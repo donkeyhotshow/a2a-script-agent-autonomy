@@ -28,37 +28,28 @@ router.post('/invoke', authenticate, async (req: Request, res: Response, next: N
       context?: unknown;
       message?: string;
       code_blocks?: FileBlock[];
-      sessionId?: string;
     };
 
-    // Parse and validate context
     let context: ContextBlock;
     if (body.context) {
       context = parseContextBlock(body.context);
     } else {
-      // Create default context
       context = {
         version: '1.0' as const,
-        session_id: body.sessionId || 'stateless',
+        session_id: 'stateless',
       };
     }
 
-    const { message, code_blocks: codeBlocks, sessionId } = body;
-    const clientId = (req as any).user?.id || 'anonymous';
+    const { message, code_blocks: codeBlocks } = body;
+    const clientId = (req as any).client?.id || 'anonymous';
 
-    // Create request using raw SQL to avoid Prisma client issues
-    const id = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    const promiseId = `prm_${Date.now()}_${Math.random().toString(36).substr(2, 12)}`;
-
-    const { PrismaClient } = await import('@prisma/client');
-    const prisma = new PrismaClient();
-
-    await prisma.$executeRaw`
-      INSERT INTO requests (id, promise_id, session_id, client_id, status, priority, context, message_text, code_blocks, created_at)
-      VALUES (${id}, ${promiseId}, ${sessionId || null}, ${clientId}, 'pending', 0, 
-              ${JSON.stringify(context)}::jsonb, ${message || null}, 
-              ${codeBlocks ? JSON.stringify(codeBlocks) : null}, NOW())
-    `;
+    const { requestService } = await import('../services/request.service.js');
+    const { promiseId } = await requestService.create({
+      clientId,
+      context: context as Record<string, unknown>,
+      message,
+      codeBlocks: codeBlocks ?? undefined,
+    });
 
     res.status(201).json({
       success: true,
@@ -80,7 +71,6 @@ router.post('/message', authenticate, async (req: Request, res: Response, next: 
       context?: unknown;
       message?: string;
       code_blocks?: FileBlock[];
-      sessionId?: string;
     };
 
     let context: ContextBlock;
@@ -89,26 +79,20 @@ router.post('/message', authenticate, async (req: Request, res: Response, next: 
     } else {
       context = {
         version: '1.0' as const,
-        session_id: body.sessionId || 'stateless',
+        session_id: 'stateless',
       };
     }
 
-    const { message, code_blocks: codeBlocks, sessionId } = body;
-    const clientId = (req as any).user?.id || 'anonymous';
+    const { message, code_blocks: codeBlocks } = body;
+    const clientId = (req as any).client?.id || 'anonymous';
 
-    // Create request
-    const id = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    const promiseId = `prm_${Date.now()}_${Math.random().toString(36).substr(2, 12)}`;
-
-    const { PrismaClient } = await import('@prisma/client');
-    const prisma = new PrismaClient();
-
-    await prisma.$executeRaw`
-      INSERT INTO requests (id, promise_id, session_id, client_id, status, priority, context, message_text, code_blocks, created_at)
-      VALUES (${id}, ${promiseId}, ${sessionId || null}, ${clientId}, 'pending', 0, 
-              ${JSON.stringify(context)}::jsonb, ${message || null}, 
-              ${codeBlocks ? JSON.stringify(codeBlocks) : null}, NOW())
-    `;
+    const { requestService } = await import('../services/request.service.js');
+    const { promiseId } = await requestService.create({
+      clientId,
+      context: context as Record<string, unknown>,
+      message,
+      codeBlocks: codeBlocks ?? undefined,
+    });
 
     res.status(201).json({
       success: true,

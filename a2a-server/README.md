@@ -88,25 +88,29 @@ a2a-server/
 - `POST /api/v1/auth/register` - Регистрация клиента
 - `POST /api/v1/auth/token` - Получение JWT токена
 - `POST /api/v1/auth/refresh` - Обновление токена
+- `GET /api/v1/auth/me` - Текущий пользователь
 
-### Projects
-- `GET /api/v1/projects` - Список проектов
-- `POST /api/v1/projects` - Создать проект
-- `GET /api/v1/projects/:id` - Получить проект
-- `DELETE /api/v1/projects/:id` - Удалить проект
-- `GET /api/v1/projects/:id/indexing-status` - Статус индексации
-- `GET /api/v1/projects/:id/architecture` - Архитектурные особенности
-- `POST /api/v1/projects/:id/search` - Поиск по коду
-- `POST /api/v1/projects/:id/webhook` - Git webhook
+### Requests (Async Protocol)
+- `POST /api/v1/requests` - Создать запрос, возвращает `promiseId`
+- `GET /api/v1/requests/:promiseId/status` - Статус запроса
+- `GET /api/v1/requests/:promiseId/result` - Результат (completed/failed)
+- `DELETE /api/v1/requests/:promiseId` - Отменить запрос
+- `DELETE /api/v1/requests/queue/pending` - Очистить очередь
+- `GET /api/v1/requests/queue/stats` - Статистика очереди
 
 ### Sessions
 - `POST /api/v1/sessions` - Создать сессию
-- `GET /api/v1/sessions/:id` - Статус сессии
-- `POST /api/v1/sessions/:id/message` - Отправить сообщение (new_task)
-- `POST /api/v1/sessions/:id/files` - Отправить файлы
-- `POST /api/v1/sessions/:id/continue` - Продолжить (кнопка "Делаем")
-- `POST /api/v1/sessions/:id/confirm` - Подтвердить изменения
-- `DELETE /api/v1/sessions/:id` - Удалить сессию
+- `GET /api/v1/sessions` - Список сессий (требует projectId)
+- `GET /api/v1/sessions/:sessionId` - Получить сессию
+- `PATCH /api/v1/sessions/:sessionId` - Обновить сессию
+- `DELETE /api/v1/sessions/:sessionId` - Удалить сессию
+- `GET /api/v1/sessions/:sessionId/messages` - Сообщения сессии
+- `POST /api/v1/sessions/:sessionId/messages` - Добавить сообщение
+
+### Legacy Endpoints
+- `POST /api/v1/invoke` - Создать запрос (legacy)
+- `POST /api/v1/message` - Альтернативное имя для invoke
+- `GET /api/v1/health` - Health check
 
 ## Скрипты
 

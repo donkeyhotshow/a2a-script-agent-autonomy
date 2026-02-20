@@ -96,7 +96,6 @@ model Session {
   project     Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
   tasks       Task[]
   messages    Message[]
-  requests    Request[]
 
   @@index([projectId])
   @@index([status])
@@ -195,7 +194,6 @@ enum MessageStatus {
 model Request {
   id          String        @id
   promiseId   String        @unique @default(cuid()) @map("promise_id")
-  sessionId   String?       @map("session_id")
   clientId    String        @map("client_id")
   status      RequestStatus @default(pending)
   priority    Int           @default(0)
@@ -207,11 +205,9 @@ model Request {
   createdAt   DateTime      @default(now()) @map("created_at")
   startedAt   DateTime?     @map("started_at")
   completedAt DateTime?     @map("completed_at")
-  session     Session?      @relation(fields: [sessionId], references: [id], onDelete: SetNull)
 
   @@index([status, priority, createdAt])
   @@index([clientId])
-  @@index([sessionId])
   @@map("requests")
 }
 

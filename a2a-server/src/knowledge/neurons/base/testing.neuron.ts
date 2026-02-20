@@ -4,12 +4,13 @@ export const testingNeuron: Neuron = {
   id: 'neuron-testing',
   name: 'Testing',
   category: 'testing',
-  triggers: ['tests/', 'Pest', 'PHPUnit', 'TestCase', 'factory('],
+  triggers: ['Pest', 'PHPUnit', 'TestCase', 'factory(', 'extends TestCase'],
   knowledge: {
     entities: ['Pest', 'PHPUnit', 'TestCase', 'Factory'],
     relations: ['extends TestCase', 'uses factory'],
     description: 'Laravel 11 testing: Pest, PHPUnit, factories',
   },
+  actions: [{ type: 'inject', target: 'neuron-context-testing' }],
   store: {
     paths: { tests: 'tests/', feature: 'tests/Feature/', unit: 'tests/Unit/' },
     conventions: ['it()', 'test()', 'expect()'],

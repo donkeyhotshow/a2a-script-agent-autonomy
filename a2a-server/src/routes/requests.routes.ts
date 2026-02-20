@@ -4,10 +4,8 @@
  */
 
 import { Router, Request, Response, NextFunction } from 'express';
-import { MessageDirection, MessageStatus } from '@prisma/client';
 import { authenticate } from '../middleware/auth.middleware.js';
 import { requestService } from '../services/request.service.js';
-import { messageService } from '../services/message.service.js';
 import { logger } from '../utils/logger.js';
 
 const router = Router();
@@ -18,7 +16,7 @@ const router = Router();
  */
 router.post('/', authenticate, async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { sessionId, context, message, codeBlocks, priority } = req.body;
+    const { context, message, codeBlocks, priority } = req.body;
     const clientId = req.client?.id || 'anonymous';
 
     // Validate required fields
@@ -31,26 +29,12 @@ router.post('/', authenticate, async (req: Request, res: Response, next: NextFun
 
     // Create request
     const { promiseId, id } = await requestService.create({
-      sessionId,
       clientId,
       context,
       message,
       codeBlocks,
       priority,
     });
-
-    // If sessionId provided, create a user message linked to this request
-    if (sessionId) {
-      await messageService.create({
-        sessionId,
-        direction: MessageDirection.CLIENT_TO_SERVER,
-        role: 'user',
-        content: { text: message || '', context },
-        contentText: message || '',
-        promiseId,
-        status: MessageStatus.pending,
-      });
-    }
 
     logger.info('Request created via API', { promiseId, requestId: id, clientId });
 
@@ -119,17 +103,26 @@ router.get('/:promiseId/result', authenticate, async (req: Request, res: Respons
       });
     }
 
-    // Update linked message status if exists
-    if (result.sessionId) {
-      await messageService.updateByPromiseId(promiseId, {
-        status: result.status === 'completed' ? 'completed' as any : 'failed' as any,
-        content: { result: result.result, error: result.error },
-      });
-    }
-
     res.json({
       success: true,
       data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * DELETE /api/v1/requests/queue/pending
+ * Cancel all pending requests (queue clear)
+ */
+router.delete('/queue/pending', authenticate, async (_req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { cancelledCount } = await requestService.cancelAllPending();
+
+    res.json({
+      success: true,
+      data: { cancelledCount },
     });
   } catch (error) {
     next(error);

@@ -4,7 +4,11 @@
  */
 
 import { getContextBlock } from './context-store.js';
-import type { ActivatedNeuron, NeuronAction } from './neurons/neuron.types.js';
+import type {
+  ActivatedNeuron,
+  NeuronAction,
+  NeuronActionRequestFiles,
+} from './neurons/neuron.types.js';
 
 export interface InjectedContext {
   target: string;
@@ -25,11 +29,30 @@ function isInjectAction(action: unknown): action is NeuronAction {
   );
 }
 
+function isRequestFilesAction(action: unknown): action is NeuronActionRequestFiles {
+  return (
+    action !== null &&
+    typeof action === 'object' &&
+    'type' in action &&
+    (action as NeuronActionRequestFiles).type === 'request_files' &&
+    'items' in action &&
+    Array.isArray((action as NeuronActionRequestFiles).items)
+  );
+}
+
+/** Sort by priority (higher first). Default priority 5. */
+export function sortByPriority(
+  activated: ActivatedNeuron[] | null | undefined
+): ActivatedNeuron[] {
+  const list = Array.isArray(activated) ? [...activated] : [];
+  return list.sort((a, b) => (b.neuron.priority ?? 5) - (a.neuron.priority ?? 5));
+}
+
 /**
  * Resolve inject actions from activated neurons.
  * - Skips malformed actions (missing type, empty target)
  * - Deduplicates by target (first occurrence wins)
- * - Preserves order: first neuron's first inject, then second neuron's, etc.
+ * - Order by neuron priority (higher first)
  */
 export function resolveInjections(
   activated: ActivatedNeuron[] | null | undefined
@@ -37,7 +60,7 @@ export function resolveInjections(
   const seen = new Set<string>();
   const result: InjectedContext[] = [];
 
-  const list = Array.isArray(activated) ? activated : [];
+  const list = sortByPriority(activated);
 
   for (const { neuron } of list) {
     const actions = neuron?.actions;
@@ -55,6 +78,33 @@ export function resolveInjections(
     }
   }
 
+  return result;
+}
+
+/**
+ * Resolve request_files actions from activated neurons.
+ * Returns deduplicated items. Order by neuron priority.
+ */
+export function resolveRequestFiles(
+  activated: ActivatedNeuron[] | null | undefined
+): string[] {
+  const seen = new Set<string>();
+  const result: string[] = [];
+  const list = sortByPriority(activated);
+
+  for (const { neuron } of list) {
+    const actions = neuron?.actions;
+    if (!Array.isArray(actions)) continue;
+    for (const action of actions) {
+      if (!isRequestFilesAction(action)) continue;
+      for (const item of action.items) {
+        if (typeof item === 'string' && item.length > 0 && !seen.has(item)) {
+          seen.add(item);
+          result.push(item);
+        }
+      }
+    }
+  }
   return result;
 }
 

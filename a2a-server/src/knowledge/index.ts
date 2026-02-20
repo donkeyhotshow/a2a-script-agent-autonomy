@@ -5,3 +5,6 @@ export * from './context-handler.js';
 export * from './entity-recognizer.js';
 export * from './relation-mapper.js';
 export * from './graph-store.js';
+export * from './semantic-extractor.js';
+export * from './question-builder.js';
+export * from './index-query.js';

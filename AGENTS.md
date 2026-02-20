@@ -1,192 +1,71 @@
-# A2A — Agent Instructions
+# A2A — AGENTS.md (что делать прямо сейчас)
+
+Цель: **граф знаний уже есть**, хотим **подзаполнить его вручную**, чтобы быстро упереться в первые реальные проблемы.
+
+**Документация:** [docs/README.md](docs/README.md) — индекс всех документов (без дублирования).
 
 ---
 
-## Knowledge Graph
+## Ссылки
 
-### Структура
-
-Граф знаний — граф сущностей и связей по проекту. Хранится in-memory по `projectId`.
-
-**Сущности (entities):** распознаются из кода (entity-recognizer)
-- Типы: `model`, `controller`, `service`, `repository`, `middleware`, `request`, `policy`, `vue-component`, `vue-page`, `factory`, `seeder`, …
-- Метаданные: `namespace`, `extends`, `implements`, `methods`, `relationships`, `imports`, …
-
-**Связи (relations):**
-| Тип | Описание |
-|-----|----------|
-| `uses` | A использует B (import) |
-| `extends` | A наследует B |
-| `implements` | A реализует B |
-| `has-many`, `belongs-to`, `belongs-to-many`, `has-one` | Eloquent |
-| `handles` | Controller обрабатывает |
-| `validates` | Request валидирует Model |
-| `renders` | Vue рендерит компонент |
-
-**Неполный граф:** нет графа для `projectId` ИЛИ пустые `entities` и `relations` → сервер генерирует вопрос.
+| Что | Куда |
+|-----|------|
+| Dev-проект, вызовы | [DEV_PROJECT.json](DEV_PROJECT.json), [docs/websitestore-challenges.md](docs/websitestore-challenges.md) |
+| Последовательность | [SEQUENCE.md](SEQUENCE.md) |
+| Протокол (context, new_task, tasks, request_files) | [a2a-client/docs/requirements.md](a2a-client/docs/requirements.md) |
+| Ограничения команд на сервер | [docs/server-command-restrictions.md](docs/server-command-restrictions.md) |
+| Граф: локальная настройка (не диалог) | [docs/graph-local-config.md](docs/graph-local-config.md) |
+| Граф (entities, relations) | [LOADING.md](LOADING.md) |
+| Поток, трассировка | [docs/flow-graph-requests.md](docs/flow-graph-requests.md) |
+| JSON payloads, curl | [json-in-cmd.md](json-in-cmd.md) |
+| Raw примеры (request/response) | [docs/adr-hacks/](docs/adr-hacks/) |
+| Задачи развития сервисов | [tasks/](tasks/) |
+| ADR | [docs/adr/](docs/adr/) |
+| Планы реализации | [plans/](plans/) |
 
 ---
 
-### Workflow
+## Быстрый старт (2 итерации)
 
-```
-┌─────────────────────────────────────────────────────────────────────────┐
-│ 1. Client: POST /requests { context: { projectId }, message, codeBlocks }│
-└─────────────────────────────────────────────────────────────────────────┘
-                                    │
-                                    ▼
-┌─────────────────────────────────────────────────────────────────────────┐
-│ 2. Server: сохраняет в очередь (pending)                                 │
-└─────────────────────────────────────────────────────────────────────────┘
-                                    │
-                                    ▼
-┌─────────────────────────────────────────────────────────────────────────┐
-│ 3. Request Processor (timer 5s): getNextPending() → processing           │
-└─────────────────────────────────────────────────────────────────────────┘
-                                    │
-                    ┌───────────────┴───────────────┐
-                    ▼                               ▼
-┌──────────────────────────────┐    ┌──────────────────────────────────────┐
-│ Граф неполный                │    │ Граф есть (entities + relations)      │
-│ → question                   │    │ → нейроны, контекст, external AI     │
-│ → result: graph_incomplete    │    │ → result: completed                  │
-│ → остановка таймера          │    │ → следующий tick                      │
-└──────────────────────────────┘    └──────────────────────────────────────┘
-                    │
-                    ▼
-┌─────────────────────────────────────────────────────────────────────────┐
-│ 4. Client: poll /status → /result                                       │
-│    При graph_incomplete: ответить на question (codeBlocks, context)     │
-│    → итерация 2                                                          │
-└─────────────────────────────────────────────────────────────────────────┘
-```
+**Requests API:** `POST /api/v1/requests` → poll `.../result`. Base: `http://localhost:3000/api/v1`, Auth: `Bearer a2a_dev_password`.
 
-**Этажи (из абстракции):**
-- Этаж 1: кодовая база, индексы, граф
-- Этаж 2: сервер — поднимает данные, нейроны, если нет связей → вопрос
-- Этаж 3: external AI — когда задача готова, обрабатывает и возвращает
+**Iter1:** POST без codeBlocks → `graph_incomplete` + question.  
+**Iter2:** POST с codeBlocks (controller, request, model, service, vue) → `completed`.
+
+Полные примеры: [json-in-cmd.md](json-in-cmd.md), [SEQUENCE.md](SEQUENCE.md).
 
 ---
 
-## API Client: Manual Task Input for Knowledge Graph Training
-
-Use the Requests API to feed tasks manually and train the knowledge graph. At least 2 iterations recommended.
-
-**Base URL:** `http://localhost:3000/api/v1`  
-**Auth:** `Authorization: Bearer <A2A_SERVER_PASSWORD>` (or `SKIP_AUTH=1` in dev)
-
----
-
-### Iteration 1: First Request
+## Запуск сервера
 
 ```bash
-# 1. Create request
-curl -X POST http://localhost:3000/api/v1/requests \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer a2a_dev_password" \
-  -d '{
-    "context": {
-      "projectId": "proj_my_project",
-      "projectName": "My Laravel App",
-      "projectType": "laravel"
-    },
-    "message": "Add email validation to User registration"
-  }'
+# Из корня проекта
+npm run dev
 
-# Response: { "success": true, "data": { "promiseId": "prm_xxx", "requestId": "req_xxx" } }
+# Или только сервер
+npm run dev:api
+
+# Без авторизации (разработка)
+cd a2a-server && npm run dev:no-auth
 ```
+
+---
+
+## CLI: вопросы из графа
 
 ```bash
-# 2. Poll status (every 5 sec)
-curl http://localhost:3000/api/v1/requests/PRM_ID/status \
-  -H "Authorization: Bearer a2a_dev_password"
-
-# 3. Get result when status=completed or failed
-curl http://localhost:3000/api/v1/requests/PRM_ID/result \
-  -H "Authorization: Bearer a2a_dev_password"
-```
-
-**If `result.outcome === "graph_incomplete"`:** Server generated a question. Check `result.question`. Answer it in the next request (provide more context, e.g. codeBlocks).
-
----
-
-### Iteration 2: Answer Question / Add Context
-
-```bash
-# Send follow-up with code blocks to enrich graph
-curl -X POST http://localhost:3000/api/v1/requests \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer a2a_dev_password" \
-  -d '{
-    "context": {
-      "projectId": "proj_my_project",
-      "projectName": "My Laravel App"
-    },
-    "message": "UserService.php handles registration",
-    "codeBlocks": [
-      {
-        "path": "app/Services/UserService.php",
-        "content": "<?php\n\nclass UserService { public function register(array $data) { ... } }"
-      }
-    ]
-  }'
-```
-
-Repeat poll → result. If still `graph_incomplete`, add more files in `codeBlocks` or adjust `context`.
-
----
-
-### Request Body Schema
-
-| Field | Required | Description |
-|-------|----------|-------------|
-| `context` | yes | JSON object. Must include `projectId` for graph. |
-| `message` | no | Task description |
-| `codeBlocks` | no | `[{ path, content }]` — files for graph indexing |
-| `sessionId` | no | Optional session link |
-| `priority` | no | 0 = default, higher = sooner |
-
-### Result Outcomes
-
-| `result.outcome` | Meaning |
-|------------------|---------|
-| `completed` | Processed successfully |
-| `graph_incomplete` | Graph missing/empty. `result.question` has the question. Add context and retry. |
-| (failed) | `error` object with code/message |
-
----
-
-### Minimal Training Script (2 iterations)
-
-```bash
-# Iteration 1
-P1=$(curl -s -X POST http://localhost:3000/api/v1/requests \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer a2a_dev_password" \
-  -d '{"context":{"projectId":"proj_1"},"message":"Task 1"}' | jq -r '.data.promiseId')
-
-# Wait + poll
-sleep 6
-curl -s "http://localhost:3000/api/v1/requests/$P1/result" -H "Authorization: Bearer a2a_dev_password" | jq
-
-# Iteration 2 (with codeBlocks if graph_incomplete)
-P2=$(curl -s -X POST http://localhost:3000/api/v1/requests \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer a2a_dev_password" \
-  -d '{"context":{"projectId":"proj_1"},"message":"Task 2","codeBlocks":[{"path":"app/User.php","content":"<?php\nclass User {}"}]}' | jq -r '.data.promiseId')
-
-sleep 6
-curl -s "http://localhost:3000/api/v1/requests/$P2/result" -H "Authorization: Bearer a2a_dev_password" | jq
+npm run questions                    # project_path из .a2a-client/projects.json
+node scripts/questions-cli.js C:/path/to/project
 ```
 
 ---
 
-### Endpoints Summary
+## Первые трудности (чеклист)
 
-| Method | Path | Description |
-|--------|------|-------------|
-| POST | /api/v1/requests | Create request → promiseId |
-| GET | /api/v1/requests/:promiseId/status | Poll status |
-| GET | /api/v1/requests/:promiseId/result | Get result (when ready) |
-| DELETE | /api/v1/requests/:promiseId | Cancel pending |
-| GET | /api/v1/requests/queue/stats | Queue length |
+- Пути/неймспейсы не совпадают (кастомные папки)
+- Связи не извлекаются (belongsTo в трейте)
+- Импорты неочевидны (app(), resolve())
+- Смешение слоёв (controller делает всё)
+- Frontend-роутинг (Inertia/Vue)
+
+Подробнее: [docs/websitestore-challenges.md](docs/websitestore-challenges.md).

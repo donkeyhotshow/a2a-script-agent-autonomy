@@ -4,7 +4,7 @@ export const projectDetectorNeuron: Neuron = {
   id: 'neuron-project-detector',
   name: 'Project Detector',
   category: 'architecture',
-  triggers: ['composer.json', 'laravel/framework'],
+  triggers: ['laravel/framework', 'laravel', 'composer'],
   knowledge: {
     entities: ['composer.json', 'package.json'],
     relations: [],

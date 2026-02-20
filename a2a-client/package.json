@@ -16,15 +16,11 @@
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:debug": "playwright test --debug",
     "test:e2e:report": "playwright show-report",
-    "dev": "npm run dev:kill-ports && node scripts/wait-for-ports-free.js 5173 5174 3000 8080 && concurrently \"npm run dev:web\" \"npm run dev:api\"",
-    "dev:kill-ports": "npx --yes kill-port 5173 5174 3000 8080 || exit 0",
-    "dev:web": "vite",
-    "dev:api": "npm run dev --prefix ../a2a-server"
+    "dev": "vite"
   },
   "devDependencies": {
     "@playwright/test": "^1.40.0",
     "@types/node": "^20.10.0",
-    "concurrently": "^9.1.0",
     "cross-env": "^7.0.3",
     "node-fetch": "^2.7.0",
     "supertest": "^6.3.4",

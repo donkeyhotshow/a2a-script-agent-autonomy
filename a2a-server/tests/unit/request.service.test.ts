@@ -69,12 +69,10 @@ describe('Request Service', () => {
       const dataWithOptional = {
         clientId: 'client-123',
         context: { version: '1.0' },
-        sessionId: 'session-123',
         message: 'Hello',
         priority: 5,
       };
       
-      expect(dataWithOptional.sessionId).toBe('session-123');
       expect(dataWithOptional.message).toBe('Hello');
       expect(dataWithOptional.priority).toBe(5);
     });
@@ -99,7 +97,6 @@ describe('Request Service', () => {
       const result = {
         id: 'req-1',
         promiseId: 'prm-1',
-        sessionId: 'session-1',
         clientId: 'client-1',
         status: 'pending' as const,
         priority: 0,

@@ -9,8 +9,12 @@
  */
 
 import { activateNeurons } from './neurons/neuron-activator.js';
-import { resolveInjections, mergeInjectedContext } from './context-injector.js';
-import { getContextBlock, registerContextBlock } from './context-store.js';
+import {
+  resolveInjections,
+  resolveRequestFiles,
+  mergeInjectedContext,
+} from './context-injector.js';
+import { registerContextBlock } from './context-store.js';
 import type { ContextBlock, FileBlock, Task, TaskType } from '../types/index.js';
 import type { ActivationContext, ActivatedNeuron } from './neurons/neuron.types.js';
 
@@ -237,15 +241,19 @@ export function handleRootContext(
   // Activate neurons
   const activatedNeurons = activateNeurons(activationContext);
   
-  // Resolve @INJECT actions
+  // Resolve @INJECT and request_files actions
   const injectedContexts = resolveInjections(activatedNeurons);
   const injectedContent = mergeInjectedContext(injectedContexts);
-  
+  const neuronRequestedFiles = resolveRequestFiles(activatedNeurons);
+
   // Update session
   const updatedContext: ContextBlock = {
     version: '1.0',
     session_id: sessionId,
     architectural_features: extractArchitecturalFeatures(rootContext),
+    ...(neuronRequestedFiles.length > 0 && {
+      request_files: neuronRequestedFiles,
+    }),
   };
   
   updateSessionContext(sessionId, {
@@ -258,11 +266,13 @@ export function handleRootContext(
     injectedContent,
     activatedNeurons,
   };
-  
+  if (neuronRequestedFiles.length > 0) {
+    result.requestedFiles = neuronRequestedFiles;
+  }
   if (activeActions?.actions) {
     result.actions = activeActions.actions;
   }
-  
+
   return result;
 }
 
@@ -397,22 +407,38 @@ export function handleContext(
     activatedNeurons
   );
   
-  // Resolve @INJECT actions
+  // Resolve @INJECT and request_files actions
   const injectedContexts = resolveInjections(allActivatedNeurons);
   const injectedContent = mergeInjectedContext(injectedContexts);
-  
+  const neuronRequestedFiles = resolveRequestFiles(allActivatedNeurons);
+
+  const allRequested = [
+    ...(mergedContext.request_files ?? []),
+    ...neuronRequestedFiles,
+  ];
+  const finalContext: ContextBlock = {
+    ...mergedContext,
+    ...(allRequested.length > 0 && {
+      request_files: [...new Set(allRequested)],
+    }),
+  };
+
   // Update session
   updateSessionContext(sessionId, {
-    context: mergedContext,
+    context: finalContext,
     activatedNeurons: allActivatedNeurons,
     history: [...session.history, session.context],
   });
-  
-  return {
-    context: mergedContext,
+
+  const result: ContextHandlerResult = {
+    context: finalContext,
     injectedContent,
     activatedNeurons: allActivatedNeurons,
   };
+  if (neuronRequestedFiles.length > 0) {
+    result.requestedFiles = neuronRequestedFiles;
+  }
+  return result;
 }
 
 /**
@@ -478,6 +504,7 @@ export function handleNewTask(
   const activationContext: ActivationContext = {
     filePaths: [],
     projectStructure: architecturalFeatures ?? [],
+    taskText: tasks.join(' '),
   };
   
   // Activate neurons based on tasks
@@ -489,33 +516,45 @@ export function handleNewTask(
     activatedNeurons
   );
   
-  // Resolve @INJECT actions
+  // Resolve @INJECT and request_files actions
   const injectedContexts = resolveInjections(allActivatedNeurons);
   const injectedContent = mergeInjectedContext(injectedContexts);
-  
+  const neuronRequestedFiles = resolveRequestFiles(allActivatedNeurons);
+
   // Update context with tasks
   const updatedContext: ContextBlock = {
     ...session.context,
     new_task: tasks,
     tasks: [...(session.context.tasks ?? []), ...newTasks],
+    ...(architecturalFeatures && {
+      architectural_features: architecturalFeatures,
+    }),
+    ...(neuronRequestedFiles.length > 0 && {
+      request_files: [
+        ...new Set([
+          ...(session.context.request_files ?? []),
+          ...neuronRequestedFiles,
+        ]),
+      ],
+    }),
   };
-  
-  if (architecturalFeatures) {
-    updatedContext.architectural_features = architecturalFeatures;
-  }
-  
+
   // Update session
   updateSessionContext(sessionId, {
     context: updatedContext,
     activatedNeurons: allActivatedNeurons,
     history: [...session.history, session.context],
   });
-  
-  return {
+
+  const result: ContextHandlerResult = {
     context: updatedContext,
     injectedContent,
     activatedNeurons: allActivatedNeurons,
   };
+  if (neuronRequestedFiles.length > 0) {
+    result.requestedFiles = neuronRequestedFiles;
+  }
+  return result;
 }
 
 /**
@@ -544,6 +583,58 @@ function inferTaskType(task: string): string {
   }
   
   return 'analyze';
+}
+
+/**
+ * Stateless: process new_task → tasks via neurons.
+ * Used by Request API (no session).
+ * Activates neurons from codeBlocks paths + architectural_features,
+ * converts new_task strings to Task[], moves into context.tasks, clears new_task.
+ */
+export function processNewTaskToContext(
+  context: Record<string, unknown>,
+  codeBlocks: Array<{ path: string; content?: string }>
+): Record<string, unknown> {
+  const newTask = context['new_task'] as string[] | undefined;
+  if (!newTask?.length) return context;
+
+  const projectStructure = (context['architectural_features'] as string[]) ?? [];
+  const fileContents = codeBlocks.length
+    ? Object.fromEntries(codeBlocks.map((c) => [c.path, c.content ?? '']))
+    : undefined;
+  const activationContext: ActivationContext = {
+    filePaths: codeBlocks.map((c) => c.path),
+    fileContents,
+    projectStructure,
+    taskText: newTask.join(' '),
+  };
+  let activated: ActivatedNeuron[];
+  try {
+    activated = activateNeurons(activationContext);
+  } catch {
+    activated = [];
+  }
+  const neuronRequestedFiles = resolveRequestFiles(activated);
+
+  const existingTasks = (context['tasks'] as Task[]) ?? [];
+  const newTasks: Task[] = newTask.map((task, index) => ({
+    id: `task_${Date.now()}_${index}`,
+    type: inferTaskType(task) as TaskType,
+    status: 'pending' as const,
+    target: task,
+    progress: 0,
+  }));
+
+  const result: Record<string, unknown> = {
+    ...context,
+    tasks: [...existingTasks, ...newTasks],
+    new_task: [],
+  };
+  if (neuronRequestedFiles.length > 0) {
+    const existing = (context['request_files'] as string[]) ?? [];
+    result.request_files = [...new Set([...existing, ...neuronRequestedFiles])];
+  }
+  return result;
 }
 
 // ============================================

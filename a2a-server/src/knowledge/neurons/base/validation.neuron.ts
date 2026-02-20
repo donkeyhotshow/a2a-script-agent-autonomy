@@ -4,12 +4,13 @@ export const validationNeuron: Neuron = {
   id: 'neuron-validation',
   name: 'Validation',
   category: 'validation',
-  triggers: ['FormRequest', 'app/Http/Requests/', 'rules()', 'validate('],
+  triggers: ['FormRequest', 'rules()', 'validate(', 'Http\\Requests'],
   knowledge: {
     entities: ['FormRequest', 'Validator', 'rules'],
     relations: ['extends FormRequest', 'uses Validator'],
     description: 'Laravel 11 validation: FormRequest, rules, validate',
   },
+  actions: [{ type: 'inject', target: 'neuron-context-validation' }],
   store: {
     paths: { requests: 'app/Http/Requests/' },
     conventions: ['authorize()', 'rules()'],

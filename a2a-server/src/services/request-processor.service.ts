@@ -1,62 +1,58 @@
 /**
  * Request Processor Service
  * Timer-based loop: picks first pending request, attempts to resolve.
- * Stops on error. Stops on incomplete graph (generates question, logs).
+ * No graph extraction. Neurons process context. Placeholder for ChatGPT.
  */
 
-import { requestService, type RequestResult } from './request.service.js';
-import { getGraph } from '../knowledge/graph-store.js';
+import { requestService } from './request.service.js';
+import { processNewTaskToContext } from '../knowledge/context-handler.js';
+import { extractSemantics } from '../knowledge/semantic-extractor.js';
+import { buildQuestions } from '../knowledge/question-builder.js';
+import { queryIndex } from '../knowledge/index-query.js';
 import { logger } from '../utils/logger.js';
 
 const DEFAULT_INTERVAL_MS = 5000;
 
 let timerId: ReturnType<typeof setInterval> | null = null;
 
-export type ProcessOutcome = 'completed' | 'failed' | 'graph_incomplete';
-
-function isGraphIncomplete(projectId: string | undefined): boolean {
-  if (!projectId) return true;
-  const graph = getGraph(projectId);
-  if (!graph) return true;
-  if (!graph.entities?.length && !graph.relations?.length) return true;
-  return false;
-}
-
-function generateQuestion(request: RequestResult): string {
-  const projectId = (request.context?.projectId as string) || 'unknown';
-  return `Knowledge graph is incomplete for project ${projectId}. Please index the project or provide more context.`;
-}
+export type ProcessOutcome = 'completed' | 'failed';
 
 /**
- * Process one request. Returns outcome; on error or graph_incomplete, iteration stops.
+ * Process one request. Neurons: new_task → tasks. No graph.
  */
 export async function processOneRequest(): Promise<ProcessOutcome | null> {
   const request = await requestService.getNextPending();
   if (!request) return null;
 
-  const { promiseId, context } = request;
-  const projectId = context?.projectId as string | undefined;
+  const { promiseId, context, codeBlocks } = request;
+  const ctx = context as Record<string, unknown> | null;
+  let workingContext = ctx ?? {};
+  const codeBlocksArr = codeBlocks ?? [];
+
+  // Neurons: move new_task → tasks
+  if (workingContext['new_task']) {
+    workingContext = processNewTaskToContext(workingContext, codeBlocksArr);
+    logger.info('[RequestProcessor] new_task moved to tasks', {
+      promiseId,
+      tasksCount: (workingContext['tasks'] as unknown[])?.length ?? 0,
+    });
+  }
+
+  // Semantic layer: extract → questions → index
+  const projectId = (workingContext['project_path'] as string) ?? 'default';
+  const tasks = (workingContext['tasks'] as Array<{ target?: string }>) ?? [];
+  const taskTexts = tasks.map((t) => t.target).filter(Boolean) as string[];
+  const chunks = extractSemantics(codeBlocksArr);
+  const questions = buildQuestions(chunks, taskTexts);
+  const indexAnswers = await queryIndex(projectId, questions);
 
   try {
-    if (isGraphIncomplete(projectId)) {
-      const question = generateQuestion(request);
-      logger.info('[RequestProcessor] Graph incomplete, question generated', {
-        promiseId,
-        projectId: projectId ?? 'none',
-        question,
-      });
-      await requestService.updateStatus(promiseId, 'completed', {
-        outcome: 'graph_incomplete',
-        question,
-        message: 'Server stopped: knowledge graph incomplete. Answer the question to continue.',
-      });
-      return 'graph_incomplete';
-    }
-
-    // TODO: full processing (neurons, external AI) — for now just complete
     await requestService.updateStatus(promiseId, 'completed', {
       outcome: 'completed',
-      message: 'Request processed (placeholder)',
+      message: 'Request processed (placeholder for ChatGPT)',
+      context: workingContext,
+      questions: questions.map((q) => q.question),
+      index_answers: indexAnswers,
     });
     return 'completed';
   } catch (err) {
@@ -74,11 +70,11 @@ export async function processOneRequest(): Promise<ProcessOutcome | null> {
 }
 
 /**
- * Run one iteration. Stops loop on error or graph_incomplete.
+ * Run one iteration. Stops loop on error.
  */
 async function tick(): Promise<void> {
   const outcome = await processOneRequest();
-  if (outcome === 'failed' || outcome === 'graph_incomplete') {
+  if (outcome === 'failed') {
     stopRequestProcessor();
   }
 }

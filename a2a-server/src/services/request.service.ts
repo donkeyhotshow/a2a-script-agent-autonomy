@@ -11,7 +11,6 @@ const prisma = new PrismaClient();
 export type RequestStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled';
 
 export interface CreateRequestData {
-  sessionId?: string;
   clientId: string;
   context: Record<string, unknown>;
   message?: string;
@@ -22,7 +21,6 @@ export interface CreateRequestData {
 export interface RequestResult {
   id: string;
   promiseId: string;
-  sessionId: string | null;
   clientId: string;
   status: RequestStatus;
   priority: number;
@@ -41,20 +39,19 @@ export class RequestService {
    * Create a new request and return promiseId
    */
   async create(data: CreateRequestData): Promise<{ promiseId: string; id: string }> {
-    const id = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    const promiseId = `prm_${Date.now()}_${Math.random().toString(36).substr(2, 12)}`;
-
-    // Using raw query until Prisma client is regenerated
-    await prisma.$executeRaw`
-      INSERT INTO requests (id, promise_id, session_id, client_id, status, priority, context, message_text, code_blocks, created_at)
-      VALUES (${id}, ${promiseId}, ${data.sessionId || null}, ${data.clientId}, 'pending', ${data.priority || 0}, 
-              ${JSON.stringify(data.context)}::jsonb, ${data.message || null}, 
-              ${data.codeBlocks ? JSON.stringify(data.codeBlocks) : null}, NOW())
-    `;
-
-    logger.info('Request created', { requestId: id, promiseId, clientId: data.clientId });
-
-    return { promiseId, id };
+    const req = await prisma.request.create({
+      data: {
+        id: `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        clientId: data.clientId,
+        status: 'pending',
+        priority: data.priority ?? 0,
+        context: data.context as object,
+        message: data.message ?? null,
+        codeBlocks: data.codeBlocks ? (data.codeBlocks as object) : null,
+      },
+    });
+    logger.info('Request created', { requestId: req.id, promiseId: req.promiseId, clientId: data.clientId });
+    return { promiseId: req.promiseId, id: req.id };
   }
 
   /**
@@ -95,46 +92,24 @@ export class RequestService {
    * Get full request result by promiseId
    */
   async getResult(promiseId: string): Promise<RequestResult | null> {
-    const result = await prisma.$queryRaw<Array<{
-      id: string;
-      promise_id: string;
-      session_id: string | null;
-      client_id: string;
-      status: string;
-      priority: number;
-      context: any;
-      message_text: string | null;
-      code_blocks: any;
-      result: any;
-      error: any;
-      created_at: Date;
-      started_at: Date | null;
-      completed_at: Date | null;
-    }>>`
-      SELECT id, promise_id, session_id, client_id, status, priority, context, 
-             message_text, code_blocks, result, error, created_at, started_at, completed_at
-      FROM requests
-      WHERE promise_id = ${promiseId}
-    `;
-
-    if (!result || result.length === 0) return null;
-
-    const row = result[0];
+    const req = await prisma.request.findUnique({
+      where: { promiseId },
+    });
+    if (!req) return null;
     return {
-      id: row.id,
-      promiseId: row.promise_id,
-      sessionId: row.session_id,
-      clientId: row.client_id,
-      status: row.status as RequestStatus,
-      priority: row.priority,
-      context: row.context as Record<string, unknown>,
-      message: row.message_text,
-      codeBlocks: row.code_blocks as Array<{ path: string; content: string }> | null,
-      result: row.result as Record<string, unknown> | null,
-      error: row.error as Record<string, unknown> | null,
-      createdAt: row.created_at,
-      startedAt: row.started_at,
-      completedAt: row.completed_at,
+      id: req.id,
+      promiseId: req.promiseId,
+      clientId: req.clientId,
+      status: req.status,
+      priority: req.priority,
+      context: req.context as Record<string, unknown>,
+      message: req.message,
+      codeBlocks: req.codeBlocks as Array<{ path: string; content: string }> | null,
+      result: req.result as Record<string, unknown> | null,
+      error: req.error as Record<string, unknown> | null,
+      createdAt: req.createdAt,
+      startedAt: req.startedAt,
+      completedAt: req.completedAt,
     };
   }
 
@@ -149,18 +124,18 @@ export class RequestService {
   ): Promise<boolean> {
     try {
       const now = new Date();
-      const startedAt = status === 'processing' ? now : null;
-      const completedAt = status === 'completed' || status === 'failed' ? now : null;
+      const data: { status: RequestStatus; startedAt?: Date; completedAt?: Date; result?: object; error?: object } = {
+        status,
+      };
+      if (status === 'processing') data.startedAt = now;
+      if (status === 'completed' || status === 'failed') data.completedAt = now;
+      if (result !== undefined) data.result = result;
+      if (error !== undefined) data.error = error;
 
-      await prisma.$executeRaw`
-        UPDATE requests
-        SET status = ${status},
-            started_at = COALESCE(${startedAt}, started_at),
-            completed_at = COALESCE(${completedAt}, completed_at),
-            result = COALESCE(${result ? JSON.stringify(result) : null}, result),
-            error = COALESCE(${error ? JSON.stringify(error) : null}, error)
-        WHERE promise_id = ${promiseId}
-      `;
+      await prisma.request.updateMany({
+        where: { promiseId },
+        data,
+      });
 
       logger.info('Request status updated', { promiseId, status });
       return true;
@@ -186,26 +161,48 @@ export class RequestService {
   }
 
   /**
+   * Cancel all pending requests (queue clear)
+   */
+  async cancelAllPending(): Promise<{ cancelledCount: number }> {
+    const result = await prisma.$queryRaw<Array<{ count: bigint }>>`
+      SELECT COUNT(*) as count
+      FROM requests
+      WHERE status = 'pending'
+    `;
+
+    const pendingCount = Number(result[0]?.count || 0);
+    if (pendingCount === 0) return { cancelledCount: 0 };
+
+    await prisma.$executeRaw`
+      UPDATE requests
+      SET status = 'cancelled'
+      WHERE status = 'pending'
+    `;
+
+    logger.warn('Cancelled all pending requests', { cancelledCount: pendingCount });
+    return { cancelledCount: pendingCount };
+  }
+
+  /**
    * Get next pending request for processing (for worker)
    */
   async getNextPending(): Promise<RequestResult | null> {
     const result = await prisma.$queryRaw<Array<{
       id: string;
       promise_id: string;
-      session_id: string | null;
       client_id: string;
       status: string;
       priority: number;
-      context: any;
+      context: unknown;
       message_text: string | null;
-      code_blocks: any;
-      result: any;
-      error: any;
+      code_blocks: unknown;
+      result: unknown;
+      error: unknown;
       created_at: Date;
       started_at: Date | null;
       completed_at: Date | null;
     }>>`
-      SELECT id, promise_id, session_id, client_id, status, priority, context, 
+      SELECT id, promise_id, client_id, status, priority, context, 
              message_text, code_blocks, result, error, created_at, started_at, completed_at
       FROM requests
       WHERE status = 'pending'
@@ -217,14 +214,11 @@ export class RequestService {
     if (!result || result.length === 0) return null;
 
     const row = result[0];
-    
-    // Mark as processing
     await this.updateStatus(row.promise_id, 'processing');
 
     return {
       id: row.id,
       promiseId: row.promise_id,
-      sessionId: row.session_id,
       clientId: row.client_id,
       status: row.status as RequestStatus,
       priority: row.priority,

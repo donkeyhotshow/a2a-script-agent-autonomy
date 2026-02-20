@@ -5,7 +5,15 @@
 
 const CONTEXT_ID_REGEX = /^[a-z0-9][a-z0-9_-]{0,255}$/i;
 const MAX_CONTENT_BYTES = 512 * 1024; // 512KB per block
-const BUILTIN_IDS = new Set(['neuron-context-laravel-11']);
+const BUILTIN_IDS = new Set([
+  'neuron-context-laravel-11',
+  'neuron-context-validation',
+  'neuron-context-eloquent',
+  'neuron-context-auth',
+  'neuron-context-routing',
+  'neuron-context-views',
+  'neuron-context-testing',
+]);
 
 const builtin: Map<string, string> = new Map([
   [
@@ -18,6 +26,12 @@ const builtin: Map<string, string> = new Map([
 - Stack: laravel, inertia, vue, tailwind
 `,
   ],
+  ['neuron-context-validation', '## Validation: FormRequest, rules(), validate()'],
+  ['neuron-context-eloquent', '## Eloquent: Model, belongsTo, hasMany, factory'],
+  ['neuron-context-auth', '## Auth: Policy, Guard, middleware(auth)'],
+  ['neuron-context-routing', '## Routing: Route::, Controller, web.php'],
+  ['neuron-context-views', '## Views: Inertia, Vue, .vue'],
+  ['neuron-context-testing', '## Testing: Pest, PHPUnit, TestCase, factory()'],
 ]);
 
 const blocks: Map<string, string> = new Map();

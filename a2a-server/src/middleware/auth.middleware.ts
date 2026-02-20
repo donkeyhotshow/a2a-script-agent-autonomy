@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { AppError, unauthorized } from './error.middleware.js';
+import { unauthorized } from './error.middleware.js';
 
 declare global {
   namespace Express {
@@ -10,7 +10,7 @@ declare global {
 }
 
 // Hardcoded password for server access
-const SERVER_PASSWORD = process.env.A2A_SERVER_PASSWORD || 'a2a_dev_password';
+const SERVER_PASSWORD = process.env['A2A_SERVER_PASSWORD'] || 'a2a_dev_password';
 
 /**
  * Simple password-based authentication
@@ -18,12 +18,12 @@ const SERVER_PASSWORD = process.env.A2A_SERVER_PASSWORD || 'a2a_dev_password';
  */
 export async function authenticate(
   req: Request,
-  res: Response,
+  _res: Response,
   next: NextFunction
 ): Promise<void> {
   try {
     // Skip auth in development if SKIP_AUTH is set
-    if (process.env.SKIP_AUTH === '1' || process.env.NODE_ENV === 'development') {
+    if (process.env['SKIP_AUTH'] === '1' || process.env['NODE_ENV'] === 'development') {
       req.client = { id: 'dev-client', email: 'dev@a2a.local' };
       return next();
     }
@@ -67,7 +67,7 @@ export async function optionalAuth(
   next: NextFunction
 ): Promise<void> {
   try {
-    if (process.env.SKIP_AUTH === '1' || process.env.NODE_ENV === 'development') {
+    if (process.env['SKIP_AUTH'] === '1' || process.env['NODE_ENV'] === 'development') {
       req.client = { id: 'dev-client', email: 'dev@a2a.local' };
       return next();
     }
@@ -135,7 +135,7 @@ export function rateLimitByClient(
   _maxRequests: number,
   _windowMs: number
 ) {
-  return async (req: Request, _res: Response, next: NextFunction): Promise<void> => {
+  return async (_req: Request, _res: Response, next: NextFunction): Promise<void> => {
     // Pass-through: rate limiting not yet implemented
     next();
   };

@@ -19,6 +19,12 @@
     "prisma:studio": "prisma studio",
     "prisma:seed": "ts-node prisma/seed.ts",
     "init-db": "tsx scripts/init-db.ts",
+    "export-db": "tsx scripts/export-db.ts",
+    "process-input": "tsx scripts/process-input.ts",
+    "neurons:list": "tsx scripts/neurons-cli.ts list",
+    "neurons:validate": "tsx scripts/neurons-cli.ts validate",
+    "neurons:test": "tsx scripts/neurons-cli.ts test",
+    "neurons:doc": "tsx scripts/neurons-cli.ts doc",
     "docker:up": "docker-compose up -d",
     "docker:down": "docker-compose down",
     "docker:logs": "docker-compose logs -f"
