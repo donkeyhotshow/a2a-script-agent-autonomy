@@ -58,6 +58,8 @@ export interface Neuron {
   triggersRegex?: boolean;
   /** 1-10, higher = earlier in injection order. Default 5. */
   priority?: number;
+  /** Activate when contentPool is empty or no other neurons matched */
+  activatesWhenEmpty?: boolean;
 }
 
 export interface ActivationContext {

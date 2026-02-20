@@ -4,7 +4,7 @@ export const routingNeuron: Neuron = {
   id: 'neuron-routing',
   name: 'Routing',
   category: 'routing',
-  triggers: ['Route::', 'Controller', 'web.php', 'App\\Http\\Controllers'],
+  triggers: ['Route::', 'Controller', 'web.php', 'App\\Http\\Controllers', 'route', 'routing', 'controller'],
   knowledge: {
     entities: ['Route', 'Controller', 'Middleware'],
     relations: ['Route -> Controller', 'middleware chain'],

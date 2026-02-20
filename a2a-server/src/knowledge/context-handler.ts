@@ -585,6 +585,11 @@ function inferTaskType(task: string): string {
   return 'analyze';
 }
 
+export interface ProcessNewTaskResult {
+  context: Record<string, unknown>;
+  activatedNeurons: ActivatedNeuron[];
+}
+
 /**
  * Stateless: process new_task → tasks via neurons.
  * Used by Request API (no session).
@@ -594,9 +599,9 @@ function inferTaskType(task: string): string {
 export function processNewTaskToContext(
   context: Record<string, unknown>,
   codeBlocks: Array<{ path: string; content?: string }>
-): Record<string, unknown> {
+): ProcessNewTaskResult {
   const newTask = context['new_task'] as string[] | undefined;
-  if (!newTask?.length) return context;
+  if (!newTask?.length) return { context, activatedNeurons: [] };
 
   const projectStructure = (context['architectural_features'] as string[]) ?? [];
   const fileContents = codeBlocks.length
@@ -634,7 +639,7 @@ export function processNewTaskToContext(
     const existing = (context['request_files'] as string[]) ?? [];
     result.request_files = [...new Set([...existing, ...neuronRequestedFiles])];
   }
-  return result;
+  return { context: result, activatedNeurons: activated };
 }
 
 // ============================================

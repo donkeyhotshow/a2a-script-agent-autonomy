@@ -7,6 +7,8 @@ import { Router, Request, Response, NextFunction } from 'express';
 import { authenticate } from '../middleware/auth.middleware.js';
 import { sessionService } from '../services/session.service.js';
 import { messageService } from '../services/message.service.js';
+import { createSessionContext, getSessionContext, handleRootContext } from '../knowledge/context-handler.js';
+import type { RootContext } from '../knowledge/context-handler.js';
 import { logger } from '../utils/logger.js';
 
 const router = Router();
@@ -30,6 +32,8 @@ router.post('/', authenticate, async (req: Request, res: Response, next: NextFun
       projectId,
       title,
     });
+
+    createSessionContext(session.id, projectId);
 
     logger.info('Session created via API', { sessionId: session.id, projectId });
 
@@ -66,6 +70,43 @@ router.get('/', authenticate, async (req: Request, res: Response, next: NextFunc
     res.json({
       success: true,
       data: sessions,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * POST /api/v1/sessions/:sessionId/root-context
+ * Submit root context (activates neurons, returns context + injectedContent)
+ */
+router.post('/:sessionId/root-context', authenticate, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { sessionId } = req.params;
+    const rootContext = req.body as RootContext;
+
+    const dbSession = await sessionService.getById(sessionId);
+    if (!dbSession) {
+      return res.status(404).json({
+        success: false,
+        error: { code: 'NOT_FOUND', message: 'Session not found' },
+      });
+    }
+
+    if (!getSessionContext(sessionId)) {
+      createSessionContext(sessionId, dbSession.projectId);
+    }
+
+    const result = handleRootContext(sessionId, rootContext);
+
+    res.json({
+      success: true,
+      data: {
+        context: result.context,
+        injectedContent: result.injectedContent,
+        activatedNeurons: result.activatedNeurons.map((a) => ({ id: a.neuron.id, name: a.neuron.name })),
+        requestedFiles: result.requestedFiles,
+      },
     });
   } catch (error) {
     next(error);

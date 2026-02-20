@@ -14,7 +14,10 @@ function validateNeuron(neuron: Neuron): void {
   if (neurons.has(neuron.id)) {
     throw new Error(`Neuron id already registered: ${neuron.id}`);
   }
-  if (!Array.isArray(neuron.triggers) || neuron.triggers.length === 0) {
+  if (
+    !Array.isArray(neuron.triggers) ||
+    (neuron.triggers.length === 0 && !neuron.activatesWhenEmpty)
+  ) {
     throw new Error(`Neuron ${neuron.id}: triggers required (non-empty array)`);
   }
   const actions = neuron.actions;

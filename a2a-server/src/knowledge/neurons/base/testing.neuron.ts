@@ -4,7 +4,7 @@ export const testingNeuron: Neuron = {
   id: 'neuron-testing',
   name: 'Testing',
   category: 'testing',
-  triggers: ['Pest', 'PHPUnit', 'TestCase', 'factory(', 'extends TestCase'],
+  triggers: ['Pest', 'PHPUnit', 'TestCase', 'factory(', 'extends TestCase', 'test', 'testing'],
   knowledge: {
     entities: ['Pest', 'PHPUnit', 'TestCase', 'Factory'],
     relations: ['extends TestCase', 'uses factory'],

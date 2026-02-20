@@ -203,6 +203,19 @@ export function queryRelations(
 // ============================================
 
 /**
+ * Merge entities by id. New entities overwrite existing for same id.
+ */
+export function mergeEntitiesById(
+  existing: RecognizedEntity[],
+  newEntities: RecognizedEntity[]
+): RecognizedEntity[] {
+  const byId = new Map<string, RecognizedEntity>();
+  for (const e of existing) byId.set(e.id, e);
+  for (const e of newEntities) byId.set(e.id, e);
+  return Array.from(byId.values());
+}
+
+/**
  * Build and store graph from entities
  */
 export function buildAndStoreGraph(

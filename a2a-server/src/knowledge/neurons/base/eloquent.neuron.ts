@@ -4,7 +4,7 @@ export const eloquentNeuron: Neuron = {
   id: 'neuron-eloquent',
   name: 'Eloquent',
   category: 'eloquent',
-  triggers: ['extends Model', 'belongsTo', 'hasMany', 'factory', 'App\\Models'],
+  triggers: ['extends Model', 'belongsTo', 'hasMany', 'factory', 'App\\Models', 'model', 'eloquent', 'migration'],
   knowledge: {
     entities: ['Model', 'Factory', 'Migration'],
     relations: ['belongsTo', 'hasMany', 'hasOne', 'belongsToMany'],

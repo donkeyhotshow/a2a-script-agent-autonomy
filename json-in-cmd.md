@@ -4,7 +4,7 @@
 
 **Base:** `http://localhost:8080/api/v1` | **Auth:** `Bearer a2a_dev_password`
 
-`project_path` — путь к проекту на клиенте. `new_task` — массив [текст задачи, подсказки, architectural_features].
+`project_path` — путь к проекту на клиенте. `new_task` — массив [текст задачи, подсказки]. `architectural_features` — опциональный `string[]` (Laravel, FormRequest, Inertia, app/Models/); клиент заполняет из detector или вручную; при отсутствии сервер использует `[]`.
 
 ---
 
@@ -15,7 +15,8 @@
   "context": {
     "version": "1.0",
     "project_path": "C:/workspace/domain-platform/websitestore.com.ua",
-    "new_task": ["Собери первичный граф и скажи, чего не хватает"]
+    "new_task": ["Собери первичный граф и скажи, чего не хватает"],
+    "architectural_features": ["Laravel", "FormRequest", "Inertia"]
   }
 }
 ```

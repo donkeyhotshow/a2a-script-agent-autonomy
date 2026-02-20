@@ -1,6 +1,6 @@
 # Hack Results Analysis
 
-**Date:** 2026-02-20 | **Source:** [adr-hacks/README.md](README.md) | **Tasks:** [tasks/README.md](../../tasks/README.md)
+**Date:** 2026-02-20 | **Source:** [adr-hacks/README.md](README.md) | **Tasks:** [tasks/README.md](../../tasks/README.md) | **Completed:** [tasks/COMPLETED-SUMMARY.md](../../tasks/COMPLETED-SUMMARY.md)
 
 ---
 

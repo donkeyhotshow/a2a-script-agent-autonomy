@@ -71,5 +71,14 @@ export function activateNeurons(ctx: ActivationContext): ActivatedNeuron[] {
     }
   }
 
+  // Bootstrap: when no neurons matched, activate neurons with activatesWhenEmpty
+  if (activated.length === 0) {
+    for (const neuron of neurons) {
+      if (neuron.activatesWhenEmpty) {
+        activated.push({ neuron, matchedTriggers: ['(empty pool)'] });
+      }
+    }
+  }
+
   return activated;
 }

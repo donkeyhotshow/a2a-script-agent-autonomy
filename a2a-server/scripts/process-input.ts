@@ -8,10 +8,13 @@
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'fs';
 import { join, dirname } from 'path';
 import { processNewTaskToContext } from '../src/knowledge/context-handler.js';
+import { resolveInjections, mergeInjectedContext } from '../src/knowledge/context-injector.js';
+import { registerBaseNeurons } from '../src/knowledge/neurons/base/index.js';
+
+registerBaseNeurons();
 import { extractSemantics } from '../src/knowledge/semantic-extractor.js';
 import { buildQuestions } from '../src/knowledge/question-builder.js';
 import { queryIndex } from '../src/knowledge/index-query.js';
-
 // ============================================
 // MD Protocol Parser (per a2a-client/docs/requirements.md)
 // ============================================
@@ -43,6 +46,7 @@ function parseMdInput(text: string): { context: Record<string, unknown>; codeBlo
 function serializeOutput(result: {
   outcome: string;
   context: Record<string, unknown>;
+  activatedNeurons?: Array<{ neuron: { id: string; name: string }; matchedTriggers: string[] }>;
   questions?: string[];
   index_answers?: Array<{ question: string; filePath?: string; content?: string }>;
   message?: string;
@@ -57,6 +61,18 @@ function serializeOutput(result: {
   parts.push('---');
   parts.push(`**outcome:** ${result.outcome}`);
   if (result.message) parts.push(`**message:** ${result.message}`);
+  if (result.activatedNeurons?.length) {
+    parts.push('');
+    parts.push('### Activated neurons');
+    for (const an of result.activatedNeurons) {
+      parts.push(`- ${an.neuron.name} (${an.matchedTriggers.join(', ')})`);
+    }
+  }
+  if (result.context.request_files) {
+    parts.push('');
+    parts.push('### request_files');
+    parts.push((result.context.request_files as string[]).join(', '));
+  }
   parts.push('');
 
   if (result.questions?.length) {
@@ -85,8 +101,11 @@ async function processInput(context: Record<string, unknown>, codeBlocks: Array<
   let workingContext = { ...context };
   const codeBlocksArr = codeBlocks;
 
+  let activatedNeurons: Array<{ neuron: { id: string; name: string }; matchedTriggers: string[] }> = [];
   if (workingContext['new_task']) {
-    workingContext = processNewTaskToContext(workingContext, codeBlocksArr) as Record<string, unknown>;
+    const { context, activatedNeurons: an } = processNewTaskToContext(workingContext, codeBlocksArr);
+    workingContext = context;
+    activatedNeurons = an;
   }
 
   const tasks = (workingContext['tasks'] as Array<{ target?: string }>) ?? [];
@@ -96,10 +115,16 @@ async function processInput(context: Record<string, unknown>, codeBlocks: Array<
   const projectId = (workingContext['project_path'] as string) ?? 'default';
   const indexAnswers = await queryIndex(projectId, built);
 
+  const injectedContent = mergeInjectedContext(resolveInjections(activatedNeurons));
+  const contextBlock = { ...workingContext, outcome: 'completed' };
+  // External AI: placeholder — too early to integrate
+  const message = 'Request processed (placeholder for external AI)';
+
   return {
     outcome: 'completed',
-    context: { ...workingContext, outcome: 'completed' },
-    message: 'Request processed (placeholder for ChatGPT)',
+    context: contextBlock,
+    activatedNeurons,
+    message,
     questions: built.map((q) => q.question),
     index_answers: indexAnswers,
   };
