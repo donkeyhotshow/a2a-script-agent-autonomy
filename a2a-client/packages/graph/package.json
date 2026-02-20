@@ -4,7 +4,7 @@
   "description": "Graph indexing and search for A2A - Knowledge graph builder for code projects",
   "main": "src/index.js",
   "scripts": {
-    "test": "vitest run"
+    "test": "vitest run --bail=1"
   },
   "keywords": [
     "a2a",

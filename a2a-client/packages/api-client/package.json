@@ -5,7 +5,7 @@
   "main": "src/index.js",
   "types": "types/index.d.ts",
   "scripts": {
-    "test": "jest"
+    "test": "jest --bail"
   },
   "keywords": [
     "a2a",

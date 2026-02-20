@@ -24,9 +24,9 @@ describe('ApiClient <-> Server integration', () => {
     expect(res.body.status).toBe('ok');
   });
 
-  it('should return 401 for projects without auth', async () => {
+  it('should return 401 for sessions without auth', async () => {
     if (!app) return;
-    const res = await request(app).get('/api/v1/projects');
+    const res = await request(app).get('/api/v1/sessions');
     expect(res.status).toBe(401);
   });
 

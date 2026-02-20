@@ -24,8 +24,10 @@ const Explorer = {
       el.innerHTML = '<div class="empty">Select a project</div>';
       return;
     }
+    el.innerHTML = '<div class="loading">Loading...</div>';
     try {
       const data = await Storage.loadProjectData(proj.id);
+      if (!data) throw new Error('No data');
       const index = data.index || {};
       this.state.files = index.files || [];
       this.renderTree();

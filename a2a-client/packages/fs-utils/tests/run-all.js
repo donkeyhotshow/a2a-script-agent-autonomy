@@ -21,7 +21,7 @@ for (const test of tests) {
   try {
     execSync(`node ${path.join(__dirname, test)}`, { stdio: 'inherit' });
   } catch (e) {
-    // Exit code уже обработан в тестах
+    process.exit(1); // fail-fast
   }
 }
 

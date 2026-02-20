@@ -1,6 +1,7 @@
 /** @type {import('vitest').UserConfig} */
 module.exports = {
   test: {
+    bail: 1,
     globals: true,
     environment: 'node',
     include: ['packages/fs-utils/tests/**/*.test.js', 'packages/graph/tests/**/*.test.js', 'packages/agent/**/*.test.js', 'packages/api-client/**/*.test.js', 'tests/**/*.test.js'],

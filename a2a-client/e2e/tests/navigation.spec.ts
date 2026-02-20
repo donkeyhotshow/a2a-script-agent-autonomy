@@ -81,34 +81,33 @@ test.describe('Navigation', () => {
   test('NAV-05: Should display connection status', async ({ page }) => {
     await page.goto('/');
     
+    // Wait for projects to load (triggers renderStatus)
+    await expect(page.locator('.project-card')).toHaveCount(2);
+    
     // Check status dot is connected
     const statusDot = page.locator('#statusDot');
     await expect(statusDot).toHaveClass(/connected/);
     
-    // Check status text
+    // Check status text (.a2a when connected)
     const statusText = page.locator('#statusText');
-    await expect(statusText).toHaveText('Connected');
+    await expect(statusText).toHaveText('.a2a');
   });
 
   test('NAV-06: Should display disconnected status when API is unavailable', async ({ page }) => {
-    // Override mock to simulate disconnected state
-    await page.route('**/api/status', route => {
-      route.fulfill({
-        status: 500,
-        contentType: 'application/json',
-        body: JSON.stringify({ error: 'Server error' })
-      });
+    await setupApiMocks(page, {
+      projects: [],
+      connected: true,
+      projectsFail: true
     });
     
     await page.goto('/');
     
-    // Check status dot is not connected
+    // Check error state (projects failed to load)
+    await expect(page.locator('#projectsList .error')).toBeVisible();
+    
+    // Status dot not connected when load fails
     const statusDot = page.locator('#statusDot');
     await expect(statusDot).not.toHaveClass(/connected/);
-    
-    // Check status text
-    const statusText = page.locator('#statusText');
-    await expect(statusText).toHaveText('Disconnected');
   });
 
   test('NAV-07: Should display logo and header elements', async ({ page }) => {

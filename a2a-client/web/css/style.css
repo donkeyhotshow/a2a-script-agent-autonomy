@@ -289,6 +289,53 @@ body {
   resize: none;
 }
 
+.chat-input-bar textarea:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Spinner for pending messages */
+.spinner {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--fg2);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Message status styles */
+.msg.pending {
+  opacity: 0.8;
+}
+
+.msg.pending .msg-content {
+  position: relative;
+}
+
+.msg.failed .msg-content {
+  border-left: 2px solid var(--error);
+  padding-left: 8px;
+}
+
+.msg.failed .msg-role::after {
+  content: ' (failed)';
+  color: var(--error);
+}
+
+/* Button disabled state */
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 /* Modal */
 .modal {
   display: none;

@@ -6,6 +6,7 @@ dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
 export default defineConfig({
   test: {
+    bail: 1,
     globals: true,
     environment: 'node',
     include: ['tests/**/*.test.ts'],

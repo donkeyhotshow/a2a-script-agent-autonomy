@@ -12,35 +12,61 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('Seeding database...');
 
-  // Dev client: login dev@example.com / dev (used by web app default)
-  const devClient = await prisma.client.upsert({
-    where: { email: 'dev@example.com' },
-    update: {},
-    create: {
-      id: 'dev-client',
-      name: 'Dev Client',
-      email: 'dev@example.com',
-      passwordHash: await hash('dev', 10),
-      apiKey: 'sk_a2a_dev_key',
-      isActive: true,
-    },
-  });
+  const devPwdHash = await hash('dev', 10);
+  const testPwdHash = await hash('password123', 10);
+  const testApiKey = `sk_a2a_${uuidv4().replace(/-/g, '')}`;
 
-  // Create test client
-  const testClient = await prisma.client.upsert({
-    where: { email: 'test@example.com' },
-    update: {},
-    create: {
-      id: uuidv4(),
-      name: 'Test Client',
-      email: 'test@example.com',
-      passwordHash: await hash('password123', 10),
-      apiKey: `sk_a2a_${uuidv4().replace(/-/g, '')}`,
-      isActive: true,
-    },
+  try {
+    await prisma.client.create({
+      data: {
+        id: 'dev-client',
+        name: 'Dev Client',
+        email: 'dev@example.com',
+        passwordHash: devPwdHash,
+        apiKey: 'sk_a2a_dev_key',
+        isActive: true,
+      },
+    });
+  } catch (e: any) {
+    if (e?.code !== 'P2002') throw e;
+  }
+  const devClient = await prisma.client.findFirst({
+    where: { OR: [{ id: 'dev-client' }, { email: 'dev@example.com' }, { apiKey: 'sk_a2a_dev_key' }] },
   });
+  if (!devClient) throw new Error('Dev client not found - run migrations first');
 
+  try {
+    await prisma.client.create({
+      data: {
+        id: uuidv4(),
+        name: 'Test Client',
+        email: 'test@example.com',
+        passwordHash: testPwdHash,
+        apiKey: testApiKey,
+        isActive: true,
+      },
+    });
+  } catch (e: any) {
+    if (e?.code !== 'P2002') throw e;
+  }
+  const testClient = await prisma.client.findFirst({ where: { email: 'test@example.com' } });
+  if (!testClient) throw new Error('Test client not found');
   console.log('Created clients:', devClient.email, testClient.email);
+
+  // Default project - matches vite-plugin loadProjects fallback (id: 'default')
+  const defaultProject = await prisma.project.upsert({
+    where: { id: 'default' },
+    update: {},
+    create: {
+      id: 'default',
+      clientId: devClient.id,
+      name: 'Workspace',
+      description: 'Default workspace for dev client',
+      gitUrl: 'file://.',
+      branch: 'main',
+      status: 'PENDING_CLONE',
+    },
+  });
 
   // Create test project (for dev client)
   const devProject = await prisma.project.upsert({
@@ -72,21 +98,13 @@ async function main() {
     },
   });
 
-  console.log('Created projects:', devProject.name, testProject.name);
+  console.log('Created projects:', defaultProject.name, devProject.name, testProject.name);
 
   // Create architectural features
   await prisma.architecturalFeature.createMany({
     data: [
-      {
-        projectId: testProject.id,
-        feature: 'standard_laravel_structure',
-        category: 'directory_structure',
-      },
-      {
-        projectId: testProject.id,
-        feature: 'eloquent_models',
-        category: 'custom_pattern',
-      },
+      { id: 'af_1', projectId: testProject.id, feature: 'standard_laravel_structure', category: 'directory_structure' },
+      { id: 'af_2', projectId: testProject.id, feature: 'eloquent_models', category: 'custom_pattern' },
     ],
     skipDuplicates: true,
   });

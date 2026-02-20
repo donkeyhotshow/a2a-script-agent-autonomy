@@ -10,6 +10,73 @@ A2A Client — клиентская часть системы для индек�
 
 ---
 
+## Текущая задача: Асинхронный протокол
+
+### Принципы
+
+1. Клиент хранит сессии в .a2a/sessions/, текущий проект в cookie
+2. Клиент отправляет запросы на сервер → получает promiseId
+3. Клиент опрашивает сервер каждые 5 секунд
+4. При получении результата — обновляет UI
+
+### Задачи
+
+- [ ] Обновить `web/js/sessions.js` — API для сессий
+- [ ] Создать `web/js/api.js` — функции для API сервера
+- [x] Обновить `web/js/storage.js` — cookie + API (.a2a)
+- [ ] Добавить spinner стили в `web/css/style.css`
+- [ ] Обновить `packages/api-client/src/async-client.js`
+
+### Структура данных в .a2a папке проекта
+
+```
+project/
+├── .a2a/
+│   ├── index.json          # Индекс проекта
+│   ├── sessions/
+│   │   ├── sess_1.json     # Сессия с сообщениями
+│   │   └── sess_2.json
+│   └── config.json         # Конфигурация проекта
+```
+
+### Формат файла сессии (sessions/sess_1.json)
+
+```json
+{
+  "id": "sess_1",
+  "projectId": "proj_1",
+  "title": "New Session",
+  "createdAt": "2026-02-20T...",
+  "messages": [
+    {
+      "id": "msg_1",
+      "role": "user",
+      "content": "Hello",
+      "promiseId": "prm_xxx",
+      "status": "pending",
+      "createdAt": "2026-02-20T..."
+    }
+  ]
+}
+```
+
+### UI поведение
+
+1. Пользователь пишет сообщение
+2. UI блокирует поле ввода
+3. Добавляет сообщение с spinner'ом
+4. Сохраняет в .a2a/sessions/
+5. Отправляет POST /requests → получает promiseId
+6. Сохраняет promiseId в сообщении
+7. Запускает polling (setTimeout 5 сек)
+8. При completed/failed:
+   - Обновляет сообщение в .a2a
+   - Убирает spinner
+   - Разблокирует поле ввода
+   - Добавляет ответ сервера как новое сообщение
+
+---
+
 ## Чанк 1: Tier 1 — Эвристики (база)
 
 ### 1.1 Пакет fs-utils

@@ -3,12 +3,16 @@ import app from './app.js';
 import { config } from './config/index.js';
 import { logger } from './utils/logger.js';
 import { initWebSocket } from './websocket/index.js';
+import { startRequestProcessor, stopRequestProcessor } from './services/request-processor.service.js';
 
 // Create HTTP server
 const server = http.createServer(app);
 
 // WebSocket (handles upgrade on /ws/sessions/*)
 initWebSocket(server);
+
+// Request processor: timer loop picks first pending request
+startRequestProcessor(config.requestProcessorIntervalMs);
 
 // Start server
 server.listen(config.port, () => {
@@ -25,7 +29,8 @@ server.listen(config.port, () => {
 // Graceful shutdown
 const gracefulShutdown = (signal: string) => {
   logger.info(`Received ${signal}. Starting graceful shutdown...`);
-  
+  stopRequestProcessor();
+
   server.close((err) => {
     if (err) {
       logger.error('Error during server shutdown', { error: err.message });

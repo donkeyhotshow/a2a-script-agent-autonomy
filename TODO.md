@@ -1,34 +1,70 @@
-# A2A Server Refactoring - Remove Projects & Sessions
+# A2A Coding Orchestrator — Асинхронный протокол
 
-## Task
-Server should NOT be responsible for projects, sessions, and should NOT store any client requests. Server should only accept markdown with context block and optional code blocks. Keep authentication.
+## Текущая задача
 
-## Plan
+Реализация асинхронного протокола обмена данными между клиентом и сервером.
 
-### Phase 1: Remove Prisma Models
-- [ ] Remove Project, Session, Task, Message, and related models from schema.prisma
+### Принципы
 
-### Phase 2: Remove Repositories
-- [ ] Delete project.repository.ts
-- [ ] Delete session.repository.ts
+1. **Сервер минималистичный** — только приём запросов, очередь, возврат promiseId
+2. **Сервер не хранит сессии** — не знает про Session, Message, Project
+3. **Клиент хранит всё** — сессии в .a2a/sessions/, текущий проект в cookie
+4. **Polling на клиенте** — каждые 5 секунд
 
-### Phase 3: Remove Services
-- [ ] Delete project.service.ts
-- [ ] Delete session.service.ts
+---
 
-### Phase 4: Remove Routes
-- [ ] Delete projects.routes.ts
-- [ ] Delete sessions.routes.ts
+## План
 
-### Phase 5: Remove Controllers
-- [ ] Delete project.controller.ts
-- [ ] Delete session.controller.ts
+### Фаза 1: Сервер — База данных
+- [ ] Добавить модель Request в Prisma schema
+- [ ] Создать миграцию
 
-### Phase 6: Create New Simplified API
-- [ ] Create new message handler that accepts context directly from request
-- [ ] Update routes/index.ts with simplified endpoints
-- [ ] Keep authentication middleware
+### Фаза 2: Сервер — API
+- [ ] Создать requests.routes.ts с 4 endpoint'ами
+- [ ] Обновить routes/index.ts
 
-### Phase 7: Clean up
-- [ ] Update app.ts to remove unused imports
-- [ ] Test the new API
+### Фаза 3: Очистка сервера
+- [ ] Удалить SessionService
+- [ ] Удалить MessageService
+- [ ] Удалить sessions.routes.ts
+- [ ] Удалить websocket код
+
+### Фаза 4: Клиент
+- [ ] Обновить sessions.js — работа с .a2a папкой
+- [ ] Создать api.js — функции для API сервера
+- [ ] Обновить storage.js — работа с .a2a/sessions/
+- [ ] Добавить spinner стили
+
+### Фаза 5: Тестирование
+- [ ] Протестировать полный цикл
+
+---
+
+## API Endpoints
+
+| Метод | Путь | Описание |
+|-------|------|----------|
+| POST | /api/v1/requests | Создать запрос → promiseId |
+| GET | /api/v1/requests/:promiseId/status | Получить статус |
+| GET | /api/v1/requests/:promiseId/result | Получить результат |
+| DELETE | /api/v1/requests/:promiseId | Отменить запрос |
+
+---
+
+## Статусы запроса
+
+| Статус | Описание |
+|--------|----------|
+| pending | В очереди |
+| processing | Обрабатывается |
+| completed | Готов |
+| failed | Ошибка |
+| cancelled | Отменён |
+
+---
+
+## Документация
+
+- [Детальный план](plans/async-protocol-change.md)
+- [TODO сервера](a2a-server/TODO.md)
+- [TODO клиента](a2a-client/TODO.md)

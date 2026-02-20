@@ -61,6 +61,9 @@ const configSchema = z.object({
   // Session
   sessionTimeoutMs: z.coerce.number().default(3600000),
   sessionMaxInactiveMs: z.coerce.number().default(1800000),
+
+  // Request Processor (timer loop)
+  requestProcessorIntervalMs: z.coerce.number().default(5000),
 });
 
 // Parse and validate configuration
@@ -95,6 +98,7 @@ function loadConfig() {
     chunkOverlapTokens: process.env.CHUNK_OVERLAP_TOKENS,
     sessionTimeoutMs: process.env.SESSION_TIMEOUT_MS,
     sessionMaxInactiveMs: process.env.SESSION_MAX_INACTIVE_MS,
+    requestProcessorIntervalMs: process.env.REQUEST_PROCESSOR_INTERVAL_MS,
   };
 
   try {

@@ -12,10 +12,11 @@ test.describe('Explorer Page', () => {
 
   test('EXP-01: Should show empty state without files', async ({ page }) => {
     await page.goto('/');
+    await page.click('.project-card:first-child');
     await page.click('.nav-link[data-page="explorer"]');
     
     const emptyMessage = page.locator('#fileTree .empty');
-    await expect(emptyMessage).toHaveText('No files. Build index.');
+    await expect(emptyMessage).toHaveText('No index. Run indexer on project.');
   });
 
   test('EXP-02: Should display file tree', async ({ page }) => {
@@ -26,9 +27,9 @@ test.describe('Explorer Page', () => {
     });
     
     await page.goto('/');
+    await page.click('.project-card:first-child');
     await page.click('.nav-link[data-page="explorer"]');
     
-    // Wait for files to load
     const fileItems = page.locator('.file-item');
     await expect(fileItems).toHaveCount(5);
   });
@@ -41,9 +42,9 @@ test.describe('Explorer Page', () => {
     });
     
     await page.goto('/');
+    await page.click('.project-card:first-child');
     await page.click('.nav-link[data-page="explorer"]');
     
-    // Click on first file
     await page.click('.file-item:first-child');
     
     // Check editor header shows file path
@@ -63,6 +64,7 @@ test.describe('Explorer Page', () => {
     });
     
     await page.goto('/');
+    await page.click('.project-card:first-child');
     await page.click('.nav-link[data-page="explorer"]');
     
     // Click on first file
@@ -81,6 +83,7 @@ test.describe('Explorer Page', () => {
     });
     
     await page.goto('/');
+    await page.click('.project-card:first-child');
     await page.click('.nav-link[data-page="explorer"]');
     
     // Click refresh button
@@ -98,6 +101,7 @@ test.describe('Explorer Page', () => {
     });
     
     await page.goto('/');
+    await page.click('.project-card:first-child');
     await page.click('.nav-link[data-page="explorer"]');
     
     // Type chat message
@@ -119,6 +123,7 @@ test.describe('Explorer Page', () => {
     });
     
     await page.goto('/');
+    await page.click('.project-card:first-child');
     await page.click('.nav-link[data-page="explorer"]');
     
     // Type chat message and press Enter
@@ -138,6 +143,7 @@ test.describe('Explorer Page', () => {
     });
     
     await page.goto('/');
+    await page.click('.project-card:first-child');
     await page.click('.nav-link[data-page="explorer"]');
     
     // Send a message
@@ -161,6 +167,7 @@ test.describe('Explorer Page', () => {
     });
     
     await page.goto('/');
+    await page.click('.project-card:first-child');
     await page.click('.nav-link[data-page="explorer"]');
     
     // Check placeholder is shown
@@ -169,17 +176,22 @@ test.describe('Explorer Page', () => {
   });
 
   test('EXP-10: Should show loading state', async ({ page }) => {
-    // Delay the response
-    await page.route('**/api/files', async route => {
+    await setupApiMocks(page, {
+      projects: mockApiResponses.sampleProjects.data.projects,
+      files: [],
+      connected: true
+    });
+    await page.route('**/api/a2a/projects/*/data', async route => {
       await new Promise(resolve => setTimeout(resolve, 500));
       route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({ files: [] })
+        body: JSON.stringify({ index: { files: [] }, files: [] })
       });
     });
     
     await page.goto('/');
+    await page.click('.project-card:first-child');
     await page.click('.nav-link[data-page="explorer"]');
     
     // Should show loading initially
@@ -188,7 +200,12 @@ test.describe('Explorer Page', () => {
   });
 
   test('EXP-11: Should show error state on API failure', async ({ page }) => {
-    await page.route('**/api/files', route => {
+    await setupApiMocks(page, {
+      projects: mockApiResponses.sampleProjects.data.projects,
+      files: [],
+      connected: true
+    });
+    await page.route('**/api/a2a/projects/*/data', route => {
       route.fulfill({
         status: 500,
         contentType: 'application/json',
@@ -197,6 +214,7 @@ test.describe('Explorer Page', () => {
     });
     
     await page.goto('/');
+    await page.click('.project-card:first-child');
     await page.click('.nav-link[data-page="explorer"]');
     
     // Should show error
@@ -212,6 +230,7 @@ test.describe('Explorer Page', () => {
     });
     
     await page.goto('/');
+    await page.click('.project-card:first-child');
     await page.click('.nav-link[data-page="explorer"]');
     
     // Try to send empty message
@@ -230,6 +249,7 @@ test.describe('Explorer Page', () => {
     });
     
     await page.goto('/');
+    await page.click('.project-card:first-child');
     await page.click('.nav-link[data-page="explorer"]');
     
     // Check file names are displayed (just the filename, not full path)
@@ -245,6 +265,7 @@ test.describe('Explorer Page', () => {
     });
     
     await page.goto('/');
+    await page.click('.project-card:first-child');
     await page.click('.nav-link[data-page="explorer"]');
     
     // Check file icon is present
@@ -253,9 +274,8 @@ test.describe('Explorer Page', () => {
     expect(text).toContain('📄');
   });
 
-  test('EXP-15: Should limit file display to 200 files', async ({ page }) => {
-    // Create 250 files
-    const manyFiles = Array.from({ length: 250 }, (_, i) => `file${i}.js`);
+  test('EXP-15: Should limit file display to 300 files', async ({ page }) => {
+    const manyFiles = Array.from({ length: 350 }, (_, i) => `file${i}.js`);
     
     await setupApiMocks(page, {
       projects: mockApiResponses.sampleProjects.data.projects,
@@ -264,11 +284,11 @@ test.describe('Explorer Page', () => {
     });
     
     await page.goto('/');
+    await page.click('.project-card:first-child');
     await page.click('.nav-link[data-page="explorer"]');
     
-    // Should only show 200 files
     const fileItems = page.locator('.file-item');
     const count = await fileItems.count();
-    expect(count).toBe(200);
+    expect(count).toBe(300);
   });
 });

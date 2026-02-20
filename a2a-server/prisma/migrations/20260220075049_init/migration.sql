@@ -1,7 +1,4 @@
 -- CreateEnum
-CREATE TYPE "ProjectStatus" AS ENUM ('PENDING_CLONE', 'CLONING', 'PENDING_INDEXING', 'INDEXING', 'INDEXED', 'ERROR');
-
--- CreateEnum
 CREATE TYPE "SessionStatus" AS ENUM ('CREATED', 'ACTIVE', 'PAUSED', 'COMPLETED', 'ERROR');
 
 -- CreateEnum
@@ -37,48 +34,6 @@ CREATE TABLE "clients" (
     "updated_at" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "clients_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "projects" (
-    "id" TEXT NOT NULL,
-    "client_id" TEXT NOT NULL,
-    "name" TEXT NOT NULL,
-    "description" TEXT,
-    "git_url" TEXT NOT NULL,
-    "branch" TEXT NOT NULL DEFAULT 'main',
-    "ssh_key_encrypted" TEXT,
-    "status" "ProjectStatus" NOT NULL DEFAULT 'PENDING_CLONE',
-    "last_indexed_at" TIMESTAMP(3),
-    "indexing_progress" INTEGER NOT NULL DEFAULT 0,
-    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP(3) NOT NULL,
-
-    CONSTRAINT "projects_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "architectural_features" (
-    "id" TEXT NOT NULL,
-    "project_id" TEXT NOT NULL,
-    "feature" TEXT NOT NULL,
-    "category" TEXT NOT NULL,
-    "detected_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT "architectural_features_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "sessions" (
-    "id" TEXT NOT NULL,
-    "project_id" TEXT NOT NULL,
-    "status" "SessionStatus" NOT NULL DEFAULT 'CREATED',
-    "context" JSONB,
-    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP(3) NOT NULL,
-    "completed_at" TIMESTAMP(3),
-
-    CONSTRAINT "sessions_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -161,22 +116,6 @@ CREATE TABLE "embeddings" (
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "embeddings_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "indexing_jobs" (
-    "id" TEXT NOT NULL,
-    "project_id" TEXT NOT NULL,
-    "type" TEXT NOT NULL,
-    "payload" JSONB NOT NULL,
-    "status" "JobStatus" NOT NULL DEFAULT 'PENDING',
-    "progress" INTEGER NOT NULL DEFAULT 0,
-    "error" TEXT,
-    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "started_at" TIMESTAMP(3),
-    "completed_at" TIMESTAMP(3),
-
-    CONSTRAINT "indexing_jobs_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateIndex

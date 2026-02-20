@@ -229,8 +229,6 @@ export interface ContextHandlerResult {
 }
 
 export interface SessionContext {
-  sessionId: string;
-  projectId: string;
   context: ContextBlock;
   activatedNeurons: ActivatedNeuron[];
   history: ContextBlock[];

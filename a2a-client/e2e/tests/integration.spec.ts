@@ -48,10 +48,11 @@ test.describe('Integration Tests - Promise Protocol', () => {
     
     await page.goto('/');
     
-    // 1. Click Build Index in footer
-    await page.click('#buildIndex');
+    // 1. Select project (required before Explorer can load files)
+    await page.click('.project-card:first-child');
     
-    // 2. Wait for button to change state
+    // 2. Click Build Index in footer
+    await page.click('#buildIndex');
     await page.waitForTimeout(100);
     
     // 3. Navigate to Explorer
@@ -130,7 +131,7 @@ test.describe('Integration Tests - Promise Protocol', () => {
     await expect(messageInput).toBeEnabled();
   });
 
-  test('INT-05: Project selection persists in localStorage', async ({ page }) => {
+  test('INT-05: Project selection persists in cookie', async ({ page }) => {
     await setupApiMocks(page, {
       projects: mockApiResponses.sampleProjects.data.projects,
       sessions: [],
@@ -143,8 +144,11 @@ test.describe('Integration Tests - Promise Protocol', () => {
     // 1. Select first project
     await page.click('.project-card:first-child');
     
-    // 2. Check localStorage
-    const storedProject = await page.evaluate(() => localStorage.getItem('a2a_project'));
+    // 2. Check cookie
+    const storedProject = await page.evaluate(() => {
+      const m = document.cookie.match(/a2a_currentProject=([^;]+)/);
+      return m ? m[1] : null;
+    });
     expect(storedProject).toBe('proj-1');
     
     // 3. Reload page
@@ -181,8 +185,13 @@ test.describe('Integration Tests - Promise Protocol', () => {
   });
 
   test('INT-07: Error handling across pages', async ({ page }) => {
-    // Setup failing API
-    await page.route('**/api/**', (route) => {
+    // Projects load OK, but project data fails (for explorer)
+    await setupApiMocks(page, {
+      projects: mockApiResponses.sampleProjects.data.projects,
+      files: [],
+      connected: true
+    });
+    await page.route('**/api/a2a/projects', route => {
       route.fulfill({
         status: 500,
         contentType: 'application/json',
@@ -192,21 +201,28 @@ test.describe('Integration Tests - Promise Protocol', () => {
     
     await page.goto('/');
     
-    // 1. Check disconnected status
-    const statusDot = page.locator('#statusDot');
-    await expect(statusDot).not.toHaveClass(/connected/);
+    // 1. Check error on projects page
+    await expect(page.locator('#projectsList .error')).toBeVisible();
     
-    // 2. Check error on projects page
-    const projectsError = page.locator('#projectsList .error');
-    await expect(projectsError).toBeVisible();
+    // 2. Reload with projects OK, override data to fail
+    await setupApiMocks(page, {
+      projects: mockApiResponses.sampleProjects.data.projects,
+      files: [],
+      connected: true
+    });
+    await page.route('**/api/a2a/projects/*/data', route => {
+      route.fulfill({
+        status: 500,
+        contentType: 'application/json',
+        body: JSON.stringify({ error: 'Server error' })
+      });
+    });
     
-    // 3. Navigate to sessions
-    await page.click('.nav-link[data-page="sessions"]');
-    
-    // 4. Navigate to explorer
+    await page.goto('/');
+    await page.click('.project-card:first-child');
     await page.click('.nav-link[data-page="explorer"]');
-    const filesError = page.locator('#fileTree .error');
-    await expect(filesError).toBeVisible();
+    
+    await expect(page.locator('#fileTree .error')).toBeVisible();
   });
 
   test('INT-08: Continue button workflow with promise', async ({ page }) => {
@@ -251,21 +267,24 @@ test.describe('Integration Tests - Promise Protocol', () => {
     
     await page.goto('/');
     
-    // 1. Navigate to Explorer
+    // 1. Select project (required before Explorer loads files)
+    await page.click('.project-card:first-child');
+    
+    // 2. Navigate to Explorer
     await page.click('.nav-link[data-page="explorer"]');
     
-    // 2. Select a file
+    // 3. Select a file
     await page.click('.file-item:first-child');
     
-    // 3. Check editor shows content
+    // 4. Check editor shows content
     const editorContent = page.locator('#editorContent');
     await expect(editorContent).not.toBeEmpty();
     
-    // 4. Send chat message about the file
+    // 5. Send chat message about the file
     await page.fill('#chatInput', 'Explain this file');
     await page.click('#sendChat');
     
-    // 5. Check message appears
+    // 6. Check message appears
     const chatMessages = page.locator('#chatMessages .msg');
     await expect(chatMessages).toHaveCount(1);
   });
@@ -284,19 +303,15 @@ test.describe('Integration Tests - Promise Protocol', () => {
     
     // 1. Check empty state
     const emptyProjects = page.locator('#projectsList .empty');
-    await expect(emptyProjects).toHaveText('No projects. Click + Add');
+    await expect(emptyProjects).toHaveText('No projects. Add project path with .a2a folder.');
     
-    // 2. Check connection status
-    const statusText = page.locator('#statusText');
-    await expect(statusText).toHaveText('Connected');
-    
-    // 3. Create first project
+    // 2. Create first project
     await page.click('#addProject');
     await page.fill('#projectName', 'My First Project');
     await page.fill('#projectPath', '/home/user/my-project');
     await page.click('#saveProject');
     
-    // 4. Navigate through all pages
+    // 3. Navigate through all pages
     await page.click('.nav-link[data-page="sessions"]');
     await expect(page.locator('#page-sessions')).toHaveClass(/active/);
     

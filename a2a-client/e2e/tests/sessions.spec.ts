@@ -13,6 +13,7 @@ test.describe('Sessions Page - Promise Protocol', () => {
   });
 
   test('SES-01: Should show empty state without project', async ({ page }) => {
+    await setupApiMocks(page, { projects: [], sessions: [], connected: true });
     await page.goto('/');
     await page.click('.nav-link[data-page="sessions"]');
     

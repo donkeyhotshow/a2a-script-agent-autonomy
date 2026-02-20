@@ -6,12 +6,13 @@ const API = '/api/a2a';
 
 const Storage = {
   async loadProjects() {
+    const r = await fetch(`${API}/projects`);
+    if (!r.ok) throw new Error('Failed to load');
     try {
-      const r = await fetch(`${API}/projects`);
       const d = await r.json();
       return d.projects || [];
     } catch {
-      return [];
+      throw new Error('Failed to load');
     }
   },
 
@@ -27,12 +28,9 @@ const Storage = {
   },
 
   async loadProjectData(projectId) {
-    try {
-      const r = await fetch(`${API}/projects/${encodeURIComponent(projectId)}/data`);
-      return r.ok ? await r.json() : { index: {}, files: [] };
-    } catch {
-      return { index: {}, files: [] };
-    }
+    const r = await fetch(`${API}/projects/${encodeURIComponent(projectId)}/data`);
+    if (!r.ok) throw new Error('Failed to load');
+    return r.json();
   },
 
   async loadFile(projectId, filePath) {
@@ -42,33 +40,52 @@ const Storage = {
   },
 
   getCurrentProjectId() {
-    return localStorage.getItem('a2a_currentProject') || null;
+    const m = document.cookie.split('; ').find((row) => row.startsWith('a2a_currentProject='));
+    return m ? m.split('=')[1] : null;
   },
 
   setCurrentProject(id) {
-    if (id) localStorage.setItem('a2a_currentProject', id);
-    else localStorage.removeItem('a2a_currentProject');
+    if (id) document.cookie = `a2a_currentProject=${id}; path=/; max-age=31536000`;
+    else document.cookie = 'a2a_currentProject=; path=/; max-age=0';
   },
 
-  getSessions(projectId) {
-    const raw = localStorage.getItem(`a2a_sessions_${projectId}`);
+  async getSessions(projectId) {
     try {
-      return raw ? JSON.parse(raw) : [];
+      const r = await fetch(`${API}/projects/${encodeURIComponent(projectId)}/sessions`);
+      if (!r.ok) return [];
+      const d = await r.json();
+      return d.sessions || [];
     } catch {
       return [];
     }
   },
 
-  saveSession(projectId, session) {
-    const list = this.getSessions(projectId);
-    const i = list.findIndex((s) => s.id === session.id);
-    if (i >= 0) list[i] = session;
-    else list.unshift(session);
-    localStorage.setItem(`a2a_sessions_${projectId}`, JSON.stringify(list));
+  async saveSession(projectId, session) {
+    const r = await fetch(`${API}/projects/${encodeURIComponent(projectId)}/sessions/${encodeURIComponent(session.id)}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(session),
+    });
+    if (!r.ok) throw new Error('Failed to save session');
+    const d = await r.json();
+    return d.session;
   },
 
-  getSession(projectId, id) {
-    return this.getSessions(projectId).find((s) => s.id === id);
+  async getSession(projectId, id) {
+    try {
+      const r = await fetch(`${API}/projects/${encodeURIComponent(projectId)}/sessions/${encodeURIComponent(id)}`);
+      if (!r.ok) return null;
+      return await r.json();
+    } catch {
+      return null;
+    }
+  },
+
+  async deleteSession(projectId, sessionId) {
+    const r = await fetch(`${API}/projects/${encodeURIComponent(projectId)}/sessions/${encodeURIComponent(sessionId)}`, {
+      method: 'DELETE',
+    });
+    return r.ok;
   },
 };
 

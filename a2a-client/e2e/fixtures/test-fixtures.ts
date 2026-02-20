@@ -144,16 +144,18 @@ export async function setupApiMocks(page: Page, options: {
   files?: string[];
   connected?: boolean;
   usePromiseProtocol?: boolean;
+  projectsFail?: boolean;
 } = {}) {
   const {
     projects = [],
     sessions = [],
     files = [],
     connected = true,
-    usePromiseProtocol = true
+    usePromiseProtocol = true,
+    projectsFail = false
   } = options;
 
-  // Status endpoint
+  // Status endpoint (legacy)
   await page.route('**/api/status', (route: Route) => {
     route.fulfill({
       status: connected ? 200 : 500,
@@ -162,120 +164,175 @@ export async function setupApiMocks(page: Page, options: {
     });
   });
 
-  // Projects endpoints
-  await page.route('**/api/projects', (route: Route) => {
+  // /api/a2a - Projects from .a2a-client (Storage)
+  await page.route('**/api/a2a/projects', (route: Route) => {
+    if (projectsFail && route.request().method() === 'GET') {
+      route.fulfill({
+        status: 500,
+        contentType: 'application/json',
+        body: JSON.stringify({ error: 'Server error' })
+      });
+      return;
+    }
     if (route.request().method() === 'GET') {
       route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({ data: { projects } })
+        body: JSON.stringify({ projects })
       });
     } else if (route.request().method() === 'POST') {
       const body = route.request().postDataJSON();
+      const projList = body?.projects ?? projects;
       route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({ id: 'proj-new', ...body })
+        body: JSON.stringify({ success: true, projects: projList })
       });
     }
   });
 
-  // Single project endpoints
-  await page.route('**/api/projects/*', (route: Route) => {
-    const url = route.request().url();
-    const match = url.match(/\/api\/projects\/([^/]+)/);
-    const projectId = match ? match[1] : null;
-    
-    if (route.request().method() === 'DELETE') {
+  await page.route('**/api/a2a/projects/*/data', (route: Route) => {
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ index: { files }, files: [] })
+    });
+  });
+
+  await page.route('**/api/a2a/projects/*/files/**', (route: Route) => {
+    route.fulfill({
+      status: 200,
+      contentType: 'text/plain',
+      body: mockApiResponses.fileContent.content
+    });
+  });
+
+  const sessionsForA2a = sessions.map(s => ({
+    id: s.id,
+    title: s.id,
+    createdAt: s.createdAt
+  }));
+  await page.route('**/api/a2a/projects/*/sessions', (route: Route) => {
+    if (route.request().method() === 'GET') {
       route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify(mockApiResponses.success)
+        body: JSON.stringify({ sessions: sessionsForA2a })
       });
-    } else if (route.request().method() === 'PUT') {
+    } else if (route.request().method() === 'POST') {
       route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify(mockApiResponses.success)
+        body: JSON.stringify({ success: true, session: { id: 'sess-new', messages: [] } })
+      });
+    }
+  });
+
+  await page.route('**/api/a2a/projects/*/sessions/*', (route: Route) => {
+    const url = route.request().url();
+    const match = url.match(/\/sessions\/([^/]+)/);
+    const sess = sessions.find(s => s.id === (match?.[1] ?? ''));
+    if (route.request().method() === 'GET') {
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(sess || { id: match?.[1], messages: [] })
       });
     } else {
-      const project = projects.find(p => p.id === projectId);
       route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify(project || {})
+        body: JSON.stringify(mockApiResponses.success)
       });
     }
   });
 
-  // Project select endpoint
-  await page.route('**/api/projects/*/select', (route: Route) => {
-    route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify(mockApiResponses.success)
-    });
-  });
-
-  // Project index endpoint
-  await page.route('**/api/projects/*/index', (route: Route) => {
-    route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify(mockApiResponses.success)
-    });
-  });
-
-  // Sessions endpoints
-  await page.route('**/api/sessions*', (route: Route) => {
+  // /api/v1 - Server sessions (Sessions.js)
+  const sessionsData = sessions.map(s => ({
+    ...s,
+    messages: s.messages?.map(m => ({
+      id: m.id,
+      role: m.role,
+      content: m.content,
+      contentText: m.content,
+      status: m.pending ? 'pending' : 'completed',
+      promiseId: m.promiseId
+    })) ?? []
+  }));
+  await page.route('**/api/v1/sessions**', (route: Route) => {
     const url = route.request().url();
+    const idMatch = url.match(/\/api\/v1\/sessions\/([^/?]+)/);
     
-    if (route.request().method() === 'POST') {
-      const body = route.request().postDataJSON();
+    if (route.request().method() === 'POST' && !idMatch) {
       const sessionId = 'sess-new-' + Date.now();
-      
-      if (usePromiseProtocol) {
-        // Return promiseId for session creation
-        const promiseId = 'promise-sess-' + Date.now();
-        promiseStore.set(promiseId, { status: 'completed', result: { id: sessionId, role: 'server', content: 'Session created' } });
-        route.fulfill({
-          status: 200,
-          contentType: 'application/json',
-          body: JSON.stringify({ promiseId, session_id: sessionId, status: 'active' })
-        });
-      } else {
-        route.fulfill({
-          status: 200,
-          contentType: 'application/json',
-          body: JSON.stringify(mockApiResponses.newSession)
-        });
-      }
-    } else {
-      // GET with query params
+      const newSession = { id: sessionId, status: 'active', messages: [] };
+      route.fulfill({
+        status: 201,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true, data: newSession })
+      });
+    } else if (route.request().method() === 'GET' && !idMatch) {
       route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({ sessions })
+        body: JSON.stringify({ success: true, data: sessionsData })
+      });
+    } else if (idMatch) {
+      const sessionId = idMatch[1];
+      const session = sessionsData.find(s => s.id === sessionId) || { id: sessionId, status: 'active', messages: [] };
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true, data: session })
       });
     }
   });
 
-  // Single session endpoint
-  await page.route('**/api/sessions/*', (route: Route) => {
-    const url = route.request().url();
-    const match = url.match(/\/api\/sessions\/([^/]+)/);
-    const sessionId = match ? match[1] : null;
-    const session = sessions.find(s => s.id === sessionId);
-    
+  // /api/v1/requests - promise-based protocol
+  await page.route('**/api/v1/requests', (route: Route) => {
+    if (route.request().method() === 'POST') {
+      const promiseId = 'prm-' + Date.now();
+      const result = { id: 'msg-srv-1', role: 'server' as const, content: 'Response' };
+      promiseStore.set(promiseId, { status: 'pending' });
+      setTimeout(() => {
+        promiseStore.set(promiseId, { status: 'completed', result });
+      }, 100);
+      route.fulfill({
+        status: 201,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true, data: { promiseId } })
+      });
+    }
+  });
+
+  await page.route('**/api/v1/requests/*/status', (route: Route) => {
+    const match = route.request().url().match(/\/requests\/([^/]+)\/status/);
+    const promiseId = match?.[1] ?? '';
+    const data = promiseStore.get(promiseId);
     route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify(session || { id: sessionId, status: 'active', messages: [] })
+      body: JSON.stringify({
+        success: true,
+        data: { status: data?.status ?? 'pending', result: data?.result, error: data?.error }
+      })
     });
   });
 
-  // Session messages endpoint - with promise protocol support
-  await page.route('**/api/sessions/*/messages', (route: Route) => {
+  await page.route('**/api/v1/requests/*/result', (route: Route) => {
+    const match = route.request().url().match(/\/requests\/([^/]+)\/result/);
+    const promiseId = match?.[1] ?? '';
+    const data = promiseStore.get(promiseId);
+    const result = data?.result?.content ?? data?.result;
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ success: true, data: { result: result ?? 'Done' } })
+    });
+  });
+
+  // Legacy /api/sessions/* (fallback)
+  await page.route('**/api/sessions/*', (route: Route) => {
     if (route.request().method() === 'POST') {
       const body = route.request().postDataJSON();
       

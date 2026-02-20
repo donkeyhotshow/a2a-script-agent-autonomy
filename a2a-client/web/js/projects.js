@@ -29,7 +29,10 @@ const Projects = {
       this.render();
     } catch {
       el.innerHTML = '<div class="error">Failed to load</div>';
+      if (window.A2A?.renderStatus) A2A.renderStatus(false);
+      return;
     }
+    if (window.A2A?.renderStatus) A2A.renderStatus();
   },
 
   render() {

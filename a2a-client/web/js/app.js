@@ -55,15 +55,17 @@ const A2A = {
     this.renderStatus();
   },
 
-  renderStatus() {
+  renderStatus(connected = true) {
     const idx = document.getElementById('indexStatus');
     if (idx) idx.textContent = `Index: ${this.state.indexStatus}`;
     const proj = document.getElementById('currentProject');
     if (proj) proj.textContent = this.state.project?.name || 'No project';
     const dot = document.getElementById('statusDot');
     const text = document.getElementById('statusText');
-    if (dot) dot.classList.add('connected');
-    if (text) text.textContent = '.a2a';
+    if (dot) {
+      dot.classList.toggle('connected', connected);
+    }
+    if (text) text.textContent = connected ? '.a2a' : '—';
   },
 
   escape(s) {

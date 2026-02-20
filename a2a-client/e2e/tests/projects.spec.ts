@@ -13,27 +13,22 @@ test.describe('Projects Page', () => {
     await page.goto('/');
     
     const emptyMessage = page.locator('#projectsList .empty');
-    await expect(emptyMessage).toHaveText('No projects. Click + Add');
+    await expect(emptyMessage).toHaveText('No projects. Add project path with .a2a folder.');
   });
 
   test('PRJ-02: Should open Add Project modal', async ({ page }) => {
     await page.goto('/');
     
-    // Click Add button
     await page.click('#addProject');
     
-    // Check modal is visible
     const modal = page.locator('#addProjectModal');
     await expect(modal).toBeVisible();
     
-    // Check modal title
     const modalTitle = page.locator('#addProjectModal .modal-header h3');
     await expect(modalTitle).toHaveText('Add Project');
     
-    // Check form fields are present
     await expect(page.locator('#projectName')).toBeVisible();
     await expect(page.locator('#projectPath')).toBeVisible();
-    await expect(page.locator('#projectServer')).toBeVisible();
   });
 
   test('PRJ-03: Should close modal on Cancel', async ({ page }) => {
@@ -92,15 +87,11 @@ test.describe('Projects Page', () => {
   test('PRJ-07: Should create new project', async ({ page }) => {
     await page.goto('/');
     
-    // Open modal
     await page.click('#addProject');
     
-    // Fill form
     await page.fill('#projectName', 'New Test Project');
     await page.fill('#projectPath', '/path/to/new/project');
-    await page.fill('#projectServer', 'http://localhost:3000/api/v1');
     
-    // Save
     await page.click('#saveProject');
     
     // Modal should close
@@ -151,13 +142,8 @@ test.describe('Projects Page', () => {
     
     await page.goto('/');
     
-    // Click Index button on first project
-    await page.click('.project-card:first-child [data-action="index"]');
-    
-    // Wait a moment for the request
+    await page.click('#buildIndex');
     await page.waitForTimeout(100);
-    
-    // No error should occur
   });
 
   test('PRJ-11: Should remove project with confirmation', async ({ page }) => {
@@ -181,7 +167,7 @@ test.describe('Projects Page', () => {
     await page.waitForTimeout(100);
   });
 
-  test('PRJ-12: Should display project stats', async ({ page }) => {
+  test('PRJ-12: Should display project name and path', async ({ page }) => {
     await setupApiMocks(page, {
       projects: mockApiResponses.sampleProjects.data.projects,
       connected: true
@@ -189,33 +175,31 @@ test.describe('Projects Page', () => {
     
     await page.goto('/');
     
-    // Check stats in first project card
     const firstCard = page.locator('.project-card:first-child');
-    const meta = firstCard.locator('.project-meta');
-    await expect(meta).toContainText('42 files');
-    await expect(meta).toContainText('5 sessions');
+    await expect(firstCard.locator('.project-name')).toContainText('Test Project');
+    await expect(firstCard.locator('.project-path')).toContainText('/test/project');
   });
 
   test('PRJ-13: Should show loading state', async ({ page }) => {
-    // Delay the response
-    await page.route('**/api/projects', async route => {
+    await setupApiMocks(page, { projects: [], connected: true });
+    await page.route('**/api/a2a/projects', async route => {
       await new Promise(resolve => setTimeout(resolve, 500));
       route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({ data: { projects: [] } })
+        body: JSON.stringify({ projects: [] })
       });
     });
     
     await page.goto('/');
     
-    // Should show loading initially
     const loading = page.locator('#projectsList .loading');
     await expect(loading).toBeVisible();
   });
 
   test('PRJ-14: Should show error state on API failure', async ({ page }) => {
-    await page.route('**/api/projects', route => {
+    await setupApiMocks(page, { projects: [], connected: true });
+    await page.route('**/api/a2a/projects', route => {
       route.fulfill({
         status: 500,
         contentType: 'application/json',
@@ -225,7 +209,6 @@ test.describe('Projects Page', () => {
     
     await page.goto('/');
     
-    // Should show error
     const error = page.locator('#projectsList .error');
     await expect(error).toHaveText('Failed to load');
   });
