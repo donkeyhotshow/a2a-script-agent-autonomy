@@ -1,0 +1,24 @@
+{
+  "name": "@a2a/hybrid-search",
+  "version": "1.0.0",
+  "description": "Hybrid Search combining multiple indexing methods for comprehensive codebase search",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "node test/hybrid.test.js"
+  },
+  "keywords": [
+    "a2a",
+    "hybrid",
+    "search",
+    "semantic",
+    "fulltext",
+    "code-search"
+  ],
+  "author": "",
+  "license": "MIT",
+  "peerDependencies": {
+    "@a2a/rag": "^1.0.0",
+    "@a2a/fulltext": "^1.0.0",
+    "@a2a/graph": "^1.0.0"
+  }
+}

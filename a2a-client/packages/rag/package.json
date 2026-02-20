@@ -1,0 +1,36 @@
+{
+  "name": "@a2a/rag",
+  "version": "1.0.0",
+  "description": "RAG Indexing and Search Module for A2A - Local indexing and search capabilities for code projects",
+  "main": "src/index.js",
+  "types": "types/index.d.ts",
+  "scripts": {
+    "test": "jest"
+  },
+  "keywords": [
+    "a2a",
+    "rag",
+    "indexing",
+    "search",
+    "code",
+    "retrieval",
+    "embedding"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {},
+  "devDependencies": {
+    "jest": "^29.7.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/org-carrier/a2a-app.git",
+    "directory": "packages/rag"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "name": "@a2a/agent",
+  "version": "1.0.0",
+  "description": "A2A Agent - Main agent logic for processing user requests and executing server commands",
+  "main": "src/index.js",
+  "types": "types/index.d.ts",
+  "scripts": {
+    "test": "jest"
+  },
+  "keywords": [
+    "a2a",
+    "agent",
+    "task",
+    "automation",
+    "cli"
+  ],
+  "author": "",
+  "license": "MIT",
+  "peerDependencies": {
+    "@a2a/api-client": "^1.0.0",
+    "@a2a/rag": "^1.0.0"
+  },
+  "dependencies": {
+    "simple-git": "^3.22.0"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/org-carrier/a2a-app.git",
+    "directory": "packages/agent"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

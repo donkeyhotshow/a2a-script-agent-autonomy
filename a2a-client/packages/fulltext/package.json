@@ -1,0 +1,24 @@
+{
+  "name": "@a2a/fulltext",
+  "version": "1.0.0",
+  "description": "Full-Text Search with BM25 ranking for A2A codebase indexing",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "node test/fulltext.test.js"
+  },
+  "keywords": [
+    "a2a",
+    "fulltext",
+    "search",
+    "bm25",
+    "code-search"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "flexsearch": "^0.7.43"
+  },
+  "peerDependencies": {
+    "@a2a/fs-utils": "^1.0.0"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "name": "@a2a/graph",
+  "version": "1.0.0",
+  "description": "Graph indexing and search for A2A - Knowledge graph builder for code projects",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "a2a",
+    "graph",
+    "knowledge-graph",
+    "code-analysis",
+    "dependencies"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@a2a/agent": "^1.0.0"
+  }
+}
