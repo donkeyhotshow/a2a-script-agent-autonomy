@@ -91,6 +91,13 @@ export const loginInputSchema = z.object({
 });
 
 /**
+ * Refresh token input schema
+ */
+export const refreshTokenInputSchema = z.object({
+  refreshToken: z.string().min(1),
+});
+
+/**
  * Create project input schema
  */
 export const createProjectInputSchema = z.object({
@@ -130,33 +137,27 @@ export const searchQuerySchema = z.object({
 /**
  * Validate and parse input
  */
-export function validateInput<T>(
-  schema: z.ZodSchema<T>,
-  data: unknown
-): T {
-  // TODO: Implement validation wrapper
-  // 1. Parse with schema
-  // 2. Return parsed data or throw error
-  
-  throw new Error('validateInput not implemented');
+export function validateInput<T>(schema: z.ZodSchema<T>, data: unknown): T {
+  return schema.parse(data) as T;
 }
 
 /**
  * Check if string is valid JSON
  */
 export function isValidJson(str: string): boolean {
-  // TODO: Implement JSON validation
-  
-  throw new Error('isValidJson not implemented');
+  try {
+    JSON.parse(str);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 /**
  * Sanitize string (remove HTML tags, trim)
  */
 export function sanitizeString(str: string): string {
-  // TODO: Implement string sanitization
-  
-  throw new Error('sanitizeString not implemented');
+  return str.replace(/<[^>]*>/g, '').trim();
 }
 
 /**
@@ -166,19 +167,13 @@ export function isValidFileExtension(
   filename: string,
   allowedExtensions: string[]
 ): boolean {
-  // TODO: Implement extension check
-  
-  throw new Error('isValidFileExtension not implemented');
+  const ext = filename.split('.').pop()?.toLowerCase() ?? '';
+  return allowedExtensions.some((e) => e.toLowerCase() === ext);
 }
 
 /**
  * Validate MIME type
  */
-export function isValidMimeType(
-  mimeType: string,
-  allowedTypes: string[]
-): boolean {
-  // TODO: Implement MIME type check
-  
-  throw new Error('isValidMimeType not implemented');
+export function isValidMimeType(mimeType: string, allowedTypes: string[]): boolean {
+  return allowedTypes.some((t) => t.toLowerCase() === mimeType.toLowerCase());
 }

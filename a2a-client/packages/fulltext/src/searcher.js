@@ -134,6 +134,11 @@ class FullTextSearcher {
       filteredResults = filteredResults.filter(r => regex.test(r.filePath));
     }
     
+    // Query-length boost: more text = more points per % (unified free-style)
+    const queryWords = query.trim().split(/\s+/).filter(w => w.length > 0);
+    const queryLengthBoost = 1 + Math.min(queryWords.length * 0.01, 0.5); // +1% per word, max +50%
+    for (const r of filteredResults) r.score *= queryLengthBoost;
+    
     // Сортируем по score и ограничиваем
     filteredResults.sort((a, b) => b.score - a.score);
     filteredResults = filteredResults.slice(0, limit);
@@ -314,9 +319,11 @@ class FullTextSearcher {
       if (results.length >= limit * 2) break;
     }
     
-    // Сортируем по количеству совпадений
-    results.sort((a, b) => b.score - a.score);
+    // Query-length boost: more pattern = more points
+    const boost = 1 + Math.min(pattern.length * 0.002, 0.5); // +0.2% per char, max +50%
+    for (const r of results) r.score *= boost;
     
+    results.sort((a, b) => b.score - a.score);
     return results.slice(0, limit);
   }
   

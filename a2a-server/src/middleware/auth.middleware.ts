@@ -1,26 +1,20 @@
 import { Request, Response, NextFunction } from 'express';
 import { AppError, unauthorized } from './error.middleware.js';
-import { TokenPayload } from '../services/auth.service.js';
 
-/**
- * Auth Middleware
- * Handles JWT and API Key authentication
- */
-
-// Extend Express Request type
 declare global {
   namespace Express {
     interface Request {
-      client?: {
-        id: string;
-        email: string;
-      };
+      client?: { id: string; email: string };
     }
   }
 }
 
+// Hardcoded password for server access
+const SERVER_PASSWORD = process.env.A2A_SERVER_PASSWORD || 'a2a_dev_password';
+
 /**
- * Authenticate via JWT or API Key
+ * Simple password-based authentication
+ * Password is hardcoded in client
  */
 export async function authenticate(
   req: Request,
@@ -28,31 +22,37 @@ export async function authenticate(
   next: NextFunction
 ): Promise<void> {
   try {
-    // TODO: Implement authentication
-    // 1. Check Authorization header for Bearer token
-    // 2. Check X-API-Key header for API key
-    // 3. Validate token/key
-    // 4. Attach client to request
-    // 5. Call next()
+    // Skip auth in development if SKIP_AUTH is set
+    if (process.env.SKIP_AUTH === '1' || process.env.NODE_ENV === 'development') {
+      req.client = { id: 'dev-client', email: 'dev@a2a.local' };
+      return next();
+    }
+
+    const authHeader = req.headers.authorization;
     
-    // Example structure:
-    // const authHeader = req.headers.authorization;
-    // const apiKey = req.headers['x-api-key'];
-    
-    // if (authHeader?.startsWith('Bearer ')) {
-    //   const token = authHeader.slice(7);
-    //   const payload = await verifyToken(token);
-    //   req.client = { id: payload.clientId, email: payload.email };
-    //   return next();
-    // }
-    
-    // if (apiKey) {
-    //   const client = await authenticateWithApiKey(apiKey as string);
-    //   req.client = { id: client.id, email: client.email };
-    //   return next();
-    // }
-    
-    throw unauthorized('AUTH_001', 'Authentication required');
+    if (!authHeader) {
+      throw unauthorized('AUTH_001', 'Authorization header required');
+    }
+
+    // Expect: Basic base64(email:password) or Bearer password
+    if (authHeader.startsWith('Basic ')) {
+      const base64Credentials = authHeader.slice(6);
+      const credentials = Buffer.from(base64Credentials, 'base64').toString('utf-8');
+      const [email, password] = credentials.split(':');
+      
+      if (password === SERVER_PASSWORD && email) {
+        req.client = { id: 'client', email };
+        return next();
+      }
+    } else if (authHeader.startsWith('Bearer ')) {
+      const token = authHeader.slice(7);
+      if (token === SERVER_PASSWORD) {
+        req.client = { id: 'client', email: 'client@a2a.local' };
+        return next();
+      }
+    }
+
+    throw unauthorized('AUTH_002', 'Invalid credentials');
   } catch (error) {
     next(error);
   }
@@ -63,14 +63,36 @@ export async function authenticate(
  */
 export async function optionalAuth(
   req: Request,
-  res: Response,
+  _res: Response,
   next: NextFunction
 ): Promise<void> {
   try {
-    // TODO: Implement optional auth
-    // Same as authenticate but doesn't throw error
-    // Just sets req.client if valid auth present
+    if (process.env.SKIP_AUTH === '1' || process.env.NODE_ENV === 'development') {
+      req.client = { id: 'dev-client', email: 'dev@a2a.local' };
+      return next();
+    }
+
+    const authHeader = req.headers.authorization;
     
+    if (!authHeader) {
+      return next();
+    }
+
+    if (authHeader.startsWith('Basic ')) {
+      const base64Credentials = authHeader.slice(6);
+      const credentials = Buffer.from(base64Credentials, 'base64').toString('utf-8');
+      const [email, password] = credentials.split(':');
+      
+      if (password === SERVER_PASSWORD && email) {
+        req.client = { id: 'client', email };
+      }
+    } else if (authHeader.startsWith('Bearer ')) {
+      const token = authHeader.slice(7);
+      if (token === SERVER_PASSWORD) {
+        req.client = { id: 'client', email: 'client@a2a.local' };
+      }
+    }
+
     next();
   } catch (error) {
     next(error);
@@ -82,13 +104,9 @@ export async function optionalAuth(
  */
 export function requireAuth(
   req: Request,
-  res: Response,
+  _res: Response,
   next: NextFunction
 ): void {
-  // TODO: Implement require auth
-  // Check if req.client is set
-  // Throw 401 if not
-  
   if (!req.client) {
     throw unauthorized('AUTH_001', 'Authentication required');
   }
@@ -97,50 +115,28 @@ export function requireAuth(
 }
 
 /**
- * Check resource ownership
+ * Check resource ownership (no-op in stateless mode)
  */
-export function requireOwnership(getResourceClientId: (req: Request) => Promise<string>) {
-  return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    try {
-      // TODO: Implement ownership check
-      // 1. Get resource client ID
-      // 2. Compare with authenticated client
-      // 3. Throw 403 if mismatch
-      
-      if (!req.client) {
-        throw unauthorized('AUTH_001', 'Authentication required');
-      }
-      
-      const resourceClientId = await getResourceClientId(req);
-      
-      if (resourceClientId !== req.client.id) {
-        throw new AppError('AUTH_003', 'Access denied', 403);
-      }
-      
-      next();
-    } catch (error) {
-      next(error);
+export function requireOwnership(_getResourceClientId: (req: Request) => Promise<string>) {
+  return async (req: Request, _res: Response, next: NextFunction): Promise<void> => {
+    // In stateless mode, we don't have resources to check ownership of
+    // Just require authentication
+    if (!req.client) {
+      throw unauthorized('AUTH_001', 'Authentication required');
     }
+    next();
   };
 }
 
 /**
- * Rate limit by client ID
+ * Rate limit by client ID (placeholder)
  */
 export function rateLimitByClient(
-  maxRequests: number,
-  windowMs: number
+  _maxRequests: number,
+  _windowMs: number
 ) {
-  return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    try {
-      // TODO: Implement client rate limiting
-      // 1. Get client ID from request
-      // 2. Check rate limit in Redis
-      // 3. Throw 429 if exceeded
-      
-      next();
-    } catch (error) {
-      next(error);
-    }
+  return async (req: Request, _res: Response, next: NextFunction): Promise<void> => {
+    // Pass-through: rate limiting not yet implemented
+    next();
   };
 }

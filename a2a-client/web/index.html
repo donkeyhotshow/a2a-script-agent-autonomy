@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>A2A Client</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="app">
+    <header class="header">
+      <div class="logo">A2A</div>
+      <nav class="nav">
+        <a href="#" class="nav-link active" data-page="projects">Projects</a>
+        <a href="#" class="nav-link" data-page="sessions">Sessions</a>
+        <a href="#" class="nav-link" data-page="explorer">Explorer</a>
+      </nav>
+      <div class="status">
+        <span class="status-dot" id="statusDot"></span>
+        <span id="statusText">—</span>
+      </div>
+    </header>
+
+    <main class="main">
+      <!-- Projects -->
+      <section class="page active" id="page-projects">
+        <div class="page-header">
+          <h1>Projects</h1>
+          <button class="btn btn-primary" id="addProject">+ Add</button>
+        </div>
+        <div class="projects-grid" id="projectsList"></div>
+      </section>
+
+      <!-- Sessions -->
+      <section class="page" id="page-sessions">
+        <div class="sessions-layout">
+          <aside class="sessions-sidebar">
+            <div class="page-header">
+              <h2>Sessions</h2>
+              <button class="btn btn-primary" id="newSession">+ New</button>
+            </div>
+            <select id="sessionFilter">
+              <option value="all">All</option>
+              <option value="active">Active</option>
+              <option value="waiting">Waiting</option>
+              <option value="completed">Done</option>
+            </select>
+            <div class="sessions-list" id="sessionsList"></div>
+          </aside>
+          <div class="session-panel">
+            <div class="session-header" id="sessionHeader"></div>
+            <div class="session-messages" id="sessionMessages"></div>
+            <div class="session-input-bar">
+              <textarea id="messageInput" placeholder="Task or message..."></textarea>
+              <div class="input-actions">
+                <button class="btn btn-secondary" id="btnContinue" title="Continue without input (§3.3.4)">Делаем</button>
+                <button class="btn btn-primary" id="sendMessage">Send</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Explorer -->
+      <section class="page" id="page-explorer">
+        <div class="explorer-layout">
+          <aside class="file-sidebar">
+            <div class="page-header">
+              <h3>Files</h3>
+              <button class="btn btn-icon" id="refreshFiles" title="Refresh">↻</button>
+            </div>
+            <div class="file-tree" id="fileTree"></div>
+          </aside>
+          <div class="editor-panel">
+            <div class="editor-header" id="editorHeader"></div>
+            <pre class="editor-content" id="editorContent"><span class="placeholder">Select a file</span></pre>
+          </div>
+          <aside class="chat-sidebar">
+            <div class="chat-messages" id="chatMessages"></div>
+            <div class="chat-input-bar">
+              <textarea id="chatInput" placeholder="Request..."></textarea>
+              <button class="btn btn-primary" id="sendChat">Send</button>
+            </div>
+          </aside>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <span id="currentProject">No project</span>
+      <span id="indexStatus">Index: —</span>
+      <button class="btn btn-small" id="buildIndex">Build Index</button>
+    </footer>
+  </div>
+
+  <!-- Add Project Modal -->
+  <div class="modal" id="addProjectModal">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3>Add Project</h3>
+        <button class="btn btn-icon modal-close">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="field">
+          <label>Name</label>
+          <input type="text" id="projectName" placeholder="My Project">
+        </div>
+        <div class="field">
+          <label>Path</label>
+          <input type="text" id="projectPath" placeholder="C:\path\to\project (with .a2a folder)">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary modal-cancel">Cancel</button>
+        <button class="btn btn-primary" id="saveProject">Add</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/storage.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/projects.js"></script>
+  <script src="js/sessions.js"></script>
+  <script src="js/explorer.js"></script>
+</body>
+</html>

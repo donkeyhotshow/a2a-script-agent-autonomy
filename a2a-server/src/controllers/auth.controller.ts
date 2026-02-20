@@ -1,5 +1,32 @@
 import { Request, Response, NextFunction } from 'express';
+import jwt from 'jsonwebtoken';
 import { AppError } from '../middleware/error.middleware.js';
+import * as clientRepo from '../repositories/client.repository.js';
+import { hashPassword, generateApiKey, verifyPassword } from '../utils/crypto.js';
+import { config } from '../config/index.js';
+import { loginInputSchema, refreshTokenInputSchema } from '../utils/validation.js';
+
+type JwtPayload = { sub: string; email: string; type: 'access' | 'refresh' };
+
+function signAccessToken(clientId: string, email: string): string {
+  return jwt.sign(
+    { sub: clientId, email, type: 'access' } as JwtPayload,
+    config.jwtSecret,
+    { expiresIn: config.jwtExpiresIn }
+  );
+}
+
+function signRefreshToken(clientId: string, email: string): string {
+  return jwt.sign(
+    { sub: clientId, email, type: 'refresh' } as JwtPayload,
+    config.jwtSecret,
+    { expiresIn: config.jwtRefreshExpiresIn }
+  );
+}
+
+function verifyToken(token: string): JwtPayload {
+  return jwt.verify(token, config.jwtSecret) as JwtPayload;
+}
 
 /**
  * Auth Controller
@@ -13,19 +40,36 @@ export async function register(
   next: NextFunction
 ): Promise<void> {
   try {
-    // TODO: Implement registration logic
-    // 1. Validate input (email, password, name)
-    // 2. Check if client already exists
-    // 3. Hash password
-    // 4. Generate API key
-    // 5. Create client in database
-    // 6. Return success response with client info
-    
-    throw new AppError('NOT_IMPLEMENTED', 'Registration not implemented', 501);
+    const { name, email, password } = req.body as { name?: string; email?: string; password?: string };
+    if (!name || !email || !password) {
+      throw new AppError('VALIDATION_001', 'name, email and password required', 400);
+    }
+
+    if (await clientRepo.emailExists(email)) {
+      throw new AppError('AUTH_002', 'Email already registered', 409);
+    }
+
+    const passwordHash = await hashPassword(password);
+    const apiKey = generateApiKey();
+
+    const client = await clientRepo.createClient({ name, email, passwordHash, apiKey });
+
+    res.status(201).json({
+      success: true,
+      data: {
+        id: client.id,
+        name: client.name,
+        email: client.email,
+        apiKey,
+      },
+    });
   } catch (error) {
     next(error);
   }
 }
+
+// Dev bypass: dev@example.com / dev works without DB (dev@localhost fails zod email)
+const DEV_CREDS = { email: 'dev@example.com', password: 'dev' };
 
 // POST /api/v1/auth/token
 export async function getToken(
@@ -34,13 +78,32 @@ export async function getToken(
   next: NextFunction
 ): Promise<void> {
   try {
-    // TODO: Implement token generation
-    // 1. Validate credentials (email + password OR api_key)
-    // 2. Verify client exists and is active
-    // 3. Generate JWT token
-    // 4. Return token with expiration
-    
-    throw new AppError('NOT_IMPLEMENTED', 'Token generation not implemented', 501);
+    const apiKey = req.headers['x-api-key'] as string | undefined;
+    if (apiKey) {
+      const client = await clientRepo.findClientByApiKey(apiKey);
+      if (!client) throw new AppError('AUTH_001', 'Invalid API key', 401);
+      const accessToken = signAccessToken(client.id, client.email);
+      const refreshToken = signRefreshToken(client.id, client.email);
+      res.json({ success: true, data: { accessToken, refreshToken } });
+      return;
+    }
+    const body = req.body as { email?: string; password?: string };
+    if (process.env.NODE_ENV === 'development' && body?.email === DEV_CREDS.email && body?.password === DEV_CREDS.password) {
+      const accessToken = signAccessToken('dev-client', DEV_CREDS.email);
+      const refreshToken = signRefreshToken('dev-client', DEV_CREDS.email);
+      res.json({ success: true, data: { accessToken, refreshToken } });
+      return;
+    }
+    const { email, password } = loginInputSchema.parse(req.body);
+    const client = await clientRepo.findClientByEmail(email);
+    if (!client) throw new AppError('AUTH_001', 'Invalid credentials', 401);
+    if (!(await verifyPassword(password, client.passwordHash))) {
+      throw new AppError('AUTH_001', 'Invalid credentials', 401);
+    }
+    if (!client.isActive) throw new AppError('AUTH_001', 'Account inactive', 401);
+    const accessToken = signAccessToken(client.id, client.email);
+    const refreshToken = signRefreshToken(client.id, client.email);
+    res.json({ success: true, data: { accessToken, refreshToken } });
   } catch (error) {
     next(error);
   }
@@ -53,13 +116,19 @@ export async function refreshToken(
   next: NextFunction
 ): Promise<void> {
   try {
-    // TODO: Implement token refresh
-    // 1. Validate refresh token
-    // 2. Verify client still active
-    // 3. Generate new JWT token
-    // 4. Return new token
-    
-    throw new AppError('NOT_IMPLEMENTED', 'Token refresh not implemented', 501);
+    const { refreshToken: token } = refreshTokenInputSchema.parse(req.body);
+    let payload: JwtPayload;
+    try {
+      payload = verifyToken(token);
+    } catch {
+      throw new AppError('AUTH_001', 'Invalid token', 401);
+    }
+    if (payload.type !== 'refresh') throw new AppError('AUTH_001', 'Invalid token', 401);
+    const client = await clientRepo.findClientById(payload.sub);
+    if (!client || !client.isActive) throw new AppError('AUTH_001', 'Client not found', 401);
+    const accessToken = signAccessToken(client.id, client.email);
+    const newRefreshToken = signRefreshToken(client.id, client.email);
+    res.json({ success: true, data: { accessToken, refreshToken: newRefreshToken } });
   } catch (error) {
     next(error);
   }
@@ -72,12 +141,19 @@ export async function getCurrentClient(
   next: NextFunction
 ): Promise<void> {
   try {
-    // TODO: Implement get current client
-    // 1. Extract client ID from JWT
-    // 2. Fetch client from database
-    // 3. Return client info (without sensitive data)
-    
-    throw new AppError('NOT_IMPLEMENTED', 'Get current client not implemented', 501);
+    if (!req.client) throw new AppError('AUTH_001', 'Authentication required', 401);
+
+    const client = await clientRepo.findClientById(req.client.id);
+    if (!client) throw new AppError('AUTH_001', 'Client not found', 401);
+
+    res.json({
+      success: true,
+      data: {
+        id: client.id,
+        name: client.name,
+        email: client.email,
+      },
+    });
   } catch (error) {
     next(error);
   }

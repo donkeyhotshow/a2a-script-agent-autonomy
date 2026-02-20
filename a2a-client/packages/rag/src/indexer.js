@@ -58,7 +58,7 @@ class RAGIndexer {
    */
   async _initIgnoreDetector(config) {
     try {
-      const { IgnoreDetector } = require('../../agent/src/ignore-detector');
+      const { IgnoreDetector } = require('@a2a/fs-utils');
       this.ignoreDetector = new IgnoreDetector({
         projectPath: this.projectPath,
         customIgnoreFiles: config.customIgnoreFiles || [],

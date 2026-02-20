@@ -5,6 +5,7 @@ Full-Text Search with BM25 ranking for A2A codebase indexing.
 ## Features
 
 - **Fast Search**: Very fast full-text search using FlexSearch (5-25ms)
+- **Query-length boost**: More text = more points per % (unified free-style scoring)
 - **Fuzzy Search**: Find results even with typos
 - **BM25 Ranking**: Advanced ranking algorithm for better relevance
 - **Highlight Extraction**: Automatic highlighting of matching text

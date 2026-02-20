@@ -15,6 +15,7 @@ const { RAGIndexer, RAGSearcher } = require('@a2a/rag');
 const { CardManager } = require('./card-manager');
 const { FileSystem } = require('./fs-reader');
 const { GitOps } = require('./git-ops');
+const { detectArchitecturalFeaturesLight } = require('./architectural-features');
 
 /**
  * A2A Agent - Main agent class
@@ -61,22 +62,26 @@ class A2AAgent {
       await this.initSession();
     }
 
-    // 2. Create initial card
+    const projectPath = this.config.projectPath || process.cwd();
+    const architecturalFeatures = await detectArchitecturalFeaturesLight(projectPath, this.fs);
+
     const card = this.cardManager.createCard({
       sessionId: this.sessionId,
       user: { id: this.config.userId },
       project: {
-        path: this.config.projectPath,
+        id: this.config.projectId,
+        path: projectPath,
         type: await this.detectProjectType(),
       },
       request: { raw: userRequest },
+      architecturalFeatures,
     });
 
     this.currentCard = card;
 
     // 3. Do RAG search for relevant files
     const ragResults = await this.ragSearcher.search(userRequest);
-    card.context.ragResults = ragResults;
+    card.ragResults = ragResults;
 
     // 4. Send card to server
     const response = await this.apiClient.createCard(card);

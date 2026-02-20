@@ -2,9 +2,13 @@ import http from 'http';
 import app from './app.js';
 import { config } from './config/index.js';
 import { logger } from './utils/logger.js';
+import { initWebSocket } from './websocket/index.js';
 
 // Create HTTP server
 const server = http.createServer(app);
+
+// WebSocket (handles upgrade on /ws/sessions/*)
+initWebSocket(server);
 
 // Start server
 server.listen(config.port, () => {

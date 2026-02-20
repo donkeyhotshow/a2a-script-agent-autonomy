@@ -1,41 +1,20 @@
 import { Router } from 'express';
+import { authenticate } from '../middleware/auth.middleware.js';
+import * as authController from '../controllers/auth.controller.js';
+import { validateBody } from '../middleware/validate.middleware.js';
+import { registerInputSchema } from '../utils/validation.js';
 
 const router = Router();
 
-// POST /api/v1/auth/register
-router.post('/register', async (_req, res) => {
-  // TODO: Implement registration
-  res.status(501).json({
-    success: false,
-    error: {
-      code: 'NOT_IMPLEMENTED',
-      message: 'Registration endpoint not yet implemented',
-    },
-  });
-});
+router.post(
+  '/register',
+  validateBody(registerInputSchema),
+  authController.register
+);
 
-// POST /api/v1/auth/token
-router.post('/token', async (_req, res) => {
-  // TODO: Implement token generation
-  res.status(501).json({
-    success: false,
-    error: {
-      code: 'NOT_IMPLEMENTED',
-      message: 'Token endpoint not yet implemented',
-    },
-  });
-});
+router.post('/token', authController.getToken);
+router.post('/refresh', authController.refreshToken);
 
-// POST /api/v1/auth/refresh
-router.post('/refresh', async (_req, res) => {
-  // TODO: Implement token refresh
-  res.status(501).json({
-    success: false,
-    error: {
-      code: 'NOT_IMPLEMENTED',
-      message: 'Token refresh not yet implemented',
-    },
-  });
-});
+router.get('/me', authenticate, authController.getCurrentClient);
 
 export default router;

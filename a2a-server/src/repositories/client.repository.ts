@@ -1,58 +1,31 @@
 import { Client } from '@prisma/client';
+import { getPrismaClient } from '../config/database.js';
 
-/**
- * Client Repository
- * Data access layer for Client entity
- */
+const prisma = () => getPrismaClient();
 
-/**
- * Create a new client
- */
 export async function createClient(data: {
   name: string;
   email: string;
   passwordHash: string;
   apiKey: string;
 }): Promise<Client> {
-  // TODO: Implement create client
-  // 1. Use Prisma to create client
-  // 2. Return created client
-  
-  throw new Error('createClient not implemented');
+  return prisma().client.create({ data });
 }
 
-/**
- * Find client by ID
- */
 export async function findClientById(id: string): Promise<Client | null> {
-  // TODO: Implement find by ID
-  // 1. Use Prisma to find client
-  // 2. Return client or null
-  
-  throw new Error('findClientById not implemented');
+  return prisma().client.findUnique({ where: { id } });
 }
 
-/**
- * Find client by email
- */
 export async function findClientByEmail(email: string): Promise<Client | null> {
-  // TODO: Implement find by email
-  
-  throw new Error('findClientByEmail not implemented');
+  return prisma().client.findUnique({ where: { email } });
 }
 
-/**
- * Find client by API key
- */
 export async function findClientByApiKey(apiKey: string): Promise<Client | null> {
-  // TODO: Implement find by API key
-  
-  throw new Error('findClientByApiKey not implemented');
+  return prisma().client.findFirst({
+    where: { apiKey, isActive: true },
+  });
 }
 
-/**
- * Update client
- */
 export async function updateClient(
   id: string,
   data: Partial<{
@@ -63,45 +36,31 @@ export async function updateClient(
     isActive: boolean;
   }>
 ): Promise<Client> {
-  // TODO: Implement update client
-  
-  throw new Error('updateClient not implemented');
+  return prisma().client.update({ where: { id }, data });
 }
 
-/**
- * Delete client
- */
 export async function deleteClient(id: string): Promise<void> {
-  // TODO: Implement delete client
-  // Note: Will cascade delete projects
-  
-  throw new Error('deleteClient not implemented');
+  await prisma().client.delete({ where: { id } });
 }
 
-/**
- * Check if email exists
- */
 export async function emailExists(email: string): Promise<boolean> {
-  // TODO: Implement email check
-  
-  throw new Error('emailExists not implemented');
+  const c = await prisma().client.findUnique({ where: { email } });
+  return c !== null;
 }
 
-/**
- * Deactivate client
- */
 export async function deactivateClient(id: string): Promise<Client> {
-  // TODO: Implement deactivate
-  // Set isActive to false
-  
-  throw new Error('deactivateClient not implemented');
+  return prisma().client.update({
+    where: { id },
+    data: { isActive: false },
+  });
 }
 
-/**
- * Regenerate API key
- */
-export async function regenerateApiKey(id: string, newApiKey: string): Promise<Client> {
-  // TODO: Implement API key regeneration
-  
-  throw new Error('regenerateApiKey not implemented');
+export async function regenerateApiKey(
+  id: string,
+  newApiKey: string
+): Promise<Client> {
+  return prisma().client.update({
+    where: { id },
+    data: { apiKey: newApiKey },
+  });
 }

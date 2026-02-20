@@ -1,12 +1,10 @@
 import { Worker, Job } from 'bullmq';
-import { logger } from '../../utils/logger.js';
 import { indexProject, indexFile, IndexingProgress } from '../../ml/indexer.service.js';
-import { updateProjectStatus } from '../../repositories/project.repository.js';
-import { ProjectStatus } from '@prisma/client';
 
 /**
  * Indexing Worker
  * Processes indexing jobs from the queue
+ * Note: In stateless mode, this worker is not used
  */
 
 export interface IndexingJobData {
@@ -36,11 +34,8 @@ let worker: Worker | null = null;
  * Start indexing worker
  */
 export function startIndexingWorker(): Worker {
-  // TODO: Implement worker start
-  // 1. Create Worker instance
-  // 2. Set up job processor
-  // 3. Set up event handlers
-  // 4. Return worker
+  // TODO: Implement worker start for stateless mode
+  // In stateless mode, indexing is not performed by the server
   
   throw new Error('startIndexingWorker not implemented');
 }
@@ -48,13 +43,8 @@ export function startIndexingWorker(): Worker {
 /**
  * Process indexing job
  */
-async function processJob(job: Job<IndexingJobData>): Promise<IndexingJobResult> {
-  // TODO: Implement job processing
-  // 1. Check job type
-  // 2. Update project status to INDEXING
-  // 3. Execute indexing
-  // 4. Update project status to INDEXED or ERROR
-  // 5. Return result
+async function processJob(_job: Job<IndexingJobData>): Promise<IndexingJobResult> {
+  // TODO: Implement job processing for stateless mode
   
   throw new Error('processJob not implemented');
 }
@@ -62,34 +52,21 @@ async function processJob(job: Job<IndexingJobData>): Promise<IndexingJobResult>
 /**
  * Handle job progress
  */
-function onProgress(job: Job, progress: IndexingProgress): void {
-  // TODO: Implement progress handling
-  // 1. Update job progress
-  // 2. Log progress
-  // 3. Emit WebSocket event if needed
-  
+function onProgress(_job: Job, _progress: IndexingProgress): void {
   throw new Error('onProgress not implemented');
 }
 
 /**
  * Handle job completed
  */
-function onCompleted(job: Job, result: IndexingJobResult): void {
-  // TODO: Implement completion handling
-  // 1. Log completion
-  // 2. Update project status
-  
+function onCompleted(_job: Job, _result: IndexingJobResult): void {
   throw new Error('onCompleted not implemented');
 }
 
 /**
  * Handle job failed
  */
-function onFailed(job: Job | undefined, error: Error): void {
-  // TODO: Implement failure handling
-  // 1. Log error
-  // 2. Update project status to ERROR
-  
+function onFailed(_job: Job | undefined, _error: Error): void {
   throw new Error('onFailed not implemented');
 }
 
@@ -97,8 +74,6 @@ function onFailed(job: Job | undefined, error: Error): void {
  * Stop indexing worker
  */
 export async function stopIndexingWorker(): Promise<void> {
-  // TODO: Implement worker stop
-  
   throw new Error('stopIndexingWorker not implemented');
 }
 
@@ -109,7 +84,5 @@ export function getWorkerStatus(): {
   running: boolean;
   activeJobs: number;
 } {
-  // TODO: Implement status check
-  
   throw new Error('getWorkerStatus not implemented');
 }

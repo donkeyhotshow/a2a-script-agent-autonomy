@@ -120,55 +120,6 @@ export interface FileMetadata {
 }
 
 // ============================================
-// Session Types
-// ============================================
-
-export interface SessionState {
-  id: string;
-  projectId: string;
-  status: SessionStatus;
-  context: ContextBlock | null;
-  createdAt: Date;
-  updatedAt: Date;
-  completedAt: Date | null;
-}
-
-export type SessionStatus = 'created' | 'active' | 'paused' | 'completed' | 'error';
-
-// ============================================
-// Project Types
-// ============================================
-
-export interface ProjectState {
-  id: string;
-  clientId: string;
-  name: string;
-  description?: string;
-  gitUrl: string;
-  branch: string;
-  status: ProjectStatus;
-  lastIndexedAt: Date | null;
-  indexingProgress: number;
-}
-
-export type ProjectStatus = 
-  | 'pending_clone' 
-  | 'cloning' 
-  | 'pending_indexing' 
-  | 'indexing' 
-  | 'indexed' 
-  | 'error';
-
-// ============================================
-// Architectural Feature Types
-// ============================================
-
-export interface ArchitecturalFeature {
-  feature: string;
-  category: 'directory_structure' | 'naming_convention' | 'custom_pattern';
-}
-
-// ============================================
 // API Response Types
 // ============================================
 
@@ -192,7 +143,7 @@ export interface PaginatedResponse<T> {
 }
 
 // ============================================
-// WebSocket Event Types
+// WebSocket Event Types (for future use)
 // ============================================
 
 export interface WsEvent<T = unknown> {
@@ -206,7 +157,6 @@ export type WsEventType =
   | 'task:completed'
   | 'files:updated'
   | 'files:requested'
-  | 'session:completed'
   | 'error';
 
 export interface TaskProgressPayload {
@@ -226,10 +176,6 @@ export interface FilesUpdatedPayload {
 
 export interface FilesRequestedPayload {
   paths: string[];
-}
-
-export interface SessionCompletedPayload {
-  summary: string;
 }
 
 export interface ErrorPayload {

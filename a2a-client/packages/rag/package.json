@@ -7,18 +7,12 @@
   "scripts": {
     "test": "jest"
   },
-  "keywords": [
-    "a2a",
-    "rag",
-    "indexing",
-    "search",
-    "code",
-    "retrieval",
-    "embedding"
-  ],
+  "keywords": ["a2a", "rag", "indexing", "search", "code", "retrieval", "embedding"],
   "author": "",
   "license": "MIT",
-  "dependencies": {},
+  "dependencies": {
+    "@a2a/fs-utils": "*"
+  },
   "devDependencies": {
     "jest": "^29.7.0"
   },

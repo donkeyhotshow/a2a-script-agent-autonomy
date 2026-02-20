@@ -13,11 +13,6 @@ import { AppError, validationError } from './error.middleware.js';
 export function validate(schema: AnyZodObject) {
   return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      // TODO: Implement validation
-      // 1. Parse request with schema
-      // 2. Replace req.body/params/query with parsed data
-      // 3. Call next()
-      
       await schema.parseAsync({
         body: req.body,
         params: req.params,
@@ -46,8 +41,6 @@ export function validate(schema: AnyZodObject) {
 export function validateBody(schema: AnyZodObject) {
   return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      // TODO: Implement body validation
-      
       req.body = await schema.parseAsync(req.body);
       next();
     } catch (error) {
@@ -70,8 +63,6 @@ export function validateBody(schema: AnyZodObject) {
 export function validateParams(schema: AnyZodObject) {
   return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      // TODO: Implement params validation
-      
       req.params = await schema.parseAsync(req.params);
       next();
     } catch (error) {
@@ -94,8 +85,6 @@ export function validateParams(schema: AnyZodObject) {
 export function validateQuery(schema: AnyZodObject) {
   return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      // TODO: Implement query validation
-      
       req.query = await schema.parseAsync(req.query);
       next();
     } catch (error) {
@@ -117,10 +106,6 @@ export function validateQuery(schema: AnyZodObject) {
  */
 export function sanitize(allowedFields: string[]) {
   return (req: Request, res: Response, next: NextFunction): void => {
-    // TODO: Implement sanitization
-    // 1. Remove any fields not in allowedFields
-    // 2. Useful for preventing mass assignment
-    
     if (req.body && typeof req.body === 'object') {
       const sanitized: Record<string, unknown> = {};
       for (const field of allowedFields) {

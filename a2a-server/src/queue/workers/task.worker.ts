@@ -1,11 +1,11 @@
 import { Worker, Job } from 'bullmq';
 import { logger } from '../../utils/logger.js';
-import { updateTask } from '../../repositories/session.repository.js';
 import { TaskStatus, TaskType } from '@prisma/client';
 
 /**
  * Task Worker
  * Processes task jobs from the queue
+ * Note: In stateless mode, task processing is handled differently
  */
 
 export interface TaskJobData {
@@ -29,11 +29,8 @@ let worker: Worker | null = null;
  * Start task worker
  */
 export function startTaskWorker(): Worker {
-  // TODO: Implement worker start
-  // 1. Create Worker instance
-  // 2. Set up job processor
-  // 3. Set up event handlers
-  // 4. Return worker
+  // TODO: Implement worker start for stateless mode
+  // In stateless mode, tasks are processed inline
   
   throw new Error('startTaskWorker not implemented');
 }
@@ -42,11 +39,7 @@ export function startTaskWorker(): Worker {
  * Process task job
  */
 async function processJob(job: Job<TaskJobData>): Promise<TaskJobResult> {
-  // TODO: Implement job processing
-  // 1. Update task status to IN_PROGRESS
-  // 2. Execute task based on type
-  // 3. Update task status to COMPLETED or FAILED
-  // 4. Return result
+  // TODO: Implement job processing for stateless mode
   
   throw new Error('processJob not implemented');
 }
@@ -54,87 +47,56 @@ async function processJob(job: Job<TaskJobData>): Promise<TaskJobResult> {
 /**
  * Execute analyze task
  */
-async function executeAnalyzeTask(data: TaskJobData): Promise<unknown> {
-  // TODO: Implement analyze task
-  // 1. Get target file/directory
-  // 2. Run analysis
-  // 3. Return results
-  
+async function executeAnalyzeTask(_data: TaskJobData): Promise<unknown> {
   throw new Error('executeAnalyzeTask not implemented');
 }
 
 /**
  * Execute refactor task
  */
-async function executeRefactorTask(data: TaskJobData): Promise<unknown> {
-  // TODO: Implement refactor task
-  // 1. Get target code
-  // 2. Apply refactoring
-  // 3. Return changes
-  
+async function executeRefactorTask(_data: TaskJobData): Promise<unknown> {
   throw new Error('executeRefactorTask not implemented');
 }
 
 /**
  * Execute test task
  */
-async function executeTestTask(data: TaskJobData): Promise<unknown> {
-  // TODO: Implement test task
-  // 1. Get target code
-  // 2. Generate tests
-  // 3. Return test code
-  
+async function executeTestTask(_data: TaskJobData): Promise<unknown> {
   throw new Error('executeTestTask not implemented');
 }
 
 /**
  * Execute document task
  */
-async function executeDocumentTask(data: TaskJobData): Promise<unknown> {
-  // TODO: Implement document task
-  // 1. Get target code
-  // 2. Generate documentation
-  // 3. Return docs
-  
+async function executeDocumentTask(_data: TaskJobData): Promise<unknown> {
   throw new Error('executeDocumentTask not implemented');
 }
 
 /**
  * Execute fix task
  */
-async function executeFixTask(data: TaskJobData): Promise<unknown> {
-  // TODO: Implement fix task
-  // 1. Get error context
-  // 2. Generate fix
-  // 3. Return fix
-  
+async function executeFixTask(_data: TaskJobData): Promise<unknown> {
   throw new Error('executeFixTask not implemented');
 }
 
 /**
  * Handle job progress
  */
-function onProgress(job: Job, progress: number): void {
-  // TODO: Implement progress handling
-  
+function onProgress(_job: Job, _progress: number): void {
   throw new Error('onProgress not implemented');
 }
 
 /**
  * Handle job completed
  */
-function onCompleted(job: Job, result: TaskJobResult): void {
-  // TODO: Implement completion handling
-  
+function onCompleted(_job: Job, _result: TaskJobResult): void {
   throw new Error('onCompleted not implemented');
 }
 
 /**
  * Handle job failed
  */
-function onFailed(job: Job | undefined, error: Error): void {
-  // TODO: Implement failure handling
-  
+function onFailed(_job: Job | undefined, _error: Error): void {
   throw new Error('onFailed not implemented');
 }
 
@@ -142,7 +104,5 @@ function onFailed(job: Job | undefined, error: Error): void {
  * Stop task worker
  */
 export async function stopTaskWorker(): Promise<void> {
-  // TODO: Implement worker stop
-  
   throw new Error('stopTaskWorker not implemented');
 }

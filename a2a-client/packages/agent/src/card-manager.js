@@ -46,6 +46,8 @@ class CardManager {
         path: data.project?.path || process.cwd(),
         type: data.project?.type || 'unknown',
       },
+
+      architecturalFeatures: data.architecturalFeatures ?? [],
       
       sections: {
         description: {

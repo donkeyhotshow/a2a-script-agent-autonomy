@@ -12,11 +12,6 @@ let prisma: PrismaClient | null = null;
  * Get Prisma client instance
  */
 export function getPrismaClient(): PrismaClient {
-  // TODO: Implement Prisma client singleton
-  // 1. Create PrismaClient if not exists
-  // 2. Configure logging
-  // 3. Return instance
-  
   if (!prisma) {
     prisma = new PrismaClient({
       log: [
@@ -34,11 +29,9 @@ export function getPrismaClient(): PrismaClient {
         },
       ],
     });
-    
-    // TODO: Setup log listeners
-    // prisma.$on('query', (e) => { ... });
-    // prisma.$on('error', (e) => { ... });
-    // prisma.$on('warn', (e) => { ... });
+    prisma.$on('query', (e) => logger.debug('Prisma query', { query: e.query }));
+    prisma.$on('error', (e) => logger.error('Prisma error', { message: e.message }));
+    prisma.$on('warn', (e) => logger.warn('Prisma warn', { message: e.message }));
   }
   
   return prisma;
@@ -48,24 +41,20 @@ export function getPrismaClient(): PrismaClient {
  * Connect to database
  */
 export async function connectDatabase(): Promise<void> {
-  // TODO: Implement database connection
-  // 1. Get Prisma client
-  // 2. Execute $connect()
-  // 3. Log success
-  
-  throw new Error('connectDatabase not implemented');
+  const p = getPrismaClient();
+  await p.$connect();
+  logger.info('Database connected');
 }
 
 /**
  * Disconnect from database
  */
 export async function disconnectDatabase(): Promise<void> {
-  // TODO: Implement database disconnection
-  // 1. Get Prisma client
-  // 2. Execute $disconnect()
-  // 3. Log success
-  
-  throw new Error('disconnectDatabase not implemented');
+  if (prisma) {
+    await prisma.$disconnect();
+    prisma = null;
+    logger.info('Database disconnected');
+  }
 }
 
 /**
@@ -76,12 +65,16 @@ export async function checkDatabaseHealth(): Promise<{
   latency?: number;
   error?: string;
 }> {
-  // TODO: Implement health check
-  // 1. Execute simple query
-  // 2. Measure latency
-  // 3. Return status
-  
-  throw new Error('checkDatabaseHealth not implemented');
+  const start = Date.now();
+  try {
+    await getPrismaClient().$queryRaw`SELECT 1`;
+    return { status: 'healthy', latency: Date.now() - start };
+  } catch (e) {
+    return {
+      status: 'unhealthy',
+      error: e instanceof Error ? e.message : String(e),
+    };
+  }
 }
 
 /**
@@ -90,26 +83,7 @@ export async function checkDatabaseHealth(): Promise<{
 export async function executeTransaction<T>(
   fn: (prisma: PrismaClient) => Promise<T>
 ): Promise<T> {
-  // TODO: Implement transaction wrapper
-  // 1. Use $transaction
-  // 2. Handle errors
-  // 3. Return result
-  
-  throw new Error('executeTransaction not implemented');
-}
-
-/**
- * Execute raw query
- */
-export async function executeRawQuery<T = unknown>(
-  query: string,
-  ...values: unknown[]
-): Promise<T[]> {
-  // TODO: Implement raw query
-  // 1. Use $queryRaw
-  // 2. Return results
-  
-  throw new Error('executeRawQuery not implemented');
+  return getPrismaClient().$transaction(fn);
 }
 
 // Export Prisma types

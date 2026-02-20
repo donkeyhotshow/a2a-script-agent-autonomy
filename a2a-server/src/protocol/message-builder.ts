@@ -1,9 +1,48 @@
-import { ContextBlock, FileBlock, ClientMessage, ServerMessage } from '../types/index.js';
-
 /**
  * Message Builder
  * Builds messages according to A2A protocol format
+ * Production-ready: validation, serialization, type safety
  */
+
+import {
+  ContextBlock,
+  FileBlock,
+  ClientMessage,
+  ServerMessage,
+  TaskStatus,
+} from '../types/index.js';
+import {
+  createInitialContext,
+  createNewTaskContext,
+  createFileRequestContext,
+  validateContextBlock,
+} from './context-parser.js';
+
+const PROTOCOL_VERSION = '1.0';
+
+// ============================================
+// Message Validation
+// ============================================
+
+function isValidMessage(message: unknown): message is ClientMessage | ServerMessage {
+  if (typeof message !== 'object' || message === null) return false;
+  const msg = message as Record<string, unknown>;
+  
+  // Must have context
+  if (!msg['context']) return false;
+  
+  const { valid } = validateContextBlock(msg['context']);
+  if (!valid) return false;
+  
+  // Files must be array if present
+  if (msg['files'] !== undefined && !Array.isArray(msg['files'])) return false;
+  
+  return true;
+}
+
+// ============================================
+// Client Message Builders
+// ============================================
 
 /**
  * Build client message
@@ -12,10 +51,65 @@ export function buildClientMessage(
   context: ContextBlock,
   files?: FileBlock[]
 ): ClientMessage {
-  // TODO: Implement client message building
+  const message: ClientMessage = { context };
   
-  throw new Error('buildClientMessage not implemented');
+  if (files && files.length > 0) {
+    message.files = files;
+  }
+  
+  return message;
 }
+
+/**
+ * Build new_task message
+ */
+export function buildNewTaskMessage(
+  sessionId: string,
+  tasks: string[],
+  architecturalFeatures?: string[]
+): ClientMessage {
+  const context = createNewTaskContext(sessionId, tasks, architecturalFeatures);
+  return buildClientMessage(context);
+}
+
+/**
+ * Build continue message
+ */
+export function buildContinueMessage(sessionId: string): ClientMessage {
+  const context: ContextBlock = {
+    version: PROTOCOL_VERSION,
+    session_id: sessionId,
+    continue: true,
+  };
+  return buildClientMessage(context);
+}
+
+/**
+ * Build confirm message
+ */
+export function buildConfirmMessage(sessionId: string): ClientMessage {
+  const context: ContextBlock = {
+    version: PROTOCOL_VERSION,
+    session_id: sessionId,
+    confirm: true,
+  };
+  return buildClientMessage(context);
+}
+
+/**
+ * Build file response message
+ */
+export function buildFileResponseMessage(
+  sessionId: string,
+  files: FileBlock[],
+  context: ContextBlock
+): ClientMessage {
+  return buildClientMessage(context, files);
+}
+
+// ============================================
+// Server Message Builders
+// ============================================
 
 /**
  * Build server message
@@ -27,40 +121,17 @@ export function buildServerMessage(
     message?: string;
   }
 ): ServerMessage {
-  // TODO: Implement server message building
+  const result: ServerMessage = { context };
   
-  throw new Error('buildServerMessage not implemented');
-}
-
-/**
- * Build new_task message
- */
-export function buildNewTaskMessage(
-  sessionId: string,
-  tasks: string[],
-  architecturalFeatures?: string[]
-): ClientMessage {
-  // TODO: Implement new_task message
+  if (options?.files && options.files.length > 0) {
+    result.files = options.files;
+  }
   
-  throw new Error('buildNewTaskMessage not implemented');
-}
-
-/**
- * Build continue message
- */
-export function buildContinueMessage(sessionId: string): ClientMessage {
-  // TODO: Implement continue message
+  if (options?.message) {
+    result.message = options.message;
+  }
   
-  throw new Error('buildContinueMessage not implemented');
-}
-
-/**
- * Build confirm message
- */
-export function buildConfirmMessage(sessionId: string): ClientMessage {
-  // TODO: Implement confirm message
-  
-  throw new Error('buildConfirmMessage not implemented');
+  return result;
 }
 
 /**
@@ -70,22 +141,8 @@ export function buildFileRequestMessage(
   sessionId: string,
   paths: string[]
 ): ServerMessage {
-  // TODO: Implement file request message
-  
-  throw new Error('buildFileRequestMessage not implemented');
-}
-
-/**
- * Build file response message
- */
-export function buildFileResponseMessage(
-  sessionId: string,
-  files: FileBlock[],
-  context: ContextBlock
-): ClientMessage {
-  // TODO: Implement file response message
-  
-  throw new Error('buildFileResponseMessage not implemented');
+  const context = createFileRequestContext(sessionId, paths);
+  return buildServerMessage(context);
 }
 
 /**
@@ -95,11 +152,21 @@ export function buildTaskProgressMessage(
   sessionId: string,
   taskId: string,
   progress: number,
-  status: string
+  status: TaskStatus | string
 ): ServerMessage {
-  // TODO: Implement progress message
-  
-  throw new Error('buildTaskProgressMessage not implemented');
+  const context: ContextBlock = {
+    version: PROTOCOL_VERSION,
+    session_id: sessionId,
+    tasks: [
+      {
+        id: taskId,
+        type: 'analyze', // Default type for progress updates
+        status: status as TaskStatus,
+        progress: Math.max(0, Math.min(100, progress)),
+      },
+    ],
+  };
+  return buildServerMessage(context);
 }
 
 /**
@@ -112,9 +179,19 @@ export function buildErrorMessage(
   file?: string,
   line?: number
 ): ServerMessage {
-  // TODO: Implement error message
-  
-  throw new Error('buildErrorMessage not implemented');
+  const context: ContextBlock = {
+    version: PROTOCOL_VERSION,
+    session_id: sessionId,
+    errors: [
+      {
+        code,
+        message,
+        ...(file && { file }),
+        ...(line !== undefined && { line }),
+      },
+    ],
+  };
+  return buildServerMessage(context);
 }
 
 /**
@@ -124,27 +201,91 @@ export function buildSessionCompleteMessage(
   sessionId: string,
   summary: string
 ): ServerMessage {
-  // TODO: Implement complete message
-  
-  throw new Error('buildSessionCompleteMessage not implemented');
+  const context: ContextBlock = {
+    version: PROTOCOL_VERSION,
+    session_id: sessionId,
+    tasks: [
+      {
+        id: 'session',
+        type: 'analyze',
+        status: 'completed',
+        progress: 100,
+      },
+    ],
+  };
+  return buildServerMessage(context, { message: summary });
 }
+
+/**
+ * Build acknowledgment message
+ */
+export function buildAckMessage(
+  sessionId: string,
+  message?: string
+): ServerMessage {
+  const context = createInitialContext(sessionId);
+  return buildServerMessage(context, { message: message ?? 'Acknowledged' });
+}
+
+/**
+ * Build neuron activation message
+ */
+export function buildNeuronActivationMessage(
+  sessionId: string,
+  activatedNeurons: string[],
+  injectedContent?: string
+): ServerMessage {
+  const context: ContextBlock = {
+    version: PROTOCOL_VERSION,
+    session_id: sessionId,
+    architectural_features: activatedNeurons,
+  };
+  
+  if (injectedContent) {
+    return buildServerMessage(context, { message: injectedContent });
+  }
+  return buildServerMessage(context);
+}
+
+// ============================================
+// Serialization
+// ============================================
 
 /**
  * Serialize message for transmission
  */
 export function serializeMessage(message: ClientMessage | ServerMessage): string {
-  // TODO: Implement serialization
-  
-  throw new Error('serializeMessage not implemented');
+  return JSON.stringify(message);
 }
 
 /**
  * Parse received message
  */
 export function parseMessage(data: string): ClientMessage | ServerMessage {
-  // TODO: Implement message parsing
-  
-  throw new Error('parseMessage not implemented');
+  try {
+    const parsed = JSON.parse(data);
+    
+    if (!isValidMessage(parsed)) {
+      throw new Error('Invalid message structure');
+    }
+    
+    return parsed;
+  } catch (error) {
+    throw new Error(
+      `Failed to parse message: ${error instanceof Error ? error.message : 'Unknown error'}`
+    );
+  }
+}
+
+/**
+ * Parse message safely (returns null on error)
+ */
+export function parseMessageSafe(data: string): ClientMessage | ServerMessage | null {
+  try {
+    return parseMessage(data);
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -154,7 +295,99 @@ export function validateMessage(message: unknown): {
   valid: boolean;
   errors: string[];
 } {
-  // TODO: Implement validation
-  
-  throw new Error('validateMessage not implemented');
+  const errors: string[] = [];
+
+  if (typeof message !== 'object' || message === null) {
+    return { valid: false, errors: ['Message must be an object'] };
+  }
+
+  const msg = message as Record<string, unknown>;
+
+  // Check context
+  if (!msg['context']) {
+    errors.push('context is required');
+  } else {
+    const { valid: contextValid, errors: contextErrors } = validateContextBlock(msg['context']);
+    if (!contextValid) {
+      errors.push(...contextErrors.map((e) => `context: ${e}`));
+    }
+  }
+
+  // Check files if present
+  if (msg['files'] !== undefined) {
+    if (!Array.isArray(msg['files'])) {
+      errors.push('files must be an array');
+    } else {
+      for (let i = 0; i < msg['files'].length; i++) {
+        const file = msg['files'][i];
+        if (typeof file !== 'object' || file === null) {
+          errors.push(`files[${i}] must be an object`);
+        } else {
+          const f = file as Record<string, unknown>;
+          if (typeof f['path'] !== 'string' || f['path'].length === 0) {
+            errors.push(`files[${i}].path is required and must be a non-empty string`);
+          }
+          if (typeof f['content'] !== 'string') {
+            errors.push(`files[${i}].content is required and must be a string`);
+          }
+        }
+      }
+    }
+  }
+
+  // Check message field (server messages only)
+  if (msg['message'] !== undefined && typeof msg['message'] !== 'string') {
+    errors.push('message must be a string');
+  }
+
+  return { valid: errors.length === 0, errors };
+}
+
+// ============================================
+// Message Utilities
+// ============================================
+
+/**
+ * Check if message is a client message
+ */
+export function isClientMessage(message: ClientMessage | ServerMessage): message is ClientMessage {
+  return !('message' in message && typeof message['message'] === 'string');
+}
+
+/**
+ * Check if message is a server message
+ */
+export function isServerMessage(message: ClientMessage | ServerMessage): message is ServerMessage {
+  return 'message' in message || !('files' in message);
+}
+
+/**
+ * Get session ID from message
+ */
+export function getSessionId(message: ClientMessage | ServerMessage): string {
+  return message.context.session_id;
+}
+
+/**
+ * Clone message deeply
+ */
+export function cloneMessage<T extends ClientMessage | ServerMessage>(message: T): T {
+  return JSON.parse(JSON.stringify(message));
+}
+
+/**
+ * Create message with updated context
+ */
+export function updateMessageContext<T extends ClientMessage | ServerMessage>(
+  message: T,
+  updates: Partial<ContextBlock>
+): T {
+  return {
+    ...message,
+    context: {
+      ...message.context,
+      ...updates,
+      version: PROTOCOL_VERSION,
+    },
+  };
 }

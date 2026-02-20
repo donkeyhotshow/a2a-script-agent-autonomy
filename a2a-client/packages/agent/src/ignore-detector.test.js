@@ -3,31 +3,17 @@
  */
 
 const { IgnoreDetector } = require('./ignore-detector');
-const fs = require('fs').promises;
-const path = require('path');
-const os = require('os');
-
-// Mock fs.promises
-jest.mock('fs', () => ({
-  promises: {
-    access: jest.fn(),
-    readFile: jest.fn(),
-    readdir: jest.fn(),
-  }
-}));
 
 describe('IgnoreDetector', () => {
   let detector;
-  let tempDir;
+  const tempDir = '/test/project';
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    tempDir = '/test/project';
     detector = new IgnoreDetector({ projectPath: tempDir });
   });
 
   describe('_parseIgnoreFile', () => {
-    test('should parse simple patterns', () => {
+    it('should parse simple patterns', () => {
       const content = 'node_modules/\n.git\n*.log';
       const patterns = detector._parseIgnoreFile(content, '.a2aignore');
       
@@ -41,7 +27,7 @@ describe('IgnoreDetector', () => {
       });
     });
 
-    test('should parse root-anchored patterns', () => {
+    it('should parse root-anchored patterns', () => {
       const content = '/node_modules/\n/build\n';
       const patterns = detector._parseIgnoreFile(content, '.a2aignore');
       
@@ -51,7 +37,7 @@ describe('IgnoreDetector', () => {
       expect(patterns[1].pattern).toBe('build');
     });
 
-    test('should parse negation patterns', () => {
+    it('should parse negation patterns', () => {
       const content = '*.log\n!important.log';
       const patterns = detector._parseIgnoreFile(content, '.a2aignore');
       
@@ -60,7 +46,7 @@ describe('IgnoreDetector', () => {
       expect(patterns[1].pattern).toBe('important.log');
     });
 
-    test('should skip comments and empty lines', () => {
+    it('should skip comments and empty lines', () => {
       const content = '# This is a comment\nnode_modules/\n\n.git';
       const patterns = detector._parseIgnoreFile(content, '.a2aignore');
       
@@ -73,27 +59,27 @@ describe('IgnoreDetector', () => {
       detector._initialized = true;
     });
 
-    test('should match exact paths', () => {
+    it('should match exact paths', () => {
       expect(detector._matchPattern('node_modules', 'node_modules')).toBe(true);
       expect(detector._matchPattern('src/index.js', 'src')).toBe(true);
     });
 
-    test('should match patterns at any path level', () => {
+    it('should match patterns at any path level', () => {
       expect(detector._matchPattern('packages/agent/node_modules', 'node_modules')).toBe(true);
       expect(detector._matchPattern('deep/nested/node_modules/lib', 'node_modules')).toBe(true);
       expect(detector._matchPattern('src/components/Button.js', 'components')).toBe(true);
     });
 
-    test('should match path prefixes', () => {
+    it('should match path prefixes', () => {
       expect(detector._matchPattern('node_modules/express/package.json', 'node_modules')).toBe(true);
     });
 
-    test('should not match partial names', () => {
+    it('should not match partial names', () => {
       expect(detector._matchPattern('my_node_modules', 'node_modules')).toBe(false);
       expect(detector._matchPattern('node_modules_backup', 'node_modules')).toBe(false);
     });
 
-    test('should handle glob patterns', () => {
+    it('should handle glob patterns', () => {
       expect(detector._matchPattern('test.js', '*.js')).toBe(true);
       expect(detector._matchPattern('helper.js', '*.js')).toBe(true);
       expect(detector._matchPattern('file.txt', '*.js')).toBe(false);
@@ -107,7 +93,7 @@ describe('IgnoreDetector', () => {
       detector._initialized = true;
     });
 
-    test('should ignore node_modules at root level', () => {
+    it('should ignore node_modules at root level', () => {
       detector.ignorePatterns = [
         { pattern: 'node_modules', isNegation: false, isDir: true, isRootAnchored: false, source: '.a2aignore' }
       ];
@@ -117,7 +103,7 @@ describe('IgnoreDetector', () => {
       expect(detector.shouldIgnore('node_modules/express/package.json')).toBe(true);
     });
 
-    test('should ignore node_modules in subdirectories', () => {
+    it('should ignore node_modules in subdirectories', () => {
       detector.ignorePatterns = [
         { pattern: 'node_modules', isNegation: false, isDir: true, isRootAnchored: false, source: '.a2aignore' }
       ];
@@ -127,7 +113,7 @@ describe('IgnoreDetector', () => {
       expect(detector.shouldIgnore('deep/nested/path/node_modules')).toBe(true);
     });
 
-    test('should NOT ignore node_modules when using root-anchored pattern', () => {
+    it('should NOT ignore node_modules when using root-anchored pattern', () => {
       detector.ignorePatterns = [
         { pattern: 'node_modules', isNegation: false, isDir: true, isRootAnchored: true, source: '.a2aignore' }
       ];
@@ -137,7 +123,7 @@ describe('IgnoreDetector', () => {
       expect(detector.shouldIgnore('deep/nested/node_modules')).toBe(false);
     });
 
-    test('should handle negation patterns', () => {
+    it('should handle negation patterns', () => {
       detector.ignorePatterns = [
         { pattern: '*.log', isNegation: false, isDir: false, isRootAnchored: false, source: '.a2aignore' },
         { pattern: 'important.log', isNegation: true, isDir: false, isRootAnchored: false, source: '.a2aignore' }
@@ -153,7 +139,7 @@ describe('IgnoreDetector', () => {
       detector._initialized = true;
     });
 
-    test('should ignore directories with trailing slash pattern', () => {
+    it('should ignore directories with trailing slash pattern', () => {
       detector.ignorePatterns = [
         { pattern: 'dist', isNegation: false, isDir: true, isRootAnchored: false, source: '.a2aignore' }
       ];
@@ -163,7 +149,7 @@ describe('IgnoreDetector', () => {
       expect(detector.shouldIgnore('src/dist')).toBe(true);
     });
 
-    test('should ignore files by extension', () => {
+    it('should ignore files by extension', () => {
       detector.ignorePatterns = [
         { pattern: '*.tmp', isNegation: false, isDir: false, isRootAnchored: false, source: '.a2aignore' }
       ];
@@ -172,7 +158,7 @@ describe('IgnoreDetector', () => {
       expect(detector.shouldIgnore('temp/cache.tmp')).toBe(true);
     });
 
-    test('should ignore specific directories anywhere in path', () => {
+    it('should ignore specific directories anywhere in path', () => {
       detector.ignorePatterns = [
         { pattern: '.git', isNegation: false, isDir: true, isRootAnchored: false, source: '.a2aignore' }
       ];
@@ -182,7 +168,7 @@ describe('IgnoreDetector', () => {
       expect(detector.shouldIgnore('packages/agent/.git/config')).toBe(true);
     });
 
-    test('should ignore specific files anywhere in path', () => {
+    it('should ignore specific files anywhere in path', () => {
       detector.ignorePatterns = [
         { pattern: 'package-lock.json', isNegation: false, isDir: false, isRootAnchored: false, source: '.a2aignore' }
       ];
@@ -204,7 +190,7 @@ describe('IgnoreDetector', () => {
       detector._initialized = true;
     });
 
-    test('should skip node_modules directories at any level', () => {
+    it('should skip node_modules directories at any level', () => {
       detector.ignorePatterns = [
         { pattern: 'node_modules', isNegation: false, isDir: true, isRootAnchored: false, source: '.a2aignore' }
       ];
@@ -213,7 +199,7 @@ describe('IgnoreDetector', () => {
       expect(detector.shouldSkipDirectory('node_modules', 'packages/agent')).toBe(true);
     });
 
-    test('should skip when parent directory is ignored', () => {
+    it('should skip when parent directory is ignored', () => {
       detector.ignorePatterns = [
         { pattern: 'node_modules', isNegation: false, isDir: true, isRootAnchored: false, source: '.a2aignore' }
       ];
@@ -232,7 +218,7 @@ describe('IgnoreDetector', () => {
       ];
     });
 
-    test('should filter out ignored entries', () => {
+    it('should filter out ignored entries', () => {
       const entries = [
         { name: 'src', path: 'src', type: 'directory' },
         { name: 'node_modules', path: 'node_modules', type: 'directory' },
@@ -254,7 +240,7 @@ describe('IgnoreDetector', () => {
       detector._initialized = true;
     });
 
-    test('real-world .a2aignore patterns', () => {
+    it('real-world .a2aignore patterns', () => {
       // Simulate patterns from a real .a2aignore file
       const patterns = [
         { pattern: 'node_modules', isNegation: false, isDir: true, isRootAnchored: false, source: '.a2aignore' },
@@ -282,7 +268,7 @@ describe('IgnoreDetector', () => {
       expect(detector.shouldIgnore('README.md')).toBe(false);
     });
 
-    test('mixed root-anchored and non-anchored patterns', () => {
+    it('mixed root-anchored and non-anchored patterns', () => {
       detector.ignorePatterns = [
         { pattern: 'build', isNegation: false, isDir: true, isRootAnchored: true, source: '.a2aignore' },  // Only root
         { pattern: 'node_modules', isNegation: false, isDir: true, isRootAnchored: false, source: '.a2aignore' }  // Anywhere

@@ -1,27 +1,18 @@
 /**
- * @a2a/api-client - HTTP client for A2A server communication
- * 
- * Provides methods for:
- * - Creating and managing task cards
- * - Answering server questions
- * - Reporting command execution results
- * - Managing card lifecycle
- * 
+ * @a2a/api-client - HTTP client for A2A server
+ * Protocol per requirements.md: context block always present
  * @module @a2a/api-client
  */
 
 const fetch = require('node-fetch');
+const {
+  buildNewTaskContext,
+  buildContinueContext,
+  buildConfirmContext,
+  buildFileResponseContext,
+} = require('./protocol.js');
 
-/**
- * API Error class for handling HTTP errors
- */
 class ApiError extends Error {
-  /**
-   * Create an API error
-   * @param {string} message - Error message
-   * @param {number} status - HTTP status code
-   * @param {Object} data - Additional error data
-   */
   constructor(message, status, data = {}) {
     super(message);
     this.name = 'ApiError';
@@ -30,172 +21,162 @@ class ApiError extends Error {
   }
 }
 
-/**
- * API Client for A2A server communication
- */
 class ApiClient {
-  /**
-   * Create an API client instance
-   * @param {Object} config - Configuration options
-   * @param {string} config.serverUrl - Server URL (default: http://localhost:3000/v1)
-   * @param {string} [config.token] - Authentication token
-   * @param {string} [config.clientId] - Client identifier
-   * @param {number} [config.timeout=30000] - Request timeout in ms
-   */
   constructor(config) {
-    this.serverUrl = config.serverUrl || 'http://localhost:3000/v1';
+    this.serverUrl = (config.serverUrl || 'http://localhost:3000/api/v1').replace(/\/?$/, '');
     this.token = config.token;
     this.clientId = config.clientId;
     this.timeout = config.timeout || 30000;
   }
 
-  /**
-   * Make HTTP request to server
-   * @private
-   * @param {string} method - HTTP method
-   * @param {string} path - API path
-   * @param {Object|null} body - Request body
-   * @returns {Promise<Object>} Response data
-   * @throws {ApiError} On request failure
-   */
   async request(method, path, body = null) {
     const url = `${this.serverUrl}${path}`;
-    const headers = {
-      'Content-Type': 'application/json',
-    };
+    const headers = { 'Content-Type': 'application/json' };
+    if (this.token) headers['Authorization'] = `Bearer ${this.token}`;
+    if (this.clientId) headers['X-Client-ID'] = this.clientId;
 
-    if (this.token) {
-      headers['Authorization'] = `Bearer ${this.token}`;
-    }
-    if (this.clientId) {
-      headers['X-Client-ID'] = this.clientId;
-    }
-
-    const options = {
-      method,
-      headers,
-      timeout: this.timeout,
-    };
-
-    if (body) {
-      options.body = JSON.stringify(body);
-    }
+    const options = { method, headers, timeout: this.timeout };
+    if (body) options.body = JSON.stringify(body);
 
     try {
       const response = await fetch(url, options);
-      const data = await response.json();
-
+      const data = await response.json().catch(() => ({}));
       if (!response.ok) {
         throw new ApiError(data.error?.message || 'Request failed', response.status, data);
       }
-
       return data;
     } catch (err) {
-      if (err.name === 'AbortError') {
-        throw new ApiError('Request timeout', 408);
-      }
+      if (err.name === 'AbortError') throw new ApiError('Request timeout', 408);
       throw err;
     }
   }
 
-  /**
-   * Create new task card
-   * @param {Object} card - Card data
-   * @param {string} card.sessionId - Session identifier
-   * @param {Object} card.userRequest - User request data
-   * @param {Object} card.sections - Card sections
-   * @returns {Promise<Object>} Created card with server response
-   */
+  /** Send body as per requirements: context block or legacy new_task */
+  _sendBody(context, files = []) {
+    const body = { context };
+    if (files.length) body.files = files.map((f) => ({ path: f.path, content: f.content }));
+    return body;
+  }
+
+  async createSession(projectId) {
+    const res = await this.request('POST', '/sessions', { project_id: projectId });
+    return res.data || res;
+  }
+
+  /** Adapter: createCard(card) -> createSession + sendMessage. Card needs projectId, userRequest.original */
   async createCard(card) {
-    return this.request('POST', '/cards', {
-      action: 'submit_card',
-      card,
-    });
+    const projectId = card.project?.id || card.projectId;
+    if (!projectId) throw new ApiError('projectId required', 400);
+    const req = card.userRequest?.original ?? card.request?.raw ?? '';
+    const arch = card.architecturalFeatures ?? card.architectural_features;
+    return this.createCardByProject(projectId, req, arch);
+  }
+
+  async createCardByProject(projectId, userRequest, architecturalFeatures) {
+    const session = await this.createSession(projectId);
+    const sid = session.session_id;
+    const task = Array.isArray(userRequest) ? userRequest : [String(userRequest || '')];
+    const msg = await this.sendMessage(sid, task, architecturalFeatures);
+    const status = (msg.tasks?.length > 0) ? 'task_created' : 'processing';
+    return { ...msg, status, card: { cardId: sid } };
+  }
+
+  /** Adapter: reportCommands(sessionId, results) -> continueSession */
+  async reportCommands(sessionId, _commandResults) {
+    return this.continueSession(sessionId);
+  }
+
+  /** Adapter: answerQuestions(sessionId, _answers) -> confirmSession */
+  async answerQuestions(sessionId, _answers) {
+    return this.confirmSession(sessionId);
   }
 
   /**
-   * Update task card
-   * @param {string} cardId - Card identifier
-   * @param {Object} updates - Card updates
-   * @returns {Promise<Object>} Updated card
+   * Get session
+   * @param {string} sessionId - Session ID
+   * @returns {Promise<Object>} Session data
    */
-  async updateCard(cardId, updates) {
-    return this.request('PATCH', `/cards/${cardId}`, {
-      action: 'update_card',
-      card: updates,
-    });
+  async getSession(sessionId) {
+    const res = await this.request('GET', `/sessions/${sessionId}`);
+    return res.data || res;
   }
 
   /**
-   * Answer questions from server
-   * @param {string} cardId - Card identifier
-   * @param {Object} answers - Answers to questions
-   * @returns {Promise<Object>} Server response
+   * Send message (new task) to session
+   * Per requirements §3.3: context with new_task, architectural_features
+   * @param {string} sessionId - Session ID
+   * @param {string[]} newTask - Task items [text, hints, ...]
+   * @param {string[]} [architecturalFeatures] - Non-standard file layout
+   * @returns {Promise<Object>} Response with context
    */
-  async answerQuestions(cardId, answers) {
-    return this.request('PATCH', `/cards/${cardId}`, {
-      action: 'answer_questions',
-      cardId,
-      answers,
-    });
+  async sendMessage(sessionId, newTask, architecturalFeatures) {
+    const context = buildNewTaskContext(sessionId, newTask, architecturalFeatures);
+    const body = { context, new_task: newTask }; // new_task for server compat
+    const res = await this.request('POST', `/sessions/${sessionId}/message`, body);
+    return res.data || res;
   }
 
   /**
-   * Report command execution results to server
-   * @param {string} cardId - Card identifier
-   * @param {Array} commandResults - Array of command execution results
-   * @returns {Promise<Object>} Server response
+   * Get session context
+   * @param {string} sessionId - Session ID
+   * @returns {Promise<Object>} { context }
    */
-  async reportCommands(cardId, commandResults) {
-    return this.request('POST', `/cards/${cardId}/commands`, {
-      action: 'execute_commands',
-      cardId,
-      commandResults,
-    });
+  async getSessionContext(sessionId) {
+    const res = await this.request('GET', `/sessions/${sessionId}/context`);
+    return res.data || res;
   }
 
   /**
-   * Get card status
-   * @param {string} cardId - Card identifier
-   * @returns {Promise<Object>} Card data
+   * Continue session (кнопка "Делаем") - §3.3.4
    */
-  async getCard(cardId) {
-    return this.request('GET', `/cards/${cardId}`);
+  async continueSession(sessionId) {
+    const context = buildContinueContext(sessionId);
+    const res = await this.request('POST', `/sessions/${sessionId}/continue`, { context });
+    return res.data || res;
   }
 
   /**
-   * Cancel task/card
-   * @param {string} cardId - Card identifier
-   * @returns {Promise<Object>} Cancellation result
+   * Confirm changes - §3.4.2 verification. Optionally include files for verification.
+   * @param {string} sessionId
+   * @param {Array<{path:string,content:string}>} [files] - Applied file contents
    */
-  async cancelCard(cardId) {
-    return this.request('DELETE', `/cards/${cardId}`);
+  async confirmSession(sessionId, files = []) {
+    const context = buildConfirmContext(sessionId);
+    const body = this._sendBody(context, files);
+    const res = await this.request('POST', `/sessions/${sessionId}/confirm`, body);
+    return res.data || res;
   }
 
   /**
-   * Search RAG index via server
-   * @param {string} query - Search query
-   * @param {Object} options - Search options
-   * @param {number} [options.limit=10] - Max results
-   * @returns {Promise<Object>} Search results
+   * Send requested files - §7.2
    */
-  async searchRAG(query, options = {}) {
-    return this.request('POST', '/search', {
-      query,
-      limit: options.limit || 10,
-    });
+  async sendFiles(sessionId, files) {
+    const context = buildFileResponseContext(sessionId);
+    const body = this._sendBody(context, files);
+    const res = await this.request('POST', `/sessions/${sessionId}/files`, body);
+    return res.data || res;
   }
 
   /**
-   * Get server status
-   * @returns {Promise<Object>} Server status
+   * Delete session
+   * @param {string} sessionId - Session ID
+   * @returns {Promise<void>}
    */
-  async getStatus() {
-    return this.request('GET', '/status');
+  async deleteSession(sessionId) {
+    await this.request('DELETE', `/sessions/${sessionId}`);
+  }
+
+  /**
+   * Invoke - send markdown + context + optional code blocks. Server is stateless.
+   * @param {Object} opts
+   * @param {string} opts.markdown - Markdown content
+   * @param {Object} [opts.context] - Side context
+   * @param {Array<{path:string,content:string}>} [opts.files] - Attached code blocks
+   */
+  async invoke({ markdown, context = {}, files = [] }) {
+    const res = await this.request('POST', '/invoke', { markdown, context, files });
+    return res.data || res;
   }
 }
 
-module.exports = {
-  ApiClient,
-  ApiError,
-};
+module.exports = { ApiClient, ApiError };

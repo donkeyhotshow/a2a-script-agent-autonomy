@@ -1,39 +1,16 @@
 /**
- * Jest Test Setup
- * Global configuration for tests
+ * Vitest Test Setup
  */
 
-// TODO: Implement test setup
-// 1. Setup test database
-// 2. Setup Redis mock
-// 3. Setup environment variables
-// 4. Setup global hooks
+import dotenv from 'dotenv';
+import path from 'path';
 
-// Set test environment
+dotenv.config({ path: path.resolve(process.cwd(), '.env') });
+
 process.env.NODE_ENV = 'test';
-process.env.DATABASE_URL = 'postgresql://test:test@localhost:5432/a2a_test';
-process.env.REDIS_URL = 'redis://localhost:6379/1';
-process.env.JWT_SECRET = 'test-jwt-secret';
-process.env.ENCRYPTION_KEY = 'test-encryption-key-32-characters!';
-
-// Global beforeAll hook
-beforeAll(async () => {
-  // TODO: Setup test database connection
-  console.log('Setting up test environment...');
-});
-
-// Global afterAll hook
-afterAll(async () => {
-  // TODO: Cleanup test database
-  console.log('Tearing down test environment...');
-});
-
-// Global beforeEach hook
-beforeEach(async () => {
-  // TODO: Reset database state
-});
-
-// Global afterEach hook
-afterEach(async () => {
-  // TODO: Cleanup after each test
-});
+// SKIP_AUTH=1 bypasses auth - set only when DB available for full integration
+// process.env.SKIP_AUTH = '1';
+process.env.DATABASE_URL = process.env.DATABASE_URL ?? 'postgresql://pgadmin:51202368Wmid%40@localhost:5432/a2a_test?schema=public';
+process.env.REDIS_URL = process.env.REDIS_URL ?? 'redis://localhost:6379/1';
+process.env.JWT_SECRET = process.env.JWT_SECRET ?? 'test-jwt-secret-min-32-characters-long';
+process.env.ENCRYPTION_KEY = process.env.ENCRYPTION_KEY ?? 'test-encryption-key-32-characters!';

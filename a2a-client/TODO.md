@@ -15,7 +15,7 @@ A2A Client — клиентская часть системы для индек�
 ### 1.1 Пакет fs-utils
 - [ ] Рефакторинг `ignore-detector.js` — оптимизация производительности
 - [ ] Добавить кэширование результатов сканирования
-- [ ] Покрыть тестами 90%+ кода
+- [x] Vitest unit tests (ignore-detector, glob-matcher, file-scanner)
 
 ### 1.2 Пакет graph (Tier 1)
 - [ ] Расширить builder для извлечения связей Laravel

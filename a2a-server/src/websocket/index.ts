@@ -2,109 +2,115 @@ import { WebSocketServer, WebSocket } from 'ws';
 import { Server } from 'http';
 import { logger } from '../utils/logger.js';
 
-/**
- * WebSocket Server
- * Real-time communication with A2A clients
- */
-
 let wss: WebSocketServer | null = null;
+const sessionConnections = new Map<string, Set<WebSocket>>();
 
-/**
- * Initialize WebSocket server
- */
 export function initWebSocket(server: Server): WebSocketServer {
-  // TODO: Implement WebSocket initialization
-  // 1. Create WebSocketServer
-  // 2. Setup connection handler
-  // 3. Setup heartbeat/ping-pong
-  // 4. Return server instance
-  
-  throw new Error('initWebSocket not implemented');
+  wss = new WebSocketServer({ noServer: true });
+
+  server.on('upgrade', (request, socket, head) => {
+    const url = new URL(request.url ?? '', `http://${request.headers.host}`);
+    if (!url.pathname.startsWith('/ws/sessions/')) {
+      socket.destroy();
+      return;
+    }
+    const sessionId = url.pathname.replace('/ws/sessions/', '').split('/')[0];
+    const token = url.searchParams.get('token');
+    if (!sessionId || !token) {
+      socket.destroy();
+      return;
+    }
+    wss!.handleUpgrade(request, socket, head, (ws) => {
+      wss!.emit('connection', ws, request, sessionId);
+    });
+  });
+
+  wss.on('connection', (ws: WebSocket, _req: unknown, sessionId: string) => {
+    if (!sessionConnections.has(sessionId)) {
+      sessionConnections.set(sessionId, new Set());
+    }
+    sessionConnections.get(sessionId)!.add(ws);
+    logger.info('WebSocket connected', { sessionId });
+
+    ws.on('close', () => {
+      sessionConnections.get(sessionId)?.delete(ws);
+      if (sessionConnections.get(sessionId)?.size === 0) {
+        sessionConnections.delete(sessionId);
+      }
+    });
+
+    ws.on('pong', () => {
+      (ws as WebSocket & { isAlive?: boolean }).isAlive = true;
+    });
+  });
+
+  const interval = setInterval(() => {
+    wss?.clients.forEach((ws: WebSocket) => {
+      const w = ws as WebSocket & { isAlive?: boolean };
+      if (w.isAlive === false) return ws.terminate();
+      w.isAlive = false;
+      ws.ping();
+    });
+  }, 30000);
+  wss.on('close', () => clearInterval(interval));
+
+  return wss;
 }
 
-/**
- * Get WebSocket server instance
- */
 export function getWebSocketServer(): WebSocketServer {
-  // TODO: Implement getter
-  
-  throw new Error('getWebSocketServer not implemented');
+  if (!wss) throw new Error('WebSocket server not initialized');
+  return wss;
 }
 
-/**
- * Broadcast to all connected clients
- */
 export function broadcast(message: unknown): void {
-  // TODO: Implement broadcast
-  // 1. Iterate all clients
-  // 2. Send message to each
-  
-  throw new Error('broadcast not implemented');
+  const data = JSON.stringify(message);
+  wss?.clients.forEach((ws) => {
+    if (ws.readyState === WebSocket.OPEN) ws.send(data);
+  });
 }
 
-/**
- * Send to specific session
- */
 export function sendToSession(sessionId: string, message: unknown): void {
-  // TODO: Implement session-specific send
-  // 1. Find client by session ID
-  // 2. Send message
-  
-  throw new Error('sendToSession not implemented');
+  const data = JSON.stringify(message);
+  const conns = sessionConnections.get(sessionId);
+  if (conns) {
+    conns.forEach((ws) => {
+      if (ws.readyState === WebSocket.OPEN) ws.send(data);
+    });
+  }
 }
 
-/**
- * Close WebSocket server
- */
 export async function closeWebSocket(): Promise<void> {
-  // TODO: Implement close
-  // 1. Close all connections
-  // 2. Close server
-  
-  throw new Error('closeWebSocket not implemented');
+  if (wss) {
+    wss.close();
+    wss = null;
+    sessionConnections.clear();
+    logger.info('WebSocket server closed');
+  }
 }
 
-/**
- * Get connected clients count
- */
 export function getConnectedClientsCount(): number {
-  // TODO: Implement count
-  
-  throw new Error('getConnectedClientsCount not implemented');
+  return wss?.clients.size ?? 0;
 }
 
-/**
- * Connection handler type
- */
 export type ConnectionHandler = (
   ws: WebSocket,
   sessionId: string,
   clientId: string
 ) => void;
 
-/**
- * Message handler type
- */
 export type MessageHandler = (
   ws: WebSocket,
   sessionId: string,
   message: unknown
 ) => void;
 
-/**
- * Set connection handler
- */
+let connectionHandler: ConnectionHandler | null = null;
+let messageHandler: MessageHandler | null = null;
+
 export function onConnection(handler: ConnectionHandler): void {
-  // TODO: Implement handler registration
-  
-  throw new Error('onConnection not implemented');
+  connectionHandler = handler;
 }
 
-/**
- * Set message handler
- */
 export function onMessage(handler: MessageHandler): void {
-  // TODO: Implement handler registration
-  
-  throw new Error('onMessage not implemented');
+  messageHandler = handler;
 }

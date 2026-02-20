@@ -1,121 +1,108 @@
 import crypto from 'crypto';
 import { config } from '../config/index.js';
 
-/**
- * Crypto Utilities
- * Encryption and hashing functions
- */
+const ALG = 'aes-256-gcm';
+const IV_LEN = 16;
+const AUTH_TAG_LEN = 16;
+
+function getEncryptionKey(): Buffer {
+  const key = process.env.ENCRYPTION_KEY || config.jwtSecret;
+  return crypto.createHash('sha256').update(key).digest();
+}
 
 /**
  * Encrypt sensitive data (e.g., SSH keys)
  */
 export function encrypt(text: string): string {
-  // TODO: Implement encryption
-  // 1. Get encryption key from config
-  // 2. Generate IV
-  // 3. Encrypt with AES-256-GCM
-  // 4. Return IV + encrypted data (base64)
-  
-  throw new Error('encrypt not implemented');
+  const key = getEncryptionKey();
+  const iv = crypto.randomBytes(IV_LEN);
+  const cipher = crypto.createCipheriv(ALG, key, iv);
+  const enc = Buffer.concat([cipher.update(text, 'utf8'), cipher.final()]);
+  const tag = cipher.getAuthTag();
+  return Buffer.concat([iv, tag, enc]).toString('base64');
 }
 
 /**
  * Decrypt sensitive data
  */
 export function decrypt(encryptedData: string): string {
-  // TODO: Implement decryption
-  // 1. Extract IV from data
-  // 2. Decrypt with AES-256-GCM
-  // 3. Return plaintext
-  
-  throw new Error('decrypt not implemented');
+  const key = getEncryptionKey();
+  const buf = Buffer.from(encryptedData, 'base64');
+  const iv = buf.subarray(0, IV_LEN);
+  const tag = buf.subarray(IV_LEN, IV_LEN + AUTH_TAG_LEN);
+  const enc = buf.subarray(IV_LEN + AUTH_TAG_LEN);
+  const decipher = crypto.createDecipheriv(ALG, key, iv);
+  decipher.setAuthTag(tag);
+  return decipher.update(enc) + decipher.final('utf8');
 }
 
 /**
  * Generate random string
  */
 export function generateRandomString(length: number = 32): string {
-  // TODO: Implement random string generation
-  // 1. Generate random bytes
-  // 2. Encode as hex or base64url
-  
-  throw new Error('generateRandomString not implemented');
+  return crypto.randomBytes(Math.ceil(length / 2)).toString('hex').slice(0, length);
 }
 
 /**
  * Generate UUID v4
  */
 export function generateUuid(): string {
-  // TODO: Implement UUID generation
-  // Use crypto.randomUUID()
-  
-  throw new Error('generateUuid not implemented');
+  return crypto.randomUUID();
 }
 
 /**
  * Hash string with SHA-256
  */
 export function hashSha256(text: string): string {
-  // TODO: Implement SHA-256 hash
-  
-  throw new Error('hashSha256 not implemented');
+  return crypto.createHash('sha256').update(text, 'utf8').digest('hex');
 }
 
 /**
  * Generate HMAC
  */
 export function generateHmac(data: string, secret?: string): string {
-  // TODO: Implement HMAC generation
-  // Use secret from config if not provided
-  
-  throw new Error('generateHmac not implemented');
+  const key = secret ?? config.jwtSecret;
+  return crypto.createHmac('sha256', key).update(data, 'utf8').digest('hex');
 }
 
 /**
  * Verify HMAC
  */
 export function verifyHmac(data: string, hmac: string, secret?: string): boolean {
-  // TODO: Implement HMAC verification
-  // Compare with constant-time comparison
-  
-  throw new Error('verifyHmac not implemented');
+  const expected = generateHmac(data, secret);
+  return constantTimeCompare(expected, hmac);
 }
 
 /**
  * Generate API key
  */
-export function generateApiKey(prefix: string = 'a2a'): string {
-  // TODO: Implement API key generation
-  // Format: {prefix}_{random_32_chars}
-  
-  throw new Error('generateApiKey not implemented');
+export function generateApiKey(prefix: string = 'sk_a2a'): string {
+  return `${prefix}_${generateRandomString(32)}`;
 }
 
 /**
- * Hash password with bcrypt-like algorithm
+ * Hash password with bcrypt
  */
 export async function hashPassword(password: string): Promise<string> {
-  // TODO: Implement password hashing
-  // Use PBKDF2 or scrypt
-  
-  throw new Error('hashPassword not implemented');
+  const { hash } = await import('bcrypt');
+  return hash(password, 10);
 }
 
 /**
  * Verify password against hash
  */
 export async function verifyPassword(password: string, hash: string): Promise<boolean> {
-  // TODO: Implement password verification
-  
-  throw new Error('verifyPassword not implemented');
+  const { compare } = await import('bcrypt');
+  return compare(password, hash);
 }
 
 /**
  * Constant-time string comparison
  */
 export function constantTimeCompare(a: string, b: string): boolean {
-  // TODO: Implement constant-time comparison
-  // Use crypto.timingSafeEqual
-  
-  throw new Error('constantTimeCompare not implemented');
+  if (a.length !== b.length) return false;
+  const bufA = Buffer.from(a, 'utf8');
+  const bufB = Buffer.from(b, 'utf8');
+  if (bufA.length !== bufB.length) return false;
+  return crypto.timingSafeEqual(bufA, bufB);
 }
