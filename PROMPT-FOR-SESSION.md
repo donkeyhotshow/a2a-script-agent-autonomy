@@ -50,12 +50,12 @@ Created the `process-input` script.
 ```bash
 # from repo root
 npx tsx a2a-server/scripts/process-input.ts [input.md] [output.md]
-# defaults: docs/adr-hacks/raw/etalon-D-request.md → output/etalon-D-result.md
+# defaults: docs/adr-hacks/archive/raw/etalon-D-request.md → output/etalon-D-result.md
 ```
 
 **Example run:**
 ```
-Input: docs/adr-hacks/raw/etalon-D-request.md
+Input: docs/adr-hacks/archive/raw/etalon-D-request.md
 Output: output/etalon-D-result.md
 Outcome: completed
 ```

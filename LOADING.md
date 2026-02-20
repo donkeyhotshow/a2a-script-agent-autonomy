@@ -6,15 +6,16 @@
 
 ---
 
-## Neurons (7)
+## Neurons (8)
 
-Один нейрон — множество триггеров. Подозрение строится при **неполном сходстве** (partial match).
+Один нейрон — множество триггеров. Подозрение строится при **неполном сходстве** (partial match). Каталог: `a2a-server/docs/neurons-catalog.md` (autogen: `npm run neurons:doc`).
 
-| id | category | triggers (content-based) |
-|----|----------|--------------------------|
-| neuron-validation | validation | FormRequest, rules(), validate(, Http\\Requests |
+| id | category | triggers (content-based) | note |
+|----|----------|--------------------------|------|
+| neuron-bootstrap | discovery | — | activatesWhenEmpty: true; request_files: composer.json, app/, resources/ |
+| neuron-validation | validation | FormRequest, rules(), validate(, Http\\Requests; **task:** validation, validate, rules | task-trigger |
 | neuron-auth | auth | Policy, Guard, middleware('auth'), App\\Policies |
-| neuron-eloquent | eloquent | extends Model, belongsTo, hasMany, factory, App\\Models |
+| neuron-eloquent | eloquent | extends Model, belongsTo, hasMany, factory, App\\Models | + request_files |
 | neuron-routing | routing | Route::, Controller, web.php, App\\Http\\Controllers |
 | neuron-views | views | Inertia, .vue, resources/js, Inertia\\ |
 | neuron-testing | testing | Pest, PHPUnit, TestCase, factory(, extends TestCase |

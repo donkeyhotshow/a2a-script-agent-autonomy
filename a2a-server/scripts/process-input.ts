@@ -2,7 +2,7 @@
 /**
  * Process MD protocol input → run core logic → write output to file.
  * No DB. Use: npx tsx scripts/process-input.ts [input.md] [output.md]
- * Default: docs/adr-hacks/raw/etalon-D-request.md → output/etalon-D-result.md
+ * Default: docs/adr-hacks/archive/raw/etalon-D-request.md → output/etalon-D-result.md
  */
 
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'fs';
@@ -136,7 +136,7 @@ async function processInput(context: Record<string, unknown>, codeBlocks: Array<
 
 // Run from a2a-server or repo root
 const root = process.cwd().endsWith('a2a-server') ? join(process.cwd(), '..') : process.cwd();
-const defaultInput = join(root, 'docs/adr-hacks/raw/etalon-D-request.md');
+const defaultInput = join(root, 'docs/adr-hacks/archive/raw/etalon-D-request.md');
 const defaultOutput = join(root, 'output/etalon-D-result.md');
 
 const inputPath = process.argv[2] || defaultInput;

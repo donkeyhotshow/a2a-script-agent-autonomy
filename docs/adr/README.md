@@ -28,5 +28,6 @@ A2A Coding Orchestrator — key architectural decisions.
 | [0020](0020-plexe-ml-planned.md) | Plexe ML — planned | proposed |
 | [0021](0021-client-polling.md) | Client polling | accepted |
 | [0022](0022-file-block-format.md) | File block format | accepted |
+| [0023](0023-code-hierarchy.md) | Code hierarchy (canonical) | accepted |
 
 Format: [MADR](https://adr.github.io/madr/).

@@ -1,6 +1,6 @@
 # Hack 0001: Direct API bypass
 
-**Index:** [docs/README.md](../README.md) | **Etalon:** [etalon-neuron-activation.md](../etalon-neuron-activation.md)
+**Index:** [docs/README.md](../../README.md) | **Etalon:** [etalon-neuron-activation.md](../../etalon-neuron-activation.md)
 
 ## Status
 

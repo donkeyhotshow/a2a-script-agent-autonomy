@@ -25,7 +25,7 @@
 
 | # | Задача | Описание |
 |---|--------|----------|
-| 2.1 | MD без file blocks | `npx tsx a2a-server/scripts/process-input.ts docs/adr-hacks/raw/etalon-A-request.md` → 0 neurons |
+| 2.1 | MD без file blocks | `npx tsx a2a-server/scripts/process-input.ts docs/adr-hacks/archive/raw/etalon-A-request.md` → 0 neurons |
 | 2.2 | MD с одним file | Один file block → entities, graph_incomplete |
 | 2.3 | MD с несколькими files | 2–5 file blocks → merge, relations |
 | 2.4 | MD полный стек | Все ключевые типы → completed |
@@ -62,9 +62,9 @@
 
 | # | Scenario | Файл | Output |
 |---|----------|------|--------|
-| 5.1 | A — short task, no files | raw/etalon-A-request.md | output/etalon-A-result.md |
-| 5.2 | B — arch only | raw/etalon-B-request.md | output/etalon-B-result.md |
-| 5.3 | D — task + codeBlocks | raw/etalon-D-request.md | output/etalon-D-result.md |
-| 5.4 | E — activates nothing | raw/etalon-E-request.md | output/etalon-E-result.md |
+| 5.1 | A — short task, no files | archive/raw/etalon-A-request.md | output/etalon-A-result.md |
+| 5.2 | B — arch only | archive/raw/etalon-B-request.md | output/etalon-B-result.md |
+| 5.3 | D — task + codeBlocks | archive/raw/etalon-D-request.md | output/etalon-D-result.md |
+| 5.4 | E — activates nothing | archive/raw/etalon-E-request.md | output/etalon-E-result.md |
 
-Run: `npx tsx a2a-server/scripts/process-input.ts docs/adr-hacks/raw/etalon-X-request.md output/etalon-X-result.md`
+Run: `npx tsx a2a-server/scripts/process-input.ts docs/adr-hacks/archive/raw/etalon-X-request.md output/etalon-X-result.md`
