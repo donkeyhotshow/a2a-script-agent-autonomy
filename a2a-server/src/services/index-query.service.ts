@@ -1,9 +1,10 @@
 /**
- * Index Query — questions → codebase index → answers.
- * Integrates with search.service.hybridSearch when implemented.
+ * Index Query Service
+ * Orchestrates knowledge (questions) + ml (search).
+ * Services may depend on both.
  */
 
-import type { BuiltQuestion } from './question-builder.js';
+import type { BuiltQuestion } from '../knowledge/question-builder.js';
 import { hybridSearch } from '../ml/search.service.js';
 
 export interface IndexAnswer {
@@ -13,10 +14,6 @@ export interface IndexAnswer {
   score?: number;
 }
 
-/**
- * Query codebase index with questions.
- * Uses hybridSearch when available; falls back to placeholder on error.
- */
 export async function queryIndex(
   projectId: string,
   questions: BuiltQuestion[]

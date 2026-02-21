@@ -1,85 +1,76 @@
 import { Router } from 'express';
-import { checkDatabaseHealth } from '../config/database.js';
-import { checkRedisHealth } from '../config/redis.js';
+import { getHealthStatus } from '../services/health.service.js';
 
 const router = Router();
 
 /**
  * Health Check Routes
- * Endpoints for monitoring service health
+ * Uses health.service (routes → services only).
  */
 
-// GET /api/v1/health
 router.get('/', async (_req, res) => {
-  // TODO: Implement comprehensive health check
-  // 1. Check database connection
-  // 2. Check Redis connection
-  // 3. Check disk space
-  // 4. Return aggregated status
-  
-  res.status(501).json({
-    success: false,
-    error: {
-      code: 'NOT_IMPLEMENTED',
-      message: 'Health check not yet implemented',
-    },
-  });
+  try {
+    const status = await getHealthStatus();
+    const ok = status.database.status === 'healthy' && status.redis.status === 'healthy';
+    res.json({
+      success: true,
+      data: {
+        status: ok ? 'healthy' : 'degraded',
+        database: status.database,
+        redis: status.redis,
+        timestamp: new Date().toISOString(),
+      },
+    });
+  } catch (err) {
+    res.status(503).json({
+      success: false,
+      error: { code: 'HEALTH_ERROR', message: String(err) },
+    });
+  }
 });
 
-// GET /api/v1/health/live
-router.get('/live', async (_req, res) => {
-  // TODO: Implement liveness probe
-  // Simple check that the server is running
-  
-  res.status(501).json({
-    success: false,
-    error: {
-      code: 'NOT_IMPLEMENTED',
-      message: 'Liveness check not yet implemented',
-    },
-  });
+router.get('/live', (_req, res) => {
+  res.json({ success: true, data: { status: 'alive' } });
 });
 
-// GET /api/v1/health/ready
 router.get('/ready', async (_req, res) => {
-  // TODO: Implement readiness probe
-  // Check if server is ready to accept requests
-  // 1. Database connected
-  // 2. Redis connected
-  
-  res.status(501).json({
-    success: false,
-    error: {
-      code: 'NOT_IMPLEMENTED',
-      message: 'Readiness check not yet implemented',
-    },
-  });
+  try {
+    const status = await getHealthStatus();
+    const ready = status.database.status === 'healthy';
+    res.status(ready ? 200 : 503).json({
+      success: ready,
+      data: { ready, database: status.database, redis: status.redis },
+    });
+  } catch (err) {
+    res.status(503).json({
+      success: false,
+      data: { ready: false, error: String(err) },
+    });
+  }
 });
 
-// GET /api/v1/health/database
 router.get('/database', async (_req, res) => {
-  // TODO: Implement database health check
-  
-  res.status(501).json({
-    success: false,
-    error: {
-      code: 'NOT_IMPLEMENTED',
-      message: 'Database health check not yet implemented',
-    },
-  });
+  try {
+    const status = await getHealthStatus();
+    res.json({ success: true, data: status.database });
+  } catch (err) {
+    res.status(503).json({
+      success: false,
+      error: { code: 'HEALTH_ERROR', message: String(err) },
+    });
+  }
 });
 
-// GET /api/v1/health/redis
 router.get('/redis', async (_req, res) => {
-  // TODO: Implement Redis health check
-  
-  res.status(501).json({
-    success: false,
-    error: {
-      code: 'NOT_IMPLEMENTED',
-      message: 'Redis health check not yet implemented',
-    },
-  });
+  try {
+    const status = await getHealthStatus();
+    res.json({ success: true, data: status.redis });
+  } catch (err) {
+    res.status(503).json({
+      success: false,
+      error: { code: 'HEALTH_ERROR', message: String(err) },
+    });
+  }
 });
 
 export default router;

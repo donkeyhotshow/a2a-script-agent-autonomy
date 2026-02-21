@@ -7,8 +7,8 @@ import { Router, Request, Response, NextFunction } from 'express';
 import { authenticate } from '../middleware/auth.middleware.js';
 import { sessionService } from '../services/session.service.js';
 import { messageService } from '../services/message.service.js';
-import { createSessionContext, getSessionContext, handleRootContext } from '../knowledge/context-handler.js';
-import type { RootContext } from '../knowledge/context-handler.js';
+import { createContext, getContext, handleRoot } from '../services/session-context.service.js';
+import type { RootContext } from '../services/session-context.service.js';
 import { logger } from '../utils/logger.js';
 
 const router = Router();
@@ -33,7 +33,7 @@ router.post('/', authenticate, async (req: Request, res: Response, next: NextFun
       title,
     });
 
-    createSessionContext(session.id, projectId);
+    createContext(session.id, projectId);
 
     logger.info('Session created via API', { sessionId: session.id, projectId });
 
@@ -93,11 +93,11 @@ router.post('/:sessionId/root-context', authenticate, async (req: Request, res: 
       });
     }
 
-    if (!getSessionContext(sessionId)) {
-      createSessionContext(sessionId, dbSession.projectId);
+    if (!getContext(sessionId)) {
+      createContext(sessionId, dbSession.projectId);
     }
 
-    const result = handleRootContext(sessionId, rootContext);
+    const result = handleRoot(sessionId, rootContext);
 
     res.json({
       success: true,

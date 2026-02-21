@@ -110,4 +110,4 @@ Scripts may import **src/knowledge**, **src/protocol**, **src/services** as need
 
 **ADR:** This hierarchy is the accepted layout. Changes go via ADR in [adr/](adr/).
 
-**Violations:** Current breaches of the above rules are listed in [code-hierarchy-violations.md](code-hierarchy-violations.md).
+**Violations:** All fixed (2026-02-21). Historical record: [archive/code-hierarchy-violations.md](archive/code-hierarchy-violations.md).

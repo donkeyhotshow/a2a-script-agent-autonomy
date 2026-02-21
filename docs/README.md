@@ -29,8 +29,9 @@
 | [../all-posible-concept-realisations/README.md](../all-posible-concept-realisations/README.md) | **Варианты графа:** 9 возможных применений графа в системе |
 | [flow-graph-requests.md](flow-graph-requests.md) | Поток: API → RequestProcessor → GraphStore, компоненты, трассировка |
 | [code-hierarchy.md](code-hierarchy.md) | **Иерархия кода:** репозиторий, a2a-server/src, knowledge, правила зависимостей |
-| [code-hierarchy-violations.md](code-hierarchy-violations.md) | Нарушения иерархии (routes→knowledge, controller→repo, knowledge→ml) |
 | [graph-input-tasks.md](graph-input-tasks.md) | Задачи по вводу данных в граф (отдельные) |
+| [archive/](archive/) | Устаревшие: code-hierarchy-violations (fixed) |
+| [../archive/](../archive/) | tttt, ID-NEURONS-UNIQUE (scratch, exploratory) |
 | [adr/README.md](adr/README.md) | Architecture Decision Records |
 | [adr-hacks/README.md](adr-hacks/README.md) | Хаки: direct API bypass, etalon raw (A/B/D/E) |
 | [../tasks/README.md](../tasks/README.md) | Задачи развития сервисов (из анализа хаков) |

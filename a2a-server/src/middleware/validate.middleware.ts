@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { AnyZodObject, ZodError } from 'zod';
-import { AppError, validationError } from './error.middleware.js';
+import { validationError } from './error.middleware.js';
 
 /**
  * Validation Middleware

@@ -14,7 +14,7 @@ import { registerBaseNeurons } from '../src/knowledge/neurons/base/index.js';
 registerBaseNeurons();
 import { extractSemantics } from '../src/knowledge/semantic-extractor.js';
 import { buildQuestions } from '../src/knowledge/question-builder.js';
-import { queryIndex } from '../src/knowledge/index-query.js';
+import { queryIndex } from '../src/services/index-query.service.js';
 // ============================================
 // MD Protocol Parser (per a2a-client/docs/requirements.md)
 // ============================================

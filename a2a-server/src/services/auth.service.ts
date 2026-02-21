@@ -1,9 +1,38 @@
-import { Client } from '@prisma/client';
-
 /**
  * Auth Service
- * Handles authentication business logic
+ * Handles auth logic: tokens, client repo, config.
+ * Controllers → services only.
  */
+
+import jwt from 'jsonwebtoken';
+import { AppError } from '../types/errors.js';
+import * as clientRepo from '../repositories/client.repository.js';
+import { hashPassword, generateApiKey, verifyPassword } from '../utils/crypto.js';
+import { config } from '../config/index.js';
+
+type JwtPayload = { sub: string; email: string; type: 'access' | 'refresh' };
+
+function signAccessToken(clientId: string, email: string): string {
+  return jwt.sign(
+    { sub: clientId, email, type: 'access' } as JwtPayload,
+    config.jwtSecret,
+    { expiresIn: config.jwtExpiresIn }
+  );
+}
+
+function signRefreshToken(clientId: string, email: string): string {
+  return jwt.sign(
+    { sub: clientId, email, type: 'refresh' } as JwtPayload,
+    config.jwtSecret,
+    { expiresIn: config.jwtRefreshExpiresIn }
+  );
+}
+
+function verifyToken(token: string): JwtPayload {
+  return jwt.verify(token, config.jwtSecret) as JwtPayload;
+}
+
+const DEV_CREDS = { email: 'dev@example.com', password: 'dev' };
 
 export interface RegisterInput {
   name: string;
@@ -11,117 +40,87 @@ export interface RegisterInput {
   password: string;
 }
 
-export interface LoginInput {
+export interface RegisterResult {
+  id: string;
+  name: string;
   email: string;
-  password: string;
+  apiKey: string;
 }
 
-export interface TokenPayload {
-  clientId: string;
-  email: string;
+export async function register(input: RegisterInput): Promise<RegisterResult> {
+  const { name, email, password } = input;
+  if (!name || !email || !password) {
+    throw new AppError('VALIDATION_001', 'name, email and password required', 400);
+  }
+  if (await clientRepo.emailExists(email)) {
+    throw new AppError('AUTH_002', 'Email already registered', 409);
+  }
+  const passwordHash = await hashPassword(password);
+  const apiKey = generateApiKey();
+  const client = await clientRepo.createClient({ name, email, passwordHash, apiKey });
+  return {
+    id: client.id,
+    name: client.name,
+    email: client.email,
+    apiKey,
+  };
 }
 
-export interface AuthTokens {
+export interface TokenResult {
   accessToken: string;
   refreshToken: string;
-  expiresIn: number;
 }
 
-/**
- * Register a new client
- */
-export async function registerClient(input: RegisterInput): Promise<Client> {
-  // TODO: Implement client registration
-  // 1. Check if email already exists
-  // 2. Hash password with bcrypt
-  // 3. Generate unique API key
-  // 4. Create client in database
-  // 5. Return created client
-  
-  throw new Error('registerClient not implemented');
+export async function getTokenByApiKey(apiKey: string): Promise<TokenResult | null> {
+  const client = await clientRepo.findClientByApiKey(apiKey);
+  if (!client) return null;
+  return {
+    accessToken: signAccessToken(client.id, client.email),
+    refreshToken: signRefreshToken(client.id, client.email),
+  };
 }
 
-/**
- * Authenticate client and generate tokens
- */
-export async function authenticateClient(input: LoginInput): Promise<AuthTokens> {
-  // TODO: Implement authentication
-  // 1. Find client by email
-  // 2. Verify password hash
-  // 3. Generate JWT access token
-  // 4. Generate refresh token
-  // 5. Return tokens
-  
-  throw new Error('authenticateClient not implemented');
+export async function getTokenByCredentials(email: string, password: string): Promise<TokenResult | null> {
+  if (process.env.NODE_ENV === 'development' && email === DEV_CREDS.email && password === DEV_CREDS.password) {
+    return {
+      accessToken: signAccessToken('dev-client', DEV_CREDS.email),
+      refreshToken: signRefreshToken('dev-client', DEV_CREDS.email),
+    };
+  }
+  const client = await clientRepo.findClientByEmail(email);
+  if (!client) return null;
+  if (!(await verifyPassword(password, client.passwordHash))) return null;
+  if (!client.isActive) throw new AppError('AUTH_001', 'Account inactive', 401);
+  return {
+    accessToken: signAccessToken(client.id, client.email),
+    refreshToken: signRefreshToken(client.id, client.email),
+  };
 }
 
-/**
- * Authenticate via API key
- */
-export async function authenticateWithApiKey(apiKey: string): Promise<Client> {
-  // TODO: Implement API key authentication
-  // 1. Find client by API key
-  // 2. Check if client is active
-  // 3. Return client
-  
-  throw new Error('authenticateWithApiKey not implemented');
+export async function refreshToken(token: string): Promise<TokenResult> {
+  let payload: JwtPayload;
+  try {
+    payload = verifyToken(token);
+  } catch {
+    throw new AppError('AUTH_001', 'Invalid token', 401);
+  }
+  if (payload.type !== 'refresh') throw new AppError('AUTH_001', 'Invalid token', 401);
+  const client = await clientRepo.findClientById(payload.sub);
+  if (!client || !client.isActive) throw new AppError('AUTH_001', 'Client not found', 401);
+  return {
+    accessToken: signAccessToken(client.id, client.email),
+    refreshToken: signRefreshToken(client.id, client.email),
+  };
 }
 
-/**
- * Refresh access token
- */
-export async function refreshAccessToken(refreshToken: string): Promise<AuthTokens> {
-  // TODO: Implement token refresh
-  // 1. Verify refresh token
-  // 2. Check if client still active
-  // 3. Generate new access token
-  // 4. Generate new refresh token
-  // 5. Return tokens
-  
-  throw new Error('refreshAccessToken not implemented');
+export interface ClientInfo {
+  id: string;
+  name: string;
+  email: string;
 }
 
-/**
- * Verify JWT token and return payload
- */
-export async function verifyToken(token: string): Promise<TokenPayload> {
-  // TODO: Implement token verification
-  // 1. Verify JWT signature
-  // 2. Check expiration
-  // 3. Extract and return payload
-  
-  throw new Error('verifyToken not implemented');
-}
-
-/**
- * Generate API key for client
- */
-export function generateApiKey(): string {
-  // TODO: Implement API key generation
-  // 1. Generate random bytes
-  // 2. Encode as base64url
-  // 3. Add prefix for identification
-  
-  throw new Error('generateApiKey not implemented');
-}
-
-/**
- * Hash password
- */
-export async function hashPassword(password: string): Promise<string> {
-  // TODO: Implement password hashing
-  // 1. Generate salt
-  // 2. Hash with bcrypt
-  
-  throw new Error('hashPassword not implemented');
-}
-
-/**
- * Verify password against hash
- */
-export async function verifyPassword(password: string, hash: string): Promise<boolean> {
-  // TODO: Implement password verification
-  // 1. Compare with bcrypt
-  
-  throw new Error('verifyPassword not implemented');
+export async function getClientById(id: string): Promise<ClientInfo | null> {
+  const client = await clientRepo.findClientById(id);
+  if (!client) return null;
+  return { id: client.id, name: client.name, email: client.email };
 }

@@ -9,7 +9,7 @@ import { processNewTaskToContext } from '../knowledge/context-handler.js';
 import { resolveInjections, mergeInjectedContext } from '../knowledge/context-injector.js';
 import { extractSemantics } from '../knowledge/semantic-extractor.js';
 import { buildQuestions } from '../knowledge/question-builder.js';
-import { queryIndex } from '../knowledge/index-query.js';
+import { queryIndex } from './index-query.service.js';
 import { recognizeEntitiesBatch } from '../knowledge/entity-recognizer.js';
 import { getGraph, buildAndStoreGraph, mergeEntitiesById } from '../knowledge/graph-store.js';
 import { generateQuestionsFromGraph } from '../knowledge/question-generator.js';

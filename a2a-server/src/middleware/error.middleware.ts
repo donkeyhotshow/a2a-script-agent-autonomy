@@ -1,21 +1,9 @@
 import { Request, Response, NextFunction } from 'express';
 import { logger } from '../utils/logger.js';
 import { ApiResponse } from '../types/index.js';
+import { AppError } from '../types/errors.js';
 
-// Custom error class
-export class AppError extends Error {
-  public readonly code: string;
-  public readonly statusCode: number;
-  public readonly details?: Record<string, unknown>;
-
-  constructor(code: string, message: string, statusCode: number = 500, details?: Record<string, unknown>) {
-    super(message);
-    this.code = code;
-    this.statusCode = statusCode;
-    this.details = details;
-    Error.captureStackTrace(this, this.constructor);
-  }
-}
+export { AppError };
 
 // Error code to status code mapping
 const errorStatusMap: Record<string, number> = {

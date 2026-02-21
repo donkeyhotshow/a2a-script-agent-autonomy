@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { AppError } from './error.middleware.js';
+import { AppError } from '../types/errors.js';
 
 /**
  * Rate Limiter Middleware
