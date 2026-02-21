@@ -14,7 +14,7 @@ Neurons hold Laravel 11 DNA (conventions, paths). Need initial set.
 
 ## Decision
 
-**8 base neurons** in `knowledge/neurons/base/` (see [LOADING.md](../../LOADING.md) § Neurons, [a2a-server/docs/neurons-catalog.md](../../a2a-server/docs/neurons-catalog.md) — autogen `npm run neurons:doc`):
+**8 base neurons** in [archive/knowledge-legacy/neurons/base/](../../archive/knowledge-legacy/neurons/base/) (see [a2a-server/docs/neurons.md](../../a2a-server/docs/neurons.md)):
 - `bootstrap` — `activatesWhenEmpty: true`; request_files: composer.json, package.json, app/, resources/ (discovery when pool empty)
 - `validation` — FormRequest, rules(), validate(); **task triggers:** "validation", "validate", "rules"
 - `auth` — Policy, Guard, middleware('auth')

@@ -99,7 +99,7 @@ Client                    API (Express)              RequestService (Prisma)    
 | `recognizeEntities(content, path)` | Один файл | Найти model, controller, service, request, vue-component и т.д. по regex |
 | `recognizeEntitiesBatch(files)` | Массив `{path, content}` | Обработать все codeBlocks |
 
-**Типы сущностей и связей:** [LOADING.md](../LOADING.md)
+**Типы сущностей и связей:** entity-recognizer.ts, relation-mapper.ts
 
 ---
 
@@ -170,7 +170,7 @@ Client                    API (Express)              RequestService (Prisma)    
 
 ## 5. Итеративный сценарий
 
-→ [AGENTS.md](../AGENTS.md), [SEQUENCE.md](../SEQUENCE.md), [json-in-cmd.md](../json-in-cmd.md)
+→ [AGENTS.md](../AGENTS.md), [adr-hacks/](adr-hacks/)
 
 ---
 

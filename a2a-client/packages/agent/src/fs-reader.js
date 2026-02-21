@@ -6,7 +6,7 @@ const fs = require('fs').promises;
 const path = require('path');
 const { exec } = require('child_process');
 const { promisify } = require('util');
-const { IgnoreDetector } = require('./ignore-detector');
+const { IgnoreDetector } = require('@a2a/fs-utils');
 
 const execAsync = promisify(exec);
 

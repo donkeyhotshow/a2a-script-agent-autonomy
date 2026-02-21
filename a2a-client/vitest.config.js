@@ -4,7 +4,7 @@ module.exports = {
     bail: 1,
     globals: true,
     environment: 'node',
-    include: ['packages/fs-utils/tests/**/*.test.js', 'packages/graph/tests/**/*.test.js', 'packages/agent/**/*.test.js', 'packages/api-client/**/*.test.js', 'tests/**/*.test.js'],
+    include: ['packages/fs-utils/tests/**/*.test.js', 'packages/agent/**/*.test.js', 'packages/api-client/**/*.test.js', 'tests/**/*.test.js'],
     setupFiles: ['tests/setup.js'],
     coverage: {
       provider: 'v8',

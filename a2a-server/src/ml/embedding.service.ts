@@ -1,5 +1,4 @@
 import { getEmbedding, getEmbeddings } from './plexe.client.js';
-import { cache } from '../config/redis.js';
 import { logger } from '../utils/logger.js';
 
 /**

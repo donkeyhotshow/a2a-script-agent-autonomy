@@ -18,6 +18,7 @@
   "license": "MIT",
   "peerDependencies": {
     "@a2a/api-client": "^1.0.0",
+    "@a2a/fs-utils": "^1.0.0",
     "@a2a/rag": "^1.0.0"
   },
   "dependencies": {

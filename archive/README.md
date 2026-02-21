@@ -1,12 +1,25 @@
-# Archive — устаревшие / избыточные документы
+# Archive — migration status
 
-**Миграция:** [ARCHIVE-MIGRATION-TASKS.md](ARCHIVE-MIGRATION-TASKS.md) — 20 задач по постепенному переносу.
+**Updated:** 2026-02-21
 
-| Что | Причина |
-|-----|---------|
-| **tttt/** | Scratch-план действий (307+ actions), не используется |
-| **ID-NEURONS-UNIQUE.md** | 1000 neuron IDs (exploratory), текущая система — 8 нейронов |
-| **tasks/** | Задачи развития сервисов (из анализа хаков) |
-| **knowledge/** | Старая структура; логика в services/ |
-| **plans/** | Планы реализации (README: как восстановить из git) |
-| **all-posible-concept-realisations/** | 9 вариантов графа (exploratory) |
+## Structure
+
+| Folder | Purpose |
+|--------|---------|
+| all-posible-concept-realisations | Concept variants (01-09) |
+| context-snapshots | project2-websitestore context JSON |
+| docs-obsolete | ID-NEURONS-UNIQUE, superseded docs |
+| knowledge-legacy | Archived knowledge (neurons, graph) |
+| output | Etalon process-input results |
+| plans | Historical plans (merged from tttt/plans) |
+| tasks | Archived dev tasks (001-021) |
+| tasks/meta | COMPLETED-SUMMARY, NEURON-ENVIRONMENT-ANALYSIS |
+| tests-orphan | Legacy test files from archive root |
+
+## Root tasks
+
+Active migration tasks: [../tasks/](../tasks/).
+
+## Docs index
+
+[docs/README.md](../docs/README.md) — canonical docs index.

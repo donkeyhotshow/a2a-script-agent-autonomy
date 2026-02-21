@@ -2,7 +2,7 @@
  * Unit tests for IgnoreDetector
  */
 
-const { IgnoreDetector } = require('./ignore-detector');
+const { IgnoreDetector } = require('@a2a/fs-utils');
 
 describe('IgnoreDetector', () => {
   let detector;

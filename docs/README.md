@@ -23,9 +23,10 @@
 | [neurons-and-paths-law.md](neurons-and-paths-law.md) | **Закон:** пути не в контексте; нейроны — только от задачи, всегда действуют |
 | [etalon-neuron-activation.md](etalon-neuron-activation.md) | **Etalon:** θ (theta) scenarios — short/large task, task-triggered vs content-triggered |
 | [flow-graph-requests.md](flow-graph-requests.md) | Поток: API → RequestProcessor → GraphStore, компоненты, трассировка |
+| [a2a-server/docs/entry-points.md](../a2a-server/docs/entry-points.md) | Root context, new_task, request_files |
 | [code-hierarchy.md](code-hierarchy.md) | **Иерархия кода:** репозиторий, a2a-server/src, knowledge, правила зависимостей |
 | [graph-input-tasks.md](graph-input-tasks.md) | Задачи по вводу данных в граф (отдельные) |
-| [../archive/](../archive/) | Устаревшие: tttt, ID-NEURONS-UNIQUE, plans, tasks, knowledge; [ARCHIVE-MIGRATION-TASKS.md](../archive/ARCHIVE-MIGRATION-TASKS.md) |
+| [../archive/](../archive/) | Устаревшие: plans, tasks, knowledge-legacy, docs-obsolete, docs-adr-obsolete; [ARCHIVE-MIGRATION-TASKS.md](../archive/ARCHIVE-MIGRATION-TASKS.md) |
 | [adr/README.md](adr/README.md) | Architecture Decision Records |
 | [adr-hacks/README.md](adr-hacks/README.md) | Хаки: direct API bypass, etalon raw (A/B/D/E) |
 
@@ -49,8 +50,7 @@
 
 | Документ | Назначение |
 |----------|------------|
-| [a2a-server/docs/neurons-catalog.md](../a2a-server/docs/neurons-catalog.md) | **Каталог нейронов** (автоген: `cd a2a-server && npm run neurons:doc`) |
-| [a2a-server/docs/neurons.md](../a2a-server/docs/neurons.md) | **Нейроны:** CLI, типы, request_files |
+| [a2a-server/docs/neurons.md](../a2a-server/docs/neurons.md) | **Нейроны:** типы, request_files (CLI → archive/scripts-legacy) |
 
 - Нейрон = множество триггеров; partial match → подозрение.
 - В контекст попадают **данные триггера** (не нейрон), чтобы на следующей итерации ре-триггернуть и обработать другие данные.

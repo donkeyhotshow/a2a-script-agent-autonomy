@@ -26,8 +26,6 @@ async function req(url, opts = {}) {
   return res.json();
 }
 
-const DEV_PROJECT_PATH = 'C:\\workspace\\domain-platform\\websitestore.com.ua';
-
 function getProjectPath(argv) {
   const path = argv[2];
   if (path) return path;
@@ -42,7 +40,7 @@ function getProjectPath(argv) {
     if (!file) throw new Error('projects.json not found');
     const data = JSON.parse(fs.readFileSync(file, 'utf8'));
     const proj = data.projects?.[0];
-    return proj?.path || DEV_PROJECT_PATH;
+    return proj?.path || process.cwd();
   } catch {
     return process.cwd();
   }

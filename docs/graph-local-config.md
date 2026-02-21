@@ -1,6 +1,6 @@
 # Граф знаний: локальная настройка
 
-**Индекс:** [docs/README.md](README.md) | **Данные:** [LOADING.md](../LOADING.md)
+**Индекс:** [docs/README.md](README.md)
 
 Граф знаний **настраивается локально вручную**, а не через диалог клиент–сервер.
 
@@ -11,14 +11,14 @@
 | Что | Как |
 |-----|-----|
 | **Граф** | Локальный конфиг: neurons, entity types, relation types |
-| **Источник** | LOADING.md, конфиги проекта |
+| **Источник** | Конфиги проекта, [a2a-server/docs/neurons.md](../a2a-server/docs/neurons.md) |
 | **Не** | Диалог, произвольные задачи от клиента |
 
 ---
 
 ## Компоненты графа (локальные)
 
-- **Neurons** — триггеры, категории (LOADING.md § Neurons)
+- **Neurons** — триггеры, категории ([a2a-server/docs/neurons.md](../a2a-server/docs/neurons.md))
 - **Entity types** — model, controller, service, request, vue-component, …
 - **Relation types** — uses, extends, belongs-to, handles, validates, …
 - **Context blocks** — builtin (neuron-context-laravel-11 и т.п.)

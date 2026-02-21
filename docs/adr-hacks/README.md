@@ -24,11 +24,3 @@ Hacks use data from the client (when dev project is added) and/or direct `POST /
 - **File content:** `GET /api/a2a/projects/:id/files/:path` — file body for codeBlocks.
 - **Architectural features:** From client agent: `detectArchitecturalFeaturesLight(projectPath, fs)` (packages/agent). Not exposed by plugin; can be run in CLI or baked into payload.
 
----
-
-## process-input (etalon in archive)
-
-```bash
-npx tsx a2a-server/scripts/process-input.ts [input.md] [output.md]
-# default: docs/adr-hacks/archive/raw/etalon-D-request.md → output/etalon-D-result.md
-```

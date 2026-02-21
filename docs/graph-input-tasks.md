@@ -21,50 +21,27 @@
 
 ---
 
-## 2. Ввод через process-input
-
-| # | Задача | Описание |
-|---|--------|----------|
-| 2.1 | MD без file blocks | `npx tsx a2a-server/scripts/process-input.ts docs/adr-hacks/archive/raw/etalon-A-request.md` → 0 neurons |
-| 2.2 | MD с одним file | Один file block → entities, graph_incomplete |
-| 2.3 | MD с несколькими files | 2–5 file blocks → merge, relations |
-| 2.4 | MD полный стек | Все ключевые типы → completed |
-
----
-
-## 3. Ввод по типу сущности
+## 2. Ввод по типу сущности
 
 | # | Задача | Файл/паттерн |
 |---|--------|--------------|
-| 3.1 | Model | app/Models/*.php, extends Model, belongsTo, hasMany |
-| 3.2 | Controller | app/Http/Controllers/*.php, extends Controller |
-| 3.3 | Request | app/Http/Requests/*.php, extends FormRequest |
-| 3.4 | Service | app/Services/*.php или app/Domain/*/Services |
-| 3.5 | Vue component | resources/js/Components/*.vue |
-| 3.6 | Vue page | resources/js/Pages/*.vue, Inertia |
-| 3.7 | Routes | routes/web.php, Route:: |
-| 3.8 | Config | config/*.php, composer.json |
+| 2.1 | Model | app/Models/*.php, extends Model, belongsTo, hasMany |
+| 2.2 | Controller | app/Http/Controllers/*.php, extends Controller |
+| 2.3 | Request | app/Http/Requests/*.php, extends FormRequest |
+| 2.4 | Service | app/Services/*.php или app/Domain/*/Services |
+| 2.5 | Vue component | resources/js/Components/*.vue |
+| 2.6 | Vue page | resources/js/Pages/*.vue, Inertia |
+| 2.7 | Routes | routes/web.php, Route:: |
+| 2.8 | Config | config/*.php, composer.json |
 
 ---
 
-## 4. Верификация ввода
+## 3. Верификация ввода
 
 | # | Задача | Описание |
 |---|--------|----------|
-| 4.1 | Проверить entities | result.entities, graph_logs |
-| 4.2 | Проверить relations | result.relations, handles, validates, uses |
-| 4.3 | Проверить questions | При graph_incomplete — questions с hint |
-| 4.4 | Проверить graph_logs | question + answer в логах |
+| 3.1 | Проверить entities | result.entities, graph_logs |
+| 3.2 | Проверить relations | result.relations, handles, validates, uses |
+| 3.3 | Проверить questions | При graph_incomplete — questions с hint |
+| 3.4 | Проверить graph_logs | question + answer в логах |
 
----
-
-## 5. Raw-кейсы (etalon)
-
-| # | Scenario | Файл | Output |
-|---|----------|------|--------|
-| 5.1 | A — short task, no files | archive/raw/etalon-A-request.md | output/etalon-A-result.md |
-| 5.2 | B — arch only | archive/raw/etalon-B-request.md | output/etalon-B-result.md |
-| 5.3 | D — task + codeBlocks | archive/raw/etalon-D-request.md | output/etalon-D-result.md |
-| 5.4 | E — activates nothing | archive/raw/etalon-E-request.md | output/etalon-E-result.md |
-
-Run: `npx tsx a2a-server/scripts/process-input.ts docs/adr-hacks/archive/raw/etalon-X-request.md output/etalon-X-result.md`

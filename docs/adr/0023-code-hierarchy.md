@@ -23,4 +23,4 @@ Need a single canonical description of repo layout and layer boundaries so new c
 ## Consequences
 
 - One place to check where to put code and what may import what.
-- Knowledge layer stays testable and reusable from scripts (e.g. process-input).
+- Knowledge layer stays testable and reusable from scripts.

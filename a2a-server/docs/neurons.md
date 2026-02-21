@@ -1,27 +1,8 @@
 # Neurons — CLI, Types, request_files
 
-**Index:** [docs/README.md](../../docs/README.md) | [neurons-catalog.md](neurons-catalog.md)
+**Index:** [docs/README.md](../../docs/README.md)
 
----
-
-## CLI
-
-| Command | Description |
-|---------|--------------|
-| `npm run neurons:list` | List all neurons, triggers, actions |
-| `npm run neurons:validate` | Validate structure, inject targets, dependsOn |
-| `npm run neurons:test <file>` | Test activation on a file |
-| `npm run neurons:doc` | Generate `docs/neurons-catalog.md` |
-
-### Examples
-
-```bash
-cd a2a-server
-npm run neurons:list
-npm run neurons:validate
-npm run neurons:test app/Models/User.php
-npm run neurons:doc
-```
+CLI (neurons:list, neurons:validate, neurons:test, neurons:doc) → [archive/scripts-legacy/neurons-cli.ts](../../archive/scripts-legacy/neurons-cli.ts).
 
 ---
 

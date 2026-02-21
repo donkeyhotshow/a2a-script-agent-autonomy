@@ -16,7 +16,7 @@ Canonical layout and layer rules. New code must follow this hierarchy.
 | **archive/tasks/** | Development tasks (archived) |
 | **archive/plans/** | Implementation plans (archived) |
 | **scripts/** | Root-level scripts (e.g. questions-cli) |
-| **output/** | Generated outputs (etalon results, etc.) |
+| **archive/output/** | Generated outputs (etalon results, etc.) |
 | **AGENTS.md** | What to do now; links to docs |
 
 Rule: **docs/** is the single index ([docs/README.md](README.md)); cross-link from there, not duplicate.
@@ -39,7 +39,7 @@ Entry: `src/app.ts` → `routes/index.js` → services/controllers.
 | **protocol/** | Parsing context, file blocks, message build | types |
 | **repositories/** | Data access (DB, files) | config, types |
 | **ml/** | Embedding, indexer, search, Plexe client | config, types |
-| **queue/** | Jobs and workers (BullMQ planned) | services, knowledge |
+| ~~queue/~~ | → [archive/queue-stubs/](../archive/queue-stubs/) (BullMQ stubs) | — |
 | **config/** | DB, Redis, env | — |
 | **types/** | Shared TS types | — |
 | **utils/** | Logger, helpers | — |
@@ -49,15 +49,11 @@ Entry: `src/app.ts` → `routes/index.js` → services/controllers.
 
 ### 2.2 Knowledge layer (archived)
 
-**knowledge/** → [archive/knowledge/](../archive/knowledge/). Stubs in services (session-context, request-processor).
+**knowledge/** → [archive/knowledge-legacy/](../archive/knowledge-legacy/). Stubs in services (session-context, request-processor).
 
 ### 2.3 Scripts (outside src)
 
-| Path | Role |
-|-----|------|
-| **a2a-server/scripts/process-input.ts** | CLI: load neurons, process MD input, write output (request_files, activated_neurons) |
-
-Scripts may import **src/knowledge**, **src/protocol**, **src/services** as needed.
+init-db, export-db. process-input, neurons-cli → [archive/scripts-legacy/](../archive/scripts-legacy/).
 
 ---
 
