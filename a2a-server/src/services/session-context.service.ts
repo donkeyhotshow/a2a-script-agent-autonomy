@@ -1,26 +1,35 @@
 /**
  * Session Context Service
- * Wraps knowledge/context-handler for routes layer.
- * Routes → services only; no direct knowledge.
+ * Stub: knowledge/context-handler archived. Returns minimal responses.
  */
 
-import {
-  createSessionContext,
-  getSessionContext,
-  handleRootContext,
-} from '../knowledge/context-handler.js';
-import type { RootContext, ContextHandlerResult } from '../knowledge/context-handler.js';
-
-export type { RootContext, ContextHandlerResult };
-
-export function createContext(sessionId: string, projectId: string) {
-  return createSessionContext(sessionId, projectId);
+export interface RootContext {
+  [key: string]: unknown;
 }
 
-export function getContext(sessionId: string) {
-  return getSessionContext(sessionId);
+export interface ContextHandlerResult {
+  context: RootContext;
+  injectedContent: string;
+  activatedNeurons: Array<{ neuron: { id: string; name: string }; matchedTriggers: string[] }>;
+  requestedFiles: string[];
+}
+
+const sessions = new Map<string, { projectId: string }>();
+
+export function createContext(sessionId: string, projectId: string): void {
+  sessions.set(sessionId, { projectId });
+}
+
+export function getContext(sessionId: string): { projectId: string } | null {
+  return sessions.get(sessionId) ?? null;
 }
 
 export function handleRoot(sessionId: string, rootContext: RootContext): ContextHandlerResult {
-  return handleRootContext(sessionId, rootContext);
+  sessions.set(sessionId, { projectId: (rootContext['project_path'] as string) ?? 'default' });
+  return {
+    context: rootContext,
+    injectedContent: '',
+    activatedNeurons: [],
+    requestedFiles: [],
+  };
 }

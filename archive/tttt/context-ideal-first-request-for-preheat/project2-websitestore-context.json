@@ -1,0 +1,92 @@
+{
+  "projectName": "WebsiteStore E-commerce Platform",
+  "projectType": "real-world-development",
+  "detectedAt": "2026-02-11T00:00:00Z",
+  "frameworks": {
+    "frontend": ["vue@3.5.0", "inertia@2.2.18"],
+    "backend": ["laravel@11.0"],
+    "testing": ["vitest@4.0.18", "playwright@1.58.1", "phpunit@11.5.3"]
+  },
+  "libraries": {
+    "state": ["pinia@3.0.4"],
+    "styling": ["tailwindcss@4.1.18"],
+    "ui": ["@heroicons/vue@2.2.0"],
+    "i18n": ["vue-i18n@11.2.8"],
+    "validation": ["zod@4.3.6"],
+    "router": ["vue-router@5.0.2"]
+  },
+  "architecture": {
+    "type": "feature-first-modular",
+    "patterns": ["mvc", "service-layer", "repository", "composition-api", "inertia-bridge", "feature-modules"],
+    "structure": {
+      "frontend": "features/*/resources/js",
+      "backend": "features/*/app",
+      "tests": "tests",
+      "services": "features/*/app/Services",
+      "models": "features/*/app/Models",
+      "controllers": "features/*/app/Http/Controllers",
+      "shared": "features/shared"
+    }
+  },
+  "metrics": {
+    "features": 35,
+    "controllers": 45,
+    "models": 38,
+    "vueComponents": 150,
+    "piniaStores": 12,
+    "tests": 350,
+    "coverage": "45%"
+  },
+  "detectors": {
+    "vue": {
+      "found": true,
+      "files": ["features/**/resources/js/**/*.vue"],
+      "count": 150
+    },
+    "pinia": {
+      "found": true,
+      "files": ["features/**/resources/js/stores/**/*.ts"],
+      "count": 12
+    },
+    "laravel": {
+      "found": true,
+      "files": ["features/**/app/Http/Controllers/**/*.php"],
+      "count": 45
+    },
+    "service-layer": {
+      "found": true,
+      "files": ["features/**/app/Services/**/*.php"],
+      "count": 32
+    },
+    "repository-pattern": {
+      "found": true,
+      "files": ["features/**/app/Repositories/**/*.php"],
+      "count": 15
+    },
+    "inertia": {
+      "found": true,
+      "version": "2.2.18",
+      "pages": ["features/**/resources/js/Pages/**/*.vue"]
+    },
+    "typescript": {
+      "found": true,
+      "config": "tsconfig.json",
+      "strict": false
+    },
+    "tailwind": {
+      "found": true,
+      "version": "4.1.18",
+      "config": "tailwind.config.js"
+    },
+    "feature-modules": {
+      "found": true,
+      "business": ["auth", "cart", "checkout", "orders", "payments", "products", "profile", "users", "catalog", "reviews", "wishlist"],
+      "infrastructure": ["cache", "console", "database", "queue", "storage", "testing"],
+      "shared": ["foundation", "design-system", "layouts", "constants", "types", "utils"]
+    },
+    "spatie-packages": {
+      "found": true,
+      "packages": ["laravel-permission", "laravel-medialibrary", "laravel-activitylog", "laravel-backup", "laravel-settings", "laravel-sluggable", "laravel-prometheus"]
+    }
+  }
+}

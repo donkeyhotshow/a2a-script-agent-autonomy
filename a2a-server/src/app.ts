@@ -5,9 +5,6 @@ import compression from 'compression';
 import { logger } from './utils/logger.js';
 import { errorHandler } from './middleware/error.middleware.js';
 import routes from './routes/index.js';
-import { registerBaseNeurons } from './knowledge/neurons/base/index.js';
-
-registerBaseNeurons();
 
 const app: Express = express();
 

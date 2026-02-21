@@ -4,7 +4,7 @@
  * Services may depend on both.
  */
 
-import type { BuiltQuestion } from '../knowledge/question-builder.js';
+import type { BuiltQuestion } from '../types/knowledge.types.js';
 import { hybridSearch } from '../ml/search.service.js';
 
 export interface IndexAnswer {

@@ -11,21 +11,6 @@ vi.mock('../../src/services/request.service.js');
 vi.mock('../../src/utils/logger.js', () => ({
   logger: { info: vi.fn(), error: vi.fn(), warn: vi.fn(), debug: vi.fn() },
 }));
-vi.mock('../../src/knowledge/graph-store.js', () => ({
-  getGraph: vi.fn().mockReturnValue({
-    entities: [
-      { id: '1', type: 'controller' },
-      { id: '2', type: 'model' },
-      { id: '3', type: 'request' },
-      { id: '4', type: 'service' },
-      { id: '5', type: 'vue-component' },
-      { id: '6', type: 'vue-page' },
-    ],
-    relations: [{ sourceId: '1', targetId: '2' }],
-  }),
-  buildAndStoreGraph: vi.fn(),
-  mergeEntitiesById: vi.fn((a: unknown[], b: unknown[]) => [...a, ...b]),
-}));
 
 const PROJECT_PATH = 'C:/workspace/domain-platform/websitestore.com.ua';
 
@@ -69,7 +54,7 @@ describe('Request Processor Service', () => {
     expect(requestService.updateStatus).toHaveBeenCalledWith(
       'prm-1',
       'completed',
-      expect.objectContaining({ outcome: 'completed', message: expect.stringContaining('placeholder') })
+      expect.objectContaining({ outcome: 'completed', message: expect.stringContaining('processed') })
     );
   });
 

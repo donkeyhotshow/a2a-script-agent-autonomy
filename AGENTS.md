@@ -17,18 +17,14 @@
 | Что | Куда |
 |-----|------|
 | Dev-проект, вызовы | [DEV_PROJECT.json](DEV_PROJECT.json), [docs/websitestore-challenges.md](docs/websitestore-challenges.md) |
-| Последовательность | [SEQUENCE.md](SEQUENCE.md) |
 | Протокол (context, new_task, tasks, request_files) | [a2a-client/docs/requirements.md](a2a-client/docs/requirements.md) |
 | Ограничения команд на сервер | [docs/server-command-restrictions.md](docs/server-command-restrictions.md) |
 | Граф: локальная настройка (не диалог) | [docs/graph-local-config.md](docs/graph-local-config.md) |
-| Граф (entities, relations) | [LOADING.md](LOADING.md) |
-| Поток, трассировка | [docs/flow-graph-requests.md](docs/flow-graph-requests.md) |
+| Граф (entities, relations), поток | [docs/flow-graph-requests.md](docs/flow-graph-requests.md) |
 | Иерархия кода | [docs/code-hierarchy.md](docs/code-hierarchy.md) |
-| JSON payloads, curl | [json-in-cmd.md](json-in-cmd.md) |
-| Raw примеры (request/response) | [docs/adr-hacks/](docs/adr-hacks/) |
-| Задачи развития сервисов | [tasks/](tasks/) |
+| Payloads, raw примеры | [docs/adr-hacks/](docs/adr-hacks/) |
+| Задачи, планы (архив) | [archive/](archive/) |
 | ADR | [docs/adr/](docs/adr/) |
-| Планы реализации | [plans/](plans/) |
 
 ---
 
@@ -39,7 +35,7 @@
 **Iter1:** POST без codeBlocks → `graph_incomplete` + question.  
 **Iter2:** POST с codeBlocks (controller, request, model, service, vue) → `completed`.
 
-Полные примеры: [json-in-cmd.md](json-in-cmd.md), [SEQUENCE.md](SEQUENCE.md).
+Полные примеры: [docs/adr-hacks/](docs/adr-hacks/).
 
 ---
 

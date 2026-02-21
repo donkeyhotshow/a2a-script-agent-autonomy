@@ -13,11 +13,10 @@ Canonical layout and layer rules. New code must follow this hierarchy.
 | **a2a-server/** | Backend: API, knowledge, graph, neurons, processor |
 | **a2a-client/** | Client: Vite app, e2e, packages, protocol |
 | **docs/** | Documentation index and canonical docs (no duplication) |
-| **tasks/** | Development tasks (from hack analysis) |
-| **plans/** | Implementation plans (pre-ADR) |
+| **archive/tasks/** | Development tasks (archived) |
+| **archive/plans/** | Implementation plans (archived) |
 | **scripts/** | Root-level scripts (e.g. questions-cli) |
 | **output/** | Generated outputs (etalon results, etc.) |
-| **LOADING.md** | Training data: neurons, entity/relation types, config |
 | **AGENTS.md** | What to do now; links to docs |
 
 Rule: **docs/** is the single index ([docs/README.md](README.md)); cross-link from there, not duplicate.
@@ -48,24 +47,9 @@ Entry: `src/app.ts` → `routes/index.js` → services/controllers.
 | **app.ts** | Express setup, register neurons | routes, middleware, knowledge/neurons |
 | **index.ts** | Server start | app, config |
 
-### 2.2 Knowledge layer (no HTTP)
+### 2.2 Knowledge layer (archived)
 
-| Path | Role |
-|-----|------|
-| **knowledge/context-handler.ts** | processNewTaskToContext, merge context |
-| **knowledge/context-injector.ts** | Resolve @INJECT from neurons |
-| **knowledge/context-store.ts** | Built-in context blocks (e.g. Laravel 11) |
-| **knowledge/graph-store.ts** | In-memory graph (project_path → StoredGraph) |
-| **knowledge/entity-recognizer.ts** | Code → entities (regex-based) |
-| **knowledge/relation-mapper.ts** | Map relations between entities |
-| **knowledge/neurons/** | Neuron store, activator, base neurons |
-| **knowledge/neurons/base/** | One file per neuron (bootstrap, validation, auth, …) |
-| **knowledge/question-generator.ts** | Graph → questions |
-| **knowledge/index-query.ts** | Query index (stub) |
-| **knowledge/semantic-extractor.ts** | Extract semantics from code |
-| **knowledge/graph-log.ts** | Logging for graph ops |
-
-Rule: **knowledge/** must not import from **routes**, **controllers**, or **app**. It is used by services and scripts (e.g. process-input).
+**knowledge/** → [archive/knowledge/](../archive/knowledge/). Stubs in services (session-context, request-processor).
 
 ### 2.3 Scripts (outside src)
 
