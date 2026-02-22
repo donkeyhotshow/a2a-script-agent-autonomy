@@ -1,0 +1,15 @@
+{
+  "context": {
+    "new_task": ["Добавить валидацию email при регистрации"]
+  },
+  "codeBlocks": [
+    {
+      "path": "package.json",
+      "content": "{\n  \"dependencies\": {\n    \"vue\": \"^3.5.0\",\n    \"@inertiajs/vue3\": \"^2.0.0\"\n  },\n  \"devDependencies\": {\n    \"tailwindcss\": \"^3.4.0\",\n    \"vitest\": \"^2.0.0\"\n  }\n}"
+    },
+    {
+      "path": "composer.json",
+      "content": "{\n  \"require\": {\n    \"php\": \"^8.2\",\n    \"laravel/framework\": \"^11.0\"\n  }\n}"
+    }
+  ]
+}
