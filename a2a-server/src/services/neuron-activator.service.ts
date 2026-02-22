@@ -59,7 +59,7 @@ function collectRequestFiles(activated: ActivatedNeuron[]): string[] {
       }
     }
   }
-  return [...seen];
+  return Array.from(seen);
 }
 
 function buildInjectedContent(activated: ActivatedNeuron[]): string {
