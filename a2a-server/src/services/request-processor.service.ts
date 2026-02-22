@@ -58,12 +58,6 @@ function parseTaskText(ctx: Record<string, unknown>): string {
   return '';
 }
 
-function parseArchFeatures(ctx: Record<string, unknown>): string[] {
-  const af = ctx['architectural_features'];
-  if (Array.isArray(af)) return af.filter((x): x is string => typeof x === 'string');
-  return [];
-}
-
 function parseCodeBlocks(blocks: unknown): CodeBlock[] {
   if (!Array.isArray(blocks)) return [];
   return blocks
@@ -130,7 +124,7 @@ export async function processOneRequest(): Promise<ProcessResult | null> {
       hasInitialFiles: hasInitialProjectFiles(blocks),
     });
 
-    // Step 0: Extract frameworks from package.json/composer.json (if present)
+    // Step 1: Extract frameworks from package.json/composer.json (if present)
     let frameworks: ExtractedFrameworks | undefined;
     let frameworkTriggers: string[] = [];
     
@@ -145,7 +139,7 @@ export async function processOneRequest(): Promise<ProcessResult | null> {
       });
     }
 
-    // Step 1: Parse existing graph from context (from client)
+    // Step 2: Parse existing graph from context (from client)
     const existingGraph = parseGraphFromContext(ctx);
     
     logger.debug('[RequestProcessor] Existing graph', { 
@@ -153,7 +147,7 @@ export async function processOneRequest(): Promise<ProcessResult | null> {
       relationCount: existingGraph.relations.length 
     });
     
-    // Step 2: Recognize entities from codeBlocks
+    // Step 5: Recognize entities from codeBlocks
     let updatedGraph = existingGraph;
     let recognitionResult: { count: number; types: Record<string, number> } | undefined;
     
@@ -171,7 +165,7 @@ export async function processOneRequest(): Promise<ProcessResult | null> {
         relationCount: relations.length 
       });
       
-      // Step 3: Merge recognized into existing graph
+      // Step 6: Merge recognized into existing graph
       updatedGraph = mergeRecognizedIntoGraph(existingGraph, { entities, relations });
       
       // Count entity types
@@ -186,7 +180,7 @@ export async function processOneRequest(): Promise<ProcessResult | null> {
       };
     }
     
-    // Step 4: Check if graph is complete
+    // Step 7: Check if graph is complete
     const completeness = isGraphComplete(updatedGraph, { taskText });
     
     if (!completeness.complete) {
@@ -196,7 +190,11 @@ export async function processOneRequest(): Promise<ProcessResult | null> {
       await requestService.updateStatus(promiseId, 'completed', {
         outcome: 'graph_incomplete',
         message: 'Graph incomplete, need more context',
-        context: { ...ctx, request_files: ctx['request_files'], frameworks },
+        context: { 
+          ...ctx, // Preserves new_task!
+          graph: updatedGraph,
+          frameworks,
+        },
         graph: updatedGraph,
         graph_stats: getGraphStats(updatedGraph),
         questions,
@@ -220,26 +218,25 @@ export async function processOneRequest(): Promise<ProcessResult | null> {
       };
     }
     
-    // Step 5: Activate neurons
+    // Step 8: Activate neurons
     const activationResult = activateNeurons({
       taskText,
       codeBlocks: blocks,
-      architecturalFeatures: parseArchFeatures(ctx),
+      architecturalFeatures: [], // Removed architectural_features from protocol
       frameworkTriggers, // Pass framework triggers for neuron activation
     });
 
     const activatedIds = activationResult.activatedNeurons.map((a) => a.neuron.id);
     const requestFiles = Array.from(new Set([...(activationResult.requestFiles ?? []), ...((ctx['request_files'] as string[]) ?? [])]));
 
-    // Step 6: Return completed result with updated graph
+    // Step 9: Return completed result with updated graph
     await requestService.updateStatus(promiseId, 'completed', {
       outcome: 'completed',
       message: 'Request processed successfully',
       context: { 
-        ...ctx, 
-        tasks: ctx['tasks'], 
-        request_files: requestFiles,
-        frameworks, // Include extracted frameworks in context
+        ...ctx, // Preserves new_task!
+        graph: updatedGraph,
+        frameworks,
       },
       graph: updatedGraph,
       graph_stats: getGraphStats(updatedGraph),

@@ -2,6 +2,10 @@
 
 **Индекс документации:** [docs/README.md](../../docs/README.md)
 
+**Протокол:** [docs/protocol/README.md](../../docs/protocol/README.md)
+
+---
+
 ## Содержание
 
 1. [Введение и обзор](#1-введение-и-обзор)
@@ -43,17 +47,17 @@ A2A (Agent-to-Agent) приложение — это клиентская сис
 │                          │                                   │
 │  ┌───────────────────────┴───────────────────────────────┐  │
 │  │              Protocol Handler                          │  │
-│  │         - Context Block Processing                     │  │
+│  │         - JSON Request/Response                        │  │
+│  │         - Context Management                           │  │
 │  │         - File Block Management                        │  │
-│  │         - Message Serialization                        │  │
 │  └───────────────────────┬───────────────────────────────┘  │
 └──────────────────────────┼──────────────────────────────────┘
                            │
-                           │ Markdown Protocol
+                           │ JSON Protocol
                            ▼
-              ┌────────────────────────┐
-              │   A2A Server Agent     │
-              └────────────────────────┘
+               ┌────────────────────────┐
+               │   A2A Server Agent     │
+               └────────────────────────┘
 ```
 
 ---
@@ -113,198 +117,46 @@ project-root/
 
 ## 3. Протокол общения с сервером
 
-### 3.1 Общая структура протокола
+### 3.1 Обзор протокола
 
-Протокол использует **Markdown блоки** для обмена данными между клиентом и сервером.
+**Документация протокола:** [docs/protocol/README.md](../../docs/protocol/README.md)
 
-**Ключевое правило:** JSON блок контекста присутствует **ВСЕГДА** — как в запросах клиента, так и в ответах сервера.
+**Ключевые принципы:**
+- Клиент отправляет `context` + `codeBlocks`
+- Сервер обрабатывает, обновляет `context`, добавляет задачи
+- Сервер НЕ хранит состояние
+- `new_task` ВСЕГДА циркулирует в context
+- Цикл повторяется до `outcome: "completed"`
 
-### 3.2 Типы блоков
-
-| Тип блока | Подпись | Обязательность | Описание |
-|-----------|---------|----------------|----------|
-| Context | `context` | **Обязательный** | JSON-подобная структура с метаданными и задачами |
-| File | `file:<path>` | По запросу | Полное содержимое файла |
-| File Part | `file:<path>:<start>-<end>` | По запросу | Часть файла по строкам |
-
-### 3.3 Инициализация сессии
-
-#### 3.3.1 Правила инициализации
-
-1. Клиент отправляет блок контекста с параметром `new_task`
-2. `new_task` — массив, содержащий:
-   - Текст задачи пользователя
-   - Доступные подсказки из индекса
-   - **Архитектурные особенности** — нестандартные моменты расположения файлов
-3. Данные отправляются **неизбыточно** — применяется фильтрация
-4. **Первый промпт не может быть пустым** — требуется текст задачи от пользователя
-5. Приложение **НЕ определяет** что отправлять — фильтрация происходит по правилам
-
-#### 3.3.2 Архитектурные особенности проекта
-
-К первому непустому промпту автоматически добавляются **архитектурные особенности** — нестандартные моменты расположения файлов относительно стандартной структуры проекта.
-
-**Что включается:**
-- Файлы в нестандартных директориях
-- Отсутствие ожидаемых директорий
-- Нестандартные именования файлов
-- Кастомные структуры модулей
-
-**Пример архитектурных особенностей:**
+### 3.2 Структура запроса
 
 ```json
 {
-  "architectural_features": [
-    "Services расположены в app/Domain/*/Services вместо app/Services",
-    "Модели в app/Domain/*/Models вместо app/Models",
-    "Отсутствует директория resources/js/Pages — страницы в resources/views/pages",
-    "Конфиги в config/domain/* вместо корня config/"
-  ]
+  "context": {
+    "new_task": ["Задача пользователя"],
+    "graph": { ... },
+    "frameworks": { ... }
+  },
+  "codeBlocks": [ ... ]
 }
 ```
 
-**Назначение:**
-- Помощь серверу в навигации по нестандартной структуре
-- Ускорение поиска релевантных файлов
-- Предотвращение ошибок при генерации путей
-
-**Источник и ответственность:**
-- Клиент отправляет `context.architectural_features: string[]` в каждом запросе
-- Клиент заполняет из project detector или ручной конфигурации
-- Если поле отсутствует — сервер использует пустой массив `[]`
-- Без `architectural_features` нейроны с архитектурными триггерами не активируются
-
-**Примеры значений для активации нейронов:** `"Laravel"`, `"FormRequest"`, `"Inertia"`, `"app/Models/"`, `"laravel/framework"`
-
-#### 3.3.3 Условие фильтрации
-
-Фильтрация применяется когда:
-- Пользователь отправляет **непустой промпт**
-- Система использует предустановленные правила фильтрации
-- Нет необходимости в ручном выборе данных
-
-#### 3.3.4 Кнопка "Делаем" — пустой промпт
-
-Для продолжения итерации без ввода данных от пользователя предусмотрена **кнопка "Делаем"**.
-
-**Назначение:**
-- Отправка пустого промпта для продолжения работы
-- Сервер выполняет следующую итерацию по своему сценарию
-- Пользователь не обязан вводить текст на каждом шаге
-
-**Когда используется:**
-- Сервер запросил подтверждение
-- Итеративное выполнение многошаговой задачи
-- Пользователь согласен с предложенными изменениями
-
-**Формат запроса:**
+### 3.3 Структура ответа
 
 ```json
 {
-  "version": "1.0",
-  "session_id": "550e8400-e29b-41d4-a716-446655440000",
-  "continue": true
+  "outcome": "graph_incomplete" | "completed" | "failed",
+  "context": {
+    "new_task": ["Задача пользователя"],
+    "graph": { ... },
+    "questions": [ ... ],
+    "request_files": [ ... ],
+    "frameworks": { ... }
+  }
 }
 ```
 
-**Отличие от обычного промпта:**
-
-| Действие | Поле в context | Описание |
-|----------|----------------|----------|
-| Обычный промпт | `new_task` | Новая задача или уточнение |
-| Кнопка "Делаем" | `continue: true` | Продолжить без ввода данных |
-
-### 3.4 Ответ сервера
-
-#### 3.4.1 Структура ответа
-
-1. **Обязательный блок контекста** — JSON с метаданными и задачами
-2. **Блоки кода** — обновленные версии файлов (подписаны в блоке)
-3. **Запрос файлов** — сервер может затребовать файлы для проверки
-
-#### 3.4.2 Нейроны и данные триггера в контексте
-
-Нейрон не попадает в контекст, если его не триггернуло. В контекст попадают **данные триггера** (matched paths, partial matches) — чтобы на следующей итерации заново триггернуть нейроны и обрабатывать другие данные. Один нейрон — множество триггеров; подозрение строится при неполном сходстве.
-
-#### 3.4.3 Правило верификации изменений
-
-> **Критически важно:** Если сервер обновил файлы, он **ОБЯЗАН** затребовать их для проверки правильности применения правок.
-
-Это обеспечивает:
-- Подтверждение корректности изменений
-- Обнаружение конфликтов слияния
-- Целостность данных проекта
-
-#### 3.4.4 Разрешение request_files
-
-Сервер возвращает `context.request_files: string[]`. Каждый элемент — один из типов:
-
-| Тип | Пример | Действие клиента |
-|-----|--------|-------------------|
-| **Exact path** | `app/Models/User.php` | Вернуть содержимое файла |
-| **Glob** | `database/migrations/*`, `app/Models/*.php` | Развернуть в список путей, вернуть содержимое найденных файлов |
-| **Semantic term** | `User model`, `validation rules` | Семантический поиск по индексу, вернуть релевантные файлы |
-
-Клиент интерпретирует каждый элемент и отправляет соответствующие file blocks в следующем запросе.
-
-### 3.5 Схема протокола
-
-```
-┌──────────────┐                              ┌──────────────┐
-│    CLIENT    │                              │    SERVER    │
-└──────┬───────┘                              └──────┬───────┘
-       │                                             │
-       │  ┌─────────────────────────────┐           │
-       │  │ ```context                  │           │
-       │  │ {                           │           │
-       │  │   "new_task": [             │           │
-       │  │     "task text",            │           │
-       │  │     "hints from index",     │           │
-       │  │     "architectural_features"│           │
-       │  │   ]                         │           │
-       │  │ }                           │           │
-       │  │ ```                         │           │
-       │  └─────────────────────────────┘           │
-       │ ──────────────────────────────────────────►│
-       │                                             │
-       │                    ┌────────────────────────┤
-       │  ┌─────────────────┴─────────────────────┐ │
-       │  │ ```context                            │ │
-       │  │ {                                     │ │
-       │  │   "tasks": [...],                     │ │
-       │  │   "request_files": ["path/to/file"]   │ │
-       │  │ }                                     │ │
-       │  │ ```                                   │ │
-       │  │                                       │ │
-       │  │ ```file:app/Services/UserService.php │ │
-       │  │ // updated content                    │ │
-       │  │ ```                                   │ │
-       │  └───────────────────────────────────────┘ │
-       │ ◄──────────────────────────────────────────│
-       │                                             │
-       │  ┌─────────────────────────────┐           │
-       │  │ КНОПКА "ДЕЛАЕМ"             │           │
-       │  │ ```context                  │           │
-       │  │ { "tasks": [...] }        │           │
-       │  │ ```                         │           │
-       │  │                             │           │
-       │  │ ```file:app/Services/       │           │
-       │  │ UserService.php             │           │
-       │  │ // current file content     │           │
-       │  │ ```                         │           │
-       │  └─────────────────────────────┘           │
-       │ ──────────────────────────────────────────►│
-       │                                             │
-       ▼                                             ▼
-```
-
-### 3.6 Режимы взаимодействия
-
-| Режим | Инициирующий действие | Поле context | Описание |
-|-------|----------------------|--------------|----------|
-| **Новая задача** | Пользователь вводит текст | `new_task` | Начало новой задачи или уточнение |
-| **Продолжение** | Кнопка "Делаем" | `continue: true` | Итерация без ввода данных |
-| **Подтверждение** | Автоматически после изменений | `confirm: true` | Верификация применённых правок |
+**Важно:** `new_task` возвращается сервером в context и должен отправляться клиентом в следующем запросе!
 
 ---
 
@@ -375,9 +227,114 @@ project-root/
 - Lexical Search — BM25, TF-IDF
 - Reranker — финальное ранжирование
 
-### 4.3 Алгоритм поиска и оценки Score
+---
 
-#### 4.3.1 Формула ранжирования
+## 5. Форматы данных
+
+### 5.1 Граф знаний
+
+```json
+{
+  "graph": {
+    "entities": [
+      { "id": "model-user", "type": "MODEL", "name": "User", "path": "app/Models/User.php" }
+    ],
+    "relations": [
+      { "from": "model-user", "to": "model-post", "type": "hasMany" }
+    ]
+  }
+}
+```
+
+### 5.2 Типы сущностей
+
+| Тип | Описание | Пример |
+|-----|----------|--------|
+| MODEL | Eloquent модель | User, Post |
+| CONTROLLER | Контроллер | UserController |
+| SERVICE | Сервисный класс | UserService |
+| REQUEST | FormRequest | UserRequest |
+| VUE_COMPONENT | Vue компонент | UserForm.vue |
+| VUE_PAGE | Vue страница | UsersIndex.vue |
+
+---
+
+## 6. Диаграммы взаимодействия
+
+### 6.1 Итеративный обмен
+
+```
+┌──────────────┐                              ┌──────────────┐
+│    КЛИЕНТ    │                              │    СЕРВЕР    │
+└──────┬───────┘                              └──────┬───────┘
+       │                                             │
+       │  context: { new_task }                      │
+       │  codeBlocks: [package.json, composer.json] │
+       │ ──────────────────────────────────────────►│
+       │                                             │
+       │                    outcome: "graph_incomplete"
+       │                    context: { graph, questions }
+       │ ◄──────────────────────────────────────────│
+       │                                             │
+       │  context: { graph }                         │
+       │  codeBlocks: [найденные файлы]              │
+       │ ──────────────────────────────────────────►│
+       │                                             │
+       │                    outcome: "completed"
+       │ ◄──────────────────────────────────────────│
+       ▼                                             ▼
+```
+
+---
+
+## 7. Примеры обмена сообщениями
+
+### 7.1 Первый запрос
+
+```json
+POST /api/v1/requests
+{
+  "context": {
+    "new_task": ["Добавить валидацию email"]
+  },
+  "codeBlocks": [
+    { "path": "package.json", "content": "..." },
+    { "path": "composer.json", "content": "..." }
+  ]
+}
+```
+
+### 7.2 Ответ сервера
+
+```json
+{
+  "outcome": "graph_incomplete",
+  "context": {
+    "graph": { "entities": [], "relations": [] },
+    "questions": ["Какая модель хранит пользователей?"],
+    "request_files": ["app/Models/User.php"]
+  }
+}
+```
+
+### 7.3 Следующий запрос
+
+```json
+{
+  "context": {
+    "graph": { "entities": [], "relations": [] }
+  },
+  "codeBlocks": [
+    { "path": "app/Models/User.php", "content": "..." }
+  ]
+}
+```
+
+---
+
+## 8. Метрики качества поиска
+
+### 8.1 Формула ранжирования
 
 ```
 final_score = base_similarity × length_multiplier × context_weight
@@ -390,791 +347,14 @@ final_score = base_similarity × length_multiplier × context_weight
   context_weight = Σ(context_factors) / count(factors)
 ```
 
-#### 4.3.2 Принцип ранжирования
+### 8.2 Принцип ранжирования
 
 > **Ключевой принцип:** Чем длиннее запрос, тем больше баллов умножено на коэффициент сходства.
 
-**Обоснование:**
-- Длинные запросы содержат больше контекста
-- Высокая специфичность требует большего веса
-- Умножение (не сложение) сохраняет значимость similarity
-
-#### 4.3.3 Факторы контекста
-
-| Фактор | Вес | Описание |
-|--------|-----|----------|
-| File Type Match | 0.1-0.3 | Соответствие типа файла запросу |
-| Recency | 0.05-0.15 | Недавние изменения файла |
-| Import Graph | 0.1-0.2 | Связи с уже найденными файлами |
-| Test Coverage | 0.05-0.1 | Наличие тестов для кода |
-| Documentation | 0.05-0.15 | Качество документации |
-
-### 4.4 Поддерживаемые алгоритмы поиска
-
-#### 4.4.1 Семантический поиск
-
-| Алгоритм | Применение |
-|----------|------------|
-| Cosine Similarity | Основная метрика сходства |
-| Euclidean Distance | Альтернативная метрика |
-| Dot Product | Быстрое приближение |
-
-#### 4.4.2 Лексический поиск
-
-| Алгоритм | Применение |
-|----------|------------|
-| BM25 | Классический IR алгоритм |
-| TF-IDF | Взвешивание терминов |
-| Fuzzy Match | Опечатки и вариации |
-
-#### 4.4.3 Гибридные методы
-
-| Метод | Описание |
-|-------|----------|
-| Reciprocal Rank Fusion | Объединение рангов |
-| Weighted Score Fusion | Взвешенное объединение score |
-| Learning to Rank | ML-based ранжирование |
-
-### 4.5 Индексация кода
-
-#### 4.5.1 Структура индекса
-
-```json
-{
-  "index_version": "1.0",
-  "project_hash": "sha256...",
-  "files": [
-    {
-      "path": "app/Services/UserService.php",
-      "hash": "sha256...",
-      "embeddings": ["vector_id_1", "vector_id_2"],
-      "symbols": ["UserService", "createUser", "updateUser"],
-      "imports": ["App\\Models\\User", "Illuminate\\Support\\Facades\\DB"],
-      "metadata": {
-        "lines": 150,
-        "language": "php",
-        "framework": "laravel",
-        "last_modified": "2024-01-15T10:30:00Z"
-      }
-    }
-  ],
-  "vectors": {
-    "vector_id_1": {
-      "embedding": [0.1, 0.2, ...],
-      "context": "class UserService",
-      "type": "class_definition"
-    }
-  }
-}
-```
-
-#### 4.5.2 Гранулярность индексации
-
-| Уровень | Описание | Пример |
-|---------|----------|--------|
-| File | Весь файл как единица | UserService.php |
-| Class/Component | Класс или Vue компонент | class UserService |
-| Method/Function | Отдельный метод | createUser() |
-| Block | Логический блок кода | validation logic |
-
 ---
 
-## 5. Форматы данных
-
-### 5.1 Context Block Schema
-
-```json
-{
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "type": "object",
-  "required": ["version"],
-  "properties": {
-    "version": {
-      "type": "string",
-      "const": "1.0",
-      "description": "Версия формата контекста"
-    },
-    "session_id": {
-      "type": "string",
-      "format": "uuid",
-      "description": "Уникальный идентификатор сессии"
-    },
-    "new_task": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      },
-      "minItems": 1,
-      "description": "Новая задача: текст + подсказки из индекса + архитектурные особенности"
-    },
-    "architectural_features": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      },
-      "description": "Нестандартные моменты расположения файлов относительно стандартной структуры"
-    },
-    "continue": {
-      "type": "boolean",
-      "description": "Продолжить итерацию без ввода данных от пользователя - кнопка Делаем"
-    },
-    "tasks": {
-      "type": "array",
-      "items": {
-        "$ref": "#/definitions/Task"
-      },
-      "description": "Активные задачи от сервера"
-    },
-    "request_files": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      },
-      "description": "Запрос файлов от сервера. Каждый элемент: exact path, glob (*), или семантический термин. Клиент разрешает: exact → вернуть файл; glob → развернуть; semantic → поиск."
-    },
-    "confirm": {
-      "type": "boolean",
-      "description": "Подтверждение применения изменений"
-    },
-    "errors": {
-      "type": "array",
-      "items": {
-        "$ref": "#/definitions/Error"
-      },
-      "description": "Ошибки обработки"
-    }
-  },
-  "definitions": {
-    "Task": {
-      "type": "object",
-      "required": ["id", "type", "status"],
-      "properties": {
-        "id": { "type": "string" },
-        "type": { 
-          "type": "string",
-          "enum": ["analyze", "refactor", "test", "document", "fix"]
-        },
-        "status": {
-          "type": "string",
-          "enum": ["pending", "in_progress", "completed", "failed"]
-        },
-        "target": { "type": "string" },
-        "progress": { "type": "number", "minimum": 0, "maximum": 100 }
-      }
-    },
-    "Error": {
-      "type": "object",
-      "required": ["code", "message"],
-      "properties": {
-        "code": { "type": "string" },
-        "message": { "type": "string" },
-        "file": { "type": "string" },
-        "line": { "type": "integer" }
-      }
-    }
-  }
-}
-```
-
-### 5.2 File Block Format
-
-#### 5.2.1 Полный файл
-
-```markdown
-```file:app/Services/UserService.php
-<?php
-
-namespace App\Services;
-
-use App\Models\User;
-
-class UserService
-{
-    public function createUser(array $data): User
-    {
-        return User::create($data);
-    }
-}
-```
-```
-
-#### 5.2.2 Часть файла
-
-```markdown
-```file:app/Services/UserService.php:15-25
-    public function createUser(array $data): User
-    {
-        return User::create($data);
-    }
-    
-    public function updateUser(User $user, array $data): User
-    {
-        $user->update($data);
-        return $user;
-    }
-```
-```
-
-### 5.3 Search Query Format
-
-```json
-{
-  "query": "найти все методы создания пользователя",
-  "filters": {
-    "file_types": ["php", "vue"],
-    "directories": ["app/Services", "resources/js"],
-    "framework": "laravel",
-    "exclude": ["tests", "vendor"]
-  },
-  "options": {
-    "limit": 20,
-    "min_score": 0.5,
-    "include_context": true,
-    "highlight_matches": true
-  }
-}
-```
-
-### 5.4 Search Result Format
-
-```json
-{
-  "results": [
-    {
-      "file": "app/Services/UserService.php",
-      "score": 0.92,
-      "matches": [
-        {
-          "line_start": 15,
-          "line_end": 20,
-          "content": "public function createUser...",
-          "highlight": "<mark>createUser</mark>",
-          "context_score": 0.85
-        }
-      ],
-      "metadata": {
-        "framework": "laravel",
-        "type": "service",
-        "last_modified": "2024-01-15T10:30:00Z"
-      }
-    }
-  ],
-  "total": 5,
-  "query_time_ms": 45,
-  "algorithm_used": "hybrid_rrf"
-}
-```
-
----
-
-## 6. Диаграммы взаимодействия
-
-### 6.1 Жизненный цикл сессии
-
-```mermaid
-stateDiagram-v2
-    [*] --> Created: Создание сессии
-    Created --> Initialized: Отправка new_task
-    Initialized --> Active: Получение контекста
-    Active --> FileUpdate: Сервер обновил файлы
-    FileUpdate --> Verification: Запрос файлов
-    Verification --> Active: Подтверждение
-    Active --> Completed: Задача выполнена
-    Active --> Error: Ошибка
-    Error --> Active: Повторная попытка
-    Completed --> [*]
-```
-
-### 6.2 Поток обработки запроса
-
-```mermaid
-flowchart TD
-    A[Пользовательский запрос] --> B{Тип действия?}
-    B -->|Непустой промпт| D[Добавить архитектурные особенности]
-    B -->|Кнопка Делаем| P[Отправить continue:true]
-    B -->|Пустой промпт без кнопки| C[Отклонить]
-    D --> E[Применить фильтрацию]
-    E --> F[Создать context блок с new_task]
-    F --> G[Отправить на сервер]
-    P --> G
-    G --> H[Получить ответ]
-    H --> I{Есть обновления файлов?}
-    I -->|Да| J[Применить изменения]
-    J --> K[Отправить файлы для проверки]
-    K --> L[Получить подтверждение]
-    L --> M[Сессия продолжается]
-    I -->|Нет| M
-    M --> N{Задача завершена?}
-    N -->|Нет| O{Нужен ввод пользователя?}
-    O -->|Да| A
-    O -->|Нет| P
-    N -->|Да| R[Закрыть сессию]
-```
-
-### 6.3 Архитектура поиска
-
-```mermaid
-flowchart LR
-    subgraph Input
-        Q[Query]
-        F[Filters]
-    end
-    
-    subgraph Processing
-        QE[Query Embedding]
-        SE[Semantic Search]
-        LE[Lexical Search]
-        HY[Hybrid Fusion]
-    end
-    
-    subgraph Scoring
-        SIM[Similarity]
-        LEN[Length Multiplier]
-        CTX[Context Weight]
-        RANK[Final Ranking]
-    end
-    
-    subgraph Output
-        RES[Results]
-    end
-    
-    Q --> QE
-    QE --> SE
-    Q --> LE
-    F --> SE
-    F --> LE
-    SE --> HY
-    LE --> HY
-    HY --> SIM
-    SIM --> LEN
-    LEN --> CTX
-    CTX --> RANK
-    RANK --> RES
-```
-
-### 6.4 Модель состояний файла
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    File State Machine                        │
-├─────────────────────────────────────────────────────────────┤
-│                                                              │
-│   ┌──────────┐    read     ┌──────────┐                     │
-│   │  Pristine │ ──────────►│  Loaded  │                     │
-│   └──────────┘             └────┬─────┘                     │
-│        ▲                        │                            │
-│        │                        │ modify                     │
-│        │                        ▼                            │
-│   ┌────┴─────┐            ┌──────────┐                      │
-│   │  Saved   │ ◄──────────│ Modified │                      │
-│   └──────────┘   save     └────┬─────┘                      │
-│        ▲                        │                            │
-│        │                        │ server_update              │
-│        │                        ▼                            │
-│        │                 ┌───────────┐                       │
-│        └─────────────────│  Updated  │                       │
-│            confirm       └───────────┘                       │
-│                                                              │
-└─────────────────────────────────────────────────────────────┘
-```
-
----
-
-## 7. Примеры обмена сообщениями
-
-### 7.1 Инициализация новой задачи
-
-**Клиент → Сервер:**
-
-```markdown
-```context
-{
-  "version": "1.0",
-  "session_id": "550e8400-e29b-41d4-a716-446655440000",
-  "new_task": [
-    "Добавить валидацию email при регистрации пользователя",
-    "hint: UserService.php содержит логику регистрации",
-    "hint: RegisterController.php обрабатывает запрос",
-    "hint: tests/Unit/UserServiceTest.php имеет примеры тестов"
-  ],
-  "architectural_features": [
-    "Services расположены в app/Domain/User/Services вместо app/Services",
-    "Модели в app/Domain/User/Models вместо app/Models",
-    "Отсутствует директория app/Http/Controllers — контроллеры в app/Domain/*/Controllers"
-  ]
-}
-```
-```
-
-**Сервер → Клиент:**
-
-```markdown
-```context
-{
-  "version": "1.0",
-  "session_id": "550e8400-e29b-41d4-a716-446655440000",
-  "tasks": [
-    {
-      "id": "task_001",
-      "type": "analyze",
-      "status": "in_progress",
-      "target": "app/Services/UserService.php",
-      "progress": 0
-    }
-  ],
-  "request_files": [
-    "app/Services/UserService.php",
-    "app/Http/Controllers/Auth/RegisterController.php"
-  ]
-}
-```
-```
-
-### 7.2 Отправка запрошенных файлов
-
-**Клиент → Сервер:**
-
-```markdown
-```context
-{
-  "version": "1.0",
-  "session_id": "550e8400-e29b-41d4-a716-446655440000"
-}
-```
-
-```file:app/Services/UserService.php
-<?php
-
-namespace App\Services;
-
-use App\Models\User;
-use Illuminate\Support\Facades\Validator;
-
-class UserService
-{
-    public function register(array $data): User
-    {
-        return User::create($data);
-    }
-}
-```
-
-```file:app/Http/Controllers/Auth/RegisterController.php
-<?php
-
-namespace App\Http\Controllers\Auth;
-
-use App\Http\Controllers\Controller;
-use App\Services\UserService;
-use Illuminate\Http\Request;
-
-class RegisterController extends Controller
-{
-    public function __construct(
-        private UserService $userService
-    ) {}
-    
-    public function __invoke(Request $request)
-    {
-        $user = $this->userService->register($request->all());
-        return redirect()->route('dashboard');
-    }
-}
-```
-```
-
-### 7.3 Сервер обновляет файлы
-
-**Сервер → Клиент:**
-
-```markdown
-```context
-{
-  "version": "1.0",
-  "session_id": "550e8400-e29b-41d4-a716-446655440000",
-  "tasks": [
-    {
-      "id": "task_001",
-      "type": "refactor",
-      "status": "in_progress",
-      "target": "app/Services/UserService.php",
-      "progress": 50
-    }
-  ],
-  "request_files": [
-    "app/Services/UserService.php"
-  ]
-}
-```
-
-```file:app/Services/UserService.php
-<?php
-
-namespace App\Services;
-
-use App\Models\User;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\ValidationException;
-
-class UserService
-{
-    public function register(array $data): User
-    {
-        $validator = Validator::make($data, [
-            'email' => ['required', 'email', 'unique:users,email'],
-            'password' => ['required', 'min:8'],
-            'name' => ['required', 'string', 'max:255'],
-        ]);
-        
-        if ($validator->fails()) {
-            throw new ValidationException($validator);
-        }
-        
-        return User::create($data);
-    }
-}
-```
-```
-
-### 7.4 Клиент подтверждает изменения
-
-**Клиент → Сервер:**
-
-```markdown
-```context
-{
-  "version": "1.0",
-  "session_id": "550e8400-e29b-41d4-a716-446655440000",
-  "confirm": true
-}
-```
-
-```file:app/Services/UserService.php
-<?php
-
-namespace App\Services;
-
-use App\Models\User;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\ValidationException;
-
-class UserService
-{
-    public function register(array $data): User
-    {
-        $validator = Validator::make($data, [
-            'email' => ['required', 'email', 'unique:users,email'],
-            'password' => ['required', 'min:8'],
-            'name' => ['required', 'string', 'max:255'],
-        ]);
-        
-        if ($validator->fails()) {
-            throw new ValidationException($validator);
-        }
-        
-        return User::create($data);
-    }
-}
-```
-```
-
-### 7.5 Использование кнопки "Делаем"
-
-**Сценарий:** Сервер выполнил часть работы и ожидает продолжения. Пользователь нажимает кнопку "Делаем" для продолжения без ввода данных.
-
-**Клиент → Сервер:**
-
-```markdown
-```context
-{
-  "version": "1.0",
-  "session_id": "550e8400-e29b-41d4-a716-446655440000",
-  "continue": true
-}
-```
-```
-
-**Сервер → Клиент:**
-
-```markdown
-```context
-{
-  "version": "1.0",
-  "session_id": "550e8400-e29b-41d4-a716-446655440000",
-  "tasks": [
-    {
-      "id": "task_001",
-      "type": "refactor",
-      "status": "in_progress",
-      "target": "app/Domain/User/Services/UserService.php",
-      "progress": 75
-    }
-  ],
-  "request_files": [
-    "app/Domain/User/Services/UserService.php"
-  ]
-}
-```
-
-Продолжаю работу над валидацией. Добавляю обработку ошибок валидации.
-```
-
-### 7.6 Завершение задачи
-
-**Сервер → Клиент:**
-
-```markdown
-```context
-{
-  "version": "1.0",
-  "session_id": "550e8400-e29b-41d4-a716-446655440000",
-  "tasks": [
-    {
-      "id": "task_001",
-      "type": "refactor",
-      "status": "completed",
-      "target": "app/Services/UserService.php",
-      "progress": 100
-    },
-    {
-      "id": "task_002",
-      "type": "test",
-      "status": "completed",
-      "target": "tests/Unit/UserServiceTest.php",
-      "progress": 100
-    }
-  ]
-}
-```
-
-Добавлена валидация email при регистрации:
-
-1. **UserService.php** — добавлен метод валидации с правилами:
-   - `email`: required, email, unique
-   - `password`: required, min:8
-   - `name`: required, string, max:255
-
-2. **UserServiceTest.php** — добавлены тесты:
-   - `test_registration_with_valid_email`
-   - `test_registration_fails_with_invalid_email`
-   - `test_registration_fails_with_duplicate_email`
-```
-
----
-
-## 8. Метрики качества поиска
-
-### 8.1 Основные метрики
-
-| Метрика | Формула | Целевое значение |
-|---------|---------|------------------|
-| **Precision@K** | relevant_in_top_k / k | ≥ 0.85 |
-| **Recall@K** | relevant_in_top_k / total_relevant | ≥ 0.75 |
-| **MRR** | Σ(1 / rank_i) / n | ≥ 0.80 |
-| **NDCG** | DCG / IDCG | ≥ 0.85 |
-| **Latency P95** | 95-й перцентиль времени | ≤ 100ms |
-
-### 8.2 Метрики ранжирования
-
-#### 8.2.1 Mean Reciprocal Rank (MRR)
-
-```
-MRR = (1/|Q|) × Σ(1/rank_i)
-
-где:
-  Q — множество запросов
-  rank_i — позиция первого релевантного результата для запроса i
-```
-
-#### 8.2.2 Normalized Discounted Cumulative Gain (NDCG)
-
-```
-DCG@k = Σ(rel_i / log2(i + 1)) for i = 1 to k
-NDCG@k = DCG@k / IDCG@k
-
-где:
-  rel_i — релевантность результата на позиции i
-  IDCG — идеальный DCG при идеальном ранжировании
-```
-
-### 8.3 Метрики для A2A контекста
-
-| Метрика | Описание | Цель |
-|---------|----------|------|
-| **Context Relevance** | Релевантность контекста задаче | ≥ 0.90 |
-| **File Coverage** | Доля найденных релевантных файлов | ≥ 0.80 |
-| **False Positive Rate** | Доля нерелевантных в результатах | ≤ 0.10 |
-| **Query Understanding** | Корректность интерпретации запроса | ≥ 0.95 |
-
-### 8.4 Мониторинг качества
-
-#### 8.4.1 Логирование метрик
-
-```json
-{
-  "timestamp": "2024-01-15T10:30:00Z",
-  "query_id": "q_550e8400",
-  "metrics": {
-    "precision_at_5": 0.80,
-    "precision_at_10": 0.70,
-    "recall_at_10": 0.85,
-    "mrr": 0.90,
-    "ndcg_at_10": 0.88,
-    "latency_ms": 45
-  },
-  "algorithm": "hybrid_rrf",
-  "query_length": 25,
-  "results_count": 10
-}
-```
-
-#### 8.4.2 A/B тестирование алгоритмов
-
-| Параметр | Значение |
-|----------|----------|
-| Минимальный размер выборки | 1000 запросов |
-| Доверительный интервал | 95% |
-| Минимальный эффект | 2% improvement |
-| Метрики для сравнения | NDCG@10, Latency P95 |
-
-### 8.5 Качество индексации
-
-| Метрика | Описание | Цель |
-|---------|----------|------|
-| **Index Freshness** | Время от последнего обновления | ≤ 5 минут |
-| **Index Completeness** | Доля проиндексированных файлов | 100% |
-| **Embedding Quality** | Качество векторных представлений | Cosine similarity ≥ 0.7 для похожих |
-
----
-
-## Приложение A: Глоссарий
-
-| Термин | Определение |
-|--------|-------------|
-| **A2A** | Agent-to-Agent — протокол взаимодействия между агентами |
-| **Context Block** | Обязательный JSON блок с метаданными сессии |
-| **File Block** | Markdown блок с содержимым файла |
-| **Embedding** | Векторное представление кода или текста |
-| **Semantic Search** | Поиск по смыслу, а не по ключевым словам |
-| **Lexical Search** | Классический поиск по ключевым словам |
-| **Hybrid Search** | Комбинация семантического и лексического поиска |
-| **Reranking** | Переранжирование результатов для улучшения качества |
-| **NDCG** | Normalized Discounted Cumulative Gain — метрика качества ранжирования |
-| **MRR** | Mean Reciprocal Rank — средний обратный ранг |
-
----
-
-## Приложение B: Ссылки
-
-- [Laravel 11 Documentation](https://laravel.com/docs/11.x)
-- [Inertia.js Documentation](https://inertiajs.com/)
-- [Vue 3 Documentation](https://vuejs.org/)
-- [Tailwind CSS Documentation](https://tailwindcss.com/)
-- [Vitest Documentation](https://vitest.dev/)
-- [Playwright Documentation](https://playwright.dev/)
-
----
-
-**Версия документа:** 1.0  
-**Дата создания:** 2026-02-19  
-**Статус:** Черновик
+## Ссылки
+
+- **Протокол:** [docs/protocol/README.md](../../docs/protocol/README.md)
+- **Нейроны:** [docs/neurons/README.md](../../docs/neurons/README.md)
+- **Граф:** [docs/graph-local-config.md](../../docs/graph-local-config.md)
