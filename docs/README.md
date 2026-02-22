@@ -25,6 +25,7 @@
 
 | Документ | Назначение |
 |----------|------------|
+| [protocol-json-api.md](protocol-json-api.md) | **JSON API:** формат запросов/ответов, первый запрос с package.json/composer.json |
 | [a2a-client/docs/requirements.md](../a2a-client/docs/requirements.md) | **Протокол:** context block, file blocks, new_task, tasks, request_files |
 | [server-command-restrictions.md](server-command-restrictions.md) | **Ограничения:** допустимые команды/промпты на сервер |
 | [graph-local-config.md](graph-local-config.md) | **Граф:** локальная настройка, не через диалог; сервер=сбор контекста, клиент=файлы |

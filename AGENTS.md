@@ -32,8 +32,10 @@
 
 **Requests API:** `POST /api/v1/requests` → poll `.../result`. Base: `http://localhost:3000/api/v1`, Auth: `Bearer a2a_dev_password`.
 
-**Iter1:** POST без codeBlocks → `graph_incomplete` + question.  
-**Iter2:** POST с codeBlocks (controller, request, model, service, vue) → `completed`.
+**Протокол:** [docs/protocol-json-api.md](docs/protocol-json-api.md) — JSON формат, первый запрос с package.json/composer.json.
+
+**Iter1:** POST с package.json + composer.json → `graph_incomplete` + questions + frameworks.  
+**Iter2:** POST с codeBlocks (найденные через RAG) + graph → `completed`.
 
 Полные примеры: [docs/adr-hacks/](docs/adr-hacks/).
 

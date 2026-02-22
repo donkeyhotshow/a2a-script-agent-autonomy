@@ -11,6 +11,7 @@ const {
   buildConfirmContext,
   buildFileResponseContext,
 } = require('./protocol.js');
+const { ApiClient: AsyncApiClient, PromisePoller } = require('./async-client.js');
 
 class ApiError extends Error {
   constructor(message, status, data = {}) {
@@ -27,6 +28,9 @@ class ApiClient {
     this.token = config.token;
     this.clientId = config.clientId;
     this.timeout = config.timeout || 30000;
+    
+    // Create async client for new protocol
+    this.async = new AsyncApiClient(config);
   }
 
   async request(method, path, body = null) {
@@ -179,4 +183,4 @@ class ApiClient {
   }
 }
 
-module.exports = { ApiClient, ApiError };
+module.exports = { ApiClient, ApiError, AsyncApiClient, PromisePoller };

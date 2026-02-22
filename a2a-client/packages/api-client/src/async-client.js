@@ -295,6 +295,163 @@ class ApiClient {
   // ============================================
 
   /**
+   * Start a new session with package.json and composer.json
+   * @param {Object} opts - { projectPath, task, packageJson, composerJson }
+   * @param {Object} [callbacks] - { onStatus, onComplete, onError }
+   * @returns {Promise<Object>} - { outcome, frameworks, graph, questions, missing }
+   */
+  async startSession(opts, callbacks = {}) {
+    const { projectPath, task, packageJson, composerJson } = opts;
+    
+    const codeBlocks = [];
+    if (packageJson) {
+      codeBlocks.push({ path: 'package.json', content: packageJson });
+    }
+    if (composerJson) {
+      codeBlocks.push({ path: 'composer.json', content: composerJson });
+    }
+
+    const { promiseId } = await this.createRequest({
+      context: {
+        project_path: projectPath,
+        new_task: task ? [task] : undefined,
+      },
+      codeBlocks,
+    });
+
+    return new Promise((resolve, reject) => {
+      this.poller.start(promiseId, {
+        onStatus: callbacks.onStatus,
+        onComplete: (result) => {
+          if (callbacks.onComplete) callbacks.onComplete(result);
+          resolve(result);
+        },
+        onError: (error) => {
+          if (callbacks.onError) callbacks.onError(error);
+          reject(new ApiError(error.message || 'Request failed', 0, error));
+        },
+      });
+    });
+  }
+
+  /**
+   * Send code blocks with existing graph (iteration)
+   * @param {Object} opts - { projectPath, graph, codeBlocks }
+   * @param {Object} [callbacks] - { onStatus, onComplete, onError }
+   * @returns {Promise<Object>} - { outcome, graph, questions, missing, activated_neuron_ids }
+   */
+  async sendCodeBlocks(opts, callbacks = {}) {
+    const { projectPath, graph, codeBlocks } = opts;
+
+    const { promiseId } = await this.createRequest({
+      context: {
+        project_path: projectPath,
+        graph,
+      },
+      codeBlocks,
+    });
+
+    return new Promise((resolve, reject) => {
+      this.poller.start(promiseId, {
+        onStatus: callbacks.onStatus,
+        onComplete: (result) => {
+          if (callbacks.onComplete) callbacks.onComplete(result);
+          resolve(result);
+        },
+        onError: (error) => {
+          if (callbacks.onError) callbacks.onError(error);
+          reject(new ApiError(error.message || 'Request failed', 0, error));
+        },
+      });
+    });
+  }
+
+  /**
+   * Run full session cycle with RAG integration
+   * @param {Object} opts - { projectPath, task, rag, maxIterations }
+   * @param {Object} [callbacks] - { onIteration, onStatus, onComplete, onError }
+   * @returns {Promise<Object>} - final result
+   */
+  async runSessionWithRAG(opts, callbacks = {}) {
+    const { projectPath, task, rag, maxIterations = 10 } = opts;
+    
+    // Read package.json and composer.json
+    const fs = require('fs');
+    const path = require('path');
+    
+    let packageJson = null;
+    let composerJson = null;
+    
+    try {
+      packageJson = fs.readFileSync(path.join(projectPath, 'package.json'), 'utf-8');
+    } catch (e) { /* ignore */ }
+    
+    try {
+      composerJson = fs.readFileSync(path.join(projectPath, 'composer.json'), 'utf-8');
+    } catch (e) { /* ignore */ }
+
+    // Start session
+    let result = await this.startSession({
+      projectPath,
+      task,
+      packageJson,
+      composerJson,
+    }, { onStatus: callbacks.onStatus });
+
+    let iteration = 1;
+    let graph = result.graph || { entities: [], relations: [] };
+
+    // Iterate until completed or max iterations
+    while (result.outcome === 'graph_incomplete' && iteration < maxIterations) {
+      if (callbacks.onIteration) {
+        callbacks.onIteration(iteration, result);
+      }
+
+      // Use RAG to find files based on questions
+      const codeBlocks = [];
+      
+      if (rag && result.questions && result.questions.length > 0) {
+        for (const question of result.questions) {
+          const searchResults = await rag.searcher.search(question, { limit: 3 });
+          
+          for (const searchResult of searchResults) {
+            const filePath = searchResult.chunk.filePath;
+            const fullPath = path.join(projectPath, filePath);
+            
+            try {
+              const content = fs.readFileSync(fullPath, 'utf-8');
+              codeBlocks.push({ path: filePath, content });
+            } catch (e) {
+              // File not found, skip
+            }
+          }
+        }
+      }
+
+      if (codeBlocks.length === 0) {
+        // No files found, break
+        break;
+      }
+
+      // Send found files
+      result = await this.sendCodeBlocks({
+        projectPath,
+        graph,
+        codeBlocks,
+      }, { onStatus: callbacks.onStatus });
+
+      graph = result.graph || graph;
+      iteration++;
+    }
+
+    if (callbacks.onComplete) {
+      callbacks.onComplete(result);
+    }
+
+    return result;
+  }
+
+  /**
    * Send a message and wait for result (with polling)
    * @param {string} sessionId 
    * @param {string} message 

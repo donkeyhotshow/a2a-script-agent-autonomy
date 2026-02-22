@@ -10,6 +10,7 @@ export interface ActivationContext {
   taskText: string;
   codeBlocks: Array<{ path: string; content: string }>;
   architecturalFeatures: string[];
+  frameworkTriggers?: string[]; // Triggers extracted from package.json/composer.json
 }
 
 export interface ActivatedNeuron {
@@ -30,6 +31,10 @@ function buildContentPool(ctx: ActivationContext): string {
     parts.push(block.path, block.content);
   }
   parts.push(...ctx.architecturalFeatures);
+  // Add framework triggers to content pool
+  if (ctx.frameworkTriggers) {
+    parts.push(...ctx.frameworkTriggers);
+  }
   return parts.join('\n').toLowerCase();
 }
 

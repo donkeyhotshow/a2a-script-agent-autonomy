@@ -8,10 +8,11 @@
  * Flow:
  * 1. Get pending request
  * 2. Parse graph from context (from client)
- * 3. Recognize entities from codeBlocks
- * 4. Merge recognized into existing graph
- * 5. Activate neurons
- * 6. Return result with updated graph
+ * 3. Extract frameworks from package.json/composer.json (if present)
+ * 4. Recognize entities from codeBlocks
+ * 5. Merge recognized into existing graph
+ * 6. Activate neurons
+ * 7. Return result with updated graph
  */
 
 import { requestService } from './request.service.js';
@@ -26,6 +27,12 @@ import {
   isGraphEmpty,
   type Graph 
 } from './graph-store.service.js';
+import { 
+  extractFrameworks, 
+  hasInitialProjectFiles,
+  getFrameworkTriggers,
+  type ExtractedFrameworks 
+} from './framework-extractor.service.js';
 import type { CodeBlock } from '../types/entity.types.js';
 
 const DEFAULT_INTERVAL_MS = 5000;
@@ -41,6 +48,7 @@ interface ProcessResult {
   relations?: { count: number } | undefined;
   questions?: string[] | undefined;
   missing?: string[] | undefined;
+  frameworks?: ExtractedFrameworks | undefined;
 }
 
 function parseTaskText(ctx: Record<string, unknown>): string {
@@ -102,7 +110,7 @@ function generateQuestions(missing: string[], graph: Graph): string[] {
     questions.push('Which model does this controller work with? Please provide the model file.');
   }
   
-  return [...new Set(questions)]; // Deduplicate
+  return Array.from(new Set(questions)); // Deduplicate
 }
 
 export async function processOneRequest(): Promise<ProcessResult | null> {
@@ -119,7 +127,23 @@ export async function processOneRequest(): Promise<ProcessResult | null> {
     logger.info('[RequestProcessor] Processing request', { 
       promiseId, 
       hasCodeBlocks: blocks.length > 0,
+      hasInitialFiles: hasInitialProjectFiles(blocks),
     });
+
+    // Step 0: Extract frameworks from package.json/composer.json (if present)
+    let frameworks: ExtractedFrameworks | undefined;
+    let frameworkTriggers: string[] = [];
+    
+    if (hasInitialProjectFiles(blocks)) {
+      frameworks = extractFrameworks(blocks);
+      frameworkTriggers = getFrameworkTriggers(frameworks);
+      
+      logger.info('[RequestProcessor] Frameworks extracted', {
+        frontend: frameworks.frontend,
+        backend: frameworks.backend,
+        triggers: frameworkTriggers,
+      });
+    }
 
     // Step 1: Parse existing graph from context (from client)
     const existingGraph = parseGraphFromContext(ctx);
@@ -172,24 +196,27 @@ export async function processOneRequest(): Promise<ProcessResult | null> {
       await requestService.updateStatus(promiseId, 'completed', {
         outcome: 'graph_incomplete',
         message: 'Graph incomplete, need more context',
-        context: { ...ctx, request_files: ctx['request_files'] },
+        context: { ...ctx, request_files: ctx['request_files'], frameworks },
         graph: updatedGraph,
         graph_stats: getGraphStats(updatedGraph),
         questions,
         missing: completeness.missing,
+        frameworks, // Include frameworks in response
       });
       
       logger.info('[RequestProcessor] Graph incomplete', { 
         promiseId, 
         missing: completeness.missing,
-        questionCount: questions.length 
+        questionCount: questions.length,
+        frameworks: frameworks?.frontend,
       });
       
       return { 
         outcome: 'graph_incomplete', 
         graph: updatedGraph, 
         questions, 
-        missing: completeness.missing 
+        missing: completeness.missing,
+        frameworks,
       };
     }
     
@@ -198,6 +225,7 @@ export async function processOneRequest(): Promise<ProcessResult | null> {
       taskText,
       codeBlocks: blocks,
       architecturalFeatures: parseArchFeatures(ctx),
+      frameworkTriggers, // Pass framework triggers for neuron activation
     });
 
     const activatedIds = activationResult.activatedNeurons.map((a) => a.neuron.id);
@@ -207,12 +235,18 @@ export async function processOneRequest(): Promise<ProcessResult | null> {
     await requestService.updateStatus(promiseId, 'completed', {
       outcome: 'completed',
       message: 'Request processed successfully',
-      context: { ...ctx, tasks: ctx['tasks'], request_files: requestFiles },
+      context: { 
+        ...ctx, 
+        tasks: ctx['tasks'], 
+        request_files: requestFiles,
+        frameworks, // Include extracted frameworks in context
+      },
       graph: updatedGraph,
       graph_stats: getGraphStats(updatedGraph),
       injected_content: activationResult.injectedContent,
       activated_neuron_ids: activatedIds,
       entities: recognitionResult,
+      frameworks, // Include frameworks in response
       questions: [],
       index_answers: [],
     });
@@ -228,7 +262,8 @@ export async function processOneRequest(): Promise<ProcessResult | null> {
     return { 
       outcome: 'completed', 
       graph: updatedGraph, 
-      entities: recognitionResult 
+      entities: recognitionResult,
+      frameworks,
     };
     
   } catch (err) {

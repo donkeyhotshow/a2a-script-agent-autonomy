@@ -299,16 +299,146 @@ body {
   display: inline-block;
   width: 12px;
   height: 12px;
-  border: 2px solid var(--fg2);
+  border: 2px solid var(--border);
   border-top-color: var(--accent);
   border-radius: 50%;
   animation: spin 1s linear infinite;
-  margin-left: 8px;
-  vertical-align: middle;
 }
 
 @keyframes spin {
   to { transform: rotate(360deg); }
+}
+
+/* Result cards */
+.result-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px;
+  margin: 8px 0;
+}
+
+.result-card.incomplete {
+  border-left: 3px solid var(--warn);
+}
+
+.result-card.completed {
+  border-left: 3px solid var(--success);
+}
+
+.result-status {
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.result-frameworks {
+  font-size: 12px;
+  color: var(--fg2);
+  margin-bottom: 8px;
+}
+
+.result-questions ul {
+  margin: 4px 0 8px 16px;
+  font-size: 12px;
+}
+
+.result-questions li {
+  margin: 4px 0;
+  color: var(--fg);
+}
+
+.result-missing {
+  font-size: 11px;
+  color: var(--warn);
+}
+
+.result-entities {
+  font-size: 12px;
+  margin-bottom: 8px;
+}
+
+.result-neurons {
+  font-size: 11px;
+  color: var(--fg2);
+}
+
+/* Entity badges */
+.entity-badge {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  margin: 2px;
+}
+
+.entity-badge.MODEL {
+  background: #238636;
+  color: #fff;
+}
+
+.entity-badge.CONTROLLER {
+  background: #1f6feb;
+  color: #fff;
+}
+
+.entity-badge.SERVICE {
+  background: #8957e5;
+  color: #fff;
+}
+
+.entity-badge.VUE {
+  background: #42b883;
+  color: #fff;
+}
+
+.entity-badge.REQUEST {
+  background: #d29922;
+  color: #000;
+}
+
+.entity-badge.more {
+  background: var(--bg3);
+  color: var(--fg2);
+}
+
+/* Graph panel */
+#graphPanel {
+  background: var(--bg2);
+  border-top: 1px solid var(--border);
+  padding: 8px 12px;
+  font-size: 11px;
+  max-height: 120px;
+  overflow-y: auto;
+}
+
+.graph-stats {
+  color: var(--fg2);
+  margin-bottom: 8px;
+}
+
+.type-count {
+  font-weight: 500;
+}
+
+.graph-entities {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.entity-group {
+  color: var(--fg2);
+}
+
+/* Frameworks badge in header */
+.frameworks {
+  font-size: 10px;
+  color: var(--fg2);
+  background: var(--bg3);
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-left: 8px;
 }
 
 /* Message status styles */

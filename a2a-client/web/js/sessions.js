@@ -1,6 +1,8 @@
 /**
  * Sessions - server-side storage with async protocol
  * Uses API for all operations, no localStorage
+ * 
+ * New protocol: package.json + composer.json on first request
  */
 
 const Sessions = {
@@ -8,9 +10,12 @@ const Sessions = {
     list: [], 
     current: null, 
     projectId: null, 
+    projectPath: null,  // Added: project path for file reading
     messages: [], 
     filter: 'all',
     pendingRequests: new Map(), // promiseId -> { messageId, timerId }
+    graph: { entities: [], relations: [] },  // Added: knowledge graph
+    frameworks: null,  // Added: extracted frameworks
   },
 
   // API base URL
@@ -35,10 +40,24 @@ const Sessions = {
     });
   },
 
-  setProject(id) {
+  setProject(id, path) {
     this.state.projectId = id;
+    this.state.projectPath = path || null;
     this.state.current = null;
     this.state.messages = [];
+    this.state.graph = { entities: [], relations: [] };
+    this.state.frameworks = null;
+    if (id) this.load();
+    else this.renderEmpty();
+  },
+
+  setProject(id, path) {
+    this.state.projectId = id;
+    this.state.projectPath = path || null;
+    this.state.current = null;
+    this.state.messages = [];
+    this.state.graph = { entities: [], relations: [] };
+    this.state.frameworks = null;
     if (id) this.load();
     else this.renderEmpty();
   },
@@ -163,7 +182,15 @@ const Sessions = {
     const s = this.state.current;
     const hasPending = this.state.messages.some(m => m.status === 'pending');
     const statusText = hasPending ? 'Waiting...' : (s.status || 'active');
-    if (hdr) hdr.innerHTML = `<span>#${(s.id || '').slice(0, 8)}</span><span class="${hasPending ? 'warn' : ''}">${statusText}</span>`;
+    
+    // Build header with frameworks info
+    let headerHtml = `<span>#${(s.id || '').slice(0, 8)}</span><span class="${hasPending ? 'warn' : ''}">${statusText}</span>`;
+    if (this.state.frameworks) {
+      const fw = this.state.frameworks;
+      const fwList = [...(fw.frontend || []), ...(fw.backend || [])].slice(0, 4).join(', ');
+      headerHtml += `<span class="frameworks" title="${A2A.escape(JSON.stringify(fw))}">${A2A.escape(fwList)}</span>`;
+    }
+    if (hdr) hdr.innerHTML = headerHtml;
     
     const btnContinue = document.getElementById('btnContinue');
     if (input) input.disabled = hasPending;
@@ -179,10 +206,21 @@ const Sessions = {
             const isPending = m.status === 'pending';
             const spinner = isPending ? '<span class="spinner"></span>' : '';
             const statusClass = isPending ? 'pending' : (m.status === 'failed' ? 'failed' : '');
+            
+            // Check for special content types
+            let contentHtml = '';
+            if (m.outcome === 'graph_incomplete') {
+              contentHtml = this.renderGraphIncomplete(m);
+            } else if (m.graph) {
+              contentHtml = this.renderCompleted(m);
+            } else {
+              contentHtml = this.fmt(m.contentText || m.content);
+            }
+            
             return `
             <div class="msg ${m.role === 'user' ? 'user' : 'server'} ${statusClass}">
               <div class="msg-role">${m.role === 'user' ? 'You' : 'Server'} ${spinner}</div>
-              <div class="msg-content">${this.fmt(m.contentText || m.content)}</div>
+              <div class="msg-content">${contentHtml}</div>
             </div>
           `;
           })
@@ -190,6 +228,108 @@ const Sessions = {
         msg.scrollTop = msg.scrollHeight;
       }
     }
+    
+    // Render graph panel
+    this.renderGraphPanel();
+  },
+
+  renderGraphIncomplete(m) {
+    const questions = m.questions || [];
+    const missing = m.missing || [];
+    const frameworks = m.frameworks;
+    
+    let html = '<div class="result-card incomplete">';
+    html += '<div class="result-status">📋 Graph Incomplete</div>';
+    
+    if (frameworks) {
+      html += '<div class="result-frameworks">';
+      html += '<strong>Frameworks:</strong> ';
+      html += [...(frameworks.frontend || []), ...(frameworks.backend || [])].join(', ');
+      html += '</div>';
+    }
+    
+    if (questions.length) {
+      html += '<div class="result-questions">';
+      html += '<strong>Questions:</strong><ul>';
+      questions.forEach(q => {
+        html += `<li>${A2A.escape(q)}</li>`;
+      });
+      html += '</ul></div>';
+    }
+    
+    if (missing.length) {
+      html += '<div class="result-missing">';
+      html += '<strong>Missing:</strong> ' + A2A.escape(missing.join(', '));
+      html += '</div>';
+    }
+    
+    html += '</div>';
+    return html;
+  },
+
+  renderCompleted(m) {
+    const graph = m.graph || { entities: [], relations: [] };
+    const neurons = m.activated_neuron_ids || [];
+    
+    let html = '<div class="result-card completed">';
+    html += '<div class="result-status">✅ Completed</div>';
+    
+    if (graph.entities && graph.entities.length) {
+      html += '<div class="result-entities">';
+      html += `<strong>Entities:</strong> ${graph.entities.length} `;
+      html += graph.entities.slice(0, 5).map(e => 
+        `<span class="entity-badge ${e.type}">${A2A.escape(e.name)}</span>`
+      ).join(' ');
+      if (graph.entities.length > 5) {
+        html += ` <span class="more">+${graph.entities.length - 5} more</span>`;
+      }
+      html += '</div>';
+    }
+    
+    if (neurons.length) {
+      html += '<div class="result-neurons">';
+      html += `<strong>Activated neurons:</strong> ${neurons.length}`;
+      html += '</div>';
+    }
+    
+    html += '</div>';
+    return html;
+  },
+
+  renderGraphPanel() {
+    const panel = document.getElementById('graphPanel');
+    if (!panel) return;
+    
+    const graph = this.state.graph;
+    if (!graph.entities || graph.entities.length === 0) {
+      panel.innerHTML = '<div class="empty">No entities in graph</div>';
+      return;
+    }
+    
+    // Group entities by type
+    const byType = {};
+    graph.entities.forEach(e => {
+      if (!byType[e.type]) byType[e.type] = [];
+      byType[e.type].push(e);
+    });
+    
+    let html = '<div class="graph-stats">';
+    html += Object.entries(byType).map(([type, entities]) => 
+      `<span class="type-count">${type}: ${entities.length}</span>`
+    ).join(' · ');
+    html += '</div>';
+    
+    html += '<div class="graph-entities">';
+    Object.entries(byType).forEach(([type, entities]) => {
+      html += `<div class="entity-group"><strong>${type}:</strong> `;
+      html += entities.map(e => 
+        `<span class="entity-badge ${type}" title="${A2A.escape(e.path)}">${A2A.escape(e.name)}</span>`
+      ).join(' ');
+      html += '</div>';
+    });
+    html += '</div>';
+    
+    panel.innerHTML = html;
   },
 
   fmt(c) {
@@ -210,6 +350,7 @@ const Sessions = {
     }
 
     const sessionId = this.state.current.id;
+    const isFirstMessage = this.state.messages.length === 0;
 
     // Add message optimistically
     const tempId = `temp_${Date.now()}`;
@@ -226,19 +367,27 @@ const Sessions = {
     this.renderView();
 
     try {
+      // Build request body
+      const body = {
+        context: {
+          version: '1.0',
+          session_id: sessionId,
+          project_path: this.state.projectPath,
+          new_task: [text],
+          graph: this.state.graph,  // Include current graph
+        },
+      };
+      
+      // On first message, include package.json and composer.json
+      if (isFirstMessage) {
+        body.codeBlocks = await this.loadProjectFiles();
+      }
+
       // Create async request
       const res = await fetch(`${this.api}/requests`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          sessionId,
-          message: text,
-          context: {
-            version: '1.0',
-            session_id: sessionId,
-            new_task: [text],
-          },
-        }),
+        body: JSON.stringify(body),
       });
       const data = await res.json();
 
@@ -272,6 +421,38 @@ const Sessions = {
     }
   },
 
+  async loadProjectFiles() {
+    // Try to load package.json and composer.json via API
+    const codeBlocks = [];
+    
+    try {
+      // Use API endpoint to read project files
+      if (this.state.projectPath) {
+        const files = ['package.json', 'composer.json'];
+        for (const file of files) {
+          try {
+            const res = await fetch(`${this.api}/projects/${this.state.projectId}/files/${file}`);
+            if (res.ok) {
+              const data = await res.json();
+              if (data.success && data.data?.content) {
+                codeBlocks.push({
+                  path: file,
+                  content: data.data.content,
+                });
+              }
+            }
+          } catch (e) {
+            // File not found, skip
+          }
+        }
+      }
+    } catch (err) {
+      console.warn('Could not load project files:', err);
+    }
+    
+    return codeBlocks;
+  },
+
   startPolling(promiseId, messageId) {
     // Store pending request
     this.state.pendingRequests.set(promiseId, { messageId });
@@ -299,12 +480,36 @@ const Sessions = {
             const msgIndex = this.state.messages.findIndex(m => m.id === pending.messageId);
             if (msgIndex >= 0) {
               this.state.messages[msgIndex].status = status === 'completed' ? 'completed' : 'failed';
-              if (resultData.success && resultData.data?.result) {
-                this.state.messages[msgIndex].content = resultData.data.result;
+              
+              // Extract result data
+              const result = resultData.data?.result || resultData.data;
+              if (result) {
+                // Store all result fields
+                this.state.messages[msgIndex].content = result;
                 this.state.messages[msgIndex].contentText = 
-                  typeof resultData.data.result === 'string' 
-                    ? resultData.data.result 
-                    : JSON.stringify(resultData.data.result, null, 2);
+                  typeof result === 'string' ? result : JSON.stringify(result, null, 2);
+                
+                // Extract special fields
+                if (result.outcome) {
+                  this.state.messages[msgIndex].outcome = result.outcome;
+                }
+                if (result.graph) {
+                  this.state.messages[msgIndex].graph = result.graph;
+                  this.state.graph = result.graph;  // Update global graph
+                }
+                if (result.frameworks) {
+                  this.state.messages[msgIndex].frameworks = result.frameworks;
+                  this.state.frameworks = result.frameworks;  // Update global frameworks
+                }
+                if (result.questions) {
+                  this.state.messages[msgIndex].questions = result.questions;
+                }
+                if (result.missing) {
+                  this.state.messages[msgIndex].missing = result.missing;
+                }
+                if (result.activated_neuron_ids) {
+                  this.state.messages[msgIndex].activated_neuron_ids = result.activated_neuron_ids;
+                }
               }
             }
           }
