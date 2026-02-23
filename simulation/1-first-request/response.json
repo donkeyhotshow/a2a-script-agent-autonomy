@@ -1,0 +1,13 @@
+{
+  "outcome": "need_context",
+  "context": {
+    "new_task": ["исправить импорты"],
+    "frameworks": { "laravel": "11.x", "vue": "3.5.x" },
+    "questions": ["Мне нужно проанализировать структуру проекта. Предоставьте PHP файлы из разных директорий."],
+    "request_files": [
+      "app/Models/User.php",
+      "app/Http/Controllers/Controller.php",
+      "src/Domain/Services/*.php"
+    ]
+  }
+}

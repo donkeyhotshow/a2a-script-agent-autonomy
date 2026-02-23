@@ -1,6 +1,6 @@
-{
+ {
   "context": {
-    "new_task": ["Добавить валидацию email при регистрации"]
+    "new_task": ["исправить импорты"]
   },
   "codeBlocks": [
     {
@@ -9,7 +9,7 @@
     },
     {
       "path": "composer.json",
-      "content": "{\n  \"require\": {\n    \"php\": \"^8.2\",\n    \"laravel/framework\": \"^11.0\"\n  }\n}"
+      "content": "{\n  \"require\": {\n    \"php\": \"^8.2\",\n    \"laravel/framework\": \"^11.0\"\n  },\n  \"autoload\": {\n    \"psr-4\": {\n      \"App\\\": \"app/\"\n    }\n  }\n}"
     }
   ]
 }

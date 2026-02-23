@@ -1,0 +1,34 @@
+{
+  "context": {
+    "new_task": ["исправить импорты"],
+    "frameworks": {
+      "laravel": "11.x",
+      "vue": "3.5.x"
+    },
+    "psr4_rules": {
+      "App\\": "app/",
+      "Domain\\": "src/Domain/"
+    }
+  },
+  "answers": [
+    {
+      "question_id": "q1",
+      "answer": "Domain\\ (префикс для src/)"
+    }
+  ],
+  "scan_results": [
+    {
+      "path": "src/Domain/Services/UserService.php",
+      "namespace": "App\\Services",
+      "expected_namespace": "Domain\\Services",
+      "status": "violation"
+    },
+    {
+      "path": "src/Domain/Repositories/UserRepository.php",
+      "namespace": "App\\Repositories",
+      "expected_namespace": "Domain\\Repositories",
+      "status": "violation"
+    }
+  ],
+  "codeBlocks": []
+}
