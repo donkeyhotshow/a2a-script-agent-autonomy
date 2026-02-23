@@ -4,11 +4,27 @@ export interface BuiltQuestion {
   question: string;
 }
 
-export type NeuronCategory = 'custom_pattern' | 'framework' | 'directory_structure' | 'naming_convention';
+export type NeuronCategory = 
+  | 'custom_pattern' 
+  | 'framework' 
+  | 'directory_structure' 
+  | 'naming_convention'
+  // New categories for task analysis system
+  | 'task_analysis'
+  | 'context_gathering'
+  | 'file_management'
+  | 'code_analysis'
+  | 'generation'
+  | 'external_ai';
 
 export type NeuronAction =
   | { type: 'inject'; target: string }
-  | { type: 'request_files'; items: string[] };
+  | { type: 'request_files'; items: string[] }
+  // New action types for task analysis
+  | { type: 'analyze'; target?: string }
+  | { type: 'classify'; target?: string }
+  | { type: 'collect'; target?: string }
+  | { type: 'trigger'; target?: string };
 
 export interface Neuron {
   id: string;

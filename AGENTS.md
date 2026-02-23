@@ -2,13 +2,9 @@
 
 ## Главное направление (текущий виток)
 
-**Найти задачу по проекту**, для которой нужно редактировать **2–4 файла**. Сервер собирает контекст для этой задачи и **итерирует**, пока дальнейшее наращивание контекста не станет избыточным. В этот момент — **остановиться**. Это основное предназначение серверной системы (нейроны, граф, request_files, индексы). Дальше — только external AI.
+**Модернизация системы нейронов** — переход от статических триггеров к итеративному анализу задач. new_task активирует нейроны анализа, сервер формирует ответ без new_task, но задача и активированные нейроны добавляются в tasks[].
 
----
-
-Цель: **граф знаний уже есть**, хотим **подзаполнить его вручную**, чтобы быстро упереться в первые реальные проблемы.
-
-**Документация:** [docs/README.md](docs/README.md) — индекс всех документов (без дублирования).
+**Документация:** [docs/neuron-modernization.md](docs/neuron-modernization.md) — полное описание новой архитектуры.
 
 ---
 
@@ -16,28 +12,40 @@
 
 | Что | Куда |
 |-----|------|
-| Dev-проект, вызовы | [DEV_PROJECT.json](DEV_PROJECT.json), [docs/websitestore-challenges.md](docs/websitestore-challenges.md) |
-| Протокол (context, new_task, tasks, request_files) | [a2a-client/docs/requirements.md](a2a-client/docs/requirements.md) |
-| Ограничения команд на сервер | [docs/server-command-restrictions.md](docs/server-command-restrictions.md) |
-| Граф: локальная настройка (не диалог) | [docs/graph-local-config.md](docs/graph-local-config.md) |
-| Граф (entities, relations), поток | [docs/flow-graph-requests.md](docs/flow-graph-requests.md) |
-| Иерархия кода | [docs/code-hierarchy.md](docs/code-hierarchy.md) |
-| Payloads, raw примеры | [docs/adr-hacks/](docs/adr-hacks/) |
-| Задачи, планы (архив) | [archive/](archive/) |
+| Модернизация нейронов | [docs/neuron-modernization.md](docs/neuron-modernization.md) |
+| Протокол | [docs/protocol-json-api.md](docs/protocol-json-api.md) |
+| Архив нейронов (legacy) | [archive/neurons-legacy/README.md](archive/neurons-legacy/README.md) |
+| Etalon активация | [docs/etalon-neuron-activation.md](docs/etalon-neuron-activation.md) |
 | ADR | [docs/adr/](docs/adr/) |
 
 ---
 
-## Быстрый старт (2 итерации)
+## Новая архитектура
 
-**Requests API:** `POST /api/v1/requests` → poll `.../result`. Base: `http://localhost:3000/api/v1`, Auth: `Bearer a2a_dev_password`.
+### Workflow
 
-**Протокол:** [docs/protocol-json-api.md](docs/protocol-json-api.md) — JSON формат, первый запрос с package.json/composer.json.
+```
+User → new_task → TaskDetailAnalyzer → NeuronActivator → TaskProcessor → Response (tasks[])
+                           ↓                  ↓                 ↓
+                    Определение          Активация        Формирование
+                    детализации          нейронов         tasks[] без new_task
+```
 
-**Iter1:** POST с package.json + composer.json → `graph_incomplete` + questions + frameworks.  
-**Iter2:** POST с codeBlocks (найденные через RAG) + graph → `completed`.
+### Определение детализации задачи
 
-Полные примеры: [docs/adr-hacks/](docs/adr-hacks/).
+| Уровень | Обработка |
+|---------|-----------|
+| **short** | Требует уточнения контекста проекта |
+| **medium** | Понятна структура, нужны файлы |
+| **detailed** | Готова к обработке |
+
+### Итерации
+
+| Итерация | Нейроны |
+|----------|---------|
+| **Iter1** | task-semantic-analyzer, project-context-detector |
+| **Iter2** | file-collector, code-analyzer |
+| **IterN** | external-ai-trigger |
 
 ---
 
@@ -56,21 +64,48 @@ cd a2a-server && npm run dev:no-auth
 
 ---
 
-## CLI: вопросы из графа
+## Быстрый старт (JSON API)
+
+**Base URL:** `http://localhost:3000/api/v1`  
+**Auth:** `Bearer a2a_dev_password`
 
 ```bash
-npm run questions                    # project_path из .a2a-client/projects.json
-node scripts/questions-cli.js C:/path/to/project
+# Отправить задачу
+curl -X POST http://localhost:3000/api/v1/requests \
+  -H "Authorization: Bearer a2a_dev_password" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "context": { "new_task": ["implement user login"] },
+    "codeBlocks": [{ "path": "package.json", "content": "..." }]
+  }'
 ```
 
 ---
 
-## Первые трудности (чеклист)
+## Структура нейронов (новая)
 
-- Пути/неймспейсы не совпадают (кастомные папки)
-- Связи не извлекаются (belongsTo в трейте)
-- Импорты неочевидны (app(), resolve())
-- Смешение слоёв (controller делает всё)
-- Frontend-роутинг (Inertia/Vue)
+```typescript
+interface Neuron {
+  id: string;
+  name: string;
+  category: 'task_analysis' | 'context_gathering' | 'file_management' | 'code_analysis' | 'generation' | 'external_ai';
+  triggers: string[];
+  knowledge: object;
+  actions: { type: 'analyze' | 'classify' | 'inject' | 'collect' | 'trigger'; target?: string }[];
+  triggersMode: 'any' | 'all';
+  priority: number;
+}
+```
 
-Подробнее: [docs/websitestore-challenges.md](docs/websitestore-challenges.md).
+---
+
+## Следующие шаги
+
+1. Реализовать TaskDetailAnalyzer
+2. Создать нейроны анализа задач в a2a-server/src/neurons/
+3. Обновить RequestProcessor для формирования tasks[]
+4. Переместить legacy нейроны в archive/neurons-legacy/
+
+---
+
+**Обновлено:** 2026-02-23

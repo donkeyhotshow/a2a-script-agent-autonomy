@@ -40,8 +40,21 @@ import {
   buildRequestContextBlock,
   buildRequestApiResult 
 } from '../protocol/message-builder.js';
+import { analyzeTaskDetail, getNeuronsByLevel, type TaskDetailLevel } from '../utils/task-detail-analyzer.js';
 import type { CodeBlock } from '../types/entity.types.js';
 import type { RequestContextBlock } from '../types/index.js';
+
+/**
+ * Task interface for tasks[] in response
+ */
+export interface Task {
+  id: string;
+  type: 'user_task' | 'neuron_task';
+  status: 'pending' | 'in_progress' | 'completed';
+  description: string;
+  source: 'user' | 'neuron';
+  neuronId?: string;
+}
 
 const DEFAULT_INTERVAL_MS = 5000;
 
@@ -63,6 +76,15 @@ interface ProcessResult {
   request_files?: string[] | undefined;
   /** Activated neuron IDs */
   activated_neuron_ids?: string[] | undefined;
+  /** Tasks for the new architecture */
+  tasks?: Task[] | undefined;
+  /** Task analysis result */
+  taskAnalysis?: {
+    level: TaskDetailLevel;
+    needsContext: boolean;
+    needsFiles: boolean;
+    readyForAi: boolean;
+  } | undefined;
 }
 
 function parseTaskText(ctx: Record<string, unknown>): string {
@@ -137,6 +159,18 @@ export async function processOneRequest(): Promise<ProcessResult | null> {
     const contextManager = resetContextManager();
     const taskText = parseTaskText(ctx);
     contextManager.set('task', taskText);
+    
+    // Analyze task detail level using TaskDetailAnalyzer
+    const taskAnalysis = taskText ? analyzeTaskDetail(taskText) : null;
+    const taskDetailLevel = taskAnalysis?.level || 'short';
+    
+    logger.info('[RequestProcessor] Task analysis', { 
+      taskText: taskText?.substring(0, 50),
+      detailLevel: taskDetailLevel,
+      wordCount: taskAnalysis?.wordCount,
+      hasTechnicalTerms: taskAnalysis?.hasTechnicalTerms,
+      hasFilePaths: taskAnalysis?.hasFilePaths,
+    });
     
     // Initialize PhaseMachine with context
     const phaseMachine = resetPhaseMachine(ctx);
@@ -360,12 +394,60 @@ export async function processOneRequest(): Promise<ProcessResult | null> {
     // Get final context for completed phase
     const finalContext = contextManager.getForPhase('completed');
 
+    // Generate tasks for new architecture
+    const tasks: Task[] = [];
+    
+    // Add user task (original task from user)
+    if (taskText) {
+      tasks.push({
+        id: 'task-user-001',
+        type: 'user_task',
+        status: 'pending',
+        description: taskText,
+        source: 'user',
+      });
+    }
+    
+    // Add neuron tasks based on analysis
+    const suggestedNeurons = getNeuronsByLevel(taskDetailLevel);
+    
+    if (taskAnalysis?.needsContext) {
+      tasks.push({
+        id: 'task-neuron-context-001',
+        type: 'neuron_task',
+        status: 'pending',
+        description: 'Detect project framework and architecture context',
+        source: 'neuron',
+        neuronId: 'neuron-project-context-detector',
+      });
+    }
+    
+    tasks.push({
+      id: 'task-neuron-analysis-001',
+      type: 'neuron_task',
+      status: 'pending',
+      description: 'Analyze task detail level and classify task type',
+      source: 'neuron',
+      neuronId: 'neuron-task-semantic-analyzer',
+    });
+    
+    if (taskAnalysis?.needsFiles) {
+      tasks.push({
+        id: 'task-neuron-files-001',
+        type: 'neuron_task',
+        status: 'pending',
+        description: 'Collect required files based on task context',
+        source: 'neuron',
+        neuronId: 'neuron-file-collector',
+      });
+    }
+    
     // Build context block for client
     const completedContextBlock = buildRequestContextBlock({
       architecturalFeatures: frameworkTriggers,
       graph: updatedGraph,
       ...(frameworks && { frameworks: frameworks as unknown as Record<string, unknown> }),
-      ...(taskText && { newTask: [taskText] }),
+      // NOTE: new_task is NOT passed to response anymore - it's in tasks[]
       ...(requestFiles.length > 0 && { requestFiles }),
     });
 
@@ -382,6 +464,8 @@ export async function processOneRequest(): Promise<ProcessResult | null> {
       frameworks,
       questions: [],
       index_answers: [],
+      // Include tasks in response
+      tasks,
     });
     
     logger.info('[RequestProcessor] Completed', { 
@@ -402,6 +486,14 @@ export async function processOneRequest(): Promise<ProcessResult | null> {
       context: completedContextBlock,
       activated_neuron_ids: activatedIds,
       request_files: requestFiles.length > 0 ? requestFiles : undefined,
+      // Include tasks in response
+      tasks,
+      taskAnalysis: taskAnalysis ? {
+        level: taskDetailLevel,
+        needsContext: taskAnalysis.needsContext,
+        needsFiles: taskAnalysis.needsFiles,
+        readyForAi: taskAnalysis.readyForAi,
+      } : undefined,
     };
     
   } catch (err) {
