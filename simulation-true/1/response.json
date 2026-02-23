@@ -1,29 +1,46 @@
 {
   "outcome": "need_files",
-  "message": "Для исправления импортов мне нужно понять структуру проекта и какие изменения были сделаны при рефакторинге.",
+  "message": "Для исправления импортов после рефакторинга мне нужно проанализировать структуру проекта.",
   "context": {
-    "tasks":[
-      {
-        "requested":"исправить импорты после рефакторинга",
-        "neurons":[
-          {
-            "id":"fix-imports-script",
-            "phase":1,
-            "task":"find brokent imports", 
-            ... 
-          }
-        ]
-        }
+    "task": {
+      "clarifications": [
+        "исправить импорты после рефакторинга",
+        "Какие файлы содержат импорты?"
       ],
-    
-    "frameworks": {
-      "frontend": "vue",
-      "backend": "laravel"
+      "neurons": [
+        {
+          "id": "neuron-task-semantic-analyzer",
+          "phase": 1,
+          "status": "completed",
+          "result": {
+            "detail_level": "medium",
+            "classification": "MECHANICAL"
+          }
+        },
+        {
+          "id": "neuron-project-context-detector",
+          "phase": 2,
+          "status": "completed",
+          "result": {
+            "frameworks": ["laravel", "vue"]
+          }
+        },
+        {
+          "id": "neuron-file-collector",
+          "phase": 3,
+          "status": "in_progress",
+          "actions": [
+            {
+              "type": "request_files",
+              "items": ["**/*.php", "**/*.vue"]
+            }
+          ]
+        }
+      ]
     },
-    "architectural_features": ["vue", "laravel", "inertia"],
-    "task_classification": {
-      "type": "MECHANICAL",
-      "confidence": 0.85
+    "frameworks": {
+      "backend": "laravel",
+      "frontend": "vue"
     }
   }
 }

@@ -1,13 +1,6 @@
 {
   "context": {
-    "session_id": "session-abc-123",
-    "version": "1.0",
-    "new_task": ["исправить импорты после рефакторинга"],
-    "iterations": {
-      "current": 1,
-      "max": 5,
-      "startedAt": "2024-01-15T10:00:00Z"
-    }
+    "new_task": "исправить импорты после рефакторинга"
   },
   "codeBlocks": [
     {
