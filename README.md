@@ -29,13 +29,13 @@ A2A — серверно-клиентская система для:
 ├─────────────────────────────────────────────────────────────────┤
 │ Протокол: JSON REST API                                         │
 │   → POST /api/v1/requests                                       │
-│   → GET /api/v1/requests/:promiseId/result                      │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
 ## Быстрый старт
 
-```bash
+```
+bash
 # Запуск сервера
 npm run dev
 
@@ -44,7 +44,8 @@ cd a2a-server && npm run dev:no-auth
 ```
 
 **Первый запрос:**
-```json
+```
+json
 POST /api/v1/requests
 {
   "context": {
@@ -59,7 +60,8 @@ POST /api/v1/requests
 ```
 
 **Ответ:**
-```json
+```
+json
 {
   "outcome": "graph_incomplete",
   "frameworks": {
@@ -71,13 +73,32 @@ POST /api/v1/requests
 }
 ```
 
-## Документация
+---
+
+## Документация по протоколу (клиент-сервер) ⭐⭐⭐
+
+**Важно:** Полная документация по протоколу общения клиента и сервера находится в разделе `docs/protocol/`.
+
+### Основные документы протокола
+
+| Документ | Назначение |
+|---------|-----------|
+|[Протокол: оглавление](docs/protocol/README.md)|Индекс всей документации протокола|
+|[Обзор: ключевые принципы](docs/protocol/overview.md)|Формат, stateless context, итеративный обмен|
+|[Структура context](docs/protocol/context.md)|Поле context в запросах/ответах|
+|[Структура codeBlocks](docs/protocol/codeblocks.md)|Блоки кода в запросах|
+|[Первый запрос сессии](docs/protocol/first-request.md)|Первый запрос сессии|
+|[Жизненный цикл потоков](docs/protocol/flow.md)|Жизненный цикл итераций|
+|[JSON API примеры](docs/protocol-json-api.md)|Примеры curl-запросов|
+
+---
+
+## Общая документация
 
 | Документ | Назначение |
 |----------|------------|
 | [AGENTS.md](AGENTS.md) | Что делать сейчас |
 | [docs/README.md](docs/README.md) | Индекс всех документов |
-| [docs/protocol-json-api.md](docs/protocol-json-api.md) | JSON протокол |
 | [docs/architecture-principles.md](docs/architecture-principles.md) | Архитектурные принципы |
 
 ## Структура проекта
@@ -116,7 +137,8 @@ a2a-client/           # Клиент
 
 ## Разработка
 
-```bash
+```
+bash
 # Установка зависимостей
 npm install
 

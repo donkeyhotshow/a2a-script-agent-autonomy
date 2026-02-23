@@ -8,12 +8,30 @@
 
 ---
 
+## Документация по протоколу (клиент-сервер) ⭐⭐⭐
+
+**Важно:** Полная документация по протоколу общения клиента и сервера находится в разделе `docs/protocol/`.
+
+### Основные документы протокола
+
+| Документ | Назначение |
+|---------|-----------|
+|[Протокол: оглавление](docs/protocol/README.md)|Индекс всей документации протокола|
+|[Обзор: ключевые принципы](docs/protocol/overview.md)|Формат, stateless context, итеративный обмен|
+|[Структура context](docs/protocol/context.md)|Поле context в запросах/ответах|
+|[Структура codeBlocks](docs/protocol/codeblocks.md)|Блоки кода в запросах|
+|[Первый запрос сессии](docs/protocol/first-request.md)|Первый запрос сессии|
+|[Жизненный цикл потоков](docs/protocol/flow.md)|Жизненный цикл итераций|
+|[JSON API примеры](docs/protocol-json-api.md)|Примеры curl-запросов|
+
+---
+
 ## Ссылки
 
 | Что | Куда |
 |-----|------|
 | Модернизация нейронов | [docs/neuron-modernization.md](docs/neuron-modernization.md) |
-| Протокол | [docs/protocol-json-api.md](docs/protocol-json-api.md) |
+| Протокол (полный) | [docs/protocol/README.md](docs/protocol/README.md) |
 | Архив нейронов (legacy) | [archive/neurons-legacy/README.md](archive/neurons-legacy/README.md) |
 | Etalon активация | [docs/etalon-neuron-activation.md](docs/etalon-neuron-activation.md) |
 | ADR | [docs/adr/](docs/adr/) |
@@ -51,7 +69,8 @@ User → new_task → TaskDetailAnalyzer → NeuronActivator → TaskProcessor �
 
 ## Запуск сервера
 
-```bash
+```
+bash
 # Из корня проекта
 npm run dev
 
@@ -84,7 +103,8 @@ curl -X POST http://localhost:3000/api/v1/requests \
 
 ## Структура нейронов (новая)
 
-```typescript
+```
+typescript
 interface Neuron {
   id: string;
   name: string;

@@ -1,0 +1,174 @@
+{
+  "phase": "recognition",
+  "timestamp": "2024-01-15T10:00:05Z",
+  "components": {
+    "psr4Analyzer": {
+      "composerMappings": [
+        {
+          "namespace": "App\\",
+          "path": "app/",
+          "files": [
+            "app/Http/Controllers/UserController.php",
+            "app/Http/Controllers/OrderController.php",
+            "app/Http/Requests/UserRequest.php"
+          ]
+        },
+        {
+          "namespace": "Domain\\",
+          "path": "src/Domain/",
+          "files": [
+            "src/Domain/Models/User.php",
+            "src/Domain/Models/Order.php"
+          ]
+        }
+      ],
+      "violations": [
+        {
+          "file": "app/Http/Controllers/UserController.php",
+          "import": "use App\\Models\\User;",
+          "expectedNamespace": "App\\Models\\User",
+          "actualNamespace": "Domain\\Models\\User",
+          "severity": "error",
+          "message": "Namespace mismatch: App\\Models\\User does not exist. Expected: Domain\\Models\\User"
+        },
+        {
+          "file": "app/Http/Controllers/OrderController.php",
+          "import": "use App\\Models\\Order;",
+          "expectedNamespace": "App\\Models\\Order",
+          "actualNamespace": "Domain\\Models\\Order",
+          "severity": "error",
+          "message": "Namespace mismatch: App\\Models\\Order does not exist. Expected: Domain\\Models\\Order"
+        },
+        {
+          "file": "app/Http/Requests/UserRequest.php",
+          "import": "use App\\Models\\User;",
+          "expectedNamespace": "App\\Models\\User",
+          "actualNamespace": "Domain\\Models\\User",
+          "severity": "error",
+          "message": "Namespace mismatch: App\\Models\\User does not exist. Expected: Domain\\Models\\User"
+        }
+      ],
+      "userClarification": {
+        "question": "Подтвердите правило замены:",
+        "from": "App\\Models\\",
+        "to": "Domain\\Models\\"
+      }
+    },
+    "entityRecognizer": {
+      "recognized": {
+        "entities": [
+          {
+            "id": "ent-001",
+            "type": "CONTROLLER",
+            "name": "UserController",
+            "path": "app/Http/Controllers/UserController.php",
+            "namespace": "App\\Http\\Controllers",
+            "methods": ["index", "store"]
+          },
+          {
+            "id": "ent-002",
+            "type": "CONTROLLER",
+            "name": "OrderController",
+            "path": "app/Http/Controllers/OrderController.php",
+            "namespace": "App\\Http\\Controllers",
+            "methods": ["index", "store"]
+          },
+          {
+            "id": "ent-003",
+            "type": "REQUEST",
+            "name": "UserRequest",
+            "path": "app/Http/Requests/UserRequest.php",
+            "namespace": "App\\Http\\Requests"
+          },
+          {
+            "id": "ent-004",
+            "type": "MODEL",
+            "name": "User",
+            "path": "src/Domain/Models/User.php",
+            "namespace": "Domain\\Models",
+            "relations": ["hasMany:Order"]
+          },
+          {
+            "id": "ent-005",
+            "type": "MODEL",
+            "name": "Order",
+            "path": "src/Domain/Models/Order.php",
+            "namespace": "Domain\\Models",
+            "relations": ["belongsTo:User"]
+          }
+        ],
+        "relations": [
+          {
+            "id": "rel-001",
+            "type": "USES",
+            "from": "UserController",
+            "to": "User",
+            "file": "app/Http/Controllers/UserController.php"
+          },
+          {
+            "id": "rel-002",
+            "type": "USES",
+            "from": "OrderController",
+            "to": "Order",
+            "file": "app/Http/Controllers/OrderController.php"
+          },
+          {
+            "id": "rel-003",
+            "type": "BELONGS_TO",
+            "from": "Order",
+            "to": "User",
+            "file": "src/Domain/Models/Order.php"
+          },
+          {
+            "id": "rel-004",
+            "type": "HAS_MANY",
+            "from": "User",
+            "to": "Order",
+            "file": "src/Domain/Models/User.php"
+          }
+        ]
+      },
+      "issues": [
+        {
+          "type": "broken_import",
+          "file": "app/Http/Controllers/UserController.php",
+          "import": "use App\\Models\\User;",
+          "suggestedFix": "use Domain\\Models\\User;"
+        },
+        {
+          "type": "broken_import",
+          "file": "app/Http/Controllers/OrderController.php",
+          "import": "use App\\Models\\Order;",
+          "suggestedFix": "use Domain\\Models\\Order;"
+        },
+        {
+          "type": "broken_import",
+          "file": "app/Http/Requests/UserRequest.php",
+          "import": "use App\\Models\\User;",
+          "suggestedFix": "use Domain\\Models\\User;"
+        }
+      ]
+    },
+    "graphStore": {
+      "previousGraph": {
+        "entities": [],
+        "relations": []
+      },
+      "mergedGraph": {
+        "entities": [
+          {"id": "ent-001", "type": "CONTROLLER", "name": "UserController"},
+          {"id": "ent-002", "type": "CONTROLLER", "name": "OrderController"},
+          {"id": "ent-003", "type": "REQUEST", "name": "UserRequest"},
+          {"id": "ent-004", "type": "MODEL", "name": "User"},
+          {"id": "ent-005", "type": "MODEL", "name": "Order"}
+        ],
+        "relations": [
+          {"id": "rel-001", "type": "USES", "from": "UserController", "to": "User"},
+          {"id": "rel-002", "type": "USES", "from": "OrderController", "to": "Order"},
+          {"id": "rel-003", "type": "BELONGS_TO", "from": "Order", "to": "User"},
+          {"id": "rel-004", "type": "HAS_MANY", "from": "User", "to": "Order"}
+        ]
+      }
+    }
+  }
+}

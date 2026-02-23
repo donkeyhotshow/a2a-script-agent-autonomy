@@ -1,0 +1,69 @@
+{
+  "phase": "action",
+  "timestamp": "2024-01-15T10:00:10Z",
+  "components": {
+    "instructionGenerator": {
+      "taskType": "MECHANICAL",
+      "strategy": "update_imports",
+      "rule": {
+        "from": "App\\Models\\",
+        "to": "Domain\\Models\\"
+      },
+      "fixes": [
+        {
+          "id": "fix-001",
+          "type": "update_import",
+          "target": "app/Http/Controllers/UserController.php",
+          "action": "replace",
+          "importType": "class",
+          "line": 5,
+          "original": "use App\\Models\\User;",
+          "content": "use Domain\\Models\\User;",
+          "metadata": {
+            "entity": "User",
+            "namespace": "Domain\\Models"
+          }
+        },
+        {
+          "id": "fix-002",
+          "type": "update_import",
+          "target": "app/Http/Controllers/OrderController.php",
+          "action": "replace",
+          "importType": "class",
+          "line": 5,
+          "original": "use App\\Models\\Order;",
+          "content": "use Domain\\Models\\Order;",
+          "metadata": {
+            "entity": "Order",
+            "namespace": "Domain\\Models"
+          }
+        },
+        {
+          "id": "fix-003",
+          "type": "update_import",
+          "target": "app/Http/Requests/UserRequest.php",
+          "action": "replace",
+          "importType": "class",
+          "line": 5,
+          "original": "use App\\Models\\User;",
+          "content": "use Domain\\Models\\User;",
+          "metadata": {
+            "entity": "User",
+            "namespace": "Domain\\Models"
+          }
+        }
+      ],
+      "validation": {
+        "totalFiles": 3,
+        "totalImports": 3,
+        "allReplacementsValid": true
+      }
+    },
+    "entityRecognizer": {
+      "reValidation": {
+        "allImportsResolved": true,
+        "noNewBrokenImports": true
+      }
+    }
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "outcome": "need_files",
+  "message": "Для исправления импортов мне нужно понять структуру проекта и какие изменения были сделаны при рефакторинге.",
+  "context": {
+    "tasks":[
+      {
+        "requested":"исправить импорты после рефакторинга",
+        "neurons":[
+          {
+            "id":"fix-imports-script",
+            "phase":1,
+            "task":"find brokent imports", 
+            ... 
+          }
+        ]
+        }
+      ],
+    
+    "frameworks": {
+      "frontend": "vue",
+      "backend": "laravel"
+    },
+    "architectural_features": ["vue", "laravel", "inertia"],
+    "task_classification": {
+      "type": "MECHANICAL",
+      "confidence": 0.85
+    }
+  }
+}

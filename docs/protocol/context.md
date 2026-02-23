@@ -46,13 +46,16 @@
 {
   "outcome": "graph_incomplete",
   "context": {
-    "new_task": ["Добавить валидацию email"],
-    "graph": {
+    "tasks":[
+      {
+        "title": "Добавить валидацию email",
+        "graph": {
       "entities": [],
       "relations": []
-    },
-    "request_files": ["app/Models/User.php"],
-    "questions": ["Какая модель хранит пользователей?"],
+    ,},
+    "request_files": ["Какая модель хранит пользователей?"],}],
+    
+    
     "frameworks": {
       "laravel": "11.x",
       "vue": "3.5.x"

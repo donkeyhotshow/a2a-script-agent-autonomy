@@ -1,0 +1,61 @@
+{
+  "outcome": "completed",
+  "message": "Все импорты успешно исправлены! Задача выполнена.",
+  "iterations": {
+    "current": 4,
+    "max": 5,
+    "history": [
+      {
+        "iteration": 1,
+        "outcome": "need_files",
+        "durationMs": 150,
+        "activatedNeurons": ["framework-detector", "task-analyzer"],
+        "questionsCount": 3
+      },
+      {
+        "iteration": 2,
+        "outcome": "need_clarification",
+        "durationMs": 200,
+        "activatedNeurons": ["psr4-analyzer", "entity-recognizer"],
+        "questionsCount": 1
+      },
+      {
+        "iteration": 3,
+        "outcome": "ready_to_fix",
+        "durationMs": 180,
+        "activatedNeurons": ["instruction-generator"],
+        "questionsCount": 0
+      }
+    ]
+  },
+  "validation": {
+    "allFixesApplied": true,
+    "filesValidated": 3,
+    "noNewErrors": true
+  },
+  "graph": {
+    "entities": [
+      {"id": "ent-001", "type": "CONTROLLER", "name": "UserController"},
+      {"id": "ent-002", "type": "CONTROLLER", "name": "OrderController"},
+      {"id": "ent-003", "type": "REQUEST", "name": "UserRequest"},
+      {"id": "ent-004", "type": "MODEL", "name": "User", "namespace": "Domain\\Models"},
+      {"id": "ent-005", "type": "MODEL", "name": "Order", "namespace": "Domain\\Models"}
+    ],
+    "relations": [
+      {"id": "rel-001", "type": "USES", "from": "UserController", "to": "User"},
+      {"id": "rel-002", "type": "USES", "from": "OrderController", "to": "Order"},
+      {"id": "rel-003", "type": "BELONGS_TO", "from": "Order", "to": "User"},
+      {"id": "rel-004", "type": "HAS_MANY", "from": "User", "to": "Order"}
+    ]
+  },
+  "applied_fixes_summary": {
+    "total": 3,
+    "successful": 3,
+    "failed": 0,
+    "details": [
+      {"fix_id": "fix-001", "file": "app/Http/Controllers/UserController.php", "status": "applied"},
+      {"fix_id": "fix-002", "file": "app/Http/Controllers/OrderController.php", "status": "applied"},
+      {"fix_id": "fix-003", "file": "app/Http/Requests/UserRequest.php", "status": "applied"}
+    ]
+  }
+}
