@@ -2,16 +2,23 @@
  * RAG Searcher - Search in indexed files
  * 
  * Локальный поиск по индексу без использования LLM.
+ * Поддерживает гибридный поиск: keyword-based + TF-IDF/BM25.
  */
 
 const fs = require('fs').promises;
 const path = require('path');
+const { TFIDFService } = require('./tfidf');
 
 class RAGSearcher {
-  constructor(config) {
+  constructor(config = {}) {
     this.projectPath = config.projectPath || process.cwd();
     this.indexPath = path.join(this.projectPath, '.a2a', 'index');
     this.index = null;
+    
+    // TF-IDF integration
+    this.useTFIDF = config.useTFIDF !== false;
+    this.tfidf = this.useTFIDF ? new TFIDFService() : null;
+    this.tfidfIndexed = false;
   }
 
   /**
@@ -28,6 +35,207 @@ class RAGSearcher {
     } catch (err) {
       console.warn('Index not found. Run `a2a index` first.');
       return { files: [], chunks: [] };
+    }
+  }
+
+  /**
+   * Index a single document in TF-IDF
+   * @param {string} id - Document identifier
+   * @param {string} content - Document content
+   */
+  indexDocument(id, content) {
+    if (this.tfidf) {
+      this.tfidf.addDocument(id, content);
+    }
+  }
+
+  /**
+   * Index multiple documents in TF-IDF
+   * @param {Array<{id: string, content: string}>} documents - Documents to index
+   */
+  indexDocuments(documents) {
+    if (this.tfidf) {
+      this.tfidf.addDocuments(documents.map(doc => ({
+        id: doc.id,
+        text: doc.content
+      })));
+    }
+  }
+
+  /**
+   * Build TF-IDF index from loaded RAG index
+   * @returns {Promise<void>}
+   */
+  async buildTFIDFIndex() {
+    if (!this.tfidf) {
+      throw new Error('TF-IDF not enabled');
+    }
+    
+    const index = await this.loadIndex();
+    
+    // Clear existing TF-IDF index
+    this.tfidf.clear();
+    
+    // Index all chunks
+    for (const chunk of index.chunks) {
+      this.tfidf.addDocument(chunk.id || `${chunk.filePath}:${chunk.startLine}`, chunk.content);
+    }
+    
+    this.tfidfIndexed = true;
+  }
+
+  /**
+   * Search using TF-IDF/BM25
+   * @param {string} query - Search query
+   * @param {number} [topK=10] - Number of results
+   * @returns {Promise<Array<{id: string, score: number, chunk?: object}>>}
+   */
+  async searchTFIDF(query, topK = 10) {
+    if (!this.tfidf) {
+      throw new Error('TF-IDF not enabled');
+    }
+    
+    // Build index if not done
+    if (!this.tfidfIndexed) {
+      await this.buildTFIDFIndex();
+    }
+    
+    const results = this.tfidf.search(query, topK);
+    
+    // Enrich results with chunk data
+    const index = await this.loadIndex();
+    const chunkMap = new Map();
+    for (const chunk of index.chunks) {
+      const key = chunk.id || `${chunk.filePath}:${chunk.startLine}`;
+      chunkMap.set(key, chunk);
+    }
+    
+    return results.map(r => ({
+      ...r,
+      chunk: chunkMap.get(r.id)
+    }));
+  }
+
+  /**
+   * Hybrid search combining keyword-based and TF-IDF results using RRF
+   * 
+   * Uses Reciprocal Rank Fusion (RRF) algorithm for combining results:
+   * RRF(d) = Σ 1/(k + rank(d))
+   * 
+   * RRF is more robust than score normalization because:
+   * - It uses ranks instead of raw scores (less sensitive to outliers)
+   * - Works well when different search methods produce different score scales
+   * - Standard approach in modern hybrid search systems
+   * 
+   * @param {string} query - Search query
+   * @param {Object} [options={}] - Search options
+   * @param {number} [options.limit=10] - Max results
+   * @param {number} [options.keywordWeight=0.5] - Weight for keyword search (0-1)
+   * @param {number} [options.tfidfWeight=0.5] - Weight for TF-IDF search (0-1)
+   * @param {number} [options.k=60] - RRF constant (standard value: 60)
+   * @returns {Promise<Array<{chunk: object, score: number, highlights: string[]}>>}
+   */
+  async searchHybrid(query, options = {}) {
+    const limit = options.limit || 10;
+    const keywordWeight = options.keywordWeight ?? 0.5;
+    const tfidfWeight = options.tfidfWeight ?? 0.5;
+    const k = options.k ?? 60; // RRF constant (standard value)
+    
+    // Run both searches in parallel (get more results for better RRF ranking)
+    const [keywordResults, tfidfResults] = await Promise.all([
+      this.search(query, { limit: limit * 2 }),
+      this.tfidf ? this.searchTFIDF(query, limit * 2) : Promise.resolve([])
+    ]);
+    
+    // RRF scoring: score(d) = Σ weight_i * (1 / (k + rank_i(d)))
+    const rrfScores = new Map();
+    
+    // Process keyword results with RRF
+    for (let i = 0; i < keywordResults.length; i++) {
+      const result = keywordResults[i];
+      const id = result.chunk.id || `${result.chunk.filePath}:${result.chunk.startLine}`;
+      const rrfContribution = keywordWeight * (1 / (k + i + 1));
+      
+      if (rrfScores.has(id)) {
+        const existing = rrfScores.get(id);
+        existing.score += rrfContribution;
+        existing.keywordRank = i + 1;
+        existing.keywordScore = result.score;
+        // Merge highlights
+        if (result.highlights) {
+          existing.highlights = [...new Set([...existing.highlights, ...result.highlights])];
+        }
+      } else {
+        rrfScores.set(id, {
+          chunk: result.chunk,
+          score: rrfContribution,
+          highlights: result.highlights || [],
+          keywordRank: i + 1,
+          keywordScore: result.score,
+          tfidfRank: null,
+          tfidfScore: 0
+        });
+      }
+    }
+    
+    // Process TF-IDF results with RRF
+    for (let i = 0; i < tfidfResults.length; i++) {
+      const result = tfidfResults[i];
+      const id = result.id;
+      const rrfContribution = tfidfWeight * (1 / (k + i + 1));
+      
+      if (rrfScores.has(id)) {
+        const existing = rrfScores.get(id);
+        existing.score += rrfContribution;
+        existing.tfidfRank = i + 1;
+        existing.tfidfScore = result.score;
+      } else if (result.chunk) {
+        rrfScores.set(id, {
+          chunk: result.chunk,
+          score: rrfContribution,
+          highlights: [],
+          keywordRank: null,
+          keywordScore: 0,
+          tfidfRank: i + 1,
+          tfidfScore: result.score
+        });
+      }
+    }
+    
+    // Sort by RRF score and limit
+    const results = [...rrfScores.values()]
+      .map(r => ({
+        chunk: r.chunk,
+        score: r.score,
+        highlights: r.highlights.slice(0, 5),
+        details: {
+          keywordRank: r.keywordRank,
+          keywordScore: r.keywordScore,
+          tfidfRank: r.tfidfRank,
+          tfidfScore: r.tfidfScore
+        }
+      }))
+      .sort((a, b) => b.score - a.score)
+      .slice(0, limit);
+    
+    return results;
+  }
+
+  /**
+   * Get TF-IDF statistics
+   * @returns {object|null}
+   */
+  getTFIDFStats() {
+    return this.tfidf ? this.tfidf.getStats() : null;
+  }
+
+  /**
+   * Clear TF-IDF index
+   */
+  clearTFIDFIndex() {
+    if (this.tfidf) {
+      this.tfidf.clear();
+      this.tfidfIndexed = false;
     }
   }
 

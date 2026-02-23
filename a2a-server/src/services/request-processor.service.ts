@@ -5,14 +5,15 @@
  * IMPORTANT: Server does NOT store client data!
  * Graph is passed in context and returned in response.
  * 
- * Flow:
+ * Flow (with PhaseMachine):
  * 1. Get pending request
- * 2. Parse graph from context (from client)
- * 3. Extract frameworks from package.json/composer.json (if present)
- * 4. Recognize entities from codeBlocks
- * 5. Merge recognized into existing graph
- * 6. Activate neurons
- * 7. Return result with updated graph
+ * 2. Initialize ContextManager and PhaseMachine
+ * 3. idle → discovery: Extract frameworks from package.json/composer.json
+ * 4. discovery → recognition: Recognize entities from codeBlocks
+ * 5. recognition → analysis: Check graph completeness
+ * 6. analysis → action: Activate neurons (if complete)
+ * 7. action → validation: Validate results
+ * 8. validation → completed: Return result with updated graph
  */
 
 import { requestService } from './request.service.js';
@@ -33,6 +34,8 @@ import {
   getFrameworkTriggers,
   type ExtractedFrameworks 
 } from './framework-extractor.service.js';
+import { PhaseMachine, getPhaseMachine, resetPhaseMachine, type Phase } from './phase-machine.service.js';
+import { ContextManager, getContextManager, resetContextManager } from './context-manager.service.js';
 import type { CodeBlock } from '../types/entity.types.js';
 
 const DEFAULT_INTERVAL_MS = 5000;
@@ -115,22 +118,44 @@ export async function processOneRequest(): Promise<ProcessResult | null> {
   const ctx = (context as Record<string, unknown>) ?? {};
 
   try {
+    // ========================================
+    // PHASE 0: Initialization
+    // ========================================
+    
+    // Reset and initialize ContextManager
+    const contextManager = resetContextManager();
     const taskText = parseTaskText(ctx);
-    const blocks = parseCodeBlocks(codeBlocks);
+    contextManager.set('task', taskText);
+    
+    // Initialize PhaseMachine with context
+    const phaseMachine = resetPhaseMachine(ctx);
     
     logger.info('[RequestProcessor] Processing request', { 
       promiseId, 
-      hasCodeBlocks: blocks.length > 0,
-      hasInitialFiles: hasInitialProjectFiles(blocks),
+      hasCodeBlocks: codeBlocks?.length ?? 0 > 0,
+      hasInitialFiles: hasInitialProjectFiles(parseCodeBlocks(codeBlocks)),
+      initialPhase: phaseMachine.getCurrentPhase(),
     });
 
-    // Step 1: Extract frameworks from package.json/composer.json (if present)
+    // ========================================
+    // PHASE 1: idle → discovery
+    // ========================================
+    phaseMachine.transition('discovery', 'start processing');
+    logger.info('[RequestProcessor] Phase transition', { 
+      phase: 'discovery', 
+      reason: 'start processing' 
+    });
+
+    const blocks = parseCodeBlocks(codeBlocks);
+    
+    // Extract frameworks from package.json/composer.json (if present)
     let frameworks: ExtractedFrameworks | undefined;
     let frameworkTriggers: string[] = [];
     
     if (hasInitialProjectFiles(blocks)) {
       frameworks = extractFrameworks(blocks);
       frameworkTriggers = getFrameworkTriggers(frameworks);
+      contextManager.set('frameworks', frameworks);
       
       logger.info('[RequestProcessor] Frameworks extracted', {
         frontend: frameworks.frontend,
@@ -139,17 +164,29 @@ export async function processOneRequest(): Promise<ProcessResult | null> {
       });
     }
 
-    // Step 2: Parse existing graph from context (from client)
+    // ========================================
+    // PHASE 2: discovery → recognition
+    // ========================================
+    const discoveryToRecognition = phaseMachine.transition('recognition', 'proceed to entity recognition');
+    logger.info('[RequestProcessor] Phase transition', { 
+      phase: 'recognition', 
+      success: discoveryToRecognition.success,
+      reason: 'proceed to entity recognition' 
+    });
+
+    // Parse existing graph from context (from client)
     const existingGraph = parseGraphFromContext(ctx);
+    contextManager.set('graph', existingGraph);
     
     logger.debug('[RequestProcessor] Existing graph', { 
       entityCount: existingGraph.entities.length,
       relationCount: existingGraph.relations.length 
     });
     
-    // Step 5: Recognize entities from codeBlocks
+    // Recognize entities from codeBlocks
     let updatedGraph = existingGraph;
     let recognitionResult: { count: number; types: Record<string, number> } | undefined;
+    let recognizedEntities: { entities: typeof existingGraph.entities; relations: typeof existingGraph.relations } | null = null;
     
     if (blocks.length > 0) {
       logger.debug('[RequestProcessor] Recognizing entities', { blockCount: blocks.length });
@@ -165,8 +202,13 @@ export async function processOneRequest(): Promise<ProcessResult | null> {
         relationCount: relations.length 
       });
       
-      // Step 6: Merge recognized into existing graph
+      // Merge recognized into existing graph
       updatedGraph = mergeRecognizedIntoGraph(existingGraph, { entities, relations });
+      recognizedEntities = { entities, relations };
+      
+      // Store in ContextManager
+      contextManager.set('graph', updatedGraph);
+      contextManager.set('entities', { entities, relations });
       
       // Count entity types
       const entityTypes: Record<string, number> = {};
@@ -179,19 +221,54 @@ export async function processOneRequest(): Promise<ProcessResult | null> {
         types: entityTypes,
       };
     }
-    
-    // Step 7: Check if graph is complete
+
+    // ========================================
+    // PHASE 3: recognition → analysis
+    // ========================================
+    const recognitionToAnalysis = phaseMachine.transition('analysis', 'check graph completeness');
+    logger.info('[RequestProcessor] Phase transition', { 
+      phase: 'analysis', 
+      success: recognitionToAnalysis.success,
+      reason: 'check graph completeness' 
+    });
+
+    // Check if graph is complete
     const completeness = isGraphComplete(updatedGraph, { taskText });
     
+    // Auto transition based on results
+    const autoTransitionResult = phaseMachine.autoTransition({
+      hasEntities: (recognizedEntities?.entities.length ?? 0) > 0,
+      isComplete: completeness.complete,
+      hasQuestions: !completeness.complete,
+      needsMoreFiles: completeness.missing.length > 0,
+    });
+    
+    logger.info('[RequestProcessor] Auto transition result', { 
+      success: autoTransitionResult.success,
+      from: autoTransitionResult.previousPhase,
+      to: autoTransitionResult.currentPhase,
+      canContinue: autoTransitionResult.canContinue,
+    });
+
+    // ========================================
+    // Handle incomplete graph (validation phase)
+    // ========================================
     if (!completeness.complete) {
-      // Graph incomplete - generate questions
+      // Transition to validation for incomplete graph
+      phaseMachine.transition('validation', 'graph incomplete');
+      
       const questions = generateQuestions(completeness.missing, updatedGraph);
+      contextManager.set('questions', questions);
+      
+      // Get context for validation phase
+      const phaseContext = contextManager.getForPhase('validation');
       
       await requestService.updateStatus(promiseId, 'completed', {
         outcome: 'graph_incomplete',
         message: 'Graph incomplete, need more context',
         context: { 
-          ...ctx, // Preserves new_task!
+          ...ctx,
+          ...phaseContext,
           graph: updatedGraph,
           frameworks,
         },
@@ -199,7 +276,7 @@ export async function processOneRequest(): Promise<ProcessResult | null> {
         graph_stats: getGraphStats(updatedGraph),
         questions,
         missing: completeness.missing,
-        frameworks, // Include frameworks in response
+        frameworks,
       });
       
       logger.info('[RequestProcessor] Graph incomplete', { 
@@ -207,6 +284,7 @@ export async function processOneRequest(): Promise<ProcessResult | null> {
         missing: completeness.missing,
         questionCount: questions.length,
         frameworks: frameworks?.frontend,
+        phaseStats: phaseMachine.getStats(),
       });
       
       return { 
@@ -217,24 +295,61 @@ export async function processOneRequest(): Promise<ProcessResult | null> {
         frameworks,
       };
     }
-    
-    // Step 8: Activate neurons
+
+    // ========================================
+    // PHASE 4: analysis → action
+    // ========================================
+    const analysisToAction = phaseMachine.transition('action', 'graph complete, activate neurons');
+    logger.info('[RequestProcessor] Phase transition', { 
+      phase: 'action', 
+      success: analysisToAction.success,
+      reason: 'graph complete, activate neurons' 
+    });
+
+    // Activate neurons
     const activationResult = activateNeurons({
       taskText,
       codeBlocks: blocks,
-      architecturalFeatures: [], // Removed architectural_features from protocol
-      frameworkTriggers, // Pass framework triggers for neuron activation
+      architecturalFeatures: [],
+      frameworkTriggers,
     });
 
     const activatedIds = activationResult.activatedNeurons.map((a) => a.neuron.id);
     const requestFiles = Array.from(new Set([...(activationResult.requestFiles ?? []), ...((ctx['request_files'] as string[]) ?? [])]));
+    
+    // Store activated neurons in context
+    contextManager.set('activated_neurons', activatedIds);
 
-    // Step 9: Return completed result with updated graph
+    // ========================================
+    // PHASE 5: action → validation
+    // ========================================
+    const actionToValidation = phaseMachine.transition('validation', 'validate results');
+    logger.info('[RequestProcessor] Phase transition', { 
+      phase: 'validation', 
+      success: actionToValidation.success,
+      reason: 'validate results' 
+    });
+
+    // ========================================
+    // PHASE 6: validation → completed
+    // ========================================
+    const validationToCompleted = phaseMachine.transition('completed', 'validation passed');
+    logger.info('[RequestProcessor] Phase transition', { 
+      phase: 'completed', 
+      success: validationToCompleted.success,
+      reason: 'validation passed' 
+    });
+
+    // Get final context for completed phase
+    const finalContext = contextManager.getForPhase('completed');
+
+    // Return completed result with updated graph
     await requestService.updateStatus(promiseId, 'completed', {
       outcome: 'completed',
       message: 'Request processed successfully',
       context: { 
-        ...ctx, // Preserves new_task!
+        ...ctx,
+        ...finalContext,
         graph: updatedGraph,
         frameworks,
       },
@@ -243,7 +358,7 @@ export async function processOneRequest(): Promise<ProcessResult | null> {
       injected_content: activationResult.injectedContent,
       activated_neuron_ids: activatedIds,
       entities: recognitionResult,
-      frameworks, // Include frameworks in response
+      frameworks,
       questions: [],
       index_answers: [],
     });
@@ -253,7 +368,9 @@ export async function processOneRequest(): Promise<ProcessResult | null> {
       activatedCount: activatedIds.length, 
       activatedIds: activatedIds.slice(0, 5),
       entityCount: updatedGraph.entities.length,
-      relationCount: updatedGraph.relations.length
+      relationCount: updatedGraph.relations.length,
+      phaseStats: phaseMachine.getStats(),
+      contextStats: contextManager.getStats(),
     });
     
     return { 

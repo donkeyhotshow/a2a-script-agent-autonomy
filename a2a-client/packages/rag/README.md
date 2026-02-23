@@ -85,6 +85,49 @@ const content = await searcher.getFileContent('app/Models/User.php');
 const chunks = await searcher.getFileChunks('app/Models/User.php');
 ```
 
+## TF-IDF/BM25 Search
+
+Пакет поддерживает TF-IDF/BM25 для sparse retrieval без внешних зависимостей.
+
+### Использование
+
+```javascript
+const { RAGSearcher } = require('@a2a/rag');
+
+const searcher = new RAGSearcher({ 
+  projectPath: '/path/to/project',
+  useTFIDF: true  // по умолчанию
+});
+
+// Индексация документов
+await searcher.indexDocument('file1.js', 'content of file');
+await searcher.buildTFIDFIndex();
+
+// Поиск
+const results = await searcher.searchTFIDF('user authentication', 10);
+
+// Гибридный поиск (keyword + TF-IDF)
+const hybrid = await searcher.searchHybrid('query', {
+  limit: 10,
+  keywordWeight: 0.4,
+  tfidfWeight: 0.6
+});
+```
+
+### API
+
+#### `searchTFIDF(query, topK)`
+BM25 поиск по индексу.
+
+#### `searchHybrid(query, options)`
+Комбинирует keyword-based и TF-IDF поиск.
+
+#### `buildTFIDFIndex()`
+Строит TF-IDF индекс из RAG индекса.
+
+#### `getTFIDFStats()`
+Возвращает статистику индекса.
+
 ## Index Structure
 
 The index is stored in `.a2a/index/rag-files.json`:
