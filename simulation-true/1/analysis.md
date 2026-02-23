@@ -1,56 +1,98 @@
 # Simulation 1 - Analysis
 
-## Server Processes
+## Action-Based System
 
-### 1. RequestProcessor
-- Получает запрос с `new_task`
-- Запускает PhaseMachine
+Система использует базу actions для ограничения всех возможных действий системы над проектом.
 
-### 2. PhaseMachine States
-```
-idle → discovery → recognition → analysis → action → validation → completed
-```
+---
 
-### 3. Neuron Activation Flow
-
-| Neuron | Priority | Trigger | Status |
-|--------|----------|---------|--------|
-| neuron-task-semantic-analyzer | 10 | * | completed |
-| neuron-project-context-detector | 8 | frameworks | completed |
-| neuron-file-collector | 5 | request_files | in_progress |
-
-### 4. Task Migration (new_task → task)
+## Workflow
 
 ```
-new_task: "исправить импорты после рефакторинга"
-         ↓
-    Task with clarifications
-         ↓
-  clarifications: [
-    { type: "file_request", question: "...", status: "pending" }
-  ]
+new_task → Поиск action в базе → Найден?
+                              ↓
+              Да              ↓              Нет
+        proposedActions ←----┴----→ fallbackActions
+              ↓                              ↓
+     action + steps              1. LLM Action Generator (ollama)
+                                   - Phase 1: Генерация общих шагов
+                                   - Phase 2: Генерация подпунктов
+                                   - Phase 3: Генерация скрипта
+                               2. Auto-AI режимы
 ```
 
-### 5. Neuron Actions
+---
 
-Нейроны возвращают `actions` - требования действий:
+## 1. Поиск Action в Базе
 
-```
-json
+Система ищет подходящий action в [`a2a-server/src/acions/`](a2a-server/src/acions/):
+- Поиск по categoryId, actionId, triggers
+- Если найден → берём action + steps из файла
+- Предлагаем на выбор пользователю
+
+---
+
+## 2. Fallback (Action НЕ найден)
+
+Когда action не найден в базе:
+
+### LLM Action Generator (ollama/rnj-1)
+
+Итеративный процесс генерации действий:
+
+| Phase | Описание | Пользователь |
+|-------|----------|--------------|
+| **Phase 1** | Генерация общих шагов | Подтвердить / Перегенерировать |
+| **Phase 2** | Генерация подпунктов (по одному за итерацию) | Подтвердить / Перегенерировать |
+| **Phase 3** | Генерация исполняемого скрипта | Клиент выполняет → Результат |
+
+### Auto-AI Режимы
+- 1-context-collection - Сбор контекста для внешнего AI
+- 2-code-analysis - Анализ кода
+- 3-knowledge-graph - Построение графа знаний
+- 4-code-generation - Генерация кода
+- 5-hybrid - Гибридный режим
+
+---
+
+## Пример: "исправить импорты после рефакторинга"
+
+**Поиск в базе → Найден ✓**
+
+```json
 {
-  "actions": [
-    { "type": "request_files", "items": ["**/*.php"] }
+  "proposedActions": [
+    {
+      "actionId": "fix-imports",
+      "steps": ["collect", "detect", "fix", "verify"]
+    }
   ]
 }
 ```
 
-### 6. Clarifications
+---
 
-Когда нейрон требует уточнения → создаётся `clarification`:
-- Мигрирует в `task.clarifications`
-- Клиент должен ответить
-- Задача уточняется на основе ответов
+## Пример: "создать новую фичу авторизации"
 
-## Outcome: need_files
+**Поиск в базе → НЕ найден**
 
-Сервер запрашивает файлы через clarification.
+Fallback: LLM Action Generator
+
+```
+Phase 1: Ollama генерирует общие шаги
+  - Создать модель данных
+  - Создать миграцию
+  - Создать контроллер
+  - Создать представления
+  ↓
+Пользователь: Подтвердить
+
+Phase 2: Для каждого шага генерируются подпункты
+  (итеративно, по одному за раз)
+  ↓
+Пользователь: Подтвердить
+
+Phase 3: Генерируется исполняемый скрипт
+  ↓
+Клиент выполняет → Результат
+```

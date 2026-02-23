@@ -1,46 +1,87 @@
 {
-  "outcome": "need_files",
-  "message": "Для исправления импортов после рефакторинга мне нужно проанализировать структуру проекта.",
+  "outcome": "actions_proposed",
+  "message": "Найден подходящий action в базе. Выберите действие:",
+  "proposedActions": [
+    {
+      "actionId": "fix-imports",
+      "categoryId": "code-quality",
+      "executorSystemId": "agent",
+      "title": "Исправление импортов после рефакторинга",
+      "description": "Автоматическое исправление сломанных импортов после изменения структуры проекта",
+      "confidence": 0.95,
+      "canMigrateToScript": true,
+      "steps": [
+        {
+          "id": 1,
+          "description": "Собрать все файлы с импортами (PHP, Vue)",
+          "type": "collect"
+        },
+        {
+          "id": 2,
+          "description": "Определить сломанные пути импортов на основе PSR-4",
+          "type": "detect"
+        },
+        {
+          "id": 3,
+          "description": "Исправить импорты согласно новой структуре",
+          "type": "fix"
+        },
+        {
+          "id": 4,
+          "description": "Проверить работоспособность через тесты",
+          "type": "verify"
+        }
+      ],
+      "triggers": ["import", "refactor", "psr-4"],
+      "source": "base-search"
+    }
+  ],
+  "fallbackActions": [],
+  "fallbackAvailable": true,
+  "fallbackInfo": {
+    "taskDecomposition": {
+      "type": "task-decomposition",
+      "model": "rnj-1",
+      "provider": "ollama",
+      "title": "Разбить задачу на atomic шаги через ollama",
+      "description": "Если стандартный action не подходит, ollama разобьёт задачу на подзадачи"
+    },
+    "autoAiModes": [
+      {
+        "mode": "auto-ai",
+        "variant": "1-context-collection",
+        "title": "Сбор контекста для внешнего AI"
+      },
+      {
+        "mode": "auto-ai",
+        "variant": "2-code-analysis",
+        "title": "Анализ кода"
+      },
+      {
+        "mode": "auto-ai",
+        "variant": "4-code-generation",
+        "title": "Генерация кода"
+      }
+    ]
+  },
   "context": {
     "task": {
-      "clarifications": [
-        "исправить импорты после рефакторинга",
-        "Какие файлы содержат импорты?"
-      ],
-      "neurons": [
-        {
-          "id": "neuron-task-semantic-analyzer",
-          "phase": 1,
-          "status": "completed",
-          "result": {
-            "detail_level": "medium",
-            "classification": "MECHANICAL"
-          }
-        },
-        {
-          "id": "neuron-project-context-detector",
-          "phase": 2,
-          "status": "completed",
-          "result": {
-            "frameworks": ["laravel", "vue"]
-          }
-        },
-        {
-          "id": "neuron-file-collector",
-          "phase": 3,
-          "status": "in_progress",
-          "actions": [
-            {
-              "type": "request_files",
-              "items": ["**/*.php", "**/*.vue"]
-            }
-          ]
-        }
-      ]
+      "original_request": "исправить импорты после рефакторинга",
+      "detail_level": "medium",
+      "classification": "MECHANICAL"
     },
-    "frameworks": {
+    "project": {
       "backend": "laravel",
-      "frontend": "vue"
+      "frontend": "vue",
+      "psr4_mapping": {
+        "App\\": "app/",
+        "Domain\\": "src/Domain/"
+      }
+    },
+    "actionSearch": {
+      "method": "base-search",
+      "found": true,
+      "actionId": "fix-imports"
     }
   }
 }
