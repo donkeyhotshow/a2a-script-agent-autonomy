@@ -36,7 +36,12 @@ import {
 } from './framework-extractor.service.js';
 import { PhaseMachine, getPhaseMachine, resetPhaseMachine, type Phase } from './phase-machine.service.js';
 import { ContextManager, getContextManager, resetContextManager } from './context-manager.service.js';
+import { 
+  buildRequestContextBlock,
+  buildRequestApiResult 
+} from '../protocol/message-builder.js';
 import type { CodeBlock } from '../types/entity.types.js';
+import type { RequestContextBlock } from '../types/index.js';
 
 const DEFAULT_INTERVAL_MS = 5000;
 
@@ -52,6 +57,12 @@ interface ProcessResult {
   questions?: string[] | undefined;
   missing?: string[] | undefined;
   frameworks?: ExtractedFrameworks | undefined;
+  /** Context block for client */
+  context?: RequestContextBlock | undefined;
+  /** Files requested from client */
+  request_files?: string[] | undefined;
+  /** Activated neuron IDs */
+  activated_neuron_ids?: string[] | undefined;
 }
 
 function parseTaskText(ctx: Record<string, unknown>): string {
@@ -263,15 +274,19 @@ export async function processOneRequest(): Promise<ProcessResult | null> {
       // Get context for validation phase
       const phaseContext = contextManager.getForPhase('validation');
       
+      // Build context block for client
+      const contextBlock = buildRequestContextBlock({
+        requestFiles: completeness.missing,
+        architecturalFeatures: frameworkTriggers,
+        graph: updatedGraph,
+        ...(frameworks && { frameworks: frameworks as unknown as Record<string, unknown> }),
+        ...(taskText && { newTask: [taskText] }),
+      });
+      
       await requestService.updateStatus(promiseId, 'completed', {
         outcome: 'graph_incomplete',
         message: 'Graph incomplete, need more context',
-        context: { 
-          ...ctx,
-          ...phaseContext,
-          graph: updatedGraph,
-          frameworks,
-        },
+        context: contextBlock,
         graph: updatedGraph,
         graph_stats: getGraphStats(updatedGraph),
         questions,
@@ -293,6 +308,8 @@ export async function processOneRequest(): Promise<ProcessResult | null> {
         questions, 
         missing: completeness.missing,
         frameworks,
+        context: contextBlock,
+        request_files: completeness.missing,
       };
     }
 
@@ -343,16 +360,20 @@ export async function processOneRequest(): Promise<ProcessResult | null> {
     // Get final context for completed phase
     const finalContext = contextManager.getForPhase('completed');
 
+    // Build context block for client
+    const completedContextBlock = buildRequestContextBlock({
+      architecturalFeatures: frameworkTriggers,
+      graph: updatedGraph,
+      ...(frameworks && { frameworks: frameworks as unknown as Record<string, unknown> }),
+      ...(taskText && { newTask: [taskText] }),
+      ...(requestFiles.length > 0 && { requestFiles }),
+    });
+
     // Return completed result with updated graph
     await requestService.updateStatus(promiseId, 'completed', {
       outcome: 'completed',
       message: 'Request processed successfully',
-      context: { 
-        ...ctx,
-        ...finalContext,
-        graph: updatedGraph,
-        frameworks,
-      },
+      context: completedContextBlock,
       graph: updatedGraph,
       graph_stats: getGraphStats(updatedGraph),
       injected_content: activationResult.injectedContent,
@@ -378,6 +399,9 @@ export async function processOneRequest(): Promise<ProcessResult | null> {
       graph: updatedGraph, 
       entities: recognitionResult,
       frameworks,
+      context: completedContextBlock,
+      activated_neuron_ids: activatedIds,
+      request_files: requestFiles.length > 0 ? requestFiles : undefined,
     };
     
   } catch (err) {

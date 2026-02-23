@@ -10,6 +10,9 @@ import {
   ClientMessage,
   ServerMessage,
   TaskStatus,
+  RequestContextBlock,
+  RequestApiResult,
+  Task,
 } from '../types/index.js';
 import {
   createInitialContext,
@@ -390,4 +393,102 @@ export function updateMessageContext<T extends ClientMessage | ServerMessage>(
       version: PROTOCOL_VERSION,
     },
   };
+}
+
+// ============================================
+// Request API Context Block Builders
+// ============================================
+
+/**
+ * Build context block for Request API response
+ * Contains all data needed by client for next iteration
+ */
+export function buildRequestContextBlock(options: {
+  tasks?: Task[];
+  requestFiles?: string[];
+  architecturalFeatures?: string[];
+  graph?: { entities: unknown[]; relations: unknown[] };
+  frameworks?: Record<string, unknown>;
+  newTask?: string[];
+}): RequestContextBlock {
+  const context: RequestContextBlock = {};
+
+  if (options.tasks && options.tasks.length > 0) {
+    context.tasks = options.tasks;
+  }
+
+  if (options.requestFiles && options.requestFiles.length > 0) {
+    context.request_files = options.requestFiles;
+  }
+
+  if (options.architecturalFeatures && options.architecturalFeatures.length > 0) {
+    context.architectural_features = options.architecturalFeatures;
+  }
+
+  if (options.graph) {
+    context.graph = options.graph;
+  }
+
+  if (options.frameworks) {
+    context.frameworks = options.frameworks;
+  }
+
+  if (options.newTask && options.newTask.length > 0) {
+    context.new_task = options.newTask;
+  }
+
+  return context;
+}
+
+/**
+ * Build complete Request API result
+ */
+export function buildRequestApiResult(options: {
+  outcome: 'completed' | 'graph_incomplete' | 'failed';
+  message?: string;
+  context?: RequestContextBlock;
+  questions?: string[];
+  missing?: string[];
+  graphStats?: { entityCount: number; relationCount: number; entityTypes: Record<string, number> };
+  activatedNeuronIds?: string[];
+  injectedContent?: string[];
+  error?: { code: string; message: string };
+}): RequestApiResult {
+  const result: RequestApiResult = {
+    outcome: options.outcome,
+  };
+
+  if (options.message) {
+    result.message = options.message;
+  }
+
+  if (options.context) {
+    result.context = options.context;
+  }
+
+  if (options.questions && options.questions.length > 0) {
+    result.questions = options.questions;
+  }
+
+  if (options.missing && options.missing.length > 0) {
+    result.missing = options.missing;
+  }
+
+  if (options.graphStats) {
+    result.graph_stats = options.graphStats;
+  }
+
+  if (options.activatedNeuronIds && options.activatedNeuronIds.length > 0) {
+    result.activated_neuron_ids = options.activatedNeuronIds;
+  }
+
+  if (options.injectedContent && options.injectedContent.length > 0) {
+    result.injected_content = options.injectedContent;
+  }
+
+  if (options.error) {
+    result.error = options.error;
+  }
+
+  return result;
 }

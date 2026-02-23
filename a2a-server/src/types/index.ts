@@ -182,3 +182,69 @@ export interface ErrorPayload {
   code: string;
   message: string;
 }
+
+// ============================================
+// Architectural Feature Types
+// ============================================
+
+export interface ArchitecturalFeature {
+  name: string;
+  category: 'directory_structure' | 'naming_convention' | 'custom_pattern' | 'framework';
+  description?: string;
+  path?: string;
+  metadata?: Record<string, unknown>;
+}
+
+// ============================================
+// Request API Response Types
+// ============================================
+
+/**
+ * Context block returned in Request API response
+ * Contains all data needed by client for next iteration
+ */
+export interface RequestContextBlock {
+  /** Tasks to be performed (derived from new_task and neuron activation) */
+  tasks?: Task[];
+  /** Files that client should provide in next request */
+  request_files?: string[];
+  /** Architectural features detected in project */
+  architectural_features?: string[];
+  /** Current graph state */
+  graph?: {
+    entities: unknown[];
+    relations: unknown[];
+  };
+  /** Frameworks detected in project (flexible structure) */
+  frameworks?: Record<string, unknown>;
+  /** Original task from client */
+  new_task?: string[];
+}
+
+/**
+ * Full result structure for Request API
+ */
+export interface RequestApiResult {
+  outcome: 'completed' | 'graph_incomplete' | 'failed';
+  message?: string;
+  context?: RequestContextBlock;
+  /** Questions for client (when graph_incomplete) */
+  questions?: string[];
+  /** Missing elements identified */
+  missing?: string[];
+  /** Graph statistics */
+  graph_stats?: {
+    entityCount: number;
+    relationCount: number;
+    entityTypes: Record<string, number>;
+  };
+  /** Activated neuron IDs */
+  activated_neuron_ids?: string[];
+  /** Content injected by neurons */
+  injected_content?: string[];
+  /** Error details (when failed) */
+  error?: {
+    code: string;
+    message: string;
+  };
+}
