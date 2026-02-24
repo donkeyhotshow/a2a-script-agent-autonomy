@@ -2,6 +2,9 @@
  * A2A Protocol - context and file block handling per requirements.md
  * §3.2 Block types: context (required), file, file:path:start-end
  * §5.1 Context schema, §5.2 File block format
+ *
+ * Client does not alter context returned by server: when continuing or iterating,
+ * send back server-provided context (e.g. graph) as-is; only add new fields (step_result, step_id, code_blocks).
  */
 
 const VERSION = '1.0';

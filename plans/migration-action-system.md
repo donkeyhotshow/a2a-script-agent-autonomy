@@ -1,7 +1,10 @@
 # План: Миграция на Action-Based систему
 
+> **Относится к:** a2a-server + a2a-client
+
 ## Текущее состояние
 
+- Definitions: [`a2a-server/src/actions/definitions/`](a2a-server/src/actions/definitions/) ([README](a2a-server/src/actions/definitions/README.md)); код: [action-registry.ts](a2a-server/src/actions/action-registry.ts), [action-parser.ts](a2a-server/src/actions/action-parser.ts)
 - Есть папка `a2a-server/src/actions/` (новая)
 - Есть `archive/actions-legacy/` (старые actions)
 - Есть `etalon/` с примерами скриптов

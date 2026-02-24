@@ -72,3 +72,8 @@ powershell -ExecutionPolicy Bypass -File C:\workspace\bin\qtu.ps1 -Question "В�
 - **Request processor is timer-based** - Polls for pending requests every 5 seconds (configurable via REQUEST_PROCESSOR_INTERVAL_MS)
 - **WebSocket separate from HTTP** - WS on port 3001, HTTP on port 3000
 - **Client workspaces** - `agent`, `api-client`, `fs-utils`, `rag`, `script-runner` are separate npm packages under `a2a-client/packages/`
+
+### Client vs Server (разделение ответственности)
+- **Client:** Holds all codebase indexes (RAG, file search, free-form search). Stores history. Executes commands from server responses. Sends context back to server **without altering it** (only adds new inputs like `step_result`, `code_blocks`; does not modify graph/context returned by server).
+- **Server:** Controls client via response payload. Receives context and **may modify it** (server can change context). Server does **not** store user code or codebase data. Server does **not** use caches to pass data between iterations (ContextManager is request-scoped; ActionExecutor keeps only execution state: step index, not file content). Server = logic + its own data only. **Actions** (definitions in `a2a-server/src/actions/definitions/`) are the main place for mechanical task decisions.
+- **fileCachePath** (config): for server-owned assets (e.g. git clone dirs), not for caching user codebase; user code stays on client.

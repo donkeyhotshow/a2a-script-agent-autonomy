@@ -316,7 +316,8 @@ export async function execute(code, context = {}) {
 | Файл | Изменения |
 |------|-----------|
 | `a2a-server/src/services/request-processor.service.ts` | Добавить обработку new_task и continue |
-| `a2a-server/src/actions/definitions/fix-vue-imports.md` | Обновить формат с TypeScript кодом |
+| [definitions/fix-vue-imports.md](a2a-server/src/actions/definitions/fix-vue-imports.md) | Обновить формат с TypeScript кодом |
+| [definitions/README.md](a2a-server/src/actions/definitions/README.md) | Ссылки на планы и код |
 | `a2a-client/packages/api-client/src/async-client.js` | Добавить обработку action |
 | `a2a-client/packages/script-runner/` | Добавить тесты |
 

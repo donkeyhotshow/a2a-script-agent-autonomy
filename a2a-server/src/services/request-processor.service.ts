@@ -1,10 +1,11 @@
 /**
  * Request Processor Service
  * Processes requests: recognizes entities, builds graph, activates neurons
- * 
+ *
  * IMPORTANT: Server does NOT store client data!
  * Graph is passed in context and returned in response.
- * 
+ * ContextManager is reset per request (resetContextManager) — no cache of context/code between iterations.
+ *
  * Flow (with PhaseMachine):
  * 1. Get pending request
  * 2. Initialize ContextManager and PhaseMachine

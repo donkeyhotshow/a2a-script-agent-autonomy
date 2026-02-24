@@ -60,3 +60,14 @@ export {
   actionProcessor,
   type ActionProcessorResult,
 } from './action-processor.js';
+
+// Auto-AI definitions index
+export {
+  AUTO_AI_CATEGORIES,
+  AUTO_AI_ACTION_IDS,
+  getActionIdsByCategory,
+  getCategories,
+  isAutoAiAction,
+  getCategoryForAction,
+  type AutoAiCategory,
+} from './definitions/auto-ai-index.js';

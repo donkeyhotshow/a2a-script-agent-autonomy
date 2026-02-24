@@ -2,6 +2,8 @@
 
 Исправить сломанные импорты в Vue файлах.
 
+**Планы:** [actions-definitions-for-auto-ai](../../../../plans/actions-definitions-for-auto-ai.md) (пример) · [fix-vue-imports-improvements](../../../../plans/later/fix-vue-imports-improvements.md), [fix-vue-imports-batch](../../../../plans/later/fix-vue-imports-batch.md) (варианты).
+
 ## Sub-actions (4 steps)
 
 ### 1. vue-import-detect

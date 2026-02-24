@@ -1,10 +1,12 @@
 # План: Система итеративных Actions на основе MD файлов
 
+> **Относится к:** a2a-server (actions)
+
 ## Контекст
 
 **Текущее состояние:**
 - Есть симуляции итеративного обмена в `simulation-true/` (JSON формат)
-- Есть MD файлы actions в `a2a-server/src/actions/` (статические описания)
+- MD файлы actions: [`a2a-server/src/actions/definitions/`](a2a-server/src/actions/definitions/) (оглавление: [definitions/README.md](a2a-server/src/actions/definitions/README.md))
 
 **Цель:**
 Создать единую систему, где MD файлы определяют структуру action с итеративными шагами, а система парсит их и выполняет.
@@ -54,8 +56,7 @@
 - Aliases: @ -> resources/js
 ```
 
-**Файлы для создания:**
-- `a2a-server/src/actions/action-parser.ts` - парсер MD в структуру
+**Файлы:** парсер — [action-parser.ts](a2a-server/src/actions/action-parser.ts), реестр — [action-registry.ts](a2a-server/src/actions/action-registry.ts), definitions — [definitions/README.md](a2a-server/src/actions/definitions/README.md)
 
 ---
 

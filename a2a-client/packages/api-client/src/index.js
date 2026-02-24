@@ -12,6 +12,7 @@ const {
   buildFileResponseContext,
 } = require('./protocol.js');
 const { ApiClient: AsyncApiClient, PromisePoller } = require('./async-client.js');
+const { handleActionResponse, createExecuteCode } = require('./action-handler.js');
 
 class ApiError extends Error {
   constructor(message, status, data = {}) {
@@ -183,4 +184,11 @@ class ApiClient {
   }
 }
 
-module.exports = { ApiClient, ApiError, AsyncApiClient, PromisePoller };
+module.exports = {
+  ApiClient,
+  ApiError,
+  AsyncApiClient,
+  PromisePoller,
+  handleActionResponse,
+  createExecuteCode,
+};

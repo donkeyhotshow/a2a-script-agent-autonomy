@@ -5,6 +5,9 @@ import { invoke } from '../services/invoke.service.js';
 // Import new routes
 import sessionsRoutes from './sessions.routes.js';
 import requestsRoutes from './requests.routes.js';
+import actionsRoutes from './actions.routes.js';
+import tasksRoutes from './tasks.routes.js';
+import projectsRoutes from './projects.routes.js';
 
 /**
  * a2a-server: async protocol with sessions and requests.
@@ -17,6 +20,13 @@ router.use('/sessions', sessionsRoutes);
 
 // Mount request routes  
 router.use('/requests', requestsRoutes);
+
+// Mount actions routes
+router.use('/actions', actionsRoutes);
+
+// Mount tasks and projects (stubs - see plans)
+router.use('/tasks', tasksRoutes);
+router.use('/projects', projectsRoutes);
 
 async function handleInvoke(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {

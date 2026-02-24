@@ -1,5 +1,18 @@
 # План: Создание Action Definitions для Auto-AI Use Cases
 
+> **Относится к:** a2a-server (actions)
+
+## Связи
+
+| Куда | Что |
+|------|-----|
+| [a2a-server/src/actions/definitions/README.md](a2a-server/src/actions/definitions/README.md) | Оглавление definitions, ссылки на планы и код |
+| [definitions/](a2a-server/src/actions/definitions/) | Все MD: context/, analysis/, graph/, generation/, hybrid/, fallback/, fix-vue-imports*.md |
+| [auto-ai-index.ts](a2a-server/src/actions/definitions/auto-ai-index.ts) | Индекс категорий → action IDs |
+| [action-registry.ts](a2a-server/src/actions/action-registry.ts) | Загрузка MD из definitions |
+| [action-parser.ts](a2a-server/src/actions/action-parser.ts) | Парсинг MD в структуру |
+| [actions/index.ts](a2a-server/src/actions/index.ts) | Экспорт registry + Auto-AI хелперы |
+
 ## Обзор
 
 Этот план описывает создание Action definitions в [`a2a-server/src/actions/definitions/`](a2a-server/src/actions/definitions/) для каждого use-case из [`a2a-server/docs/use-cases/auto-ai/`](a2a-server/docs/use-cases/auto-ai/).
@@ -325,33 +338,21 @@ export default async function run(input: { files: string[] }) {
 
 ## Файлы для создания
 
-### Actions/definitions/ (16 файлов):
+### Actions/definitions/ (реализовано + fallback, hybrid-improve, hybrid-explain):
+
+Реализованные MD лежат в [`a2a-server/src/actions/definitions/`](a2a-server/src/actions/definitions/):
 
 ```
-actions/definitions/
-├── context/
-│   ├── context-scan.md
-│   ├── context-index.md
-│   ├── context-query.md
-│   ├── context-rank.md
-│   └── context-format.md
-├── analysis/
-│   ├── analyze-full.md
-│   ├── analyze-performance.md
-│   ├── analyze-security.md
-│   ├── analyze-architecture.md
-│   └── analyze-test.md
-├── graph/
-│   ├── graph-build.md
-│   ├── graph-query.md
-│   └── graph-impact.md
-├── generation/
-│   ├── generate-crud.md
-│   ├── generate-model.md
-│   └── generate-controller.md
-└── hybrid/
-    ├── hybrid-fix.md
-    └── hybrid-refactor.md
+definitions/
+├── context/     → context-scan.md, context-index.md, context-query.md, context-rank.md, context-format.md
+├── analysis/    → analyze-full.md, analyze-performance.md, analyze-security.md, analyze-architecture.md, analyze-test.md
+├── graph/       → graph-build.md, graph-query.md, graph-impact.md
+├── generation/  → generate-crud.md, generate-model.md, generate-controller.md
+├── hybrid/      → hybrid-fix.md, hybrid-refactor.md, hybrid-improve.md, hybrid-explain.md
+├── fallback/    → ai-fallback.md, ai-analyze.md, ai-generate.md
+├── fix-vue-imports.md, fix-vue-imports-batch.md, fix-vue-imports-alternatives.md, fix-vue-imports-improvements.md
+├── README.md    → оглавление и ссылки на планы/код
+└── auto-ai-index.ts
 ```
 
 ---

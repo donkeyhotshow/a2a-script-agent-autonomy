@@ -8,7 +8,8 @@ const path = require('path');
 const tests = [
   'glob-matcher.test.js',
   'ignore-detector.test.js',
-  'file-scanner.test.js'
+  'file-scanner.test.js',
+  'file-scanner.ignore.test.js',
 ];
 
 console.log('=== Running all @a2a/fs-utils tests ===\n');

@@ -5,10 +5,11 @@ import { taskSemanticAnalyzerNeuron } from './task-semantic-analyzer.neuron.js';
 import { projectContextDetectorNeuron } from './project-context-detector.neuron.js';
 import { fileCollectorNeuron } from './file-collector.neuron.js';
 import { externalAiTriggerNeuron } from './external-ai-trigger.neuron.js';
+import { validationNeuron } from './validation.neuron.js';
 
 /**
  * Neurons registry
- * 
+ *
  * Legacy neurons moved to archive/neurons-legacy/
  * New architecture uses task analysis neurons with iterative processing
  */
@@ -17,7 +18,7 @@ export const neurons: Neuron[] = [
   taskSemanticAnalyzerNeuron,
   projectContextDetectorNeuron,
   fileCollectorNeuron,
-  
+  validationNeuron,
   // External AI trigger (lowest priority - runs last)
   externalAiTriggerNeuron,
 ];
@@ -41,5 +42,6 @@ export {
   taskSemanticAnalyzerNeuron,
   projectContextDetectorNeuron,
   fileCollectorNeuron,
+  validationNeuron,
   externalAiTriggerNeuron,
 };
