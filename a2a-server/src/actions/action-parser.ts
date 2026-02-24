@@ -344,7 +344,8 @@ export async function parseAllActionsFromDirectory(directoryPath: string): Promi
     const files = await fs.readdir(directoryPath);
     
     for (const file of files) {
-      if (file.endsWith('.md')) {
+      // Skip README files - they are documentation, not action definitions
+      if (file.endsWith('.md') && file.toLowerCase() !== 'readme.md') {
         const filePath = path.join(directoryPath, file);
         try {
           const content = await fs.readFile(filePath, 'utf-8');

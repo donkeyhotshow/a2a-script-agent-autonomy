@@ -7,6 +7,13 @@ import { ActionDefinition, ActionMatch } from './types.js';
 import { parseAllActionsFromDirectory } from './action-parser.js';
 
 /**
+ * Minimum match score threshold for action matching.
+ * Actions with matchScore below this threshold are considered weak matches and filtered out.
+ * Value 0.5 corresponds to at least one exact keyword match.
+ */
+export const MIN_MATCH_SCORE = 0.5;
+
+/**
  * Action Registry - manages loading and searching actions from MD files
  */
 export class ActionRegistry {
@@ -82,28 +89,35 @@ export class ActionRegistry {
       const descLower = action.description.toLowerCase();
       const titleLower = action.title.toLowerCase();
 
+      let keywordMatches = 0;
+      
       for (const word of taskWords) {
         // Exact keyword match in description or title
         if (descLower.includes(word) || titleLower.includes(word)) {
           matchScore += 0.5;
+          keywordMatches++;
         } 
-        // Partial match (word contains the search term or vice versa)
+        // Partial match: action word contains the search term
+        // Only match if action word is longer and contains the search term
         else if (word.length > 3) {
-          const partialMatch = [...descLower.split(/\s+/), ...titleLower.split(/\s+/)]
-            .some(w => w.includes(word) || word.includes(w));
+          const actionWords = [...descLower.split(/\s+/), ...titleLower.split(/\s+/)];
+          const partialMatch = actionWords.some(w => w.length > 3 && w.includes(word));
           if (partialMatch) {
             matchScore += 0.3;
+            keywordMatches++;
           }
         }
       }
 
-      // Add priority score (higher priority = lower number, so we invert)
+      // Add priority score only if there are keyword matches
+      // This prevents actions from matching based solely on priority
       // Priority is typically 1-100, lower = higher priority
-      if (action.priority > 0) {
+      if (keywordMatches > 0 && action.priority > 0) {
         matchScore += 0.1 * (action.priority / 10);
       }
 
-      if (matchScore > 0) {
+      // Only include matches above the minimum threshold
+      if (matchScore >= MIN_MATCH_SCORE) {
         matches.push({
           action,
           matchScore

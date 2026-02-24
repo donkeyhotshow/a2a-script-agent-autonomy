@@ -51,6 +51,28 @@
             <div class="session-header" id="sessionHeader"></div>
             <div class="session-messages" id="sessionMessages"></div>
             <div id="graphPanel"></div>
+            
+            <!-- Action Progress -->
+            <div id="action-progress" class="action-progress" style="display: none;">
+              <div class="action-header">
+                <span id="action-title">Action: fix-vue-imports</span>
+                <span id="action-progress-text">Step 1/4</span>
+              </div>
+              <div class="progress-bar">
+                <div id="action-progress-bar" class="progress-fill" style="width: 0%"></div>
+              </div>
+              <div id="action-steps" class="action-steps">
+                <!-- Steps will be rendered here -->
+              </div>
+              <div id="action-log" class="action-log">
+                <!-- Log entries -->
+              </div>
+              <div class="action-actions">
+                <button class="btn btn-primary" id="action-run" style="display: none;">Run Action</button>
+                <button class="btn btn-secondary" id="action-cancel" style="display: none;">Cancel</button>
+              </div>
+            </div>
+            
             <div class="session-input-bar">
               <textarea id="messageInput" placeholder="Task or message..."></textarea>
               <div class="input-actions">

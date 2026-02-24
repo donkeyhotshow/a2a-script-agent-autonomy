@@ -6,7 +6,7 @@
   "main": "src/index.js",
   "types": "src/index.d.ts",
   "scripts": {
-    "test": "node --test src/test.js"
+    "test": "node tests/index.test.js"
   },
   "dependencies": {
     "vm2": "^3.9.19"

@@ -16,6 +16,13 @@ const Sessions = {
     pendingRequests: new Map(), // promiseId -> { messageId, timerId }
     graph: { entities: [], relations: [] },  // Added: knowledge graph
     frameworks: null,  // Added: extracted frameworks
+    // Action execution state
+    action: {
+      definition: null,       // ActionDefinition
+      executionState: null,   // ExecutionState
+      logs: [],               // Array of log entries
+      isRunning: false,       // Is action currently executing
+    },
   },
 
   // API base URL
@@ -38,6 +45,9 @@ const Sessions = {
         this.send();
       }
     });
+    // Action buttons
+    document.getElementById('action-run')?.addEventListener('click', () => this.runAction());
+    document.getElementById('action-cancel')?.addEventListener('click', () => this.cancelAction());
   },
 
   setProject(id, path) {
@@ -47,17 +57,7 @@ const Sessions = {
     this.state.messages = [];
     this.state.graph = { entities: [], relations: [] };
     this.state.frameworks = null;
-    if (id) this.load();
-    else this.renderEmpty();
-  },
-
-  setProject(id, path) {
-    this.state.projectId = id;
-    this.state.projectPath = path || null;
-    this.state.current = null;
-    this.state.messages = [];
-    this.state.graph = { entities: [], relations: [] };
-    this.state.frameworks = null;
+    this.resetActionState();
     if (id) this.load();
     else this.renderEmpty();
   },
@@ -508,11 +508,15 @@ const Sessions = {
                   this.state.messages[msgIndex].missing = result.missing;
                 }
                 if (result.activated_neuron_ids) {
-                  this.state.messages[msgIndex].activated_neuron_ids = result.activated_neuron_ids;
+                   this.state.messages[msgIndex].activated_neuron_ids = result.activated_neuron_ids;
+                 }
+                // Handle action response
+                if (result.action || result.executionState) {
+                  this.handleActionResponse(result);
                 }
-              }
-            }
-          }
+               }
+             }
+           }
 
           this.stopPolling(promiseId);
           this.renderView();
@@ -590,6 +594,386 @@ const Sessions = {
     } catch (err) {
       console.error('Failed to send continue:', err);
     }
+  },
+
+  // ==================== Action Progress Methods ====================
+
+  /**
+   * Handle action response from server
+   * @param {Object} result - Server response with action field
+   */
+  handleActionResponse(result) {
+    if (!result.action && !result.executionState) return;
+
+    // Update action state
+    if (result.action) {
+      this.state.action.definition = result.action.action;
+      this.state.action.matchScore = result.action.matchScore;
+    }
+
+    if (result.executionState) {
+      this.state.action.executionState = result.executionState;
+    }
+
+    // Show action progress panel
+    this.showActionProgress();
+
+    // Render current state
+    this.renderActionProgress();
+
+    // If action is executing, start step execution
+    if (result.outcome === 'action_executing' && !this.state.action.isRunning) {
+      this.executeCurrentStep();
+    }
+
+    // If action completed/failed, finalize
+    if (result.outcome === 'completed' || result.outcome === 'failed') {
+      this.finalizeAction(result);
+    }
+  },
+
+  /**
+   * Show action progress panel
+   */
+  showActionProgress() {
+    const panel = document.getElementById('action-progress');
+    if (panel) panel.style.display = 'block';
+  },
+
+  /**
+   * Hide action progress panel
+   */
+  hideActionProgress() {
+    const panel = document.getElementById('action-progress');
+    if (panel) panel.style.display = 'none';
+  },
+
+  /**
+   * Render action progress UI
+   */
+  renderActionProgress() {
+    const { definition, executionState, logs } = this.state.action;
+    if (!definition) return;
+
+    // Update title
+    const titleEl = document.getElementById('action-title');
+    if (titleEl) titleEl.textContent = `Action: ${definition.id}`;
+
+    // Update progress text
+    const progressTextEl = document.getElementById('action-progress-text');
+    const progressBar = document.getElementById('action-progress-bar');
+    
+    if (executionState && definition.subActions) {
+      const currentStep = executionState.currentStepIndex + 1;
+      const totalSteps = definition.subActions.length;
+      const progressPercent = (executionState.currentStepIndex / totalSteps) * 100;
+
+      if (progressTextEl) progressTextEl.textContent = `Step ${currentStep}/${totalSteps}`;
+      if (progressBar) {
+        progressBar.style.width = `${progressPercent}%`;
+        
+        // Update progress bar class based on status
+        progressBar.className = 'progress-fill';
+        if (this.state.action.isRunning) {
+          progressBar.classList.add('running');
+        }
+      }
+    }
+
+    // Render steps
+    this.renderActionSteps();
+
+    // Render logs
+    this.renderActionLogs();
+
+    // Update buttons
+    this.updateActionButtons();
+  },
+
+  /**
+   * Render action steps list
+   */
+  renderActionSteps() {
+    const { definition, executionState } = this.state.action;
+    const stepsEl = document.getElementById('action-steps');
+    
+    if (!stepsEl || !definition?.subActions) return;
+
+    const history = executionState?.history || [];
+    const currentIndex = executionState?.currentStepIndex || 0;
+
+    stepsEl.innerHTML = definition.subActions.map((step, index) => {
+      const historyItem = history.find(h => h.stepId === step.id);
+      let status = 'pending';
+      let statusText = '';
+
+      if (historyItem) {
+        status = historyItem.status;
+        statusText = historyItem.status;
+      } else if (index < currentIndex) {
+        status = 'skipped';
+        statusText = 'skipped';
+      } else if (index === currentIndex && this.state.action.isRunning) {
+        status = 'running';
+        statusText = 'running...';
+      }
+
+      return `
+        <div class="action-step ${status}">
+          <span class="step-icon ${status}"></span>
+          <span class="step-name">${A2A.escape(step.title)}</span>
+          <span class="step-status">${statusText}</span>
+        </div>
+      `;
+    }).join('');
+  },
+
+  /**
+   * Render action log entries
+   */
+  renderActionLogs() {
+    const logsEl = document.getElementById('action-log');
+    if (!logsEl) return;
+
+    const logs = this.state.action.logs || [];
+    
+    if (logs.length === 0) {
+      logsEl.innerHTML = '<div class="log-entry info">Waiting for execution...</div>';
+      return;
+    }
+
+    logsEl.innerHTML = logs.map(log => {
+      const time = new Date(log.timestamp).toLocaleTimeString();
+      return `
+        <div class="log-entry ${log.level || 'info'}">
+          <span class="log-time">${time}</span>
+          <span class="log-message">${A2A.escape(log.message)}</span>
+        </div>
+      `;
+    }).join('');
+
+    // Scroll to bottom
+    logsEl.scrollTop = logsEl.scrollHeight;
+  },
+
+  /**
+   * Update action buttons visibility
+   */
+  updateActionButtons() {
+    const runBtn = document.getElementById('action-run');
+    const cancelBtn = document.getElementById('action-cancel');
+    const { definition, isRunning } = this.state.action;
+
+    if (runBtn) {
+      runBtn.style.display = definition && !isRunning ? 'block' : 'none';
+    }
+    if (cancelBtn) {
+      cancelBtn.style.display = isRunning ? 'block' : 'none';
+    }
+  },
+
+  /**
+   * Add log entry
+   * @param {string} message - Log message
+   * @param {string} level - Log level (info, success, error, warn)
+   */
+  addActionLog(message, level = 'info') {
+    this.state.action.logs.push({
+      message,
+      level,
+      timestamp: new Date().toISOString(),
+    });
+    this.renderActionLogs();
+  },
+
+  /**
+   * Execute current step via script-runner API
+   */
+  async executeCurrentStep() {
+    const { definition, executionState } = this.state.action;
+    if (!definition || !executionState) return;
+
+    const currentStep = definition.subActions[executionState.currentStepIndex];
+    if (!currentStep) {
+      // All steps completed
+      this.finalizeAction({ outcome: 'completed' });
+      return;
+    }
+
+    this.state.action.isRunning = true;
+    this.addActionLog(`Starting step: ${currentStep.title}`, 'info');
+    this.renderActionProgress();
+
+    try {
+      // Call API to execute step
+      const res = await fetch(`${this.api}/actions/execute-step`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sessionId: this.state.current.id,
+          actionId: definition.id,
+          stepId: currentStep.id,
+          context: {
+            projectPath: this.state.projectPath,
+            previousOutput: this.getPreviousStepOutput(),
+          },
+        }),
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        const result = data.data;
+        
+        // Update execution state
+        if (result.executionState) {
+          this.state.action.executionState = result.executionState;
+        }
+
+        // Log result
+        if (result.success) {
+          this.addActionLog(`Step completed: ${currentStep.title}`, 'success');
+        } else {
+          this.addActionLog(`Step failed: ${result.error || 'Unknown error'}`, 'error');
+        }
+
+        // Continue to next step or finish
+        if (result.outcome === 'action_executing') {
+          // Execute next step
+          setTimeout(() => this.executeCurrentStep(), 500);
+        } else if (result.outcome === 'completed') {
+          this.finalizeAction(result);
+        } else if (result.outcome === 'failed') {
+          this.finalizeAction(result);
+        }
+      } else {
+        this.addActionLog(`API error: ${data.error || 'Unknown error'}`, 'error');
+        this.state.action.isRunning = false;
+      }
+    } catch (err) {
+      console.error('Failed to execute step:', err);
+      this.addActionLog(`Error: ${err.message}`, 'error');
+      this.state.action.isRunning = false;
+    }
+
+    this.renderActionProgress();
+  },
+
+  /**
+   * Get output from previous step
+   */
+  getPreviousStepOutput() {
+    const { executionState } = this.state.action;
+    if (!executionState?.history?.length) return null;
+    
+    const lastHistory = executionState.history[executionState.history.length - 1];
+    return lastHistory?.result || null;
+  },
+
+  /**
+   * Finalize action execution
+   * @param {Object} result - Final result
+   */
+  finalizeAction(result) {
+    this.state.action.isRunning = false;
+
+    // Update progress bar
+    const progressBar = document.getElementById('action-progress-bar');
+    if (progressBar) {
+      progressBar.className = 'progress-fill';
+      if (result.outcome === 'completed') {
+        progressBar.classList.add('completed');
+        this.addActionLog('Action completed successfully!', 'success');
+      } else if (result.outcome === 'failed') {
+        progressBar.classList.add('failed');
+        this.addActionLog(`Action failed: ${result.error || 'Unknown error'}`, 'error');
+      }
+    }
+
+    // Update buttons
+    this.updateActionButtons();
+
+    // Send continue to server with action result
+    this.sendActionContinue(result);
+  },
+
+  /**
+   * Send continue with action result
+   * @param {Object} result - Action execution result
+   */
+  async sendActionContinue(result) {
+    if (!this.state.current) return;
+
+    try {
+      const res = await fetch(`${this.api}/requests`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sessionId: this.state.current.id,
+          context: {
+            version: '1.0',
+            session_id: this.state.current.id,
+            continue: true,
+            actionResult: {
+              actionId: this.state.action.definition?.id,
+              outcome: result.outcome,
+              executionState: this.state.action.executionState,
+            },
+          },
+        }),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        // Start polling for response
+        const msgId = `action_${Date.now()}`;
+        this.startPolling(data.data.promiseId, msgId);
+      }
+    } catch (err) {
+      console.error('Failed to send action continue:', err);
+    }
+  },
+
+  /**
+   * Run action manually (from button click)
+   */
+  async runAction() {
+    const { definition } = this.state.action;
+    if (!definition) return;
+
+    this.state.action.executionState = {
+      actionId: definition.id,
+      currentStepIndex: 0,
+      history: [],
+    };
+    this.state.action.logs = [];
+    this.state.action.isRunning = true;
+
+    this.addActionLog(`Starting action: ${definition.id}`, 'info');
+    this.renderActionProgress();
+    this.executeCurrentStep();
+  },
+
+  /**
+   * Cancel action execution
+   */
+  cancelAction() {
+    this.state.action.isRunning = false;
+    this.addActionLog('Action cancelled by user', 'warn');
+    this.renderActionProgress();
+  },
+
+  /**
+   * Reset action state
+   */
+  resetActionState() {
+    this.state.action = {
+      definition: null,
+      executionState: null,
+      logs: [],
+      isRunning: false,
+    };
+    this.hideActionProgress();
   },
 };
 

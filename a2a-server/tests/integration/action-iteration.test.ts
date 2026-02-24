@@ -97,11 +97,11 @@ describe('Action Iteration Flow', () => {
 
     const result = await actionProcessor.processTaskRequest(sessionId, taskDescription);
 
-    // Note: Current implementation matches any action with low score
-    // This test verifies the behavior - may need threshold adjustment
-    // For now, we accept that the system tries to find any action
+    // With MIN_MATCH_SCORE threshold, irrelevant tasks should not match any action
     expect(result).toBeDefined();
     expect(result.message).toBeDefined();
+    expect(result.actionId).toBeUndefined();
+    expect(result.continue).toBe(false);
   });
 
   it('should include code in action response', async () => {

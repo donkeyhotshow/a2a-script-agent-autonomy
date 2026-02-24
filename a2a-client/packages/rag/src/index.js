@@ -1,14 +1,15 @@
 /**
  * @a2a/rag - RAG Indexing and Search Module
- * 
+ *
  * Provides local indexing and search capabilities for code projects.
  * Part of the A2A distributed system.
- * 
+ *
  * Features:
  * - Keyword-based search with technical term extraction
  * - TF-IDF/BM25 sparse retrieval
  * - Hybrid search combining both methods
- * 
+ * - Semantic search with embedding models
+ *
  * @module @a2a/rag
  */
 
@@ -16,6 +17,8 @@ const { RAGIndexer } = require('./indexer');
 const { RAGSearcher } = require('./searcher');
 const { ChunkManager } = require('./chunk-manager');
 const { TFIDFService } = require('./tfidf');
+const { RAGIntegrator } = require('./rag-integrator');
+const { SemanticSearcher } = require('./semantic-search');
 
 /**
  * Create a RAG instance with indexer and searcher
@@ -32,7 +35,7 @@ function createRAG(config) {
   const chunks = new ChunkManager(config);
   // Note: TFIDFService is also available via searcher.tfidf when useTFIDF is true
   const tfidf = new TFIDFService();
-  
+
   return { indexer, searcher, chunks, tfidf };
 }
 
@@ -42,4 +45,6 @@ module.exports = {
   ChunkManager,
   TFIDFService,
   createRAG,
+  RAGIntegrator,
+  SemanticSearcher,
 };
