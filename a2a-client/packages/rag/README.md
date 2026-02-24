@@ -1,14 +1,19 @@
-# @a2a/rag
+# @a2a/rag - RAG Indexing and Search Module
 
-RAG (Retrieval-Augmented Generation) Indexing and Search Module for A2A. Provides local indexing and search capabilities for code projects without using LLM - all processing is done locally.
+> Provides local indexing and search capabilities for code projects with BM25, hybrid search, semantic search, query understanding, and more.
 
 ## Features
 
-- **Local Indexing**: Index project files for fast search
-- **Smart Chunking**: Different chunking strategies for PHP, JS/TS, and Markdown
-- **Keyword Search**: Extract and search by keywords, technical terms, and method names
-- **No LLM Required**: All processing happens locally on the client
-- **Multiple File Types**: Support for PHP, JavaScript, TypeScript, Vue, Markdown, JSON, YAML
+- **Keyword-based search** with technical term extraction
+- **TF-IDF/BM25 sparse retrieval** for exact code matching
+- **Hybrid search** combining sparse and dense methods
+- **Semantic search** with embedding models (Ollama)
+- **Meilisearch integration** for production-grade full-text search
+- **Cross-encoder reranking** with Cohere/Jina API
+- **AST-based chunking** for accurate code parsing
+- **Query understanding** with intent detection
+- **Search suggestions** with autocomplete
+- **Code similarity** detection for duplicate finding
 
 ## Installation
 
@@ -16,359 +21,289 @@ RAG (Retrieval-Augmented Generation) Indexing and Search Module for A2A. Provide
 npm install @a2a/rag
 ```
 
-## Usage
-
-### Basic Setup
-
-```javascript
-const { createRAG, RAGIndexer, RAGSearcher } = require('@a2a/rag');
-
-// Option 1: Use createRAG helper
-const { indexer, searcher, chunks } = createRAG({
-  projectPath: '/path/to/project',
-  includePatterns: ['**/*.php', '**/*.js', '**/*.vue'],
-  excludePatterns: ['node_modules/**', 'vendor/**']
-});
-
-// Option 2: Use classes directly
-const indexer = new RAGIndexer({
-  projectPath: '/path/to/project',
-  includePatterns: ['**/*.php', '**/*.js'],
-  excludePatterns: ['node_modules/**', 'vendor/**', '.git/**']
-});
-
-const searcher = new RAGSearcher({
-  projectPath: '/path/to/project'
-});
-```
-
-### Indexing a Project
-
-```javascript
-// Index the entire project
-const index = await indexer.indexProject();
-
-// Force re-index (ignore existing index)
-const index = await indexer.indexProject(true);
-
-console.log(`Indexed ${index.files.length} files, ${index.chunks.length} chunks`);
-```
-
-### Searching the Index
-
-```javascript
-// Load index (automatically done on first search)
-const results = await searcher.search('email validation', {
-  limit: 10
-});
-
-// Process results
-results.forEach(result => {
-  console.log(`[Score: ${result.score}] ${result.chunk.filePath}`);
-  console.log(`  Type: ${result.chunk.type}, Name: ${result.chunk.name}`);
-  console.log(`  Highlights: ${result.highlights.join(', ')}`);
-});
-```
-
-### Advanced Search
-
-```javascript
-// Search with options
-const results = await searcher.search('authentication', {
-  limit: 20
-});
-
-// Get file content
-const content = await searcher.getFileContent('app/Models/User.php');
-
-// Get chunks for specific file
-const chunks = await searcher.getFileChunks('app/Models/User.php');
-```
-
-## TF-IDF/BM25 Search
-
-Пакет поддерживает TF-IDF/BM25 для sparse retrieval без внешних зависимостей.
-
-### Использование
-
-```javascript
-const { RAGSearcher } = require('@a2a/rag');
-
-const searcher = new RAGSearcher({ 
-  projectPath: '/path/to/project',
-  useTFIDF: true  // по умолчанию
-});
-
-// Индексация документов
-await searcher.indexDocument('file1.js', 'content of file');
-await searcher.buildTFIDFIndex();
-
-// Поиск
-const results = await searcher.searchTFIDF('user authentication', 10);
-
-// Гибридный поиск (keyword + TF-IDF)
-const hybrid = await searcher.searchHybrid('query', {
-  limit: 10,
-  keywordWeight: 0.4,
-  tfidfWeight: 0.6
-});
-```
-
-### API
-
-#### `searchTFIDF(query, topK)`
-BM25 поиск по индексу.
-
-#### `searchHybrid(query, options)`
-Комбинирует keyword-based и TF-IDF поиск.
-
-#### `buildTFIDFIndex()`
-Строит TF-IDF индекс из RAG индекса.
-
-#### `getTFIDFStats()`
-Возвращает статистику индекса.
-
-## Index Structure
-
-The index is stored in `.a2a/index/rag-files.json`:
-
-```json
-{
-  "version": "1.0",
-  "timestamp": "2026-01-20T10:00:00Z",
-  "projectPath": "/path/to/project",
-  "files": [
-    {
-      "path": "app/Models/User.php",
-      "ext": ".php",
-      "size": 1234,
-      "modified": "2026-01-20T09:00:00Z",
-      "hash": "abc123def456",
-      "language": "php"
-    }
-  ],
-  "chunks": [
-    {
-      "id": "abc123",
-      "filePath": "app/Models/User.php",
-      "type": "class",
-      "name": "User",
-      "content": "class User extends Model {...",
-      "startLine": 1
-    }
-  ]
-}
-```
-
-## Chunk Types
-
-| Type | Description | File Types |
-|------|-------------|------------|
-| `class` | Class definition | PHP, JS, TS |
-| `method` | Method/function | PHP, JS, TS |
-| `function` | Function definition | JS, TS |
-| `section` | Markdown section | MD |
-| `lines` | Line-based chunk | Other |
-
-## Configuration
-
-### RAGIndexer Options
-
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| projectPath | string | `process.cwd()` | Path to project |
-| includePatterns | string[] | `['**/*.php', '**/*.js', '**/*.vue', '**/*.ts', '**/*.md']` | File patterns to include |
-| excludePatterns | string[] | `['node_modules/**', 'vendor/**', 'storage/**', '.git/**']` | File patterns to exclude |
-
-### RAGSearcher Options
-
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| projectPath | string | `process.cwd()` | Path to project |
-
-## Search Scoring
-
-The search algorithm uses multiple factors for scoring:
-
-1. **Keyword matches** (2 points each)
-2. **Technical terms** (10 points each) - CamelCase, class names
-3. **Method names** (15 points each) - Function calls
-4. **Chunk type bonus** (1.2x) - Classes and methods get bonus
-5. **Name match** (20 points) - Direct name match
-
-## Data Request Format
-
-When requesting data from the RAG system:
-
-```javascript
-const searchRequest = {
-  query: 'email validation',
-  options: {
-    limit: 10,
-    type: 'class'  // optional filter
-  }
-};
-```
-
-## Command Format for Search
-
-Commands from server for RAG search:
-
-```javascript
-const command = {
-  id: 'cmd-search-001',
-  type: 'search_rag',
-  params: {
-    query: 'валидация email',
-    options: {
-      limit: 10,
-      type: 'class|method|function|section|lines'
-    }
-  }
-};
-```
-
-### Response Format
-
-```javascript
-const response = {
-  commandId: 'cmd-search-001',
-  success: true,
-  results: [
-    {
-      chunk: {
-        id: 'abc123',
-        filePath: 'app/Models/User.php',
-        type: 'class',
-        name: 'User',
-        content: 'class User extends Model {...',
-        startLine: 1
-      },
-      score: 25.5,
-      highlights: [
-        '...валидация для email...',
-        '...protected $rules = [\'email\' => \'email\'...'
-      ]
-    }
-  ]
-};
-```
-
-## API Reference
-
-### createRAG(config)
-
-Creates a RAG instance with indexer, searcher, and chunk manager.
-
-```javascript
-const { indexer, searcher, chunks } = createRAG({
-  projectPath: '/project',
-  includePatterns: ['**/*.php'],
-  excludePatterns: ['vendor/**']
-});
-```
-
-### RAGIndexer
-
-#### Methods
-
-| Method | Parameters | Returns | Description |
-|--------|------------|---------|-------------|
-| indexProject(force) | boolean | Promise<Object> | Index all project files |
-| indexFile(filePath) | string | Promise<Object> | Index single file |
-| chunkFile(filePath, content, ext) | string, string, string | Array | Chunk file content |
-
-### RAGSearcher
-
-#### Methods
-
-| Method | Parameters | Returns | Description |
-|--------|------------|---------|-------------|
-| search(query, options) | string, Object | Promise<Array> | Search index |
-| searchFiles(pattern) | string | Promise<Array> | Search files by pattern |
-| getFileContent(path) | string | Promise<string> | Get file content |
-| getFileChunks(path) | string | Promise<Array> | Get chunks for file |
-| loadIndex() | - | Promise<Object> | Load index into memory |
-
-### ChunkManager
-
-```javascript
-const { ChunkManager } = require('@a2a/rag');
-
-const manager = new ChunkManager(config);
-
-// Chunk PHP by class/method
-const phpChunks = manager.chunkPHP(filePath, content);
-
-// Chunk JS/TS by function/class
-const jsChunks = manager.chunkJS(filePath, content);
-
-// Chunk Markdown by sections
-const mdChunks = manager.chunkMarkdown(filePath, content);
-
-// Simple line-based chunking
-const lineChunks = manager.chunkLines(filePath, content, 50);
-```
-
-## Examples
-
-### Example 1: Index and Search Laravel Project
+## Quick Start
 
 ```javascript
 const { createRAG } = require('@a2a/rag');
 
-async function indexAndSearch() {
-  const { indexer, searcher } = createRAG({
-    projectPath: './my-laravel-app',
-    includePatterns: ['**/*.php', '**/*.vue'],
-    excludePatterns: ['vendor/**', 'node_modules/**', 'storage/**']
-  });
+const rag = createRAG({
+  projectPath: '/path/to/project',
+  useTFIDF: true,
+  useBM25: true,
+  useSemantic: true,
+});
 
-  // Index project
-  console.log('Indexing...');
-  await indexer.indexProject();
+// Index files
+await rag.indexer.indexDirectory();
 
-  // Search
-  const results = await searcher.search('authentication middleware', {
-    limit: 5
-  });
-
-  results.forEach(r => {
-    console.log(`${r.chunk.filePath} (${r.chunk.type}: ${r.chunk.name})`);
-    console.log(`  Score: ${r.score}`);
-    console.log(`  ${r.highlights[0] || r.chunk.content.substring(0, 100)}...`);
-  });
-}
-
-indexAndSearch().catch(console.error);
+// Search
+const results = await rag.searcher.search('UserService');
 ```
 
-### Example 2: Direct File Search
+## Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                        @a2a/rag                                  │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│   ┌──────────────┐  ┌──────────────┐  ┌──────────────┐        │
+│   │   Chunk      │  │   Indexer    │  │   Searcher   │        │
+│   │   Manager    │  │              │  │              │        │
+│   └──────────────┘  └──────────────┘  └──────────────┘        │
+│                                                                  │
+│   ┌──────────────┐  ┌──────────────┐  ┌──────────────┐        │
+│   │    TF-IDF    │  │     BM25     │  │   Semantic   │        │
+│   │              │  │              │  │   Search     │        │
+│   └──────────────┘  └──────────────┘  └──────────────┘        │
+│                                                                  │
+│   ┌──────────────┐  ┌──────────────┐  ┌──────────────┐        │
+│   │   Hybrid     │  │   Reranker   │  │  Meilisearch │        │
+│   │   Search     │  │   (Cohere)   │  │   Client     │        │
+│   └──────────────┘  └──────────────┘  └──────────────┘        │
+│                                                                  │
+│   ┌──────────────┐  ┌──────────────┐  ┌──────────────┐        │
+│   │    Query     │  │  Suggestions │  │  Similarity   │        │
+│   │ Understanding│  │              │  │  Detection   │        │
+│   └──────────────┘  └──────────────┘  └──────────────┘        │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+## Core Modules
+
+### createRAG(config)
+
+Creates a RAG instance with indexer and searcher.
 
 ```javascript
-const { RAGSearcher } = require('@a2a/rag');
-
-async function findControllers() {
-  const searcher = new RAGSearcher({
-    projectPath: './my-app'
-  });
-
-  // Search for controller files
-  const controllers = await searcher.searchFiles('**/*Controller.php');
-  
-  console.log(`Found ${controllers.length} controllers:`);
-  controllers.forEach(c => console.log(`  - ${c.path}`));
-}
-
-findControllers().catch(console.error);
+const rag = createRAG({
+  projectPath: '/path/to/project',
+  includePatterns: ['*.php', '*.vue', '*.js'],
+  excludePatterns: ['node_modules/**', 'vendor/**'],
+  useTFIDF: true,
+  useBM25: false,
+  useSemantic: false,
+});
 ```
 
-## Performance Tips
+## Advanced Search Features
 
-1. **Index regularly**: Run `indexProject()` after significant code changes
-2. **Use limits**: Always specify `limit` for large projects
-3. **Cache index**: RAGSearcher caches the index in memory after first load
-4. **Exclude large directories**: Always exclude `node_modules`, `vendor`, etc.
+### BM25 Scorer
+
+Okapi BM25 implementation for better code search.
+
+```javascript
+const { createBM25Scorer } = require('@a2a/rag');
+
+const bm25 = createBM25Scorer({ k1: 1.5, b: 0.75 });
+bm25.addDocument('doc1', 'UserService handles user operations');
+const results = bm25.search('user service', { limit: 10 });
+```
+
+### Hybrid Search
+
+Combines sparse (BM25) and dense (vector) search using RRF.
+
+```javascript
+const { createHybridSearcher } = require('@a2a/rag');
+
+const hybrid = createHybridSearcher({
+  sparseSearch: bm25Scorer,
+  denseSearch: semanticSearcher,
+  sparseWeight: 0.7,
+  denseWeight: 0.3,
+});
+
+const results = await hybrid.search('UserService methods');
+```
+
+### Reranking
+
+Cross-encoder reranking with Cohere or Jina API.
+
+```javascript
+const { createReranker } = require('@a2a/rag');
+
+const reranker = createReranker({
+  provider: 'cohere',
+  apiKey: process.env.COHERE_API_KEY,
+});
+
+const reranked = await reranker.rerank(
+  'UserService methods',
+  [{ id: '1', content: 'class UserService...' }],
+  { topN: 5 }
+);
+```
+
+### Query Understanding
+
+Analyzes search queries to detect intent and optimize search.
+
+```javascript
+const { createQueryUnderstandingEngine, INTENT_TYPES } = require('@a2a/rag');
+
+const engine = createQueryUnderstandingEngine();
+
+const analysis = engine.analyze('UserService');
+// {
+//   type: 'exact_name',
+//   confidence: 0.95,
+//   terms: ['userservice'],
+//   entities: { frameworks: [], fileTypes: [], symbols: ['UserService'] },
+//   suggestions: ['UserService', 'UserServiceService', 'UserServiceController'],
+//   modifiers: { isNegation: false, isFuzzy: false, isExact: false, isWildcard: false }
+// }
+
+// Intent types: exact_name, code_pattern, semantic, dependency, file_path, symbol, documentation, mixed
+```
+
+**Detected Intents:**
+- `exact_name` - "UserService", "createUser()"
+- `code_pattern` - "->createUser(", "$user->"
+- `semantic` - "how to create user"
+- `dependency` - "who uses UserService"
+- `file_path` - "app/Models/User"
+- `symbol` - "class User", "function login"
+- `documentation` - "laravel docs"
+
+### Search Suggestions
+
+Intelligent autocomplete based on indexed code symbols.
+
+```javascript
+const { createSuggestionsEngine } = require('@a2a/rag');
+
+const suggestions = createSuggestionsEngine({ maxSuggestions: 10 });
+
+// Index symbols from chunks
+suggestions.indexSymbols([
+  { name: 'UserService', type: 'class', filePath: 'app/Services/UserService.php' },
+  { name: 'createUser', type: 'method', filePath: 'app/Services/UserService.php' },
+]);
+
+// Get suggestions
+const results = suggestions.getSuggestions('User');
+// [{ text: 'UserService', type: 'class', filePath: '...', score: 100 }]
+
+// Get by type
+const classes = suggestions.getByType('class', 5);
+```
+
+**Features:**
+- Prefix-based matching
+- Frequency-based ranking
+- Type preferences (class > function > method)
+- Case sensitivity preservation
+
+### Code Similarity Detection
+
+Finds similar code patterns across the codebase.
+
+```javascript
+const { createSimilarityEngine } = require('@a2a/rag');
+
+const similarity = createSimilarityEngine({ minSimilarity: 0.3 });
+
+// Index chunks
+similarity.index(chunks);
+
+// Find similar code
+const similar = similarity.findSimilar('function createUser() { ... }', {
+  method: 'jaccard',  // jaccard, cosine, overlap, dice
+  threshold: 0.3,
+  limit: 5,
+});
+
+// Find duplicate code
+const duplicates = similarity.findDuplicates({ threshold: 0.8 });
+```
+
+**Similarity Metrics:**
+- **Jaccard** - Intersection over Union
+- **Cosine** - Vector cosine similarity
+- **Overlap** - Overlap coefficient
+- **Dice** - Dice coefficient
+
+### Query Expander
+
+Expands queries with related terms based on search history.
+
+```javascript
+const { createQueryExpander } = require('@a2a/rag');
+
+const expander = createQueryExpander();
+
+// Add term relations
+expander.addRelation('user', 'UserService', 1);
+expander.addRelation('user', 'UserController', 0.8);
+
+// Expand query
+const expanded = expander.expand('user authentication');
+// ['user', 'authentication', 'UserService', 'UserController']
+
+// Learn from clicks
+expander.learn('login', 'AuthController');
+```
+
+## Complete Search Pipeline
+
+```javascript
+const { 
+  createHybridSearcher, createReranker, createMeilisearchClient,
+  createQueryUnderstandingEngine, createSuggestionsEngine,
+  createSimilarityEngine 
+} = require('@a2a/rag');
+
+async function searchPipeline(query) {
+  // 1. Understand query intent
+  const understanding = createQueryUnderstandingEngine();
+  const analysis = understanding.analyze(query);
+  
+  // 2. Get suggestions
+  const suggestionsEngine = createSuggestionsEngine();
+  suggestionsEngine.indexSymbols(chunks);
+  const suggestions = suggestionsEngine.getSuggestions(query, { limit: 5 });
+  
+  // 3. Execute hybrid search
+  const hybrid = createHybridSearcher({ sparseWeight: 0.7, denseWeight: 0.3 });
+  const results = await hybrid.search(query, { limit: 50 });
+  
+  // 4. Rerank results
+  const reranker = createReranker({ provider: 'cohere', apiKey: process.env.COHERE_API_KEY });
+  const reranked = await reranker.rerank(query, results, { topN: 10 });
+  
+  return {
+    analysis,
+    suggestions,
+    results: reranked,
+  };
+}
+```
+
+## API Reference
+
+| Module | Description |
+|--------|-------------|
+| `createRAG` | Main RAG factory |
+| `createBM25Scorer` | BM25 ranking |
+| `createHybridSearcher` | Hybrid search |
+| `createReranker` | Cross-encoder reranking |
+| `createMeilisearchClient` | Meilisearch client |
+| `createASTChunker` | AST-based chunking |
+| `createQueryUnderstandingEngine` | Intent detection |
+| `createSuggestionsEngine` | Autocomplete |
+| `createQueryExpander` | Query expansion |
+| `createSimilarityEngine` | Code similarity |
+
+## Best Practices
+
+1. **Use BM25 for code** - BM25 outperforms TF-IDF for exact code matching
+2. **Hybrid for mixed queries** - Combine sparse + dense for best results
+3. **Query understanding** - Analyze intent before searching
+4. **Rerank for quality** - Add reranking as final step
+5. **Similarity for refactoring** - Find duplicate code before refactoring
 
 ## License
 
