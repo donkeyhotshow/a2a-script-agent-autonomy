@@ -1,16 +1,14 @@
 # Simulation True 2 - Analysis
 
-## Workflow: Client Approves Action with Context
+## Request (Client → Server)
 
-### Request (Client → Server)
-
-Клиент подтверждает выбор экшена и отправляет контекст:
+Клиент подтверждает выбор экшена и добавляет execution:
 ```json
 {
   "action": "approve_action",
   "selectedAction": { "actionId": "fix-vue-imports" },
   "context": {
-    "project": { ... },
+    "task": "исправить импорты в vue компонентах",
     "execution": {
       "actionId": "fix-vue-imports",
       "currentStep": 0,
@@ -21,35 +19,31 @@
 }
 ```
 
-### Process (Server Side)
+## Response (Server → Client)
 
-1. **Сохранение контекста**
-   - Принять context от клиента
-   - Обновить currentStep = 1
-   - Записать currentActionId = "vue-import-detect"
-
-2. **Генерация DSL для первого шага**
-   - Sub-action: `vue-import-detect`
-   - Сгенерировать исполняемый DSL скрипт
-
-### Response (Server → Client)
-
+Сервер обновляет execution и возвращает DSL для первого шага:
 ```json
 {
   "outcome": "action_executing",
   "context": {
+    "task": "исправить импорты в vue компонентах",
     "execution": {
       "actionId": "fix-vue-imports",
       "currentStep": 1,
+      "totalSteps": 4,
       "currentActionId": "vue-import-detect",
       "history": []
     }
   },
-  "executingAction": { ... }
+  "executingAction": {
+    "actionId": "vue-import-detect",
+    "dsl": { ... }
+  }
 }
 ```
 
-### Key Point
+## Process
 
-Клиент **принудительно отправляет** context на каждом шаге.
-Сервер **откладывает** важные значения (currentStep, currentActionId, history) в context.
+1. **Принять context** - сохранить task и execution
+2. **Обновить execution** - currentStep = 1, currentActionId = "vue-import-detect"
+3. **Вернуть DSL** - скрипт для первого шага

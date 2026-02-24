@@ -1,74 +1,42 @@
 # Simulation True 1 - Analysis
 
-## Workflow: Action Found in Database
-
-### Request (Client → Server)
+## Request (Client → Server)
 
 Клиент отправляет задачу:
 ```json
 {
   "action": "task_request",
-  "task": "исправить импорты в vue компонентах",
-  "context": { ... }
+  "task": "исправить импорты в vue компонентах"
 }
 ```
 
-### Process (Server Side)
+## Response (Server → Client)
 
-1. **Поиск экшена в базе**
-   - Искать в `a2a-server/src/actions/`
-   - Использовать семантический поиск (RAG)
-   - Найден: `fix-vue-imports` (matchScore: 0.95)
-
-2. **Извлечение sub-actions**
-   - Читать `fix-vue-imports.md`
-   - Извлечь 4 шага: detect → resolve → apply → cleanup
-
-3. **Формирование fallback**
-   - Если не найден: предложить auto-ai (LLM) или manual decomposition
-
-### Response (Server → Client)
-
+Сервер ищет экшен в базе и откладывает task в context:
 ```json
 {
   "outcome": "action_proposal",
+  "context": {
+    "task": "исправить импорты в vue компонентах"
+  },
   "proposedActions": [
     {
       "actionId": "fix-vue-imports",
-      "subActions": [
-        { "actionId": "vue-import-detect", ... },
-        { "actionId": "vue-import-resolve", ... },
-        ...
-      ]
+      "subActions": [...]
     }
   ],
-  "fallbackActions": [
-    { "mode": "auto-ai", ... },
-    { "mode": "task-decomposition", ... }
-  ]
+  "fallbackActions": [...]
 }
 ```
 
-### Decision Point (Client)
+## Process
 
-Клиент выбирает:
-- **Принять** предложенный экшен → переход к 2
-- **Выбрать fallback** (auto-ai или manual)
-- **Отклонить** → завершение
+1. **Поиск экшена** - искать в `a2a-server/src/actions/`
+2. **Найден**: `fix-vue-imports` (matchScore: 0.95)
+3. **Отложить task в context** - сервер сохраняет задачу
 
-## Flow Diagram
+## Fallback
 
-```
-Client                        Server
-  |                             |
-  |--- task_request ----------->|
-  |                             |
-  |                     [search actions]
-  |                     [find fix-vue-imports]
-  |                     [extract sub-actions]
-  |                             |
-  |<-- action_proposal ---------|
-  |                             |
-  | [user selects action]       |
-  |                             |
-```
+Если экшен НЕ найден:
+- `auto-ai`: LLM генерация (rnj-1 через Ollama)
+- `task-decomposition`: Ручная декомпозиция

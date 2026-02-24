@@ -1,76 +1,50 @@
 # Simulation True 3 - Analysis
 
-## Workflow: Step Result → Next Step
-
-### Request (Client → Server)
+## Request (Client → Server)
 
 Клиент отправляет результат первого шага:
 ```json
 {
   "action": "step_result",
   "stepId": "vue-import-detect",
-  "result": { "broken_imports": [...] }
-}
-```
-
-### Process (Server Side)
-
-1. **Обработка результата**
-   - Принять результат выполнения шага
-   - Сохранить для контекста
-
-2. **Переход к следующему шагу**
-   - Sub-action: `vue-import-resolve`
-   - Передать broken_imports как входные данные
-   - Сгенерировать DSL скрипт
-
-### Response (Server → Client)
-
-```json
-{
-  "outcome": "action_executing",
-  "currentStep": 2,
-  "previousStep": { "actionId": "vue-import-detect", "result": { "broken_imports": 3 } },
-  "executingAction": {
-    "actionId": "vue-import-resolve",
-    "dsl": { "script": "vue-import-resolve", "input": { "broken_imports": [...] } }
+  "result": { "broken_imports": [...] },
+  "context": {
+    "task": "исправить импорты в vue компонентах",
+    "execution": {
+      "actionId": "fix-vue-imports",
+      "currentStep": 1,
+      "currentActionId": "vue-import-detect",
+      "history": [{ "step": 1, "status": "completed", "result": {...} }]
+    }
   }
 }
 ```
 
-## Chain
+## Response (Server → Client)
 
-```
-Step 1: vue-import-detect
-         ↓
-       result: 3 broken imports
-         ↓
-Step 2: vue-import-resolve (текущий)
-         ↓
-       result: patches[]
-         ↓
-Step 3: vue-import-apply
-         ↓
-       result: fixed files
-         ↓
-Step 4: vue-import-cleanup
-         ↓
-       result: action_complete
+Сервер обновляет context и возвращает DSL для следующего шага:
+```json
+{
+  "outcome": "action_executing",
+  "context": {
+    "task": "исправить импорты в vue компонентах",
+    "execution": {
+      "actionId": "fix-vue-imports",
+      "currentStep": 2,
+      "currentActionId": "vue-import-resolve",
+      "history": [{ "step": 1, "status": "completed", "result": {...} }]
+    }
+  },
+  "executingAction": {
+    "actionId": "vue-import-resolve",
+    "dsl": { ... }
+  }
+}
 ```
 
-## Flow Diagram
+## Process
 
-```
-Client                        Server
-  |                             |
-  |--- step_result ------------>|
-  |   { broken_imports: [...] }  |
-  |                             |
-  |                     [process result]
-  |                     [get next sub-action]
-  |                     [generate DSL for step 2]
-  |                             |
-  |<-- action_executing --------|
-  |   { vue-import-resolve }    |
-  |                             |
-```
+1. **Принять result** - сохранить результат шага
+2. **Обновить history** - добавить завершенный шаг
+3. **Переход к следующему шагу** - currentStep++, currentActionId = "vue-import-resolve"
+4. **Вернуть DSL** - скрипт для следующего шага

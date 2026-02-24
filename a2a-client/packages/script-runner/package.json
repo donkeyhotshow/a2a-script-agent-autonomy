@@ -1,0 +1,16 @@
+{
+  "name": "@a2a/script-runner",
+  "version": "1.0.0",
+  "description": "Script runner for executing TypeScript code from MD action files",
+  "type": "module",
+  "main": "src/index.js",
+  "types": "src/index.d.ts",
+  "scripts": {
+    "test": "node --test src/test.js"
+  },
+  "dependencies": {
+    "vm2": "^3.9.19"
+  },
+  "keywords": ["a2a", "script", "runner", "vm"],
+  "license": "MIT"
+}

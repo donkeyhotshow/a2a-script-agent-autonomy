@@ -1,34 +1,47 @@
 # Simulation True 5 - Analysis
 
-## Workflow: Action Complete
-
-### Request (Client → Server)
+## Request (Client → Server)
 
 Клиент отправляет результат третьего шага:
 ```json
 {
   "action": "step_result",
   "stepId": "vue-import-apply",
-  "result": { "fixed_files": [...] }
+  "result": { "fixed_files": [...] },
+  "context": {
+    "task": "исправить импорты в vue компонентах",
+    "execution": {
+      "actionId": "fix-vue-imports",
+      "currentStep": 3,
+      "history": [
+        { "step": 1, "actionId": "vue-import-detect", "status": "completed" },
+        { "step": 2, "actionId": "vue-import-resolve", "status": "completed" },
+        { "step": 3, "actionId": "vue-import-apply", "status": "completed" }
+      ]
+    }
+  }
 }
 ```
 
-### Process (Server Side)
-
-1. **Обработка результата**
-   - Принять массив fixed_files
-
-2. **Финальный шаг**
-   - Sub-action: `vue-import-cleanup`
-   - Выполнить очистку
-   - Завершить экшен
-
-### Response (Server → Client)
+## Response (Server → Client)
 
 ```json
 {
   "outcome": "action_complete",
-  "currentStep": 4,
+  "context": {
+    "task": "исправить импорты в vue компонентах",
+    "execution": {
+      "actionId": "fix-vue-imports",
+      "currentStep": 4,
+      "status": "completed",
+      "history": [
+        { "step": 1, "actionId": "vue-import-detect", "result": { "broken_imports": 3 } },
+        { "step": 2, "actionId": "vue-import-resolve", "result": { "patches": 3 } },
+        { "step": 3, "actionId": "vue-import-apply", "result": { "fixed_files": 3 } },
+        { "step": 4, "actionId": "vue-import-cleanup", "result": { "cleanup_count": 0 } }
+      ]
+    }
+  },
   "finalResult": {
     "actionId": "fix-vue-imports",
     "summary": {
@@ -43,27 +56,10 @@
 ## Complete Chain
 
 ```
-1. vue-import-detect     → broken_imports: 3
-2. vue-import-resolve   → patches: 3  
-3. vue-import-apply     → fixed_files: 3
-4. vue-import-cleanup   → cleanup: 0
-                              ↓
-                    action_complete
-```
-
-## Flow Diagram
-
-```
-Client                        Server
-  |                             |
-  |--- step_result ------------>|
-  |   { fixed_files: [...] }   |
-  |                             |
-  |                     [process result]
-  |                     [cleanup]
-  |                     [complete action]
-  |                             |
-  |<-- action_complete --------|
-  |   { summary }              |
-  |                             |
+fix-vue-imports (main action)
+    │
+    ├── vue-import-detect    → broken_imports: 3
+    ├── vue-import-resolve   → patches: 3
+    ├── vue-import-apply     → fixed_files: 3
+    └── vue-import-cleanup   → action_complete
 ```

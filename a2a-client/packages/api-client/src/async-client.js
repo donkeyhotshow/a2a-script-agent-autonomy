@@ -520,6 +520,107 @@ class ApiClient {
       });
     });
   }
+
+  // ============================================
+  // Action Execution (no-ai mode)
+  // ============================================
+
+  /**
+   * Execute an action iteratively with code execution on client
+   * @param {Object} opts - { task, sessionId, scriptRunner, projectPath }
+   * @param {Object} [callbacks] - { onStep, onStatus, onComplete, onError }
+   * @returns {Promise<Object>} - final result
+   */
+  async executeAction(opts, callbacks = {}) {
+    const { task, sessionId, scriptRunner, projectPath } = opts;
+    
+    // Step 1: Send new_task to find matching action
+    const { promiseId } = await this.createRequest({
+      sessionId,
+      context: {
+        version: '1.0',
+        session_id: sessionId,
+        new_task: task,
+        project_path: projectPath,
+      },
+    });
+
+    let result = await this.waitForResult(promiseId, { onStatus: callbacks.onStatus });
+    
+    // Check if action was found
+    if (!result.action || !result.action.currentStep) {
+      // No action found, return result as-is
+      if (callbacks.onComplete) callbacks.onComplete(result);
+      return result;
+    }
+
+    // Step 2: Iteratively execute steps
+    while (result.action && result.action.currentStep) {
+      const step = result.action.currentStep;
+      
+      if (callbacks.onStep) {
+        callbacks.onStep(step, result);
+      }
+
+      // Execute code on client if available
+      let stepResult = null;
+      if (step.code && scriptRunner) {
+        try {
+          stepResult = await scriptRunner.execute(step.code, {
+            projectPath,
+            sessionId,
+            stepId: step.id,
+          });
+        } catch (error) {
+          // Step execution failed
+          if (callbacks.onError) {
+            callbacks.onError({ step: step.id, error: error.message });
+          }
+          throw new ApiError(`Step ${step.id} failed: ${error.message}`, 0, { step, error });
+        }
+      }
+
+      // Send step result and get next step
+      const nextRequest = await this.createRequest({
+        sessionId,
+        context: {
+          version: '1.0',
+          session_id: sessionId,
+          continue: true,
+          step_id: step.id,
+          step_result: stepResult,
+        },
+      });
+
+      result = await this.waitForResult(nextRequest.promiseId, { onStatus: callbacks.onStatus });
+    }
+
+    // Action completed
+    if (callbacks.onComplete) callbacks.onComplete(result);
+    return result;
+  }
+
+  /**
+   * Execute action step and return result
+   * @param {string} sessionId 
+   * @param {string} stepId 
+   * @param {Object} stepResult 
+   * @param {Object} [callbacks] 
+   */
+  async continueAction(sessionId, stepId, stepResult, callbacks = {}) {
+    const { promiseId } = await this.createRequest({
+      sessionId,
+      context: {
+        version: '1.0',
+        session_id: sessionId,
+        continue: true,
+        step_id: stepId,
+        step_result: stepResult,
+      },
+    });
+
+    return this.waitForResult(promiseId, callbacks);
+  }
 }
 
 module.exports = { ApiClient, ApiError, PromisePoller };

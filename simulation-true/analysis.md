@@ -2,52 +2,43 @@
 
 ## Overview
 
-Симуляция полного воркфлоу системы action-based с передачей контекста.
+Симуляция полного воркфлоу системы action-based с передачей context на каждом шаге.
 
-## Ключевые изменения
+## Workflow
 
-### Контекст на каждом шаге
+```
+1. Client → Server: task_request (task)
+              ↓
+2. Server → Client: action_proposal + context (сервер откладывает task)
+              ↓
+3. Client → Server: approve_action + context (task + execution)
+              ↓
+4. Server → Client: action_executing + context (сервер обновляет execution)
+              ↓
+5. Client → Server: step_result + context
+              ↓
+6. Server → Client: action_executing + context
+              ↓
+... повторяется для каждого шага
+```
 
-**Клиент** принудительно отправляет `context` на каждом запросе:
+## Context Structure
+
 ```json
 {
   "context": {
-    "project": { ... },
+    "task": "исправить импорты в vue компонентах",
     "execution": {
       "actionId": "fix-vue-imports",
       "currentStep": 1,
       "totalSteps": 4,
       "currentActionId": "vue-import-detect",
       "history": [
-        { "step": 1, "actionId": "vue-import-detect", "status": "completed", "result": { ... } }
+        { "step": 1, "actionId": "vue-import-detect", "status": "completed", "result": {...} }
       ]
     }
   }
 }
-```
-
-**Сервер** откладывает важные значения в контекст:
-- `currentStep` - текущий шаг
-- `currentActionId` - ID текущего экшена
-- `history` - история выполненных шагов с результатами
-
-## Workflow
-
-```
-Client → Server: task_request
-Server → Client: action_proposal
-
-Client → Server: approve_action + context (currentStep: 0)
-Server → Client: action_executing + context (currentStep: 1)
-
-Client → Server: step_result + context (currentStep: 1, history: [step1])
-Server → Client: action_executing + context (currentStep: 2)
-
-Client → Server: step_result + context (currentStep: 2, history: [step1, step2])
-Server → Client: action_executing + context (currentStep: 3)
-
-Client → Server: step_result + context (currentStep: 3, history: [step1, step2, step3])
-Server → Client: action_complete + context (currentStep: 4, status: completed)
 ```
 
 ## Files
@@ -56,23 +47,30 @@ Server → Client: action_complete + context (currentStep: 4, status: completed)
 simulation-true/
 ├── 1/
 │   ├── request.json    # task_request
-│   ├── response.json   # action_proposal
+│   ├── response.json   # action_proposal + context
 │   └── analysis.md
 ├── 2/
 │   ├── request.json    # approve_action + context
-│   ├── response.json   # action_executing + updated context
+│   ├── response.json   # action_executing + context
 │   └── analysis.md
 ├── 3/
-│   ├── request.json    # step_result + context (history: [step1])
-│   ├── response.json   # action_executing + updated context
+│   ├── request.json    # step_result + context
+│   ├── response.json   # action_executing + context
 │   └── analysis.md
 ├── 4/
-│   ├── request.json    # step_result + context (history: [step1, step2])
-│   ├── response.json   # action_executing + updated context
+│   ├── request.json    # step_result + context
+│   ├── response.json   # action_executing + context
 │   └── analysis.md
 ├── 5/
-│   ├── request.json    # step_result + context (history: [step1, step2, step3])
-│   ├── response.json   # action_complete + final context
+│   ├── request.json    # step_result + context
+│   ├── response.json   # action_complete + context
 │   └── analysis.md
 └── analysis.md         # Этот файл
 ```
+
+## Key Points
+
+1. **Клиент отправляет task** - сервер откладывает её в context
+2. **Context передается на каждом шаге** - содержит task + execution
+3. **Сервер обновляет execution** - currentStep, currentActionId, history
+4. **Fallback** - если экшен не найден, предлагается auto-ai или task-decomposition

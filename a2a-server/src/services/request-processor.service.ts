@@ -14,6 +14,14 @@
  * 6. analysis → action: Activate neurons (if complete)
  * 7. action → validation: Validate results
  * 8. validation → completed: Return result with updated graph
+ * 
+ * Flow (with Actions - no-ai):
+ * 1. Get pending request with new_task
+ * 2. Find matching action in ActionRegistry
+ * 3. Return action_proposal with code for first step
+ * 4. Client executes code, sends continue with step_result
+ * 5. Process step result, return next step with code
+ * 6. Repeat until completed
  */
 
 import { requestService } from './request.service.js';
@@ -41,6 +49,7 @@ import {
   buildRequestApiResult 
 } from '../protocol/message-builder.js';
 import { analyzeTaskDetail, getNeuronsByLevel, type TaskDetailLevel } from '../utils/task-detail-analyzer.js';
+import { actionProcessor } from '../actions/action-processor.js';
 import type { CodeBlock } from '../types/entity.types.js';
 import type { RequestContextBlock } from '../types/index.js';
 
@@ -85,6 +94,18 @@ interface ProcessResult {
     needsFiles: boolean;
     readyForAi: boolean;
   } | undefined;
+  /** Action for no-ai mode - contains code to execute on client */
+  action?: {
+    id?: string;
+    title?: string;
+    matchScore?: number;
+    currentStep?: {
+      id: string;
+      title: string;
+      code?: string;
+    } | null;
+    nextSteps?: Array<{ id: string; title: string }>;
+  } | null | undefined;
 }
 
 function parseTaskText(ctx: Record<string, unknown>): string {
@@ -152,12 +173,57 @@ export async function processOneRequest(): Promise<ProcessResult | null> {
 
   try {
     // ========================================
-    // PHASE 0: Initialization
+    // ACTION FLOW: Check for action-related requests
+    // ========================================
+    
+    // Check for continue with step_result (iterative action execution)
+    if (ctx['continue'] && ctx['step_result']) {
+      logger.info('[RequestProcessor] Processing step result', {
+        stepId: ctx['step_id'],
+      });
+      
+      const sessionId = ctx['session_id'] as string || promiseId;
+      const stepId = ctx['step_id'] as string;
+      const stepResult = ctx['step_result'];
+      
+      const result = await actionProcessor.processStepResult(sessionId, stepId, stepResult);
+      
+      return {
+        outcome: result.continue ? 'completed' : 'completed',
+        context: result.message.context,
+        activated_neuron_ids: result.actionId ? [result.actionId] : undefined,
+        action: result.message.action,
+      };
+    }
+    
+    // Check for new_task (potential action match)
+    const taskText = parseTaskText(ctx);
+    if (taskText) {
+      // Try to find matching action
+      const sessionId = ctx['session_id'] as string || promiseId;
+      const actionResult = await actionProcessor.processTaskRequest(sessionId, taskText);
+      
+      if (actionResult.continue && actionResult.actionId) {
+        logger.info('[RequestProcessor] Action matched', {
+          actionId: actionResult.actionId,
+          step: actionResult.currentStep?.id,
+        });
+        
+        return {
+          outcome: 'completed',
+          context: actionResult.message.context,
+          activated_neuron_ids: [actionResult.actionId],
+          action: actionResult.message.action,
+        };
+      }
+    }
+
+    // ========================================
+    // PHASE 0: Initialization (existing flow)
     // ========================================
     
     // Reset and initialize ContextManager
     const contextManager = resetContextManager();
-    const taskText = parseTaskText(ctx);
     contextManager.set('task', taskText);
     
     // Analyze task detail level using TaskDetailAnalyzer

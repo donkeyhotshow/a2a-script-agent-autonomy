@@ -65,6 +65,21 @@ export interface ServerMessage {
   context: ContextBlock;
   files?: FileBlock[];
   message?: string;
+  /** Action data for iterative execution */
+  action?: {
+    id?: string;
+    title?: string;
+    matchScore?: number;
+    currentStep?: {
+      id: string;
+      title: string;
+      code?: string;
+    } | null;
+    nextSteps?: Array<{
+      id: string;
+      title: string;
+    }>;
+  };
 }
 
 // ============================================
