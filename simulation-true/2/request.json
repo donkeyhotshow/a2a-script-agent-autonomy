@@ -1,6 +1,9 @@
 {
-  "context": {
-    "new_task": "создать новую фичу авторизации"
+  "action": "approve_action",
+  "selectedAction": {
+    "actionId": "fix-vue-imports"
   },
-  "codeBlocks": []
+  "context": {
+    "task": "исправить импорты в vue компонентах"
+  }
 }

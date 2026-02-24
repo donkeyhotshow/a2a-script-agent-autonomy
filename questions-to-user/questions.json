@@ -1,0 +1,137 @@
+{
+  "sessionId": "action-system-migration",
+  "createdAt": "2026-02-23T00:00:00Z",
+  "context": "Идет миграция на Action-Based систему. Нужно определить следующие шаги.",
+  "groups": [
+    {
+      "title": "Миграция на Actions",
+      "questions": [
+        {
+          "id": "action-priority",
+          "type": "radio",
+          "question": "Какой action реализовать первым?",
+          "options": [
+            "fix-vue-imports (уже есть пример)",
+            "Создать новый action с нуля",
+            "Переделать существующие neurons в actions",
+            "Добавить API для поиска actions"
+          ]
+        },
+        {
+          "id": "action-format",
+          "type": "radio",
+          "question": "Какой формат действий использовать?",
+          "options": [
+            "Только action_id (сервер хранит данные)",
+            "Полные данные в симуляции",
+            "JSON с priority и subActions",
+            "Markdown с метаданными"
+          ]
+        }
+      ]
+    },
+    {
+      "title": "API Разработка",
+      "questions": [
+        {
+          "id": "api-endpoints",
+          "type": "checkbox",
+          "question": "Какие эндпоинты реализовать?",
+          "options": [
+            "GET /api/v1/actions/:actionId",
+            "GET /api/v1/actions/search?q=",
+            "POST /api/v1/actions (создание)",
+            "DELETE /api/v1/actions/:actionId"
+          ]
+        },
+        {
+          "id": "storage",
+          "type": "radio",
+          "question": "Где хранить данные actions?",
+          "options": [
+            "В памяти (как graph)",
+            "PostgreSQL (через Prisma)",
+            "Redis (кеширование)",
+            "Файловая система (.md файлы)"
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Web UI",
+      "questions": [
+        {
+          "id": "ui-features",
+          "type": "checkbox",
+          "question": "Какие функции UI нужны?",
+          "options": [
+            "Запрос actionId → сервер",
+            "Сортировка по priority",
+            "Подтверждение запуска",
+            "История выполненных actions"
+          ]
+        },
+        {
+          "id": "fallback",
+          "type": "radio",
+          "question": "Как обрабатывать неизвестные действия?",
+          "options": [
+            "Ollama (external-ai-hub)",
+            "OpenAI (если настроен)",
+            "Показать ошибку пользователю",
+            "Спросить у пользователя"
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Тестирование",
+      "questions": [
+        {
+          "id": "test-approach",
+          "type": "radio",
+          "question": "Как тестировать action system?",
+          "options": [
+            "Симуляции (уже есть в simulation-action/)",
+            "Мок API ответы",
+            "Интеграционные тесты",
+            "E2E через Playwright"
+          ]
+        },
+        {
+          "id": "test-scenarios",
+          "type": "checkbox",
+          "question": "Какие сценарии покрыть?",
+          "options": [
+            "Успешный вызов action",
+            "Action не найден",
+            "Ошибка сервера",
+            "Fallback на Ollama"
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Ресурсы",
+      "questions": [
+        {
+          "id": "time-estimate",
+          "type": "radio",
+          "question": "Сколько времени на реализацию?",
+          "options": [
+            "1-2 часа (базовая реализация)",
+            "Пол дня (с тестами)",
+            "1 день (полный фукнционал)",
+            "Больше (с Web UI и fallback)"
+          ]
+        },
+        {
+          "id": "blocking",
+          "type": "textarea",
+          "question": "Есть ли блокирующие проблемы?",
+          "placeholder": "Опишите что мешает работе..."
+        }
+      ]
+    }
+  ]
+}

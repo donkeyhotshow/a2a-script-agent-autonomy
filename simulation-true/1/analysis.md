@@ -1,98 +1,74 @@
-# Simulation 1 - Analysis
+# Simulation True 1 - Analysis
 
-## Action-Based System
+## Workflow: Action Found in Database
 
-Система использует базу actions для ограничения всех возможных действий системы над проектом.
+### Request (Client → Server)
 
----
-
-## Workflow
-
-```
-new_task → Поиск action в базе → Найден?
-                              ↓
-              Да              ↓              Нет
-        proposedActions ←----┴----→ fallbackActions
-              ↓                              ↓
-     action + steps              1. LLM Action Generator (ollama)
-                                   - Phase 1: Генерация общих шагов
-                                   - Phase 2: Генерация подпунктов
-                                   - Phase 3: Генерация скрипта
-                               2. Auto-AI режимы
+Клиент отправляет задачу:
+```json
+{
+  "action": "task_request",
+  "task": "исправить импорты в vue компонентах",
+  "context": { ... }
+}
 ```
 
----
+### Process (Server Side)
 
-## 1. Поиск Action в Базе
+1. **Поиск экшена в базе**
+   - Искать в `a2a-server/src/actions/`
+   - Использовать семантический поиск (RAG)
+   - Найден: `fix-vue-imports` (matchScore: 0.95)
 
-Система ищет подходящий action в [`a2a-server/src/acions/`](a2a-server/src/acions/):
-- Поиск по categoryId, actionId, triggers
-- Если найден → берём action + steps из файла
-- Предлагаем на выбор пользователю
+2. **Извлечение sub-actions**
+   - Читать `fix-vue-imports.md`
+   - Извлечь 4 шага: detect → resolve → apply → cleanup
 
----
+3. **Формирование fallback**
+   - Если не найден: предложить auto-ai (LLM) или manual decomposition
 
-## 2. Fallback (Action НЕ найден)
-
-Когда action не найден в базе:
-
-### LLM Action Generator (ollama/rnj-1)
-
-Итеративный процесс генерации действий:
-
-| Phase | Описание | Пользователь |
-|-------|----------|--------------|
-| **Phase 1** | Генерация общих шагов | Подтвердить / Перегенерировать |
-| **Phase 2** | Генерация подпунктов (по одному за итерацию) | Подтвердить / Перегенерировать |
-| **Phase 3** | Генерация исполняемого скрипта | Клиент выполняет → Результат |
-
-### Auto-AI Режимы
-- 1-context-collection - Сбор контекста для внешнего AI
-- 2-code-analysis - Анализ кода
-- 3-knowledge-graph - Построение графа знаний
-- 4-code-generation - Генерация кода
-- 5-hybrid - Гибридный режим
-
----
-
-## Пример: "исправить импорты после рефакторинга"
-
-**Поиск в базе → Найден ✓**
+### Response (Server → Client)
 
 ```json
 {
+  "outcome": "action_proposal",
   "proposedActions": [
     {
-      "actionId": "fix-imports",
-      "steps": ["collect", "detect", "fix", "verify"]
+      "actionId": "fix-vue-imports",
+      "subActions": [
+        { "actionId": "vue-import-detect", ... },
+        { "actionId": "vue-import-resolve", ... },
+        ...
+      ]
     }
+  ],
+  "fallbackActions": [
+    { "mode": "auto-ai", ... },
+    { "mode": "task-decomposition", ... }
   ]
 }
 ```
 
----
+### Decision Point (Client)
 
-## Пример: "создать новую фичу авторизации"
+Клиент выбирает:
+- **Принять** предложенный экшен → переход к 2
+- **Выбрать fallback** (auto-ai или manual)
+- **Отклонить** → завершение
 
-**Поиск в базе → НЕ найден**
-
-Fallback: LLM Action Generator
+## Flow Diagram
 
 ```
-Phase 1: Ollama генерирует общие шаги
-  - Создать модель данных
-  - Создать миграцию
-  - Создать контроллер
-  - Создать представления
-  ↓
-Пользователь: Подтвердить
-
-Phase 2: Для каждого шага генерируются подпункты
-  (итеративно, по одному за раз)
-  ↓
-Пользователь: Подтвердить
-
-Phase 3: Генерируется исполняемый скрипт
-  ↓
-Клиент выполняет → Результат
+Client                        Server
+  |                             |
+  |--- task_request ----------->|
+  |                             |
+  |                     [search actions]
+  |                     [find fix-vue-imports]
+  |                     [extract sub-actions]
+  |                             |
+  |<-- action_proposal ---------|
+  |                             |
+  | [user selects action]       |
+  |                             |
 ```

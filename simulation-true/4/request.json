@@ -1,0 +1,22 @@
+{
+  "action": "step_result",
+  "stepId": "vue-import-resolve",
+  "result": {
+    "patches": [
+      { "file": "resources/js/Pages/Auth/Login.vue", "line": 3, "from": "../components/Header", "to": "@/components/Header" },
+      { "file": "resources/js/Pages/Auth/Register.vue", "line": 5, "from": "../../utils/helpers", "to": "@/utils/helpers" },
+      { "file": "resources/js/components/UserCard.vue", "line": 2, "from": "@/stores/user", "to": "@/stores/userStore" }
+    ]
+  },
+  "context": {
+    "task": "исправить импорты в vue компонентах",
+    "execution": {
+      "actionId": "fix-vue-imports",
+      "currentActionId": "vue-import-resolve",
+      "history": [
+        { "step": 1, "actionId": "vue-import-detect", "status": "completed", "result": { "broken_imports": 3 } },
+        { "step": 2, "actionId": "vue-import-resolve", "status": "completed", "result": { "patches": 3 } }
+      ]
+    }
+  }
+}

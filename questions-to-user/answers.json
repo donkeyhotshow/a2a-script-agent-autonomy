@@ -1,0 +1,16 @@
+{
+    "answers": {
+        "test-simple": "Yes, proceed",
+        "main-direction": "B: PRIORITY-6 (улучшение агентной системы)",
+        "urgency": "Критично - нужно сегодня",
+        "action-priority": "fix-vue-imports (уже есть пример)",
+        "action-format": "Полные данные в симуляции",
+        "storage": "Файловая система (.md файлы)",
+        "ui-features": [
+            "Запрос actionId → сервер",
+            "Подтверждение запуска"
+        ]
+    },
+    "sessionId": "action-system-migration",
+    "lastUpdated": "2026-02-24T01:33:51+00:00"
+}

@@ -1,0 +1,95 @@
+{
+  "outcome": "need_clarification",
+  "message": "Я обнаружил 3 файла с неправильными импортами. Пожалуйста, подтвердите правило замены.",
+  "iterations": {
+    "current": 2,
+    "max": 5,
+    "history": [
+      {
+        "iteration": 1,
+        "outcome": "need_files",
+        "durationMs": 150,
+        "activatedNeurons": ["framework-detector", "task-analyzer"],
+        "questionsCount": 3
+      }
+    ]
+  },
+  "questions": [
+    {
+      "id": "q-confirm-001",
+      "type": "confirm",
+      "text": "Заменить все импорты App\\Models\\ на Domain\\Models\\ ?",
+      "required": true
+    }
+  ],
+  "context": {
+    "new_task": ["исправить импорты после рефакторинга"],
+    "frameworks": {
+      "frontend": "vue",
+      "backend": "laravel"
+    },
+    "architectural_features": ["vue", "laravel", "inertia"],
+    "task_classification": {
+      "type": "MECHANICAL",
+      "confidence": 0.95
+    },
+    "answers": [
+      {
+        "question_id": "q-001",
+        "text": "Модели были перемещены из app/Models в src/Domain/Models"
+      },
+      {
+        "question_id": "q-002",
+        "text": "Старый namespace был App\\Models"
+      },
+      {
+        "question_id": "q-003",
+        "text": "Новый namespace - Domain\\Models"
+      }
+    ]
+  },
+  "graph": {
+    "entities": [
+      {"id": "ent-001", "type": "CONTROLLER", "name": "UserController", "path": "app/Http/Controllers/UserController.php"},
+      {"id": "ent-002", "type": "CONTROLLER", "name": "OrderController", "path": "app/Http/Controllers/OrderController.php"},
+      {"id": "ent-003", "type": "REQUEST", "name": "UserRequest", "path": "app/Http/Requests/UserRequest.php"},
+      {"id": "ent-004", "type": "MODEL", "name": "User", "path": "src/Domain/Models/User.php"},
+      {"id": "ent-005", "type": "MODEL", "name": "Order", "path": "src/Domain/Models/Order.php"}
+    ],
+    "relations": [
+      {"id": "rel-001", "type": "USES", "from": "UserController", "to": "User"},
+      {"id": "rel-002", "type": "USES", "from": "OrderController", "to": "Order"},
+      {"id": "rel-003", "type": "BELONGS_TO", "from": "Order", "to": "User"},
+      {"id": "rel-004", "type": "HAS_MANY", "from": "User", "to": "Order"}
+    ]
+  },
+  "graph_stats": {
+    "entityCount": 5,
+    "relationCount": 4,
+    "entityTypes": {
+      "CONTROLLER": 2,
+      "REQUEST": 1,
+      "MODEL": 2
+    }
+  },
+  "detected_issues": [
+    {
+      "file": "app/Http/Controllers/UserController.php",
+      "issue": "broken_import",
+      "current": "use App\\Models\\User;",
+      "suggested": "use Domain\\Models\\User;"
+    },
+    {
+      "file": "app/Http/Controllers/OrderController.php",
+      "issue": "broken_import",
+      "current": "use App\\Models\\Order;",
+      "suggested": "use Domain\\Models\\Order;"
+    },
+    {
+      "file": "app/Http/Requests/UserRequest.php",
+      "issue": "broken_import",
+      "current": "use App\\Models\\User;",
+      "suggested": "use Domain\\Models\\User;"
+    }
+  ]
+}

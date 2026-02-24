@@ -1,0 +1,56 @@
+{
+  "context": {
+    "session_id": "session-abc-123",
+    "version": "1.0",
+    "new_task": ["исправить импорты после рефакторинга"],
+    "iterations": {
+      "current": 1,
+      "max": 5,
+      "history": []
+    },
+    "answers": [
+      {
+        "question_id": "q-001",
+        "text": "Модели были перемещены из app/Models в src/Domain/Models"
+      },
+      {
+        "question_id": "q-002", 
+        "text": "Старый namespace был App\\Models"
+      },
+      {
+        "question_id": "q-003",
+        "text": "Новый namespace - Domain\\Models"
+      }
+    ],
+    "task_classification": {
+      "type": "MECHANICAL",
+      "confidence": 0.85
+    },
+    "frameworks": {
+      "frontend": "vue",
+      "backend": "laravel"
+    }
+  },
+  "codeBlocks": [
+    {
+      "path": "app/Http/Controllers/UserController.php",
+      "content": "<?php\n\nnamespace App\\Http\\Controllers;\n\nuse App\\Models\\User;\nuse App\\Http\\Requests\\UserRequest;\n\nclass UserController extends Controller\n{\n    public function index()\n    {\n        $users = User::all();\n        return view('users.index', compact('users'));\n    }\n\n    public function store(UserRequest $request)\n    {\n        $user = User::create($request->validated());\n        return redirect()->route('users.show', $user->id);\n    }\n}"
+    },
+    {
+      "path": "app/Http/Controllers/OrderController.php",
+      "content": "<?php\n\nnamespace App\\Http\\Controllers;\n\nuse App\\Models\\Order;\nuse App\\Http\\Requests\\OrderRequest;\n\nclass OrderController extends Controller\n{\n    public function index()\n    {\n        $orders = Order::with('user')->get();\n        return view('orders.index', compact('orders'));\n    }\n\n    public function store(OrderRequest $request)\n    {\n        $order = Order::create($request->validated());\n        return redirect()->route('orders.show', $order->id);\n    }\n}"
+    },
+    {
+      "path": "app/Http/Requests/UserRequest.php",
+      "content": "<?php\n\nnamespace App\\Http\\Requests;\n\nuse App\\Models\\User;\nuse Illuminate\\Foundation\\Http\\FormRequest;\n\nclass UserRequest extends FormRequest\n{\n    public function authorize(): bool\n    {\n        return true;\n    }\n\n    public function rules(): array\n    {\n        return [\n            'name' => 'required|string|max:255',\n            'email' => 'required|email|unique:users,email',\n        ];\n    }\n}"
+    },
+    {
+      "path": "src/Domain/Models/User.php",
+      "content": "<?php\n\nnamespace Domain\\Models;\n\nuse Illuminate\\Database\\Eloquent\\Model;\nuse Illuminate\\Database\\Eloquent\\Relations\\HasMany;\n\nclass User extends Model\n{\n    protected $fillable = ['name', 'email'];\n\n    public function orders(): HasMany\n    {\n        return $this->hasMany(Order::class);\n    }\n}"
+    },
+    {
+      "path": "src/Domain/Models/Order.php",
+      "content": "<?php\n\nnamespace Domain\\Models;\n\nuse Illuminate\\Database\\Eloquent\\Model;\nuse Illuminate\\Database\\Eloquent\\Relations\\BelongsTo;\n\nclass Order extends Model\n{\n    protected $fillable = ['user_id', 'total', 'status'];\n\n    public function user(): BelongsTo\n    {\n        return $this->belongsTo(User::class);\n    }\n}"
+    }
+  ]
+}

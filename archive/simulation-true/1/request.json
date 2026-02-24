@@ -1,0 +1,15 @@
+{
+  "context": {
+    "new_task": "исправить импорты в vue компонентах после рефакторинга"
+  },
+  "codeBlocks": [
+    {
+      "path": "vite.config.js",
+      "content": "import { defineConfig } from 'vite';\nimport vue from '@vitejs/plugin-vue';\nimport path from 'path';\n\nexport default defineConfig({\n  resolve: {\n    alias: {\n      '@': path.resolve(__dirname, './resources/js'),\n      '~': path.resolve(__dirname, './resources'),\n    },\n  },\n  plugins: [vue()],\n});"
+    },
+    {
+      "path": "resources/js/app.js",
+      "content": "import { createApp } from 'vue';\nimport { createInertiaApp } from '@inertiajs/vue3';\nimport '../css/app.css';\n\ncreateInertiaApp({\n  resolve: (name) => require(`./Pages/${name}`),\n  setup({ el, App, props, plugin }) {\n    createApp(App).use(plugin).mount(el);\n  },\n});"
+    }
+  ]
+}

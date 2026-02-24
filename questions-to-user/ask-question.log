@@ -1,0 +1,12 @@
+[2026-02-15 18:48:49] [INFO] Starting ask-question for: test-simple
+[2026-02-15 18:48:51] [INFO] PHP server started (PID: 22352)
+[2026-02-15 18:48:51] [INFO] Opened in Edge
+[2026-02-15 18:49:01] [INFO] Completed: {"answer":"Yes, proceed","questionId":"test-simple","timestamp":"2026-02-15T18:49:01.0340165+02:00"}
+[2026-02-15 18:56:37] [INFO] Starting ask-question for: main-direction
+[2026-02-15 18:56:39] [INFO] PHP server started (PID: 15988)
+[2026-02-15 18:56:39] [INFO] Opened in Edge
+[2026-02-15 18:57:01] [INFO] Completed: {"timestamp":"2026-02-15T18:57:01.1447504+02:00","questionId":"main-direction","answer":"B: PRIORITY-6 (улучшение агентной системы)"}
+[2026-02-15 18:57:01] [INFO] Starting ask-question for: urgency
+[2026-02-15 18:57:03] [INFO] PHP server started (PID: 15684)
+[2026-02-15 18:57:03] [INFO] Opened in Edge
+[2026-02-15 18:57:18] [INFO] Completed: {"timestamp":"2026-02-15T18:57:18.1912201+02:00","questionId":"urgency","answer":"Критично - нужно сегодня"}

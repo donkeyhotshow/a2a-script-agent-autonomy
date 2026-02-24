@@ -1,0 +1,26 @@
+{
+  "outcome": "action_executing",
+  "message": "Запускаю выполнение action: fix-vue-imports",
+  "currentStep": 1,
+  "totalSteps": 4,
+  "executingAction": {
+    "actionId": "vue-import-detect",
+    "title": "Определить сломанные импорты",
+    "priority": 5,
+    "dsl": {
+      "script": "vue-import-detect",
+      "output": "broken_imports[]"
+    },
+    "dslScript": "```typescript\n// vue-import-detect.dsl\n// Определить сломанные импорты в Vue файлах\n\nconst result = await script.execute('vue-import-detect', {\n  rootDir: './resources/js',\n  extensions: ['.vue', '.js', '.ts'],\n  aliases: {\n    '@': 'resources/js',\n    '~': 'resources'\n  }\n});\n\n// result = [{ file, line, specifier }]\n```"
+  },
+  "nextSteps": [
+    { "actionId": "vue-import-resolve", "title": "Разрешить пути" },
+    { "actionId": "vue-import-apply", "title": "Применить исправления" },
+    { "actionId": "vue-import-cleanup", "title": "Очистить" }
+  ],
+  "context": {
+    "task": "исправить импорты в vue компонентах",
+    "framework": "vue",
+    "found": true
+  }
+}

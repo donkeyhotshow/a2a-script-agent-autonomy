@@ -1,15 +1,4 @@
 {
-  "context": {
-    "new_task": "исправить импорты после рефакторинга"
-  },
-  "codeBlocks": [
-    {
-      "path": "composer.json",
-      "content": "{\n  \"autoload\": {\n    \"psr-4\": {\n      \"App\\\\\": \"app/\",\n      \"Domain\\\\\": \"src/Domain/\"\n    }\n  },\n  \"require\": {\n    \"php\": \"^8.2\",\n    \"laravel/framework\": \"^11.0\"\n  }\n}"
-    },
-    {
-      "path": "package.json",
-      "content": "{\n  \"dependencies\": {\n    \"vue\": \"^3.5.0\",\n    \"@inertiajs/vue3\": \"^2.0.0\"\n  }\n}"
-    }
-  ]
+  "action": "task_request",
+  "task": "исправить импорты в vue компонентах"
 }

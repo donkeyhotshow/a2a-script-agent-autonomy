@@ -1,87 +1,64 @@
 {
-  "outcome": "actions_proposed",
-  "message": "Найден подходящий action в базе. Выберите действие:",
+  "outcome": "action_proposal",
+  "message": "Найден подходящий экшен в базе",
+  "context": {
+    "task": "исправить импорты в vue компонентах"
+  },
   "proposedActions": [
     {
-      "actionId": "fix-imports",
-      "categoryId": "code-quality",
-      "executorSystemId": "agent",
-      "title": "Исправление импортов после рефакторинга",
-      "description": "Автоматическое исправление сломанных импортов после изменения структуры проекта",
-      "confidence": 0.95,
-      "canMigrateToScript": true,
-      "steps": [
+      "actionId": "fix-vue-imports",
+      "title": "Исправить сломанные импорты в Vue файлах",
+      "description": "Автоматически определить и исправить проблемы с импортами в Vue компонентах",
+      "priority": 10,
+      "matchScore": 0.95,
+      "subActions": [
         {
-          "id": 1,
-          "description": "Собрать все файлы с импортами (PHP, Vue)",
-          "type": "collect"
+          "actionId": "vue-import-detect",
+          "title": "Определить сломанные импорты",
+          "description": "Сканирует Vue файлы и находит битые импорты",
+          "priority": 10,
+          "input": "none",
+          "output": "broken_imports[]"
         },
         {
-          "id": 2,
-          "description": "Определить сломанные пути импортов на основе PSR-4",
-          "type": "detect"
+          "actionId": "vue-import-resolve",
+          "title": "Разрешить правильные пути",
+          "description": "На основе списка битых импортов находит правильные пути",
+          "priority": 9,
+          "input": "broken_imports[]",
+          "output": "patches[]"
         },
         {
-          "id": 3,
-          "description": "Исправить импорты согласно новой структуре",
-          "type": "fix"
+          "actionId": "vue-import-apply",
+          "title": "Применить исправления",
+          "description": "Применяет исправления к файлам",
+          "priority": 8,
+          "input": "patches[]",
+          "output": "fixed_files[]"
         },
         {
-          "id": 4,
-          "description": "Проверить работоспособность через тесты",
-          "type": "verify"
+          "actionId": "vue-import-cleanup",
+          "title": "Очистить временные файлы",
+          "description": "Удаляет временные файлы после работы",
+          "priority": 7,
+          "input": "none",
+          "output": "cleanup_count"
         }
-      ],
-      "triggers": ["import", "refactor", "psr-4"],
-      "source": "base-search"
+      ]
     }
   ],
-  "fallbackActions": [],
-  "fallbackAvailable": true,
-  "fallbackInfo": {
-    "taskDecomposition": {
-      "type": "task-decomposition",
-      "model": "rnj-1",
-      "provider": "ollama",
-      "title": "Разбить задачу на atomic шаги через ollama",
-      "description": "Если стандартный action не подходит, ollama разобьёт задачу на подзадачи"
+  "fallbackActions": [
+    {
+      "mode": "auto-ai",
+      "title": "AI Action Generator",
+      "description": "Сгенерировать новый экшен с помощью LLM (rnj-1 через Ollama)",
+      "fallbackType": "llm_generation"
     },
-    "autoAiModes": [
-      {
-        "mode": "auto-ai",
-        "variant": "1-context-collection",
-        "title": "Сбор контекста для внешнего AI"
-      },
-      {
-        "mode": "auto-ai",
-        "variant": "2-code-analysis",
-        "title": "Анализ кода"
-      },
-      {
-        "mode": "auto-ai",
-        "variant": "4-code-generation",
-        "title": "Генерация кода"
-      }
-    ]
-  },
-  "context": {
-    "task": {
-      "original_request": "исправить импорты после рефакторинга",
-      "detail_level": "medium",
-      "classification": "MECHANICAL"
-    },
-    "project": {
-      "backend": "laravel",
-      "frontend": "vue",
-      "psr4_mapping": {
-        "App\\": "app/",
-        "Domain\\": "src/Domain/"
-      }
-    },
-    "actionSearch": {
-      "method": "base-search",
-      "found": true,
-      "actionId": "fix-imports"
+    {
+      "mode": "task-decomposition",
+      "title": "Декомпозиция задачи",
+      "description": "Разбить задачу на подзадачи вручную",
+      "fallbackType": "manual"
     }
-  }
+  ]
 }

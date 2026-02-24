@@ -1,0 +1,212 @@
+{
+  "outcome": "action_creation",
+  "message": "Action 'fix-vue-imports' не найден. Выберите способ обработки:",
+  "fallbackOptions": [
+    {
+      "type": "create_new_action",
+      "title": "Создать новый action",
+      "description": "Сгенерировать новый action через ollama с полной детализацией скриптов"
+    },
+    {
+      "type": "auto_ai",
+      "title": "Использовать auto-ai режим",
+      "variants": ["1-context-collection", "2-code-analysis", "4-code-generation", "5-hybrid"]
+    }
+  ],
+  "selected_option": {
+    "type": "create_new_action",
+    "action_name": "fix-vue-imports"
+  },
+  "action_creation_workflow": {
+    "phase1": {
+      "name": "Генерация общих действий (Global Actions)",
+      "description": "Ollama генерирует high-level действия для задачи",
+      "prompt": "Для задачи 'исправить импорты в vue компонентах после рефакторинга' разбей на 3-5 автономных действий. Каждое действие должно иметь четкое название и описание.",
+      "input_context": {
+        "task": "исправить импорты в vue компонентах после рефакторинга",
+        "framework": "vue",
+        "build_tool": "vite"
+      },
+      "ollama_response": {
+        "model": "rnj-1",
+        "output": [
+          {
+            "id": "action-1",
+            "name": "Сканировать файлы проекта",
+            "description": "Найти все Vue и JS файлы содержащие import statements",
+            "input": "none",
+            "output": "список_файлов"
+          },
+          {
+            "id": "action-2",
+            "name": "Проанализировать импорты",
+            "description": "Извлечь и классифицировать все импорты по типу пути",
+            "input": "список_файлов",
+            "output": "список_импортов"
+          },
+          {
+            "id": "action-3",
+            "name": "Найти сломанные импорты",
+            "description": "Проверить каждый импорт на существование файла",
+            "input": "список_импортов",
+            "output": "сломанные_импорты"
+          },
+          {
+            "id": "action-4",
+            "name": "Исправить импорты",
+            "description": "Заменить неверные пути на правильные",
+            "input": "сломанные_импорты",
+            "output": "исправленные_файлы"
+          },
+          {
+            "id": "action-5",
+            "name": "Верифицировать",
+            "description": "Запустить lint для проверки",
+            "input": "исправленные_файлы",
+            "output": "результат_проверки"
+          }
+        ]
+      },
+      "user_action": "confirm_or_edit",
+      "user_feedback": null,
+      "status": "awaiting_confirmation"
+    },
+    "phase2": {
+      "name": "Детализация локальных шагов (Local Steps)",
+      "description": "Для каждого global action генерируются детальные шаги с командами",
+      "prompt": "Для каждого действия детализируй: команда, скрипт, параметры, входные/выходные данные",
+      "iteration_status": "in_progress",
+      "global_actions_detail": [
+        {
+          "global_action_id": "action-1",
+          "name": "Сканировать файлы проекта",
+          "local_steps": [
+            {
+              "step_id": "1.1",
+              "name": "Найти Vue файлы",
+              "command": "find resources/js -type f -name '*.vue'",
+              "description": "Найти все Vue компоненты"
+            },
+            {
+              "step_id": "1.2",
+              "name": "Найти JS файлы с импортами",
+              "command": "find resources/js -type f \\( -name '*.js' -o -name '*.ts' \\) | xargs grep -l 'from'",
+              "description": "Найти JS файлы с import statements"
+            }
+          ]
+        },
+        {
+          "global_action_id": "action-2",
+          "name": "Проанализировать импорты",
+          "local_steps": [
+            {
+              "step_id": "2.1",
+              "name": "Парсить импорты",
+              "script": "parse_imports.py",
+              "description": "Извлечь import statements и определить тип пути",
+              "input_from": "action-1.output"
+            }
+          ]
+        },
+        {
+          "global_action_id": "action-3",
+          "name": "Найти сломанные импорты",
+          "local_steps": [
+            {
+              "step_id": "3.1",
+              "name": "Проверить пути",
+              "script": "check_paths.py",
+              "description": "Для каждого импорта проверить существование файла",
+              "input_from": "action-2.output"
+            }
+          ]
+        },
+        {
+          "global_action_id": "action-4",
+          "name": "Исправить импорты",
+          "local_steps": [
+            {
+              "step_id": "4.1",
+              "name": "Сгенерировать замены",
+              "script": "generate_replacements.py",
+              "description": "Создать список замен на основе сломанных импортов",
+              "input_from": "action-3.output"
+            },
+            {
+              "step_id": "4.2",
+              "name": "Применить замены",
+              "script": "apply_replacements.py",
+              "description": "Применить замены к файлам",
+              "input_from": "step_4.1.output"
+            }
+          ]
+        },
+        {
+          "global_action_id": "action-5",
+          "name": "Верифицировать",
+          "local_steps": [
+            {
+              "step_id": "5.1",
+              "name": "Запустить линтер",
+              "command": "npm run lint",
+              "description": "Проверить что импорты исправлены"
+            }
+          ]
+        }
+      ],
+      "user_action": "confirm_or_regenerate",
+      "status": "pending"
+    },
+    "phase3": {
+      "name": "Генерация кода скриптов",
+      "description": "Пользователь добавляет требования к каждому скрипту, ollama генерирует код",
+      "user_input_required": true,
+      "scripts_to_generate": [
+        {
+          "script_name": "parse_imports.py",
+          "requirements": "Парсит Vue и JS файлы, извлекает import statements, определяет тип пути (alias/relative/npm)",
+          "input": "список_файлов",
+          "output": "JSON массив импортов",
+          "edge_cases": "Обработать: @alias, ~alias, ../, ./, npm пакеты"
+        },
+        {
+          "script_name": "check_paths.py",
+          "requirements": "Проверяет существование файлов по каждому импорту",
+          "input": "JSON массив импортов",
+          "output": "JSON с проверенными импортами",
+          "context": { "aliases": { "@": "resources/js", "~": "resources" } }
+        },
+        {
+          "script_name": "generate_replacements.py",
+          "requirements": "Генерирует список замен на основе сломанных импортов",
+          "input": "JSON с проверенными импортами",
+          "output": "JSON массив замен (old_path -> new_path)"
+        }
+      ],
+      "regeneration_round": {
+        "round": 1,
+        "user_feedback": null,
+        "status": "awaiting_user_requirements"
+      },
+      "status": "pending"
+    }
+  },
+  "context": {
+    "task": {
+      "original_request": "исправить импорты в vue компонентах после рефакторинга",
+      "detail_level": "medium",
+      "classification": "MECHANICAL"
+    },
+    "project": {
+      "framework": "vue",
+      "build_tool": "vite",
+      "aliases": { "@": "resources/js", "~": "resources" }
+    },
+    "actionSearch": {
+      "method": "semantic-base-search",
+      "found": false,
+      "actionId": "fix-vue-imports",
+      "reason": "not in database"
+    }
+  }
+}

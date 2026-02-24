@@ -1,0 +1,27 @@
+{
+  "outcome": "completed",
+  "context": {
+    "new_task": ["исправить импорты"],
+    "psr4_rules": {
+      "App\\": "app/",
+      "Domain\\": "src/Domain/"
+    },
+    "fixes_applied": 2,
+    "affected_files": 2
+  },
+  "action": "update_references",
+  "instructions": [
+    "Обновите use-инструкции в app/Http/Controllers/UserController.php:",
+    "  use App\\Services\\UserService → use Domain\\Services\\UserService",
+    "  use App\\Repositories\\UserRepository → use Domain\\Repositories\\UserRepository",
+    "Обновите use-инструкции в app/Services/OrderService.php:",
+    "  use App\\Services\\UserService → use Domain\\Services\\UserService"
+  ],
+  "summary": {
+    "task": "исправить импорты",
+    "iterations": 5,
+    "files_fixed": 2,
+    "references_to_update": 2,
+    "questions_asked": 1
+  }
+}

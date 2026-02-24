@@ -1,0 +1,31 @@
+{
+  "outcome": "ready_to_fix",
+  "context": {
+    "new_task": ["исправить импорты"],
+    "psr4_rules": {
+      "App\\": "app/",
+      "Domain\\": "src/Domain/"
+    },
+    "violations_count": 2
+  },
+  "action": "apply_fixes",
+  "instructions": [
+    "Замените namespace в src/Domain/Services/UserService.php: App\\Services → Domain\\Services",
+    "Замените namespace в src/Domain/Repositories/UserRepository.php: App\\Repositories → Domain\\Repositories",
+    "Обновите все use-инструкции, ссылающиеся на старые namespace"
+  ],
+  "fixes": [
+    {
+      "file": "src/Domain/Services/UserService.php",
+      "type": "namespace",
+      "old": "App\\Services",
+      "new": "Domain\\Services"
+    },
+    {
+      "file": "src/Domain/Repositories/UserRepository.php",
+      "type": "namespace",
+      "old": "App\\Repositories",
+      "new": "Domain\\Repositories"
+    }
+  ]
+}

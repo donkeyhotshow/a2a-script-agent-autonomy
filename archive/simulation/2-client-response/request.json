@@ -1,0 +1,16 @@
+{
+  "context": {
+    "new_task": ["исправить импорты"],
+    "frameworks": {
+      "laravel": "11.x",
+      "vue": "3.5.x"
+    }
+  },
+  "message": "Запрошенные файлы не существуют в проекте",
+  "missing_files": [
+    "app/Models/User.php",
+    "app/Http/Controllers/Controller.php",
+    "src/Domain/Services/*.php"
+  ],
+  "codeBlocks": []
+}

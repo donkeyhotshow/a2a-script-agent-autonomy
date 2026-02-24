@@ -1,0 +1,93 @@
+{
+  "outcome": "agent_mode_selected",
+  "message": "Выберите режим работы с агентом:",
+  "selected_mode": "auto-ai",
+  "available_modes": [
+    {
+      "mode": "auto-ai",
+      "variant": "1-context-collection",
+      "title": "Сбор контекста",
+      "description": "Подготовить контекст для Claude/GPT. Система сканирует проект, создаёт индексы и формирует промпт.",
+      "workflow": [
+        { "step": "Сканировать структуру проекта", "action": "scan_project", "description": "Определить файловую структуру" },
+        { "step": "Создать векторные индексы", "action": "create_indexes", "description": "Индексировать код для семантического поиска" },
+        { "step": "Найти релевантные файлы", "action": "search_relevant", "description": "Найти файлы связанные с задачей" },
+        { "step": "Сформировать промпт", "action": "build_prompt", "description": "Собрать контекст для AI" }
+      ],
+      "output": {
+        "context_files": ["vite.config.js", "package.json", "Vue файлы с импортами"],
+        "prompt": "Проанализируй импорты в Vue компонентах..."
+      }
+    },
+    {
+      "mode": "auto-ai",
+      "variant": "2-code-analysis",
+      "title": "Анализ кода",
+      "description": "Проанализировать структуру проекта, найти проблемные места и связи.",
+      "workflow": [
+        { "step": "Определить технологический стек", "action": "detect_stack", "description": "Vue 3, Vite, Inertia, Pinia" },
+        { "step": "Построить граф зависимостей", "action": "build_graph", "description": "Как компоненты связаны между собой" },
+        { "step": "Найти паттерны импортов", "action": "find_patterns", "description": "Какие пути используются" },
+        { "step": "Выявить проблемные места", "action": "detect_issues", "description": "Сломанные, устаревшие импорты" },
+        { "step": "Сформировать отчёт", "action": "build_report", "description": "Рекомендации по исправлению" }
+      ],
+      "output": {
+        "stack": { "frontend": "vue", "state": "pinia", "routing": "inertia" },
+        "graph": { "nodes": 50, "edges": 120 },
+        "issues": [{ "type": "broken_import", "count": 5 }]
+      }
+    },
+    {
+      "mode": "auto-ai",
+      "variant": "4-code-generation",
+      "title": "Генерация кода",
+      "description": "Сгенерировать исправления через AI на основе контекста.",
+      "workflow": [
+        { "step": "Собрать контекст", "action": "collect_context", "description": "Все релевантные файлы" },
+        { "step": "Отправить в AI", "action": "send_to_ai", "description": "Claude/GPT получает задачу" },
+        { "step": "Получить код", "action": "receive_code", "description": "Сгенерированные исправления" },
+        { "step": "Применить изменения", "action": "apply_changes", "description": "Записать в файлы" },
+        { "step": "Добавить тесты", "action": "add_tests", "description": "Unit тесты для проверки" }
+      ],
+      "output": {
+        "files_generated": 3,
+        "tests_added": 2
+      }
+    },
+    {
+      "mode": "auto-ai",
+      "variant": "5-hybrid",
+      "title": "Гибридный режим",
+      "description": "Комбинация анализа и генерации с итерациями.",
+      "workflow": [
+        { "step": "Быстрый анализ", "action": "quick_scan" },
+        { "step": "Генерация плана", "action": "generate_plan" },
+        { "step": "Пользователь утверждает", "action": "user_approval" },
+        { "step": "Генерация кода", "action": "generate_code" },
+        { "step": "Верификация", "action": "verify" }
+      ]
+    }
+  ],
+  "current_session": {
+    "id": "session-abc123",
+    "agent": "claude",
+    "status": "awaiting_selection",
+    "context_window": 100000
+  },
+  "context": {
+    "task": {
+      "original_request": "исправить импорты в vue компонентах после рефакторинга",
+      "detail_level": "medium",
+      "classification": "MECHANICAL"
+    },
+    "project": {
+      "framework": "vue",
+      "build_tool": "vite"
+    },
+    "actionSearch": {
+      "found": false,
+      "reason": "action not in database"
+    },
+    "user_selection": "pending"
+  }
+}
