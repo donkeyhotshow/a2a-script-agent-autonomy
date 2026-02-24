@@ -44,6 +44,4 @@ powershell -ExecutionPolicy Bypass -File C:\workspace\bin\qtu.ps1 -Question "В�
 - Браузер по умолчанию (Edge/Chrome/Firefox)
 
 **Файлы:**
-- `questions-to-user/questions.json` - все вопросы
 - `questions-to-user/questions/q_xxx.json` - отдельный файл вопроса
-- `questions-to-user/answers.json` - ответы пользователя
