@@ -1,0 +1,33 @@
+{
+  "name": "@a2a/types",
+  "version": "1.0.0",
+  "description": "Shared TypeScript types for A2A packages",
+  "main": "src/index.js",
+  "module": "src/index.js",
+  "types": "src/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./src/index.js",
+      "require": "./src/index.js",
+      "types": "./src/index.d.ts"
+    },
+    "./*": {
+      "import": "./src/*.js",
+      "require": "./src/*.js",
+      "types": "./src/*.d.ts"
+    }
+  },
+  "scripts": {
+    "test": "echo \"No tests configured\" && exit 0"
+  },
+  "keywords": [
+    "a2a",
+    "types",
+    "protocol"
+  ],
+  "author": "",
+  "license": "MIT",
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  }
+}
