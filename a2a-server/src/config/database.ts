@@ -1,5 +1,4 @@
 import { PrismaClient } from '@prisma/client';
-import { logger } from '../utils/logger.js';
 
 /**
  * Database Configuration
@@ -7,6 +6,24 @@ import { logger } from '../utils/logger.js';
  */
 
 let prisma: PrismaClient | null = null;
+
+export type DatabaseLogger = {
+  info: (message: string, meta?: Record<string, unknown>) => void;
+  error: (message: string, meta?: Record<string, unknown>) => void;
+  warn: (message: string, meta?: Record<string, unknown>) => void;
+  debug: (message: string, meta?: Record<string, unknown>) => void;
+};
+
+let databaseLogger: DatabaseLogger = {
+  info: (message, meta) => console.info(message, meta),
+  error: (message, meta) => console.error(message, meta),
+  warn: (message, meta) => console.warn(message, meta),
+  debug: (message, meta) => console.debug(message, meta),
+};
+
+export function setDatabaseLogger(logger: DatabaseLogger): void {
+  databaseLogger = logger;
+}
 
 /**
  * Get Prisma client instance
@@ -29,9 +46,9 @@ export function getPrismaClient(): PrismaClient {
         },
       ],
     });
-    prisma.$on('query', (e) => logger.debug('Prisma query', { query: e.query }));
-    prisma.$on('error', (e) => logger.error('Prisma error', { message: e.message }));
-    prisma.$on('warn', (e) => logger.warn('Prisma warn', { message: e.message }));
+    prisma.$on('query', (e) => databaseLogger.debug('Prisma query', { query: e.query }));
+    prisma.$on('error', (e) => databaseLogger.error('Prisma error', { message: e.message }));
+    prisma.$on('warn', (e) => databaseLogger.warn('Prisma warn', { message: e.message }));
   }
   
   return prisma;
@@ -43,7 +60,7 @@ export function getPrismaClient(): PrismaClient {
 export async function connectDatabase(): Promise<void> {
   const p = getPrismaClient();
   await p.$connect();
-  logger.info('Database connected');
+  databaseLogger.info('Database connected');
 }
 
 /**
@@ -53,7 +70,7 @@ export async function disconnectDatabase(): Promise<void> {
   if (prisma) {
     await prisma.$disconnect();
     prisma = null;
-    logger.info('Database disconnected');
+    databaseLogger.info('Database disconnected');
   }
 }
 

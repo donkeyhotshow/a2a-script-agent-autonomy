@@ -11,13 +11,12 @@ const router = Router();
 router.get('/', async (_req, res) => {
   try {
     const status = await getHealthStatus();
-    const ok = status.database.status === 'healthy' && status.redis.status === 'healthy';
+    const ok = status.database.status === 'healthy';
     res.json({
       success: true,
       data: {
         status: ok ? 'healthy' : 'degraded',
         database: status.database,
-        redis: status.redis,
         timestamp: new Date().toISOString(),
       },
     });
@@ -39,7 +38,7 @@ router.get('/ready', async (_req, res) => {
     const ready = status.database.status === 'healthy';
     res.status(ready ? 200 : 503).json({
       success: ready,
-      data: { ready, database: status.database, redis: status.redis },
+      data: { ready, database: status.database },
     });
   } catch (err) {
     res.status(503).json({
@@ -53,18 +52,6 @@ router.get('/database', async (_req, res) => {
   try {
     const status = await getHealthStatus();
     res.json({ success: true, data: status.database });
-  } catch (err) {
-    res.status(503).json({
-      success: false,
-      error: { code: 'HEALTH_ERROR', message: String(err) },
-    });
-  }
-});
-
-router.get('/redis', async (_req, res) => {
-  try {
-    const status = await getHealthStatus();
-    res.json({ success: true, data: status.redis });
   } catch (err) {
     res.status(503).json({
       success: false,

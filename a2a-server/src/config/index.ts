@@ -15,10 +15,6 @@ const configSchema = z.object({
   // Database
   databaseUrl: z.string().url(),
 
-  // Redis
-  redisUrl: z.string().default('redis://localhost:6379'),
-  redisPassword: z.string().optional(),
-
   // Auth
   jwtSecret: z.string().min(32),
   jwtExpiresIn: z.string().default('1h'),
@@ -73,8 +69,6 @@ function loadConfig() {
     port: process.env.PORT,
     host: process.env.HOST,
     databaseUrl: process.env.DATABASE_URL,
-    redisUrl: process.env.REDIS_URL,
-    redisPassword: process.env.REDIS_PASSWORD,
     jwtSecret: process.env.JWT_SECRET,
     jwtExpiresIn: process.env.JWT_EXPIRES_IN,
     jwtRefreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN,

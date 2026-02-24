@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { unauthorized } from './error.middleware.js';
+import { unauthorized } from '../errors/http-errors.js';
 
 declare global {
   namespace Express {

@@ -4,7 +4,9 @@
  * Provides automatic indexing of scanned files and real-time updates.
  */
 
-const { FileScanner } = require('../fs-utils');
+const fs = require('fs').promises;
+const path = require('path');
+const { FileScanner } = require('@a2a/fs-utils');
 const { RAGIndexer } = require('./indexer');
 const { ChunkManager } = require('./chunk-manager');
 const chokidar = require('chokidar');

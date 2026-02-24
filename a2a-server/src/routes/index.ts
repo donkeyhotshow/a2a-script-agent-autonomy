@@ -41,7 +41,6 @@ async function handleInvoke(req: Request, res: Response, next: NextFunction): Pr
 }
 
 router.post('/invoke', authenticate, handleInvoke);
-router.post('/message', authenticate, handleInvoke);
 
 // Health check - no auth required
 router.get('/health', (_req: Request, res: Response) => {

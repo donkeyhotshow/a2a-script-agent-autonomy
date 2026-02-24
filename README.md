@@ -77,19 +77,15 @@ json
 
 ## Документация по протоколу (клиент-сервер) ⭐⭐⭐
 
-**Важно:** Полная документация по протоколу общения клиента и сервера находится в разделе `docs/protocol/`.
+**Важно:** Документация по протоколу находится в `a2a-server/docs/`.
 
-### Основные документы протокола
+### Основные документы
 
 | Документ | Назначение |
 |---------|-----------|
-|[Протокол: оглавление](docs/protocol/README.md)|Индекс всей документации протокола|
-|[Обзор: ключевые принципы](docs/protocol/overview.md)|Формат, stateless context, итеративный обмен|
-|[Структура context](docs/protocol/context.md)|Поле context в запросах/ответах|
-|[Структура codeBlocks](docs/protocol/codeblocks.md)|Блоки кода в запросах|
-|[Первый запрос сессии](docs/protocol/first-request.md)|Первый запрос сессии|
-|[Жизненный цикл потоков](docs/protocol/flow.md)|Жизненный цикл итераций|
-|[JSON API примеры](docs/protocol-json-api.md)|Примеры curl-запросов|
+|[a2a-server/docs/entry-points.md](a2a-server/docs/entry-points.md)|Точки входа API|
+|[a2a-server/docs/action-api.md](a2a-server/docs/action-api.md)|API действий|
+|[a2a-server/docs/use-cases/](a2a-server/docs/use-cases/)|Сценарии использования|
 
 ---
 
@@ -98,8 +94,7 @@ json
 | Документ | Назначение |
 |----------|------------|
 | [AGENTS.md](AGENTS.md) | Что делать сейчас |
-| [docs/README.md](docs/README.md) | Индекс всех документов |
-| [docs/architecture-principles.md](docs/architecture-principles.md) | Архитектурные принципы |
+| [a2a-server/docs/](a2a-server/docs/) | Документация сервера |
 
 ## Структура проекта
 
