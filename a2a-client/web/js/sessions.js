@@ -59,6 +59,9 @@ const Sessions = {
     // Initialize VueFlow when modules are loaded
     this.initVueFlow();
     
+    // Initialize Action Details Card
+    this.initActionDetailsCard();
+    
     // NEW: Restore saved flow nodes from localStorage after a delay
     setTimeout(() => this.restoreFlowFromStorage(), 500);
   },
@@ -1117,6 +1120,207 @@ const Sessions = {
       approved: false,
     };
     this.hideActionProgress();
+    this.hideActionDetailsCard();
+  },
+
+  // ==================== Action Details Card ====================
+
+  /**
+   * Показать карточку деталей действия
+   * @param {Object} action - данные действия
+   */
+  showActionDetailsCard(action) {
+    const card = document.getElementById('action-details-card');
+    if (!card) return;
+    
+    // Если action передан, заполняем данные
+    if (action) {
+      this.state.action.definition = action.definition || action;
+      this.state.action.matchScore = action.matchScore || 0;
+    }
+    
+    const definition = this.state.action.definition;
+    const matchScore = this.state.action.matchScore || 0;
+    
+    // Заполнить заголовок
+    const titleEl = document.getElementById('actionCardTitle');
+    if (titleEl) {
+      titleEl.textContent = definition?.name || definition?.id || 'Action';
+    }
+    
+    // Заполнить описание
+    const descEl = document.getElementById('actionDescription');
+    if (descEl) {
+      descEl.textContent = definition?.description || 'No description available';
+    }
+    
+    // Match score
+    const scoreEl = document.getElementById('actionMatchScore');
+    if (scoreEl) {
+      const percentage = Math.round(matchScore * 100);
+      scoreEl.textContent = percentage + '%';
+      scoreEl.className = 'match-score';
+      if (percentage < 70) scoreEl.classList.add('medium');
+      if (percentage < 50) scoreEl.classList.add('low');
+    }
+    
+    // Sub-actions
+    const subActions = definition?.subActions || [];
+    const countEl = document.getElementById('subactionsCount');
+    const listEl = document.getElementById('subactionsList');
+    
+    if (countEl) countEl.textContent = subActions.length;
+    
+    if (listEl) {
+      if (subActions.length === 0) {
+        listEl.innerHTML = '<div class="empty-message">No sub-actions</div>';
+      } else {
+        listEl.innerHTML = subActions.map((sub, idx) => {
+          const status = sub.status || 'pending';
+          const icon = status === 'completed' ? '✓' : (status === 'failed' ? '✕' : (status === 'running' ? '⟳' : idx + 1));
+          return `
+            <div class="subaction-item" data-index="${idx}">
+              <span class="subaction-icon ${status}">${icon}</span>
+              <span class="subaction-name">${this.escape(sub.title || sub.name || sub.id || 'Sub-action ' + (idx + 1))}</span>
+              <span class="subaction-status">${status}</span>
+            </div>
+          `;
+        }).join('');
+      }
+    }
+    
+    // Parameters
+    const paramsEl = document.getElementById('paramsContent');
+    const paramsContainer = document.getElementById('actionParams');
+    if (paramsEl && paramsContainer) {
+      const params = definition?.parameters || {};
+      if (Object.keys(params).length > 0) {
+        paramsEl.textContent = JSON.stringify(params, null, 2);
+        paramsContainer.style.display = 'block';
+      } else {
+        paramsContainer.style.display = 'none';
+      }
+    }
+    
+    // Показать карточку
+    card.style.display = 'block';
+    
+    // Скрыть старую панель прогресса
+    this.hideActionProgress();
+    
+    console.log('Action Details Card shown');
+  },
+
+  /**
+   * Скрыть карточку деталей действия
+   */
+  hideActionDetailsCard() {
+    const card = document.getElementById('action-details-card');
+    if (card) card.style.display = 'none';
+  },
+
+  /**
+   * Обновить статус sub-action
+   * @param {number} stepIndex - индекс шага
+   * @param {string} status - новый статус
+   */
+  updateSubActionStatus(stepIndex, status) {
+    const listEl = document.getElementById('subactionsList');
+    if (!listEl) return;
+    
+    const items = listEl.querySelectorAll('.subaction-item');
+    if (items[stepIndex]) {
+      const item = items[stepIndex];
+      const icon = item.querySelector('.subaction-icon');
+      const statusEl = item.querySelector('.subaction-status');
+      
+      if (icon) {
+        icon.className = 'subaction-icon ' + status;
+        icon.textContent = status === 'completed' ? '✓' : (status === 'failed' ? '✕' : (status === 'running' ? '⟳' : stepIndex + 1));
+      }
+      if (statusEl) statusEl.textContent = status;
+    }
+  },
+
+  /**
+   * Отклонить действие
+   */
+  rejectAction() {
+    console.log('Action rejected by user');
+    this.hideActionDetailsCard();
+    this.resetActionState();
+    this.addActionLog('Action rejected by user', 'warn');
+    
+    // Показать уведомление
+    this.showNotification('Action rejected', 'warn');
+  },
+
+  /**
+   * Инициализировать обработчики карточки деталей действия
+   */
+  initActionDetailsCard() {
+    // Close button
+    document.getElementById('closeActionCard')?.addEventListener('click', () => {
+      this.hideActionDetailsCard();
+    });
+    
+    // Approve button
+    document.getElementById('approveActionCard')?.addEventListener('click', () => {
+      this.approveAction();
+    });
+    
+    // Reject button
+    document.getElementById('rejectAction')?.addEventListener('click', () => {
+      this.rejectAction();
+    });
+    
+    console.log('Action Details Card initialized');
+  },
+
+  /**
+   * Показать уведомление
+   * @param {string} message - текст сообщения
+   * @param {string} type - тип (info, warn, error, success)
+   */
+  showNotification(message, type = 'info') {
+    // Создаем временное уведомление
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.textContent = message;
+    notification.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 12px 20px;
+      border-radius: 8px;
+      background: ${type === 'warn' ? '#fef3c7' : type === 'error' ? '#fee2e2' : type === 'success' ? '#dcfce7' : '#dbeafe'};
+      color: ${type === 'warn' ? '#b45309' : type === 'error' ? '#dc2626' : type === 'success' ? '#16a34a' : '#2563eb'};
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      z-index: 10000;
+      animation: slideIn 0.3s ease;
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Удалить через 3 секунды
+    setTimeout(() => {
+      notification.remove();
+    }, 3000);
+  },
+
+  /**
+   * Экранировать HTML
+   * @param {string} str - строка для экранирования
+   * @returns {string} экранированная строка
+   */
+  escape(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
   },
 
   showFlow() {

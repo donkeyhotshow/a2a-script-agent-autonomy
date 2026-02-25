@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -211,9 +211,29 @@
       <div id="flow-container" class="flow-container">
         <div class="flow-header">
           <h3>🔀 Protocol Flow</h3>
-          <div class="search-container">
+          <!-- Enhanced Search Panel -->
+          <div class="enhanced-search">
             <input type="text" id="flowSearchInput" placeholder="Search in flow..." class="search-input">
-            <button id="flowSearchBtn" class="search-btn">🔍</button>
+            <select id="flowTypeFilter" class="search-filter">
+              <option value="">All Types</option>
+              <option value="taskInput">Task Request</option>
+              <option value="actionProposal">Action Proposal</option>
+              <option value="subAction">Sub Action</option>
+              <option value="result">Result</option>
+              <option value="actionComplete">Complete</option>
+              <option value="session">Session</option>
+            </select>
+            <select id="flowStatusFilter" class="search-filter">
+              <option value="">All Status</option>
+              <option value="running">Running</option>
+              <option value="completed">Completed</option>
+              <option value="failed">Failed</option>
+            </select>
+            <div class="search-nav">
+              <span id="searchResultsCount">0/0</span>
+              <button id="searchPrev" class="btn btn-small" title="Previous (Shift+Enter)">↑</button>
+              <button id="searchNext" class="btn btn-small" title="Next (Enter)">↓</button>
+            </div>
           </div>
           <div class="flow-controls">
             <button class="btn btn-small" id="flowZoomIn">+</button>
@@ -261,7 +281,7 @@
               <option value="waiting">Waiting</option>
               <option value="completed">Done</option>
             </select>
-            <div class="sessions-list" id="sessionsList"></div>
+            <div class="sessions-list" id="sessionsList"></div>\r\n            <!-- Session History Panel -->\r\n            <div id="session-history-panel" class="session-history-panel" style="display: none;">\r\n              <div class="history-header">\r\n                <h3>������� ������</h3>\r\n                <div class="history-filters">\r\n                  <select id="sessionStatusFilter" class="filter-select">\r\n                    <option value="all">��� �������</option>\r\n                    <option value="active">Active</option>\r\n                    <option value="waiting">Waiting</option>\r\n                    <option value="completed">Completed</option>\r\n                  </select>\r\n                  <input type="text" id="sessionSearchInput" placeholder="�����..." class="search-input">\r\n                </div>\r\n              </div>\r\n              <div id="sessionHistoryList" class="history-list">\r\n              </div>\r\n              <div class="history-footer">\r\n                <button class="btn btn-secondary" id="exportSessions">�������</button>\r\n                <button class="btn btn-secondary" id="clearHistory">��������</button>\r\n              </div>\r\n            </div>
           </aside>
           <div class="session-panel">
             <div class="session-header" id="sessionHeader">
@@ -285,6 +305,44 @@
                 <button class="btn btn-approve" id="action-approve" style="display: none;">✓ Approve</button>
                 <button class="btn btn-primary" id="action-run" style="display: none;">Run</button>
                 <button class="btn btn-secondary" id="action-cancel" style="display: none;">Cancel</button>
+              </div>
+            </div>
+            
+            <!-- Action Details Card -->
+            <div id="action-details-card" class="action-details-card" style="display: none;">
+              <div class="action-card-header">
+                <div class="action-title-row">
+                  <span class="action-icon">⚡</span>
+                  <span id="actionCardTitle" class="action-card-title">Action</span>
+                  <span id="actionMatchScore" class="match-score">95%</span>
+                </div>
+                <button class="btn btn-icon card-close" id="closeActionCard">×</button>
+              </div>
+              
+              <div class="action-card-body">
+                <div class="action-description" id="actionDescription">
+                  Description of the action...
+                </div>
+                
+                <div class="action-subactions">
+                  <div class="subactions-header">
+                    <span>Sub-actions</span>
+                    <span id="subactionsCount">0</span>
+                  </div>
+                  <div id="subactionsList" class="subactions-list">
+                    <!-- Sub-action items will be rendered here -->
+                  </div>
+                </div>
+                
+                <div class="action-params" id="actionParams" style="display: none;">
+                  <div class="params-header">Parameters</div>
+                  <div id="paramsContent" class="params-content"></div>
+                </div>
+              </div>
+              
+              <div class="action-card-footer">
+                <button class="btn btn-reject" id="rejectAction">✕ Reject</button>
+                <button class="btn btn-approve" id="approveActionCard">✓ Approve</button>
               </div>
             </div>
             
@@ -332,6 +390,8 @@
   <!-- Flow protocol and nodes (loaded as modules) -->
   <script src="js/flow/nodes.js" type="module"></script>
   <script src="js/flow/protocol.js" type="module"></script>
+  <!-- Enhanced Flow Search -->
+  <script src="js/flow/search.js"></script>
   
   <!-- Vue App for VueFlow -->
   <script type="module">
@@ -398,6 +458,14 @@
           window.setFlowEdges = (newEdges) => {
             edges.value = newEdges;
             setEdges(newEdges);
+          };
+          // Get current nodes (for search functionality)
+          window.getFlowNodes = () => {
+            return nodes.value;
+          };
+          // Get current edges
+          window.getFlowEdges = () => {
+            return edges.value;
           };
           window.clearFlowView = () => {
             nodes.value = [];
