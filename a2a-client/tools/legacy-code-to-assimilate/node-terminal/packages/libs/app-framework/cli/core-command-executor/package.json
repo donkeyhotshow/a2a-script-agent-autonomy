@@ -1,0 +1,40 @@
+{
+  "name": "@libs/core/core-command-executor",
+  "version": "2.0.0",
+  "description": "Система выполнения команд с мониторингом и отменой",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "jest --detectOpenHandles",
+    "lint": "eslint .",
+    "docs": "jsdoc -c jsdoc.json",
+    "test:clearCache": "jest --clearCache"
+  },
+  "keywords": [
+    "command",
+    "executor",
+    "monitoring",
+    "cancellation",
+    "streaming",
+    "timeout",
+    "security"
+  ],
+  "author": "System Development Team",
+  "license": "MIT",
+  "dependencies": {
+    "execa": "^5.1.1",
+    "nanoid": "^4.0.0"
+  },
+  "devDependencies": {
+    "eslint": "^8.0.0",
+    "jest": "^29.0.0",
+    "jsdoc": "^4.0.0"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "internal://libs/core/core-command-executor"
+  }
+}

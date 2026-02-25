@@ -1,0 +1,291 @@
+"use strict";
+/**
+ * @a2a/json - VueFlow Mapper
+ * Converts UnifiedResponse to VueFlow nodes and edges
+ */
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.resetNodeCounter = resetNodeCounter;
+exports.convertToVueFlowNodes = convertToVueFlowNodes;
+exports.convertToVueFlowEdges = convertToVueFlowEdges;
+exports.convertToVueFlowGraph = convertToVueFlowGraph;
+exports.getStatusColor = getStatusColor;
+exports.getNodeTypeIcon = getNodeTypeIcon;
+const parser_js_1 = require("./parser.js");
+/**
+ * Node position counter for auto-layout
+ */
+let nodeCounter = 0;
+/**
+ * Reset node counter (useful for testing)
+ */
+function resetNodeCounter() {
+    nodeCounter = 0;
+}
+/**
+ * Calculate node position for auto-layout
+ */
+function calculatePosition(index) {
+    const x = 100;
+    const y = 100 + index * 120;
+    return { x, y };
+}
+/**
+ * Convert UnifiedResponse to VueFlow nodes
+ * @param response - UnifiedResponse from server
+ * @returns Array of VueFlow nodes
+ */
+function convertToVueFlowNodes(response) {
+    const nodes = [];
+    let index = nodeCounter;
+    if ((0, parser_js_1.isActionProposalResponse)(response)) {
+        const result = response.result;
+        // Context node
+        nodes.push({
+            id: `context_${result.context.session_id}`,
+            type: 'context',
+            position: calculatePosition(index++),
+            data: {
+                label: 'Context',
+                sessionId: result.context.session_id,
+                tasks: result.context.tasks?.length || 0,
+                status: 'loaded',
+            },
+        });
+        // Proposed actions nodes
+        result.proposedActions.forEach((action, actionIndex) => {
+            nodes.push({
+                id: `action_${action.id}`,
+                type: 'action',
+                position: calculatePosition(index++),
+                data: {
+                    label: action.name,
+                    description: action.description,
+                    priority: action.priority,
+                    actionId: action.id,
+                    status: 'proposed',
+                    dsl: action.dsl,
+                },
+            });
+            // Edge from context to action
+            // (edges are handled in convertToVueFlowEdges)
+        });
+        // Fallback actions
+        result.fallbackActions?.forEach((fallback) => {
+            nodes.push({
+                id: `fallback_${fallback.id}`,
+                type: 'fallback',
+                position: calculatePosition(index++),
+                data: {
+                    label: fallback.name,
+                    description: fallback.description,
+                    reason: fallback.reason,
+                    actionId: fallback.id,
+                    status: 'fallback',
+                },
+            });
+        });
+    }
+    if ((0, parser_js_1.isActionExecutingResponse)(response)) {
+        const result = response.result;
+        // Current executing action
+        nodes.push({
+            id: `executing_${result.executingAction.id}`,
+            type: 'action',
+            position: calculatePosition(index++),
+            data: {
+                label: result.executingAction.name,
+                description: result.executingAction.description,
+                priority: result.executingAction.priority,
+                actionId: result.executingAction.id,
+                status: 'executing',
+                dsl: result.executingAction.dsl,
+            },
+        });
+        // Next steps
+        result.nextSteps.forEach((step, stepIndex) => {
+            nodes.push({
+                id: `next_${step.id}`,
+                type: 'nextStep',
+                position: calculatePosition(index++),
+                data: {
+                    label: step.name,
+                    description: step.description,
+                    priority: step.priority,
+                    actionId: step.id,
+                    status: 'pending',
+                    stepIndex,
+                },
+            });
+        });
+    }
+    if ((0, parser_js_1.isActionProgressResponse)(response)) {
+        const result = response.result;
+        // Current step node
+        nodes.push({
+            id: `progress_${result.actionId}`,
+            type: 'progress',
+            position: calculatePosition(index++),
+            data: {
+                label: result.currentStep.title,
+                description: result.currentStep.code,
+                progress: result.currentStep.progress,
+                actionId: result.actionId,
+                status: 'in_progress',
+                message: result.message,
+                completedSteps: result.completedSteps.length,
+                remainingSteps: result.remainingSteps.length,
+            },
+        });
+    }
+    if ((0, parser_js_1.isActionCompletedResponse)(response)) {
+        const result = response.result;
+        // Completed action node
+        nodes.push({
+            id: `completed_${result.actionId}`,
+            type: 'completed',
+            position: calculatePosition(index++),
+            data: {
+                label: 'Completed',
+                description: result.summary,
+                actionId: result.actionId,
+                status: 'completed',
+                output: result.output,
+                filesModified: result.filesModified,
+                executionTimeMs: result.executionTimeMs,
+            },
+        });
+    }
+    if ((0, parser_js_1.isActionErrorResponse)(response)) {
+        const result = response.result;
+        // Error node
+        nodes.push({
+            id: `error_${result.actionId}`,
+            type: 'error',
+            position: calculatePosition(index++),
+            data: {
+                label: 'Error',
+                description: result.error.message,
+                actionId: result.actionId,
+                status: 'failed',
+                errorCode: result.error.code,
+                canRetry: result.canRetry,
+                failedStep: result.failedStep,
+            },
+        });
+    }
+    // Update global counter
+    nodeCounter = index;
+    return nodes;
+}
+/**
+ * Convert UnifiedResponse to VueFlow edges
+ * @param response - UnifiedResponse from server
+ * @param nodes - Previously created nodes (to get IDs)
+ * @returns Array of VueFlow edges
+ */
+function convertToVueFlowEdges(response, nodes) {
+    const edges = [];
+    if ((0, parser_js_1.isActionProposalResponse)(response)) {
+        const result = response.result;
+        const contextId = `context_${result.context.session_id}`;
+        // Edges from context to each proposed action
+        result.proposedActions.forEach((action) => {
+            edges.push({
+                id: `edge_${contextId}_${action.id}`,
+                source: contextId,
+                target: `action_${action.id}`,
+                type: 'smoothstep',
+                animated: false,
+                label: 'proposes',
+            });
+        });
+        // Edges from context to fallback actions
+        result.fallbackActions?.forEach((fallback) => {
+            edges.push({
+                id: `edge_${contextId}_fallback_${fallback.id}`,
+                source: contextId,
+                target: `fallback_${fallback.id}`,
+                type: 'smoothstep',
+                animated: false,
+                label: 'fallback',
+            });
+        });
+    }
+    if ((0, parser_js_1.isActionExecutingResponse)(response)) {
+        const result = response.result;
+        // Edge from executing action to next steps
+        result.nextSteps.forEach((step, index) => {
+            edges.push({
+                id: `edge_${result.executingAction.id}_${step.id}`,
+                source: `action_${result.executingAction.id}`,
+                target: `next_${step.id}`,
+                type: 'smoothstep',
+                animated: true,
+                label: `step ${index + 1}`,
+            });
+        });
+    }
+    if ((0, parser_js_1.isActionProgressResponse)(response)) {
+        const result = response.result;
+        // Edge from previous completed step to current
+        if (result.completedSteps.length > 0) {
+            const lastCompleted = result.completedSteps[result.completedSteps.length - 1];
+            edges.push({
+                id: `edge_progress_${lastCompleted}_${result.currentStep.id}`,
+                source: `progress_${lastCompleted}`,
+                target: `progress_${result.actionId}`,
+                type: 'smoothstep',
+                animated: true,
+                label: 'completed',
+            });
+        }
+    }
+    return edges;
+}
+/**
+ * Convert full UnifiedResponse to VueFlow graph (nodes + edges)
+ * @param response - UnifiedResponse from server
+ * @returns Object with nodes and edges arrays
+ */
+function convertToVueFlowGraph(response) {
+    // Reset counter for new graph
+    resetNodeCounter();
+    const nodes = convertToVueFlowNodes(response);
+    const edges = convertToVueFlowEdges(response, nodes);
+    return { nodes, edges };
+}
+/**
+ * Get node status color for styling
+ * @param status - Node status
+ * @returns Color hex code
+ */
+function getStatusColor(status) {
+    const colors = {
+        proposed: '#3B82F6', // blue
+        pending: '#6B7280', // gray
+        executing: '#F59E0B', // amber
+        in_progress: '#F59E0B', // amber
+        completed: '#10B981', // green
+        failed: '#EF4444', // red
+        fallback: '#8B5CF6', // purple
+        error: '#EF4444', // red
+    };
+    return colors[status] || '#6B7280';
+}
+/**
+ * Get node type icon for display
+ * @param nodeType - VueFlow node type
+ * @returns Icon identifier
+ */
+function getNodeTypeIcon(nodeType) {
+    const icons = {
+        context: '📋',
+        action: '⚡',
+        nextStep: '➡️',
+        progress: '⏳',
+        completed: '✅',
+        error: '❌',
+        fallback: '🔄',
+    };
+    return icons[nodeType] || '📦';
+}

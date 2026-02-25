@@ -1,0 +1,32 @@
+{
+  "name": "@mcp/archive-operations",
+  "version": "1.0.0",
+  "description": "Archive operations for MCP applications",
+  "main": "index.js",
+  "type": "commonjs",
+  "scripts": {
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage"
+  },
+  "keywords": [
+    "mcp",
+    "archive",
+    "operations",
+    "model-context-protocol"
+  ],
+  "author": "MCP Team",
+  "license": "MIT",
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.28.3",
+    "@babel/preset-env": "^7.28.3",
+    "fs-extra": "^11.3.1",
+    "jest": "^29.7.0"
+  },
+  "directories": {
+    "test": "tests"
+  }
+}

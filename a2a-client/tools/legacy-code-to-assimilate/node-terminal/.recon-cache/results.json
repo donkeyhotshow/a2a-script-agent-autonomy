@@ -1,0 +1,3367 @@
+{
+  "graph": {
+    "nodes": [
+      "work\\priority-3\\node-terminal\\.eslintrc.js",
+      "work\\priority-3\\node-terminal\\archive\\unused-files\\mcp\\config.js",
+      "work\\priority-3\\node-terminal\\archive\\unused-files\\src\\core\\config.ts",
+      "work\\priority-3\\node-terminal\\archive\\unused-files\\src\\domain\\command-executor.ts",
+      "work\\priority-3\\node-terminal\\archive\\unused-files\\src\\domain\\security-analyzer.ts",
+      "work\\priority-3\\node-terminal\\archive\\unused-files\\src\\types\\index.ts",
+      "work\\priority-3\\node-terminal\\archive\\unused-files\\src\\types\\legacy.d.ts",
+      "work\\priority-3\\node-terminal\\archive\\unused-files\\src\\types\\mcp-modules.d.ts",
+      "work\\priority-3\\node-terminal\\archive\\unused-files\\src\\types\\mcp-types.ts",
+      "work\\priority-3\\node-terminal\\archive\\unused-files\\tests\\setup\\encoding-test-setup.ts",
+      "work\\priority-3\\node-terminal\\archive\\unused-files\\tests\\setup\\integration-setup.ts",
+      "work\\priority-3\\node-terminal\\archive\\unused-files\\tests\\setup\\mcp-file-tool-setup.ts",
+      "work\\priority-3\\node-terminal\\archive\\unused-files\\tests\\setup\\unit-setup.ts",
+      "work\\priority-3\\node-terminal\\archive\\unused-files\\tests\\setup.js",
+      "work\\priority-3\\node-terminal\\archive\\unused-files\\tests\\unit\\core-logger-fixed.ts",
+      "work\\priority-3\\node-terminal\\archive\\unused-files\\tests\\unit\\logger-core-fixed.ts",
+      "work\\priority-3\\node-terminal\\archive\\unused-files\\tests\\unit\\logger-core-v2-migration-fixed.ts",
+      "work\\priority-3\\node-terminal\\archive\\unused-files\\tests\\unit\\__mocks__\\async-cleanup.mock.js",
+      "work\\priority-3\\node-terminal\\archive\\unused-files\\tests\\unit\\__mocks__\\encoding-utils.mock.js",
+      "work\\priority-3\\node-terminal\\archive\\unused-files\\tests\\unit\\__mocks__\\history-system.mock.js",
+      "work\\priority-3\\node-terminal\\archive\\unused-files\\tests\\unit\\__mocks__\\powershell-integration.mock.js",
+      "work\\priority-3\\node-terminal\\archive\\unused-files\\tests\\unit\\__mocks__\\security-process-manager.mock.js",
+      "work\\priority-3\\node-terminal\\archive\\unused-files\\tests\\unit\\__mocks__\\terminal-handler-mocks.js",
+      "work\\priority-3\\node-terminal\\archive\\unused-files\\tests\\unit\\__mocks__\\timeout-interceptor.mock.js",
+      "work\\priority-3\\node-terminal\\archive\\unused-files\\vitest.simple.config.ts",
+      "work\\priority-3\\node-terminal\\archive\\unused-files\\work\\analyze-dependencies.js",
+      "work\\priority-3\\node-terminal\\archive\\unused-files\\work\\backups\\hint-system\\src\\hint-system.lib.js",
+      "work\\priority-3\\node-terminal\\archive\\unused-files\\work\\fix-template-literals.js",
+      "work\\priority-3\\node-terminal\\archive\\unused-files\\work\\test-cwd-improvements.js",
+      "work\\priority-3\\node-terminal\\archive\\unused-files\\work\\test-json-rpc-commands.js",
+      "work\\priority-3\\node-terminal\\archive\\unused-files\\work\\test-pwd-after-cd.js",
+      "work\\priority-3\\node-terminal\\archive\\unused-files\\work\\validate-json-updated.js",
+      "work\\priority-3\\node-terminal\\archive\\unused-files\\work\\validate-json.js",
+      "work\\priority-3\\node-terminal\\babel.config.js",
+      "work\\priority-3\\node-terminal\\jest.config.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\api\\api\\auth-middleware\\index.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\api\\api\\gateway\\index.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\api\\api\\gateway\\jest.config.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\api\\api\\gateway\\src\\api-validator.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\api\\api\\gateway\\src\\auth-manager.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\api\\api\\gateway\\src\\gateway-app.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\api\\api\\gateway\\src\\middleware-core.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\api\\api\\gateway\\src\\request-handler.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\api\\api\\gateway\\src\\route-manager.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\api\\api\\gateway\\tests\\gateway.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\api\\api\\gateway\\tests\\integration\\auth-integration.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\api\\api\\gateway\\tests\\integration\\gateway-integration.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\api\\api\\gateway\\tests\\mock-server.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\api\\api\\gateway\\tests\\unit\\api-validator.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\api\\api\\gateway\\tests\\unit\\auth-manager.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\api\\api\\gateway\\tests\\unit\\gateway-app.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\api\\api\\gateway\\tests\\unit\\middleware-core.spec.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\api\\api\\gateway\\tests\\unit\\middleware-core.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\api\\api\\gateway\\tests\\unit\\request-handler.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\api\\api\\gateway\\tests\\unit\\route-manager.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\api\\api\\system-controller\\index.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\api\\api\\system-controller\\tests\\system-controller.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\api\\unified-api-client\\index.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\cli-utils\\index.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\cli-utils\\tests\\unit\\cli-utils.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\command-utils\\tests\\index.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\core-command-executor\\babel.config.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\core-command-executor\\CommandEnums.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\core-command-executor\\CommandErrors.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\core-command-executor\\CommandRunner.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\core-command-executor\\CommandValidator.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\core-command-executor\\ExecutionContext.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\core-command-executor\\index.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\core-command-executor\\jest.config.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\core-command-executor\\StructuredLogger.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\core-command-executor\\tests\\CommandEnums.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\core-command-executor\\tests\\CommandErrors.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\core-command-executor\\tests\\CommandRunner.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\core-command-executor\\tests\\CommandValidator.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\core-command-executor\\tests\\core-command-executor.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\core-command-executor\\tests\\ExecutionContext.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\core-command-executor\\tests\\integration.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\core-command-executor\\tests\\performance.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\core-command-executor\\tests\\setup.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\core-command-executor\\tests\\StructuredLogger.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\archive-operations\\index.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\archive-operations\\jest.config.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\archive-operations\\src\\archive-manager.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\archive-operations\\tests\\archive-manager.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\archive-operations\\tests\\archive-operations.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\archive-operations\\tests\\basic.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\archive-operations\\tests\\mocks.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\archive-operations\\tests\\setup.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\atomic-operations\\index.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\atomic-operations\\jest.config.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\atomic-operations\\src\\atomic-operations.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\atomic-operations\\tests\\atomic-operations.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\atomic-operations\\tests\\setup.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\command-executor\\index.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\command-executor\\src\\command-executor.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\command-executor\\tests\\command-executor.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\data-manager\\index.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\data-manager\\src\\data-manager.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\data-manager\\src\\DataBackupAndRestore.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\data-manager\\src\\DataSearchAndStats.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\data-manager\\tests\\data-manager.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\feedback-system\\jest.config.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\feedback-system\\src\\DebugSystem.d.ts",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\feedback-system\\src\\DocumentManager.ts",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\feedback-system\\src\\FeedbackAnalytics.ts",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\feedback-system\\src\\FeedbackPlugin.ts",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\feedback-system\\src\\FeedbackTools.ts",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\feedback-system\\src\\index.ts",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\feedback-system\\src\\SuggestionCrudOperations.ts",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\feedback-system\\src\\SuggestionDataStore.ts",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\feedback-system\\src\\SuggestionExportManager.ts",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\feedback-system\\src\\SuggestionFilterUtils.ts",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\feedback-system\\src\\SuggestionManager.ts",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\feedback-system\\src\\SuggestionStatisticsManager.ts",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\feedback-system\\tests\\edge-cases\\feedback-analytics-plugin-edge-cases.test.ts",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\feedback-system\\tests\\edge-cases\\feedback-system-edge-cases.test.ts",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\feedback-system\\tests\\integration\\data-analytics.test.ts",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\feedback-system\\tests\\integration\\document-creation.test.ts",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\feedback-system\\tests\\integration\\error-performance.test.ts",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\feedback-system\\tests\\integration\\feedback-workflow.test.ts",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\feedback-system\\tests\\performance\\feedback-system-performance.test.ts",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\feedback-system\\tests\\setup.ts",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\feedback-system\\tests\\unit\\feedback-analytics.test.ts",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\feedback-system\\tests\\unit\\feedback-plugin.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\feedback-system\\tests\\unit\\feedback-plugin.test.ts",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\feedback-system\\tests\\unit\\feedback-tools.test.ts",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\feedback-system\\tests\\unit\\index.test.ts",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\feedback-system\\tests\\unit\\mocks\\DebugSystem.cjs.mock.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\feedback-system\\tests\\unit\\suggestion-datastore.test.ts",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\feedback-system\\tests\\unit\\suggestion-filter-utils.test.ts",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\feedback-system\\tests\\unit\\suggestion-manager.test.ts",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\history-manager\\src\\history-manager.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\history-manager\\tests\\history-manager.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\index.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\mcp-tools\\index.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\mcp-tools\\tests\\index.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\rules-engine\\src\\rules-engine.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\rules-engine\\tests\\rules-engine.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\src\\babel.config.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\src\\connection-manager.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\src\\jest.config.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\src\\message-handler.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\src\\protocol-core.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\src\\rules-engine.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\src\\test-controller.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\src\\tests\\connection-manager.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\src\\tests\\message-handler.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\src\\tests\\protocol-core.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\src\\tests\\rules-engine.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\src\\tests\\test-controller.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\tests\\index.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp-terminal-core\\index.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp-terminal-core\\tests\\mcp-terminal-core.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp-terminal-handlers\\HandlerEnums.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp-terminal-handlers\\HandlerErrors.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp-terminal-handlers\\index.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp-terminal-handlers\\TerminalHandler.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp-terminal-handlers\\tests\\mcp-terminal-handlers.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\terminal-interface\\tests\\terminal-interface.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\bootstrap\\babel.config.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\bootstrap\\index.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\bootstrap\\jest.config.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\bootstrap\\module-alias-setup.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\bootstrap\\tests\\bootstrap.feature.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\bootstrap\\tests\\bootstrap.integration.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\configuration\\configuration-loader\\index.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\configuration\\configuration-loader\\tests\\configuration-loader.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\file-utils\\file-system\\index.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\file-utils\\file-system\\index.old.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\file-utils\\file-system\\tests\\file-system.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\markdown-utils\\src\\front-matter-parser.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\markdown-utils\\tests\\front-matter-parser.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\markdown-utils\\tests\\markdown-utils.feature.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\markdown-utils\\tests\\markdown-utils.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\markdown-utils\\__tests__\\front-matter-parser.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\shared\\tests\\general-utils.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\unified-controller\\babel.config.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\unified-controller\\index.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\unified-controller\\jest.config.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\unified-controller\\src\\ControllerMiddleware.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\unified-controller\\src\\core-index.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\unified-controller\\src\\ErrorHandlerIntegration.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\unified-controller\\src\\event-bus.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\unified-controller\\src\\PluginController.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\unified-controller\\src\\PluginLifecycleManager.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\unified-controller\\src\\PluginLoader.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\unified-controller\\src\\PluginManager.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\unified-controller\\src\\ReportCrudOperations.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\unified-controller\\src\\ReportPersistenceManager.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\unified-controller\\src\\ReportQueryManager.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\unified-controller\\src\\ReportStatisticsManager.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\unified-controller\\src\\RequestTransformer.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\unified-controller\\src\\RequestValidator.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\unified-controller\\src\\ResponseTransformer.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\unified-controller\\src\\TaskReporter.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\unified-controller\\src\\TaskReporterLogger.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\unified-controller\\src\\UniversalController.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\unified-controller\\tests\\unified-controller.feature.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\unified-controller\\tests\\unified-controller.integration.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\unified-controller\\tests\\unit\\core-index.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\unified-controller\\tests\\unit\\ErrorHandlerIntegration.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\unified-controller\\tests\\unit\\event-bus.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\unified-controller\\tests\\unit\\PluginController.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\unified-controller\\tests\\unit\\PluginLifecycleManager.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\unified-controller\\tests\\unit\\PluginLoader.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\unified-controller\\tests\\unit\\PluginManager.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\unified-controller\\tests\\unit\\RequestTransformer.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\unified-controller\\tests\\unit\\RequestValidator.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\unified-controller\\tests\\unit\\ResponseTransformer.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\unified-controller\\tests\\unit\\TaskReporter.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\unified-controller\\tests\\unit\\UniversalController.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\unified-controller\\tests\\universal-controller.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\unified-controller\\tests\\UniversalController.integration.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\utils\\formatters.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\utils\\tests\\formatters.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\utils\\tests\\utils.feature.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\validation\\schema-validator\\index.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\validation\\schema-validator\\jest.config.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\validation\\schema-validator\\tests\\schema-validator.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\error-handling\\error-handler-with-recipes\\tests\\error-handler-with-recipes.feature.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\error-handling\\error-handler-with-recipes\\tests\\error-handler-with-recipes.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\error-handling\\error-report-manager\\tests\\error-report-manager.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\index.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\logging-reporting\\core-logger\\index.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\logging-reporting\\core-logger\\tests\\core-logger.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\logging-reporting\\index.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\logging-reporting\\reports\\task-report-generator\\index.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\logging-reporting\\reports\\task-report-generator\\tests\\task-report-generator.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\logging-reporting\\reports\\task-reporter.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\logging-reporting\\reports\\tests\\task-reporter.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\logging-reporting\\system-info\\index.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\logging-reporting\\system-info\\tests\\index.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\logging-reporting\\system-info\\tests\\system-info.feature.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\logging-reporting\\system-info\\tests\\system-info.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\logging-reporting\\tests\\index.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\project-management\\project\\project-manager\\index.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\project-management\\project\\project-manager\\project-analyzer.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\project-management\\project\\project-manager\\tests\\index.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\project-management\\project\\project-manager\\tests\\project-analyzer.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\project-management\\project\\testing-framework\\error-parsing\\tests\\index.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\project-management\\project\\testing-framework\\test-result-parser\\index.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\project-management\\project\\testing-framework\\test-result-parser\\tests\\index.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\project-management\\project\\testing-utils\\index.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\project-management\\project\\testing-utils\\test-activity-manager.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\project-management\\project\\testing-utils\\test-file-analyzer.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\project-management\\project\\testing-utils\\test-statistics.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\project-management\\project\\testing-utils\\tests\\unit\\index.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\project-management\\project\\testing-utils\\tests\\unit\\test-activity-manager.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\project-management\\project\\testing-utils\\tests\\unit\\test-file-analyzer.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\project-management\\project\\testing-utils\\tests\\unit\\test-statistics.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\project-management\\project-utils\\jest.config.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\project-management\\project-utils\\src\\project-utils.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\project-management\\project-utils\\tests\\project-utils.feature.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\project-management\\project-utils\\tests\\project-utils.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\security\\code-analyzer\\babel.config.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\security\\code-analyzer\\jest.config.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\security\\code-analyzer\\src\\code-analyzer.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\security\\security-analyzer\\jest.config.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\security\\security-analyzer\\src\\index.ts",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\security\\security-analyzer\\src\\mcp-security-mask.ts",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\security\\security-analyzer\\src\\rules\\default-rules.ts",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\security\\security-analyzer\\src\\rules\\function-rule.ts",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\security\\security-analyzer\\src\\rules\\index.ts",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\security\\security-analyzer\\src\\rules\\pattern-rule.ts",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\security\\security-analyzer\\src\\security-analyzer.ts",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\security\\security-analyzer\\src\\SecurityAnalysisResultManager.ts",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\security\\security-analyzer\\src\\SecurityLogger.ts",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\security\\security-analyzer\\src\\SecurityMetricsAndUtils.ts",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\security\\security-analyzer\\src\\types\\index.ts",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\security\\security-analyzer\\tests\\index.test.ts",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\security\\security-analyzer\\tests\\mcp-security-mask.test.ts",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\security\\security-analyzer\\tests\\security-analyzer.test.ts",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\security\\security-analyzer\\tests\\setup.ts",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\archive-operations\\ArchiveAnalyzer.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\archive-operations\\ArchiveExtractor.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\archive-operations\\ArchiveMaintenance.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\archive-operations\\atomic-operations.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\archive-operations\\index.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\archive-operations\\tests\\archive-tests.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\archive-operations\\tests\\atomic-operations.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\archive-operations\\tests\\atomic-tests.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\archive-operations\\tests\\index.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\archive-operations\\tests\\integration.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\archive-operations\\tests\\test-assertions.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\archive-operations\\tests\\test-utils.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\history-manager\\index.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\history-manager\\jest.config.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\history-manager\\tests\\history-persistence.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\history-manager\\tests\\index.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\housekeeping-manager\\index.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\housekeeping-manager\\tests\\housekeeping-manager.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\service-management\\tests\\service-management.feature.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\service-management\\tests\\service-management.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\system-info\\index.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\system-info\\tests\\system-info-collector.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\thread-manager\\examples\\basic-usage.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\thread-manager\\examples\\integration-example.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\thread-manager\\examples\\scheduler-example.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\thread-manager\\index.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\thread-manager\\src\\PriorityQueue.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\thread-manager\\src\\TaskExecutor.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\thread-manager\\src\\TaskScheduler.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\thread-manager\\src\\ThreadManager.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\thread-manager\\src\\ThreadMonitor.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\thread-manager\\src\\WorkerPool.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\thread-manager\\tests\\index.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\thread-manager\\tests\\PriorityQueue.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\thread-manager\\tests\\TaskExecutor.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\thread-manager\\tests\\TaskScheduler.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\thread-manager\\tests\\thread-manager.feature.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\thread-manager\\tests\\ThreadManager.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\thread-manager\\tests\\ThreadMonitor.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\thread-manager\\tests\\WorkerPool.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\work-directory-manager\\index.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\work-directory-manager\\tests\\work-directory-manager.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\workdir-manager\\index.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\workdir-manager\\tests\\workdir-manager.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\workdir-utils\\example.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\workdir-utils\\jest.config.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\workdir-utils\\src\\workdir-utils.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\workdir-utils\\tests\\integration.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\workdir-utils\\tests\\workdir-utils.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\worker-task-executor\\index.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\worker-task-executor\\tests\\worker-task-executor.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\tests\\app-framework.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\tests\\index.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\third-party-integrations\\plugins\\core\\plugin-manager\\index.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\third-party-integrations\\plugins\\core\\tests\\plugin-manager.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\ui\\ui\\composables\\server-management.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\ui\\ui\\utils\\server-display-utils.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config\\index.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config\\index.old.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config\\jest-guard.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config\\jest.config.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config\\setup-module-alias.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config\\tests\\config.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\analytics\\index.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\app-architectures\\index.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\app-architectures\\tests\\app-architectures.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\apps-list\\tests\\apps-list.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\audit\\index.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\audit\\tests\\audit.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\automation\\index.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\automation\\tests\\automation.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\compliance\\index.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\compliance\\tests\\compliance.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\config\\index.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\core\\BaseModel.browser.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\core\\BaseModel.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\core\\ModelFactory.browser.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\core\\ModelFactory.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\core\\ModelRegistry.browser.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\core\\ModelRegistry.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\core\\ModelUtils.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\core\\tests\\BaseModel.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\core\\tests\\ModelFactory.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\core\\tests\\ModelRegistry.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\core\\UnifiedConfigManager.browser.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\deployment\\index.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\deployment\\tests\\deployment.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\domains\\helpers.browser.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\domains\\index.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\domains\\tests\\unit\\domains.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\environments\\index.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\environments\\tests\\environments.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\error-handling\\index.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\error-handling\\tests\\error-handling.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\gateway\\helpers.browser.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\gateway\\index.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\gateway\\tests\\gateway.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\gateway\\tests\\unit\\gateway.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\hosting\\helpers.browser.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\hosting\\index.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\hosting\\tests\\unit\\hosting.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\index.browser-stub.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\index.browser.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\index.old.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\infrastructure\\index.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\infrastructure\\tests\\infrastructure.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\invalid-config\\index.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\invalid-config\\tests\\invalid-config.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\models\\ServersModel.browser.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\models\\ServersModel.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\models\\ServicesModel.browser.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\models\\ServicesModel.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\models\\tests\\ServersModel.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\models\\tests\\ServicesModel.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\network\\index.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\network\\tests\\network.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\notifications\\index.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\notifications\\tests\\notifications.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\package-testing\\index.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\package-testing\\tests\\package-testing.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\paths-manager\\index.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\paths-manager\\tests\\paths-manager.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\ports\\helpers.browser.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\ports\\index.browser.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\ports\\index.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\ports\\tests\\helpers.browser.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\ports\\tests\\helpers.selection-transform.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\ports\\tests\\helpers.validation.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\ports\\tests\\ports.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\ports\\tests\\setup-vitest.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\ports\\ui\\components\\BaseBadge.vue",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\ports\\ui\\components\\BaseButton.vue",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\ports\\ui\\components\\BaseCheckbox.vue",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\ports\\ui\\components\\BaseInput.vue",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\ports\\ui\\components\\BaseRadioGroup.vue",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\project-types\\config-manager.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\project-types\\index.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\project-types\\tests\\config-manager.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\project-types\\tests\\project-types.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\projects\\helpers.browser.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\projects\\index.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\projects\\tests\\unit\\projects.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\servers\\index.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\servers\\tests\\servers.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\service-groups\\config-manager.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\service-groups\\index.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\service-groups\\tests\\config-manager.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\service-groups\\tests\\service-groups.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\services\\config-manager.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\services\\index.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\services\\tests\\config-manager.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\services\\tests\\services.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\settings\\config-manager.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\settings\\index.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\settings\\tests\\config-manager.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\settings\\tests\\settings.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\system-config\\config-manager.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\system-config\\tests\\config-manager.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\system-config\\tests\\system-config.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\task-types\\index.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\task-types\\tests\\task-types.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\testing-manager\\index.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\testing-manager\\tests\\testing-manager.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\tests\\index.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\tests\\integration\\apps-services-integration.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\tests\\tests\\tests.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\vulnerabilities\\index.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\vulnerabilities\\tests\\vulnerabilities.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\core\\configuration\\index.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\core\\configuration\\src\\ConfigurationBackupManager.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\core\\configuration\\src\\ConfigurationLoaderSaver.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\core\\configuration\\src\\ConfigurationQueryManager.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\core\\configuration\\src\\ConfigurationSecurityManager.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\core\\configuration\\src\\ConfigurationValidationManager.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\core\\configuration\\tests\\configuration.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\core\\error-core\\tests\\error-core-manager.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\core\\file-utils\\FileManager.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\core\\file-utils\\index.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\core\\file-utils\\index.old.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\core\\index.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\core\\json-utils\\index.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\core\\json-utils\\tests\\json-utils.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\core\\logging\\index.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\core\\logging\\tests\\logging.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\core\\shared\\index.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\core\\shared\\tests\\shared.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\core\\status-monitor\\index.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\core\\templates\\index.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\core\\templates\\tests\\templates.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\core\\time\\index.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\core\\time\\tests\\time.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\core\\utils\\tests\\core-utils.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\error-management\\client-error-monitor.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\error-management\\error-handler\\browser-error-handler.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\error-management\\error-handler\\error-classes.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\error-management\\error-handler\\error-collector.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\error-management\\error-handler\\error-utils.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\error-management\\error-handler\\global-error-handler.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\error-management\\error-handler\\index.browser.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\error-management\\error-handler\\index.full.browser.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\error-management\\error-handler\\index.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\error-management\\error-handler\\index.old.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\error-management\\error-handler\\tests\\error-handler.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\error-management\\error-handler\\tests\\global-error-handler.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\error-management\\error-handler\\tests\\re-export-wrapper.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\error-management\\error-handler\\tests\\validation.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\error-management\\error-handler\\validation-utils.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\error-management\\error-operations\\index.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\error-management\\error-operations\\src\\ErrorCategorizationManager.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\error-management\\error-operations\\src\\ErrorHandlingStrategies.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\error-management\\error-operations\\src\\ServiceConfigurationValidator.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\error-management\\index.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\error-management\\tests\\error-management.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\error-management\\tests\\unit\\error-operations.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\logging-monitoring\\index.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\logging-monitoring\\logging\\console-utils.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\logging-monitoring\\logging\\index.browser-stub.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\logging-monitoring\\logging\\index.browser.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\logging-monitoring\\logging\\index.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\logging-monitoring\\logging\\tests\\logging.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\logging-monitoring\\mcp-monitoring\\index.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\logging-monitoring\\mcp-monitoring\\tests\\unit\\mcp-monitoring-manager.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\logging-monitoring\\monitoring\\index.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\logging-monitoring\\monitoring\\src\\HealthCheckManager.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\logging-monitoring\\monitoring\\src\\PortMonitoringManager.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\logging-monitoring\\tests\\logging-monitoring.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\analytics-engine\\tests\\index.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\archive-manager\\tests\\index.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\atomic-operations\\tests\\index.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\cluster\\index.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\cluster\\tests\\unit\\cluster-manager.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\command-converter\\tests\\index.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\command-runner\\tests\\index.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\command-validation\\tests\\index.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\daemon\\index copy.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\daemon\\index.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\daemon\\tests\\daemon.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\file-operations\\jest.config.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\file-operations\\tests\\edge-cases\\file-operations-edge-cases.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\file-operations\\tests\\file-operations.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\file-operations\\tests\\performance\\file-operations-performance.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\file-operations\\tests\\unit\\file-operations-unit.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\fs-commands\\tests\\index.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\hint-system\\tests\\index.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\history\\tests\\index.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\history-importer\\tests\\index.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\index.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\jest-proxy\\tests\\index.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\jest.config.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\leader-election\\index.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\leader-election\\tests\\unit\\leader-election-manager.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\metrics\\index.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\metrics\\jest.config.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\metrics\\tests\\metrics.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\metrics\\tests\\setup.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\path-utils\\file-operations.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\path-utils\\index.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\path-utils\\path-constants.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\path-utils\\tests\\path-utils.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\path-validation\\tests\\index.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\plugin-registry\\tests\\index.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\process-management\\index.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\process-management\\tests\\process-management.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\process-spawn\\index.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\process-spawn\\JobManager.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\process-spawn\\ProcessKiller.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\process-spawn\\ProcessMonitor.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\process-spawn\\ProcessSpawner.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\process-spawn\\SpawnConfig.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\process-spawn\\tests\\index.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\process-spawn\\tests\\JobManager.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\process-spawn\\tests\\ProcessKiller.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\process-spawn\\tests\\ProcessMonitor.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\process-spawn\\tests\\ProcessSpawner.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\process-spawn\\tests\\SpawnConfig.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\process-spawn\\types\\SpawnTypes.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\reports\\index.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\reports\\jest.config.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\reports\\tests\\reports.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\reports\\tests\\setup.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\runtime-mode\\tests\\index.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\search\\tests\\index.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\security-mask\\tests\\index.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\server-config\\tests\\index.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\server-utils\\tests\\index.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\service-management\\cli.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\service-management\\index.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\service-management\\integration.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\service-management\\service-status-utils.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\service-management\\src\\ServiceActionManager.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\service-management\\src\\ServiceConfigManager.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\service-management\\src\\ServiceDataManager.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\service-management\\src\\ServiceFormGenerator.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\service-management\\src\\ServiceLogger.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\service-management\\src\\ServiceProcessManager.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\service-management\\src\\ServiceValidator.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\service-management\\tests\\basic.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\service-management\\tests\\integration.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\service-management\\tests\\service-cli.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\service-management\\tests\\service-config-manager.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\service-management\\tests\\service-logger.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\service-management\\tests\\service-management.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\service-management\\tests\\service-process-manager.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\service-management\\tests\\service-status-utils.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\service-management\\tests\\setup.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\session-vars\\tests\\index.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\syntax-fixer\\tests\\index.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\task-management\\index.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\task-management\\tests\\task-management.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\task-report-manager\\index.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\tests\\index.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\tests\\minimal-test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\tests\\simple-test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\tests\\system-modules.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\unified-daemon\\index.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\unified-daemon\\PidFileManager.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\unified-daemon\\src\\PidDaemonManager.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\unified-daemon\\src\\PidFilePersistence.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\unified-daemon\\src\\PidQueueManager.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\unified-daemon\\tests\\pid-daemon-manager.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\unified-daemon\\tests\\pid-file-manager.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\unified-daemon\\tests\\pid-file-persistence.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\unified-daemon\\tests\\pid-queue-manager.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\unified-daemon\\tests\\unified-daemon.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\workdir\\tests\\index.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\validation\\index.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\validation\\settings-validation-schema.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\validation\\tests\\index.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\validation\\tests\\setup.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\validation\\tests\\validation.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\validation\\validation\\format-validators.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\validation\\validation\\tests\\index.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\validation\\validation\\tests\\validation-utils.test.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\validation\\validation\\type-checkers.js",
+      "work\\priority-3\\node-terminal\\packages\\libs\\validation\\validation\\validation-logic.js",
+      "work\\priority-3\\node-terminal\\src\\core\\logger.ts",
+      "work\\priority-3\\node-terminal\\src\\types\\atomic-archive.types.ts",
+      "work\\priority-3\\node-terminal\\tests\\unit\\__mocks__\\encoding-diagnostics.mock.js",
+      "work\\priority-3\\node-terminal\\tests\\unit\\__mocks__\\external-dependencies.mock.js",
+      "work\\priority-3\\node-terminal\\tests\\unit\\__mocks__\\powershell-unicode-handler.mock.js",
+      "work\\priority-3\\node-terminal\\vitest.config.js"
+    ],
+    "edges": [],
+    "metrics": {
+      "work\\priority-3\\node-terminal\\.eslintrc.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\archive\\unused-files\\mcp\\config.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\archive\\unused-files\\src\\core\\config.ts": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\archive\\unused-files\\src\\domain\\command-executor.ts": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\archive\\unused-files\\src\\domain\\security-analyzer.ts": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\archive\\unused-files\\src\\types\\index.ts": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\archive\\unused-files\\src\\types\\legacy.d.ts": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\archive\\unused-files\\src\\types\\mcp-modules.d.ts": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\archive\\unused-files\\src\\types\\mcp-types.ts": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\archive\\unused-files\\tests\\setup\\encoding-test-setup.ts": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\archive\\unused-files\\tests\\setup\\integration-setup.ts": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\archive\\unused-files\\tests\\setup\\mcp-file-tool-setup.ts": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\archive\\unused-files\\tests\\setup\\unit-setup.ts": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\archive\\unused-files\\tests\\setup.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\archive\\unused-files\\tests\\unit\\core-logger-fixed.ts": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\archive\\unused-files\\tests\\unit\\logger-core-fixed.ts": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\archive\\unused-files\\tests\\unit\\logger-core-v2-migration-fixed.ts": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\archive\\unused-files\\tests\\unit\\__mocks__\\async-cleanup.mock.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\archive\\unused-files\\tests\\unit\\__mocks__\\encoding-utils.mock.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\archive\\unused-files\\tests\\unit\\__mocks__\\history-system.mock.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\archive\\unused-files\\tests\\unit\\__mocks__\\powershell-integration.mock.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\archive\\unused-files\\tests\\unit\\__mocks__\\security-process-manager.mock.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\archive\\unused-files\\tests\\unit\\__mocks__\\terminal-handler-mocks.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\archive\\unused-files\\tests\\unit\\__mocks__\\timeout-interceptor.mock.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\archive\\unused-files\\vitest.simple.config.ts": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\archive\\unused-files\\work\\analyze-dependencies.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\archive\\unused-files\\work\\backups\\hint-system\\src\\hint-system.lib.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\archive\\unused-files\\work\\fix-template-literals.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\archive\\unused-files\\work\\test-cwd-improvements.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\archive\\unused-files\\work\\test-json-rpc-commands.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\archive\\unused-files\\work\\test-pwd-after-cd.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\archive\\unused-files\\work\\validate-json-updated.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\archive\\unused-files\\work\\validate-json.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\babel.config.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\jest.config.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\api\\api\\auth-middleware\\index.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\api\\api\\gateway\\index.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\api\\api\\gateway\\jest.config.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\api\\api\\gateway\\src\\api-validator.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\api\\api\\gateway\\src\\auth-manager.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\api\\api\\gateway\\src\\gateway-app.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\api\\api\\gateway\\src\\middleware-core.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\api\\api\\gateway\\src\\request-handler.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\api\\api\\gateway\\src\\route-manager.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\api\\api\\gateway\\tests\\gateway.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\api\\api\\gateway\\tests\\integration\\auth-integration.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\api\\api\\gateway\\tests\\integration\\gateway-integration.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\api\\api\\gateway\\tests\\mock-server.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\api\\api\\gateway\\tests\\unit\\api-validator.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\api\\api\\gateway\\tests\\unit\\auth-manager.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\api\\api\\gateway\\tests\\unit\\gateway-app.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\api\\api\\gateway\\tests\\unit\\middleware-core.spec.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\api\\api\\gateway\\tests\\unit\\middleware-core.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\api\\api\\gateway\\tests\\unit\\request-handler.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\api\\api\\gateway\\tests\\unit\\route-manager.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\api\\api\\system-controller\\index.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\api\\api\\system-controller\\tests\\system-controller.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\api\\unified-api-client\\index.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\cli-utils\\index.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\cli-utils\\tests\\unit\\cli-utils.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\command-utils\\tests\\index.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\core-command-executor\\babel.config.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\core-command-executor\\CommandEnums.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\core-command-executor\\CommandErrors.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\core-command-executor\\CommandRunner.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\core-command-executor\\CommandValidator.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\core-command-executor\\ExecutionContext.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\core-command-executor\\index.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\core-command-executor\\jest.config.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\core-command-executor\\StructuredLogger.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\core-command-executor\\tests\\CommandEnums.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\core-command-executor\\tests\\CommandErrors.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\core-command-executor\\tests\\CommandRunner.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\core-command-executor\\tests\\CommandValidator.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\core-command-executor\\tests\\core-command-executor.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\core-command-executor\\tests\\ExecutionContext.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\core-command-executor\\tests\\integration.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\core-command-executor\\tests\\performance.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\core-command-executor\\tests\\setup.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\core-command-executor\\tests\\StructuredLogger.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\archive-operations\\index.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\archive-operations\\jest.config.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\archive-operations\\src\\archive-manager.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\archive-operations\\tests\\archive-manager.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\archive-operations\\tests\\archive-operations.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\archive-operations\\tests\\basic.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\archive-operations\\tests\\mocks.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\archive-operations\\tests\\setup.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\atomic-operations\\index.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\atomic-operations\\jest.config.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\atomic-operations\\src\\atomic-operations.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\atomic-operations\\tests\\atomic-operations.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\atomic-operations\\tests\\setup.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\command-executor\\index.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\command-executor\\src\\command-executor.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\command-executor\\tests\\command-executor.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\data-manager\\index.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\data-manager\\src\\data-manager.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\data-manager\\src\\DataBackupAndRestore.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\data-manager\\src\\DataSearchAndStats.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\data-manager\\tests\\data-manager.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\feedback-system\\jest.config.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\feedback-system\\src\\DebugSystem.d.ts": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\feedback-system\\src\\DocumentManager.ts": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\feedback-system\\src\\FeedbackAnalytics.ts": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\feedback-system\\src\\FeedbackPlugin.ts": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\feedback-system\\src\\FeedbackTools.ts": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\feedback-system\\src\\index.ts": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\feedback-system\\src\\SuggestionCrudOperations.ts": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\feedback-system\\src\\SuggestionDataStore.ts": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\feedback-system\\src\\SuggestionExportManager.ts": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\feedback-system\\src\\SuggestionFilterUtils.ts": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\feedback-system\\src\\SuggestionManager.ts": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\feedback-system\\src\\SuggestionStatisticsManager.ts": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\feedback-system\\tests\\edge-cases\\feedback-analytics-plugin-edge-cases.test.ts": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\feedback-system\\tests\\edge-cases\\feedback-system-edge-cases.test.ts": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\feedback-system\\tests\\integration\\data-analytics.test.ts": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\feedback-system\\tests\\integration\\document-creation.test.ts": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\feedback-system\\tests\\integration\\error-performance.test.ts": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\feedback-system\\tests\\integration\\feedback-workflow.test.ts": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\feedback-system\\tests\\performance\\feedback-system-performance.test.ts": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\feedback-system\\tests\\setup.ts": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\feedback-system\\tests\\unit\\feedback-analytics.test.ts": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\feedback-system\\tests\\unit\\feedback-plugin.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\feedback-system\\tests\\unit\\feedback-plugin.test.ts": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\feedback-system\\tests\\unit\\feedback-tools.test.ts": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\feedback-system\\tests\\unit\\index.test.ts": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\feedback-system\\tests\\unit\\mocks\\DebugSystem.cjs.mock.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\feedback-system\\tests\\unit\\suggestion-datastore.test.ts": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\feedback-system\\tests\\unit\\suggestion-filter-utils.test.ts": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\feedback-system\\tests\\unit\\suggestion-manager.test.ts": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\history-manager\\src\\history-manager.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\history-manager\\tests\\history-manager.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\index.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\mcp-tools\\index.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\mcp-tools\\tests\\index.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\rules-engine\\src\\rules-engine.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\rules-engine\\tests\\rules-engine.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\src\\babel.config.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\src\\connection-manager.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\src\\jest.config.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\src\\message-handler.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\src\\protocol-core.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\src\\rules-engine.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\src\\test-controller.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\src\\tests\\connection-manager.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\src\\tests\\message-handler.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\src\\tests\\protocol-core.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\src\\tests\\rules-engine.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\src\\tests\\test-controller.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\tests\\index.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp-terminal-core\\index.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp-terminal-core\\tests\\mcp-terminal-core.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp-terminal-handlers\\HandlerEnums.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp-terminal-handlers\\HandlerErrors.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp-terminal-handlers\\index.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp-terminal-handlers\\TerminalHandler.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp-terminal-handlers\\tests\\mcp-terminal-handlers.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\terminal-interface\\tests\\terminal-interface.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\bootstrap\\babel.config.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\bootstrap\\index.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\bootstrap\\jest.config.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\bootstrap\\module-alias-setup.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\bootstrap\\tests\\bootstrap.feature.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\bootstrap\\tests\\bootstrap.integration.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\configuration\\configuration-loader\\index.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\configuration\\configuration-loader\\tests\\configuration-loader.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\file-utils\\file-system\\index.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\file-utils\\file-system\\index.old.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\file-utils\\file-system\\tests\\file-system.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\markdown-utils\\src\\front-matter-parser.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\markdown-utils\\tests\\front-matter-parser.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\markdown-utils\\tests\\markdown-utils.feature.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\markdown-utils\\tests\\markdown-utils.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\markdown-utils\\__tests__\\front-matter-parser.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\shared\\tests\\general-utils.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\unified-controller\\babel.config.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\unified-controller\\index.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\unified-controller\\jest.config.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\unified-controller\\src\\ControllerMiddleware.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\unified-controller\\src\\core-index.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\unified-controller\\src\\ErrorHandlerIntegration.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\unified-controller\\src\\event-bus.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\unified-controller\\src\\PluginController.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\unified-controller\\src\\PluginLifecycleManager.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\unified-controller\\src\\PluginLoader.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\unified-controller\\src\\PluginManager.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\unified-controller\\src\\ReportCrudOperations.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\unified-controller\\src\\ReportPersistenceManager.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\unified-controller\\src\\ReportQueryManager.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\unified-controller\\src\\ReportStatisticsManager.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\unified-controller\\src\\RequestTransformer.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\unified-controller\\src\\RequestValidator.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\unified-controller\\src\\ResponseTransformer.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\unified-controller\\src\\TaskReporter.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\unified-controller\\src\\TaskReporterLogger.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\unified-controller\\src\\UniversalController.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\unified-controller\\tests\\unified-controller.feature.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\unified-controller\\tests\\unified-controller.integration.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\unified-controller\\tests\\unit\\core-index.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\unified-controller\\tests\\unit\\ErrorHandlerIntegration.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\unified-controller\\tests\\unit\\event-bus.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\unified-controller\\tests\\unit\\PluginController.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\unified-controller\\tests\\unit\\PluginLifecycleManager.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\unified-controller\\tests\\unit\\PluginLoader.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\unified-controller\\tests\\unit\\PluginManager.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\unified-controller\\tests\\unit\\RequestTransformer.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\unified-controller\\tests\\unit\\RequestValidator.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\unified-controller\\tests\\unit\\ResponseTransformer.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\unified-controller\\tests\\unit\\TaskReporter.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\unified-controller\\tests\\unit\\UniversalController.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\unified-controller\\tests\\universal-controller.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\unified-controller\\tests\\UniversalController.integration.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\utils\\formatters.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\utils\\tests\\formatters.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\utils\\tests\\utils.feature.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\validation\\schema-validator\\index.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\validation\\schema-validator\\jest.config.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\validation\\schema-validator\\tests\\schema-validator.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\error-handling\\error-handler-with-recipes\\tests\\error-handler-with-recipes.feature.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\error-handling\\error-handler-with-recipes\\tests\\error-handler-with-recipes.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\error-handling\\error-report-manager\\tests\\error-report-manager.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\index.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\logging-reporting\\core-logger\\index.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\logging-reporting\\core-logger\\tests\\core-logger.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\logging-reporting\\index.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\logging-reporting\\reports\\task-report-generator\\index.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\logging-reporting\\reports\\task-report-generator\\tests\\task-report-generator.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\logging-reporting\\reports\\task-reporter.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\logging-reporting\\reports\\tests\\task-reporter.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\logging-reporting\\system-info\\index.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\logging-reporting\\system-info\\tests\\index.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\logging-reporting\\system-info\\tests\\system-info.feature.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\logging-reporting\\system-info\\tests\\system-info.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\logging-reporting\\tests\\index.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\project-management\\project\\project-manager\\index.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\project-management\\project\\project-manager\\project-analyzer.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\project-management\\project\\project-manager\\tests\\index.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\project-management\\project\\project-manager\\tests\\project-analyzer.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\project-management\\project\\testing-framework\\error-parsing\\tests\\index.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\project-management\\project\\testing-framework\\test-result-parser\\index.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\project-management\\project\\testing-framework\\test-result-parser\\tests\\index.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\project-management\\project\\testing-utils\\index.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\project-management\\project\\testing-utils\\test-activity-manager.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\project-management\\project\\testing-utils\\test-file-analyzer.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\project-management\\project\\testing-utils\\test-statistics.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\project-management\\project\\testing-utils\\tests\\unit\\index.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\project-management\\project\\testing-utils\\tests\\unit\\test-activity-manager.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\project-management\\project\\testing-utils\\tests\\unit\\test-file-analyzer.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\project-management\\project\\testing-utils\\tests\\unit\\test-statistics.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\project-management\\project-utils\\jest.config.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\project-management\\project-utils\\src\\project-utils.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\project-management\\project-utils\\tests\\project-utils.feature.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\project-management\\project-utils\\tests\\project-utils.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\security\\code-analyzer\\babel.config.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\security\\code-analyzer\\jest.config.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\security\\code-analyzer\\src\\code-analyzer.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\security\\security-analyzer\\jest.config.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\security\\security-analyzer\\src\\index.ts": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\security\\security-analyzer\\src\\mcp-security-mask.ts": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\security\\security-analyzer\\src\\rules\\default-rules.ts": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\security\\security-analyzer\\src\\rules\\function-rule.ts": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\security\\security-analyzer\\src\\rules\\index.ts": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\security\\security-analyzer\\src\\rules\\pattern-rule.ts": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\security\\security-analyzer\\src\\security-analyzer.ts": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\security\\security-analyzer\\src\\SecurityAnalysisResultManager.ts": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\security\\security-analyzer\\src\\SecurityLogger.ts": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\security\\security-analyzer\\src\\SecurityMetricsAndUtils.ts": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\security\\security-analyzer\\src\\types\\index.ts": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\security\\security-analyzer\\tests\\index.test.ts": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\security\\security-analyzer\\tests\\mcp-security-mask.test.ts": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\security\\security-analyzer\\tests\\security-analyzer.test.ts": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\security\\security-analyzer\\tests\\setup.ts": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\archive-operations\\ArchiveAnalyzer.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\archive-operations\\ArchiveExtractor.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\archive-operations\\ArchiveMaintenance.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\archive-operations\\atomic-operations.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\archive-operations\\index.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\archive-operations\\tests\\archive-tests.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\archive-operations\\tests\\atomic-operations.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\archive-operations\\tests\\atomic-tests.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\archive-operations\\tests\\index.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\archive-operations\\tests\\integration.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\archive-operations\\tests\\test-assertions.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\archive-operations\\tests\\test-utils.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\history-manager\\index.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\history-manager\\jest.config.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\history-manager\\tests\\history-persistence.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\history-manager\\tests\\index.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\housekeeping-manager\\index.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\housekeeping-manager\\tests\\housekeeping-manager.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\service-management\\tests\\service-management.feature.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\service-management\\tests\\service-management.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\system-info\\index.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\system-info\\tests\\system-info-collector.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\thread-manager\\examples\\basic-usage.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\thread-manager\\examples\\integration-example.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\thread-manager\\examples\\scheduler-example.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\thread-manager\\index.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\thread-manager\\src\\PriorityQueue.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\thread-manager\\src\\TaskExecutor.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\thread-manager\\src\\TaskScheduler.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\thread-manager\\src\\ThreadManager.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\thread-manager\\src\\ThreadMonitor.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\thread-manager\\src\\WorkerPool.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\thread-manager\\tests\\index.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\thread-manager\\tests\\PriorityQueue.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\thread-manager\\tests\\TaskExecutor.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\thread-manager\\tests\\TaskScheduler.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\thread-manager\\tests\\thread-manager.feature.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\thread-manager\\tests\\ThreadManager.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\thread-manager\\tests\\ThreadMonitor.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\thread-manager\\tests\\WorkerPool.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\work-directory-manager\\index.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\work-directory-manager\\tests\\work-directory-manager.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\workdir-manager\\index.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\workdir-manager\\tests\\workdir-manager.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\workdir-utils\\example.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\workdir-utils\\jest.config.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\workdir-utils\\src\\workdir-utils.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\workdir-utils\\tests\\integration.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\workdir-utils\\tests\\workdir-utils.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\worker-task-executor\\index.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\worker-task-executor\\tests\\worker-task-executor.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\tests\\app-framework.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\tests\\index.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\third-party-integrations\\plugins\\core\\plugin-manager\\index.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\third-party-integrations\\plugins\\core\\tests\\plugin-manager.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\ui\\ui\\composables\\server-management.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\ui\\ui\\utils\\server-display-utils.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config\\index.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config\\index.old.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config\\jest-guard.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config\\jest.config.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config\\setup-module-alias.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config\\tests\\config.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\analytics\\index.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\app-architectures\\index.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\app-architectures\\tests\\app-architectures.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\apps-list\\tests\\apps-list.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\audit\\index.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\audit\\tests\\audit.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\automation\\index.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\automation\\tests\\automation.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\compliance\\index.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\compliance\\tests\\compliance.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\config\\index.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\core\\BaseModel.browser.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\core\\BaseModel.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\core\\ModelFactory.browser.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\core\\ModelFactory.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\core\\ModelRegistry.browser.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\core\\ModelRegistry.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\core\\ModelUtils.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\core\\tests\\BaseModel.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\core\\tests\\ModelFactory.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\core\\tests\\ModelRegistry.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\core\\UnifiedConfigManager.browser.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\deployment\\index.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\deployment\\tests\\deployment.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\domains\\helpers.browser.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\domains\\index.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\domains\\tests\\unit\\domains.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\environments\\index.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\environments\\tests\\environments.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\error-handling\\index.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\error-handling\\tests\\error-handling.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\gateway\\helpers.browser.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\gateway\\index.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\gateway\\tests\\gateway.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\gateway\\tests\\unit\\gateway.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\hosting\\helpers.browser.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\hosting\\index.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\hosting\\tests\\unit\\hosting.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\index.browser-stub.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\index.browser.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\index.old.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\infrastructure\\index.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\infrastructure\\tests\\infrastructure.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\invalid-config\\index.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\invalid-config\\tests\\invalid-config.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\models\\ServersModel.browser.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\models\\ServersModel.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\models\\ServicesModel.browser.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\models\\ServicesModel.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\models\\tests\\ServersModel.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\models\\tests\\ServicesModel.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\network\\index.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\network\\tests\\network.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\notifications\\index.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\notifications\\tests\\notifications.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\package-testing\\index.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\package-testing\\tests\\package-testing.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\paths-manager\\index.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\paths-manager\\tests\\paths-manager.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\ports\\helpers.browser.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\ports\\index.browser.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\ports\\index.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\ports\\tests\\helpers.browser.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\ports\\tests\\helpers.selection-transform.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\ports\\tests\\helpers.validation.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\ports\\tests\\ports.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\ports\\tests\\setup-vitest.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\ports\\ui\\components\\BaseBadge.vue": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\ports\\ui\\components\\BaseButton.vue": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\ports\\ui\\components\\BaseCheckbox.vue": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\ports\\ui\\components\\BaseInput.vue": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\ports\\ui\\components\\BaseRadioGroup.vue": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\project-types\\config-manager.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\project-types\\index.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\project-types\\tests\\config-manager.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\project-types\\tests\\project-types.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\projects\\helpers.browser.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\projects\\index.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\projects\\tests\\unit\\projects.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\servers\\index.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\servers\\tests\\servers.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\service-groups\\config-manager.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\service-groups\\index.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\service-groups\\tests\\config-manager.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\service-groups\\tests\\service-groups.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\services\\config-manager.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\services\\index.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\services\\tests\\config-manager.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\services\\tests\\services.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\settings\\config-manager.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\settings\\index.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\settings\\tests\\config-manager.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\settings\\tests\\settings.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\system-config\\config-manager.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\system-config\\tests\\config-manager.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\system-config\\tests\\system-config.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\task-types\\index.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\task-types\\tests\\task-types.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\testing-manager\\index.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\testing-manager\\tests\\testing-manager.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\tests\\index.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\tests\\integration\\apps-services-integration.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\tests\\tests\\tests.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\vulnerabilities\\index.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\vulnerabilities\\tests\\vulnerabilities.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\core\\configuration\\index.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\core\\configuration\\src\\ConfigurationBackupManager.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\core\\configuration\\src\\ConfigurationLoaderSaver.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\core\\configuration\\src\\ConfigurationQueryManager.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\core\\configuration\\src\\ConfigurationSecurityManager.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\core\\configuration\\src\\ConfigurationValidationManager.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\core\\configuration\\tests\\configuration.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\core\\error-core\\tests\\error-core-manager.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\core\\file-utils\\FileManager.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\core\\file-utils\\index.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\core\\file-utils\\index.old.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\core\\index.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\core\\json-utils\\index.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\core\\json-utils\\tests\\json-utils.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\core\\logging\\index.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\core\\logging\\tests\\logging.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\core\\shared\\index.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\core\\shared\\tests\\shared.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\core\\status-monitor\\index.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\core\\templates\\index.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\core\\templates\\tests\\templates.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\core\\time\\index.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\core\\time\\tests\\time.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\core\\utils\\tests\\core-utils.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\error-management\\client-error-monitor.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\error-management\\error-handler\\browser-error-handler.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\error-management\\error-handler\\error-classes.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\error-management\\error-handler\\error-collector.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\error-management\\error-handler\\error-utils.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\error-management\\error-handler\\global-error-handler.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\error-management\\error-handler\\index.browser.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\error-management\\error-handler\\index.full.browser.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\error-management\\error-handler\\index.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\error-management\\error-handler\\index.old.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\error-management\\error-handler\\tests\\error-handler.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\error-management\\error-handler\\tests\\global-error-handler.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\error-management\\error-handler\\tests\\re-export-wrapper.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\error-management\\error-handler\\tests\\validation.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\error-management\\error-handler\\validation-utils.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\error-management\\error-operations\\index.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\error-management\\error-operations\\src\\ErrorCategorizationManager.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\error-management\\error-operations\\src\\ErrorHandlingStrategies.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\error-management\\error-operations\\src\\ServiceConfigurationValidator.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\error-management\\index.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\error-management\\tests\\error-management.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\error-management\\tests\\unit\\error-operations.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\logging-monitoring\\index.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\logging-monitoring\\logging\\console-utils.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\logging-monitoring\\logging\\index.browser-stub.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\logging-monitoring\\logging\\index.browser.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\logging-monitoring\\logging\\index.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\logging-monitoring\\logging\\tests\\logging.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\logging-monitoring\\mcp-monitoring\\index.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\logging-monitoring\\mcp-monitoring\\tests\\unit\\mcp-monitoring-manager.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\logging-monitoring\\monitoring\\index.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\logging-monitoring\\monitoring\\src\\HealthCheckManager.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\logging-monitoring\\monitoring\\src\\PortMonitoringManager.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\logging-monitoring\\tests\\logging-monitoring.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\analytics-engine\\tests\\index.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\archive-manager\\tests\\index.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\atomic-operations\\tests\\index.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\cluster\\index.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\cluster\\tests\\unit\\cluster-manager.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\command-converter\\tests\\index.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\command-runner\\tests\\index.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\command-validation\\tests\\index.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\daemon\\index copy.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\daemon\\index.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\daemon\\tests\\daemon.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\file-operations\\jest.config.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\file-operations\\tests\\edge-cases\\file-operations-edge-cases.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\file-operations\\tests\\file-operations.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\file-operations\\tests\\performance\\file-operations-performance.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\file-operations\\tests\\unit\\file-operations-unit.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\fs-commands\\tests\\index.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\hint-system\\tests\\index.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\history\\tests\\index.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\history-importer\\tests\\index.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\index.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\jest-proxy\\tests\\index.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\jest.config.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\leader-election\\index.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\leader-election\\tests\\unit\\leader-election-manager.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\metrics\\index.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\metrics\\jest.config.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\metrics\\tests\\metrics.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\metrics\\tests\\setup.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\path-utils\\file-operations.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\path-utils\\index.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\path-utils\\path-constants.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\path-utils\\tests\\path-utils.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\path-validation\\tests\\index.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\plugin-registry\\tests\\index.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\process-management\\index.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\process-management\\tests\\process-management.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\process-spawn\\index.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\process-spawn\\JobManager.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\process-spawn\\ProcessKiller.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\process-spawn\\ProcessMonitor.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\process-spawn\\ProcessSpawner.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\process-spawn\\SpawnConfig.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\process-spawn\\tests\\index.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\process-spawn\\tests\\JobManager.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\process-spawn\\tests\\ProcessKiller.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\process-spawn\\tests\\ProcessMonitor.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\process-spawn\\tests\\ProcessSpawner.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\process-spawn\\tests\\SpawnConfig.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\process-spawn\\types\\SpawnTypes.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\reports\\index.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\reports\\jest.config.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\reports\\tests\\reports.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\reports\\tests\\setup.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\runtime-mode\\tests\\index.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\search\\tests\\index.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\security-mask\\tests\\index.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\server-config\\tests\\index.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\server-utils\\tests\\index.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\service-management\\cli.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\service-management\\index.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\service-management\\integration.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\service-management\\service-status-utils.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\service-management\\src\\ServiceActionManager.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\service-management\\src\\ServiceConfigManager.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\service-management\\src\\ServiceDataManager.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\service-management\\src\\ServiceFormGenerator.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\service-management\\src\\ServiceLogger.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\service-management\\src\\ServiceProcessManager.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\service-management\\src\\ServiceValidator.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\service-management\\tests\\basic.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\service-management\\tests\\integration.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\service-management\\tests\\service-cli.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\service-management\\tests\\service-config-manager.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\service-management\\tests\\service-logger.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\service-management\\tests\\service-management.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\service-management\\tests\\service-process-manager.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\service-management\\tests\\service-status-utils.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\service-management\\tests\\setup.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\session-vars\\tests\\index.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\syntax-fixer\\tests\\index.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\task-management\\index.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\task-management\\tests\\task-management.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\task-report-manager\\index.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\tests\\index.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\tests\\minimal-test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\tests\\simple-test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\tests\\system-modules.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\unified-daemon\\index.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\unified-daemon\\PidFileManager.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\unified-daemon\\src\\PidDaemonManager.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\unified-daemon\\src\\PidFilePersistence.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\unified-daemon\\src\\PidQueueManager.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\unified-daemon\\tests\\pid-daemon-manager.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\unified-daemon\\tests\\pid-file-manager.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\unified-daemon\\tests\\pid-file-persistence.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\unified-daemon\\tests\\pid-queue-manager.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\unified-daemon\\tests\\unified-daemon.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\system\\workdir\\tests\\index.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\validation\\index.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\validation\\settings-validation-schema.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\validation\\tests\\index.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\validation\\tests\\setup.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\validation\\tests\\validation.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\validation\\validation\\format-validators.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\validation\\validation\\tests\\index.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\validation\\validation\\tests\\validation-utils.test.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\validation\\validation\\type-checkers.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\packages\\libs\\validation\\validation\\validation-logic.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\src\\core\\logger.ts": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\src\\types\\atomic-archive.types.ts": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\tests\\unit\\__mocks__\\encoding-diagnostics.mock.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\tests\\unit\\__mocks__\\external-dependencies.mock.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\tests\\unit\\__mocks__\\powershell-unicode-handler.mock.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      },
+      "work\\priority-3\\node-terminal\\vitest.config.js": {
+        "inDegree": 0,
+        "outDegree": 0
+      }
+    }
+  },
+  "entryPoints": [
+    "work\\priority-3\\node-terminal\\archive\\unused-files\\src\\types\\index.ts",
+    "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\api\\api\\auth-middleware\\index.js",
+    "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\api\\api\\gateway\\index.js",
+    "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\api\\api\\system-controller\\index.js",
+    "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\api\\unified-api-client\\index.js",
+    "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\cli-utils\\index.js",
+    "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\core-command-executor\\index.js",
+    "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\archive-operations\\index.js",
+    "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\atomic-operations\\index.js",
+    "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\command-executor\\index.js",
+    "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\data-manager\\index.js",
+    "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\feedback-system\\src\\index.ts",
+    "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\index.js",
+    "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\mcp-tools\\index.js",
+    "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp-terminal-core\\index.js",
+    "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp-terminal-handlers\\index.js",
+    "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\bootstrap\\index.js",
+    "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\configuration\\configuration-loader\\index.js",
+    "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\file-utils\\file-system\\index.js",
+    "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\unified-controller\\index.js",
+    "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\validation\\schema-validator\\index.js",
+    "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\index.js",
+    "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\logging-reporting\\core-logger\\index.js",
+    "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\logging-reporting\\index.js",
+    "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\logging-reporting\\reports\\task-report-generator\\index.js",
+    "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\logging-reporting\\system-info\\index.js",
+    "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\project-management\\project\\project-manager\\index.js",
+    "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\project-management\\project\\testing-framework\\test-result-parser\\index.js",
+    "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\project-management\\project\\testing-utils\\index.js",
+    "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\security\\security-analyzer\\src\\index.ts",
+    "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\security\\security-analyzer\\src\\rules\\index.ts",
+    "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\security\\security-analyzer\\src\\types\\index.ts",
+    "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\archive-operations\\index.js",
+    "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\archive-operations\\tests\\index.js",
+    "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\history-manager\\index.js",
+    "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\housekeeping-manager\\index.js",
+    "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\system-info\\index.js",
+    "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\thread-manager\\index.js",
+    "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\work-directory-manager\\index.js",
+    "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\workdir-manager\\index.js",
+    "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\worker-task-executor\\index.js",
+    "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\third-party-integrations\\plugins\\core\\plugin-manager\\index.js",
+    "work\\priority-3\\node-terminal\\packages\\libs\\config\\index.js",
+    "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\analytics\\index.js",
+    "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\app-architectures\\index.js",
+    "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\audit\\index.js",
+    "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\automation\\index.js",
+    "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\compliance\\index.js",
+    "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\config\\index.js",
+    "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\deployment\\index.js",
+    "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\domains\\index.js",
+    "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\environments\\index.js",
+    "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\error-handling\\index.js",
+    "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\gateway\\index.js",
+    "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\hosting\\index.js",
+    "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\infrastructure\\index.js",
+    "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\invalid-config\\index.js",
+    "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\network\\index.js",
+    "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\notifications\\index.js",
+    "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\package-testing\\index.js",
+    "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\paths-manager\\index.js",
+    "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\ports\\index.js",
+    "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\project-types\\index.js",
+    "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\projects\\index.js",
+    "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\servers\\index.js",
+    "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\service-groups\\index.js",
+    "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\services\\index.js",
+    "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\settings\\index.js",
+    "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\task-types\\index.js",
+    "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\testing-manager\\index.js",
+    "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\tests\\index.js",
+    "work\\priority-3\\node-terminal\\packages\\libs\\config-unified\\vulnerabilities\\index.js",
+    "work\\priority-3\\node-terminal\\packages\\libs\\core\\configuration\\index.js",
+    "work\\priority-3\\node-terminal\\packages\\libs\\core\\file-utils\\index.js",
+    "work\\priority-3\\node-terminal\\packages\\libs\\core\\index.js",
+    "work\\priority-3\\node-terminal\\packages\\libs\\core\\json-utils\\index.js",
+    "work\\priority-3\\node-terminal\\packages\\libs\\core\\logging\\index.js",
+    "work\\priority-3\\node-terminal\\packages\\libs\\core\\shared\\index.js",
+    "work\\priority-3\\node-terminal\\packages\\libs\\core\\status-monitor\\index.js",
+    "work\\priority-3\\node-terminal\\packages\\libs\\core\\templates\\index.js",
+    "work\\priority-3\\node-terminal\\packages\\libs\\core\\time\\index.js",
+    "work\\priority-3\\node-terminal\\packages\\libs\\error-management\\error-handler\\index.js",
+    "work\\priority-3\\node-terminal\\packages\\libs\\error-management\\error-operations\\index.js",
+    "work\\priority-3\\node-terminal\\packages\\libs\\error-management\\index.js",
+    "work\\priority-3\\node-terminal\\packages\\libs\\logging-monitoring\\index.js",
+    "work\\priority-3\\node-terminal\\packages\\libs\\logging-monitoring\\logging\\index.js",
+    "work\\priority-3\\node-terminal\\packages\\libs\\logging-monitoring\\mcp-monitoring\\index.js",
+    "work\\priority-3\\node-terminal\\packages\\libs\\logging-monitoring\\monitoring\\index.js",
+    "work\\priority-3\\node-terminal\\packages\\libs\\system\\cluster\\index.js",
+    "work\\priority-3\\node-terminal\\packages\\libs\\system\\daemon\\index.js",
+    "work\\priority-3\\node-terminal\\packages\\libs\\system\\index.js",
+    "work\\priority-3\\node-terminal\\packages\\libs\\system\\leader-election\\index.js",
+    "work\\priority-3\\node-terminal\\packages\\libs\\system\\metrics\\index.js",
+    "work\\priority-3\\node-terminal\\packages\\libs\\system\\path-utils\\index.js",
+    "work\\priority-3\\node-terminal\\packages\\libs\\system\\process-management\\index.js",
+    "work\\priority-3\\node-terminal\\packages\\libs\\system\\process-spawn\\index.js",
+    "work\\priority-3\\node-terminal\\packages\\libs\\system\\reports\\index.js",
+    "work\\priority-3\\node-terminal\\packages\\libs\\system\\service-management\\cli.js",
+    "work\\priority-3\\node-terminal\\packages\\libs\\system\\service-management\\index.js",
+    "work\\priority-3\\node-terminal\\packages\\libs\\system\\task-management\\index.js",
+    "work\\priority-3\\node-terminal\\packages\\libs\\system\\task-report-manager\\index.js",
+    "work\\priority-3\\node-terminal\\packages\\libs\\system\\unified-daemon\\index.js",
+    "work\\priority-3\\node-terminal\\packages\\libs\\validation\\index.js"
+  ],
+  "candidates": [
+    {
+      "path": "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\worker-task-executor\\tests\\worker-task-executor.test.js",
+      "relativePath": "packages\\libs\\app-framework\\system-utils\\worker-task-executor\\tests\\worker-task-executor.test.js",
+      "score": 403,
+      "metrics": {
+        "inDegree": 0,
+        "outDegree": 0
+      }
+    },
+    {
+      "path": "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\workdir-manager\\tests\\workdir-manager.test.js",
+      "relativePath": "packages\\libs\\app-framework\\system-utils\\workdir-manager\\tests\\workdir-manager.test.js",
+      "score": 293,
+      "metrics": {
+        "inDegree": 0,
+        "outDegree": 0
+      }
+    },
+    {
+      "path": "work\\priority-3\\node-terminal\\packages\\libs\\core\\templates\\tests\\templates.test.js",
+      "relativePath": "packages\\libs\\core\\templates\\tests\\templates.test.js",
+      "score": 273,
+      "metrics": {
+        "inDegree": 0,
+        "outDegree": 0
+      }
+    },
+    {
+      "path": "work\\priority-3\\node-terminal\\packages\\libs\\core\\logging\\tests\\logging.test.js",
+      "relativePath": "packages\\libs\\core\\logging\\tests\\logging.test.js",
+      "score": 113,
+      "metrics": {
+        "inDegree": 0,
+        "outDegree": 0
+      }
+    },
+    {
+      "path": "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\system-utils\\thread-manager\\tests\\WorkerPool.test.js",
+      "relativePath": "packages\\libs\\app-framework\\system-utils\\thread-manager\\tests\\WorkerPool.test.js",
+      "score": 63,
+      "metrics": {
+        "inDegree": 0,
+        "outDegree": 0
+      }
+    },
+    {
+      "path": "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\rules-engine\\tests\\rules-engine.test.js",
+      "relativePath": "packages\\libs\\app-framework\\cli\\mcp\\rules-engine\\tests\\rules-engine.test.js",
+      "score": 53,
+      "metrics": {
+        "inDegree": 0,
+        "outDegree": 0
+      }
+    },
+    {
+      "path": "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\cli\\mcp\\tests\\index.test.js",
+      "relativePath": "packages\\libs\\app-framework\\cli\\mcp\\tests\\index.test.js",
+      "score": 43,
+      "metrics": {
+        "inDegree": 0,
+        "outDegree": 0
+      }
+    },
+    {
+      "path": "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\file-utils\\file-system\\tests\\file-system.test.js",
+      "relativePath": "packages\\libs\\app-framework\\core\\file-utils\\file-system\\tests\\file-system.test.js",
+      "score": 43,
+      "metrics": {
+        "inDegree": 0,
+        "outDegree": 0
+      }
+    },
+    {
+      "path": "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\markdown-utils\\tests\\front-matter-parser.test.js",
+      "relativePath": "packages\\libs\\app-framework\\core\\markdown-utils\\tests\\front-matter-parser.test.js",
+      "score": 43,
+      "metrics": {
+        "inDegree": 0,
+        "outDegree": 0
+      }
+    },
+    {
+      "path": "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\core\\markdown-utils\\tests\\markdown-utils.feature.test.js",
+      "relativePath": "packages\\libs\\app-framework\\core\\markdown-utils\\tests\\markdown-utils.feature.test.js",
+      "score": 43,
+      "metrics": {
+        "inDegree": 0,
+        "outDegree": 0
+      }
+    },
+    {
+      "path": "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\error-handling\\error-handler-with-recipes\\tests\\error-handler-with-recipes.test.js",
+      "relativePath": "packages\\libs\\app-framework\\error-handling\\error-handler-with-recipes\\tests\\error-handler-with-recipes.test.js",
+      "score": 43,
+      "metrics": {
+        "inDegree": 0,
+        "outDegree": 0
+      }
+    },
+    {
+      "path": "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\logging-reporting\\core-logger\\tests\\core-logger.test.js",
+      "relativePath": "packages\\libs\\app-framework\\logging-reporting\\core-logger\\tests\\core-logger.test.js",
+      "score": 43,
+      "metrics": {
+        "inDegree": 0,
+        "outDegree": 0
+      }
+    },
+    {
+      "path": "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\logging-reporting\\reports\\tests\\task-reporter.test.js",
+      "relativePath": "packages\\libs\\app-framework\\logging-reporting\\reports\\tests\\task-reporter.test.js",
+      "score": 43,
+      "metrics": {
+        "inDegree": 0,
+        "outDegree": 0
+      }
+    },
+    {
+      "path": "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\logging-reporting\\system-info\\tests\\system-info.feature.test.js",
+      "relativePath": "packages\\libs\\app-framework\\logging-reporting\\system-info\\tests\\system-info.feature.test.js",
+      "score": 43,
+      "metrics": {
+        "inDegree": 0,
+        "outDegree": 0
+      }
+    },
+    {
+      "path": "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\logging-reporting\\tests\\index.test.js",
+      "relativePath": "packages\\libs\\app-framework\\logging-reporting\\tests\\index.test.js",
+      "score": 43,
+      "metrics": {
+        "inDegree": 0,
+        "outDegree": 0
+      }
+    },
+    {
+      "path": "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\project-management\\project\\project-manager\\tests\\index.test.js",
+      "relativePath": "packages\\libs\\app-framework\\project-management\\project\\project-manager\\tests\\index.test.js",
+      "score": 43,
+      "metrics": {
+        "inDegree": 0,
+        "outDegree": 0
+      }
+    },
+    {
+      "path": "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\project-management\\project\\project-manager\\tests\\project-analyzer.test.js",
+      "relativePath": "packages\\libs\\app-framework\\project-management\\project\\project-manager\\tests\\project-analyzer.test.js",
+      "score": 43,
+      "metrics": {
+        "inDegree": 0,
+        "outDegree": 0
+      }
+    },
+    {
+      "path": "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\project-management\\project\\testing-framework\\error-parsing\\tests\\index.test.js",
+      "relativePath": "packages\\libs\\app-framework\\project-management\\project\\testing-framework\\error-parsing\\tests\\index.test.js",
+      "score": 43,
+      "metrics": {
+        "inDegree": 0,
+        "outDegree": 0
+      }
+    },
+    {
+      "path": "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\project-management\\project\\testing-framework\\test-result-parser\\tests\\index.test.js",
+      "relativePath": "packages\\libs\\app-framework\\project-management\\project\\testing-framework\\test-result-parser\\tests\\index.test.js",
+      "score": 43,
+      "metrics": {
+        "inDegree": 0,
+        "outDegree": 0
+      }
+    },
+    {
+      "path": "work\\priority-3\\node-terminal\\packages\\libs\\app-framework\\project-management\\project\\testing-utils\\tests\\unit\\index.test.js",
+      "relativePath": "packages\\libs\\app-framework\\project-management\\project\\testing-utils\\tests\\unit\\index.test.js",
+      "score": 43,
+      "metrics": {
+        "inDegree": 0,
+        "outDegree": 0
+      }
+    }
+  ],
+  "projectPath": "work\\priority-3\\node-terminal"
+}

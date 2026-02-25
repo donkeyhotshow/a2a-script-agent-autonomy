@@ -1,0 +1,17 @@
+node_modules/
+dist/
+coverage/
+.DS_Store
+.env.local
+.env.*.local
+.cache/
+.vscode/settings.json
+.history/
+.nyc_output/
+test-results/
+.tmp/
+server.pid
+archive-folders.zip
+archive-old-files.zip
+
+archive/

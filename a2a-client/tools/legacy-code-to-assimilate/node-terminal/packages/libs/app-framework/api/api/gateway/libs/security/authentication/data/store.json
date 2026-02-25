@@ -1,0 +1,59 @@
+{
+  "users": [
+    {
+      "id": "u_ae609eed6056",
+      "username": "testadmin",
+      "passwordHash": "$pbkdf2$68bbdc28e4ae0e22ea1c14a3f15cd06c$a32d59ed5fd95130d0d8122443ef6da97247b8d157ee8f1ba077b010b2537787f6f42a5fcce2fc8b49e9da5ec754f49f4d79183d82b3fb7b6978b4922966b4f2",
+      "roles": [
+        "admin",
+        "user"
+      ]
+    },
+    {
+      "id": "u_48dce35e0773",
+      "username": "testuser",
+      "passwordHash": "$pbkdf2$003bedc08ebd27d176bfd9878a1f8fe2$6ce87a7e910361662e998590e57069fb13e22ad44b17df75ee47702b7700b6a3f22132b4076d708da0102281e958075940f476c30c581222abfc8a9fef64bbf6",
+      "roles": [
+        "user"
+      ]
+    },
+    {
+      "id": "u_93e50b2145ac",
+      "username": "testreadonly",
+      "passwordHash": "$pbkdf2$8161f35e01e473a80f85b3ee4288bd2d$db924afbfbc0c911ce658b1b95344fb6fe351fc52845769dcedd18e872ceab0b8b34612158bf8bfd8252a1c49c013019a5ed2e850fad81ee2838b35fcdcb0dcc",
+      "roles": [
+        "readonly"
+      ]
+    }
+  ],
+  "authKeys": [
+    {
+      "key": "a9a29e5fbd71cc2f8e682adbcf0ffa493ab4a87c59694e95fa3e6ef11a9889dd",
+      "username": "testadmin",
+      "roles": [
+        "admin",
+        "user"
+      ],
+      "createdAt": "2025-08-27T00:41:43.698Z",
+      "expiresAt": "2026-08-27T00:41:43.698Z"
+    },
+    {
+      "key": "a4403eb82f4f9c826039e0ba1781876acdea5a88a6fe3d530297cc1f877237eb",
+      "username": "testuser",
+      "roles": [
+        "user"
+      ],
+      "createdAt": "2025-08-27T00:41:43.707Z",
+      "expiresAt": "2026-08-27T00:41:43.707Z"
+    },
+    {
+      "key": "269ab1389640730912506d921b20bf4da5b67e1cd7687f35ae395124973b0396",
+      "username": "testreadonly",
+      "roles": [
+        "readonly"
+      ],
+      "createdAt": "2025-08-27T00:41:43.717Z",
+      "expiresAt": "2026-08-27T00:41:43.717Z"
+    }
+  ]
+}

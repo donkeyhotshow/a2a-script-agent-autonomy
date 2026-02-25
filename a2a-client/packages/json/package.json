@@ -22,7 +22,6 @@
     "zod": "^3.22.4"
   },
   "devDependencies": {
-    "@types/zod": "^3.22.0",
     "typescript": "^5.0.0"
   },
   "engines": { "node": ">=18.0.0" },

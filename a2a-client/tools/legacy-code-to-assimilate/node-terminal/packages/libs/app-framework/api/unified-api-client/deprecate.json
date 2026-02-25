@@ -1,0 +1,5 @@
+{
+  "deprecated": true,
+  "migration_instructions": "This library is deprecated. Please migrate to `network/api-client/index.js` for all unified API client functionalities. The `network/api-client/index.js` library provides a unified and robust set of tools for network requests, including caching, retries, and error handling. Refer to its documentation for usage details.",
+  "replacement_library": "network/api-client/index.js"
+}

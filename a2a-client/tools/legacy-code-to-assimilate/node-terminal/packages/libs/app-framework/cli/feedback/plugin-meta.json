@@ -1,0 +1,14 @@
+{
+  "pluginName": "project-feedback-system",
+  "version": "2.0.0",
+  "description": "System for collecting suggestions and reports for projects",
+  "targetService": "project-feedback",
+  "createdAt": "2025-10-12T06:14:45.514Z",
+  "lastUpdated": "2025-10-12T06:14:45.514Z",
+  "directories": {
+    "feedback": "C:\\apps\\libs\\app-framework\\cli\\feedback",
+    "reports": "C:\\apps\\libs\\app-framework\\cli\\work\\reports",
+    "rules": "C:\\apps\\libs\\app-framework\\cli\\.cursor\\rules",
+    "guides": "C:\\apps\\libs\\app-framework\\cli\\docs\\guides"
+  }
+}

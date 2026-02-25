@@ -1,0 +1,36 @@
+{
+  "name": "@libs/app-framework-cli-utils",
+  "version": "1.0.0",
+  "description": "Common CLI utility functions",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "eventemitter3": "^5.0.1"
+  },
+  "devDependencies": {
+    "jest": "^30.0.5",
+    "@babel/core": "^7.28.3",
+    "@babel/preset-env": "^7.28.3",
+    "babel-jest": "^30.0.5"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "testMatch": [
+      "<rootDir>/tests/unit/**/*.test.js"
+    ],
+    "moduleNameMapper": {
+      "^@libs/(.*)$": "<rootDir>/../$1"
+    },
+    "transform": {
+      "^(.*\\\\.js|\\\\.ts)$": "babel-jest"
+    },
+    "transformIgnorePatterns": [
+      "/node_modules/(?!eventemitter3)"
+    ]
+  }
+}

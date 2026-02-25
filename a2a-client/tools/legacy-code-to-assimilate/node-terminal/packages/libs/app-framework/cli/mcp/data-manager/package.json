@@ -1,0 +1,29 @@
+{
+  "name": "@mcp/data-manager",
+  "version": "1.0.0",
+  "description": "Data manager for MCP applications",
+  "main": "index.js",
+  "type": "commonjs",
+  "scripts": {
+    "test": "mocha tests/**/*.test.js"
+  },
+  "keywords": [
+    "mcp",
+    "data-management",
+    "model-context-protocol"
+  ],
+  "author": "MCP Team",
+  "license": "MIT",
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "dependencies": {
+    "@mcp/core-json-utils": "file:../../core/json-utils",
+    "fs-extra": "^11.1.0"
+  },
+  "devDependencies": {
+    "chai": "^4.3.7",
+    "mocha": "^10.2.0",
+    "sinon": "^15.0.1"
+  }
+}
