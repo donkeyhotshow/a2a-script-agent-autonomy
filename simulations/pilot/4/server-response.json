@@ -1,0 +1,21 @@
+{
+  "success": false,
+  "data": {
+    "id": "req_1772002977295_0pvbhtgw7",
+    "promiseId": "cmm1otjww0003y1d5nbtl90g2",
+    "clientId": "simulation-client",
+    "status": "processing",
+    "priority": 0,
+    "context": {
+      "version": "1.0",
+      "session_id": "stateless"
+    },
+    "message": "исправить импорты в vue компонентах",
+    "codeBlocks": null,
+    "result": null,
+    "error": null,
+    "createdAt": "2026-02-25T07:02:57.296Z",
+    "startedAt": "2026-02-25T07:03:01.495Z",
+    "completedAt": null
+  }
+}

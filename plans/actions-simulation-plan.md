@@ -6,11 +6,13 @@
 1. Брати `request.json` з папки симуляції
 2. Відправляти на сервер
 3. Зберігати відповідь у `server-response.json` 
-4. Порівнювати з `response.json` (еталон)
+4. Порівнювати з `response.json` (**Еталон вимог - створений вручну**)
 
 ## Референс: simulations/pilot
 
-Приклад: [`simulations/pilot/1/request.json`](simulations/pilot/1/request.json)
+**ВНИМАНИЕ:** Все response.json в simulations/pilot/ - это ЭТАЛОНЫ (созданы вручную, целевое поведение системы).
+
+Пример: [`simulations/pilot/1/request.json`](simulations/pilot/1/request.json)
 
 ```
 simulations/pilot/1/request.json  →  Сервер  →  simulations/pilot/1/server-response.json
@@ -95,8 +97,8 @@ simulations/fix-vue-imports/
 ├── analysis.md              # Опис що тестуємо, очікувані результати
 ├── 1/
 │   ├── request.json         # task_request
-│   ├── response.json        # ОЧІКУВАНА відповідь сервера (еталон)
-│   └── server-response.json # РЕАЛЬНА відповідь сервера (буде оновлюватись)
+│   ├── response.json        # **Еталон вимог** (цільова поведінка)
+│   └── server-response.json # Реальна відповідь сервера
 ├── 2/
 │   ├── request.json         # approve_action
 │   ├── response.json

@@ -1,9 +1,0 @@
-{
-    "name": "Questions To User",
-    "description": "Module to display questions based on JSON actions (v1)",
-    "version": "0.1.0-v1",
-    "author": "AI Assistant & User",
-    "dependencies": {
-        "framework": "^1.0.0"
-    }
-} 

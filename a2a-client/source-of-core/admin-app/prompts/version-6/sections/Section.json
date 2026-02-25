@@ -1,7 +1,0 @@
-{
-  "type": "Section",
-  "name": "footerSection",
-  "children": [
-    { "type": "Button", "name": "logout", "label": "Logout", "props": { "variant": "secondary" } }
-  ]
-} 

@@ -220,3 +220,50 @@ web/
 | action_executing | default | #3b82f6 (blue) |
 | step_result | default | #6b7280 (gray) |
 | action_complete | output | #22c55e (green) |
+
+## Интеграция с Legacy admin-app
+
+### Что берем из admin-app:
+1. **JSON Schema подход** - компоненты описываются JSON
+2. **Валидация** - модуль ModuleValidation
+3. **Структура данных** - modules, components, validations
+
+### admin-app файлы для референса:
+- `admin-app/docs/ui/json-template-schema.md` - JSON схема UI
+- `admin-app/implement-modules/` - примеры модулей
+- `admin-app/docs/ui/core-concepts/` - концепции компонентов
+
+### Маппинг: admin-app → VueFlow
+
+```
+admin-app JSON                    VueFlow
+────────────────                  ───────
+modules[].components[]     →      CustomNode
+modules[].validations[]    →      Node Validation
+modules[].actions[]       →      Edge (connection)
+```
+
+## Интеграция с существующими пакетами a2a-client
+
+### Подключаемые пакеты:
+- `packages/api-client/` - коммуникация с сервером
+- `packages/fs-utils/` - файловые операции
+- `packages/rag/` - поиск и индексация
+- `packages/script-runner/` - выполнение скриптов
+
+### a2a-client структура:
+```
+a2a-client/
+├── packages/
+│   ├── api-client/src/index.ts   # HTTP клиент
+│   ├── fs-utils/                # Файловые утилиты
+│   └── rag/                     # RAG для поиска
+└── web/                         # VueFlow интерфейс
+```
+
+## Что еще нужно сделать:
+
+1. **Реализовать VueFlow компонент** - создать реальный код
+2. **Интегрировать с api-client** - подключить к серверу
+3. **Создать кастомные ноды** - для каждого типа экшенов
+4. **Запустить симуляции** - проверить протокол

@@ -48,6 +48,13 @@ const Sessions = {
     // Action buttons
     document.getElementById('action-run')?.addEventListener('click', () => this.runAction());
     document.getElementById('action-cancel')?.addEventListener('click', () => this.cancelAction());
+    
+    // Flow controls
+    document.getElementById('showFlow')?.addEventListener('click', () => this.showFlow());
+    document.getElementById('flowZoomIn')?.addEventListener('click', () => window.zoomIn?.());
+    document.getElementById('flowZoomOut')?.addEventListener('click', () => window.zoomOut?.());
+    document.getElementById('flowFitView')?.addEventListener('click', () => window.fitView?.());
+    document.getElementById('flowClose')?.addEventListener('click', () => this.hideFlow());
   },
 
   setProject(id, path) {
@@ -974,6 +981,35 @@ const Sessions = {
       isRunning: false,
     };
     this.hideActionProgress();
+  },
+
+  // Show protocol flow
+  showFlow() {
+    const flowContainer = document.getElementById('flow-container');
+    if (flowContainer) {
+      flowContainer.style.display = 'flex';
+      flowContainer.classList.add('active');
+      // Initialize flow if not done
+      if (window.initFlow) {
+        window.initFlow();
+        // Load current context
+        if (this.state.messages.length > 0) {
+          const contextBlocks = this.state.messages
+            .filter(m => m.contextBlock)
+            .map(m => m.contextBlock);
+          window.loadContext?.(contextBlocks);
+        }
+      }
+    }
+  },
+
+  // Hide protocol flow
+  hideFlow() {
+    const flowContainer = document.getElementById('flow-container');
+    if (flowContainer) {
+      flowContainer.style.display = 'none';
+      flowContainer.classList.remove('active');
+    }
   },
 };
 

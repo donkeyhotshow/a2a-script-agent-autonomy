@@ -1,1 +1,0 @@
-{"title":"Laravel Framework","content":"Laravel is a web application framework with expressive, elegant syntax.","metadata":{"category":"framework"}}

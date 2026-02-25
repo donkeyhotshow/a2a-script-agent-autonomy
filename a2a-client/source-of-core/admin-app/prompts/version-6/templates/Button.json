@@ -1,8 +1,0 @@
-{
-  "type": "Button",
-  "name": "submit",
-  "label": "Submit",
-  "props": {
-    "variant": "primary"
-  }
-} 

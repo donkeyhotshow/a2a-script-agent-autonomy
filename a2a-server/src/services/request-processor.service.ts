@@ -110,9 +110,34 @@ interface ProcessResult {
 }
 
 function parseTaskText(ctx: Record<string, unknown>): string {
+  // Check task (top-level field - PRIMARY for simulations)
+  const task = ctx['task'];
+  if (task) {
+    if (Array.isArray(task)) return task.join(' ');
+    if (typeof task === 'string') return task;
+  }
+  
+  // Check new_task (standard field)
   const nt = ctx['new_task'];
-  if (Array.isArray(nt)) return nt.join(' ');
-  if (typeof nt === 'string') return nt;
+  if (nt) {
+    if (Array.isArray(nt)) return nt.join(' ');
+    if (typeof nt === 'string') return nt;
+  }
+  
+  // Check message (from invoke)
+  const msg = ctx['message'];
+  if (msg) {
+    if (Array.isArray(msg)) return msg.join(' ');
+    if (typeof msg === 'string') return msg;
+  }
+  
+  // Check context.task (nested context)
+  const nestedCtx = ctx['context'] as Record<string, unknown> | undefined;
+  if (nestedCtx?.['task']) {
+    if (Array.isArray(nestedCtx['task'])) return (nestedCtx['task'] as string[]).join(' ');
+    if (typeof nestedCtx['task'] === 'string') return nestedCtx['task'] as string;
+  }
+  
   return '';
 }
 
@@ -169,8 +194,13 @@ export async function processOneRequest(): Promise<ProcessResult | null> {
   const request = await requestService.getNextPending();
   if (!request) return null;
 
-  const { promiseId, context, codeBlocks } = request;
+  const { promiseId, context, codeBlocks, message } = request;
   const ctx = (context as Record<string, unknown>) ?? {};
+  
+  // Add message to context if provided
+  if (message) {
+    ctx['message'] = message;
+  }
 
   try {
     // ========================================

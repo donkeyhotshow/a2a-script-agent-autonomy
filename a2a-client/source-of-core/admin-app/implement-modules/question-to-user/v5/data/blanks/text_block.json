@@ -1,7 +1,0 @@
-{
-    "type": "div",
-    "props": {
-        "content": "Default text content",
-        "class": "mb-2"
-    }
-} 

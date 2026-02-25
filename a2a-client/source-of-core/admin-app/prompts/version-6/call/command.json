@@ -1,9 +1,0 @@
-{
-    "type": "Instructions",
-    "instructions": [
-        {
-            "action": "call",
-            "from": "commands/doSomething"
-        }
-    ]
-} 

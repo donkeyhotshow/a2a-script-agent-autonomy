@@ -1,7 +1,0 @@
-{
-    "type": "div",
-    "props": {
-        "class": "mb-3 p-3 bg-gray-50 border-l-4 border-blue-500 rounded",
-        "content": "Default question text"
-    }
-} 

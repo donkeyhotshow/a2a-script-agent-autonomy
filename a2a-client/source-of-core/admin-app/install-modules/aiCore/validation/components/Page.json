@@ -1,8 +1,0 @@
-{
-    "description":"Page component",
-    "version":"1.0.0",
-    "nestedValidation":{
-        "structure":{
-            "type":{
-                "type":"string","required":true},
-                "props":{"type":"object","required":false,"nestedValidation":{"structure":{"title":{"type":"string","required":true}}}},"children":{"type":"array","required":false,"nestedValidation":{"itemStructure":{"_allowAnyObject":true,"_allowString":true}}}}}}
