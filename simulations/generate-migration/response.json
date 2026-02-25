@@ -1,0 +1,136 @@
+{
+  "success": true,
+  "data": {
+    "id": "req_generate_migration_001",
+    "promiseId": "cmm1qf1t9000066n5jv10n4c7",
+    "clientId": "simulation-client",
+    "status": "completed",
+    "priority": 0,
+    "context": {
+      "task": "создать миграцию для таблицы users",
+      "action": "task_request",
+      "version": "1.0",
+      "session_id": "stateless"
+    },
+    "message": "создать миграцию для таблицы users",
+    "codeBlocks": null,
+    "result": {
+      "context": {
+        "tasks": [
+          {
+            "id": "generate-migration-users",
+            "type": "generate",
+            "status": "in_progress",
+            "progress": 0
+          }
+        ],
+        "version": "1.0",
+        "session_id": "stateless"
+      },
+      "outcome": "completed",
+      "fallbackActions": [
+        {
+          "mode": "auto-ai",
+          "title": "AI Action Generator",
+          "description": "Сгенерировать новый экшен с помощью LLM",
+          "fallbackType": "llm_generation"
+        },
+        {
+          "mode": "task-decomposition",
+          "title": "Декомпозиция задачи",
+          "description": "Разбить задачу на подзадачи вручную",
+          "fallbackType": "manual"
+        }
+      ],
+      "proposedActions": [
+        {
+          "title": "Генерация миграции для таблицы users — создание полной структуры таблицы с стандартными полями",
+          "actionId": "generate-migration",
+          "priority": 10,
+          "matchScore": 2.9,
+          "subActions": [
+            {
+              "title": "Определение структуры таблицы users",
+              "actionId": "define-table-structure",
+              "description": "Определить поля: id, name, email, email_verified_at, password, remember_token, timestamps",
+              "priority": 10,
+              "input": "none",
+              "output": "table_structure"
+            },
+            {
+              "title": "Создание файла миграции",
+              "actionId": "create-migration-file",
+              "description": "Создать файл миграции в database/migrations/",
+              "priority": 9,
+              "input": "table_structure",
+              "output": "migration_path"
+            },
+            {
+              "title": "Добавление индексов для оптимизации",
+              "actionId": "add-indexes",
+              "description": "Добавить уникальный индекс для email, индексы для frequently queried полей",
+              "priority": 8,
+              "input": "migration_path",
+              "output": "migration_with_indexes"
+            },
+            {
+              "title": "Добавление внешних ключей",
+              "actionId": "add-foreign-keys",
+              "description": "Добавить foreign key constraints если нужно",
+              "priority": 7,
+              "input": "migration_with_indexes",
+              "output": "final_migration"
+            }
+          ],
+          "description": "Генерация миграции для создания таблицы users со стандартными полями Laravel: id, name, email, password, timestamps."
+        },
+        {
+          "title": "Генерация миграции только с базовыми полями",
+          "actionId": "generate-basic-migration",
+          "priority": 8,
+          "matchScore": 2.3,
+          "subActions": [
+            {
+              "title": "Создание базовой миграции",
+              "actionId": "create-basic-migration",
+              "description": "Создать миграцию только с id, name, email, timestamps",
+              "priority": 8,
+              "input": "none",
+              "output": "basic_migration_path"
+            }
+          ],
+          "description": "Создать миграцию с минимальным набором полей без дополнительных индексов."
+        },
+        {
+          "title": "Генерация миграции для модификации существующей таблицы users",
+          "actionId": "generate-alter-migration",
+          "priority": 7,
+          "matchScore": 1.8,
+          "subActions": [
+            {
+              "title": "Анализ существующей структуры",
+              "actionId": "analyze-existing-structure",
+              "description": "Проверить существующую структуру таблицы users",
+              "priority": 8,
+              "input": "none",
+              "output": "current_structure"
+            },
+            {
+              "title": "Создание миграции ALTER",
+              "actionId": "create-alter-migration",
+              "description": "Создать миграцию для добавления/изменения полей",
+              "priority": 7,
+              "input": "current_structure",
+              "output": "alter_migration_path"
+            }
+          ],
+          "description": "Создать миграцию для модификации уже существующей таблицы users."
+        }
+      ]
+    },
+    "error": null,
+    "createdAt": "2026-02-25T08:48:00.000Z",
+    "startedAt": "2026-02-25T08:48:01.000Z",
+    "completedAt": "2026-02-25T08:48:02.000Z"
+  }
+}

@@ -1,0 +1,116 @@
+{
+  "success": true,
+  "data": {
+    "id": "req_graph_build_001",
+    "promiseId": "cmm1qf1t9000066n5jv10n4c4",
+    "clientId": "simulation-client",
+    "status": "completed",
+    "priority": 0,
+    "context": {
+      "task": "построить граф зависимостей для проекта",
+      "action": "task_request",
+      "version": "1.0",
+      "session_id": "stateless"
+    },
+    "message": "построить граф зависимостей для проекта",
+    "codeBlocks": null,
+    "result": {
+      "context": {
+        "tasks": [
+          {
+            "id": "graph-build",
+            "type": "graph",
+            "status": "in_progress",
+            "progress": 0
+          }
+        ],
+        "version": "1.0",
+        "session_id": "stateless"
+      },
+      "outcome": "completed",
+      "fallbackActions": [
+        {
+          "mode": "auto-ai",
+          "title": "AI Action Generator",
+          "description": "Сгенерировать новый экшен с помощью LLM",
+          "fallbackType": "llm_generation"
+        },
+        {
+          "mode": "task-decomposition",
+          "title": "Декомпозиция задачи",
+          "description": "Разбить задачу на подзадачи вручную",
+          "fallbackType": "manual"
+        }
+      ],
+      "proposedActions": [
+        {
+          "title": "Построение графа зависимостей — сканирование файлов, извлечение сущностей и построение связей между модулями",
+          "actionId": "graph-build",
+          "priority": 10,
+          "matchScore": 3.0,
+          "subActions": [
+            {
+              "title": "Сканирование файлов проекта — определение всех исходных файлов и их типов",
+              "actionId": "scan-files"
+            },
+            {
+              "title": "Извлечение сущностей — парсинг файлов для выделения классов, интерфейсов, функций и их зависимостей",
+              "actionId": "extract-entities"
+            },
+            {
+              "title": "Построение связей — создание графа на основе импортов, экспортов и ссылок между сущностями",
+              "actionId": "build-relations"
+            },
+            {
+              "title": "Сохранение графа — сериализация графа в формат для последующих запросов",
+              "actionId": "save-graph"
+            }
+          ],
+          "description": "Построение графа зависимостей: сканирование всех файлов проекта, извлечение сущностей (классы, интерфейсы, функции), построение связей на основе импортов/экспортов."
+        },
+        {
+          "title": "Инкрементальное обновление графа — добавление новых файлов без полного перестроения",
+          "actionId": "graph-update",
+          "priority": 8,
+          "matchScore": 2.1,
+          "subActions": [
+            {
+              "title": "Определение изменённых файлов",
+              "actionId": "detect-changes"
+            },
+            {
+              "title": "Обновление затронутых узлов",
+              "actionId": "update-nodes"
+            },
+            {
+              "title": "Пересчёт затронутых связей",
+              "actionId": "rebuild-edges"
+            }
+          ],
+          "description": "Инкрементальное обновление графа при изменении файлов."
+        },
+        {
+          "title": "Визуализация графа зависимостей — создание визуального представления связей",
+          "actionId": "graph-visualize",
+          "priority": 6,
+          "matchScore": 1.5,
+          "subActions": [
+            {
+              "title": "Генерация данных для визуализации",
+              "actionId": "generate-viz-data"
+            },
+            {
+              "title": "Создание диаграммы связей",
+              "actionId": "create-diagram"
+            }
+          ],
+          "description": "Визуализация построенного графа зависимостей."
+        }
+      ]
+    },
+    "error": null,
+    "createdAt": "2026-02-25T08:45:00.000Z",
+    "startedAt": "2026-02-25T08:45:01.000Z",
+    "completedAt": "2026-02-25T08:45:02.000Z"
+  }
+}

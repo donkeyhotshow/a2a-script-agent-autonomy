@@ -2,6 +2,9 @@
 
 // Protocol types based on a2a-codebase-agen-v1.md
 
+// Re-export Unified JSON types
+export * from './unified.js';
+
 // ============================================
 // Context Block Types
 // ============================================

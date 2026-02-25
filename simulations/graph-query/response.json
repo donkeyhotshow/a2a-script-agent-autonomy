@@ -1,0 +1,112 @@
+{
+  "success": true,
+  "data": {
+    "id": "req_graph_query_001",
+    "promiseId": "cmm1qf1t9000066n5jv10n4c5",
+    "clientId": "simulation-client",
+    "status": "completed",
+    "priority": 0,
+    "context": {
+      "task": "найти все файлы которые используют модель User",
+      "action": "task_request",
+      "version": "1.0",
+      "session_id": "stateless"
+    },
+    "message": "найти все файлы которые используют модель User",
+    "codeBlocks": null,
+    "result": {
+      "context": {
+        "tasks": [
+          {
+            "id": "graph-query",
+            "type": "graph",
+            "status": "in_progress",
+            "progress": 0
+          }
+        ],
+        "version": "1.0",
+        "session_id": "stateless"
+      },
+      "outcome": "completed",
+      "fallbackActions": [
+        {
+          "mode": "auto-ai",
+          "title": "AI Action Generator",
+          "description": "Сгенерировать новый экшен с помощью LLM",
+          "fallbackType": "llm_generation"
+        },
+        {
+          "mode": "task-decomposition",
+          "title": "Декомпозиция задачи",
+          "description": "Разбить задачу на подзадачи вручную",
+          "fallbackType": "manual"
+        }
+      ],
+      "proposedActions": [
+        {
+          "title": "Запрос к графу — поиск всех использований модели User",
+          "actionId": "graph-query",
+          "priority": 10,
+          "matchScore": 3.0,
+          "subActions": [
+            {
+              "title": "Поиск сущности User в графе — определение узла модели",
+              "actionId": "find-entity"
+            },
+            {
+              "title": "Запрос к графу — выполнение запроса на поиск всех связей",
+              "actionId": "query-graph"
+            },
+            {
+              "title": "Фильтрация результатов — исключение тестов и node_modules",
+              "actionId": "filter-results"
+            },
+            {
+              "title": "Формирование списка файлов — подготовка итогового отчёта",
+              "actionId": "format-output"
+            }
+          ],
+          "description": "Запрос к графу зависимостей: найти все файлы, которые используют модель User, включая импорты, наследование и агрегацию."
+        },
+        {
+          "title": "Поиск прямых зависимостей — только ближайшие связи",
+          "actionId": "graph-query-direct",
+          "priority": 8,
+          "matchScore": 2.3,
+          "subActions": [
+            {
+              "title": "Поиск узла User",
+              "actionId": "find-entity"
+            },
+            {
+              "title": "Получение только прямых связей (depth=1)",
+              "actionId": "get-direct-relations"
+            }
+          ],
+          "description": "Поиск только прямых зависимостей без рекурсивного обхода."
+        },
+        {
+          "title": "Поиск с учётом типов связей — фильтрация по типу зависимости",
+          "actionId": "graph-query-typed",
+          "priority": 7,
+          "matchScore": 1.9,
+          "subActions": [
+            {
+              "title": "Определение типов связей для поиска",
+              "actionId": "define-relation-types"
+            },
+            {
+              "title": "Выполнение типизированного запроса",
+              "actionId": "typed-query"
+            }
+          ],
+          "description": "Поиск с фильтрацией по типам связей: imports, extends, implements, calls."
+        }
+      ]
+    },
+    "error": null,
+    "createdAt": "2026-02-25T08:50:00.000Z",
+    "startedAt": "2026-02-25T08:50:01.000Z",
+    "completedAt": "2026-02-25T08:50:02.000Z"
+  }
+}

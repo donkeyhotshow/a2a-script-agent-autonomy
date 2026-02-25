@@ -254,75 +254,83 @@ a2a-client/
 ### Список half-finished документов
 
 #### Root уровень (1 документ)
-| Файл | Описание | SubActions | Статус |
-|------|----------|------------|--------|
-| dialog.md | AI диалог с управлением тулзами | 5 | Имеет структуру, но не реализовано |
+
+| # | Файл | Путь | Описание | SubActions |
+|---|------|------|----------|------------|
+| 1 | dialog.md | `a2a-server/src/actions/definitions/dialog.md` | AI диалог с управлением тулзами | 5 |
 
 #### analysis/ (9 документов)
-| Файл | Описание | SubActions | Статус |
-|------|----------|------------|--------|
-| analyze-architecture.md | Анализ архитектуры | 2 | Пустые заглушки |
-| analyze-full.md | Полный анализ | 5 | Пустые заглушки |
-| analyze-laravel.md | Анализ Laravel | 2 | Пустые заглушки |
-| analyze-performance.md | Анализ производительности | 3 | Частично (есть комментарии) |
-| analyze-security.md | Анализ безопасности | 2 | Пустые заглушки |
-| analyze-test.md | Анализ тестов | 2 | Пустые заглушки |
-| analyze-typescript.md | Анализ TypeScript | 2 | Пустые заглушки |
-| analyze-vue.md | Анализ Vue | 2 | Пустые заглушки |
+
+| # | Файл | Путь | Описание | SubActions |
+|---|------|------|----------|------------|
+| 2 | analyze-architecture.md | `a2a-server/src/actions/definitions/analysis/analyze-architecture.md` | Анализ архитектуры | 2 |
+| 3 | analyze-full.md | `a2a-server/src/actions/definitions/analysis/analyze-full.md` | Полный анализ | 5 |
+| 4 | analyze-laravel.md | `a2a-server/src/actions/definitions/analysis/analyze-laravel.md` | Анализ Laravel | 2 |
+| 5 | analyze-performance.md | `a2a-server/src/actions/definitions/analysis/analyze-performance.md` | Анализ производительности | 3 |
+| 6 | analyze-security.md | `a2a-server/src/actions/definitions/analysis/analyze-security.md` | Анализ безопасности | 2 |
+| 7 | analyze-test.md | `a2a-server/src/actions/definitions/analysis/analyze-test.md` | Анализ тестов | 2 |
+| 8 | analyze-typescript.md | `a2a-server/src/actions/definitions/analysis/analyze-typescript.md` | Анализ TypeScript | 2 |
+| 9 | analyze-vue.md | `a2a-server/src/actions/definitions/analysis/analyze-vue.md` | Анализ Vue | 2 |
 
 #### context/ (5 документов)
-| Файл | Описание | SubActions | Статус |
-|------|----------|------------|--------|
-| context-format.md | Форматирование контекста | 2 | Пустые заглушки |
-| context-index.md | Построение индекса | 2 | Пустые заглушки |
-| context-query.md | Семантический поиск | 3 | Частично (step 1 имеет логику) |
-| context-rank.md | Ранжирование | 2 | Пустые заглушки |
-| context-scan.md | Сканирование контекста | 2 | Пустые заглушки |
+
+| # | Файл | Путь | Описание | SubActions |
+|---|------|------|----------|------------|
+| 10 | context-format.md | `a2a-server/src/actions/definitions/context/context-format.md` | Форматирование контекста | 2 |
+| 11 | context-index.md | `a2a-server/src/actions/definitions/context/context-index.md` | Построение индекса | 2 |
+| 12 | context-query.md | `a2a-server/src/actions/definitions/context/context-query.md` | Семантический поиск | 3 |
+| 13 | context-rank.md | `a2a-server/src/actions/definitions/context/context-rank.md` | Ранжирование | 2 |
+| 14 | context-scan.md | `a2a-server/src/actions/definitions/context/context-scan.md` | Сканирование контекста | 2 |
 
 #### fallback/ (3 документа)
-| Файл | Описание | SubActions | Статус |
-|------|----------|------------|--------|
-| ai-analyze.md | AI анализ | 3 | Пустые заглушки |
-| ai-fallback.md | Generic LLM обработка | 3 | Пустые заглушки |
-| ai-generate.md | AI генерация | 3 | Пустые заглушки |
+
+| # | Файл | Путь | Описание | SubActions |
+|---|------|------|----------|------------|
+| 15 | ai-analyze.md | `a2a-server/src/actions/definitions/fallback/ai-analyze.md` | AI анализ | 3 |
+| 16 | ai-fallback.md | `a2a-server/src/actions/definitions/fallback/ai-fallback.md` | Generic LLM обработка | 3 |
+| 17 | ai-generate.md | `a2a-server/src/actions/definitions/fallback/ai-generate.md` | AI генерация | 3 |
 
 #### generation/ (7 документов)
-| Файл | Описание | SubActions | Статус |
-|------|----------|------------|--------|
-| generate-controller.md | Генерация контроллера | 2 | Пустые заглушки |
-| generate-crud.md | Генерация CRUD | 6 | Пустые заглушки |
-| generate-method.md | Генерация метода | 3 | Пустые заглушки |
-| generate-migration.md | Генерация миграции | 2 | Пустые заглушки |
-| generate-model.md | Генерация модели | 2 | Пустые заглушки |
-| generate-test.md | Генерация тестов | 2 | Пустые заглушки |
-| generate-view.md | Генерация представления | 2 | Пустые заглушки |
+
+| # | Файл | Путь | Описание | SubActions |
+|---|------|------|----------|------------|
+| 18 | generate-controller.md | `a2a-server/src/actions/definitions/generation/generate-controller.md` | Генерация контроллера | 2 |
+| 19 | generate-crud.md | `a2a-server/src/actions/definitions/generation/generate-crud.md` | Генерация CRUD | 6 |
+| 20 | generate-method.md | `a2a-server/src/actions/definitions/generation/generate-method.md` | Генерация метода | 3 |
+| 21 | generate-migration.md | `a2a-server/src/actions/definitions/generation/generate-migration.md` | Генерация миграции | 2 |
+| 22 | generate-model.md | `a2a-server/src/actions/definitions/generation/generate-model.md` | Генерация модели | 2 |
+| 23 | generate-test.md | `a2a-server/src/actions/definitions/generation/generate-test.md` | Генерация тестов | 2 |
+| 24 | generate-view.md | `a2a-server/src/actions/definitions/generation/generate-view.md` | Генерация представления | 2 |
 
 #### graph/ (6 документов)
-| Файл | Описание | SubActions | Статус |
-|------|----------|------------|--------|
-| graph-build.md | Построение графа | 4 | Пустые заглушки |
-| graph-extract-entities.md | Извлечение сущностей | 1 | Пустая заглушка |
-| graph-extract-relations.md | Извлечение связей | 1 | Пустая заглушка |
-| graph-impact.md | Анализ влияния | 2 | Пустые заглушки |
-| graph-query.md | Запрос к графу | 2 | Пустые заглушки |
-| graph-visualize.md | Визуализация графа | 1 | Пустая заглушка |
+
+| # | Файл | Путь | Описание | SubActions |
+|---|------|------|----------|------------|
+| 25 | graph-build.md | `a2a-server/src/actions/definitions/graph/graph-build.md` | Построение графа | 4 |
+| 26 | graph-extract-entities.md | `a2a-server/src/actions/definitions/graph/graph-extract-entities.md` | Извлечение сущностей | 1 |
+| 27 | graph-extract-relations.md | `a2a-server/src/actions/definitions/graph/graph-extract-relations.md` | Извлечение связей | 1 |
+| 28 | graph-impact.md | `a2a-server/src/actions/definitions/graph/graph-impact.md` | Анализ влияния | 2 |
+| 29 | graph-query.md | `a2a-server/src/actions/definitions/graph/graph-query.md` | Запрос к графу | 2 |
+| 30 | graph-visualize.md | `a2a-server/src/actions/definitions/graph/graph-visualize.md` | Визуализация графа | 1 |
 
 #### hybrid/ (4 документа)
-| Файл | Описание | SubActions | Статус |
-|------|----------|------------|--------|
-| hybrid-explain.md | AI объяснение | 2 | Пустые заглушки |
-| hybrid-fix.md | Гибридное исправление | 8 | Пустые заглушки |
-| hybrid-improve.md | Улучшение кода | 2 | Пустые заглушки |
-| hybrid-refactor.md | Гибридный рефакторинг | 2 | Пустые заглушки |
+
+| # | Файл | Путь | Описание | SubActions |
+|---|------|------|----------|------------|
+| 31 | hybrid-explain.md | `a2a-server/src/actions/definitions/hybrid/hybrid-explain.md` | AI объяснение | 2 |
+| 32 | hybrid-fix.md | `a2a-server/src/actions/definitions/hybrid/hybrid-fix.md` | Гибридное исправление | 8 |
+| 33 | hybrid-improve.md | `a2a-server/src/actions/definitions/hybrid/hybrid-improve.md` | Улучшение кода | 2 |
+| 34 | hybrid-refactor.md | `a2a-server/src/actions/definitions/hybrid/hybrid-refactor.md` | Гибридный рефакторинг | 2 |
 
 #### fix-vue-imports variants (3 документа)
-| Файл | Описание | SubActions | Статус |
-|------|----------|------------|--------|
-| fix-vue-imports-alternatives.md | Альтернативные пути | 3 | Пустые заглушки |
-| fix-vue-imports-batch.md | Пакетная обработка | 4 | Пустые заглушки |
-| fix-vue-imports-improvements.md | Улучшения импортов | 2 | Пустые заглушки |
 
-### Итого: 33 half-finished документа
+| # | Файл | Путь | Описание | SubActions |
+|---|------|------|----------|------------|
+| 35 | fix-vue-imports-alternatives.md | `a2a-server/src/actions/definitions/fix-vue-imports-alternatives.md` | Альтернативные пути | 3 |
+| 36 | fix-vue-imports-batch.md | `a2a-server/src/actions/definitions/fix-vue-imports-batch.md` | Пакетная обработка | 4 |
+| 37 | fix-vue-imports-improvements.md | `a2a-server/src/actions/definitions/fix-vue-imports-improvements.md` | Улучшения импортов | 2 |
+
+### Итого: 37 half-finished документа
 
 ### Приоритеты доработки
 

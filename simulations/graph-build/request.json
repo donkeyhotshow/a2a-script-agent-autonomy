@@ -1,0 +1,9 @@
+{
+  "action": "task_request",
+  "task": "построить граф зависимостей для проекта",
+  "options": {
+    "includeNodeModules": false,
+    "includeTests": true,
+    "maxDepth": 15
+  }
+}

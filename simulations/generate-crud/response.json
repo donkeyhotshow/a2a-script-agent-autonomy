@@ -1,0 +1,110 @@
+{
+  "success": true,
+  "data": {
+    "id": "req_generate_crud_001",
+    "promiseId": "cmm1qf1t9000066n5jv10n4c4",
+    "clientId": "simulation-client",
+    "status": "completed",
+    "priority": 0,
+    "context": {
+      "task": "сгенерировать CRUD для сущности User",
+      "action": "task_request",
+      "version": "1.0",
+      "session_id": "stateless"
+    },
+    "message": "сгенерировать CRUD для сущности User",
+    "codeBlocks": null,
+    "result": {
+      "context": {
+        "tasks": [
+          {
+            "id": "generate-crud-user",
+            "type": "generate",
+            "status": "in_progress",
+            "progress": 0
+          }
+        ],
+        "version": "1.0",
+        "session_id": "stateless"
+      },
+      "outcome": "completed",
+      "fallbackActions": [
+        {
+          "mode": "auto-ai",
+          "title": "AI Action Generator",
+          "description": "Сгенерировать новый экшен с помощью LLM",
+          "fallbackType": "llm_generation"
+        },
+        {
+          "mode": "task-decomposition",
+          "title": "Декомпозиция задачи",
+          "description": "Разбить задачу на подзадачи вручную",
+          "fallbackType": "manual"
+        }
+      ],
+      "proposedActions": [
+        {
+          "title": "Генерация полного CRUD для сущности User — модель, контроллер, миграция и маршруты",
+          "actionId": "generate-crud",
+          "priority": 10,
+          "matchScore": 2.9,
+          "subActions": [
+            {
+              "title": "Создание модели User",
+              "actionId": "generate-model",
+              "description": "Создать модель User с полями: id, name, email, password, timestamps",
+              "priority": 10,
+              "input": "none",
+              "output": "model_path"
+            },
+            {
+              "title": "Создание миграции для таблицы users",
+              "actionId": "generate-migration",
+              "description": "Создать миграцию для создания таблицы users с необходимыми полями",
+              "priority": 9,
+              "input": "none",
+              "output": "migration_path"
+            },
+            {
+              "title": "Создание контроллера UserController",
+              "actionId": "generate-controller",
+              "description": "Создать контроллер с методами: index, show, store, update, destroy",
+              "priority": 8,
+              "input": "none",
+              "output": "controller_path"
+            },
+            {
+              "title": "Создание маршрутов для CRUD операций",
+              "actionId": "generate-routes",
+              "description": "Добавить маршруты для всех CRUD операций в роутере",
+              "priority": 7,
+              "input": "none",
+              "output": "routes_path"
+            },
+            {
+              "title": "Создание request-валидаторов",
+              "actionId": "generate-requests",
+              "description": "Создать request классы для валидации входящих данных",
+              "priority": 6,
+              "input": "none",
+              "output": "requests_paths"
+            },
+            {
+              "title": "Создание ресурсного класса (API Resource)",
+              "actionId": "generate-resource",
+              "description": "Создать API Resource для преобразования ответов",
+              "priority": 5,
+              "input": "none",
+              "output": "resource_path"
+            }
+          ],
+          "description": "Полная генерация CRUD для сущности User: модель, контроллер, миграция, маршруты, валидаторы и ресурсы."
+        }
+      ]
+    },
+    "error": null,
+    "createdAt": "2026-02-25T08:45:00.000Z",
+    "startedAt": "2026-02-25T08:45:01.000Z",
+    "completedAt": "2026-02-25T08:45:02.000Z"
+  }
+}

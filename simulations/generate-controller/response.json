@@ -1,0 +1,119 @@
+{
+  "success": true,
+  "data": {
+    "id": "req_generate_controller_001",
+    "promiseId": "cmm1qf1t9000066n5jv10n4c5",
+    "clientId": "simulation-client",
+    "status": "completed",
+    "priority": 0,
+    "context": {
+      "task": "создать контроллер для управления товарами",
+      "action": "task_request",
+      "version": "1.0",
+      "session_id": "stateless"
+    },
+    "message": "создать контроллер для управления товарами",
+    "codeBlocks": null,
+    "result": {
+      "context": {
+        "tasks": [
+          {
+            "id": "generate-controller-product",
+            "type": "generate",
+            "status": "in_progress",
+            "progress": 0
+          }
+        ],
+        "version": "1.0",
+        "session_id": "stateless"
+      },
+      "outcome": "completed",
+      "fallbackActions": [
+        {
+          "mode": "auto-ai",
+          "title": "AI Action Generator",
+          "description": "Сгенерировать новый экшен с помощью LLM",
+          "fallbackType": "llm_generation"
+        },
+        {
+          "mode": "task-decomposition",
+          "title": "Декомпозиция задачи",
+          "description": "Разбить задачу на подзадачи вручную",
+          "fallbackType": "manual"
+        }
+      ],
+      "proposedActions": [
+        {
+          "title": "Генерация контроллера ProductController — полный набор CRUD методов для управления товарами",
+          "actionId": "generate-controller",
+          "priority": 10,
+          "matchScore": 2.8,
+          "subActions": [
+            {
+              "title": "Анализ существующей модели Product",
+              "actionId": "inspect-model",
+              "description": "Проверить наличие модели Product и её структуры",
+              "priority": 10,
+              "input": "none",
+              "output": "model_info"
+            },
+            {
+              "title": "Создание контроллера ProductController",
+              "actionId": "create-controller",
+              "description": "Создать файл контроллера с методами index, show, store, update, destroy",
+              "priority": 9,
+              "input": "model_info",
+              "output": "controller_path"
+            },
+            {
+              "title": "Добавление методов для работы с категориями товаров",
+              "actionId": "add-category-methods",
+              "description": "Добавить методы для фильтрации и категоризации товаров",
+              "priority": 8,
+              "input": "controller_path",
+              "output": "updated_controller_path"
+            },
+            {
+              "title": "Создание маршрутов для ProductController",
+              "actionId": "generate-routes",
+              "description": "Добавить маршруты RESTful для всех методов контроллера",
+              "priority": 7,
+              "input": "none",
+              "output": "routes_path"
+            }
+          ],
+          "description": "Генерация контроллера ProductController с полным набором CRUD методов для управления товарами в интернет-магазине."
+        },
+        {
+          "title": "Генерация API контроллера для товаров — только JSON методы без представлений",
+          "actionId": "generate-api-controller",
+          "priority": 9,
+          "matchScore": 2.5,
+          "subActions": [
+            {
+              "title": "Создание API контроллера",
+              "actionId": "create-api-controller",
+              "description": "Создать контроллер с JSON ответами для API",
+              "priority": 9,
+              "input": "none",
+              "output": "api_controller_path"
+            },
+            {
+              "title": "Создание API маршрутов",
+              "actionId": "generate-api-routes",
+              "description": "Добавить маршруты для API версии",
+              "priority": 8,
+              "input": "none",
+              "output": "api_routes_path"
+            }
+          ],
+          "description": "Генерация API-ориентированного контроллера только с JSON методами."
+        }
+      ]
+    },
+    "error": null,
+    "createdAt": "2026-02-25T08:46:00.000Z",
+    "startedAt": "2026-02-25T08:46:01.000Z",
+    "completedAt": "2026-02-25T08:46:02.000Z"
+  }
+}

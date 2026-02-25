@@ -1,0 +1,94 @@
+{
+  "success": true,
+  "data": {
+    "id": "req_analyze_laravel_001",
+    "promiseId": "cmm1qf1t9000066n5jv10n4c7",
+    "clientId": "simulation-client",
+    "status": "completed",
+    "priority": 0,
+    "context": {
+      "task": "проанализировать Laravel код",
+      "action": "task_request",
+      "version": "1.0",
+      "session_id": "stateless"
+    },
+    "message": "проанализировать Laravel код",
+    "codeBlocks": null,
+    "result": {
+      "context": {
+        "tasks": [
+          {
+            "id": "analyze-laravel",
+            "type": "analyze",
+            "status": "in_progress",
+            "progress": 0
+          }
+        ],
+        "version": "1.0",
+        "session_id": "stateless"
+      },
+      "outcome": "completed",
+      "fallbackActions": [
+        {
+          "mode": "auto-ai",
+          "title": "AI Action Generator",
+          "description": "Сгенерировать новый экшен с помощью LLM",
+          "fallbackType": "llm_generation"
+        },
+        {
+          "mode": "task-decomposition",
+          "title": "Декомпозиция задачи",
+          "description": "Разбить задачу на подзадачи вручную",
+          "fallbackType": "manual"
+        }
+      ],
+      "proposedActions": [
+        {
+          "title": "Анализ Laravel кода — проверка моделей, контроллеров, миграций, роутов и сервис-провайдеров",
+          "actionId": "analyze-laravel",
+          "priority": 10,
+          "matchScore": 2.8,
+          "subActions": [
+            {
+              "title": "Сканирование PHP файлов — поиск Laravel файлов в проекте",
+              "actionId": "scan-php-files"
+            },
+            {
+              "title": "Анализ моделей — проверка Eloquent моделей, связей и миграций",
+              "actionId": "analyze-models"
+            },
+            {
+              "title": "Анализ контроллеров — проверка методов контроллеров и бизнес-логики",
+              "actionId": "analyze-controllers"
+            },
+            {
+              "title": "Анализ миграций — проверка структуры базы данных и зависимостей миграций",
+              "actionId": "analyze-migrations"
+            },
+            {
+              "title": "Анализ роутов — проверка определения маршрутов и HTTP методов",
+              "actionId": "analyze-routes"
+            },
+            {
+              "title": "Анализ сервис-провайдеров — проверка регистрации сервисов и зависимостей",
+              "actionId": "analyze-providers"
+            },
+            {
+              "title": "Анализ middleware — проверка промежуточного ПО",
+              "actionId": "analyze-middleware"
+            },
+            {
+              "title": "Генерация отчёта по Laravel",
+              "actionId": "generate-laravel-report"
+            }
+          ],
+          "description": "Комплексный анализ Laravel кода: проверка моделей, контроллеров, миграций, роутов, сервис-провайдеров и middleware."
+        }
+      ]
+    },
+    "error": null,
+    "createdAt": "2026-02-25T08:45:00.000Z",
+    "startedAt": "2026-02-25T08:45:01.000Z",
+    "completedAt": "2026-02-25T08:45:02.000Z"
+  }
+}
