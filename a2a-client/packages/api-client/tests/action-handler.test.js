@@ -1,4 +1,4 @@
-const { handleActionResponse, createExecuteCode } = require('../src/action-handler.js');
+const { handleActionResponse, createExecuteCode } = require('../dist/index.js');
 
 describe('action-handler', () => {
   describe('handleActionResponse', () => {
@@ -28,14 +28,21 @@ describe('action-handler', () => {
         context: { session_id: 's1' },
         action: { currentStep: { id: 'step-1', code: 'return 42;' } },
       };
-      const sendContinue = jest.fn().mockResolvedValue({ action: null });
+      let sendContinueCalled = false;
+      const sendContinue = async (sessionId, stepId, result) => {
+        sendContinueCalled = true;
+        expect(sessionId).toBe('s1');
+        expect(stepId).toBe('step-1');
+        expect(result).toEqual({ value: 42 });
+        return { action: null };
+      };
       const r = await handleActionResponse(response, {
         executeCode: async () => ({ value: 42 }),
         sendContinue,
       });
       expect(r.handled).toBe(true);
       expect(r.stepResult).toEqual({ value: 42 });
-      expect(sendContinue).toHaveBeenCalledWith('s1', 'step-1', { value: 42 });
+      expect(sendContinueCalled).toBe(true);
       expect(r.nextResponse).toEqual({ action: null });
     });
 

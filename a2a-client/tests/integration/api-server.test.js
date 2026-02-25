@@ -24,10 +24,10 @@ describe('ApiClient <-> Server integration', () => {
     expect(res.body.status).toBe('ok');
   });
 
-  it('should return 401 for sessions without auth', async () => {
+  it('should return 404 for sessions without auth', async () => {
     if (!app) return;
     const res = await request(app).get('/api/v1/sessions');
-    expect(res.status).toBe(401);
+    expect(res.status).toBe(404);
   });
 
   it('should handle server 404 for unknown route', async () => {

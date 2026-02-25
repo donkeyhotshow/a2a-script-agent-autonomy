@@ -4,7 +4,6 @@
 import { type FileBlockLike } from './protocol';
 import { AsyncApiClient, PromisePoller } from './async-client';
 import { handleActionResponse, createExecuteCode } from './action-handler';
-export type { FileBlockLike };
 export interface ApiClientConfig {
     serverUrl?: string;
     token?: string;
@@ -58,3 +57,4 @@ export declare class ApiClient {
 }
 export { AsyncApiClient, PromisePoller, handleActionResponse, createExecuteCode };
 export type { ExecuteScriptFn } from './action-handler';
+export { buildNewTaskContext, buildContinueContext, buildConfirmContext, buildFileResponseContext, serializeFileBlock, parseFileBlock, parseMessage, type FileBlockLike, } from './protocol';

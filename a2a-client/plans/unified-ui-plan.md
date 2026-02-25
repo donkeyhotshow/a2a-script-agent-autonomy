@@ -221,28 +221,6 @@ web/
 | step_result | default | #6b7280 (gray) |
 | action_complete | output | #22c55e (green) |
 
-## Интеграция с Legacy admin-app
-
-### Что берем из admin-app:
-1. **JSON Schema подход** - компоненты описываются JSON
-2. **Валидация** - модуль ModuleValidation
-3. **Структура данных** - modules, components, validations
-
-### admin-app файлы для референса:
-- `admin-app/docs/ui/json-template-schema.md` - JSON схема UI
-- `admin-app/implement-modules/` - примеры модулей
-- `admin-app/docs/ui/core-concepts/` - концепции компонентов
-
-### Маппинг: admin-app → VueFlow
-
-```
-admin-app JSON                    VueFlow
-────────────────                  ───────
-modules[].components[]     →      CustomNode
-modules[].validations[]    →      Node Validation
-modules[].actions[]       →      Edge (connection)
-```
-
 ## Интеграция с существующими пакетами a2a-client
 
 ### Подключаемые пакеты:

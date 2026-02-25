@@ -1,7 +1,7 @@
 /**
  * ApiClient unit tests
  */
-const { ApiClient, ApiError } = require('../packages/api-client/src/index.js');
+const { ApiClient, ApiError } = require('../packages/api-client/dist/index.js');
 
 describe('ApiClient', () => {
   it('constructs with default serverUrl', () => {

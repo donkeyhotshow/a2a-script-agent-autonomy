@@ -6,7 +6,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.createExecuteCode = exports.handleActionResponse = exports.PromisePoller = exports.AsyncApiClient = exports.ApiClient = exports.ApiError = void 0;
+exports.parseMessage = exports.parseFileBlock = exports.serializeFileBlock = exports.buildFileResponseContext = exports.buildConfirmContext = exports.buildContinueContext = exports.buildNewTaskContext = exports.createExecuteCode = exports.handleActionResponse = exports.PromisePoller = exports.AsyncApiClient = exports.ApiClient = exports.ApiError = void 0;
 const node_fetch_1 = __importDefault(require("node-fetch"));
 const protocol_1 = require("./protocol");
 const async_client_1 = require("./async-client");
@@ -135,3 +135,11 @@ class ApiClient {
     }
 }
 exports.ApiClient = ApiClient;
+var protocol_2 = require("./protocol");
+Object.defineProperty(exports, "buildNewTaskContext", { enumerable: true, get: function () { return protocol_2.buildNewTaskContext; } });
+Object.defineProperty(exports, "buildContinueContext", { enumerable: true, get: function () { return protocol_2.buildContinueContext; } });
+Object.defineProperty(exports, "buildConfirmContext", { enumerable: true, get: function () { return protocol_2.buildConfirmContext; } });
+Object.defineProperty(exports, "buildFileResponseContext", { enumerable: true, get: function () { return protocol_2.buildFileResponseContext; } });
+Object.defineProperty(exports, "serializeFileBlock", { enumerable: true, get: function () { return protocol_2.serializeFileBlock; } });
+Object.defineProperty(exports, "parseFileBlock", { enumerable: true, get: function () { return protocol_2.parseFileBlock; } });
+Object.defineProperty(exports, "parseMessage", { enumerable: true, get: function () { return protocol_2.parseMessage; } });

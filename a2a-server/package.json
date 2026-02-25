@@ -22,7 +22,13 @@
     "export-db": "tsx scripts/export-db.ts",
     "docker:up": "docker-compose up -d",
     "docker:down": "docker-compose down",
-    "docker:logs": "docker-compose logs -f"
+    "docker:logs": "docker-compose logs -f",
+    "sim:create": "tsx scripts/sim-create.ts",
+    "sim:run": "tsx scripts/sim-run.ts",
+    "sim:run-all": "tsx scripts/sim-run.ts --all",
+    "sim:validate": "tsx scripts/sim-validate.ts",
+    "sim:compare": "tsx scripts/sim-compare.ts",
+    "sim:report": "tsx scripts/sim-report.ts"
   },
   "keywords": [
     "a2a",

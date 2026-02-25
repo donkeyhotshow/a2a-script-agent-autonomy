@@ -1,7 +1,7 @@
 /**
  * GlobMatcher unit tests
  */
-const GlobMatcher = require('../dist/glob-matcher');
+const { GlobMatcher } = require('../dist/index');
 
 describe('GlobMatcher', () => {
   describe('simple patterns', () => {

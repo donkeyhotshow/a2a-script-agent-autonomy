@@ -5,7 +5,7 @@ const {
   serializeFileBlock,
   parseFileBlock,
   parseMessage,
-} = require('../src/protocol.js');
+} = require('../dist/index.js');
 
 describe('protocol', () => {
   describe('buildNewTaskContext', () => {

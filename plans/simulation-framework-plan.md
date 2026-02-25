@@ -38,8 +38,6 @@ a2a-server/src/
 
 ```
 a2a-client/
-├── source-of-core/
-│   └── admin-app/           # Legacy проект (референс для UI)
 ├── packages/
 │   ├── api-client/          # Клієнт для сервера
 │   ├── fs-utils/           # Файлові утиліти
@@ -312,18 +310,6 @@ STEP 3-N: step_result (повторюється для кожного sub-action
 }
 ```
 
-### 5.2 Референс з admin-app
-
-Legacy проект `admin-app` використовує:
-- JSON структуру для даних (modules, components)
-- Валідацію через JSON Schema
-- Компонентний підхід з JSON конфігурацією
-
-**Ключові файли для референсу:**
-- `admin-app/@lessons-learned.json` - уроки
-- `admin-app/checklist-map.json` - мапа чеклістів
-- `admin-app/app/Console/Commands/Helpers/ModuleValidate/` - валідація
-
 ### 5.3 Маппінг екшенів на UI компоненти
 
 | Екшен | UI Компонент | JSON Конфіг |
@@ -423,7 +409,6 @@ npm run simulate:compare fix-vue-imports
 - [ ] server-response.json зберігається окремо
 - [ ] Diff показує 100% збіг для готових екшенів
 - [ ] Unified JSON frontend відображає всі компоненти
-- [ ] Legacy admin-app JSON підхід інтегрований
 
 ## 9. Залежності
 
