@@ -81,6 +81,22 @@ async function runSimulation() {
       invokeInput.message = requestData.message;
     }
     
+    // Add action type (task_request, approve_action, step_result)
+    if (requestData.action) {
+      invokeInput.action = requestData.action;
+    }
+    
+    // Add selectedAction for approve_action
+    if (requestData.selectedAction) {
+      invokeInput.selectedAction = requestData.selectedAction;
+    }
+    
+    // Add step result for step_result
+    if (requestData.stepId) {
+      invokeInput.stepId = requestData.stepId;
+      invokeInput.stepResult = requestData.result;
+    }
+    
     const { promiseId } = await invoke('simulation-client', invokeInput);
     
     console.log(`   Promise ID: ${promiseId}`);

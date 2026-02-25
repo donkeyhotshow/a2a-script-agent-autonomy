@@ -1,21 +1,72 @@
 {
-  "success": false,
+  "success": true,
   "data": {
-    "id": "req_1772002915272_zjrptxqy7",
-    "promiseId": "cmm1os8210001y1d50y431k90",
+    "id": "req_1772005715553_obtfeddkr",
+    "promiseId": "cmm1qg8w60000mtx1zn6u29pn",
     "clientId": "simulation-client",
-    "status": "processing",
+    "status": "completed",
     "priority": 0,
     "context": {
+      "action": "approve_action",
       "version": "1.0",
-      "session_id": "stateless"
+      "session_id": "stateless",
+      "selectedAction": {
+        "actionId": "fix-vue-imports"
+      }
     },
-    "message": "исправить импорты в vue компонентах",
+    "message": null,
     "codeBlocks": null,
-    "result": null,
+    "result": {
+      "context": {
+        "version": "1.0",
+        "execution": {
+          "history": [],
+          "actionId": "fix-vue-imports",
+          "currentActionId": "collect"
+        },
+        "session_id": "stateless"
+      },
+      "outcome": "completed",
+      "nextSteps": [
+        {
+          "title": "Find import statements",
+          "actionId": "analyze"
+        },
+        {
+          "title": "Detect broken imports",
+          "actionId": "detect"
+        },
+        {
+          "title": "Generate patches for broken imports",
+          "actionId": "resolve"
+        },
+        {
+          "title": "Apply patches to fix imports",
+          "actionId": "apply"
+        }
+      ],
+      "executingAction": {
+        "dsl": {
+          "input": {
+            "rootDir": "${context.rootDir}",
+            "extensions": [
+              ".vue",
+              ".ts",
+              ".tsx"
+            ]
+          },
+          "script": ""
+        },
+        "title": "Collect Vue and TypeScript files",
+        "actionId": "collect",
+        "priority": 100,
+        "dslScript": "",
+        "description": "Collect Vue and TypeScript files"
+      }
+    },
     "error": null,
-    "createdAt": "2026-02-25T07:01:55.274Z",
-    "startedAt": "2026-02-25T07:01:56.456Z",
-    "completedAt": null
+    "createdAt": "2026-02-25T07:48:35.718Z",
+    "startedAt": "2026-02-25T07:48:37.901Z",
+    "completedAt": "2026-02-25T07:48:37.905Z"
   }
 }

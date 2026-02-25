@@ -16,6 +16,14 @@ export interface ContextBlock {
   request_files?: string[];
   confirm?: boolean;
   errors?: ProtocolError[];
+  /** Task from client (for action processing) */
+  task?: string;
+  /** Execution state for actions */
+  execution?: {
+    actionId: string;
+    currentActionId: string;
+    history: unknown[];
+  };
 }
 
 export interface Task {
@@ -82,6 +90,20 @@ export interface ServerMessage {
       title: string;
     }>;
   };
+  /** Executing action for action_executing response (top-level) */
+  executingAction?: {
+    actionId: string;
+    title: string;
+    description?: string;
+    priority?: number;
+    dsl?: Record<string, unknown>;
+    dslScript?: string;
+  };
+  /** Next steps for action_executing response */
+  nextSteps?: Array<{
+    actionId: string;
+    title: string;
+  }>;
 }
 
 // ============================================

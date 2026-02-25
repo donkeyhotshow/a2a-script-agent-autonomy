@@ -18,15 +18,27 @@ beforeAll(async () => {
 });
 
 describe('Web App integration', () => {
-  it('should have valid index.html structure', () => {
+  it('should have valid index.html structure with VueFlow', () => {
     const htmlPath = path.resolve(__dirname, '../../web/index.html');
     const html = fs.readFileSync(htmlPath, 'utf8');
-    expect(html).toContain('id="page-projects"');
+    // Check for sessions page (main page after migration)
     expect(html).toContain('id="page-sessions"');
-    expect(html).toContain('id="page-explorer"');
-    expect(html).toContain('js/storage.js');
+    // Check for VueFlow scripts
+    expect(html).toContain('js/flow/index.js');
+    expect(html).toContain('js/flow/nodes.js');
+    expect(html).toContain('js/flow/protocol.js');
+    // Check for sessions
     expect(html).toContain('js/sessions.js');
-    expect(html).toContain('js/projects.js');
+    // Check for flow container
+    expect(html).toContain('flow-container');
+    expect(html).toContain('vueflow-graph');
+  });
+
+  it('should have VueFlow flow files', () => {
+    const flowDir = path.resolve(__dirname, '../../web/js/flow');
+    expect(fs.existsSync(path.join(flowDir, 'index.js'))).toBe(true);
+    expect(fs.existsSync(path.join(flowDir, 'nodes.js'))).toBe(true);
+    expect(fs.existsSync(path.join(flowDir, 'protocol.js'))).toBe(true);
   });
 
   it('should have server API mounted at /api/v1', async () => {

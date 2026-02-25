@@ -517,3 +517,39 @@ export const ActionCompleteNode = {
  * Register all custom node types
  */
 export function registerCustomNodes() {
+  return {
+    taskInput: TaskInputNode,
+    actionProposal: ActionProposalNode,
+    subAction: SubActionNode,
+    result: ResultNode,
+    actionComplete: ActionCompleteNode
+  };
+}
+
+/**
+ * Get node type by protocol message type
+ */
+export function getNodeType(protocolType) {
+  const nodeTypeMap = {
+    'task_request': 'taskInput',
+    'action_proposal': 'actionProposal',
+    'action_executing': 'subAction',
+    'step_result': 'result',
+    'action_complete': 'actionComplete'
+  };
+  return nodeTypeMap[protocolType] || 'default';
+}
+
+/**
+ * Get node color by protocol message type
+ */
+export function getNodeColor(protocolType) {
+  const colorMap = {
+    'task_request': '#22c55e',
+    'action_proposal': '#eab308',
+    'action_executing': '#3b82f6',
+    'step_result': '#6b7280',
+    'action_complete': '#22c55e'
+  };
+  return colorMap[protocolType] || '#6b7280';
+}

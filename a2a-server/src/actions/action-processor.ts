@@ -138,6 +138,84 @@ export class ActionProcessor {
   }
 
   /**
+   * Подтвердить выполнение конкретного action (approve_action)
+   */
+  async approveAction(
+    sessionId: string,
+    actionId: string
+  ): Promise<ActionProcessorResult> {
+    await this.initialize();
+
+    // Начинаем выполнение указанного action
+    const response = this.actionService.startExecution(sessionId, actionId);
+
+    if (!response || response.outcome === 'failed') {
+      return {
+        continue: false,
+        message: this.buildErrorMessage(sessionId, response?.error || `Failed to start action: ${actionId}`),
+      };
+    }
+
+    // Получаем текущий шаг
+    const executingAction = response.executingAction;
+
+    // Build nextSteps from remaining subActions
+    const actionDef = this.actionService.getAction(actionId);
+    const nextSteps = actionDef?.subActions.slice(1).map(sa => ({
+      actionId: sa.id,
+      title: sa.title,
+    })) || [];
+
+    return {
+      continue: true,
+      message: this.buildActionExecutingMessage(sessionId, actionId, response, executingAction, nextSteps),
+      actionId,
+      ...(executingAction ? { currentStep: executingAction } : {}),
+    };
+  }
+
+  /**
+   * Построить сообщение для action_executing ответа (approve_action)
+   */
+  private buildActionExecutingMessage(
+    sessionId: string,
+    actionId: string,
+    response: ActionResponseSimulation,
+    executingAction: SubAction | undefined,
+    nextSteps: Array<{ actionId: string; title: string }>
+  ): ServerMessage {
+    const context: ContextBlock = {
+      version: PROTOCOL_VERSION,
+      session_id: sessionId,
+      execution: {
+        actionId,
+        currentActionId: executingAction?.id || '',
+        history: [],
+      },
+    };
+
+    const result: ServerMessage = {
+      context,
+      message: response.message,
+      nextSteps,
+    };
+
+    // Add executingAction if available
+    if (executingAction) {
+      result.executingAction = {
+        actionId: executingAction.id,
+        title: executingAction.title,
+        description: executingAction.description,
+        priority: executingAction.priority,
+        dsl: executingAction.dsl as unknown as Record<string, unknown> | undefined,
+        dslScript: executingAction.code,
+      };
+    }
+
+    return result;
+  }
+
+  /**
    * Завершить выполнение
    */
   async completeExecution(sessionId: string): Promise<void> {

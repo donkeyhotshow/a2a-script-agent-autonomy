@@ -204,49 +204,158 @@ export async function processOneRequest(): Promise<ProcessResult | null> {
 
   try {
     // ========================================
-    // ACTION FLOW: Check for action-related requests
+    // PARSE TASK TEXT EARLY (needed for both action flow and legacy flow)
+    // ========================================
+    const taskText = parseTaskText(ctx);
+    
+    // ========================================
+    // ACTION FLOW: Handle action-based requests (no-AI mode)
     // ========================================
     
-    // Check for continue with step_result (iterative action execution)
-    if (ctx['continue'] && ctx['step_result']) {
-      logger.info('[RequestProcessor] Processing step result', {
-        stepId: ctx['step_id'],
+    const actionType = ctx['action'] as string | undefined;
+    const sessionId = ctx['session_id'] as string || promiseId;
+    
+    // Handle step_result - client sends step result after executing code
+    if (actionType === 'step_result' || (ctx['continue'] && ctx['step_result'])) {
+      logger.info('[RequestProcessor] Processing step_result', {
+        stepId: ctx['stepId'] || ctx['step_id'],
+        actionType,
       });
       
-      const sessionId = ctx['session_id'] as string || promiseId;
-      const stepId = ctx['step_id'] as string;
-      const stepResult = ctx['step_result'];
+      const stepId = ctx['stepId'] as string || ctx['step_id'] as string;
+      const stepResult = ctx['stepResult'] || ctx['step_result'];
+      
+      if (!stepId || !stepResult) {
+        logger.warn('[RequestProcessor] Missing stepId or stepResult', { stepId, stepResult });
+      }
       
       const result = await actionProcessor.processStepResult(sessionId, stepId, stepResult);
       
+      // Determine response type: action_executing if more steps, action_complete if done
+      const responseType = result.continue ? 'action_executing' : 'action_complete';
+      
+      // Format result based on response type
+      let resultData: Record<string, unknown>;
+      if (result.continue) {
+        // More steps remaining - return action_executing format
+        resultData = {
+          context: result.message.context,
+          executingAction: result.message.executingAction || {
+            actionId: result.currentStep?.id || '',
+            title: result.currentStep?.title || '',
+          },
+          nextSteps: result.message.nextSteps || [],
+        };
+      } else {
+        // All steps completed - return action_complete format
+        resultData = {
+          context: result.message.context,
+          message: result.message.message || 'Action completed',
+          completed: true,
+        };
+      }
+      
+      // Update request status
+      await requestService.updateStatus(promiseId, 'completed', {
+        outcome: 'completed',
+        ...resultData,
+      });
+      
       return {
-        outcome: result.continue ? 'completed' : 'completed',
+        outcome: 'completed',
         context: result.message.context,
         activated_neuron_ids: result.actionId ? [result.actionId] : undefined,
         action: result.message.action,
       };
     }
     
-    // Check for new_task (potential action match)
-    const taskText = parseTaskText(ctx);
-    if (taskText) {
-      // Try to find matching action
-      const sessionId = ctx['session_id'] as string || promiseId;
-      const actionResult = await actionProcessor.processTaskRequest(sessionId, taskText);
+    // Handle task_request - client sends new task, we propose actions
+    if (actionType === 'task_request' || actionType === undefined) {
+      const taskText = parseTaskText(ctx);
       
-      if (actionResult.continue && actionResult.actionId) {
-        logger.info('[RequestProcessor] Action matched', {
-          actionId: actionResult.actionId,
-          step: actionResult.currentStep?.id,
-        });
+      if (taskText) {
+        logger.info('[RequestProcessor] Processing task_request', { taskText: taskText.substring(0, 50) });
         
-        return {
-          outcome: 'completed',
-          context: actionResult.message.context,
-          activated_neuron_ids: [actionResult.actionId],
-          action: actionResult.message.action,
-        };
+        const actionResult = await actionProcessor.processTaskRequest(sessionId, taskText);
+        
+        if (actionResult.continue && actionResult.actionId) {
+          logger.info('[RequestProcessor] Action matched', {
+            actionId: actionResult.actionId,
+            step: actionResult.currentStep?.id,
+          });
+          
+          // Format result for action_proposal response (gold standard format)
+          const resultData = {
+            context: actionResult.message.context,
+            proposedActions: actionResult.message.action ? [{
+              actionId: actionResult.message.action.id || actionResult.actionId,
+              title: actionResult.message.action.title,
+              description: actionResult.message.action.title,
+              priority: 10,
+              matchScore: actionResult.message.action.matchScore,
+              subActions: actionResult.message.action.nextSteps?.map(ns => ({
+                actionId: ns.id,
+                title: ns.title,
+              })) || [],
+            }] : [],
+            fallbackActions: [
+              { mode: 'auto-ai', title: 'AI Action Generator', description: 'Сгенерировать новый экшен с помощью LLM', fallbackType: 'llm_generation' },
+              { mode: 'task-decomposition', title: 'Декомпозиция задачи', description: 'Разбить задачу на подзадачи вручную', fallbackType: 'manual' },
+            ],
+          };
+          
+          // Update request status to completed with action result
+          await requestService.updateStatus(promiseId, 'completed', {
+            outcome: 'completed',
+            ...resultData,
+          });
+          
+          // Return action_proposal response
+          return {
+            outcome: 'completed',
+            context: actionResult.message.context,
+            activated_neuron_ids: [actionResult.actionId],
+            action: actionResult.message.action,
+          };
+        }
       }
+    }
+    
+    // Handle approve_action - client approved selected action, we start execution
+    if (actionType === 'approve_action') {
+      logger.info('[RequestProcessor] Processing approve_action', {
+        selectedAction: ctx['selectedAction'],
+      });
+      
+      const selectedAction = ctx['selectedAction'] as { actionId: string } | undefined;
+      
+      if (!selectedAction?.actionId) {
+        logger.warn('[RequestProcessor] Missing selectedAction.actionId');
+      }
+      
+      // Start action execution
+      const actionResult = await actionProcessor.approveAction(sessionId, selectedAction?.actionId || '');
+      
+      // Format result for action_executing response (gold standard format)
+      const resultData = {
+        context: actionResult.message.context,
+        executingAction: actionResult.message.executingAction,
+        nextSteps: actionResult.message.nextSteps,
+      };
+      
+      // Update request status
+      await requestService.updateStatus(promiseId, 'completed', {
+        outcome: 'completed',
+        ...resultData,
+      });
+      
+      // Return action_executing response
+      return {
+        outcome: 'completed',
+        context: actionResult.message.context,
+        activated_neuron_ids: actionResult.actionId ? [actionResult.actionId] : undefined,
+        action: actionResult.message.action,
+      };
     }
 
     // ========================================

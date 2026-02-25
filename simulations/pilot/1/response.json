@@ -1,6 +1,4 @@
 {
-  "outcome": "action_proposal",
-  "message": "Найден подходящий экшен в базе",
   "context": {
     "task": "исправить импорты в vue компонентах"
   },

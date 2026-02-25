@@ -1,49 +1,74 @@
 {
   "success": true,
   "data": {
-    "id": "req_1772003247820_o5fer7yhw",
-    "promiseId": "cmm1ozcpa000027tp90na7ro1",
+    "id": "req_1772005659826_zilmx3rh0",
+    "promiseId": "cmm1qf1t9000066n5jv10n4c2",
     "clientId": "simulation-client",
     "status": "completed",
     "priority": 0,
     "context": {
+      "task": "исправить импорты в vue компонентах",
+      "action": "task_request",
       "version": "1.0",
       "session_id": "stateless"
     },
-    "message": null,
+    "message": "исправить импорты в vue компонентах",
     "codeBlocks": null,
     "result": {
-      "graph": {
-        "entities": [],
-        "relations": []
-      },
       "context": {
-        "graph": {
-          "entities": [],
-          "relations": []
-        },
-        "request_files": [
-          "No entities recognized"
-        ]
+        "tasks": [
+          {
+            "id": "fix-vue-imports-batch",
+            "type": "analyze",
+            "status": "in_progress",
+            "progress": 0
+          }
+        ],
+        "version": "1.0",
+        "session_id": "stateless"
       },
-      "message": "Graph incomplete, need more context",
-      "missing": [
-        "No entities recognized"
+      "outcome": "completed",
+      "fallbackActions": [
+        {
+          "mode": "auto-ai",
+          "title": "AI Action Generator",
+          "description": "Сгенерировать новый экшен с помощью LLM",
+          "fallbackType": "llm_generation"
+        },
+        {
+          "mode": "task-decomposition",
+          "title": "Декомпозиция задачи",
+          "description": "Разбить задачу на подзадачи вручную",
+          "fallbackType": "manual"
+        }
       ],
-      "outcome": "graph_incomplete",
-      "questions": [
-        "Please provide the relevant code files (controller, model, service, or Vue components)."
-      ],
-      "graph_stats": {
-        "entityCount": 0,
-        "entityTypes": {},
-        "relationCount": 0,
-        "relationTypes": {}
-      }
+      "proposedActions": [
+        {
+          "title": "Исправить сломанные импорты в Vue файлах с серверной обработкой (батчами). **План:** [fix-vue-imports-batch](../../../plans/later/fix-vue-imports-batch.md).",
+          "actionId": "fix-vue-imports-batch",
+          "priority": 10,
+          "matchScore": 2.5,
+          "subActions": [
+            {
+              "title": "Обнаружение сломанных импортов — батч по 10 файлов. Condition: context.phase === 'detect'.",
+              "actionId": "batch-detect"
+            },
+            {
+              "title": "Разрешение импортов на сервере. Condition: context.phase === 'resolve'. Client отправляет broken_imports, сервер возвращает patches.",
+              "actionId": "batch-resolve"
+            },
+            {
+              "title": "Применение исправлений. Condition: context.phase === 'apply'. После применения: phase = hasMore ? 'detect' : 'completed'.",
+              "actionId": "batch-apply"
+            }
+          ],
+          "description": "Исправить сломанные импорты в Vue файлах с серверной обработкой (батчами). **План:** [fix-vue-imports-batch](../../../plans/later/fix-vue-imports-batch.md)."
+        }
+      ]
     },
     "error": null,
-    "createdAt": "2026-02-25T07:07:27.887Z",
-    "startedAt": "2026-02-25T07:07:31.776Z",
-    "completedAt": "2026-02-25T07:07:31.783Z"
+    "createdAt": "2026-02-25T07:47:39.885Z",
+    "startedAt": "2026-02-25T07:47:42.824Z",
+    "completedAt": "2026-02-25T07:47:42.831Z"
   }
 }

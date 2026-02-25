@@ -10,6 +10,7 @@ import { Controls } from '@vue-flow/controls';
 import { MiniMap } from '@vue-flow/minimap';
 import { 
   mapContextToFlow, 
+  mapSimulationResponseToFlow,
   createTaskRequestNode, 
   addNodeToFlow, 
   updateNodeInFlow, 
@@ -27,7 +28,14 @@ import {
   getLastTaskNode,
   getLastProposalNode
 } from './protocol.js';
-import { registerCustomNodes } from './nodes.js';
+import { 
+  registerCustomNodes,
+  TaskInputNode,
+  ActionProposalNode,
+  SubActionNode,
+  ResultNode,
+  ActionCompleteNode
+} from './nodes.js';
 
 // Import VueFlow styles
 import '@vue-flow/core/dist/style.css';
@@ -228,8 +236,13 @@ class A2AFlowManager {
    * @param {Object} response - Server response
    */
   handleServerResponse(response) {
-    // Convert response to flow
-    const responseFlow = responseToFlow(response);
+    // Try simulation response format first
+    let responseFlow;
+    if (response && response.outcome) {
+      responseFlow = mapSimulationResponseToFlow(response);
+    } else {
+      responseFlow = responseToFlow(response);
+    }
     
     if (responseFlow.nodes.length > 0) {
       // Add all nodes from response
@@ -399,13 +412,14 @@ class A2AFlowManager {
       return;
     }
 
-    // Register custom nodes
+    // Get custom node types
     const customNodes = registerCustomNodes();
 
-    // Create VueFlow instance
+    // Create VueFlow instance with custom node types
     this.vueflow = new VueFlow({
       nodes: [],
       edges: [],
+      nodeTypes: customNodes,  // Register custom nodes
       fitViewOnInit: true,
       defaultEdgeOptions: {
         type: 'smoothstep',
@@ -486,13 +500,32 @@ class A2AFlowManager {
 
   /**
    * Load context and render flow
+   * @param {Object} context - Response context or array of context blocks
    */
   loadContext(context) {
     if (!this.isInitialized) {
       this.init();
     }
 
-    this.currentFlow = mapContextToFlow(context);
+    // Handle simulation response format
+    if (context && context.outcome) {
+      this.currentFlow = mapSimulationResponseToFlow(context);
+    } else {
+      this.currentFlow = mapContextToFlow(context);
+    }
+    this.render();
+  }
+
+  /**
+   * Load simulation data directly (for testing with simulations/pilot/)
+   * @param {Object} simulationResponse - Response from simulation
+   */
+  loadSimulationResponse(simulationResponse) {
+    if (!this.isInitialized) {
+      this.init();
+    }
+    
+    this.currentFlow = mapSimulationResponseToFlow(simulationResponse);
     this.render();
   }
 
@@ -608,6 +641,10 @@ export function initFlow() {
 
 export function loadContext(context) {
   flowManager.loadContext(context);
+}
+
+export function loadSimulationResponse(response) {
+  flowManager.loadSimulationResponse(response);
 }
 
 export function addTask(taskText) {

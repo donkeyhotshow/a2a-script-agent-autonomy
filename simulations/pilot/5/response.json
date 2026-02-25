@@ -1,6 +1,4 @@
-{
-  "outcome": "action_complete",
-  "message": "Все шаги выполнены. Исправлено 3 файла.",
+{ 
   "context": {
     "task": "исправить импорты в vue компонентах",
     "execution": {

@@ -1,7 +1,8 @@
 /**
  * A2A Protocol to VueFlow mapping utilities
  * 
- * Maps A2A protocol ContextBlocks to VueFlow nodes and edges
+ * Maps A2A protocol responses to VueFlow nodes and edges
+ * Supports simulation data structures from simulations/pilot/
  */
 
 import { getNodeType, getNodeColor } from './nodes.js';
@@ -213,22 +214,30 @@ export const NODE_LABELS = {
 export const LAYOUT_CONFIG = {
   nodeWidth: 220,
   nodeHeight: 150,
-  verticalSpacing: 120,
+  verticalSpacing: 180,
   horizontalSpacing: 50,
   startX: 100,
   startY: 50
 };
 
 /**
- * Extract message type from ContextBlock
+ * Get message type from response (supports both old and new formats)
  */
 function getMessageType(contextBlock) {
   if (!contextBlock) return 'default';
+  
+  // Check for outcome field (simulation format)
+  if (contextBlock.outcome) {
+    return contextBlock.outcome;
+  }
+  
+  // Check for type field (old format)
   return contextBlock.type || contextBlock.messageType || 'default';
 }
 
 /**
- * Extract data from ContextBlock for node display
+ * Extract data from response for node display
+ * Handles both old ContextBlock format and new simulation format
  */
 function extractNodeData(contextBlock) {
   if (!contextBlock) return {};
@@ -237,54 +246,118 @@ function extractNodeData(contextBlock) {
     timestamp: contextBlock.timestamp || new Date().toISOString()
   };
   
-  switch (contextBlock.type) {
-    case 'task_request':
-      return {
-        ...baseData,
-        task: contextBlock.task || contextBlock.text || 'No task specified'
-      };
-      
+  const outcome = contextBlock.outcome;
+  
+  // Handle simulation data formats
+  switch (outcome) {
     case 'action_proposal':
       return {
         ...baseData,
-        actionName: contextBlock.actionName || contextBlock.action || 'Unknown Action',
-        description: contextBlock.description || '',
-        stepsCount: contextBlock.steps?.length || contextBlock.subActions?.length || 0
+        actionName: contextBlock.proposedActions?.[0]?.title || 
+                    contextBlock.proposedActions?.[0]?.actionId || 
+                    'Proposed Action',
+        description: contextBlock.proposedActions?.[0]?.description || 
+                     contextBlock.message || '',
+        matchScore: contextBlock.proposedActions?.[0]?.matchScore,
+        subActions: contextBlock.proposedActions?.[0]?.subActions || [],
+        stepsCount: contextBlock.proposedActions?.[0]?.subActions?.length || 0
       };
       
     case 'action_executing':
-      return {
-        ...baseData,
-        subActionName: contextBlock.subActionName || contextBlock.currentAction || 'Sub Action',
-        stepIndex: contextBlock.stepIndex || 1,
-        stepName: contextBlock.stepName || contextBlock.step || 'Running...',
-        codeBlocks: contextBlock.codeBlocks || [],
-        status: contextBlock.status || 'running',
-        statusText: contextBlock.statusText || 'Running'
-      };
+      const executingAction = contextBlock.executingAction || {};
+      const execution = contextBlock.context?.execution || {};
+      const history = execution.history || [];
+      const currentStepIndex = history.length + 1;
       
-    case 'step_result':
       return {
         ...baseData,
-        success: contextBlock.success !== false,
-        message: contextBlock.message || '',
-        changes: contextBlock.changes || []
+        subActionName: executingAction.title || executingAction.actionId || 'Sub Action',
+        stepIndex: currentStepIndex,
+        stepName: executingAction.title || 'Executing...',
+        description: executingAction.description || '',
+        dsl: executingAction.dslScript || executingAction.dsl?.script || '',
+        input: executingAction.dsl?.input || {},
+        output: executingAction.dsl?.output || '',
+        status: 'running',
+        statusText: 'Running',
+        actionId: execution.actionId || executingAction.actionId,
+        history: history,
+        nextSteps: contextBlock.nextSteps || [],
+        previousStep: contextBlock.previousStep?.result
       };
       
     case 'action_complete':
+      const finalResult = contextBlock.finalResult || {};
+      const completedExecution = contextBlock.context?.execution || {};
+      
       return {
         ...baseData,
-        actionName: contextBlock.actionName || 'Action',
-        summary: contextBlock.summary || '',
-        totalSteps: contextBlock.totalSteps || 0,
-        duration: contextBlock.duration || '0s'
+        actionName: finalResult.actionId || completedExecution.actionId || 'Action',
+        summary: finalResult.summary || {},
+        totalSteps: completedExecution.history?.length || finalResult.summary?.totalSteps || 0,
+        duration: 'completed',
+        history: completedExecution.history || [],
+        success: true
+      };
+      
+    case 'task_request':
+      return {
+        ...baseData,
+        task: contextBlock.task || contextBlock.message || 'No task specified'
       };
       
     default:
-      return {
-        ...baseData,
-        ...contextBlock
-      };
+      // Handle legacy format
+      switch (contextBlock.type) {
+        case 'task_request':
+          return {
+            ...baseData,
+            task: contextBlock.task || contextBlock.text || 'No task specified'
+          };
+          
+        case 'action_proposal':
+          return {
+            ...baseData,
+            actionName: contextBlock.actionName || contextBlock.action || 'Unknown Action',
+            description: contextBlock.description || '',
+            stepsCount: contextBlock.steps?.length || contextBlock.subActions?.length || 0
+          };
+          
+        case 'action_executing':
+          return {
+            ...baseData,
+            subActionName: contextBlock.subActionName || contextBlock.currentAction || 'Sub Action',
+            stepIndex: contextBlock.stepIndex || 1,
+            stepName: contextBlock.stepName || contextBlock.step || 'Running...',
+            codeBlocks: contextBlock.codeBlocks || [],
+            status: contextBlock.status || 'running',
+            statusText: contextBlock.statusText || 'Running'
+          };
+          
+        case 'step_result':
+          return {
+            ...baseData,
+            success: contextBlock.success !== false,
+            message: contextBlock.message || '',
+            changes: contextBlock.changes || [],
+            result: contextBlock.result || {}
+          };
+          
+        case 'action_complete':
+          return {
+            ...baseData,
+            actionName: contextBlock.actionName || 'Action',
+            summary: contextBlock.summary || '',
+            totalSteps: contextBlock.totalSteps || 0,
+            duration: contextBlock.duration || '0s'
+          };
+          
+        default:
+          return {
+            ...baseData,
+            ...contextBlock
+          };
+      }
   }
 }
 
@@ -303,7 +376,7 @@ export function mapContextBlockToNode(contextBlock, index, totalNodes) {
   const y = layout.startY + (index * layout.verticalSpacing);
   
   return {
-    id: contextBlock.id || `node-${index}`,
+    id: contextBlock.id || `node-${index}-${Date.now()}`,
     type: nodeType,
     position: { x, y },
     data: {
@@ -320,12 +393,153 @@ export function mapContextBlockToNode(contextBlock, index, totalNodes) {
 }
 
 /**
+ * Map a simulation response to VueFlow nodes and edges
+ * This is the main entry point for simulation data
+ */
+export function mapSimulationResponseToFlow(response) {
+  if (!response) return { nodes: [], edges: [] };
+  
+  const nodes = [];
+  const edges = [];
+  
+  // Get the outcome to determine what to render
+  const outcome = response.outcome;
+  const context = response.context || {};
+  const execution = context.execution || {};
+  
+  // Always add task request node first
+  const taskNode = mapContextBlockToNode({
+    id: 'task-request',
+    outcome: 'task_request',
+    task: context.task || response.message || 'Task'
+  }, 0, 10);
+  nodes.push(taskNode);
+  
+  if (outcome === 'action_proposal' || outcome === 'action_executing' || outcome === 'action_complete') {
+    // Add action proposal node
+    const proposalNode = mapContextBlockToNode({
+      id: 'action-proposal',
+      outcome: 'action_proposal',
+      proposedActions: response.proposedActions,
+      message: response.message
+    }, 1, 10);
+    nodes.push(proposalNode);
+    
+    // Add edge from task to proposal
+    edges.push({
+      id: 'edge-task-proposal',
+      source: taskNode.id,
+      target: proposalNode.id,
+      type: 'smoothstep',
+      style: { stroke: '#eab308', strokeWidth: 2 },
+      markerEnd: { type: 'arrowclosed', color: '#eab308' }
+    });
+  }
+  
+  if (outcome === 'action_executing' || outcome === 'action_complete') {
+    // Add sub-action nodes based on history
+    const history = execution.history || [];
+    history.forEach((step, idx) => {
+      const stepNode = mapContextBlockToNode({
+        id: `step-${idx}`,
+        outcome: 'action_executing',
+        executingAction: { 
+          actionId: step.actionId, 
+          title: step.actionId,
+          description: `Step ${idx + 1}`
+        },
+        context: { execution: { history, actionId: execution.actionId } },
+        previousStep: step.result,
+        stepIndex: idx + 1,
+        status: step.status
+      }, 2 + idx, 10);
+      nodes.push(stepNode);
+      
+      // Add edge from previous node
+      const prevNode = idx === 0 ? nodes[1] : nodes[2 + idx - 1];
+      edges.push({
+        id: `edge-step-${idx}`,
+        source: prevNode.id,
+        target: stepNode.id,
+        type: 'smoothstep',
+        animated: step.status === 'completed' ? false : idx === history.length - 1,
+        style: { 
+          stroke: step.status === 'completed' ? '#22c55e' : '#3b82f6', 
+          strokeWidth: 2 
+        },
+        markerEnd: { 
+          type: 'arrowclosed', 
+          color: step.status === 'completed' ? '#22c55e' : '#3b82f6' 
+        }
+      });
+    });
+    
+    // If action is still executing, add current step node
+    if (outcome === 'action_executing' && response.executingAction) {
+      const currentStepIndex = history.length;
+      const currentNode = mapContextBlockToNode({
+        id: `step-${currentStepIndex}`,
+        outcome: 'action_executing',
+        executingAction: response.executingAction,
+        context: response.context,
+        previousStep: response.previousStep?.result,
+        nextSteps: response.nextSteps,
+        stepIndex: currentStepIndex + 1,
+        status: 'running'
+      }, 2 + currentStepIndex, 10);
+      nodes.push(currentNode);
+      
+      // Add edge to current step
+      const prevNode = history.length > 0 ? nodes[2 + currentStepIndex - 1] : nodes[1];
+      edges.push({
+        id: `edge-current-step`,
+        source: prevNode.id,
+        target: currentNode.id,
+        type: 'smoothstep',
+        animated: true,
+        style: { stroke: '#3b82f6', strokeWidth: 2 },
+        markerEnd: { type: 'arrowclosed', color: '#3b82f6' }
+      });
+    }
+    
+    // If action is complete, add completion node
+    if (outcome === 'action_complete') {
+      const completeNode = mapContextBlockToNode({
+        id: 'action-complete',
+        outcome: 'action_complete',
+        finalResult: response.finalResult,
+        context: response.context
+      }, nodes.length, 10);
+      nodes.push(completeNode);
+      
+      // Add edge from last step to completion
+      const lastStepNode = nodes[nodes.length - 2];
+      edges.push({
+        id: 'edge-complete',
+        source: lastStepNode.id,
+        target: completeNode.id,
+        type: 'smoothstep',
+        style: { stroke: '#22c55e', strokeWidth: 2 },
+        markerEnd: { type: 'arrowclosed', color: '#22c55e' }
+      });
+    }
+  }
+  
+  return { nodes, edges };
+}
+
+/**
  * Map context to VueFlow elements (nodes and edges)
  * 
  * @param {Array|Object} context - ContextBlock or array of ContextBlocks
  * @returns {Object} { nodes, edges }
  */
 export function mapContextToFlow(context) {
+  // Handle simulation response format
+  if (context && context.outcome) {
+    return mapSimulationResponseToFlow(context);
+  }
+  
   // Handle different context formats
   let contextBlocks = [];
   
@@ -339,6 +553,9 @@ export function mapContextToFlow(context) {
     contextBlocks = context.contextBlocks;
   } else if (context.messages) {
     contextBlocks = context.messages;
+  } else if (context.proposedActions || context.executingAction) {
+    // It's a simulation response
+    return mapSimulationResponseToFlow(context);
   } else {
     // Single context block
     contextBlocks = [context];
@@ -499,11 +716,20 @@ export function importFlowFromJSON(jsonString) {
 export function responseToFlow(response) {
   if (!response) return { nodes: [], edges: [] };
   
+  // Handle simulation response format first
+  if (response.outcome) {
+    return mapSimulationResponseToFlow(response);
+  }
+  
   // Handle different response formats
   const context = response.context || response;
   const messages = context.messages || context.blocks || context.contextBlocks || [];
   
   if (!Array.isArray(messages) || messages.length === 0) {
+    // Check if it's a simulation-style response
+    if (context.proposedActions || context.executingAction) {
+      return mapSimulationResponseToFlow(context);
+    }
     // No messages yet - return empty
     return { nodes: [], edges: [] };
   }
@@ -556,6 +782,7 @@ export function createResultContextBlock(result) {
     success: result.success !== false,
     message: result.message || '',
     changes: result.changes || [],
+    result: result,
     timestamp: new Date().toISOString()
   };
 }

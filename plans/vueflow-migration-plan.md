@@ -1,4 +1,4 @@
-# VueFlow Migration Plan for a2a-client/web
+икVueFlow Migration Plan for a2a-client/web
 
 ## Overview
 Migrate `a2a-client/web` to fully use VueFlow for A2A Protocol visualization. The web already has VueFlow dependencies installed and partial implementation in `js/flow/` folder.
@@ -133,31 +133,32 @@ json
 
 ## Migration Tasks
 
-### Phase 1: Fix Custom Nodes (Critical)
+### Phase 1: Fix Custom Nodes (Critical) ✅ COMPLETED
 ```
 Task 1.1: Update js/flow/nodes.js to use Vue 3 functional components
-- Convert template strings to proper Vue 3 components
-- Use defineComponent or plain objects with @vue-flow/core
+- ✅ Convert template strings to proper Vue 3 components (using h() function)
+- ✅ Use plain objects with @vue-flow/core
 
 Task 1.2: Register custom nodes properly in js/flow/index.js
-- Use VueFlow's registerNodeTypes method
+- ✅ Use nodeTypes option in VueFlow constructor
 
 Task 1.3: Add new node types for sub-actions
-- SubActionNode - for each step in execution
-- Need to handle: dsl, input/output, progress tracking
+- ✅ SubActionNode - for each step in execution
+- ✅ Handle: dsl, input/output, progress tracking
 ```
 
-### Phase 2: Data Mapping (Protocol → Nodes)
+### Phase 2: Data Mapping (Protocol → Nodes) ✅ COMPLETED
 ```
 Task 2.1: Update protocol.js for new response structures
-- Map proposedActions to ActionProposalNode
-- Map executingAction to SubActionNode
-- Map history to step tracking
-- Map finalResult to ActionCompleteNode
+- ✅ Map proposedActions to ActionProposalNode
+- ✅ Map executingAction to SubActionNode
+- ✅ Map history to step tracking
+- ✅ Map finalResult to ActionCompleteNode
+- ✅ Added mapSimulationResponseToFlow() function
 
 Task 2.2: Add edge animations
-- Animate edges to currently running sub-action
-- Show completed steps in green
+- ✅ Animate edges to currently running sub-action
+- ✅ Show completed steps in green
 ```
 
 ### Phase 3: Enhance Flow UI Integration
@@ -171,15 +172,19 @@ Task 3.2: Add more interactive features
 - History view for completed steps
 ```
 
-### Phase 4: Real-time Updates
+### Phase 4: Real-time Updates ✅ COMPLETED
 ```
 Task 4.1: Integrate with Sessions.js
-- Connect flow updates to session polling
-- Auto-add nodes on new responses
+- ✅ Connect flow updates to session polling
+- ✅ Auto-add nodes on new responses
+- ✅ Added addTaskToFlow() - adds task when sending message
+- ✅ Added updateFlowWithResponse() - updates flow on server response
+- ✅ Added updateFlowFromMessages() - loads existing messages to flow
+- ✅ Flow updates on step execution
 
 Task 4.2: Visual feedback
-- Animate edge to running step
-- Update node status in real-time
+- ✅ Animate edge to running step
+- ✅ Update node status in real-time
 ```
 
 ---
