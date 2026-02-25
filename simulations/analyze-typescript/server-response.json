@@ -1,0 +1,19 @@
+{
+  "success": false,
+  "data": {
+    "id": "req_1772029655218_ko0himo7d",
+    "promiseId": "cmm24pcv10000kr07gpm6q0gq",
+    "clientId": "simulation-client",
+    "status": "pending",
+    "priority": 0,
+    "context": {
+      "version": "1.0",
+      "session_id": "stateless"
+    },
+    "message": "проверить TypeScript типы",
+    "codeBlocks": null,
+    "result": null,
+    "error": null,
+    "createdAt": "2026-02-25T14:27:35.390Z"
+  }
+}

@@ -1,0 +1,58 @@
+{
+  "context": {
+    "task": "запитати у користувача яку версію Node.js він використовує",
+    "execution": {
+      "actionId": "dialog",
+      "currentActionId": "user-question",
+      "status": "completed",
+      "history": [
+        { "step": 1, "actionId": "user-question", "status": "completed", "result": { "response": "v20.x" } }
+      ]
+    }
+  },
+  "previousStep": {
+    "actionId": "user-question",
+    "result": {
+      "value": "v20.x",
+      "label": "Node.js v20.x (LTS)",
+      "timestamp": "2026-02-25T14:30:00.000Z"
+    }
+  },
+  "executingAction": {
+    "actionId": "user-question",
+    "title": "Запитати версію Node.js",
+    "description": "Задає питання користувачу про версію Node.js",
+    "priority": 10,
+    "question": {
+      "text": "Яку версію Node.js ви використовуєте?",
+      "type": "multiple-choice",
+      "options": [
+        { "value": "v18.x", "label": "Node.js v18.x (LTS)" },
+        { "value": "v20.x", "label": "Node.js v20.x (LTS)" },
+        { "value": "v22.x", "label": "Node.js v22.x (Current)" },
+        { "value": "other", "label": "Інша версія" }
+      ]
+    }
+  },
+  "finalResult": {
+    "actionId": "dialog",
+    "summary": {
+      "question_asked": "Яку версію Node.js ви використовуєте?",
+      "user_response": "v20.x",
+      "response_label": "Node.js v20.x (LTS)",
+      "timestamp": "2026-02-25T14:30:00.000Z"
+    },
+    "details": {
+      "question": {
+        "text": "Яку версію Node.js ви використовуєте?",
+        "type": "multiple-choice",
+        "options": ["v18.x", "v20.x", "v22.x", "Інша"]
+      },
+      "answer": {
+        "value": "v20.x",
+        "label": "Node.js v20.x (LTS)",
+        "timestamp": "2026-02-25T14:30:00.000Z"
+      }
+    }
+  }
+}

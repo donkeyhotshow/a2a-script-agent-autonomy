@@ -2,6 +2,8 @@
   "name": "a2a-coding-orchestrator",
   "private": true,
   "scripts": {
+    "sim:run": "node simulations/run-simulation.js",
+    "sim:run-all": "node simulations/run-all-simulations.js",
     "questions": "node scripts/questions-cli.js",
     "dev": "npm run dev:kill-ports && node scripts/wait-for-ports-free.js 5173 5174 3000 8080 && concurrently \"npm run dev:web\" \"npm run dev:api\"",
     "dev:kill-ports": "npx --yes kill-port 5173 5174 3000 8080 || exit 0",
@@ -9,7 +11,8 @@
     "dev:api": "npm run dev --prefix a2a-server"
   },
   "devDependencies": {
-    "concurrently": "^9.1.0"
+    "concurrently": "^9.1.0",
+    "vitest": "^4.0.18"
   },
   "dependencies": {
     "playwright": "^1.58.2"

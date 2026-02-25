@@ -1,0 +1,54 @@
+{
+  "context": {
+    "task": "проаналізувати проект"
+  },
+  "proposedActions": [
+    {
+      "actionId": "analyze-full",
+      "title": "Повний аналіз проекту",
+      "description": "Сканує файли проекту, аналізує код та генерує звіт з метриками",
+      "priority": 10,
+      "matchScore": 0.98,
+      "subActions": [
+        {
+          "actionId": "scan-files",
+          "title": "Сканувати файли проекту",
+          "description": "Сканує структуру проекту і збирає список файлів",
+          "priority": 10,
+          "input": "none",
+          "output": "file_list[]"
+        },
+        {
+          "actionId": "analyze-code",
+          "title": "Аналізувати код",
+          "description": "Аналізує код кожного файлу, збирає метрики",
+          "priority": 9,
+          "input": "file_list[]",
+          "output": "metrics{}"
+        },
+        {
+          "actionId": "generate-report",
+          "title": "Згенерувати звіт",
+          "description": "Генерує фінальний звіт з аналізу",
+          "priority": 8,
+          "input": "metrics{}",
+          "output": "report"
+        }
+      ]
+    }
+  ],
+  "fallbackActions": [
+    {
+      "mode": "auto-ai",
+      "title": "AI Action Generator",
+      "description": "Згенерувати новий екшен за допомогою LLM",
+      "fallbackType": "llm_generation"
+    },
+    {
+      "mode": "task-decomposition",
+      "title": "Декомпозиція задачі",
+      "description": "Розбити задачу на підзадачі вручну",
+      "fallbackType": "manual"
+    }
+  ]
+}

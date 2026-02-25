@@ -412,7 +412,7 @@ npm run simulate:compare fix-vue-imports
 
 ## 9. Залежності
 
-- Node.js 18+
+- Node.js 20+
 - a2a-server запущений локально
 - API endpoint: http://localhost:3000/api/v1/
 

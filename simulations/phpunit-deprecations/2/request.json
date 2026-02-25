@@ -1,0 +1,9 @@
+{
+  "action": "approve_action",
+  "selectedAction": {
+    "actionId": "phpunit-deprecations"
+  },
+  "context": {
+    "task": "знайти застарілі PHPUnit методи"
+  }
+}

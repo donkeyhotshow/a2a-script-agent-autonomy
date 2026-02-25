@@ -1,0 +1,39 @@
+{
+  "context": {
+    "task": "знайти застарілі PHPUnit методи",
+    "execution": {
+      "actionId": "phpunit-deprecations",
+      "currentActionId": "detect-deprecations",
+      "history": [
+        { "step": 1, "actionId": "scan-phpunit", "status": "completed", "result": { "total": 45 } }
+      ]
+    }
+  },
+  "previousStep": {
+    "actionId": "scan-phpunit",
+    "result": {
+      "files": [
+        { "path": "tests/Unit/UserTest.php" },
+        { "path": "tests/Feature/AuthTest.php" }
+      ],
+      "total": 45
+    }
+  },
+  "executingAction": {
+    "actionId": "detect-deprecations",
+    "title": "Виявлення deprecated методів",
+    "description": "Виявлення deprecated методів: assertEquals, assertInternalType, etc.",
+    "priority": 9,
+    "dsl": {
+      "script": "detect-deprecations",
+      "input": {
+        "files": 45
+      },
+      "output": "deprecations[]"
+    },
+    "dslScript": "```typescript\n// detect-deprecations.dsl\n// Виявлення deprecated методів\n\nconst result = await script.execute('detect-deprecations', {\n  rootDir: 'tests',\n  deprecatedMethods: [\n    'assertEquals',\n    'assertInternalType',\n    'assertArrayHasKey',\n    'assertInstanceOf'\n  ]\n});\n\n// result = {\n//   deprecations: [\n//     { method: 'assertEquals', file: 'tests/Unit/UserTest.php', line: 15 },\n//     { method: 'assertInternalType', file: 'tests/Feature/AuthTest.php', line: 22 }\n//   ]\n// }\n```"
+  },
+  "nextSteps": [
+    { "actionId": "generate-deprecations-report", "title": "Генерація звіту" }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "context": {
+    "task": "виправити імпорти у vue компонентах",
+    "execution": {
+      "actionId": "fix-vue-imports",
+      "currentActionId": "vue-import-detect",
+      "history": []
+    }
+  },
+  "executingAction": {
+    "actionId": "vue-import-detect",
+    "title": "Визначити зламані імпорти",
+    "description": "Сканує Vue файли і знаходить біті імпорти",
+    "priority": 10,
+    "dsl": {
+      "script": "vue-import-detect",
+      "input": {
+        "rootDir": ".",
+        "filePattern": "**/*.vue"
+      },
+      "output": "broken_imports[]"
+    },
+    "dslScript": "```typescript\n// vue-import-detect.dsl\n// Визначення зламаних імпортів у Vue файлах\n\nconst result = await script.execute('vue-import-detect', {\n   filePattern: '**/*.vue'\n });\n\n// result = [\n//   { file: 'resources/js/Pages/Auth/Login.vue', line: 3, specifier: '../components/Header' },\n//   { file: 'resources/js/Pages/Auth/Register.vue', line: 5, specifier: '../../utils/helpers' },\n//   { file: 'resources/js/components/UserCard.vue', line: 2, specifier: '@/stores/user' }\n// ]\n```"
+  },
+  "nextSteps": [
+    { "actionId": "vue-import-resolve", "title": "Вирішити правильні шляхи" },
+    { "actionId": "vue-import-apply", "title": "Застосувати виправлення" },
+    { "actionId": "vue-import-cleanup", "title": "Очистити" }
+  ]
+}

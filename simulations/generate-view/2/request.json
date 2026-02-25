@@ -1,0 +1,9 @@
+{
+  "action": "approve_action",
+  "selectedAction": {
+    "actionId": "generate-view"
+  },
+  "context": {
+    "task": "створити форму редагування профілю користувача"
+  }
+}

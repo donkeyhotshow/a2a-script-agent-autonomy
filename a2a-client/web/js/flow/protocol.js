@@ -177,22 +177,31 @@ export function setA2AClient(client) {
 }
 
 /**
- * Node color constants based on protocol message types
+ * Node color constants based on protocol message types and entity types
  */
 export const NODE_COLORS = {
-  /** task_request - Input Node (green) */
+  // Protocol types
   TASK_REQUEST: '#22c55e',
-  /** action_proposal - Default Node (yellow) */
   ACTION_PROPOSAL: '#eab308',
-  /** action_executing - Default Node (blue) */
   ACTION_EXECUTING: '#3b82f6',
-  /** step_result - Default Node (gray) */
   STEP_RESULT: '#6b7280',
-  /** action_complete - Output Node (green) */
   ACTION_COMPLETE: '#22c55e',
-  /** Default node color */
+  
+  // Entity types
+  AGENTS: '#a855f7',
+  NODES: '#3b82f6',
+  ACTIONS: '#f97316',
+  SERVICES: '#06b6d4',
+  TASKS: '#84cc16',
+  TERMINATORS: '#ef4444',
+  PACKAGES: '#6366f1',
+  FEATURES: '#ec4899',
+  SYSTEMS: '#14b8a6',
+  SCRIPTS: '#f59e0b',
+  SOLUTIONS: '#10b981',
+  
+  // Default
   DEFAULT: '#6b7280',
-  /** Error state */
   ERROR: '#ef4444'
 };
 
@@ -200,11 +209,27 @@ export const NODE_COLORS = {
  * Node type labels for display
  */
 export const NODE_LABELS = {
+  // Protocol types
   task_request: 'Task Request',
   action_proposal: 'Action Proposal',
   action_executing: 'Executing',
   step_result: 'Result',
   action_complete: 'Complete',
+  
+  // Entity types
+  agents: 'AGENTS',
+  nodes: 'NODES',
+  actions: 'ACTIONS',
+  services: 'SERVICES',
+  tasks: 'TASKS',
+  terminators: 'TERMINATORS',
+  packages: 'PACKAGES',
+  features: 'FEATURES',
+  systems: 'SYSTEMS',
+  scripts: 'SCRIPTS',
+  solutions: 'SOLUTIONS',
+  
+  // Default
   default: 'Node'
 };
 
@@ -231,6 +256,11 @@ function getMessageType(contextBlock) {
     return contextBlock.outcome;
   }
   
+  // Check for entity type field
+  if (contextBlock.entityType) {
+    return contextBlock.entityType;
+  }
+  
   // Check for type field (old format)
   return contextBlock.type || contextBlock.messageType || 'default';
 }
@@ -243,10 +273,25 @@ function extractNodeData(contextBlock) {
   if (!contextBlock) return {};
   
   const baseData = {
-    timestamp: contextBlock.timestamp || new Date().toISOString()
+    timestamp: contextBlock.timestamp || new Date().toISOString(),
+    id: contextBlock.id,
+    name: contextBlock.name,
+    label: contextBlock.label,
+    path: contextBlock.path
   };
   
   const outcome = contextBlock.outcome;
+  
+  // Handle entity types
+  if (contextBlock.entityType) {
+    return {
+      ...baseData,
+      entityType: contextBlock.entityType,
+      name: contextBlock.name || contextBlock.label || contextBlock.entityType,
+      description: contextBlock.description || '',
+      path: contextBlock.path || ''
+    };
+  }
   
   // Handle simulation data formats
   switch (outcome) {
@@ -263,7 +308,7 @@ function extractNodeData(contextBlock) {
         stepsCount: contextBlock.proposedActions?.[0]?.subActions?.length || 0
       };
       
-    case 'action_executing':
+    case 'action_executing': {
       const executingAction = contextBlock.executingAction || {};
       const execution = contextBlock.context?.execution || {};
       const history = execution.history || [];
@@ -285,8 +330,9 @@ function extractNodeData(contextBlock) {
         nextSteps: contextBlock.nextSteps || [],
         previousStep: contextBlock.previousStep?.result
       };
-      
-    case 'action_complete':
+    }
+    
+    case 'action_complete': {
       const finalResult = contextBlock.finalResult || {};
       const completedExecution = contextBlock.context?.execution || {};
       
@@ -299,14 +345,16 @@ function extractNodeData(contextBlock) {
         history: completedExecution.history || [],
         success: true
       };
-      
-    case 'task_request':
+    }
+    
+    case 'task_request': {
       return {
         ...baseData,
         task: contextBlock.task || contextBlock.message || 'No task specified'
       };
-      
-    default:
+    }
+    
+    default: {
       // Handle legacy format
       switch (contextBlock.type) {
         case 'task_request':
@@ -351,13 +399,14 @@ function extractNodeData(contextBlock) {
             totalSteps: contextBlock.totalSteps || 0,
             duration: contextBlock.duration || '0s'
           };
-          
+    
         default:
           return {
             ...baseData,
             ...contextBlock
           };
       }
+    }
   }
 }
 
@@ -556,6 +605,9 @@ export function mapContextToFlow(context) {
   } else if (context.proposedActions || context.executingAction) {
     // It's a simulation response
     return mapSimulationResponseToFlow(context);
+  } else if (context.entities) {
+    // It's a graph/entities response
+    return mapEntitiesToFlow(context);
   } else {
     // Single context block
     contextBlocks = [context];
@@ -585,6 +637,75 @@ export function mapContextToFlow(context) {
       }
     });
   }
+  
+  return { nodes, edges };
+}
+
+/**
+ * Map entities (graph) to VueFlow nodes and edges
+ * Supports entity types: AGENTS, NODES, ACTIONS, SERVICES, TASKS, TERMINATORS, PACKAGES, FEATURES, SYSTEMS, SCRIPTS, SOLUTIONS
+ */
+export function mapEntitiesToFlow(context) {
+  const nodes = [];
+  const edges = [];
+  
+  const entities = context.entities || [];
+  const relations = context.relations || [];
+  
+  // Group entities by type for layout
+  const byType = {};
+  entities.forEach(entity => {
+    const type = entity.type || 'unknown';
+    if (!byType[type]) byType[type] = [];
+    byType[type].push(entity);
+  });
+  
+  // Position nodes by type (columns)
+  const typeOrder = ['agents', 'nodes', 'actions', 'services', 'tasks', 'terminators', 'packages', 'features', 'systems', 'scripts', 'solutions'];
+  let currentX = LAYOUT_CONFIG.startX;
+  
+  typeOrder.forEach((type, typeIndex) => {
+    if (!byType[type]) return;
+    
+    byType[type].forEach((entity, entityIndex) => {
+      const node = mapContextBlockToNode({
+        id: entity.id || `entity-${type}-${entityIndex}`,
+        entityType: type,
+        name: entity.name,
+        label: entity.label,
+        description: entity.description,
+        path: entity.path
+      }, nodes.length, entities.length);
+      
+      // Override position for grid layout
+      node.position = {
+        x: currentX,
+        y: LAYOUT_CONFIG.startY + (entityIndex * LAYOUT_CONFIG.verticalSpacing)
+      };
+      
+      nodes.push(node);
+    });
+    
+    currentX += LAYOUT_CONFIG.nodeWidth + LAYOUT_CONFIG.horizontalSpacing;
+  });
+  
+  // Create edges from relations
+  relations.forEach((relation, idx) => {
+    edges.push({
+      id: `relation-${idx}`,
+      source: relation.source,
+      target: relation.target,
+      type: 'smoothstep',
+      style: {
+        stroke: '#64748b',
+        strokeWidth: 1
+      },
+      markerEnd: {
+        type: 'arrowclosed',
+        color: '#64748b'
+      }
+    });
+  });
   
   return { nodes, edges };
 }
@@ -721,6 +842,11 @@ export function responseToFlow(response) {
     return mapSimulationResponseToFlow(response);
   }
   
+  // Handle entities (graph) response
+  if (response.entities) {
+    return mapEntitiesToFlow(response);
+  }
+  
   // Handle different response formats
   const context = response.context || response;
   const messages = context.messages || context.blocks || context.contextBlocks || [];
@@ -729,6 +855,10 @@ export function responseToFlow(response) {
     // Check if it's a simulation-style response
     if (context.proposedActions || context.executingAction) {
       return mapSimulationResponseToFlow(context);
+    }
+    // Check for entities
+    if (context.entities) {
+      return mapEntitiesToFlow(context);
     }
     // No messages yet - return empty
     return { nodes: [], edges: [] };
@@ -801,6 +931,25 @@ export function createCompleteContextBlock(completion) {
     summary: completion.summary || '',
     totalSteps: completion.totalSteps || 0,
     duration: completion.duration || '0s',
+    timestamp: new Date().toISOString()
+  };
+}
+
+/**
+ * Create an entity node
+ * 
+ * @param {string} entityType - Type of entity (agents, nodes, actions, services, tasks, terminators, packages, features, systems, scripts, solutions)
+ * @param {Object} entityData - Entity data (name, label, description, path)
+ * @returns {Object} ContextBlock for entity
+ */
+export function createEntityContextBlock(entityType, entityData) {
+  return {
+    id: `entity-${entityType}-${Date.now()}`,
+    entityType: entityType,
+    name: entityData.name || entityData.label || entityType,
+    label: entityData.label || entityData.name || entityType,
+    description: entityData.description || '',
+    path: entityData.path || '',
     timestamp: new Date().toISOString()
   };
 }

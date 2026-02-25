@@ -3,7 +3,8 @@
 
 id: fix-vue-imports
 version: 1.0
-description: "Find and fix broken imports in Vue/TS files"
+title: "Исправить сломанные импорты в Vue файлах"
+description: "Исправить сломанные импорты в Vue файлах. Автоматически определить и исправить проблемы с импортами в Vue компонентах"
 
 # Use mixins
 mixins:
@@ -22,6 +23,10 @@ triggers:
   - resolve import issues
   - broken imports
   - fix import paths
+  - исправить импорты
+  - исправить импорты в vue
+  - vue импорты
+  - сломанные импорты
 
 # Steps pipeline
 steps:

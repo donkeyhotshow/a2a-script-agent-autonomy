@@ -1,0 +1,30 @@
+{
+  "context": {
+    "task": "створити модель User з полями name, email, password",
+    "execution": {
+      "actionId": "generate-model",
+      "currentActionId": "generate-model",
+      "status": "completed",
+      "history": [
+        { "step": 1, "actionId": "analyze-fields", "status": "completed", "result": { "field_spec": { "name": "User" } } },
+        { "step": 2, "actionId": "generate-model", "status": "completed", "result": { "model_file": "generated" } }
+      ]
+    }
+  },
+  "previousStep": {
+    "actionId": "generate-model",
+    "result": {
+      "model_file": {
+        "path": "app/Models/User.php"
+      }
+    }
+  },
+  "executingAction": {
+    "actionId": "generate-model",
+    "title": "Генерація моделі",
+    "description": "Завершення генерації",
+    "priority": 10,
+    "status": "completed"
+  },
+  "nextSteps": []
+}

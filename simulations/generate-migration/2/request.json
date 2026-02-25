@@ -1,0 +1,9 @@
+{
+  "action": "approve_action",
+  "selectedAction": {
+    "actionId": "generate-migration"
+  },
+  "context": {
+    "task": "створити міграцію для таблиці users"
+  }
+}

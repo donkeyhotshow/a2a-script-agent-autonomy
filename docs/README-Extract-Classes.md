@@ -22,7 +22,7 @@ php artisan build
 ### 2. Извлеките классы из бандла
 
 ```bash
-node .cursor/eslint-rules/extract-classes.cjs
+node docs/archive/eslint-rules/extract-classes.cjs
 ```
 
 Это создаст файл `extracted-classes.json` с данными:
@@ -79,7 +79,7 @@ npx eslint "features/**/*.vue"
 
 1. Удаляете CSS переменную из кода
 2. Собираете проект: `npm run build`
-3. Извлекаете классы: `node .cursor/eslint-rules/extract-classes.cjs`
+3. Извлекаете классы: `node docs/archive/eslint-rules/extract-classes.cjs`
 4. Запускаете ESLint: `npx eslint "features/**/*.vue"`
 5. ESLint находит все места, где используется удаленная переменная! 🎯
 
@@ -91,7 +91,7 @@ npx eslint "features/**/*.vue"
 {
   "scripts": {
     "build": "vite build",
-    "extract-classes": "node .cursor/eslint-rules/extract-classes.cjs",
+    "extract-classes": "node docs/archive/eslint-rules/extract-classes.cjs",
     "build:full": "npm run build && npm run extract-classes",
     "lint:styles": "eslint \"features/**/*.vue\" --rule \"inertia/no-invalid-classes: error\""
   }
@@ -115,7 +115,7 @@ npm run lint:styles
 - name: Build and extract classes
   run: |
     npm run build
-    node .cursor/eslint-rules/extract-classes.cjs
+    node docs/archive/eslint-rules/extract-classes.cjs
 
 - name: Lint styles
   run: npx eslint "features/**/*.vue" --rule "inertia/no-invalid-classes: error"
@@ -171,9 +171,9 @@ npm run lint:styles
 
 ```bash
 npm run build
-node .cursor/eslint-rules/extract-classes.cjs
+node docs/archive/eslint-rules/extract-classes.cjs
 ```
 
 ### Правило не находит классы из бандла
 
-Убедитесь, что `extracted-classes.json` находится в `.cursor/eslint-rules/` директории.
+Убедитесь, что `extracted-classes.json` находится в `docs/archive/eslint-rules/` директории.

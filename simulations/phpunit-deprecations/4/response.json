@@ -1,0 +1,38 @@
+{
+  "context": {
+    "task": "знайти застарілі PHPUnit методи",
+    "execution": {
+      "actionId": "phpunit-deprecations",
+      "currentActionId": "generate-deprecations-report",
+      "history": [
+        { "step": 1, "actionId": "scan-phpunit", "status": "completed", "result": { "total": 45 } },
+        { "step": 2, "actionId": "detect-deprecations", "status": "completed", "result": { "deprecations": 2 } }
+      ]
+    }
+  },
+  "previousStep": {
+    "actionId": "detect-deprecations",
+    "result": {
+      "deprecations": [
+        { "method": "assertEquals", "file": "tests/Unit/UserTest.php", "line": 15, "suggestion": "assertEqualsWithDelta" },
+        { "method": "assertInternalType", "file": "tests/Feature/AuthTest.php", "line": 22, "suggestion": "assertIsArray" }
+      ]
+    }
+  },
+  "executingAction": {
+    "actionId": "generate-deprecations-report",
+    "title": "Генерація звіту",
+    "description": "Створення звіту з рекомендаціями",
+    "priority": 8,
+    "dsl": {
+      "script": "generate-deprecations-report",
+      "input": {
+        "deprecations": 2,
+        "files": 45
+      },
+      "output": "deprecations_report"
+    },
+    "dslScript": "```typescript\n// generate-deprecations-report.dsl\n// Генерація звіту\n\nconst result = await script.execute('generate-deprecations-report', {\n  deprecations: 2,\n  format: 'markdown'\n});\n\n// result = { report: '# PHPUnit Deprecations\\n\\n## Found\\n...' }\n```"
+  },
+  "nextSteps": []
+}

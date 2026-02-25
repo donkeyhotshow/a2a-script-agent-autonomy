@@ -1,0 +1,54 @@
+{
+  "context": {
+    "task": "проаналізувати продуктивність проекту"
+  },
+  "proposedActions": [
+    {
+      "actionId": "analyze-performance",
+      "title": "Аналіз продуктивності",
+      "description": "Аналіз продуктивності коду, виявлення вузьких місць",
+      "priority": 10,
+      "matchScore": 0.98,
+      "subActions": [
+        {
+          "actionId": "scan-performance",
+          "title": "Сканування продуктивності",
+          "description": "Аналіз коду на предмет продуктивності",
+          "priority": 10,
+          "input": "none",
+          "output": "perf_data{}"
+        },
+        {
+          "actionId": "analyze-bottlenecks",
+          "title": "Аналіз вузьких місць",
+          "description": "Виявлення bottlenecks та повільних операцій",
+          "priority": 9,
+          "input": "perf_data{}",
+          "output": "bottlenecks[]"
+        },
+        {
+          "actionId": "generate-perf-report",
+          "title": "Генерація звіту про продуктивність",
+          "description": "Створення звіту з рекомендаціями",
+          "priority": 8,
+          "input": "bottlenecks[]",
+          "output": "perf_report"
+        }
+      ]
+    }
+  ],
+  "fallbackActions": [
+    {
+      "mode": "auto-ai",
+      "title": "AI Action Generator",
+      "description": "Згенерувати новий екшен за допомогою LLM",
+      "fallbackType": "llm_generation"
+    },
+    {
+      "mode": "task-decomposition",
+      "title": "Декомпозиція задачі",
+      "description": "Розбити задачу на підзадачі вручну",
+      "fallbackType": "manual"
+    }
+  ]
+}

@@ -252,17 +252,10 @@ export class ActionProcessor {
     match: { action: ActionDefinition; matchScore: number },
     response: ActionResponseSimulation
   ): ServerMessage {
+    // Для action_proposal НЕ добавляем tasks с in_progress - это соответствует Gold Standard
     const context: ContextBlock = {
       version: PROTOCOL_VERSION,
       session_id: sessionId,
-      tasks: [
-        {
-          id: match.action.id,
-          type: 'analyze',
-          status: 'in_progress',
-          progress: 0,
-        },
-      ],
     };
 
     const firstStep = match.action.subActions[0];

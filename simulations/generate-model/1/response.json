@@ -1,0 +1,40 @@
+{
+  "context": {
+    "task": "створити модель User з полями name, email, password"
+  },
+  "proposedActions": [
+    {
+      "actionId": "generate-model",
+      "title": "Генерація моделі",
+      "description": "Створення Eloquent моделі з полями та зв'язками",
+      "priority": 10,
+      "matchScore": 0.96,
+      "subActions": [
+        {
+          "actionId": "analyze-fields",
+          "title": "Аналіз полів моделі",
+          "description": "Визначення полів, типів та атрибутів",
+          "priority": 10,
+          "input": "model_name, fields[]",
+          "output": "field_spec"
+        },
+        {
+          "actionId": "generate-model",
+          "title": "Генерація моделі",
+          "description": "Створення файлу моделі",
+          "priority": 9,
+          "input": "field_spec",
+          "output": "model_file"
+        }
+      ]
+    }
+  ],
+  "fallbackActions": [
+    {
+      "mode": "auto-ai",
+      "title": "AI Action Generator",
+      "description": "Згенерувати новий екшен за допомогою LLM",
+      "fallbackType": "llm_generation"
+    }
+  ]
+}

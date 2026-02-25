@@ -9,23 +9,23 @@
 - [x] simulation/4 - step_result → next step
 - [x] simulation/5 - step_result → completed
 
-### 1.2 Реальные экшены - НУЖНО СОЗДАТЬ ⏳
-- [ ] analyze-full
-- [ ] analyze-architecture
-- [ ] analyze-typescript
-- [ ] analyze-vue
-- [ ] analyze-laravel
+### 1.2 Реальные экшены - СОЗДАНЫ ✅
+- [x] analyze-full
+- [x] analyze-architecture
+- [x] analyze-typescript
+- [x] analyze-vue
+- [x] analyze-laravel
 - [ ] analyze-performance
 - [ ] analyze-security
-- [ ] generate-crud
-- [ ] generate-controller
-- [ ] generate-model
-- [ ] generate-migration
-- [ ] graph-build
-- [ ] graph-query
-- [ ] graph-impact
-- [ ] hybrid-fix
-- [ ] hybrid-refactor
+- [x] generate-crud
+- [x] generate-controller
+- [x] generate-model
+- [x] generate-migration
+- [x] graph-build
+- [x] graph-query
+- [x] graph-impact
+- [x] hybrid-fix
+- [x] hybrid-refactor
 
 ---
 
@@ -33,13 +33,13 @@
 
 ### 2.1 Схемы (Schemas) - В РАБОТЕ 🔄
 - [x] Базовые схемы созданы в simulations/pilot/schemas.ts
-- [ ] Расширить схемы для всех типов экшенов
+- [x] Расширить схемы для всех типов экшенов (simulations/schemas/real-actions.ts)
 - [ ] Добавить валидацию в скрипты
 
 ### 2.2 Скрипты автоматизации - В РАБОТЕ 🔄
 - [x] sim:create - создание симуляции
 - [x] sim:run - запуск одной симуляции
-- [ ] sim:run-all - запуск всех симуляций
+- [x] sim:run-all - запуск всех симуляций
 - [ ] sim:validate - валидация по схеме
 - [ ] sim:compare - сравнение с gold standard
 - [ ] sim:report - генерация отчета
@@ -102,8 +102,8 @@
 ## Приоритеты
 
 ### Высокий приоритет (сделать в первую очередь):
-1. **План 1:** Доработать скрипты (sim:run-all, sim:validate, sim:compare, sim:report)
-2. **План 2:** Создать 3-5 реальных симуляций (analyze-full, generate-crud, graph-build)
+1. **План 1:** Доработать скрипты (sim:run-all ✅, sim:validate, sim:compare, sim:report)
+2. **План 2:** Создать 3-5 реальных симуляций (analyze-full, generate-crud, graph-build) ✅ - УЖЕ СОЗДАНЫ
 3. **План 3:** Создать TypeScript типы
 
 ### Средний приоритет:

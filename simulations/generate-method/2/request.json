@@ -1,0 +1,9 @@
+{
+  "action": "approve_action",
+  "selectedAction": {
+    "actionId": "generate-method"
+  },
+  "context": {
+    "task": "додати метод getActiveUsers до моделі User"
+  }
+}

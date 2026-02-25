@@ -537,49 +537,281 @@ button:disabled {
 
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
 
-/* VueFlow Graph Container */
+/* VueFlow Graph Container - Side Panel */
 .flow-container {
   position: fixed;
-  top: 0;
-  left: 0;
+  top: 40px; /* Below header */
   right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.9);
-  z-index: 1000;
+  width: 450px;
+  height: calc(100vh - 40px - 28px);
+  background: var(--bg2);
+  border-left: 1px solid var(--border);
+  z-index: 100;
   display: flex;
   flex-direction: column;
+  transform: translateX(100%);
+  transition: transform 0.3s ease-in-out;
 }
 
 .flow-container.active {
+  transform: translateX(0);
+}
+
+.flow-container .toggle-btn {
+  position: fixed;
+  top: 60px;
+  right: 10px;
+  z-index: 99;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 14px;
   display: flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.flow-container .toggle-btn:hover {
+  background: var(--accent-hover);
 }
 
 .flow-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 20px;
-  background: #1e293b;
-  border-bottom: 1px solid #334155;
+  padding: 8px 12px;
+  background: var(--bg3);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
 }
 
 .flow-header h3 {
   margin: 0;
-  color: #f8fafc;
-  font-size: 16px;
+  color: var(--fg);
+  font-size: 14px;
 }
 
 .flow-controls {
   display: flex;
-  gap: 8px;
+  gap: 4px;
 }
 
 .vueflow-graph {
   flex: 1;
-  background: #0f172a;
+  background: var(--bg);
+  min-height: 0;
 }
 
-/* VueFlow custom node styles */
+/* Node Details Panel */
+.node-details-panel {
+  position: fixed;
+  top: 100px;
+  right: 470px;
+  width: 320px;
+  max-height: calc(100vh - 140px);
+  overflow: auto;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  z-index: 200;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.node-details-panel .close-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  border: none;
+  background: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: var(--fg2);
+}
+
+.node-details-panel .close-btn:hover {
+  color: var(--fg);
+}
+
+.node-details-panel h3 {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+  color: var(--fg);
+}
+
+.node-details-panel .node-type {
+  font-size: 12px;
+  color: var(--fg2);
+  margin-bottom: 4px;
+}
+
+.node-details-panel .node-type span {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.node-details-panel .node-id {
+  font-size: 11px;
+  color: var(--fg2);
+  font-family: monospace;
+  word-break: break-all;
+}
+
+.node-details-panel .section {
+  border-top: 1px solid var(--border);
+  padding-top: 12px;
+  margin-top: 12px;
+}
+
+.node-details-panel .section-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--fg2);
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.node-details-panel pre {
+  background: var(--bg);
+  padding: 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  overflow: auto;
+  max-height: 150px;
+  margin: 0;
+  color: var(--fg);
+}
+
+/* Node tabs for DSL, Input, Output */
+.node-details-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.node-details-tabs button {
+  padding: 4px 8px;
+  font-size: 11px;
+  border: 1px solid var(--border);
+  background: var(--bg3);
+  color: var(--fg2);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.node-details-tabs button.active {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+}
+
+.node-details-panel .tab-content {
+  margin-top: 8px;
+}
+
+.node-details-panel .tab-pane {
+  display: none;
+}
+
+.node-details-panel .tab-pane.active {
+  display: block;
+}
+
+/* Node progress indicator */
+.vue-flow__node .node-progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 3px;
+  background: var(--accent);
+  transition: width 0.3s ease;
+}
+
+.vue-flow__node .node-progress.completed {
+  background: var(--success);
+}
+
+.vue-flow__node .node-progress.error {
+  background: var(--error);
+}
+
+/* Node status indicator */
+.vue-flow__node-status {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--fg2);
+}
+
+.vue-flow__node-status.active {
+  background: var(--accent);
+  animation: pulse 1s infinite;
+}
+
+.vue-flow__node-status.completed {
+  background: var(--success);
+}
+
+.vue-flow__node-status.error {
+  background: var(--error);
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* Flow history panel */
+.flow-history {
+  padding: 8px;
+  border-top: 1px solid var(--border);
+  background: var(--bg3);
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+.flow-history-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--fg2);
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.flow-history-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--fg2);
+}
+
+.flow-history-item:hover {
+  background: var(--bg);
+  color: var(--fg);
+}
+
+.flow-history-item .icon {
+  font-size: 14px;
+}
+
+.flow-history-item.completed .icon {
+  color: var(--success);
+}
+
+.flow-history-item.active .icon {
+  color: var(--accent);
+}
 .vue-flow__node-taskInput,
 .vue-flow__node-actionProposal,
 .vue-flow__node-subAction,
@@ -960,4 +1192,111 @@ button:disabled {
   display: flex;
   gap: 8px;
   justify-content: flex-end;
+}
+
+/* Approve Button Styles */
+.btn-approve {
+  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+  color: white;
+  font-weight: 600;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(34, 197, 94, 0.3);
+}
+
+.btn-approve:hover {
+  background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(34, 197, 94, 0.4);
+}
+
+.btn-approve:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(34, 197, 94, 0.3);
+}
+
+.btn-approve:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Session Node Styles for VueFlow */
+.vue-flow__node-session {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  min-width: 180px;
+}
+
+.vue-flow__node-session .session-header {
+  background: #8b5cf6;
+  padding: 8px 12px;
+  color: white;
+  font-weight: 600;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 8px 8px 0 0;
+}
+
+.vue-flow__node-session .session-content {
+  padding: 12px;
+  font-size: 12px;
+}
+
+.vue-flow__node-session .session-label {
+  font-weight: 600;
+  color: #64748b;
+  font-size: 11px;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.vue-flow__node-session .session-value {
+  color: #1e293b;
+  font-size: 13px;
+  margin-bottom: 8px;
+  font-family: monospace;
+}
+
+.vue-flow__node-session .session-meta {
+  display: flex;
+  gap: 8px;
+  font-size: 11px;
+  color: #64748b;
+  margin-bottom: 8px;
+}
+
+.vue-flow__node-session .session-status {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.vue-flow__node-session .session-status.active {
+  background: #dbeafe;
+  color: #2563eb;
+}
+
+.vue-flow__node-session .session-status.completed {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.vue-flow__node-session .session-status.failed {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.vue-flow__node-session .session-status.waiting {
+  background: #fef3c7;
+  color: #b45309;
 }

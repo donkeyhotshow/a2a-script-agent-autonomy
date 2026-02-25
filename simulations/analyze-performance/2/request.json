@@ -1,0 +1,9 @@
+{
+  "action": "approve_action",
+  "selectedAction": {
+    "actionId": "analyze-performance"
+  },
+  "context": {
+    "task": "проаналізувати продуктивність проекту"
+  }
+}

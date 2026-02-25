@@ -70,7 +70,7 @@ const DEFAULT_INTERVAL_MS = 5000;
 
 let timerId: ReturnType<typeof setInterval> | null = null;
 
-export type ProcessOutcome = 'completed' | 'failed' | 'graph_incomplete';
+export type ProcessOutcome = 'completed' | 'failed' | 'graph_incomplete' | 'action_proposal';
 
 interface ProcessResult {
   outcome: ProcessOutcome;
@@ -306,13 +306,13 @@ export async function processOneRequest(): Promise<ProcessResult | null> {
           
           // Update request status to completed with action result
           await requestService.updateStatus(promiseId, 'completed', {
-            outcome: 'completed',
+            outcome: 'action_proposal',
             ...resultData,
           });
           
           // Return action_proposal response
           return {
-            outcome: 'completed',
+            outcome: 'action_proposal',
             context: actionResult.message.context,
             activated_neuron_ids: [actionResult.actionId],
             action: actionResult.message.action,

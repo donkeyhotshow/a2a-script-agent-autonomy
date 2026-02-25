@@ -1,0 +1,27 @@
+{
+  "action": "step_result",
+  "stepId": "analyze-target",
+  "result": {
+    "target_spec": {
+      "name": "UserController",
+      "path": "app/Http/Controllers/UserController.php",
+      "methods": [
+        { "name": "index", "http_method": "GET", "route": "/users" },
+        { "name": "create", "http_method": "GET", "route": "/users/create" },
+        { "name": "store", "http_method": "POST", "route": "/users" },
+        { "name": "show", "http_method": "GET", "route": "/users/{user}" },
+        { "name": "edit", "http_method": "GET", "route": "/users/{user}/edit" },
+        { "name": "update", "http_method": "PUT/PATCH", "route": "/users/{user}" },
+        { "name": "destroy", "http_method": "DELETE", "route": "/users/{user}" }
+      ]
+    }
+  },
+  "context": {
+    "task": "створити тест для UserController",
+    "execution": {
+      "actionId": "generate-test",
+      "currentActionId": "analyze-target",
+      "history": []
+    }
+  }
+}

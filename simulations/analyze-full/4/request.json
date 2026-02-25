@@ -1,0 +1,40 @@
+{
+  "action": "step_result",
+  "stepId": "analyze-code",
+  "result": {
+    "metrics": {
+      "totalLines": 5423,
+      "codeLines": 4210,
+      "commentLines": 456,
+      "blankLines": 757,
+      "avgComplexity": 2.3,
+      "coverage": 78,
+      "duplicateLines": 89,
+      "byType": {
+        "ts": 3456,
+        "vue": 1967,
+        "json": 357,
+        "test": 912
+      },
+      "byFile": [
+        { "path": "src/index.ts", "lines": 234, "complexity": 3 },
+        { "path": "src/utils/helpers.ts", "lines": 145, "complexity": 2 },
+        { "path": "src/components/Button.vue", "lines": 178, "complexity": 2 },
+        { "path": "src/components/Modal.vue", "lines": 234, "complexity": 4 },
+        { "path": "src/stores/userStore.ts", "lines": 89, "complexity": 1 },
+        { "path": "src/services/api.ts", "lines": 156, "complexity": 3 }
+      ]
+    }
+  },
+  "context": {
+    "task": "проаналізувати проект",
+    "execution": {
+      "actionId": "analyze-full",
+      "currentActionId": "analyze-code",
+      "history": [
+        { "step": 1, "actionId": "scan-files", "status": "completed", "result": { "file_count": 10 } },
+        { "step": 2, "actionId": "analyze-code", "status": "completed", "result": { "totalLines": 5423, "coverage": 78 } }
+      ]
+    }
+  }
+}

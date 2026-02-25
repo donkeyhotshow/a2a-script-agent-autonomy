@@ -28,4 +28,9 @@ describe('ApiClient', () => {
     expect(err.status).toBe(404);
     expect(err.data).toEqual({ code: 'NOT_FOUND' });
   });
+
+  it('constructs with undefined options', () => {
+    const client = new ApiClient(undefined);
+    expect(client.serverUrl).toBe('http://localhost:3000/api/v1');
+  });
 });

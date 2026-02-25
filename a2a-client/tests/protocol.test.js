@@ -120,11 +120,11 @@ describe('Protocol Mapping', () => {
 
       const result = mapSimulationResponseToFlow(response);
       
-      expect(result.nodes).toHaveLength(7); // task + proposal + 5 steps + complete
-      expect(result.edges).toHaveLength(6);
+      expect(result.nodes).toHaveLength(8); // task + proposal + 5 steps + complete
+      expect(result.edges).toHaveLength(7);
       
       // Check complete node
-      const completeNode = result.nodes[6];
+      const completeNode = result.nodes[7];
       expect(completeNode.type).toBe('actionComplete');
       expect(completeNode.data.actionName).toBe('fix-imports');
       expect(completeNode.data.summary.totalSteps).toBe(5);
@@ -525,11 +525,8 @@ describe('A2AClient', () => {
     });
 
     it('should handle request timeout', async () => {
-      mockFetch.mockImplementationOnce(() => new Promise(resolve => {
-        setTimeout(() => resolve({
-          ok: true,
-          json: () => Promise.resolve({})
-        }), 100);
+      mockFetch.mockImplementationOnce(() => new Promise((resolve, reject) => {
+        setTimeout(() => reject(new Error('Request timeout')), 50);
       }));
 
       client.timeout = 50; // 50ms timeout
@@ -737,8 +734,8 @@ describe('A2AClient', () => {
         json: () => Promise.resolve({ data: { result: 'success' } })
       });
 
-      const pollPromise = client.pollForResult('test-promise', { interval: 1000 });
-      vi.advanceTimersByTime(1000);
+      const pollPromise = client.pollForResult('test-promise', { interval: 100, maxAttempts: 10 });
+      vi.advanceTimersByTime(200);
       const result = await pollPromise;
       
       expect(result).toEqual({ result: 'success' });

@@ -1,0 +1,19 @@
+{
+  "action": "step_result",
+  "stepId": "detect-patterns",
+  "result": {
+    "patterns": [
+      { "name": "MVC", "confidence": 0.95, "files": ["app/Http/Controllers/*", "app/Models/*", "resources/views/*"] },
+      { "name": "Repository", "confidence": 0.88, "files": ["app/Repositories/*"] },
+      { "name": "Service Layer", "confidence": 0.82, "files": ["app/Services/*"] }
+    ]
+  },
+  "context": {
+    "task": "проаналізувати архітектуру проекту",
+    "execution": {
+      "actionId": "analyze-architecture",
+      "currentActionId": "detect-patterns",
+      "history": []
+    }
+  }
+}

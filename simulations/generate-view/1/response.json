@@ -1,0 +1,40 @@
+{
+  "context": {
+    "task": "створити форму редагування профілю користувача"
+  },
+  "proposedActions": [
+    {
+      "actionId": "generate-view",
+      "title": "Генерація Vue форми редагування профілю",
+      "description": "Створення Vue компонента для редагування профілю користувача",
+      "priority": 10,
+      "matchScore": 0.94,
+      "subActions": [
+        {
+          "actionId": "analyze-model",
+          "title": "Аналіз моделі User",
+          "description": "Аналіз полів моделі User для створення форми",
+          "priority": 10,
+          "input": "model_name, model_path",
+          "output": "model_spec"
+        },
+        {
+          "actionId": "generate-view",
+          "title": "Генерація Vue компонента",
+          "description": "Створення Vue Single File Component для редагування профілю",
+          "priority": 9,
+          "input": "model_spec, view_type",
+          "output": "view_file"
+        }
+      ]
+    }
+  ],
+  "fallbackActions": [
+    {
+      "mode": "auto-ai",
+      "title": "AI Action Generator",
+      "description": "Згенерувати новий екшен за допомогою LLM",
+      "fallbackType": "llm_generation"
+    }
+  ]
+}

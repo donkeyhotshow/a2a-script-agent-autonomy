@@ -1,0 +1,65 @@
+{
+  "context": {
+    "task": "створити повний CRUD для сутності User",
+    "execution": {
+      "actionId": "generate-crud",
+      "currentActionId": "generate-crud",
+      "status": "completed",
+      "history": [
+        { "step": 1, "actionId": "prepare-model", "status": "completed", "result": { "model_spec": { "name": "User" } } },
+        { "step": 2, "actionId": "generate-code", "status": "completed", "result": { "files_generated": 7 } }
+      ]
+    }
+  },
+  "previousStep": {
+    "actionId": "generate-code",
+    "result": {
+      "status": "completed",
+      "files_created": [
+        "app/Models/User.php",
+        "app/Http/Controllers/UserController.php",
+        "database/migrations/2024_01_01_000001_create_users_table.php",
+        "resources/views/users/index.blade.php",
+        "resources/views/users/create.blade.php",
+        "resources/views/users/show.blade.php",
+        "resources/views/users/edit.blade.php"
+      ]
+    }
+  },
+  "finalResult": {
+    "actionId": "generate-crud",
+    "summary": {
+      "entity": "User",
+      "files_created": 7,
+      "status": "success"
+    },
+    "details": {
+      "model": {
+        "path": "app/Models/User.php",
+        "class": "User",
+        "extends": "Model",
+        "fillable": ["name", "email", "password", "role", "is_active"],
+        "relationships": []
+      },
+      "controller": {
+        "path": "app/Http/Controllers/UserController.php",
+        "class": "UserController",
+        "methods": ["index", "create", "store", "show", "edit", "update", "destroy"]
+      },
+      "migration": {
+        "path": "database/migrations/2024_01_01_000001_create_users_table.php",
+        "table": "users",
+        "fields": ["id", "name", "email", "password", "role", "is_active", "timestamps"]
+      },
+      "views": {
+        "count": 4,
+        "files": [
+          "resources/views/users/index.blade.php",
+          "resources/views/users/create.blade.php",
+          "resources/views/users/show.blade.php",
+          "resources/views/users/edit.blade.php"
+        ]
+      }
+    }
+  }
+}

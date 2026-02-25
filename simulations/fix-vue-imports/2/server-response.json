@@ -1,0 +1,29 @@
+{
+  "context": {
+    "task": "виправити імпорти у vue компонентах",
+    "execution": {
+      "actionId": "fix-vue-imports",
+      "currentActionId": "vue-import-detect",
+      "history": []
+    }
+  },
+  "executingAction": {
+    "actionId": "vue-import-detect",
+    "title": "Визначити зламані імпорти",
+    "description": "Сканує Vue файли і знаходить біті імпорти",
+    "priority": 10,
+    "dsl": {
+      "script": "vue-import-detect",
+      "input": {
+        "rootDir": ".",
+        "filePattern": "**/*.vue"
+      },
+      "output": "broken_imports[]"
+    }
+  },
+  "nextSteps": [
+    { "actionId": "vue-import-resolve", "title": "Вирішити правильні шляхи" },
+    { "actionId": "vue-import-apply", "title": "Застосувати виправлення" },
+    { "actionId": "vue-import-cleanup", "title": "Очистити" }
+  ]
+}

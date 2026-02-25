@@ -1,0 +1,70 @@
+{
+  "context": {
+    "task": "створити повний CRUD для сутності User"
+  },
+  "proposedActions": [
+    {
+      "actionId": "generate-crud",
+      "title": "Генерація повного CRUD",
+      "description": "Створення моделі, контролера, міграції та представлень для сутності",
+      "priority": 10,
+      "matchScore": 0.97,
+      "subActions": [
+        {
+          "actionId": "prepare-model",
+          "title": "Підготовка даних моделі",
+          "description": "Визначення полів, типів даних та валідації",
+          "priority": 10,
+          "input": "entity_name, fields[]",
+          "output": "model_spec"
+        },
+        {
+          "actionId": "generate-model",
+          "title": "Генерація моделі",
+          "description": "Створення файлу моделі",
+          "priority": 9,
+          "input": "model_spec",
+          "output": "model_file"
+        },
+        {
+          "actionId": "generate-controller",
+          "title": "Генерація контролера",
+          "description": "Створення контролера з CRUD методами",
+          "priority": 8,
+          "input": "model_spec",
+          "output": "controller_file"
+        },
+        {
+          "actionId": "generate-migration",
+          "title": "Генерація міграції",
+          "description": "Створення міграції для таблиці",
+          "priority": 7,
+          "input": "model_spec",
+          "output": "migration_file"
+        },
+        {
+          "actionId": "generate-views",
+          "title": "Генерація представлень",
+          "description": "Створення Blade/React/Vue представлень",
+          "priority": 6,
+          "input": "model_spec",
+          "output": "view_files[]"
+        }
+      ]
+    }
+  ],
+  "fallbackActions": [
+    {
+      "mode": "auto-ai",
+      "title": "AI Action Generator",
+      "description": "Згенерувати новий екшен за допомогою LLM",
+      "fallbackType": "llm_generation"
+    },
+    {
+      "mode": "manual",
+      "title": "Ручне створення",
+      "description": "Створити файли вручну",
+      "fallbackType": "manual"
+    }
+  ]
+}

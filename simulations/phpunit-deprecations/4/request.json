@@ -1,0 +1,20 @@
+{
+  "action": "step_result",
+  "stepId": "detect-deprecations",
+  "result": {
+    "deprecations": [
+      { "method": "assertEquals", "file": "tests/Unit/UserTest.php", "line": 15, "suggestion": "assertEqualsWithDelta" },
+      { "method": "assertInternalType", "file": "tests/Feature/AuthTest.php", "line": 22, "suggestion": "assertIsArray" }
+    ]
+  },
+  "context": {
+    "task": "знайти застарілі PHPUnit методи",
+    "execution": {
+      "actionId": "phpunit-deprecations",
+      "currentActionId": "detect-deprecations",
+      "history": [
+        { "step": 1, "actionId": "scan-phpunit", "status": "completed", "result": { "total": 45 } }
+      ]
+    }
+  }
+}

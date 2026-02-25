@@ -216,9 +216,10 @@ export class ActionRegistry {
 
     return {
       id: dslAction.id,
-      title: dslAction.id.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
+      title: (dslAction as unknown as { title?: string }).title || dslAction.id.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
       description: (dslAction as unknown as { description?: string }).description || '',
       priority: 50, // YAML actions have higher priority
+      triggers: (dslAction as unknown as { triggers?: string[] }).triggers || [],
       context: this.convertContext(dslAction.context),
       subActions,
     };
@@ -300,12 +301,19 @@ export class ActionRegistry {
       let matchScore = 0;
       const descLower = action.description.toLowerCase();
       const titleLower = action.title.toLowerCase();
+      const triggersLower = (action.triggers || []).map(t => t.toLowerCase());
 
       let keywordMatches = 0;
       
       for (const word of taskWords) {
+        // Check triggers first (highest weight)
+        const triggerMatch = triggersLower.some(t => t.includes(word) || word.includes(t));
+        if (triggerMatch) {
+          matchScore += 0.7;
+          keywordMatches++;
+        }
         // Exact keyword match in description or title
-        if (descLower.includes(word) || titleLower.includes(word)) {
+        else if (descLower.includes(word) || titleLower.includes(word)) {
           matchScore += 0.5;
           keywordMatches++;
         } 

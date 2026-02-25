@@ -1,0 +1,42 @@
+{
+  "context": {
+    "task": "проаналізувати архітектуру проекту",
+    "execution": {
+      "actionId": "analyze-architecture",
+      "currentActionId": "generate-arch-docs",
+      "history": [
+        { "step": 1, "actionId": "detect-patterns", "status": "completed", "result": { "patterns": ["MVC", "Repository", "Service Layer"] } },
+        { "step": 2, "actionId": "analyze-components", "status": "completed", "result": { "components": { "controllers": 15, "models": 22, "services": 18 } } }
+      ]
+    }
+  },
+  "previousStep": {
+    "actionId": "analyze-components",
+    "result": {
+      "components": {
+        "controllers": { "count": 15, "files": ["app/Http/Controllers/*"] },
+        "models": { "count": 22, "files": ["app/Models/*"] },
+        "services": { "count": 18, "files": ["app/Services/*"] },
+        "repositories": { "count": 12, "files": ["app/Repositories/*"] },
+        "views": { "count": 45, "files": ["resources/views/*"] },
+        "middleware": { "count": 8, "files": ["app/Http/Middleware/*"] }
+      }
+    }
+  },
+  "executingAction": {
+    "actionId": "generate-arch-docs",
+    "title": "Генерація архітектурної документації",
+    "description": "Створення документації архітектури",
+    "priority": 6,
+    "dsl": {
+      "script": "generate-arch-docs",
+      "input": {
+        "patterns": ["MVC", "Repository", "Service Layer"],
+        "components": { "controllers": 15, "models": 22, "services": 18 }
+      },
+      "output": "arch_doc"
+    },
+    "dslScript": "```typescript\n// generate-arch-docs.dsl\n// Генерація архітектурної документації\n\nconst result = await script.execute('generate-arch-docs', {\n  patterns: ['MVC', 'Repository', 'Service Layer'],\n  components: {\n    controllers: 15,\n    models: 22,\n    services: 18,\n    repositories: 12\n  },\n  format: 'markdown'\n});\n\n// result = { doc: '# Архітектура проекту\\n\\n## Паттерни\\n- MVC\\n- Repository\\n...' }\n```"
+  },
+  "nextSteps": []
+}

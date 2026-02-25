@@ -1,0 +1,39 @@
+{
+  "context": {
+    "task": "додати метод getActiveUsers до моделі User",
+    "execution": {
+      "actionId": "generate-method",
+      "currentActionId": "generate-method",
+      "status": "completed",
+      "history": [
+        { "step": 1, "actionId": "analyze-class", "status": "completed", "result": { "class_spec": { "name": "User" } } },
+        { "step": 2, "actionId": "generate-method", "status": "completed", "result": { "method_code": "generated" } }
+      ]
+    }
+  },
+  "previousStep": {
+    "actionId": "generate-method",
+    "result": {
+      "status": "completed",
+      "method_added": "getActiveUsers",
+      "location": "app/Models/User.php"
+    }
+  },
+  "finalResult": {
+    "actionId": "generate-method",
+    "summary": {
+      "class": "User",
+      "method_added": "getActiveUsers",
+      "location": "app/Models/User.php",
+      "status": "success"
+    },
+    "details": {
+      "method_name": "scopeGetActiveUsers",
+      "type": "scope",
+      "return_type": "Collection",
+      "parameters": [],
+      "code": "public function scopeGetActiveUsers($query)\n{\n    return $query->where('is_active', true);\n}",
+      "usage": "User::getActiveUsers()"
+    }
+  }
+}

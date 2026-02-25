@@ -36,7 +36,7 @@
 
 ### 1. Правила уже добавлены в проект
 
-Файлы находятся в `.cursor/eslint-rules/`:
+Файлы находятся в `docs/archive/eslint-rules/`:
 - `no-invalid-classes.cjs`
 - `require-responsive-classes.cjs`
 - `suggest-styling-improvements.cjs`
@@ -61,7 +61,7 @@ rules: {
 npm run build
 
 # Извлеките классы из бандла
-node .cursor/eslint-rules/extract-classes.cjs
+node docs/archive/eslint-rules/extract-classes.cjs
 
 # Запустите проверку
 npx eslint "features/**/*.vue"
@@ -197,7 +197,7 @@ npx eslint "features/**/*.vue"
 npm run build
 
 # 2. Извлеките классы
-node .cursor/eslint-rules/extract-classes.cjs
+node docs/archive/eslint-rules/extract-classes.cjs
 
 # Результат:
 # Обработано CSS файлов: 2
@@ -244,7 +244,7 @@ npx eslint "features/**/*.vue"
 npm run build
 
 # 3. Извлекаете актуальные данные
-node .cursor/eslint-rules/extract-classes.cjs
+node docs/archive/eslint-rules/extract-classes.cjs
 
 # 4. ESLint найдет все места с удаленной переменной!
 npx eslint "features/**/*.vue"
@@ -257,7 +257,7 @@ npx eslint "features/**/*.vue"
 ```json
 {
   "scripts": {
-    "build:full": "npm run build && node .cursor/eslint-rules/extract-classes.cjs",
+    "build:full": "npm run build && node docs/archive/eslint-rules/extract-classes.cjs",
     "lint:styles": "eslint \"features/**/*.vue\" --rule \"inertia/no-invalid-classes: error\"",
     "precommit": "npm run lint:styles"
   }
@@ -287,7 +287,7 @@ jobs:
       - name: Build and extract classes
         run: |
           npm run build
-          node .cursor/eslint-rules/extract-classes.cjs
+          node docs/archive/eslint-rules/extract-classes.cjs
       
       - name: Lint styles
         run: npx eslint "features/**/*.vue" --rule "inertia/no-invalid-classes: error"
@@ -301,7 +301,7 @@ lint-styles:
   script:
     - npm ci
     - npm run build
-    - node .cursor/eslint-rules/extract-classes.cjs
+    - node docs/archive/eslint-rules/extract-classes.cjs
     - npx eslint "features/**/*.vue" --rule "inertia/no-invalid-classes: error"
 ```
 
@@ -315,7 +315,7 @@ lint-styles:
 ```bash
 # Пересоберите проект и извлеките классы заново
 npm run build
-node .cursor/eslint-rules/extract-classes.cjs
+node docs/archive/eslint-rules/extract-classes.cjs
 ```
 
 ### Проблема: Файл extracted-classes.json не создается
@@ -326,7 +326,7 @@ node .cursor/eslint-rules/extract-classes.cjs
 ### Проблема: Правило не находит классы из бандла
 
 **Решение:**
-Убедитесь, что `extracted-classes.json` находится в `.cursor/eslint-rules/` директории.
+Убедитесь, что `extracted-classes.json` находится в `docs/archive/eslint-rules/` директории.
 
 ### Проблема: Динамические классы помечаются как ошибки
 
@@ -387,9 +387,9 @@ node .cursor/eslint-rules/extract-classes.cjs
 При возникновении проблем:
 
 1. Проверьте, что проект собран: `npm run build`
-2. Извлеките классы заново: `node .cursor/eslint-rules/extract-classes.cjs`
+2. Извлеките классы заново: `node docs/archive/eslint-rules/extract-classes.cjs`
 3. Проверьте конфигурацию ESLint: `eslint.config.mjs`
-4. Проверьте версию Node.js: `node --version` (требуется v14+)
+4. Проверьте версию Node.js: `node --version` (требуется v20+)
 
 ---
 

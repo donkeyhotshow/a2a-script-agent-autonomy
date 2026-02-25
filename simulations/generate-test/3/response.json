@@ -1,0 +1,38 @@
+{
+  "context": {
+    "task": "створити тест для UserController",
+    "execution": {
+      "actionId": "generate-test",
+      "currentActionId": "generate-test",
+      "history": ["analyze-target"]
+    }
+  },
+  "executingAction": {
+    "actionId": "generate-test",
+    "title": "Генерація тесту",
+    "description": "Створення тестового файлу для UserController",
+    "priority": 9,
+    "dsl": {
+      "script": "generate-test",
+      "input": {
+        "target_spec": {
+          "name": "UserController",
+          "path": "app/Http/Controllers/UserController.php",
+          "methods": [
+            { "name": "index", "http_method": "GET", "route": "/users" },
+            { "name": "create", "http_method": "GET", "route": "/users/create" },
+            { "name": "store", "http_method": "POST", "route": "/users" },
+            { "name": "show", "http_method": "GET", "route": "/users/{user}" },
+            { "name": "edit", "http_method": "GET", "route": "/users/{user}/edit" },
+            { "name": "update", "http_method": "PUT/PATCH", "route": "/users/{user}" },
+            { "name": "destroy", "http_method": "DELETE", "route": "/users/{user}" }
+          ]
+        },
+        "test_type": "feature"
+      },
+      "output": "test_file"
+    },
+    "dslScript": "```typescript\n// generate-test.dsl\n// Генерація тестового файлу\n\nconst result = await script.execute('generate-test', {\n  target_spec: {\n    name: 'UserController',\n    path: 'app/Http/Controllers/UserController.php',\n    methods: [\n      { name: 'index', http_method: 'GET', route: '/users' },\n      { name: 'store', http_method: 'POST', route: '/users' },\n      { name: 'show', http_method: 'GET', route: '/users/{user}' },\n      { name: 'update', http_method: 'PUT/PATCH', route: '/users/{user}' },\n      { name: 'destroy', http_method: 'DELETE', route: '/users/{user}' }\n    ]\n  },\n  test_type: 'feature'\n});\n\n// result = {\n//   test_file: {\n//     path: 'tests/Feature/UserControllerTest.php',\n//     code: '<?php ...'\n//   }\n// }\n```"
+  },
+  "nextSteps": []
+}

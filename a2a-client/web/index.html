@@ -11,14 +11,24 @@
   <script type="importmap">
   {
     "imports": {
-      "vue": "https://esm.sh/vue@3.4.0",
+      "vue": "https://esm.sh/vue@3.4.0/vue.esm-browser.js",
+      "vue/dist/vue.esm-browser.js": "https://esm.sh/vue@3.4.0/vue.esm-browser.js",
       "@vue-flow/core": "https://esm.sh/@vue-flow/core@1.48.2",
       "@vue-flow/background": "https://esm.sh/@vue-flow/background@1.3.2",
       "@vue-flow/controls": "https://esm.sh/@vue-flow/controls@1.1.3",
       "@vue-flow/minimap": "https://esm.sh/@vue-flow/minimap@1.5.4"
+    },
+    "alias": {
+      "vue": "vue/dist/vue.esm-browser.js"
     }
   }
   </script>
+  
+  <!-- VueFlow Styles - Required for proper graph rendering -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@vue-flow/core@1.48.2/dist/style.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@vue-flow/background@1.3.2/dist/style.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@vue-flow/controls@1.1.3/dist/style.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@vue-flow/minimap@1.5.4/dist/style.css">
   
   <!-- Vue DevTools configuration -->
   <script>
@@ -69,15 +79,127 @@
     .flow-controls .btn:hover {
       background: #f1f5f9;
     }
+    
+    /* Search component styles */
+    .search-container {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-right: 16px;
+      z-index: 100;
+      position: relative;
+    }
+    
+    .search-input {
+      padding: 8px 12px;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      font-size: 14px;
+      width: 240px;
+      background: white;
+      outline: none;
+      transition: border-color 0.2s;
+      color: #333;
+    }
+    
+    .search-input:focus {
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+    
+    .search-btn {
+      padding: 8px 12px;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      background: white;
+      cursor: pointer;
+      font-size: 16px;
+      transition: all 0.2s;
+      color: #333;
+    }
+    
+    .search-btn:hover {
+      background: #f1f5f9;
+      border-color: #cbd5e1;
+    }
+    
+    .search-btn:active {
+      transform: translateY(1px);
+    }
+    
+    /* Entity Types Legend */
+    .flow-legend {
+      position: absolute;
+      bottom: 10px;
+      left: 10px;
+      background: rgba(255, 255, 255, 0.95);
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 12px;
+      font-size: 11px;
+      max-height: 300px;
+      overflow-y: auto;
+      z-index: 10;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .flow-legend-title {
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: #1e293b;
+      font-size: 12px;
+    }
+    
+    .flow-legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 0;
+      color: #475569;
+    }
+    
+    .flow-legend-color {
+      width: 12px;
+      height: 12px;
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+    
+    /* Demo Button */
+    .demo-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      z-index: 10;
+      padding: 6px 12px;
+      font-size: 12px;
+      background: #3b82f6;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    
+    .demo-btn:hover {
+      background: #2563eb;
+    }
   </style>
 </head>
 <body>
   <div class="app">
     <header class="header">
       <div class="logo">A2A</div>
+      <div class="search-container">
+        <input type="text" id="searchInput" placeholder="Search..." class="search-input">
+        <button id="searchBtn" class="search-btn">🔍</button>
+      </div>
       <nav class="nav">
         <a href="#" class="nav-link active" data-page="sessions">Sessions</a>
+        <a href="#" class="nav-link" data-page="debug">Debug</a>
       </nav>
+      <button id="flowToggle" class="btn btn-secondary" style="margin-left: auto; margin-right: 12px;">
+        🔀 Flow
+      </button>
       <div class="status">
         <span class="status-dot" id="statusDot"></span>
         <span id="statusText">—</span>
@@ -85,17 +207,44 @@
     </header>
 
     <main class="main">
-      <!-- VueFlow Graph Container (always visible on right) -->
+      <!-- VueFlow Graph Container (side panel) -->
       <div id="flow-container" class="flow-container">
         <div class="flow-header">
           <h3>🔀 Protocol Flow</h3>
+          <div class="search-container">
+            <input type="text" id="flowSearchInput" placeholder="Search in flow..." class="search-input">
+            <button id="flowSearchBtn" class="search-btn">🔍</button>
+          </div>
           <div class="flow-controls">
             <button class="btn btn-small" id="flowZoomIn">+</button>
             <button class="btn btn-small" id="flowZoomOut">−</button>
             <button class="btn btn-small" id="flowFitView">Fit</button>
+            <button class="btn btn-small" id="flowDemo" title="Load Demo Data">🎲</button>
           </div>
         </div>
-        <div id="vueflow-graph" class="vueflow-graph"></div>
+        <div id="vueflow-graph" class="vueflow-graph">
+          <!-- Legend -->
+          <div class="flow-legend" id="flowLegend">
+            <div class="flow-legend-title">Entity Types</div>
+            <div class="flow-legend-item"><span class="flow-legend-color" style="background:#a855f7"></span>🤖 AGENTS</div>
+            <div class="flow-legend-item"><span class="flow-legend-color" style="background:#3b82f6"></span>🔵 NODES</div>
+            <div class="flow-legend-item"><span class="flow-legend-color" style="background:#f97316"></span>⚡ ACTIONS</div>
+            <div class="flow-legend-item"><span class="flow-legend-color" style="background:#06b6d4"></span>🔧 SERVICES</div>
+            <div class="flow-legend-item"><span class="flow-legend-color" style="background:#84cc16"></span>📋 TASKS</div>
+            <div class="flow-legend-item"><span class="flow-legend-color" style="background:#ef4444"></span>🛑 TERMINATORS</div>
+            <div class="flow-legend-item"><span class="flow-legend-color" style="background:#6366f1"></span>📦 PACKAGES</div>
+            <div class="flow-legend-item"><span class="flow-legend-color" style="background:#ec4899"></span>✨ FEATURES</div>
+            <div class="flow-legend-item"><span class="flow-legend-color" style="background:#14b8a6"></span>⚙️ SYSTEMS</div>
+            <div class="flow-legend-item"><span class="flow-legend-color" style="background:#f59e0b"></span>📜 SCRIPTS</div>
+            <div class="flow-legend-item"><span class="flow-legend-color" style="background:#10b981"></span>💡 SOLUTIONS</div>
+          </div>
+        </div>
+        
+        <!-- Flow History Panel -->
+        <div class="flow-history" id="flowHistory">
+          <div class="flow-history-title">📜 Step History</div>
+          <div id="flowHistoryList"></div>
+        </div>
       </div>
 
       <!-- Sessions -->
@@ -133,6 +282,7 @@
               <div id="action-steps" class="action-steps"></div>
               <div id="action-log" class="action-log"></div>
               <div class="action-actions">
+                <button class="btn btn-approve" id="action-approve" style="display: none;">✓ Approve</button>
                 <button class="btn btn-primary" id="action-run" style="display: none;">Run</button>
                 <button class="btn btn-secondary" id="action-cancel" style="display: none;">Cancel</button>
               </div>
@@ -179,16 +329,219 @@
     </div>
   </div>
 
-  <!-- VueFlow Scripts -->
+  <!-- Flow protocol and nodes (loaded as modules) -->
   <script src="js/flow/nodes.js" type="module"></script>
   <script src="js/flow/protocol.js" type="module"></script>
-  <script src="js/flow/index.js" type="module"></script>
+  
+  <!-- Vue App for VueFlow -->
+  <script type="module">
+    import { createApp, ref, onMounted, h } from 'vue';
+    import { VueFlow, useVueFlow } from '@vue-flow/core';
+    import { Background } from '@vue-flow/background';
+    import { Controls } from '@vue-flow/controls';
+    import { MiniMap } from '@vue-flow/minimap';
+    
+    // Demo data for entity types
+    const DEMO_DATA = {
+      entities: [
+        { id: 'agent1', type: 'agents', name: 'Code Review Agent', path: '/agents/code-review.js' },
+        { id: 'agent2', type: 'agents', name: 'Build Agent', path: '/agents/build-agent.js' },
+        { id: 'node1', type: 'nodes', name: 'Start Node', path: '/nodes/start.js' },
+        { id: 'node2', type: 'nodes', name: 'Process Node', path: '/nodes/process.js' },
+        { id: 'action1', type: 'actions', name: 'Analyze Code', path: '/actions/analyze.js' },
+        { id: 'action2', type: 'actions', name: 'Run Tests', path: '/actions/test.js' },
+        { id: 'service1', type: 'services', name: 'File Service', path: '/services/file.js' },
+        { id: 'service2', type: 'services', name: 'Git Service', path: '/services/git.js' },
+        { id: 'task1', type: 'tasks', name: 'Daily Build', path: '/tasks/daily-build.js' },
+        { id: 'terminator1', type: 'terminators', name: 'Success Exit', path: '/terminators/success.js' },
+        { id: 'terminator2', type: 'terminators', name: 'Error Exit', path: '/terminators/error.js' },
+        { id: 'package1', type: 'packages', name: 'vueflow', path: '/node_modules/vueflow' },
+        { id: 'package2', type: 'packages', name: 'typescript', path: '/node_modules/typescript' },
+        { id: 'feature1', type: 'features', name: 'Dark Mode', path: '/features/dark-mode.js' },
+        { id: 'system1', type: 'systems', name: 'Auth System', path: '/systems/auth.js' },
+        { id: 'script1', type: 'scripts', name: 'Build Script', path: '/scripts/build.sh' },
+        { id: 'solution1', type: 'solutions', name: 'Fix Imports', path: '/solutions/fix-imports.js' }
+      ],
+      relations: [
+        { source: 'agent1', target: 'node1' },
+        { source: 'node1', target: 'action1' },
+        { source: 'action1', target: 'node2' },
+        { source: 'node2', target: 'action2' },
+        { source: 'action2', target: 'service1' },
+        { source: 'service1', target: 'service2' },
+        { source: 'service2', target: 'task1' },
+        { source: 'task1', target: 'terminator1' },
+        { source: 'action1', target: 'package1' },
+        { source: 'package1', target: 'feature1' },
+        { source: 'service1', target: 'system1' },
+        { source: 'action2', target: 'script1' },
+        { source: 'agent1', target: 'solution1' },
+        { source: 'solution1', target: 'terminator2' }
+      ]
+    };
+    
+    // Create Vue app using render function
+    const app = createApp({
+      components: { VueFlow, Background, Controls, MiniMap },
+      setup() {
+        const { fitView, setNodes, setEdges } = useVueFlow();
+        const nodes = ref([]);
+        const edges = ref([]);
+        const isReady = ref(false);
+        
+        // Expose methods globally
+        onMounted(() => {
+          window.setFlowNodes = (newNodes) => {
+            nodes.value = newNodes;
+            setNodes(newNodes);
+          };
+          window.setFlowEdges = (newEdges) => {
+            edges.value = newEdges;
+            setEdges(newEdges);
+          };
+          window.clearFlowView = () => {
+            nodes.value = [];
+            edges.value = [];
+            setNodes([]);
+            setEdges([]);
+          };
+          window.flowFitView = () => fitView();
+          window.loadDemoData = () => {
+            if (window.mapEntitiesToFlow) {
+              const { nodes, edges } = window.mapEntitiesToFlow(DEMO_DATA);
+              window.setFlowNodes(nodes);
+              window.setFlowEdges(edges);
+              console.log('Demo data loaded:', nodes.length, 'nodes,', edges.length, 'edges');
+            }
+          };
+          isReady.value = true;
+          console.log('VueFlow Vue app mounted');
+        });
+        
+        return { nodes, edges, isReady };
+      },
+      render() {
+        if (!this.isReady) {
+          return h('div', { style: 'width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;' }, 'Loading VueFlow...');
+        }
+        return h(VueFlow, { nodes: this.nodes, edges: this.edges, fitViewOnInit: true }, {
+          default: () => [
+            h(Background, { patternColor: '#aaa', gap: 8 }),
+            h(MiniMap),
+            h(Controls)
+          ]
+        });
+      }
+    });
+    
+    // Mount to container
+    const container = document.getElementById('vueflow-graph');
+    if (container) {
+      app.mount(container);
+      console.log('VueFlow app mounted to #vueflow-graph');
+    } else {
+      console.error('VueFlow container not found');
+    }
+  </script>
   
   <!-- JSON UI Components -->
   <script src="js/json/adapter.js" type="module"></script>
   <script src="js/json/ui.js" type="module"></script>
   
-  <!-- Sessions with VueFlow Integration -->
+  <!-- Sessions -->
   <script src="js/sessions.js"></script>
+  
+  <!-- Search functionality -->
+  <script>
+    // Search functionality
+    document.addEventListener('DOMContentLoaded', function() {
+      const searchInput = document.getElementById('searchInput');
+      const searchBtn = document.getElementById('searchBtn');
+      
+      // Handle search button click
+      searchBtn.addEventListener('click', performSearch);
+      
+      // Handle Enter key in search input
+      searchInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+          performSearch();
+        }
+      });
+      
+      // Handle search input focus/blur for visual feedback
+      searchInput.addEventListener('focus', function() {
+        this.style.borderColor = '#3b82f6';
+      });
+      
+      searchInput.addEventListener('blur', function() {
+        this.style.borderColor = '#e2e8f0';
+      });
+      
+      function performSearch() {
+        const query = searchInput.value.trim();
+        if (!query) {
+          alert('Please enter a search term');
+          return;
+        }
+        
+        console.log('Searching for:', query);
+        
+        // Visual feedback
+        searchBtn.style.background = '#f1f5f9';
+        setTimeout(() => {
+          searchBtn.style.background = 'white';
+        }, 200);
+      }
+      
+      // Flow search functionality
+      const flowSearchInput = document.getElementById('flowSearchInput');
+      const flowSearchBtn = document.getElementById('flowSearchBtn');
+      
+      // Handle flow search button click
+      flowSearchBtn.addEventListener('click', performFlowSearch);
+      
+      // Handle Enter key in flow search input
+      flowSearchInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+          performFlowSearch();
+        }
+      });
+      
+      // Handle flow search input focus/blur for visual feedback
+      flowSearchInput.addEventListener('focus', function() {
+        this.style.borderColor = '#3b82f6';
+      });
+      
+      flowSearchInput.addEventListener('blur', function() {
+        this.style.borderColor = '#e2e8f0';
+      });
+      
+      function performFlowSearch() {
+        const query = flowSearchInput.value.trim();
+        if (!query) {
+          alert('Please enter a search term');
+          return;
+        }
+        
+        console.log('Searching in flow for:', query);
+        
+        // Visual feedback
+        flowSearchBtn.style.background = '#f1f5f9';
+        setTimeout(() => {
+          flowSearchBtn.style.background = 'white';
+        }, 200);
+      }
+      
+      // Demo button handler
+      const demoBtn = document.getElementById('flowDemo');
+      if (demoBtn) {
+        demoBtn.addEventListener('click', function() {
+          if (window.loadDemoData) {
+            window.loadDemoData();
+          }
+        });
+      }
+    });
+  </script>
 </body>
 </html>

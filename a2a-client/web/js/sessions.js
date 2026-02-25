@@ -1,9 +1,11 @@
 /**
  * Sessions - server-side storage with async protocol
- * Uses API for all operations, no localStorage
+ * Uses API for all operations, with localStorage caching for flow nodes
  * 
  * New protocol: package.json + composer.json on first request
  * VueFlow integration for protocol visualization
+ * 
+ * NEW: Session tracking with localStorage persistence
  */
 
 const Sessions = {
@@ -22,6 +24,7 @@ const Sessions = {
       executionState: null,
       logs: [],
       isRunning: false,
+      approved: false, // NEW: track if action was approved
     },
   },
 
@@ -44,11 +47,62 @@ const Sessions = {
     });
     document.getElementById('action-run')?.addEventListener('click', () => this.runAction());
     document.getElementById('action-cancel')?.addEventListener('click', () => this.cancelAction());
+    // NEW: Approve button handler
+    document.getElementById('action-approve')?.addEventListener('click', () => this.approveAction());
     document.getElementById('showFlow')?.addEventListener('click', () => this.showFlow());
+    document.getElementById('flowToggle')?.addEventListener('click', () => this.toggleFlow());
     document.getElementById('flowZoomIn')?.addEventListener('click', () => window.zoomIn?.());
     document.getElementById('flowZoomOut')?.addEventListener('click', () => window.zoomOut?.());
     document.getElementById('flowFitView')?.addEventListener('click', () => window.fitView?.());
     document.getElementById('flowClose')?.addEventListener('click', () => this.hideFlow());
+    
+    // Initialize VueFlow when modules are loaded
+    this.initVueFlow();
+    
+    // NEW: Restore saved flow nodes from localStorage after a delay
+    setTimeout(() => this.restoreFlowFromStorage(), 500);
+  },
+
+  initVueFlow() {
+    let attempts = 0;
+    const maxAttempts = 50; // 5 seconds max
+    
+    const checkAndInit = () => {
+      attempts++;
+      if (window.setFlowNodes && window.setFlowEdges) {
+        console.log('VueFlow initialized from Sessions.init()');
+        
+        // After init, try to load context if there are messages
+        if (this.state.messages?.length > 0) {
+          this.updateFlowFromMessages();
+        }
+      } else if (attempts < maxAttempts) {
+        // Retry after a short delay if modules haven't loaded yet
+        setTimeout(checkAndInit, 100);
+      } else {
+        console.warn('VueFlow modules not loaded after 5 seconds');
+      }
+    };
+    
+    // Start checking after a short delay to let modules load first
+    setTimeout(checkAndInit, 100);
+  },
+
+  // NEW: Restore flow nodes from localStorage
+  restoreFlowFromStorage() {
+    if (!window.SessionFlowStorage) {
+      console.log('SessionFlowStorage not available yet, retrying...');
+      setTimeout(() => this.restoreFlowFromStorage(), 500);
+      return;
+    }
+    
+    const savedNodes = SessionFlowStorage.getNodes();
+    if (savedNodes.length > 0 && window.addContextBlock) {
+      console.log('Restoring', savedNodes.length, 'session nodes from localStorage');
+      savedNodes.forEach(node => {
+        window.addContextBlock(node);
+      });
+    }
   },
 
   setProject(id, path) {
@@ -445,6 +499,11 @@ const Sessions = {
                 if (result.outcome) {
                   this.state.messages[msgIndex].outcome = result.outcome;
                   this.updateFlowWithResponse(result);
+                  
+                  // NEW: Show Approve button when action_proposal received
+                  if (result.outcome === 'action_proposal' && result.action) {
+                    this.showApproveButton();
+                  }
                 }
                 if (result.graph) {
                   this.state.messages[msgIndex].graph = result.graph;
@@ -542,11 +601,56 @@ const Sessions = {
     if (window.addTask) window.addTask(taskText);
   },
 
+  // NEW: Add session node to flow when action is approved
+  addSessionNodeToFlow(session) {
+    if (!session || !window.addContextBlock) return;
+    
+    // Check if already added
+    if (window.SessionFlowStorage && window.SessionFlowStorage.hasSessionNode(session.id)) {
+      console.log('Session node already exists:', session.id);
+      return;
+    }
+    
+    // Get next position
+    const position = window.SessionFlowStorage 
+      ? window.SessionFlowStorage.getNextPosition()
+      : { x: 100 + Math.random() * 200, y: 50 + Math.random() * 200 };
+    
+    const node = {
+      id: `session-${session.id}`,
+      type: 'session',
+      position: position,
+      data: {
+        sessionId: session.id,
+        label: `Session #${session.id.slice(0, 8)}`,
+        status: session.status || 'active',
+        messageCount: session.messages?.length || this.state.messages.length,
+        createdAt: session.createdAt
+      }
+    };
+    
+    // Add to VueFlow
+    window.addContextBlock(node);
+    console.log('Session node added to flow:', node.id);
+    
+    // Save to localStorage
+    if (window.SessionFlowStorage) {
+      window.SessionFlowStorage.saveNode(node);
+      console.log('Session node saved to localStorage');
+    }
+  },
+
   updateFlowWithResponse(result) {
     if (!result) return;
     const flowContainer = document.getElementById('flow-container');
     if (!flowContainer || flowContainer.style.display === 'none') return;
-    if (window.loadContext) window.loadContext(result);
+    
+    if (window.setFlowNodes && window.setFlowEdges) {
+      const flowData = this.mapToVueFlow(result);
+      window.setFlowNodes(flowData.nodes);
+      window.setFlowEdges(flowData.edges);
+      console.log('Flow updated with response:', flowData.nodes.length, 'nodes');
+    }
   },
 
   updateFlowFromMessages() {
@@ -557,14 +661,153 @@ const Sessions = {
       .filter(m => m.role === 'server' && m.outcome)
       .pop();
     
-    if (lastServerMsg && window.loadContext) {
-      const result = lastServerMsg.content?.outcome ? lastServerMsg.content : 
-                     lastServerMsg.contentText ? JSON.parse(lastServerMsg.contentText) : null;
-      if (result) window.loadContext(result);
+    if (lastServerMsg && window.setFlowNodes && window.setFlowEdges) {
+      try {
+        const result = lastServerMsg.content?.outcome ? lastServerMsg.content : 
+                       lastServerMsg.contentText ? JSON.parse(lastServerMsg.contentText) : null;
+        if (result) {
+          // Map result to VueFlow nodes/edges
+          const flowData = this.mapToVueFlow(result);
+          window.setFlowNodes(flowData.nodes);
+          window.setFlowEdges(flowData.edges);
+          console.log('Flow updated with', flowData.nodes.length, 'nodes');
+          
+          // Update history panel
+          if (window.updateFlowHistory) {
+            window.updateFlowHistory(flowData.nodes);
+          }
+        }
+      } catch (e) {
+        console.warn('Failed to parse message content for flow:', e);
+      }
     }
   },
 
+  // Map server response to VueFlow format - UPDATED with session node support
+  mapToVueFlow(result) {
+    const nodes = [];
+    const edges = [];
+    
+    // Task request node
+    nodes.push({
+      id: 'task-request',
+      type: 'taskInput',
+      position: { x: 250, y: 0 },
+      data: { 
+        label: result.message || 'Task',
+        task: result.message || 'Task',
+        timestamp: new Date().toISOString()
+      },
+    });
+    
+    // Add nodes based on outcome
+    if (result.outcome === 'action_proposal' && result.proposedActions) {
+      nodes.push({
+        id: 'proposal',
+        type: 'actionProposal',
+        position: { x: 250, y: 100 },
+        data: { 
+          label: 'Proposed: ' + result.proposedActions.length + ' actions',
+          actionName: result.proposedActions[0]?.title || 'Proposed Action',
+          description: result.proposedActions[0]?.description || '',
+          subActions: result.proposedActions[0]?.subActions || [],
+          matchScore: result.proposedActions[0]?.matchScore
+        },
+      });
+      edges.push({
+        id: 'e1',
+        source: 'task-request',
+        target: 'proposal',
+        type: 'smoothstep',
+        style: { stroke: '#eab308', strokeWidth: 2 },
+        markerEnd: { type: 'arrowclosed', color: '#eab308' }
+      });
+    }
+    
+    if (result.outcome === 'action_executing' || result.outcome === 'action_complete') {
+      nodes.push({
+        id: 'executing',
+        type: result.outcome === 'action_complete' ? 'actionComplete' : 'subAction',
+        position: { x: 250, y: 200 },
+        data: { 
+          label: result.outcome === 'action_complete' ? '✓ Completed' : '▶ Executing',
+          status: result.outcome === 'action_complete' ? 'completed' : 'running'
+        },
+      });
+      edges.push({
+        id: 'e2',
+        source: 'task-request',
+        target: 'executing',
+        type: 'smoothstep',
+        style: { stroke: '#3b82f6', strokeWidth: 2 },
+        markerEnd: { type: 'arrowclosed', color: '#3b82f6' }
+      });
+    }
+    
+    // NEW: Add session node if action was approved
+    if (this.state.action.approved && this.state.current) {
+      const sessionNode = {
+        id: `session-${this.state.current.id}`,
+        type: 'session',
+        position: { x: 50, y: 100 },
+        data: {
+          sessionId: this.state.current.id,
+          label: `Session #${this.state.current.id.slice(0, 8)}`,
+          status: this.state.current.status || 'active',
+          messageCount: this.state.messages.length
+        }
+      };
+      nodes.push(sessionNode);
+      
+      // Connect session node to task
+      edges.push({
+        id: 'e-session',
+        source: sessionNode.id,
+        target: 'task-request',
+        type: 'smoothstep',
+        style: { stroke: '#8b5cf6', strokeWidth: 2 },
+        markerEnd: { type: 'arrowclosed', color: '#8b5cf6' }
+      });
+    }
+    
+    return { nodes, edges };
+  },
+
   // ==================== Action Progress ====================
+
+  // NEW: Show approve button when action is proposed
+  showApproveButton() {
+    const approveBtn = document.getElementById('action-approve');
+    const runBtn = document.getElementById('action-run');
+    if (approveBtn) approveBtn.style.display = 'block';
+    if (runBtn) runBtn.style.display = 'none';
+    console.log('Approve button shown');
+  },
+
+  // NEW: Approve action and add session node to flow
+  async approveAction() {
+    if (!this.state.current || !this.state.action.definition) return;
+    
+    console.log('Approving action for session:', this.state.current.id);
+    
+    // Mark as approved
+    this.state.action.approved = true;
+    
+    // Add session node to flow
+    this.addSessionNodeToFlow(this.state.current);
+    
+    // Hide approve button, show run button
+    const approveBtn = document.getElementById('action-approve');
+    const runBtn = document.getElementById('action-run');
+    if (approveBtn) approveBtn.style.display = 'none';
+    if (runBtn) runBtn.style.display = 'block';
+    
+    // Update flow to show session node
+    this.updateFlowFromMessages();
+    
+    // Start the action
+    this.runAction();
+  },
 
   handleActionResponse(result) {
     if (!result.action && !result.executionState) return;
@@ -686,7 +929,11 @@ const Sessions = {
     const cancelBtn = document.getElementById('action-cancel');
     const { definition, isRunning } = this.state.action;
 
-    if (runBtn) runBtn.style.display = definition && !isRunning ? 'block' : 'none';
+    // Only show Run button if action is NOT approved yet
+    // (if approved, we already started execution)
+    if (runBtn) {
+      runBtn.style.display = (definition && !isRunning && !this.state.action.approved) ? 'block' : 'none';
+    }
     if (cancelBtn) cancelBtn.style.display = isRunning ? 'block' : 'none';
   },
 
@@ -778,9 +1025,27 @@ const Sessions = {
       if (result.outcome === 'completed') {
         progressBar.classList.add('completed');
         this.addActionLog('Action completed successfully!', 'success');
+        
+        // NEW: Update session node status in storage
+        if (this.state.current && window.SessionFlowStorage) {
+          const node = window.SessionFlowStorage.getNodeBySessionId(this.state.current.id);
+          if (node) {
+            node.data.status = 'completed';
+            window.SessionFlowStorage.updateNode(node.id, node);
+          }
+        }
       } else if (result.outcome === 'failed') {
         progressBar.classList.add('failed');
         this.addActionLog(`Action failed: ${result.error || 'Unknown error'}`, 'error');
+        
+        // NEW: Update session node status in storage
+        if (this.state.current && window.SessionFlowStorage) {
+          const node = window.SessionFlowStorage.getNodeBySessionId(this.state.current.id);
+          if (node) {
+            node.data.status = 'failed';
+            window.SessionFlowStorage.updateNode(node.id, node);
+          }
+        }
       }
     }
 
@@ -849,6 +1114,7 @@ const Sessions = {
       executionState: null,
       logs: [],
       isRunning: false,
+      approved: false,
     };
     this.hideActionProgress();
   },
@@ -858,6 +1124,10 @@ const Sessions = {
     if (flowContainer) {
       flowContainer.style.display = 'flex';
       flowContainer.classList.add('active');
+      
+      // Update toggle button text
+      const toggleBtn = document.getElementById('flowToggle');
+      if (toggleBtn) toggleBtn.textContent = '🔀 Hide Flow';
       
       if (window.initFlow) {
         window.initFlow();
@@ -869,10 +1139,30 @@ const Sessions = {
   hideFlow() {
     const flowContainer = document.getElementById('flow-container');
     if (flowContainer) {
-      flowContainer.style.display = 'none';
+      flowContainer.style.display = '';
       flowContainer.classList.remove('active');
+      
+      // Update toggle button text
+      const toggleBtn = document.getElementById('flowToggle');
+      if (toggleBtn) toggleBtn.textContent = '🔀 Flow';
+    }
+  },
+
+  toggleFlow() {
+    const flowContainer = document.getElementById('flow-container');
+    if (flowContainer && flowContainer.classList.contains('active')) {
+      this.hideFlow();
+    } else {
+      this.showFlow();
     }
   },
 };
 
 window.Sessions = Sessions;
+
+// Auto-initialize Sessions when DOM is ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => Sessions.init());
+} else {
+  Sessions.init();
+}

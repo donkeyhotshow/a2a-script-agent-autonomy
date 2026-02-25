@@ -1,0 +1,31 @@
+{
+  "context": {
+    "task": "проаналізувати Laravel код",
+    "execution": {
+      "actionId": "analyze-laravel",
+      "currentActionId": "scan-php-files",
+      "history": []
+    }
+  },
+  "executingAction": {
+    "actionId": "scan-php-files",
+    "title": "Сканування PHP файлів",
+    "description": "Пошук Laravel файлів в проекті",
+    "priority": 10,
+    "dsl": {
+      "script": "scan-php-files",
+      "input": {
+        "rootDir": ".",
+        "patterns": ["app/**/*.php", "database/**/*.php", "routes/**/*.php"]
+      },
+      "output": "php_files[]"
+    },
+    "dslScript": "```typescript\n// scan-php-files.dsl\n// Сканування PHP файлів\n\nconst result = await script.execute('scan-php-files', {\n  rootDir: '.',\n  patterns: ['app/**/*.php', 'database/**/*.php', 'routes/**/*.php'],\n  exclude: ['vendor/**', 'node_modules/**']\n});\n\n// result = {\n//   files: [\n//     { path: 'app/Models/User.php', type: 'model' },\n//     { path: 'app/Http/Controllers/AuthController.php', type: 'controller' },\n//     { path: 'database/migrations/2024_01_01_000001_create_users_table.php', type: 'migration' },\n//     ...\n//   ],\n//   total: 156\n// }\n```"
+  },
+  "nextSteps": [
+    { "actionId": "analyze-models", "title": "Аналіз моделей" },
+    { "actionId": "analyze-controllers", "title": "Аналіз контролерів" },
+    { "actionId": "analyze-migrations", "title": "Аналіз міграцій" },
+    { "actionId": "generate-laravel-report", "title": "Генерація звіту по Laravel" }
+  ]
+}

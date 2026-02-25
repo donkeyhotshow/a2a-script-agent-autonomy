@@ -1,0 +1,9 @@
+{
+  "action": "approve_action",
+  "selectedAction": {
+    "actionId": "generate-controller"
+  },
+  "context": {
+    "task": "створити контролер для моделі User"
+  }
+}

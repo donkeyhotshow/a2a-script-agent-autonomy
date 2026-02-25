@@ -8,11 +8,49 @@
  * - step_result → Default Node (gray)
  * - action_complete → Output Node (green)
  * 
+ * Entity types (for graph visualization):
+ * - AGENTS → Agent entities (purple)
+ * - NODES → Node entities (blue)
+ * - ACTIONS → Action entities (orange)
+ * - SERVICES → Service entities (cyan)
+ * - TASKS → Task entities (lime)
+ * - TERMINATORS → Terminator entities (red)
+ * - PACKAGES → Package entities (indigo)
+ * - FEATURES → Feature entities (pink)
+ * - SYSTEMS → System entities (teal)
+ * - SCRIPTS → Script entities (amber)
+ * - SOLUTIONS → Solution entities (emerald)
+ * 
  * Uses Vue 3 render functions for compatibility with vanilla JS
  */
 
 import { h } from 'vue';
 import { Handle, Position } from '@vue-flow/core';
+
+/**
+ * Element type constants
+ */
+export const ELEMENT_TYPES = {
+  // Protocol types
+  TASK_REQUEST: 'task_request',
+  ACTION_PROPOSAL: 'action_proposal',
+  ACTION_EXECUTING: 'action_executing',
+  STEP_RESULT: 'step_result',
+  ACTION_COMPLETE: 'action_complete',
+  
+  // Entity types
+  AGENTS: 'agents',
+  NODES: 'nodes',
+  ACTIONS: 'actions',
+  SERVICES: 'services',
+  TASKS: 'tasks',
+  TERMINATORS: 'terminators',
+  PACKAGES: 'packages',
+  FEATURES: 'features',
+  SYSTEMS: 'systems',
+  SCRIPTS: 'scripts',
+  SOLUTIONS: 'solutions'
+};
 
 /**
  * Create a node wrapper with common structure
@@ -72,6 +110,10 @@ function createNodeWrapper(props, children, headerColor, headerIcon, headerTitle
     })
   ]);
 }
+
+// ============================================
+// Protocol Node Types
+// ============================================
 
 /**
  * TaskInputNode - displays task_request message
@@ -160,7 +202,6 @@ export const ActionProposalNode = {
           h('div', {
             style: { fontSize: '11px', color: '#94a3b8' }
           }, `${subActions.length} steps`),
-          // Show match score if available
           data.matchScore ? h('div', {
             style: {
               marginTop: '8px',
@@ -171,7 +212,6 @@ export const ActionProposalNode = {
               color: '#b45309'
             }
           }, `Match: ${Math.round(data.matchScore * 100)}%`) : null,
-          // Show sub-actions list if available
           subActions.length > 0 ? h('div', {
             style: {
               marginTop: '8px',
@@ -223,7 +263,6 @@ export const SubActionNode = {
       const data = props.data || {};
       const status = data.status || 'running';
       
-      // Status styling
       const statusColors = {
         running: { bg: '#dbeafe', color: '#2563eb', text: 'Running...' },
         completed: { bg: '#dcfce7', color: '#16a34a', text: '✓ Completed' },
@@ -252,7 +291,6 @@ export const SubActionNode = {
               fontWeight: '500'
             }
           }, data.subActionName || data.stepName || 'Sub Action'),
-          // Show description
           data.description ? h('div', {
             style: {
               fontSize: '12px',
@@ -260,7 +298,6 @@ export const SubActionNode = {
               marginBottom: '8px'
             }
           }, data.description) : null,
-          // Show DSL if available
           data.dsl ? h('div', {
             style: {
               marginTop: '8px',
@@ -290,7 +327,6 @@ export const SubActionNode = {
               }
             }, data.dsl.substring(0, 200) + (data.dsl.length > 200 ? '...' : ''))
           ]) : null,
-          // Show input/output
           data.input ? h('div', {
             style: {
               marginTop: '8px',
@@ -298,7 +334,6 @@ export const SubActionNode = {
               color: '#64748b'
             }
           }, [`Input: ${JSON.stringify(data.input).substring(0, 50)}...`]) : null,
-          // Status badge
           h('div', {
             style: {
               marginTop: '8px',
@@ -353,7 +388,6 @@ export const ResultNode = {
               color: success ? '#22c55e' : '#ef4444'
             }
           }, success ? '✓ Success' : '✗ Failed'),
-          // Show message
           data.message ? h('div', {
             style: {
               fontSize: '12px',
@@ -361,7 +395,6 @@ export const ResultNode = {
               marginBottom: '8px'
             }
           }, data.message) : null,
-          // Show result data
           data.result ? h('div', {
             style: {
               marginTop: '8px',
@@ -388,7 +421,6 @@ export const ResultNode = {
               }
             }, typeof data.result === 'object' ? JSON.stringify(data.result, null, 2) : String(data.result))
           ]) : null,
-          // Show changes if any
           data.changes && data.changes.length > 0 ? h('div', {
             style: {
               marginTop: '8px'
@@ -459,7 +491,6 @@ export const ActionCompleteNode = {
               fontWeight: '500'
             }
           }, data.actionName || 'Unknown'),
-          // Show summary
           Object.keys(summary).length > 0 ? h('div', {
             style: {
               marginTop: '8px',
@@ -491,7 +522,6 @@ export const ActionCompleteNode = {
               ])
             )
           ]) : null,
-          // Stats row
           h('div', {
             style: {
               marginTop: '8px',
@@ -513,43 +543,227 @@ export const ActionCompleteNode = {
   }
 };
 
+// ============================================
+// Entity Node Types (NEW)
+// ============================================
+
+/**
+ * Factory function to create entity node components
+ */
+const createEntityNode = (type, color, icon, label) => ({
+  name: `${type}Node`,
+  type,
+  props: ['id', 'type', 'data', 'selected'],
+  setup(props) {
+    return () => {
+      const data = props.data || {};
+      return createNodeWrapper(
+        props,
+        [
+          h('div', {
+            style: {
+              fontWeight: '600',
+              color: '#64748b',
+              fontSize: '11px',
+              textTransform: 'uppercase',
+              marginBottom: '4px'
+            }
+          }, `${label}:`),
+          h('div', {
+            style: {
+              color: '#1e293b',
+              fontSize: '13px',
+              marginBottom: '4px',
+              fontWeight: '500'
+            }
+          }, data.name || data.label || `${label}`),
+          data.path ? h('div', {
+            style: {
+              fontSize: '11px',
+              color: '#64748b',
+              marginBottom: '8px',
+              wordBreak: 'break-all'
+            }
+          }, data.path) : null,
+          h('div', {
+            style: { fontSize: '11px', color: '#94a3b8' }
+          }, `ID: ${data.id || 'N/A'}`)
+        ],
+        color,
+        icon,
+        type.toUpperCase()
+      );
+    };
+  }
+});
+
+// Entity node instances
+const AgentsNode = createEntityNode('agents', '#a855f7', '🤖', 'Agent');
+const NodesEntityNode = createEntityNode('nodesEntity', '#3b82f6', '🔵', 'Node');
+const ActionsEntityNode = createEntityNode('actionsEntity', '#f97316', '⚡', 'Action');
+const ServicesNode = createEntityNode('services', '#06b6d4', '🔧', 'Service');
+const TasksNode = createEntityNode('tasks', '#84cc16', '📋', 'Task');
+const TerminatorsNode = createEntityNode('terminators', '#ef4444', '🛑', 'Terminator');
+const PackagesNode = createEntityNode('packages', '#6366f1', '📦', 'Package');
+const FeaturesNode = createEntityNode('features', '#ec4899', '✨', 'Feature');
+const SystemsNode = createEntityNode('systems', '#14b8a6', '⚙️', 'System');
+const ScriptsNode = createEntityNode('scripts', '#f59e0b', '📜', 'Script');
+const SolutionsNode = createEntityNode('solutions', '#10b981', '💡', 'Solution');
+
+/**
+ * SessionNode - displays session info on the graph
+ * Purple color (#8b5cf6) - represents a confirmed session
+ * NEW: Added for session tracking after action approval
+ */
+const SessionNode = {
+  name: 'SessionNode',
+  type: 'session',
+  props: ['id', 'type', 'data', 'selected'],
+  setup(props) {
+    return () => {
+      const data = props.data || {};
+      const statusColors = {
+        active: { bg: '#dbeafe', color: '#2563eb', text: 'Active' },
+        completed: { bg: '#dcfce7', color: '#16a34a', text: 'Completed' },
+        failed: { bg: '#fee2e2', color: '#dc2626', text: 'Failed' },
+        waiting: { bg: '#fef3c7', color: '#b45309', text: 'Waiting' }
+      };
+      const statusStyle = statusColors[data.status] || statusColors.active;
+      
+      return createNodeWrapper(
+        props,
+        [
+          h('div', {
+            style: {
+              fontWeight: '600',
+              color: '#64748b',
+              fontSize: '11px',
+              textTransform: 'uppercase',
+              marginBottom: '4px'
+            }
+          }, 'Session:'),
+          h('div', {
+            style: {
+              color: '#1e293b',
+              fontSize: '13px',
+              marginBottom: '8px',
+              fontFamily: 'monospace'
+            }
+          }, (data.sessionId || 'N/A').slice(0, 12)),
+          h('div', {
+            style: {
+              display: 'flex',
+              gap: '8px',
+              fontSize: '11px',
+              color: '#64748b',
+              marginBottom: '8px'
+            }
+          }, [
+            h('span', {}, `Messages: ${data.messageCount || 0}`)
+          ]),
+          h('div', { 
+            style: { 
+              marginTop: '8px', 
+              padding: '4px 8px', 
+              borderRadius: '4px', 
+              fontSize: '11px', 
+              fontWeight: '600',
+              backgroundColor: statusStyle.bg,
+              color: statusStyle.color,
+              textAlign: 'center'
+            }
+          }, statusStyle.text)
+        ],
+        '#8b5cf6', // Purple color for sessions
+        '📋',
+        'SESSION'
+      );
+    };
+  }
+};
+
 /**
  * Register all custom node types
  */
 export function registerCustomNodes() {
   return {
+    // Protocol nodes
     taskInput: TaskInputNode,
     actionProposal: ActionProposalNode,
     subAction: SubActionNode,
     result: ResultNode,
-    actionComplete: ActionCompleteNode
+    actionComplete: ActionCompleteNode,
+    
+    // Entity nodes
+    agents: AgentsNode,
+    nodesEntity: NodesEntityNode,
+    actionsEntity: ActionsEntityNode,
+    services: ServicesNode,
+    tasks: TasksNode,
+    terminators: TerminatorsNode,
+    packages: PackagesNode,
+    features: FeaturesNode,
+    systems: SystemsNode,
+    scripts: ScriptsNode,
+    solutions: SolutionsNode,
+    
+    // Session node (NEW - for tracking confirmed sessions)
+    session: SessionNode
   };
 }
 
 /**
- * Get node type by protocol message type
+ * Get node type by protocol message type or entity type
  */
 export function getNodeType(protocolType) {
   const nodeTypeMap = {
+    // Protocol types
     'task_request': 'taskInput',
     'action_proposal': 'actionProposal',
     'action_executing': 'subAction',
     'step_result': 'result',
-    'action_complete': 'actionComplete'
+    'action_complete': 'actionComplete',
+    
+    // Entity types
+    'agents': 'agents',
+    'nodes': 'nodesEntity',
+    'actions': 'actionsEntity',
+    'services': 'services',
+    'tasks': 'tasks',
+    'terminators': 'terminators',
+    'packages': 'packages',
+    'features': 'features',
+    'systems': 'systems',
+    'scripts': 'scripts',
+    'solutions': 'solutions'
   };
   return nodeTypeMap[protocolType] || 'default';
 }
 
 /**
- * Get node color by protocol message type
+ * Get node color by protocol message type or entity type
  */
 export function getNodeColor(protocolType) {
   const colorMap = {
+    // Protocol types
     'task_request': '#22c55e',
     'action_proposal': '#eab308',
     'action_executing': '#3b82f6',
     'step_result': '#6b7280',
-    'action_complete': '#22c55e'
+    'action_complete': '#22c55e',
+    
+    // Entity types
+    'agents': '#a855f7',
+    'nodes': '#3b82f6',
+    'actions': '#f97316',
+    'services': '#06b6d4',
+    'tasks': '#84cc16',
+    'terminators': '#ef4444',
+    'packages': '#6366f1',
+    'features': '#ec4899',
+    'systems': '#14b8a6',
+    'scripts': '#f59e0b',
+    'solutions': '#10b981'
   };
   return colorMap[protocolType] || '#6b7280';
 }

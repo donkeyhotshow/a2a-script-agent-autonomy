@@ -1,0 +1,40 @@
+{
+  "context": {
+    "task": "створити тест для UserController"
+  },
+  "proposedActions": [
+    {
+      "actionId": "generate-test",
+      "title": "Генерація тесту",
+      "description": "Створення тестового файлу",
+      "priority": 10,
+      "matchScore": 0.92,
+      "subActions": [
+        {
+          "actionId": "analyze-target",
+          "title": "Аналіз цільового класу",
+          "description": "Аналіз методів контролера для тестування",
+          "priority": 10,
+          "input": "target_class, target_path",
+          "output": "target_spec"
+        },
+        {
+          "actionId": "generate-test",
+          "title": "Генерація тесту",
+          "description": "Створення тестового файлу",
+          "priority": 9,
+          "input": "target_spec, test_type",
+          "output": "test_file"
+        }
+      ]
+    }
+  ],
+  "fallbackActions": [
+    {
+      "mode": "auto-ai",
+      "title": "AI Action Generator",
+      "description": "Згенерувати новий екшен за допомогою LLM",
+      "fallbackType": "llm_generation"
+    }
+  ]
+}

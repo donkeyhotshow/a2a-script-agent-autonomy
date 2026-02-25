@@ -1,0 +1,43 @@
+{
+  "context": {
+    "task": "виправити імпорти у vue компонентах",
+    "execution": {
+      "actionId": "fix-vue-imports",
+      "currentActionId": "vue-import-cleanup",
+      "status": "completed",
+      "history": [
+        { "step": 1, "actionId": "vue-import-detect", "status": "completed", "result": { "broken_imports": 3 } },
+        { "step": 2, "actionId": "vue-import-resolve", "status": "completed", "result": { "patches": 3 } },
+        { "step": 3, "actionId": "vue-import-apply", "status": "completed", "result": { "fixed_files": 3 } },
+        { "step": 4, "actionId": "vue-import-cleanup", "status": "completed", "result": { "cleanup_count": 0 } }
+      ]
+    }
+  },
+  "previousStep": {
+    "actionId": "vue-import-apply",
+    "result": {
+      "fixed_files": 3
+    }
+  },
+  "executingAction": {
+    "actionId": "vue-import-cleanup",
+    "title": "Очистити тимчасові файли",
+    "description": "Видаляє тимчасові файли після роботи",
+    "priority": 7,
+    "dsl": {
+      "script": "vue-import-cleanup",
+      "input": {},
+      "output": "cleanup_count"
+    },
+    "dslScript": "```typescript\n// vue-import-cleanup.dsl\n// Очищення тимчасових файлів\n\nconst result = await script.execute('vue-import-cleanup', {});\n\n// result = { cleanup_count: 0 }\n```"
+  },
+  "finalResult": {
+    "actionId": "fix-vue-imports",
+    "summary": {
+      "broken_imports_found": 3,
+      "patches_resolved": 3,
+      "files_fixed": 3,
+      "cleanup_count": 0
+    }
+  }
+}

@@ -9,7 +9,7 @@ Agent-to-Agent сервер для интеллектуального анали
 - **Framework:** Express
 - **Database:** PostgreSQL + pgvector
 - **Cache/Queue:** Redis + BullMQ
-- **ML:** Plexe
+- **ML:** Plexe Local CPU Solutions
 - **Git:** simple-git
 
 ## Быстрый старт
@@ -131,10 +131,7 @@ npm run prisma:studio # Prisma Studio UI
 
 ## Документация
 
-- [Требования к серверу](../plans/a2a-server-requirements-analysis.md)
-- [API спецификация](../plans/a2a-server-api-specification.md)
-- [Схема БД](../plans/a2a-server-database-schema.md)
-- [План реализации](../plans/a2a-server-implementation-plan.md)
+- [План реализации](../docs/archive/a2a-server-implementation-plan.md)
 
 ## Лицензия
 

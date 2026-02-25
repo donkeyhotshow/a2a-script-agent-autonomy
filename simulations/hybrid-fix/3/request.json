@@ -1,0 +1,54 @@
+{
+  "action": "step_result",
+  "stepId": "detect-issues",
+  "result": {
+    "issues": [
+      {
+        "id": 1,
+        "file": "src/services/api.ts",
+        "line": 42,
+        "type": "error",
+        "severity": "high",
+        "message": "Невизначена змінна 'userData'",
+        "suggestion": "Додати імпорт: import { userData } from '@/stores/user'"
+      },
+      {
+        "id": 2,
+        "file": "src/utils/helpers.ts",
+        "line": 15,
+        "type": "warning",
+        "severity": "medium",
+        "message": "Невживаний імпорт 'formatDate'",
+        "suggestion": "Видалити невикористаний імпорт"
+      },
+      {
+        "id": 3,
+        "file": "src/components/Button.vue",
+        "line": 8,
+        "type": "error",
+        "severity": "high",
+        "message": "Пропущена обов'язкова властивість 'variant'",
+        "suggestion": "Додати default значення або типізацію"
+      },
+      {
+        "id": 4,
+        "file": "src/stores/userStore.ts",
+        "line": 23,
+        "type": "info",
+        "severity": "low",
+        "message": "Застарілий API виклик",
+        "suggestion": "Оновити до нового синтаксису"
+      }
+    ]
+  },
+  "context": {
+    "task": "виправити помилки в коді з AI",
+    "execution": {
+      "actionId": "hybrid-fix",
+      "currentActionId": "detect-issues",
+      "history": [
+        { "step": 1, "actionId": "detect-issues", "status": "completed", "result": { "issues_count": 4 } }
+      ]
+    }
+  }
+}

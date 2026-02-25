@@ -1,0 +1,9 @@
+{
+  "action": "approve_action",
+  "selectedAction": {
+    "actionId": "generate-model"
+  },
+  "context": {
+    "task": "створити модель User з полями name, email, password"
+  }
+}

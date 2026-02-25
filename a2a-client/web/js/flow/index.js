@@ -481,7 +481,8 @@ class A2AFlowManager {
 
     onNodeClick((event) => {
       console.log('Node clicked:', event.node);
-      // Could show node details in sidebar
+      // Show node details in sidebar
+      this.showNodeDetails(event.node);
     });
 
     onEdgeClick((event) => {
@@ -591,6 +592,137 @@ class A2AFlowManager {
   }
 
   /**
+   * Show node details in a panel
+   * @param {Object} node - Clicked node
+   */
+  showNodeDetails(node) {
+    // Find or create a details panel
+    let panel = document.getElementById('node-details-panel');
+    if (!panel) {
+      panel = document.createElement('div');
+      panel.id = 'node-details-panel';
+      panel.className = 'node-details-panel';
+      document.body.appendChild(panel);
+    }
+    
+    const data = node.data || {};
+    const type = node.type || 'default';
+    
+    // Extract relevant information from node data
+    const dsl = data.dsl || data.definition || null;
+    const input = data.input || data.task || data.message || null;
+    const output = data.output || data.result || data.response || null;
+    const status = data.status || 'pending';
+    const timestamp = data.timestamp || null;
+    
+    // Build tabs content
+    let tabsContent = '';
+    
+    // Data section (always show)
+    let dataSection = `<div class="section"><div class="section-title">Data</div><pre>${JSON.stringify(data, null, 2)}</pre></div>`;
+    
+    // If there's DSL, show tabs
+    if (dsl || input || output) {
+      tabsContent = `
+        <div class="node-details-tabs">
+          ${dsl ? '<button class="active" data-tab="dsl">DSL</button>' : ''}
+          ${input ? '<button data-tab="input">Input</button>' : ''}
+          ${output ? '<button data-tab="output">Output</button>' : ''}
+        </div>
+        <div class="tab-content">
+          ${dsl ? `<div class="tab-pane active" data-tab="dsl"><pre>${typeof dsl === 'string' ? dsl : JSON.stringify(dsl, null, 2)}</pre></div>` : ''}
+          ${input ? `<div class="tab-pane" data-tab="input"><pre>${typeof input === 'string' ? input : JSON.stringify(input, null, 2)}</pre></div>` : ''}
+          ${output ? `<div class="tab-pane" data-tab="output"><pre>${typeof output === 'string' ? output : JSON.stringify(output, null, 2)}</pre></div>` : ''}
+        </div>
+      `;
+      dataSection = ''; // Hide raw data if we have tabs
+    }
+    
+    panel.innerHTML = `
+      <button class="close-btn" onclick="document.getElementById('node-details-panel').remove()">×</button>
+      <h3>Node Details</h3>
+      <div class="node-type">Type: <span>${type}</span></div>
+      <div class="node-type">Status: <span>${status}</span></div>
+      <div class="node-id">${node.id}</div>
+      ${timestamp ? `<div class="node-type">Time: ${new Date(timestamp).toLocaleString()}</div>` : ''}
+      
+      ${tabsContent}
+      ${dataSection}
+    `;
+    
+    // Add tab switching functionality
+    const tabs = panel.querySelectorAll('.node-details-tabs button');
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        // Update button states
+        tabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        
+        // Show corresponding content
+        const tabName = tab.dataset.tab;
+        panel.querySelectorAll('.tab-pane').forEach(pane => {
+          pane.classList.toggle('active', pane.dataset.tab === tabName);
+        });
+      });
+    });
+  }
+
+  /**
+   * Update flow history panel with completed steps
+   * @param {Array} nodes - Array of flow nodes
+   */
+  updateHistory(nodes) {
+    const historyList = document.getElementById('flowHistoryList');
+    if (!historyList) return;
+    
+    // Filter completed nodes
+    const completedNodes = nodes.filter(n => 
+      n.data?.status === 'completed' || 
+      n.data?.status === 'done' ||
+      n.type?.includes('complete') ||
+      n.type?.includes('result')
+    );
+    
+    if (completedNodes.length === 0) {
+      historyList.innerHTML = '<div class="flow-history-item">No completed steps yet</div>';
+      return;
+    }
+    
+    historyList.innerHTML = completedNodes.map(node => {
+      const label = node.data?.label || node.data?.task || node.data?.title || node.type || 'Step';
+      const icon = node.data?.status === 'error' ? '❌' : '✅';
+      return `
+        <div class="flow-history-item completed" data-node-id="${node.id}">
+          <span class="icon">${icon}</span>
+          <span class="label">${label.substring(0, 30)}${label.length > 30 ? '...' : ''}</span>
+        </div>
+      `;
+    }).join('');
+    
+    // Add click handlers to jump to node
+    historyList.querySelectorAll('.flow-history-item').forEach(item => {
+      item.addEventListener('click', () => {
+        const nodeId = item.dataset.nodeId;
+        this.focusNode(nodeId);
+      });
+    });
+  }
+
+  /**
+   * Focus on a specific node in the flow
+   * @param {string} nodeId - Node ID to focus on
+   */
+  focusNode(nodeId) {
+    if (!this.vueflow) return;
+    
+    const node = this.vueflow.findNode(nodeId);
+    if (node) {
+      this.vueflow.setCenter(node.position.x + 100, node.position.y + 50, { zoom: 1.5, duration: 500 });
+      this.showNodeDetails(node);
+    }
+  }
+
+  /**
    * Zoom in
    */
   zoomIn() {
@@ -670,6 +802,10 @@ export function fitView() {
   flowManager.fitView();
 }
 
+export function updateFlowHistory(nodes) {
+  flowManager.updateHistory(nodes);
+}
+
 export function configureClient(config) {
   flowManager.configureClient(config);
 }
@@ -712,6 +848,33 @@ export function onComplete(callback) {
 
 export function onError(callback) {
   flowManager.onError(callback);
+}
+
+// Make functions available globally (for non-module scripts)
+if (typeof window !== 'undefined') {
+  window.initFlow = initFlow;
+  window.loadContext = loadContext;
+  window.loadSimulationResponse = loadSimulationResponse;
+  window.addTask = addTask;
+  window.addContextBlock = addContextBlock;
+  window.updateNode = updateNode;
+  window.clearFlowView = clearFlowView;
+  window.zoomIn = zoomIn;
+  window.zoomOut = zoomOut;
+  window.fitView = fitView;
+  window.updateFlowHistory = updateFlowHistory;
+  window.configureClient = configureClient;
+  window.sendTask = sendTask;
+  window.approveAction = approveAction;
+  window.sendStepResult = sendStepResult;
+  window.cancelRequest = cancelRequest;
+  window.onTaskResponse = onTaskResponse;
+  window.onProposal = onProposal;
+  window.onActionApproved = onActionApproved;
+  window.onResult = onResult;
+  window.onComplete = onComplete;
+  window.onError = onError;
+  window.flowManager = flowManager;
 }
 
 export { flowManager, A2AFlowManager, A2AClient };

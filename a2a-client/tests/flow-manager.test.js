@@ -26,7 +26,7 @@ import {
   onResult,
   onComplete,
   onError
-} from '../web/js/flow/flow-manager.js';
+} from '../web/js/flow/index.js';
 
 // Mock VueFlow imports
 vi.mock('@vue-flow/core', () => ({
@@ -78,6 +78,9 @@ vi.mock('../web/js/flow/protocol.js', () => ({
   createResultContextBlock: vi.fn(),
   createCompleteContextBlock: vi.fn(),
 }));
+
+// Mock VueFlow globally
+global.VueFlow = vi.fn();
 
 describe('A2AFlowManager', () => {
   let manager;

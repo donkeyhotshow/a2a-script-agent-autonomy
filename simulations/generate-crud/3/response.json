@@ -1,0 +1,63 @@
+{
+  "context": {
+    "task": "створити повний CRUD для сутності User",
+    "execution": {
+      "actionId": "generate-crud",
+      "currentActionId": "generate-code",
+      "history": [
+        { "step": 1, "actionId": "prepare-model", "status": "completed", "result": { "model_spec": { "name": "User", "fields": 8 } } }
+      ]
+    }
+  },
+  "previousStep": {
+    "actionId": "prepare-model",
+    "result": {
+      "model_spec": {
+        "name": "User",
+        "table": "users",
+        "fields": [
+          { "name": "id", "type": "bigint", "primary": true },
+          { "name": "name", "type": "string", "required": true },
+          { "name": "email", "type": "string", "required": true, "unique": true },
+          { "name": "password", "type": "string", "required": true },
+          { "name": "role", "type": "enum", "required": false, "values": ["admin", "user", "guest"] },
+          { "name": "is_active", "type": "boolean", "default": true },
+          { "name": "created_at", "type": "timestamp" },
+          { "name": "updated_at", "type": "timestamp" }
+        ],
+        "validations": {
+          "name": "required|string|max:255",
+          "email": "required|email|unique:users",
+          "password": "required|string|min:8",
+          "role": "in:admin,user,guest",
+          "is_active": "boolean"
+        }
+      }
+    }
+  },
+  "executingAction": {
+    "actionId": "generate-code",
+    "title": "Генерація коду CRUD",
+    "description": "Генерація моделі, контролера, міграції та представлень",
+    "priority": 9,
+    "dsl": {
+      "script": "generate-crud-code",
+      "input": {
+        "model_spec": {
+          "name": "User",
+          "table": "users",
+          "fields": [
+            { "name": "name", "type": "string", "required": true },
+            { "name": "email", "type": "string", "required": true, "unique": true },
+            { "name": "password", "type": "string", "required": true },
+            { "name": "role", "type": "enum", "required": false },
+            { "name": "is_active", "type": "boolean", "default": true }
+          ]
+        }
+      },
+      "output": "generated_files{}"
+    },
+    "dslScript": "```typescript\n// generate-crud-code.dsl\n// Генерація повного CRUD коду\n\nconst result = await script.execute('generate-crud-code', {\n  model_spec: {\n    name: 'User',\n    table: 'users',\n    fields: [...]\n  },\n  templates: ['model', 'controller', 'migration', 'views']\n});\n\n// result = {\n//   files: {\n//     model: 'app/Models/User.php',\n//     controller: 'app/Http/Controllers/UserController.php',\n//     migration: 'database/migrations/2024_01_01_000001_create_users_table.php',\n//     views: ['resources/views/users/index.blade.php', ...]\n//   }\n// }\n```"
+  },
+  "nextSteps": []
+}

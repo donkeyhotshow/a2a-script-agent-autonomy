@@ -1,0 +1,29 @@
+{
+  "context": {
+    "task": "знайти застарілі PHPUnit методи",
+    "execution": {
+      "actionId": "phpunit-deprecations",
+      "currentActionId": "scan-phpunit",
+      "history": []
+    }
+  },
+  "executingAction": {
+    "actionId": "scan-phpunit",
+    "title": "Сканування PHPUnit тестів",
+    "description": "Пошук PHPUnit тестів у проекті",
+    "priority": 10,
+    "dsl": {
+      "script": "scan-phpunit",
+      "input": {
+        "rootDir": ".",
+        "patterns": ["tests/**/*.php"]
+      },
+      "output": "phpunit_files[]"
+    },
+    "dslScript": "```typescript\n// scan-phpunit.dsl\n// Сканування PHPUnit тестів\n\nconst result = await script.execute('scan-phpunit', {\n  rootDir: '.',\n  patterns: ['tests/**/*.php'],\n  exclude: ['vendor/**']\n});\n\n// result = {\n//   files: [\n//     { path: 'tests/Unit/UserTest.php' },\n//     { path: 'tests/Feature/AuthTest.php' }\n//   ],\n//   total: 45\n// }\n```"
+  },
+  "nextSteps": [
+    { "actionId": "detect-deprecations", "title": "Виявлення deprecated методів" },
+    { "actionId": "generate-deprecations-report", "title": "Генерація звіту" }
+  ]
+}

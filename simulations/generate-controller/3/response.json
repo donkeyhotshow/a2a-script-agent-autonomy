@@ -1,0 +1,41 @@
+{
+  "context": {
+    "task": "створити контролер для моделі User",
+    "execution": {
+      "actionId": "generate-controller",
+      "currentActionId": "generate-controller",
+      "history": [
+        { "step": 1, "actionId": "analyze-model", "status": "completed", "result": { "model_spec": { "name": "User", "fields": 8 } } }
+      ]
+    }
+  },
+  "previousStep": {
+    "actionId": "analyze-model",
+    "result": {
+      "model_spec": {
+        "name": "User",
+        "table": "users",
+        "fillable": ["name", "email", "password", "role", "is_active"]
+      }
+    }
+  },
+  "executingAction": {
+    "actionId": "generate-controller",
+    "title": "Генерація контролера UserController",
+    "description": "Створення контролера з повним набором CRUD методів",
+    "priority": 9,
+    "dsl": {
+      "script": "generate-controller",
+      "input": {
+        "model_name": "User",
+        "model_spec": {
+          "name": "User",
+          "fillable": ["name", "email", "password", "role", "is_active"]
+        }
+      },
+      "output": "controller_file"
+    },
+    "dslScript": "```typescript\n// generate-controller.dsl\n// Генерація контролера\n\nconst result = await script.execute('generate-controller', {\n  model_name: 'User',\n  model_spec: {\n    name: 'User',\n    fillable: ['name', 'email', 'password', 'role', 'is_active']\n  },\n  methods: ['index', 'create', 'store', 'show', 'edit', 'update', 'destroy'],\n  template: 'laravel'\n});\n\n// result = {\n//   controller_file: {\n//     path: 'app/Http/Controllers/UserController.php',\n//     content: '<?php ...'\n//   }\n// }\n```"
+  },
+  "nextSteps": []
+}

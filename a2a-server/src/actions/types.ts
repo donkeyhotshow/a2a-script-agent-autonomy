@@ -58,6 +58,8 @@ export interface ActionDefinition {
   description: string;
   /** Execution priority (lower = higher priority) */
   priority: number;
+  /** Triggers for semantic search */
+  triggers?: string[];
   /** Execution context */
   context: ActionContext;
   /** Ordered list of sub-actions */

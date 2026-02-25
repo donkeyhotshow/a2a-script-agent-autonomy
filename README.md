@@ -24,7 +24,6 @@ A2A — серверно-клиентская система для:
 │ Сервер (a2a-server)                                             │
 │   → Framework Extractor: Vue, Laravel, Tailwind версии          │
 │   → Entity Recognizer: Model, Controller, Service, Vue          │
-│   → Graph Store: сущности и связи (БЕЗ БД!)                     │
 │   → Neuron Activator: ~100 нейронов-детекторов                  │
 ├─────────────────────────────────────────────────────────────────┤
 │ Протокол: JSON REST API                                         │
@@ -102,7 +101,6 @@ json
 a2a-server/           # Сервер (Node.js, Express, TypeScript)
   src/services/       # Основные сервисы
     entity-recognizer.service.ts    # Распознавание сущностей
-    graph-store.service.ts          # Граф знаний (in-memory)
     framework-extractor.service.ts  # Извлечение фреймворков
     neuron-activator.service.ts     # Активация нейронов
     request-processor.service.ts    # Обработка запросов

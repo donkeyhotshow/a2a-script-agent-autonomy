@@ -18,7 +18,7 @@
 
 ```bash
 npm run build
-node .cursor/eslint-rules/extract-classes.cjs
+node docs/archive/eslint-rules/extract-classes.cjs
 ```
 
 ### 2. Запустите проверку
@@ -45,7 +45,7 @@ npx eslint "features/**/*.vue"
 1. Соберите проект и извлеките классы:
 ```bash
 npm run build
-node .cursor/eslint-rules/extract-classes.cjs
+node docs/archive/eslint-rules/extract-classes.cjs
 ```
 
 2. Запустите проверку:
