@@ -33,4 +33,22 @@ describe('ApiClient', () => {
     const client = new ApiClient(undefined);
     expect(client.serverUrl).toBe('http://localhost:3000/api/v1');
   });
+
+  it('constructs with custom timeout', () => {
+    const client = new ApiClient({ timeout: 5000 });
+    expect(client.timeout).toBe(5000);
+  });
+
+  it('constructs with all custom options', () => {
+    const client = new ApiClient({
+      serverUrl: 'http://custom/api',
+      token: 'my-token',
+      clientId: 'my-client',
+      timeout: 10000
+    });
+    expect(client.serverUrl).toBe('http://custom/api');
+    expect(client.token).toBe('my-token');
+    expect(client.clientId).toBe('my-client');
+    expect(client.timeout).toBe(10000);
+  });
 });

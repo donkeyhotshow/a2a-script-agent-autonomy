@@ -784,6 +784,12 @@ const Sessions = {
     const runBtn = document.getElementById('action-run');
     if (approveBtn) approveBtn.style.display = 'block';
     if (runBtn) runBtn.style.display = 'none';
+    
+    // Show Action Details Card if available
+    if (document.getElementById('action-details-card')) {
+      this.showActionDetailsCard(this.state.action.definition);
+    }
+    
     console.log('Approve button shown');
   },
 
