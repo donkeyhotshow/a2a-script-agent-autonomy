@@ -1,0 +1,252 @@
+{
+    "type": "Instructions",
+    "instructions": [
+        {
+            "action": "update",
+            "batch": [
+                {
+                    "value": "get-next-ai-probe-question",
+                    "to": "buffer:actionId"
+                },
+                {
+                    "value": {
+                        "keywords": ["ai", "probe", "questions", "ui-generation"],
+                        "ai_summary": "Retrieves and processes AI probe questions to generate dynamic UI.",
+                        "features": ["dynamic-ui", "question-processing"]
+                    },
+                    "to": "buffer:tags"
+                }
+            ]
+        },
+        {
+            "action": "comment",
+            "value": "QTU v5: Process questions and update dynamic display directly in page"
+        },
+        {
+            "action": "update",
+            "batch": [
+                {
+                    "from": "file!question-to-user/data/current-probe-questions.json",
+                    "to": "buffer:allProbeQuestions"
+                },
+                {
+                    "value": {
+                        "type": "label",
+                        "props": {
+                            "content": "",
+                            "className": "question-label"
+                        }
+                    },
+                    "to": "buffer:textQuestionTpl"
+                },
+                {
+                    "value": {
+                        "type": "inputtext",
+                        "props": {
+                            "v-model": "",
+                            "className": "question-input"
+                        }
+                    },
+                    "to": "buffer:textInputAnswerTpl"
+                },
+                {
+                    "value": {
+                        "type": "div",
+                        "props": {
+                            "className": "radio-option"
+                        },
+                        "children": [
+                            {
+                                "type": "checkbox",
+                                "props": {
+                                    "v-model": "",
+                                    "inputId": "",
+                                    "name": "",
+                                    "value": ""
+                                }
+                            },
+                            {
+                                "type": "label",
+                                "props": {
+                                    "content": "",
+                                    "for": ""
+                                }
+                            }
+                        ]
+                    },
+                    "to": "buffer:radioButtonTpl"
+                },
+                {
+                    "value": [],
+                    "to": "buffer:generatedFormElements"
+                }
+            ]
+        },
+        {
+            "action": "for",
+            "from": "buffer:allProbeQuestions",
+            "to": "currentItem",
+            "instructions": [
+                {
+                    "action": "comment",
+                    "value": "Processing question: {{buffer:for.currentItem.id}}"
+                },
+                {
+                    "action": "update",
+                    "batch": [
+                        {
+                            "from": "buffer:textQuestionTpl",
+                            "to": "buffer:currentElement"
+                        },
+                        {
+                            "from": "buffer:for.currentItem.text",
+                            "to": "buffer:currentElement.props.content"
+                        },
+                        {
+                            "from": "buffer:currentElement",
+                            "to": "buffer:generatedFormElements"
+                        }
+                    ]
+                },
+                {
+                    "action": "update",
+                    "condition": [
+                        "equals",
+                        "buffer:for.currentItem.type",
+                        "text_input"
+                    ],
+                    "batch": [
+                        {
+                            "from": "buffer:textInputAnswerTpl",
+                            "to": "buffer:answerElement"
+                        },
+                        {
+                            "from": "buffer:for.currentItem.answer_model_path",
+                            "to": "buffer:answerElement.props.v-model"
+                        },
+                        {
+                            "from": "buffer:answerElement",
+                            "to": "buffer:generatedFormElements"
+                        }
+                    ]
+                },
+                {
+                    "action": "update",
+                    "condition": [
+                        "equals",
+                        "buffer:for.currentItem.type",
+                        "radio_choice"
+                    ],
+                    "batch": [
+                        {
+                            "action": "for",
+                            "from": "buffer:for.currentItem.options",
+                            "to": "optionItem",
+                            "instructions": [
+                                {
+                                    "action": "comment",
+                                    "value": "Looping radio options for {{buffer:for.parentItem.id}}"
+                                },
+                                {
+                                    "action": "update",
+                                    "batch": [
+                                        {
+                                            "from": "buffer:radioButtonTpl",
+                                            "to": "buffer:radioOptionElement"
+                                        },
+                                        {
+                                            "from": "buffer:for.parentItem.answer_model_path",
+                                            "to": "buffer:radioOptionElement.children.0.props.v-model"
+                                        },
+                                        {
+                                            "value": "{{buffer:for.parentItem.id}}_{{buffer:for.currentItem.value}}",
+                                            "to": "buffer:radioOptionElement.children.0.props.inputId"
+                                        },
+                                        {
+                                            "from": "buffer:for.parentItem.id",
+                                            "to": "buffer:radioOptionElement.children.0.props.name"
+                                        },
+                                        {
+                                            "from": "buffer:for.currentItem.value",
+                                            "to": "buffer:radioOptionElement.children.0.props.value"
+                                        },
+                                        {
+                                            "from": "buffer:for.currentItem.label",
+                                            "to": "buffer:radioOptionElement.children.1.props.content"
+                                        },
+                                        {
+                                            "value": "{{buffer:for.parentItem.id}}_{{buffer:for.currentItem.value}}",
+                                            "to": "buffer:radioOptionElement.children.1.props.for"
+                                        },
+                                        {
+                                            "from": "buffer:radioOptionElement",
+                                            "to": "buffer:generatedFormElements"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "action": "comment",
+            "value": "Place generated UI elements into the designated buffer"
+        },
+        {
+            "action": "update",
+            "from": "buffer:generatedFormElements",
+            "to": "buffer:qtu.generatedUI"
+        },
+        {
+            "action": "comment",
+            "value": "Define the root structure for the output area"
+        },
+        {
+            "action": "update",
+            "batch": [
+                {
+                    "value": {
+                        "type": "div",
+                        "props": {
+                            "id": "dynamic-question-content-area-target",
+                            "class": "space-y-4"
+                        },
+                        "children": []
+                    },
+                    "to": "buffer:tempNextProbeAreaRoot"
+                },
+                {
+                    "from": "buffer:generatedFormElements",
+                    "to": "buffer:tempNextProbeAreaRoot.children"
+                },
+                {
+                    "from": "buffer:tempNextProbeAreaRoot",
+                    "to": "file!question-to-user/templates/question-area.json"
+                }
+            ]
+        },
+        {
+            "action": "update",
+            "batch": [
+                {
+                    "from": "buffer:actionId",
+                    "to": "output:actionId"
+                },
+                {
+                    "from": "buffer:tags",
+                    "to": "output:tags"
+                },
+                {
+                    "value": {
+                        "success": true,
+                        "message": "Dynamic UI generated successfully.",
+                        "generatedUI": true
+                    },
+                    "to": "output:result"
+                }
+            ]
+        }
+    ]
+} 

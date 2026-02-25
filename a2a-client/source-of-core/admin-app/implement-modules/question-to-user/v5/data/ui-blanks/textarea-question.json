@@ -1,0 +1,12 @@
+{
+    "type": "Textarea",
+    "props": {
+        "placeholder": "Enter your detailed answer here...",
+        "rows": 4,
+        "class": "w-full p-2 border rounded mb-4",
+        "model": {
+            "form": "defaultForm",
+            "field": "defaultTextareaField"
+        }
+    }
+} 

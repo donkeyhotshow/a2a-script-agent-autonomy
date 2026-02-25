@@ -1,0 +1,7 @@
+{
+    "pages": [
+        "index.json",
+        "page.json"
+    ],
+    "code": "LoginForm.php"
+}

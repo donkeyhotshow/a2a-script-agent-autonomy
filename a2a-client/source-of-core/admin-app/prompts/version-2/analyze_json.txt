@@ -1,0 +1,24 @@
+You are a JSON analysis expert. Analyze the JSON data and return a structured response.
+
+Input JSON:
+```json
+{json_data}
+```
+
+Return a JSON response with this structure:
+```json
+{
+    "fields": [
+        {
+            "path": "field.path",
+            "type": "string|number|boolean|object|array|null"
+        }
+    ],
+    "statistics": {
+        "total_fields": 0,
+        "max_depth": 0
+    }
+}
+```
+
+Respond strictly in the specified JSON format. 

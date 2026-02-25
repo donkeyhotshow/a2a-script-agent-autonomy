@@ -1,0 +1,22 @@
+{
+    "type": "Textarea",
+    "vAddress": "",
+    "props": {
+        "label": "",
+        "inputId": "",
+        "name": "",
+        "placeholder": "",
+        "rows": 3,
+        "cols": 30,
+        "autoResize": true,
+        "required": false,
+        "maxlength": null,
+        "ariaDescribedBy": "",
+        "validationMessage": "",
+        "class": "w-full md:w-14rem mb-3"
+    },
+    "model": {
+        "field": "",
+        "value": null
+    }
+}

@@ -1,0 +1,139 @@
+{
+    "type": "div",
+    "name": "values-section",
+    "props": {
+        "class": "py-12 px-4 md:px-6 lg:px-8 xl:px-10 2xl:px-12",
+        "style": "background: linear-gradient(135deg, rgba(18, 168, 0, 0.05) 0%, rgba(245, 230, 0, 0.05) 100%), url('/images/backgrounds/forest-light.webp') no-repeat center/cover; background-blend-mode: overlay;"
+    },
+    "children": [
+        {
+            "type": "div",
+            "props": {
+                "class": "max-w-7xl mx-auto"
+            },
+            "children": [
+                {
+                    "type": "div",
+                    "props": {
+                        "class": "text-center mb-10 bg-white/60 backdrop-blur-sm p-6 rounded-xl shadow-sm"
+                    },
+                    "children": [
+                        {
+                            "type": "Tag",
+                            "props": {
+                                "value": "Цінності",
+                                "severity": "success",
+                                "class": "mb-2 text-sm font-bold uppercase tracking-wider",
+                                "style": "background-color: #12A800; color: white;"
+                            }
+                        },
+                        {
+                            "type": "div",
+                            "props": {
+                                "content": "<h2 class='text-3xl sm:text-4xl font-bold mb-4' style='color: #3D3B47;'>Наші принципи</h2><p class='text-xl max-w-3xl mx-auto' style='color: #3D3B47;'>Ми віримо в якість, професіоналізм та індивідуальний підхід.</p>"
+                            }
+                        }
+                    ]
+                },
+                {
+                    "type": "Grid",
+                    "props": {
+                        "class": "grid grid-cols-1 md:grid-cols-3 gap-8"
+                    },
+                    "children": [
+                        {
+                            "type": "Card",
+                            "props": {
+                                "class": "p-6 text-center bg-white/70 backdrop-blur-sm rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 transform hover:-translate-y-1"
+                            },
+                            "children": [
+                                {
+                                    "type": "div",
+                                    "props": {
+                                        "class": "flex items-center justify-center w-16 h-16 mx-auto mb-4 rounded-full",
+                                        "style": "background-color: #12A800;"
+                                    },
+                                    "children": [
+                                        {
+                                            "type": "Icon",
+                                            "props": {
+                                                "name": "pi pi-star",
+                                                "class": "text-3xl text-white"
+                                            }
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "div",
+                                    "props": {
+                                        "content": "<h3 class='text-xl font-semibold mb-2' style='color: #3D3B47;'>Якість</h3><p style='color: #3D3B47;'>Використовуємо лише найкращі матеріали та техніки.</p>"
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "type": "Card",
+                            "props": {
+                                "class": "p-6 text-center bg-white/70 backdrop-blur-sm rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 transform hover:-translate-y-1"
+                            },
+                            "children": [
+                                {
+                                    "type": "div",
+                                    "props": {
+                                        "class": "flex items-center justify-center w-16 h-16 mx-auto mb-4 rounded-full",
+                                        "style": "background-color: #F46700;"
+                                    },
+                                    "children": [
+                                        {
+                                            "type": "Icon",
+                                            "props": {
+                                                "name": "pi pi-users",
+                                                "class": "text-3xl text-white"
+                                            }
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "div",
+                                    "props": {
+                                        "content": "<h3 class='text-xl font-semibold mb-2' style='color: #3D3B47;'>Професіоналізм</h3><p style='color: #3D3B47;'>Наша команда - це досвідчені та кваліфіковані майстри.</p>"
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "type": "Card",
+                            "props": {
+                                "class": "p-6 text-center bg-white/70 backdrop-blur-sm rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 transform hover:-translate-y-1"
+                            },
+                            "children": [
+                                {
+                                    "type": "div",
+                                    "props": {
+                                        "class": "flex items-center justify-center w-16 h-16 mx-auto mb-4 rounded-full",
+                                        "style": "background-color: #6B00F5;"
+                                    },
+                                    "children": [
+                                        {
+                                            "type": "Icon",
+                                            "props": {
+                                                "name": "pi pi-heart",
+                                                "class": "text-3xl text-white"
+                                            }
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "div",
+                                    "props": {
+                                        "content": "<h3 class='text-xl font-semibold mb-2' style='color: #3D3B47;'>Індивідуальний підхід</h3><p style='color: #3D3B47;'>Ми слухаємо ваші побажання та створюємо унікальний стиль.</p>"
+                                    }
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+} 

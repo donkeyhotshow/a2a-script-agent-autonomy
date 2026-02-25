@@ -1,0 +1,76 @@
+{
+    "type": "Instructions",
+    "instructions": [
+        {
+            "action": "update",
+            "batch": [
+                {
+                    "from": "input",
+                    "to": "primary-form/data/text-storage-section:check-section"
+                },
+                {
+                    "value": {},
+                    "to": "primary-form/data/text-storage-section:result-data"
+                }
+            ]
+        },
+        {
+            "action": "for",
+            "from": "primary-form/data/text-storage-section:check-section.instructions",
+            "to": "primary-form/data/text-storage-section:check-section.instructions",
+            "instructions": [
+                {
+                    "action": "update",
+                    "value": true,
+                    "to": "buffer:for.currentItem.disabled"
+                },
+                {
+                    "action": "update",
+                    "from": "buffer:for.currentItem",
+                    "to": "buffer:for.list"
+                }
+            ]
+        },
+        {
+            "action": "for",
+            "from": "input:text-storage-section:cb-form",
+            "instructions": [
+                {
+                    "action": "update",
+                    "value": false,
+                    "to": "primary-form/data/text-storage-section:check-section.instructions.{buffer:for.currentItem}.disabled"
+                }
+            ]
+        },
+        {
+            "action": "update",
+            "from": "{primary-form/data/program:checkboxSectionUpdatingTo}",
+            "to": "primary-form/data/text-storage-section:result-data"
+        },
+        {
+            "disabled": true,
+            "action": "print_r",
+            "from": "output"
+        },
+        {
+            "action": "call",
+            "from": "primary-form/data/text-storage-section:check-section.instructions"
+        },
+        {
+            "action": "update",
+            "from": "primary-form/data/text-storage-section:result-data",
+            "with": "json_encode",
+            "to": "primary-form/data/text-storage-section:result-data"
+        },
+        {
+            "action": "save",
+            "from": [
+                "primary-form/data/text-storage-section"
+            ]
+        },
+        {
+            "action": "call",
+            "from": "primary-form/commands/load-forms-and-return"
+        }
+    ]
+}

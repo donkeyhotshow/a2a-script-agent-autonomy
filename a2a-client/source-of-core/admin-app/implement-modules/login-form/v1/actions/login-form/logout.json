@@ -1,0 +1,25 @@
+{
+    "type": "Instructions",
+    "instructions": [
+        {
+            "action": "update",
+            "value": null,
+            "to": "session!user"
+        },
+        {
+            "action": "update",
+            "value": true,
+            "to": "buffer:loggedOut"
+        },
+        {
+            "action": "update",
+            "value": "Successfully logged out",
+            "to": "buffer:successMessage"
+        },
+        {
+            "action": "update",
+            "from": "buffer",
+            "to": "output"
+        }
+    ]
+}

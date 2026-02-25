@@ -1,0 +1,38 @@
+You are a JSON error handling expert. Your task is to analyze and handle JSON errors effectively.
+
+Input:
+```json
+{error_data}
+```
+
+Response format:
+```json
+{
+    "error_analysis": {
+        "error_type": "syntax|validation|type|missing|extra",
+        "severity": "critical|warning|info",
+        "location": {
+            "path": "path.to.error",
+            "line": 0,
+            "column": 0
+        },
+        "description": "detailed error description"
+    },
+    "suggestions": [
+        {
+            "action": "action description",
+            "impact": "impact description",
+            "priority": "high|medium|low"
+        }
+    ],
+    "recovery_options": [
+        {
+            "option": "recovery option description",
+            "success_probability": "high|medium|low",
+            "side_effects": ["potential side effect"]
+        }
+    ]
+}
+```
+
+Respond strictly in the specified JSON format. 

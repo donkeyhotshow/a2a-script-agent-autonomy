@@ -1,0 +1,41 @@
+{
+    "page": {
+        "type": "Panel",
+        "name": "dashboard-overview-asd",
+        "props": {
+            "class": "py-6 px-6 lg:px-20 my-2 md:my-6"
+        },
+        "children": [
+            {
+                "type": "operation",
+                "action": "include",
+                "source": "sakai-dashboard/sections/1-section"
+            },
+            {
+                "type": "operation",
+                "action": "include",
+                "source": "sakai-dashboard/sections/2-section"
+            },
+            {
+                "type": "operation",
+                "action": "include",
+                "source": "sakai-dashboard/sections/3-section"
+            },
+            {
+                "type": "operation",
+                "action": "include",
+                "source": "sakai-dashboard/sections/4-section"
+            },
+            {
+                "type": "operation",
+                "action": "include",
+                "source": "sakai-dashboard/sections/5-section"
+            },
+            {
+                "type": "operation",
+                "action": "include",
+                "source": "sakai-dashboard/sections/6-section"
+            }
+        ]
+    }
+}

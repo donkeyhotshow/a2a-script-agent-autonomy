@@ -1,0 +1,47 @@
+{
+    "type": "div",
+    "props": {
+        "class": "card flex flex-col gap-4"
+    },
+    "children": [
+        {
+            "type": "Text",
+            "props": {
+                "content": "Help Text",
+                "class": "font-semibold text-xl"
+            }
+        },
+        {
+            "type": "div",
+            "props": {
+                "class": "flex flex-wrap gap-2"
+            },
+            "children": [
+                {
+                    "type": "Label",
+                    "props": {
+                        "for": "username",
+                        "content": "Username",
+                        "class": "font-medium"
+                    }
+                },
+                {
+                    "type": "InputText",
+                    "props": {
+                        "id": "username",
+                        "type": "text",
+                        "class": "p-inputtext-fluid w-full",
+                        "placeholder": "Enter your username"
+                    }
+                },
+                {
+                    "type": "Text",
+                    "props": {
+                        "content": "Enter your username to reset your password.",
+                        "class": "text-sm text-surface-600 dark:text-surface-200"
+                    }
+                }
+            ]
+        }
+    ]
+}

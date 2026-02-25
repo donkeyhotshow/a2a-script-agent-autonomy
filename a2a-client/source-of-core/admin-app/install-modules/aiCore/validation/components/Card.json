@@ -1,0 +1,88 @@
+{
+    "componentName": "Card",
+    "description": "PrimeVue Card component for displaying content in a card format.",
+    "level": 2,
+    "status": "active",
+    "dependencies": [],
+    "_comment": "Validation expects properties within a 'props' object.",
+    "documentationLink": "docs/guides/module/04-ui-construction.md",
+    "nestedValidation": {
+        "structure": {
+            "vAddress": {
+                "type": "string",
+                "required": false,
+                "description": "Address for v-model or component identification."
+            },
+            "disabled": {
+                "type": "boolean",
+                "required": false,
+                "default": false,
+                "description": "Disable rendering of the component."
+            },
+            "props": {
+                "type": "object",
+                "required": false,
+                "description": "Container for PrimeVue Card properties and HTML attributes.",
+                "nestedValidation": {
+                    "structure": {
+                        "pt": {
+                            "type": [
+                                "object",
+                                "null"
+                            ],
+                            "required": false
+                        },
+                        "ptOptions": {
+                            "type": "object",
+                            "required": false
+                        },
+                        "unstyled": {
+                            "type": "boolean",
+                            "required": false,
+                            "default": false
+                        },
+                        "name": {
+                            "type": "string",
+                            "required": false
+                        },
+                        "key": {
+                            "type": [
+                                "string",
+                                "number"
+                            ],
+                            "required": false
+                        },
+                        "ref": {
+                            "type": "string",
+                            "required": false
+                        },
+                        "allOf": [
+                            {
+                                "$ref": "../common/props.json"
+                            }
+                        ]
+                    }
+                }
+            },
+            "children": {
+                "type": "array",
+                "required": false,
+                "nestedValidation": {
+                    "_allowAnyObject": true,
+                    "_allowString": true,
+                    "_allowBoolean": true,
+                    "_allowNumber": true,
+                    "_allowNull": true
+                }
+            },
+            "$ref": "../common/root.json"
+        }
+    },
+    "implementationNotes": [
+        "Refactored to standard V1 format (using 'props').",
+        "Level updated to 2.",
+        "Added common PrimeVue Card props and standard attributes to props.nestedValidation.structure.",
+        "Defined common Card slots (header, footer, title, subtitle, content, default).",
+        "Note: Original notes mentioned missing .vue file and potential placeholder status."
+    ]
+}

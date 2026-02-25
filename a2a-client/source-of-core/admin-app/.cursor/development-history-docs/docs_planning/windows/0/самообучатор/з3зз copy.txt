@@ -1,0 +1,68 @@
+
+
+Read file: script/engine/scenarios/SCN-IndexCollectTaskData.scenario.json
+
+
+
+Read file: main-work.ps1
+
+
+Read file: script/engine/task_definitions/Generic-00002.json
+
+
+Read file: script/engine/task_definitions/Generic-00002-FullyCollectTaskData.json
+
+
+Ran tool
+
+
+Ran tool
+
+
+Ran tool
+
+
+Read file: main-index.ps1
+
+
+Read file: main-index.ps1
+
+
+Read file: script/engine/config/system_config.json
+
+
+Read file: config/system_config.json
+
+
+Ran tool
+
+
+Ran tool
+
+
+Read file: script/config/system_config.json
+
+
+Read file: index/script/engine.index.json
+
+
+Read file: script/engine/Manage-Index.ps1
+
+
+Ran tool
+
+
+Read file: script/engine/task_definitions/Generic-00004.json
+
+
+
+I’ve enriched the Generic-00004 task with all relevant scripts under review and fleshed out a concrete modernization plan in `implementationNotes`. 
+
+Next steps:
+1. Update your index‐generation pipeline (e.g. in your indexer script or CI) to include both JSON and Markdown file types, and ensure it recurses into the `script/planing-new-tasks` and `script/engine/task_definitions` directories.
+2. Refactor `index-processor.php` to accept CLI flags for include/exclude patterns so you can target specific directories and extensions dynamically.
+3. Enhance `scenario-utils.php`’s `runCommand` to JSON-serialize argument arrays for the PHP engine, avoiding brittle shell string concatenation on Windows.
+4. Amend `SCN-IndexCollectTaskData.scenario.json` to embed `projectRoot` in its `initialContext`, guaranteeing the QueryIndex step always knows where to look.
+5. Introduce schema validation in `main-work.ps1` to catch missing or mismatched `type` properties before scenario execution.
+6. Write integration tests for the `SCN-IndexCollectTaskData` scenario, verifying it correctly populates `collectedIndexData` in tasks with IDs containing “00002” (e.g. rerun for `Generic-00002`, `Generic-00002-FullyCollectTaskData`, `TASK-GENERIC-00002-QTU-IMPROVEMENT`).
+7. Update your documentation at `script/docs/standards/task-manager/index-data-workflow.md` with examples of the new indexer capabilities and how to invoke them.

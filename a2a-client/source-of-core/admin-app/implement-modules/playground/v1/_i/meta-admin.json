@@ -1,0 +1,16 @@
+{
+    "permalink": {
+        "path": "admin/sakai-core",
+        "module": "sakai-core",
+        "metadata": {
+            "title": "Sakai Core Management",
+            "description": "Manage core functionalities.",
+            "handles_subpaths": false
+        }
+    },
+    "menu": {
+        "label": "Sakai Core Management",
+        "path": "/admin/sakai-core",
+        "order": 13
+    }
+}

@@ -1,0 +1,54 @@
+{
+  "enable_output_control": true,
+  "description": "Controls which validation output systems are enabled. Set to false to disable specific outputs.",
+  
+  "error_types": {
+    "critical_errors": true,
+    "major_errors": true,
+    "warnings": true,
+    "notices": true,
+    "info": true,
+    "suggestions": true,
+    "unknown_component_types": true
+  },
+  
+  "categories": {
+    "structure": true,
+    "props": true,
+    "component": true,
+    "json": true,
+    "file": true
+  },
+  
+  "detail_systems": {
+    "error_messages": true,
+    "error_context": true,
+    "error_path": true,
+    "documentation_links": true,
+    "component_examples": true,
+    "schema_information": true,
+    "suggestion_hints": true
+  },
+  
+  "verbosity_integration": {
+    "respect_command_verbosity": true,
+    "override_verbosity_levels": false,
+    "custom_verbosity": {
+      "v1_shows_docs": true,
+      "v2_shows_examples": true,
+      "v3_shows_schema": true
+    }
+  },
+  
+  "pagination": {
+    "enabled": true,
+    "max_lines_per_page": 800,
+    "interactive_pagination": true
+  },
+  
+  "filtering": {
+    "show_only_min_level": true,
+    "show_all_with_flag": true,
+    "always_include_component_type_errors": true
+  }
+} 

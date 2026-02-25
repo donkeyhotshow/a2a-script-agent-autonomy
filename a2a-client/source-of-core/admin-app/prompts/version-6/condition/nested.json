@@ -1,0 +1,18 @@
+{
+    "type": "Instructions",
+    "instructions": [
+        {
+            "action": "update",
+            "condition": ["equals", "buffer:step", 1],
+            "batch": [
+                {
+                    "action": "update",
+                    "condition": ["equals", "buffer:flag", true],
+                    "batch": [
+                        {"value": "ok", "to": "buffer:result"}
+                    ]
+                }
+            ]
+        }
+    ]
+} 

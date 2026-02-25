@@ -1,0 +1,14 @@
+{
+    "type": "Column",
+    "children": [
+        {
+            "type": "Button",
+            "props": {
+                "label": "{categoryName}",
+                "severity": "info",
+                "outlined": true,
+                "class": "w-full"
+            }
+        }
+    ]
+}

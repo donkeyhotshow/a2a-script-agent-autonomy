@@ -1,0 +1,42 @@
+## Potential Helper Refactoring in app/Console/Commands/Helpers/ModuleValidate/
+
+- [ ] Refactor `json_encode` and `json_decode` usages to use `App\Helpers\JsonHelper`.
+    - ValidationEventCollector.php
+    - ModuleJsonProcessor.php
+    - ValidationConfigLoader.php
+    - ModuleValidationLogHelper.php
+    - ComponentValidation.php
+    - ValidationResultOutputHelper.php
+    - ErrorMessageGenerator.php
+    - ComponentRuleLoader.php
+    - PaginationHelper.php
+- [ ] Refactor array manipulation functions (`array_values`, `array_keys`, `array_filter`, `array_map`, `array_merge`, `array_unique`) to use `App\Helpers\ArrayHelper`.
+    - ValidationEventCollector.php
+    - ModuleJsonProcessor.php
+    - ValidationConfigLoader.php
+    - ModuleValidationLogHelper.php
+    - ComponentValidation.php
+    - ValidationResultOutputHelper.php
+    - ErrorMessageGenerator.php
+    - ComponentRuleLoader.php
+    - PaginationHelper.php
+- [ ] Refactor file operations (`File::*`, `file_exists`, `file_get_contents`) to use `App\Helpers\FileHelper` and `App\Helpers\PathHelper`.
+    - ValidationEventCollector.php
+    - ModuleJsonProcessor.php
+    - ValidationConfigLoader.php
+    - ModuleValidationLogHelper.php
+    - ComponentValidation.php
+    - ValidationResultOutputHelper.php
+    - ErrorMessageGenerator.php
+    - ComponentRuleLoader.php
+    - PaginationHelper.php
+- [ ] Review string manipulations (`explode`) for potential inclusion in `App\Helpers\ArrayHelper` or other helpers.
+    - ValidationEventCollector.php
+    - ModuleJsonProcessor.php
+    - ValidationConfigLoader.php
+    - ModuleValidationLogHelper.php
+    - ComponentValidation.php
+    - ValidationResultOutputHelper.php
+    - ErrorMessageGenerator.php
+    - ComponentRuleLoader.php
+    - PaginationHelper.php 

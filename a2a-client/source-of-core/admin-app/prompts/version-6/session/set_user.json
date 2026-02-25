@@ -1,0 +1,14 @@
+{
+    "type": "Instructions",
+    "instructions": [
+        {
+            "action": "update",
+            "value": {
+                "id": 123,
+                "name": "Alice",
+                "roles": ["admin", "user"]
+            },
+            "to": "session:user"
+        }
+    ]
+} 

@@ -9,6 +9,13 @@ import { fileCollectorNeuron } from './file-collector.neuron.js';
 import { externalAiTriggerNeuron } from './external-ai-trigger.neuron.js';
 import { validationNeuron } from './validation.neuron.js';
 
+// Custom lint neurons
+import { lintInertiaNeurons } from './lint-inertia.neuron.js';
+import { lintAccessibilityNeurons } from './lint-accessibility.neuron.js';
+import { lintPhpNeurons } from './lint-php.neuron.js';
+import { lintPowershellNeurons } from './lint-powershell.neuron.js';
+import { lintTestingNeurons } from './lint-testing.neuron.js';
+
 /**
  * Neurons registry
  *
@@ -21,6 +28,17 @@ export const neurons: Neuron[] = [
   projectContextDetectorNeuron,
   fileCollectorNeuron,
   validationNeuron,
+  // Custom lint neurons (priority 5-9 based on severity)
+  // Inertia.js lint neurons
+  ...lintInertiaNeurons,
+  // Accessibility lint neurons
+  ...lintAccessibilityNeurons,
+  // PHP lint neurons
+  ...lintPhpNeurons,
+  // PowerShell lint neurons
+  ...lintPowershellNeurons,
+  // Testing lint neurons
+  ...lintTestingNeurons,
   // External AI trigger (lowest priority - runs last)
   externalAiTriggerNeuron,
 ];
@@ -46,4 +64,10 @@ export {
   fileCollectorNeuron,
   validationNeuron,
   externalAiTriggerNeuron,
+  // Lint neurons
+  lintInertiaNeurons,
+  lintAccessibilityNeurons,
+  lintPhpNeurons,
+  lintPowershellNeurons,
+  lintTestingNeurons,
 };

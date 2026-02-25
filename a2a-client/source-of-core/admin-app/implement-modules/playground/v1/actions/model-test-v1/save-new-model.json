@@ -1,0 +1,44 @@
+{
+    "type": "Instructions",
+    "instructions": [
+        {
+            "disabled": false,
+            "action": "print_r",
+            "from": "input"
+        },
+        {
+            "action": "update",
+            "from": "input:modelDataForm",
+            "to": "model!TestDataModel"
+        },
+        {
+            "action": "save",
+            "from": "model!TestDataModel"
+        },
+        {
+            "action": "update",
+            "from": "playground/data/blanks/status-item",
+            "to": "buffer:blankItem"
+        },
+        {
+            "action": "update",
+            "to": "buffer:blankItem.props.content",
+            "value": "✔ Record saved: {input:recordId}"
+        },
+        {
+            "action": "add",
+            "from": "buffer:blankItem",
+            "to": "playground/model-test-v1:content.children.1.children.3.children",
+            "how": "append"
+        },
+        {
+            "action": "save",
+            "from": "playground/model-test-v1"
+        },
+        {
+            "action": "update",
+            "to": "output:result.title",
+            "value": "✔ Record saved: {input:recordId}"
+        }
+    ]
+}

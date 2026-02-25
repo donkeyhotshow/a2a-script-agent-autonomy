@@ -1,0 +1,16 @@
+# JSON UI Actions & Operations
+
+This section documents the standard commands, actions, and operations available within the JSON UI framework, primarily used for interacting with the backend or manipulating UI state.
+
+## Key Documents
+
+-   **[Server Actions Reference](./server-actions-reference.md)**: Reference guide for standard server-side actions (e.g., `navigateTo`, `setModelProperty`, `callFunction`).
+-   **[Server Operations Reference](./server-operations-reference.md)**: Reference for lower-level server operations potentially triggered by actions. *(Clarify distinction from Actions)*.
+-   **[UI Documentation Actions](./ui-documentation.md)**: Actions specifically related to UI state or documentation rendering? *(Needs clarification)*.
+
+## Examples
+
+-   **[General Examples](./examples.md)**: Various examples demonstrating action usage.
+-   **[Server Command Window Create Example](./example-server-command-window-create.md)**: Specific example for creating a window via server command.
+
+Refer also to the [Action Handling Flow](../../../concepts/action-handling-flow.md) and [Extended Server Actions](../server-actions-extended/) documentation.

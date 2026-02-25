@@ -1,0 +1,44 @@
+{
+    "type": "div",
+    "id": "qtu-suggestions-section",
+    "props": {
+        "class": "qtu-suggestions-section p-2 mb-3 {{props.class?}}"
+    },
+    "children": [
+        {
+            "type": "h4",
+            "props": {
+                "content": "{{props.title}}",
+                "class": "text-md font-semibold text-surface-700 dark:text-surface-200 mb-2"
+            }
+        },
+        {
+            "type": "div",
+            "props": {
+                "class": "suggestion-item p-2 mb-1 border border-surface-200 dark:border-surface-700 rounded"
+            },
+            "children": [
+                {
+                    "type": "Span",
+                    "props": {
+                        "content": "{{props.suggestions[0].text? | Suggestion 1 Example}}"
+                    }
+                }
+            ]
+        },
+        {
+            "type": "div",
+            "props": {
+                "class": "suggestion-item p-2 mb-1 border border-surface-200 dark:border-surface-700 rounded"
+            },
+            "children": [
+                {
+                    "type": "Span",
+                    "props": {
+                        "content": "{{props.suggestions[1].text? | Suggestion 2 Example}}"
+                    }
+                }
+            ]
+        }
+    ]
+}

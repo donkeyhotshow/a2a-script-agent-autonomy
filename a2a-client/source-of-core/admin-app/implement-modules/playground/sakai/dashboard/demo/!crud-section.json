@@ -1,0 +1,260 @@
+{
+    "type": "Section",
+    "name": "crud-section",
+    "props": {
+        "class": "py-6 px-6 lg:px-20 my-2 md:my-6"
+    },
+    "children": [
+        {
+            "type": "Grid",
+            "props": {
+                "class": "grid grid-cols-12 gap-4"
+            },
+            "children": [
+                {
+                    "type": "Column",
+                    "props": {
+                        "class": "col-span-12"
+                    },
+                    "children": [
+                        {
+                            "type": "Text",
+                            "props": {
+                                "content": "<h4 class='m-0'>Manage Products</h4>",
+                                "class": "mb-6"
+                            }
+                        },
+                        {
+                            "type": "Toolbar",
+                            "props": {
+                                "class": "mb-6"
+                            },
+                            "children": [
+                                {
+                                    "type": "Button",
+                                    "props": {
+                                        "label": "New",
+                                        "icon": "pi pi-plus",
+                                        "severity": "secondary",
+                                        "class": "mr-2",
+                                        "@click": "openNew"
+                                    }
+                                },
+                                {
+                                    "type": "Button",
+                                    "props": {
+                                        "label": "Delete",
+                                        "icon": "pi pi-trash",
+                                        "severity": "secondary",
+                                        "@click": "confirmDeleteSelected",
+                                        ":disabled": "!selectedProducts || !selectedProducts.length"
+                                    }
+                                },
+                                {
+                                    "type": "Button",
+                                    "props": {
+                                        "label": "Export",
+                                        "icon": "pi pi-upload",
+                                        "severity": "secondary",
+                                        "@click": "exportCSV($event)"
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "type": "DataTable",
+                            "props": {
+                                "ref": "dt",
+                                "model:selection": "selectedProducts",
+                                ":value": "products",
+                                "dataKey": "id",
+                                ":paginator": true,
+                                ":rows": 10,
+                                ":filters": "filters",
+                                "paginatorTemplate": "FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown",
+                                ":rowsPerPageOptions": "[5, 10, 25]",
+                                "currentPageReportTemplate": "Showing {first} to {last} of {totalRecords} products"
+                            },
+                            "children": [
+                                {
+                                    "type": "Column",
+                                    "props": {
+                                        "selectionMode": "multiple",
+                                        "style": "width: 3rem",
+                                        ":exportable": false
+                                    }
+                                },
+                                {
+                                    "type": "Column",
+                                    "props": {
+                                        "field": "code",
+                                        "header": "Code",
+                                        "sortable": true,
+                                        "style": "min-width: 12rem"
+                                    }
+                                },
+                                {
+                                    "type": "Column",
+                                    "props": {
+                                        "field": "name",
+                                        "header": "Name",
+                                        "sortable": true,
+                                        "style": "min-width: 16rem"
+                                    }
+                                },
+                                {
+                                    "type": "Column",
+                                    "props": {
+                                        "header": "Image"
+                                    },
+                                    "children": [
+                                        {
+                                            "type": "Template",
+                                            "props": {
+                                                "slot": "body"
+                                            },
+                                            "children": [
+                                                {
+                                                    "type": "Image",
+                                                    "props": {
+                                                        ":src": "`https://primefaces.org/cdn/primevue/images/product/${slotProps.data.image}`",
+                                                        ":alt": "slotProps.data.image",
+                                                        "class": "rounded",
+                                                        "style": "width: 64px"
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "Column",
+                                    "props": {
+                                        "field": "price",
+                                        "header": "Price",
+                                        "sortable": true,
+                                        "style": "min-width: 8rem"
+                                    },
+                                    "children": [
+                                        {
+                                            "type": "Template",
+                                            "props": {
+                                                "slot": "body"
+                                            },
+                                            "children": [
+                                                {
+                                                    "type": "Text",
+                                                    "props": {
+                                                        "content": "{{ formatCurrency(slotProps.data.price) }}"
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "Column",
+                                    "props": {
+                                        "field": "category",
+                                        "header": "Category",
+                                        "sortable": true,
+                                        "style": "min-width: 10rem"
+                                    }
+                                },
+                                {
+                                    "type": "Column",
+                                    "props": {
+                                        "field": "rating",
+                                        "header": "Reviews",
+                                        "sortable": true,
+                                        "style": "min-width: 12rem"
+                                    },
+                                    "children": [
+                                        {
+                                            "type": "Template",
+                                            "props": {
+                                                "slot": "body"
+                                            },
+                                            "children": [
+                                                {
+                                                    "type": "Rating",
+                                                    "props": {
+                                                        ":modelValue": "slotProps.data.rating",
+                                                        ":readonly": true
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "Column",
+                                    "props": {
+                                        "field": "inventoryStatus",
+                                        "header": "Status",
+                                        "sortable": true,
+                                        "style": "min-width: 12rem"
+                                    },
+                                    "children": [
+                                        {
+                                            "type": "Template",
+                                            "props": {
+                                                "slot": "body"
+                                            },
+                                            "children": [
+                                                {
+                                                    "type": "Tag",
+                                                    "props": {
+                                                        ":value": "slotProps.data.inventoryStatus",
+                                                        ":severity": "getStatusLabel(slotProps.data.inventoryStatus)"
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "Column",
+                                    "props": {
+                                        ":exportable": false,
+                                        "style": "min-width: 12rem"
+                                    },
+                                    "children": [
+                                        {
+                                            "type": "Template",
+                                            "props": {
+                                                "slot": "body"
+                                            },
+                                            "children": [
+                                                {
+                                                    "type": "Button",
+                                                    "props": {
+                                                        "icon": "pi pi-pencil",
+                                                        "outlined": true,
+                                                        "rounded": true,
+                                                        "class": "mr-2",
+                                                        "@click": "editProduct(slotProps.data)"
+                                                    }
+                                                },
+                                                {
+                                                    "type": "Button",
+                                                    "props": {
+                                                        "icon": "pi pi-trash",
+                                                        "outlined": true,
+                                                        "rounded": true,
+                                                        "severity": "danger",
+                                                        "@click": "confirmDeleteProduct(slotProps.data)"
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

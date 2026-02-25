@@ -1,0 +1,34 @@
+{
+    "type": "Instructions",
+    "instructions": [
+        {
+            "action": "update",
+            "batch": [
+                {
+                    "value": null,
+                    "to": "primary-form/data/program-section:stepNext"
+                },
+                {
+                    "value": null,
+                    "to": "primary-form/data/program-section:stepPrev"
+                },
+                {
+                    "value": null,
+                    "to": "primary-form/data/program-section:levelEnter"
+                },
+                {
+                    "value": null,
+                    "to": "primary-form/data/program-section:levelLeave"
+                },
+                {
+                    "value": null,
+                    "to": "primary-form/data/program-section:stepComplete"
+                }
+            ]
+        },
+        {
+            "action": "save",
+            "from": "primary-form/data/program-section"
+        }
+    ]
+}

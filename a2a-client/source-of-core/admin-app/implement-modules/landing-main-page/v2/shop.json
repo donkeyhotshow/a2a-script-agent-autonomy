@@ -1,0 +1,44 @@
+{
+    "type": "Page",
+    "title": "Магазин - Чоловіча Косметика",
+    "description": "Ознайомтеся з нашим асортиментом преміальної чоловічої косметики: засоби для догляду за волоссям, бородою та шкірою.",
+    "content": {
+        "type": "div",
+        "name": "shop-page",
+        "props": {
+            "class": "bg-surface-0 dark:bg-surface-900 min-h-screen flex flex-col"
+        },
+        "children": [
+            {
+                "type": "operation",
+                "action": "include",
+                "source": "landing-main-page/landing-main-page/sections/header-section"
+            },
+            {
+                "type": "div",
+                "props": {
+                    "class": "flex-grow py-12 px-4 md:px-6 lg:px-8"
+                },
+                "children": [
+                    {
+                        "type": "H1",
+                        "props": {
+                            "content": "Наш Асортимент",
+                            "class": "text-3xl md:text-4xl font-bold mb-8 text-center text-surface-900 dark:text-surface-0"
+                        }
+                    },
+                    {
+                        "type": "operation",
+                        "action": "include",
+                        "source": "landing-main-page/landing-main-page/sections/product-showcase-section"
+                    }
+                ]
+            },
+            {
+                "type": "operation",
+                "action": "include",
+                "source": "landing-main-page/landing-main-page/sections/footer-section"
+            }
+        ]
+    }
+}

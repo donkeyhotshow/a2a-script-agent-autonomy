@@ -1,0 +1,15 @@
+{
+    "type": "Instructions",
+    "instructions": [
+        {
+            "action": "update",
+            "value": true,
+            "to": "buffer:validationFailed"
+        },
+        {
+            "action": "update",
+            "value": {"field": "Field is required"},
+            "to": "buffer:validationErrors.field"
+        }
+    ]
+} 

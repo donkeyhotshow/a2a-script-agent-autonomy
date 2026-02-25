@@ -1,0 +1,50 @@
+[
+    {
+        "id": "qtu-v5-question-summary",
+        "type": "quest",
+        "label": "Question Summary (v5)",
+        "path": "/question-to-user/question-summary-page",
+        "icon": "pi pi-comment",
+        "description": "AI-driven probing questions and analysis of user responses."
+    },
+    {
+        "id": "qtu-v5-ai-specific-dialogs",
+        "type": "quest",
+        "label": "AI Probe (v5)",
+        "path": "/question-to-user/ai-specific-dialogs-page",
+        "icon": "pi pi-comment",
+        "description": "AI-driven probing questions and analysis of user responses."
+    },
+    {
+        "id": "qtu-v5-task-scenario-management",
+        "type": "quest",
+        "label": "Task & Scenario Mgmt (v5)",
+        "path": "/question-to-user/task-scenario-management-page",
+        "icon": "pi pi-list",
+        "description": "Manage system tasks and scenarios, and execute commands."
+    },
+    {
+        "id": "qtu-v5-dialogs",
+        "type": "quest",
+        "label": "General Dialogs (v5)",
+        "path": "/question-to-user/dialogs-page",
+        "icon": "pi pi-clone",
+        "description": "Allows selection and display of general dialog definitions."
+    },
+    {
+        "id": "qtu-v5-task-overview",
+        "type": "quest",
+        "label": "Task Overview (v5)",
+        "path": "/question-to-user/task-overview",
+        "icon": "pi pi-briefcase",
+        "description": "Page to display and manage tasks."
+    },
+    {
+        "id": "qtu-v5-page-management",
+        "type": "quest",
+        "label": "Page Management (v5)",
+        "path": "/question-to-user/page",
+        "icon": "pi pi-briefcase",
+        "description": "Page to display and manage pages."
+    }
+]

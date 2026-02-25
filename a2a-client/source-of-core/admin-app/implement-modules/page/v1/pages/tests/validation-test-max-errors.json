@@ -1,0 +1,36 @@
+{
+    "type": "page",
+    "title": "Test Page with Intentional Validation Errors",
+    "props": {
+        "badProperty": "This property should not be here",
+        "anotherBadProperty": 123
+    },
+    "children": [
+        {
+            "props": {
+                "class": "test-class"
+            }
+        },
+        {
+            "type": "div",
+            "props": {
+                "invalidProp": "This should be detected as invalid"
+            },
+            "children": [
+                {
+                    "type": "p",
+                    "props": {
+                        "content": "This should be in children, not props"
+                    }
+                }
+            ]
+        },
+        {
+            "type": "image",
+            "props": {
+                "src": "missing.jpg",
+                "alt": "Missing image"
+            }
+        }
+    ]
+}

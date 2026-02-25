@@ -1,0 +1,21 @@
+[
+    {
+        "type": "Text",
+        "props": {
+            "content": "Select",
+            "class": "font-semibold text-xl"
+        }
+    },
+    {
+        "type": "Select",
+        "props": {
+            "options": {
+                "type": "operation",
+                "action": "include",
+                "source": "layout/test-data/select-city"
+            },
+            "optionLabel": "name",
+            "placeholder": "Select Options"
+        }
+    }
+]

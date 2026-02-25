@@ -1,0 +1,58 @@
+## Potential Helper Refactoring in app/Console/Commands/Listeners/
+
+- [ ] Refactor `json_encode` and `json_decode` usages to use `App\Helpers\JsonHelper`.
+    - PropertyValidationListener.php
+    - PropertyErrorSummaryListener.php
+    - ErrorMessageGeneratorListener.php
+    - EventStatisticsListener.php
+    - ValidationContextEnricherListener.php
+    - DataIntegrityValidationListener.php
+    - ModelValidationListener.php
+    - ComponentStructureValidator.php
+    - DocumentationGeneratorListener.php
+    - ErrorCategorizer.php
+    - ValidationLoggerListener.php
+    - SuggestionGeneratorListener.php
+    - UnknownComponentTypeListener.php
+- [ ] Refactor array manipulation functions (`array_values`, `array_keys`, `array_filter`, `array_map`, `array_merge`, `array_unique`) to use `App\Helpers\ArrayHelper`.
+    - PropertyValidationListener.php
+    - PropertyErrorSummaryListener.php
+    - ErrorMessageGeneratorListener.php
+    - EventStatisticsListener.php
+    - ValidationContextEnricherListener.php
+    - DataIntegrityValidationListener.php
+    - ModelValidationListener.php
+    - ComponentStructureValidator.php
+    - DocumentationGeneratorListener.php
+    - ErrorCategorizer.php
+    - ValidationLoggerListener.php
+    - SuggestionGeneratorListener.php
+    - UnknownComponentTypeListener.php
+- [ ] Refactor file operations (`File::*`, `file_exists`, `file_get_contents`, `file_put_contents`, `File::makeDirectory`, `File::append`) to use `App\Helpers\FileHelper` and `App\Helpers\PathHelper`.
+    - PropertyValidationListener.php
+    - PropertyErrorSummaryListener.php
+    - ErrorMessageGeneratorListener.php
+    - EventStatisticsListener.php
+    - ValidationContextEnricherListener.php
+    - DataIntegrityValidationListener.php
+    - ModelValidationListener.php
+    - ComponentStructureValidator.php
+    - DocumentationGeneratorListener.php
+    - ErrorCategorizer.php
+    - ValidationLoggerListener.php
+    - SuggestionGeneratorListener.php
+    - UnknownComponentTypeListener.php
+- [ ] Review string manipulations (`explode`, `strtolower`) for potential inclusion in helpers.
+    - PropertyValidationListener.php
+    - PropertyErrorSummaryListener.php
+    - ErrorMessageGeneratorListener.php
+    - EventStatisticsListener.php
+    - ValidationContextEnricherListener.php
+    - DataIntegrityValidationListener.php
+    - ModelValidationListener.php
+    - ComponentStructureValidator.php
+    - DocumentationGeneratorListener.php
+    - ErrorCategorizer.php
+    - ValidationLoggerListener.php
+    - SuggestionGeneratorListener.php
+    - UnknownComponentTypeListener.php 

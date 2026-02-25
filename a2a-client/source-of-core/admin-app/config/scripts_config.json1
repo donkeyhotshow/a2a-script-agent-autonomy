@@ -1,0 +1,539 @@
+{
+    "description": "Central configuration settings for PowerShell scripts in the ./script directory",
+    "indexingWorkflow": {
+        "description": "State and configuration for the stateful indexing process (fix-indexer.ps1)",
+        "indexBaseDir": "index/",
+        "scanGroups": [
+            {
+                "name": "script_docs",
+                "path": "script/docs/",
+                "indexFile": "index/script/docs.index.json",
+                "description": "Documentation for project scripts and standards.",
+                "includePatterns": [
+                    "*.md"
+                ],
+                "excludePatterns": [
+                    ".aide/"
+                ]
+            },
+            {
+                "name": "script_engine",
+                "path": "script/engine/",
+                "indexFile": "index/script/engine.index.json",
+                "description": "Core scripting engine files (PowerShell and PHP).",
+                "includePatterns": [
+                    "*.ps1",
+                    "*.php"
+                ],
+                "excludePatterns": [
+                    "**/tests/"
+                ]
+            },
+            {
+                "name": "script_helpers",
+                "path": "script/helpers/",
+                "indexFile": "index/script/helpers.index.json",
+                "description": "Helper scripts and utility functions.",
+                "includePatterns": [
+                    "*.ps1",
+                    "*.php"
+                ]
+            },
+            {
+                "name": "code_app_airude_app",
+                "path": "app/AiRudeDepot/App/",
+                "indexFile": "index/code/app.AiRudeDepot.App.index.json",
+                "includePatterns": [
+                    "*.php"
+                ],
+                "excludePatterns": []
+            },
+            {
+                "name": "code_app_airude_helpers",
+                "path": "app/AiRudeDepot/Helpers/",
+                "indexFile": "index/code/app.AiRudeDepot.Helpers.index.json",
+                "includePatterns": [
+                    "*.php"
+                ],
+                "excludePatterns": []
+            },
+            {
+                "name": "code_app_airude_managers",
+                "path": "app/AiRudeDepot/Managers/",
+                "indexFile": "index/code/app.AiRudeDepot.Managers.index.json",
+                "includePatterns": [
+                    "*.php"
+                ],
+                "excludePatterns": [
+                    ".aide/",
+                    ".git/",
+                    ".vscode/",
+                    "vendor/",
+                    "node_modules/"
+                ]
+            },
+            {
+                "name": "code_app_airude_modules_code",
+                "path": "app/AiRudeDepot/Modules/",
+                "indexFile": "index/code/app.AiRudeDepot.Modules.index.json",
+                "includePatterns": [
+                    "*.php"
+                ],
+                "excludePatterns": [
+                    ".aide/",
+                    ".git/",
+                    ".vscode/",
+                    "vendor/",
+                    "node_modules/"
+                ]
+            },
+            {
+                "name": "code_app_airude_processors",
+                "path": "app/AiRudeDepot/Processors/",
+                "indexFile": "index/code/app.AiRudeDepot.Processors.index.json",
+                "includePatterns": [
+                    "*.php",
+                    "*.json"
+                ],
+                "excludePatterns": [
+                    ".aide/",
+                    ".git/",
+                    ".vscode/",
+                    "vendor/",
+                    "node_modules/"
+                ]
+            },
+            {
+                "name": "code_app_airude_storage",
+                "path": "app/AiRudeDepot/Storage/",
+                "indexFile": "index/code/app.AiRudeDepot.Storage.index.json",
+                "includePatterns": [
+                    "*.php"
+                ],
+                "excludePatterns": [
+                    ".aide/",
+                    ".git/",
+                    ".vscode/",
+                    "vendor/",
+                    "node_modules/"
+                ]
+            },
+            {
+                "name": "code_app_console_commands",
+                "path": "app/Console/Commands/",
+                "indexFile": "index/code/app.Console.Commands.index.json",
+                "includePatterns": [
+                    "*.php"
+                ],
+                "excludePatterns": [
+                    ".aide/",
+                    ".git/",
+                    ".vscode/",
+                    "vendor/",
+                    "node_modules/"
+                ]
+            },
+            {
+                "name": "code_app_helpers",
+                "path": "app/Helpers/",
+                "indexFile": "index/code/app.Helpers.index.json",
+                "description": "Application-level PHP helper classes.",
+                "includePatterns": [
+                    "*.php"
+                ],
+                "excludePatterns": [
+                    "**/Traits/",
+                    "**/Utils/Old/"
+                ]
+            },
+            {
+                "name": "code_app_hooks",
+                "path": "app/Hooks/",
+                "indexFile": "index/code/app.Hooks.index.json",
+                "includePatterns": [
+                    "*.php"
+                ],
+                "excludePatterns": [
+                    ".aide/",
+                    ".git/",
+                    ".vscode/",
+                    "vendor/",
+                    "node_modules/"
+                ]
+            },
+            {
+                "name": "code_app_http_controllers",
+                "path": "app/Http/Controllers/",
+                "indexFile": "index/code/app.Http.Controllers.index.json",
+                "description": "HTTP Controllers (Backend, Common, Frontend).",
+                "includePatterns": [
+                    "*.php"
+                ]
+            },
+            {
+                "name": "code_app_http_middleware",
+                "path": "app/Http/Middleware/",
+                "indexFile": "index/code/app.Http.Middleware.index.json",
+                "includePatterns": [
+                    "*.php"
+                ],
+                "excludePatterns": [
+                    ".aide/",
+                    ".git/",
+                    ".vscode/",
+                    "vendor/",
+                    "node_modules/"
+                ]
+            },
+            {
+                "name": "code_app_models",
+                "path": "app/Models/",
+                "indexFile": "index/code/app.Models.index.json",
+                "includePatterns": [
+                    "*.php"
+                ],
+                "excludePatterns": [
+                    ".aide/",
+                    ".git/",
+                    ".vscode/",
+                    "vendor/",
+                    "node_modules/"
+                ]
+            },
+            {
+                "name": "modules_docs_implement_config",
+                "path": "implement-modules/config/",
+                "indexFile": "index/modules/docs.implement.config.index.json",
+                "description": "Implementation documentation for the Config module.",
+                "includePatterns": [
+                    "*.md",
+                    "*.json"
+                ],
+                "excludePatterns": [
+                    ".aide/"
+                ]
+            },
+            {
+                "name": "modules_docs_implement_landing_main_page",
+                "path": "implement-modules/landing-main-page/",
+                "indexFile": "index/modules/docs.implement.landing-main-page.index.json",
+                "description": "Implementation documentation for the Landing Main Page module.",
+                "includePatterns": [
+                    "*.md",
+                    "*.json"
+                ],
+                "excludePatterns": [
+                    ".aide/"
+                ]
+            },
+            {
+                "name": "modules_docs_implement_primary_form",
+                "path": "implement-modules/primary-form/",
+                "indexFile": "index/modules/docs.implement.primary-form.index.json",
+                "description": "Implementation documentation for the Primary Form module.",
+                "includePatterns": [
+                    "*.md",
+                    "*.json"
+                ],
+                "excludePatterns": [
+                    ".aide/"
+                ]
+            },
+            {
+                "name": "modules_docs_implement_contact_form",
+                "path": "implement-modules/contact-form/",
+                "indexFile": "index/modules/docs.implement.contact-form.index.json",
+                "description": "Implementation documentation for the Contact Form module.",
+                "includePatterns": [
+                    "*.md",
+                    "*.json"
+                ],
+                "excludePatterns": [
+                    ".aide/"
+                ]
+            },
+            {
+                "name": "modules_docs_implement_login_form",
+                "path": "implement-modules/login-form/",
+                "indexFile": "index/modules/docs.implement.login-form.index.json",
+                "description": "Implementation documentation for the Login Form module.",
+                "includePatterns": [
+                    "*.md",
+                    "*.json"
+                ],
+                "excludePatterns": [
+                    ".aide/"
+                ]
+            },
+            {
+                "name": "modules_docs_implement_page",
+                "path": "implement-modules/page/",
+                "indexFile": "index/modules/docs.implement.page.index.json",
+                "description": "Implementation documentation for the Page module.",
+                "includePatterns": [
+                    "*.md",
+                    "*.json"
+                ],
+                "excludePatterns": [
+                    ".aide/"
+                ]
+            },
+            {
+                "name": "modules_docs_implement_playground",
+                "path": "implement-modules/playground/",
+                "indexFile": "index/modules/docs.implement.playground.index.json",
+                "description": "Implementation documentation for the Playground module.",
+                "includePatterns": [
+                    "*.md",
+                    "*.json"
+                ],
+                "excludePatterns": [
+                    ".aide/"
+                ]
+            },
+            {
+                "name": "modules_docs_implement_question_to_user",
+                "path": "implement-modules/question-to-user/",
+                "indexFile": "index/modules/docs.implement.question-to-user.index.json",
+                "description": "Implementation documentation for the Question to User module.",
+                "includePatterns": [
+                    "*.md",
+                    "*.json"
+                ],
+                "excludePatterns": [
+                    ".aide/"
+                ]
+            },
+            {
+                "name": "modules_docs_implement_top_bar",
+                "path": "implement-modules/top-bar/",
+                "indexFile": "index/modules/docs.implement.top-bar.index.json",
+                "description": "Implementation documentation for the Top Bar module.",
+                "includePatterns": [
+                    "*.md",
+                    "*.json"
+                ],
+                "excludePatterns": [
+                    ".aide/"
+                ]
+            },
+            {
+                "name": "resources_backend_js",
+                "path": "resources/backend/js/",
+                "indexFile": "index/resources/resources.backend.js.index.json",
+                "includePatterns": [
+                    "*.js"
+                ],
+                "excludePatterns": [
+                    ".aide/",
+                    ".git/",
+                    ".vscode/",
+                    "vendor/",
+                    "node_modules/"
+                ]
+            },
+            {
+                "name": "resources_common_js",
+                "path": "resources/common/js/",
+                "indexFile": "index/resources/resources.common.js.index.json",
+                "includePatterns": [
+                    "*.js"
+                ],
+                "excludePatterns": [
+                    ".aide/",
+                    ".git/",
+                    ".vscode/",
+                    "vendor/",
+                    "node_modules/"
+                ]
+            },
+            {
+                "name": "resources_common_managers",
+                "path": "resources/common/managers/",
+                "indexFile": "index/resources/resources.common.managers.index.json",
+                "includePatterns": [
+                    "*.*"
+                ],
+                "excludePatterns": [
+                    ".aide/",
+                    ".git/",
+                    ".vscode/",
+                    "vendor/",
+                    "node_modules/"
+                ]
+            },
+            {
+                "name": "resources_frontend",
+                "path": "resources/frontend/",
+                "indexFile": "index/resources/resources.frontend.index.json",
+                "includePatterns": [
+                    "*.*"
+                ],
+                "excludePatterns": [
+                    ".aide/",
+                    ".git/",
+                    ".vscode/",
+                    "vendor/",
+                    "node_modules/"
+                ]
+            },
+            {
+                "name": "tests_feature_controllers",
+                "path": "tests/Feature/Controllers/",
+                "indexFile": "index/tests/tests.Feature.Controllers.index.json",
+                "includePatterns": [
+                    "*.php"
+                ],
+                "excludePatterns": [
+                    ".aide/",
+                    ".git/",
+                    ".vscode/",
+                    "vendor/",
+                    "node_modules/"
+                ]
+            },
+            {
+                "name": "tests_feature_airude_depot",
+                "path": "tests/Feature/AiRudeDepot/",
+                "indexFile": "index/tests/tests.Feature.AiRudeDepot.index.json",
+                "includePatterns": [
+                    "*.php"
+                ],
+                "excludePatterns": [
+                    ".aide/",
+                    ".git/",
+                    ".vscode/",
+                    "vendor/",
+                    "node_modules/"
+                ]
+            }
+        ],
+        "groups": {
+            "description": "Named groups of scan groups for easier referencing",
+            "modules": [
+                "modules_docs_implement_config",
+                "modules_docs_implement_contact_form",
+                "modules_docs_implement_landing_main_page",
+                "modules_docs_implement_login_form",
+                "modules_docs_implement_page",
+                "modules_docs_implement_playground",
+                "modules_docs_implement_primary_form",
+                "modules_docs_implement_question_to_user",
+                "modules_docs_implement_top_bar"
+            ],
+            "code-php": [
+                "code_app_airude_app",
+                "code_app_airude_helpers",
+                "code_app_airude_managers",
+                "code_app_airude_modules_code",
+                "code_app_airude_processors",
+                "code_app_airude_storage",
+                "code_app_console_commands",
+                "code_app_helpers",
+                "code_app_hooks",
+                "code_app_http_controllers",
+                "code_app_http_middleware",
+                "code_app_models"
+            ],
+            "question-to-user": [
+                "script_engine",
+                "script_docs",
+                "modules_docs_implement_question_to_user"
+            ]
+        }
+    },
+    "mirrorsDocsScan": {
+        "description": "Configuration for the fix-mirrors-docs.ps1 script.",
+        "sourceDirs": [
+            "app",
+            "resources",
+            "routes",
+            "tests"
+        ],
+        "docsMirrorsDir": "docs-mirrors"
+    },
+    "main": {
+        "description": "Settings for main.ps1"
+    },
+    "modules": {
+        "description": "List of module scripts to be invoked by main.ps1 without parameters",
+        "scripts": [
+            "fix/fix-indexer.ps1",
+            "fix/fix-mirrors-docs.ps1",
+            "fix/file-cleanup.ps1",
+            "fix/find-broken-links.ps1",
+            "fix/invoke-periodic-action.ps1"
+        ]
+    },
+    "periodicActions": {
+        "description": "Configuration for actions triggered periodically based on run counts.",
+        "stateFilePath": "script/config/periodic_action_state.json",
+        "actions": [
+            {
+                "id": "blinking_message_lessons",
+                "frequency": 21,
+                "type": "message",
+                "message": "Remember to consult @lessons-learned.json for insights!",
+                "color": "Yellow"
+            },
+            {
+                "id": "blinking_message_requirements",
+                "frequency": 20,
+                "type": "message",
+                "message": "Have you checked /docs/ROOT.md recently?",
+                "color": "Cyan"
+            },
+            {
+                "id": "auto_commit",
+                "frequency": 20,
+                "type": "command",
+                "command": "git add -A; git commit -m 'Periodic auto-commit based on run count'",
+                "workingDirectory": "../../"
+            },
+            {
+                "id": "remove_bom_periodically",
+                "frequency": 30,
+                "type": "command",
+                "command": "pwsh -File script/fix/remove-bom.ps1",
+                "workingDirectory": "../../"
+            },
+            {
+                "id": "optimize_all",
+                "frequency": 31,
+                "type": "command",
+                "command": "pwsh -File script/fix/optimize_all.ps1",
+                "workingDirectory": "../../"
+            }
+        ]
+    },
+    "tasks": {
+        "description": "Settings related to task definition and processing"
+    },
+    "testing": {
+        "description": "Settings for tests/run.ps1"
+    },
+    "brokenLinksScan": {
+        "description": "Configuration for the find-broken-links.ps1 script.",
+        "directories": [
+            "docs/"
+        ],
+        "reportFile": "reports/broken_links_report.json",
+        "maxConsoleIssues": 10
+    },
+    "activeScripts": [
+        "fix/fix-indexer.ps1"
+    ],
+    "scriptSettings": {
+        "fix/fix-indexer.ps1": {
+            "autoTrigger": "onFileChange",
+            "watchedPaths": [
+                "app/",
+                "docs/",
+                "docs/",
+                "resources/",
+                "tests/"
+            ]
+        }
+    }
+}
+

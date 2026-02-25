@@ -1,0 +1,67 @@
+{
+    "type": "Instructions",
+    "instructions": [
+        {
+            "action": "update",
+            "batch": [
+                {
+                    "value": "reset-main-work-scenario",
+                    "to": "buffer:actionId"
+                },
+                {
+                    "value": {
+                        "keywords": ["reset", "scenario", "workflow"],
+                        "ai_summary": "Resets the main work scenario to its initial state.",
+                        "features": ["workflow-management"]
+                    },
+                    "to": "buffer:tags"
+                }
+            ]
+        },
+        {
+            "action": "comment",
+            "value": "Reset main work scenario to initial state"
+        },
+        {
+            "action": "update",
+            "batch": [
+                {
+                    "value": {
+                        "status": "initial",
+                        "lastUpdateTimestamp": "{system:timestamp}"
+                    },
+                    "to": "buffer:resetData"
+                },
+                {
+                    "from": "buffer:resetData",
+                    "to": "file!question-to-user/data/markers/{input:scenarioId}"
+                }
+            ]
+        },
+        {
+            "action": "save",
+            "from": "file!question-to-user/data/markers/{input:scenarioId}"
+        },
+        {
+            "action": "update",
+            "batch": [
+                {
+                    "from": "buffer:actionId",
+                    "to": "output:actionId"
+                },
+                {
+                    "from": "buffer:tags",
+                    "to": "output:tags"
+                },
+                {
+                    "value": {
+                        "success": true,
+                        "message": "Main work scenario reset successfully.",
+                        "scenarioId": "{input:scenarioId}"
+                    },
+                    "to": "output:result"
+                }
+            ]
+        }
+    ]
+} 

@@ -1,0 +1,11 @@
+{
+  "name": "opt/projects/admin-app",
+  "type": "project",
+  "path": "opt/projects/admin-app",
+  "description": "Laravel Admin App: инфраструктура, ресурсы, роуты",
+  "registry": "../../../docs/indexes/registry.json",
+  "entryPoints": ["routes", "bootstrap", "config", "resources"],
+  "related": ["services/main-gateway", "__templates"]
+}
+
+

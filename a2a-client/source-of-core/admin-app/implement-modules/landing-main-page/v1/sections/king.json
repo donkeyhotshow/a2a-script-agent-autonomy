@@ -1,0 +1,37 @@
+{
+    "type": "div",
+    "name": "king-section",
+    "props": {
+        "class": "py-12 px-4 md:px-6 lg:px-8",
+        "role": "region",
+        "id": "king",
+        "aria-labelledby": "king-title"
+    },
+    "children": [
+        {
+            "type": "div",
+            "props": {
+                "class": "text-center mb-6"
+            },
+            "children": [
+                {
+                    "type": "H2",
+                    "props": {
+                        "content": "Королевский Раздел",
+                        "class": "text-3xl font-bold text-surface-900 dark:text-surface-0",
+                        "id": "king-title"
+                    }
+                }
+            ]
+        },
+        {
+            "type": "Image",
+            "props": {
+                "src": "landing-main-page/1.jpg",
+                "alt": "Тестовое изображение для раздела King",
+                "class": "w-full h-auto rounded-lg shadow-md",
+                "loading": "lazy"
+            }
+        }
+    ]
+}

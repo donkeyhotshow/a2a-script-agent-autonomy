@@ -1,0 +1,92 @@
+{
+    "type": "Page",
+    "title": "Contact Form Submissions",
+    "props": {
+        "class": "p-4"
+    },
+    "content": {
+        "type": "Card",
+        "children": [
+            {
+                "type": "H3",
+                "content": "Received Submissions"
+            },
+            {
+                "type": "divider"
+            },
+            {
+                "type": "DataTable",
+                "props": {
+                    "value": {
+                        "dataContext": "contact-form/data/submissions"
+                    },
+                    "paginator": true,
+                    "rows": 10,
+                    "rowsPerPageOptions": [
+                        10,
+                        25,
+                        50
+                    ],
+                    "class": "p-datatable-sm",
+                    "tableStyle": "min-width: 50rem",
+                    "emptyMessage": "Немає отриманих повідомлень."
+                },
+                "children": [
+                    {
+                        "type": "Column",
+                        "props": {
+                            "field": "name",
+                            "header": "Ім'я"
+                        }
+                    },
+                    {
+                        "type": "Column",
+                        "props": {
+                            "field": "email",
+                            "header": "Email"
+                        }
+                    },
+                    {
+                        "type": "Column",
+                        "props": {
+                            "field": "message",
+                            "header": "Повідомлення"
+                        }
+                    },
+                    {
+                        "type": "Column",
+                        "props": {
+                            "header": "Дії",
+                            "style": "width: '10rem'"
+                        },
+                        "slots": {
+                            "body": {
+                                "type": "Button",
+                                "props": {
+                                    "icon": "pi pi-trash",
+                                    "severity": "danger",
+                                    "rounded": true,
+                                    "text": true,
+                                    "aria-label": "Delete Submission"
+                                },
+                                "customHooks": {
+                                    "click": [
+                                        {
+                                            "action": "sendData",
+                                            "data": {
+                                                "sendTo": "contact-form/actions/delete-submission",
+                                                "payload": {
+                                                    "indexToDelete": "{slotProps.rowIndex}"
+                                                }
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                ]
+            }
+        ]
+    }
+}

@@ -1,0 +1,18 @@
+[
+    {
+        "type": "Text",
+        "props": {
+            "content": "Input Number",
+            "class": "font-semibold text-xl"
+        }
+    },
+    {
+        "type": "InputNumber",
+        "props": {
+            "model": "inputNumberValue",
+            "placeholder": "Enter a number",
+            "showButtons": true,
+            "mode": "decimal"
+        }
+    }
+]

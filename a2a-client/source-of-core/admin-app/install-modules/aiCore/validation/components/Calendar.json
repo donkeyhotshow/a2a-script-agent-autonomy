@@ -1,0 +1,150 @@
+{
+    "componentName": "Calendar",
+    "description": "PrimeVue Calendar component for date selection.",
+    "level": 4,
+    "status": "ready",
+    "dependencies": [
+        "VModel.vue"
+    ],
+    "_comment": "Validation expects properties within a 'props' object.",
+    "documentationLink": "docs/guides/module/04-ui-construction.md",
+    "nestedValidation": {
+        "structure": {
+            "vAddress": {
+                "type": "string",
+                "required": false,
+                "description": "Address for v-model or component identification."
+            },
+            "disabled": {
+                "type": "boolean",
+                "required": false,
+                "default": false,
+                "description": "Disable rendering of the component."
+            },
+            "props": {
+                "type": "object",
+                "required": false,
+                "description": "Container for PrimeVue Calendar properties and HTML attributes.",
+                "nestedValidation": {
+                    "structure": {
+                        "label": {
+                            "type": "string",
+                            "required": false,
+                            "description": "Associated label text (often handled by a separate Label component or wrapper)."
+                        },
+                        "placeholder": {
+                            "type": "string",
+                            "required": false
+                        },
+                        "dateFormat": {
+                            "type": "string",
+                            "required": false,
+                            "default": "mm/dd/yy",
+                            "description": "Format of the date."
+                        },
+                        "showIcon": {
+                            "type": "boolean",
+                            "required": false,
+                            "default": false
+                        },
+                        "selectionMode": {
+                            "type": "string",
+                            "required": false,
+                            "options": [
+                                "single",
+                                "multiple",
+                                "range"
+                            ],
+                            "default": "single"
+                        },
+                        "showTime": {
+                            "type": "boolean",
+                            "required": false,
+                            "default": false
+                        },
+                        "hourFormat": {
+                            "type": "string",
+                            "required": false,
+                            "options": [
+                                "12",
+                                "24"
+                            ],
+                            "default": "24"
+                        },
+                        "showButtonBar": {
+                            "type": "boolean",
+                            "required": false,
+                            "default": false
+                        },
+                        "inline": {
+                            "type": "boolean",
+                            "required": false,
+                            "default": false
+                        },
+                        "readonly": {
+                            "type": "boolean",
+                            "required": false
+                        },
+                        "minDate": {
+                            "type": [
+                                "string",
+                                "object"
+                            ],
+                            "required": false
+                        },
+                        "maxDate": {
+                            "type": [
+                                "string",
+                                "object"
+                            ],
+                            "required": false
+                        },
+                        "pt": {
+                            "type": "object",
+                            "required": false
+                        },
+                        "ptOptions": {
+                            "type": "object",
+                            "required": false
+                        },
+                        "unstyled": {
+                            "type": "boolean",
+                            "required": false,
+                            "default": false
+                        },
+                        "tabindex": {
+                            "type": [
+                                "string",
+                                "number"
+                            ],
+                            "required": false
+                        },
+                        "name": {
+                            "type": "string",
+                            "required": false
+                        },
+                        "allOf": [
+                            {
+                                "$ref": "../common/props.json"
+                            }
+                        ]
+                    }
+                }
+            },
+            "children": {
+                "type": "array",
+                "required": false,
+                "description": "Calendar does not typically accept children.",
+                "nestedValidation": {
+                    "_blockAll": true
+                }
+            },
+            "$ref": "../common/root.json"
+        }
+    },
+    "implementationNotes": [
+        "Refactored placeholder rule to standard V1 format (using 'props').",
+        "Requires VModel wrapper for data binding.",
+        "Added common PrimeVue Calendar properties based on documentation."
+    ]
+}

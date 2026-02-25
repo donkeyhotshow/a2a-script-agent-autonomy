@@ -1,0 +1,224 @@
+{
+    "type": "Instructions",
+    "instructions": [
+        {
+            "action": "update",
+            "from": "input",
+            "to": "login-form/data/oauth-callback"
+        },
+        {
+            "action": "update",
+            "batch": [
+                {
+                    "value": false,
+                    "to": "buffer:error"
+                },
+                {
+                    "value": "",
+                    "to": "buffer:errorMessage"
+                },
+                {
+                    "value": false,
+                    "to": "buffer:authenticated"
+                }
+            ]
+        },
+        {
+            "action": "update",
+            "condition": [
+                "equals",
+                "buffer:oauth-callback.state",
+                ""
+            ],
+            "batch": [
+                {
+                    "value": true,
+                    "to": "buffer:error"
+                },
+                {
+                    "value": "Invalid state parameter",
+                    "to": "buffer:errorMessage"
+                }
+            ]
+        },
+        {
+            "action": "update",
+            "condition": [
+                "equals",
+                "buffer:oauth-callback.code",
+                ""
+            ],
+            "batch": [
+                {
+                    "value": true,
+                    "to": "buffer:error"
+                },
+                {
+                    "value": "Authorization code not received",
+                    "to": "buffer:errorMessage"
+                }
+            ]
+        },
+        {
+            "action": "update",
+            "condition": "!buffer:error",
+            "batch": [
+                {
+                    "from": "session!social-auth-state",
+                    "to": "buffer:authState"
+                },
+                {
+                    "action": "update",
+                    "condition": [
+                        "notEquals",
+                        "buffer:authState.state",
+                        "buffer:oauth-callback.state"
+                    ],
+                    "batch": [
+                        {
+                            "value": true,
+                            "to": "buffer:error"
+                        },
+                        {
+                            "value": "State validation failed. Possible CSRF attack.",
+                            "to": "buffer:errorMessage"
+                        }
+                    ]
+                },
+                {
+                    "action": "update",
+                    "condition": "!buffer:error",
+                    "batch": [
+                        {
+                            "value": "login-form/data/social-providers",
+                            "with": "json_decode",
+                            "to": "buffer:providers"
+                        },
+                        {
+                            "action": "for",
+                            "from": "buffer:providers",
+                            "instructions": [
+                                {
+                                    "action": "update",
+                                    "condition": [
+                                        "equals",
+                                        "buffer:for.currentItem.name",
+                                        "buffer:authState.provider"
+                                    ],
+                                    "batch": [
+                                        {
+                                            "from": "buffer:for.currentItem",
+                                            "to": "buffer:provider"
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "value": {
+                                "client_id": "{buffer:provider.client_id}",
+                                "client_secret": "{buffer:provider.client_secret}",
+                                "code": "{buffer:oauth-callback.code}",
+                                "redirect_uri": "{buffer:provider.redirect_url}",
+                                "grant_type": "authorization_code"
+                            },
+                            "to": "buffer:tokenRequest"
+                        },
+                        {
+                            "value": "post",
+                            "to": "buffer:apiMethod"
+                        },
+                        {
+                            "value": "{buffer:provider.token_url}",
+                            "to": "buffer:apiUrl"
+                        },
+                        {
+                            "value": "application/json",
+                            "to": "buffer:contentType"
+                        },
+                        {
+                            "action": "call",
+                            "from": "login-form/commands/api-request"
+                        },
+                        {
+                            "action": "update",
+                            "condition": "!buffer:apiError",
+                            "batch": [
+                                {
+                                    "value": "get",
+                                    "to": "buffer:apiMethod"
+                                },
+                                {
+                                    "value": "{buffer:provider.user_url}",
+                                    "to": "buffer:apiUrl"
+                                },
+                                {
+                                    "value": {
+                                        "Authorization": "Bearer {buffer:apiResponse.access_token}"
+                                    },
+                                    "to": "buffer:apiHeaders"
+                                },
+                                {
+                                    "action": "call",
+                                    "from": "login-form/commands/api-request"
+                                },
+                                {
+                                    "action": "update",
+                                    "condition": "!buffer:apiError",
+                                    "batch": [
+                                        {
+                                            "value": {
+                                                "provider": "{buffer:provider.name}",
+                                                "provider_id": "{buffer:apiResponse.id}",
+                                                "email": "{buffer:apiResponse.email}",
+                                                "name": "{buffer:apiResponse.name}",
+                                                "avatar": "{buffer:apiResponse.avatar}"
+                                            },
+                                            "to": "buffer:socialProfile"
+                                        },
+                                        {
+                                            "action": "call",
+                                            "from": "login-form/commands/process-social-login"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "action": "update",
+                                    "condition": "buffer:apiError",
+                                    "batch": [
+                                        {
+                                            "value": true,
+                                            "to": "buffer:error"
+                                        },
+                                        {
+                                            "value": "Failed to fetch user profile: {buffer:apiErrorMessage}",
+                                            "to": "buffer:errorMessage"
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "action": "update",
+                            "condition": "buffer:apiError",
+                            "batch": [
+                                {
+                                    "value": true,
+                                    "to": "buffer:error"
+                                },
+                                {
+                                    "value": "Failed to authenticate with provider: {buffer:apiErrorMessage}",
+                                    "to": "buffer:errorMessage"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "action": "return",
+            "from": "buffer"
+        }
+    ]
+}

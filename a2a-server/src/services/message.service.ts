@@ -257,6 +257,132 @@ export class MessageService {
       return false;
     }
   }
+
+  /**
+   * Create multiple messages (batch operation)
+   * Ref: plans/message-service-improvements.md - Пакетные операции
+   */
+  async createMany(dataList: CreateMessageData[]): Promise<{
+    id: string;
+    sessionId: string;
+    direction: MessageDirection;
+    role: string | null;
+    content: Record<string, unknown>;
+    contentText: string | null;
+    promiseId: string | null;
+    status: string | null;
+    createdAt: Date;
+  }[]> {
+    if (dataList.length === 0) return [];
+    
+    const messages = await prisma.message.createMany({
+      data: dataList.map((data) => ({
+        id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        sessionId: data.sessionId,
+        direction: data.direction,
+        role: data.role || null,
+        content: data.content as any,
+        contentText: data.contentText || null,
+        promiseId: data.promiseId || null,
+        status: data.status || MessageStatus.sent,
+      })),
+    });
+
+    logger.info('Messages created', { count: messages.count });
+
+    // Return created messages
+    const result = await prisma.message.findMany({
+      where: {
+        sessionId: dataList[0]!.sessionId,
+        createdAt: { gte: new Date(Date.now() - 1000) },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: dataList.length,
+    });
+
+    return result.map((m) => ({
+      id: m.id,
+      sessionId: m.sessionId,
+      direction: m.direction,
+      role: m.role,
+      content: m.content as Record<string, unknown>,
+      contentText: m.contentText,
+      promiseId: m.promiseId,
+      status: m.status,
+      createdAt: m.createdAt,
+    }));
+  }
+
+  /**
+   * Delete all messages for a session
+   * Ref: plans/message-service-improvements.md - Пакетные операции
+   */
+  async deleteBySessionId(sessionId: string): Promise<number> {
+    const result = await prisma.message.deleteMany({
+      where: { sessionId },
+    });
+
+    logger.info('Messages deleted by session', { sessionId, count: result.count });
+    return result.count;
+  }
+
+  /**
+   * Count messages in a session
+   * Ref: plans/message-service-improvements.md - Агрегация
+   */
+  async count(sessionId: string, filters?: {
+    direction?: MessageDirection;
+    role?: string;
+    status?: MessageStatus;
+  }): Promise<number> {
+    const where: Record<string, unknown> = { sessionId: sessionId };
+    
+    if (filters?.direction) {
+      where.direction = filters.direction;
+    }
+    if (filters?.role) {
+      where.role = filters.role;
+    }
+    if (filters?.status) {
+      where.status = filters.status;
+    }
+
+    return prisma.message.count({ where: where as any });
+  }
+
+  /**
+   * Get latest messages for a session
+   * Ref: plans/message-service-improvements.md - Агрегация
+   */
+  async getLatest(sessionId: string, limit: number = 10): Promise<{
+    id: string;
+    sessionId: string;
+    direction: MessageDirection;
+    role: string | null;
+    content: Record<string, unknown>;
+    contentText: string | null;
+    promiseId: string | null;
+    status: string | null;
+    createdAt: Date;
+  }[]> {
+    const messages = await prisma.message.findMany({
+      where: { sessionId },
+      orderBy: { createdAt: 'desc' },
+      take: limit,
+    });
+
+    return messages.map((m) => ({
+      id: m.id,
+      sessionId: m.sessionId,
+      direction: m.direction,
+      role: m.role,
+      content: m.content as Record<string, unknown>,
+      contentText: m.contentText,
+      promiseId: m.promiseId,
+      status: m.status,
+      createdAt: m.createdAt,
+    }));
+  }
 }
 
 export const messageService = new MessageService();

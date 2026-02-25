@@ -1,0 +1,75 @@
+# JSON UI Module Installation
+
+This section describes how JSON UI modules are structured for installation and the process managed by the AI Installer.
+
+## Key Aspects
+
+-   **[Directory Structure](./directory-structure.md)**: Defines the expected directory layout for a module within the `storage/aiInstaller/` path, including templates, configuration, and metadata.
+-   **[Installation Meta Files](./installation-meta-files.md)**: Describes the purpose and format of metadata files used during the installation process (e.g., `_i/config.json`, `_i/install.json`).
+
+Refer also to the main [AI Installer Documentation](../../core/Installer/).
+
+## Overview
+
+Modules in the JSON UI system are organized into structured sets of files with a defined hierarchy. This organization ensures: - **Modularity**: Each module can be installed, removed, or updated independently.
+- **Reusability**: Components and logic can be reused across different modules.
+- **Extensibility**: Modules can be easily extended with new functionality.
+- **Maintainability**: A clear structure simplifies navigation and code maintenance.
+
+## Section Contents
+
+1.  **[Module Directory Structure](./directory-structure.md)** - A complete description of a typical module's directory structure, including the purpose of each directory and the types of files within it.
+2.  **[Installation Metadata (`_i/` directory)](./installation-meta-files.md)** - Detailed description of the configuration files in the `_i` directory that control the installation and registration of the module.
+
+## Key Components of the Installation Format
+
+### 1. Installation Metadata
+
+The `_i` directory contains key configuration files: - `meta.json` - Basic information about the module (name, version, dependencies).
+- `files-by-block.json` - Organization of files by functional blocks.
+- `links.json` - Routes and links for the module.
+- And other configuration files.
+
+### 2. Directory Structure
+
+Modules typically contain the following main directories: ```
+module-name/
+├── _i/             # Installation metadata
+├── actions/        # Action definitions
+├── templates/      # JSON UI templates
+├── data/           # Data files and models
+├── commands/       # Reusable commands (If applicable)
+└── ...            # Other specific directories
+```
+
+### 3. Root Files
+
+The root of the module usually contains files defining the entry point: - `page.json` - The main structure of the module's page.
+
+## Module Installation Process
+
+During module installation, the system performs the following main steps: 1.  Reads `_i/meta.json` to check compatibility and dependencies.
+2.  Registers routes from `_i/links.json`.
+3.  Copies files according to the structure defined in `_i/files-by-block.json` and `_i/common.json`.
+4.  Configures the admin interface based on `_i/meta-admin.json`.
+5.  Activates the module in the system.
+
+## Relationship with AiRudeDepot
+
+JSON UI modules integrate closely with the [`AiRudeDepot` engine](../../../core/AiRudeDepot/README.md), which: - Processes commands defined in action files.
+- Manages module data through the [path system](../../../core/AiRudeDepot/Support/StoragePathParser.md).
+- Transforms JSON templates into Vue components for UI rendering (see [Rendering Pipeline](../core-concepts/rendering-pipeline.md)).
+
+## Usage Example
+
+To create a new module, follow this installation file format: 1.  Create the basic directory structure (`_i`, `actions`, `templates`, etc.).
+2.  Define metadata in the `_i` directory.
+3.  Create the root `page.json` file.
+4.  Add necessary JSON templates, actions, data, and other components.
+
+## Additional Information
+
+For a more detailed understanding of specific aspects of the installation file format, refer to the relevant documentation sections: - [Module Directory Structure](./directory-structure.md)
+- [Installation Metadata](./installation-meta-files.md)
+- [Commands and Operations](../commands-and-operations/README.md)
+- [Module Architecture](../module-architecture/README.md)

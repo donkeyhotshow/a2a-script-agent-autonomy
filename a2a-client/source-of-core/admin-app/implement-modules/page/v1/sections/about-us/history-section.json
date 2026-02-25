@@ -1,0 +1,191 @@
+{
+    "type": "div",
+    "name": "history-section",
+    "props": {
+        "id": "history-section",
+        "class": "py-16 px-4 md:px-6 lg:px-8 xl:px-10 2xl:px-12 bg-surface-50 dark:bg-surface-900"
+    },
+    "children": [
+        {
+            "type": "div",
+            "props": {
+                "class": "max-w-7xl mx-auto"
+            },
+            "children": [
+                {
+                    "type": "div",
+                    "props": {
+                        "content": "<h2 class='text-3xl sm:text-4xl md:text-5xl font-bold text-center mb-4 text-surface-900 dark:text-surface-0'>Шлях до досконалості</h2><p class='text-xl text-center text-surface-600 dark:text-surface-300 max-w-3xl mx-auto mb-12'>Від маленької перукарні до преміум барбершопу з тату-студією</p>"
+                    }
+                },
+                {
+                    "type": "div",
+                    "props": {
+                        "class": "grid grid-cols-1 md:grid-cols-3 gap-8"
+                    },
+                    "children": [
+                        {
+                            "type": "Column",
+                            "props": {
+                                "class": "flex flex-col"
+                            },
+                            "children": [
+                                {
+                                    "type": "Card",
+                                    "props": {
+                                        "class": "p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 bg-surface-0 dark:bg-surface-800 rounded-xl flex flex-col h-full mx-auto w-full"
+                                    },
+                                    "children": [
+                                        {
+                                            "type": "Tag",
+                                            "props": {
+                                                "value": "2010",
+                                                "severity": "warn",
+                                                "class": "mb-4 text-lg self-start"
+                                            }
+                                        },
+                                        {
+                                            "type": "Image",
+                                            "props": {
+                                                "src": "/images/history/start.webp",
+                                                "alt": "Початок",
+                                                "class": "rounded-lg shadow-md w-full h-48 object-cover mb-6"
+                                            }
+                                        },
+                                        {
+                                            "type": "div",
+                                            "props": {
+                                                "content": "<h3 class='text-2xl font-bold mb-3 text-surface-900 dark:text-surface-0'>Скромні початки</h3><p class='text-lg text-surface-600 dark:text-surface-300 leading-relaxed flex-grow'>Засновано в гаражі з мрією про кращий барбершоп. Перші клієнти та перші успіхи.</p>"
+                                            }
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "type": "Column",
+                            "props": {
+                                "class": "flex flex-col"
+                            },
+                            "children": [
+                                {
+                                    "type": "Card",
+                                    "props": {
+                                        "class": "p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 bg-surface-0 dark:bg-surface-800 rounded-xl flex flex-col h-full mx-auto w-full"
+                                    },
+                                    "children": [
+                                        {
+                                            "type": "Tag",
+                                            "props": {
+                                                "content": "2013-2015",
+                                                "severity": "info",
+                                                "class": "mb-4 text-lg self-start"
+                                            }
+                                        },
+                                        {
+                                            "type": "Image",
+                                            "props": {
+                                                "src": "/images/history/development.webp",
+                                                "alt": "Розвиток",
+                                                "class": "rounded-lg shadow-md w-full h-48 object-cover mb-6"
+                                            }
+                                        },
+                                        {
+                                            "type": "div",
+                                            "props": {
+                                                "content": "<h3 class='text-2xl font-bold mb-3 text-surface-900 dark:text-surface-0'>Розвиток</h3><p class='text-lg text-surface-600 dark:text-surface-300 leading-relaxed flex-grow'>Переїзд у центр міста, розширення команди та відкриття тату-студії. Формування унікального стилю.</p>"
+                                            }
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "type": "Column",
+                            "props": {
+                                "class": "flex flex-col"
+                            },
+                            "children": [
+                                {
+                                    "type": "Card",
+                                    "props": {
+                                        "class": "p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 bg-surface-0 dark:bg-surface-800 rounded-xl flex flex-col h-full mx-auto w-full"
+                                    },
+                                    "children": [
+                                        {
+                                            "type": "Tag",
+                                            "props": {
+                                                "value": "Сьогодні",
+                                                "severity": "success",
+                                                "class": "mb-4 text-lg self-start"
+                                            }
+                                        },
+                                        {
+                                            "type": "Image",
+                                            "props": {
+                                                "src": "/images/history/present.webp",
+                                                "alt": "Сьогодення",
+                                                "class": "rounded-lg shadow-md w-full h-48 object-cover mb-6"
+                                            }
+                                        },
+                                        {
+                                            "type": "div",
+                                            "props": {
+                                                "content": "<h3 class='text-2xl font-bold mb-3 text-surface-900 dark:text-surface-0'>Сьогодення</h3><p class='text-lg text-surface-600 dark:text-surface-300 leading-relaxed flex-grow'>Преміальний заклад з професійною командою, сучасним обладнанням та відданістю якості.</p>"
+                                            }
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": "Card",
+                    "props": {
+                        "class": "mt-16 max-w-3xl mx-auto p-8 bg-gradient-to-br from-surface-0 to-surface-100 dark:from-surface-800 dark:to-surface-900 rounded-xl shadow-lg"
+                    },
+                    "children": [
+                        {
+                            "type": "div",
+                            "props": {
+                                "content": "<p class='text-2xl italic text-center text-surface-700 dark:text-surface-200 leading-relaxed'>Наша місія створювати не просто зовнішній вигляд, а цілісний стиль життя через мистецтво барберінгу та тату.</p>"
+                            }
+                        },
+                        {
+                            "type": "divider",
+                            "props": {
+                                "class": "my-6 w-1/3 mx-auto border-t-2 border-primary/30"
+                            }
+                        },
+                        {
+                            "type": "div",
+                            "props": {
+                                "class": "flex items-center justify-center gap-4"
+                            },
+                            "children": [
+                                {
+                                    "type": "Avatar",
+                                    "props": {
+                                        "image": "/images/team/founder.webp",
+                                        "size": "large",
+                                        "shape": "circle",
+                                        "class": "shadow-md"
+                                    }
+                                },
+                                {
+                                    "type": "div",
+                                    "props": {
+                                        "content": "<p class='font-semibold text-lg text-surface-900 dark:text-surface-0'>Андрій Ковальчук</p><p class='text-surface-600 dark:text-surface-300'>Засновник</p>"
+                                    }
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}
+
+

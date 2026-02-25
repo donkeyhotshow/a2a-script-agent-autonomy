@@ -1,0 +1,182 @@
+# JSON UI System Documentation
+
+This section details the core framework for defining and rendering user interfaces using declarative JSON structures.
+
+## Key Concepts & Areas
+
+-   **[Core Concepts](./core-concepts/)**: Fundamental principles, elements, data binding, and the rendering pipeline of the JSON UI system.
+-   **[JSON Template Schema](./json-template-schema.md)**: The definitive structure and allowed keys/values for UI templates.
+-   **[Module Architecture](./module-architecture/)**: How JSON UI modules are structured and organized within the `storage/aiInstaller/` directory.
+-   **[Module Installation](./module-installation/)**: Details about how JSON UI modules are installed and managed by the AI Installer.
+-   **[Commands and Operations](./commands-and-operations/)**: Documentation on standard actions and operations available within the JSON UI system for backend interaction.
+-   **[Server Actions Extended](./server-actions-extended/)**: Documentation for extended or custom server-side actions initiated from the JSON UI.
+
+## Examples
+
+-   **[UI Examples V1](./ui-examples-v1.md)**: Examples demonstrating V1 features. *(Review relevance)*
+-   **[UI Examples V2](./ui-examples-v2.md)**: Examples demonstrating V2 features. *(Review relevance)*
+
+Refer to the subdirectories and files for detailed information.
+
+## Main Sections
+
+1.  **[Core Concepts](./core-concepts/README.md)**
+*   Fundamental principles and concepts of the system
+*   Global managers and their usage
+*   Basic structure of UI elements
+2.  **[Module Architecture](./module-architecture/README.md)**
+*   Organization of module components
+*   Interaction between components
+3.  **[Module Installation](./module-installation/README.md)**
+*   Module installation process
+4.  **[Commands and Operations](./commands-and-operations/README.md)**
+*   Working with data on the server
+*   Request processing
+*   Integration with the client-side
+5.  **[Server Actions (Additional)](./server-actions-extended/README.md)**
+*   Extended server-side operations
+
+## Module Types
+
+The JSON UI system features several main types of modules, each with its own characteristics and structure: ### 1. `Landing Page Modules`
+
+**Features: **
+
+*   Focus on information presentation and simple interaction
+*   Absence of complex business logic
+*   Predominant use of simple actions (`customHooks`)
+*   Modular organization of UI components
+
+**Main Components: **
+
+*   Navigation elements
+*   Information sections
+*   Simple feedback forms
+
+### 2. `Primary Form Modules`
+
+**Features: **
+
+*   Complex forms for data entry and processing
+*   Use of hooks (`customHooks`) and managers for data handling
+*   Integration with application business logic
+*   Multi-step processes
+
+**Main Components: **
+
+*   Data entry forms
+*   Validation
+*   Data processing and saving mechanisms
+
+### 3. `Login Form Modules`
+
+**Features: **
+
+*   Authentication and registration forms
+*   Interaction with the security system
+*   Credential validation
+
+**Main Components: **
+
+*   Login forms
+*   Registration forms
+*   Password recovery
+
+### 4. `Top Bar Modules`
+
+**Features: **
+
+*   Top-level navigation elements
+*   Global actions and search
+*   Integration with the notification system
+
+**Main Components: **
+
+*   Menus
+*   Search
+*   Notifications
+*   User profile
+
+## Module Creation Process
+
+The general process for creating a new module in JSON UI involves the following steps: 1.  **Planning**
+*   Define the module's purpose and functionality
+*   Choose the module type
+*   Plan the structure and components
+2.  **Creating the Basic Structure**
+*   Create the module directory
+*   Set up metadata in the `_i` directory
+*   Create root files (`page.json`)
+3.  **Developing UI Components**
+*   Create JSON templates in the `\templates` directory
+*   Organize components into logical groups
+*   Configure the visual presentation
+4.  **Defining Data and Logic**
+*   Create data structures in the `data` directory
+*   Define actions and commands in the `actions` directory
+*   Add validation in the `validations` directory
+5.  **Testing and Debugging**
+*   Verify module operation
+*   Debug hooks and actions
+*   Optimize performance
+
+## Classes for Server Actions
+
+Classes for working with server actions include: *   **`File`**: Handles file operations.
+*   **`Directory`**: Manages directory structures.
+*   **`Buffer`**: Manages temporary data storage.
+*   **`Model`**: Represents data models.
+*   **`MySQL`**: Interfaces with MySQL databases.
+
+See the [Commands and Operations](./commands-and-operations/README.md) section for more details.
+
+## Development Recommendations
+
+1.  **Modularity**: Break down complex interfaces into reusable components.
+2.  **Consistency**: Follow unified principles for code organization and naming.
+3.  **Separation**: Separate UI from business logic and data.
+4.  **Documentation**: Document complex parts of your module.
+5.  **Testing**: Regularly test the module during development.
+6.  **Standards**: Follow the [UI Component Standards Checklist](../../checklists/verifications/verify-component-standards.md) when creating and modifying components.
+
+## Verification of Modules and Components
+
+To ensure quality and standardization in development, use the following checklists: 1.  **[Module Verification Checklist](../../checklists/verifications/verify-module.md)** - General requirements for modules
+2.  **[UI Component Standards Checklist](../../checklists/verifications/verify-component-standards.md)** - Requirements for UI components
+
+Verification is recommended:
+
+*   After creating a new module
+*   After significant changes to an existing module
+*   Before deploying the module to production
+*   When handing over the module to other developers
+
+## Related Documentation
+
+-   [Common Managers](../resources/common/managers/README.md) - Documentation for shared resource managers.
+-   [Common Elements](../resources/common/elements/README.md) - Documentation for common UI elements.
+-   [PrimeVue Elements](../resources/common/elements/primevue/README.md) - Specifics related to PrimeVue elements.
+
+### Structure of This Documentation
+
+- **Commands and Operations (`commands-and-operations/`)**: Describes the available commands and operations that can be used within JSON UI modules for dynamic interactions and data manipulation.
+
+### 5. Жизненный цикл запроса (GET - Рендеринг страницы)
+
+Когда пользователь запрашивает страницу модуля (GET-запрос), происходит следующий упрощенный процесс: 1.  **Маршрутизация:** Запрос попадает в контроллер (например, `ModuleController`), который определяет имя модуля и путь к странице.
+2.  **Инициализация Модуля: ** Создается экземпляр класса модуля (например, `PrimaryForm` или базовый `App`).
+3.  **Выполнение `moduleRun`: ** Вызывается метод `moduleRun` этого экземпляра.
+4.  **Работа Модификаторов (внутри `moduleRun`): **
+*   **`layoutModule` + `layoutNodeOperation`: ** Эта цепочка модификаторов отвечает за построение **структуры UI страницы**. Она загружает основной макет (`layout.json` или `page.json`), обрабатывает операции включения (`include`) для секций и компонентов. Результат – массив, описывающий структуру `props.page`.
+*   **`layoutFormComponent`: ** Этот модификатор вызывается *после* построения структуры. Он обрабатывает компоненты форм (`<Form>`, `<InputText>`, etc.), найденные в структуре, и отвечает за подготовку и возврат **данных состояния** этих форм (значения полей, опции для селектов и т.д.). Результат – массив данных форм, обычно сгруппированный по именам форм.
+5.  **Сборка Ответа (`StepResponse`):** Метод `moduleRun` объединяет результаты работы модификаторов:
+*   Структура UI помещается в `props.page`.
+*   Данные состояния форм помещаются в `props.forms`.
+6.  **Ответ Клиенту: ** Собранные `props` (включая `page` и `forms`) вместе с другой информацией (`auth`, `flash` и т.д.) отправляются на фронтенд через Inertia.
+7.  **Рендеринг Vue:** Компоненты Vue на фронтенде используют данные из `props.page` для построения DOM и данные из `props.forms` для инициализации состояния форм.
+
+Этот раздельный подход модификаторов позволяет гибко управлять как структурой страницы, так и данными, которые ее наполняют.
+
+### 6. Обработка Действий (POST)
+
+Для обработки действий пользователя (клики, отправка форм) смотрите концепцию [Поток обработки действий](mdc: ../../concepts/action-handling-flow.md).

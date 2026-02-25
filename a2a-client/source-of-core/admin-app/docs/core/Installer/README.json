@@ -1,0 +1,16 @@
+# AI Installer Documentation
+
+This section covers the AI Installer system, responsible for installing and managing modules within the application.
+
+## Key Documents
+
+-   **[AI Installer Overview](./AI-Installer-Overview.md)**: A comprehensive overview of the installer's architecture, workflow, and concepts.
+-   **[Installer Controller Documentation](./Installer-Controller-Documentation.md)**: Details on the backend controller handling installation requests.
+-   **[AI Installer Implementation Checklist](./AI-Installer-Implementation-Checklist.md)**: A checklist for developers creating or integrating modules with the installer.
+
+## Contents
+
+-   **[Overview](./AI-Installer-Overview.md)**: General description of the installer's functionality, architecture, and integration points (like JsonPathEditor and URLController).
+-   **[Implementation Checklist](AI-Installer-Implementation-Checklist.md)**: A checklist tracking the setup and implementation status of various installer components and integrations.
+-   **[Installer Controller](./Installer-Controller-Documentation.md)**: Detailed documentation for the `InstallerController` class, which handles the installation process via the Inertia.js interface.
+-   **[Hooks Guide](./Installing-Hooks-Guide.md)**: Explanation of the hook system used by the installer for extending functionality during installation. 

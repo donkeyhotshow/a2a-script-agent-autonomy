@@ -1,0 +1,54 @@
+{
+    "componentName": "Tag",
+    "description": "PrimeVue Tag component for displaying status or labels.",
+    "level": 3,
+    "status": "active",
+    "dependencies": [
+        "PrimeVue"
+    ],
+    "_comment": "Validation rules using the 'props' structure.",
+    "nestedValidation": {
+        "structure": {
+            "children": {
+                "type": "array",
+                "required": false,
+                "description": "Child elements of the div.",
+                "nestedValidation": {
+                    "_allowAnyObject": true,
+                    "_allowString": true
+                }
+            },
+            "props": {
+                "type": "object",
+                "required": false,
+                "nestedValidation": {
+                    "structure": {
+                        "allOf": [
+                            {
+                                "$ref": "../common/props.json"
+                            },
+                            {
+                                "$ref": "../common/content.json"
+                            },
+                            {
+                                "severity": {
+                                    "required": false,
+                                    "type": "string",
+                                    "description": "Severity level of the tag (e.g. 'success', 'info', 'warning', 'danger')"
+                                }
+                            }
+                        ]
+                    }
+                }
+            },
+            "$ref": "../common/root.json"
+        }
+    },
+    "implementationNotes": [
+        "Refactored to standard structure V1 (using 'props').",
+        "Removed deprecated 'usage' section.",
+        "Includes PrimeVue Tag props and standard attributes within props.",
+        "Note: Original notes indicated missing .vue file."
+    ],
+    "documentationLink": "docs/guides/module/04-ui-construction.md"
+}

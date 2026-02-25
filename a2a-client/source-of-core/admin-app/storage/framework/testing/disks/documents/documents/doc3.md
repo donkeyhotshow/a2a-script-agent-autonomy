@@ -1,0 +1,1 @@
+{"title":"PHP Programming","content":"PHP is a popular general-purpose scripting language.","metadata":{"category":"language"}}

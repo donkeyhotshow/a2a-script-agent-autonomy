@@ -1,0 +1,58 @@
+[
+    {
+        "id": "playground-save-session",
+        "type": "guest",
+        "label": "Playground: Save Session Test",
+        "path": "/playground/save-session-test",
+        "page": "save-session-test",
+        "icon": "pi pi-database"
+    },
+    {
+        "id": "playground-home",
+        "type": "guest",
+        "label": "Playground: Home",
+        "path": "/playground/index",
+        "page": "index",
+        "icon": "pi pi-database"
+    },
+    {
+        "id": "playground-home-indirect",
+        "type": "guest",
+        "label": "Playground: Home",
+        "path": "/playground",
+        "link": "/playground/index",
+        "icon": "pi pi-database"
+    },
+    {
+        "id": "playground-session-operations",
+        "type": "guest",
+        "label": "Playground: Session Operations Test",
+        "path": "/playground/session-test-v1",
+        "page": "session-test-v1",
+        "icon": "pi pi-cog"
+    },
+    {
+        "id": "playground-session-operations",
+        "type": "guest",
+        "label": "Playground: Session Operations Test",
+        "path": "/playground/session-test-v2",
+        "page": "session-test-v2",
+        "icon": "pi pi-cog"
+    },
+    {
+        "id": "playground-model-data-module-test",
+        "type": "guest",
+        "label": "Playground: Model Data Module Test",
+        "path": "/playground/model-test-v1",
+        "page": "model-test-v1",
+        "icon": "pi pi-id-card"
+    },
+    {
+        "id": "playground-mysql-data-module-test",
+        "type": "quest",
+        "label": "Playground: MySQL Test",
+        "path": "/playground/mysql-test-v1",
+        "page": "mysql-test-v1",
+        "icon": "pi pi-database"
+    }
+]

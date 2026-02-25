@@ -1,0 +1,165 @@
+{
+    "type": "div",
+    "name": "map-section",
+    "props": {
+        "class": "py-12 px-4 md:px-6 lg:px-8 xl:px-10 2xl:px-12 bg-surface-50 dark:bg-surface-900"
+    },
+    "children": [
+        {
+            "type": "div",
+            "props": {
+                "class": "container mx-auto"
+            },
+            "children": [
+                {
+                    "type": "Card",
+                    "props": {
+                        "class": "shadow-2xl rounded-xl overflow-hidden"
+                    },
+                    "children": [
+                        {
+                            "type": "Grid",
+                            "props": {
+                                "class": "grid grid-cols-1 lg:grid-cols-3"
+                            },
+                            "children": [
+                                {
+                                    "type": "div",
+                                    "props": {
+                                        "class": "p-8 lg:col-span-1",
+                                        "style": "background: linear-gradient(to right, rgba(107, 0, 245, 0.05), rgba(244, 103, 0, 0.05));"
+                                    },
+                                    "children": [
+                                        {
+                                            "type": "div",
+                                            "props": {
+                                                "content": "<h2 class='text-3xl font-bold mb-6' style='color: #3D3B47;'>Як до нас дістатися</h2>"
+                                            }
+                                        },
+                                        {
+                                            "type": "div",
+                                            "props": {
+                                                "class": "space-y-6"
+                                            },
+                                            "children": [
+                                                {
+                                                    "type": "div",
+                                                    "props": {
+                                                        "class": "flex items-start gap-3"
+                                                    },
+                                                    "children": [
+                                                        {
+                                                            "type": "Icon",
+                                                            "props": {
+                                                                "class": "pi pi-map-marker text-xl mt-1",
+                                                                "style": "color: #F46700;"
+                                                            }
+                                                        },
+                                                        {
+                                                            "type": "div",
+                                                            "props": {
+                                                                "content": "<h3 class='text-lg font-semibold mb-2' style='color: #3D3B47;'>Адреса</h3><p style='color: #3D3B47;'>вул. Хрещатик, 1<br>Київ, 01001<br>Україна</p>"
+                                                            }
+                                                        }
+                                                    ]
+                                                },
+                                                {
+                                                    "type": "div",
+                                                    "props": {
+                                                        "class": "flex items-start gap-3"
+                                                    },
+                                                    "children": [
+                                                        {
+                                                            "type": "Icon",
+                                                            "props": {
+                                                                "class": "pi pi-directions text-xl mt-1",
+                                                                "style": "color: #F46700;"
+                                                            }
+                                                        },
+                                                        {
+                                                            "type": "div",
+                                                            "props": {
+                                                                "content": "<h3 class='text-lg font-semibold mb-2' style='color: #3D3B47;'>Як дістатися</h3><p style='color: #3D3B47;'>Метро Хрещатик - 2 хв<br>Метро Майдан Незалежності - 5 хв<br>Зупинка автобуса - 1 хв</p>"
+                                                            }
+                                                        }
+                                                    ]
+                                                },
+                                                {
+                                                    "type": "div",
+                                                    "props": {
+                                                        "class": "flex items-start gap-3"
+                                                    },
+                                                    "children": [
+                                                        {
+                                                            "type": "Icon",
+                                                            "props": {
+                                                                "class": "pi pi-car text-xl mt-1",
+                                                                "style": "color: #F46700;"
+                                                            }
+                                                        },
+                                                        {
+                                                            "type": "div",
+                                                            "props": {
+                                                                "content": "<h3 class='text-lg font-semibold mb-2' style='color: #3D3B47;'>Паркування</h3><p style='color: #3D3B47;'>Підземний паркінг - 2 хв<br>Вуличне паркування - 1 хв</p>"
+                                                            }
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        },
+                                        {
+                                            "type": "div",
+                                            "props": {
+                                                "class": "flex gap-4 mt-8"
+                                            },
+                                            "children": [
+                                                {
+                                                    "type": "Button",
+                                                    "props": {
+                                                        "label": "Google Maps",
+                                                        "icon": "pi pi-map",
+                                                        "severity": "primary",
+                                                        "class": "flex-1",
+                                                        "style": "background-color: #F46700; color: white; border: none;"
+                                                    }
+                                                },
+                                                {
+                                                    "type": "Button",
+                                                    "props": {
+                                                        "label": "Waze",
+                                                        "icon": "pi pi-directions",
+                                                        "outlined": true,
+                                                        "severity": "primary",
+                                                        "class": "flex-1",
+                                                        "style": "border-color: #6B00F5; color: #6B00F5;"
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "div",
+                                    "props": {
+                                        "class": "lg:col-span-2 h-[600px] relative"
+                                    },
+                                    "children": [
+                                        {
+                                            "type": "div",
+                                            "props": {
+                                                "class": "w-full h-full",
+                                                "style": "background: linear-gradient(135deg, #6B00F5 0%, #F46700 100%); opacity: 0.8;"
+                                            }
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}
+
+

@@ -1,0 +1,18 @@
+{
+  "type": "Form",
+  "name": "registerForm",
+  "model": {
+    "form": "registerForm",
+    "fields": [
+      { "name": "username", "type": "InputText", "label": "Username" },
+      { "name": "email", "type": "InputText", "label": "Email" },
+      { "name": "password", "type": "Password", "label": "Password" }
+    ]
+  },
+  "children": [
+    { "type": "InputText", "name": "username", "label": "Username" },
+    { "type": "InputText", "name": "email", "label": "Email" },
+    { "type": "Password", "name": "password", "label": "Password" },
+    { "type": "Button", "name": "register", "label": "Register", "props": { "variant": "primary" } }
+  ]
+} 

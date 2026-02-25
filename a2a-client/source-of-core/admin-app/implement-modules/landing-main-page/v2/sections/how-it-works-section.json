@@ -1,0 +1,15 @@
+{
+    "type": "div",
+    "props": {
+        "style": "padding: 20px; background-color: #c9c9c9; text-align: center;"
+    },
+    "children": [
+        {
+            "type": "H2",
+            "props": {
+                "content": "How It Works - Placeholder",
+                "class": "text-3xl font-bold text-center mb-8"
+            }
+        }
+    ]
+}

@@ -1,0 +1,173 @@
+{
+    "type": "div",
+    "id": "main-qtu-interface-section",
+    "props": {
+        "class": "space-y-6",
+        "role": "region",
+        "aria-labelledby": "main-qtu-interface-heading"
+    },
+    "children": [
+        {
+            "type": "h2",
+            "id": "main-qtu-interface-heading",
+            "props": {
+                "class": "sr-only",
+                "children": "Question-to-User Interface"
+            }
+        },
+        {
+            "type": "div",
+            "props": {
+                "class": "border rounded shadow-md",
+                "role": "region",
+                "aria-labelledby": "question-set-heading"
+            },
+            "children": [
+                {
+                    "type": "div",
+                    "props": {
+                        "class": "bg-gray-100 p-3 font-medium border-b flex justify-between"
+                    },
+                    "children": [
+                        {
+                            "type": "h3",
+                            "id": "question-set-heading",
+                            "props": {
+                                "class": "font-medium",
+                                "children": "Current Dialog / Question Set"
+                            }
+                        }
+                    ]
+                },
+                {
+                    "type": "div",
+                    "props": {
+                        "class": "p-4"
+                    },
+                    "children": [
+                        {
+                            "type": "button",
+                            "props": {
+                                "type": "button",
+                                "class": "bg-purple-500 text-white px-3 py-1 rounded text-sm",
+                                "children": "Load Default Question Set",
+                                "aria-label": "Load default question set",
+                                "aria-controls": "mainQtuResponseForm"
+                            },
+                            "customHooks": {
+                                "click": [
+                                    {
+                                        "action": "call",
+                                        "from": "question-to-user/actions/load-question-set.json"
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "type": "p",
+                            "props": {
+                                "class": "mt-2 text-sm text-gray-600",
+                                "children": "Use the button above to load a question set, or navigate to a specific dialog page."
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "type": "form",
+            "id": "mainQtuResponseForm",
+            "props": {
+                "class": "space-y-4",
+                "aria-labelledby": "questions-answers-heading",
+                "role": "form"
+            },
+            "children": [
+                {
+                    "type": "div",
+                    "props": {
+                        "class": "border rounded shadow-md"
+                    },
+                    "children": [
+                        {
+                            "type": "div",
+                            "props": {
+                                "class": "bg-gray-100 p-3 font-medium border-b"
+                            },
+                            "children": [
+                                {
+                                    "type": "h3",
+                                    "id": "questions-answers-heading",
+                                    "props": {
+                                        "class": "font-medium",
+                                        "children": "Questions & Answers"
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "type": "div",
+                            "props": {
+                                "class": "p-4"
+                            },
+                            "children": [
+                                {
+                                    "operation": "include",
+                                    "source": "file!question-to-user/sections/question-display.json"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": "div",
+                    "props": {
+                        "class": "flex justify-end space-x-2 p-4",
+                        "role": "toolbar",
+                        "aria-label": "Form actions"
+                    },
+                    "children": [
+                        {
+                            "type": "button",
+                            "props": {
+                                "type": "button",
+                                "class": "bg-yellow-500 text-white px-3 py-2 rounded border border-yellow-600",
+                                "children": "Clear Answers",
+                                "aria-label": "Clear all answers in this form",
+                                "aria-controls": "mainQtuResponseForm"
+                            },
+                            "customHooks": {
+                                "click": [
+                                    {
+                                        "action": "call",
+                                        "from": "question-to-user/actions/clear-current-answers.json"
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "type": "button",
+                            "props": {
+                                "type": "button",
+                                "class": "bg-green-500 text-white px-3 py-2 rounded",
+                                "children": "Submit Answers",
+                                "aria-label": "Submit all answers in this form",
+                                "aria-controls": "mainQtuResponseForm"
+                            },
+                            "customHooks": {
+                                "click": [
+                                    {
+                                        "action": "call",
+                                        "from": "question-to-user/actions/save-current-answers.json",
+                                        "input": "{input:mainQtuResponseForm}",
+                                        "to": "buffer:mainQtuSaveStatus"
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

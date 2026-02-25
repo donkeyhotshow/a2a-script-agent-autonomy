@@ -1,0 +1,436 @@
+{
+    "type": "Page",
+    "title": "Послуги",
+    "description": "Ознайомтеся з різноманітними послугами барберінгу та татуювання у Barber XXL 1.",
+    "content": {
+        "type": "div",
+        "name": "services-page",
+        "props": {
+            "class": "bg-white"
+        },
+        "children": [
+            {
+                "type": "operation",
+                "action": "include",
+                "source": "landing-main-page/sections/header-section"
+            },
+            {
+                "type": "div",
+                "props": {
+                    "class": "py-6 sm:py-8 md:py-12 px-4 sm:px-6 md:px-8 lg:px-10 text-center",
+                    "style": "background-color: #f8f9fa;"
+                },
+                "children": [
+                    {
+                        "type": "div",
+                        "props": {
+                            "content": "<h1 class='text-3xl sm:text-4xl md:text-5xl font-bold mb-3 sm:mb-4' style='color: #3D3B47;'>Наші послуги</h1><p class='text-lg sm:text-xl md:text-2xl max-w-3xl mx-auto' style='color: #3D3B47;'>Від точних стрижок до ексклюзивних татуювань — ми пропонуємо послуги найвищого рівня.</p>"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "div",
+                "name": "services-navigation",
+                "props": {
+                    "class": "py-4 sm:py-6 px-4 sm:px-6 md:px-8 lg:px-10 border-b",
+                    "style": "background-color: white; border-color: rgba(61, 59, 71, 0.1);"
+                },
+                "children": [
+                    {
+                        "type": "div",
+                        "props": {
+                            "class": "flex flex-wrap justify-center gap-2 sm:gap-4"
+                        },
+                        "children": [
+                            {
+                                "type": "Button",
+                                "props": {
+                                    "label": "Барбер-послуги",
+                                    "icon": "pi pi-scissors",
+                                    "class": "p-button-rounded p-button-outlined cursor-pointer text-sm sm:text-base",
+                                    "style": "color: #3D3B47; border-color: #3D3B47;"
+                                },
+                                "customHooks": {
+                                    "click": [
+                                        {
+                                            "action": "navigateTo",
+                                            "data": {
+                                                "fragment": "barber-services"
+                                            }
+                                        }
+                                    ]
+                                }
+                            },
+                            {
+                                "type": "Button",
+                                "props": {
+                                    "label": "Послуги татуювання",
+                                    "icon": "pi pi-palette",
+                                    "class": "p-button-rounded p-button-outlined cursor-pointer text-sm sm:text-base",
+                                    "style": "color: #3D3B47; border-color: #3D3B47;"
+                                },
+                                "customHooks": {
+                                    "click": [
+                                        {
+                                            "action": "navigateTo",
+                                            "data": {
+                                                "fragment": "tattoo-services"
+                                            }
+                                        }
+                                    ]
+                                }
+                            },
+                            {
+                                "type": "Button",
+                                "props": {
+                                    "label": "Преміум-пакети",
+                                    "icon": "pi pi-star",
+                                    "class": "p-button-rounded p-button-outlined cursor-pointer text-sm sm:text-base",
+                                    "style": "color: #3D3B47; border-color: #3D3B47;"
+                                },
+                                "customHooks": {
+                                    "click": [
+                                        {
+                                            "action": "navigateTo",
+                                            "data": {
+                                                "fragment": "premium-packages"
+                                            }
+                                        }
+                                    ]
+                                }
+                            },
+                            {
+                                "type": "Button",
+                                "props": {
+                                    "label": "Записатися",
+                                    "icon": "pi pi-calendar",
+                                    "class": "p-button-rounded cursor-pointer text-sm sm:text-base",
+                                    "style": "background-color: #F46700; color: white; border: none;"
+                                },
+                                "customHooks": {
+                                    "click": [
+                                        {
+                                            "action": "navigateTo",
+                                            "data": {
+                                                "route": "/landing-main-page/booking"
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "type": "div",
+                "props": {
+                    "id": "barber-services"
+                },
+                "children": [
+                    {
+                        "type": "operation",
+                        "action": "include",
+                        "source": "landing-main-page/sections/services/barber-services-section"
+                    }
+                ]
+            },
+            {
+                "type": "div",
+                "props": {
+                    "content": "<div class='text-gray-900 mb-2 text-2xl sm:text-3xl font-semibold'>Враження клієнтів</div><span class='text-gray-600 text-xl sm:text-2xl'>Що робить нас особливими</span><p class='text-gray-900 sm:line-height-2 md:line-height-4 text-lg sm:text-xl md:text-2xl mt-4 sm:mt-6' style='max-width: 800px'>\"У Barber XXL 1 ми віримо, що надаємо не просто послугу. Ми створюємо враження, яке поєднує традиційну майстерність із сучасними техніками, гарантуючи, що кожен клієнт виходить виглядаючи та почуваючись найкраще.\"</p><img src='/assets/signature.svg' class='mt-4 sm:mt-6 h-12 sm:h-16' alt='Підпис засновника' />",
+                    "class": "col-span-12 mt-10 sm:mt-20 mb-10 sm:mb-20 p-4 sm:p-6 md:p-10 lg:p-20 mx-auto",
+                    "style": "border-radius: 20px; background: linear-gradient(0deg, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.6)), radial-gradient(77.36% 256.97% at 77.36% 57.52%, #efe1af 0%, #c3dcfa 100%)"
+                }
+            },
+            {
+                "type": "div",
+                "props": {
+                    "id": "tattoo-services"
+                },
+                "children": [
+                    {
+                        "type": "operation",
+                        "action": "include",
+                        "source": "landing-main-page/sections/services/tattoo-services-section"
+                    }
+                ]
+            },
+            {
+                "type": "div",
+                "name": "gallery-section",
+                "props": {
+                    "class": "py-6 sm:py-8 md:py-12 px-4 sm:px-6 md:px-8 lg:px-10",
+                    "style": "background-color: #f8f9fa;"
+                },
+                "children": [
+                    {
+                        "type": "div",
+                        "props": {
+                            "content": "<h2 class='text-2xl sm:text-3xl font-bold text-center mb-4 sm:mb-6 md:mb-10' style='color: #3D3B47;'>Наші роботи</h2><p class='text-base sm:text-lg md:text-xl text-center max-w-3xl mx-auto mb-4 sm:mb-8' style='color: #3D3B47;'>Перегляньте галерею наших робіт, щоб оцінити майстерність наших барберів та тату-майстрів.</p>"
+                        }
+                    },
+                    {
+                        "type": "div",
+                        "props": {
+                            "class": "grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4"
+                        },
+                        "children": [
+                            {
+                                "type": "Image",
+                                "props": {
+                                    "src": "/images/gallery/haircut-1.webp",
+                                    "alt": "Стрижка чоловіча",
+                                    "class": "w-full h-32 sm:h-48 md:h-60 object-cover rounded-lg hover:shadow-lg transition-shadow duration-300 cursor-pointer",
+                                    "style": "background-color: #F8F3E9;"
+                                }
+                            },
+                            {
+                                "type": "Image",
+                                "props": {
+                                    "src": "/images/gallery/haircut-2.webp",
+                                    "alt": "Коротка стрижка",
+                                    "class": "w-full h-32 sm:h-48 md:h-60 object-cover rounded-lg hover:shadow-lg transition-shadow duration-300 cursor-pointer",
+                                    "style": "background-color: #F8F3E9;"
+                                }
+                            },
+                            {
+                                "type": "Image",
+                                "props": {
+                                    "src": "/images/gallery/tattoo-1.webp",
+                                    "alt": "Тату рукав",
+                                    "class": "w-full h-32 sm:h-48 md:h-60 object-cover rounded-lg hover:shadow-lg transition-shadow duration-300 cursor-pointer",
+                                    "style": "background-color: #F5F0FF;"
+                                }
+                            },
+                            {
+                                "type": "Image",
+                                "props": {
+                                    "src": "/images/gallery/tattoo-2.webp",
+                                    "alt": "Мінімалістичне тату",
+                                    "class": "w-full h-32 sm:h-48 md:h-60 object-cover rounded-lg hover:shadow-lg transition-shadow duration-300 cursor-pointer",
+                                    "style": "background-color: #F5F0FF;"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "type": "div",
+                        "props": {
+                            "class": "text-center mt-4 sm:mt-8"
+                        },
+                        "children": [
+                            {
+                                "type": "Button",
+                                "props": {
+                                    "label": "Дивитися більше в Instagram",
+                                    "icon": "pi pi-instagram",
+                                    "class": "p-button-outlined cursor-pointer text-sm sm:text-base",
+                                    "style": "color: #3D3B47; border-color: #3D3B47;"
+                                }
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "type": "div",
+                "name": "premium-packages",
+                "props": {
+                    "id": "premium-packages",
+                    "class": "py-6 sm:py-8 md:py-12 px-4 sm:px-6 md:px-8 lg:px-10 xl:px-20",
+                    "style": "background-color: white;"
+                },
+                "children": [
+                    {
+                        "type": "div",
+                        "props": {
+                            "content": "<h2 class='text-2xl sm:text-3xl md:text-4xl font-bold text-center mb-4 sm:mb-8' style='color: #3D3B47;'>Преміум-пакети</h2><p class='text-base sm:text-lg md:text-xl text-center max-w-4xl mx-auto mb-6 sm:mb-10' style='color: #3D3B47;'>Спробуйте наші фірмові комбінації для неперевершеного досвіду догляду та стилю.</p>"
+                        }
+                    },
+                    {
+                        "type": "Grid",
+                        "props": {
+                            "class": "grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 md:gap-8 max-w-5xl mx-auto"
+                        },
+                        "children": [
+                            {
+                                "type": "Column",
+                                "children": [
+                                    {
+                                        "type": "Card",
+                                        "props": {
+                                            "class": "border-2 p-4 sm:p-6 rounded-lg hover:shadow-lg transition-shadow duration-300 bg-white",
+                                            "style": "border-color: #F46700;"
+                                        },
+                                        "children": [
+                                            {
+                                                "type": "div",
+                                                "props": {
+                                                    "class": "relative"
+                                                },
+                                                "children": [
+                                                    {
+                                                        "type": "div",
+                                                        "props": {
+                                                            "content": "<h3 class='text-xl sm:text-2xl font-bold mb-2' style='color: #F46700;'>Екзекютів</h3><p class='text-sm sm:text-base mb-4 sm:mb-6' style='color: #3D3B47;'>Повний досвід догляду для сучасного джентльмена.</p><ul class='list-disc list-inside mb-4 sm:mb-6 text-sm sm:text-base' style='color: #3D3B47;'><li>Преміум-стрижка</li><li>Моделювання бороди</li><li>Гаряче рушникове обгортання обличчя</li><li>Масаж голови</li><li>Комплімент-напій</li></ul><p class='text-xl sm:text-2xl font-bold' style='color: #3D3B47;'>₴950</p>"
+                                                        }
+                                                    },
+                                                    {
+                                                        "type": "div",
+                                                        "props": {
+                                                            "class": "absolute top-0 right-0"
+                                                        },
+                                                        "children": [
+                                                            {
+                                                                "type": "div",
+                                                                "props": {
+                                                                    "class": "flex items-center gap-1 px-2 py-1 rounded",
+                                                                    "style": "background-color: rgba(245, 230, 0, 0.9);"
+                                                                },
+                                                                "children": [
+                                                                    {
+                                                                        "type": "Icon",
+                                                                        "props": {
+                                                                            "class": "pi pi-crown",
+                                                                            "style": "color: #3D3B47; font-size: 0.8rem;"
+                                                                        }
+                                                                    },
+                                                                    {
+                                                                        "type": "Span",
+                                                                        "props": {
+                                                                            "content": "Королі",
+                                                                            "class": "text-xs font-semibold",
+                                                                            "style": "color: #3D3B47;"
+                                                                        }
+                                                                    }
+                                                                ]
+                                                            }
+                                                        ]
+                                                    }
+                                                ]
+                                            },
+                                            {
+                                                "type": "Button",
+                                                "props": {
+                                                    "label": "Забронювати пакет",
+                                                    "class": "mt-3 sm:mt-4 cursor-pointer w-full sm:w-auto text-sm sm:text-base",
+                                                    "style": "background-color: #F46700; color: white; border: none;"
+                                                },
+                                                "customHooks": {
+                                                    "click": [
+                                                        {
+                                                            "action": "navigateTo",
+                                                            "data": {
+                                                                "route": "/landing-main-page/booking"
+                                                            }
+                                                        }
+                                                    ]
+                                                }
+                                            }
+                                        ]
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "Column",
+                                "children": [
+                                    {
+                                        "type": "Card",
+                                        "props": {
+                                            "class": "border-2 p-4 sm:p-6 rounded-lg hover:shadow-lg transition-shadow duration-300 bg-white",
+                                            "style": "border-color: #6B00F5;"
+                                        },
+                                        "children": [
+                                            {
+                                                "type": "div",
+                                                "props": {
+                                                    "class": "relative"
+                                                },
+                                                "children": [
+                                                    {
+                                                        "type": "div",
+                                                        "props": {
+                                                            "content": "<h3 class='text-xl sm:text-2xl font-bold mb-2' style='color: #6B00F5;'>Чорнила та Стрижка</h3><p class='text-sm sm:text-base mb-4 sm:mb-6' style='color: #3D3B47;'>Ідеальне поєднання стилю та мистецтва.</p><ul class='list-disc list-inside mb-4 sm:mb-6 text-sm sm:text-base' style='color: #3D3B47;'><li>Дизайнерська стрижка</li><li>Невелике тату-дизайн</li><li>Моделювання бороди</li><li>Набір для післядогляду</li><li>Пріоритетний запис</li></ul><p class='text-xl sm:text-2xl font-bold' style='color: #3D3B47;'>₴1,500</p>"
+                                                        }
+                                                    },
+                                                    {
+                                                        "type": "div",
+                                                        "props": {
+                                                            "class": "absolute top-0 right-0"
+                                                        },
+                                                        "children": [
+                                                            {
+                                                                "type": "div",
+                                                                "props": {
+                                                                    "class": "flex items-center gap-1 px-2 py-1 rounded",
+                                                                    "style": "background-color: #F46700;"
+                                                                },
+                                                                "children": [
+                                                                    {
+                                                                        "type": "Icon",
+                                                                        "props": {
+                                                                            "class": "pi pi-star",
+                                                                            "style": "color: white; font-size: 0.8rem;"
+                                                                        }
+                                                                    },
+                                                                    {
+                                                                        "type": "Span",
+                                                                        "props": {
+                                                                            "content": "MASTER",
+                                                                            "class": "text-xs font-semibold",
+                                                                            "style": "color: white;"
+                                                                        }
+                                                                    }
+                                                                ]
+                                                            }
+                                                        ]
+                                                    }
+                                                ]
+                                            },
+                                            {
+                                                "type": "Button",
+                                                "props": {
+                                                    "label": "Забронювати пакет",
+                                                    "class": "mt-3 sm:mt-4 cursor-pointer w-full sm:w-auto text-sm sm:text-base",
+                                                    "style": "background-color: #6B00F5; color: white; border: none;"
+                                                },
+                                                "customHooks": {
+                                                    "click": [
+                                                        {
+                                                            "action": "navigateTo",
+                                                            "data": {
+                                                                "route": "/landing-main-page/booking"
+                                                            }
+                                                        }
+                                                    ]
+                                                }
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "type": "operation",
+                "action": "include",
+                "source": "landing-main-page/sections/services/barber-tattoo-tabs-section"
+            },
+            {
+                "type": "operation",
+                "action": "include",
+                "source": "landing-main-page/sections/services/booking-cta-section"
+            },
+            {
+                "type": "operation",
+                "action": "include",
+                "source": "landing-main-page/sections/footer-section"
+            }
+        ]
+    }
+}
+

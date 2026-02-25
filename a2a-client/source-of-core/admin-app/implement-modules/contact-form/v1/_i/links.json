@@ -1,0 +1,10 @@
+[
+    {
+        "id": "home-admin",
+        "type": "admin",
+        "label": "Барбершоп Лендінг",
+        "path": "/contact-form/page",
+        "page": "page",
+        "icon": "pi pi-home"
+    }
+]

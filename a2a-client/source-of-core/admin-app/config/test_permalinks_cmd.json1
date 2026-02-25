@@ -1,0 +1,14 @@
+{
+    "test-command-module": {
+        "routes": [
+            {
+                "path": "page1",
+                "component": "Test\/Page1"
+            },
+            {
+                "path": "page2\/{id}",
+                "component": "Test\/Page2"
+            }
+        ]
+    }
+}

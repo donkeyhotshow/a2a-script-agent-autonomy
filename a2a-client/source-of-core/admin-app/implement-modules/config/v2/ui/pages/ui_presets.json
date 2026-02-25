@@ -1,0 +1,441 @@
+{
+    "//_comment": "This entire file defines a template/component for rendering a single category of UI presets (e.g., 'primitive', 'semantic', 'extend'). It expects 'categoryEntry' in its context, which is [categoryName, categoryData].",
+    "props": {
+        "header": "{{categoryEntry[0]}}"
+    },
+    "children": [
+        {
+            "if": "{{categoryEntry[0] === 'primitive'}}",
+            "then": [
+                {
+                    "//_comment_primitive_accordion": "Main accordion for all sub-categories within 'primitive' (e.g., borderRadius, emerald)",
+                    "type": "p-accordion",
+                    "props": {
+                        "multiple": true,
+                        "activeIndex": []
+                    },
+                    "loop": {
+                        "data": "{{ Object.entries(categoryEntry[1] || {}) }}",
+                        "as": "subCategory"
+                    },
+                    "children": [
+                        {
+                            "type": "p-accordionTab",
+                            "props": {
+                                "header": "{{ subCategory[0] }}"
+                            },
+                            "children": [
+                                {
+                                    "//_comment_primitive_subCategory_logic": "Handles different rendering based on the structure of the subCategory data.",
+                                    "if": "{{ typeof subCategory[1] === 'object' && subCategory[1] !== null }}",
+                                    "then": [
+                                        {
+                                            "//_comment_primitive_is_object": "If the subCategory data is an object, check if it is a color palette or other key-value pairs.",
+                                            "if": "{{ subCategory[1].hasOwnProperty('50') || subCategory[1].hasOwnProperty('500') }}",
+                                            "then": [
+                                                {
+                                                    "//_comment_primitive_color_palette": "Renders a color palette with sorted inputs for each shade.",
+                                                    "type": "div",
+                                                    "props": {
+                                                        "class": "p-fluid p-formgrid p-grid"
+                                                    },
+                                                    "loop": {
+                                                        "data": "{{ Object.entries(subCategory[1] || {}).sort((a, b) => {const numA = parseInt(a[0]); const numB = parseInt(b[0]); if (!isNaN(numA) && !isNaN(numB)) return numA - numB; return a[0].localeCompare(b[0]);}) }}",
+                                                        "as": "colorEntry"
+                                                    },
+                                                    "children": [
+                                                        {
+                                                            "type": "div",
+                                                            "props": {
+                                                                "class": "p-field p-col-12 p-md-4 p-lg-3 p-d-flex p-ai-center"
+                                                            },
+                                                            "children": [
+                                                                {
+                                                                    "type": "span",
+                                                                    "props": {
+                                                                        "class": "p-mr-2",
+                                                                        "style": "min-width: 40px; text-align: right; font-weight: bold;",
+                                                                        "content": "{{colorEntry[0]}} :"
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "type": "p-inputText",
+                                                                    "props": {
+                                                                        "id": "{{'primitive_' + subCategory[0] + '_' + colorEntry[0]}}",
+                                                                        "modelValue": "{{colorEntry[1]}}"
+                                                                    },
+                                                                    "events": {
+                                                                        "update:modelValue": {
+                                                                            "setContext": {
+                                                                                "formData": "{{ {...context.formData, [categoryEntry[0]]: {...categoryEntry[1], [subCategory[0]]: {...subCategory[1], [colorEntry[0]]: eventValue}}} }}"
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                }
+                                                            ]
+                                                        }
+                                                    ]
+                                                }
+                                            ],
+                                            "else": [
+                                                {
+                                                    "//_comment_primitive_other_object": "Renders generic key-value pairs for objects that are not color palettes (e.g., borderRadius).",
+                                                    "type": "div",
+                                                    "props": {
+                                                        "class": "p-fluid p-formgrid p-grid"
+                                                    },
+                                                    "loop": {
+                                                        "data": "{{ Object.entries(subCategory[1] || {}) }}",
+                                                        "as": "primitiveEntry"
+                                                    },
+                                                    "children": [
+                                                        {
+                                                            "type": "div",
+                                                            "props": {
+                                                                "class": "p-field p-col-12 p-md-6"
+                                                            },
+                                                            "children": [
+                                                                {
+                                                                    "type": "label",
+                                                                    "props": {
+                                                                        "for": "{{'primitive_' + subCategory[0] + '_' + primitiveEntry[0]}}",
+                                                                        "content": "{{primitiveEntry[0]}}"
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "type": "p-inputText",
+                                                                    "props": {
+                                                                        "id": "{{'primitive_' + subCategory[0] + '_' + primitiveEntry[0]}}",
+                                                                        "modelValue": "{{primitiveEntry[1]}}",
+                                                                        "type": "text"
+                                                                    },
+                                                                    "events": {
+                                                                        "update:modelValue": {
+                                                                            "setContext": {
+                                                                                "formData": "{{ {...context.formData, [categoryEntry[0]]: {...categoryEntry[1], [subCategory[0]]: {...subCategory[1], [primitiveEntry[0]]: eventValue}}} }}"
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                }
+                                                            ]
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    ],
+                                    "else": [
+                                        {
+                                            "//_comment_primitive_is_simple_value": "If subCategory data is not an object (e.g. a direct string/number), render a single input.",
+                                            "type": "div",
+                                            "props": {
+                                                "class": "p-field"
+                                            },
+                                            "children": [
+                                                {
+                                                    "type": "label",
+                                                    "props": {
+                                                        "for": "{{'primitive_' + subCategory[0]}}",
+                                                        "content": "{{subCategory[0]}}"
+                                                    }
+                                                },
+                                                {
+                                                    "type": "p-inputText",
+                                                    "props": {
+                                                        "id": "{{'primitive_' + subCategory[0]}}",
+                                                        "modelValue": "{{subCategory[1]}}",
+                                                        "type": "text"
+                                                    },
+                                                    "events": {
+                                                        "update:modelValue": {
+                                                            "setContext": {
+                                                                "formData": "{{ {...context.formData, [categoryEntry[0]]: {...categoryEntry[1], [subCategory[0]]: eventValue }} }}"
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ],
+            "else": [
+                {
+                    "if": "{{categoryEntry[0] === 'semantic'}}",
+                    "then": [
+                        {
+                            "//_comment_semantic_accordion": "Main accordion for sub-categories within 'semantic'.",
+                            "type": "p-accordion",
+                            "props": {
+                                "multiple": true,
+                                "activeIndex": []
+                            },
+                            "loop": {
+                                "data": "{{ Object.entries(categoryEntry[1] || {}) }}",
+                                "as": "semanticEntry"
+                            },
+                            "children": [
+                                {
+                                    "type": "p-accordionTab",
+                                    "props": {
+                                        "header": "{{ semanticEntry[0] }}"
+                                    },
+                                    "children": [
+                                        {
+                                            "//_comment_semantic_string_value": "Renders a simple input if the semantic value is a string.",
+                                            "if": "{{ typeof semanticEntry[1] === 'string' }}",
+                                            "then": [
+                                                {
+                                                    "type": "div",
+                                                    "props": {
+                                                        "class": "p-field p-grid"
+                                                    },
+                                                    "children": [
+                                                        {
+                                                            "type": "label",
+                                                            "props": {
+                                                                "class": "p-col-fixed",
+                                                                "style": "width:200px",
+                                                                "for": "{{'semantic_' + semanticEntry[0]}}",
+                                                                "content": "{{semanticEntry[0]}}"
+                                                            }
+                                                        },
+                                                        {
+                                                            "type": "div",
+                                                            "props": {
+                                                                "class": "p-col"
+                                                            },
+                                                            "children": [
+                                                                {
+                                                                    "type": "p-inputText",
+                                                                    "props": {
+                                                                        "id": "{{'semantic_' + semanticEntry[0]}}",
+                                                                        "modelValue": "{{semanticEntry[1]}}"
+                                                                    },
+                                                                    "events": {
+                                                                        "update:modelValue": {
+                                                                            "setContext": {
+                                                                                "formData": "{{ {...context.formData, [categoryEntry[0]]: {...categoryEntry[1], [semanticEntry[0]]: eventValue}}} }}"
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                }
+                                                            ]
+                                                        }
+                                                    ]
+                                                }
+                                            ],
+                                            "else": [
+                                                {
+                                                    "if": "{{ semanticEntry[0] === 'colorScheme' }}",
+                                                    "then": [
+                                                        {
+                                                            "//_comment_semantic_colorScheme": "Handles the complex 'colorScheme' with nested accordions for light/dark themes.",
+                                                            "type": "p-accordion",
+                                                            "props": {
+                                                                "multiple": true,
+                                                                "activeIndex": [
+                                                                    0
+                                                                ]
+                                                            },
+                                                            "loop": {
+                                                                "data": "{{ Object.entries(semanticEntry[1] || {}) }}",
+                                                                "as": "scheme"
+                                                            },
+                                                            "children": [
+                                                                {
+                                                                    "type": "p-accordionTab",
+                                                                    "props": {
+                                                                        "header": "Цветовая схема: {{ scheme[0] }}"
+                                                                    },
+                                                                    "children": [
+                                                                        {
+                                                                            "if": "{{ scheme[0] === 'light' }}",
+                                                                            "then": [
+                                                                                {
+                                                                                    "type": "p-accordion",
+                                                                                    "props": {
+                                                                                        "multiple": true,
+                                                                                        "activeIndex": []
+                                                                                    },
+                                                                                    "loop": {
+                                                                                        "data": "{{ Object.entries(scheme[1] || {}) }}",
+                                                                                        "as": "lightEntry"
+                                                                                    },
+                                                                                    "children": [
+                                                                                        {
+                                                                                            "type": "p-accordionTab",
+                                                                                            "props": {
+                                                                                                "header": "{{ lightEntry[0] }}"
+                                                                                            },
+                                                                                            "children": [
+                                                                                                {
+                                                                                                    "//_comment_semantic_lightEntry_logic": "Logic for items within a light theme color category (e.g., primary, surface).",
+                                                                                                    "if": "{{ (lightEntry[1].hasOwnProperty('50') || lightEntry[1].hasOwnProperty('500') || lightEntry[1].hasOwnProperty('color')) && typeof lightEntry[1] === 'object' && lightEntry[1] !== null }}",
+                                                                                                    "then": [
+                                                                                                        {
+                                                                                                            "//_comment_semantic_lightEntry_paletteOrColor": "Renders as sorted color inputs if it looks like a palette or a single color object.",
+                                                                                                            "type": "div",
+                                                                                                            "props": {
+                                                                                                                "class": "p-fluid p-formgrid p-grid"
+                                                                                                            },
+                                                                                                            "loop": {
+                                                                                                                "data": "{{ Object.entries(lightEntry[1] || {}).sort((a, b) => {\nconst numA = parseInt(a[0]);\nconst numB = parseInt(b[0]);\nif (!isNaN(numA) && !isNaN(numB)) return numA - numB;\nif (a[0] === 'color') return -1; if (b[0] === 'color') return 1;\nreturn a[0].localeCompare(b[0]);\n}) }}",
+                                                                                                                "as": "colorValueEntry"
+                                                                                                            },
+                                                                                                            "children": [
+                                                                                                                {
+                                                                                                                    "type": "div",
+                                                                                                                    "props": {
+                                                                                                                        "class": "p-field p-col-12 p-md-6 p-lg-4 p-d-flex p-ai-center"
+                                                                                                                    },
+                                                                                                                    "children": [
+                                                                                                                        {
+                                                                                                                            "type": "label",
+                                                                                                                            "props": {
+                                                                                                                                "class": "p-mr-2",
+                                                                                                                                "style": "min-width: 150px; text-align: right; font-weight: bold;",
+                                                                                                                                "content": "{{colorValueEntry[0]}} :",
+                                                                                                                                "for": "{{ 'semantic_colorScheme_' + scheme[0] + '_' + lightEntry[0] + '_' + colorValueEntry[0] }}"
+                                                                                                                            }
+                                                                                                                        },
+                                                                                                                        {
+                                                                                                                            "type": "p-inputText",
+                                                                                                                            "props": {
+                                                                                                                                "id": "{{ 'semantic_colorScheme_' + scheme[0] + '_' + lightEntry[0] + '_' + colorValueEntry[0] }}",
+                                                                                                                                "modelValue": "{{colorValueEntry[1]}}"
+                                                                                                                            },
+                                                                                                                            "events": {
+                                                                                                                                "update:modelValue": {
+                                                                                                                                    "setContext": {
+                                                                                                                                        "formData": "{{ {...context.formData, semantic: {...context.formData.semantic, colorScheme: {...context.formData.semantic.colorScheme, [scheme[0]]: {...context.formData.semantic.colorScheme[scheme[0]], [lightEntry[0]]: {...context.formData.semantic.colorScheme[scheme[0]][lightEntry[0]], [colorValueEntry[0]]: eventValue }}}}}}} }}"
+                                                                                                                                    }
+                                                                                                                                }
+                                                                                                                            }
+                                                                                                                        }
+                                                                                                                    ]
+                                                                                                                }
+                                                                                                            ]
+                                                                                                        }
+                                                                                                    ],
+                                                                                                    "else": [
+                                                                                                        {
+                                                                                                            "//_comment_semantic_lightEntry_fallback": "Fallback to json_editor for other structures within light theme category.",
+                                                                                                            "type": "config.json_editor",
+                                                                                                            "props": {
+                                                                                                                "title": "Детальные настройки для {{ lightEntry[0] }}",
+                                                                                                                "data": "{{ lightEntry[1] }}",
+                                                                                                                "options": {
+                                                                                                                    "mode": "tree",
+                                                                                                                    "search": true,
+                                                                                                                    "navigationBar": false
+                                                                                                                },
+                                                                                                                "onChange": {
+                                                                                                                    "setContext": {
+                                                                                                                        "formData": "{{ {...context.formData, semantic: {...context.formData.semantic, colorScheme: {...context.formData.semantic.colorScheme, [scheme[0]]: {...context.formData.semantic.colorScheme[scheme[0]], [lightEntry[0]]: eventValue}}}}}} }}"
+                                                                                                                    }
+                                                                                                                }
+                                                                                                            }
+                                                                                                        }
+                                                                                                    ]
+                                                                                                }
+                                                                                            ]
+                                                                                        }
+                                                                                    ]
+                                                                                }
+                                                                            ],
+                                                                            "else": [
+                                                                                {
+                                                                                    "if": "{{ scheme[0] === 'dark' }}",
+                                                                                    "then": [
+                                                                                        {
+                                                                                            "//_comment_semantic_darkScheme_editor": "Dark theme is directly edited with json_editor for simplicity here.",
+                                                                                            "type": "config.json_editor",
+                                                                                            "props": {
+                                                                                                "title": "Настройки для {{ scheme[0] }} темы (Dark)",
+                                                                                                "data": "{{scheme[1]}}",
+                                                                                                "options": {
+                                                                                                    "mode": "tree",
+                                                                                                    "search": true,
+                                                                                                    "navigationBar": false
+                                                                                                },
+                                                                                                "onChange": {
+                                                                                                    "setContext": {
+                                                                                                        "formData": "{{ {...context.formData, semantic: {...context.formData.semantic, colorScheme: {...context.formData.semantic.colorScheme, [scheme[0]]: eventValue}}} }}"
+                                                                                                    }
+                                                                                                }
+                                                                                            }
+                                                                                        }
+                                                                                    ],
+                                                                                    "else": [
+                                                                                        {
+                                                                                            "type": "div",
+                                                                                            "props": {
+                                                                                                "content": "Неизвестная цветовая схема: {{ scheme[0] }}"
+                                                                                            }
+                                                                                        }
+                                                                                    ]
+                                                                                }
+                                                                            ]
+                                                                        }
+                                                                    ]
+                                                                }
+                                                            ]
+                                                        }
+                                                    ],
+                                                    "else": [
+                                                        {
+                                                            "//_comment_semantic_other_object_editor": "Fallback for other semantic entries that are not strings or colorScheme - use json_editor.",
+                                                            "type": "config.json_editor",
+                                                            "props": {
+                                                                "title": "Настройки для {{semanticEntry[0]}}",
+                                                                "data": "{{semanticEntry[1]}}",
+                                                                "options": {
+                                                                    "mode": "tree",
+                                                                    "search": true,
+                                                                    "navigationBar": false
+                                                                },
+                                                                "onChange": {
+                                                                    "setContext": {
+                                                                        "formData": "{{ {...context.formData, [categoryEntry[0]]: {...categoryEntry[1], [semanticEntry[0]]: eventValue}}} }}"
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ],
+                    "else": [
+                        {
+                            "//_comment_extend_or_other_category_editor": "Fallback for any other category (e.g., 'extend') - use json_editor.",
+                            "type": "config.json_editor",
+                            "props": {
+                                "title": "Пресеты для категории \"{{categoryEntry[0]}}\"",
+                                "data": "{{categoryEntry[1]}}",
+                                "options": {
+                                    "mode": "tree",
+                                    "search": true
+                                },
+                                "onChange": {
+                                    "setContext": {
+                                        "formData": "{{ {...context.formData, [categoryEntry[0]]: eventValue} }}"
+                                    }
+                                }
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

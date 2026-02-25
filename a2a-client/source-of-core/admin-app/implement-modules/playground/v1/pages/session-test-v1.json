@@ -1,0 +1,118 @@
+{
+    "type": "Page",
+    "content": {
+        "type": "div",
+        "props": {
+            "class": "p-4 grid grid-cols-1 md:grid-cols-2 gap-4"
+        },
+        "children": [
+            {
+                "type": "div",
+                "props": {
+                    "id": "inputSection",
+                    "class": "border rounded p-4"
+                },
+                "children": [
+                    {
+                        "type": "H2",
+                        "props": {
+                            "class": "text-xl font-semibold mb-4",
+                            "content": "Test: Save to Session"
+                        }
+                    },
+                    {
+                        "type": "Form",
+                        "props": {
+                            "formId": "saveSessionForm",
+                            "class": "space-y-4"
+                        },
+                        "children": [
+                            {
+                                "type": "InputText",
+                                "props": {
+                                    "name": "textToSave",
+                                    "label": "Text to Save:",
+                                    "ariaLabel": "Enter text to save into the session",
+                                    "placeholder": "Enter text here..."
+                                },
+                                "model": {
+                                    "form": "saveSessionForm",
+                                    "field": "textToSave"
+                                }
+                            },
+                            {
+                                "type": "Button",
+                                "props": {
+                                    "label": "Save to Session",
+                                    "ariaLabel": "Save the entered text to the user session",
+                                    "icon": "pi pi-save"
+                                },
+                                "customHooks": {
+                                    "click": [
+                                        {
+                                            "action": "sendData",
+                                            "data": {
+                                                "sendTo": "session-test-v1/save-to-session",
+                                                "form": "saveSessionForm"
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "type": "div",
+                "props": {
+                    "id": "outputSection",
+                    "class": "border rounded p-4"
+                },
+                "children": [
+                    {
+                        "type": "H3",
+                        "props": {
+                            "class": "text-lg font-semibold mb-2",
+                            "content": "Session Data Result (Loaded via Button):"
+                        }
+                    },
+                    {
+                        "type": "div",
+                        "props": {
+                            "id": "sessionDisplay",
+                            "class": "p-3 border rounded bg-gray-100 min-h-[80px] mb-4",
+                            "content": "Click button below to load session data..."
+                        }
+                    },
+                    {
+                        "type": "div",
+                        "props": {
+                            "id": "statusLog",
+                            "class": "p-3 border rounded bg-gray-50 min-h-[80px] mb-4"
+                        },
+                        "children": []
+                    },
+                    {
+                        "type": "Button",
+                        "props": {
+                            "label": "Load Session Data to div",
+                            "ariaLabel": "Load data saved in session into the display area above",
+                            "icon": "pi pi-download"
+                        },
+                        "customHooks": {
+                            "click": [
+                                {
+                                    "action": "sendData",
+                                    "data": {
+                                        "sendTo": "session-test-v1/load-from-session-to-content"
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        ]
+    }
+}

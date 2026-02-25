@@ -1,0 +1,34 @@
+[
+    {
+        "id": "purpose_question",
+        "text": "What is the purpose of your request?",
+        "type": "text_input",
+        "answer_model_path": "form.purpose"
+    },
+    {
+        "id": "context_question",
+        "text": "Do you have additional context to share?",
+        "type": "text_input",
+        "answer_model_path": "form.context"
+    },
+    {
+        "id": "priority_question",
+        "text": "What is the priority level of this request?",
+        "type": "radio_choice",
+        "answer_model_path": "form.priority",
+        "options": [
+            {
+                "value": "low",
+                "label": "Low - No urgency"
+            },
+            {
+                "value": "medium",
+                "label": "Medium - Complete within 24 hours"
+            },
+            {
+                "value": "high",
+                "label": "High - Urgent, requires immediate attention"
+            }
+        ]
+    }
+] 

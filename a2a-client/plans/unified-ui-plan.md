@@ -1,7 +1,10 @@
-# План: Централизованный UI с Поиском и Действиями
+# План: Unified JSON Frontend на VueFlow
 
-## Концепция
-Заменить все страницы (чат, файлы, проекты и т.д.) на **одну центральную страницу** с поиском.
+## Используем VueFlow
+
+**Decision:** Используем [VueFlow](https://vueflow.dev/) для node-based UI
+
+> VueFlow - готовая библиотека для визуальных node-based интерфейсов на Vue 3
 
 ## Структура страницы
 
@@ -107,82 +110,84 @@
 - `GET /promises/pending` - активные промисы
 - `GET /promise/<id>` - статус промиса
 
-## Техническая реализация
+## Техническая реализация (VueFlow)
+
+### Установка
+
+```bash
+cd a2a-client
+npm install @vue-flow/core @vue-flow/background @vue-flow/controls @vue-flow/minimap
+```
 
 ### Frontend (a2a-client/web/)
 
 ```
 web/
-├── index.html          # Одна страница
+├── index.html          # Одна страница с VueFlow
 ├── css/
-│   └── unified.css     # Новые стили
+│   └── flow.css       # Стили для нод
 └── js/
-    ├── app.js          # Инициализация
-    ├── search.js       # Поиск действий
-    ├── actions.js      # Карточки действий
-    ├── tickets.js      # Тикеты
-    └── form.js         # Форма запуска
+    ├── app.js         # Инициализация VueFlow
+    ├── nodes.js       # Кастомные ноды
+    ├── edges.js       # Connections
+    └── protocol.js   # Маппинг ContextBlock → Flow
 ```
 
-### HTML Структура
+### HTML Структура (VueFlow)
 
 ```html
 <div id="app">
   <header>
     <div class="search-container">
       <input type="text" id="search-input" placeholder="Что вы хотите сделать?">
-      <button id="ai-btn">🤖 AI</button>
     </div>
   </header>
   
   <main>
-    <section id="results-section" class="hidden">
-      <div id="action-cards"></div>
-    </section>
-    
-    <section id="ai-suggestion" class="hidden">
-      <p>Использую AI агента...</p>
-    </section>
+    <!-- VueFlow Canvas -->
+    <div id="flow-canvas"></div>
   </main>
   
-  <footer id="tickets-section">
-    <h3>Активные задачи</h3>
-    <div id="tickets-list"></div>
-  </footer>
+  <aside id="properties-panel">
+    <h3>Свойства</h3>
+    <div id="node-properties"></div>
+  </aside>
 </div>
+
+<!-- VueFlow -->
+<script src="https://unpkg.com/@vue-flow/core/dist/vue-flow.js"></script>
 ```
 
-## План реализации
+## План реализации (VueFlow)
 
 ### Этап 1: Базовая структура (2 дня)
 ```
-1.1. Создать unified.css
-1.2. Обновить index.html - одна секция
-1.3. Search компонент с debounce
-1.4. Подключить /actions API
+1.1 Установить VueFlow
+1.2 Создать базовую структуру с VueFlow canvas
+1.3 Настроить кастомные ноды
+1.4 Подключить API /actions
 ```
 
-### Этап 2: Поиск и карточки (2 дня)
+### Этап 2: Кастомные ноды (2 дня)
 ```
-2.1. Action Registry загрузка
-2.2. Фильтрация по поиску
-3.3. Карточки действий
-2.4. Клик → форма
-```
-
-### Этап 3: Выполнение и тикеты (2 дня)
-```
-3.1. Форма с параметрами
-3.2. Submit → Promise
-3.3. Tickets panel
-3.4. Real-time updates (polling)
+2.1 TaskInputNode - ввод задачи
+2.2 ActionProposalNode - предложение экшенов
+2.3 SubActionNode - под-экшены
+2.4 ResultNode - результаты
 ```
 
-### Этап 4: AI Agent fallback (1 день)
+### Этап 3: Интеграция с протоколом (2 дня)
 ```
-4.1. Когда нет результатов → AI
-4.2. Интеграция с существующим агентом
-4.3. Stream ответов
+3.1 Маппинг ContextBlock → VueFlow nodes
+3.2 Обработка proposedActions
+3.3 Edge connections между нодами
+```
+
+### Этап 4: UI компоненты (1 день)
+```
+4.1 Панель свойств ноды
+4.2 Сайдбар с доступными экшенами
+4.3 Поиск по экшенам
 ```
 
 ## Удаляется
@@ -198,9 +203,20 @@ web/
 - ✅ Action Registry
 - ✅ Agent Algorithms
 
-## Файлы для изменения
+## Файлы для изменения (VueFlow)
 
-- `a2a-client/web/index.html`
-- `a2a-client/web/css/style.css` → `unified.css`
-- `a2a-client/web/js/app.js`
-- Новые: `search.js`, `actions.js`, `tickets.js`, `form.js`
+- `a2a-client/web/index.html` - Основная страница с VueFlow
+- `a2a-client/web/js/app.js` - VueFlow инициализация
+- `a2a-client/web/js/nodes.js` - Кастомные ноды
+- `a2a-client/web/js/edges.js` - Connections
+- `a2a-client/web/js/protocol.js` - Маппинг протокола
+
+## Маппинг протокола на VueFlow
+
+| ContextBlock.outcome | VueFlow Node Type | Цвет |
+|---------------------|-------------------|------|
+| task_request | input | #22c55e (green) |
+| action_proposal | default | #eab308 (yellow) |
+| action_executing | default | #3b82f6 (blue) |
+| step_result | default | #6b7280 (gray) |
+| action_complete | output | #22c55e (green) |

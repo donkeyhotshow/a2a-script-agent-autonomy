@@ -1,0 +1,262 @@
+{
+    "type": "Tabs",
+    "props": {
+        "class": "w-full max-w-md mx-auto bg-white shadow-lg rounded-lg overflow-hidden"
+    },
+    "items": [
+        {
+            "type": "Panel",
+            "props": {
+                "header": "Login",
+                "class": "p-4"
+            },
+            "children": [
+                {
+                    "type": "Form",
+                    "name": "login-form",
+                    "props": {
+                        "class": "flex flex-col gap-4"
+                    },
+                    "children": [
+                        {
+                            "type": "InputText",
+                            "name": "login",
+                            "props": {
+                                "placeholder": "Username or Email",
+                                "class": "w-full p-2"
+                            },
+                            "model": {
+                                "form": "login-form",
+                                "field": "login"
+                            }
+                        },
+                        {
+                            "type": "Password",
+                            "name": "password",
+                            "props": {
+                                "placeholder": "Password",
+                                "toggleMask": true,
+                                "class": "w-full p-2"
+                            },
+                            "model": {
+                                "form": "login-form",
+                                "field": "password"
+                            }
+                        },
+                        {
+                            "type": "Span",
+                            "props": {
+                                "class": "text-sm text-gray-600 flex items-center"
+                            },
+                            "children": [
+                                {
+                                    "type": "Checkbox",
+                                    "name": "remember",
+                                    "props": {
+                                        "class": "mr-2"
+                                    },
+                                    "model": {
+                                        "form": "login-form",
+                                        "field": "remember"
+                                    }
+                                },
+                                {
+                                    "type": "div",
+                                    "props": {
+                                        "class": "text-sm text-gray-600",
+                                        "content": "Remember me"
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "type": "div",
+                            "props": {
+                                "class": "flex items-center justify-between mt-4"
+                            },
+                            "children": [
+                                {
+                                    "type": "Button",
+                                    "props": {
+                                        "label": "Login",
+                                        "class": "p-button-primary",
+                                        "action": "submit"
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "type": "operation",
+                            "action": "include",
+                            "source": "login-form/templates/social-buttons.json"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "type": "Panel",
+            "props": {
+                "header": "Register",
+                "class": "p-4"
+            },
+            "children": [
+                {
+                    "type": "Form",
+                    "name": "register-form",
+                    "props": {
+                        "class": "flex flex-col gap-4"
+                    },
+                    "children": [
+                        {
+                            "type": "InputText",
+                            "name": "login",
+                            "props": {
+                                "placeholder": "Username",
+                                "class": "w-full p-2"
+                            },
+                            "model": {
+                                "form": "register-form",
+                                "field": "login"
+                            }
+                        },
+                        {
+                            "type": "InputText",
+                            "name": "email",
+                            "props": {
+                                "placeholder": "Email",
+                                "class": "w-full p-2"
+                            },
+                            "model": {
+                                "form": "register-form",
+                                "field": "email"
+                            }
+                        },
+                        {
+                            "type": "InputText",
+                            "name": "name",
+                            "props": {
+                                "placeholder": "Full Name",
+                                "class": "w-full p-2"
+                            },
+                            "model": {
+                                "form": "register-form",
+                                "field": "name"
+                            }
+                        },
+                        {
+                            "type": "Password",
+                            "name": "password",
+                            "props": {
+                                "placeholder": "Password",
+                                "toggleMask": true,
+                                "class": "w-full p-2"
+                            },
+                            "model": {
+                                "form": "register-form",
+                                "field": "password"
+                            }
+                        },
+                        {
+                            "type": "Password",
+                            "name": "password_confirmation",
+                            "props": {
+                                "placeholder": "Confirm Password",
+                                "class": "w-full p-2"
+                            },
+                            "model": {
+                                "form": "register-form",
+                                "field": "password_confirmation"
+                            }
+                        },
+                        {
+                            "type": "Span",
+                            "props": {
+                                "class": "text-sm text-gray-600"
+                            },
+                            "children": [
+                                {
+                                    "type": "Checkbox",
+                                    "name": "agree_terms",
+                                    "props": {
+                                        "class": "mr-2"
+                                    },
+                                    "model": {
+                                        "form": "register-form",
+                                        "field": "agree_terms"
+                                    }
+                                },
+                                {
+                                    "type": "div",
+                                    "props": {
+                                        "content": "I agree to the Terms of Service and Privacy Policy"
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "type": "Button",
+                            "props": {
+                                "label": "Create Account",
+                                "class": "p-button-primary mt-4",
+                                "action": "submit"
+                            }
+                        },
+                        {
+                            "type": "operation",
+                            "action": "include",
+                            "source": "login-form/templates/social-buttons.json"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "type": "Panel",
+            "props": {
+                "header": "Forgot Password",
+                "class": "p-4"
+            },
+            "children": [
+                {
+                    "type": "Form",
+                    "name": "forgot-password-form",
+                    "props": {
+                        "class": "flex flex-col gap-4"
+                    },
+                    "children": [
+                        {
+                            "type": "div",
+                            "props": {
+                                "class": "text-sm text-gray-600 mb-4"
+                            },
+                            "children": [
+                                "Enter your email address and we'll send you a link to reset your password."
+                            ]
+                        },
+                        {
+                            "type": "InputText",
+                            "name": "email",
+                            "props": {
+                                "placeholder": "Email",
+                                "class": "w-full p-2"
+                            },
+                            "model": {
+                                "form": "forgot-password-form",
+                                "field": "email"
+                            }
+                        },
+                        {
+                            "type": "Button",
+                            "props": {
+                                "label": "Send Reset Link",
+                                "class": "p-button-primary mt-4",
+                                "action": "submit"
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

@@ -1,0 +1,103 @@
+# JSON UI Module Architecture
+
+This section describes the standard architecture and file organization for JSON UI modules stored within the `storage/aiInstaller/` directory.
+
+## Key Documents
+
+-   **[Installation Format](./installation-format.md)**: Details the directory structure (`_i/`, `templates/`, `actions/`, etc.) and file formats expected for a module to be installable by the AI Installer. *(Note: Contains cleaned-up concepts, removed Level 1/2 references).*
+
+Understanding this architecture is crucial for creating compatible and maintainable modules. Refer also to the [Module Installation](./../module-installation/) documentation.
+
+**See also: **
+
+* [Core Concepts](../core-concepts/README.md)
+* [Module Installation](../module-installation/README.md)
+* [Storage Code Structure](../../../standards/storage-code-structure.md)
+* [Commands and Operations Overview](../commands-and-operations/README.md)
+
+## Core Principles
+
+- **Modularity: ** Each functional block of the application is designed as a separate module.
+- **Reusability: ** Components and logic within a module can be reused (e.g., via the [`include` server operation](../commands-and-operations/server-operations-reference.md#include)).
+- **Clear Separation: ** Separation of [UI (JSON)](../core-concepts/template-schema.md), [data](../../../core/AiRudeDepot/Support/Data.md) handling, and [server-side logic](../../../core/AiRudeDepot/README.md), often managed by [`DataHub`](../../../core/AiRudeDepot/Support/DataHub.md).
+
+## Module Types
+
+The system supports various types of modules, optimized for specific tasks. For more details,
+see the [description of module types in the main JSON UI README](../README.md#module-types).
+
+### [Landing Page Modules](./landing-page-modules/README.md)
+
+* **Purpose: ** Presentation pages, introductory screens.
+* **Features: ** Simple structure, emphasis on UI, use of client-side [event handlers (`customHooks`)](../core-concepts/managers.md).
+* **Example: ** See the section [Landing Page Type Modules](./landing-page-modules/README.md).
+
+### [Primary Form Modules](./primary-form-modules/README.md)
+
+* **Purpose: ** Main forms for working with data, often involving [`FormManager`](../../resources/managers/form/formManager.md).
+* **Features: ** Complex logic, use of server-side commands/[actions](../core-concepts/module-actions.md) (invoked via client [`customHooks`](../core-concepts/managers.md)), [validation rules](../module-installation/directory-structure.md#validations), interaction with models and [`DataHub`](../../../core/AiRudeDepot/Support/DataHub.md).
+* **Example: ** See the section [Primary Form Type Modules](./primary-form-modules/README.md).
+
+### Login Form Modules
+
+* **Purpose:** Authentication and registration.
+* **Example: ** *Example not yet documented.*
+
+### Top Bar Modules
+
+* **Purpose: ** Global navigation, search, notifications.
+* **Example: ** *Example not yet documented.*
+
+## Internal Module Structure
+
+The standard directory structure of a module is detailed in the
+section [Module Directory Structure](../module-installation/directory-structure.md).
+
+Key elements: * **[`_i/`](../module-installation/directory-structure.md#_i-metadata)**: Installation metadata (see [Installation Metadata](../module-installation/installation-meta-files.md) and [Installation File Format](./installation-format.md)).
+* **[`page.json`](../module-installation/directory-structure.md#pagejson)**: Main file describing the [UI structure](../core-concepts/template-schema.md) of the page/module.
+* **[`templates/`](../module-installation/directory-structure.md#templates)**: JSON templates for UI components (see [Component Syntax](../core-concepts/component-syntax.md)).
+* **[`sections/`](../module-installation/directory-structure.md#sections)**: (Often used in Landing Pages) Reusable blocks/sections of the page, typically included using the [`include` operation](../commands-and-operations/server-operations-reference.md#include).
+* **[`actions/`](../module-installation/directory-structure.md#actions)**: Definitions of [Server Actions](../core-concepts/module-actions.md) (sequences of [server commands](../commands-and-operations/server-actions-reference.md)) invoked via `call` or client `sendData` hooks.
+* **[`data/`](../module-installation/directory-structure.md#data)**: Initial or static data for the module (see [`Data` Support Class](../../../core/AiRudeDepot/Support/Data.md)).
+* **[`validations/`](../module-installation/directory-structure.md#validations)**: Validation rules, often used with [`FormManager`](../../resources/managers/form/formManager.md).
+
+## Component Interaction
+
+Interaction between components and with the system is handled via: * **Command System (Server)**: For executing server-side logic (see [Server Actions Reference](../commands-and-operations/server-actions-reference.md) and [Server Operations Reference](../commands-and-operations/server-operations-reference.md)), typically initiated via `customHooks` using `sendData`.
+* **Client Actions (`customHooks`)**: For simple client-side UI effects and initiating server requests (see [UI Commands Reference](../commands-and-operations/ui-documentation.md) and `ActionManager` within [Global Managers](../core-concepts/managers.md)).
+* **Global Managers (`hub`)**: For accessing shared services and state (see [`HubManager`](../../resources/managers/HubManager.md) and [Global Managers List](../core-concepts/managers.md)).
+* **Event Bus (`hub.notifyManager`)**: For loose coupling between components/managers (see `NotifyManager` within [Global Managers](../core-concepts/managers.md)).
+
+## Contents
+
+1. **[Installation File Format (`installation-format.md`)](installation-format.md)**
+* Describes the structure and purpose of `manifest.json` and `module.json` files, necessary for registering and installing
+the module in the main system.
+
+2. **[Landing Page Type Modules (`landing-page-modules/`)](landing-page-modules/README.md)**
+* **[README](landing-page-modules/README.md)**: Overview of presentation-oriented modules.
+* **[How to Create](landing-page-modules/how-to-create.md)**: Step-by-step guide to creating a Landing Page module.
+* **[Example](landing-page-modules/example.md)**: Analysis of the `landing-main-page` module structure.
+* **Key features: ** Use of [`include`](../commands-and-operations/server-operations-reference.md#include) for composition, [`customHooks`](../core-concepts/managers.md) for simple navigation (
+[`navigateTo`](../commands-and-operations/ui-documentation.md#navigateto)).
+
+3. **[Primary Form Type Modules (`primary-form-modules/`)](primary-form-modules/README.md)**
+* **[How to Create](primary-form-modules/how-to-create.md)**: Step-by-step guide to creating a Primary Form module.
+* **[Example](primary-form-modules/example.md)**: Analysis of the `primary-form` module structure.
+* **Key features: ** Separation into [`templates`](../module-installation/directory-structure.md#templates), [`actions`](../module-installation/directory-structure.md#actions), [`data`](../module-installation/directory-structure.md#data). Use of the
+[`AiRudeDepot`](../../../core/AiRudeDepot/README.md) command system ([`ProcessInstruction`](../../../core/AiRudeDepot/Render/ProcessInstruction.md)) on the server (initiated via client [`customHooks`](../core-concepts/managers.md) like `sendData`).
+
+## General Structural Principles
+
+* **Isolation: ** Each module resides in its own directory within `storage/aiInstaller/` (as defined in [Storage Code Structure](../../../standards/storage-code-structure.md)).
+* **Entry Point: ** Typically, there is a root file (e.g., [`page.json`](../module-installation/directory-structure.md#pagejson)) for the module's main page.
+* **Reusability:**
+* Within a module: UI sections (`sections/`) or templates (`templates/`) can be reused via the [`include` server operation](../commands-and-operations/server-operations-reference.md#include).
+* Between modules: (Requires clarification) Common components or commands might be extracted into a separate "common"
+module or library (consider [Component Standards](../../../standards/component-standards.md)).
+* **Configuration: ** [`manifest.json` and `module.json`](./installation-format.md) files provide metadata for the installation system.
+
+## Choosing a Module Type
+
+The choice of module structure ([Landing Page](./landing-page-modules/README.md) vs. [Primary Form](./primary-form-modules/README.md)) depends on its purpose: * For displaying content with minimal interactivity -> **Landing Page**.
+* For forms, processes, data handling, complex logic -> **Primary Form**.

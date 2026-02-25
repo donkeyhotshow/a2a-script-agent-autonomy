@@ -1,0 +1,85 @@
+{
+    "type": "Section",
+    "name": "f-section",
+    "props": {
+        "class": "py-6 px-6 lg:px-20 my-2 md:my-6"
+    },
+    "children": [
+        {
+            "type": "Grid",
+            "props": {
+                "class": "grid grid-cols-12 gap-4"
+            },
+            "children": [
+                {
+                    "type": "Column",
+                    "props": {
+                        "class": "col-span-12"
+                    },
+                    "children": [
+                        {
+                            "type": "Text",
+                            "props": {
+                                "content": "<div class='font-semibold text-xl'>Tree</div>"
+                            }
+                        },
+                        {
+                            "type": "Tree",
+                            "props": {
+                                "value": "treeValue",
+                                "selectionMode": "checkbox",
+                                "model:selectionKeys": "selectedTreeValue"
+                            }
+                        }
+                    ]
+                },
+                {
+                    "type": "Column",
+                    "props": {
+                        "class": "col-span-12"
+                    },
+                    "children": [
+                        {
+                            "type": "Text",
+                            "props": {
+                                "content": "<div class='font-semibold text-xl mb-4'>TreeTable</div>"
+                            }
+                        },
+                        {
+                            "type": "TreeTable",
+                            "props": {
+                                "value": "treeTableValue",
+                                "selectionMode": "checkbox",
+                                "model:selectionKeys": "selectedTreeTableValue"
+                            },
+                            "children": [
+                                {
+                                    "type": "Column",
+                                    "props": {
+                                        "field": "name",
+                                        "header": "Name",
+                                        "expander": true
+                                    }
+                                },
+                                {
+                                    "type": "Column",
+                                    "props": {
+                                        "field": "size",
+                                        "header": "Size"
+                                    }
+                                },
+                                {
+                                    "type": "Column",
+                                    "props": {
+                                        "field": "type",
+                                        "header": "Type"
+                                    }
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

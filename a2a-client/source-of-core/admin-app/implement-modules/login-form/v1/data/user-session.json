@@ -1,0 +1,11 @@
+{
+    "isLoggedIn": false,
+    "user": null,
+    "permissions": [],
+    "lastActivity": "",
+    "preferences": {
+        "theme": "light",
+        "language": "en",
+        "notifications": true
+    }
+}

@@ -1,0 +1,77 @@
+{
+    "type": "Instructions",
+    "instructions": [
+        {
+            "action": "update",
+            "batch": [
+                {
+                    "value": "submit-task",
+                    "to": "buffer:actionId"
+                },
+                {
+                    "value": {
+                        "keywords": ["task", "submission", "workflow"],
+                        "ai_summary": "Submits a task for processing in the workflow.",
+                        "features": ["workflow-management"]
+                    },
+                    "to": "buffer:tags"
+                }
+            ]
+        },
+        {
+            "action": "comment",
+            "value": "Submit task for processing in workflow"
+        },
+        {
+            "action": "update",
+            "batch": [
+                {
+                    "from": "input:taskData",
+                    "to": "buffer:taskData"
+                },
+                {
+                    "value": {
+                        "timestamp": "{system:timestamp}",
+                        "taskData": "{buffer:taskData}",
+                        "status": "submitted"
+                    },
+                    "to": "buffer:submissionData"
+                }
+            ]
+        },
+        {
+            "action": "update",
+            "batch": [
+                {
+                    "from": "buffer:submissionData",
+                    "to": "file!question-to-user/data/tasks/{input:taskId}.json"
+                }
+            ]
+        },
+        {
+            "action": "save",
+            "from": "file!question-to-user/data/tasks/{input:taskId}.json"
+        },
+        {
+            "action": "update",
+            "batch": [
+                {
+                    "from": "buffer:actionId",
+                    "to": "output:actionId"
+                },
+                {
+                    "from": "buffer:tags",
+                    "to": "output:tags"
+                },
+                {
+                    "value": {
+                        "success": true,
+                        "message": "Task submitted successfully.",
+                        "taskId": "{input:taskId}"
+                    },
+                    "to": "output:result"
+                }
+            ]
+        }
+    ]
+} 

@@ -1,0 +1,485 @@
+{
+    "type": "Page",
+    "title": "Запис на прийом",
+    "description": "Забронюйте своє барбер- або тату-сеанс у Barber XXL 1.",
+    "content": {
+        "type": "Panel",
+        "name": "booking-page",
+        "props": {
+            "class": "bg-surface-0 dark:bg-surface-900"
+        },
+        "children": [
+            {
+                "type": "operation",
+                "action": "include",
+                "source": "landing-main-page/sections/header-section"
+            },
+            {
+                "type": "div",
+                "props": {
+                    "class": "flex flex-col pt-6 px-6 lg:px-20 overflow-hidden",
+                    "style": "background: linear-gradient(0deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.2)), radial-gradient(77.36% 256.97% at 77.36% 57.52%, rgb(238, 239, 175) 0%, rgb(195, 227, 250) 100%); clip-path: ellipse(150% 87% at 93% 13%)"
+                },
+                "children": [
+                    {
+                        "type": "div",
+                        "props": {
+                            "content": "<h1 class='text-5xl font-bold text-gray-900 leading-tight'><span class='font-light block'>Забронюйте свій</span>Ідеальний досвід</h1>",
+                            "class": "mx-6 md:mx-20 mt-6 mb-4"
+                        }
+                    },
+                    {
+                        "type": "div",
+                        "props": {
+                            "content": "<p class='font-normal text-2xl leading-normal md:mt-4 text-gray-700'>Запишіться на прийом до наших експертів-барберів та тату-майстрів.</p>",
+                            "class": "mx-6 md:mx-20 mb-10"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "div",
+                "name": "booking-tabs-section",
+                "props": {
+                    "class": "py-8 px-4 md:px-6 lg:px-8 bg-surface-50 dark:bg-surface-800"
+                },
+                "children": [
+                    {
+                        "type": "div",
+                        "props": {
+                            "class": "max-w-7xl mx-auto"
+                        },
+                        "children": [
+                            {
+                                "type": "Tabs",
+                                "props": {
+                                    "class": "booking-tabs"
+                                },
+                                "items": [
+                                    {
+                                        "type": "TabPanel",
+                                        "props": {
+                                            "header": "Барбер послуги",
+                                            "leftIcon": "pi pi-scissors mr-2"
+                                        },
+                                        "children": [
+                                            {
+                                                "type": "operation",
+                                                "action": "include",
+                                                "source": "landing-main-page/sections/booking/booking-form-section"
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "type": "TabPanel",
+                                        "props": {
+                                            "header": "Тату сесії",
+                                            "leftIcon": "pi pi-palette mr-2"
+                                        },
+                                        "children": [
+                                            {
+                                                "type": "div",
+                                                "props": {
+                                                    "class": "p-6 bg-surface-0 dark:bg-surface-900 shadow-lg rounded-lg"
+                                                },
+                                                "children": [
+                                                    {
+                                                        "type": "div",
+                                                        "props": {
+                                                            "content": "<h2 class='text-3xl font-bold mb-6 text-center text-surface-900 dark:text-surface-0'>Запишіться на тату-сесію</h2><p class='text-lg text-surface-600 dark:text-surface-400 mb-6 text-center'>Перед тату-сесією рекомендуємо спочатку пройти безкоштовну консультацію, щоб обговорити дизайн, розмір та розташування татуювання.</p>"
+                                                        }
+                                                    },
+                                                    {
+                                                        "type": "Form",
+                                                        "props": {
+                                                            "class": "flex flex-column gap-4"
+                                                        },
+                                                        "children": [
+                                                            {
+                                                                "type": "Grid",
+                                                                "props": {
+                                                                    "class": "grid grid-cols-1 md:grid-cols-2 gap-4"
+                                                                },
+                                                                "children": [
+                                                                    {
+                                                                        "type": "Column",
+                                                                        "children": [
+                                                                            {
+                                                                                "type": "InputText",
+                                                                                "props": {
+                                                                                    "placeholder": "Ваше ім'я",
+                                                                                    "class": "w-full"
+                                                                                }
+                                                                            }
+                                                                        ]
+                                                                    },
+                                                                    {
+                                                                        "type": "Column",
+                                                                        "children": [
+                                                                            {
+                                                                                "type": "InputText",
+                                                                                "props": {
+                                                                                    "placeholder": "Ваш email",
+                                                                                    "class": "w-full"
+                                                                                }
+                                                                            }
+                                                                        ]
+                                                                    }
+                                                                ]
+                                                            },
+                                                            {
+                                                                "type": "InputText",
+                                                                "props": {
+                                                                    "placeholder": "Ваш телефон",
+                                                                    "class": "w-full"
+                                                                }
+                                                            },
+                                                            {
+                                                                "type": "Dropdown",
+                                                                "props": {
+                                                                    "options": [
+                                                                        {
+                                                                            "label": "Консультація (Безкоштовно)",
+                                                                            "value": "consultation"
+                                                                        },
+                                                                        {
+                                                                            "label": "Невелике татуювання",
+                                                                            "value": "small_tattoo"
+                                                                        },
+                                                                        {
+                                                                            "label": "Середнє татуювання",
+                                                                            "value": "medium_tattoo"
+                                                                        },
+                                                                        {
+                                                                            "label": "Тату-рукав",
+                                                                            "value": "sleeve"
+                                                                        },
+                                                                        {
+                                                                            "label": "Продовження сеансу",
+                                                                            "value": "followup"
+                                                                        }
+                                                                    ],
+                                                                    "placeholder": "Тип тату-сесії",
+                                                                    "class": "w-full"
+                                                                }
+                                                            },
+                                                            {
+                                                                "type": "Dropdown",
+                                                                "props": {
+                                                                    "options": [
+                                                                        {
+                                                                            "label": "Марія - Тату-майстер",
+                                                                            "value": "maria"
+                                                                        },
+                                                                        {
+                                                                            "label": "Олег - Тату-майстер",
+                                                                            "value": "oleg"
+                                                                        },
+                                                                        {
+                                                                            "label": "Будь-який майстер",
+                                                                            "value": "any"
+                                                                        }
+                                                                    ],
+                                                                    "placeholder": "Виберіть тату-майстра",
+                                                                    "class": "w-full"
+                                                                }
+                                                            },
+                                                            {
+                                                                "type": "Calendar",
+                                                                "props": {
+                                                                    "placeholder": "Оберіть дату",
+                                                                    "class": "w-full"
+                                                                }
+                                                            },
+                                                            {
+                                                                "type": "InputTextarea",
+                                                                "props": {
+                                                                    "placeholder": "Опишіть свою ідею татуювання або прикріпіть посилання на референси",
+                                                                    "rows": 5,
+                                                                    "class": "w-full"
+                                                                }
+                                                            },
+                                                            {
+                                                                "type": "Button",
+                                                                "props": {
+                                                                    "label": "Надіслати запит на консультацію",
+                                                                    "severity": "primary",
+                                                                    "class": "w-full mt-4"
+                                                                }
+                                                            }
+                                                        ]
+                                                    }
+                                                ]
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "type": "TabPanel",
+                                        "props": {
+                                            "header": "Преміум-пакети",
+                                            "leftIcon": "pi pi-star mr-2"
+                                        },
+                                        "children": [
+                                            {
+                                                "type": "div",
+                                                "props": {
+                                                    "class": "p-6 bg-surface-0 dark:bg-surface-900 shadow-lg rounded-lg"
+                                                },
+                                                "children": [
+                                                    {
+                                                        "type": "div",
+                                                        "props": {
+                                                            "content": "<h2 class='text-3xl font-bold mb-6 text-center text-surface-900 dark:text-surface-0'>Забронюйте преміум-пакет</h2><p class='text-lg text-surface-600 dark:text-surface-400 mb-6 text-center'>Оберіть один з наших преміум-пакетів для повного досвіду перевтілення.</p>"
+                                                        }
+                                                    },
+                                                    {
+                                                        "type": "Grid",
+                                                        "props": {
+                                                            "class": "grid grid-cols-1 md:grid-cols-2 gap-6 mb-6"
+                                                        },
+                                                        "children": [
+                                                            {
+                                                                "type": "Column",
+                                                                "children": [
+                                                                    {
+                                                                        "type": "Card",
+                                                                        "props": {
+                                                                            "class": "border-2 border-primary p-4 rounded-lg hover:shadow-lg transition-shadow duration-300 bg-surface-0 dark:bg-surface-900 cursor-pointer"
+                                                                        },
+                                                                        "children": [
+                                                                            {
+                                                                                "type": "div",
+                                                                                "props": {
+                                                                                    "content": "<h3 class='text-xl font-bold text-primary'>Екзекютів</h3><p class='text-surface-600 dark:text-surface-300 mb-2'>Повний комплекс послуг для сучасного джентльмена</p><p class='text-xl font-bold text-surface-900 dark:text-surface-0'>₴950</p>"
+                                                                                }
+                                                                            }
+                                                                        ]
+                                                                    }
+                                                                ]
+                                                            },
+                                                            {
+                                                                "type": "Column",
+                                                                "children": [
+                                                                    {
+                                                                        "type": "Card",
+                                                                        "props": {
+                                                                            "class": "border-2 border-primary p-4 rounded-lg hover:shadow-lg transition-shadow duration-300 bg-surface-0 dark:bg-surface-900 cursor-pointer"
+                                                                        },
+                                                                        "children": [
+                                                                            {
+                                                                                "type": "div",
+                                                                                "props": {
+                                                                                    "content": "<h3 class='text-xl font-bold text-primary'>Чорнила та Стрижка</h3><p class='text-surface-600 dark:text-surface-300 mb-2'>Ідеальне поєднання стилю та мистецтва</p><p class='text-xl font-bold text-surface-900 dark:text-surface-0'>₴1,500</p>"
+                                                                                }
+                                                                            }
+                                                                        ]
+                                                                    }
+                                                                ]
+                                                            }
+                                                        ]
+                                                    },
+                                                    {
+                                                        "type": "Form",
+                                                        "props": {
+                                                            "class": "flex flex-column gap-4"
+                                                        },
+                                                        "children": [
+                                                            {
+                                                                "type": "InputText",
+                                                                "props": {
+                                                                    "placeholder": "Ваше ім'я",
+                                                                    "class": "w-full"
+                                                                }
+                                                            },
+                                                            {
+                                                                "type": "InputText",
+                                                                "props": {
+                                                                    "placeholder": "Ваш email",
+                                                                    "class": "w-full"
+                                                                }
+                                                            },
+                                                            {
+                                                                "type": "InputText",
+                                                                "props": {
+                                                                    "placeholder": "Ваш телефон",
+                                                                    "class": "w-full"
+                                                                }
+                                                            },
+                                                            {
+                                                                "type": "Calendar",
+                                                                "props": {
+                                                                    "placeholder": "Оберіть дату",
+                                                                    "class": "w-full"
+                                                                }
+                                                            },
+                                                            {
+                                                                "type": "InputTextarea",
+                                                                "props": {
+                                                                    "placeholder": "Додаткові побажання",
+                                                                    "rows": 3,
+                                                                    "class": "w-full"
+                                                                }
+                                                            },
+                                                            {
+                                                                "type": "Button",
+                                                                "props": {
+                                                                    "label": "Забронювати пакет",
+                                                                    "class": "w-full cursor-pointer"
+                                                                }
+                                                            }
+                                                        ]
+                                                    }
+                                                ]
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "type": "div",
+                "name": "booking-features",
+                "props": {
+                    "class": "py-6 px-6 lg:px-20 mt-8 mx-0 lg:mx-20 bg-white dark:bg-surface-800"
+                },
+                "children": [
+                    {
+                        "type": "div",
+                        "props": {
+                            "content": "<div class='text-surface-900 dark:text-surface-0 font-normal mb-2 text-4xl'>Чому обрати нас</div><span class='text-muted-color text-2xl'>Відчуйте зручність та високу якість обслуговування</span>",
+                            "class": "text-center mb-8"
+                        }
+                    },
+                    {
+                        "type": "Grid",
+                        "props": {
+                            "class": "grid grid-cols-1 md:grid-cols-3 gap-6"
+                        },
+                        "children": [
+                            {
+                                "type": "Column",
+                                "props": {
+                                    "class": "p-4 bg-surface-50 dark:bg-surface-700 rounded-lg shadow-sm"
+                                },
+                                "children": [
+                                    {
+                                        "type": "div",
+                                        "props": {
+                                            "class": "flex items-center mb-4"
+                                        },
+                                        "children": [
+                                            {
+                                                "type": "Icon",
+                                                "props": {
+                                                    "name": "pi pi-calendar",
+                                                    "class": "text-3xl text-primary mr-4"
+                                                }
+                                            },
+                                            {
+                                                "type": "div",
+                                                "props": {
+                                                    "content": "<h3 class='text-xl font-semibold text-surface-900 dark:text-surface-0'>Зручне бронювання</h3>"
+                                                }
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "type": "div",
+                                        "props": {
+                                            "content": "<p class='text-surface-600 dark:text-surface-300'>Виберіть зручний час та дату за допомогою нашої простої системи бронювання.</p>"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "Column",
+                                "props": {
+                                    "class": "p-4 bg-surface-50 dark:bg-surface-700 rounded-lg shadow-sm"
+                                },
+                                "children": [
+                                    {
+                                        "type": "div",
+                                        "props": {
+                                            "class": "flex items-center mb-4"
+                                        },
+                                        "children": [
+                                            {
+                                                "type": "Icon",
+                                                "props": {
+                                                    "name": "pi pi-clock",
+                                                    "class": "text-3xl text-primary mr-4"
+                                                }
+                                            },
+                                            {
+                                                "type": "div",
+                                                "props": {
+                                                    "content": "<h3 class='text-xl font-semibold text-surface-900 dark:text-surface-0'>Без черг</h3>"
+                                                }
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "type": "div",
+                                        "props": {
+                                            "content": "<p class='text-surface-600 dark:text-surface-300'>Пропустіть чергу та приходьте точно до запланованого часу вашого прийому.</p>"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "Column",
+                                "props": {
+                                    "class": "p-4 bg-surface-50 dark:bg-surface-700 rounded-lg shadow-sm"
+                                },
+                                "children": [
+                                    {
+                                        "type": "div",
+                                        "props": {
+                                            "class": "flex items-center mb-4"
+                                        },
+                                        "children": [
+                                            {
+                                                "type": "Icon",
+                                                "props": {
+                                                    "name": "pi pi-user",
+                                                    "class": "text-3xl text-primary mr-4"
+                                                }
+                                            },
+                                            {
+                                                "type": "div",
+                                                "props": {
+                                                    "content": "<h3 class='text-xl font-semibold text-surface-900 dark:text-surface-0'>Професійні майстри</h3>"
+                                                }
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "type": "div",
+                                        "props": {
+                                            "content": "<p class='text-surface-600 dark:text-surface-300'>Виберіть серед наших досвідчених барберів та тату-майстрів для створення вашого ідеального стилю.</p>"
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "type": "operation",
+                "action": "include",
+                "source": "landing-main-page/sections/booking-confirmation-section"
+            },
+            {
+                "type": "operation",
+                "action": "include",
+                "source": "landing-main-page/sections/footer-section"
+            }
+        ]
+    }
+}
+
+

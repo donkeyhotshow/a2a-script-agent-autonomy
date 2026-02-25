@@ -1,0 +1,1336 @@
+{
+    "type": "page",
+    "version": "1.0.0",
+    "layout": "config.default_layout",
+    "title": "Конфигурация верхней панели (Top Bar)",
+    "description": "Страница для управления настройками верхней панели приложения.",
+    "//_comment_dataSources": "Loads the top-bar-settings.json file. Initializes with default structure on error.",
+    "dataSources": [
+        {
+            "id": "topBarConfigData",
+            "action": "config.load_config_file",
+            "params": {
+                "filePath": "implement-modules/top-bar/top-bar-settings.json"
+            },
+            "onSuccess": {
+                "setContext": {
+                    "formData": "{{actionResult.fileContent}}",
+                    "activeTab": 0
+                }
+            },
+            "onError": {
+                "showToast": {
+                    "severity": "error",
+                    "summary": "Ошибка загрузки",
+                    "detail": "Не удалось загрузить конфигурацию Top Bar: {{error.message}}"
+                },
+                "setContext": {
+                    "formData": {
+                        "leftItems": [],
+                        "rightItems": [],
+                        "globalSettings": {}
+                    }
+                }
+            }
+        }
+    ],
+    "//_comment_actions": "Manages CRUD operations for top bar items and global settings saving.",
+    "actions": [
+        {
+            "id": "saveChanges",
+            "//_comment_saveChanges": "Saves the entire top bar configuration.",
+            "action": "config.save_config_file",
+            "params": {
+                "filePath": "implement-modules/top-bar/top-bar-settings.json",
+                "fileContent": "{{context.formData}}"
+            },
+            "onSuccess": {
+                "showToast": {
+                    "severity": "success",
+                    "summary": "Сохранено",
+                    "detail": "Конфигурация Top Bar успешно сохранена."
+                },
+                "triggerDataSource": "topBarConfigData"
+            },
+            "onError": {
+                "showToast": {
+                    "severity": "error",
+                    "summary": "Ошибка сохранения",
+                    "detail": "Не удалось сохранить конфигурацию Top Bar: {{error.message}}"
+                }
+            }
+        },
+        {
+            "id": "openItemForm",
+            "params": [
+                "listName",
+                "itemIndex",
+                "itemData"
+            ],
+            "//_comment_openItemForm": "Prepares and shows a dialog/form for adding or editing an item from either leftItems or rightItems list. `itemIndex` is null for new items.",
+            "run": [
+                {
+                    "setContext": {
+                        "itemForm": {
+                            "visible": true,
+                            "listName": "{{params.listName}}",
+                            "itemIndex": "{{params.itemIndex !== null ? params.itemIndex : null}}",
+                            "data": "{{params.itemData ? params.itemData : { type: 'link', order: 0 } }}"
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "id": "closeItemForm",
+            "//_comment_closeItemForm": "Hides the item add/edit form.",
+            "run": [
+                {
+                    "setContext": {
+                        "itemForm": null
+                    }
+                }
+            ]
+        },
+        {
+            "id": "submitItemForm",
+            "params": [
+                "formData",
+                "listName",
+                "itemIndex"
+            ],
+            "//_comment_submitItemForm": "Handles saving the item from the form. If itemIndex is provided, it updates an existing item; otherwise, it adds a new item to the specified list (leftItems or rightItems).",
+            "run": [
+                {
+                    "if": "{{params.itemIndex !== null}}",
+                    "then": [
+                        {
+                            "setContext": {
+                                "formData": "{{
+                                let
+                                updatedList
+                                =
+                        [
+                            ...context.formData
+                            [
+                                params.listName
+                            ]
+                        ]
+                        ;
+                        updatedList
+                        [
+                            params.itemIndex
+                        ]
+                        =
+                        params.formData
+                        ;
+                        {
+                            ...context.formData,
+                        [
+                            params.listName
+                        ]
+                        :
+                        updatedList
+                        }
+                    }
+                    }
+                        "
+                        }
+                    }
+                    ],
+                    "else": [
+                        {
+                            "setContext": {
+                                "formData": "{{ {...context.formData, [params.listName]: [...(context.formData[params.listName] || []), params.formData]} }}"
+                            }
+                        }
+                    ]
+                },
+                {
+                    "triggerAction": "closeItemForm"
+                }
+            ]
+        },
+        {
+            "id": "deleteItem",
+            "params": [
+                "listName",
+                "itemIndex"
+            ],
+            "//_comment_deleteItem": "Deletes an item from the specified list (leftItems or rightItems) at the given index.",
+            "run": [
+                {
+                    "setContext": {
+                        "formData": "{{
+                        let
+                        list
+                        =
+                [
+                    ...context.formData
+                    [
+                        params.listName
+                    ]
+                ]
+                ;
+                list.splice(params.itemIndex,
+                1)
+                ;
+                {
+                    ...context.formData,
+                [
+                    params.listName
+                ]
+                :
+                list
+                }
+            }
+            }
+                "
+                }
+            }
+            ]
+        }
+    ],
+    "//_comment_body": "Main page layout: Toolbar for saving, TabView for Left Items, Right Items, and Global Settings.",
+    "body": [
+        {
+            "type": " p-toolbar",
+            "//_comment_save_toolbar": "Global save button for all top bar configurations.",
+            "children": [
+                {
+                    "type": " div",
+                    "props": {
+                        "class": "p-toolbar-group-right"
+                    },
+                    "children": [
+                        {
+                            "type": " p-button",
+                            "props": {
+                                "label": "Сохранить изменения",
+                                "icon": "pi pi-save",
+                                "class": "p-button-success"
+                            },
+                            "events": {
+                                "click": {
+                                    "triggerAction": "saveChanges"
+                                }
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "type": " p-tabView",
+            "//_comment_main_tabs": "Tabs for managing left items, right items, and global settings of the top bar.",
+            "props": {
+                "activeIndex": "{{context.activeTab}}"
+            },
+            "events": {
+                "update:activeIndex": {
+                    "setContext": {
+                        "activeTab": "{{eventValue}}"
+                    }
+                }
+            },
+            "children": [
+                {
+                    "type": " p-tabPanel",
+                    "props": {
+                        "header": "Элементы слева"
+                    },
+                    "//_comment_left_items_panel": "Panel for managing items displayed on the left side of the top bar.",
+                    "children": [
+                        {
+                            "type": " p-toolbar",
+                            "//_comment_add_left_item_toolbar": "Toolbar with a button to add a new item to the left side.",
+                            "props": {
+                                "class": "p-mb-2"
+                            },
+                            "children": [
+                                {
+                                    "type": " div",
+                                    "props": {
+                                        "class": "p-toolbar-group-left"
+                                    },
+                                    "children": [
+                                        {
+                                            "type": " p-button",
+                                            "props": {
+                                                "label": "Добавить элемент слева",
+                                                "icon": "pi pi-plus"
+                                            },
+                                            "events": {
+                                                "click": {
+                                                    "triggerAction": {
+                                                        "id": "openItemForm",
+                                                        "params": {
+                                                            "listName": "leftItems"
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "type": " div",
+                            "props": {
+                                "class": "p-grid"
+                            },
+                            "//_comment_left_items_loop": "Loops through leftItems and displays each in a card.",
+                            "loop": {
+                                "data": "{{context.formData.leftItems}}",
+                                "as": "item",
+                                "indexAs": "itemIndex"
+                            },
+                            "children": [
+                                {
+                                    "type": " div",
+                                    "props": {
+                                        "class": "p-col-12 p-md-6 p-lg-4"
+                                    },
+                                    "children": [
+                                        {
+                                            "type": " p-card",
+                                            "//_comment_item_card": "Card displaying details of a single top bar item. Assumes edit/delete buttons are in the card footer (not shown in partial view).",
+                                            "props": {
+                                                "title": "{{item.label || item.id || ('Элемент ' + (itemIndex + 1))}}"
+                                            },
+                                            "children": [
+                                                {
+                                                    "type": " div",
+                                                    "props": {
+                                                        "class": "p-fluid"
+                                                    },
+                                                    "//_comment_item_details": "Displays common and type-specific details for the item.",
+                                                    "children": [
+                                                        {
+                                                            "type": " p",
+                                                            "props": {
+                                                                "content": "ID: {{item.id || 'N/A'}}"
+                                                            }
+                                                        },
+                                                        {
+                                                            "type": " p",
+                                                            "props": {
+                                                                "content": "Порядок: {{item.order !== undefined ? item.order : 'N/A'}}"
+                                                            }
+                                                        },
+                                                        {
+                                                            "if": "{{item.type === 'link'}}",
+                                                            "then": [
+                                                                {
+                                                                    "type": " p",
+                                                                    "props": {
+                                                                        "content": "Тип: Ссылка"
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "type": " p",
+                                                                    "props": {
+                                                                        "content": "Текст: {{item.label || 'N/A'}}"
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "type": " p",
+                                                                    "props": {
+                                                                        "content": "Иконка: {{item.icon || 'N/A'}}"
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "type": " p",
+                                                                    "props": {
+                                                                        "content": "URL: {{item.target || 'N/A'}}"
+                                                                    }
+                                                                }
+                                                            ]
+                                                        },
+                                                        {
+                                                            "if": "{{item.type === 'image'}}",
+                                                            "then": [
+                                                                {
+                                                                    "type": " p",
+                                                                    "props": {
+                                                                        "content": "Тип: Изображение"
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "type": " img",
+                                                                    "props": {
+                                                                        "src": "{{item.imageUrl}}",
+                                                                        "alt": "{{item.id || 'Image'}}",
+                                                                        "style": {
+                                                                            "maxWidth": "100px",
+                                                                            "maxHeight": "50px",
+                                                                            "display": "{{item.imageUrl ? 'block' : 'none'}}"
+                                                                        }
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "type": " p",
+                                                                    "props": {
+                                                                        "content": "URL: {{item.imageUrl || 'N/A'}}"
+                                                                    }
+                                                                }
+                                                            ]
+                                                        },
+                                                        {
+                                                            "if": "{{item.type === 'iconButton'}}",
+                                                            "then": [
+                                                                {
+                                                                    "type": " p",
+                                                                    "props": {
+                                                                        "content": "Тип: Кнопка-иконка"
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "type": " p",
+                                                                    "props": {
+                                                                        "content": "Иконка: {{item.icon || 'N/A'}}"
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "type": " p",
+                                                                    "props": {
+                                                                        "content": "Action: {{item.action || 'N/A'}}"
+                                                                    }
+                                                                }
+                                                            ]
+                                                        },
+                                                        {
+                                                            "if": "{{item.type === 'dropdown'}}",
+                                                            "then": [
+                                                                {
+                                                                    "type": " p",
+                                                                    "props": {
+                                                                        "content": "Тип: Выпадающий список"
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "type": " p",
+                                                                    "props": {
+                                                                        "content": "Текст: {{item.label || 'N/A'}}"
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "type": " p",
+                                                                    "props": {
+                                                                        "content": "Иконка: {{item.icon || 'N/A'}}"
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "type": " p",
+                                                                    "props": {
+                                                                        "content": "Кол-во элементов: {{(item.items && item.items.length) || 0}}"
+                                                                    }
+                                                                }
+                                                            ]
+                                                        },
+                                                        {
+                                                            "if": "{{!['link', 'image', 'iconButton', 'dropdown'].includes(item.type)}}",
+                                                            "then": [
+                                                                {
+                                                                    "type": " p",
+                                                                    "props": {
+                                                                        "content": "Тип: {{item.type || 'Неизвестный'}}"
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "//_comment_unknown_type_fallback": "Fallback to display other properties if item type is not one of the known types.",
+                                                                    "type": " ul",
+                                                                    "props": {
+                                                                        "class": "p-list-none p-p-0"
+                                                                    },
+                                                                    "loop": {
+                                                                        "data": "{{Object.entries(item).filter(entry => entry[0] !== 'id' && entry[0] !== 'order' && entry[0] !== 'type')}}",
+                                                                        "as": "prop"
+                                                                    },
+                                                                    "children": [
+                                                                        {
+                                                                            "type": " li",
+                                                                            "props": {
+                                                                                "content": "{{prop[0]}}: {{prop[1]}}"
+                                                                            }
+                                                                        }
+                                                                    ]
+                                                                }
+                                                            ]
+                                                        }
+                                                    ]
+                                                }
+                                            ],
+                                            "footer": [
+                                                {
+                                                    "type": " p-button",
+                                                    "props": {
+                                                        "label": "Редактировать",
+                                                        "icon": "pi pi-pencil",
+                                                        "class": "p-button-text"
+                                                    },
+                                                    "events": {
+                                                        "click": {
+                                                            "triggerAction": {
+                                                                "id": "openItemForm",
+                                                                "params": {
+                                                                    "listName": "leftItems",
+                                                                    "itemIndex": "{{itemIndex}}",
+                                                                    "itemData": "{{item}}"
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                },
+                                                {
+                                                    "type": " p-button",
+                                                    "props": {
+                                                        "label": "Удалить",
+                                                        "icon": "pi pi-trash",
+                                                        "class": "p-button-text p-button-danger"
+                                                    },
+                                                    "events": {
+                                                        "click": {
+                                                            "triggerAction": {
+                                                                "id": "deleteItem",
+                                                                "params": {
+                                                                    "listName": "leftItems",
+                                                                    "itemIndex": "{{itemIndex}}"
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "if": "{{ !context.formData.leftItems || context.formData.leftItems.length === 0 }}",
+                            "then": [
+                                {
+                                    "type": " div",
+                                    "props": {
+                                        "content": "Список элементов слева пуст.",
+                                        "class": "p-text-center p-p-3"
+                                    }
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": " p-tabPanel",
+                    "props": {
+                        "header": "Элементы справа"
+                    },
+                    "children": [
+                        {
+                            "type": " p-toolbar",
+                            "props": {
+                                "class": "p-mb-2"
+                            },
+                            "children": [
+                                {
+                                    "type": " div",
+                                    "props": {
+                                        "class": "p-toolbar-group-left"
+                                    },
+                                    "children": [
+                                        {
+                                            "type": " p-button",
+                                            "props": {
+                                                "label": "Добавить элемент справа",
+                                                "icon": "pi pi-plus"
+                                            },
+                                            "events": {
+                                                "click": {
+                                                    "triggerAction": {
+                                                        "id": "openItemForm",
+                                                        "params": {
+                                                            "listName": "rightItems"
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "type": " div",
+                            "props": {
+                                "class": "p-grid"
+                            },
+                            "loop": {
+                                "data": "{{context.formData.rightItems}}",
+                                "as": "item",
+                                "indexAs": "itemIndex"
+                            },
+                            "children": [
+                                {
+                                    "type": " div",
+                                    "props": {
+                                        "class": "p-col-12 p-md-6 p-lg-4"
+                                    },
+                                    "children": [
+                                        {
+                                            "type": " p-card",
+                                            "props": {
+                                                "title": "{{item.label || item.id || ('Элемент ' + (itemIndex + 1))}}"
+                                            },
+                                            "children": [
+                                                {
+                                                    "type": " div",
+                                                    "props": {
+                                                        "class": "p-fluid"
+                                                    },
+                                                    "children": [
+                                                        {
+                                                            "type": " p",
+                                                            "props": {
+                                                                "content": "ID: {{item.id || 'N/A'}}"
+                                                            }
+                                                        },
+                                                        {
+                                                            "type": " p",
+                                                            "props": {
+                                                                "content": "Порядок: {{item.order !== undefined ? item.order : 'N/A'}}"
+                                                            }
+                                                        },
+                                                        {
+                                                            "if": "{{item.type === 'link'}}",
+                                                            "then": [
+                                                                {
+                                                                    "type": " p",
+                                                                    "props": {
+                                                                        "content": "Тип: Ссылка"
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "type": " p",
+                                                                    "props": {
+                                                                        "content": "Текст: {{item.label || 'N/A'}}"
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "type": " p",
+                                                                    "props": {
+                                                                        "content": "Иконка: {{item.icon || 'N/A'}}"
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "type": " p",
+                                                                    "props": {
+                                                                        "content": "URL: {{item.target || 'N/A'}}"
+                                                                    }
+                                                                }
+                                                            ]
+                                                        },
+                                                        {
+                                                            "if": "{{item.type === 'image'}}",
+                                                            "then": [
+                                                                {
+                                                                    "type": " p",
+                                                                    "props": {
+                                                                        "content": "Тип: Изображение"
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "type": " img",
+                                                                    "props": {
+                                                                        "src": "{{item.imageUrl}}",
+                                                                        "alt": "{{item.id || 'Image'}}",
+                                                                        "style": {
+                                                                            "maxWidth": "100px",
+                                                                            "maxHeight": "50px",
+                                                                            "display": "{{item.imageUrl ? 'block' : 'none'}}"
+                                                                        }
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "type": " p",
+                                                                    "props": {
+                                                                        "content": "URL: {{item.imageUrl || 'N/A'}}"
+                                                                    }
+                                                                }
+                                                            ]
+                                                        },
+                                                        {
+                                                            "if": "{{item.type === 'iconButton'}}",
+                                                            "then": [
+                                                                {
+                                                                    "type": " p",
+                                                                    "props": {
+                                                                        "content": "Тип: Кнопка-иконка"
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "type": " p",
+                                                                    "props": {
+                                                                        "content": "Иконка: {{item.icon || 'N/A'}}"
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "type": " p",
+                                                                    "props": {
+                                                                        "content": "Action: {{item.action || 'N/A'}}"
+                                                                    }
+                                                                }
+                                                            ]
+                                                        },
+                                                        {
+                                                            "if": "{{item.type === 'dropdown'}}",
+                                                            "then": [
+                                                                {
+                                                                    "type": " p",
+                                                                    "props": {
+                                                                        "content": "Тип: Выпадающий список"
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "type": " p",
+                                                                    "props": {
+                                                                        "content": "Текст: {{item.label || 'N/A'}}"
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "type": " p",
+                                                                    "props": {
+                                                                        "content": "Иконка: {{item.icon || 'N/A'}}"
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "type": " p",
+                                                                    "props": {
+                                                                        "content": "Кол-во элементов: {{(item.items && item.items.length) || 0}}"
+                                                                    }
+                                                                }
+                                                            ]
+                                                        },
+                                                        {
+                                                            "if": "{{!['link', 'image', 'iconButton', 'dropdown'].includes(item.type)}}",
+                                                            "then": [
+                                                                {
+                                                                    "type": " p",
+                                                                    "props": {
+                                                                        "content": "Тип: {{item.type || 'Неизвестный'}}"
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "type": " ul",
+                                                                    "props": {
+                                                                        "class": "p-list-none p-p-0"
+                                                                    },
+                                                                    "loop": {
+                                                                        "data": "{{Object.entries(item).filter(entry => entry[0] !== 'id' && entry[0] !== 'order' && entry[0] !== 'type')}}",
+                                                                        "as": "prop"
+                                                                    },
+                                                                    "children": [
+                                                                        {
+                                                                            "type": " li",
+                                                                            "props": {
+                                                                                "content": "{{prop[0]}}: {{prop[1]}}"
+                                                                            }
+                                                                        }
+                                                                    ]
+                                                                }
+                                                            ]
+                                                        }
+                                                    ]
+                                                }
+                                            ],
+                                            "footer": [
+                                                {
+                                                    "type": " p-button",
+                                                    "props": {
+                                                        "label": "Редактировать",
+                                                        "icon": "pi pi-pencil",
+                                                        "class": "p-button-text"
+                                                    },
+                                                    "events": {
+                                                        "click": {
+                                                            "triggerAction": {
+                                                                "id": "openItemForm",
+                                                                "params": {
+                                                                    "listName": "rightItems",
+                                                                    "itemIndex": "{{itemIndex}}",
+                                                                    "itemData": "{{item}}"
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                },
+                                                {
+                                                    "type": " p-button",
+                                                    "props": {
+                                                        "label": "Удалить",
+                                                        "icon": "pi pi-trash",
+                                                        "class": "p-button-text p-button-danger"
+                                                    },
+                                                    "events": {
+                                                        "click": {
+                                                            "triggerAction": {
+                                                                "id": "deleteItem",
+                                                                "params": {
+                                                                    "listName": "rightItems",
+                                                                    "itemIndex": "{{itemIndex}}"
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "if": "{{ !context.formData.rightItems || context.formData.rightItems.length === 0 }}",
+                            "then": [
+                                {
+                                    "type": " div",
+                                    "props": {
+                                        "content": "Список элементов справа пуст.",
+                                        "class": "p-text-center p-p-3"
+                                    }
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": " p-tabPanel",
+                    "props": {
+                        "header": "Глобальные настройки"
+                    },
+                    "children": [
+                        {
+                            "type": " div",
+                            "props": {
+                                "class": "p-fluid p-formgrid p-grid"
+                            },
+                            "children": [
+                                // Sticky setting
+                                {
+                                    "type": " div",
+                                    "props": {
+                                        "class": "p-field p-col-12 p-md-6"
+                                    },
+                                    "children": [
+                                        {
+                                            "type": " label",
+                                            "props": {
+                                                "for": "topbar_sticky",
+                                                "content": "Прилепленная (Sticky)"
+                                            }
+                                        },
+                                        {
+                                            "type": " p-inputSwitch",
+                                            "props": {
+                                                "id": "topbar_sticky",
+                                                "modelValue": "{{context.formData.globalSettings.sticky}}"
+                                            },
+                                            "events": {
+                                                "update:modelValue": {
+                                                    "setContext": {
+                                                        "formData": "{{ {...context.formData, globalSettings: {...context.formData.globalSettings, sticky: eventValue}} }}"
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    ]
+                                },
+                                // Height setting
+                                {
+                                    "type": " div",
+                                    "props": {
+                                        "class": "p-field p-col-12 p-md-6"
+                                    },
+                                    "children": [
+                                        {
+                                            "type": " label",
+                                            "props": {
+                                                "for": "topbar_height",
+                                                "content": "Высота (например, 60px, 4rem)"
+                                            }
+                                        },
+                                        {
+                                            "type": " p-inputText",
+                                            "props": {
+                                                "id": "topbar_height",
+                                                "modelValue": "{{context.formData.globalSettings.height}}"
+                                            },
+                                            "events": {
+                                                "update:modelValue": {
+                                                    "setContext": {
+                                                        "formData": "{{ {...context.formData, globalSettings: {...context.formData.globalSettings, height: eventValue}} }}"
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    ]
+                                },
+                                // Background Color setting
+                                {
+                                    "type": " div",
+                                    "props": {
+                                        "class": "p-field p-col-12 p-md-6"
+                                    },
+                                    "children": [
+                                        {
+                                            "type": " label",
+                                            "props": {
+                                                "for": "topbar_bgColor",
+                                                "content": "Цвет фона (HEX, rgba, имя цвета)"
+                                            }
+                                        },
+                                        {
+                                            "type": " p-inputText",
+                                            // В идеале p-colorPicker, если доступен
+                                            "props": {
+                                                "id": "topbar_bgColor",
+                                                "modelValue": "{{context.formData.globalSettings.backgroundColor}}"
+                                            },
+                                            "events": {
+                                                "update:modelValue": {
+                                                    "setContext": {
+                                                        "formData": "{{ {...context.formData, globalSettings: {...context.formData.globalSettings, backgroundColor: eventValue}} }}"
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    ]
+                                },
+                                // Text Color setting
+                                {
+                                    "type": " div",
+                                    "props": {
+                                        "class": "p-field p-col-12 p-md-6"
+                                    },
+                                    "children": [
+                                        {
+                                            "type": " label",
+                                            "props": {
+                                                "for": "topbar_textColor",
+                                                "content": "Цвет текста (HEX, rgba, имя цвета)"
+                                            }
+                                        },
+                                        {
+                                            "type": " p-inputText",
+                                            // В идеале p-colorPicker
+                                            "props": {
+                                                "id": "topbar_textColor",
+                                                "modelValue": "{{context.formData.globalSettings.textColor}}"
+                                            },
+                                            "events": {
+                                                "update:modelValue": {
+                                                    "setContext": {
+                                                        "formData": "{{ {...context.formData, globalSettings: {...context.formData.globalSettings, textColor: eventValue}} }}"
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        // Dialog for Add/Edit Item
+        {
+            "type": " p-dialog",
+            "props": {
+                "header": "{{ context.itemForm.itemIndex !== null ? 'Редактировать элемент' : 'Добавить элемент' }}",
+                "visible": "{{context.itemForm.visible}}",
+                "modal": true,
+                "style": {
+                    "width": "50vw"
+                },
+                "onHide": {
+                    "triggerAction": "closeItemForm"
+                }
+            },
+            "children": [
+                {
+                    "type": " div",
+                    "props": {
+                        "class": "p-fluid p-formgrid p-grid"
+                    },
+                    "children": [
+                        // ID
+                        {
+                            "type": " div",
+                            "props": {
+                                "class": "p-field p-col-12"
+                            },
+                            "children": [
+                                {
+                                    "type": " label",
+                                    "props": {
+                                        "for": "item_id",
+                                        "content": "ID (уникальный идентификатор)"
+                                    }
+                                },
+                                {
+                                    "type": " p-inputText",
+                                    "props": {
+                                        "id": "item_id",
+                                        "modelValue": "{{context.itemForm.data.id}}"
+                                    },
+                                    "events": {
+                                        "update:modelValue": {
+                                            "setContext": {
+                                                "itemForm.data.id": "{{eventValue}}"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        },
+                        // Type
+                        {
+                            "type": " div",
+                            "props": {
+                                "class": "p-field p-col-12"
+                            },
+                            "children": [
+                                {
+                                    "type": " label",
+                                    "props": {
+                                        "for": "item_type",
+                                        "content": "Тип элемента"
+                                    }
+                                },
+                                {
+                                    "type": " p-dropdown",
+                                    "props": {
+                                        "id": "item_type",
+                                        "options": [
+                                            // Пока только 'link', позже расширим
+                                            {
+                                                "label": "Ссылка (Link)",
+                                                "value": "link"
+                                            },
+                                            {
+                                                "label": "Изображение (Image)",
+                                                "value": "image"
+                                            },
+                                            {
+                                                "label": "Кнопка-иконка (IconButton)",
+                                                "value": "iconButton"
+                                            },
+                                            {
+                                                "label": "Выпадающий список (Dropdown)",
+                                                "value": "dropdown"
+                                            }
+                                        ],
+                                        "modelValue": "{{context.itemForm.data.type}}"
+                                    },
+                                    "events": {
+                                        "update:modelValue": {
+                                            "setContext": {
+                                                "itemForm.data.type": "{{eventValue}}"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        },
+                        // Label
+                        {
+                            "if": "{{context.itemForm.data.type === 'link' || context.itemForm.data.type === 'dropdown'}}",
+                            // Только для link и dropdown
+                            "then": [
+                                {
+                                    "type": " div",
+                                    "props": {
+                                        "class": "p-field p-col-12"
+                                    },
+                                    "children": [
+                                        {
+                                            "type": " label",
+                                            "props": {
+                                                "for": "item_label",
+                                                "content": "Текст/Label"
+                                            }
+                                        },
+                                        {
+                                            "type": " p-inputText",
+                                            "props": {
+                                                "id": "item_label",
+                                                "modelValue": "{{context.itemForm.data.label}}"
+                                            },
+                                            "events": {
+                                                "update:modelValue": {
+                                                    "setContext": {
+                                                        "itemForm.data.label": "{{eventValue}}"
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        // Icon
+                        {
+                            "if": "{{context.itemForm.data.type === 'link' || context.itemForm.data.type === 'iconButton' || context.itemForm.data.type === 'dropdown'}}",
+                            "then": [
+                                {
+                                    "type": " div",
+                                    "props": {
+                                        "class": "p-field p-col-12"
+                                    },
+                                    "children": [
+                                        {
+                                            "type": " label",
+                                            "props": {
+                                                "for": "item_icon",
+                                                "content": "Иконка (например, pi pi-home)"
+                                            }
+                                        },
+                                        {
+                                            "type": " p-inputText",
+                                            "props": {
+                                                "id": "item_icon",
+                                                "modelValue": "{{context.itemForm.data.icon}}"
+                                            },
+                                            "events": {
+                                                "update:modelValue": {
+                                                    "setContext": {
+                                                        "itemForm.data.icon": "{{eventValue}}"
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        // Target (for link type)
+                        {
+                            "if": "{{context.itemForm.data.type === 'link'}}",
+                            "then": [
+                                {
+                                    "type": " div",
+                                    "props": {
+                                        "class": "p-field p-col-12"
+                                    },
+                                    "children": [
+                                        {
+                                            "type": " label",
+                                            "props": {
+                                                "for": "item_target",
+                                                "content": "Цель/URL (для типа Link)"
+                                            }
+                                        },
+                                        {
+                                            "type": " p-inputText",
+                                            "props": {
+                                                "id": "item_target",
+                                                "modelValue": "{{context.itemForm.data.target}}"
+                                            },
+                                            "events": {
+                                                "update:modelValue": {
+                                                    "setContext": {
+                                                        "itemForm.data.target": "{{eventValue}}"
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        // Action (for iconButton type)
+                        {
+                            "if": "{{context.itemForm.data.type === 'iconButton'}}",
+                            "then": [
+                                {
+                                    "type": " div",
+                                    "props": {
+                                        "class": "p-field p-col-12"
+                                    },
+                                    "children": [
+                                        {
+                                            "type": " label",
+                                            "props": {
+                                                "for": "item_action_prop",
+                                                "content": "Action ID (для типа IconButton)"
+                                            }
+                                        },
+                                        {
+                                            "type": " p-inputText",
+                                            "props": {
+                                                "id": "item_action_prop",
+                                                "modelValue": "{{context.itemForm.data.action}}"
+                                            },
+                                            "events": {
+                                                "update:modelValue": {
+                                                    "setContext": {
+                                                        "itemForm.data.action": "{{eventValue}}"
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        // Image URL (for image type)
+                        {
+                            "if": "{{context.itemForm.data.type === 'image'}}",
+                            "then": [
+                                {
+                                    "type": " div",
+                                    "props": {
+                                        "class": "p-field p-col-12"
+                                    },
+                                    "children": [
+                                        {
+                                            "type": " label",
+                                            "props": {
+                                                "for": "item_imageUrl",
+                                                "content": "URL изображения (для типа Image)"
+                                            }
+                                        },
+                                        {
+                                            "type": " p-inputText",
+                                            "props": {
+                                                "id": "item_imageUrl",
+                                                "modelValue": "{{context.itemForm.data.imageUrl}}"
+                                            },
+                                            "events": {
+                                                "update:modelValue": {
+                                                    "setContext": {
+                                                        "itemForm.data.imageUrl": "{{eventValue}}"
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        // Items (for dropdown type)
+                        {
+                            "if": "{{context.itemForm.data.type === 'dropdown'}}",
+                            "then": [
+                                {
+                                    "type": " div",
+                                    "props": {
+                                        "class": "p-field p-col-12"
+                                    },
+                                    "children": [
+                                        {
+                                            "type": " label",
+                                            "props": {
+                                                "for": "item_dropdown_items",
+                                                "content": "Элементы выпадающего списка (JSON массив объектов)"
+                                            }
+                                        },
+                                        {
+                                            "type": " config.json_editor",
+                                            "props": {
+                                                "id": "item_dropdown_items",
+                                                "modelValue": "{{context.itemForm.data.items}}",
+                                                "editorOptions": {
+                                                    "mode": "code",
+                                                    "mainMenuBar": false,
+                                                    "navigationBar": false,
+                                                    "statusBar": false
+                                                },
+                                                "style": {
+                                                    "height": "200px"
+                                                }
+                                            },
+                                            "events": {
+                                                "update:modelValue": {
+                                                    "setContext": {
+                                                        "itemForm.data.items": "{{eventValue}}"
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        // Order
+                        {
+                            "type": " div",
+                            "props": {
+                                "class": "p-field p-col-12"
+                            },
+                            "children": [
+                                {
+                                    "type": " label",
+                                    "props": {
+                                        "for": "item_order",
+                                        "content": "Порядок (число)"
+                                    }
+                                },
+                                {
+                                    "type": " p-inputNumber",
+                                    "props": {
+                                        "id": "item_order",
+                                        "modelValue": "{{context.itemForm.data.order}}"
+                                    },
+                                    "events": {
+                                        "update:modelValue": {
+                                            "setContext": {
+                                                "itemForm.data.order": "{{eventValue}}"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ],
+            "footer": [
+                {
+                    "type": " p-button",
+                    "props": {
+                        "label": "Отмена",
+                        "icon": "pi pi-times",
+                        "class": "p-button-text"
+                    },
+                    "events": {
+                        "click": {
+                            "triggerAction": "closeItemForm"
+                        }
+                    }
+                },
+                {
+                    "type": " p-button",
+                    "props": {
+                        "label": "{{ context.itemForm.itemIndex !== null ? 'Сохранить' : 'Добавить' }}",
+                        "icon": "pi pi-check"
+                    },
+                    "events": {
+                        "click": {
+                            "triggerAction": {
+                                "id": "submitItemForm",
+                                "params": {
+                                    "formData": "{{context.itemForm.data}}",
+                                    "listName": "{{context.itemForm.listName}}",
+                                    "itemIndex": "{{context.itemForm.itemIndex}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            ]
+        }
+    ]
+}

@@ -1,0 +1,25 @@
+{
+
+    "readonly": {
+        "type": "boolean",
+        "required": false,
+        "default": false
+    },
+    "placeholder": {
+        "type": "string",
+        "required": false
+    },
+    "disabled": {
+        "type": "boolean",
+        "required": false,
+        "default": false,
+        "description": "Disable editing in the input text."
+    },
+    "tabindex": {
+        "type": [
+            "string",
+            "number"
+        ],
+        "required": false
+    }
+}

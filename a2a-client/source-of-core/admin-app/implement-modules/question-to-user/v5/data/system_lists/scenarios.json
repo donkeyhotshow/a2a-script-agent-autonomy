@@ -1,0 +1,26 @@
+[
+    {
+        "id": "SCN-ActivateTask",
+        "name": "Activate Task (SCN-ActivateTask)"
+    },
+    {
+        "id": "SCN-CloseTask",
+        "name": "Close Task (SCN-CloseTask)"
+    },
+    {
+        "id": "SCN-FullyCollectTaskData",
+        "name": "Fully Collect Task Data (SCN-FullyCollectTaskData)"
+    },
+    {
+        "id": "SCN-GenerateTaskType",
+        "name": "Generate Task Type (SCN-GenerateTaskType)"
+    },
+    {
+        "id": "SCN-QueryIndex",
+        "name": "Query Index (SCN-QueryIndex)"
+    },
+    {
+        "id": "SCN-MonitorProcess",
+        "name": "Monitor Long Process (SCN-MonitorProcess)"
+    }
+]

@@ -1,0 +1,154 @@
+{
+    "type": "div",
+    "name": "hero-section",
+    "props": {
+        "class": "flex flex-col pt-4 sm:pt-6 px-4 sm:px-6 md:px-8 lg:px-10 xl:px-12 2xl:px-16 overflow-hidden relative min-h-[600px]",
+        "style": "background: linear-gradient(135deg, rgba(18, 168, 0, 0.1) 0%, rgba(107, 0, 245, 0.05) 100%), url('/images/backgrounds/forest-blur.webp') no-repeat center/cover; background-blend-mode: overlay; backdrop-filter: blur(5px);"
+    },
+    "children": [
+        {
+            "type": "div",
+            "props": {
+                "class": "absolute inset-0 z-0",
+                "style": "background: radial-gradient(circle at top left, rgba(18, 168, 0, 0.2) 0%, transparent 60%), radial-gradient(circle at bottom right, rgba(245, 230, 0, 0.1) 0%, transparent 60%); mix-blend-mode: overlay;"
+            }
+        },
+        {
+            "type": "div",
+            "props": {
+                "class": "grid grid-cols-12 mx-2 sm:mx-4 md:mx-6 lg:mx-8 xl:mx-10 mt-0 md:mt-6 relative z-10"
+            },
+            "children": [
+                {
+                    "type": "div",
+                    "props": {
+                        "class": "col-span-12 md:col-span-7 lg:col-span-8 flex flex-col justify-center"
+                    },
+                    "children": [
+                        {
+                            "type": "div",
+                            "props": {
+                                "content": "<h1 class='text-4xl sm:text-5xl md:text-6xl font-bold leading-tight' style='color: #3D3B47;'><span class='font-light block' style='color: #12A800;'>Стиль та якість</span>Твій ідеальний барбершоп</h1><p class='text-lg sm:text-xl md:text-2xl mt-3 sm:mt-4 mb-4 sm:mb-6' style='color: #3D3B47;'>Перетворіть свій образ з найкращими майстрами Києва. Стрижки, догляд за бородою та унікальні тату-дизайни.</p>",
+                                "class": "mb-4 sm:mb-6 backdrop-blur-sm bg-white/30 p-6 rounded-lg shadow-sm"
+                            }
+                        },
+                        {
+                            "type": "ButtonGroup",
+                            "props": {
+                                "class": "flex flex-col sm:flex-row gap-3 sm:gap-4"
+                            },
+                            "children": [
+                                {
+                                    "type": "Button",
+                                    "props": {
+                                        "label": "Записатися зараз",
+                                        "class": "p-button-lg p-button-rounded shadow-lg w-full sm:w-auto",
+                                        "style": "background-color: #F46700; color: white; border: none;",
+                                        "severity": "primary"
+                                    },
+                                    "customHooks": {
+                                        "click": [
+                                            {
+                                                "action": "navigateTo",
+                                                "data": {
+                                                    "route": "/landing-main-page/booking"
+                                                }
+                                            }
+                                        ]
+                                    }
+                                },
+                                {
+                                    "type": "Button",
+                                    "props": {
+                                        "label": "Наші послуги",
+                                        "class": "p-button-lg p-button-outlined p-button-rounded w-full sm:w-auto",
+                                        "style": "border-color: #12A800; color: #12A800; background-color: rgba(255, 255, 255, 0.7);",
+                                        "severity": "secondary"
+                                    },
+                                    "customHooks": {
+                                        "click": [
+                                            {
+                                                "action": "navigateTo",
+                                                "data": {
+                                                    "route": "/landing-main-page/services"
+                                                }
+                                            }
+                                        ]
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "type": "div",
+                            "props": {
+                                "class": "flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-6 mt-6 sm:mt-8"
+                            },
+                            "children": [
+                                {
+                                    "type": "Tag",
+                                    "props": {
+                                        "value": "4.9/5 рейтинг",
+                                        "icon": "pi pi-star-fill",
+                                        "severity": "success",
+                                        "class": "text-base sm:text-lg backdrop-blur-sm",
+                                        "style": "background-color: #12A800; color: white;"
+                                    }
+                                },
+                                {
+                                    "type": "Tag",
+                                    "props": {
+                                        "value": "1000+ клієнтів",
+                                        "icon": "pi pi-users",
+                                        "severity": "info",
+                                        "class": "text-base sm:text-lg backdrop-blur-sm",
+                                        "style": "background-color: #F5E600; color: #3D3B47;"
+                                    }
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": "div",
+                    "props": {
+                        "class": "col-span-12 md:col-span-5 lg:col-span-4 flex justify-center items-center mt-6 md:mt-0"
+                    },
+                    "children": [
+                        {
+                            "type": "div",
+                            "props": {
+                                "class": "max-w-full h-auto md:max-w-md shadow-xl rounded-lg transform rotate-3 overflow-hidden relative",
+                                "style": "height: 300px; width: 100%;"
+                            },
+                            "children": [
+                                {
+                                    "type": "div",
+                                    "props": {
+                                        "class": "absolute inset-0",
+                                        "style": "background: linear-gradient(135deg, #12A800 0%, #F46700 100%); opacity: 0.85;"
+                                    }
+                                },
+                                {
+                                    "type": "div",
+                                    "props": {
+                                        "class": "absolute inset-0 flex items-center justify-center",
+                                        "content": "<h3 class='text-3xl font-bold text-white text-center p-6'>Досконалість<br>у кожній деталі</h3>"
+                                    }
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "type": "div",
+            "name": "belt-placeholder",
+            "props": {
+                "class": "absolute top-0 right-0 h-full w-16 md:w-24 opacity-50",
+                "style": "z-index: 5; clip-path: polygon(20% 0, 100% 0, 100% 100%, 0% 100%); background-color: #12A800;"
+            }
+        }
+    ]
+}
+

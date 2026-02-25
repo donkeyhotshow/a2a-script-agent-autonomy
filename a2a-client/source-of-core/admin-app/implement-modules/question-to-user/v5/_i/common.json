@@ -1,0 +1,26 @@
+{
+    "code": [
+        "code/QuestionToUser.php"
+    ],
+    "data": {
+        "blanks": [
+            "data/blanks/boolean-switch.json",
+            "data/blanks/checkbox-list.json",
+            "data/blanks/directory-path-input.json",
+            "data/blanks/file-path-input.json",
+            "data/blanks/number-input.json",
+            "data/blanks/radio.json",
+            "data/blanks/select.json",
+            "data/blanks/text-block.json",
+            "data/blanks/text-input.json",
+            "data/blanks/textarea.json",
+            "data/blanks/ai-probe-answers-blank.json"
+        ]
+    },
+    "validations": [
+        "validations/ai-probe-validation.json"
+    ],
+    "state": [
+        "state/validationErrors.json"
+    ]
+} 

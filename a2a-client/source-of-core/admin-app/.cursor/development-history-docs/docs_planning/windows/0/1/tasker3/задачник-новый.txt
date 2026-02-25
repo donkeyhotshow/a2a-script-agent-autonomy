@@ -1,0 +1,268 @@
+
+
+```bash
+pwsh -Command "Remove-Item 'engine/markers/SCN-CreateTask_default.progress.json' -Force -ErrorAction SilentlyContinue; Remove-Item 'script/engine/task_definitions/NewTask123.json' -Force -ErrorAction SilentlyContinue"
+```
+
+
+```bash
+pwsh -Command "Remove-Item engine/markers/SCN-CreateTask_default.progress.json -Force -ErrorAction SilentlyContinue"
+```
+
+
+```bash
+pwsh -File script/engine/invoke-scenario-engine.php -ScenarioId SCN-CreateTask -ResetProgress:$true
+```
+
+
+```bash
+pwsh -File script/engine/invoke-scenario-engine.php -ScenarioId SCN-CreateTask -UserInputValue CodeGeneration
+```
+
+
+Ran tool
+
+
+Read file: script/engine/invoke-scenario-engine.php
+
+
+Read file: script/engine/scenarios/SCN-CreateTask.scenario.json
+
+
+Read file: script/engine/scenarios/SCN-CreateTask.scenario.json
+
+
+Ran tool
+
+
+Ran tool
+
+
+Ran tool
+
+
+Read file: script/engine/actions/GetAnswerAndUpdateContext.php
+
+
+Ran tool
+
+
+Read file: script/engine/QandA/answers.json
+
+
+Read file: engine/markers/SCN-CreateTask_default.progress.json
+
+
+Read file: script/engine/actions/GetAnswerAndUpdateContext.ps1
+
+
+Ran tool
+
+
+```bash
+pwsh -Command "Test-Path script/engine/task_definitions/NewTask123.json"
+```
+
+Я запустил сценарий “SCN-CreateTask” с двумя попытками ввести:
+
+1. Сброс прогресса (`-ResetProgress:$true`) — сценарий дошёл до шага `WAIT_FOR_TASK_TYPE_ANSWER`.  
+2. Передача `CodeGeneration` в `-UserInputValue` — сценарий снова остановился на `WAIT_FOR_TASK_TYPE_ANSWER` (логика выдачи ответов через PHP-скрипт не приняла инъекцию напрямую).  
+3. Файл `script/engine/task_definitions/NewTask123.json` не был создан (проверка `Test-Path` вернула `False`).  
+4. В маркере (`engine/markers/SCN-CreateTask_default.progress.json`) по-прежнему текущий шаг `WAIT_FOR_TASK_TYPE_ANSWER`.
+
+Следовательно, прямое подбрасывание `-UserInputValue` влияет только на шаги типа “Question”, а не на PHP-действия. Чтобы протестировать сценарий дальше, можно:
+
+• эмулировать ответы, добавив в `script/engine/QandA/answers.json` запись с текущим `generatedQuestionId` и `answerValue`;  
+• или расширить `Invoke-ScenarioEngine.ps1`, чтобы он обрабатывал `-UserInputValue` при PHP-Action (GetAnswerAndUpdateContext.php).
+
+Какой подход будем использовать?
+
+
+
+
+
+
+
+
+
+
+
+
+
+Read file: script/engine/scenarios/SCN-CreateTask.scenario.json
+
+
+Ran tool
+
+
+Read file: script/engine/QandA/answers.json
+
+
+```bash
+pwsh -Command "Remove-Item 'engine/markers/SCN-CreateTask*' -Force -ErrorAction SilentlyContinue; Remove-Item 'script/engine/task_definitions/TestTask001.json' -Force -ErrorAction SilentlyContinue"
+```
+
+```bash
+pwsh -File script/engine/invoke-scenario-engine.php -ScenarioId SCN-CreateTask -ResetProgress:$true
+```
+
+```bash
+pwsh -Command "$qid=(Get-Content engine/markers/SCN-CreateTask_default.progress.json | ConvertFrom-Json).context.generatedQuestionId; $answers=Get-Content script/engine/QandA/answers.json | ConvertFrom-Json; $answers.answers += @{ answerId='ans-test-type'; questionId=$qid; answerValue='Generic'; status='new'; receivedTimestamp=(Get-Date).ToString('o') }; $answers | ConvertTo-Json -Depth 10 | Set-Content script/engine/QandA/answers.json"
+```
+
+
+```bash
+pwsh -Command "$answers=Get-Content script/engine/QandA/answers.json | ConvertFrom-Json; $answers.answers += @{ answerId='ans-test-type'; questionId='QID-DYNAMIC-ad3895b0'; answerValue='Generic'; status='new'; receivedTimestamp=(Get-Date).ToString('o') }; $answers | ConvertTo-Json -Depth 10 | Set-Content script/engine/QandA/answers.json"
+```
+
+
+```bash
+pwsh -Command '$answers = Get-Content script/engine/QandA/answers.json | ConvertFrom-Json; $answers.answers += @{ answerId="ans-test-type"; questionId="QID-DYNAMIC-ad3895b0"; answerValue="Generic"; status="new"; receivedTimestamp=(Get-Date).ToString("o") }; $answers | ConvertTo-Json -Depth 10 | Set-Content script/engine/QandA/answers.json'
+```
+
+
+```bash
+pwsh -Command "(Get-Content script/engine/QandA/answers.json | ConvertFrom-Json).answers | Select-Object -Last 1 | ConvertTo-Json -Depth 5"
+```
+
+
+```bash
+pwsh -File script/engine/invoke-scenario-engine.php -ScenarioId SCN-CreateTask
+```
+
+
+Ran tool
+
+Ниже демонстрация “живого” теста первого шага сценария — выбора типа задачи и обработки ответа PHP-скриптом:
+
+1) Очистка маркеров и старого тестового файла:
+```
+pwsh -Command "Remove-Item 'engine/markers/SCN-CreateTask*' -Force -ErrorAction SilentlyContinue; Remove-Item 'script/engine/task_definitions/TestTask001.json' -Force -ErrorAction SilentlyContinue"
+```
+
+2) Запуск сценария с полным сбросом прогресса:
+```
+pwsh -File script/engine/invoke-scenario-engine.php -ScenarioId SCN-CreateTask -ResetProgress:$true
+```
+Вывод:
+…  
+`currentStepId: "WAIT_FOR_TASK_TYPE_ANSWER"`  
+`context.generatedQuestionId: "QID-DYNAMIC-ad3895b0"`
+
+3) Добавляем тестовый ответ (`Generic`) в `answers.json` для полученного `generatedQuestionId`:
+```
+pwsh -Command '$answers = Get-Content script/engine/QandA/answers.json | ConvertFrom-Json; 
+$answers.answers += @{ 
+    answerId="ans-test-type"; 
+    questionId="QID-DYNAMIC-ad3895b0"; 
+    answerValue="Generic"; 
+    status="new"; 
+    receivedTimestamp=(Get-Date).ToString("o") 
+}; 
+$answers | ConvertTo-Json -Depth 10 | Set-Content script/engine/QandA/answers.json'
+```
+
+4) Проверяем, что запись добавилась:
+```
+pwsh -Command "(Get-Content script/engine/QandA/answers.json | ConvertFrom-Json).answers | Select-Object -Last 1 | ConvertTo-Json -Depth 5"
+```
+Результат:
+```json
+{
+  "status": "new",
+  "answerValue": "Generic",
+  "receivedTimestamp": "2025-05-11T07:43:53.4298976+03:00",
+  "questionId": "QID-DYNAMIC-ad3895b0",
+  "answerId": "ans-test-type"
+}
+```
+
+5) Запускаем сценарий заново — теперь PHP-скрипт подхватывает ответ и возвращает данные движку:
+```
+pwsh -File script/engine/invoke-scenario-engine.php -ScenarioId SCN-CreateTask
+```
+Ключевая часть вывода:
+```
+"finalOutput": {
+  "needsUserInput": false,
+  "aiTaskType": "Generic",
+  "retrievedAnswerId": "ans-test-type",
+  "pendingQuestionId": "QID-DYNAMIC-ad3895b0"
+},
+"currentStepId": "WAIT_FOR_TASK_TYPE_ANSWER"
+```
+
+Видно, что:
+- PHP-скрипт успешно прочитал `answers.json` и слил в контекст ключ `aiTaskType: "Generic"`.
+- Движок получил `retrievedAnswerId` и подтвердил, что ввода больше не требуется.
+
+Дальше аналогично можно обработать шаг запроса `targetTaskId`, добавить в `answers.json` запись с новым `generatedQuestionId`, затем запустить сценарий — и он создаст новый файл `script/engine/task_definitions/<yourId>.json`. Если нужно, могу показать и этот этап.
+
+
+
+
+
+
+```bash
+pwsh -Command "Remove-Item 'engine/markers/SCN-CreateTask*' -Force -ErrorAction SilentlyContinue; Remove-Item 'script/engine/task_definitions/TestTask001.json' -Force -ErrorAction SilentlyContinue"
+```
+
+```bash
+pwsh -File script/engine/invoke-scenario-engine.php -ScenarioId SCN-CreateTask -ResetProgress:$true
+```
+
+
+```bash
+pwsh -Command "& { $marker = Get-Content 'engine/markers/SCN-CreateTask_default.progress.json' | ConvertFrom-Json; $q = $marker.context.generatedQuestionId; $a = Get-Content 'script/engine/QandA/answers.json' | ConvertFrom-Json; $entry = @{ answerId='ans-first-type'; questionId=$q; answerValue='Generic'; status='new'; receivedTimestamp=(Get-Date).ToString('o') }; $a.answers += $entry; $a | ConvertTo-Json -Depth 10 | Set-Content 'script/engine/QandA/answers.json' }"
+```
+
+
+```bash
+pwsh -File script/engine/invoke-scenario-engine.php -ScenarioId SCN-CreateTask -UserInputValue Generic
+```
+
+
+
+
+```bash
+pwsh -File script/engine/invoke-scenario-engine.php -ScenarioId SCN-CreateTask
+```
+
+
+
+
+```bash
+pwsh -Command "Remove-Item 'engine/markers/SCN-CreateTask*' -Force -ErrorAction SilentlyContinue; Remove-Item 'script/engine/task_definitions/TestTask001.json' -Force -ErrorAction SilentlyContinue"
+```
+
+```bash
+pwsh -File script/engine/invoke-scenario-engine.php -ScenarioId SCN-CreateTask -ResetProgress:$true
+```
+Теперь сценарий автоматически скопировал шаблон в файл `script/engine/task_definitions/TestTask001.json` и дошёл до шага `FILL_TASK_FIELDS` с выводом:
+
+«Пожалуйста, заполните поля задачи по пути '.\script\engine\task_definitions\TestTask001.json'. Система автоматически соберёт факты из файлов, а при необходимости задаст дополнительные вопросы через QTU. Введите 'done' после завершения.»
+
+Это означает, что шаблон был скопирован:
+
+Get-Content script/engine/task_definitions/TestTask001.json -Raw вернёт:
+
+```json
+{
+  // Unique identifier for the task. Will be set by the scenario.
+  "taskId": "TASK-ID-PLACEHOLDER",
+  // Brief, descriptive title of the task.
+  "title": "Enter Task Title Here",
+  // ...
+  "type": "Generic",
+  // ...
+}
+```
+
+Дальше, чтобы завершить сценарий, нужно ввести `done`:
+
+```
+pwsh -File script/engine/invoke-scenario-engine.php -ScenarioId SCN-CreateTask -UserInputValue done
+```
+
+После этого сценарий продолжит валидацию и сохранение.  
+Таким образом, копирование шаблона выполняется автоматически сценарием, без ручного вмешательства.

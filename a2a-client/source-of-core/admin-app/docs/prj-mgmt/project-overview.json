@@ -1,0 +1,20 @@
+{
+    "title": "Project Overview: Admin App Framework (JSON UI)",
+    "mainGoal": "To create a comprehensive, structured, accurate, and easy-to-use documentation system for the Admin App framework, focusing on the JSON UI engine. This will enable developers to quickly learn the framework, use its features effectively, and easily find necessary information.",
+    "keyDocumentationObjectives": [
+        "Full Reorganization: Structure existing documentation into a logical, multi-level hierarchy for better navigation and understanding.",
+        "Eliminate Duplication: Consolidate scattered information, remove duplicates, and establish a single source of truth for each concept, component, or manager.",
+        "Content Up-to-Date: Update documentation to match the current codebase, reflecting the latest APIs, components, and features (V1 focus initially).",
+        "Standardize Formatting: Apply consistent Markdown rules (`docs/standards/style-guide.md`) for readability.",
+        "Improve Examples: Provide clear, practical, working code examples for key system aspects (schemas, actions, managers, components).",
+        "Fill Gaps: Document previously undocumented components, managers, and functions.",
+        "Enhance Linking: Ensure correct and comprehensive cross-references between related documentation sections.",
+        "Clarify Scope: Clearly mark planned but unimplemented features (V2) to avoid confusion."
+    ],
+    "expectedOutcomes": [
+        "Increased developer productivity through easy information access.",
+        "Reduced onboarding time for new team members.",
+        "Fewer errors related to incorrect JSON UI usage.",
+        "A reliable knowledge base for future development and support."
+    ]
+}

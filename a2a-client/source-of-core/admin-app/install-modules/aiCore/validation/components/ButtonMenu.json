@@ -1,0 +1,143 @@
+{
+    "componentName": "ButtonMenu",
+    "description": "Component displaying a button that reveals a menu, similar to PrimeVue MenuButton or SplitButton.",
+    "level": 3,
+    "status": "active",
+    "dependencies": [],
+    "nestedValidation": {
+        "structure": {
+            "vAddress": {
+                "type": "string",
+                "required": false,
+                "description": "Address for v-model or component identification."
+            },
+            "disabled": {
+                "type": "boolean",
+                "required": false,
+                "default": false,
+                "description": "Disable rendering of the component."
+            },
+            "props": {
+                "type": "object",
+                "required": false,
+                "description": "Properties for the main button element.",
+                "nestedValidation": {
+                    "structure": {
+                        "allOf": [
+                            {
+                                "$ref": "../common/props.json"
+                            },
+                            {
+                                "label": {
+                                    "type": "string",
+                                    "required": false,
+                                    "description": "Label for the main button."
+                                },
+                                "icon": {
+                                    "type": "string",
+                                    "required": false,
+                                    "pattern": "^(pi\\s[a-zA-Z0-9\\s\\-]+|mdi:[a-zA-Z0-9\\-]+)$",
+                                    "description": "Icon for the main button."
+                                },
+                                "severity": {
+                                    "type": "string",
+                                    "required": false,
+                                    "options": [
+                                        "primary",
+                                        "secondary",
+                                        "success",
+                                        "info",
+                                        "warn",
+                                        "help",
+                                        "danger",
+                                        "contrast",
+                                        null
+                                    ]
+                                },
+                                "size": {
+                                    "type": "string",
+                                    "required": false,
+                                    "options": [
+                                        "small",
+                                        "large"
+                                    ]
+                                }
+                            }
+                        ]
+                    }
+                }
+            },
+            "items": {
+                "type": "array",
+                "required": true,
+                "description": "Array of menu item objects.",
+                "nestedValidation": {
+                    "_allowAnyObject": false,
+                    "itemStructure": {
+                        "type": "object",
+                        "required": true,
+                        "nestedValidation": {
+                            "structure": {
+                                "label": {
+                                    "type": "string",
+                                    "required": false,
+                                    "description": "Text label for the menu item."
+                                },
+                                "icon": {
+                                    "type": "string",
+                                    "required": false,
+                                    "pattern": "^(pi\\s[a-zA-Z0-9\\s\\-]+|mdi:[a-zA-Z0-9\\-]+)$",
+                                    "description": "Icon for the menu item."
+                                },
+                                "command": {
+                                    "type": "string",
+                                    "required": false,
+                                    "description": "Custom command identifier associated with the item click."
+                                },
+                                "dialogConfig": {
+                                    "type": "object",
+                                    "required": false,
+                                    "description": "Configuration for opening a dialog when item is clicked."
+                                },
+                                "disabled": {
+                                    "type": "boolean",
+                                    "required": false,
+                                    "default": false
+                                },
+                                "separator": {
+                                    "type": "boolean",
+                                    "required": false,
+                                    "default": false,
+                                    "description": "Indicates if the item is a separator."
+                                },
+                                "url": {
+                                    "type": "string",
+                                    "required": false,
+                                    "description": "URL to navigate to if the item acts as a link."
+                                },
+                                "target": {
+                                    "type": "string",
+                                    "required": false,
+                                    "options": [
+                                        "_blank",
+                                        "_self",
+                                        "_parent",
+                                        "_top"
+                                    ],
+                                    "description": "Target window for the link URL."
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "$ref": "../common/root.json"
+        }
+    },
+    "implementationNotes": [
+        "Initial definition based on usage in program-control.json.",
+        "Assumes functionality similar to PrimeVue MenuButton.",
+        "Needs corresponding Vue component implementation."
+    ],
+    "documentationLink": "docs/guides/module/04-ui-construction.md"
+}

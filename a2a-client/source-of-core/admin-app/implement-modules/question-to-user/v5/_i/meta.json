@@ -1,0 +1,13 @@
+{
+    "id": "question-to-user",
+    "name": "Question to User",
+    "version": "5.0.0",
+    "description": "Module for handling user questions and interactions",
+    "author": "AI Task System Team",
+    "dependencies": [
+        "primevue",
+        "tailwind"
+    ],
+    "requires": [],
+    "status": "in-development"
+} 

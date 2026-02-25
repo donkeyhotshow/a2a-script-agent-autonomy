@@ -1,0 +1,367 @@
+{
+    "type": "div",
+    "name": "footer-section",
+    "props": {
+        "class": "py-8 px-4 md:px-6 lg:px-8 xl:px-10 2xl:px-12 text-surface-200",
+        "style": "background: linear-gradient(135deg, rgba(18, 168, 0, 0.95) 0%, rgba(52, 58, 64, 0.95) 100%), url('/images/backgrounds/forest-dark.webp') no-repeat center/cover; background-blend-mode: overlay; color: white;"
+    },
+    "children": [
+        {
+            "type": "div",
+            "props": {
+                "class": "max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-8"
+            },
+            "children": [
+                {
+                    "type": "div",
+                    "props": {
+                        "class": "md:col-span-1"
+                    },
+                    "children": [
+                        {
+                            "type": "Image",
+                            "props": {
+                                "src": "/images/logo-light.webp",
+                                "alt": "Barber XXL Logo",
+                                "class": "h-10 mb-4"
+                            }
+                        },
+                        {
+                            "type": "div",
+                            "props": {
+                                "content": "<p class='text-sm text-gray-300'>Преміум барбершоп та тату-студія в центрі Києва. Майстерність, стиль та індивідуальний підхід.</p>"
+                            }
+                        }
+                    ]
+                },
+                {
+                    "type": "div",
+                    "children": [
+                        {
+                            "type": "div",
+                            "props": {
+                                "content": "<h4 class='text-lg font-semibold mb-4 text-white'>Навігація</h4>"
+                            }
+                        },
+                        {
+                            "type": "Ul",
+                            "props": {
+                                "class": "list-none p-0 m-0 space-y-2"
+                            },
+                            "children": [
+                                {
+                                    "type": "Li",
+                                    "children": [
+                                        {
+                                            "type": "Link",
+                                            "props": {
+                                                "href": "/landing-main-page/",
+                                                "label": "Головна",
+                                                "class": "text-gray-300 hover:text-white transition-colors duration-200"
+                                            }
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "Li",
+                                    "children": [
+                                        {
+                                            "type": "Link",
+                                            "props": {
+                                                "href": "/landing-main-page/about",
+                                                "label": "Про нас",
+                                                "class": "text-gray-300 hover:text-white transition-colors duration-200"
+                                            }
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "Li",
+                                    "children": [
+                                        {
+                                            "type": "Link",
+                                            "props": {
+                                                "href": "/landing-main-page/services",
+                                                "label": "Послуги",
+                                                "class": "text-gray-300 hover:text-white transition-colors duration-200"
+                                            }
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "Li",
+                                    "children": [
+                                        {
+                                            "type": "Link",
+                                            "props": {
+                                                "href": "/landing-main-page/contact",
+                                                "label": "Контакти",
+                                                "class": "text-gray-300 hover:text-white transition-colors duration-200"
+                                            }
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "Li",
+                                    "children": [
+                                        {
+                                            "type": "Link",
+                                            "props": {
+                                                "href": "/landing-main-page/booking",
+                                                "label": "Запис",
+                                                "class": "text-gray-300 hover:text-white transition-colors duration-200"
+                                            }
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": "div",
+                    "children": [
+                        {
+                            "type": "div",
+                            "props": {
+                                "content": "<h4 class='text-lg font-semibold mb-4 text-white'>Контакти</h4>"
+                            }
+                        },
+                        {
+                            "type": "Ul",
+                            "props": {
+                                "class": "list-none p-0 m-0 space-y-2 text-gray-300"
+                            },
+                            "children": [
+                                {
+                                    "type": "Li",
+                                    "props": {
+                                        "class": "flex items-center"
+                                    },
+                                    "children": [
+                                        {
+                                            "type": "Icon",
+                                            "props": {
+                                                "name": "pi pi-map-marker",
+                                                "class": "mr-2 text-green-400"
+                                            }
+                                        },
+                                        {
+                                            "type": "Span",
+                                            "props": {
+                                                "content": "вул. Хрещатик, 1, Київ"
+                                            }
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "Li",
+                                    "props": {
+                                        "class": "flex items-center"
+                                    },
+                                    "children": [
+                                        {
+                                            "type": "Icon",
+                                            "props": {
+                                                "name": "pi pi-phone",
+                                                "class": "mr-2 text-green-400"
+                                            }
+                                        },
+                                        {
+                                            "type": "Span",
+                                            "props": {
+                                                "content": "+38 (067) 123-45-67"
+                                            }
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "Li",
+                                    "props": {
+                                        "class": "flex items-center"
+                                    },
+                                    "children": [
+                                        {
+                                            "type": "Icon",
+                                            "props": {
+                                                "name": "pi pi-envelope",
+                                                "class": "mr-2 text-green-400"
+                                            }
+                                        },
+                                        {
+                                            "type": "Span",
+                                            "props": {
+                                                "content": "info@barberxxl.com"
+                                            }
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "Li",
+                                    "props": {
+                                        "class": "flex items-center"
+                                    },
+                                    "children": [
+                                        {
+                                            "type": "Icon",
+                                            "props": {
+                                                "name": "pi pi-clock",
+                                                "class": "mr-2 text-green-400"
+                                            }
+                                        },
+                                        {
+                                            "type": "Span",
+                                            "props": {
+                                                "content": "Пн-Пт: 10:00-20:00"
+                                            }
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "Li",
+                                    "props": {
+                                        "class": "flex items-center"
+                                    },
+                                    "children": [
+                                        {
+                                            "type": "Icon",
+                                            "props": {
+                                                "name": "pi pi-clock",
+                                                "class": "mr-2 text-green-400"
+                                            }
+                                        },
+                                        {
+                                            "type": "Span",
+                                            "props": {
+                                                "content": "Сб: 09:00-18:00"
+                                            }
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": "div",
+                    "children": [
+                        {
+                            "type": "div",
+                            "props": {
+                                "content": "<h4 class='text-lg font-semibold mb-4 text-white'>Соцмережі</h4>"
+                            }
+                        },
+                        {
+                            "type": "div",
+                            "props": {
+                                "class": "flex gap-3"
+                            },
+                            "children": [
+                                {
+                                    "type": "Button",
+                                    "props": {
+                                        "icon": "pi pi-facebook",
+                                        "severity": "secondary",
+                                        "text": true,
+                                        "class": "text-gray-300 hover:text-white hover:bg-green-800 transition-colors duration-200"
+                                    }
+                                },
+                                {
+                                    "type": "Button",
+                                    "props": {
+                                        "icon": "pi pi-instagram",
+                                        "severity": "secondary",
+                                        "text": true,
+                                        "class": "text-gray-300 hover:text-white hover:bg-green-800 transition-colors duration-200"
+                                    }
+                                },
+                                {
+                                    "type": "Button",
+                                    "props": {
+                                        "icon": "pi pi-telegram",
+                                        "severity": "secondary",
+                                        "text": true,
+                                        "class": "text-gray-300 hover:text-white hover:bg-green-800 transition-colors duration-200"
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "type": "div",
+                            "props": {
+                                "class": "mt-4"
+                            },
+                            "children": [
+                                {
+                                    "type": "Button",
+                                    "props": {
+                                        "label": "Записатися онлайн",
+                                        "icon": "pi pi-calendar-plus",
+                                        "class": "w-full",
+                                        "style": "background-color: #F46700; border: none;"
+                                    },
+                                    "customHooks": {
+                                        "click": [
+                                            {
+                                                "action": "navigateTo",
+                                                "data": {
+                                                    "route": "/landing-main-page/booking"
+                                                }
+                                            }
+                                        ]
+                                    }
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "type": "divider",
+            "props": {
+                "class": "my-6 border-green-800"
+            }
+        },
+        {
+            "type": "div",
+            "props": {
+                "class": "max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center"
+            },
+            "children": [
+                {
+                    "type": "div",
+                    "props": {
+                        "class": "text-sm text-gray-400 mb-4 md:mb-0",
+                        "content": "<Script>document.write(new Date().getFullYear());</Script> © Barber XXL. Всі права захищені."
+                    }
+                },
+                {
+                    "type": "div",
+                    "props": {
+                        "class": "flex gap-4"
+                    },
+                    "children": [
+                        {
+                            "type": "Link",
+                            "props": {
+                                "href": "/privacy",
+                                "label": "Політика конфіденційності",
+                                "class": "text-sm text-gray-400 hover:text-white transition-colors duration-200"
+                            }
+                        },
+                        {
+                            "type": "Link",
+                            "props": {
+                                "href": "/terms",
+                                "label": "Умови використання",
+                                "class": "text-sm text-gray-400 hover:text-white transition-colors duration-200"
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}
+

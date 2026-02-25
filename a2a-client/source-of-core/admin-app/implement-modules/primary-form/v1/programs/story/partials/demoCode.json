@@ -1,0 +1,14 @@
+{
+    "demoCode": {
+        "stepSort": {
+            "display": {
+                "task": "Сортировать данные по приоритету."
+            }
+        },
+        "stepTransform": {
+            "display": {
+                "task": "Переделай steps в именованый массив"
+            }
+        }
+    }
+}

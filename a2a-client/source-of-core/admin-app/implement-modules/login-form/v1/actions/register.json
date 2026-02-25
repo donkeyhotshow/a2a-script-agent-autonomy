@@ -1,0 +1,133 @@
+{
+    "type": "Instructions",
+    "instructions": [
+        {
+            "action": "update",
+            "from": "input",
+            "to": "login-form/data/registration"
+        },
+        {
+            "action": "update",
+            "batch": [
+                {
+                    "value": false,
+                    "to": "buffer:error"
+                },
+                {
+                    "value": [],
+                    "to": "buffer:validationErrors"
+                },
+                {
+                    "value": false,
+                    "to": "buffer:registrationSuccess"
+                }
+            ]
+        },
+        {
+            "action": "call",
+            "from": "login-form/validations/registration-validation"
+        },
+        {
+            "action": "update",
+            "condition": "!buffer:validationFailed",
+            "batch": [
+                {
+                    "from": "model!User:where:login,{buffer:registration.login}",
+                    "to": "buffer:usersWithSameLogin"
+                },
+                {
+                    "from": "model!User:where:email,{buffer:registration.email}",
+                    "to": "buffer:usersWithSameEmail"
+                },
+                {
+                    "action": "update",
+                    "condition": [
+                        "is_array",
+                        "buffer:usersWithSameLogin"
+                    ],
+                    "batch": [
+                        {
+                            "value": true,
+                            "to": "buffer:userExists"
+                        }
+                    ]
+                },
+                {
+                    "action": "update",
+                    "condition": [
+                        "is_array",
+                        "buffer:usersWithSameEmail"
+                    ],
+                    "batch": [
+                        {
+                            "value": true,
+                            "to": "buffer:emailExists"
+                        }
+                    ]
+                },
+                {
+                    "action": "update",
+                    "condition": "buffer:userExists",
+                    "batch": [
+                        {
+                            "value": true,
+                            "to": "buffer:error"
+                        },
+                        {
+                            "value": "User with this username already exists",
+                            "to": "buffer:errorMessage"
+                        }
+                    ]
+                },
+                {
+                    "action": "update",
+                    "condition": "buffer:emailExists",
+                    "batch": [
+                        {
+                            "value": true,
+                            "to": "buffer:error"
+                        },
+                        {
+                            "value": "Email is already registered",
+                            "to": "buffer:errorMessage"
+                        }
+                    ]
+                },
+                {
+                    "action": "update",
+                    "condition": "!buffer:error",
+                    "batch": [
+                        {
+                            "from": "model!User:create:login,{buffer:registration.login}:email,{buffer:registration.email}:password,{buffer:registration.password}:name,{buffer:registration.name}:created_at,{date('Y-m-d H:i:s')}:role,user",
+                            "to": "buffer:newUser"
+                        },
+                        {
+                            "value": true,
+                            "to": "buffer:registrationSuccess"
+                        },
+                        {
+                            "from": "buffer:newUser",
+                            "to": "buffer:authenticatedUser"
+                        },
+                        {
+                            "value": true,
+                            "to": "buffer:authenticated"
+                        },
+                        {
+                            "from": "buffer:authenticatedUser",
+                            "to": "session!user"
+                        },
+                        {
+                            "value": "Registration successful! You are now logged in.",
+                            "to": "buffer:successMessage"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "action": "return",
+            "from": "buffer"
+        }
+    ]
+}

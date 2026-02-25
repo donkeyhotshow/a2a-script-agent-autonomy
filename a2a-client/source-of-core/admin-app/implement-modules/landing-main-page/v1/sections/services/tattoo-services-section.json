@@ -1,0 +1,489 @@
+{
+    "type": "div",
+    "name": "tattoo-services-section-section",
+    "props": {
+        "class": "py-12 px-4 md:px-6 lg:px-8",
+        "style": "background-color: #f8f9fa;",
+        "role": "region",
+        "id": "tattoo-services-section",
+        "aria-labelledby": "tattoo-services-section-title"
+    },
+    "children": [
+        {
+            "type": "div",
+            "props": {
+                "class": "max-w-7xl mx-auto"
+            },
+            "children": [
+                {
+                    "type": "div",
+                    "props": {
+                        "class": "text-center mb-10"
+                    },
+                    "children": [
+                        {
+                            "type": "Tag",
+                            "props": {
+                                "value": "Тату",
+                                "class": "mb-2 text-sm font-bold uppercase tracking-wider",
+                                "style": "background-color: rgba(245, 230, 0, 0.2); color: #3D3B47;"
+                            }
+                        },
+                        {
+                            "type": "div",
+                            "props": {
+                                "content": "<h2 class='text-3xl sm:text-4xl font-bold mb-4' style='color: #3D3B47;'>Послуги татуювання</h2><p class='text-xl max-w-3xl mx-auto' style='color: #3D3B47;'>Відкрийте для себе мистецтво татуювання з нашими талановитими майстрами.</p>"
+                            }
+                        }
+                    ]
+                },
+                {
+                    "type": "Grid",
+                    "props": {
+                        "class": "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+                    },
+                    "children": [
+                        {
+                            "type": "Card",
+                            "props": {
+                                "class": "bg-white rounded-xl shadow-lg overflow-hidden flex flex-col"
+                            },
+                            "children": [
+                                {
+                                    "type": "div",
+                                    "props": {
+                                        "class": "relative"
+                                    },
+                                    "children": [
+                                        {
+                                            "type": "Image",
+                                            "props": {
+                                                "src": "/images/tattoo/small-tattoo.webp",
+                                                "alt": "Маленьке татуювання",
+                                                "width": "100%",
+                                                "class": "w-full h-56 object-cover",
+                                                "style": "background-color: #F5F0FF;",
+                                                "loading": "lazy"
+                                            }
+                                        },
+                                        {
+                                            "type": "div",
+                                            "props": {
+                                                "class": "absolute top-2 right-2 flex items-center gap-1 px-2 py-1 rounded",
+                                                "style": "background-color: rgba(245, 230, 0, 0.9);"
+                                            },
+                                            "children": [
+                                                {
+                                                    "type": "Icon",
+                                                    "props": {
+                                                        "class": "pi pi-crown",
+                                                        "style": "color: #3D3B47; font-size: 0.8rem;"
+                                                    }
+                                                },
+                                                {
+                                                    "type": "Span",
+                                                    "props": {
+                                                        "content": "Королі",
+                                                        "class": "text-xs font-semibold",
+                                                        "style": "color: #3D3B47;"
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "div",
+                                    "props": {
+                                        "class": "p-6 flex flex-col flex-grow"
+                                    },
+                                    "children": [
+                                        {
+                                            "type": "div",
+                                            "props": {
+                                                "content": "<h3 class='text-xl font-semibold mb-2' style='color: #3D3B47;'>Маленьке тату (до 10 см)</h3><p class='mb-4 flex-grow' style='color: #3D3B47;'>Ідеально для першого тату або мінімалістичного дизайну.</p>"
+                                            }
+                                        },
+                                        {
+                                            "type": "Tag",
+                                            "props": {
+                                                "value": "від 1500₴",
+                                                "class": "font-semibold text-lg mt-auto self-start",
+                                                "style": "background-color: #F46700; color: white;"
+                                            }
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "type": "Card",
+                            "props": {
+                                "class": "bg-white rounded-xl shadow-lg overflow-hidden flex flex-col"
+                            },
+                            "children": [
+                                {
+                                    "type": "div",
+                                    "props": {
+                                        "class": "relative"
+                                    },
+                                    "children": [
+                                        {
+                                            "type": "Image",
+                                            "props": {
+                                                "src": "/images/tattoo/medium-tattoo.webp",
+                                                "alt": "Середнє татуювання",
+                                                "width": "100%",
+                                                "class": "w-full h-56 object-cover",
+                                                "style": "background-color: #F5F0FF;",
+                                                "loading": "lazy"
+                                            }
+                                        },
+                                        {
+                                            "type": "div",
+                                            "props": {
+                                                "class": "absolute top-2 right-2 flex items-center gap-1 px-2 py-1 rounded",
+                                                "style": "background-color: #F46700;"
+                                            },
+                                            "children": [
+                                                {
+                                                    "type": "Icon",
+                                                    "props": {
+                                                        "class": "pi pi-star",
+                                                        "style": "color: white; font-size: 0.8rem;"
+                                                    }
+                                                },
+                                                {
+                                                    "type": "Span",
+                                                    "props": {
+                                                        "content": "MASTER",
+                                                        "class": "text-xs font-semibold",
+                                                        "style": "color: white;"
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "div",
+                                    "props": {
+                                        "class": "p-6 flex flex-col flex-grow"
+                                    },
+                                    "children": [
+                                        {
+                                            "type": "div",
+                                            "props": {
+                                                "content": "<h3 class='text-xl font-semibold mb-2' style='color: #3D3B47;'>Середнє тату (10-20 см)</h3><p class='mb-4 flex-grow' style='color: #3D3B47;'>Для більш деталізованих робіт та виразних дизайнів.</p>"
+                                            }
+                                        },
+                                        {
+                                            "type": "Tag",
+                                            "props": {
+                                                "value": "від 3000₴",
+                                                "class": "font-semibold text-lg mt-auto self-start",
+                                                "style": "background-color: #F46700; color: white;"
+                                            }
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "type": "Card",
+                            "props": {
+                                "class": "bg-white rounded-xl shadow-lg overflow-hidden flex flex-col"
+                            },
+                            "children": [
+                                {
+                                    "type": "div",
+                                    "props": {
+                                        "class": "relative"
+                                    },
+                                    "children": [
+                                        {
+                                            "type": "Image",
+                                            "props": {
+                                                "src": "/images/tattoo/large-tattoo.webp",
+                                                "alt": "Велике татуювання",
+                                                "width": "100%",
+                                                "class": "w-full h-56 object-cover",
+                                                "style": "background-color: #F5F0FF;",
+                                                "loading": "lazy"
+                                            }
+                                        },
+                                        {
+                                            "type": "div",
+                                            "props": {
+                                                "class": "absolute top-2 right-2 flex items-center gap-1 px-2 py-1 rounded border-2",
+                                                "style": "border-color: #3D3B47; background-color: transparent;"
+                                            },
+                                            "children": [
+                                                {
+                                                    "type": "Icon",
+                                                    "props": {
+                                                        "class": "pi pi-maximize",
+                                                        "style": "color: #3D3B47; font-size: 0.8rem;"
+                                                    }
+                                                },
+                                                {
+                                                    "type": "Span",
+                                                    "props": {
+                                                        "content": "MAX",
+                                                        "class": "text-xs font-semibold",
+                                                        "style": "color: #3D3B47;"
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "div",
+                                    "props": {
+                                        "class": "p-6 flex flex-col flex-grow"
+                                    },
+                                    "children": [
+                                        {
+                                            "type": "div",
+                                            "props": {
+                                                "content": "<h3 class='text-xl font-semibold mb-2' style='color: #3D3B47;'>Велике тату (від 20 см)</h3><p class='mb-4 flex-grow' style='color: #3D3B47;'>Масштабні проекти, рукава, спина - втілюємо ваші амбітні ідеї.</p>"
+                                            }
+                                        },
+                                        {
+                                            "type": "Tag",
+                                            "props": {
+                                                "value": "від 6000₴",
+                                                "class": "font-semibold text-lg mt-auto self-start",
+                                                "style": "background-color: #F46700; color: white;"
+                                            }
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "type": "Card",
+                            "props": {
+                                "class": "bg-white rounded-xl shadow-lg overflow-hidden flex flex-col"
+                            },
+                            "children": [
+                                {
+                                    "type": "div",
+                                    "props": {
+                                        "class": "relative"
+                                    },
+                                    "children": [
+                                        {
+                                            "type": "Image",
+                                            "props": {
+                                                "src": "/images/tattoo/cover-up.webp",
+                                                "alt": "Перекриття тату (Cover-up)",
+                                                "width": "100%",
+                                                "class": "w-full h-56 object-cover",
+                                                "style": "background-color: #F5F0FF;",
+                                                "loading": "lazy"
+                                            }
+                                        },
+                                        {
+                                            "type": "div",
+                                            "props": {
+                                                "class": "absolute top-2 right-2 flex items-center gap-1 px-2 py-1 rounded",
+                                                "style": "background-color: #F46700;"
+                                            },
+                                            "children": [
+                                                {
+                                                    "type": "Icon",
+                                                    "props": {
+                                                        "class": "pi pi-star",
+                                                        "style": "color: white; font-size: 0.8rem;"
+                                                    }
+                                                },
+                                                {
+                                                    "type": "Span",
+                                                    "props": {
+                                                        "content": "MASTER",
+                                                        "class": "text-xs font-semibold",
+                                                        "style": "color: white;"
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "div",
+                                    "props": {
+                                        "class": "p-6 flex flex-col flex-grow"
+                                    },
+                                    "children": [
+                                        {
+                                            "type": "div",
+                                            "props": {
+                                                "content": "<h3 class='text-xl font-semibold mb-2' style='color: #3D3B47;'>Перекриття (Cover-up)</h3><p class='mb-4 flex-grow' style='color: #3D3B47;'>Оновлення або повне перекриття старих татуювань.</p>"
+                                            }
+                                        },
+                                        {
+                                            "type": "Tag",
+                                            "props": {
+                                                "value": "Ціна за домовленістю",
+                                                "class": "font-semibold text-lg mt-auto self-start",
+                                                "style": "background-color: #6B00F5; color: white;"
+                                            }
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "type": "Card",
+                            "props": {
+                                "class": "bg-white rounded-xl shadow-lg overflow-hidden flex flex-col"
+                            },
+                            "children": [
+                                {
+                                    "type": "div",
+                                    "props": {
+                                        "class": "relative"
+                                    },
+                                    "children": [
+                                        {
+                                            "type": "Image",
+                                            "props": {
+                                                "src": "/images/tattoo/correction.webp",
+                                                "alt": "Корекція татуювання",
+                                                "width": "100%",
+                                                "class": "w-full h-56 object-cover",
+                                                "style": "background-color: #F5F0FF;",
+                                                "loading": "lazy"
+                                            }
+                                        },
+                                        {
+                                            "type": "div",
+                                            "props": {
+                                                "class": "absolute top-2 right-2 flex items-center gap-1 px-2 py-1 rounded",
+                                                "style": "background-color: rgba(245, 230, 0, 0.9);"
+                                            },
+                                            "children": [
+                                                {
+                                                    "type": "Icon",
+                                                    "props": {
+                                                        "class": "pi pi-crown",
+                                                        "style": "color: #3D3B47; font-size: 0.8rem;"
+                                                    }
+                                                },
+                                                {
+                                                    "type": "Span",
+                                                    "props": {
+                                                        "content": "Королі",
+                                                        "class": "text-xs font-semibold",
+                                                        "style": "color: #3D3B47;"
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "div",
+                                    "props": {
+                                        "class": "p-6 flex flex-col flex-grow"
+                                    },
+                                    "children": [
+                                        {
+                                            "type": "div",
+                                            "props": {
+                                                "content": "<h3 class='text-xl font-semibold mb-2' style='color: #3D3B47;'>Корекція тату</h3><p class='mb-4 flex-grow' style='color: #3D3B47;'>Оновлення кольору та контурів існуючого татуювання.</p>"
+                                            }
+                                        },
+                                        {
+                                            "type": "Tag",
+                                            "props": {
+                                                "value": "від 800₴",
+                                                "class": "font-semibold text-lg mt-auto self-start",
+                                                "style": "background-color: #F46700; color: white;"
+                                            }
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "type": "Card",
+                            "props": {
+                                "class": "bg-white rounded-xl shadow-lg overflow-hidden flex flex-col"
+                            },
+                            "children": [
+                                {
+                                    "type": "div",
+                                    "props": {
+                                        "class": "relative"
+                                    },
+                                    "children": [
+                                        {
+                                            "type": "Image",
+                                            "props": {
+                                                "src": "/images/tattoo/custom-design.webp",
+                                                "alt": "Розробка ескізу",
+                                                "width": "100%",
+                                                "class": "w-full h-56 object-cover",
+                                                "style": "background-color: #F5F0FF;",
+                                                "loading": "lazy"
+                                            }
+                                        },
+                                        {
+                                            "type": "div",
+                                            "props": {
+                                                "class": "absolute top-2 right-2 flex items-center gap-1 px-2 py-1 rounded border-2",
+                                                "style": "border-color: #3D3B47; background-color: transparent;"
+                                            },
+                                            "children": [
+                                                {
+                                                    "type": "Icon",
+                                                    "props": {
+                                                        "class": "pi pi-maximize",
+                                                        "style": "color: #3D3B47; font-size: 0.8rem;"
+                                                    }
+                                                },
+                                                {
+                                                    "type": "Span",
+                                                    "props": {
+                                                        "content": "MAX",
+                                                        "class": "text-xs font-semibold",
+                                                        "style": "color: #3D3B47;"
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "div",
+                                    "props": {
+                                        "class": "p-6 flex flex-col flex-grow"
+                                    },
+                                    "children": [
+                                        {
+                                            "type": "div",
+                                            "props": {
+                                                "content": "<h3 class='text-xl font-semibold mb-2' style='color: #3D3B47;'>Розробка ескізу</h3><p class='mb-4 flex-grow' style='color: #3D3B47;'>Створення унікального дизайну татуювання за вашими ідеями.</p>"
+                                            }
+                                        },
+                                        {
+                                            "type": "Tag",
+                                            "props": {
+                                                "value": "від 1000₴",
+                                                "class": "font-semibold text-lg mt-auto self-start",
+                                                "style": "background-color: #F46700; color: white;"
+                                            }
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

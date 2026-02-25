@@ -1,0 +1,120 @@
+{
+    "type": "Instructions",
+    "instructions": [
+        {
+            "action": "update",
+            "batch": [
+                {
+                    "value": false,
+                    "to": "buffer:apiError"
+                },
+                {
+                    "value": "",
+                    "to": "buffer:apiErrorMessage"
+                },
+                {
+                    "value": {},
+                    "to": "buffer:apiResponse"
+                }
+            ]
+        },
+        {
+            "action": "update",
+            "condition": [
+                "equals",
+                "buffer:apiUrl",
+                ""
+            ],
+            "batch": [
+                {
+                    "value": true,
+                    "to": "buffer:apiError"
+                },
+                {
+                    "value": "API URL not specified",
+                    "to": "buffer:apiErrorMessage"
+                }
+            ]
+        },
+        {
+            "action": "update",
+            "condition": "!buffer:apiError",
+            "batch": [
+                {
+                    "action": "comment",
+                    "comment": "This is a placeholder for making actual HTTP requests. In a real implementation, this would use cURL or Guzzle to make the request and parse the response."
+                },
+                {
+                    "action": "comment",
+                    "comment": "For demonstration purposes, we'll simulate different responses based on the provider."
+                },
+                {
+                    "action": "update",
+                    "condition": [
+                        "contains",
+                        "buffer:apiUrl",
+                        "google"
+                    ],
+                    "batch": [
+                        {
+                            "value": {
+                                "access_token": "google_mock_token_123",
+                                "expires_in": 3600,
+                                "token_type": "Bearer",
+                                "id": "12345",
+                                "email": "user@gmail.com",
+                                "name": "Google User",
+                                "avatar": "https://lh3.googleusercontent.com/photo.jpg"
+                            },
+                            "to": "buffer:apiResponse"
+                        }
+                    ]
+                },
+                {
+                    "action": "update",
+                    "condition": [
+                        "contains",
+                        "buffer:apiUrl",
+                        "facebook"
+                    ],
+                    "batch": [
+                        {
+                            "value": {
+                                "access_token": "facebook_mock_token_123",
+                                "expires_in": 3600,
+                                "token_type": "Bearer",
+                                "id": "67890",
+                                "email": "user@facebook.com",
+                                "name": "Facebook User",
+                                "avatar": "https://graph.facebook.com/v10.0/67890/picture"
+                            },
+                            "to": "buffer:apiResponse"
+                        }
+                    ]
+                },
+                {
+                    "action": "update",
+                    "condition": [
+                        "contains",
+                        "buffer:apiUrl",
+                        "github"
+                    ],
+                    "batch": [
+                        {
+                            "value": {
+                                "access_token": "github_mock_token_123",
+                                "expires_in": 3600,
+                                "token_type": "Bearer",
+                                "id": "13579",
+                                "email": "user@github.com",
+                                "name": "GitHub User",
+                                "avatar": "https://avatars.githubusercontent.com/u/13579"
+                            },
+                            "to": "buffer:apiResponse"
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

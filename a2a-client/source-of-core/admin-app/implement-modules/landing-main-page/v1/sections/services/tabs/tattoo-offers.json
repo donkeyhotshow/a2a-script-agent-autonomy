@@ -1,0 +1,255 @@
+{
+    "type": "div",
+    "props": {
+        "class": "py-12 px-4 md:px-6 lg:px-8",
+        "role": "region",
+        "id": "tattoo-offers",
+        "aria-labelledby": "tattoo-offers-title"
+    },
+    "children": [
+        {
+            "type": "Grid",
+            "props": {
+                "class": "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6"
+            },
+            "children": [
+                {
+                    "type": "Column",
+                    "children": [
+                        {
+                            "type": "Card",
+                            "props": {
+                                "class": "h-full shadow-md hover:shadow-lg transition-all"
+                            },
+                            "children": [
+                                {
+                                    "type": "div",
+                                    "props": {
+                                        "class": "relative"
+                                    },
+                                    "children": [
+                                        {
+                                            "type": "Image",
+                                            "props": {
+                                                "src": "/images/services/custom-tattoo-design.webp",
+                                                "alt": "Індивідуальний дизайн",
+                                                "class": "w-full h-40 sm:h-48 object-cover rounded-t-lg",
+                                                "style": "background-color: #F5F0FF;",
+                                                "loading": "lazy"
+                                            }
+                                        },
+                                        {
+                                            "type": "div",
+                                            "props": {
+                                                "class": "absolute top-2 right-2 flex items-center gap-1 px-2 py-1 rounded",
+                                                "style": "background-color: rgba(245, 230, 0, 0.9);"
+                                            },
+                                            "children": [
+                                                {
+                                                    "type": "Icon",
+                                                    "props": {
+                                                        "class": "pi pi-crown",
+                                                        "style": "color: #3D3B47; font-size: 0.8rem;"
+                                                    }
+                                                },
+                                                {
+                                                    "type": "Span",
+                                                    "props": {
+                                                        "content": "Королі",
+                                                        "class": "text-xs font-semibold",
+                                                        "style": "color: #3D3B47;"
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "div",
+                                    "props": {
+                                        "class": "p-3 sm:p-4"
+                                    },
+                                    "children": [
+                                        {
+                                            "type": "div",
+                                            "props": {
+                                                "content": "<h3 class='text-lg sm:text-xl font-semibold mb-2' style='color: #3D3B47;'>Індивідуальний дизайн</h3><p class='text-sm sm:text-base mb-3 sm:mb-4' style='color: #3D3B47;'>Створення унікальних ескізів тату за вашими побажаннями та ідеями.</p><div class='text-base sm:text-lg font-semibold' style='color: #6B00F5;'>Від ₴1000</div>"
+                                            }
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": "Column",
+                    "children": [
+                        {
+                            "type": "Card",
+                            "props": {
+                                "class": "h-full shadow-md hover:shadow-lg transition-all"
+                            },
+                            "children": [
+                                {
+                                    "type": "div",
+                                    "props": {
+                                        "class": "relative"
+                                    },
+                                    "children": [
+                                        {
+                                            "type": "Image",
+                                            "props": {
+                                                "src": "/images/services/tattoo-session.webp",
+                                                "alt": "Сеанс татуювання",
+                                                "class": "w-full h-40 sm:h-48 object-cover rounded-t-lg",
+                                                "style": "background-color: #F5F0FF;",
+                                                "loading": "lazy"
+                                            }
+                                        },
+                                        {
+                                            "type": "div",
+                                            "props": {
+                                                "class": "absolute top-2 right-2 flex items-center gap-1 px-2 py-1 rounded",
+                                                "style": "background-color: #F46700;"
+                                            },
+                                            "children": [
+                                                {
+                                                    "type": "Icon",
+                                                    "props": {
+                                                        "class": "pi pi-star",
+                                                        "style": "color: white; font-size: 0.8rem;"
+                                                    }
+                                                },
+                                                {
+                                                    "type": "Span",
+                                                    "props": {
+                                                        "content": "MASTER",
+                                                        "class": "text-xs font-semibold",
+                                                        "style": "color: white;"
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "div",
+                                    "props": {
+                                        "class": "p-3 sm:p-4"
+                                    },
+                                    "children": [
+                                        {
+                                            "type": "div",
+                                            "props": {
+                                                "content": "<h3 class='text-lg sm:text-xl font-semibold mb-2' style='color: #3D3B47;'>Сеанс татуювання</h3><p class='text-sm sm:text-base mb-3 sm:mb-4' style='color: #3D3B47;'>Професійне нанесення татуювань з використанням стерильного обладнання.</p><div class='text-base sm:text-lg font-semibold' style='color: #6B00F5;'>Від ₴2400/год</div>"
+                                            }
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": "Column",
+                    "children": [
+                        {
+                            "type": "Card",
+                            "props": {
+                                "class": "h-full shadow-md hover:shadow-lg transition-all"
+                            },
+                            "children": [
+                                {
+                                    "type": "div",
+                                    "props": {
+                                        "class": "relative"
+                                    },
+                                    "children": [
+                                        {
+                                            "type": "Image",
+                                            "props": {
+                                                "src": "/images/services/tattoo-correction.webp",
+                                                "alt": "Корекція та оновлення",
+                                                "class": "w-full h-40 sm:h-48 object-cover rounded-t-lg",
+                                                "style": "background-color: #F5F0FF;",
+                                                "loading": "lazy"
+                                            }
+                                        },
+                                        {
+                                            "type": "div",
+                                            "props": {
+                                                "class": "absolute top-2 right-2 flex items-center gap-1 px-2 py-1 rounded border-2",
+                                                "style": "border-color: #3D3B47; background-color: transparent;"
+                                            },
+                                            "children": [
+                                                {
+                                                    "type": "Icon",
+                                                    "props": {
+                                                        "class": "pi pi-maximize",
+                                                        "style": "color: #3D3B47; font-size: 0.8rem;"
+                                                    }
+                                                },
+                                                {
+                                                    "type": "Span",
+                                                    "props": {
+                                                        "content": "MAX",
+                                                        "class": "text-xs font-semibold",
+                                                        "style": "color: #3D3B47;"
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "div",
+                                    "props": {
+                                        "class": "p-3 sm:p-4"
+                                    },
+                                    "children": [
+                                        {
+                                            "type": "div",
+                                            "props": {
+                                                "content": "<h3 class='text-lg sm:text-xl font-semibold mb-2' style='color: #3D3B47;'>Корекція та оновлення</h3><p class='text-sm sm:text-base mb-3 sm:mb-4' style='color: #3D3B47;'>Освіження кольорів або корекція існуючих татуювань.</p><div class='text-base sm:text-lg font-semibold' style='color: #6B00F5;'>Від ₴1600</div>"
+                                            }
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "type": "div",
+            "props": {
+                "class": "text-center mt-4 sm:mt-6"
+            },
+            "children": [
+                {
+                    "type": "Button",
+                    "props": {
+                        "label": "Всі тату-послуги",
+                        "icon": "pi pi-external-link",
+                        "class": "cursor-pointer text-sm sm:text-base",
+                        "style": "background-color: #6B00F5; color: white; border: none;",
+                        "aria-label": "Всі тату-послуги"
+                    },
+                    "customHooks": {
+                        "click": [
+                            {
+                                "action": "navigateTo",
+                                "data": {
+                                    "route": "/landing-main-page/services"
+                                }
+                            }
+                        ]
+                    }
+                }
+            ]
+        }
+    ],
+    "name": "tattoo-offers-section"
+}

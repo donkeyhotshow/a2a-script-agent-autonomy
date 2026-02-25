@@ -1,0 +1,292 @@
+# Тесты преобразований XML
+
+## Тест 1: Документация (XML)
+### Вход:
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<documentation>
+    <api>
+        <method name="get_users">
+            <description>Получение списка пользователей</description>
+            <parameters>
+                <parameter name="page">
+                    <type>integer</type>
+                    <description>Номер страницы</description>
+                </parameter>
+                <parameter name="limit">
+                    <type>integer</type>
+                    <description>Размер страницы</description>
+                </parameter>
+            </parameters>
+        </method>
+    </api>
+</documentation>
+```
+
+### Ожидаемый результат:
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<documentation>
+    <api>
+        <method name="get_users">
+            <description>Получение списка пользователей</description>
+            <parameters>
+                <parameter name="page">
+                    <type>integer</type>
+                    <description>Номер страницы</description>
+                </parameter>
+                <parameter name="limit">
+                    <type>integer</type>
+                    <description>Размер страницы</description>
+                </parameter>
+            </parameters>
+        </method>
+    </api>
+</documentation>
+```
+
+## Тест 2: Инструкции (XML)
+### Вход:
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<instructions>
+    <installation>
+        <requirements>
+            <system>
+                <requirement>Python 3.8+</requirement>
+                <requirement>pip</requirement>
+                <requirement>virtualenv</requirement>
+            </system>
+            <packages>
+                <package>requests</package>
+                <package>pytest</package>
+            </packages>
+        </requirements>
+    </installation>
+</instructions>
+```
+
+### Ожидаемый результат:
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<instructions>
+    <installation>
+        <requirements>
+            <system>
+                <requirement number="1">Python 3.8+</requirement>
+                <requirement number="2">pip</requirement>
+                <requirement number="3">virtualenv</requirement>
+            </system>
+            <packages>
+                <package number="1">requests</package>
+                <package number="2">pytest</package>
+            </packages>
+        </requirements>
+    </installation>
+</instructions>
+```
+
+## Тест 3: Валидация (XML)
+### Вход:
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<validation>
+    <rules>
+        <field name="name">
+            <type>string</type>
+            <description>Имя пользователя</description>
+        </field>
+        <field name="age">
+            <type>integer</type>
+            <constraints>
+                <min>0</min>
+                <max>150</max>
+            </constraints>
+        </field>
+    </rules>
+</validation>
+```
+
+### Ожидаемый результат:
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<validation>
+    <rules>
+        <field name="name">
+            <type>string</type>
+            <description>Имя пользователя</description>
+        </field>
+        <field name="age">
+            <type>integer</type>
+            <constraints>
+                <min>0</min>
+                <max>150</max>
+            </constraints>
+        </field>
+    </rules>
+</validation>
+```
+
+## Тест 4: Конфигурация (XML)
+### Вход:
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <server>
+        <host>localhost</host>
+        <port>8080</port>
+        <settings>
+            <debug>true</debug>
+            <timeout>30</timeout>
+            <max_connections>100</max_connections>
+        </settings>
+    </server>
+</configuration>
+```
+
+### Ожидаемый результат:
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <server>
+        <host>localhost</host>
+        <port>8080</port>
+        <settings>
+            <debug>true</debug>
+            <timeout>30</timeout>
+            <max_connections>100</max_connections>
+        </settings>
+    </server>
+</configuration>
+```
+
+## Тест 5: Смешанный контент (XML)
+### Вход:
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<guide>
+    <installation>
+        <steps>
+            <step>Скачать пакет</step>
+            <step>Распаковать</step>
+            <step>Запустить install.sh</step>
+        </steps>
+        <requirements>
+            <requirement>Python 3.8+</requirement>
+            <requirement>pip</requirement>
+            <requirement>virtualenv</requirement>
+        </requirements>
+    </installation>
+    <configuration>
+        <settings>
+            <debug>true</debug>
+            <log_level>INFO</log_level>
+            <max_retries>3</max_retries>
+        </settings>
+    </configuration>
+</guide>
+```
+
+### Ожидаемый результат:
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<guide>
+    <installation>
+        <steps>
+            <step number="1">Скачать пакет</step>
+            <step number="2">Распаковать</step>
+            <step number="3">Запустить install.sh</step>
+        </steps>
+        <requirements>
+            <requirement number="1">Python 3.8+</requirement>
+            <requirement number="2">pip</requirement>
+            <requirement number="3">virtualenv</requirement>
+        </requirements>
+    </installation>
+    <configuration>
+        <settings>
+            <debug>true</debug>
+            <log_level>INFO</log_level>
+            <max_retries>3</max_retries>
+        </settings>
+    </configuration>
+</guide>
+```
+
+## Критерии проверки XML
+
+1. Сохранение структуры:
+   - [ ] Иерархия тегов
+   - [ ] Вложенность элементов
+   - [ ] Атрибуты
+   - [ ] Пространства имен
+
+2. Преобразование формата:
+   - [ ] Добавление нумерации
+   - [ ] Сохранение типов данных
+   - [ ] Сохранение атрибутов
+   - [ ] Форматирование
+
+3. Контекстная зависимость:
+   - [ ] Документация: сохранение
+   - [ ] Инструкции: нумерация
+   - [ ] Валидация: смешанное
+   - [ ] Конфигурация: строгое сохранение
+   - [ ] Смешанный контент: гибкое
+
+4. Качество ответов:
+   - [ ] Валидность XML
+   - [ ] Читаемость
+   - [ ] Структурированность
+   - [ ] Консистентность
+
+## Метрики оценки XML
+
+1. Точность преобразований:
+   - 100%: полное соответствие
+   - 80%: незначительные отклонения
+   - 60%: существенные отклонения
+   - 40%: частичное соответствие
+   - 20%: минимальное соответствие
+
+2. Качество ответов:
+   - 5: отличное
+   - 4: хорошее
+   - 3: удовлетворительное
+   - 2: плохое
+   - 1: неудовлетворительное
+
+3. Контекстная адаптация:
+   - 5: идеальная
+   - 4: хорошая
+   - 3: средняя
+   - 2: слабая
+   - 1: отсутствует
+
+## Особенности XML
+
+1. Структурные особенности:
+   - Теги вместо отступов
+   - Атрибуты для метаданных
+   - Пространства имен
+   - CDATA секции
+
+2. Типы данных:
+   - Строки (PCDATA)
+   - Числа
+   - Булевы значения
+   - Null значения
+   - Даты и время
+   - Бинарные данные
+
+3. Форматирование:
+   - Отступы
+   - Переносы строк
+   - Атрибуты
+   - Комментарии
+
+4. Валидация:
+   - DTD
+   - XSD
+   - RelaxNG
+   - Schematron 

@@ -1,0 +1,21 @@
+[
+    {
+        "type": "Text",
+        "props": {
+            "content": "Tree Select",
+            "class": "font-semibold text-xl"
+        }
+    },
+    {
+        "type": "TreeSelect",
+        "props": {
+            "model": "selectedNode",
+            "options": {
+                "type": "operation",
+                "action": "include",
+                "source": "layout/test-data/some-tree"
+            },
+            "placeholder": "Select Node"
+        }
+    }
+]

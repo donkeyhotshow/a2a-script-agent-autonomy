@@ -1,0 +1,484 @@
+{
+    "type": "Section",
+    "name": "timeline-section",
+    "props": {
+        "class": "py-6 px-6 lg:px-20 my-2 md:my-6"
+    },
+    "children": [
+        {
+            "type": "Grid",
+            "props": {
+                "class": "grid grid-cols-12 gap-8"
+            },
+            "children": [
+                {
+                    "type": "Column",
+                    "props": {
+                        "class": "col-span-6"
+                    },
+                    "children": [
+                        {
+                            "type": "Card",
+                            "props": {
+                                "class": "card"
+                            },
+                            "children": [
+                                {
+                                    "type": "Text",
+                                    "props": {
+                                        "content": "Left Align",
+                                        "class": "font-semibold text-xl mb-4"
+                                    }
+                                },
+                                {
+                                    "type": "Timeline",
+                                    "props": {
+                                        "value": "events"
+                                    },
+                                    "children": [
+                                        {
+                                            "type": "Template",
+                                            "props": {
+                                                "slot": "content",
+                                                "slotProps": "slotProps"
+                                            },
+                                            "children": [
+                                                {
+                                                    "type": "Text",
+                                                    "props": {
+                                                        "content": "{{ slotProps.item.status }}"
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": "Column",
+                    "props": {
+                        "class": "col-span-6"
+                    },
+                    "children": [
+                        {
+                            "type": "Card",
+                            "props": {
+                                "class": "card"
+                            },
+                            "children": [
+                                {
+                                    "type": "Text",
+                                    "props": {
+                                        "content": "Right Align",
+                                        "class": "font-semibold text-xl mb-4"
+                                    }
+                                },
+                                {
+                                    "type": "Timeline",
+                                    "props": {
+                                        "value": "events",
+                                        "align": "right"
+                                    },
+                                    "children": [
+                                        {
+                                            "type": "Template",
+                                            "props": {
+                                                "slot": "content",
+                                                "slotProps": "slotProps"
+                                            },
+                                            "children": [
+                                                {
+                                                    "type": "Text",
+                                                    "props": {
+                                                        "content": "{{ slotProps.item.status }}"
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": "Column",
+                    "props": {
+                        "class": "col-span-6"
+                    },
+                    "children": [
+                        {
+                            "type": "Card",
+                            "props": {
+                                "class": "card"
+                            },
+                            "children": [
+                                {
+                                    "type": "Text",
+                                    "props": {
+                                        "content": "Alternate Align",
+                                        "class": "font-semibold text-xl mb-4"
+                                    }
+                                },
+                                {
+                                    "type": "Timeline",
+                                    "props": {
+                                        "value": "events",
+                                        "align": "alternate"
+                                    },
+                                    "children": [
+                                        {
+                                            "type": "Template",
+                                            "props": {
+                                                "slot": "content",
+                                                "slotProps": "slotProps"
+                                            },
+                                            "children": [
+                                                {
+                                                    "type": "Text",
+                                                    "props": {
+                                                        "content": "{{ slotProps.item.status }}"
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": "Column",
+                    "props": {
+                        "class": "col-span-6"
+                    },
+                    "children": [
+                        {
+                            "type": "Card",
+                            "props": {
+                                "class": "card"
+                            },
+                            "children": [
+                                {
+                                    "type": "Text",
+                                    "props": {
+                                        "content": "Opposite Content",
+                                        "class": "font-semibold text-xl mb-4"
+                                    }
+                                },
+                                {
+                                    "type": "Timeline",
+                                    "props": {
+                                        "value": "events"
+                                    },
+                                    "children": [
+                                        {
+                                            "type": "Template",
+                                            "props": {
+                                                "slot": "opposite",
+                                                "slotProps": "slotProps"
+                                            },
+                                            "children": [
+                                                {
+                                                    "type": "Text",
+                                                    "props": {
+                                                        "content": "<small class='text-muted-color'>{{ slotProps.item.date }}</small>"
+                                                    }
+                                                }
+                                            ]
+                                        },
+                                        {
+                                            "type": "Template",
+                                            "props": {
+                                                "slot": "content",
+                                                "slotProps": "slotProps"
+                                            },
+                                            "children": [
+                                                {
+                                                    "type": "Text",
+                                                    "props": {
+                                                        "content": "{{ slotProps.item.status }}"
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": "Column",
+                    "props": {
+                        "class": "col-span-full"
+                    },
+                    "children": [
+                        {
+                            "type": "Card",
+                            "props": {
+                                "class": "card"
+                            },
+                            "children": [
+                                {
+                                    "type": "Text",
+                                    "props": {
+                                        "content": "Templating",
+                                        "class": "font-semibold text-xl mb-4"
+                                    }
+                                },
+                                {
+                                    "type": "Timeline",
+                                    "props": {
+                                        "value": "events",
+                                        "align": "alternate",
+                                        "class": "customized-timeline"
+                                    },
+                                    "children": [
+                                        {
+                                            "type": "Template",
+                                            "props": {
+                                                "slot": "marker",
+                                                "slotProps": "slotProps"
+                                            },
+                                            "children": [
+                                                {
+                                                    "type": "Span",
+                                                    "props": {
+                                                        "class": "flex w-8 h-8 items-center justify-center text-white rounded-full z-10 shadow-sm",
+                                                        "style": "{ backgroundColor: slotProps.item.color }"
+                                                    },
+                                                    "children": [
+                                                        {
+                                                            "type": "Icon",
+                                                            "props": {
+                                                                "class": "{{ slotProps.item.icon }}"
+                                                            }
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        },
+                                        {
+                                            "type": "Template",
+                                            "props": {
+                                                "slot": "content",
+                                                "slotProps": "slotProps"
+                                            },
+                                            "children": [
+                                                {
+                                                    "type": "Card",
+                                                    "props": {
+                                                        "class": "mt-4"
+                                                    },
+                                                    "children": [
+                                                        {
+                                                            "type": "Template",
+                                                            "props": {
+                                                                "slot": "title"
+                                                            },
+                                                            "children": [
+                                                                {
+                                                                    "type": "Text",
+                                                                    "props": {
+                                                                        "content": "{{ slotProps.item.status }}"
+                                                                    }
+                                                                }
+                                                            ]
+                                                        },
+                                                        {
+                                                            "type": "Template",
+                                                            "props": {
+                                                                "slot": "subtitle"
+                                                            },
+                                                            "children": [
+                                                                {
+                                                                    "type": "Text",
+                                                                    "props": {
+                                                                        "content": "{{ slotProps.item.date }}"
+                                                                    }
+                                                                }
+                                                            ]
+                                                        },
+                                                        {
+                                                            "type": "Template",
+                                                            "props": {
+                                                                "slot": "content"
+                                                            },
+                                                            "children": [
+                                                                {
+                                                                    "type": "Image",
+                                                                    "props": {
+                                                                        "v-if": "slotProps.item.image",
+                                                                        "src": "`https://primefaces.org/cdn/primevue/images/product/${slotProps.item.image}`",
+                                                                        "alt": "slotProps.item.name",
+                                                                        "width": "200",
+                                                                        "class": "shadow-sm"
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "type": "Text",
+                                                                    "props": {
+                                                                        "content": "<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Inventore sed consequuntur error repudiandae numquam deserunt quisquam repellat libero asperiores earum nam nobis, culpa ratione quam perferendis esse, cupiditate neque quas!</p>"
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "type": "Button",
+                                                                    "props": {
+                                                                        "label": "Read more",
+                                                                        "text": true
+                                                                    }
+                                                                }
+                                                            ]
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": "Column",
+                    "props": {
+                        "class": "col-span-full"
+                    },
+                    "children": [
+                        {
+                            "type": "Card",
+                            "props": {
+                                "class": "card"
+                            },
+                            "children": [
+                                {
+                                    "type": "Text",
+                                    "props": {
+                                        "content": "Horizontal",
+                                        "class": "font-semibold text-xl mb-4"
+                                    }
+                                },
+                                {
+                                    "type": "Text",
+                                    "props": {
+                                        "content": "Top Align",
+                                        "class": "font-semibold mb-2"
+                                    }
+                                },
+                                {
+                                    "type": "Timeline",
+                                    "props": {
+                                        "value": "horizontalEvents",
+                                        "layout": "horizontal",
+                                        "align": "top"
+                                    },
+                                    "children": [
+                                        {
+                                            "type": "Template",
+                                            "props": {
+                                                "slot": "content",
+                                                "slotProps": "slotProps"
+                                            },
+                                            "children": [
+                                                {
+                                                    "type": "Text",
+                                                    "props": {
+                                                        "content": "{{ slotProps.item }}"
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "Text",
+                                    "props": {
+                                        "content": "Bottom Align",
+                                        "class": "font-semibold mt-4 mb-2"
+                                    }
+                                },
+                                {
+                                    "type": "Timeline",
+                                    "props": {
+                                        "value": "horizontalEvents",
+                                        "layout": "horizontal",
+                                        "align": "bottom"
+                                    },
+                                    "children": [
+                                        {
+                                            "type": "Template",
+                                            "props": {
+                                                "slot": "content",
+                                                "slotProps": "slotProps"
+                                            },
+                                            "children": [
+                                                {
+                                                    "type": "Text",
+                                                    "props": {
+                                                        "content": "{{ slotProps.item }}"
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "Text",
+                                    "props": {
+                                        "content": "Alternate Align",
+                                        "class": "font-semibold mt-4 mb-2"
+                                    }
+                                },
+                                {
+                                    "type": "Timeline",
+                                    "props": {
+                                        "value": "horizontalEvents",
+                                        "layout": "horizontal",
+                                        "align": "alternate"
+                                    },
+                                    "children": [
+                                        {
+                                            "type": "Template",
+                                            "props": {
+                                                "slot": "opposite"
+                                            },
+                                            "children": [
+                                                {
+                                                    "type": "Text",
+                                                    "props": {
+                                                        "content": "&nbsp;"
+                                                    }
+                                                }
+                                            ]
+                                        },
+                                        {
+                                            "type": "Template",
+                                            "props": {
+                                                "slot": "content",
+                                                "slotProps": "slotProps"
+                                            },
+                                            "children": [
+                                                {
+                                                    "type": "Text",
+                                                    "props": {
+                                                        "content": "{{ slotProps.item }}"
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

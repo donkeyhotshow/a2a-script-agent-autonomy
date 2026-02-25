@@ -1,0 +1,97 @@
+{
+    "type": "Button",
+    "props": {
+        "label": "Login / Signup",
+        "icon": "pi pi-user",
+        "severity": "primary",
+        "class": "ml-4",
+        "dialogConfig": {
+            "type": "Dialog",
+            "props": {
+                "header": "Login or Create Account",
+                "modal": true,
+                "style": "width: 400px"
+            },
+            "fields": [
+                {
+                    "type": "InputText",
+                    "props": {
+                        "label": "Email Address",
+                        "placeholder": "your@email.com"
+                    },
+                    "model": {
+                        "form": "authForm",
+                        "field": "email",
+                        "default": ""
+                    }
+                },
+                {
+                    "type": "InputText",
+                    "props": {
+                        "label": "Password",
+                        "placeholder": "Enter password",
+                        "type": "password"
+                    },
+                    "model": {
+                        "form": "authForm",
+                        "field": "password",
+                        "default": ""
+                    }
+                },
+                {
+                    "type": "div",
+                    "props": {
+                        "content": "<a href='#' class='text-sm text-primary hover:underline'>Forgot Password?</a>",
+                        "class": "text-right mt-1"
+                    }
+                }
+            ],
+            "actions": [
+                {
+                    "type": "Button",
+                    "props": {
+                        "label": "Login",
+                        "icon": "pi pi-sign-in",
+                        "severity": "primary",
+                        "class": "w-full"
+                    },
+                    "customHooks": {
+                        "click": [
+                            {
+                                "action": "sendData",
+                                "data": {
+                                    "sendTo": "auth/login",
+                                    "form": "authForm"
+                                }
+                            },
+                            {
+                                "action": "closeDialog"
+                            }
+                        ]
+                    }
+                },
+                {
+                    "type": "Button",
+                    "props": {
+                        "label": "Create Account",
+                        "icon": "pi pi-user-plus",
+                        "severity": "secondary",
+                        "outlined": true,
+                        "class": "w-full mt-2"
+                    },
+                    "customHooks": {
+                        "click": [
+                            {
+                                "action": "sendData",
+                                "data": {
+                                    "sendTo": "auth/register",
+                                    "form": "authForm"
+                                }
+                            }
+                        ]
+                    }
+                }
+            ]
+        }
+    }
+}

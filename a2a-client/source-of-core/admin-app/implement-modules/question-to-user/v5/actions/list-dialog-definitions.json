@@ -1,0 +1,56 @@
+{
+    "type": "Instructions",
+    "instructions": [
+        {
+            "action": "update",
+            "batch": [
+                {
+                    "value": "list-dialog-definitions",
+                    "to": "buffer:actionId"
+                },
+                {
+                    "value": {
+                        "keywords": ["dialog", "definitions", "list", "system"],
+                        "ai_summary": "Retrieves and returns a list of available dialog definitions.",
+                        "features": ["system-lists", "dialog-management"]
+                    },
+                    "to": "buffer:tags"
+                }
+            ]
+        },
+        {
+            "action": "comment",
+            "value": "Lists available dialog definitions by reading from a data file. TODO: Integrate with actual backend dialog listing mechanism if this file is not the source of truth."
+        },
+        {
+            "action": "comment",
+            "value": "Fetching list of dialog definitions from data file."
+        },
+        {
+            "action": "update",
+            "batch": [
+                {
+                    "from": "file!question-to-user/data/system_lists/dialog-definitions",
+                    "to": "buffer:fetchedDialogs"
+                }
+            ]
+        },
+        {
+            "action": "update",
+            "batch": [
+                {
+                    "from": "buffer:actionId",
+                    "to": "output:actionId"
+                },
+                {
+                    "from": "buffer:tags",
+                    "to": "output:tags"
+                },
+                {
+                    "from": "buffer:fetchedDialogs",
+                    "to": "output:result"
+                }
+            ]
+        }
+    ]
+} 

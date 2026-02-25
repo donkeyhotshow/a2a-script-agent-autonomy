@@ -1,0 +1,9 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Scan Group Array Schema",
+    "description": "JSON Schema for an array of scan group definitions, used in scripts_config.json.",
+    "type": "array",
+    "items": {
+        "$ref": "./scanGroupSchema.json#"
+    }
+}

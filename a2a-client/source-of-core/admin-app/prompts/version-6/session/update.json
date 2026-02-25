@@ -1,0 +1,10 @@
+{
+    "type": "Instructions",
+    "instructions": [
+        {
+            "action": "update",
+            "from": "buffer:user",
+            "to": "session:user"
+        }
+    ]
+} 

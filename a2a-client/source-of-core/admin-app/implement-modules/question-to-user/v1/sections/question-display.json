@@ -1,0 +1,9 @@
+{
+  "type": "section",
+  "children": [
+    {
+      "type": "component",
+      "source": "file!question-to-user/templates/question-area.json:children"
+    }
+  ]
+} 

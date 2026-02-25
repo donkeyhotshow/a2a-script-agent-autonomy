@@ -1,0 +1,42 @@
+{
+    "componentName": "Pre",
+    "description": "Standard HTML <pre> inline element.",
+    "status": "ready",
+    "level": 5,
+    "documentationLink": "docs/guides/module/04-ui-construction.md",
+    "dependencies": [],
+    "nestedValidation": {
+        "structure": {
+            "children": {
+                "type": "array",
+                "required": false,
+                "description": "Child elements of the div.",
+                "nestedValidation": {
+                    "_allowAnyObject": true,
+                    "_allowString": true
+                }
+            },
+            "props": {
+                "type": "object",
+                "required": false,
+                "nestedValidation": {
+                    "structure": {
+                        "allOf": [
+                            {
+                                "$ref": "../common/props.json"
+                            },
+                            {
+                                "$ref": "../common/content.json"
+                            }
+                        ]
+                    }
+                }
+            },
+            "$ref": "../common/root.json"
+        }
+    },
+    "implementationNotes": [
+        "Represents the standard HTML <span> element.",
+        "Standard attributes like id, class, style should be applied directly at the component root if not defined in props."
+    ]
+}

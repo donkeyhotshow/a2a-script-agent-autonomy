@@ -1,0 +1,12 @@
+{
+    "content": {
+        "type": "string",
+        "required": false,
+        "description": "Direct HTML content for the div (use children instead usually)."
+    },
+    "value": {
+        "type": "string",
+        "required": false,
+        "description": "Direct HTML content for the div (use children instead usually)."
+    }
+}

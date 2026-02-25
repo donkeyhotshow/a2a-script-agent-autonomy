@@ -1,0 +1,26 @@
+[
+    {
+        "id": "home-admin",
+        "type": "admin",
+        "label": "Primary Form",
+        "path": "/admin/primary-form",
+        "page": "primary-form",
+        "icon": "pi pi-home"
+    },
+    {
+        "id": "home-quest-direct",
+        "type": "quest",
+        "label": "Home",
+        "path": "/primary-form/page",
+        "page": "page",
+        "icon": "pi pi-home"
+    },
+    {
+        "id": "home-quest-indirect",
+        "type": "quest",
+        "label": "Home",
+        "link": "/primary-form/page",
+        "path": "/primary-form",
+        "icon": "pi pi-home"
+    }
+]

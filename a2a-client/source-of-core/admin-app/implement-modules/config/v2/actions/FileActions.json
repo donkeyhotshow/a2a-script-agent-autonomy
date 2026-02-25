@@ -1,0 +1,172 @@
+{
+    // Define a base directory for file operations.
+    // For flexibility and security, this should ideally be determined from a global app config.
+    // For now, let's assume the workspace root is the effective base, and paths are relative to it.
+    // An empty string means paths are relative to project root but still sanitized.
+    private
+    const
+    ALLOWED_BASE_PATH
+    =
+    ''
+    ;
+    // Paths will be relative to project root + sanitized
+    private
+    string
+    $projectRoot
+    ;
+
+    public
+    function
+    __construct() {
+    // In a real application, projectRoot might be injected or retrieved from a service container.
+    // Assuming the workspace root is where the app runs.
+    $this->projectRoot
+    =
+    rtrim(getcwd(),
+    DIRECTORY_SEPARATOR)
+    ;
+}
+
+/**
+ * Resolves the given file path against a base directory and performs security checks.
+ *
+ * @param string $filePath Relative file path from user input.
+ * @param bool $checkMustExist If true, the resolved path must exist.
+ * @param bool $ensureBaseDir If true, ensures the base directory of the path exists (for saving).
+ * @return array ['status' => bool, 'path' => string|null, 'error' => string|null]
+ */
+private function resolveAndSecurePath(string $filePath, bool $checkMustExist = true, bool $ensureBaseDir = false): array {
+if (empty($filePath)) {
+return ['status' => false, 'path' => null, 'error' => 'File path cannot be empty.'];
+}
+
+// Normalize path and remove traversal attempts
+$normalizedPath = str_replace('..', '', $filePath);
+$normalizedPath = ltrim(str_replace('\\ ', '/', $normalizedPath), '/'); // Normalize to forward slashes and remove leading slash
+
+// Construct full path relative to project root. If ALLOWED_BASE_PATH is set, prepend it.
+$fullPath = $this->projectRoot . DIRECTORY_SEPARATOR;
+if (!empty(self:: ALLOWED_BASE_PATH)) {
+$fullPath .= self::ALLOWED_BASE_PATH . DIRECTORY_SEPARATOR . $normalizedPath;
+} else {
+$fullPath .= $normalizedPath; // Relative to project root if no specific base path
+}
+
+$realFullPath = realpath($fullPath);
+$realProjectRootWithBase = realpath($this->projectRoot . (!empty(self:: ALLOWED_BASE_PATH) ? DIRECTORY_SEPARATOR . self:: ALLOWED_BASE_PATH: ''));
+
+// Security check: Ensure the resolved path is within the allowed base directory of the project.
+if ($realProjectRootWithBase === false) {
+// This indicates an issue with the ALLOWED_BASE_PATH or projectRoot configuration.
+return ['status' => false, 'path' => null, 'error' => 'Internal configuration error: Base path for storage is invalid.'];
+}
+
+if ($ensureBaseDir) {
+$dirName = dirname($fullPath);
+if (!is_dir($dirName)) {
+if (!mkdir($dirName, 0775, true)) {
+return ['status' => false, 'path' => null, 'error' => 'Failed to create directory: ' . htmlspecialchars($dirName)];
+}
+}
+// Path for saving might not exist yet, so realpath check is different
+// We rely on the constructed $fullPath for saving, after directory creation.
+// Check if the directory part is within the allowed base
+$realDirName = realpath($dirName);
+if ($realDirName === false || strpos($realDirName, $realProjectRootWithBase) !== 0) {
+return ['status' => false, 'path' => null, 'error' => 'Access denied: Cannot save file outside allowed storage area. Path: ' . htmlspecialchars($filePath)];
+}
+return ['status' => true, 'path' => $fullPath, 'error' => null];
+}
+
+if ($realFullPath === false) {
+if ($checkMustExist) {
+return ['status' => false, 'path' => null, 'error' => 'File not found: ' . htmlspecialchars($filePath)];
+}
+// If file doesn't need to exist (e.g. for saving to a new file), but we are not in ensureBaseDir mode this is an issue.
+// However, saveFile path will use ensureBaseDir logic.
+}
+
+if ($realFullPath !== false && strpos($realFullPath, $realProjectRootWithBase) !== 0) {
+return ['status' => false, 'path' => null, 'error' => 'Access denied: File is outside allowed storage area. Path: ' . htmlspecialchars($filePath)];
+}
+
+if ($checkMustExist && !is_file($realFullPath)) {
+return ['status' => false, 'path' => null, 'error' => 'Path is not a file: ' . htmlspecialchars($filePath)];
+}
+
+return ['status' => true, 'path' => $realFullPath ?? $fullPath, 'error' => null];
+}
+
+/**
+ * Загружает содержимое JSON-файла с диска.
+ *
+ * @param array $inputs Входные параметры (filePath).
+ * @return array Output array as per action definition.
+ */
+public function loadFile(array $inputs): array {
+$pathResult = $this->resolveAndSecurePath($inputs['filePath'] ?? '');
+if (!$pathResult['status']) {
+return ['error' => $pathResult['error']];
+}
+$filePath = $pathResult['path'];
+
+if (!is_readable($filePath)) {
+return ['error' => 'File not readable: ' . htmlspecialchars($inputs['filePath'] ?? '')];
+}
+
+$rawFileContent = @file_get_contents($filePath);
+if ($rawFileContent === false) {
+return ['error' => 'Failed to read file content: ' . htmlspecialchars($inputs['filePath'] ?? '')];
+}
+
+$fileContent = json_decode($rawFileContent, true); // true for associative array
+if (json_last_error() !== JSON_ERROR_NONE) {
+// If not valid JSON, but file exists, perhaps return raw content for non-JSON files?
+// Action definition implies JSON, so error is appropriate for parse failure.
+return ['error' => 'JSON parsing error: ' . json_last_error_msg() . ' for file: ' . htmlspecialchars($inputs['filePath'] ?? ''), 'rawFileContent' => $rawFileContent];
+}
+
+return [
+'fileContent' => $fileContent,
+'rawFileContent' => $rawFileContent
+];
+}
+
+/**
+ * Сохраняет данные в JSON-файл на диске.
+ *
+ * @param array $inputs Входные параметры (filePath, fileContent, prettyPrint).
+ * @return array Output array as per action definition.
+ */
+public function saveFile(array $inputs): array {
+if (!isset($inputs['fileContent'])) {
+// As per definition, fileContent is required.
+return ['success' => false, 'error' => 'fileContent is required.'];
+}
+
+$pathResult = $this->resolveAndSecurePath($inputs['filePath'] ?? '', false, true);
+if (!$pathResult['status']) {
+return ['success' => false, 'error' => $pathResult['error']];
+}
+$filePath = $pathResult['path'];
+
+$fileContent = $inputs['fileContent'];
+$prettyPrint = filter_var($inputs['prettyPrint'] ?? true, FILTER_VALIDATE_BOOLEAN);
+
+$jsonFlags = JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE;
+if ($prettyPrint) {
+$jsonFlags |= JSON_PRETTY_PRINT;
+}
+
+$jsonData = json_encode($fileContent, $jsonFlags);
+if (json_last_error() !== JSON_ERROR_NONE) {
+return ['success' => false, 'error' => 'JSON encoding error: ' . json_last_error_msg()];
+}
+
+if (@file_put_contents($filePath, $jsonData) === false) {
+return ['success' => false, 'error' => 'Failed to write to file: ' . htmlspecialchars($inputs['filePath'] ?? '')];
+}
+
+return ['success' => true];
+}
+}

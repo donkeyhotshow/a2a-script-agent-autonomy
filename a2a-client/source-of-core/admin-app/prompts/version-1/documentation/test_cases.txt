@@ -1,0 +1,226 @@
+# Test Cases
+
+## Basic Transformations
+
+1. Simple Field:
+   ```json
+   Input:
+   {
+       "name": "test"
+   }
+   
+   Expected Output:
+   {
+       "type": "Instructions",
+       "instructions": [
+           {
+               "action": "update",
+               "batch": [
+                   {
+                       "value": "test",
+                       "to": "buffer:name"
+                   }
+               ]
+           }
+       ]
+   }
+   ```
+
+2. Multiple Fields:
+   ```json
+   Input:
+   {
+       "name": "test",
+       "age": 25,
+       "active": true
+   }
+   
+   Expected Output:
+   {
+       "type": "Instructions",
+       "instructions": [
+           {
+               "action": "update",
+               "batch": [
+                   {
+                       "value": "test",
+                       "to": "buffer:name"
+                   },
+                   {
+                       "value": 25,
+                       "to": "buffer:age"
+                   },
+                   {
+                       "value": true,
+                       "to": "buffer:active"
+                   }
+               ]
+           }
+       ]
+   }
+   ```
+
+## Complex Transformations
+
+1. Nested Objects:
+   ```json
+   Input:
+   {
+       "user": {
+           "profile": {
+               "name": "John",
+               "settings": {
+                   "theme": "dark"
+               }
+           }
+       }
+   }
+   
+   Expected Output:
+   {
+       "type": "Instructions",
+       "instructions": [
+           {
+               "action": "update",
+               "batch": [
+                   {
+                       "value": {
+                           "profile": {
+                               "name": "John",
+                               "settings": {
+                                   "theme": "dark"
+                               }
+                           }
+                       },
+                       "to": "buffer:user"
+                   }
+               ]
+           }
+       ]
+   }
+   ```
+
+2. Arrays:
+   ```json
+   Input:
+   {
+       "items": [
+           {"id": 1, "name": "item1"},
+           {"id": 2, "name": "item2"}
+       ]
+   }
+   
+   Expected Output:
+   {
+       "type": "Instructions",
+       "instructions": [
+           {
+               "action": "update",
+               "batch": [
+                   {
+                       "value": [
+                           {"id": 1, "name": "item1"},
+                           {"id": 2, "name": "item2"}
+                       ],
+                       "to": "buffer:items"
+                   }
+               ]
+           }
+       ]
+   }
+   ```
+
+## Edge Cases
+
+1. Empty Objects:
+   ```json
+   Input: {}
+   
+   Expected Output:
+   {
+       "type": "Instructions",
+       "instructions": [
+           {
+               "action": "update",
+               "batch": []
+           }
+       ]
+   }
+   ```
+
+2. Null Values:
+   ```json
+   Input:
+   {
+       "field": null
+   }
+   
+   Expected Output:
+   {
+       "type": "Instructions",
+       "instructions": [
+           {
+               "action": "update",
+               "batch": [
+                   {
+                       "value": null,
+                       "to": "buffer:field"
+                   }
+               ]
+           }
+       ]
+   }
+   ```
+
+## Performance Tests
+
+1. Large Objects:
+   ```json
+   Input:
+   {
+       "data": {
+           "items": Array(1000).fill({"id": 1, "name": "item"})
+       }
+   }
+   ```
+
+2. Deep Nesting:
+   ```json
+   Input:
+   {
+       "level1": {
+           "level2": {
+               "level3": {
+                   "level4": {
+                       "level5": "value"
+                   }
+               }
+           }
+       }
+   }
+   ```
+
+## Error Cases
+
+1. Invalid JSON:
+   ```json
+   Input: {"name": "test", "age": 25,}
+   ```
+
+2. Missing Fields:
+   ```json
+   Input:
+   {
+       "name": "test"
+   }
+   Expected: type field
+   ```
+
+3. Type Mismatch:
+   ```json
+   Input:
+   {
+       "age": "25"
+   }
+   Expected: number
+   ``` 

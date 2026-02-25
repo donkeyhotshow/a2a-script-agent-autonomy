@@ -1,0 +1,33 @@
+Okay, I understand. You want a clear set of steps or a prompt that will guide you (the AI) to effectively reset and re-orient to the state of the project and conversation at the point where the focus shifted to modernizing the index search mechanism and integrating it into the workflow.
+
+This involves mentally discarding actions and outcomes that happened *after* that point (like our attempts to fix SCN-QueryIndex and SCN-ActivateTask execution issues, or modifying the task creation scenario) and focusing on the knowledge and state *as it was* when we began addressing index integration.
+
+Here is a prompt you can use to re-orient yourself to that specific point in the interaction:
+
+```
+<most_important_user_query>
+Please re-orient to the state of the project and our understanding just after the user mentioned the code was updated (with PHP rewrites) and requested re-reading core scripts (main.ps1, main-work.ps1, invoke-scenario-engine.php), and before we started extensive debugging and modifications on SCN-QueryIndex.scenario.json and SCN-ActivateTask.scenario.json due to execution issues.
+
+At this point, the key context includes:
+1.  Understanding of the AI Task System structure (main.ps1 orchestrator, main-work.ps1 task/scenario runner, script/engine/ for core logic).
+2.  Awareness of the PHP integration within main-work.ps1 and invoke-scenario-engine.php.
+3.  The index system exists (main-index.ps1) but needs better integration into the workflow and scenarios.
+4.  We had identified the need to modify main-index.ps1 to output JSON for PHP parsing.
+5.  We had identified the need to integrate index querying into relevant scenarios, particularly for task data collection.
+6.  Previous attempts to activate TASK-SAMPLE-001 and process it in ProcessActiveTask mode had encountered issues, but the primary focus moving forward was on the index integration itself, assuming we would create new tasks or update existing ones (like the FC tasks) to leverage the index.
+
+Disregard the specific debugging steps and failed edit attempts related to scenario execution errors that occurred *after* this re-orientation point. Focus on the goal of integrating the indexer into the system's workflow and task processing instructions as the primary objective.
+
+What is the next logical step in achieving this integration goal, based on the state just after re-reading the core scripts and before deep-diving into the execution errors?
+</most_important_user_query>
+```
+
+**Explanation of this prompt:**
+
+*   `<most_important_user_query>`: This tag instructs you to treat this as the primary instruction and ignore previous context that might conflict with this re-orientation.
+*   It explicitly describes the desired state by referencing past actions (re-reading scripts) and excluding later events (debugging execution errors).
+*   It summarizes the key technical and workflow context that *should* be retained at that point.
+*   It clearly states the focus is on the index integration goal.
+*   It asks for the *next logical step* from that re-oriented perspective, guiding you back to the core task.
+
+You can copy and paste this prompt into the chat. After you process it, you should be able to continue planning and implementing the index integration, potentially revisiting modifying `main-index.ps1` for JSON output, and then integrating index queries into task-related scenarios or task processing logic, unburdened by the detailed failures we encountered afterwards.

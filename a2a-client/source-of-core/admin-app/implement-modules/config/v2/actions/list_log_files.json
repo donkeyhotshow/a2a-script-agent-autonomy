@@ -1,0 +1,58 @@
+{
+    "actionId": "config.list_log_files",
+    "version": "1.0.0",
+    "description": "Получает список доступных лог-файлов.",
+    "inputs": {
+        "type": "object",
+        "properties": {
+            "logDirectory": {
+                "type": "string",
+                "description": "Директория, в которой искать лог-файлы (опционально, может быть преднастроено в обработчике)."
+            },
+            "filePattern": {
+                "type": "string",
+                "description": "Паттерн для поиска файлов (например, *.log) (опционально)."
+            }
+        }
+    },
+    "outputs": {
+        "type": "object",
+        "properties": {
+            "logFiles": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "name": {
+                            "type": "string",
+                            "description": "Имя файла"
+                        },
+                        "path": {
+                            "type": "string",
+                            "description": "Полный путь к файлу или идентификатор"
+                        }
+                    },
+                    "required": [
+                        "name",
+                        "path"
+                    ]
+                },
+                "description": "Массив объектов лог-файлов."
+            },
+            "error": {
+                "type": "string",
+                "description": "Сообщение об ошибке, если операция не удалась."
+            }
+        },
+        "required": [
+            "logFiles"
+        ]
+    },
+    "handler": {
+        "type": "php",
+        "class": "ConfigModule\LogActions",
+        "method": "listLogs",
+        "file": "php/LogActions.php"
+    },
+    "notes": "Обработчик должен вернуть пустой массив, если лог-файлы не найдены или директория не существует."
+}

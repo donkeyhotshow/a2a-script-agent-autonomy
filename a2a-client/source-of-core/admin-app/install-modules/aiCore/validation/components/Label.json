@@ -1,0 +1,49 @@
+{
+    "componentName": "Label",
+    "description": "Represents a standard HTML <label> element. Typically used with form elements.",
+    "level": 5,
+    "status": "ready",
+    "dependencies": [],
+    "nestedValidation": {
+        "structure": {
+            "children": {
+                "type": "array",
+                "required": false,
+                "nestedValidation": {
+                    "_allowString": true
+                },
+                "description": "The text content of the label."
+            },
+            "props": {
+                "type": "object",
+                "required": false,
+                "description": "Container for standard HTML label attributes.",
+                "nestedValidation": {
+                    "structure": {
+                        "allOf": [
+                            {
+                                "$ref": "../common/props.json"
+                            },
+                            {
+                                "for": {
+                                    "type": "string",
+                                    "required": false,
+                                    "description": "Specifies the id of the form element the label should be bound to."
+                                }
+                            },
+                            {
+                                "$ref": "../common/content.json"
+                            }
+                        ]
+                    }
+                }
+            },
+            "$ref": "../common/root.json"
+        }
+    },
+    "implementationNotes": [
+        "Renders a standard HTML <label> tag.",
+        "Refactored to expect props within a 'props' object."
+    ],
+    "documentationLink": "docs/guides/module/04-ui-construction.md"
+}

@@ -1,0 +1,50 @@
+{
+    "type": "Page",
+    "title": "Home",
+    "description": "Barber XXL 1 - Premium Barber Shop and Tattoo Salon in Kyiv.",
+    "content": {
+        "type": "Grid",
+        "children": [
+            {
+                "type": "Column",
+                "props": {
+                    "class": "col-span-12 md:col-span-4"
+                },
+                "children": [
+                    {
+                        "type": "operation",
+                        "action": "include",
+                        "source": "primary-form/templates/forms/program-control"
+                    }
+                ]
+            },
+            {
+                "type": "Column",
+                "props": {
+                    "class": "col-span-12 md:col-span-4"
+                },
+                "children": [
+                    {
+                        "type": "operation",
+                        "action": "include",
+                        "source": "primary-form/templates/forms/checkbox-section"
+                    }
+                ]
+            },
+            {
+                "type": "Column",
+                "props": {
+                    "class": "col-span-12 md:col-span-4"
+                },
+                "children": [
+                    {
+                        "type": "operation",
+                        "action": "include",
+                        "source": "primary-form/templates/forms/result-section"
+                    }
+                ]
+            }
+        ]
+    }
+}
+

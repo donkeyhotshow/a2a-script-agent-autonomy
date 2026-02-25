@@ -1,0 +1,140 @@
+{
+    "type": "div",
+    "name": "map-section",
+    "props": {
+        "class": "py-12 px-4 md:px-6 lg:px-8 xl:px-10 2xl:px-12",
+        "style": "background: linear-gradient(135deg, rgba(18, 168, 0, 0.08) 0%, rgba(107, 0, 245, 0.05) 100%), url('/images/backgrounds/forest-abstract.webp') no-repeat center/cover; background-blend-mode: overlay;"
+    },
+    "children": [
+        {
+            "type": "div",
+            "props": {
+                "class": "bg-white/80 backdrop-blur-sm rounded-lg p-6 mb-8 shadow-sm max-w-3xl mx-auto text-center",
+                "content": "<h2 class='text-3xl font-bold mb-4' style='color: #3D3B47;'>Знайдіть нас</h2><p class='text-xl max-w-3xl mx-auto' style='color: #3D3B47;'>Ми знаходимося в центральній частині Києва, з легким доступом громадським транспортом та місцями для паркування</p>"
+            }
+        },
+        {
+            "type": "div",
+            "props": {
+                "class": "rounded-xl overflow-hidden shadow-lg max-w-6xl mx-auto relative"
+            },
+            "children": [
+                {
+                    "type": "div",
+                    "props": {
+                        "class": "w-full h-96",
+                        "style": "background: linear-gradient(135deg, #12A800 0%, #F46700 100%); opacity: 0.8;"
+                    }
+                },
+                {
+                    "type": "div",
+                    "props": {
+                        "class": "absolute top-4 left-4 bg-white p-4 rounded-lg shadow-md max-w-xs"
+                    },
+                    "children": [
+                        {
+                            "type": "div",
+                            "props": {
+                                "content": "<h3 class='text-lg font-semibold mb-2 flex items-center' style='color: #3D3B47;'><i class='pi pi-map-marker mr-2' style='color: #F46700;'></i>Barber XXL</h3><p style='color: #3D3B47;'>вул. Барбершоп, 123<br>Київ, Україна</p>"
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "type": "Grid",
+            "props": {
+                "class": "grid grid-cols-1 md:grid-cols-3 gap-6 mt-8 max-w-6xl mx-auto"
+            },
+            "children": [
+                {
+                    "type": "Column",
+                    "children": [
+                        {
+                            "type": "Card",
+                            "props": {
+                                "class": "text-center p-4 shadow-md hover:shadow-lg transition-all bg-white/80 backdrop-blur-sm"
+                            },
+                            "children": [
+                                {
+                                    "type": "div",
+                                    "props": {
+                                        "content": "<div class='flex justify-center mb-3'><div class='flex items-center justify-center w-12 h-12 rounded-full text-white' style='background-color: #F46700;'><i class='pi pi-car text-2xl'></i></div></div><h3 class='text-lg font-semibold mb-2' style='color: #3D3B47;'>Паркування</h3><p style='color: #3D3B47;'>Приватна парковка для клієнтів, 5 хвилин ходьби від метро</p>"
+                                    }
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": "Column",
+                    "children": [
+                        {
+                            "type": "Card",
+                            "props": {
+                                "class": "text-center p-4 shadow-md hover:shadow-lg transition-all bg-white/80 backdrop-blur-sm"
+                            },
+                            "children": [
+                                {
+                                    "type": "div",
+                                    "props": {
+                                        "content": "<div class='flex justify-center mb-3'><div class='flex items-center justify-center w-12 h-12 rounded-full text-white' style='background-color: #12A800;'><i class='pi pi-directions text-2xl'></i></div></div><h3 class='text-lg font-semibold mb-2' style='color: #3D3B47;'>Транспорт</h3><p style='color: #3D3B47;'>Станція метро, автобусні зупинки та таксі поруч з нами</p>"
+                                    }
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": "Column",
+                    "children": [
+                        {
+                            "type": "Card",
+                            "props": {
+                                "class": "text-center p-4 shadow-md hover:shadow-lg transition-all bg-white/80 backdrop-blur-sm"
+                            },
+                            "children": [
+                                {
+                                    "type": "div",
+                                    "props": {
+                                        "content": "<div class='flex justify-center mb-3'><div class='flex items-center justify-center w-12 h-12 rounded-full text-white' style='background-color: #6B00F5;'><i class='pi pi-compass text-2xl'></i></div></div><h3 class='text-lg font-semibold mb-2' style='color: #3D3B47;'>Навігація</h3><p style='color: #3D3B47;'>Шукайте 'Barber XXL' у Google Maps для точних вказівок</p>"
+                                    }
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "type": "div",
+            "props": {
+                "class": "text-center mt-8"
+            },
+            "children": [
+                {
+                    "type": "Button",
+                    "props": {
+                        "label": "Відкрити в Google Maps",
+                        "icon": "pi pi-external-link",
+                        "outlined": true,
+                        "class": "cursor-pointer bg-white/70",
+                        "style": "border-color: #12A800; color: #12A800;"
+                    },
+                    "customHooks": {
+                        "click": [
+                            {
+                                "action": "navigateTo",
+                                "data": {
+                                    "url": "https://maps.google.com",
+                                    "target": "_blank"
+                                }
+                            }
+                        ]
+                    }
+                }
+            ]
+        }
+    ]
+} 

@@ -1,0 +1,143 @@
+# JSON Transformation Examples
+
+## Basic Transformations
+
+### Example 1: Simple Field
+Input:
+```json
+{
+    "name": "test"
+}
+```
+
+Output:
+```json
+{
+    "type": "Instructions",
+    "instructions": [
+        {
+            "action": "update",
+            "batch": [
+                {
+                    "value": "test",
+                    "to": "buffer:name"
+                }
+            ]
+        }
+    ]
+}
+```
+
+### Example 2: Nested Object
+Input:
+```json
+{
+    "config": {
+        "enabled": true
+    }
+}
+```
+
+Output:
+```json
+{
+    "type": "Instructions",
+    "instructions": [
+        {
+            "action": "update",
+            "batch": [
+                {
+                    "value": {
+                        "enabled": true
+                    },
+                    "to": "buffer:config"
+                }
+            ]
+        }
+    ]
+}
+```
+
+### Example 3: Array of Objects
+Input:
+```json
+{
+    "items": [
+        {"id": 1, "name": "Item 1"},
+        {"id": 2, "name": "Item 2"}
+    ]
+}
+```
+
+Output:
+```json
+{
+    "type": "Instructions",
+    "instructions": [
+        {
+            "action": "update",
+            "batch": [
+                {
+                    "value": [
+                        {"id": 1, "name": "Item 1"},
+                        {"id": 2, "name": "Item 2"}
+                    ],
+                    "to": "buffer:items"
+                }
+            ]
+        }
+    ]
+}
+```
+
+### Example 4: Complex Nested Structure
+Input:
+```json
+{
+    "user": {
+        "profile": {
+            "name": "John",
+            "age": 30,
+            "preferences": {
+                "theme": "dark",
+                "notifications": true
+            }
+        },
+        "settings": {
+            "language": "en",
+            "timezone": "UTC"
+        }
+    }
+}
+```
+
+Output:
+```json
+{
+    "type": "Instructions",
+    "instructions": [
+        {
+            "action": "update",
+            "batch": [
+                {
+                    "value": {
+                        "profile": {
+                            "name": "John",
+                            "age": 30,
+                            "preferences": {
+                                "theme": "dark",
+                                "notifications": true
+                            }
+                        },
+                        "settings": {
+                            "language": "en",
+                            "timezone": "UTC"
+                        }
+                    },
+                    "to": "buffer:user"
+                }
+            ]
+        }
+    ]
+}
+```

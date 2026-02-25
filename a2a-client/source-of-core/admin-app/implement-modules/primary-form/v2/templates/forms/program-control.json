@@ -1,0 +1,159 @@
+{
+    "type": "Form",
+    "name": "program-section",
+    "props": {
+        "class": "card flex flex-col gap-4"
+    },
+    "children": [
+        {
+            "type": "div",
+            "props": {
+                "class": "flex items-center gap-2"
+            },
+            "children": [
+                {
+                    "type": "Select",
+                    "name": "window-selector",
+                    "props": {
+                        "label": "Окно",
+                        "placeholder": "Выберите окно",
+                        "clearable": true,
+                        "filter": true,
+                        "filterPlaceholder": "Поиск окна...",
+                        "class": "grow"
+                    },
+                    "model": {
+                        "form": "program-section",
+                        "field": "selectedWindow",
+                        "options": {
+                            "type": "operation",
+                            "action": "include",
+                            "source": "primary-form/data/models/windows"
+                        },
+                        "optionLabel": "name",
+                        "optionValue": "id",
+                        "default": ""
+                    },
+                    "customHooks": {
+                        "change": [
+                            {
+                                "action": "sendData",
+                                "data": {
+                                    "sendTo": "program-section/windowChange",
+                                    "form": "program-section",
+                                    "field": "selectedWindow"
+                                }
+                            }
+                        ]
+                    }
+                },
+                {
+                    "type": "ButtonMenu",
+                    "props": {
+                        "icon": "pi pi-ellipsis-v"
+                    },
+                    "items": [
+                        {
+                            "label": "Новое окно",
+                            "icon": "pi pi-home",
+                            "dialogConfig": {
+                                "type": "operation",
+                                "action": "include",
+                                "source": "primary-form/templates/parts/program/windowCreateDialog"
+                            }
+                        },
+                        {
+                            "label": "Удалить окно",
+                            "icon": "pi pi-home",
+                            "command": "asdadf"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "type": "div",
+            "props": {
+                "class": "flex items-center gap-2"
+            },
+            "children": [
+                {
+                    "type": "Select",
+                    "name": "program-selector",
+                    "props": {
+                        "label": "Проект",
+                        "placeholder": "Выберите проект",
+                        "clearable": true,
+                        "filter": true,
+                        "filterPlaceholder": "Поиск проекта...",
+                        "class": "grow"
+                    },
+                    "model": {
+                        "form": "program-section",
+                        "field": "selectedProgram",
+                        "options": {
+                            "type": "operation",
+                            "action": "include",
+                            "source": "primary-form/data/models/programs"
+                        },
+                        "optionLabel": "name",
+                        "optionValue": "id",
+                        "default": ""
+                    },
+                    "customHooks": {
+                        "change": [
+                            {
+                                "action": "sendData",
+                                "data": {
+                                    "sendTo": "program-section/programChange",
+                                    "form": "program-section",
+                                    "field": "selectedProgram"
+                                }
+                            }
+                        ]
+                    }
+                },
+                {
+                    "type": "Button",
+                    "props": {
+                        "class": "p-button-primary",
+                        "icon": "pi pi-refresh"
+                    }
+                }
+            ]
+        },
+        {
+            "type": "PathBreadcrumb",
+            "props": {
+                "disabled": true,
+                "class": "cursor-pointer"
+            },
+            "items": [],
+            "disabled": false
+        },
+        {
+            "type": "operation",
+            "action": "add",
+            "source": "primary-form/templates/parts/program/requestToChat"
+        },
+        {
+            "type": "InputText",
+            "name": "currentProgramState",
+            "props": {
+                "label": "Current Program State",
+                "disabled": true,
+                "class": "w-full"
+            },
+            "model": {
+                "form": "program-section",
+                "field": "currentProgramState",
+                "default": ""
+            }
+        },
+        {
+            "type": "operation",
+            "action": "add",
+            "source": "primary-form/templates/parts/program/navButtons"
+        }
+    ]
+}

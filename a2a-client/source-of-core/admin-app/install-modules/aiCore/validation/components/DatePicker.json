@@ -1,0 +1,155 @@
+{
+    "componentName": "DatePicker",
+    "description": "Input component for selecting dates and times (Alias for PrimeVue Calendar).",
+    "level": 4,
+    "status": "ready",
+    "dependencies": [
+        "VModel.vue"
+    ],
+    "_comment": "Validation expects properties within a 'props' object. This is an alias for Calendar.",
+    "documentationLink": "docs/guides/module/04-ui-construction.md",
+    "nestedValidation": {
+        "structure": {
+            "vAddress": {
+                "type": "string",
+                "required": false,
+                "description": "Address for v-model or component identification."
+            },
+            "disabled": {
+                "type": "boolean",
+                "required": false,
+                "default": false,
+                "description": "Disable rendering of the component."
+            },
+            "props": {
+                "type": "object",
+                "required": false,
+                "description": "Container for PrimeVue Calendar/DatePicker properties and HTML attributes.",
+                "nestedValidation": {
+                    "structure": {
+                        "placeholder": {
+                            "type": "string",
+                            "required": false
+                        },
+                        "showTime": {
+                            "type": "boolean",
+                            "required": false,
+                            "default": false
+                        },
+                        "hourFormat": {
+                            "type": "string",
+                            "required": false,
+                            "options": [
+                                "12",
+                                "24"
+                            ],
+                            "default": "24"
+                        },
+                        "dateFormat": {
+                            "type": "string",
+                            "required": false,
+                            "default": "mm/dd/yy",
+                            "description": "Format of the date."
+                        },
+                        "showIcon": {
+                            "type": "boolean",
+                            "required": false,
+                            "default": false
+                        },
+                        "minDate": {
+                            "type": [
+                                "string",
+                                "object"
+                            ],
+                            "required": false,
+                            "description": "Minimum selectable date."
+                        },
+                        "maxDate": {
+                            "type": [
+                                "string",
+                                "object"
+                            ],
+                            "required": false,
+                            "description": "Maximum selectable date."
+                        },
+                        "selectionMode": {
+                            "type": "string",
+                            "required": false,
+                            "options": [
+                                "single",
+                                "multiple",
+                                "range"
+                            ],
+                            "default": "single"
+                        },
+                        "inline": {
+                            "type": "boolean",
+                            "required": false,
+                            "default": false
+                        },
+                        "readonly": {
+                            "type": "boolean",
+                            "required": false,
+                            "default": false
+                        },
+                        "showButtonBar": {
+                            "type": "boolean",
+                            "required": false,
+                            "default": false
+                        },
+                        "timeOnly": {
+                            "type": "boolean",
+                            "required": false,
+                            "default": false
+                        },
+                        "pt": {
+                            "type": "object",
+                            "required": false
+                        },
+                        "ptOptions": {
+                            "type": "object",
+                            "required": false
+                        },
+                        "unstyled": {
+                            "type": "boolean",
+                            "required": false,
+                            "default": false
+                        },
+                        "tabindex": {
+                            "type": [
+                                "string",
+                                "number"
+                            ],
+                            "required": false
+                        },
+                        "name": {
+                            "type": "string",
+                            "required": false
+                        },
+                        "allOf": [
+                            {
+                                "$ref": "../common/props.json"
+                            }
+                        ]
+                    }
+                }
+            },
+            "children": {
+                "type": "array",
+                "required": false,
+                "description": "DatePicker (Calendar) does not typically accept children.",
+                "nestedValidation": {
+                    "_blockAll": true
+                }
+            },
+            "requiresModel": true,
+            "$ref": "../common/root.json"
+        }
+    },
+    "implementationNotes": [
+        "Refactored to standard V1 format (using 'props').",
+        "PrimeVue component: Calendar (DatePicker is an alias)",
+        "Added standard HTML attributes and common PrimeVue Calendar props.",
+        "Requires model binding (likely via VModel wrapper)."
+    ]
+}

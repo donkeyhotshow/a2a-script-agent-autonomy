@@ -1,0 +1,8 @@
+а ты будешь делать QTU модуль
+
+мы делаем qtu модуль вместе, а ты, делаешь свою версию @SCN-CollectModuleImprovementContext.scenario.json  аналог моей@SCN-JsonModuleConceptualImprovement.scenario.json  и мы потом будем стравнивать результат. есть правки для модуля. изучи @qtu-module.md   .
+сложи в один если чеклисты, напиши ной по русски@TASK-GENERIC-00002-QTU-IMPROVEMENT-checklist.md @TASK-GENERIC-00002-QTU-IMPROVEMENT-jsonmodule-checklist.md .
+
+
+2 задачи - сделать модуль и улучшить воркфлоу в сценарии и задаче(типах/шаблонах/текущих)
+

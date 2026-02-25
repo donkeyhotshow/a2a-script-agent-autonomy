@@ -6,7 +6,7 @@ const IV_LEN = 16;
 const AUTH_TAG_LEN = 16;
 
 function getEncryptionKey(): Buffer {
-  const key = process.env.ENCRYPTION_KEY || config.jwtSecret;
+  const key = config.encryptionKey || config.jwtSecret;
   return crypto.createHash('sha256').update(key).digest();
 }
 

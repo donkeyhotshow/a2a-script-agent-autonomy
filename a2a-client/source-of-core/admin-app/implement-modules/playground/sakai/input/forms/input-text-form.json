@@ -1,0 +1,43 @@
+[
+    {
+        "type": "Text",
+        "props": {
+            "content": "InputText",
+            "class": "font-semibold text-xl"
+        }
+    },
+    {
+        "type": "div",
+        "props": {
+            "class": "flex flex-col md:flex-row gap-4"
+        },
+        "children": [
+            {
+                "type": "InputText",
+                "props": {
+                    "type": "text",
+                    "placeholder": "Default",
+                    "model": "defaultInputValue"
+                }
+            },
+            {
+                "type": "InputText",
+                "props": {
+                    "type": "text",
+                    "placeholder": "Disabled",
+                    "disabled": true,
+                    "model": "disabledInputValue"
+                }
+            },
+            {
+                "type": "InputText",
+                "props": {
+                    "type": "text",
+                    "placeholder": "Invalid",
+                    "invalid": true,
+                    "model": "invalidInputValue"
+                }
+            }
+        ]
+    }
+]

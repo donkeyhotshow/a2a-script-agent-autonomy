@@ -1,0 +1,25 @@
+{
+    "type": "div",
+    "props": {
+        "class": "card flex flex-col gap-4"
+    },
+    "children": [
+        {
+            "type": "operation",
+            "action": "add",
+            "source": "sakai-input/forms/select-form"
+        },
+        {
+            "type": "operation",
+            "action": "add",
+            "source": "sakai-input/forms/multi-select-form"
+        },
+        {
+            "type": "operation",
+            "action": "add",
+            "source": "sakai-input/forms/tree-select-form"
+        }
+    ]
+}
+
+

@@ -1,0 +1,18 @@
+[
+    {
+        "type": "Text",
+        "props": {
+            "content": "Textarea",
+            "class": "font-semibold text-xl"
+        }
+    },
+    {
+        "type": "Textarea",
+        "props": {
+            "model": "textareaValue",
+            "rows": 5,
+            "placeholder": "Enter your message",
+            "autoResize": true
+        }
+    }
+]

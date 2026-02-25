@@ -1,0 +1,2472 @@
+[
+    {
+        "category": "ai",
+        "path": "storage\\aiCore\\MyPreset.json",
+        "size": 22667
+    },
+    {
+        "category": "ai",
+        "path": "storage\\aiCore\\colors.json",
+        "size": 7026
+    },
+    {
+        "category": "ai",
+        "path": "storage\\aiCore\\component-map-v-model.json",
+        "size": 626
+    },
+    {
+        "category": "ai",
+        "path": "storage\\aiCore\\component-map.json",
+        "size": 1938
+    },
+    {
+        "category": "ai",
+        "path": "storage\\aiCore\\surfaces.json",
+        "size": 3539
+    },
+    {
+        "category": "ai",
+        "path": "storage\\aiDepot\\installer\\layout.json",
+        "size": 0
+    },
+    {
+        "category": "ai",
+        "path": "storage\\aiDepot\\installer\\module.json",
+        "size": 0
+    },
+    {
+        "category": "ai",
+        "path": "storage\\ai\\models\\programs.json",
+        "size": 328
+    },
+    {
+        "category": "ai",
+        "path": "storage\\ai\\models\\programs\\meta.json",
+        "size": 0
+    },
+    {
+        "category": "ai",
+        "path": "storage\\ai\\models\\programs\\template.json",
+        "size": 70
+    },
+    {
+        "category": "ai",
+        "path": "storage\\ai\\models\\windows.json",
+        "size": 638
+    },
+    {
+        "category": "ai",
+        "path": "storage\\ai\\models\\windows\\meta.json",
+        "size": 0
+    },
+    {
+        "category": "ai",
+        "path": "storage\\ai\\models\\windows\\template.json",
+        "size": 22
+    },
+    {
+        "category": "ai",
+        "path": "storage\\ai\\modificators\\layoutFormComponent.json",
+        "size": 57
+    },
+    {
+        "category": "ai",
+        "path": "storage\\ai\\modificators\\layoutModule.json",
+        "size": 449
+    },
+    {
+        "category": "ai",
+        "path": "storage\\ai\\modificators\\layoutNodeOperation.json",
+        "size": 57
+    },
+    {
+        "category": "ai",
+        "path": "storage\\ai\\modificators\\processAction.json",
+        "size": 249
+    },
+    {
+        "category": "ai",
+        "path": "storage\\ai\\modificators\\processInstructionsList.json",
+        "size": 67
+    },
+    {
+        "category": "ai",
+        "path": "storage\\ai\\modules\\css-schema-processor\\config.json",
+        "size": 70
+    },
+    {
+        "category": "ai",
+        "path": "storage\\ai\\modules\\css-schema-processor\\index.js",
+        "size": 1470
+    },
+    {
+        "category": "ai",
+        "path": "storage\\ai\\modules\\css-schema-processor\\module.json",
+        "size": 136
+    },
+    {
+        "category": "ai",
+        "path": "storage\\ai\\modules\\module.json",
+        "size": 136
+    },
+    {
+        "category": "ai",
+        "path": "storage\\ai\\primary-form\\actions\\calcCheckboxes.json",
+        "size": 5864
+    },
+    {
+        "category": "ai",
+        "path": "storage\\ai\\primary-form\\actions\\chat-response-form\\calcCheckboxes.json",
+        "size": 5716
+    },
+    {
+        "category": "ai",
+        "path": "storage\\ai\\primary-form\\actions\\check-section\\applyCheckboxes.json",
+        "size": 2108
+    },
+    {
+        "category": "ai",
+        "path": "storage\\ai\\primary-form\\actions\\file-selected.json",
+        "size": 669
+    },
+    {
+        "category": "ai",
+        "path": "storage\\ai\\primary-form\\actions\\program-section\\fileChange.json",
+        "size": 6
+    },
+    {
+        "category": "ai",
+        "path": "storage\\ai\\primary-form\\actions\\program-section\\levelEnter.json",
+        "size": 951
+    },
+    {
+        "category": "ai",
+        "path": "storage\\ai\\primary-form\\actions\\program-section\\levelLeave.json",
+        "size": 951
+    },
+    {
+        "category": "ai",
+        "path": "storage\\ai\\primary-form\\actions\\program-section\\programChange.json",
+        "size": 1958
+    },
+    {
+        "category": "ai",
+        "path": "storage\\ai\\primary-form\\actions\\program-section\\stepBack.json",
+        "size": 949
+    },
+    {
+        "category": "ai",
+        "path": "storage\\ai\\primary-form\\actions\\program-section\\stepComplete.json",
+        "size": 953
+    },
+    {
+        "category": "ai",
+        "path": "storage\\ai\\primary-form\\actions\\program-section\\stepNext.json",
+        "size": 949
+    },
+    {
+        "category": "ai",
+        "path": "storage\\ai\\primary-form\\actions\\program-section\\stepPrev.json",
+        "size": 949
+    },
+    {
+        "category": "ai",
+        "path": "storage\\ai\\primary-form\\actions\\program-section\\windowChange.json",
+        "size": 1566
+    },
+    {
+        "category": "ai",
+        "path": "storage\\ai\\primary-form\\actions\\result-section\\calcCheckboxesSave.json",
+        "size": 1842
+    },
+    {
+        "category": "ai",
+        "path": "storage\\ai\\primary-form\\actions\\windowCreate.json",
+        "size": 1562
+    },
+    {
+        "category": "ai",
+        "path": "storage\\ai\\primary-form\\code\\app\\AiRudeDepot\\Modules\\PrimaryForm.php",
+        "size": 15707
+    },
+    {
+        "category": "ai",
+        "path": "storage\\ai\\primary-form\\commands\\load-forms-and-return.json",
+        "size": 434
+    },
+    {
+        "category": "ai",
+        "path": "storage\\ai\\primary-form\\commands\\reset-step-commands.json",
+        "size": 594
+    },
+    {
+        "category": "ai",
+        "path": "storage\\ai\\primary-form\\commands\\windows-select-options.json",
+        "size": 1263
+    },
+    {
+        "category": "ai",
+        "path": "storage\\ai\\primary-form\\layout.json",
+        "size": 150
+    },
+    {
+        "category": "ai",
+        "path": "storage\\ai\\primary-form\\layout\\forms\\checkbox-section.json",
+        "size": 2838
+    },
+    {
+        "category": "ai",
+        "path": "storage\\ai\\primary-form\\layout\\forms\\program-control.json",
+        "size": 10114
+    },
+    {
+        "category": "ai",
+        "path": "storage\\ai\\primary-form\\layout\\forms\\result-section.json",
+        "size": 1544
+    },
+    {
+        "category": "ai",
+        "path": "storage\\ai\\primary-form\\layout\\layouts\\card-layout.json",
+        "size": 2323
+    },
+    {
+        "category": "ai",
+        "path": "storage\\ai\\primary-form\\layout\\layouts\\grid-layout.json",
+        "size": 1213
+    },
+    {
+        "category": "ai",
+        "path": "storage\\ai\\primary-form\\layout\\parts\\program\\navButtons.json",
+        "size": 4082
+    },
+    {
+        "category": "ai",
+        "path": "storage\\ai\\primary-form\\layout\\parts\\program\\props.json",
+        "size": 0
+    },
+    {
+        "category": "ai",
+        "path": "storage\\ai\\primary-form\\layout\\parts\\program\\requestToChat.json",
+        "size": 4525
+    },
+    {
+        "category": "ai",
+        "path": "storage\\ai\\primary-form\\layout\\parts\\program\\windowCreateDialog.json",
+        "size": 1037
+    },
+    {
+        "category": "ai",
+        "path": "storage\\ai\\primary-form\\layout\\parts\\program\\windowRemoveDialog.json",
+        "size": 1753
+    },
+    {
+        "category": "ai",
+        "path": "storage\\ai\\primary-form\\layout\\parts\\test\\checkSectionTest.json",
+        "size": 1209
+    },
+    {
+        "category": "ai",
+        "path": "storage\\ai\\primary-form\\layout\\parts\\test\\programSectionTest.json",
+        "size": 958
+    },
+    {
+        "category": "ai",
+        "path": "storage\\ai\\primary-form\\layout\\parts\\test\\resultSectionTest.json",
+        "size": 1204
+    },
+    {
+        "category": "ai",
+        "path": "storage\\ai\\primary-form\\models\\cb.json",
+        "size": 342
+    },
+    {
+        "category": "ai",
+        "path": "storage\\ai\\primary-form\\module.json",
+        "size": 3591
+    },
+    {
+        "category": "ai",
+        "path": "storage\\ai\\primary-form\\state\\chat-response-form.json",
+        "size": 1160
+    },
+    {
+        "category": "ai",
+        "path": "storage\\ai\\primary-form\\state\\check-section.json",
+        "size": 2
+    },
+    {
+        "category": "ai",
+        "path": "storage\\ai\\primary-form\\state\\log.json",
+        "size": 4
+    },
+    {
+        "category": "ai",
+        "path": "storage\\ai\\primary-form\\state\\program-section.json",
+        "size": 6045
+    },
+    {
+        "category": "ai",
+        "path": "storage\\ai\\primary-form\\state\\program.json",
+        "size": 165
+    },
+    {
+        "category": "ai",
+        "path": "storage\\ai\\primary-form\\state\\result-section.json",
+        "size": 20
+    },
+    {
+        "category": "ai",
+        "path": "storage\\ai\\primary-form\\validations\\chatResponse-ban-list.json",
+        "size": 0
+    },
+    {
+        "category": "ai",
+        "path": "storage\\ai\\primary-form\\validations\\validate.json",
+        "size": 977
+    },
+    {
+        "category": "ai",
+        "path": "storage\\ai\\primary-form\\validations\\window-name.json",
+        "size": 0
+    },
+    {
+        "category": "ai",
+        "path": "storage\\ai\\landing-main-page\\layout.json",
+        "size": 1258
+    },
+    {
+        "category": "ai",
+        "path": "storage\\ai\\landing-main-page\\sections\\features-section.json",
+        "size": 7838
+    },
+    {
+        "category": "ai",
+        "path": "storage\\ai\\landing-main-page\\sections\\footer-section.json",
+        "size": 6684
+    },
+    {
+        "category": "ai",
+        "path": "storage\\ai\\landing-main-page\\sections\\header-section.json",
+        "size": 3820
+    },
+    {
+        "category": "ai",
+        "path": "storage\\ai\\landing-main-page\\sections\\hero-section.json",
+        "size": 1267
+    },
+    {
+        "category": "ai",
+        "path": "storage\\ai\\landing-main-page\\sections\\highlights-section.json",
+        "size": 5436
+    },
+    {
+        "category": "ai",
+        "path": "storage\\ai\\landing-main-page\\sections\\pricing-section.json",
+        "size": 7425
+    },
+    {
+        "category": "ai",
+        "path": "storage\\ai\\tests\\Feature\\layout.json",
+        "size": 44
+    },
+    {
+        "category": "app.console",
+        "path": "app\\Console\\Commands\\AiRudeDepot\\File.php",
+        "size": 6020
+    },
+    {
+        "category": "app.console",
+        "path": "app\\Console\\Commands\\AiRudeDepot\\FileRead.php",
+        "size": 3478
+    },
+    {
+        "category": "app.console",
+        "path": "app\\Console\\Commands\\Config\\FtpConfig.php",
+        "size": 8150
+    },
+    {
+        "category": "app.console",
+        "path": "app\\Console\\Commands\\Config\\JsonOptions.php",
+        "size": 1649
+    },
+    {
+        "category": "app.console",
+        "path": "app\\Console\\Commands\\Config\\Normal.php",
+        "size": 1829
+    },
+    {
+        "category": "app.console",
+        "path": "app\\Console\\Commands\\PushToHosting.php",
+        "size": 3533
+    },
+    {
+        "category": "app.console",
+        "path": "app\\Console\\Commands\\RemoveCache.php",
+        "size": 539
+    },
+    {
+        "category": "app.controllers",
+        "path": "app\\Http\\Controllers\\Common\\AdminController.php",
+        "size": 332
+    },
+    {
+        "category": "app.controllers",
+        "path": "app\\Http\\Controllers\\Common\\Auth\\AuthenticatedSessionController.php",
+        "size": 1406
+    },
+    {
+        "category": "app.controllers",
+        "path": "app\\Http\\Controllers\\Common\\Background\\ImagesController.php",
+        "size": 806
+    },
+    {
+        "category": "app.controllers",
+        "path": "app\\Http\\Controllers\\Common\\Controller.php",
+        "size": 327
+    },
+    {
+        "category": "app.http.middleware",
+        "path": "app\\Http\\Middleware\\HandleCartRequests.php",
+        "size": 413
+    },
+    {
+        "category": "app.http.middleware",
+        "path": "app\\Http\\Middleware\\HandleInertiaRequests.php",
+        "size": 2825
+    },
+    {
+        "category": "app.http.middleware",
+        "path": "app\\Http\\Middleware\\TrustProxies.php",
+        "size": 655
+    },
+    {
+        "category": "app.http.requests",
+        "path": "app\\Http\\Requests\\Auth\\LoginRequest.php",
+        "size": 2186
+    },
+    {
+        "category": "app.http.resources",
+        "path": "app\\Http\\Resources\\Cart.php",
+        "size": 4793
+    },
+    {
+        "category": "app.http.resources",
+        "path": "app\\Http\\Resources\\CartFacades.php",
+        "size": 4034
+    },
+    {
+        "category": "app.models",
+        "path": "app\\Models\\Item.php",
+        "size": 225
+    },
+    {
+        "category": "app.models",
+        "path": "app\\Models\\TestMetaTable.php",
+        "size": 285
+    },
+    {
+        "category": "app.models",
+        "path": "app\\Models\\User.php",
+        "size": 1377
+    },
+    {
+        "category": "app.providers",
+        "path": "app\\Providers\\AppServiceProvider.php",
+        "size": 977
+    },
+    {
+        "category": "app.providers",
+        "path": "app\\Providers\\RouteServiceProvider.php",
+        "size": 366
+    },
+    {
+        "category": "app.repositories",
+        "path": "app\\Repositories\\MetaTableRepository.php",
+        "size": 763
+    },
+    {
+        "category": "app.resources",
+        "path": "resources\\common\\components\\AlertManager.vue",
+        "size": 1207
+    },
+    {
+        "category": "app.resources",
+        "path": "resources\\common\\js\\Components\\Toolbar.vue",
+        "size": 436
+    },
+    {
+        "category": "app.resources",
+        "path": "resources\\common\\js\\app.js",
+        "size": 1126
+    },
+    {
+        "category": "app.resources",
+        "path": "resources\\common\\js\\primevue-preset.js",
+        "size": 217
+    },
+    {
+        "category": "app.resources",
+        "path": "resources\\common\\js\\ssr.js",
+        "size": 1765
+    },
+    {
+        "category": "app.resources",
+        "path": "resources\\common\\managers\\ActionManager.js",
+        "size": 7482
+    },
+    {
+        "category": "app.resources",
+        "path": "resources\\common\\managers\\ComponentManager.js",
+        "size": 4727
+    },
+    {
+        "category": "app.resources",
+        "path": "resources\\common\\managers\\FormManager.js",
+        "size": 9155
+    },
+    {
+        "category": "app.resources",
+        "path": "resources\\common\\managers\\HubManager.js",
+        "size": 14637
+    },
+    {
+        "category": "app.resources",
+        "path": "resources\\common\\managers\\LayoutManager.js",
+        "size": 1211
+    },
+    {
+        "category": "app.resources",
+        "path": "resources\\common\\managers\\MenuManager.js",
+        "size": 1504
+    },
+    {
+        "category": "app.resources",
+        "path": "resources\\common\\managers\\ModalManager.js",
+        "size": 1204
+    },
+    {
+        "category": "app.resources",
+        "path": "resources\\common\\managers\\NotifyManager.js",
+        "size": 2459
+    },
+    {
+        "category": "app.resources",
+        "path": "resources\\common\\managers\\PropsManager.js",
+        "size": 7999
+    },
+    {
+        "category": "app.resources",
+        "path": "resources\\common\\managers\\SplitterManager.js",
+        "size": 1687
+    },
+    {
+        "category": "app.resources",
+        "path": "resources\\common\\managers\\ThemeManager.js",
+        "size": 11536
+    },
+    {
+        "category": "app.resources",
+        "path": "resources\\common\\managers\\TimerManager.js",
+        "size": 1726
+    },
+    {
+        "category": "app.resources",
+        "path": "resources\\common\\managers\\UIManager.js",
+        "size": 494
+    },
+    {
+        "category": "app.resources",
+        "path": "resources\\common\\managers\\constants\\actions.js",
+        "size": 929
+    },
+    {
+        "category": "app.resources",
+        "path": "resources\\common\\managers\\constants\\constants.js",
+        "size": 170
+    },
+    {
+        "category": "app.resources",
+        "path": "resources\\common\\managers\\constants\\events.js",
+        "size": 2473
+    },
+    {
+        "category": "app.resources",
+        "path": "resources\\common\\managers\\constants\\scope.js",
+        "size": 219
+    },
+    {
+        "category": "app.resources",
+        "path": "resources\\common\\managers\\imports\\customHooks.js",
+        "size": 5802
+    },
+    {
+        "category": "app.resources",
+        "path": "resources\\common\\managers\\imports\\data.js",
+        "size": 759
+    },
+    {
+        "category": "app.resources",
+        "path": "resources\\common\\managers\\imports\\log.js",
+        "size": 2038
+    },
+    {
+        "category": "app.resources",
+        "path": "resources\\common\\managers\\imports\\settings.js",
+        "size": 647
+    },
+    {
+        "category": "app.resources",
+        "path": "resources\\common\\managers\\imports\\storage.js",
+        "size": 1139
+    },
+    {
+        "category": "app.resources",
+        "path": "resources\\common\\managers\\include\\Box\\BaseManager.js",
+        "size": 3061
+    },
+    {
+        "category": "app.resources",
+        "path": "resources\\common\\managers\\include\\Box\\Box\\Box\\Box\\Box\\CoreManager.js",
+        "size": 775
+    },
+    {
+        "category": "app.resources",
+        "path": "resources\\common\\managers\\include\\Box\\Box\\Box\\Box\\StartManager.js",
+        "size": 462
+    },
+    {
+        "category": "app.resources",
+        "path": "resources\\common\\managers\\include\\Box\\Box\\Box\\GlobalManager.js",
+        "size": 337
+    },
+    {
+        "category": "app.resources",
+        "path": "resources\\common\\managers\\include\\Box\\Box\\Box\\LocalManager.js",
+        "size": 1161
+    },
+    {
+        "category": "app.resources",
+        "path": "resources\\common\\managers\\include\\Box\\Box\\FirstManager.js",
+        "size": 176
+    },
+    {
+        "category": "app.resources",
+        "path": "resources\\common\\managers\\include\\ComponentManagerBase.js",
+        "size": 295
+    },
+    {
+        "category": "app.resources",
+        "path": "resources\\common\\managers\\include\\DataManagerBase.js",
+        "size": 503
+    },
+    {
+        "category": "app.resources",
+        "path": "resources\\common\\managers\\include\\ExtendedBaseManager.js",
+        "size": 223
+    },
+    {
+        "category": "app.resources",
+        "path": "resources\\common\\managers\\include\\UIManagerBase.js",
+        "size": 1169
+    },
+    {
+        "category": "app.resources",
+        "path": "resources\\common\\managers\\private\\log\\AlertManager.js",
+        "size": 1104
+    },
+    {
+        "category": "app.resources",
+        "path": "resources\\common\\managers\\private\\log\\LogManager.js",
+        "size": 1071
+    },
+    {
+        "category": "app.resources",
+        "path": "resources\\common\\managers\\private\\log\\ToastManager.js",
+        "size": 3592
+    },
+    {
+        "category": "app.resources",
+        "path": "resources\\common\\template\\css\\app.css",
+        "size": 2043
+    },
+    {
+        "category": "app.resources",
+        "path": "resources\\common\\template\\css\\primevue\\layout\\_core.scss",
+        "size": 464
+    },
+    {
+        "category": "app.resources",
+        "path": "resources\\common\\template\\css\\primevue\\layout\\_footer.scss",
+        "size": 194
+    },
+    {
+        "category": "app.resources",
+        "path": "resources\\common\\template\\css\\primevue\\layout\\_main.scss",
+        "size": 374
+    },
+    {
+        "category": "app.resources",
+        "path": "resources\\common\\template\\css\\primevue\\layout\\_menu.scss",
+        "size": 3869
+    },
+    {
+        "category": "app.resources",
+        "path": "resources\\common\\template\\css\\primevue\\layout\\_mixins.scss",
+        "size": 458
+    },
+    {
+        "category": "app.resources",
+        "path": "resources\\common\\template\\css\\primevue\\layout\\_preloading.scss",
+        "size": 893
+    },
+    {
+        "category": "app.resources",
+        "path": "resources\\common\\template\\css\\primevue\\layout\\_responsive.scss",
+        "size": 2951
+    },
+    {
+        "category": "app.resources",
+        "path": "resources\\common\\template\\css\\primevue\\layout\\_topbar.scss",
+        "size": 2705
+    },
+    {
+        "category": "app.resources",
+        "path": "resources\\common\\template\\css\\primevue\\layout\\_typography.scss",
+        "size": 899
+    },
+    {
+        "category": "app.resources",
+        "path": "resources\\common\\template\\css\\primevue\\layout\\_utils.scss",
+        "size": 421
+    },
+    {
+        "category": "app.resources",
+        "path": "resources\\common\\template\\css\\primevue\\layout\\layout.scss",
+        "size": 240
+    },
+    {
+        "category": "app.resources",
+        "path": "resources\\common\\template\\css\\primevue\\layout\\variables\\_common.scss",
+        "size": 980
+    },
+    {
+        "category": "app.resources",
+        "path": "resources\\common\\template\\css\\primevue\\layout\\variables\\_dark.scss",
+        "size": 163
+    },
+    {
+        "category": "app.resources",
+        "path": "resources\\common\\template\\css\\primevue\\layout\\variables\\_light.scss",
+        "size": 144
+    },
+    {
+        "category": "app.resources",
+        "path": "resources\\common\\template\\css\\primevue\\styles.scss",
+        "size": 234
+    },
+    {
+        "category": "app.resources",
+        "path": "resources\\common\\template\\css\\themes.scss",
+        "size": 4164
+    },
+    {
+        "category": "app.resources",
+        "path": "resources\\common\\template\\css\\tw.css",
+        "size": 299
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Components\\AdminBar\\AdminBar.vue",
+        "size": 8580
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Components\\AdminBar\\Debug\\Content.vue",
+        "size": 1364
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Components\\AdminBar\\Debug\\FloatingTextarea.vue",
+        "size": 4275
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Components\\AdminBar\\Debug\\Request.vue",
+        "size": 2153
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Components\\AdminBar\\Debug\\ToastMessage.vue",
+        "size": 2386
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Components\\AdminBar\\Explorer\\Storage.vue",
+        "size": 7888
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Components\\AdminBar\\Explorer\\VueFlow.vue",
+        "size": 2652
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Components\\AdminBar\\Parts\\AdminDrawer.vue",
+        "size": 2213
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Components\\AdminBar\\Parts\\LeftBlock.vue",
+        "size": 460
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Components\\AdminBar\\Theme\\Configurator.json",
+        "size": 788
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Components\\AdminBar\\Theme\\ThemeManager.vue",
+        "size": 829
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Components\\AdminBar\\items.json",
+        "size": 1498
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Components\\Modal\\UniDialog.vue",
+        "size": 4404
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Elements\\Customs\\PathBreadcrumb.vue",
+        "size": 1611
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Elements\\Presets.vue",
+        "size": 9818
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Elements\\Primevue\\ComplexContainer.vue",
+        "size": 1148
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Elements\\Primevue\\ComplexContainer\\Accordion.vue",
+        "size": 926
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Elements\\Primevue\\ComplexContainer\\Card.vue",
+        "size": 1835
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Elements\\Primevue\\ComplexContainer\\Carousel.vue",
+        "size": 421
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Elements\\Primevue\\ComplexContainer\\DataTable.vue",
+        "size": 4831
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Elements\\Primevue\\ComplexContainer\\Drawer.vue",
+        "size": 501
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Elements\\Primevue\\ComplexContainer\\Grid.vue",
+        "size": 673
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Elements\\Primevue\\ComplexContainer\\Splitter.vue",
+        "size": 500
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Elements\\Primevue\\ComplexContainer\\SplitterPanel.vue",
+        "size": 538
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Elements\\Primevue\\ComplexContainer\\Steps.vue",
+        "size": 484
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Elements\\Primevue\\ComplexContainer\\Tabs.vue",
+        "size": 1009
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Elements\\Primevue\\ComplexContainer\\Toolbar.vue",
+        "size": 249
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Elements\\Primevue\\Component.vue",
+        "size": 1086
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Elements\\Primevue\\Components\\Breadcrumb.vue",
+        "size": 1811
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Elements\\Primevue\\Components\\Button.vue",
+        "size": 478
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Elements\\Primevue\\Components\\ButtonMenu.vue",
+        "size": 1471
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Elements\\Primevue\\Components\\DatePicker.vue",
+        "size": 260
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Elements\\Primevue\\Components\\divider.vue",
+        "size": 394
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Elements\\Primevue\\Components\\Icon.vue",
+        "size": 175
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Elements\\Primevue\\Components\\Image.vue",
+        "size": 342
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Elements\\Primevue\\Components\\Listbox.vue",
+        "size": 245
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Elements\\Primevue\\Components\\Logo.vue",
+        "size": 500
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Elements\\Primevue\\Components\\Rating.vue",
+        "size": 240
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Elements\\Primevue\\Container.vue",
+        "size": 1587
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Elements\\Primevue\\Containers\\ButtonGroup.vue",
+        "size": 524
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Elements\\Primevue\\Containers\\Column.vue",
+        "size": 704
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Elements\\Primevue\\Containers\\div.vue",
+        "size": 663
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Elements\\Primevue\\Containers\\Fieldset.vue",
+        "size": 614
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Elements\\Primevue\\Containers\\FloatLabel.vue",
+        "size": 506
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Elements\\Primevue\\Containers\\Fluid.vue",
+        "size": 476
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Elements\\Primevue\\Containers\\Form.vue",
+        "size": 3182
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Elements\\Primevue\\Containers\\IconField.vue",
+        "size": 514
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Elements\\Primevue\\Containers\\InputGroup.vue",
+        "size": 519
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Elements\\Primevue\\Containers\\InputGroupAddon.vue",
+        "size": 550
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Elements\\Primevue\\Containers\\InputIcon.vue",
+        "size": 255
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Elements\\Primevue\\Containers\\Label.vue",
+        "size": 651
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Elements\\Primevue\\Containers\\Panel.vue",
+        "size": 474
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Elements\\Primevue\\Containers\\Row.vue",
+        "size": 701
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Elements\\Primevue\\Containers\\ScrollPanel.vue",
+        "size": 839
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Elements\\Primevue\\Containers\\Text.vue",
+        "size": 1047
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Elements\\Primevue\\Customs.vue",
+        "size": 396
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Elements\\Primevue\\VModel.vue",
+        "size": 3602
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Elements\\Primevue\\VModel\\Checkbox.vue",
+        "size": 1383
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Elements\\Primevue\\VModel\\Checkbox\\Checkbox.vue",
+        "size": 974
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Elements\\Primevue\\VModel\\Checkbox\\RadioButton.vue",
+        "size": 415
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Elements\\Primevue\\VModel\\Input.vue",
+        "size": 1678
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Elements\\Primevue\\VModel\\Input\\AutoComplete.vue",
+        "size": 270
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Elements\\Primevue\\VModel\\Input\\ColorPicker.vue",
+        "size": 265
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Elements\\Primevue\\VModel\\Input\\FileUpload.vue",
+        "size": 260
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Elements\\Primevue\\VModel\\Input\\InputNumber.vue",
+        "size": 265
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Elements\\Primevue\\VModel\\Input\\InputText.vue",
+        "size": 381
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Elements\\Primevue\\VModel\\Input\\Knob.vue",
+        "size": 230
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Elements\\Primevue\\VModel\\Input\\Password.vue",
+        "size": 448
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Elements\\Primevue\\VModel\\Input\\Slider.vue",
+        "size": 240
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Elements\\Primevue\\VModel\\Input\\Textarea.vue",
+        "size": 260
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Elements\\Primevue\\VModel\\Input\\ToggleButton.vue",
+        "size": 270
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Elements\\Primevue\\VModel\\Input\\ToggleSwitch.vue",
+        "size": 270
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Elements\\Primevue\\VModel\\Select.vue",
+        "size": 1150
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Elements\\Primevue\\VModel\\Select\\MultiSelect.vue",
+        "size": 265
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Elements\\Primevue\\VModel\\Select\\Select.vue",
+        "size": 247
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Elements\\Primevue\\VModel\\Select\\SelectButton.vue",
+        "size": 270
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Elements\\Primevue\\VModel\\Select\\TreeSelect.vue",
+        "size": 362
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Elements\\RenderJson.vue",
+        "size": 264
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Pages\\AllInOneParser\\Diff.vue",
+        "size": 707
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Pages\\AllInOneParser\\Index.vue",
+        "size": 3069
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Pages\\AllInOneParser\\ReplaceMethodsInClass.vue",
+        "size": 727
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Pages\\AllInOneParser\\ReplaceMethodsInClassByNamespace.vue",
+        "size": 799
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Pages\\AllInOneParser\\StorywriterJson.vue",
+        "size": 783
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Pages\\Auth\\Login.vue",
+        "size": 2122
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Pages\\Dynamic\\Index.vue",
+        "size": 2515
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Pages\\Examples\\Index.vue",
+        "size": 395
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Pages\\Examples\\Select.vue",
+        "size": 858
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Pages\\Examples\\Toast.vue",
+        "size": 921
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Pages\\Installer\\Index.vue",
+        "size": 3253
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Pages\\PhpEdit\\Index.vue",
+        "size": 834
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Pages\\Shortcuts\\Edit.vue",
+        "size": 77
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Pages\\Shortcuts\\Index.vue",
+        "size": 72
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Pages\\Shortcuts\\Pack.vue",
+        "size": 77
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Pages\\Shortcuts\\SetId.vue",
+        "size": 78
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Pages\\Shortcuts\\Unpack.vue",
+        "size": 79
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Pages\\VueFlow\\1\\Index.vue",
+        "size": 1873
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Pages\\VueFlow\\Demo1.vue",
+        "size": 2149
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Pages\\VueFlow\\Demo2.vue",
+        "size": 3001
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Pages\\VueFlow\\Demo3.vue",
+        "size": 289
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Pages\\VueFlow\\Index.vue",
+        "size": 3224
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Pages\\VueFlow\\components\\CustomResizerNode.vue",
+        "size": 353
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Pages\\VueFlow\\components\\CustomToolbarNode.vue",
+        "size": 633
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Pages\\VueFlow\\components\\SpecialEdge.vue",
+        "size": 1370
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Pages\\VueFlow\\components\\SpecialNode.vue",
+        "size": 726
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Shared\\Layout.vue",
+        "size": 819
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\Shared\\LayoutForExamples.vue",
+        "size": 168
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\app.js",
+        "size": 423
+    },
+    {
+        "category": "backend.resources.js",
+        "path": "resources\\backend\\js\\ssr.js",
+        "size": 1504
+    },
+    {
+        "category": "config",
+        "path": "config\\app.php",
+        "size": 222
+    },
+    {
+        "category": "config",
+        "path": "config\\cors.php",
+        "size": 885
+    },
+    {
+        "category": "config",
+        "path": "config\\database.php",
+        "size": 5575
+    },
+    {
+        "category": "config",
+        "path": "config\\inertia.php",
+        "size": 1648
+    },
+    {
+        "category": "config",
+        "path": "config\\mail.php",
+        "size": 3695
+    },
+    {
+        "category": "config",
+        "path": "config\\sanctum.php",
+        "size": 2994
+    },
+    {
+        "category": "config",
+        "path": "config\\services.php",
+        "size": 228
+    },
+    {
+        "category": "config",
+        "path": "config\\session.php",
+        "size": 8168
+    },
+    {
+        "category": "config",
+        "path": "config\\ziggy.php",
+        "size": 23
+    },
+    {
+        "category": "docs",
+        "path": "docs\\README.md",
+        "size": 7379
+    },
+    {
+        "category": "docs",
+        "path": "docs\\docs\\codeRules\\README.md",
+        "size": 2489
+    },
+    {
+        "category": "docs",
+        "path": "docs\\docs\\codeRules\\codeWrite.md",
+        "size": 23710
+    },
+    {
+        "category": "docs",
+        "path": "docs\\docs\\codeRules\\css\\README.md",
+        "size": 164
+    },
+    {
+        "category": "docs",
+        "path": "docs\\docs\\codeRules\\json\\JsonTemplateSchema.md",
+        "size": 12054
+    },
+    {
+        "category": "docs",
+        "path": "docs\\docs\\codeRules\\php\\LaravelRules.md",
+        "size": 3580
+    },
+    {
+        "category": "docs",
+        "path": "docs\\docs\\codeRules\\vue\\README.md",
+        "size": 25
+    },
+    {
+        "category": "docs",
+        "path": "docs\\docs\\codeRules\\vue\\inertiajsRules.md",
+        "size": 4641
+    },
+    {
+        "category": "docs",
+        "path": "docs\\docs\\codeWrite.md",
+        "size": 26200
+    },
+    {
+        "category": "docs",
+        "path": "docs\\docs\\howToDoDocs\\README.md",
+        "size": 3755
+    },
+    {
+        "category": "docs",
+        "path": "docs\\docs\\howToDoDocs\\phpClassToMd copy.md",
+        "size": 0
+    },
+    {
+        "category": "docs",
+        "path": "docs\\docs\\howToDoDocs\\templates\\MdFileTemplate1.md",
+        "size": 15485
+    },
+    {
+        "category": "docs",
+        "path": "docs\\docs\\howToDoDocs\\vueToMd.md",
+        "size": 0
+    },
+    {
+        "category": "docs",
+        "path": "docs\\docs\\howToDoDocs\\zagotovki.md",
+        "size": 3504
+    },
+    {
+        "category": "docs",
+        "path": "docs\\resources\\backend\\README.md",
+        "size": 0
+    },
+    {
+        "category": "docs",
+        "path": "docs\\resources\\backend\\js\\Elements\\Customs\\PathBreadcrumb.md",
+        "size": 1706
+    },
+    {
+        "category": "docs",
+        "path": "docs\\resources\\backend\\js\\Elements\\Presets.md",
+        "size": 9917
+    },
+    {
+        "category": "docs",
+        "path": "docs\\resources\\backend\\js\\Elements\\Primevue\\ComplexContainer.md",
+        "size": 702
+    },
+    {
+        "category": "docs",
+        "path": "docs\\resources\\backend\\js\\Elements\\Primevue\\ComplexContainer\\Accordion.md",
+        "size": 5340
+    },
+    {
+        "category": "docs",
+        "path": "docs\\resources\\backend\\js\\Elements\\Primevue\\ComplexContainer\\Card.md",
+        "size": 2317
+    },
+    {
+        "category": "docs",
+        "path": "docs\\resources\\backend\\js\\Elements\\Primevue\\ComplexContainer\\Carousel.md",
+        "size": 1137
+    },
+    {
+        "category": "docs",
+        "path": "docs\\resources\\backend\\js\\Elements\\Primevue\\ComplexContainer\\DataTable.md",
+        "size": 4051
+    },
+    {
+        "category": "docs",
+        "path": "docs\\resources\\backend\\js\\Elements\\Primevue\\ComplexContainer\\Drawer.md",
+        "size": 1161
+    },
+    {
+        "category": "docs",
+        "path": "docs\\resources\\backend\\js\\Elements\\Primevue\\ComplexContainer\\Grid.md",
+        "size": 2303
+    },
+    {
+        "category": "docs",
+        "path": "docs\\resources\\backend\\js\\Elements\\Primevue\\ComplexContainer\\Splitter.md",
+        "size": 1342
+    },
+    {
+        "category": "docs",
+        "path": "docs\\resources\\backend\\js\\Elements\\Primevue\\ComplexContainer\\SplitterPanel.md",
+        "size": 1242
+    },
+    {
+        "category": "docs",
+        "path": "docs\\resources\\backend\\js\\Elements\\Primevue\\ComplexContainer\\Steps.md",
+        "size": 1598
+    },
+    {
+        "category": "docs",
+        "path": "docs\\resources\\backend\\js\\Elements\\Primevue\\ComplexContainer\\Tabs.md",
+        "size": 1545
+    },
+    {
+        "category": "docs",
+        "path": "docs\\resources\\backend\\js\\Elements\\Primevue\\ComplexContainer\\Toolbar.md",
+        "size": 1640
+    },
+    {
+        "category": "docs",
+        "path": "docs\\resources\\backend\\js\\Elements\\Primevue\\Component.md",
+        "size": 658
+    },
+    {
+        "category": "docs",
+        "path": "docs\\resources\\backend\\js\\Elements\\Primevue\\Components\\Breadcrumb.md",
+        "size": 728
+    },
+    {
+        "category": "docs",
+        "path": "docs\\resources\\backend\\js\\Elements\\Primevue\\Components\\Button.md",
+        "size": 1998
+    },
+    {
+        "category": "docs",
+        "path": "docs\\resources\\backend\\js\\Elements\\Primevue\\Components\\ButtonMenu.md",
+        "size": 1275
+    },
+    {
+        "category": "docs",
+        "path": "docs\\resources\\backend\\js\\Elements\\Primevue\\Components\\DatePicker.md",
+        "size": 442
+    },
+    {
+        "category": "docs",
+        "path": "docs\\resources\\backend\\js\\Elements\\Primevue\\Components\\divider.md",
+        "size": 413
+    },
+    {
+        "category": "docs",
+        "path": "docs\\resources\\backend\\js\\Elements\\Primevue\\Components\\Icon.md",
+        "size": 367
+    },
+    {
+        "category": "docs",
+        "path": "docs\\resources\\backend\\js\\Elements\\Primevue\\Components\\Image.md",
+        "size": 466
+    },
+    {
+        "category": "docs",
+        "path": "docs\\resources\\backend\\js\\Elements\\Primevue\\Components\\Listbox.md",
+        "size": 418
+    },
+    {
+        "category": "docs",
+        "path": "docs\\resources\\backend\\js\\Elements\\Primevue\\Components\\Logo.md",
+        "size": 511
+    },
+    {
+        "category": "docs",
+        "path": "docs\\resources\\backend\\js\\Elements\\Primevue\\Components\\Rating.md",
+        "size": 430
+    },
+    {
+        "category": "docs",
+        "path": "docs\\resources\\backend\\js\\Elements\\Primevue\\Container.md",
+        "size": 707
+    },
+    {
+        "category": "docs",
+        "path": "docs\\resources\\backend\\js\\Elements\\Primevue\\Containers\\ButtonGroup.md",
+        "size": 526
+    },
+    {
+        "category": "docs",
+        "path": "docs\\resources\\backend\\js\\Elements\\Primevue\\Containers\\Column.md",
+        "size": 1277
+    },
+    {
+        "category": "docs",
+        "path": "docs\\resources\\backend\\js\\Elements\\Primevue\\Containers\\div.md",
+        "size": 710
+    },
+    {
+        "category": "docs",
+        "path": "docs\\resources\\backend\\js\\Elements\\Primevue\\Containers\\Fieldset.md",
+        "size": 500
+    },
+    {
+        "category": "docs",
+        "path": "docs\\resources\\backend\\js\\Elements\\Primevue\\Containers\\FloatLabel.md",
+        "size": 602
+    },
+    {
+        "category": "docs",
+        "path": "docs\\resources\\backend\\js\\Elements\\Primevue\\Containers\\Fluid.md",
+        "size": 406
+    },
+    {
+        "category": "docs",
+        "path": "docs\\resources\\backend\\js\\Elements\\Primevue\\Containers\\Form.md",
+        "size": 915
+    },
+    {
+        "category": "docs",
+        "path": "docs\\resources\\backend\\js\\Elements\\Primevue\\Containers\\IconField.md",
+        "size": 391
+    },
+    {
+        "category": "docs",
+        "path": "docs\\resources\\backend\\js\\Elements\\Primevue\\Containers\\InputGroup.md",
+        "size": 467
+    },
+    {
+        "category": "docs",
+        "path": "docs\\resources\\backend\\js\\Elements\\Primevue\\Containers\\InputGroupAddon.md",
+        "size": 407
+    },
+    {
+        "category": "docs",
+        "path": "docs\\resources\\backend\\js\\Elements\\Primevue\\Containers\\InputIcon.md",
+        "size": 408
+    },
+    {
+        "category": "docs",
+        "path": "docs\\resources\\backend\\js\\Elements\\Primevue\\Containers\\Label.md",
+        "size": 351
+    },
+    {
+        "category": "docs",
+        "path": "docs\\resources\\backend\\js\\Elements\\Primevue\\Containers\\Panel.md",
+        "size": 519
+    },
+    {
+        "category": "docs",
+        "path": "docs\\resources\\backend\\js\\Elements\\Primevue\\Containers\\Row.md",
+        "size": 418
+    },
+    {
+        "category": "docs",
+        "path": "docs\\resources\\backend\\js\\Elements\\Primevue\\Containers\\ScrollPanel.md",
+        "size": 448
+    },
+    {
+        "category": "docs",
+        "path": "docs\\resources\\backend\\js\\Elements\\Primevue\\Containers\\Text.md",
+        "size": 369
+    },
+    {
+        "category": "docs",
+        "path": "docs\\resources\\backend\\js\\Elements\\Primevue\\Customs.md",
+        "size": 246
+    },
+    {
+        "category": "docs",
+        "path": "docs\\resources\\backend\\js\\Elements\\Primevue\\VModel.md",
+        "size": 1396
+    },
+    {
+        "category": "docs",
+        "path": "docs\\resources\\backend\\js\\Elements\\Primevue\\VModel\\Checkbox.md",
+        "size": 638
+    },
+    {
+        "category": "docs",
+        "path": "docs\\resources\\backend\\js\\Elements\\Primevue\\VModel\\Checkbox\\Checkbox.md",
+        "size": 1388
+    },
+    {
+        "category": "docs",
+        "path": "docs\\resources\\backend\\js\\Elements\\Primevue\\VModel\\Checkbox\\RadioButton.md",
+        "size": 355
+    },
+    {
+        "category": "docs",
+        "path": "docs\\resources\\backend\\js\\Elements\\Primevue\\VModel\\Input.md",
+        "size": 1004
+    },
+    {
+        "category": "docs",
+        "path": "docs\\resources\\backend\\js\\Elements\\Primevue\\VModel\\Input\\AutoComplete.md",
+        "size": 665
+    },
+    {
+        "category": "docs",
+        "path": "docs\\resources\\backend\\js\\Elements\\Primevue\\VModel\\Input\\ColorPicker.md",
+        "size": 534
+    },
+    {
+        "category": "docs",
+        "path": "docs\\resources\\backend\\js\\Elements\\Primevue\\VModel\\Input\\FileUpload.md",
+        "size": 343
+    },
+    {
+        "category": "docs",
+        "path": "docs\\resources\\backend\\js\\Elements\\Primevue\\VModel\\Input\\InputNumber.md",
+        "size": 352
+    },
+    {
+        "category": "docs",
+        "path": "docs\\resources\\backend\\js\\Elements\\Primevue\\VModel\\Input\\InputText.md",
+        "size": 338
+    },
+    {
+        "category": "docs",
+        "path": "docs\\resources\\backend\\js\\Elements\\Primevue\\VModel\\Input\\Knob.md",
+        "size": 320
+    },
+    {
+        "category": "docs",
+        "path": "docs\\resources\\backend\\js\\Elements\\Primevue\\VModel\\Input\\Password.md",
+        "size": 341
+    },
+    {
+        "category": "docs",
+        "path": "docs\\resources\\backend\\js\\Elements\\Primevue\\VModel\\Input\\Slider.md",
+        "size": 347
+    },
+    {
+        "category": "docs",
+        "path": "docs\\resources\\backend\\js\\Elements\\Primevue\\VModel\\Input\\Textarea.md",
+        "size": 1155
+    },
+    {
+        "category": "docs",
+        "path": "docs\\resources\\backend\\js\\Elements\\Primevue\\VModel\\Input\\ToggleButton.md",
+        "size": 363
+    },
+    {
+        "category": "docs",
+        "path": "docs\\resources\\backend\\js\\Elements\\Primevue\\VModel\\Input\\ToggleSwitch.md",
+        "size": 422
+    },
+    {
+        "category": "docs",
+        "path": "docs\\resources\\backend\\js\\Elements\\Primevue\\VModel\\Select.md",
+        "size": 801
+    },
+    {
+        "category": "docs",
+        "path": "docs\\resources\\backend\\js\\Elements\\Primevue\\VModel\\Select\\MultiSelect.md",
+        "size": 365
+    },
+    {
+        "category": "docs",
+        "path": "docs\\resources\\backend\\js\\Elements\\Primevue\\VModel\\Select\\Select.md",
+        "size": 1862
+    },
+    {
+        "category": "docs",
+        "path": "docs\\resources\\backend\\js\\Elements\\Primevue\\VModel\\Select\\SelectButton.md",
+        "size": 370
+    },
+    {
+        "category": "docs",
+        "path": "docs\\resources\\backend\\js\\Elements\\Primevue\\VModel\\Select\\TreeSelect.md",
+        "size": 1211
+    },
+    {
+        "category": "docs",
+        "path": "docs\\resources\\backend\\js\\Elements\\README.md",
+        "size": 4119
+    },
+    {
+        "category": "docs",
+        "path": "docs\\resources\\backend\\js\\Elements\\RenderJson.md",
+        "size": 2522
+    },
+    {
+        "category": "docs",
+        "path": "docs\\resources\\backend\\js\\Pages\\Dynamic\\Index.md",
+        "size": 2635
+    },
+    {
+        "category": "docs",
+        "path": "docs\\resources\\backend\\js\\Shared\\Layout.md",
+        "size": 1891
+    },
+    {
+        "category": "docs",
+        "path": "docs\\resources\\common\\README.md",
+        "size": 0
+    },
+    {
+        "category": "docs",
+        "path": "docs\\resources\\common\\managers\\ActionManagerDescrption.md",
+        "size": 4632
+    },
+    {
+        "category": "docs",
+        "path": "docs\\resources\\common\\managers\\ComponentManagerDescrption.md",
+        "size": 5535
+    },
+    {
+        "category": "docs",
+        "path": "docs\\resources\\common\\managers\\NotifyManagerDescrption.md",
+        "size": 2618
+    },
+    {
+        "category": "docs",
+        "path": "docs\\resources\\common\\managers\\FormManagerDescrption.md",
+        "size": 4735
+    },
+    {
+        "category": "docs",
+        "path": "docs\\resources\\common\\managers\\HubManagerDescrption.md",
+        "size": 11922
+    },
+    {
+        "category": "docs",
+        "path": "docs\\resources\\common\\managers\\LayoutManagerDescrption.md",
+        "size": 3241
+    },
+    {
+        "category": "docs",
+        "path": "docs\\resources\\common\\managers\\LogManagerDescrption.md",
+        "size": 4991
+    },
+    {
+        "category": "docs",
+        "path": "docs\\resources\\common\\managers\\MenuManagerDescrption.md",
+        "size": 3363
+    },
+    {
+        "category": "docs",
+        "path": "docs\\resources\\common\\managers\\ModalManagerDescrption.md",
+        "size": 3439
+    },
+    {
+        "category": "docs",
+        "path": "docs\\resources\\common\\managers\\PropsManagerDescrption.md",
+        "size": 2896
+    },
+    {
+        "category": "docs",
+        "path": "docs\\resources\\common\\managers\\README.md",
+        "size": 8931
+    },
+    {
+        "category": "docs",
+        "path": "docs\\resources\\common\\managers\\SplitterManagerDescrption.md",
+        "size": 3280
+    },
+    {
+        "category": "docs",
+        "path": "docs\\resources\\common\\managers\\ThemeManagerDescrption.md",
+        "size": 3413
+    },
+    {
+        "category": "docs",
+        "path": "docs\\resources\\common\\managers\\TimerManagerDescrption.md",
+        "size": 2300
+    },
+    {
+        "category": "docs",
+        "path": "docs\\resources\\common\\managers\\UIManagerDescrption.md",
+        "size": 1947
+    },
+    {
+        "category": "docs",
+        "path": "docs\\resources\\common\\managers\\parts\\AllInOneManagersTestingRECOMENDATIONSaboutManagers.md",
+        "size": 13484
+    },
+    {
+        "category": "docs",
+        "path": "docs\\resources\\common\\managers\\parts\\ListenersAndCustomHooksRules.md",
+        "size": 4810
+    },
+    {
+        "category": "docs",
+        "path": "docs\\resources\\common\\managers\\parts\\SoundersActions.md",
+        "size": 5717
+    },
+    {
+        "category": "docs",
+        "path": "docs\\resources\\common\\managers\\parts\\constants.md",
+        "size": 3857
+    },
+    {
+        "category": "docs",
+        "path": "docs\\tests\\Feature\\Feauture.md",
+        "size": 16428
+    },
+    {
+        "category": "docs",
+        "path": "docs\\tests\\Feature\\FeautureBestPractices.md",
+        "size": 1262
+    },
+    {
+        "category": "docs",
+        "path": "docs\\tests\\Feature\\FeautureExample.md",
+        "size": 5211
+    },
+    {
+        "category": "docs",
+        "path": "docs\\tests\\Feature\\FeautureTestsConfig.md",
+        "size": 1751
+    },
+    {
+        "category": "docs",
+        "path": "docs\\tests\\README.md",
+        "size": 246
+    },
+    {
+        "category": "docs",
+        "path": "docs\\tests\\TestCase.php.md",
+        "size": 0
+    },
+    {
+        "category": "docs",
+        "path": "docs\\tests\\setup.js.md",
+        "size": 0
+    },
+    {
+        "category": "docs",
+        "path": "docs\\tests\\vue\\UniDialog.md",
+        "size": 1894
+    },
+    {
+        "category": "frontend.controllers",
+        "path": "app\\Http\\Controllers\\Frontend\\DepotController.php",
+        "size": 1143
+    },
+    {
+        "category": "frontend.resources.js",
+        "path": "resources\\frontend\\js\\Components\\ClientBar.vue",
+        "size": 70
+    },
+    {
+        "category": "frontend.resources.js",
+        "path": "resources\\frontend\\js\\Pages\\Dynamic\\Index.vue",
+        "size": 239
+    },
+    {
+        "category": "frontend.resources.js",
+        "path": "resources\\frontend\\js\\Shared\\Layout.vue",
+        "size": 369
+    },
+    {
+        "category": "frontend.resources.js",
+        "path": "resources\\frontend\\js\\app.js",
+        "size": 402
+    },
+    {
+        "category": "frontend.resources.js",
+        "path": "resources\\frontend\\js\\ziggy.js",
+        "size": 1585
+    },
+    {
+        "category": "other",
+        "path": "app\\AiRudeDepot\\App.php",
+        "size": 3896
+    },
+    {
+        "category": "other",
+        "path": "app\\AiRudeDepot\\Main.php",
+        "size": 1978
+    },
+    {
+        "category": "other",
+        "path": "app\\AiRudeDepot\\Render\\Box\\Box\\Box\\ArrayForJson.php",
+        "size": 1518
+    },
+    {
+        "category": "other",
+        "path": "app\\AiRudeDepot\\Render\\Box\\Box\\Storage\\Buffer.php",
+        "size": 397
+    },
+    {
+        "category": "other",
+        "path": "app\\AiRudeDepot\\Render\\Box\\Box\\Storage\\Directory.php",
+        "size": 3304
+    },
+    {
+        "category": "other",
+        "path": "app\\AiRudeDepot\\Render\\Box\\Box\\Storage\\File.php",
+        "size": 1795
+    },
+    {
+        "category": "other",
+        "path": "app\\AiRudeDepot\\Render\\Box\\Box\\Storage\\Model.php",
+        "size": 79
+    },
+    {
+        "category": "other",
+        "path": "app\\AiRudeDepot\\Render\\Box\\Box\\Storage\\Mysql.php",
+        "size": 79
+    },
+    {
+        "category": "other",
+        "path": "app\\AiRudeDepot\\Render\\Box\\Box\\Storage\\Session.php",
+        "size": 999
+    },
+    {
+        "category": "other",
+        "path": "app\\AiRudeDepot\\Render\\Box\\ProcessInstruction.php",
+        "size": 10975
+    },
+    {
+        "category": "other",
+        "path": "app\\AiRudeDepot\\Render\\Box\\ProcessingActions.php",
+        "size": 5367
+    },
+    {
+        "category": "other",
+        "path": "app\\AiRudeDepot\\Render\\Box\\Response\\Box\\ResponseActions.php",
+        "size": 1548
+    },
+    {
+        "category": "other",
+        "path": "app\\AiRudeDepot\\Render\\Box\\Response\\Box\\ResponseState.php",
+        "size": 766
+    },
+    {
+        "category": "other",
+        "path": "app\\AiRudeDepot\\Render\\Box\\Response\\CommonResponseFunctions.php",
+        "size": 627
+    },
+    {
+        "category": "other",
+        "path": "app\\AiRudeDepot\\Render\\Box\\Response\\ProgramResponse.php",
+        "size": 812
+    },
+    {
+        "category": "other",
+        "path": "app\\AiRudeDepot\\Render\\Box\\Response\\StepResponse.php",
+        "size": 791
+    },
+    {
+        "category": "other",
+        "path": "app\\AiRudeDepot\\Render\\Modificator.php",
+        "size": 2514
+    },
+    {
+        "category": "other",
+        "path": "app\\AiRudeDepot\\Render\\Modificators\\FormComponent.php",
+        "size": 946
+    },
+    {
+        "category": "other",
+        "path": "app\\AiRudeDepot\\Render\\Modificators\\NodeOperation.php",
+        "size": 3067
+    },
+    {
+        "category": "other",
+        "path": "app\\AiRudeDepot\\Render\\Modificators\\ProcessInstructionsList.php",
+        "size": 712
+    },
+    {
+        "category": "other",
+        "path": "app\\AiRudeDepot\\Render\\StorageNavigator.php",
+        "size": 7614
+    },
+    {
+        "category": "other",
+        "path": "app\\AiRudeDepot\\Support\\Action.php",
+        "size": 2271
+    },
+    {
+        "category": "other",
+        "path": "app\\AiRudeDepot\\Support\\Data.php",
+        "size": 3844
+    },
+    {
+        "category": "other",
+        "path": "app\\AiRudeDepot\\Support\\Path.php",
+        "size": 6193
+    },
+    {
+        "category": "other",
+        "path": "app\\AiRudeDepot\\Support\\PathBreadcrumb.php",
+        "size": 914
+    },
+    {
+        "category": "other",
+        "path": "app\\AiRudeDepot\\Support\\StaticStorage.php",
+        "size": 2280
+    },
+    {
+        "category": "other",
+        "path": "app\\AiRudeDepot\\Support\\StoragePathParser.php",
+        "size": 7160
+    },
+    {
+        "category": "other",
+        "path": "app\\AiRudeDepot\\Support\\StorageSession.php",
+        "size": 2220
+    },
+    {
+        "category": "other",
+        "path": "app\\Http\\Controllers\\Backend\\AllInOneParserController.php",
+        "size": 3264
+    },
+    {
+        "category": "other",
+        "path": "app\\Http\\Controllers\\Backend\\Custom\\ChatCodeParser.php",
+        "size": 2868
+    },
+    {
+        "category": "other",
+        "path": "app\\Http\\Controllers\\Backend\\DashboardController.php",
+        "size": 725
+    },
+    {
+        "category": "other",
+        "path": "app\\Http\\Controllers\\Backend\\ExamplesController.php",
+        "size": 620
+    },
+    {
+        "category": "other",
+        "path": "app\\Http\\Controllers\\Backend\\FileStorageController.php",
+        "size": 1761
+    },
+    {
+        "category": "other",
+        "path": "app\\Http\\Controllers\\Backend\\InstallerController.php",
+        "size": 4688
+    },
+    {
+        "category": "other",
+        "path": "app\\Http\\Controllers\\Backend\\PhpEditController.php",
+        "size": 1491
+    },
+    {
+        "category": "other",
+        "path": "app\\Http\\Controllers\\Backend\\ShortcutsController.php",
+        "size": 1308
+    },
+    {
+        "category": "other",
+        "path": "app\\Http\\Controllers\\DepotController.php",
+        "size": 75
+    },
+    {
+        "category": "other",
+        "path": "app\\Mail\\Admin\\OrderAdded.php",
+        "size": 1034
+    },
+    {
+        "category": "other",
+        "path": "app\\Mail\\OrderAdded.php",
+        "size": 1121
+    },
+    {
+        "category": "other",
+        "path": "app\\Mail\\OrderApproved.php",
+        "size": 1117
+    },
+    {
+        "category": "other",
+        "path": "app\\Mail\\OrderCancelled.php",
+        "size": 1122
+    },
+    {
+        "category": "other",
+        "path": "app\\Mail\\OrderDelivered.php",
+        "size": 1120
+    },
+    {
+        "category": "other",
+        "path": "app\\Mail\\OrderDispatched.php",
+        "size": 1123
+    },
+    {
+        "category": "other",
+        "path": "app\\Mail\\OrderPayed.php",
+        "size": 1107
+    },
+    {
+        "category": "routes",
+        "path": "routes\\console.php",
+        "size": 5313
+    },
+    {
+        "category": "routes",
+        "path": "routes\\panel.php",
+        "size": 4990
+    },
+    {
+        "category": "routes",
+        "path": "routes\\web.php",
+        "size": 2430
+    },
+    {
+        "category": "tests",
+        "path": "tests\\Feature\\AppTest.php",
+        "size": 3321
+    },
+    {
+        "category": "tests",
+        "path": "tests\\Feature\\ExternalServiceTest.php",
+        "size": 852
+    },
+    {
+        "category": "tests",
+        "path": "tests\\Feature\\ModificatorsTest.php",
+        "size": 204
+    },
+    {
+        "category": "tests",
+        "path": "tests\\Feature\\PassRegexpTest.php",
+        "size": 203
+    },
+    {
+        "category": "tests",
+        "path": "tests\\Feature\\PathTest.php",
+        "size": 2853
+    },
+    {
+        "category": "tests",
+        "path": "tests\\Feature\\ProcessingActionsTest.php",
+        "size": 3617
+    },
+    {
+        "category": "tests",
+        "path": "tests\\Feature\\ProgramControlTest.php",
+        "size": 4210
+    },
+    {
+        "category": "tests",
+        "path": "tests\\Feature\\ResponseTest.php",
+        "size": 3891
+    },
+    {
+        "category": "tests",
+        "path": "tests\\Feature\\StorageNavigatorTest.php",
+        "size": 1959
+    },
+    {
+        "category": "tests",
+        "path": "tests\\Include\\TestCase.php",
+        "size": 967
+    },
+    {
+        "category": "tests",
+        "path": "tests\\Unit\\BasicTest.php",
+        "size": 297
+    },
+    {
+        "category": "tests",
+        "path": "tests\\js\\components\\CheckboxTest.js",
+        "size": 2569
+    },
+    {
+        "category": "tests",
+        "path": "tests\\js\\components\\InputTest.js",
+        "size": 2896
+    },
+    {
+        "category": "tests",
+        "path": "tests\\js\\components\\PresetsTest.js",
+        "size": 1617
+    },
+    {
+        "category": "tests",
+        "path": "tests\\js\\components\\SelectTest.js",
+        "size": 1936
+    },
+    {
+        "category": "tests",
+        "path": "tests\\js\\components\\VModelTest.js",
+        "size": 1639
+    },
+    {
+        "category": "tests",
+        "path": "tests\\js\\managers\\ComponentManagerTest.js",
+        "size": 1283
+    },
+    {
+        "category": "tests",
+        "path": "tests\\js\\managers\\CustomHooksManagerTest.js",
+        "size": 4625
+    },
+    {
+        "category": "tests",
+        "path": "tests\\js\\managers\\FormManagerTest.js",
+        "size": 6956
+    },
+    {
+        "category": "tests",
+        "path": "tests\\js\\managers\\LayoutManagerTest.js",
+        "size": 927
+    },
+    {
+        "category": "tests",
+        "path": "tests\\js\\managers\\MenuManagerTest.js",
+        "size": 938
+    },
+    {
+        "category": "tests",
+        "path": "tests\\js\\managers\\ModalManagerTest.js",
+        "size": 797
+    },
+    {
+        "category": "tests",
+        "path": "tests\\js\\managers\\NotifyManagerTest.js",
+        "size": 680
+    },
+    {
+        "category": "tests",
+        "path": "tests\\js\\managers\\PropsManagerTest.js",
+        "size": 1547
+    },
+    {
+        "category": "tests",
+        "path": "tests\\js\\managers\\SplitterManagerTest.js",
+        "size": 817
+    },
+    {
+        "category": "tests",
+        "path": "tests\\js\\managers\\ThemeManagerTest.js",
+        "size": 2129
+    },
+    {
+        "category": "tests",
+        "path": "tests\\js\\managers\\TimerManagerTest.js",
+        "size": 1706
+    },
+    {
+        "category": "tests",
+        "path": "tests\\js\\managers\\UIManagerTest.js",
+        "size": 1696
+    },
+    {
+        "category": "tests",
+        "path": "tests\\js\\managers\\tests\\fixtures\\config.json",
+        "size": 129
+    },
+    {
+        "category": "tests",
+        "path": "tests\\setup.js",
+        "size": 102
+    },
+    {
+        "category": "views",
+        "path": "resources\\views\\app.blade.php",
+        "size": 905
+    },
+    {
+        "category": "views",
+        "path": "resources\\views\\front.blade.php",
+        "size": 737
+    },
+    {
+        "category": "views",
+        "path": "resources\\views\\mail\\admin\\include\\footer.blade.php",
+        "size": 297
+    },
+    {
+        "category": "views",
+        "path": "resources\\views\\mail\\admin\\include\\header.blade.php",
+        "size": 2002
+    },
+    {
+        "category": "views",
+        "path": "resources\\views\\mail\\admin\\order_added.blade.php",
+        "size": 1147
+    },
+    {
+        "category": "views",
+        "path": "resources\\views\\mail\\include\\payment.blade.php",
+        "size": 472
+    },
+    {
+        "category": "views",
+        "path": "resources\\views\\mail\\include\\products_list.blade.php",
+        "size": 608
+    },
+    {
+        "category": "views",
+        "path": "resources\\views\\mail\\include\\shipping.blade.php",
+        "size": 497
+    },
+    {
+        "category": "views",
+        "path": "resources\\views\\mail\\include\\template\\footer.blade.php",
+        "size": 297
+    },
+    {
+        "category": "views",
+        "path": "resources\\views\\mail\\include\\template\\header.blade.php",
+        "size": 2127
+    },
+    {
+        "category": "views",
+        "path": "resources\\views\\mail\\include\\template\\thanks.blade.php",
+        "size": 79
+    },
+    {
+        "category": "views",
+        "path": "resources\\views\\mail\\order_added.blade.php",
+        "size": 1100
+    },
+    {
+        "category": "views",
+        "path": "resources\\views\\mail\\order_approved.blade.php",
+        "size": 511
+    },
+    {
+        "category": "views",
+        "path": "resources\\views\\mail\\order_cancelled.blade.php",
+        "size": 443
+    },
+    {
+        "category": "views",
+        "path": "resources\\views\\mail\\order_delivered.blade.php",
+        "size": 377
+    },
+    {
+        "category": "views",
+        "path": "resources\\views\\mail\\order_dispatched.blade.php",
+        "size": 466
+    },
+    {
+        "category": "views",
+        "path": "resources\\views\\mail\\order_payed.blade.php",
+        "size": 445
+    },
+    {
+        "category": "views",
+        "path": "resources\\views\\mail\\payment\\account.blade.php",
+        "size": 120
+    },
+    {
+        "category": "views",
+        "path": "resources\\views\\mail\\payment\\card.blade.php",
+        "size": 99
+    },
+    {
+        "category": "views",
+        "path": "resources\\views\\mail\\payment\\cash.blade.php",
+        "size": 44
+    },
+    {
+        "category": "views",
+        "path": "resources\\views\\mail\\payment\\liqpay.blade.php",
+        "size": 99
+    },
+    {
+        "category": "views",
+        "path": "resources\\views\\mail\\shipping\\delivery.blade.php",
+        "size": 169
+    },
+    {
+        "category": "views",
+        "path": "resources\\views\\mail\\shipping\\pickup.blade.php",
+        "size": 59
+    },
+    {
+        "category": "views",
+        "path": "resources\\views\\mail\\shipping\\post.blade.php",
+        "size": 161
+    },
+    {
+        "category": "views",
+        "path": "resources\\views\\modules\\config.blade.php",
+        "size": 856
+    },
+    {
+        "category": "views",
+        "path": "resources\\views\\modules\\edit.blade.php",
+        "size": 334
+    },
+    {
+        "category": "views",
+        "path": "resources\\views\\modules\\index.blade.php",
+        "size": 1113
+    },
+    {
+        "category": "views",
+        "path": "resources\\views\\newDesignForSite.html",
+        "size": 2415
+    }
+]

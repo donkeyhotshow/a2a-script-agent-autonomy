@@ -1,0 +1,55 @@
+{
+    "componentName": "ButtonGroup",
+    "description": "Groups multiple Button components together.",
+    "level": 3,
+    "status": "ready",
+    "dependencies": [
+        "Button"
+    ],
+    "_comment": "Validation expects properties within a 'props' object.",
+    "nestedValidation": {
+        "structure": {
+            "props": {
+                "type": "object",
+                "required": false,
+                "description": "Container for ButtonGroup attributes.",
+                "nestedValidation": {
+                    "structure": {
+                        "allOf": [
+                            {
+                                "$ref": "../common/props.json"
+                            },
+                            {
+                                "$ref": "../common/label.json"
+                            },
+                            {
+                                "$ref": "../common/icon.json"
+                            },
+                            {
+                                "$ref": "../common/size.json"
+                            },
+                            {
+                                "$ref": "../common/button.json"
+                            }
+                        ]
+                    }
+                }
+            },
+            "children": {
+                "type": "array",
+                "required": true,
+                "nestedValidation": {
+                    "allowedTypes": [
+                        "Button"
+                    ]
+                }
+            },
+            "$ref": "../common/root.json"
+        }
+    },
+    "implementationNotes": [
+        "Refactored placeholder rule.",
+        "Assumes it primarily contains Button components."
+    ],
+    "documentationLink": "docs/guides/module/04-ui-construction.md"
+}

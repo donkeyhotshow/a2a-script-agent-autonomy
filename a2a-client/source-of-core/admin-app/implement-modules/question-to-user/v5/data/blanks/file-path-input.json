@@ -1,0 +1,19 @@
+{
+    "type": "FilePathInput",
+    "props": {
+        "vAddress": "",
+        "label": "",
+        "inputId": "",
+        "name": "",
+        "placeholder": "",
+        "required": false,
+        "accept": null,
+        "ariaDescribedBy": "",
+        "validationMessage": "",
+        "class": "w-full md:w-14rem mb-3"
+    },
+    "model": {
+        "field": "",
+        "value": null
+    }
+}

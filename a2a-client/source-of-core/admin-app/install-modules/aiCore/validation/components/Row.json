@@ -1,0 +1,46 @@
+{
+    "componentName": "Row",
+    "description": "Represents a row, likely used for layout within a Grid.",
+    "level": 1,
+    "status": "ready",
+    "dependencies": [
+        "Grid",
+        "Column"
+    ],
+    "_comment": "Validation expects properties within a 'props' object.",
+    "nestedValidation": {
+        "structure": {
+            "children": {
+                "type": "array",
+                "required": false,
+                "description": "Child elements of the div.",
+                "nestedValidation": {
+                    "_allowAnyObject": true,
+                    "_allowString": true
+                }
+            },
+            "props": {
+                "type": "object",
+                "required": false,
+                "nestedValidation": {
+                    "structure": {
+                        "allOf": [
+                            {
+                                "$ref": "../common/props.json"
+                            },
+                            {
+                                "$ref": "../common/content.json"
+                            }
+                        ]
+                    }
+                }
+            },
+            "$ref": "../common/root.json"
+        }
+    },
+    "implementationNotes": [
+        "Refactored placeholder rule to standard V1 format (using 'props').",
+        "Assumes usage within a Grid, containing Column components."
+    ],
+    "documentationLink": "docs/guides/module/04-ui-construction.md"
+}

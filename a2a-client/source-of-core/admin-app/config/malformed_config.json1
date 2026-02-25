@@ -1,0 +1,19 @@
+{
+    "comment": "This is a malformed JSON file for testing - extra comma.",
+    "scan_settings": {
+        "source_file_extensions": [
+            ".ps1",
+            ".php"
+        ],
+        "include_directories": [
+            "script/",
+            "app/"
+        ]
+    },
+    "documentation_mapping": {
+        "base_documentation_path": "docs/"
+    },
+    "output_options": {
+        "report_file_path": "reports/malformed_report.json"
+    }
+}

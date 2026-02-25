@@ -1,0 +1,46 @@
+{
+    "type": "object",
+    "properties": {
+        "type": {
+            "type": "string",
+            "required": true,
+            "description": "The component type"
+        },
+        "props": {
+            "type": "object",
+            "required": false,
+            "description": "Component properties"
+        },
+        "children": {
+            "type": ["array", "string", "object"],
+            "required": false,
+            "description": "Child components or content"
+        },
+        "slots": {
+            "type": "object",
+            "required": false,
+            "description": "Named slots for template content"
+        },
+        "model": {
+            "type": "object",
+            "required": false,
+            "description": "Component model data and configuration"
+        },
+        "customHooks": {
+            "type": "object",
+            "required": false,
+            "description": "Custom event hooks and behaviors"
+        },
+        "tags": {
+            "type": "object",
+            "required": true,
+            "properties": {
+                "ai_summary": {
+                    "type": "string",
+                    "required": true,
+                    "description": "Short description for AI processing"
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,115 @@
+{
+    "componentName": "Splitter",
+    "description": "Layout component to create resizeable panels.",
+    "level": 3,
+    "status": "ready",
+    "documentationLink": "docs/guides/module/04-ui-construction.md",
+    "dependencies": [
+        "SplitterPanel"
+    ],
+    "_comment": "Validation expects properties within a 'props' object.",
+    "nestedValidation": {
+        "structure": {
+            "vAddress": {
+                "type": "string",
+                "required": false,
+                "description": "Address for v-model or component identification."
+            },
+            "disabled": {
+                "type": "boolean",
+                "required": false,
+                "default": false,
+                "description": "Disable rendering of the component."
+            },
+            "props": {
+                "type": "object",
+                "required": false,
+                "description": "Container for PrimeVue Splitter properties and HTML attributes.",
+                "nestedValidation": {
+                    "structure": {
+                        "layout": {
+                            "type": "string",
+                            "required": false,
+                            "default": "horizontal",
+                            "options": [
+                                "horizontal",
+                                "vertical"
+                            ],
+                            "description": "Orientation of panels."
+                        },
+                        "gutterSize": {
+                            "type": "number",
+                            "required": false,
+                            "default": 4,
+                            "description": "Gutter size in pixels."
+                        },
+                        "stateKey": {
+                            "type": "string",
+                            "required": false,
+                            "description": "Storage key for layout state."
+                        },
+                        "stateStorage": {
+                            "type": "string",
+                            "required": false,
+                            "default": "session",
+                            "options": [
+                                "session",
+                                "local"
+                            ],
+                            "description": "Storage type for layout state."
+                        },
+                        "step": {
+                            "type": "number",
+                            "required": false,
+                            "default": 5,
+                            "description": "Step size for resizing."
+                        },
+                        "minSizes": {
+                            "type": "array",
+                            "required": false,
+                            "description": "Minimum sizes of panels.",
+                            "nestedValidation": {
+                                "_allowNumber": true
+                            }
+                        },
+                        "pt": {
+                            "type": "object",
+                            "required": false
+                        },
+                        "ptOptions": {
+                            "type": "object",
+                            "required": false
+                        },
+                        "unstyled": {
+                            "type": "boolean",
+                            "required": false,
+                            "default": false
+                        },
+                        "allOf": [
+                            {
+                                "$ref": "../common/props.json"
+                            }
+                        ]
+                    }
+                }
+            },
+            "children": {
+                "type": "array",
+                "required": true,
+                "description": "Should contain two or more SplitterPanel components.",
+                "nestedValidation": {
+                    "allowedTypes": [
+                        "SplitterPanel"
+                    ]
+                }
+            },
+            "$ref": "../common/root.json"
+        }
+    },
+    "implementationNotes": [
+        "Refactored to standard V1 format (using 'props').",
+        "PrimeVue component: Splitter",
+        "Added common PrimeVue Splitter props.",
+        "Requires SplitterPanel components as children."
+    ]
+}

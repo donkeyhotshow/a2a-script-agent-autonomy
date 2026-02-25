@@ -1,0 +1,36 @@
+# JSON UI Core Concepts
+
+This section explains the fundamental building blocks and principles of the JSON UI system.
+
+## Key Concepts
+
+-   **[Component Syntax](./component-syntax.md)**: How UI components (HTML tags, PrimeVue components) are represented in the JSON structure.
+-   **[Elements V1](./elements-v1.md)**: Documentation for V1 elements or components. *(Review relevance)*
+-   **[Elements V2](./elements-v2.md)**: Documentation for V2 elements or components.
+-   **[Managers](./managers.md)**: Overview of frontend JavaScript managers responsible for handling actions, state, or UI logic (e.g., `ActionManager`, `NotifyManager`).
+-   **[Module Actions](./module-actions.md)**: Actions specifically related to module interactions or lifecycles? *(Needs clarification, potential overlap with `commands-and-operations/`)*.
+-   **[Rendering Pipeline](./rendering-pipeline.md)**: High-level overview of how JSON is processed and rendered into the final UI.
+-   **[Template Schema (Concept)](./template-schema.md)**: Conceptual explanation of the template schema. *(Compare/merge with `../json-template-schema.md`)*.
+
+Understanding these concepts is essential for working with JSON UI templates and modules.
+
+> **Important:** When developing components and modules, it is recommended
+> to follow the project's UI component standards (Documentation Link Needed)
+> and the [module verification checklist](../../../checklists/verifications/module-verification.md).
+
+## Key Documents in this Section
+
+*   **[Template Schema (`template-schema.md`)](template-schema.md): ** The central document describing the detailed schema for creating interfaces using JSON, including element types, properties, slots, conditional rendering, loops, and action binding. (Note: Currently requires significant review and updates).
+*   **[UI Elements V1 (`elements-v1.md`)](elements-v1.md): ** Lists and describes some basic UI components available.
+*   **[UI Elements V2 (`elements-v2.md`)](elements-v2.md): ** Lists and describes more advanced UI components and form elements available (e.g., `Panel`, `div`, `Button`, `InputText`, `Card`, `Accordion`, etc.), including examples and main `props`.
+*   **[Global Managers (`managers.md`)](managers.md): ** Documents available global managers accessed via the `hub` (e.g., `hub.notifyManager`, `hub.formManager`, `hub.actionManager`), explaining their purpose and usage via client-side hooks (`customHooks`).
+*   **[Module Actions (`module-actions.md`)](module-actions.md): ** Describes the concept of client-side vs. server-side actions and how they are triggered and handled.
+*   **[Component Syntax (`component-syntax.md`)](component-syntax.md): ** Provides a concise overview of the JSON syntax for defining UI components.
+
+## Further Study
+
+After familiarizing yourself with the core concepts, it is recommended to proceed to study: *   **[Module Architecture](../module-architecture/README.md): ** How to organize module files and structure.
+*   **[Commands and Operations](../commands-and-operations/README.md): ** How to add server-side interactivity and UI composition using server actions and operations.
+
+---
+*(Previous content related to architecture diagrams, setup instructions, etc., has been removed from this README for clarity and should be sought in the specific documents linked above or other relevant sections.)*

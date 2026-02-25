@@ -1,0 +1,159 @@
+{
+    "type": "Fluid",
+    "props": {
+        "class": "flex mt-8"
+    },
+    "children": [
+        {
+            "type": "div",
+            "props": {
+                "class": "card flex flex-col gap-4 w-full"
+            },
+            "children": [
+                {
+                    "type": "Text",
+                    "props": {
+                        "content": "InputGroup",
+                        "class": "font-semibold text-xl"
+                    }
+                },
+                {
+                    "type": "div",
+                    "props": {
+                        "class": "flex flex-col md:flex-row gap-4"
+                    },
+                    "children": [
+                        {
+                            "type": "InputGroup",
+                            "props": {
+                                "class": "p-inputgroup-fluid"
+                            },
+                            "children": [
+                                {
+                                    "type": "InputGroupAddon",
+                                    "children": [
+                                        {
+                                            "type": "Icon",
+                                            "props": {
+                                                "class": "pi pi-user"
+                                            }
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "InputText",
+                                    "props": {
+                                        "placeholder": "Username"
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "type": "InputGroup",
+                            "children": [
+                                {
+                                    "type": "InputGroupAddon",
+                                    "children": [
+                                        {
+                                            "type": "Icon",
+                                            "props": {
+                                                "class": "pi pi-clock"
+                                            }
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "InputGroupAddon",
+                                    "children": [
+                                        {
+                                            "type": "Icon",
+                                            "props": {
+                                                "class": "pi pi-star-fill"
+                                            }
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "InputNumber",
+                                    "props": {
+                                        "placeholder": "Price"
+                                    }
+                                },
+                                {
+                                    "type": "InputGroupAddon",
+                                    "children": [
+                                        {
+                                            "type": "Text",
+                                            "props": {
+                                                "content": "$"
+                                            }
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "InputGroupAddon",
+                                    "children": [
+                                        {
+                                            "type": "Text",
+                                            "props": {
+                                                "content": ".00"
+                                            }
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": "div",
+                    "props": {
+                        "class": "flex flex-col md:flex-row gap-4"
+                    },
+                    "children": [
+                        {
+                            "type": "InputGroup",
+                            "children": [
+                                {
+                                    "type": "Button",
+                                    "props": {
+                                        "label": "Search"
+                                    }
+                                },
+                                {
+                                    "type": "InputText",
+                                    "props": {
+                                        "placeholder": "Keyword"
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "type": "InputGroup",
+                            "children": [
+                                {
+                                    "type": "InputGroupAddon",
+                                    "children": [
+                                        {
+                                            "type": "Checkbox",
+                                            "props": {
+                                                "model": "inputGroupValue",
+                                                "binary": true
+                                            }
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "InputText",
+                                    "props": {
+                                        "placeholder": "Confirm"
+                                    }
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

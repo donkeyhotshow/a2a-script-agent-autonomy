@@ -1,0 +1,93 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Periodic Actions Schema",
+    "description": "JSON Schema for periodic actions configuration, used in scripts_config.json.",
+    "type": "object",
+    "properties": {
+        "description": {
+            "type": "string",
+            "description": "Description for the periodic actions section."
+        },
+        "stateFilePath": {
+            "type": "string",
+            "description": "Path to the state file for periodic actions."
+        },
+        "actions": {
+            "type": "array",
+            "description": "Array of periodic action definitions.",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "description": "Unique ID for the action."
+                    },
+                    "frequency": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "description": "Run frequency (e.g., every N script executions)."
+                    },
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "message",
+                            "command"
+                        ],
+                        "description": "Type of action."
+                    },
+                    "message": {
+                        "type": "string",
+                        "description": "Message to display (for type 'message')."
+                    },
+                    "color": {
+                        "type": "string",
+                        "description": "Color for the message (for type 'message')."
+                    },
+                    "command": {
+                        "type": "string",
+                        "description": "Command to execute (for type 'command')."
+                    },
+                    "workingDirectory": {
+                        "type": "string",
+                        "description": "Working directory for the command (for type 'command')."
+                    }
+                },
+                "required": [
+                    "id",
+                    "frequency",
+                    "type"
+                ],
+                "if": {
+                    "properties": {
+                        "type": {
+                            "const": "message"
+                        }
+                    }
+                },
+                "then": {
+                    "required": [
+                        "message"
+                    ]
+                },
+                "else": {
+                    "if": {
+                        "properties": {
+                            "type": {
+                                "const": "command"
+                            }
+                        }
+                    },
+                    "then": {
+                        "required": [
+                            "command"
+                        ]
+                    }
+                }
+            }
+        }
+    },
+    "required": [
+        "stateFilePath",
+        "actions"
+    ]
+}

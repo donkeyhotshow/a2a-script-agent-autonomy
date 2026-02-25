@@ -1,0 +1,128 @@
+# Type Handling Instructions
+
+## Core Type System
+
+1. Primitive Types:
+   ```json
+   {
+       "string": "text",
+       "number": 42,
+       "boolean": true,
+       "null": null
+   }
+   ```
+
+2. Complex Types:
+   ```json
+   {
+       "object": {
+           "field": "value"
+       },
+       "array": [1, 2, 3],
+       "mixed": {
+           "items": [1, "text", true]
+       }
+   }
+   ```
+
+## Type Conversion Rules
+
+1. String Handling:
+   - Preserve quotes
+   - Escape special chars
+   - Maintain encoding
+   - Validate format
+
+2. Number Handling:
+   - Preserve precision
+   - Handle decimals
+   - Support scientific
+   - Validate range
+
+3. Boolean Handling:
+   - True/False only
+   - No type coercion
+   - Strict comparison
+   - Clear semantics
+
+4. Null Handling:
+   - Explicit null
+   - No undefined
+   - Clear meaning
+   - Type safety
+
+## Complex Type Rules
+
+1. Object Handling:
+   - Preserve structure
+   - Maintain types
+   - Keep order
+   - Validate keys
+
+2. Array Handling:
+   - Preserve order
+   - Maintain types
+   - Keep structure
+   - Validate indices
+
+3. Mixed Type Handling:
+   - Type safety
+   - Clear structure
+   - Valid combinations
+   - Safe operations
+
+## Type Validation
+
+1. Input Validation:
+   - Check types
+   - Verify structure
+   - Validate values
+   - Test constraints
+
+2. Output Validation:
+   - Ensure types
+   - Verify structure
+   - Check values
+   - Test integrity
+
+## Type Safety
+
+1. Conversion Safety:
+   - No data loss
+   - Type preservation
+   - Value integrity
+   - Structure maintenance
+
+2. Operation Safety:
+   - Type checking
+   - Value validation
+   - Structure verification
+   - Relationship testing
+
+## Error Handling
+
+1. Type Errors:
+   - Invalid types
+   - Mismatched types
+   - Conversion errors
+   - Validation failures
+
+2. Structure Errors:
+   - Invalid structure
+   - Missing fields
+   - Extra fields
+   - Type conflicts
+
+## Performance
+
+1. Type Operations:
+   - Fast checking
+   - Efficient conversion
+   - Quick validation
+   - Optimized storage
+
+2. Memory Usage:
+   - Type efficiency
+   - Structure optimization
+   - Value compression
+   - Cache utilization

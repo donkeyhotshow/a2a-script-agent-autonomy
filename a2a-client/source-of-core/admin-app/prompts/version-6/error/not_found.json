@@ -1,0 +1,15 @@
+{
+    "type": "Instructions",
+    "instructions": [
+        {
+            "action": "update",
+            "value": true,
+            "to": "buffer:error"
+        },
+        {
+            "action": "update",
+            "value": "User not found",
+            "to": "buffer:errorMessage"
+        }
+    ]
+} 

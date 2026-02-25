@@ -1,0 +1,50 @@
+{
+    "type": "Dialog",
+    "props": {
+        "header": "Додаткова Інформація",
+        "visible": false,
+        "modal": true,
+        "style": "width: 50vw"
+    },
+    "children": [
+        {
+            "type": "div",
+            "props": {
+                "class": "p-dialog-content",
+                "content": "{dialog:data.content || 'Деталі не надано.'}"
+            }
+        }
+    ],
+    "slots": {
+        "footer": {
+            "type": "Button",
+            "props": {
+                "label": "Закрити",
+                "icon": "pi pi-times",
+                "class": "p-button-text"
+            },
+            "customHooks": {
+                "click": [
+                    {
+                        "action": "update",
+                        "batch": [
+                            {
+                                "value": false,
+                                "to": "dialog:visible"
+                            }
+                        ]
+                    }
+                ]
+            }
+        },
+        "default": [
+            {
+                "type": "div",
+                "props": {
+                    "class": "p-4",
+                    "content": "{dialogContent}"
+                }
+            }
+        ]
+    }
+}

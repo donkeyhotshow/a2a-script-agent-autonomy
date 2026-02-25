@@ -31,6 +31,7 @@ export const AUTO_AI_CATEGORIES = {
     'fix-vue-imports-improvements',
   ],
   fallback: ['ai-fallback', 'ai-analyze', 'ai-generate'],
+  conversation: ['dialog', 'ai-session-context'],
 } as const;
 
 export type AutoAiCategory = keyof typeof AUTO_AI_CATEGORIES;

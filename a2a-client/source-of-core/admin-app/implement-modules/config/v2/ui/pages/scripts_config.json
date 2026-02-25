@@ -1,0 +1,754 @@
+{
+    "type": "page",
+    "version": "1.0.0",
+    "layout": "config.default_layout",
+    "title": "Настройки скриптов (scripts_config.json)",
+    "description": "Страница для просмотра и редактирования центрального конфигурационного файла `config/scripts_config.json`.",
+    "dataSources": [
+        {
+            "id": "scriptsConfigData",
+            "action": "config.load_config_file",
+            "params": {
+                "filePath": "config/scripts_config.json"
+            },
+            "onSuccess": {
+                "setContext": {
+                    "formData": "{{actionResult.fileContent}}"
+                }
+            },
+            "onError": {
+                "showToast": {
+                    "severity": "error",
+                    "summary": "Ошибка загрузки",
+                    "detail": "Не удалось загрузить scripts_config.json: {{error.message}}"
+                }
+            }
+        }
+    ],
+    "actions": [
+        {
+            "id": "saveChanges",
+            "action": "config.save_config_file",
+            "params": {
+                "filePath": "config/scripts_config.json",
+                "fileContent": "{{context.formData}}",
+                "prettyPrint": true
+            },
+            "onSuccess": {
+                "showToast": {
+                    "severity": "success",
+                    "summary": "Сохранено",
+                    "detail": "Файл scripts_config.json успешно сохранен."
+                },
+                "triggerDataSource": "scriptsConfigData"
+            },
+            "onError": {
+                "showToast": {
+                    "severity": "error",
+                    "summary": "Ошибка сохранения",
+                    "detail": "Не удалось сохранить scripts_config.json: {{error.message}}"
+                }
+            }
+        }
+    ],
+    "body": [
+        {
+            "type": " p-toolbar",
+            "props": {
+                "class": "p-mb-3"
+            },
+            "children": [
+                {
+                    "type": " div",
+                    "props": {
+                        "class": "p-toolbar-group-left"
+                    }
+                },
+                {
+                    "type": " div",
+                    "props": {
+                        "class": "p-toolbar-group-right"
+                    },
+                    "children": [
+                        {
+                            "type": " p-button",
+                            "props": {
+                                "label": "Сохранить изменения",
+                                "icon": "pi pi-save"
+                            },
+                            "events": {
+                                "click": {
+                                    "triggerAction": "saveChanges"
+                                }
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "type": " p-panel",
+            "props": {
+                "header": "Общие настройки и описание"
+            },
+            "children": [
+                {
+                    "type": " p-inputText",
+                    "props": {
+                        "label": "Описание конфигурации",
+                        "modelValue": "{{context.formData.description}}",
+                        "class": "p-inputtext-lg",
+                        "style": "width: 100%;"
+                    },
+                    "events": {
+                        "update:modelValue": {
+                            "setContext": {
+                                "formData.description": "{{eventValue}}"
+                            }
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "type": " p-tabView",
+            "children": [
+                {
+                    "type": " p-tabPanel",
+                    "props": {
+                        "header": "Indexing Workflow"
+                    },
+                    "children": [
+                        {
+                            "type": " config.config_section",
+                            "props": {
+                                "title": "Базовые настройки Indexing Workflow",
+                                "data": "{{context.formData.indexingWorkflow}}"
+                            },
+                            "children": [
+                                {
+                                    "type": " p-inputText",
+                                    "props": {
+                                        "label": "Index Base Directory",
+                                        "modelValue": "{{context.formData.indexingWorkflow.indexBaseDir}}"
+                                    },
+                                    "events": {
+                                        "update:modelValue": {
+                                            "setContext": {
+                                                "formData.indexingWorkflow.indexBaseDir": "{{eventValue}}"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "type": " config.json_editor",
+                            "props": {
+                                "title": "Scan Groups (scanGroups)",
+                                "data": "{{context.formData.indexingWorkflow.scanGroups}}",
+                                "schema": {
+                                    "$ref": "#/definitions/scanGroupArraySchema"
+                                }
+                            },
+                            "events": {
+                                "change": {
+                                    "setContext": {
+                                        "formData.indexingWorkflow.scanGroups": "{{eventValue}}"
+                                    }
+                                }
+                            }
+                        },
+                        {
+                            "type": " config.json_editor",
+                            "props": {
+                                "title": "Groups (groups)",
+                                "data": "{{context.formData.indexingWorkflow.groups}}",
+                                "schema": {
+                                    "$ref": "#/definitions/groupDefinitionSchema"
+                                }
+                            },
+                            "events": {
+                                "change": {
+                                    "setContext": {
+                                        "formData.indexingWorkflow.groups": "{{eventValue}}"
+                                    }
+                                }
+                            }
+                        }
+                    ]
+                },
+                {
+                    "type": " p-tabPanel",
+                    "props": {
+                        "header": "Periodic Actions"
+                    },
+                    "children": [
+                        {
+                            "type": " config.json_editor",
+                            "props": {
+                                "title": "Periodic Actions Configuration",
+                                "data": "{{context.formData.periodicActions}}",
+                                "schema": {
+                                    "$ref": "#/definitions/periodicActionsSchema"
+                                }
+                            },
+                            "events": {
+                                "change": {
+                                    "setContext": {
+                                        "formData.periodicActions": "{{eventValue}}"
+                                    }
+                                }
+                            }
+                        }
+                    ]
+                },
+                {
+                    "type": " p-tabPanel",
+                    "props": {
+                        "header": "Mirrors Docs Scan"
+                    },
+                    "children": [
+                        {
+                            "type": " config.config_section",
+                            "props": {
+                                "title": "Настройки сканирования для зеркал документации",
+                                "descriptionFromData": "{{context.formData.mirrorsDocsScan.description}}"
+                            },
+                            "children": [
+                                {
+                                    "type": " p-inputText",
+                                    "props": {
+                                        "label": "Директория для зеркал (docsMirrorsDir)",
+                                        "modelValue": "{{context.formData.mirrorsDocsScan.docsMirrorsDir}}"
+                                    },
+                                    "events": {
+                                        "update:modelValue": {
+                                            "setContext": {
+                                                "formData.mirrorsDocsScan.docsMirrorsDir": "{{eventValue}}"
+                                            }
+                                        }
+                                    }
+                                },
+                                {
+                                    "type": " config.json_editor",
+                                    "props": {
+                                        "title": "Исходные директории (sourceDirs)",
+                                        "data": "{{context.formData.mirrorsDocsScan.sourceDirs}}",
+                                        "options": {
+                                            "mode": "tree"
+                                        },
+                                        "schema": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    },
+                                    "events": {
+                                        "change": {
+                                            "setContext": {
+                                                "formData.mirrorsDocsScan.sourceDirs": "{{eventValue}}"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": " p-tabPanel",
+                    "props": {
+                        "header": "Modules (main.ps1)"
+                    },
+                    "children": [
+                        {
+                            "type": " config.config_section",
+                            "props": {
+                                "title": "Настройки для модулей, вызываемых main.ps1",
+                                "descriptionFromData": "{{context.formData.modules.description}}"
+                            },
+                            "children": [
+                                {
+                                    "type": " config.json_editor",
+                                    "props": {
+                                        "title": "Список скриптов модулей (scripts)",
+                                        "data": "{{context.formData.modules.scripts}}",
+                                        "options": {
+                                            "mode": "tree"
+                                        },
+                                        "schema": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    },
+                                    "events": {
+                                        "change": {
+                                            "setContext": {
+                                                "formData.modules.scripts": "{{eventValue}}"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": " p-tabPanel",
+                    "props": {
+                        "header": "Active Scripts & Settings"
+                    },
+                    "children": [
+                        {
+                            "type": " config.config_section",
+                            "props": {
+                                "title": "Активные скрипты (activeScripts)"
+                            },
+                            "children": [
+                                {
+                                    "type": " config.json_editor",
+                                    "props": {
+                                        "title": "Список активных скриптов",
+                                        "data": "{{context.formData.activeScripts}}",
+                                        "options": {
+                                            "mode": "tree"
+                                        },
+                                        "schema": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    },
+                                    "events": {
+                                        "change": {
+                                            "setContext": {
+                                                "formData.activeScripts": "{{eventValue}}"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "type": " config.json_editor",
+                            "props": {
+                                "title": "Настройки для отдельных скриптов (scriptSettings)",
+                                "data": "{{context.formData.scriptSettings}}",
+                                "options": {
+                                    "mode": "code"
+                                },
+                                "schema": {
+                                    "$ref": "#/definitions/scriptSettingsSchema"
+                                }
+                            },
+                            "events": {
+                                "change": {
+                                    "setContext": {
+                                        "formData.scriptSettings": "{{eventValue}}"
+                                    }
+                                }
+                            }
+                        }
+                    ]
+                },
+                {
+                    "type": " p-tabPanel",
+                    "props": {
+                        "header": "Broken Links Scan"
+                    },
+                    "children": [
+                        {
+                            "type": " config.config_section",
+                            "props": {
+                                "title": "Настройки сканирования битых ссылок",
+                                "descriptionFromData": "{{context.formData.brokenLinksScan.description}}"
+                            },
+                            "children": [
+                                {
+                                    "type": " config.json_editor",
+                                    "props": {
+                                        "title": "Директории для сканирования (directories)",
+                                        "data": "{{context.formData.brokenLinksScan.directories}}",
+                                        "options": {
+                                            "mode": "tree"
+                                        },
+                                        "schema": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    },
+                                    "events": {
+                                        "change": {
+                                            "setContext": {
+                                                "formData.brokenLinksScan.directories": "{{eventValue}}"
+                                            }
+                                        }
+                                    }
+                                },
+                                {
+                                    "type": " p-inputText",
+                                    "props": {
+                                        "label": "Файл отчета (reportFile)",
+                                        "modelValue": "{{context.formData.brokenLinksScan.reportFile}}",
+                                        "style": "width: 100%"
+                                    },
+                                    "events": {
+                                        "update:modelValue": {
+                                            "setContext": {
+                                                "formData.brokenLinksScan.reportFile": "{{eventValue}}"
+                                            }
+                                        }
+                                    }
+                                },
+                                {
+                                    "type": " p-inputNumber",
+                                    "props": {
+                                        "label": "Макс. проблем в консоли (maxConsoleIssues)",
+                                        "modelValue": "{{context.formData.brokenLinksScan.maxConsoleIssues}}"
+                                    },
+                                    "events": {
+                                        "update:modelValue": {
+                                            "setContext": {
+                                                "formData.brokenLinksScan.maxConsoleIssues": "{{eventValue}}"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": " p-tabPanel",
+                    "props": {
+                        "header": "Task Runner Settings"
+                    },
+                    "children": [
+                        {
+                            "type": " p-message",
+                            "props": {
+                                "severity": "info",
+                                "text": "Конфигурация Task Runner будет добавлена здесь. Структура данных уточняется."
+                            }
+                        }
+                    ]
+                },
+                {
+                    "type": " p-tabPanel",
+                    "props": {
+                        "header": "Definitions"
+                    },
+                    "children": [
+                        {
+                            "type": " p-panel",
+                            "props": {
+                                "header": "scanGroupSchema",
+                                "toggleable": true,
+                                "collapsed": true
+                            },
+                            "children": [
+                                {
+                                    "type": " config.json_editor",
+                                    "props": {
+                                        "data": "{{page.definitions.scanGroupSchema}}",
+                                        "options": {
+                                            "mode": "code",
+                                            "readOnly": true
+                                        }
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "type": " p-panel",
+                            "props": {
+                                "header": "scanGroupArraySchema",
+                                "toggleable": true,
+                                "collapsed": true
+                            },
+                            "children": [
+                                {
+                                    "type": " config.json_editor",
+                                    "props": {
+                                        "data": "{{page.definitions.scanGroupArraySchema}}",
+                                        "options": {
+                                            "mode": "code",
+                                            "readOnly": true
+                                        }
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "type": " p-panel",
+                            "props": {
+                                "header": "groupDefinitionSchema",
+                                "toggleable": true,
+                                "collapsed": true
+                            },
+                            "children": [
+                                {
+                                    "type": " config.json_editor",
+                                    "props": {
+                                        "data": "{{page.definitions.groupDefinitionSchema}}",
+                                        "options": {
+                                            "mode": "code",
+                                            "readOnly": true
+                                        }
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "type": " p-panel",
+                            "props": {
+                                "header": "periodicActionsSchema",
+                                "toggleable": true,
+                                "collapsed": true
+                            },
+                            "children": [
+                                {
+                                    "type": " config.json_editor",
+                                    "props": {
+                                        "data": "{{page.definitions.periodicActionsSchema}}",
+                                        "options": {
+                                            "mode": "code",
+                                            "readOnly": true
+                                        }
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "type": " p-panel",
+                            "props": {
+                                "header": "scriptSettingsSchema",
+                                "toggleable": true,
+                                "collapsed": true
+                            },
+                            "children": [
+                                {
+                                    "type": " config.json_editor",
+                                    "props": {
+                                        "data": "{{page.definitions.scriptSettingsSchema}}",
+                                        "options": {
+                                            "mode": "code",
+                                            "readOnly": true
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": " p-tabPanel",
+                    "props": {
+                        "header": "Прочее (Raw JSON)"
+                    },
+                    "children": [
+                        {
+                            "type": " config.json_editor",
+                            "props": {
+                                "title": "Полный scripts_config.json",
+                                "data": "{{context.formData}}",
+                                "options": {
+                                    "mode": "code",
+                                    "mainMenuBar": true,
+                                    "navigationBar": true
+                                }
+                            },
+                            "events": {
+                                "change": {
+                                    "setContext": {
+                                        "formData": "{{eventValue}}"
+                                    }
+                                }
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
+    "definitions": {
+        "//_comment": "This top-level description field is for the overall configuration file.",
+        "//_comment_scanGroupSchema": "Defines the structure for a single scan group within the indexingWorkflow.scanGroups array.",
+        "scanGroupSchema": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "path": {
+                    "type": "string"
+                },
+                "indexFile": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "includePatterns": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "excludePatterns": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            },
+            "required": [
+                "name",
+                "path",
+                "indexFile"
+            ]
+        },
+        "//_comment_scanGroupArraySchema": "Defines that indexingWorkflow.scanGroups is an array of scanGroupSchema objects.",
+        "scanGroupArraySchema": {
+            "type": "array",
+            "items": {
+                "$ref": "#/definitions/scanGroupSchema"
+            }
+        },
+        "//_comment_groupDefinitionSchema": "Defines the structure for indexingWorkflow.groups, which contains a description and named arrays of scan group names.",
+        "groupDefinitionSchema": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string",
+                    "description": "Optional description for the groups object."
+                }
+            },
+            "patternProperties": {
+                "^(?!description$).*$": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "Each property (key) is a group name, and its value is an array of scan group names (strings) belonging to this group."
+                }
+            },
+            "additionalProperties": false
+        },
+        "//_comment_periodicActionsSchema": "Defines the structure for the periodicActions object, including its description, state file path, and an array of action definitions.",
+        "periodicActionsSchema": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "stateFilePath": {
+                    "type": "string",
+                    "format": "path"
+                },
+                "actions": {
+                    "type": "array",
+                    "//_comment_actions_item": "Each item in the actions array defines a periodic action.",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "id": {
+                                "type": "string",
+                                "description": "Unique identifier for the action."
+                            },
+                            "frequency": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "description": "Run this action every N times the script is invoked."
+                            },
+                            "type": {
+                                "type": "string",
+                                "enum": [
+                                    "message",
+                                    "command"
+                                ],
+                                "description": "Type of action: display a message or run a command."
+                            },
+                            "message": {
+                                "type": "string",
+                                "description": "Message to display (if type is 'message')."
+                            },
+                            "color": {
+                                "type": "string",
+                                "description": "Color for the message (e.g., Yellow, Cyan)."
+                            },
+                            "command": {
+                                "type": "string",
+                                "description": "Command to execute (if type is 'command')."
+                            },
+                            "workingDirectory": {
+                                "type": "string",
+                                "format": "path",
+                                "description": "Working directory for the command."
+                            }
+                        },
+                        "required": [
+                            "id",
+                            "frequency",
+                            "type"
+                        ],
+                        "if": {
+                            "properties": {
+                                "type": {
+                                    "const": "message"
+                                }
+                            }
+                        },
+                        "then": {
+                            "required": [
+                                "message"
+                            ]
+                        },
+                        "else": {
+                            "if": {
+                                "properties": {
+                                    "type": {
+                                        "const": "command"
+                                    }
+                                }
+                            },
+                            "then": {
+                                "required": [
+                                    "command"
+                                ]
+                            }
+                        }
+                    }
+                }
+            },
+            "required": [
+                "actions"
+            ]
+        },
+        "//_comment_scriptSettingsSchema": "Defines the structure for scriptSettings, an object where keys are script paths and values are their specific settings (e.g., autoTrigger, watchedPaths).",
+        "scriptSettingsSchema": {
+            "type": "object",
+            "additionalProperties": {
+                "type": "object",
+                "properties": {
+                    "autoTrigger": {
+                        "type": "string"
+                    },
+                    "watchedPaths": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

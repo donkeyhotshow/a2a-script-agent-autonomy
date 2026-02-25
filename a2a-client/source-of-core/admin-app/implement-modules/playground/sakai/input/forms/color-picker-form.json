@@ -1,0 +1,16 @@
+[
+    {
+        "type": "Text",
+        "props": {
+            "content": "Color Picker",
+            "class": "font-semibold text-xl"
+        }
+    },
+    {
+        "type": "ColorPicker",
+        "props": {
+            "model": "colorValue",
+            "style": "width: 2rem"
+        }
+    }
+]

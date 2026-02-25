@@ -1,0 +1,17 @@
+{
+    "page": {
+        "type": "Panel",
+        "name": "top-bar-panel",
+        "props": {
+            "class": "bg-primary"
+        },
+        "children": [
+            {
+                "type": "div",
+                "props": {
+                    "content": "<div class='text-white p-4'>Это Top Bar!</div>"
+                }
+            }
+        ]
+    }
+}

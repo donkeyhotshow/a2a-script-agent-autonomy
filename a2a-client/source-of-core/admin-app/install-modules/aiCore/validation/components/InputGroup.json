@@ -1,0 +1,63 @@
+{
+    "componentName": "InputGroup",
+    "description": "Groups input elements with addons.",
+    "level": 3,
+    "status": "ready",
+    "dependencies": [
+        "InputGroupAddon",
+        "InputText",
+        "Button"
+    ],
+    "_comment": "Validation expects properties within a 'props' object.",
+    "nestedValidation": {
+        "structure": {
+            "vAddress": {
+                "type": "string",
+                "required": false,
+                "description": "Address for v-model or component identification."
+            },
+            "disabled": {
+                "type": "boolean",
+                "required": false,
+                "default": false,
+                "description": "Disable rendering of the component."
+            },
+            "props": {
+                "type": "object",
+                "required": false,
+                "description": "Container for standard HTML attributes applied to the wrapper div.",
+                "nestedValidation": {
+                    "structure": {
+                        "allOf": [
+                            {
+                                "$ref": "../common/props.json"
+                            }
+                        ]
+                    }
+                }
+            },
+            "children": {
+                "type": "array",
+                "required": true,
+                "description": "Should contain input elements (like InputText, Button) and InputGroupAddon components.",
+                "nestedValidation": {
+                    "allowedTypes": [
+                        "InputText",
+                        "InputGroupAddon",
+                        "Button",
+                        "Dropdown",
+                        "Password"
+                    ],
+                    "_allowAnyObject": true
+                }
+            },
+            "$ref": "../common/root.json"
+        }
+    },
+    "implementationNotes": [
+        "Refactored to standard V1 format (using 'props').",
+        "PrimeVue component: InputGroup",
+        "Acts as a layout wrapper."
+    ],
+    "documentationLink": "docs/guides/module/04-ui-construction.md"
+}

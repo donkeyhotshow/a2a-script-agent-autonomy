@@ -1,0 +1,13 @@
+{
+    "cb-form": [
+    ],
+    "instructions": [
+        {
+            "action": "update",
+            "to": "primary-form/data/text-storage-section:data",
+            "value": {},
+            "disabled": true
+        }
+    ],
+    "data": null
+}

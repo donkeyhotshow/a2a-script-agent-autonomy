@@ -1,0 +1,35 @@
+{
+    "type": "Instructions",
+    "instructions": [
+        {
+            "disabled": true,
+            "action": "print_r",
+            "from": "input"
+        },
+        {
+            "disabled": true,
+            "action": "print_r",
+            "from": "output"
+        },
+        {
+            "disabled": false,
+            "action": "update",
+            "from": "input",
+            "to": "primary-form/data/program-section:selectedAddressItem"
+        },
+        {
+            "action": "update",
+            "value": true,
+            "to": "primary-form/data/program-section:addressIsUpdated"
+        },
+        {
+            "action": "save",
+            "from": "primary-form/data/program-section"
+        },
+        {
+            "action": "update",
+            "value": 1,
+            "to": "output:full"
+        }
+    ]
+}

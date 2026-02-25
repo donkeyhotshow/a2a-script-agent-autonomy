@@ -1,0 +1,43 @@
+{
+    "name": "layout-tabs",
+    "type": "Tabs",
+    "props": {
+        "class": "mb-5"
+    },
+    "items": [
+        {
+            "header": "Главная",
+            "icon": "pi pi-home",
+            "items": [
+                {
+                    "items": [
+                        {
+                            "type": "div",
+                            "props": {
+                                "value": "This is the content for the main tab."
+                            }
+                        }
+                    ]
+                }
+            ],
+            "disabled": false
+        },
+        {
+            "header": "Настройки",
+            "icon": "pi pi-cog",
+            "items": [
+                {
+                    "items": [
+                        {
+                            "type": "div",
+                            "props": {
+                                "value": "Settings and configurations are displayed here."
+                            }
+                        }
+                    ]
+                }
+            ],
+            "disabled": false
+        }
+    ]
+}

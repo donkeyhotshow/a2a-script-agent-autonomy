@@ -1,0 +1,639 @@
+{
+    "type": "Section",
+    "name": "e-section",
+    "props": {
+        "class": "py-6 px-6 lg:px-20 my-2 md:my-6"
+    },
+    "children": [
+        {
+            "type": "div",
+            "props": {
+                "class": "flex flex-col"
+            },
+            "children": [
+                {
+                    "type": "Card",
+                    "props": {
+                        "class": "card"
+                    },
+                    "children": [
+                        {
+                            "type": "Text",
+                            "props": {
+                                "content": "Toolbar",
+                                "class": "font-semibold text-xl mb-4"
+                            }
+                        },
+                        {
+                            "type": "Toolbar",
+                            "children": [
+                                {
+                                    "type": "Template",
+                                    "props": {
+                                        "slot": "start"
+                                    },
+                                    "children": [
+                                        {
+                                            "type": "Button",
+                                            "props": {
+                                                "icon": "pi pi-plus",
+                                                "class": "mr-2",
+                                                "severity": "secondary",
+                                                "text": true
+                                            }
+                                        },
+                                        {
+                                            "type": "Button",
+                                            "props": {
+                                                "icon": "pi pi-print",
+                                                "class": "mr-2",
+                                                "severity": "secondary",
+                                                "text": true
+                                            }
+                                        },
+                                        {
+                                            "type": "Button",
+                                            "props": {
+                                                "icon": "pi pi-upload",
+                                                "severity": "secondary",
+                                                "text": true
+                                            }
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "Template",
+                                    "props": {
+                                        "slot": "center"
+                                    },
+                                    "children": [
+                                        {
+                                            "type": "IconField",
+                                            "children": [
+                                                {
+                                                    "type": "InputIcon",
+                                                    "children": [
+                                                        {
+                                                            "type": "Icon",
+                                                            "props": {
+                                                                "class": "pi pi-search"
+                                                            }
+                                                        }
+                                                    ]
+                                                },
+                                                {
+                                                    "type": "InputText",
+                                                    "props": {
+                                                        "placeholder": "Search"
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "Template",
+                                    "props": {
+                                        "slot": "end"
+                                    },
+                                    "children": [
+                                        {
+                                            "type": "SplitButton",
+                                            "props": {
+                                                "label": "Save",
+                                                "model": "items"
+                                            }
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": "Grid",
+                    "props": {
+                        "class": "flex flex-col md:flex-row gap-8"
+                    },
+                    "children": [
+                        {
+                            "type": "Column",
+                            "props": {
+                                "class": "md:w-1/2"
+                            },
+                            "children": [
+                                {
+                                    "type": "Card",
+                                    "props": {
+                                        "class": "card"
+                                    },
+                                    "children": [
+                                        {
+                                            "type": "Text",
+                                            "props": {
+                                                "content": "Accordion",
+                                                "class": "font-semibold text-xl mb-4"
+                                            }
+                                        },
+                                        {
+                                            "type": "Accordion",
+                                            "props": {
+                                                "value": "0"
+                                            },
+                                            "children": [
+                                                {
+                                                    "type": "AccordionPanel",
+                                                    "props": {
+                                                        "value": "0"
+                                                    },
+                                                    "children": [
+                                                        {
+                                                            "type": "AccordionHeader",
+                                                            "props": {
+                                                                "content": "Header I"
+                                                            }
+                                                        },
+                                                        {
+                                                            "type": "AccordionContent",
+                                                            "props": {
+                                                                "content": "<p class='m-0'>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>"
+                                                            }
+                                                        }
+                                                    ]
+                                                },
+                                                {
+                                                    "type": "AccordionPanel",
+                                                    "props": {
+                                                        "value": "1"
+                                                    },
+                                                    "children": [
+                                                        {
+                                                            "type": "AccordionHeader",
+                                                            "props": {
+                                                                "content": "Header II"
+                                                            }
+                                                        },
+                                                        {
+                                                            "type": "AccordionContent",
+                                                            "props": {
+                                                                "content": "<p class='m-0'>Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt. Consectetur, adipisci velit, sed quia non numquam eius modi.</p>"
+                                                            }
+                                                        }
+                                                    ]
+                                                },
+                                                {
+                                                    "type": "AccordionPanel",
+                                                    "props": {
+                                                        "value": "2"
+                                                    },
+                                                    "children": [
+                                                        {
+                                                            "type": "AccordionHeader",
+                                                            "props": {
+                                                                "content": "Header III"
+                                                            }
+                                                        },
+                                                        {
+                                                            "type": "AccordionContent",
+                                                            "props": {
+                                                                "content": "<p class='m-0'>At vero eos et accusamus et iusto odio dignissimos ducimus qui blanditiis praesentium voluptatum deleniti atque corrupti quos dolores et quas molestias excepturi sint occaecati cupiditate non provident, similique sunt in culpa qui officia deserunt mollitia animi, id est laborum et dolorum fuga. Et harum quidem rerum facilis est et expedita distinctio. Nam libero tempore, cum soluta nobis est eligendi optio cumque nihil impedit quo minus.</p>"
+                                                            }
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "Card",
+                                    "props": {
+                                        "class": "card"
+                                    },
+                                    "children": [
+                                        {
+                                            "type": "Text",
+                                            "props": {
+                                                "content": "Tabs",
+                                                "class": "font-semibold text-xl mb-4"
+                                            }
+                                        },
+                                        {
+                                            "type": "Tabs",
+                                            "props": {
+                                                "value": "0"
+                                            },
+                                            "children": [
+                                                {
+                                                    "type": "TabList",
+                                                    "children": [
+                                                        {
+                                                            "type": "Tab",
+                                                            "props": {
+                                                                "value": "0",
+                                                                "content": "Header I"
+                                                            }
+                                                        },
+                                                        {
+                                                            "type": "Tab",
+                                                            "props": {
+                                                                "value": "1",
+                                                                "content": "Header II"
+                                                            }
+                                                        },
+                                                        {
+                                                            "type": "Tab",
+                                                            "props": {
+                                                                "value": "2",
+                                                                "content": "Header III"
+                                                            }
+                                                        }
+                                                    ]
+                                                },
+                                                {
+                                                    "type": "div",
+                                                    "children": [
+                                                        {
+                                                            "type": "div",
+                                                            "props": {
+                                                                "value": "0",
+                                                                "content": "<p class='m-0'>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>"
+                                                            }
+                                                        },
+                                                        {
+                                                            "type": "div",
+                                                            "props": {
+                                                                "value": "1",
+                                                                "content": "<p class='m-0'>Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt. Consectetur, adipisci velit, sed quia non numquam eius modi.</p>"
+                                                            }
+                                                        },
+                                                        {
+                                                            "type": "div",
+                                                            "props": {
+                                                                "value": "2",
+                                                                "content": "<p class='m-0'>At vero eos et accusamus et iusto odio dignissimos ducimus qui blanditiis praesentium voluptatum deleniti atque corrupti quos dolores et quas molestias excepturi sint occaecati cupiditate non provident, similique sunt in culpa qui officia deserunt mollitia animi, id est laborum et dolorum fuga. Et harum quidem rerum facilis est et expedita distinctio. Nam libero tempore, cum soluta nobis est eligendi optio cumque nihil impedit quo minus.</p>"
+                                                            }
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "type": "Column",
+                            "props": {
+                                "class": "md:w-1/2 mt-6 md:mt-0"
+                            },
+                            "children": [
+                                {
+                                    "type": "Card",
+                                    "props": {
+                                        "class": "card"
+                                    },
+                                    "children": [
+                                        {
+                                            "type": "Text",
+                                            "props": {
+                                                "content": "Panel",
+                                                "class": "font-semibold text-xl mb-4"
+                                            }
+                                        },
+                                        {
+                                            "type": "Panel",
+                                            "props": {
+                                                "header": "Header",
+                                                "toggleable": true
+                                            },
+                                            "children": [
+                                                {
+                                                    "type": "Text",
+                                                    "props": {
+                                                        "content": "<p class='leading-normal m-0'>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>"
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "Card",
+                                    "props": {
+                                        "class": "card"
+                                    },
+                                    "children": [
+                                        {
+                                            "type": "Text",
+                                            "props": {
+                                                "content": "Fieldset",
+                                                "class": "font-semibold text-xl mb-4"
+                                            }
+                                        },
+                                        {
+                                            "type": "Fieldset",
+                                            "props": {
+                                                "legend": "Legend",
+                                                "toggleable": true
+                                            },
+                                            "children": [
+                                                {
+                                                    "type": "Text",
+                                                    "props": {
+                                                        "content": "<p class='leading-normal m-0'>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>"
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "Card",
+                                    "props": {
+                                        "class": "card"
+                                    },
+                                    "children": [
+                                        {
+                                            "type": "Template",
+                                            "props": {
+                                                "slot": "title"
+                                            },
+                                            "children": [
+                                                {
+                                                    "type": "div",
+                                                    "props": {
+                                                        "class": "flex items-center justify-between mb-0"
+                                                    },
+                                                    "children": [
+                                                        {
+                                                            "type": "Text",
+                                                            "props": {
+                                                                "content": "Card",
+                                                                "class": "font-semibold text-xl mb-4"
+                                                            }
+                                                        },
+                                                        {
+                                                            "type": "Button",
+                                                            "props": {
+                                                                "icon": "pi pi-plus",
+                                                                "class": "p-button-text",
+                                                                "click": "toggle"
+                                                            }
+                                                        }
+                                                    ]
+                                                },
+                                                {
+                                                    "type": "Menu",
+                                                    "props": {
+                                                        "id": "config_menu",
+                                                        "ref": "menuRef",
+                                                        "model": "cardMenu",
+                                                        "popup": true
+                                                    }
+                                                }
+                                            ]
+                                        },
+                                        {
+                                            "type": "Template",
+                                            "props": {
+                                                "slot": "content"
+                                            },
+                                            "children": [
+                                                {
+                                                    "type": "Text",
+                                                    "props": {
+                                                        "content": "<p class='leading-normal m-0'>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>"
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": "Card",
+                    "props": {
+                        "class": "card mt-8"
+                    },
+                    "children": [
+                        {
+                            "type": "Text",
+                            "props": {
+                                "content": "divider",
+                                "class": "font-semibold text-xl mb-4"
+                            }
+                        },
+                        {
+                            "type": "Grid",
+                            "props": {
+                                "class": "flex flex-col md:flex-row"
+                            },
+                            "children": [
+                                {
+                                    "type": "Column",
+                                    "props": {
+                                        "class": "w-full md:w-5/12 flex flex-col items-center justify-center gap-3 py-5"
+                                    },
+                                    "children": [
+                                        {
+                                            "type": "div",
+                                            "props": {
+                                                "class": "flex flex-col gap-2"
+                                            },
+                                            "children": [
+                                                {
+                                                    "type": "Label",
+                                                    "props": {
+                                                        "for": "username",
+                                                        "content": "Username"
+                                                    }
+                                                },
+                                                {
+                                                    "type": "InputText",
+                                                    "props": {
+                                                        "id": "username",
+                                                        "type": "text"
+                                                    }
+                                                }
+                                            ]
+                                        },
+                                        {
+                                            "type": "div",
+                                            "props": {
+                                                "class": "flex flex-col gap-2"
+                                            },
+                                            "children": [
+                                                {
+                                                    "type": "Label",
+                                                    "props": {
+                                                        "for": "password",
+                                                        "content": "Password"
+                                                    }
+                                                },
+                                                {
+                                                    "type": "InputText",
+                                                    "props": {
+                                                        "id": "password",
+                                                        "type": "password"
+                                                    }
+                                                }
+                                            ]
+                                        },
+                                        {
+                                            "type": "div",
+                                            "props": {
+                                                "class": "flex"
+                                            },
+                                            "children": [
+                                                {
+                                                    "type": "Button",
+                                                    "props": {
+                                                        "label": "Login",
+                                                        "icon": "pi pi-user",
+                                                        "class": "w-full max-w-[17.35rem] mx-auto"
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "Column",
+                                    "props": {
+                                        "class": "w-full md:w-2/12"
+                                    },
+                                    "children": [
+                                        {
+                                            "type": "divider",
+                                            "props": {
+                                                "layout": "vertical",
+                                                "class": "!hidden md:!flex",
+                                                "content": "<b>OR</b>"
+                                            }
+                                        },
+                                        {
+                                            "type": "divider",
+                                            "props": {
+                                                "layout": "horizontal",
+                                                "class": "!flex md:!hidden",
+                                                "align": "center",
+                                                "content": "<b>OR</b>"
+                                            }
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "Column",
+                                    "props": {
+                                        "class": "w-full md:w-5/12 flex items-center justify-center py-5"
+                                    },
+                                    "children": [
+                                        {
+                                            "type": "Button",
+                                            "props": {
+                                                "label": "Sign Up",
+                                                "icon": "pi pi-user-plus",
+                                                "severity": "success",
+                                                "class": "w-full max-w-[17.35rem] mx-auto"
+                                            }
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": "Card",
+                    "props": {
+                        "class": "card"
+                    },
+                    "children": [
+                        {
+                            "type": "Text",
+                            "props": {
+                                "content": "Splitter",
+                                "class": "font-semibold text-xl mb-4"
+                            }
+                        },
+                        {
+                            "type": "Splitter",
+                            "props": {
+                                "style": "height: 300px",
+                                "class": "mb-8"
+                            },
+                            "children": [
+                                {
+                                    "type": "SplitterPanel",
+                                    "props": {
+                                        "size": 30,
+                                        "minSize": 10
+                                    },
+                                    "children": [
+                                        {
+                                            "type": "div",
+                                            "props": {
+                                                "class": "h-full flex items-center justify-center",
+                                                "content": "Panel 1"
+                                            }
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "SplitterPanel",
+                                    "props": {
+                                        "size": 70
+                                    },
+                                    "children": [
+                                        {
+                                            "type": "Splitter",
+                                            "props": {
+                                                "layout": "vertical"
+                                            },
+                                            "children": [
+                                                {
+                                                    "type": "SplitterPanel",
+                                                    "props": {
+                                                        "size": 15
+                                                    },
+                                                    "children": [
+                                                        {
+                                                            "type": "div",
+                                                            "props": {
+                                                                "class": "h-full flex items-center justify-center",
+                                                                "content": "Panel 2"
+                                                            }
+                                                        }
+                                                    ]
+                                                },
+                                                {
+                                                    "type": "SplitterPanel",
+                                                    "props": {
+                                                        "size": 50
+                                                    },
+                                                    "children": [
+                                                        {
+                                                            "type": "div",
+                                                            "props": {
+                                                                "class": "h-full flex items-center justify-center",
+                                                                "content": "Panel 3"
+                                                            }
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

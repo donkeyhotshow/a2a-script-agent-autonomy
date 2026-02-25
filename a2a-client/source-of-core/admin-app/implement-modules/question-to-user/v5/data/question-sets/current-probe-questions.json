@@ -1,0 +1,28 @@
+[
+    {
+        "id": "q_main_goal",
+        "text": "What is your main goal for this session?",
+        "type": "text_input",
+        "answer_model_path": "aiProbeForm.answers.mainGoal"
+    },
+    {
+        "id": "q_preferred_style",
+        "text": "What is your preferred interaction style?",
+        "type": "radio_choice",
+        "answer_model_path": "aiProbeForm.answers.interactionStyle",
+        "options": [
+            {
+                "label": "Concise and Direct",
+                "value": "direct"
+            },
+            {
+                "label": "Detailed and Explanatory",
+                "value": "detailed"
+            },
+            {
+                "label": "Collaborative and Iterative",
+                "value": "collaborative"
+            }
+        ]
+    }
+]

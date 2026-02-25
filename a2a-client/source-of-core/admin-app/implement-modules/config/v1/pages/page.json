@@ -1,0 +1,72 @@
+{
+    "type": "Page",
+    "title": "Site Configuration",
+    "props": {
+        "class": "p-4"
+    },
+    "content": {
+        "type": "Grid",
+        "children": [
+            {
+                "type": "Column",
+                "props": {
+                    "class": "col-span-4"
+                },
+                "children": [
+                    {
+                        "type": "Card",
+                        "children": [
+                            {
+                                "type": "H3",
+                                "props": {
+                                    "content": "Основные настройки"
+                                }
+                            },
+                            {
+                                "type": "div",
+                                "props": {
+                                    "content": "Здесь вы можете изменить основные параметры сайта."
+                                }
+                            },
+                            {
+                                "type": "divider"
+                            },
+                            {
+                                "type": "operation",
+                                "action": "include",
+                                "source": "config/templates/forms/config-settings"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "type": "Column",
+                "props": {
+                    "class": "col-span-4"
+                },
+                "children": [
+                    {
+                        "type": "Card",
+                        "children": [
+                            {
+                                "type": "H4",
+                                "props": {
+                                    "content": "Действия"
+                                }
+                            },
+                            {
+                                "type": "divider"
+                            },
+                            {
+                                "type": "operation",
+                                "action": "include",
+                                "source": "config/templates/parts/config-actions"
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+}

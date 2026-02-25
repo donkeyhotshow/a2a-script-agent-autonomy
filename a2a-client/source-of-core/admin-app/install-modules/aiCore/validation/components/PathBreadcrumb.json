@@ -1,0 +1,87 @@
+{
+    "componentName": "PathBreadcrumb",
+    "description": "PrimeVue Breadcrumb component customized for path display.",
+    "level": 2,
+    "status": "active",
+    "dependencies": [],
+    "_comment": "Validation rules using nestedValidation structure.",
+    "documentationLink": "docs/guides/module/04-ui-construction.md",
+    "nestedValidation": {
+        "structure": {
+            "items": {
+                "type": "array",
+                "required": false,
+                "description": "Array of breadcrumb item objects (PrimeVue MenuItem structure)."
+            },
+            "props": {
+                "type": "object",
+                "required": false,
+                "description": "Container for PrimeVue Breadcrumb properties and specific props.",
+                "nestedValidation": {
+                    "structure": {
+                        "allOf": [
+                            {
+                                "$ref": "../common/props.json"
+                            },
+                            {
+                                "disabled": {
+                                    "type": "boolean",
+                                    "required": false,
+                                    "default": false,
+                                    "description": "Disable rendering of the component."
+                                },
+                                "home": {
+                                    "type": "object",
+                                    "required": false,
+                                    "description": "MenuItem configuration for the home icon/link."
+                                },
+                                "exact": {
+                                    "type": "boolean",
+                                    "required": false,
+                                    "default": true,
+                                    "description": "Whether to apply 'router-link-active-exact'."
+                                },
+                                "pt": {
+                                    "type": "object",
+                                    "required": false
+                                },
+                                "ptOptions": {
+                                    "type": "object",
+                                    "required": false
+                                },
+                                "unstyled": {
+                                    "type": "boolean",
+                                    "required": false,
+                                    "default": false
+                                }
+                            }
+                        ]
+                    }
+                }
+            },
+            "slots": {
+                "type": "object",
+                "required": false,
+                "nestedValidation": {
+                    "structure": {
+                        "item": {
+                            "_allowAnyObject": true
+                        },
+                        "separator": {
+                            "_allowAnyObject": true
+                        }
+                    }
+                }
+            },
+            "$ref": "../common/root.json"
+        }
+    },
+    "implementationNotes": [
+        "Restructured to use nestedValidation.structure.",
+        "Added 'items' as allowed top-level key.",
+        "Added 'slots' definition.",
+        "Made 'vAddress' prop not required.",
+        "Added 'disabled' prop based on usage in primary-form.",
+        "Assumes props based on PrimeVue Breadcrumb component."
+    ]
+}

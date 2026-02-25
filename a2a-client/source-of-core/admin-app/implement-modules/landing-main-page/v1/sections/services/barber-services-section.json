@@ -1,0 +1,198 @@
+{
+    "type": "div",
+    "name": "barber-services-section-section",
+    "props": {
+        "class": "py-12 px-4 md:px-6 lg:px-8",
+        "style": "background-color: #f8f9fa;",
+        "role": "region",
+        "id": "barber-services-section",
+        "aria-labelledby": "barber-services-section-title"
+    },
+    "children": [
+        {
+            "type": "div",
+            "props": {
+                "class": "max-w-7xl mx-auto"
+            },
+            "children": [
+                {
+                    "type": "div",
+                    "props": {
+                        "class": "text-center mb-10"
+                    },
+                    "children": [
+                        {
+                            "type": "Tag",
+                            "props": {
+                                "value": "Барбер",
+                                "class": "mb-2 text-sm font-bold uppercase tracking-wider",
+                                "style": "background-color: rgba(244, 103, 0, 0.2); color: #3D3B47;"
+                            }
+                        },
+                        {
+                            "type": "div",
+                            "props": {
+                                "content": "<h2 class='text-3xl sm:text-4xl font-bold mb-4' style='color: #3D3B47;'>Послуги барберингу</h2><p class='text-xl max-w-3xl mx-auto' style='color: #3D3B47;'>Відкрийте для себе мистецтво догляду за волоссям та бородою з нашими майстрами.</p>"
+                            }
+                        }
+                    ]
+                },
+                {
+                    "type": "Grid",
+                    "props": {
+                        "class": "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+                    },
+                    "children": [
+                        {
+                            "type": "Card",
+                            "props": {
+                                "class": "bg-white rounded-xl shadow-lg overflow-hidden flex flex-col"
+                            },
+                            "children": [
+                                {
+                                    "type": "div",
+                                    "props": {
+                                        "class": "relative"
+                                    },
+                                    "children": [
+                                        {
+                                            "type": "Image",
+                                            "props": {
+                                                "src": "/images/barber/classic-haircut.webp",
+                                                "alt": "Чоловіча стрижка",
+                                                "width": "100%",
+                                                "class": "w-full h-56 object-cover",
+                                                "style": "background-color: #F8F3E9;",
+                                                "loading": "lazy"
+                                            }
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "div",
+                                    "props": {
+                                        "class": "p-6 flex flex-col flex-grow"
+                                    },
+                                    "children": [
+                                        {
+                                            "type": "div",
+                                            "props": {
+                                                "content": "<h3 class='text-xl font-semibold mb-2' style='color: #3D3B47;'>Чоловіча стрижка</h3><p class='mb-4 flex-grow' style='color: #3D3B47;'>Класична або сучасна стрижка. Тривалість: 45 хв</p>"
+                                            }
+                                        },
+                                        {
+                                            "type": "Tag",
+                                            "props": {
+                                                "value": "від 450₴",
+                                                "class": "font-semibold text-lg mt-auto self-start",
+                                                "style": "background-color: #F46700; color: white;"
+                                            }
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "type": "Card",
+                            "props": {
+                                "class": "bg-white rounded-xl shadow-lg overflow-hidden flex flex-col"
+                            },
+                            "children": [
+                                {
+                                    "type": "div",
+                                    "props": {
+                                        "class": "relative"
+                                    },
+                                    "children": [
+                                        {
+                                            "type": "Image",
+                                            "props": {
+                                                "src": "/images/barber/beard-trim.webp",
+                                                "alt": "Корекція бороди",
+                                                "width": "100%",
+                                                "class": "w-full h-56 object-cover",
+                                                "style": "background-color: #F8F3E9;",
+                                                "loading": "lazy"
+                                            }
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "div",
+                                    "props": {
+                                        "class": "p-6 flex flex-col flex-grow"
+                                    },
+                                    "children": [
+                                        {
+                                            "type": "div",
+                                            "props": {
+                                                "content": "<h3 class='text-xl font-semibold mb-2' style='color: #3D3B47;'>Догляд за бородою</h3><p class='mb-4 flex-grow' style='color: #3D3B47;'>Моделювання та стрижка бороди. Тривалість: 30 хв</p>"
+                                            }
+                                        },
+                                        {
+                                            "type": "Tag",
+                                            "props": {
+                                                "value": "від 300₴",
+                                                "class": "font-semibold text-lg mt-auto self-start",
+                                                "style": "background-color: #F46700; color: white;"
+                                            }
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "type": "Card",
+                            "props": {
+                                "class": "bg-white rounded-xl shadow-lg overflow-hidden flex flex-col"
+                            },
+                            "children": [
+                                {
+                                    "type": "div",
+                                    "props": {
+                                        "class": "relative"
+                                    },
+                                    "children": [
+                                        {
+                                            "type": "Image",
+                                            "props": {
+                                                "src": "/images/barber/royal-shave.webp",
+                                                "alt": "Королівське гоління",
+                                                "width": "100%",
+                                                "class": "w-full h-56 object-cover",
+                                                "style": "background-color: #F8F3E9;",
+                                                "loading": "lazy"
+                                            }
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "div",
+                                    "props": {
+                                        "class": "p-6 flex flex-col flex-grow"
+                                    },
+                                    "children": [
+                                        {
+                                            "type": "div",
+                                            "props": {
+                                                "content": "<h3 class='text-xl font-semibold mb-2' style='color: #3D3B47;'>Королівське гоління</h3><p class='mb-4 flex-grow' style='color: #3D3B47;'>Гоління небезпечною бритвою з рушниками. Тривалість: 40 хв</p>"
+                                            }
+                                        },
+                                        {
+                                            "type": "Tag",
+                                            "props": {
+                                                "value": "від 350₴",
+                                                "class": "font-semibold text-lg mt-auto self-start",
+                                                "style": "background-color: #F46700; color: white;"
+                                            }
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

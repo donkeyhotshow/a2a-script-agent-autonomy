@@ -1,0 +1,180 @@
+{
+    "type": "Form",
+    "id": "taskDefinitionForm",
+    "props": {
+        "class": "space-y-4 p-fluid"
+    },
+    "children": [
+        {
+            "type": "InputText",
+            "props": {
+                "label": "Task ID",
+                "placeholder": "Unique identifier for the task (e.g., TASK-001)"
+            },
+            "model": {
+                "field": "taskId"
+            }
+        },
+        {
+            "type": "InputText",
+            "props": {
+                "label": "Task Name*",
+                "placeholder": "Short, descriptive name for the task"
+            },
+            "model": {
+                "field": "taskName"
+            }
+        },
+        {
+            "type": "Textarea",
+            "props": {
+                "label": "Description",
+                "placeholder": "Detailed description of the task's purpose and goals",
+                "rows": 3,
+                "autoResize": true
+            },
+            "model": {
+                "field": "description"
+            }
+        },
+        {
+            "type": "InputText",
+            "props": {
+                "label": "Task Type",
+                "placeholder": "Type of the task (e.g., GenericTask, CodeGeneration)"
+            },
+            "model": {
+                "field": "taskType"
+            }
+        },
+        {
+            "type": "Dropdown",
+            "props": {
+                "label": "Status",
+                "placeholder": "Select task status"
+            },
+            "model": {
+                "field": "status",
+                "default": "Pending",
+                "options": [
+                    {
+                        "value": "Pending",
+                        "label": "Pending"
+                    },
+                    {
+                        "value": "InProgress",
+                        "label": "In Progress"
+                    },
+                    {
+                        "value": "Completed",
+                        "label": "Completed"
+                    },
+                    {
+                        "value": "Failed",
+                        "label": "Failed"
+                    },
+                    {
+                        "value": "OnHold",
+                        "label": "On Hold"
+                    }
+                ]
+            }
+        },
+        {
+            "type": "InputText",
+            "props": {
+                "label": "Assigned To (Optional)",
+                "placeholder": "User or AI agent ID"
+            },
+            "model": {
+                "field": "assignedTo"
+            }
+        },
+        {
+            "type": "Textarea",
+            "props": {
+                "label": "Guidance Notes (Optional)",
+                "placeholder": "Specific instructions or guidance for completing the task",
+                "rows": 3,
+                "autoResize": true
+            },
+            "model": {
+                "field": "guidanceNotes"
+            }
+        },
+        {
+            "type": "Dropdown",
+            "props": {
+                "label": "Scenario ID",
+                "placeholder": "Select a scenario"
+            },
+            "model": {
+                "field": "scenarioId",
+                "default": "",
+                "options": [
+                    {
+                        "label": "SCN-ActivateTask",
+                        "value": "SCN-ActivateTask"
+                    },
+                    {
+                        "label": "SCN-CloseTask",
+                        "value": "SCN-CloseTask"
+                    },
+                    {
+                        "label": "SCN-FullyCollectTaskData",
+                        "value": "SCN-FullyCollectTaskData"
+                    },
+                    {
+                        "label": "SCN-GenerateTaskType",
+                        "value": "SCN-GenerateTaskType"
+                    },
+                    {
+                        "label": "SCN-QueryIndex",
+                        "value": "SCN-QueryIndex"
+                    },
+                    {
+                        "label": "SCN-ResetScenario",
+                        "value": "SCN-ResetScenario"
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Button",
+            "props": {
+                "label": "Execute Scenario",
+                "icon": "pi pi-save",
+                "severity": "primary",
+                "class": "p-button mt-4"
+            },
+            "customHooks": {
+                "click": [
+                    {
+                        "action": "call",
+                        "from": "question-to-user/actions/submit-task",
+                        "input": "{input:taskDefinitionForm}",
+                        "to": "buffer:taskSaveStatus",
+                        "comment": "Action 'submit-task' will handle the form data."
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Button",
+            "props": {
+                "label": "Close Task",
+                "icon": "pi pi-close",
+                "severity": "secondary",
+                "class": "p-button mt-4"
+            },
+            "customHooks": {
+                "click": [
+                    {
+                        "action": "call",
+                        "from": "question-to-user/actions/close-task"
+                    }
+                ]
+            }
+        }
+    ]
+}

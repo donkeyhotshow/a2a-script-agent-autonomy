@@ -1,0 +1,16 @@
+{
+    "": [
+        "index.json"
+    ],
+    "data": [
+        "program.json"
+    ],
+    "actions": [
+        "config-actions/save-config.json",
+        "config-actions/save-other-module.json"
+    ],
+    "templates": [
+        "forms/config-settings.json",
+        "parts/config-actions.json"
+    ]
+} 

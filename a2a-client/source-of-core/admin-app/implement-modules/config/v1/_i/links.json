@@ -1,0 +1,20 @@
+[
+    {
+        "id": "config-admin",
+        "type": "guest",
+        "label": "Configuration",
+        "path": "/config/index",
+        "icon": "pi pi-cog",
+        "module": "config",
+        "page": "index"
+    },
+    {
+        "id": "config-admin",
+        "type": "guest",
+        "label": "Configuration",
+        "path": "/config/page",
+        "icon": "pi pi-cog",
+        "module": "config",
+        "page": "page"
+    }
+]

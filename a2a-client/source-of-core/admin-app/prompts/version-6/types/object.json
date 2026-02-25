@@ -1,0 +1,15 @@
+{
+    "type": "Instructions",
+    "instructions": [
+        {
+            "action": "update",
+            "value": {
+                "profile": {
+                    "id": 1,
+                    "name": "Bob"
+                }
+            },
+            "to": "buffer:userData"
+        }
+    ]
+} 

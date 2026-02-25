@@ -1,0 +1,18 @@
+[
+    {
+        "id": "dialog_welcome",
+        "name": "Welcome Dialog"
+    },
+    {
+        "id": "dialog_feedback",
+        "name": "Feedback Collection Dialog"
+    },
+    {
+        "id": "dialog_tutorial_step1",
+        "name": "Tutorial Step 1 Dialog"
+    },
+    {
+        "id": "dialog_user_prefs",
+        "name": "User Preferences Dialog"
+    }
+]

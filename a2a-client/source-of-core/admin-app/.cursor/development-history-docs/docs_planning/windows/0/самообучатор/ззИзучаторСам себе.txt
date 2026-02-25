@@ -1,0 +1,70 @@
+
+------------------------------
+
+
+<most_important_user_query>
+Please re-orient to the state of the project and our understanding just after the user mentioned the code was updated (with PHP rewrites) and requested re-reading core scripts (`main.ps1`, `main-work.ps1`, `invoke-scenario-engine.php`), and before we started extensive debugging and modifications on `SCN-QueryIndex.scenario.json` and `SCN-ActivateTask.scenario.json` due to execution issues.
+
+At this point, the key context includes:
+1. Understanding of the AI Task System structure (the PowerShell orchestrator in `main.ps1`, the task/scenario runner in `main-work.ps1`, and the core PHP integration in `invoke-scenario-engine.php`).
+2. Awareness that the PHP engine was refactored to correctly merge `projectRoot` into its context and to accept arrays for `QueryIndex` operations.
+3. Recognition that the index subsystem exists (`main-index.ps1` and `index-processor.php`), but still needs deeper integration into the scenario workflows.
+4. Identification of the need to modify `main-index.ps1` so its JSON output is reliably parseable by the PHP engine.
+5. Agreement that index querying must be woven into relevant scenarios (especially `SCN-IndexCollectTaskData`) to collect and persist index data into task definitions.
+6. Early attempts had been made to activate and close sample tasks (e.g. `TASK-SAMPLE-001`), but they highlighted schema mismatches (`taskType` vs. `type`) and context-passing issues that must be addressed before further debugging.
+
+Disregard all the debugging steps, marker fiddling, and failed JSON edits that occurred *after* this re-orientation point. Focus solely on integrating the indexer into our scenario engine workflow as the next logical goal.
+</most_important_user_query>
+
+
+
+
+-----------------
+
+
+<most_important_user_query>
+Please re-orient to the current state of the project and focus on the task of improving error handling and developing the Question-To-User (QTU) module within the AI Task System.
+
+The key context for this task includes:
+1.  The system structure, particularly main-work.ps1, the scenario engine (invoke-scenario-engine.php), scenarios in script/engine/scenarios/, and task types in script/engine/task_types/.
+2.  The recent refactoring of main-work.ps1 to use a try/catch gateway calling script/main-work-dispatch.ps1, aimed at providing a top-level error trap.
+3.  The challenges encountered with PowerShell's strict parameter parsing (e.g., `-param=value` causing immediate parser errors before script logic runs).
+4.  The need for more informative error messages and a structured way to ask the user for input or clarification (the QTU mechanism), especially when a scenario is halted.
+5.  The existing `Question` step type handled by `process-question-step.php` (or similar logic), which is the foundation for QTU.
+6.  Relevant standards like [question-to-user-standard.json](mdc:script/docs/standards/ai-agent/question-to-user-standard.json).
+
+Disregard previous detailed debugging on unrelated scenarios or indexer issues unless they directly inform the design or implementation of better error handling or QTU flow.
+
+The primary objective is to enhance the system's ability to handle errors gracefully and implement/improve the QTU mechanism for clearer user interaction.
+
+What is the next logical step in developing or integrating the QTU module and improving user-facing error handling, based on this context?
+</most_important_user_query>
+
+
+
+-----!!!!----
+
+Привет!
+
+Обновление по задаче улучшения скрипта `main-work.ps1` и обработки ошибок:
+
+В этой сессии мы сфокусировались на улучшении структуры скрипта `main-work.ps1` и обработке ошибок, связанных с вызовом скрипта.
+
+Ключевые моменты:
+1.  Исследовали проблему с некорректным синтаксисом параметров (например, `-параметр=значение` вместо `-параметр значение`). Обнаружили, что PowerShell перехватывает такие ошибки до начала выполнения скрипта и не позволяет реализовать "дружелюбный" перехват на ранней стадии внутри самого скрипта.
+2.  Добавили валидацию *после* обработки параметров PowerShell, чтобы скрипт выдавал понятное сообщение, если обязательные параметры (например, `-ScenarioId` для режимов `RunScenario` или `ShowScenario`) пропущены.
+3.  **Выполнили рефакторинг:** Вся основная логика диспетчеризации режимов, находившаяся в большом блоке `switch ($Mode) { ... }` в `main-work.ps1`, была **вынесена в отдельный файл:** `./script/main-work-dispatch.ps1`.
+4.  Сам `main-work.ps1` теперь стал "шлюзом". Он загружает начальное состояние, выполняет базовую проверку режима Help/invalid, а затем **вызывает `./script/main-work-dispatch.ps1` через dot-sourcing** внутри блока `try/catch`.
+5.  Такая структура обеспечивает верхнеуровневую обработку необработанных исключений, возникающих во время выполнения логики режимов, и улучшает модульность скрипта.
+
+**Итог:** Скрипт `main-work.ps1` теперь более структурирован, а необработанные ошибки из логики режимов будут перехватываться на верхнем уровне с общим сообщением. Валидация пропущенных обязательных параметров также добавлена.
+
+Мы готовы продолжить работу над интеграцией индекса или сфокусироваться на других аспектах системы, возможно, используя новую структуру `main-work.ps1`.
+
+Конец обновления.
+
+
+
+
+
+

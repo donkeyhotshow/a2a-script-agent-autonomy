@@ -1,0 +1,10 @@
+{
+    "type": "Instructions",
+    "instructions": [
+        {
+            "action": "update",
+            "from": "input",
+            "to": "buffer:data"
+        }
+    ]
+} 

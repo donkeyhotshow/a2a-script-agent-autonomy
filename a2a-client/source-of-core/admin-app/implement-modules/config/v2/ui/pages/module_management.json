@@ -1,0 +1,332 @@
+{
+    "type": "page",
+    "version": "1.0.0",
+    "layout": "config.default_layout",
+    "title": "Управление модулями",
+    "description": "Страница для просмотра, включения и отключения системных модулей.",
+    "dataSources": [
+        {
+            "id": "modulesLoader",
+            "action": "config.load_config_file",
+            "params": {
+                "filePath": "storage/system/modules_config.json"
+            },
+            "onSuccess": {
+                "setContext": {
+                    "allModules": "{{actionResult.fileContent}}",
+                    "filteredModules": "{{actionResult.fileContent}}",
+                    "filterName": "",
+                    "filterStatus": "all"
+                }
+            },
+            "onError": {
+                "showToast": {
+                    "severity": "error",
+                    "summary": "Ошибка загрузки модулей",
+                    "detail": "Не удалось загрузить конфигурацию модулей: {{error.message}}"
+                },
+                "setContext": {
+                    "allModules": [],
+                    "filteredModules": [],
+                    "filterName": "",
+                    "filterStatus": "all"
+                }
+            }
+        }
+    ],
+    "actions": [
+        {
+            "id": "applyFilters",
+            "run": [
+                {
+                    "setContext": {
+                        "filteredModules": "{{ let modules = context.allModules || []; let nameFilter = (context.filterName || '').toLowerCase(); let statusFilter = context.filterStatus || 'all'; if (nameFilter) { modules = modules.filter(m => (m.name || '').toLowerCase().includes(nameFilter) || (m.id || '').toLowerCase().includes(nameFilter)); } if (statusFilter !== 'all') { modules = modules.filter(m => (statusFilter === 'enabled' && m.isEnabled === true) || (statusFilter === 'disabled' && m.isEnabled === false) ); } modules; }}"
+                    }
+                }
+            ]
+        },
+        {
+            "id": "toggleModuleStatus",
+            "params": [
+                "moduleId",
+                "currentStatus"
+            ],
+            "run": [
+                {
+                    "setContext": {
+                        "_toggle_result": "{{ let modules = JSON.parse(JSON.stringify(context.allModules || [])); let moduleIdToToggle = params.moduleId; let newStatus = !params.currentStatus; let moduleIndex = modules.findIndex(m => m.id === moduleIdToToggle); let message = null; let severity = 'info'; let changed = false; let snglQuot = String.fromCharCode(39); if (moduleIndex === -1) { message = 'Модуль с ID ' + moduleIdToToggle + ' не найден.'; severity = 'error'; } else { let moduleToChange = modules[moduleIndex]; if (newStatus === false && moduleToChange.canDisable === false) { message = 'Модуль ' + snglQuot + moduleToChange.name + snglQuot + ' не может быть отключен.'; severity = 'warn'; } else { modules[moduleIndex].isEnabled = newStatus; changed = true; } } ({ modules: modules, toast: message ? { summary: 'Статус модуля', detail: message, severity: severity } : null, changed: changed }); }}"
+                    }
+                },
+                {
+                    "if": "{{context._toggle_result.toast}}",
+                    "then": [
+                        {
+                            "showToast": "{{context._toggle_result.toast}}"
+                        }
+                    ]
+                },
+                {
+                    "setContext": {
+                        "allModules": "{{context._toggle_result.modules}}"
+                    }
+                },
+                {
+                    "if": "{{context._toggle_result.changed === true}}",
+                    "then": [
+                        {
+                            "triggerAction": "saveModuleChanges"
+                        }
+                    ]
+                },
+                {
+                    "triggerAction": "applyFilters"
+                },
+                {
+                    "setContext": {
+                        "_toggle_result": null
+                    }
+                }
+            ]
+        },
+        {
+            "id": "saveModuleChanges",
+            "action": "config.save_config_file",
+            "callParams": {
+                "filePath": "storage/system/modules_config.json",
+                "fileContent": "{{context.allModules}}",
+                "prettyPrint": true
+            },
+            "onSuccess": {
+                "showToast": {
+                    "severity": "success",
+                    "summary": "Сохранено",
+                    "detail": "Изменения в конфигурации модулей сохранены."
+                }
+            },
+            "onError": {
+                "showToast": {
+                    "severity": "error",
+                    "summary": "Ошибка сохранения",
+                    "detail": "Не удалось сохранить изменения модулей: {{error.message}}"
+                }
+            }
+        }
+    ],
+    "body": [
+        {
+            "type": " p-toolbar",
+            "props": {
+                "class": "p-mb-2"
+            },
+            "children": [
+                {
+                    "type": " div",
+                    "props": {
+                        "class": "p-toolbar-group-left"
+                    },
+                    "children": [
+                        {
+                            "type": " p-button",
+                            "props": {
+                                "label": "Обновить",
+                                "icon": "pi pi-refresh"
+                            },
+                            "events": {
+                                "click": {
+                                    "triggerDataSource": "modulesLoader"
+                                }
+                            }
+                        },
+                        {
+                            "type": " span",
+                            "props": {
+                                "class": "p-input-icon-left p-ml-2"
+                            },
+                            "children": [
+                                {
+                                    "type": " i",
+                                    "props": {
+                                        "class": "pi pi-search"
+                                    }
+                                },
+                                {
+                                    "type": " p-inputText",
+                                    "props": {
+                                        "placeholder": "Поиск по имени/ID",
+                                        "modelValue": "{{context.filterName}}",
+                                        "style": {
+                                            "width": "200px"
+                                        }
+                                    },
+                                    "events": {
+                                        "update:modelValue": [
+                                            {
+                                                "setContext": {
+                                                    "filterName": "{{eventValue}}"
+                                                }
+                                            },
+                                            {
+                                                "triggerAction": "applyFilters"
+                                            }
+                                        ]
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "type": " p-selectButton",
+                            "props": {
+                                "options": [
+                                    {
+                                        "label": "Все",
+                                        "value": "all"
+                                    },
+                                    {
+                                        "label": "Включенные",
+                                        "value": "enabled"
+                                    },
+                                    {
+                                        "label": "Отключенные",
+                                        "value": "disabled"
+                                    }
+                                ],
+                                "modelValue": "{{context.filterStatus}}",
+                                "optionLabel": "label",
+                                "optionValue": "value",
+                                "class": "p-ml-2"
+                            },
+                            "events": {
+                                "update:modelValue": [
+                                    {
+                                        "setContext": {
+                                            "filterStatus": "{{eventValue}}"
+                                        }
+                                    },
+                                    {
+                                        "triggerAction": "applyFilters"
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "type": " p-dataView",
+            "props": {
+                "value": "{{context.filteredModules}}",
+                "layout": "list",
+                "paginator": true,
+                "rows": 10
+            },
+            "itemTemplate": {
+                "type": " div",
+                "props": {
+                    "class": "p-col-12"
+                },
+                "children": [
+                    {
+                        "type": " div",
+                        "props": {
+                            "class": "p-grid p-align-center p-nogutter module-item p-p-3"
+                        },
+                        "children": [
+                            {
+                                "type": " div",
+                                "props": {
+                                    "class": "p-col-fixed",
+                                    "style": {
+                                        "width": "60px"
+                                    }
+                                },
+                                "children": [
+                                    {
+                                        "type": " p-inputSwitch",
+                                        "props": {
+                                            "modelValue": "{{slotProps.data.isEnabled}}",
+                                            "disabled": "{{!slotProps.data.canDisable && slotProps.data.isEnabled}}"
+                                        },
+                                        "events": {
+                                            "update:modelValue": {
+                                                "triggerAction": {
+                                                    "id": "toggleModuleStatus",
+                                                    "params": {
+                                                        "moduleId": "{{slotProps.data.id}}",
+                                                        "currentStatus": "{{slotProps.data.isEnabled}}"
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "type": " div",
+                                "props": {
+                                    "class": "p-col"
+                                },
+                                "children": [
+                                    {
+                                        "type": " h4",
+                                        "props": {
+                                            "content": "{{slotProps.data.name}} ({{slotProps.data.id}})",
+                                            "class": "p-mb-1"
+                                        }
+                                    },
+                                    {
+                                        "type": " p",
+                                        "props": {
+                                            "content": "Версия: {{slotProps.data.version}}",
+                                            "class": "p-text-secondary p-mb-1"
+                                        }
+                                    },
+                                    {
+                                        "type": " p",
+                                        "props": {
+                                            "content": "{{slotProps.data.description}}",
+                                            "class": "p-mb-1"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "type": " div",
+                                "props": {
+                                    "class": "p-col-fixed",
+                                    "style": {
+                                        "width": "150px",
+                                        "textAlign": "right"
+                                    }
+                                },
+                                "children": [
+                                    {
+                                        "if": "{{slotProps.data.hasSettingsPage && slotProps.data.settingsPageUrl}}",
+                                        "then": [
+                                            {
+                                                "type": " p-button",
+                                                "props": {
+                                                    "label": "Настройки",
+                                                    "icon": "pi pi-cog",
+                                                    "class": "p-button-text",
+                                                    "link": "{{slotProps.data.settingsPageUrl}}"
+                                                }
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
+            "emptyMessage": {
+                "type": " div",
+                "props": {
+                    "content": "Список модулей пуст или не удалось загрузить. Проверьте фильтры.",
+                    "class": "p-text-center p-p-3"
+                }
+            }
+        }
+    ]
+}

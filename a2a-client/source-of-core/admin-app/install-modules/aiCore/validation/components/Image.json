@@ -1,0 +1,180 @@
+{
+    "componentName": "Image",
+    "description": "Displays an image with optional preview functionality.",
+    "level": 3,
+    "status": "active",
+    "dependencies": [],
+    "documentationLink": "docs/guides/module/04-ui-construction.md",
+    "nestedValidation": {
+        "structure": {
+            "vAddress": {
+                "type": "string",
+                "required": false,
+                "description": "Address for v-model or component identification."
+            },
+            "disabled": {
+                "type": "boolean",
+                "required": false,
+                "default": false,
+                "description": "Disable rendering of the component."
+            },
+            "children": {
+                "type": "array",
+                "required": false,
+                "description": "Image does not typically accept children.",
+                "nestedValidation": {
+                    "_blockAll": true
+                }
+            },
+            "props": {
+                "type": "object",
+                "required": false,
+                "description": "Container for PrimeVue Image properties and standard HTML img attributes.",
+                "nestedValidation": {
+                    "structure": {
+                        "imageClass": {
+                            "type": [
+                                "string",
+                                "array",
+                                "object"
+                            ],
+                            "required": false,
+                            "description": "CSS class of the image element itself."
+                        },
+                        "imageStyle": {
+                            "type": [
+                                "string",
+                                "object"
+                            ],
+                            "required": false,
+                            "description": "Inline style of the image element itself."
+                        },
+                        "preview": {
+                            "type": "boolean",
+                            "required": false,
+                            "default": false,
+                            "description": "Controls the preview functionality."
+                        },
+                        "downloadable": {
+                            "type": "boolean",
+                            "required": false,
+                            "default": false,
+                            "description": "Adds a download button to the preview control bar."
+                        },
+                        "zoomSrc": {
+                            "type": "string",
+                            "required": false,
+                            "description": "Image source for preview zoom."
+                        },
+                        "pt": {
+                            "type": "object",
+                            "required": false
+                        },
+                        "ptOptions": {
+                            "type": "object",
+                            "required": false,
+                            "description": "PassThrough options."
+                        },
+                        "unstyled": {
+                            "type": "boolean",
+                            "required": false,
+                            "default": false
+                        },
+                        "src": {
+                            "type": "string",
+                            "required": true,
+                            "description": "Specifies the path to the image."
+                        },
+                        "alt": {
+                            "type": "string",
+                            "required": false,
+                            "description": "Specifies an alternate text for the image."
+                        },
+                        "width": {
+                            "type": [
+                                "string",
+                                "number"
+                            ],
+                            "required": false,
+                            "description": "Specifies the width of the image."
+                        },
+                        "height": {
+                            "type": [
+                                "string",
+                                "number"
+                            ],
+                            "required": false,
+                            "description": "Specifies the height of the image."
+                        },
+                        "loading": {
+                            "type": "string",
+                            "required": false,
+                            "options": [
+                                "eager",
+                                "lazy"
+                            ]
+                        },
+                        "srcset": {
+                            "type": "string",
+                            "required": false
+                        },
+                        "sizes": {
+                            "type": "string",
+                            "required": false
+                        },
+                        "usemap": {
+                            "type": "string",
+                            "required": false
+                        },
+                        "ismap": {
+                            "type": "boolean",
+                            "required": false
+                        },
+                        "crossorigin": {
+                            "type": "string",
+                            "required": false,
+                            "options": [
+                                "anonymous",
+                                "use-credentials"
+                            ]
+                        },
+                        "decoding": {
+                            "type": "string",
+                            "required": false,
+                            "options": [
+                                "sync",
+                                "async",
+                                "auto"
+                            ]
+                        },
+                        "fetchpriority": {
+                            "type": "string",
+                            "required": false,
+                            "options": [
+                                "high",
+                                "low",
+                                "auto"
+                            ]
+                        },
+                        "allOf": [
+                            {
+                                "$ref": "../common/props.json"
+                            }
+                        ]
+                    }
+                }
+            },
+            "customHooks": {
+                "type": "object",
+                "required": false,
+                "description": "Object for custom hooks like actions.",
+                "nestedValidation": {
+                    "_allowAnyObject": true
+                }
+            },
+            "requiresModel": false,
+            "$ref": "../common/root.json"
+        }
+    },
+    "implementationNotes": []
+}

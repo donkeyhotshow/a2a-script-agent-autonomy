@@ -1,0 +1,106 @@
+{
+    "type": "Page",
+    "id": "qtu-dialogs-page",
+    "title": "QTU General Dialogs",
+    "description": "Allows selection and display of general dialog definitions.",
+    "content": {
+        "type": "div",
+        "props": {
+            "class": "flex flex-col min-h-screen bg-gray-100"
+        },
+        "children": [
+            {
+                "type": "div",
+                "props": {
+                    "class": "flex-grow container mx-auto p-4 space-y-6"
+                },
+                "children": [
+                    {
+                        "type": "Panel",
+                        "props": {
+                            "header": "Select Dialog",
+                            "class": "mb-6 shadow-md rounded"
+                        },
+                        "children": [
+                            {
+                                "type": "div",
+                                "props": {
+                                    "class": "p-4 space-y-3"
+                                },
+                                "children": [
+                                    {
+                                        "type": "Button",
+                                        "props": {
+                                            "label": "Load Available Dialogs",
+                                            "icon": "pi pi-refresh",
+                                            "class": "p-button-sm mb-3"
+                                        },
+                                        "customHooks": {
+                                            "click": [
+                                                {
+                                                    "action": "call",
+                                                    "from": "question-to-user/actions/list-dialog-definitions.json",
+                                                    "to": "buffer:availableDialogs"
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        "type": "select",
+                                        "props": {
+                                            "placeholder": "Select a Dialog...",
+                                            "class": "w-full"
+                                        },
+                                        "model": {
+                                            "field": "selectedDialogId",
+                                            "options": [{ "label": "Loading...", "value": "" }],
+                                            "optionLabel": "name",
+                                            "optionValue": "id"
+                                        },
+                                        "customHooks": {
+                                            "change": [
+                                                {
+                                                    "action": "call",
+                                                    "from": "question-to-user/actions/load-dialog-definition.json",
+                                                    "input": {
+                                                        "dialogId": "{pageState.selectedDialogId}"
+                                                    },
+                                                    "to": "buffer:loadedDialogContent"
+                                                }
+                                            ]
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "type": "Panel",
+                        "props": {
+                            "header": "Dialog View",
+                            "class": "shadow-md rounded"
+                        },
+                        "children": [
+                            {
+                                "type": "div",
+                                "id": "dialog-content-area",
+                                "props": {
+                                    "class": "p-4 min-h-[200px] bg-gray-50 border rounded"
+                                },
+                                "children": [
+                                    {
+                                        "type": "div",
+                                        "props": {},
+                                        "children": [
+                                            "Selected dialog content will be loaded here. This might be plain text or a structured UI from 'buffer:loadedDialogContent'."
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+}

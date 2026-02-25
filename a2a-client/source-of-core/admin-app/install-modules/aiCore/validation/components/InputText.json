@@ -1,0 +1,68 @@
+{
+    "componentName": "InputText",
+    "description": "PrimeVue InputText component.",
+    "level": 2,
+    "status": "active",
+    "dependencies": [],
+    "_comment": "Validation rules using nestedValidation structure.",
+    "nestedValidation": {
+        "structure": {
+            "model": {
+                "type": "object",
+                "required": false,
+                "description": "Model linkage object defining form and field for data binding.",
+                "nestedValidation": {
+                    "structure": {
+                        "form": {
+                            "type": "string",
+                            "required": false
+                        },
+                        "field": {
+                            "type": "string",
+                            "required": false
+                        },
+                        "default": {
+                            "type": "any",
+                            "required": false,
+                            "description": "Default value for the input text."
+                        }
+                    }
+                }
+            },
+            "props": {
+                "type": "object",
+                "required": false,
+                "description": "Container for PrimeVue InputText properties and HTML attributes.",
+                "nestedValidation": {
+                    "structure": {
+                        "allOf": [
+                            {
+                                "$ref": "../common/props.json"
+                            },
+                            {
+                                "$ref": "../common/label.json"
+                            },
+                            {
+                                "$ref": "../common/size.json"
+                            },
+                            {
+                                "$ref": "../common/button.json"
+                            },
+                            {
+                                "$ref": "../common/input.json"
+                            }
+                        ]
+                    }
+                }
+            },
+            "$ref": "../common/root.json"
+        }
+    },
+    "implementationNotes": [
+        "Restructured to use nestedValidation.structure.",
+        "The 'model' property is an object containing 'form' and 'field' keys for data binding.",
+        "Added common props like readonly, placeholder, type.",
+        "Represents the PrimeVue InputText component."
+    ],
+    "documentationLink": "docs/guides/module/04-ui-construction.md"
+}

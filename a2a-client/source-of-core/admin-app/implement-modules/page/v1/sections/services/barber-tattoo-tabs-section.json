@@ -1,0 +1,161 @@
+{
+    "type": "div",
+    "name": "barber-tattoo-tabs-section",
+    "props": {
+        "class": "py-10 sm:py-12 md:py-16 px-4 sm:px-6 md:px-8 lg:px-10 xl:px-12 2xl:px-16",
+        "style": "background-color: #f8f9fa;"
+    },
+    "children": [
+        {
+            "type": "div",
+            "props": {
+                "class": "flex flex-col items-center max-w-6xl mx-auto"
+            },
+            "children": [
+                {
+                    "type": "div",
+                    "props": {
+                        "content": "<h2 class='text-2xl sm:text-3xl md:text-4xl font-bold text-center mb-4 sm:mb-6' style='color: #3D3B47;'>Наші професійні послуги</h2><p class='text-base sm:text-lg md:text-xl text-center max-w-3xl mx-auto mb-4 sm:mb-8' style='color: #3D3B47;'>Оберіть тип послуг, який вас цікавить, і ознайомтеся з нашими пропозиціями</p>"
+                    }
+                },
+                {
+                    "type": "Tabs",
+                    "props": {
+                        "class": "w-full",
+                        "activeIndex": 0,
+                        "style": "--primary-color: #F46700; --primary-color-text: white;"
+                    },
+                    "items": [
+                        {
+                            "props": {
+                                "header": "Барбер-послуги"
+                            },
+                            "children": [
+                                {
+                                    "type": "operation",
+                                    "action": "include",
+                                    "source": "landing-main-page/sections/services/tabs/barber-offers"
+                                }
+                            ]
+                        },
+                        {
+                            "props": {
+                                "header": "Тату-послуги"
+                            },
+                            "children": [
+                                {
+                                    "type": "operation",
+                                    "action": "include",
+                                    "source": "landing-main-page/sections/services/tabs/tattoo-offers"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": "div",
+                    "props": {
+                        "class": "flex flex-col sm:flex-row justify-center items-center mt-10 bg-white p-6 rounded-lg shadow-md border",
+                        "style": "border-color: rgba(245, 230, 0, 0.3);"
+                    },
+                    "children": [
+                        {
+                            "type": "div",
+                            "props": {
+                                "class": "text-center sm:text-left mb-4 sm:mb-0 sm:mr-10"
+                            },
+                            "children": [
+                                {
+                                    "type": "div",
+                                    "props": {
+                                        "content": "<h3 class='text-xl font-semibold mb-2' style='color: #3D3B47;'>Позначки категорій</h3><p style='color: #3D3B47;'>Ми класифікуємо наші послуги для вашої зручності</p>"
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "type": "div",
+                            "props": {
+                                "class": "flex flex-wrap justify-center sm:justify-start gap-4"
+                            },
+                            "children": [
+                                {
+                                    "type": "div",
+                                    "props": {
+                                        "class": "flex items-center gap-2 px-3 py-2 rounded-full",
+                                        "style": "background-color: rgba(245, 230, 0, 0.2);"
+                                    },
+                                    "children": [
+                                        {
+                                            "type": "Icon",
+                                            "props": {
+                                                "class": "pi pi-crown",
+                                                "style": "color: #F5E600; font-size: 1rem;"
+                                            }
+                                        },
+                                        {
+                                            "type": "Span",
+                                            "props": {
+                                                "class": "font-semibold",
+                                                "content": "Королі",
+                                                "style": "color: #3D3B47;"
+                                            }
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "div",
+                                    "props": {
+                                        "class": "flex items-center gap-2 px-3 py-2 rounded-full",
+                                        "style": "background-color: #F46700;"
+                                    },
+                                    "children": [
+                                        {
+                                            "type": "Icon",
+                                            "props": {
+                                                "class": "pi pi-star",
+                                                "style": "color: white; font-size: 1rem;"
+                                            }
+                                        },
+                                        {
+                                            "type": "Span",
+                                            "props": {
+                                                "class": "font-semibold",
+                                                "content": "MASTER",
+                                                "style": "color: white;"
+                                            }
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "div",
+                                    "props": {
+                                        "class": "flex items-center gap-2 px-3 py-2 rounded-full border-2",
+                                        "style": "border-color: #3D3B47; background-color: transparent;"
+                                    },
+                                    "children": [
+                                        {
+                                            "type": "Icon",
+                                            "props": {
+                                                "class": "pi pi-maximize",
+                                                "style": "color: #3D3B47; font-size: 1rem;"
+                                            }
+                                        },
+                                        {
+                                            "type": "Span",
+                                            "props": {
+                                                "class": "font-semibold",
+                                                "content": "MAX",
+                                                "style": "color: #3D3B47;"
+                                            }
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

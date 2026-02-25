@@ -1,0 +1,169 @@
+{
+    "type": "div",
+    "props": {
+        "class": "card flex flex-col gap-4"
+    },
+    "children": [
+        {
+            "type": "Text",
+            "props": {
+                "content": "Advanced",
+                "class": "font-semibold text-xl"
+            }
+        },
+        {
+            "type": "div",
+            "props": {
+                "class": "flex flex-col md:flex-row gap-4"
+            },
+            "children": [
+                {
+                    "type": "div",
+                    "props": {
+                        "class": "flex flex-wrap gap-2 w-full"
+                    },
+                    "children": [
+                        {
+                            "type": "Label",
+                            "props": {
+                                "for": "firstname2",
+                                "content": "Firstname",
+                                "class": "font-medium"
+                            }
+                        },
+                        {
+                            "type": "InputText",
+                            "props": {
+                                "id": "firstname2",
+                                "type": "text",
+                                "class": "p-inputtext-fluid w-full",
+                                "placeholder": "Enter your firstname"
+                            }
+                        }
+                    ]
+                },
+                {
+                    "type": "div",
+                    "props": {
+                        "class": "flex flex-wrap gap-2 w-full"
+                    },
+                    "children": [
+                        {
+                            "type": "Label",
+                            "props": {
+                                "for": "lastname2",
+                                "content": "Lastname",
+                                "class": "font-medium"
+                            }
+                        },
+                        {
+                            "type": "InputText",
+                            "props": {
+                                "id": "lastname2",
+                                "type": "text",
+                                "class": "p-inputtext-fluid w-full",
+                                "placeholder": "Enter your lastname"
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "type": "div",
+            "props": {
+                "class": "flex flex-wrap"
+            },
+            "children": [
+                {
+                    "type": "Label",
+                    "props": {
+                        "for": "address",
+                        "content": "Address",
+                        "class": "font-medium"
+                    }
+                },
+                {
+                    "type": "Textarea",
+                    "props": {
+                        "id": "address",
+                        "rows": 4,
+                        "class": "p-inputtext-fluid w-full",
+                        "placeholder": "Enter your address"
+                    }
+                }
+            ]
+        },
+        {
+            "type": "div",
+            "props": {
+                "class": "flex flex-col md:flex-row gap-4"
+            },
+            "children": [
+                {
+                    "type": "div",
+                    "props": {
+                        "class": "flex flex-wrap gap-2 w-full"
+                    },
+                    "children": [
+                        {
+                            "type": "Label",
+                            "props": {
+                                "for": "state",
+                                "content": "State",
+                                "class": "font-medium"
+                            }
+                        },
+                        {
+                            "type": "Select",
+                            "props": {
+                                "id": "state",
+                                "options": [
+                                    {
+                                        "label": "Option 1",
+                                        "value": "Option 1"
+                                    },
+                                    {
+                                        "label": "Option 2",
+                                        "value": "Option 2"
+                                    },
+                                    {
+                                        "label": "Option 3",
+                                        "value": "Option 3"
+                                    }
+                                ],
+                                "placeholder": "Select One",
+                                "class": "w-full"
+                            }
+                        }
+                    ]
+                },
+                {
+                    "type": "div",
+                    "props": {
+                        "class": "flex flex-wrap gap-2 w-full"
+                    },
+                    "children": [
+                        {
+                            "type": "Label",
+                            "props": {
+                                "for": "zip",
+                                "content": "Zip",
+                                "class": "font-medium"
+                            }
+                        },
+                        {
+                            "type": "InputText",
+                            "props": {
+                                "id": "zip",
+                                "type": "text",
+                                "class": "p-inputtext-fluid w-full",
+                                "placeholder": "Enter your zip code"
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

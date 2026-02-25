@@ -1,0 +1,150 @@
+{
+    "type": "Page",
+    "title": "Про Нас - Магазин та Барбершоп",
+    "description": "Дізнайтеся більше про наш магазин чоловічої косметики та барбершоп. Наша історія, команда та цінності.",
+    "content": {
+        "type": "div",
+        "name": "about-us-page",
+        "props": {
+            "class": "bg-surface-0 dark:bg-surface-900"
+        },
+        "children": [
+            {
+                "type": "operation",
+                "action": "include",
+                "source": "layout/sections/landing-header.json"
+            },
+            {
+                "type": "operation",
+                "action": "include",
+                "source": "layout/sections/about-us/about-hero-section.json"
+            },
+            {
+                "type": "operation",
+                "action": "include",
+                "source": "layout/sections/about-us/history-section.json"
+            },
+            {
+                "type": "div",
+                "props": {
+                    "class": "py-10 px-4 md:px-6 lg:px-8 my-6 text-center bg-gradient-to-br from-surface-50 to-surface-100 dark:from-surface-800 dark:to-surface-700 rounded-lg shadow-inner max-w-5xl mx-auto"
+                },
+                "children": [
+                    {
+                        "type": "div",
+                        "props": {
+                            "class": "border-l-4 border-gray-800 pl-4 py-2 mb-12 italic text-gray-600"
+                        },
+                        "children": [
+                            {
+                                "type": "P",
+                                "props": {
+                                    "content": "\"Ми віримо, що догляд за собою та стиль – це важлива частина життя сучасного чоловіка. Тому ми поєднали найкращу косметику та майстерність барберів в одному місці.\"",
+                                    "class": "text-2xl italic text-surface-700 dark:text-surface-200 leading-relaxed mb-4"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "type": "P",
+                        "props": {
+                            "content": "— Олександр Іванов, Засновник",
+                            "class": "text-surface-900 dark:text-surface-0 font-semibold text-lg"
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "operation",
+                "action": "include",
+                "source": "landing-main-page/sections/about-us/team-section.json"
+            },
+            {
+                "type": "operation",
+                "action": "include",
+                "source": "landing-main-page/sections/about-us/values-section.json"
+            },
+            {
+                "type": "operation",
+                "action": "include",
+                "source": "landing-main-page/sections/contact/faq-section.json"
+            },
+            {
+                "type": "div",
+                "props": {
+                    "class": "py-12 px-4 md:px-6 lg:px-8 bg-primary text-white text-center"
+                },
+                "children": [
+                    {
+                        "type": "H2",
+                        "props": {
+                            "content": "Відчуйте різницю",
+                            "class": "text-3xl md:text-4xl font-bold mb-6"
+                        }
+                    },
+                    {
+                        "type": "P",
+                        "props": {
+                            "content": "Завітайте до нашого магазину або запишіться до барбершопу.",
+                            "class": "text-xl md:text-2xl mb-8 max-w-2xl mx-auto"
+                        }
+                    },
+                    {
+                        "type": "div",
+                        "props": {
+                            "class": "flex flex-wrap justify-center gap-4"
+                        },
+                        "children": [
+                            {
+                                "type": "Button",
+                                "props": {
+                                    "label": "До Магазину",
+                                    "icon": "pi pi-shopping-cart",
+                                    "severity": "contrast",
+                                    "size": "large",
+                                    "class": "p-button-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+                                },
+                                "customHooks": {
+                                    "click": [
+                                        {
+                                            "action": "navigateTo",
+                                            "data": {
+                                                "route": "/landing-main-page/shop"
+                                            }
+                                        }
+                                    ]
+                                }
+                            },
+                            {
+                                "type": "Button",
+                                "props": {
+                                    "label": "Записатися Онлайн",
+                                    "icon": "pi pi-phone",
+                                    "severity": "warn",
+                                    "size": "large",
+                                    "class": "p-button-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+                                },
+                                "customHooks": {
+                                    "click": [
+                                        {
+                                            "action": "showModal",
+                                            "data": {
+                                                "from": "landing-main-page/templates/dialogs/contact-dialog"
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "type": "operation",
+                "action": "include",
+                "source": "landing-main-page/sections/footer-section.json"
+            }
+        ]
+    }
+}
+

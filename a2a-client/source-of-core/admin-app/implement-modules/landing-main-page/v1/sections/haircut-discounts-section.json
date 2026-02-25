@@ -1,0 +1,157 @@
+{
+    "type": "div",
+    "props": {
+        "class": "py-12 px-4 md:px-6 lg:px-8",
+        "id": "haircut-discounts-section",
+        "role": "region",
+        "aria-labelledby": "haircut-discounts-section-title"
+    },
+    "children": [
+        {
+            "type": "H2",
+            "props": {
+                "content": "Exclusive Haircut Discounts",
+                "class": "text-3xl font-bold text-center mb-8",
+                "id": "haircut-discounts-section-title"
+            }
+        },
+        {
+            "type": "Grid",
+            "props": {
+                "class": "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 px-4 lg:px-16"
+            },
+            "children": [
+                {
+                    "type": "Column",
+                    "children": [
+                        {
+                            "type": "Card",
+                            "props": {
+                                "class": "text-center shadow-md hover:shadow-lg transition-shadow duration-300"
+                            },
+                            "children": [
+                                {
+                                    "type": "Image",
+                                    "props": {
+                                        "src": "/assets/1.jpg",
+                                        "alt": "50% Off King Cut",
+                                        "class": "w-full h-48 object-cover mb-4",
+                                        "loading": "lazy"
+                                    }
+                                },
+                                {
+                                    "type": "H3",
+                                    "props": {
+                                        "content": "50% OFF - The King Cut",
+                                        "class": "text-2xl font-bold text-red-600 mb-2"
+                                    }
+                                },
+                                {
+                                    "type": "P",
+                                    "props": {
+                                        "content": "Limited time offer for new customers. Get the royal treatment!",
+                                        "class": "text-gray-700 mb-4"
+                                    }
+                                },
+                                {
+                                    "type": "Button",
+                                    "props": {
+                                        "label": "Claim Offer",
+                                        "severity": "warn"
+                                    }
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": "Column",
+                    "children": [
+                        {
+                            "type": "Card",
+                            "props": {
+                                "class": "text-center shadow-md hover:shadow-lg transition-shadow duration-300"
+                            },
+                            "children": [
+                                {
+                                    "type": "Image",
+                                    "props": {
+                                        "src": "/placeholder-discount-2.jpg",
+                                        "alt": "Student Discount",
+                                        "class": "w-full h-48 object-cover mb-4",
+                                        "loading": "lazy"
+                                    }
+                                },
+                                {
+                                    "type": "H3",
+                                    "props": {
+                                        "content": "Student Special - 20% OFF",
+                                        "class": "text-xl font-semibold mb-2"
+                                    }
+                                },
+                                {
+                                    "type": "P",
+                                    "props": {
+                                        "content": "Show your student ID and save on any haircut.",
+                                        "class": "text-gray-600 mb-4"
+                                    }
+                                },
+                                {
+                                    "type": "Button",
+                                    "props": {
+                                        "label": "Learn More",
+                                        "severity": "secondary"
+                                    }
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": "Column",
+                    "children": [
+                        {
+                            "type": "Card",
+                            "props": {
+                                "class": "text-center shadow-md hover:shadow-lg transition-shadow duration-300"
+                            },
+                            "children": [
+                                {
+                                    "type": "Image",
+                                    "props": {
+                                        "src": "/placeholder-discount-3.jpg",
+                                        "alt": "Referral Bonus",
+                                        "class": "w-full h-48 object-cover mb-4",
+                                        "loading": "lazy"
+                                    }
+                                },
+                                {
+                                    "type": "H3",
+                                    "props": {
+                                        "content": "Refer a Friend - $10 OFF",
+                                        "class": "text-xl font-semibold mb-2"
+                                    }
+                                },
+                                {
+                                    "type": "P",
+                                    "props": {
+                                        "content": "Both you and your friend get $10 off your next visit.",
+                                        "class": "text-gray-600 mb-4"
+                                    }
+                                },
+                                {
+                                    "type": "Button",
+                                    "props": {
+                                        "label": "Refer Now",
+                                        "severity": "secondary"
+                                    }
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
+    "name": "haircut-discounts-section-section"
+}

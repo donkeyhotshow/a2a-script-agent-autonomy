@@ -1,0 +1,61 @@
+{
+    "main": {
+        "code": "Page.php",
+        "templates": {
+            "": [
+                "category-button.json",
+                "product-card.json"
+            ],
+            "header": [
+                "brand-logo.json",
+                "login-signup-button.json",
+                "mobile-menu.json",
+                "navigation-links.json"
+            ],
+            "dialogs": [
+                "info-dialog.json"
+            ]
+        },
+        "sections": {
+            "": [
+                "landing-header.json",
+                "landing-footer.json"
+            ],
+            "sections": {
+                "services": [
+                    "services-hero-section.json",
+                    "barber-services-section.json",
+                    "tattoo-services-section.json",
+                    "booking-cta-section.json",
+                    "barber-tattoo-tabs-section.json",
+                    "tabs/barber-offers.json",
+                    "tabs/tattoo-offers.json"
+                ],
+                "booking": [
+                    "booking-form-section.json",
+                    "booking-confirmation-section.json"
+                ],
+                "contact": [
+                    "contact-hero-section.json",
+                    "contact-content-section.json",
+                    "map-section.json",
+                    "contact-info-section.json",
+                    "faq-section.json"
+                ]
+            }
+        },
+        "pages": {
+            "": [
+                "about-hero-section.json",
+                "history-section.json",
+                "team-section.json",
+                "values-section.json"
+            ],
+            "errors": [
+                "404.json",
+                "500.json",
+                "403.json"
+            ]
+        }
+    }
+}

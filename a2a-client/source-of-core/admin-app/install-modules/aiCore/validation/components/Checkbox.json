@@ -1,0 +1,52 @@
+{
+    "componentName": "Checkbox",
+    "description": "PrimeVue Checkbox component wrapped for use with FormManager.",
+    "level": 2,
+    "status": "active",
+    "dependencies": [
+        "VModel.vue"
+    ],
+    "_comment": "Validation expects properties within a 'props' object.",
+    "documentationLink": "docs/guides/module/04-ui-construction.md",
+    "nestedValidation": {
+        "structure": {
+            "props": {
+                "type": "object",
+                "required": false,
+                "description": "Container for Checkbox wrapper props, PrimeVue Checkbox props, and HTML attributes.",
+                "nestedValidation": {
+                    "structure": {
+                        "allOf": [
+                            {
+                                "$ref": "../common/props.json"
+                            },
+                            {
+                                "$ref": "../common/label.json"
+                            },
+                            {
+                                "$ref": "../common/input.json"
+                            }
+                        ]
+                    }
+                }
+            },
+            "children": {
+                "type": "array",
+                "required": false,
+                "description": "Checkbox wrapper does not typically accept children.",
+                "nestedValidation": {
+                    "_blockAll": true
+                }
+            },
+            "$ref": "../common/root.json"
+        }
+    },
+    "implementationNotes": [
+        "Refactored to standard V1 format (using 'props').",
+        "Level updated to 2.",
+        "Requires VModel.vue wrapper.",
+        "Includes props for the wrapper (inputId, header) and props passed to PrimeVue Checkbox via $attrs.",
+        "Added `label` to structuralKeys and removed from props to support older structures.",
+        "Validation for 'value' being required when binary=false is handled by component logic."
+    ]
+}

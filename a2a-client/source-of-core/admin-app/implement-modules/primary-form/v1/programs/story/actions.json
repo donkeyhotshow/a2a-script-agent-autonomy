@@ -1,0 +1,18 @@
+{
+    "actions": {
+        "showFileBread": [
+            {
+                "action": "update",
+                "value": true,
+                "to": "primary-form/layout/forms/program-control:children.2.disabled"
+            }
+        ],
+        "showFileSelector": [
+            {
+                "action": "update",
+                "value": false,
+                "to": "primary-form/layout/forms/program-control:children.3.disabled"
+            }
+        ]
+    }
+}

@@ -1,0 +1,12 @@
+# Theming Documentation
+
+This section covers application themes, color palettes, and customization options, primarily related to the base theme (e.g., Sakai) and PrimeVue components.
+
+## Key Documents
+
+-   **[Color Palette](./colors.md)**: Defines the application's color scheme. *(Placeholder)*
+-   **[Managers](./managers.md)**: Frontend managers related to theme switching or application? *(Needs review, potential overlap with core concepts managers)*.
+-   **[Sakai Core Module](./sakai-core-module.md)**: Information about the base Sakai theme module. *(Placeholder)*
+-   **[Tailwind Configuration](./tailwind-config.md)**: How Tailwind CSS is configured for theming. *(Placeholder)*
+
+Refer to these documents for details on customizing the application's appearance.

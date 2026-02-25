@@ -1,0 +1,24 @@
+{
+    "default": "Tag",
+    "items": {
+        "checkbox": "Checkbox",
+        "radiobutton": "Checkbox",
+        "autocomplete": "Input",
+        "colorpicker": "Input",
+        "file": "Input",
+        "fileupload": "Input",
+        "inputnumber": "Input",
+        "inputtext": "Input",
+        "input": "Input",
+        "knob": "Input",
+        "password": "Input",
+        "slider": "Input",
+        "textarea": "Input",
+        "togglebutton": "Input",
+        "toggleswitch": "Input",
+        "multiselect": "Select",
+        "select": "Select",
+        "selectbutton": "Select",
+        "treeselect": "Select"
+    }
+}

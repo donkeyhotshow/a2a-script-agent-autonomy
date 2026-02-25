@@ -1,0 +1,16 @@
+{
+    "permalink": {
+        "path": "admin/forms",
+        "module": "primary-form",
+        "metadata": {
+            "title": "Forms Management",
+            "description": "Manage user interaction forms.",
+            "handles_subpaths": false
+        }
+    },
+    "menu": {
+        "label": "Forms Management",
+        "path": "/admin/forms",
+        "order": 5
+    }
+}

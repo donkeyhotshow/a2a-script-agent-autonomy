@@ -1,0 +1,15 @@
+{
+    "template": {
+        "type": "Checkbox",
+        "props": {
+            "class": "font-semibold text-xl w-full",
+            "label": "label"
+        },
+        "model": {
+            "form": "text-storage-section",
+            "field": "cb-form",
+            "default": "value",
+            "value": "value"
+        }
+    }
+}

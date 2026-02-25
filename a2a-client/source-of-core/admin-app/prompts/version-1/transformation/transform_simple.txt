@@ -1,0 +1,27 @@
+Преобразуйте следующий JSON в структуру Instructions-Update-Buffer-Output:
+
+```json
+{
+    "name": "test",
+    "config": {
+        "enabled": true,
+        "settings": {
+            "timeout": 30,
+            "retries": 3
+        }
+    },
+    "dependencies": [
+        {
+            "id": "1",
+            "version": "1.0"
+        }
+    ]
+}
+```
+
+Требования к выходной структуре:
+1. Все поля должны быть преобразованы в формат buffer
+2. Сохранить вложенность объектов
+3. Сохранить типы данных
+4. Добавить поле type: "Instructions"
+5. Все изменения должны быть в массиве instructions 

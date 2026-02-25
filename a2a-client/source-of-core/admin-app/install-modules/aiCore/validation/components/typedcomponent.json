@@ -1,0 +1,1 @@
+{"description":"Typed Component","version":"1.0.0","nestedValidation":{"structure":{"type":{"type":"string","required":true},"props":{"type":"object","required":false,"nestedValidation":{"structure":{"count":{"type":"number","required":true}}}}}}}

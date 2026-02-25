@@ -1,0 +1,12 @@
+{
+    "type": "Instructions",
+    "instructions": [
+        {
+            "action": "update",
+            "value": {
+                "source": "aiCustomTest environment"
+            },
+            "to": "output"
+        }
+    ]
+}

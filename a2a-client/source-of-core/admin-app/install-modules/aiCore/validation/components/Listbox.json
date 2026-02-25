@@ -1,0 +1,136 @@
+{
+    "componentName": "Listbox",
+    "description": "Allows selecting one or more items from a list.",
+    "level": 3,
+    "status": "ready",
+    "documentationLink": "docs/guides/module/04-ui-construction.md",
+    "dependencies": [
+        "VModel.vue"
+    ],
+    "_comment": "Validation expects properties within a 'props' object.",
+    "nestedValidation": {
+        "structure": {
+            "vAddress": {
+                "type": "string",
+                "required": false,
+                "description": "Address for v-model or component identification."
+            },
+            "disabled": {
+                "type": "boolean",
+                "required": false,
+                "default": false,
+                "description": "Disable rendering of the component."
+            },
+            "props": {
+                "type": "object",
+                "required": false,
+                "description": "Container for PrimeVue Listbox properties and HTML attributes.",
+                "nestedValidation": {
+                    "structure": {
+                        "listStyle": {
+                            "type": [
+                                "string",
+                                "object"
+                            ],
+                            "required": false,
+                            "description": "Inline style of the list."
+                        },
+                        "dataKey": {
+                            "type": "string",
+                            "required": false,
+                            "description": "Unique key for options."
+                        },
+                        "multiple": {
+                            "type": "boolean",
+                            "required": false,
+                            "default": false
+                        },
+                        "metaKeySelection": {
+                            "type": "boolean",
+                            "required": false,
+                            "default": true,
+                            "description": "Meta key for multiple selection."
+                        },
+                        "filter": {
+                            "type": "boolean",
+                            "required": false,
+                            "default": false
+                        },
+                        "filterPlaceholder": {
+                            "type": "string",
+                            "required": false
+                        },
+                        "filterLocale": {
+                            "type": "string",
+                            "required": false
+                        },
+                        "filterMatchMode": {
+                            "type": "string",
+                            "required": false,
+                            "default": "contains",
+                            "options": [
+                                "contains",
+                                "startsWith",
+                                "endsWith"
+                            ]
+                        },
+                        "filterFields": {
+                            "type": "array",
+                            "required": false,
+                            "description": "Fields for filtering.",
+                            "nestedValidation": {
+                                "_allowString": true
+                            }
+                        },
+                        "virtualScrollerOptions": {
+                            "type": "object",
+                            "required": false,
+                            "description": "Virtual scroller options."
+                        },
+                        "pt": {
+                            "type": "object",
+                            "required": false
+                        },
+                        "ptOptions": {
+                            "type": "object",
+                            "required": false
+                        },
+                        "unstyled": {
+                            "type": "boolean",
+                            "required": false,
+                            "default": false
+                        },
+                        "tabindex": {
+                            "type": [
+                                "string",
+                                "number"
+                            ],
+                            "required": false
+                        },
+                        "allOf": [
+                            {
+                                "$ref": "../common/props.json"
+                            }
+                        ]
+                    }
+                }
+            },
+            "children": {
+                "type": "array",
+                "required": false,
+                "description": "Listbox does not typically accept children.",
+                "nestedValidation": {
+                    "_blockAll": true
+                }
+            },
+            "$ref": "../common/root.json"
+        }
+    },
+    "implementationNotes": [
+        "Refactored to standard V1 format (using 'props').",
+        "PrimeVue component: Listbox",
+        "Added standard HTML attributes and common PrimeVue props/slots.",
+        "Requires model binding (likely via VModel wrapper).",
+        "'options' prop is required."
+    ]
+}

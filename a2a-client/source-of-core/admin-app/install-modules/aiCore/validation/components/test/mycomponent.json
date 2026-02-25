@@ -1,0 +1,1 @@
+{"component":"mycomponent","level":3,"nestedValidation":{"structure":{"title":{"type":"string","required":true}}}}

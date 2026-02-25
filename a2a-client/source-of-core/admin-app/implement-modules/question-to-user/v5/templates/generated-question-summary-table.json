@@ -1,0 +1,119 @@
+{
+    "type": "div",
+    "props": {
+        "class": "generated-question-summary-table-wrapper p-4"
+    },
+    "children": [
+        {
+            "type": "div",
+            "props": {
+                "class": "flex bg-gray-100 p-2 border-b font-semibold"
+            },
+            "children": [
+                {
+                    "type": "div",
+                    "props": {
+                        "class": "w-1/4"
+                    },
+                    "children": [
+                        "ID"
+                    ]
+                },
+                {
+                    "type": "div",
+                    "props": {
+                        "class": "w-1/2"
+                    },
+                    "children": [
+                        "Text"
+                    ]
+                },
+                {
+                    "type": "div",
+                    "props": {
+                        "class": "w-1/4"
+                    },
+                    "children": [
+                        "Type"
+                    ]
+                },
+                {
+                    "type": "div",
+                    "props": {
+                        "class": "w-1/4"
+                    },
+                    "children": [
+                        "Options"
+                    ]
+                }
+            ]
+        },
+        {
+            "type": "div",
+            "props": {
+                "class": "data-rows-container"
+            },
+            "children": [
+                {
+                    "type": "div",
+                    "props": {
+                        "class": "flex p-2 border-b hover:bg-gray-50"
+                    },
+                    "children": [
+                        {
+                            "type": "div",
+                            "props": {
+                                "class": "w-1/4"
+                            },
+                            "children": [
+                                "ID Placeholder"
+                            ]
+                        },
+                        {
+                            "type": "div",
+                            "props": {
+                                "class": "w-1/2"
+                            },
+                            "children": [
+                                "Text Placeholder"
+                            ]
+                        },
+                        {
+                            "type": "div",
+                            "props": {
+                                "class": "w-1/4"
+                            },
+                            "children": [
+                                "Type Placeholder"
+                            ]
+                        },
+                        {
+                            "type": "div",
+                            "props": {
+                                "class": "w-1/4"
+                            },
+                            "children": [
+                                "Options Placeholder"
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "type": "div",
+            "props": {
+                "class": "p-4 text-center text-gray-500"
+            },
+            "children": [
+                {
+                    "type": "p",
+                    "props": {},
+                    "children": [
+                        "No summary data available or data is empty."
+                    ]
+                }
+            ]
+        }
+    ]
+}

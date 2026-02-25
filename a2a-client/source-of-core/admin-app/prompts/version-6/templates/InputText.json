@@ -1,0 +1,6 @@
+{
+  "type": "InputText",
+  "name": "email",
+  "label": "Email",
+  "placeholder": "Enter your email"
+} 

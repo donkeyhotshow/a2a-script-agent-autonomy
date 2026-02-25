@@ -1,0 +1,49 @@
+{
+    "type": "Instructions",
+    "instructions": [
+        {
+            "action": "update",
+            "batch": [
+                {
+                    "from": "input",
+                    "to": "primary-form/data/program-section:selectedWindow"
+                },
+                {
+                    "from": "primary-form/data/models/windows",
+                    "find": {
+                        "value": "{primary-form/data/program-section:selectedWindow}"
+                    },
+                    "to": "buffer:selectedWindowInstance"
+                },
+                {
+                    "from": "primary-form/data/models/windows",
+                    "find": {
+                        "value": "{primary-form/data/program-section:selectedWindow}",
+                        "return": "key"
+                    },
+                    "to": "buffer:selectedWindowIndex"
+                },
+                {
+                    "from": "buffer:selectedWindowInstance.selectedProgram",
+                    "to": "primary-form/data/program-section:selectedProgram"
+                },
+                {
+                    "from": "primary-form/data/program-section",
+                    "to": "output:forms.program-section"
+                }
+            ]
+        },
+        {
+            "disabled": true,
+            "action": "add",
+            "condition": "primary-form/data/program:log",
+            "from": "primary-form/data/program-section",
+            "key": "id",
+            "to": "primary-form/data/state/log"
+        },
+        {
+            "action": "save",
+            "from": "primary-form/data/program-section"
+        }
+    ]
+}

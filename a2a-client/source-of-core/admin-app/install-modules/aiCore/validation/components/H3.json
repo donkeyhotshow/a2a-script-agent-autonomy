@@ -1,0 +1,40 @@
+{
+    "componentName": "H3",
+    "description": "Standard HTML H3 heading tag.",
+    "level": 5,
+    "status": "active",
+    "dependencies": [],
+    "_comment": "Validation expects properties within a 'props' object.",
+    "nestedValidation": {
+        "structure": {
+            "children": {
+                "type": "array",
+                "required": false,
+                "description": "Child elements of the div.",
+                "nestedValidation": {
+                    "_allowAnyObject": true,
+                    "_allowString": true
+                }
+            },
+            "props": {
+                "type": "object",
+                "required": false,
+                "nestedValidation": {
+                    "structure": {
+                        "allOf": [
+                            {
+                                "$ref": "../common/props.json"
+                            },
+                            {
+                                "$ref": "../common/content.json"
+                            }
+                        ]
+                    }
+                }
+            },
+            "$ref": "../common/root.json"
+        }
+    },
+    "implementationNotes": [],
+    "documentationLink": "docs/guides/module/04-ui-construction.md"
+}

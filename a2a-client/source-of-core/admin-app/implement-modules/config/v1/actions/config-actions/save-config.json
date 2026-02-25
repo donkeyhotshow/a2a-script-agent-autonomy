@@ -1,0 +1,21 @@
+{
+    "type": "Instructions",
+    "instructions": [
+        {
+            "action": "update",
+            "to": "data/program",
+            "from": "form:configForm"
+        },
+        {
+            "action": "save",
+            "from": "data/program"
+        },
+        {
+            "action": "return",
+            "value": {
+                "status": "success",
+                "message": "Configuration saved."
+            }
+        }
+    ]
+}

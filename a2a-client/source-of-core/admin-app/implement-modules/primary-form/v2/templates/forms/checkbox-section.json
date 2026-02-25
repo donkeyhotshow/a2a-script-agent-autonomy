@@ -1,0 +1,78 @@
+{
+    "type": "div",
+    "props": {
+        "class": "card flex flex-col gap-4"
+    },
+    "children": [
+        {
+            "type": "div",
+            "disabled": false,
+            "props": {
+                "class": "flex flex-col gap-4"
+            },
+            "children": [
+            ]
+        },
+        {
+            "type": "Button",
+            "disabled": false,
+            "props": {
+                "label": "применить чекбоксы"
+            },
+            "customHooks": {
+                "click": [
+                    {
+                        "action": "sendData",
+                        "data": {
+                            "sendTo": "text-storage-section/applyCheckboxes",
+                            "form": "text-storage-section"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Button",
+            "props": {
+                "label": "Ответ чата",
+                "dialogConfig": {
+                    "type": "Dialog",
+                    "name": "text-storage-section",
+                    "props": {
+                        "class": "w-full max-w-lg",
+                        "header": "Ответ чата",
+                        "modal": true
+                    },
+                    "fields": [
+                        {
+                            "type": "Textarea",
+                            "name": "Textareassdfdfa",
+                            "props": {
+                                "placeholder": "Введите текст ответа",
+                                "class": "w-full flex-1",
+                                "rows": 15
+                            },
+                            "model": {
+                                "form": "text-storage-section",
+                                "field": "chatResponse",
+                                "default": ""
+                            }
+                        }
+                    ],
+                    "actions": [
+                        {
+                            "type": "submit",
+                            "props": {
+                                "label": "расчитать чекбоксы",
+                                "class": "p-button-primary",
+                                "form": "chat-response-form",
+                                "icon": "pi pi-check",
+                                "sendTo": "text-storage-section/calcCheckboxes"
+                            }
+                        }
+                    ]
+                }
+            }
+        }
+    ]
+}

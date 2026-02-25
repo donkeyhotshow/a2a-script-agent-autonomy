@@ -1,0 +1,50 @@
+# PROMPT-V3: Test Case Generation
+
+## Цель
+Сгенерируйте тест-кейсы для следующей схемы данных, включая edge-cases (пустые значения, вложенность, неверные типы).
+
+## Инструкция
+1. На основе схемы ниже создайте минимум 3 тест-кейса: валидный, невалидный, edge-case.
+2. Для каждого тест-кейса укажите, почему он выбран и что проверяет.
+3. Оцените полноту покрытия (quality_score: 1-5) и дайте краткий feedback.
+
+## Пример (схема)
+```json
+{
+  "type": "object",
+  "required": ["id", "name"],
+  "properties": {
+    "id": {"type": "integer"},
+    "name": {"type": "string"},
+    "meta": {"type": "object", "properties": {"active": {"type": "boolean"}}}
+  }
+}
+```
+
+## Ожидаемый формат ответа
+```json
+[
+  {
+    "case": {"id": 1, "name": "item", "meta": {"active": true}},
+    "type": "valid",
+    "reason": "Все поля присутствуют, типы корректны."
+  },
+  {
+    "case": {"id": "one", "name": "item"},
+    "type": "invalid",
+    "reason": "id должен быть числом."
+  },
+  {
+    "case": {"id": 2, "name": "", "meta": {}},
+    "type": "edge-case",
+    "reason": "Пустая строка и пустой объект meta."
+  }
+]
+```
+
+## Формат мета-отчёта
+```json
+{
+  "quality_score": 5,
+  "feedback": "Покрыты валидные, невалидные и edge-кейсы."
+} 

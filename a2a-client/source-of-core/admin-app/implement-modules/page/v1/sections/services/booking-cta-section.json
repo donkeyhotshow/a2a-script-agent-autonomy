@@ -1,0 +1,277 @@
+{
+    "type": "Panel",
+    "name": "booking-cta-section",
+    "props": {
+        "class": "py-16 px-4 md:px-6 lg:px-8 xl:px-10 2xl:px-12 bg-surface-900 dark:bg-surface-900 relative overflow-hidden"
+    },
+    "children": [
+        {
+            "type": "div",
+            "props": {
+                "class": "absolute inset-0 bg-[url('/assets/pattern-bg.png')] opacity-5"
+            }
+        },
+        {
+            "type": "div",
+            "props": {
+                "class": "max-w-7xl mx-auto relative z-10"
+            },
+            "children": [
+                {
+                    "type": "Card",
+                    "props": {
+                        "class": "bg-gradient-to-br from-surface-0/95 to-surface-0/90 dark:from-surface-800/95 dark:to-surface-800/90 backdrop-blur-sm shadow-2xl rounded-2xl overflow-hidden"
+                    },
+                    "children": [
+                        {
+                            "type": "div",
+                            "props": {
+                                "class": "grid grid-cols-1 lg:grid-cols-2 gap-8 p-8"
+                            },
+                            "children": [
+                                {
+                                    "type": "div",
+                                    "props": {
+                                        "class": "space-y-6"
+                                    },
+                                    "children": [
+                                        {
+                                            "type": "div",
+                                            "props": {
+                                                "content": "<h2 class='text-4xl md:text-5xl font-bold mb-4 leading-tight' style='color: #3D3B47;'>Забронюйте свій час для досконалості</h2><p class='text-xl mb-8' style='color: #3D3B47;'>Оберіть зручний час для створення свого неповторного образу разом з нашими майстрами</p>"
+                                            }
+                                        },
+                                        {
+                                            "type": "div",
+                                            "props": {
+                                                "class": "grid grid-cols-1 sm:grid-cols-2 gap-6"
+                                            },
+                                            "children": [
+                                                {
+                                                    "type": "div",
+                                                    "props": {
+                                                        "class": "flex items-start space-x-3"
+                                                    },
+                                                    "children": [
+                                                        {
+                                                            "type": "Icon",
+                                                            "props": {
+                                                                "class": "pi pi-check-circle text-xl mt-1",
+                                                                "style": "color: #F46700;"
+                                                            }
+                                                        },
+                                                        {
+                                                            "type": "div",
+                                                            "props": {
+                                                                "content": "<h3 class='font-semibold mb-1' style='color: #3D3B47;'>Зручний графік</h3><p style='color: #3D3B47;'>Працюємо 7 днів на тиждень</p>"
+                                                            }
+                                                        }
+                                                    ]
+                                                },
+                                                {
+                                                    "type": "div",
+                                                    "props": {
+                                                        "class": "flex items-start space-x-3"
+                                                    },
+                                                    "children": [
+                                                        {
+                                                            "type": "Icon",
+                                                            "props": {
+                                                                "class": "pi pi-check-circle text-xl mt-1",
+                                                                "style": "color: #F46700;"
+                                                            }
+                                                        },
+                                                        {
+                                                            "type": "div",
+                                                            "props": {
+                                                                "content": "<h3 class='font-semibold mb-1' style='color: #3D3B47;'>Онлайн запис</h3><p style='color: #3D3B47;'>Швидко та зручно 24/7</p>"
+                                                            }
+                                                        }
+                                                    ]
+                                                },
+                                                {
+                                                    "type": "div",
+                                                    "props": {
+                                                        "class": "flex items-start space-x-3"
+                                                    },
+                                                    "children": [
+                                                        {
+                                                            "type": "Icon",
+                                                            "props": {
+                                                                "class": "pi pi-check-circle text-xl mt-1",
+                                                                "style": "color: #F46700;"
+                                                            }
+                                                        },
+                                                        {
+                                                            "type": "div",
+                                                            "props": {
+                                                                "content": "<h3 class='font-semibold mb-1' style='color: #3D3B47;'>Професійні майстри</h3><p style='color: #3D3B47;'>Досвід понад 5 років</p>"
+                                                            }
+                                                        }
+                                                    ]
+                                                },
+                                                {
+                                                    "type": "div",
+                                                    "props": {
+                                                        "class": "flex items-start space-x-3"
+                                                    },
+                                                    "children": [
+                                                        {
+                                                            "type": "Icon",
+                                                            "props": {
+                                                                "class": "pi pi-check-circle text-xl mt-1",
+                                                                "style": "color: #F46700;"
+                                                            }
+                                                        },
+                                                        {
+                                                            "type": "div",
+                                                            "props": {
+                                                                "content": "<h3 class='font-semibold mb-1' style='color: #3D3B47;'>Гарантія якості</h3><p style='color: #3D3B47;'>Задоволення клієнтів</p>"
+                                                            }
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "div",
+                                    "props": {
+                                        "class": "lg:border-l lg:border-surface-200 dark:lg:border-surface-700 lg:pl-8"
+                                    },
+                                    "children": [
+                                        {
+                                            "type": "Card",
+                                            "props": {
+                                                "class": "shadow-lg",
+                                                "style": "background-color: rgba(61, 59, 71, 0.05);"
+                                            },
+                                            "children": [
+                                                {
+                                                    "type": "div",
+                                                    "props": {
+                                                        "class": "p-6"
+                                                    },
+                                                    "children": [
+                                                        {
+                                                            "type": "div",
+                                                            "props": {
+                                                                "content": "<h3 class='text-2xl font-bold mb-6' style='color: #3D3B47;'>Робочі години</h3>"
+                                                            }
+                                                        },
+                                                        {
+                                                            "type": "div",
+                                                            "props": {
+                                                                "class": "space-y-4 mb-8"
+                                                            },
+                                                            "children": [
+                                                                {
+                                                                    "type": "div",
+                                                                    "props": {
+                                                                        "class": "flex justify-between items-center"
+                                                                    },
+                                                                    "children": [
+                                                                        {
+                                                                            "type": "Span",
+                                                                            "props": {
+                                                                                "class": "text-surface-700 dark:text-surface-200",
+                                                                                "content": "Понеділок - П'ятниця",
+                                                                                "style": "color: #3D3B47;"
+                                                                            }
+                                                                        },
+                                                                        {
+                                                                            "type": "Tag",
+                                                                            "props": {
+                                                                                "value": "10:00 - 20:00",
+                                                                                "severity": "info",
+                                                                                "style": "background-color: #6B00F5; color: white;"
+                                                                            }
+                                                                        }
+                                                                    ]
+                                                                },
+                                                                {
+                                                                    "type": "div",
+                                                                    "props": {
+                                                                        "class": "flex justify-between items-center"
+                                                                    },
+                                                                    "children": [
+                                                                        {
+                                                                            "type": "Span",
+                                                                            "props": {
+                                                                                "class": "text-surface-700 dark:text-surface-200",
+                                                                                "content": "Субота",
+                                                                                "style": "color: #3D3B47;"
+                                                                            }
+                                                                        },
+                                                                        {
+                                                                            "type": "Tag",
+                                                                            "props": {
+                                                                                "value": "09:00 - 18:00",
+                                                                                "severity": "info",
+                                                                                "style": "background-color: #6B00F5; color: white;"
+                                                                            }
+                                                                        }
+                                                                    ]
+                                                                },
+                                                                {
+                                                                    "type": "div",
+                                                                    "props": {
+                                                                        "class": "flex justify-between items-center"
+                                                                    },
+                                                                    "children": [
+                                                                        {
+                                                                            "type": "Span",
+                                                                            "props": {
+                                                                                "class": "text-surface-700 dark:text-surface-200",
+                                                                                "content": "Неділя",
+                                                                                "style": "color: #3D3B47;"
+                                                                            }
+                                                                        },
+                                                                        {
+                                                                            "type": "Tag",
+                                                                            "props": {
+                                                                                "value": "10:00 - 16:00",
+                                                                                "severity": "info",
+                                                                                "style": "background-color: #6B00F5; color: white;"
+                                                                            }
+                                                                        }
+                                                                    ]
+                                                                }
+                                                            ]
+                                                        },
+                                                        {
+                                                            "type": "Button",
+                                                            "props": {
+                                                                "label": "Записатись онлайн",
+                                                                "icon": "pi pi-calendar",
+                                                                "severity": "primary",
+                                                                "class": "w-full p-3 text-lg shadow-md hover:shadow-lg",
+                                                                "style": "background-color: #F46700; color: white; border: none;"
+                                                            },
+                                                            "customHooks": {
+                                                                "click": [
+                                                                    {
+                                                                        "action": "navigateTo",
+                                                                        "data": {
+                                                                            "route": "/landing-main-page/booking"
+                                                                        }
+                                                                    }
+                                                                ]
+                                                            }
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}
+

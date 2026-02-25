@@ -1,0 +1,189 @@
+{
+    "type": "div",
+    "name": "booking-form-section-section",
+    "props": {
+        "class": "py-12 px-4 md:px-6 lg:px-8",
+        "role": "region",
+        "id": "booking-form-section",
+        "aria-labelledby": "booking-form-section-title"
+    },
+    "children": [
+        {
+            "type": "div",
+            "props": {
+                "class": "max-w-3xl mx-auto"
+            },
+            "children": [
+                {
+                    "type": "div",
+                    "props": {
+                        "class": "text-center mb-10"
+                    },
+                    "children": [
+                        {
+                            "type": "Tag",
+                            "props": {
+                                "value": "Запис",
+                                "severity": "contrast",
+                                "class": "mb-2 text-sm font-bold uppercase tracking-wider"
+                            }
+                        },
+                        {
+                            "type": "div",
+                            "props": {
+                                "content": "<h2 class='text-3xl sm:text-4xl font-bold text-surface-900 dark:text-surface-0 mb-4'>Записатись на прийом</h2><p class='text-xl text-surface-600 dark:text-surface-300 max-w-3xl mx-auto'>Оберіть зручний для вас час та послугу</p>"
+                            }
+                        }
+                    ]
+                },
+                {
+                    "type": "Card",
+                    "props": {
+                        "class": "p-6 sm:p-8 bg-white dark:bg-surface-800 shadow-lg rounded-xl"
+                    },
+                    "children": [
+                        {
+                            "type": "Form",
+                            "name": "bookingForm",
+                            "props": {
+                                "class": "space-y-6"
+                            },
+                            "children": [
+                                {
+                                    "type": "Dropdown",
+                                    "props": {
+                                        "label": "Оберіть послугу",
+                                        "placeholder": "Виберіть тип послуги",
+                                        "options": [
+                                            {
+                                                "label": "Барбер: Класична стрижка",
+                                                "value": "barber_classic_cut"
+                                            },
+                                            {
+                                                "label": "Барбер: Стрижка бороди",
+                                                "value": "barber_beard_trim"
+                                            },
+                                            {
+                                                "label": "Барбер: Королівське гоління",
+                                                "value": "barber_royal_shave"
+                                            },
+                                            {
+                                                "label": "Тату: Маленьке тату",
+                                                "value": "tattoo_small"
+                                            },
+                                            {
+                                                "label": "Тату: Середнє тату",
+                                                "value": "tattoo_medium"
+                                            },
+                                            {
+                                                "label": "Тату: Консультація",
+                                                "value": "tattoo_consultation"
+                                            }
+                                        ],
+                                        "filter": true,
+                                        "class": "w-full"
+                                    },
+                                    "model": {
+                                        "form": "bookingForm",
+                                        "field": "service"
+                                    }
+                                },
+                                {
+                                    "type": "Dropdown",
+                                    "props": {
+                                        "label": "Оберіть майстра (необов'язково)",
+                                        "placeholder": "Будь-який доступний майстер",
+                                        "options": [
+                                            {
+                                                "label": "Олександр Коваль (Барбер)",
+                                                "value": "master_alex"
+                                            },
+                                            {
+                                                "label": "Марина Лисенко (Тату)",
+                                                "value": "master_marina"
+                                            },
+                                            {
+                                                "label": "Віктор Гончар (Барбер/Тату)",
+                                                "value": "master_victor"
+                                            }
+                                        ],
+                                        "showClear": true,
+                                        "class": "w-full"
+                                    },
+                                    "model": {
+                                        "form": "bookingForm",
+                                        "field": "master"
+                                    }
+                                },
+                                {
+                                    "type": "Calendar",
+                                    "props": {
+                                        "label": "Оберіть дату та час",
+                                        "placeholder": "Виберіть дату",
+                                        "showTime": true,
+                                        "hourFormat": "24",
+                                        "dateFormat": "dd.mm.yy",
+                                        "showIcon": true,
+                                        "minDate": "$today",
+                                        "class": "w-full"
+                                    },
+                                    "model": {
+                                        "form": "bookingForm",
+                                        "field": "dateTime"
+                                    }
+                                },
+                                {
+                                    "type": "InputText",
+                                    "props": {
+                                        "label": "Ваше ім'я",
+                                        "placeholder": "Введіть ваше ім'я",
+                                        "class": "w-full"
+                                    },
+                                    "model": {
+                                        "form": "bookingForm",
+                                        "field": "name"
+                                    }
+                                },
+                                {
+                                    "type": "InputText",
+                                    "props": {
+                                        "label": "Номер телефону",
+                                        "placeholder": "+380 XX XXX XX XX",
+                                        "class": "w-full"
+                                    },
+                                    "model": {
+                                        "form": "bookingForm",
+                                        "field": "phone"
+                                    }
+                                },
+                                {
+                                    "type": "Textarea",
+                                    "props": {
+                                        "label": "Коментар (необов'язково)",
+                                        "placeholder": "Додаткова інформація або побажання",
+                                        "rows": 3,
+                                        "class": "w-full"
+                                    },
+                                    "model": {
+                                        "form": "bookingForm",
+                                        "field": "comment"
+                                    }
+                                },
+                                {
+                                    "type": "Button",
+                                    "props": {
+                                        "label": "Записатись",
+                                        "icon": "pi pi-calendar-check",
+                                        "severity": "primary",
+                                        "class": "w-full py-3 text-lg",
+                                        "aria-label": "Записатись"
+                                    }
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

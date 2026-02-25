@@ -1,0 +1,16 @@
+{
+    "permalink": {
+        "path": "admin/login-audit",
+        "module": "login-form",
+        "metadata": {
+            "title": "Login Audit",
+            "description": "Monitor login activities.",
+            "handles_subpaths": false
+        }
+    },
+    "menu": {
+        "label": "Login Audit",
+        "path": "/admin/login-audit",
+        "order": 2
+    }
+}

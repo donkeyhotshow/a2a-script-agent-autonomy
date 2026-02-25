@@ -1,0 +1,25 @@
+{
+    "type": "div",
+    "props": {
+        "class": "flex space-x-2 items-center mb-2"
+    },
+    "children": [
+        {
+            "type": "input",
+            "props": {
+                "type": "radio",
+                "name": "defaultRadioGroup",
+                "id": "defaultRadioId",
+                "class": "mr-2"
+            }
+        },
+        {
+            "type": "label",
+            "props": {
+                "for": "defaultRadioId",
+                "content": "Default Radio Option",
+                "class": "text-sm"
+            }
+        }
+    ]
+}

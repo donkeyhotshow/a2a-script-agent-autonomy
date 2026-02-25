@@ -1,0 +1,69 @@
+{
+    "type": "Instructions",
+    "instructions": [
+        {
+            "action": "update",
+            "batch": [
+                {
+                    "value": "load-question-summary-table",
+                    "to": "buffer:actionId"
+                },
+                {
+                    "value": {
+                        "keywords": ["summary", "table", "ui-generation"],
+                        "ai_summary": "Loads a question summary table and prepares it for display.",
+                        "features": ["dynamic-ui", "table-processing"]
+                    },
+                    "to": "buffer:tags"
+                }
+            ]
+        },
+        {
+            "action": "comment",
+            "value": "Load question summary table and prepare for display"
+        },
+        {
+            "action": "update",
+            "batch": [
+                {
+                    "from": "file!question-to-user/data/summary-tables/{input:tableId}.json",
+                    "to": "buffer:summaryTable"
+                }
+            ]
+        },
+        {
+            "action": "update",
+            "batch": [
+                {
+                    "from": "buffer:summaryTable",
+                    "to": "file!question-to-user/templates/current-summary-table.json"
+                }
+            ]
+        },
+        {
+            "action": "save",
+            "from": "file!question-to-user/templates/current-summary-table.json"
+        },
+        {
+            "action": "update",
+            "batch": [
+                {
+                    "from": "buffer:actionId",
+                    "to": "output:actionId"
+                },
+                {
+                    "from": "buffer:tags",
+                    "to": "output:tags"
+                },
+                {
+                    "value": {
+                        "success": true,
+                        "message": "Question summary table loaded successfully.",
+                        "table": "{buffer:summaryTable}"
+                    },
+                    "to": "output:result"
+                }
+            ]
+        }
+    ]
+} 

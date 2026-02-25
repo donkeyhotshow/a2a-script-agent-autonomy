@@ -1,0 +1,21 @@
+{
+    "type": "Instructions",
+    "instructions": [
+        {
+            "action": "update",
+            "from": "form:configForm",
+            "to": "{input:configForm.targetModule}/data/program"
+        },
+        {
+            "action": "save",
+            "from": "{input:configForm.targetModule}/data/program"
+        },
+        {
+            "action": "return",
+            "value": {
+                "status": "success",
+                "message": "Configuration for {input:configForm.targetModule} updated."
+            }
+        }
+    ]
+}

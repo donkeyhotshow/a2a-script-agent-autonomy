@@ -1,0 +1,16 @@
+[
+    {
+        "action": "update",
+        "from": "permalinks/{input:href}",
+        "to": "buffer:permalink"
+    },
+    {
+        "action": "print_r",
+        "from": "buffer:permalink"
+    },
+    {
+        "action": "update",
+        "from": "{buffer:permalink.module}/pages/{buffer:permalink.page}",
+        "to": "output"
+    }
+]

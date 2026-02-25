@@ -1,0 +1,94 @@
+{
+  "title": "Audit Checklist: question-to-user/v5 - Pages Directory",
+  "date": "2024-07-26",
+  "module": "question-to-user/v5",
+  "focus": "pages/ directory - Ensure pages are renderable",
+  "phase": "1 - Page Audit & Fix",
+  "overallStrategy": [
+    "Remove include operations if the source file is not found.",
+    "Replace unsupported component types (e.g., dropdown, inputswitch, input, validationrules) with supported ones (select, inputtext, checkbox).",
+    "Ensure props are standard and valid for the component type (referencing login-form/v1 and StrictModuleChecklist.md). Remove non-standard props like role from div or children inside props."
+  ],
+  "files": [
+    {
+      "filePath": "implement-modules/question-to-user/v5/pages/ai-specific-dialogs-page.json",
+      "validationErrors": [
+        "include_source_file_not_found::div::root.content.children",
+        "include_source_file_not_found::form::root.content.children.children.children.children.children"
+      ],
+      "plannedFix": "Remove both include operations.",
+      "status": "DONE",
+      "notesOutcome": "Both include operations removed."
+    },
+    {
+      "filePath": "implement-modules/question-to-user/v5/pages/dialogs-page.json",
+      "validationErrors": [
+        "include_source_file_not_found::div::root.content.children",
+        "unknown_component_type::dropdown::..."
+      ],
+      "plannedFix": "Remove include operation. Replace dropdown with select and ensure standard props.",
+      "status": "DONE",
+      "notesOutcome": "Include removed, Dropdown to select with standard props."
+    },
+    {
+      "filePath": "implement-modules/question-to-user/v5/pages/dynamic-form-page.json",
+      "validationErrors": [
+        "include_source_file_not_found::div::root.content.children",
+        "unknown_key_in_nested_object::textarea::default"
+      ],
+      "plannedFix": "Remove include operation. For textarea, remove the model.default key.",
+      "status": "DONE",
+      "notesOutcome": "Include removed, Textarea model.default removed."
+    },
+    {
+      "filePath": "implement-modules/question-to-user/v5/pages/form-demo-page.json",
+      "validationErrors": [
+        "include_source_file_not_found::div::root.content.children",
+        "unknown_component_type::dropdown::...",
+        "unknown_component_type::inputswitch::...",
+        "empty_string_not_allowed::inputtext::model.default"
+      ],
+      "plannedFix": "Remove include. Replace dropdown with select. Replace inputswitch with checkbox. For inputtext, remove model.default.",
+      "status": "DONE",
+      "notesOutcome": "Fixes applied as planned."
+    },
+    {
+      "filePath": "implement-modules/question-to-user/v5/pages/page.json",
+      "validationErrors": [
+        "include_source_file_not_found::div::root.content.children (2 occurrences)"
+      ],
+      "plannedFix": "Remove both include operations.",
+      "status": "DONE",
+      "notesOutcome": "Both includes removed."
+    },
+    {
+      "filePath": "implement-modules/question-to-user/v5/pages/question-summary-page.json",
+      "validationErrors": [
+        "include_source_file_not_found::div::root.content.children"
+      ],
+      "plannedFix": "Remove include operation.",
+      "status": "DONE",
+      "notesOutcome": "Include removed."
+    },
+    {
+      "filePath": "implement-modules/question-to-user/v5/pages/task-overview.json",
+      "validationErrors": [
+        "include_source_file_not_found::div::root.content.children",
+        "include_source_file_not_found::div::...children (2 occurrences)"
+      ],
+      "plannedFix": "Remove all three include operations.",
+      "status": "DONE",
+      "notesOutcome": "All three includes removed."
+    },
+    {
+      "filePath": "implement-modules/question-to-user/v5/pages/task-scenario-management-page.json",
+      "validationErrors": [
+        "include_source_file_not_found::div::root.content.children",
+        "include_source_file_not_found::div::...children (3 occurrences)"
+      ],
+      "plannedFix": "Remove all four include operations.",
+      "status": "DONE",
+      "notesOutcome": "All four includes removed."
+    }
+  ]
+} 

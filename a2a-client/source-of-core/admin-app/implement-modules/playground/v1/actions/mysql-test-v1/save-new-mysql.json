@@ -1,0 +1,44 @@
+{
+    "type": "Instructions",
+    "instructions": [
+        {
+            "disabled": false,
+            "action": "print_r",
+            "from": "input"
+        },
+        {
+            "action": "update",
+            "from": "input",
+            "to": "mysql!test_table"
+        },
+        {
+            "action": "save",
+            "from": "mysql!test_table"
+        },
+        {
+            "action": "update",
+            "from": "playground/data/blanks/status-item",
+            "to": "buffer:blankItem"
+        },
+        {
+            "action": "update",
+            "to": "buffer:blankItem.props.content",
+            "value": "✔ Record Saved! (Implicit INSERT)"
+        },
+        {
+            "action": "add",
+            "from": "buffer:blankItem",
+            "to": "playground/mysql-test-v1:content.children.1.children.3.children",
+            "how": "append"
+        },
+        {
+            "action": "save",
+            "from": "playground/mysql-test-v1"
+        },
+        {
+            "action": "update",
+            "to": "output:result.title",
+            "value": "✔ Saved: (Implicit INSERT)"
+        }
+    ]
+}

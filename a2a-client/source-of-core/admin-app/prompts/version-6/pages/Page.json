@@ -1,0 +1,34 @@
+{
+  "type": "Page",
+  "title": "Login Page",
+  "name": "loginPage",
+  "class": "main-page",
+  "props": {
+    "theme": "light",
+    "layout": "centered"
+  },
+  "content": [
+    {
+      "type": "Card",
+      "title": "Login Card",
+      "children": [
+        {
+          "type": "Form",
+          "name": "loginForm",
+          "model": {
+            "form": "loginForm",
+            "fields": [
+              { "name": "login", "type": "InputText", "label": "Login" },
+              { "name": "password", "type": "Password", "label": "Password" }
+            ]
+          },
+          "children": [
+            { "type": "InputText", "name": "login", "label": "Login", "placeholder": "Enter your login" },
+            { "type": "Password", "name": "password", "label": "Password", "placeholder": "Enter your password" },
+            { "type": "Button", "name": "submit", "label": "Sign In", "props": { "variant": "primary" } }
+          ]
+        }
+      ]
+    }
+  ]
+} 

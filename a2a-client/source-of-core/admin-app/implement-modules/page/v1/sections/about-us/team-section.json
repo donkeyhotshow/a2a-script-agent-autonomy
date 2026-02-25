@@ -1,0 +1,189 @@
+{
+    "type": "div",
+    "name": "team-section",
+    "props": {
+        "class": "py-12 px-4 md:px-6 lg:px-8 xl:px-10 2xl:px-12 bg-surface-100 dark:bg-surface-800"
+    },
+    "children": [
+        {
+            "type": "div",
+            "props": {
+                "class": "max-w-7xl mx-auto"
+            },
+            "children": [
+                {
+                    "type": "div",
+                    "props": {
+                        "class": "text-center mb-10"
+                    },
+                    "children": [
+                        {
+                            "type": "Tag",
+                            "props": {
+                                "content": "Команда",
+                                "severity": "info",
+                                "class": "mb-2 text-sm font-bold uppercase tracking-wider"
+                            }
+                        },
+                        {
+                            "type": "div",
+                            "props": {
+                                "content": "<h2 class='text-3xl sm:text-4xl font-bold text-surface-900 dark:text-surface-0 mb-4'>Наші Майстри</h2><p class='text-xl text-surface-600 dark:text-surface-300 max-w-3xl mx-auto'>Познайомтеся з професіоналами, які створюють ваш стиль.</p>"
+                            }
+                        }
+                    ]
+                },
+                {
+                    "type": "Grid",
+                    "props": {
+                        "class": "grid grid-cols-1 md:grid-cols-3 gap-8"
+                    },
+                    "children": [
+                        {
+                            "type": "Card",
+                            "props": {
+                                "class": "text-center p-6 bg-white dark:bg-surface-900 rounded-xl shadow-lg transform transition duration-300 hover:scale-105"
+                            },
+                            "children": [
+                                {
+                                    "type": "Avatar",
+                                    "props": {
+                                        "image": "/images/team/member1.webp",
+                                        "size": "large",
+                                        "shape": "circle",
+                                        "class": "w-24 h-24 mx-auto mb-4 border-4 border-primary-500 dark:border-primary-400"
+                                    }
+                                },
+                                {
+                                    "type": "div",
+                                    "props": {
+                                        "content": "<h3 class='text-xl font-semibold text-surface-900 dark:text-surface-0 mb-1'>Олександр Коваль</h3><p class='text-primary-500 dark:text-primary-400 font-medium mb-3'>Старший Барбер</p><p class='text-surface-600 dark:text-surface-300'>Досвід роботи понад 10 років. Спеціалізується на класичних та сучасних чоловічих стрижках.</p>"
+                                    }
+                                },
+                                {
+                                    "type": "div",
+                                    "props": {
+                                        "class": "flex justify-center gap-3 mt-4"
+                                    },
+                                    "children": [
+                                        {
+                                            "type": "Button",
+                                            "props": {
+                                                "icon": "pi pi-instagram",
+                                                "severity": "secondary",
+                                                "text": true
+                                            }
+                                        },
+                                        {
+                                            "type": "Button",
+                                            "props": {
+                                                "icon": "pi pi-facebook",
+                                                "severity": "secondary",
+                                                "text": true
+                                            }
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "type": "Card",
+                            "props": {
+                                "class": "text-center p-6 bg-white dark:bg-surface-900 rounded-xl shadow-lg transform transition duration-300 hover:scale-105"
+                            },
+                            "children": [
+                                {
+                                    "type": "Avatar",
+                                    "props": {
+                                        "image": "/images/team/member2.webp",
+                                        "size": "large",
+                                        "shape": "circle",
+                                        "class": "w-24 h-24 mx-auto mb-4 border-4 border-primary-500 dark:border-primary-400"
+                                    }
+                                },
+                                {
+                                    "type": "div",
+                                    "props": {
+                                        "content": "<h3 class='text-xl font-semibold text-surface-900 dark:text-surface-0 mb-1'>Марина Лисенко</h3><p class='text-primary-500 dark:text-primary-400 font-medium mb-3'>Тату-Майстер</p><p class='text-surface-600 dark:text-surface-300'>Спеціалізується на реалізмі та графіці. Створює унікальні ескізи для кожного клієнта.</p>"
+                                    }
+                                },
+                                {
+                                    "type": "div",
+                                    "props": {
+                                        "class": "flex justify-center gap-3 mt-4"
+                                    },
+                                    "children": [
+                                        {
+                                            "type": "Button",
+                                            "props": {
+                                                "icon": "pi pi-instagram",
+                                                "severity": "secondary",
+                                                "text": true
+                                            }
+                                        },
+                                        {
+                                            "type": "Button",
+                                            "props": {
+                                                "icon": "pi pi-palette",
+                                                "severity": "secondary",
+                                                "text": true
+                                            }
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "type": "Card",
+                            "props": {
+                                "class": "text-center p-6 bg-white dark:bg-surface-900 rounded-xl shadow-lg transform transition duration-300 hover:scale-105"
+                            },
+                            "children": [
+                                {
+                                    "type": "Avatar",
+                                    "props": {
+                                        "image": "/images/team/member3.webp",
+                                        "size": "large",
+                                        "shape": "circle",
+                                        "class": "w-24 h-24 mx-auto mb-4 border-4 border-primary-500 dark:border-primary-400"
+                                    }
+                                },
+                                {
+                                    "type": "div",
+                                    "props": {
+                                        "content": "<h3 class='text-xl font-semibold text-surface-900 dark:text-surface-0 mb-1'>Віктор Гончар</h3><p class='text-primary-500 dark:text-primary-400 font-medium mb-3'>Барбер / Молодший Тату-Майстер</p><p class='text-surface-600 dark:text-surface-300'>Універсальний майстер, що поєднує мистецтво барберингу та початковий досвід в татуюванні.</p>"
+                                    }
+                                },
+                                {
+                                    "type": "div",
+                                    "props": {
+                                        "class": "flex justify-center gap-3 mt-4"
+                                    },
+                                    "children": [
+                                        {
+                                            "type": "Button",
+                                            "props": {
+                                                "icon": "pi pi-instagram",
+                                                "severity": "secondary",
+                                                "text": true
+                                            }
+                                        },
+                                        {
+                                            "type": "Button",
+                                            "props": {
+                                                "icon": "pi pi-user",
+                                                "severity": "secondary",
+                                                "text": true
+                                            }
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}
+

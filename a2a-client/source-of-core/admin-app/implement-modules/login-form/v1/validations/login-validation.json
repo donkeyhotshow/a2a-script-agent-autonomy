@@ -1,0 +1,68 @@
+{
+    "type": "Instructions",
+    "instructions": [
+        {
+            "action": "update",
+            "value": false,
+            "to": "buffer:validationFailed"
+        },
+        {
+            "action": "update",
+            "condition": [
+                "equals",
+                "buffer:credentials.login",
+                ""
+            ],
+            "batch": [
+                {
+                    "value": true,
+                    "to": "buffer:validationFailed"
+                },
+                {
+                    "value": {
+                        "login": "Login is required"
+                    },
+                    "to": "buffer:validationErrors.login"
+                }
+            ]
+        },
+        {
+            "action": "update",
+            "condition": [
+                "equals",
+                "buffer:credentials.password",
+                ""
+            ],
+            "batch": [
+                {
+                    "value": true,
+                    "to": "buffer:validationFailed"
+                },
+                {
+                    "value": {
+                        "password": "Password is required"
+                    },
+                    "to": "buffer:validationErrors.password"
+                }
+            ]
+        },
+        {
+            "action": "update",
+            "condition": "buffer:validationFailed",
+            "batch": [
+                {
+                    "value": true,
+                    "to": "buffer:error"
+                },
+                {
+                    "from": "buffer:validationErrors",
+                    "to": "login-form/state/validationErrors"
+                }
+            ]
+        },
+        {
+            "action": "save",
+            "from": "login-form/state/validationErrors"
+        }
+    ]
+}

@@ -1,0 +1,49 @@
+{
+    "name": "Admin Panel",
+    "module": "admin-panel",
+    "description": "Main admin panel page",
+    "version": "1.0.0",
+    "category": "admin",
+    "icon": "pi pi-cog",
+    "color": "#FF9800",
+    "routes": [
+        {
+            "path": "/panel",
+            "name": "admin.panel",
+            "component": "admin/layout",
+            "meta": {
+                "title": "Admin Panel",
+                "description": "Manage the admin panel"
+            }
+        }
+    ],
+    "permissions": [
+        {
+            "name": "admin.view",
+            "description": "View admin panel"
+        }
+    ],
+    "menu": {
+        "admin": [
+            {
+                "title": "Admin Panel",
+                "route": "admin.panel",
+                "icon": "pi pi-cog",
+                "order": 1,
+                "permission": "admin.view"
+            }
+        ],
+        "label": "Home Settings",
+        "path": "/admin/home-settings",
+        "order": 1
+    },
+    "permalink": {
+        "path": "admin/home-settings",
+        "module": "landing-main-page",
+        "metadata": {
+            "title": "Home Page Settings",
+            "description": "Configure main landing page settings.",
+            "handles_subpaths": false
+        }
+    }
+}

@@ -1,0 +1,20 @@
+{
+    "": [
+        "page.json",
+        "sections/king.json",
+        "sections/master.json",
+        "sections/maximum.json"
+    ],
+    "sections": [
+        "contact-section.json"
+    ],
+    "actions": [
+        "validate-contact-form.json"
+    ],
+    "data": {
+        "blanks": [
+            "address.json",
+            "product-markers.json"
+        ]
+    }
+}

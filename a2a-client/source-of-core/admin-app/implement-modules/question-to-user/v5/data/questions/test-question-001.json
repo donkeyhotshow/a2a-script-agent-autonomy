@@ -1,0 +1,19 @@
+{
+  "id": "test-question-001",
+  "text": "Какой ваш любимый цвет?",
+  "type": "single-choice",
+  "options": ["Красный", "Синий", "Зелёный"],
+  "tags": ["preferences", "color", "test"],
+  "conditions": {
+    "showIf": "true"
+  },
+  "metadata": {
+    "created": "2024-03-20T10:00:00Z",
+    "updated": "2024-03-20T10:00:00Z",
+    "author": "system",
+    "version": "1.0",
+    "description": "Тестовый вопрос для проверки синхронизации",
+    "category": "test",
+    "priority": "low"
+  }
+} 

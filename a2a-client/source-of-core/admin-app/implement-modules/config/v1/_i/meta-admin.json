@@ -1,0 +1,16 @@
+{
+    "permalink": {
+        "path": "admin/config",
+        "module": "config",
+        "metadata": {
+            "title": "Config Management",
+            "description": "Manage application configuration.",
+            "handles_subpaths": false
+        }
+    },
+    "menu": {
+        "label": "Configuration Management",
+        "path": "/admin/config",
+        "order": 9
+    }
+} 

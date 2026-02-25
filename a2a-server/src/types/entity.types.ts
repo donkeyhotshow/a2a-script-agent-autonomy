@@ -145,3 +145,72 @@ export interface CodeBlock {
   path: string;
   content: string;
 }
+
+// ============================================
+// Type Guards (plans/types-improvements.md)
+// ============================================
+
+/**
+ * Check if value is a valid EntityTypeName
+ */
+export function isEntityTypeName(value: unknown): value is EntityTypeName {
+  if (typeof value !== 'string') return false;
+  const validTypes: EntityTypeName[] = [
+    'MODEL', 'CONTROLLER', 'SERVICE', 'REPOSITORY', 'MIDDLEWARE',
+    'VUE_COMPONENT', 'COMPOSABLE', 'PHP', 'JS', 'CONFIG', 'REQUEST', 'VUE_PAGE', 'OTHER'
+  ];
+  return validTypes.includes(value as EntityTypeName);
+}
+
+/**
+ * Check if value is a valid RelationTypeName
+ */
+export function isRelationTypeName(value: unknown): value is RelationTypeName {
+  if (typeof value !== 'string') return false;
+  const validTypes: RelationTypeName[] = [
+    'USES', 'CREATES', 'VALIDATES', 'HANDLES', 'CALLS', 'EXTENDS',
+    'IMPLEMENTS', 'IMPORTS', 'RENDERS', 'BELONGS_TO', 'HAS_MANY', 'HAS_ONE'
+  ];
+  return validTypes.includes(value as RelationTypeName);
+}
+
+/**
+ * Check if value is a RecognizedEntity
+ */
+export function isRecognizedEntity(value: unknown): value is RecognizedEntity {
+  if (!value || typeof value !== 'object') return false;
+  const obj = value as Partial<RecognizedEntity>;
+  return (
+    typeof obj.id === 'string' &&
+    isEntityTypeName(obj.type) &&
+    typeof obj.name === 'string' &&
+    typeof obj.path === 'string'
+  );
+}
+
+/**
+ * Check if value is a RecognizedRelation
+ */
+export function isRecognizedRelation(value: unknown): value is RecognizedRelation {
+  if (!value || typeof value !== 'object') return false;
+  const obj = value as Partial<RecognizedRelation>;
+  return (
+    typeof obj.id === 'string' &&
+    typeof obj.fromPath === 'string' &&
+    isRelationTypeName(obj.type)
+  );
+}
+
+/**
+ * Check if value is a RecognitionResult
+ */
+export function isRecognitionResult(value: unknown): value is RecognitionResult {
+  if (!value || typeof value !== 'object') return false;
+  const obj = value as Partial<RecognitionResult>;
+  return (
+    Array.isArray(obj.entities) &&
+    Array.isArray(obj.relations) &&
+    obj.entities.every(isRecognizedEntity) &&
+    obj.relations.every(isRecognizedRelation)
+  );
+}

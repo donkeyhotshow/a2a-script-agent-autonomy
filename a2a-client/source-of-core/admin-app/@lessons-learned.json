@@ -1,0 +1,388 @@
+[
+    {
+        "entry": "[2025-05-01 19:37] File System Quirks: PowerShell file writes (Out-File, Set-Content) might not reliably persist changes or report errors correctly when called within complex scripts or specific terminal environments, even if preceding operations and logging show success → Why: Potential issues with stream handling, file locks, or terminal interaction (like piping to `cat`) can interfere. Investigate alternative save methods or check file status independently after writing."
+    },
+    {
+        "entry": "[2025-05-01 19:45] PowerShell Syntax: Trailing commas are not allowed after the last parameter definition within a `param()` block. Errors like 'Missing expression after =' can indicate this issue, especially after refactoring parameters. → Why: Strict syntax prevents ambiguity. Careful review after adding/removing parameters is needed."
+    },
+    {
+        "entry": "[2025-05-01 20:10] PowerShell Interop: Передача сложных структур между PowerShell-скриптами через параметры типа hashtable/array может приводить к синтаксическим и контекстным ошибкам, особенно при вызове через pwsh -File или между процессами → Решение: Всегда сериализовать такие структуры в JSON (ConvertTo-Json) в вызывающем скрипте и десериализовать (ConvertFrom-Json) в целевом. Ввести стандарт передачи сложных параметров через JSON для всех скриптов проекта. → Почему: Это устраняет ошибки преобразования типов, обеспечивает совместимость между разными способами вызова и облегчает отладку. #interop #powershell #json #standard #2025-05-01T20:10"
+    },
+    {
+        "entry": "[2025-05-01 20:15] Data Format Standardization: Для полной автоматизации и интеграции все системные данные (задачи, сценарии, прогресс, логи, конфиги) должны храниться только в формате JSON. Markdown-файлы допустимы только для человеко-ориентированной документации, но не для автоматизации. → Почему: JSON обеспечивает машинную обработку, массовое обновление, интеграцию с внешними инструментами и предотвращает ошибки парсинга. #standard #json #automation #2025-05-01T20:15"
+    },
+    {
+        "entry": "[2025-05-01 20:55] PowerShell Robustness: Scripts relying on external JSON files (config, index, data) MUST validate their existence and syntactic correctness at startup. Missing or corrupt JSON can lead to unpredictable runtime errors. Use a helper function (e.g., Test-JsonFile) to check files via Test-Path and ConvertFrom-Json within a try/catch block. Report errors clearly and exit gracefully if validation fails. → Why: Prevents cascading failures and ensures scripts operate on valid data, improving stability and debuggability. #validation #json #powershell #robustness #startup #bestpractice #2025-05-01T20:55"
+    },
+    {
+        "timestamp": "[2024-07-26T12:00:00Z]",
+        "category": "Task Management / Workflow",
+        "priority": "Important",
+        "lesson": {
+            "problem": "Need to prevent automatic execution of newly created or externally reset tasks until user validation occurs.",
+            "solution": "Introduced a 'pending-validation' status for tasks in 'tasks.index.json'. Modified the 'next.ps1' task processor to iterate all tasks but only execute those explicitly marked as 'planned', skipping 'pending-validation' and others. User validation is handled externally (simulated by manually changing the status to 'planned').",
+            "importance": "Ensures tasks aren't processed prematurely, allowing for external review/approval steps, which is critical for controlled automation workflows.",
+            "prevention": "Consistently use the 'pending-validation' status for new tasks or tasks requiring re-approval. Ensure task processing scripts strictly check for the 'planned' status before execution.",
+            "code_examples": null,
+            "references": [
+                "docs/__ps1/task/next.ps1",
+                "docs/__ps1/main/tasks.index.json",
+                "@scratchpad.json ([ID-009])"
+            ]
+        }
+    },
+    {
+        "timestamp": "[TIMESTAMP]",
+        "category": "Tooling Error",
+        "lesson": "Problem: PowerShell scripts (.ps1) executed via the environment's terminal tool (`run_terminal_cmd`) may silently fail (exit code 1, no output), even for simple Write-Host commands. → Identification Steps: 1. Verify script existence. 2. Add verbose Write-Host/Write-Error at various points (start, before/after includes, key logic blocks). 3. If no output appears even from the very first line, create a minimal test script (e.g., `Write-Host 'Test'`). 4. If the minimal script also fails silently, the issue is likely with the execution tool/environment, not the script code. 5. If the issue persists, try rebooting the system, as this resolved the problem in one instance. Use an external terminal if the issue returns. → Why: Critical for distinguishing script bugs from tooling/environment failures and knowing potential fixes (like reboot)."
+    },
+    {
+        "timestamp": "[TIMESTAMP]",
+        "category": "Architecture",
+        "priority": "Critical",
+        "problem": "Passing the main StepResponse object by reference to sub-processors (e.g., DataProcessor) and then merging the sub-processor's response back caused self-merging, duplicating array data like 'console' and 'history'.",
+        "solution": "Instantiate sub-processors with a *new* StepResponse object. After the sub-processor finishes, merge its response object into the main StepResponse object.",
+        "prevention": "Always instantiate new StepResponse objects for sub-processes that need to return their own state (history, console, etc.). Merge the result into the parent response only once after completion.",
+        "impact": "Prevents data duplication in response arrays, ensures predictable state management, clarifies data flow between components.",
+        "code_examples": "App::moduleActions: `$modificator = new DataProcessor($data, $storage, new StepResponse()); ... $this->response->merge($modificator->response());`",
+        "references": [
+            "@memories.json v1.1.30",
+            "app/AiRudeDepot/App/App.php",
+            "app/AiRudeDepot/Processors/DataProcessor.php"
+        ],
+        "tags": [
+            "stepresponse",
+            "merge",
+            "duplication",
+            "architecture",
+            "state-management",
+            "php"
+        ]
+    },
+    {
+        "timestamp": "[TIMESTAMP]",
+        "category": "Logging Standards",
+        "problem": "Need for standardized log levels across the application.",
+        "solution": "Consider adopting common log levels like debug, info, warning, error (as noted in analysis-window.mdc) for consistent logging practices.",
+        "importance": "Important",
+        "impact": "Improves log readability, filtering, and analysis.",
+        "prevention": "Define and enforce logging standards in project guidelines.",
+        "references": [
+            "docs_cleaning/1/cursor_rules_backup/analysis-window.mdc (processed)"
+        ]
+    },
+    {
+        "timestamp": "[TIMESTAMP]",
+        "category": "Debugging Process",
+        "problem": "Inefficient or haphazard debugging leading to wasted time.",
+        "solution": "Adopt a strict iterative debugging cycle: Run -> Analyze Output -> Read Logs -> Hypothesize -> Propose Fix/Log -> Repeat -> Cleanup Logs.",
+        "importance": "Critical",
+        "impact": "Significantly speeds up bug resolution, reduces guesswork, ensures issues are properly diagnosed based on evidence.",
+        "prevention": "Formalize and follow the iterative debugging standard (debugging-process-standard.md).",
+        "references": [
+            "script/data/standards/debugging-process-standard.md",
+            "docs_cleaning/1/cursor_rules_backup/iterative-debugging.mdc (processed)"
+        ]
+    },
+    {
+        "timestamp": "[AUTO] TBD",
+        "category": "Action System",
+        "issue": "Exact syntax/mechanism for invoking custom module PHP methods (e.g., from `app/AiRudeDepot/Modules/{module-id}/Code/`) via the `call` server action is undocumented/unverified in `docs_dev/sliced-upgrade-steps-v0/11-implement-php-logic.md`. Suggested format `php:...@...` needs confirmation.",
+        "solution": "Requires investigation of `ActionManager` implementation or finding working examples in the codebase to determine the correct syntax.",
+        "importance": "Critical for enabling complex backend logic within modules invoked from JSON UI.",
+        "priority": "High",
+        "impact": "Blocks implementation of modules requiring custom PHP logic called via `call` actions.",
+        "references": [
+            "docs_dev/sliced-upgrade-steps-v0/11-implement-php-logic.md"
+        ]
+    },
+    {
+        "timestamp": "[AUTO] TBD",
+        "category": "JSON UI Actions",
+        "issue": "Uncertainty about implementation status and exact distinction between `on` and `customHooks` handlers, noted in `action-documentation-fixes.md`. Also questions implementation of specific `customHooks` (data/media actions).",
+        "solution": "Requires codebase review of event handling logic (ActionManager, component handlers) to verify existence, scope, and intended usage of both `on` and `customHooks`. Need to confirm which `customHooks` actions are actually implemented.",
+        "importance": "Critical for understanding how to define component interactivity and backend communication correctly.",
+        "priority": "High",
+        "impact": "Ambiguity leads to incorrect usage, potential bugs, and difficulty choosing the right mechanism.",
+        "references": [
+            "docs_planning/modules/login-form-v2-upgrade-tasks/action-documentation-fixes.md"
+        ]
+    },
+    {
+        "timestamp": "[AUTO] TBD",
+        "category": "Security Practices",
+        "issue": "Potential hardcoded credentials found in `docs_planning/backend/server/mysql.txt` (e.g., `root:PASSWORD@localhost` line, example user password). Storing secrets in documentation or version control is insecure.",
+        "solution": "Remove all credentials from documentation/codebase. Use secure methods like environment variables, configuration files outside the repo (added to .gitignore), or dedicated secret management tools (e.g., Laravel Vault, Doppler, HashiCorp Vault). Establish clear standards for credential handling.",
+        "importance": "Critical for preventing unauthorized access and data breaches.",
+        "priority": "Critical",
+        "impact": "Exposure of credentials can lead to compromised systems/data.",
+        "references": [
+            "docs_planning/backend/server/mysql.txt (processed)"
+        ]
+    },
+    {
+        "timestamp": "[AUTO] TBD",
+        "category": "Documentation",
+        "issue": "Missing/incomplete documentation for specific Server Action operation types identified in `action-tasks.md`: model-operations, mysql-operations, buffer-operations, file-operations.",
+        "solution": "Create or complete the corresponding `.md` or standard files explaining these operations, parameters, and examples.",
+        "importance": "High for enabling developers to use advanced data/file manipulation via actions.",
+        "priority": "Medium",
+        "references": [
+            "docs_planning/modules/login-form-v2-upgrade-tasks/action-tasks.md"
+        ]
+    },
+    {
+        "timestamp": "[AUTO] TBD",
+        "category": "Documentation",
+        "issue": "Inconsistencies noted between `action-documentation.md` and `action-types-reference.md` regarding available Server Actions.",
+        "solution": "Review both documents, verify implemented actions against codebase (ActionManager), consolidate into a single, accurate reference (potentially a new standard file or table). Remove outdated/incorrect info.",
+        "importance": "Critical for providing accurate developer reference.",
+        "priority": "High",
+        "references": [
+            "docs_planning/modules/login-form-v2-upgrade-tasks/action-tasks.md"
+        ]
+    },
+    {
+        "timestamp": "[AUTO] TBD",
+        "category": "JSON UI Actions",
+        "issue": "Data addressing prefixes (`session!`, `model!`, `buffer:`) reported as unstable/unreliable in Login Form server actions (`action-tasks.md`).",
+        "solution": "Investigate the implementation of DataHub and ActionManager data access logic to identify root cause of instability. Stabilize prefix behavior or document limitations/correct usage clearly.",
+        "importance": "Critical for reliable data handling in actions.",
+        "priority": "High",
+        "references": [
+            "docs_planning/modules/login-form-v2-upgrade-tasks/action-tasks.md"
+        ]
+    },
+    {
+        "timestamp": "[AUTO] TBD",
+        "category": "Error Handling & Logging",
+        "issue": "Server action error handling (example: Login Form in `action-tasks.md`) lacks detail, sufficient logging, and user-friendly messages.",
+        "solution": "Implement standardized server-side logging for action execution (start, end, errors) with context. Define standard error response structures for actions. Improve user-facing error messages generated via actions.",
+        "importance": "Important for debugging and user experience.",
+        "priority": "Medium",
+        "references": [
+            "docs_planning/modules/login-form-v2-upgrade-tasks/action-tasks.md"
+        ]
+    },
+    {
+        "timestamp": "[AUTO] TBD",
+        "category": "Validation",
+        "issue": "Validation implementation within Server Actions reported as inconsistent (`action-tasks.md`).",
+        "solution": "Establish and document a standard approach for invoking validation within action sequences. Ensure consistency across modules like Login Form.",
+        "importance": "Important for data integrity.",
+        "priority": "Medium",
+        "references": [
+            "docs_planning/modules/login-form-v2-upgrade-tasks/action-tasks.md"
+        ]
+    },
+    {
+        "timestamp": "[AUTO] TBD",
+        "category": "PowerShell Scripting",
+        "issue": "Piping with '| cat' in 'invoke-file-cleanup.ps1' causes binding errors in Get-Content, likely due to non-string output objects.",
+        "solution": "Ensure script outputs are strings via Write-Output or format them appropriately; avoid piping if possible or use explicit string conversion.",
+        "importance": "Important",
+        "priority": "Medium",
+        "impact": "Improves script reliability and prevents runtime errors in automation workflows.",
+        "prevention": "Follow STD-POWERSHELL-SCRIPT-001 for proper output handling and testing with piping.",
+        "references": [
+            "@memories.json (current entry)",
+            "script/utils/invoke-file-cleanup.ps1"
+        ]
+    },
+    {
+        "timestamp": "[AUTO] TBD",
+        "category": "Security Practices",
+        "issue": "Potential hardcoded GitHub Personal Access Token (PAT) found in docs_dev/git.md (processed). Storing secrets like PATs in documentation or version control is highly insecure.",
+        "solution": "Remove all credentials from documentation/codebase. Use secure methods like environment variables, configuration files outside the repo (added to .gitignore), or dedicated secret management tools (e.g., Laravel Vault, Doppler, HashiCorp Vault). Establish clear standards for credential handling. **Revoke the exposed PAT immediately.**",
+        "importance": "Critical for preventing unauthorized access to code repositories and associated resources.",
+        "priority": "Critical",
+        "impact": "Exposure of credentials can lead to compromised code, data breaches, and unauthorized actions.",
+        "references": [
+            "docs_dev/git.md (processed)"
+        ],
+        "tags": [
+            "security",
+            "credentials",
+            "secrets-management",
+            "pat",
+            "git",
+            "critical",
+            "vulnerability"
+        ]
+    },
+    {
+        "timestamp": "[2024-07-26 10:00] Project Decision: JSON-LD functionality and associated tests (`test_generate_structured_data_returns_script`) removed from the project as per user direction. Corresponding composer package (`webnuvola/laravel-jsonld`) should be removed. → Why: Streamlines project by removing unused features and dependencies, aligning with current documented requirements which do not specify JSON-LD. #refactor #dependencies #requirements"
+    },
+    {
+        "timestamp": "[YYYY-MM-DD HH:MM]",
+        "category": "Testing (Mocking)",
+        "description": "Issue: Mocking static class methods in PHPUnit/Mockery for Laravel tests was problematic with instance mocks. → Fix: Used alias mocking for static classes, e.g., `Mockery::mock('alias:Namespace\\\\ClassName')`. → Why: Ensures static calls are correctly intercepted by the mock, leading to predictable behavior in tests relying on static helper methods like `ModuleClassResolver::resolve()`."
+    },
+    {
+        "timestamp": "[YYYY-MM-DD HH:MM]",
+        "category": "Testing (Dependency Injection)",
+        "description": "Issue: Tests requiring a specific instance of a manager class (e.g., `PermanentLinkManager` with overridden data) failed because the controller/service received a fresh instance from the service container. → Fix: Bind the test-specific instance to the Laravel service container in the test's `setUp()` method, e.g., `$this->app->instance(ManagerClass::class, $this->overriddenManager);`. → Why: Guarantees that the system under test uses the exact pre-configured instance, crucial for tests involving stateful services or modified configurations."
+    },
+    {
+        "timestamp": "[YYYY-MM-DD HH:MM]",
+        "category": "Framework (Inertia.js)",
+        "description": "Issue: Incorrectly attempting to render different Inertia components for error states (e.g., `Error/404`, `Error/500`). → Fix: Standardized on rendering a single main Inertia component (e.g., `Dynamic/Index`) for all responses, passing error details (type, message, status code) as props. → Why: Simplifies frontend routing and error display logic, making the Inertia integration more robust and easier to manage, aligning with typical Inertia patterns."
+    },
+    {
+        "timestamp": "[YYYY-MM-DD HH:MM]",
+        "category": "Data Management (Application Specific)",
+        "description": "Issue: Difficulty in passing permalink data resolved by `Main::runAppEnv` to the dynamically loaded module instance. → Fix: Stored the resolved permalink data array into the application instance's `DataHub` using a specific key (e.g., 'buffer:app.permalink_data') in `Main.php` and had modules retrieve it from this key. → Why: Provides a consistent mechanism for modules to access contextual permalink information without complex parameter passing through multiple layers, leveraging the existing `DataHub`."
+    },
+    {
+        "timestamp": "[YYYY-MM-DD HH:MM]",
+        "category": "Application Logic (Recursion/Redirects)",
+        "description": "Issue: Permalink entries of type 'link' were being incorrectly handled as redirects instead of internal resolutions. → Fix: Modified `Main::runAppEnv` to recursively call itself for 'link' type permalinks, passing necessary context, instead of issuing an HTTP redirect. → Why: Correctly implements the 'link' permalink type as an internal alias or forwarding mechanism rather than a client-side redirect, ensuring the URL remains unchanged and processing continues server-side."
+    },
+    {
+        "timestamp": "[YYYY-MM-DD HH:MM]",
+        "category": "Testing (State Management)",
+        "description": "Issue: Inconsistent history log counts in tests due to `FrontendApp` accumulating history from previous operations or error module executions. → Fix: Modified `FrontendApp` constructor to explicitly clear 'buffer:history' from its `DataHub` before creating its internal `StepResponse`. Also made history logging conditional in `FrontendApp::__construct` and `FrontendApp::run` to not log for error modules. → Why: Ensures a clean state for history logging at the start of each relevant `FrontendApp` lifecycle, making test assertions for history content and count more reliable and predictable."
+    },
+    {
+        "timestamp": "2025-05-05T13:00Z",
+        "category": "Component Development",
+        "description": "Issue: Inertia response props were double-nested due to backend returning page data as { props: { ... } } instead of a flat structure → Fix: Added logic in PageModule.php to flatten the structure if the only key is 'props', spreading all keys to the root before merging with global props → Why: Prevents frontend rendering issues, ensures maintainable and predictable data contracts, and avoids confusion in component props mapping. Prevention: Always flatten single-key 'props' arrays at the backend boundary before passing to Inertia. Related: app/AiRudeDepot/Modules/PageModule.php, Inertia integration."
+    },
+    {
+        "timestamp": "2025-05-05T13:20Z",
+        "category": "Component Development",
+        "description": "Issue: В StepResponse->getData('component') попадал массив вместо строки, что приводило к ошибке Error/Generic в Inertia → Fix: В PageModule.php всегда явно устанавливать строковое значение 'Dynamic/Index' в ключ 'component' → Why: Это предотвращает критические ошибки рендеринга и гарантирует предсказуемость API между backend и frontend. Prevention: Всегда проверять тип значения компонента перед возвратом в Inertia. Example: app/AiRudeDepot/Modules/PageModule.php."
+    },
+    {
+        "timestamp": "[TIMESTAMP]",
+        "category": "PHP Error Handling & Testing",
+        "lesson": "Issue: Recursive calls in error handling (e.g., rendering specific error pages like errors/508) failed due to TypeError when passing boolean `false` to a parameter expecting `?array`. This masked original errors. → Fix: Ensured `null` is passed for optional array parameters (e.g., `permalinkDataFromRunner` in `Main::runAppEnv`) in all recursive error page rendering calls. → Why: Strict type adherence in PHP is crucial, especially in error paths, to prevent cascading failures and ensure the correct error context is processed and displayed."
+    },
+    {
+        "timestamp": "[TIMESTAMP]",
+        "category": "PHP Object Property Access",
+        "lesson": "Issue: Permalink `link` attribute following failed in `Main.php` because `isset($currentPermalink->link)` might not reliably detect properties on objects with magic methods or specific dynamic structures. → Fix: Changed the condition to `property_exists($currentPermalink, 'link') && !empty($currentPermalink->link)` for more robust detection of the `link` attribute. → Why: `property_exists()` provides a more reliable way to check for property existence in objects, especially when their internal structure might not be straightforward or might involve PHP magic methods, ensuring conditional logic based on property presence behaves as expected."
+    },
+    {
+        "timestamp": "[TIMESTAMP]",
+        "category": "State Management & Testing",
+        "lesson": "Issue: History accumulated before a module exception was lost because the error page rendering started with a fresh `DataHub`/`StepResponse`. → Fix: Modified `Main.php`'s main catch block to pass the `DataHub` instance (which would contain pre-exception history and context) to the recursive `runAppEnv` call responsible for rendering the error page. Implemented `test_error_during_module_execution_includes_history` to verify this. → Why: Consistent state propagation (like history in a `DataHub`) through all execution paths, including error handling and recovery paths, is vital for accurate logging, debugging, and user feedback."
+    },
+    {
+        "timestamp": "[TIMESTAMP]",
+        "category": "Test Assertions & Error Flow",
+        "lesson": "Issue: Tests for error conditions (403, 404, 508) in `PermalinksTest.php` were asserting incorrect error page content or raw HTTP statuses because the error handling flow was not stable. → Fix: Aligned test assertions to expect the specific error page content (e.g., `errors/508` for loops, `errors/403` for access denied) rendered via the standard Inertia component, once the underlying error routing in `Main.php` was fixed. → Why: Test assertions must precisely mirror the application's expected behavior for specific error conditions. Changes in error handling logic require corresponding updates to test expectations to ensure accurate validation."
+    },
+    {
+        "timestamp": "2024-07-26T12:00:00Z",
+        "category": "UserInteraction",
+        "details": "Issue: User's previous prompt for AI to take over (e.g., \"запусти main-work.ps1...\") was not working effectively, potentially because it was too prescriptive about the AI's immediate next action, leading to AI seeking clarification instead of proceeding autonomously. → Solution: Developed a new template phrase ('Моя часть диалога завершена. Для определения следующих шагов и получения инструкций, используй main-work.ps1 по мере необходимости.') that clearly signals user input completion and directs the AI to use main-work.ps1 for guidance flexibly, as needed by its internal processing state. → Why: Clear and flexible hand-off prompts are crucial for smooth human-AI collaboration in complex workflows. They empower the AI to manage its internal decision-making and consult orchestrator scripts at appropriate junctures, rather than being rigidly commanded for each step. This reduces AI requests for unnecessary clarification and promotes smoother autonomous operation based on the established system design (e.g., reliance on main-work.ps1 for primary guidance).",
+        "priority": "Important",
+        "tags": [
+            "human-ai-interaction",
+            "prompt-design",
+            "autonomous-operation",
+            "workflow-efficiency",
+            "main-work.ps1"
+        ]
+    },
+    {
+        "timestamp": "2024-07-26T10:00:00Z",
+        "category": "PowerShell Scripting",
+        "problem": "Script using `Invoke-Expression` with complex string conditions for dynamic execution paths.",
+        "solution": "Replaced `Invoke-Expression` with explicit `if/else` or `switch` statements and direct function calls. For scenario transitions, implemented a structured `transitions` array in JSON with condition objects, evaluated by a dedicated PowerShell function (`Evaluate-Transitions`) using safer parsing and comparison logic.",
+        "importance": "Critical",
+        "impact": "Reduces security risks associated with `Invoke-Expression` (e.g., code injection), improves readability, and makes debugging easier. Structured transitions are more maintainable.",
+        "tags": [
+            "invoke-expression",
+            "security",
+            "refactoring",
+            "scenario-engine",
+            "powershell"
+        ]
+    },
+    {
+        "timestamp": "2024-07-26T11:00:00Z",
+        "category": "PowerShell Scripting",
+        "problem": "Passing parameters to script blocks invoked with `&` or `.` operator was not working as expected, leading to errors like 'Cannot find drive. A drive with the name param(...) does not exist.'",
+        "solution": "Ensured that parameters are splatted correctly (e.g., `. $scriptBlock @paramsToSplat`). Verified that the script block itself is well-formed and doesn't have issues with its own `param()` block when sourced.",
+        "importance": "Important",
+        "impact": "Correct parameter passing is essential for modular script design and proper function of action steps in the scenario engine.",
+        "tags": [
+            "script-block",
+            "parameter-passing",
+            "splatting",
+            "scenario-engine",
+            "powershell"
+        ]
+    },
+    {
+        "timestamp": "2024-07-26T12:00:00Z",
+        "category": "PowerShell Error Handling",
+        "problem": "`ConvertFrom-Json` used with `-ErrorAction SilentlyContinue` was masking issues with empty or malformed JSON files, leading to null objects and subsequent 'method on a null-valued expression' errors.",
+        "solution": "Changed `-ErrorAction SilentlyContinue` to `-ErrorAction Stop` for `ConvertFrom-Json` when loading critical files (like scenario definitions or progress markers). Added explicit null checks after conversion to handle cases where the file might be legitimately empty or parsing still fails for other reasons, allowing for graceful recovery or clearer error reporting.",
+        "importance": "Critical",
+        "impact": "Ensures that errors in JSON file integrity are caught early and explicitly, preventing cascading failures and making debugging more straightforward.",
+        "tags": [
+            "convertfrom-json",
+            "error-handling",
+            "json",
+            "powershell",
+            "debugging"
+        ]
+    },
+    {
+        "timestamp": "2024-07-26T14:00:00Z",
+        "category": "PowerShell Script Structure",
+        "problem": "`CmdletBinding` attribute caused a `ParserError: Unexpected attribute 'CmdletBinding'` when a helper function was defined before the main script's `param()` block in `Invoke-ScenarioEngine.ps1`.",
+        "solution": "Moved helper function definitions (like `Convert-PSCustomObjectToHashtable`) to appear *after* the script's main `param()` block but before their first use. `CmdletBinding` and `param` must be at the very beginning of the script body, after any `#Requires` statements but before any other code, including function definitions.",
+        "importance": "Important",
+        "impact": "Adhering to correct script structure is necessary for PowerShell parser to interpret `CmdletBinding` and `param` blocks correctly, enabling features like parameter validation and common parameters.",
+        "tags": [
+            "cmdletbinding",
+            "param-block",
+            "parser-error",
+            "powershell",
+            "script-structure"
+        ]
+    },
+    {
+        "timestamp": "2024-07-27T09:00:00Z",
+        "category": "PowerShell Path Manipulation",
+        "problem": "PowerShell script execution (specifically `Invoke-ScenarioEngine.ps1` calling `Execute-StepAction`) hung indefinitely when `Join-Path` was called with a null or empty string for its `ChildPath` argument, prompting interactively for the missing path component.",
+        "solution": "Before calling `Join-Path $parent $child`, always validate that both `$parent` and `$child` variables are non-null and non-empty strings. If validation fails, throw an explicit error or handle the condition appropriately instead of allowing `Join-Path` to hang. In `Execute-StepAction`, a check `if ([string]::IsNullOrWhiteSpace($normalizedPathFromScenario))` was added before `Join-Path`.",
+        "importance": "Critical",
+        "impact": "Prevents scripts from hanging indefinitely, which is crucial for automated processes and non-interactive environments. Ensures robust error handling for path operations.",
+        "tags": [
+            "join-path",
+            "path-manipulation",
+            "input-validation",
+            "script-hang",
+            "powershell",
+            "error-handling",
+            "scenario-engine"
+        ]
+    },
+    {
+        "timestamp": "[2024-07-26 10:00] PowerShell Pathing: Critical: When action scripts within a scenario engine are invoked, relative paths (e.g., for dependent files like question templates) must be resolved from the action script's $PSScriptRoot, not the engine's. Pass $EngineConfiguration.EnginePSScriptRoot or ensure action scripts construct paths from their own location if they need access to files relative to themselves or other known engine directories. -> Fix: Used Join-Path $PSScriptRoot 'relativePathToResource' within action scripts or passed necessary base paths via $EngineConfiguration. -> Why: Prevents File Not Found errors when action scripts are in subdirectories and try to access resources using paths relative to the main engine script.",
+    {
+        "timestamp": "[2024-07-26 11:00] PowerShell Boolean Parameters: Important: When calling PowerShell cmdlets or scripts with boolean switch parameters from within another script (especially when parameters are constructed dynamically or passed as strings initially), ensure they are correctly formatted as $true or $false (e.g., -MySwitch:$true). Simply using -MySwitch may not always be interpreted correctly in all contexts, especially if the calling mechanism treats it as a string. -> Fix: Explicitly used -SwitchName:$BooleanVariable in script calls. -> Why: Ensures predictable behavior and avoids silent failures or incorrect logic execution due to misinterpretation of boolean parameters."
+    },
+    {
+        "timestamp": "[2024-07-26 12:00] PowerShell PSCustomObject to Hashtable: Important: When parameters are deserialized from JSON (e.g., scenario step definitions containing action parameters), ConvertFrom-Json often produces PSCustomObjects. If downstream scripts expect Hashtables (e.g., for splatting or direct key access without PSObject property indirection), explicit conversion is needed. -> Fix: Implemented a Convert-PSCustomObjectToHashtable helper function that iterates PSObject.Properties. -> Why: Prevents type mismatch errors and ensures compatibility with functions expecting true hashtables, particularly for dynamic parameter handling."
+    },
+    {
+        "timestamp": "[2024-07-26 14:00] PowerShell Engine Configuration: Best Practice: When building a script engine that invokes other scripts (actions), pass a dedicated $EngineConfiguration hashtable containing common paths (like $EngineConfiguration.EnginePSScriptRoot, $EngineConfiguration.ActionsBasePath) and settings. -> Fix: Added $EngineConfiguration to Execute-Step and passed it to action scripts. -> Why: Centralizes configuration, reduces parameter clutter for action scripts, and makes the system more maintainable and less prone to errors from incorrect path assumptions."
+    },
+    {
+        "timestamp": "[2024-07-26 16:00] PowerShell Silent Failures with 'pwsh -File': Critical: If 'pwsh -File yourscript.ps1' fails silently or with cryptic errors (like not finding functions defined within the script itself), suspect file encoding issues (e.g., UTF-8 with BOM vs. UTF-8) or subtle parsing errors at the top of the script (e.g. [CmdletBinding()] placement, param() block syntax, especially default initializers). -> Fix: Copied script content to a new file (often resolves encoding issues). Systematically commented out [CmdletBinding()] and complex param() defaults, then re-introduced them carefully. Changed param() defaults for complex types to $null and initialized in script body using $PSBoundParameters.ContainsKey(). -> Why: PowerShell's parser can be very sensitive when a script is not loaded interactively. BOMs can interfere, and [CmdletBinding()] makes the param() block stricter. Silent failures mask underlying issues, requiring methodical isolation."
+    },
+    {
+        "timestamp": "[2024-07-26 17:00] PowerShell Parameter Initialization: Critical: When [CmdletBinding()] is used or when running via 'pwsh -File', initializing parameters with complex expressions (e.g., `$MyPath = (Join-Path $PSScriptRoot \"subdir\")`) directly in the param() block can cause parsing errors. Default such parameters to $null in param() and initialize them in the script body, often using `$PSBoundParameters.ContainsKey('ParameterName')` to check if they were provided. -> Fix: Example: `param([string]$MyPath = $null) if (-not $PSBoundParameters.ContainsKey('MyPath')) { $MyPath = Join-Path $PSScriptRoot \"subdir\" }`. -> Why: Enhances script robustness and avoids parser errors that can be hard to diagnose, especially in non-interactive execution contexts."
+    }
+    },
+    {
+        "timestamp": "[$(Get-Date -Format 'yyyy-MM-dd HH:mm')] Error Resolution: Test-Path -PathType Leaf incorrectly returns False for a valid file path (e.g., C:\apps\admin-app\app\Http\Controllers\Common\LoginController.php) in the environment → Fix: Bypassed the check in main-work.ps1 when collecting linkedFiles for taskQuery in ProcessActiveTask mode. This ensures linked files are passed to the index query despite the incorrect Test-Path result → Why: This behavior of Test-Path prevents correct collection of index data for linked files in FullyCollectTaskData tasks if the check is enabled. Bypassing allows the workflow to continue but indicates a potential system-level issue with Test-Path or the environment."
+    }
+]
+

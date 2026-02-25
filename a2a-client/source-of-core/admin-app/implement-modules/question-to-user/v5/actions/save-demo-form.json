@@ -1,0 +1,76 @@
+{
+    "type": "Instructions",
+    "instructions": [
+        {
+            "action": "update",
+            "batch": [
+                {
+                    "value": "save-demo-form",
+                    "to": "buffer:actionId"
+                },
+                {
+                    "value": {
+                        "keywords": ["demo", "form", "data-storage"],
+                        "ai_summary": "Saves demo form data to persistent storage.",
+                        "features": ["data-persistence"]
+                    },
+                    "to": "buffer:tags"
+                }
+            ]
+        },
+        {
+            "action": "comment",
+            "value": "Save demo form data to persistent storage"
+        },
+        {
+            "action": "update",
+            "batch": [
+                {
+                    "from": "input:formData",
+                    "to": "buffer:formData"
+                },
+                {
+                    "value": {
+                        "timestamp": "{system:timestamp}",
+                        "formData": "{buffer:formData}"
+                    },
+                    "to": "buffer:saveData"
+                }
+            ]
+        },
+        {
+            "action": "update",
+            "batch": [
+                {
+                    "from": "buffer:saveData",
+                    "to": "file!question-to-user/data/demo-forms/{input:formId}.json"
+                }
+            ]
+        },
+        {
+            "action": "save",
+            "from": "file!question-to-user/data/demo-forms/{input:formId}.json"
+        },
+        {
+            "action": "update",
+            "batch": [
+                {
+                    "from": "buffer:actionId",
+                    "to": "output:actionId"
+                },
+                {
+                    "from": "buffer:tags",
+                    "to": "output:tags"
+                },
+                {
+                    "value": {
+                        "success": true,
+                        "message": "Demo form saved successfully.",
+                        "formId": "{input:formId}"
+                    },
+                    "to": "output:result"
+                }
+            ]
+        }
+    ]
+} 

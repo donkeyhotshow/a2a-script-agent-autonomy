@@ -1,0 +1,34 @@
+[
+    {
+        "id": "home-quest-indirect",
+        "type": "quest",
+        "label": "Головна",
+        "path": "/landing-main-page",
+        "link": "/landing-main-page/page",
+        "icon": "pi pi-home"
+    },
+    {
+        "id": "home-quest-indirect",
+        "type": "quest",
+        "label": "Головна",
+        "path": "/landing-main-page/page",
+        "page": "page",
+        "icon": "pi pi-home"
+    },
+    {
+        "id": "shop-quest-direct",
+        "type": "quest",
+        "label": "Магазин",
+        "path": "/landing-main-page/shop",
+        "page": "shop",
+        "icon": "pi pi-home"
+    },
+    {
+        "id": "shop-quest-direct",
+        "type": "quest",
+        "label": "Магазин",
+        "path": "/shop",
+        "link": "/landing-main-page/shop",
+        "icon": "pi pi-home"
+    }
+]

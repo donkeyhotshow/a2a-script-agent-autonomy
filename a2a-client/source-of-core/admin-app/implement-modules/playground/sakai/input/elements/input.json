@@ -1,0 +1,43 @@
+{
+    "type": "div",
+    "props": {
+        "class": "card flex flex-col gap-4"
+    },
+    "children": [
+        {
+            "type": "operation",
+            "action": "add",
+            "source": "sakai-input/forms/input-text-form"
+        },
+        {
+            "type": "operation",
+            "action": "add",
+            "source": "sakai-input/forms/icons-form"
+        },
+        {
+            "type": "operation",
+            "action": "add",
+            "source": "sakai-input/forms/float-label-form"
+        },
+        {
+            "type": "operation",
+            "action": "add",
+            "source": "sakai-input/forms/textarea-form"
+        },
+        {
+            "type": "operation",
+            "action": "add",
+            "source": "sakai-input/forms/autocomplete-form"
+        },
+        {
+            "type": "operation",
+            "action": "add",
+            "source": "sakai-input/forms/datepicker-form"
+        },
+        {
+            "type": "operation",
+            "action": "add",
+            "source": "sakai-input/forms/input-number-form"
+        }
+    ]
+}

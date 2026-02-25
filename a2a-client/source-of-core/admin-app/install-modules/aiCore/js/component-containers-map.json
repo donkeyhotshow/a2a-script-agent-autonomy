@@ -1,0 +1,21 @@
+{
+    "default": "Tag",
+    "items": {
+        "buttongroup": "ButtonGroup",
+        "column": "Column",
+        "fieldset": "Fieldset",
+        "floatlabel": "FloatLabel",
+        "fluid": "Fluid",
+        "form": "Form",
+        "iconfield": "IconField",
+        "inputgroup": "InputGroup",
+        "inputgroupaddon": "InputGroupAddon",
+        "inputicon": "InputIcon",
+        "panel": "Panel",
+        "row": "Row",
+        "scrollpanel": "ScrollPanel",
+        "label": "Label",
+        "link": "Link",
+        "tag": "Tag"
+    }
+}

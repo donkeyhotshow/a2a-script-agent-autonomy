@@ -1,0 +1,18 @@
+{
+    "main-section": {
+        "pages": [
+            "page.json"
+        ],
+        "data": [
+            "data/submissions.json"
+        ],
+        "actions": [
+            "receive-submission.json",
+            "delete-submission.json"
+        ],
+        "templates": [
+            "forms/contact.json",
+            "dialogs/contact-dialog.json"
+        ]
+    }
+}

@@ -1,0 +1,1 @@
+{"description":"Slotted Component","version":"1.0.0","nestedValidation":{"structure":{"type":{"type":"string","required":true},"slots":{"type":"object","required":false,"nestedValidation":{"structure":{"header":{"_allowAnyObject":true,"_allowString":true,"required":true},"content":{"_allowAnyObject":true,"_allowString":true,"required":false}}}}}}}

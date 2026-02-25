@@ -1,0 +1,67 @@
+[
+    {
+        "name": "google",
+        "label": "Google",
+        "icon": "pi pi-google",
+        "color": "#DB4437",
+        "client_id": "YOUR_GOOGLE_CLIENT_ID",
+        "client_secret": "YOUR_GOOGLE_CLIENT_SECRET",
+        "redirect_url": "https://your-app.com/oauth/callback/google",
+        "auth_url": "https://accounts.google.com/o/oauth2/auth",
+        "token_url": "https://oauth2.googleapis.com/token",
+        "user_url": "https://www.googleapis.com/oauth2/v3/userinfo",
+        "scope": "email profile"
+    },
+    {
+        "name": "facebook",
+        "label": "Facebook",
+        "icon": "pi pi-facebook",
+        "color": "#4267B2",
+        "client_id": "YOUR_FACEBOOK_APP_ID",
+        "client_secret": "YOUR_FACEBOOK_APP_SECRET",
+        "redirect_url": "https://your-app.com/oauth/callback/facebook",
+        "auth_url": "https://www.facebook.com/v12.0/dialog/oauth",
+        "token_url": "https://graph.facebook.com/v12.0/oauth/access_token",
+        "user_url": "https://graph.facebook.com/v12.0/me?fields=id,name,email,picture",
+        "scope": "email public_profile"
+    },
+    {
+        "name": "github",
+        "label": "GitHub",
+        "icon": "pi pi-github",
+        "color": "#333333",
+        "client_id": "YOUR_GITHUB_CLIENT_ID",
+        "client_secret": "YOUR_GITHUB_CLIENT_SECRET",
+        "redirect_url": "https://your-app.com/oauth/callback/github",
+        "auth_url": "https://github.com/login/oauth/authorize",
+        "token_url": "https://github.com/login/oauth/access_token",
+        "user_url": "https://api.github.com/user",
+        "scope": "user:email"
+    },
+    {
+        "name": "twitter",
+        "label": "Twitter",
+        "icon": "pi pi-twitter",
+        "color": "#1DA1F2",
+        "client_id": "YOUR_TWITTER_API_KEY",
+        "client_secret": "YOUR_TWITTER_API_SECRET",
+        "redirect_url": "https://your-app.com/oauth/callback/twitter",
+        "auth_url": "https://twitter.com/i/oauth2/authorize",
+        "token_url": "https://api.twitter.com/2/oauth2/token",
+        "user_url": "https://api.twitter.com/2/users/me",
+        "scope": "tweet.read users.read offline.access"
+    },
+    {
+        "name": "linkedin",
+        "label": "LinkedIn",
+        "icon": "pi pi-linkedin",
+        "color": "#0077B5",
+        "client_id": "YOUR_LINKEDIN_CLIENT_ID",
+        "client_secret": "YOUR_LINKEDIN_CLIENT_SECRET",
+        "redirect_url": "https://your-app.com/oauth/callback/linkedin",
+        "auth_url": "https://www.linkedin.com/oauth/v2/authorization",
+        "token_url": "https://www.linkedin.com/oauth/v2/accessToken",
+        "user_url": "https://api.linkedin.com/v2/me",
+        "scope": "r_liteprofile r_emailaddress"
+    }
+]

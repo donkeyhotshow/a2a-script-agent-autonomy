@@ -1,0 +1,130 @@
+{
+    "type": "Instructions",
+    "instructions": [
+        {
+            "action": "update",
+            "from": "input",
+            "to": "login-form/data/social-auth"
+        },
+        {
+            "action": "update",
+            "batch": [
+                {
+                    "value": false,
+                    "to": "buffer:error"
+                },
+                {
+                    "value": "",
+                    "to": "buffer:errorMessage"
+                },
+                {
+                    "value": false,
+                    "to": "buffer:redirecting"
+                }
+            ]
+        },
+        {
+            "action": "update",
+            "condition": [
+                "equals",
+                "buffer:social-auth.provider",
+                ""
+            ],
+            "batch": [
+                {
+                    "value": true,
+                    "to": "buffer:error"
+                },
+                {
+                    "value": "Social provider not specified",
+                    "to": "buffer:errorMessage"
+                }
+            ]
+        },
+        {
+            "action": "update",
+            "condition": "!buffer:error",
+            "batch": [
+                {
+                    "value": "login-form/data/social-providers",
+                    "with": "json_decode",
+                    "to": "buffer:providers"
+                },
+                {
+                    "action": "for",
+                    "from": "buffer:providers",
+                    "instructions": [
+                        {
+                            "action": "update",
+                            "condition": [
+                                "equals",
+                                "buffer:for.currentItem.name",
+                                "buffer:social-auth.provider"
+                            ],
+                            "batch": [
+                                {
+                                    "from": "buffer:for.currentItem",
+                                    "to": "buffer:selectedProvider"
+                                },
+                                {
+                                    "value": true,
+                                    "to": "buffer:providerFound"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "action": "update",
+                    "condition": "buffer:providerFound",
+                    "batch": [
+                        {
+                            "value": true,
+                            "to": "buffer:redirecting"
+                        },
+                        {
+                            "value": "session:social-auth-state",
+                            "to": "buffer:stateStorageKey"
+                        },
+                        {
+                            "value": "{random(40)}",
+                            "to": "buffer:stateToken"
+                        },
+                        {
+                            "value": {
+                                "provider": "{buffer:selectedProvider.name}",
+                                "state": "{buffer:stateToken}",
+                                "created_at": "{date('Y-m-d H:i:s')}",
+                                "redirect_url": "{buffer:selectedProvider.redirect_url}",
+                                "client_id": "{buffer:selectedProvider.client_id}"
+                            },
+                            "to": "session!social-auth-state"
+                        },
+                        {
+                            "value": "{buffer:selectedProvider.auth_url}?client_id={buffer:selectedProvider.client_id}&redirect_uri={buffer:selectedProvider.redirect_url}&state={buffer:stateToken}&response_type=code&scope={buffer:selectedProvider.scope}",
+                            "to": "buffer:redirectUrl"
+                        }
+                    ]
+                },
+                {
+                    "action": "update",
+                    "condition": "!buffer:providerFound",
+                    "batch": [
+                        {
+                            "value": true,
+                            "to": "buffer:error"
+                        },
+                        {
+                            "value": "Invalid social provider",
+                            "to": "buffer:errorMessage"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "action": "return",
+            "from": "buffer"
+        }
+    ]
+}

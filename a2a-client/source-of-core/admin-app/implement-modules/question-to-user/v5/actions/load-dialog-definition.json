@@ -1,0 +1,78 @@
+{
+    "type": "Instructions",
+    "instructions": [
+        {
+            "action": "update",
+            "batch": [
+                {
+                    "value": "load-dialog-definition",
+                    "to": "buffer:actionId"
+                },
+                {
+                    "value": {
+                        "keywords": ["dialog", "definition", "ui-generation"],
+                        "ai_summary": "Loads a dialog definition and prepares it for display.",
+                        "features": ["dynamic-ui", "dialog-processing"]
+                    },
+                    "to": "buffer:tags"
+                }
+            ]
+        },
+        {
+            "action": "comment",
+            "value": "Load dialog definition and prepare for display"
+        },
+        {
+            "action": "update",
+            "batch": [
+                {
+                    "from": "file!question-to-user/data/dialog-definitions/{input:dialogId}.json",
+                    "to": "buffer:dialogDefinition"
+                }
+            ]
+        },
+        {
+            "action": "update",
+            "batch": [
+                {
+                    "from": "buffer:dialogDefinition",
+                    "to": "file!question-to-user/templates/current-dialog.json"
+                }
+            ]
+        },
+        {
+            "action": "save",
+            "from": "file!question-to-user/templates/current-dialog.json"
+        },
+        {
+            "action": "update",
+            "batch": [
+                {
+                    "from": "file!question-to-user/templates/current-dialog.json",
+                    "to": "output:currentDialog"
+                }
+            ]
+        },
+        {
+            "action": "update",
+            "batch": [
+                {
+                    "from": "buffer:actionId",
+                    "to": "output:actionId"
+                },
+                {
+                    "from": "buffer:tags",
+                    "to": "output:tags"
+                },
+                {
+                    "value": {
+                        "success": true,
+                        "message": "Dialog definition loaded successfully.",
+                        "dialog": "{buffer:dialogDefinition}"
+                    },
+                    "to": "output:result"
+                }
+            ]
+        }
+    ]
+} 

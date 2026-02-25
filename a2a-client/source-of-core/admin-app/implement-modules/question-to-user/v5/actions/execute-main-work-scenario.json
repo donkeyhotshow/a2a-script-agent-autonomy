@@ -1,0 +1,130 @@
+{
+    "type": "Instructions",
+    "instructions": [
+        {
+            "action": "update",
+            "batch": [
+                {
+                    "value": "execute-main-work-scenario",
+                    "to": "buffer:actionId"
+                },
+                {
+                    "value": {
+                        "keywords": ["scenario", "execute", "workflow", "system"],
+                        "ai_summary": "Executes a specified main-work scenario with provided inputs.",
+                        "features": ["workflow-execution", "system-integration"]
+                    },
+                    "to": "buffer:tags"
+                }
+            ]
+        },
+        {
+            "action": "comment",
+            "value": "Triggers a system scenario by preparing inputs and setting a marker file. It then attempts to read a corresponding output file. Assumes an external process monitors markers, consumes inputs, and writes outputs."
+        },
+        {
+            "action": "comment",
+            "value": "Executing scenario: ID='{input:scenarioId}', TaskID='{input:taskId}', UserInput='{input:userInputValue}'."
+        },
+        {
+            "action": "update",
+            "batch": [
+                {
+                    "value": {
+                        "scenarioId": "{input:scenarioId}",
+                        "taskId": "{input:taskId}",
+                        "userInputValue": "{input:userInputValue}",
+                        "triggeredByModule": "question-to-user/v5",
+                        "expectedOutputPath": "question-to-user/data/scenario_outputs/{input:scenarioId}",
+                        "timestamp": "{system:timestamp}"
+                    },
+                    "to": "buffer:scenarioInputsForFile"
+                },
+                {
+                    "from": "buffer:scenarioInputsForFile",
+                    "to": "file!question-to-user/data/scenario_inputs/{input:scenarioId}"
+                }
+            ]
+        },
+        {
+            "action": "update",
+            "batch": [
+                {
+                    "value": {
+                        "trigger": true,
+                        "status": "triggered_by_qtu_action",
+                        "inputFilePath": "question-to-user/data/scenario_inputs/{input:scenarioId}",
+                        "expectedOutputFilePath": "question-to-user/data/scenario_outputs/{input:scenarioId}",
+                        "lastUpdateTimestamp": "{system:timestamp}"
+                    },
+                    "to": "buffer:markerData"
+                },
+                {
+                    "from": "buffer:markerData",
+                    "to": "file!question-to-user/data/markers/{input:scenarioId}"
+                }
+            ]
+        },
+        {
+            "action": "update",
+            "from": "file!question-to-user/data/scenario_outputs/{input:scenarioId}",
+            "to": "buffer:scenarioOutputData"
+        },
+        {
+            "action": "update",
+            "condition": "!buffer:scenarioOutputData",
+            "batch": [
+                {
+                    "value": {
+                        "status": "triggered",
+                        "message": "Scenario '{input:scenarioId}' has been triggered. Output is pending.",
+                        "rawOutput": "Input prepared at: question-to-user/data/scenario_inputs/{input:scenarioId}.json\nMarker updated: question-to-user/data/markers/{input:scenarioId}.json\nWaiting for output at: question-to-user/data/scenario_outputs/{input:scenarioId}.json",
+                        "nextQuestion": null
+                    },
+                    "to": "buffer:finalExecutionResult"
+                }
+            ]
+        },
+        {
+            "action": "update",
+            "condition": "buffer:scenarioOutputData",
+            "batch": [
+                {
+                    "from": "buffer:scenarioOutputData",
+                    "to": "buffer:finalExecutionResult"
+                }
+            ]
+        },
+        {
+            "action": "update",
+            "condition": [
+                "and",
+                "buffer:scenarioOutputData",
+                "buffer:scenarioOutputData.message"
+            ],
+            "batch": [
+                {
+                    "value": "Output retrieved for scenario '{input:scenarioId}': {buffer:scenarioOutputData.message}",
+                    "to": "buffer:finalExecutionResult.message"
+                }
+            ]
+        },
+        {
+            "action": "update",
+            "batch": [
+                {
+                    "from": "buffer:actionId",
+                    "to": "output:actionId"
+                },
+                {
+                    "from": "buffer:tags",
+                    "to": "output:tags"
+                },
+                {
+                    "from": "buffer:finalExecutionResult",
+                    "to": "output:result"
+                }
+            ]
+        }
+    ]
+} 

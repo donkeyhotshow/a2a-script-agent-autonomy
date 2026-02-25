@@ -1,0 +1,7 @@
+[
+    {
+        "action": "update",
+        "from": "top-bar-links/admin",
+        "to": "output"
+    }
+]

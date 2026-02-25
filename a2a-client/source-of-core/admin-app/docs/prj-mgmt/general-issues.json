@@ -1,0 +1,153 @@
+{
+    "title": "General Issues and Limitations of the JSON UI Module System",
+    "introduction": "This document describes general architectural and technical limitations inherent in the current implementation of the JSON UI module system.",
+    "issueCategories": [
+        {
+            "categoryTitle": "Architectural Issues",
+            "issues": [
+                {
+                    "issueId": "arch_1",
+                    "title": "Data Addressing System",
+                    "description": "The current system uses string prefixes (`session:`, `state:`, `buffer:`, `model:`) for data access. This can lead to typing issues and potential name conflicts.",
+                    "manifestations": [
+                        "Lack of strict type checking when accessing data.",
+                        "Possibility of accidental data overwrites when using identical keys in different storages."
+                    ],
+                    "relatedDocuments": [
+                        "*Link to Core/AiRudeDepot documentation describing data storages (if exists).*"
+                    ],
+                    "improvementPlan": [
+                        "Development of a typed addressing system.",
+                        "Implementation of mechanisms to prevent name conflicts."
+                    ]
+                },
+                {
+                    "issueId": "arch_2",
+                    "title": "Event System",
+                    "description": "The current event system (`customHooks` and `hub.notifyManager`) is decentralized and lacks a unified bus.",
+                    "manifestations": [
+                        "Difficulties in debugging the flow of events between modules.",
+                        "Lack of built-in filtering or prioritization mechanisms."
+                    ],
+                    "relatedDocuments": [
+                        "*Link to Core/NotifyManager documentation (if exists).*",
+                        "*Examples of `customHooks` use in [PrimeVue in JSON UI](./primevue-components.md)*"
+                    ],
+                    "improvementPlan": [
+                        "Consider implementing a unified event bus.",
+                        "Add tools for monitoring and debugging events."
+                    ]
+                },
+                {
+                    "issueId": "arch_3",
+                    "title": "Actions Structure Migration",
+                    "description": "A transition is underway from the old action structure to a new one using `batch`. Both approaches may be present in the code.",
+                    "manifestations": [
+                        "Need to maintain backward compatibility.",
+                        "Potential inconsistency in processing logic."
+                    ],
+                    "relatedDocuments": [
+                        "*Link to Core/ActionExecutor or similar documentation describing action formats (if exists).*"
+                    ],
+                    "improvementPlan": [
+                        "Complete migration to the new `batch` format.",
+                        "Clear documentation of the new action format."
+                    ]
+                }
+            ]
+        },
+        {
+            "categoryTitle": "Technical Limitations",
+            "issues": [
+                {
+                    "issueId": "tech_1",
+                    "title": "Integration with PrimeVue",
+                    "description": "Integrating complex PrimeVue components via the JSON structure has limitations.",
+                    "manifestations": [
+                        "Issues with two-way `model` binding for some components (TreeTable, Calendar) - requires using `customHooks`.",
+                        "Limited support for complex events (e.g., drag-and-drop)."
+                    ],
+                    "relatedDocuments": [
+                        "[PrimeVue in JSON UI Module System](./primevue-components.md)",
+                        "[PrimeVue Version Compatibility](./primevue-version-compatibility.md) (If exists)"
+                    ],
+                    "improvementPlan": [
+                        "Develop adapters for more complex components.",
+                        "Improve documentation on integrating specific PrimeVue components."
+                    ]
+                },
+                {
+                    "issueId": "tech_2",
+                    "title": "Performance with Large Data",
+                    "description": "Displaying and processing large JSON structures or data lists can impact performance.",
+                    "manifestations": [
+                        "Delays when rendering tables/lists with thousands of elements.",
+                        "Increased memory consumption."
+                    ],
+                    "relatedDocuments": [
+                        "[Module Interface Examples](./ui-examples.md) (Section with optimization recommendations)"
+                    ],
+                    "improvementPlan": [
+                        "Active use of pagination (`paginator: true`) and virtual scrolling (where supported).",
+                        "Optimization of the server-side to return only necessary data.",
+                        "Implementation of caching."
+                    ]
+                },
+                {
+                    "issueId": "tech_3",
+                    "title": "Data Validation",
+                    "description": "The current validation system is primarily implemented on the server-side (in PHP commands).",
+                    "manifestations": [
+                        "Limited client-side validation.",
+                        "Need for explicit implementation of validation rules in PHP."
+                    ],
+                    "relatedDocuments": [
+                        "*Link to Core/Validation documentation or PHP command examples (if exists).*"
+                    ],
+                    "improvementPlan": [
+                        "Consider possibilities for declarative validation in JSON.",
+                        "Improve feedback on validation errors in the UI."
+                    ]
+                }
+            ]
+        },
+        {
+            "categoryTitle": "Organizational Aspects",
+            "issues": [
+                {
+                    "issueId": "org_1",
+                    "title": "Documentation",
+                    "description": "Documentation is undergoing continuous improvement and restructuring.",
+                    "manifestations": [
+                        "Possible incomplete sections or outdated information.",
+                        "Requires constant link updates."
+                    ],
+                    "relatedDocuments": [
+                        "[Comprehensive Documentation Plan](../documentation-plan.md)",
+                        "[Documentation Index](./documentation-index.md)"
+                    ],
+                    "improvementPlan": [
+                        "Execution of tasks from the documentation plan.",
+                        "Regular review and updates."
+                    ]
+                },
+                {
+                    "issueId": "org_2",
+                    "title": "Development and Debugging Tools",
+                    "description": "Lack of specialized tools for debugging data flow and actions in JSON UI.",
+                    "manifestations": [
+                        "Debugging requires manual analysis of logs and storage states."
+                    ],
+                    "relatedDocuments": [],
+                    "improvementPlan": [
+                        "Research and development of tools for visualizing state and data flow."
+                    ]
+                }
+            ]
+        }
+    ],
+    "relatedDocumentsGeneral": [
+        "[Module System Documentation Index](./documentation-index.md)",
+        "[Versioning Plan](./versioning-plan.md)"
+    ]
+}

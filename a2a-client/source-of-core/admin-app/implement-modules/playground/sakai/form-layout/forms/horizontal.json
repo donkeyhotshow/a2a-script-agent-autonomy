@@ -1,0 +1,81 @@
+{
+    "type": "div",
+    "props": {
+        "class": "card flex flex-col gap-4"
+    },
+    "children": [
+        {
+            "type": "Text",
+            "props": {
+                "content": "Horizontal",
+                "class": "font-semibold text-xl"
+            }
+        },
+        {
+            "type": "div",
+            "props": {
+                "class": "grid grid-cols-12 gap-2"
+            },
+            "children": [
+                {
+                    "type": "Label",
+                    "props": {
+                        "for": "name3",
+                        "content": "Name",
+                        "class": "flex items-center col-span-12 mb-2 md:col-span-2 md:mb-0"
+                    }
+                },
+                {
+                    "type": "div",
+                    "props": {
+                        "class": "col-span-12 md:col-span-10"
+                    },
+                    "children": [
+                        {
+                            "type": "InputText",
+                            "props": {
+                                "id": "name3",
+                                "type": "text",
+                                "class": "p-inputtext-fluid w-full",
+                                "placeholder": "Enter your name"
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "type": "div",
+            "props": {
+                "class": "grid grid-cols-12 gap-2"
+            },
+            "children": [
+                {
+                    "type": "Label",
+                    "props": {
+                        "for": "email3",
+                        "content": "Email",
+                        "class": "flex items-center col-span-12 mb-2 md:col-span-2 md:mb-0"
+                    }
+                },
+                {
+                    "type": "div",
+                    "props": {
+                        "class": "col-span-12 md:col-span-10"
+                    },
+                    "children": [
+                        {
+                            "type": "InputText",
+                            "props": {
+                                "id": "email3",
+                                "type": "text",
+                                "class": "p-inputtext-fluid w-full",
+                                "placeholder": "Enter your email"
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

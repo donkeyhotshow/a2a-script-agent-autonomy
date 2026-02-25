@@ -1,0 +1,23 @@
+[
+    {
+        "type": "Text",
+        "props": {
+            "content": "Multi Select",
+            "class": "font-semibold text-xl"
+        }
+    },
+    {
+        "type": "MultiSelect",
+        "props": {
+            "model": "multiselectValue",
+            "options": {
+                "type": "operation",
+                "action": "include",
+                "source": "layout/test-data/select-city"
+            },
+            "optionLabel": "name",
+            "placeholder": "Select Countries",
+            "filter": true
+        }
+    }
+]

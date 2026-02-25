@@ -1,0 +1,42 @@
+{
+    "name": "NotPrototypeAnymore",
+    "install": {
+        "init": {
+            "display": {
+                "content": {
+                    "type": "operation",
+                    "action": "include",
+                    "source": "primary-form/programs/story/install/1init"
+                }
+            }
+        },
+        "next": {
+            "task": "follow the special protocol for accurate interaction",
+            "display": {
+                "content": {
+                    "type": "operation",
+                    "action": "include",
+                    "source": "primary-form/programs/story/install/2next"
+                }
+            }
+        },
+        "argue": {
+            "display": {
+                "content": {
+                    "type": "operation",
+                    "action": "include",
+                    "source": "primary-form/programs/story/install/3arg"
+                }
+            }
+        }
+    },
+    "run": {
+        "initial": {
+            "type": "operation",
+            "action": "include",
+            "source": "primary-form/programs/story/install/4initial"
+        },
+        "fileFromFilenavigator": {
+        }
+    }
+}

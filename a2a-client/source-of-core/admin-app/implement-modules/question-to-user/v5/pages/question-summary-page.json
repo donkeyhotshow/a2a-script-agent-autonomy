@@ -1,0 +1,24 @@
+{
+    "type": "Page",
+    "id": "qtu-question-summary-page",
+    "title": "Сводка по вопросам (Таблица)",
+    "content": {
+        "type": "div",
+        "props": {
+            "class": "flex flex-col min-h-screen bg-gray-100"
+        },
+        "children": [
+            {
+                "type": "h2",
+                "props": {
+                    "content": "Таблица вопросов"
+                }
+            },
+            {
+                "type": "div",
+                "props": {},
+                "children": []
+            }
+        ]
+    }
+}

@@ -1,0 +1,21 @@
+{
+    "type": "Card",
+    "props": {
+        "title": "User Authentication",
+        "class": "w-full max-w-lg mx-auto my-10 shadow-xl rounded-lg"
+    },
+    "children": [
+        {
+            "type": "Password",
+            "props": {
+                "placeholder": "Enter Password",
+                "toggleMask": true,
+                "class": "w-full p-2 border rounded"
+            },
+            "model": {
+                "form": "secret-form",
+                "field": "secret_key"
+            }
+        }
+    ]
+}

@@ -1,0 +1,10 @@
+{
+    "name": "Playground JSON  Module",
+    "description": "Core functionalities required by the application.",
+    "version": "1.0.0",
+    "author": "Admin App Team",
+    "dependencies": {
+        "primevue": "^4.0.0",
+        "tailwindcss": "^3.0.0"
+    }
+}

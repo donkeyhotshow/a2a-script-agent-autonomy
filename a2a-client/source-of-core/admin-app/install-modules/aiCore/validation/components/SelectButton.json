@@ -1,0 +1,113 @@
+{
+    "componentName": "SelectButton",
+    "description": "PrimeVue SelectButton component for choosing from options using buttons.",
+    "level": 3,
+    "status": "ready",
+    "dependencies": [
+        "VModel.vue"
+    ],
+    "_comment": "Validation expects properties within a 'props' object.",
+    "nestedValidation": {
+        "structure": {
+            "vAddress": {
+                "type": "string",
+                "required": false,
+                "description": "Address for v-model or component identification."
+            },
+            "disabled": {
+                "type": "boolean",
+                "required": false,
+                "default": false,
+                "description": "Disable rendering of the component."
+            },
+            "props": {
+                "type": "object",
+                "required": false,
+                "description": "Container for PrimeVue SelectButton properties and HTML attributes.",
+                "nestedValidation": {
+                    "structure": {
+                        "options": {
+                            "type": "array",
+                            "required": true,
+                            "description": "An array of objects or values to display as options."
+                        },
+                        "optionLabel": {
+                            "type": "string",
+                            "required": false,
+                            "description": "Property name or function to retrieve the label of an option."
+                        },
+                        "optionValue": {
+                            "type": "string",
+                            "required": false,
+                            "description": "Property name or function to retrieve the value of an option."
+                        },
+                        "optionDisabled": {
+                            "type": "string",
+                            "required": false,
+                            "description": "Property name or function to indicate if an option is disabled."
+                        },
+                        "multiple": {
+                            "type": "boolean",
+                            "required": false,
+                            "default": false,
+                            "description": "Allows multiple selection."
+                        },
+                        "allowEmpty": {
+                            "type": "boolean",
+                            "required": false,
+                            "default": true,
+                            "description": "Whether selection can be cleared."
+                        },
+                        "pt": {
+                            "type": "object",
+                            "required": false
+                        },
+                        "ptOptions": {
+                            "type": "object",
+                            "required": false
+                        },
+                        "unstyled": {
+                            "type": "boolean",
+                            "required": false,
+                            "default": false
+                        },
+                        "tabindex": {
+                            "type": [
+                                "string",
+                                "number"
+                            ],
+                            "required": false
+                        },
+                        "name": {
+                            "type": "string",
+                            "required": false
+                        },
+                        "allOf": [
+                            {
+                                "$ref": "../common/props.json"
+                            }
+                        ]
+                    }
+                }
+            },
+            "children": {
+                "type": "array",
+                "required": false,
+                "description": "SelectButton does not typically accept children.",
+                "nestedValidation": {
+                    "_blockAll": true
+                }
+            },
+            "$ref": "../common/root.json"
+        }
+    },
+    "implementationNotes": [
+        "Refactored placeholder rule to standard V1 format (using 'props').",
+        "Level updated to 2.",
+        "Requires VModel wrapper.",
+        "Added common PrimeVue SelectButton properties and 'option' slot.",
+        "'options' prop is marked as required.",
+        "Note: Original notes mentioned missing .vue wrapper file."
+    ],
+    "documentationLink": "docs/guides/module/04-ui-construction.md"
+}

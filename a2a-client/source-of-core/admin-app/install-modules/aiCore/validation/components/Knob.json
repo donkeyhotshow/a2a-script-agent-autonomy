@@ -1,0 +1,133 @@
+{
+    "componentName": "Knob",
+    "description": "Input component to enter restricted values using a knob dial.",
+    "level": 4,
+    "status": "ready",
+    "dependencies": [
+        "VModel.vue"
+    ],
+    "_comment": "Validation expects properties within a 'props' object.",
+    "documentationLink": "docs/guides/module/04-ui-construction.md",
+    "nestedValidation": {
+        "structure": {
+            "vAddress": {
+                "type": "string",
+                "required": false,
+                "description": "Address for v-model or component identification."
+            },
+            "disabled": {
+                "type": "boolean",
+                "required": false,
+                "default": false,
+                "description": "Disable rendering of the component."
+            },
+            "props": {
+                "type": "object",
+                "required": false,
+                "description": "Container for PrimeVue Knob properties and HTML attributes.",
+                "nestedValidation": {
+                    "structure": {
+                        "min": {
+                            "type": "number",
+                            "required": false,
+                            "default": 0
+                        },
+                        "max": {
+                            "type": "number",
+                            "required": false,
+                            "default": 100
+                        },
+                        "step": {
+                            "type": "number",
+                            "required": false,
+                            "default": 1
+                        },
+                        "valueTemplate": {
+                            "type": "string",
+                            "required": false,
+                            "default": "{value}",
+                            "description": "Template string to format the value."
+                        },
+                        "size": {
+                            "type": "number",
+                            "required": false,
+                            "default": 100,
+                            "description": "Size in pixels."
+                        },
+                        "strokeWidth": {
+                            "type": "number",
+                            "required": false,
+                            "default": 14,
+                            "description": "Width of the stroke."
+                        },
+                        "readonly": {
+                            "type": "boolean",
+                            "required": false,
+                            "default": false
+                        },
+                        "valueColor": {
+                            "type": "string",
+                            "required": false,
+                            "default": "var(--primary-color, #3B82F6)",
+                            "description": "Value arc color."
+                        },
+                        "rangeColor": {
+                            "type": "string",
+                            "required": false,
+                            "default": "var(--surface-border, #D1D5DB)",
+                            "description": "Range background color."
+                        },
+                        "textColor": {
+                            "type": "string",
+                            "required": false,
+                            "default": "var(--text-color-secondary, #6B7280)",
+                            "description": "Value text color."
+                        },
+                        "pt": {
+                            "type": "object",
+                            "required": false
+                        },
+                        "ptOptions": {
+                            "type": "object",
+                            "required": false
+                        },
+                        "unstyled": {
+                            "type": "boolean",
+                            "required": false,
+                            "default": false
+                        },
+                        "tabindex": {
+                            "type": [
+                                "string",
+                                "number"
+                            ],
+                            "required": false,
+                            "default": 0
+                        },
+                        "allOf": [
+                            {
+                                "$ref": "../common/props.json"
+                            }
+                        ]
+                    }
+                }
+            },
+            "children": {
+                "type": "array",
+                "required": false,
+                "description": "Knob does not typically accept children.",
+                "nestedValidation": {
+                    "_blockAll": true
+                }
+            },
+            "requiresModel": true,
+            "$ref": "../common/root.json"
+        }
+    },
+    "implementationNotes": [
+        "Refactored to standard V1 format (using 'props').",
+        "PrimeVue component: Knob",
+        "Added standard HTML attributes and common PrimeVue props.",
+        "Requires model binding (likely via VModel wrapper)."
+    ]
+}

@@ -1,0 +1,66 @@
+[
+    {
+        "id": "core",
+        "name": "Core System",
+        "version": "1.0.0",
+        "description": "Основной модуль системы, не может быть отключен.",
+        "isEnabled": true,
+        "canDisable": false,
+        "hasSettingsPage": false,
+        "settingsPageUrl": null,
+        "dependencies": []
+    },
+    {
+        "id": "userManagement",
+        "name": "User Management",
+        "version": "1.2.0",
+        "description": "Модуль управления пользователями и правами.",
+        "isEnabled": true,
+        "canDisable": true,
+        "hasSettingsPage": true,
+        "settingsPageUrl": "#/config/user-management-settings",
+        "dependencies": [
+            "core"
+        ]
+    },
+    {
+        "id": "contentManager",
+        "name": "Content Manager",
+        "version": "0.9.0",
+        "description": "Модуль для управления контентом сайта.",
+        "isEnabled": false,
+        "canDisable": true,
+        "hasSettingsPage": true,
+        "settingsPageUrl": "#/config/content-manager-settings",
+        "dependencies": [
+            "core",
+            "userManagement"
+        ]
+    },
+    {
+        "id": "config",
+        "name": "Configuration Module",
+        "version": "1.0.0",
+        "description": "Модуль управления конфигурациями системы.",
+        "isEnabled": true,
+        "canDisable": false,
+        "hasSettingsPage": false,
+        "settingsPageUrl": null,
+        "dependencies": [
+            "core"
+        ]
+    },
+    {
+        "id": "aiCore",
+        "name": "AI Core Module",
+        "version": "1.0.0",
+        "description": "Модуль AI компонентов и валидации.",
+        "isEnabled": true,
+        "canDisable": true,
+        "hasSettingsPage": false,
+        "settingsPageUrl": null,
+        "dependencies": [
+            "core"
+        ]
+    }
+]

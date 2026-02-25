@@ -1,0 +1,9 @@
+{
+    "type": "div",
+    "props": {
+        "vAddress": "props.textBlock.vAddress",
+        "class": "font-semibold mb-1 mt-3 qtu-question-text",
+        "content": "props.textBlock.content",
+        "ariaLive": "polite"
+    }
+}

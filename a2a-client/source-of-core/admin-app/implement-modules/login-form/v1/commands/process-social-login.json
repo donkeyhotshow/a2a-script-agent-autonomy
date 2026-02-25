@@ -1,0 +1,253 @@
+{
+    "type": "Instructions",
+    "instructions": [
+        {
+            "action": "update",
+            "batch": [
+                {
+                    "value": false,
+                    "to": "buffer:authenticated"
+                },
+                {
+                    "value": false,
+                    "to": "buffer:error"
+                },
+                {
+                    "value": "",
+                    "to": "buffer:errorMessage"
+                }
+            ]
+        },
+        {
+            "action": "update",
+            "condition": [
+                "equals",
+                "buffer:socialProfile.email",
+                ""
+            ],
+            "batch": [
+                {
+                    "value": true,
+                    "to": "buffer:error"
+                },
+                {
+                    "value": "Email not provided by the social provider",
+                    "to": "buffer:errorMessage"
+                }
+            ]
+        },
+        {
+            "action": "update",
+            "condition": "!buffer:error",
+            "batch": [
+                {
+                    "value": "mysql:users",
+                    "with": "json_decode",
+                    "to": "buffer:users"
+                },
+                {
+                    "value": "mysql:social_connections",
+                    "with": "json_decode",
+                    "to": "buffer:socialConnections"
+                },
+                {
+                    "value": false,
+                    "to": "buffer:socialConnectionFound"
+                },
+                {
+                    "value": false,
+                    "to": "buffer:userByEmailFound"
+                },
+                {
+                    "action": "for",
+                    "from": "buffer:socialConnections",
+                    "instructions": [
+                        {
+                            "action": "update",
+                            "condition": [
+                                "equals",
+                                "buffer:for.currentItem.provider",
+                                "buffer:socialProfile.provider"
+                            ],
+                            "batch": [
+                                {
+                                    "action": "update",
+                                    "condition": [
+                                        "equals",
+                                        "buffer:for.currentItem.provider_id",
+                                        "buffer:socialProfile.provider_id"
+                                    ],
+                                    "batch": [
+                                        {
+                                            "value": true,
+                                            "to": "buffer:socialConnectionFound"
+                                        },
+                                        {
+                                            "from": "buffer:for.currentItem",
+                                            "to": "buffer:foundSocialConnection"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "action": "for",
+                    "from": "buffer:users",
+                    "instructions": [
+                        {
+                            "action": "update",
+                            "condition": [
+                                "equals",
+                                "buffer:for.currentItem.email",
+                                "buffer:socialProfile.email"
+                            ],
+                            "batch": [
+                                {
+                                    "value": true,
+                                    "to": "buffer:userByEmailFound"
+                                },
+                                {
+                                    "from": "buffer:for.currentItem",
+                                    "to": "buffer:foundUserByEmail"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "action": "update",
+                    "condition": "buffer:socialConnectionFound",
+                    "batch": [
+                        {
+                            "action": "for",
+                            "from": "buffer:users",
+                            "instructions": [
+                                {
+                                    "action": "update",
+                                    "condition": [
+                                        "equals",
+                                        "buffer:for.currentItem.id",
+                                        "buffer:foundSocialConnection.user_id"
+                                    ],
+                                    "batch": [
+                                        {
+                                            "from": "buffer:for.currentItem",
+                                            "to": "buffer:authenticatedUser"
+                                        },
+                                        {
+                                            "value": true,
+                                            "to": "buffer:authenticated"
+                                        },
+                                        {
+                                            "value": "Logged in with {buffer:socialProfile.provider}",
+                                            "to": "buffer:successMessage"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "action": "update",
+                    "condition": "!buffer:socialConnectionFound",
+                    "batch": [
+                        {
+                            "action": "update",
+                            "condition": "buffer:userByEmailFound",
+                            "batch": [
+                                {
+                                    "value": {
+                                        "user_id": "{buffer:foundUserByEmail.id}",
+                                        "provider": "{buffer:socialProfile.provider}",
+                                        "provider_id": "{buffer:socialProfile.provider_id}",
+                                        "created_at": "{date('Y-m-d H:i:s')}"
+                                    },
+                                    "to": "buffer:newSocialConnection"
+                                },
+                                {
+                                    "action": "add",
+                                    "from": "buffer:newSocialConnection",
+                                    "to": "mysql:social_connections"
+                                },
+                                {
+                                    "from": "buffer:foundUserByEmail",
+                                    "to": "buffer:authenticatedUser"
+                                },
+                                {
+                                    "value": true,
+                                    "to": "buffer:authenticated"
+                                },
+                                {
+                                    "value": "Connected {buffer:socialProfile.provider} account and logged in",
+                                    "to": "buffer:successMessage"
+                                }
+                            ]
+                        },
+                        {
+                            "action": "update",
+                            "condition": "!buffer:userByEmailFound",
+                            "batch": [
+                                {
+                                    "value": {
+                                        "login": "{buffer:socialProfile.provider}_{buffer:socialProfile.provider_id}",
+                                        "email": "{buffer:socialProfile.email}",
+                                        "password": "{random(20)}",
+                                        "name": "{buffer:socialProfile.name}",
+                                        "avatar": "{buffer:socialProfile.avatar}",
+                                        "created_at": "{date('Y-m-d H:i:s')}",
+                                        "role": "user"
+                                    },
+                                    "to": "buffer:newUser"
+                                },
+                                {
+                                    "action": "add",
+                                    "from": "buffer:newUser",
+                                    "to": "mysql:users"
+                                },
+                                {
+                                    "value": "mysql:users[last]",
+                                    "to": "buffer:lastUser"
+                                },
+                                {
+                                    "value": {
+                                        "user_id": "{buffer:lastUser.id}",
+                                        "provider": "{buffer:socialProfile.provider}",
+                                        "provider_id": "{buffer:socialProfile.provider_id}",
+                                        "created_at": "{date('Y-m-d H:i:s')}"
+                                    },
+                                    "to": "buffer:newSocialConnection"
+                                },
+                                {
+                                    "action": "add",
+                                    "from": "buffer:newSocialConnection",
+                                    "to": "mysql:social_connections"
+                                },
+                                {
+                                    "from": "buffer:lastUser",
+                                    "to": "buffer:authenticatedUser"
+                                },
+                                {
+                                    "value": true,
+                                    "to": "buffer:authenticated"
+                                },
+                                {
+                                    "value": "Account created with {buffer:socialProfile.provider} and logged in",
+                                    "to": "buffer:successMessage"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "action": "update",
+            "condition": "buffer:authenticated",
+            "from": "buffer:authenticatedUser",
+            "to": "session!user"
+        }
+    ]
+}

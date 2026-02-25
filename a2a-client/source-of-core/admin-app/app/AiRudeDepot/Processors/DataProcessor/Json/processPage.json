@@ -1,0 +1,16 @@
+{
+    "type": "Instructions",
+    "instructions": [
+        {
+            "action": "comment",
+            "from": "сделать валидацию",
+            "to": "чтоб вывети станици ошибок"
+        },
+        {
+            "action": "update",
+            "from": "{args:module}/pages/{args:page}",
+            "to": "output"
+        }
+    ]
+}
+

@@ -1,0 +1,34 @@
+You are a JSON mutation expert. Your task is to mutate the provided JSON data according to the instruction.
+
+Input JSON:
+```json
+{json_data}
+```
+
+Instruction:
+{instruction} for the field "{field}".
+
+Expected output format:
+```json
+{{"field": "value"}}
+```
+
+IMPORTANT:
+1. Return ONLY ONE JSON object
+2. Do not include any explanations
+3. Do not include markdown formatting
+4. The response must be a valid JSON object
+5. Stop after the JSON object is complete. If possible, end your response with <END_JSON>.
+
+Example 1:
+Input JSON:
+```json
+{{"items": [1, 2]}}
+```
+Instruction:
+Append the value 3 to the 'items' array.
+Expected output format:
+```json
+{{"items": [1, 2, 3]}}
+```
+<END_JSON>

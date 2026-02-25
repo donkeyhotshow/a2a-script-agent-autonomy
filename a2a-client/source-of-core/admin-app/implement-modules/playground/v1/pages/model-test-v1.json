@@ -1,0 +1,325 @@
+{
+    "type": "Page",
+    "content": {
+        "type": "div",
+        "props": {
+            "class": "p-4 grid grid-cols-1 md:grid-cols-2 gap-4"
+        },
+        "children": [
+            {
+                "type": "div",
+                "props": {
+                    "id": "inputSection",
+                    "class": "border rounded p-4 space-y-4"
+                },
+                "children": [
+                    {
+                        "type": "H2",
+                        "props": {
+                            "class": "text-xl font-semibold",
+                            "content": "Test: Model Operations (Path Format)"
+                        }
+                    },
+                    {
+                        "type": "Form",
+                        "props": {
+                            "formId": "modelDataForm",
+                            "class": "space-y-2 border p-2 rounded"
+                        },
+                        "children": [
+                            {
+                                "type": "H4",
+                                "props": {
+                                    "content": "Record Data"
+                                }
+                            },
+                            {
+                                "type": "InputText",
+                                "props": {
+                                    "label": "Name"
+                                },
+                                "model": {
+                                    "form": "modelDataForm",
+                                    "field": "name"
+                                }
+                            },
+                            {
+                                "type": "InputText",
+                                "props": {
+                                    "label": "Value"
+                                },
+                                "model": {
+                                    "form": "modelDataForm",
+                                    "field": "value"
+                                }
+                            },
+                            {
+                                "type": "InputText",
+                                "props": {
+                                    "label": "Category"
+                                },
+                                "model": {
+                                    "form": "modelDataForm",
+                                    "field": "category"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "type": "Form",
+                        "props": {
+                            "formId": "modelParamForm",
+                            "class": "space-y-2 border p-2 rounded mt-4"
+                        },
+                        "children": [
+                            {
+                                "type": "H4",
+                                "props": {
+                                    "content": "Parameters for Load/Update/Delete/Where/Count"
+                                }
+                            },
+                            {
+                                "type": "InputText",
+                                "props": {
+                                    "label": "Record ID"
+                                },
+                                "model": {
+                                    "form": "modelParamForm",
+                                    "field": "recordId"
+                                }
+                            },
+                            {
+                                "type": "Select",
+                                "props": {
+                                    "label": "Where Column"
+                                },
+                                "model": {
+                                    "form": "modelParamForm",
+                                    "field": "whereColumn",
+                                    "options": [
+                                        {
+                                            "label": "ID",
+                                            "value": "id"
+                                        },
+                                        {
+                                            "label": "Name",
+                                            "value": "name"
+                                        },
+                                        {
+                                            "label": "Email",
+                                            "value": "email"
+                                        },
+                                        {
+                                            "label": "Description",
+                                            "value": "description"
+                                        },
+                                        {
+                                            "label": "Status",
+                                            "value": "status"
+                                        },
+                                        {
+                                            "label": "Type",
+                                            "value": "type"
+                                        },
+                                        {
+                                            "label": "Amount",
+                                            "value": "amount"
+                                        },
+                                        {
+                                            "label": "Created At",
+                                            "value": "created_at"
+                                        },
+                                        {
+                                            "label": "Updated At",
+                                            "value": "updated_at"
+                                        }
+                                    ]
+                                }
+                            },
+                            {
+                                "type": "InputText",
+                                "props": {
+                                    "label": "Where Value"
+                                },
+                                "model": {
+                                    "form": "modelParamForm",
+                                    "field": "whereValue"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "type": "div",
+                        "props": {
+                            "class": "flex flex-wrap gap-2 pt-2"
+                        },
+                        "children": [
+                            {
+                                "type": "Button",
+                                "props": {
+                                    "label": "Save New"
+                                },
+                                "customHooks": {
+                                    "click": [
+                                        {
+                                            "action": "sendData",
+                                            "data": {
+                                                "sendTo": "model-test-v1/save-new-model",
+                                                "form": "modelDataForm"
+                                            }
+                                        }
+                                    ]
+                                }
+                            },
+                            {
+                                "type": "Button",
+                                "props": {
+                                    "label": "Update by ID"
+                                },
+                                "customHooks": {
+                                    "click": [
+                                        {
+                                            "action": "sendData",
+                                            "data": {
+                                                "sendTo": "model-test-v1/update-model-by-id",
+                                                "forms": [
+                                                    "modelDataForm",
+                                                    "modelParamForm"
+                                                ]
+                                            }
+                                        }
+                                    ]
+                                }
+                            },
+                            {
+                                "type": "Button",
+                                "props": {
+                                    "label": "Load by ID"
+                                },
+                                "customHooks": {
+                                    "click": [
+                                        {
+                                            "action": "sendData",
+                                            "data": {
+                                                "sendTo": "model-test-v1/load-model-by-id",
+                                                "form": "modelParamForm"
+                                            }
+                                        }
+                                    ]
+                                }
+                            },
+                            {
+                                "type": "Button",
+                                "props": {
+                                    "label": "Load by Where"
+                                },
+                                "customHooks": {
+                                    "click": [
+                                        {
+                                            "action": "sendData",
+                                            "data": {
+                                                "sendTo": "model-test-v1/load-model-by-where",
+                                                "form": "modelParamForm"
+                                            }
+                                        }
+                                    ]
+                                }
+                            },
+                            {
+                                "type": "Button",
+                                "props": {
+                                    "label": "Delete by ID",
+                                    "severity": "danger"
+                                },
+                                "customHooks": {
+                                    "click": [
+                                        {
+                                            "action": "sendData",
+                                            "data": {
+                                                "sendTo": "model-test-v1/delete-model-by-id",
+                                                "form": "modelParamForm"
+                                            }
+                                        }
+                                    ]
+                                }
+                            },
+                            {
+                                "type": "Button",
+                                "props": {
+                                    "label": "Count All"
+                                },
+                                "customHooks": {
+                                    "click": [
+                                        {
+                                            "action": "sendData",
+                                            "data": {
+                                                "sendTo": "model-test-v1/count-model-all"
+                                            }
+                                        }
+                                    ]
+                                }
+                            },
+                            {
+                                "type": "Button",
+                                "props": {
+                                    "label": "Count by Where"
+                                },
+                                "customHooks": {
+                                    "click": [
+                                        {
+                                            "action": "sendData",
+                                            "data": {
+                                                "sendTo": "model-test-v1/count-model-by-where",
+                                                "form": "modelParamForm"
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "type": "div",
+                "props": {
+                    "id": "outputSection",
+                    "class": "border rounded p-4 space-y-2"
+                },
+                "children": [
+                    {
+                        "type": "H3",
+                        "props": {
+                            "class": "text-lg font-semibold",
+                            "content": "Result / Status:"
+                        }
+                    },
+                    {
+                        "type": "div",
+                        "props": {
+                            "id": "modelStatus",
+                            "class": "p-2 border rounded bg-blue-100 text-blue-800",
+                            "content": "Ready..."
+                        }
+                    },
+                    {
+                        "type": "div",
+                        "props": {
+                            "id": "modelOutput",
+                            "class": "p-3 border rounded bg-gray-100 min-h-[150px] whitespace-pre-wrap",
+                            "content": "Output will appear here..."
+                        }
+                    },
+                    {
+                        "type": "div",
+                        "props": {
+                            "id": "statusLog",
+                            "class": "p-3 border rounded bg-gray-50 min-h-[80px] mb-4"
+                        },
+                        "children": []
+                    }
+                ]
+            }
+        ]
+    }
+}

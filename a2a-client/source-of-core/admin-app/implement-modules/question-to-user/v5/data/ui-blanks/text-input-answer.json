@@ -1,0 +1,12 @@
+{
+    "type": "input",
+    "props": {
+        "type": "text",
+        "placeholder": "Type your answer here...",
+        "class": "w-full p-2 border rounded mb-4"
+    },
+    "model": {
+        "field": "defaultField",
+        "default": null
+    }
+} 

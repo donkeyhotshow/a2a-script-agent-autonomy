@@ -1,0 +1,14 @@
+{
+    "type": "Instructions",
+    "instructions": [
+        {
+            "action": "update",
+            "from": "args:1",
+            "to": "input"
+        },
+        {
+            "action": "call",
+            "from": "{args:0}"
+        }
+    ]
+}

@@ -1,0 +1,201 @@
+# Документация по формату JSON для Instructions-Update-Buffer-Output
+
+## Основная структура
+
+```json
+{
+    "type": "Instructions",
+    "instructions": [
+        {
+            "action": "update",
+            "batch": [
+                {
+                    "value": <original_value>,
+                    "to": "buffer:<field_name>"
+                }
+            ]
+        }
+    ]
+}
+```
+
+## Примеры использования
+
+### 1. Простой объект
+Входной JSON:
+```json
+{
+    "name": "test"
+}
+```
+
+Преобразование:
+```json
+{
+    "type": "Instructions",
+    "instructions": [
+        {
+            "action": "update",
+            "batch": [
+                {
+                    "value": "test",
+                    "to": "buffer:name"
+                }
+            ]
+        }
+    ]
+}
+```
+
+### 2. Вложенный объект
+Входной JSON:
+```json
+{
+    "config": {
+        "enabled": true,
+        "settings": {
+            "timeout": 30
+        }
+    }
+}
+```
+
+Преобразование:
+```json
+{
+    "type": "Instructions",
+    "instructions": [
+        {
+            "action": "update",
+            "batch": [
+                {
+                    "value": {
+                        "enabled": true,
+                        "settings": {
+                            "timeout": 30
+                        }
+                    },
+                    "to": "buffer:config"
+                }
+            ]
+        }
+    ]
+}
+```
+
+### 3. Массив объектов
+Входной JSON:
+```json
+{
+    "dependencies": [
+        {
+            "id": "1",
+            "version": "1.0"
+        }
+    ]
+}
+```
+
+Преобразование:
+```json
+{
+    "type": "Instructions",
+    "instructions": [
+        {
+            "action": "update",
+            "batch": [
+                {
+                    "value": [
+                        {
+                            "id": "1",
+                            "version": "1.0"
+                        }
+                    ],
+                    "to": "buffer:dependencies"
+                }
+            ]
+        }
+    ]
+}
+```
+
+## Правила преобразования
+
+1. Все поля должны быть преобразованы в формат buffer
+2. Сохраняется вложенность объектов
+3. Сохраняются типы данных
+4. Всегда добавляется поле type: "Instructions"
+5. Все изменения должны быть в массиве instructions
+6. Каждое изменение должно иметь action: "update"
+7. В batch указываются все поля для обновления
+
+## Валидация
+
+1. Проверка обязательных полей:
+   - type
+   - instructions
+   - action
+   - batch
+   - value
+   - to
+
+2. Проверка форматов:
+   - type должен быть "Instructions"
+   - action должен быть "update"
+   - to должен начинаться с "buffer:"
+
+3. Проверка типов данных:
+   - value может быть любого типа
+   - to должен быть строкой
+   - batch должен быть массивом
+
+## Примеры ошибок
+
+### 1. Неправильный формат buffer
+```json
+{
+    "type": "Instructions",
+    "instructions": [
+        {
+            "action": "update",
+            "batch": [
+                {
+                    "value": "test",
+                    "to": "name"  // Ошибка: должно быть "buffer:name"
+                }
+            ]
+        }
+    ]
+}
+```
+
+### 2. Отсутствие обязательных полей
+```json
+{
+    "type": "Instructions",
+    "instructions": [
+        {
+            "action": "update"
+            // Ошибка: отсутствует batch
+        }
+    ]
+}
+```
+
+### 3. Неправильный тип
+```json
+{
+    "type": "WrongType",  // Ошибка: должно быть "Instructions"
+    "instructions": [
+        {
+            "action": "update",
+            "batch": [
+                {
+                    "value": "test",
+                    "to": "buffer:name"
+                }
+            ]
+        }
+    ]
+}
+``` 

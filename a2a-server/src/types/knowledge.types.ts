@@ -19,7 +19,9 @@ export type NeuronCategory =
   | 'file_management'
   | 'code_analysis'
   | 'generation'
-  | 'external_ai';
+  | 'external_ai'
+  // Custom lint neurons category
+  | 'custom_lint';
 
 export type NeuronAction =
   | { type: 'inject'; target: string }

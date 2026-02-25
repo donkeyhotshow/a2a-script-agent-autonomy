@@ -1,0 +1,10 @@
+{
+    "type": "Instructions",
+    "instructions": [
+        {
+            "action": "update",
+            "from": "top-bar-links/{args:0}",
+            "to": "output"
+        }
+    ]
+}

@@ -1,0 +1,194 @@
+{
+    "type": "Page",
+    "title": "Послуги - Магазин та Барбершоп",
+    "description": "Ознайомтеся з послугами нашого барбершопу та асортиментом преміальної чоловічої косметики.",
+    "content": {
+        "type": "div",
+        "name": "services-page",
+        "props": {
+            "class": "bg-surface-0 dark:bg-surface-900"
+        },
+        "children": [
+            {
+                "type": "operation",
+                "action": "include",
+                "source": "layout/sections/landing-header.json"
+            },
+            {
+                "type": "operation",
+                "action": "include",
+                "source": "landing-main-page/sections/services/services-hero-section"
+            },
+            {
+                "type": "div",
+                "name": "services-navigation",
+                "props": {
+                    "class": "sticky top-0 z-20 py-3 px-4 md:px-6 lg:px-8 border-b border-surface-200 dark:border-surface-700 bg-surface-0/80 dark:bg-surface-900/80 backdrop-blur-sm"
+                },
+                "children": [
+                    {
+                        "type": "div",
+                        "props": {
+                            "class": "flex flex-wrap justify-center gap-2 sm:gap-4 max-w-7xl mx-auto"
+                        },
+                        "children": [
+                            {
+                                "type": "Button",
+                                "props": {
+                                    "label": "Барбер-послуги",
+                                    "icon": "pi pi-scissors",
+                                    "link": true,
+                                    "class": "p-button-lg text-surface-700 dark:text-surface-200 hover:text-primary dark:hover:text-primary-400"
+                                },
+                                "customHooks": {
+                                    "click": [
+                                        {
+                                            "action": "scrollTo",
+                                            "data": {
+                                                "elementId": "barber-services",
+                                                "behavior": "smooth"
+                                            }
+                                        }
+                                    ]
+                                }
+                            },
+                            {
+                                "type": "Button",
+                                "props": {
+                                    "label": "Преміум-пакети",
+                                    "icon": "pi pi-star",
+                                    "link": true,
+                                    "class": "p-button-lg text-surface-700 dark:text-surface-200 hover:text-primary dark:hover:text-primary-400"
+                                },
+                                "customHooks": {
+                                    "click": [
+                                        {
+                                            "action": "scrollTo",
+                                            "data": {
+                                                "elementId": "premium-packages",
+                                                "behavior": "smooth"
+                                            }
+                                        }
+                                    ]
+                                }
+                            },
+                            {
+                                "type": "Button",
+                                "props": {
+                                    "label": "Магазин Косметики",
+                                    "icon": "pi pi-shopping-cart",
+                                    "link": true,
+                                    "class": "p-button-lg text-surface-700 dark:text-surface-200 hover:text-primary dark:hover:text-primary-400"
+                                },
+                                "customHooks": {
+                                    "click": [
+                                        {
+                                            "action": "navigateTo",
+                                            "data": {
+                                                "route": "/landing-main-page/shop"
+                                            }
+                                        }
+                                    ]
+                                }
+                            },
+                            {
+                                "type": "Button",
+                                "props": {
+                                    "label": "Контакти",
+                                    "icon": "pi pi-phone",
+                                    "severity": "primary",
+                                    "class": "p-button-lg"
+                                },
+                                "customHooks": {
+                                    "click": [
+                                        {
+                                            "action": "showModal",
+                                            "data": {
+                                                "from": "contact-form/templates/dialogs/contact-dialog"
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "type": "div",
+                "props": {
+                    "id": "barber-services"
+                },
+                "children": [
+                    {
+                        "type": "operation",
+                        "action": "include",
+                        "source": "landing-main-page/sections/services/barber-services-section"
+                    }
+                ]
+            },
+            {
+                "type": "div",
+                "props": {
+                    "id": "premium-packages"
+                },
+                "children": [
+                    {
+                        "type": "operation",
+                        "action": "include",
+                        "source": "landing-main-page/sections/pricing-section"
+                    }
+                ]
+            },
+            {
+                "type": "div",
+                "name": "shop-cta-section",
+                "props": {
+                    "class": "py-12 px-4 md:px-6 lg:px-8 bg-surface-100 dark:bg-surface-800 text-center"
+                },
+                "children": [
+                    {
+                        "type": "H2",
+                        "props": {
+                            "content": "Відкрийте наш Магазин Косметики",
+                            "class": "text-3xl font-bold mb-4 text-surface-900 dark:text-surface-0"
+                        }
+                    },
+                    {
+                        "type": "P",
+                        "props": {
+                            "content": "Знайдіть ідеальні засоби для догляду за волоссям, бородою та шкірою.",
+                            "class": "text-xl text-surface-600 dark:text-surface-300 mb-8 max-w-3xl mx-auto"
+                        }
+                    },
+                    {
+                        "type": "Button",
+                        "props": {
+                            "label": "Перейти до Магазину",
+                            "icon": "pi pi-shopping-cart",
+                            "severity": "warn",
+                            "size": "large",
+                            "class": "p-button-lg transition-transform transform hover:scale-105"
+                        },
+                        "customHooks": {
+                            "click": [
+                                {
+                                    "action": "navigateTo",
+                                    "data": {
+                                        "route": "/landing-main-page/shop"
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                ]
+            },
+            {
+                "type": "operation",
+                "action": "include",
+                "source": "landing-main-page/sections/footer-section"
+            }
+        ]
+    }
+}
+

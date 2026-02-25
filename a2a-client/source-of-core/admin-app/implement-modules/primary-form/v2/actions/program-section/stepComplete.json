@@ -1,0 +1,35 @@
+{
+    "type": "Instructions",
+    "instructions": [
+        {
+            "action": "update",
+            "batch": [
+                {
+                    "from": "models/windows",
+                    "find": {
+                        "attr": "id",
+                        "value": "{primary-form/data/program-section:selectedWindow}"
+                    },
+                    "to": "buffer:selectedWindowInstance",
+                    "comment": "require index for read state array"
+                },
+                {
+                    "from": "buffer:selectedWindowInstance.state",
+                    "to": "buffer:state"
+                },
+                {
+                    "value": true,
+                    "to": "primary-form/data/program-section:stepComplete"
+                },
+                {
+                    "from": "primary-form/data/program-section",
+                    "to": "output:forms.program-section"
+                }
+            ]
+        },
+        {
+            "action": "save",
+            "from": "primary-form/data/program-section"
+        }
+    ]
+}

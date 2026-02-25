@@ -1,0 +1,63 @@
+{
+    "componentName": "Avatar",
+    "description": "Displays an image, icon, or label to represent a user or entity.",
+    "level": 3,
+    "status": "ready",
+    "dependencies": [],
+    "_comment": "Validation expects properties within a 'props' object.",
+    "documentationLink": "docs/guides/module/04-ui-construction.md",
+    "nestedValidation": {
+        "structure": {
+            "children": {
+                "type": "array",
+                "required": false,
+                "description": "Avatar does not typically accept children.",
+                "nestedValidation": {
+                    "_blockAll": true
+                }
+            },
+            "props": {
+                "type": "object",
+                "required": false,
+                "description": "Container for PrimeVue Avatar properties and HTML attributes.",
+                "nestedValidation": {
+                    "structure": {
+                        "allOf": [
+                            {
+                                "$ref": "../common/props.json"
+                            },
+                            {
+                                "$ref": "../common/icon.json"
+                            },
+                            {
+                                "$ref": "../common/size.json"
+                            },
+                            {
+                                "image": {
+                                    "type": "string",
+                                    "required": false,
+                                    "description": "Defines the image url to display as the avatar."
+                                },
+                                "shape": {
+                                    "type": "string",
+                                    "required": false,
+                                    "default": "square",
+                                    "options": [
+                                        "square",
+                                        "circle"
+                                    ],
+                                    "description": "Shape of the avatar."
+                                }
+                            }
+                        ]
+                    }
+                }
+            },
+            "$ref": "../common/root.json"
+        }
+    },
+    "implementationNotes": [
+        "PrimeVue component: Avatar",
+        "Refactored rule based on PrimeVue Avatar documentation and merging previous definitions."
+    ]
+}

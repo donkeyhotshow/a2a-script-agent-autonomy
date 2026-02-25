@@ -1,0 +1,69 @@
+{
+    "componentName": "Fieldset",
+    "description": "Group content with a legend, optionally toggleable.",
+    "level": 2,
+    "status": "ready",
+    "dependencies": [],
+    "nestedValidation": {
+        "structure": {
+            "vAddress": {
+                "type": "string",
+                "required": false,
+                "description": "Address for v-model or component identification."
+            },
+            "disabled": {
+                "type": "boolean",
+                "required": false,
+                "default": false,
+                "description": "Disable rendering of the component."
+            },
+            "children": {
+                "type": "array",
+                "required": false,
+                "nestedValidation": {
+                    "_allowAnyObject": true,
+                    "_allowString": true
+                },
+                "description": "Main content of the fieldset (ignored if default slot is used)."
+            },
+            "props": {
+                "type": "object",
+                "required": false,
+                "description": "Container for Fieldset properties and attributes.",
+                "nestedValidation": {
+                    "structure": {
+                        "legend": {
+                            "type": "string",
+                            "required": false,
+                            "description": "Header text of the fieldset (ignored if legend slot is used)."
+                        },
+                        "toggleable": {
+                            "type": "boolean",
+                            "required": false,
+                            "default": false,
+                            "description": "Whether the content is toggleable."
+                        },
+                        "collapsed": {
+                            "type": "boolean",
+                            "required": false,
+                            "default": false,
+                            "description": "Initial collapsed state (v-model can be used for two-way binding)."
+                        },
+                        "allOf": [
+                            {
+                                "$ref": "../common/props.json"
+                            }
+                        ]
+                    }
+                }
+            },
+            "$ref": "../common/root.json"
+        }
+    },
+    "implementationNotes": [
+        "PrimeVue component: Fieldset",
+        "Refactored placeholder rule based on PrimeVue Fieldset.",
+        "Supports v-model on the 'collapsed' property."
+    ],
+    "documentationLink": "docs/guides/module/04-ui-construction.md"
+}

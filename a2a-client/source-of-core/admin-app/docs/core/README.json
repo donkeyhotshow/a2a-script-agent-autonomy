@@ -1,0 +1,12 @@
+# Core System Documentation
+
+This section covers the fundamental backend components and core functionalities of the application, excluding specific UI or module implementations.
+
+## Key Subsections
+
+-   **[AiRudeDepot](./AiRudeDepot/)**: Documentation for the core data handling and storage abstraction layer.
+-   **[Controllers](./Controllers/)**: Base controllers or core API endpoint logic.
+-   **[Helpers](./Helpers/)**: Global helper functions and utility classes.
+-   **[Installer](./Installer/)**: Components related to the application's installation or setup process.
+-   **[Models](./Models/)**: Core Eloquent models or base data structures.
+-   **[Routing](./routing/)**: Core application routing configuration, distinct from module-specific routing.

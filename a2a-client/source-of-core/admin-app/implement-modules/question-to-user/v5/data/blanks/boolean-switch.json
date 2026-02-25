@@ -1,0 +1,10 @@
+{
+    "type": "InputSwitch",
+    "props": {
+        "class": "mb-4"
+    },
+    "model": {
+        "field": "defaultBooleanField",
+        "default": false
+    }
+}

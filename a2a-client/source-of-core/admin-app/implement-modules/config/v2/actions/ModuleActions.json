@@ -1,0 +1,162 @@
+{
+    // This would typically come from a central configuration or service
+    private
+    const
+    MODULE_CONFIG_FILE_PATH
+    =
+    __DIR__
+    .
+    '/../../../../../storage/system/modules.json'
+    ;
+    // Example path
+    private
+    const
+    MODULE_MANIFEST_DIR
+    =
+    __DIR__
+    .
+    '/../../../../../implement-modules'
+    ;
+    // Example path
+
+    /**
+     * Получает список всех модулей системы и их текущий статус.
+     *
+     * @param array $inputs Входные параметры (filterByName, filterByStatus).
+     * @return array Массив с ключом 'modules' или 'error'.
+     */
+    public
+    function
+    listModules(array
+    $inputs
+    = []): array {
+// Placeholder logic: In a real system, this would involve scanning a module directory,
+// reading manifest files (e.g., module.json), and checking a central enabled/disabled list.
+
+$filterByName = strtolower($inputs['filterByName'] ?? '');
+$filterByStatus = $inputs['filterByStatus'] ?? 'all';
+
+// --- Start Example/Placeholder Data ---
+$availableModules = [
+[
+'id' => 'core',
+'name' => 'Core System',
+'version' => '1.0.0',
+'description' => 'Основной модуль системы, не может быть отключен.',
+'isEnabled' => true,
+'canDisable' => false,
+'hasSettingsPage' => false,
+'settingsPageUrl' => null,
+'dependencies' => []
+],
+[
+'id' => 'userManagement',
+'name' => 'User Management',
+'version' => '1.2.0',
+'description' => 'Модуль управления пользователями и правами.',
+'isEnabled' => true,
+'canDisable' => true,
+'hasSettingsPage' => true,
+'settingsPageUrl' => '#/config/user-management-settings', // Example URL
+'dependencies' => ['core']
+],
+[
+'id' => 'contentManager',
+'name' => 'Content Manager',
+'version' => '0.9.0',
+'description' => 'Модуль для управления контентом сайта.',
+'isEnabled' => false,
+'canDisable' => true,
+'hasSettingsPage' => true,
+'settingsPageUrl' => '#/config/content-manager-settings', // Example URL
+'dependencies' => ['core', 'userManagement']
+],
+[
+'id' => 'config', // This module itself
+'name' => 'Configuration Module',
+'version' => '1.0.0',
+'description' => 'Модуль управления конфигурациями системы.',
+'isEnabled' => true,
+'canDisable' => false, // Usually a config module can't be disabled from itself
+'hasSettingsPage' => false,
+'settingsPageUrl' => null,
+'dependencies' => ['core']
+]
+];
+// --- End Example/Placeholder Data ---
+
+// Apply filters
+$filteredModules = array_filter($availableModules, function ($module) use ($filterByName, $filterByStatus) {
+$nameMatch = true;
+if (!empty($filterByName)) {
+$nameMatch = stripos($module['name'], $filterByName) !== false || stripos($module['id'], $filterByName) !== false;
+}
+
+$statusMatch = true;
+if ($filterByStatus === 'enabled') {
+$statusMatch = $module['isEnabled'] === true;
+} elseif ($filterByStatus === 'disabled') {
+$statusMatch = $module['isEnabled'] === false;
+}
+return $nameMatch && $statusMatch;
+});
+
+return ['modules' => array_values($filteredModules)]; // Re-index array
+}
+
+/**
+ * Включает или отключает указанный модуль.
+ *
+ * @param array $inputs Входные параметры (moduleId, enabled).
+ * @return array Массив с ключами 'success', 'message', или 'error'.
+ */
+public function setModuleEnabledStatus(array $inputs): array {
+if (empty($inputs['moduleId'])) {
+return ['success' => false, 'error' => 'moduleId is required.', 'message' => 'ID модуля не указан.'];
+}
+if (!isset($inputs['enabled']) || !is_bool($inputs['enabled'])) {
+return ['success' => false, 'error' => 'enabled (boolean) is required.', 'message' => 'Не указано новое состояние модуля.'];
+}
+
+$moduleId = $inputs['moduleId'];
+$newState = $inputs['enabled'];
+
+// Placeholder logic: In a real system, this would involve:
+// 1. Finding the module (e.g., from a manifest or list).
+// 2. Checking if it `canDisable` (if $newState is false).
+// 3. Checking dependencies if disabling (warn or auto-disable others).
+// 4. Updating a central configuration file or module-specific state.
+// 5. Clearing caches / re-initializing if needed.
+
+if ($moduleId === 'core' && $newState === false) {
+return ['success' => false, 'message' => 'Основной модуль системы не может быть отключен.', 'error' => 'Cannot disable core module.'];
+}
+
+// Simulate finding the module and checking canDisable (using the placeholder data from listModules for simplicity)
+$allModules = $this->listModules()['modules']; // Get unfiltered list
+$moduleToChange = null;
+foreach ($allModules as $mod) {
+if ($mod['id'] === $moduleId) {
+$moduleToChange = $mod;
+break;
+}
+}
+
+if (!$moduleToChange) {
+return ['success' => false, 'message' => "Модуль с ID '{$moduleId}' не найден.", 'error' => 'Module not found.'];
+}
+
+if ($newState === false && $moduleToChange['canDisable'] === false) {
+return ['success' => false, 'message' => "Модуль '{$moduleToChange['name']}' не может быть отключен.", 'error' => 'Module cannot be disabled.'];
+}
+
+// Simulate saving the state (e.g., to a JSON file)
+// $configFilePath = self::MODULE_CONFIG_FILE_PATH;
+// $moduleSettings = json_decode(file_get_contents($configFilePath), true) ?? [];
+// $moduleSettings[$moduleId]['isEnabled'] = $newState;
+// file_put_contents($configFilePath, json_encode($moduleSettings, JSON_PRETTY_PRINT));
+
+$statusText = $newState ? 'включен': 'отключен';
+return ['success' => true, 'message' => "Модуль '{$moduleToChange['name']}' успешно {$statusText}."];
+}
+}

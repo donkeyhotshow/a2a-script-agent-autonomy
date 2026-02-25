@@ -1,0 +1,60 @@
+{
+    "type": "div",
+    "props": {
+        "class": "py-12 px-4 md:px-6 lg:px-8",
+        "id": "product-categories-section",
+        "role": "region",
+        "aria-labelledby": "product-categories-section-title"
+    },
+    "children": [
+        {
+            "type": "H2",
+            "props": {
+                "content": "Shop by Category",
+                "class": "text-3xl font-bold text-center mb-8",
+                "id": "product-categories-section-title"
+            }
+        },
+        {
+            "type": "Grid",
+            "props": {
+                "class": "grid-cols-2 md:grid-cols-4 gap-4 px-4 lg:px-32 text-center"
+            },
+            "children": [
+                {
+                    "type": "operation",
+                    "action": "include",
+                    "source": "layout/templates/category-button.json",
+                    "props": {
+                        "label": "Hair Care"
+                    }
+                },
+                {
+                    "type": "operation",
+                    "action": "include",
+                    "source": "layout/templates/category-button.json",
+                    "props": {
+                        "label": "Beard Care"
+                    }
+                },
+                {
+                    "type": "operation",
+                    "action": "include",
+                    "source": "layout/templates/category-button.json",
+                    "props": {
+                        "label": "Skin Care"
+                    }
+                },
+                {
+                    "type": "operation",
+                    "action": "include",
+                    "source": "layout/templates/category-button.json",
+                    "props": {
+                        "label": "Accessories"
+                    }
+                }
+            ]
+        }
+    ],
+    "name": "product-categories-section-section"
+}

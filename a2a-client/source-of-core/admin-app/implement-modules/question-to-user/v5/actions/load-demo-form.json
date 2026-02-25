@@ -1,0 +1,78 @@
+{
+    "type": "Instructions",
+    "instructions": [
+        {
+            "action": "update",
+            "batch": [
+                {
+                    "value": "load-demo-form",
+                    "to": "buffer:actionId"
+                },
+                {
+                    "value": {
+                        "keywords": ["demo", "form", "ui-generation"],
+                        "ai_summary": "Loads a demo form template and prepares it for display.",
+                        "features": ["dynamic-ui", "form-processing"]
+                    },
+                    "to": "buffer:tags"
+                }
+            ]
+        },
+        {
+            "action": "comment",
+            "value": "Load demo form template and prepare for display"
+        },
+        {
+            "action": "update",
+            "batch": [
+                {
+                    "from": "file!question-to-user/data/ui-blanks/demo-form.json",
+                    "to": "buffer:demoForm"
+                }
+            ]
+        },
+        {
+            "action": "update",
+            "batch": [
+                {
+                    "from": "buffer:demoForm",
+                    "to": "file!question-to-user/templates/demo-form.json"
+                }
+            ]
+        },
+        {
+            "action": "save",
+            "from": "file!question-to-user/templates/demo-form.json"
+        },
+        {
+            "action": "update",
+            "batch": [
+                {
+                    "from": "file!question-to-user/templates/demo-form.json",
+                    "to": "output:currentForm"
+                }
+            ]
+        },
+        {
+            "action": "update",
+            "batch": [
+                {
+                    "from": "buffer:actionId",
+                    "to": "output:actionId"
+                },
+                {
+                    "from": "buffer:tags",
+                    "to": "output:tags"
+                },
+                {
+                    "value": {
+                        "success": true,
+                        "message": "Demo form loaded successfully.",
+                        "form": "{buffer:demoForm}"
+                    },
+                    "to": "output:result"
+                }
+            ]
+        }
+    ]
+} 

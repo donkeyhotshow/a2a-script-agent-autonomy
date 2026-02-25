@@ -1,0 +1,49 @@
+{
+    "type": "div",
+    "props": {
+        "class": "card flex flex-col gap-4"
+    },
+    "children": [
+        {
+            "type": "div",
+            "props": {
+                "class": "flex flex-col gap-4"
+            },
+            "children": [
+                {
+                    "type": "Textarea",
+                    "name": "Textareasdfa",
+                    "props": {
+                        "class": "w-full flex-1",
+                        "disabled": true,
+                        "rows": 18
+                    },
+                    "model": {
+                        "form": "text-storage-section",
+                        "field": "data",
+                        "default": ""
+                    }
+                },
+                {
+                    "type": "Button",
+                    "props": {
+                        "label": "Применить изменения",
+                        "icon": "pi pi-save",
+                        "severity": "warn"
+                    },
+                    "customHooks": {
+                        "click": [
+                            {
+                                "action": "sendData",
+                                "data": {
+                                    "sendTo": "text-storage-section/calcCheckboxesSave",
+                                    "payload": true
+                                }
+                            }
+                        ]
+                    }
+                }
+            ]
+        }
+    ]
+}

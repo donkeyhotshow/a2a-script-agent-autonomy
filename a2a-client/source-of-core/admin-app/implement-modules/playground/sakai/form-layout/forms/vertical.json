@@ -1,0 +1,90 @@
+{
+    "type": "div",
+    "props": {
+        "class": "card flex flex-col gap-4"
+    },
+    "children": [
+        {
+            "type": "Text",
+            "props": {
+                "content": "Vertical",
+                "class": "font-semibold text-xl"
+            }
+        },
+        {
+            "type": "div",
+            "props": {
+                "class": "flex flex-col gap-2"
+            },
+            "children": [
+                {
+                    "type": "Label",
+                    "props": {
+                        "for": "name1",
+                        "content": "Name",
+                        "class": "font-medium"
+                    }
+                },
+                {
+                    "type": "InputText",
+                    "props": {
+                        "id": "name1",
+                        "type": "text",
+                        "class": "p-inputtext-fluid w-full",
+                        "placeholder": "Enter your name"
+                    }
+                }
+            ]
+        },
+        {
+            "type": "div",
+            "props": {
+                "class": "flex flex-col gap-2"
+            },
+            "children": [
+                {
+                    "type": "Label",
+                    "props": {
+                        "for": "email1",
+                        "content": "Email",
+                        "class": "font-medium"
+                    }
+                },
+                {
+                    "type": "InputText",
+                    "props": {
+                        "id": "email1",
+                        "type": "text",
+                        "class": "p-inputtext-fluid w-full",
+                        "placeholder": "Enter your email"
+                    }
+                }
+            ]
+        },
+        {
+            "type": "div",
+            "props": {
+                "class": "flex flex-col gap-2"
+            },
+            "children": [
+                {
+                    "type": "Label",
+                    "props": {
+                        "for": "age1",
+                        "content": "Age",
+                        "class": "font-medium"
+                    }
+                },
+                {
+                    "type": "InputText",
+                    "props": {
+                        "id": "age1",
+                        "type": "text",
+                        "class": "p-inputtext-fluid w-full",
+                        "placeholder": "Enter your age"
+                    }
+                }
+            ]
+        }
+    ]
+}

@@ -23,6 +23,9 @@ const configSchema = z.object({
   jwtRefreshExpiresIn: z.string().default('7d'),
   apiKeyPrefix: z.string().default('sk_a2a_'),
 
+  // Encryption
+  encryptionKey: z.string().min(32).optional(),
+
   // Plexe ML
   plexeApiUrl: z.string().url().optional(),
   plexeApiKey: z.string().optional(),
@@ -71,6 +74,7 @@ function loadConfig() {
     jwtExpiresIn: process.env.JWT_EXPIRES_IN,
     jwtRefreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN,
     apiKeyPrefix: process.env.API_KEY_PREFIX,
+    encryptionKey: process.env.ENCRYPTION_KEY,
     plexeApiUrl: process.env.PLEXE_API_URL,
     plexeApiKey: process.env.PLEXE_API_KEY,
     gitSshKeyPath: process.env.GIT_SSH_KEY_PATH,

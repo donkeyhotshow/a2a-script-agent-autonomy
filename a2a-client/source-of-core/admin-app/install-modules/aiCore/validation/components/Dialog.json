@@ -1,0 +1,97 @@
+{
+    "componentName": "Dialog",
+    "description": "PrimeVue Dialog component.",
+    "level": 2,
+    "status": "active",
+    "dependencies": [],
+    "_comment": "Validation rules for the Dialog component, using nestedValidation structure.",
+    "nestedValidation": {
+        "structure": {
+            "type": {
+                "_description": "Implicitly validated component type key",
+                "_internal": true
+            },
+            "name": {
+                "_description": "name validated component type key",
+                "_internal": true
+            },
+            "vAddress": {
+                "type": "string",
+                "required": false,
+                "description": "Address for v-model or component identification."
+            },
+            "disabled": {
+                "type": "boolean",
+                "required": false,
+                "default": false,
+                "description": "Disable rendering of the component."
+            },
+            "fields": {
+                "type": "array",
+                "required": false,
+                "description": "TEMP: Fields defined directly on Dialog? Should be in nested Form?"
+            },
+            "actions": {
+                "type": "array",
+                "required": false,
+                "description": "TEMP: Actions defined directly on Dialog? Should be in nested Form?"
+            },
+            "comment": {
+                "type": "string",
+                "required": false,
+                "description": "TEMP: Comment defined directly on Dialog?"
+            },
+            "props": {
+                "type": "object",
+                "required": false,
+                "description": "Container for standard HTML attributes and dialog-specific props.",
+                "nestedValidation": {
+                    "structure": {
+                        "allOf": [
+                            {
+                                "$ref": "../common/props.json"
+                            },
+                            {
+                                "visible": {
+                                    "type": "boolean",
+                                    "required": false,
+                                    "description": "Controls the visibility of the dialog."
+                                },
+                                "modal": {
+                                    "type": "boolean",
+                                    "required": false,
+                                    "description": "Determines if the dialog is modal."
+                                },
+                                "dialogConfig": {
+                                    "type": "object",
+                                    "required": false,
+                                    "_allowAnyObject": true,
+                                    "description": "Configuration object for dialog behavior and properties.",
+                                    "nestedValidation": {
+                                        "structure": {
+                                            "name": {
+                                                "type": "string",
+                                                "required": false,
+                                                "description": "A name identifier for the dialog configuration."
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                }
+            },
+            "$ref": "../common/root.json"
+        }
+    },
+    "implementationNotes": [
+        "Restructured to use nestedValidation.structure.",
+        "Represents the PrimeVue Dialog component.",
+        "Key prop 'visible' and standard attributes are defined within props.nestedValidation.structure.",
+        "Validator should now allow props like 'visible' or 'header' to appear directly OR within a props: {} object.",
+        "Added 'modal' prop definition based on examples.",
+        "Added 'default' slot definition based on examples."
+    ],
+    "documentationLink": "docs/guides/module/04-ui-construction.md"
+}

@@ -1,0 +1,26 @@
+# Audit Checklist: question-to-user/v5 - Pages Directory
+
+**Date:** 2024-07-26
+**Module:** `question-to-user/v5`
+**Focus:** `pages/` directory - Ensure pages are renderable.
+**Phase:** 1 - Page Audit & Fix
+
+**Overall Strategy for Pages:**
+1.  Remove `include` operations if the source file is not found.
+2.  Replace unsupported component types (e.g., `dropdown`, `inputswitch`, `input`, `validationrules`) with supported ones (`select`, `inputtext`, `checkbox`).
+3.  Ensure `props` are standard and valid for the component type (referencing `login-form/v1` and `StrictModuleChecklist.md`). Remove non-standard props like `role` from `div` or `children` inside `props`.
+
+---
+
+## File-by-File Audit & Remediation Plan
+
+| File Path                                                       | Validation Error(s) from Log                                                                                                                               | Planned Fix                                                                                                                                                             | Status      | Notes / Outcome |
+| :-------------------------------------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :---------- | :-------------- |
+| `implement-modules/question-to-user/v5/pages/ai-specific-dialogs-page.json` | `include_source_file_not_found::div::root.content.children` <br> `include_source_file_not_found::form::root.content.children.children.children.children.children` | Remove both `include` operations.                                                                                                                                     | `[X] DONE`  | Both include operations removed. |
+| `implement-modules/question-to-user/v5/pages/dialogs-page.json`         | `include_source_file_not_found::div::root.content.children` <br> `unknown_component_type::dropdown::...`                                                     | Remove `include` operation. Replace `dropdown` with `select` and ensure standard props.                                                                               | `[X] DONE`  | Include removed, Dropdown to select with standard props. |
+| `implement-modules/question-to-user/v5/pages/dynamic-form-page.json`    | `include_source_file_not_found::div::root.content.children` <br> `unknown_key_in_nested_object::textarea::default`                                        | Remove `include` operation. For `textarea`, remove the `model.default` key.                                                                                           | `[X] DONE`  | Include removed, Textarea model.default removed. |
+| `implement-modules/question-to-user/v5/pages/form-demo-page.json`       | `include_source_file_not_found::div::root.content.children` <br> `unknown_component_type::dropdown::...` <br> `unknown_component_type::inputswitch::...` <br> `empty_string_not_allowed::inputtext::model.default` | Remove `include`. Replace `dropdown` with `select`. Replace `inputswitch` with `checkbox`. For `inputtext`, remove `model.default`.                                 | `[X] DONE`  | Fixes applied as planned. |
+| `implement-modules/question-to-user/v5/pages/page.json`                 | `include_source_file_not_found::div::root.content.children (2 occurrences)`                                                                              | Remove both `include` operations.                                                                                                                                     | `[X] DONE`  | Both includes removed. |
+| `implement-modules/question-to-user/v5/pages/question-summary-page.json`| `include_source_file_not_found::div::root.content.children`                                                                                              | Remove `include` operation.                                                                                                                                             | `[X] DONE`  | Include removed. |
+| `implement-modules/question-to-user/v5/pages/task-overview.json`        | `include_source_file_not_found::div::root.content.children` <br> `include_source_file_not_found::div::...children (2 occurrences)`                      | Remove all three `include` operations.                                                                                                                                  | `[X] DONE`  | All three includes removed. |
+| `implement-modules/question-to-user/v5/pages/task-scenario-management-page.json` | `include_source_file_not_found::div::root.content.children` <br> `include_source_file_not_found::div::...children (3 occurrences)`                      | Remove all four `include` operations.                                                                                                                                   | `[X] DONE`  | All four includes removed. |

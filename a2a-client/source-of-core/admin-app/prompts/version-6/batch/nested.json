@@ -1,0 +1,22 @@
+{
+    "type": "Instructions",
+    "instructions": [
+        {
+            "action": "update",
+            "condition": "buffer:shouldUpdate",
+            "batch": [
+                {
+                    "action": "update",
+                    "from": "input",
+                    "to": "buffer:data"
+                },
+                {
+                    "action": "update",
+                    "batch": [
+                        {"value": true, "to": "buffer:updated"}
+                    ]
+                }
+            ]
+        }
+    ]
+} 

@@ -1,0 +1,177 @@
+{
+    "type": "Form",
+    "name": "contactForm",
+    "props": {
+        "class": "space-y-4 p-6 bg-surface-0 dark:bg-surface-800"
+    },
+    "children": [
+        {
+            "type": "div",
+            "props": {
+                "class": "text-center mb-6"
+            },
+            "children": [
+                {
+                    "type": "H3",
+                    "props": {
+                        "id": "contactFormTitle",
+                        "content": "Зв'яжіться з Нами",
+                        "class": "text-2xl font-semibold text-surface-900 dark:text-surface-0"
+                    }
+                },
+                {
+                    "type": "P",
+                    "props": {
+                        "content": "Маєте питання щодо косметики чи запису до барбершопу? Напишіть нам!",
+                        "class": "text-surface-600 dark:text-surface-300 mt-2"
+                    }
+                }
+            ]
+        },
+        {
+            "type": "div",
+            "props": {
+                "class": "field"
+            },
+            "children": [
+                {
+                    "type": "FloatLabel",
+                    "children": [
+                        {
+                            "type": "InputText",
+                            "model": {
+                                "form": "contactForm",
+                                "field": "name"
+                            },
+                            "props": {
+                                "id": "contact-name",
+                                "class": "w-full"
+                            }
+                        },
+                        {
+                            "type": "Label",
+                            "props": {
+                                "for": "contact-name",
+                                "content": "Ваше ім'я"
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "type": "div",
+            "props": {
+                "class": "field"
+            },
+            "children": [
+                {
+                    "type": "FloatLabel",
+                    "children": [
+                        {
+                            "type": "InputText",
+                            "model": {
+                                "form": "contactForm",
+                                "field": "email"
+                            },
+                            "props": {
+                                "id": "contactEmail",
+                                "type": "email",
+                                "class": "w-full"
+                            }
+                        },
+                        {
+                            "type": "Label",
+                            "props": {
+                                "for": "contactEmail",
+                                "content": "Ваш Email"
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "type": "div",
+            "props": {
+                "class": "field"
+            },
+            "children": [
+                {
+                    "type": "FloatLabel",
+                    "children": [
+                        {
+                            "type": "Textarea",
+                            "model": {
+                                "form": "contactForm",
+                                "field": "message"
+                            },
+                            "props": {
+                                "id": "contact-message",
+                                "rows": 4,
+                                "class": "w-full"
+                            }
+                        },
+                        {
+                            "type": "Label",
+                            "props": {
+                                "for": "contact-message",
+                                "content": "Ваше повідомлення"
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "type": "div",
+            "props": {
+                "class": "field"
+            },
+            "children": [
+                {
+                    "type": "Checkbox",
+                    "model": {
+                        "form": "contactForm",
+                        "field": "prefer_call"
+                    },
+                    "props": {
+                        "inputId": "prefer_call_cb",
+                        "binary": true
+                    }
+                },
+                {
+                    "type": "Label",
+                    "props": {
+                        "for": "prefer_call_cb",
+                        "content": "Бажаєте, щоб ми вам зателефонували?",
+                        "class": "ml-2"
+                    }
+                }
+            ]
+        },
+        {
+            "type": "Button",
+            "props": {
+                "label": "Надіслати",
+                "icon": "pi pi-send",
+                "type": "submit",
+                "class": "w-full mt-4"
+            },
+            "customHooks": {
+                "click": [
+                    {
+                        "action": "sendData",
+                        "data": {
+                            "sendTo": "storage/ai/landing-main-page/actions/contact-form/sendMessage",
+                            "form": "contactForm"
+                        }
+                    },
+                    {
+                        "action": "closeDialog"
+                    }
+                ]
+            }
+        }
+    ]
+}

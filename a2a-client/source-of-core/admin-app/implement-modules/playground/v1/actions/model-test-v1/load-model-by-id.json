@@ -1,0 +1,46 @@
+{
+    "type": "Instructions",
+    "instructions": [
+        {
+            "disabled": false,
+            "action": "print_r",
+            "from": "input"
+        },
+        {
+            "action": "update",
+            "from": "model!TestModel/find/{input:recordId}",
+            "with": "json_encode",
+            "to": "buffer:resultData"
+        },
+        {
+            "action": "update",
+            "to": "playground/model-test-v1:content.children.1.children.2.props.content",
+            "from": "buffer:resultData"
+        },
+        {
+            "action": "update",
+            "from": "playground/data/blanks/status-item",
+            "to": "buffer:blankItem"
+        },
+        {
+            "action": "update",
+            "to": "buffer:blankItem.props.content",
+            "value": "✔ Loaded ID: {input:recordId}"
+        },
+        {
+            "action": "add",
+            "from": "buffer:blankItem",
+            "to": "playground/model-test-v1:content.children.1.children.3.children",
+            "how": "append"
+        },
+        {
+            "action": "save",
+            "from": "playground/model-test-v1"
+        },
+        {
+            "action": "update",
+            "to": "output:result.title",
+            "value": "✔ Loaded: {buffer:resultData}"
+        }
+    ]
+}

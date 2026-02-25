@@ -1,0 +1,199 @@
+{
+  "type": "Instructions",
+  "instructions": [
+    {
+      "type": "call",
+      "from": "question-to-user/actions/loadQuestionSet",
+      "to": "temp:questionSet"
+    },
+    {
+      "type": "loop",
+      "from": "temp:questionSet.questions",
+      "to": "temp:currentQuestion",
+      "instructions": [
+        {
+          "type": "update",
+          "to": "buffer:qtu.generatedUI",
+          "batch": [
+            {
+              "type": "add",
+              "value": {
+                "type": "div",
+                "class": "mb-4 p-4 border rounded",
+                "children": [
+                  {
+                    "type": "h3",
+                    "children": [
+                      {
+                        "type": "span",
+                        "from": "temp:currentQuestion.text"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "div",
+                    "class": "mt-2",
+                    "children": []
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "type": "update",
+          "to": "buffer:qtu.generatedUI",
+          "condition": {
+            "from": "temp:currentQuestion.type",
+            "is": "select"
+          },
+          "batch": [
+            {
+              "type": "add",
+              "target": "children",
+              "value": {
+                "type": "select",
+                "class": "form-select",
+                "attributes": {
+                  "v-model": "formContext.responses[temp:currentQuestion.id]"
+                },
+                "children": [
+                  {
+                    "type": "loop",
+                    "from": "temp:currentQuestion.options",
+                    "to": "temp:option",
+                    "instructions": [
+                      {
+                        "type": "add",
+                        "value": {
+                          "type": "option",
+                          "attributes": {
+                            "value": "temp:option.value"
+                          },
+                          "children": [
+                            {
+                              "type": "span",
+                              "from": "temp:option.text"
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "type": "update",
+          "to": "buffer:qtu.generatedUI",
+          "condition": {
+            "from": "temp:currentQuestion.type",
+            "is": "textarea"
+          },
+          "batch": [
+            {
+              "type": "add",
+              "target": "children",
+              "value": {
+                "type": "textarea",
+                "class": "form-control",
+                "attributes": {
+                  "v-model": "formContext.responses[temp:currentQuestion.id]",
+                  "rows": 3
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "update",
+          "to": "buffer:qtu.generatedUI",
+          "condition": {
+            "from": "temp:currentQuestion.type",
+            "is": "text"
+          },
+          "batch": [
+            {
+              "type": "add",
+              "target": "children",
+              "value": {
+                "type": "input",
+                "class": "form-control",
+                 "attributes": {
+                  "v-model": "formContext.responses[temp:currentQuestion.id]",
+                  "type": "text"
+                }
+              }
+            }
+          ]
+        },
+         {
+          "type": "update",
+          "to": "buffer:qtu.generatedUI",
+          "condition": {
+            "from": "temp:currentQuestion.type",
+            "is": "number"
+          },
+          "batch": [
+            {
+              "type": "add",
+              "target": "children",
+              "value": {
+                "type": "input",
+                "class": "form-control",
+                "attributes": {
+                  "v-model": "formContext.responses[temp:currentQuestion.id]",
+                  "type": "number"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "update",
+          "to": "buffer:qtu.generatedUI",
+          "condition": {
+             "not": {
+                "any": [
+                     {"from": "temp:currentQuestion.type", "is": "select"},
+                     {"from": "temp:currentQuestion.type", "is": "textarea"},
+                     {"from": "temp:currentQuestion.type", "is": "text"},
+                     {"from": "temp:currentQuestion.type", "is": "number"}
+                ]
+             }
+          },
+          "batch": [
+            {
+              "type": "add",
+              "target": "children",
+              "value": {
+                "type": "div",
+                "children": [
+                   {
+                     "type": "span",
+                     "value": "Unsupported question type: "
+                   },
+                   {
+                     "type": "span",
+                     "from": "temp:currentQuestion.type"
+                   }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "save",
+      "from": "buffer:qtu.generatedUI",
+      "to": "file!question-to-user/templates/question-area.json:children"
+    },
+    {
+        "type": "save",
+        "to": "file!question-to-user/templates/question-area.json"
+    }
+  ]
+} 

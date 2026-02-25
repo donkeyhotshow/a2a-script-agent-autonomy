@@ -1,0 +1,40 @@
+[
+    {
+        "type": "Button",
+        "label": "Сохранить (текущий)",
+        "props": {
+            "icon": "pi pi-save",
+            "severity": "primary"
+        },
+        "customHooks": {
+            "click": [
+                {
+                    "action": "sendData",
+                    "data": {
+                        "sendTo": "config-actions/save-config",
+                        "form": "configForm"
+                    }
+                }
+            ]
+        }
+    },
+    {
+        "type": "Button",
+        "label": "Сохранить в другой модуль",
+        "props": {
+            "severity": "secondary",
+            "disabled": "!configForm.targetModule"
+        },
+        "customHooks": {
+            "click": [
+                {
+                    "action": "sendData",
+                    "data": {
+                        "sendTo": "config-actions/save-other-module",
+                        "form": "configForm"
+                    }
+                }
+            ]
+        }
+    }
+]

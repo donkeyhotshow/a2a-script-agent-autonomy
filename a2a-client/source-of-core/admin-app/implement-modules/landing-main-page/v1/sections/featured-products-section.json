@@ -1,0 +1,178 @@
+{
+    "type": "div",
+    "props": {
+        "class": "py-12 px-4 md:px-6 lg:px-8",
+        "id": "featured-products-section",
+        "role": "region",
+        "aria-labelledby": "featured-products-section-title"
+    },
+    "children": [
+        {
+            "type": "H2",
+            "props": {
+                "content": "Featured BarberXXL Products",
+                "class": "text-3xl font-bold text-center mb-8",
+                "id": "featured-products-section-title"
+            }
+        },
+        {
+            "type": "Grid",
+            "props": {
+                "class": "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 px-4 lg:px-16"
+            },
+            "children": [
+                {
+                    "type": "Column",
+                    "children": [
+                        {
+                            "type": "Card",
+                            "props": {
+                                "class": "text-center shadow-md hover:shadow-lg transition-shadow duration-300"
+                            },
+                            "children": [
+                                {
+                                    "type": "Image",
+                                    "props": {
+                                        "src": "/placeholder-product-1.jpg",
+                                        "alt": "Placeholder Product 1",
+                                        "class": "w-full h-48 object-cover mb-4",
+                                        "loading": "lazy"
+                                    }
+                                },
+                                {
+                                    "type": "H3",
+                                    "props": {
+                                        "content": "BarberXXL Pomade",
+                                        "class": "text-xl font-semibold mb-2"
+                                    }
+                                },
+                                {
+                                    "type": "P",
+                                    "props": {
+                                        "content": "Premium hold and shine.",
+                                        "class": "text-gray-600 mb-3"
+                                    }
+                                },
+                                {
+                                    "type": "P",
+                                    "props": {
+                                        "content": "$19.99",
+                                        "class": "font-bold text-lg mb-4"
+                                    }
+                                },
+                                {
+                                    "type": "Button",
+                                    "props": {
+                                        "label": "View Details",
+                                        "severity": "secondary"
+                                    }
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": "Column",
+                    "children": [
+                        {
+                            "type": "Card",
+                            "props": {
+                                "class": "text-center shadow-md hover:shadow-lg transition-shadow duration-300"
+                            },
+                            "children": [
+                                {
+                                    "type": "Image",
+                                    "props": {
+                                        "src": "/placeholder-product-2.jpg",
+                                        "alt": "Placeholder Product 2",
+                                        "class": "w-full h-48 object-cover mb-4",
+                                        "loading": "lazy"
+                                    }
+                                },
+                                {
+                                    "type": "H3",
+                                    "props": {
+                                        "content": "BarberXXL Beard Oil",
+                                        "class": "text-xl font-semibold mb-2"
+                                    }
+                                },
+                                {
+                                    "type": "P",
+                                    "props": {
+                                        "content": "Nourishes and conditions.",
+                                        "class": "text-gray-600 mb-3"
+                                    }
+                                },
+                                {
+                                    "type": "P",
+                                    "props": {
+                                        "content": "$24.99",
+                                        "class": "font-bold text-lg mb-4"
+                                    }
+                                },
+                                {
+                                    "type": "Button",
+                                    "props": {
+                                        "label": "View Details",
+                                        "severity": "secondary"
+                                    }
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": "Column",
+                    "children": [
+                        {
+                            "type": "Card",
+                            "props": {
+                                "class": "text-center shadow-md hover:shadow-lg transition-shadow duration-300"
+                            },
+                            "children": [
+                                {
+                                    "type": "Image",
+                                    "props": {
+                                        "src": "/placeholder-product-3.jpg",
+                                        "alt": "Placeholder Product 3",
+                                        "class": "w-full h-48 object-cover mb-4",
+                                        "loading": "lazy"
+                                    }
+                                },
+                                {
+                                    "type": "H3",
+                                    "props": {
+                                        "content": "BarberXXL Shampoo",
+                                        "class": "text-xl font-semibold mb-2"
+                                    }
+                                },
+                                {
+                                    "type": "P",
+                                    "props": {
+                                        "content": "Cleanses and invigorates.",
+                                        "class": "text-gray-600 mb-3"
+                                    }
+                                },
+                                {
+                                    "type": "P",
+                                    "props": {
+                                        "content": "$15.99",
+                                        "class": "font-bold text-lg mb-4"
+                                    }
+                                },
+                                {
+                                    "type": "Button",
+                                    "props": {
+                                        "label": "View Details",
+                                        "severity": "secondary"
+                                    }
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
+    "name": "featured-products-section-section"
+}

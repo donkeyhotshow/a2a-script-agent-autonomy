@@ -1,0 +1,154 @@
+{
+    "type": "div",
+    "props": {
+        "class": "bg-gray-100 py-8"
+    },
+    "children": [
+        {
+            "type": "Grid",
+            "props": {
+                "class": "grid-cols-1 md:grid-cols-3 gap-0"
+            },
+            "children": [
+                {
+                    "type": "Column",
+                    "children": [
+                        {
+                            "type": "div",
+                            "props": {
+                                "class": "relative text-white text-center h-80 flex flex-col justify-center items-center p-4",
+                                "style": {
+                                    "backgroundImage": "url('/assets/1.jpg')",
+                                    "backgroundSize": "cover",
+                                    "backgroundPosition": "center"
+                                }
+                            },
+                            "children": [
+                                {
+                                    "type": "div",
+                                    "props": {
+                                        "class": "absolute inset-0 bg-black opacity-50"
+                                    }
+                                },
+                                {
+                                    "type": "div",
+                                    "props": {
+                                        "class": "relative z-10"
+                                    },
+                                    "children": [
+                                        {
+                                            "type": "H2",
+                                            "props": {
+                                                "content": "КОРОЛЬ СКИДКА 50%",
+                                                "class": "text-3xl font-bold mb-3"
+                                            }
+                                        },
+                                        {
+                                            "type": "Button",
+                                            "props": {
+                                                "label": "Get Discount",
+                                                "severity": "warn"
+                                            }
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": "Column",
+                    "children": [
+                        {
+                            "type": "div",
+                            "props": {
+                                "class": "relative text-white text-center h-80 flex flex-col justify-center items-center p-4",
+                                "style": {
+                                    "backgroundImage": "url('/assets/2.jpg')",
+                                    "backgroundSize": "cover",
+                                    "backgroundPosition": "center"
+                                }
+                            },
+                            "children": [
+                                {
+                                    "type": "div",
+                                    "props": {
+                                        "class": "absolute inset-0 bg-black opacity-50"
+                                    }
+                                },
+                                {
+                                    "type": "div",
+                                    "props": {
+                                        "class": "relative z-10"
+                                    },
+                                    "children": [
+                                        {
+                                            "type": "H2",
+                                            "props": {
+                                                "content": "ТОП БРЕНДЫ",
+                                                "class": "text-3xl font-bold mb-3"
+                                            }
+                                        },
+                                        {
+                                            "type": "Button",
+                                            "props": {
+                                                "label": "Shop Brands",
+                                                "severity": "danger"
+                                            }
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": "Column",
+                    "children": [
+                        {
+                            "type": "div",
+                            "props": {
+                                "class": "relative text-white text-center h-80 flex flex-col justify-center items-center p-4",
+                                "style": {
+                                    "backgroundImage": "url('/assets/3.jpg')",
+                                    "backgroundSize": "cover",
+                                    "backgroundPosition": "center"
+                                }
+                            },
+                            "children": [
+                                {
+                                    "type": "div",
+                                    "props": {
+                                        "class": "absolute inset-0 bg-black opacity-50"
+                                    }
+                                },
+                                {
+                                    "type": "div",
+                                    "props": {
+                                        "class": "relative z-10"
+                                    },
+                                    "children": [
+                                        {
+                                            "type": "H2",
+                                            "props": {
+                                                "content": "МАКСИМУМ ВЫГОДЫ",
+                                                "class": "text-3xl font-bold mb-3"
+                                            }
+                                        },
+                                        {
+                                            "type": "Button",
+                                            "props": {
+                                                "label": "Explore Offers",
+                                                "severity": "success"
+                                            }
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

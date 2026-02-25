@@ -1,0 +1,17 @@
+{
+    "type": "Dialog",
+    "props": {
+        "header": "Зв'яжіться з Нами",
+        "modal": true,
+        "style": "width: 50vw"
+    },
+    "slots": {
+        "default": [
+            {
+                "type": "operation",
+                "action": "include",
+                "source": "landing-main-page/templates/forms/contact.json"
+            }
+        ]
+    }
+}

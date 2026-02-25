@@ -1,0 +1,14 @@
+{
+    "id": "aiCore",
+    "name": "AI Core Module",
+    "version": "1.0.0",
+    "description": "Core validation and component definitions for AI-powered features",
+    "author": "Admin System",
+    "license": "Proprietary",
+    "tags": ["ai", "core", "validation", "components"],
+    "dependencies": ["core"],
+    "validationPaths": {
+        "components": "validation/components",
+        "common": "validation/common"
+    }
+} 

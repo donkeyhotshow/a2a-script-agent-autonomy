@@ -1,0 +1,15 @@
+{
+    "type": "Instructions",
+    "instructions": [
+        {"action": "update", "from": "input.0", "to": "buffer:a"},
+        {"action": "update", "from": "input.1", "to": "buffer:b"},
+        {"action": "update", "from": "input.2", "to": "buffer:c"},
+        {"action": "update", "from": "input.3", "to": "buffer:d"},
+        {"action": "update", "from": "input.4", "to": "buffer:e"},
+        {"action": "update", "from": "input.5", "to": "buffer:f"},
+        {"action": "update", "from": "input.6", "to": "buffer:g"},
+        {"action": "update", "from": "input.7", "to": "buffer:h"},
+        {"action": "update", "from": "input.8", "to": "buffer:i"},
+        {"action": "update", "from": "input.9", "to": "buffer:j"}
+    ]
+} 

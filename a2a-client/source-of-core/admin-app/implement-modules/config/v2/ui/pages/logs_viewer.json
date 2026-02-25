@@ -1,0 +1,198 @@
+{
+    "type": "page",
+    "version": "1.0.0",
+    "layout": "config.default_layout",
+    "title": "Просмотр лог-файлов",
+    "description": "Страница для просмотра системных лог-файлов.",
+    "//_comment_dataSources": "Manages fetching the list of log files and loading the content of a selected log file.",
+    "dataSources": [
+        {
+            "id": "logFilesList",
+            "//_comment_logFilesList_ds": "Action to get the list of available log files (name and path).",
+            "action": "config.list_log_files",
+            "params": {},
+            "onSuccess": {
+                "setContext": {
+                    "availableLogs": "{{actionResult.logFiles}}",
+                    "selectedLog": null,
+                    "logContent": ""
+                }
+            },
+            "onError": {
+                "showToast": {
+                    "severity": "error",
+                    "summary": "Ошибка списка логов",
+                    "detail": "Не удалось загрузить список лог-файлов: {{error.message}}"
+                },
+                "setContext": {
+                    "availableLogs": [],
+                    "selectedLog": null,
+                    "logContent": ""
+                }
+            }
+        },
+        {
+            "id": "currentLogContent",
+            "//_comment_currentLogContent_ds": "Action to load the content of the currently selected log file. Triggered manually.",
+            "action": "config.load_log_file",
+            "params": {
+                "filePath": "{{context.selectedLog.path}}",
+                "maxLines": 500
+                // Примерное ограничение, можно сделать настраиваемым
+            },
+            "triggerManually": true,
+            // Запускать только при выборе лога
+            "onSuccess": {
+                "setContext": {
+                    "logContent": "{{actionResult.logContent}}"
+                }
+            },
+            "onError": {
+                "showToast": {
+                    "severity": "error",
+                    "summary": "Ошибка загрузки лога",
+                    "detail": "Не удалось загрузить содержимое лога: {{error.message}}"
+                },
+                "setContext": {
+                    "logContent": "Ошибка загрузки содержимого лога: {{error.message}}"
+                }
+            }
+        }
+    ],
+    "//_comment_actions": "Handles user interaction, specifically selecting a log file.",
+    "actions": [
+        {
+            "id": "selectLogFile",
+            "params": [
+                "selectedLogObject"
+            ],
+            "//_comment_selectLogFile_action": "Sets the selected log file in context and triggers loading its content. Clears content if no log is selected.",
+            "run": [
+                {
+                    "setContext": {
+                        "selectedLog": "{{params.selectedLogObject}}",
+                        "logContent": "Загрузка..."
+                    }
+                },
+                {
+                    "if": "{{params.selectedLogObject}}",
+                    "then": [
+                        {
+                            "triggerDataSource": "currentLogContent"
+                        }
+                    ],
+                    "else": [
+                        {
+                            "setContext": {
+                                "logContent": "Выберите лог-файл для просмотра."
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
+    "//_comment_body": "Layout of the log viewer: a toolbar for log selection and a panel for content display.",
+    "body": [
+        {
+            "type": " p-toolbar",
+            "//_comment_toolbar_log_selection": "Toolbar contains a dropdown to select a log file and a refresh button.",
+            "children": [
+                {
+                    "type": " div",
+                    "props": {
+                        "class": "p-toolbar-group-left"
+                    },
+                    "children": [
+                        {
+                            "type": " p-dropdown",
+                            "props": {
+                                "options": "{{context.availableLogs}}",
+                                "modelValue": "{{context.selectedLog}}",
+                                "optionLabel": "name",
+                                // Показываем имя файла
+                                // "optionValue": "path", // Можно использовать path как значение, если объекты в availableLogs сложные
+                                "placeholder": "Выберите лог-файл",
+                                "showClear": true,
+                                "style": {
+                                    "minWidth": "250px"
+                                }
+                            },
+                            "events": {
+                                "update:modelValue": {
+                                    "triggerAction": {
+                                        "id": "selectLogFile",
+                                        "params": {
+                                            "selectedLogObject": "{{eventValue}}"
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        {
+                            "type": " p-button",
+                            "props": {
+                                "icon": "pi pi-refresh",
+                                "tooltip": "Обновить список логов",
+                                "class": "p-button-text"
+                            },
+                            "events": {
+                                "click": {
+                                    "triggerDataSource": "logFilesList"
+                                }
+                            }
+                        }
+                    ]
+                }
+                // Можно добавить кнопку для скачивания лога или настройки (maxLines)
+            ]
+        },
+        {
+            "type": " p-panel",
+            "//_comment_log_content_panel": "Panel to display the content of the selected log file. Header is dynamic.",
+            "props": {
+                "header": "Содержимое лога: {{context.selectedLog.name || 'Файл не выбран'}}"
+            },
+            "children": [
+                {
+                    "type": " div",
+                    "props": {
+                        "//_comment_log_content_style": "Styling to ensure log content is displayed as pre-formatted text with scrolling.",
+                        "style": {
+                            "whiteSpace": "pre-wrap",
+                            // Для сохранения переносов строк и пробелов
+                            "fontFamily": "monospace",
+                            "maxHeight": "60vh",
+                            "overflowY": "auto",
+                            "padding": "1rem",
+                            "background": "#f4f4f4",
+                            "border": "1px solid #ccc",
+                            "borderRadius": "4px"
+                        }
+                    },
+                    "children": [
+                        {
+                            "if": "{{context.logContent}}",
+                            "then": [
+                                {
+                                    "type": "span",
+                                    "props": {
+                                        "content": "{{context.logContent}}"
+                                    }
+                                }
+                            ],
+                            "else": [
+                                {
+                                    "type": "span",
+                                    "props": {
+                                        "content": "Содержимое лога будет отображено здесь."
+                                    }
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

@@ -1,0 +1,55 @@
+{
+ 
+    "description": "Common properties configuration for all components",
+    "type": "object",
+    "properties": {
+        "customHooks": {
+            "type": "object",
+            "description": "Hooks for custom functionality like click events, navigation, etc.",
+            "properties": {
+                "click": {
+                    "type": "object",
+                    "properties": {
+                        "action": {
+                            "type": "string",
+                            "enum": ["navigate", "submit", "api", "custom"]
+                        },
+                        "to": {
+                            "type": "string",
+                            "description": "Target path for navigation"
+                        },
+                        "target": {
+                            "type": "string",
+                            "description": "Form ID for submission or other target identifier"
+                        }
+                    }
+                }
+            }
+        },
+        "commonProps": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "required": false,
+                    "description": "Unique identifier for the component"
+                },
+                "className": {
+                    "type": "string",
+                    "required": false,
+                    "description": "CSS class name for styling"
+                },
+                "style": {
+                    "type": "object",
+                    "required": false,
+                    "description": "Inline styles for the component"
+                },
+                "children": {
+                    "type": "array",
+                    "required": false,
+                    "description": "Child components"
+                }
+            }
+        }
+    }
+} 

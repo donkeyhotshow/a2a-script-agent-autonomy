@@ -1,0 +1,55 @@
+{
+    "guideId": "GUIDE-MODULE-INDEX-001",
+    "version": "1.0.0",
+    "title": "Module Development Guides",
+    "description": "This section provides guides specifically for developing, upgrading, and troubleshooting modules within the TBD: Verify System Name (JSON UI system?).",
+    "guides": [
+        {
+            "title": "Module Creation Overview",
+            "link": "./01-overview-creating-modules.md",
+            "description": "High-level overview of the module creation process and links to detailed guides."
+        },
+        {
+            "title": "File Structure",
+            "link": "./02-file-structure.md"
+        },
+        {
+            "title": "Metadata (_i/meta.json, _i/links.json)",
+            "link": "./03-metadata.md"
+        },
+        {
+            "title": "UI Construction",
+            "link": "./04-ui-construction.md"
+        },
+        {
+            "title": "Data Handling",
+            "link": "./05-data-handling.md"
+        },
+        {
+            "title": "Actions Logic",
+            "link": "./06-actions-logic.md"
+        },
+        {
+            "title": "Build & Merge Process",
+            "link": "./07-build-merge.md"
+        },
+        {
+            "title": "Validation",
+            "link": "./08-validation.md"
+        },
+        {
+            "title": "Lifecycle & Maintenance",
+            "link": "./09-lifecycle-maintenance.md"
+        },
+        {
+            "title": "Troubleshooting Module Creation Errors",
+            "link": "TBD: Verify Existence/Path (./errors-in-created-module-by-instructions.md)",
+            "description": "Common errors encountered when creating modules based on instructions and how to resolve them."
+        },
+        {
+            "title": "Landing Page Template Upgrade Example",
+            "link": "TBD: Verify Existence/Path (./landing-page-template-upgrade-implementation.md)",
+            "description": "A case study or example of upgrading a specific module (landing page template). (Note: May be outdated or need generalization)."
+        }
+    ]
+}

@@ -1,0 +1,140 @@
+{
+    "type": "Page",
+    "id": "qtu-form-demo-page",
+    "title": "Form Demo",
+    "description": "Демонстрация работы с формами в QTU",
+    "content": {
+        "type": "div",
+        "props": {
+            "class": "flex flex-col min-h-screen bg-gray-100"
+        },
+        "children": [
+            {
+                "type": "div",
+                "props": {
+                    "class": "flex-grow container mx-auto p-4 space-y-6"
+                },
+                "children": [
+                    {
+                        "type": "Panel",
+                        "props": {
+                            "header": "Демо-форма",
+                            "class": "mb-6 shadow-md rounded"
+                        },
+                        "children": [
+                            {
+                                "type": "Form",
+                                "id": "demoForm",
+                                "props": {
+                                    "class": "space-y-4 p-fluid"
+                                },
+                                "children": [
+                                    {
+                                        "type": "InputText",
+                                        "props": {
+                                            "label": "Имя",
+                                            "placeholder": "Введите ваше имя"
+                                        },
+                                        "model": {
+                                            "field": "userName"
+                                        }
+                                    },
+                                    {
+                                        "type": "select",
+                                        "props": {
+                                            "label": "Категория",
+                                            "placeholder": "Выберите категорию"
+                                        },
+                                        "model": {
+                                            "field": "category",
+                                            "options": [{ "label": "Loading...", "value": "" }],
+                                            "optionLabel": "label",
+                                            "optionValue": "value"
+                                        }
+                                    },
+                                    {
+                                        "type": "Checkbox",
+                                        "props": {}
+                                    },
+                                    {
+                                        "type": "Textarea",
+                                        "props": {
+                                            "label": "Комментарий",
+                                            "placeholder": "Введите комментарий",
+                                            "rows": 3,
+                                            "autoResize": true
+                                        },
+                                        "model": {
+                                            "field": "comment"
+                                        }
+                                    },
+                                    {
+                                        "type": "Button",
+                                        "props": {
+                                            "label": "Сохранить",
+                                            "icon": "pi pi-save",
+                                            "severity": "primary",
+                                            "class": "p-button mt-4"
+                                        },
+                                        "customHooks": {
+                                            "click": [
+                                                {
+                                                    "action": "call",
+                                                    "from": "question-to-user/actions/save-demo-form",
+                                                    "input": "{input:demoForm}",
+                                                    "to": "buffer:formSaveStatus"
+                                                }
+                                            ]
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "type": "Panel",
+                        "props": {
+                            "header": "Сохраненные данные",
+                            "class": "shadow-md rounded"
+                        },
+                        "children": [
+                            {
+                                "type": "Button",
+                                "props": {
+                                    "label": "Загрузить сохраненные данные",
+                                    "icon": "pi pi-refresh",
+                                    "class": "p-button-sm mb-3"
+                                },
+                                "customHooks": {
+                                    "click": [
+                                        {
+                                            "action": "call",
+                                            "from": "question-to-user/actions/load-demo-form",
+                                            "to": "buffer:savedFormData"
+                                        }
+                                    ]
+                                }
+                            },
+                            {
+                                "type": "div",
+                                "id": "saved-data-display",
+                                "props": {
+                                    "class": "p-4 min-h-[200px] bg-gray-50 border rounded"
+                                },
+                                "customHooks": {
+                                    "init": [
+                                        {
+                                            "action": "call",
+                                            "from": "question-to-user/actions/load-demo-form",
+                                            "to": "buffer:savedFormData"
+                                        }
+                                    ]
+                                }
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+} 
