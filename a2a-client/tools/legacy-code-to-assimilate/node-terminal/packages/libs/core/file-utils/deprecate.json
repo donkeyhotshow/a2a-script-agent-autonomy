@@ -1,0 +1,20 @@
+{
+  "status": "deprecated",
+  "since": "2025-10",
+  "replacement": "system/file-operations",
+  "migration": "docs/migrations/core-file-utils-to-system-file-operations.md",
+  "notes": "core/file-utils is deprecated. Please migrate to system/file-operations for a unified and more robust file operations management system.",
+  "deprecationWarning": {
+    "enabled": false,
+    "message": "This library is deprecated. Please migrate to {replacement}. See {migration} for details.",
+    "logLevel": "warn"
+  },
+  "sunset": {
+    "planned": "2026-04",
+    "removeAfter": "2026-10"
+  },
+  "contacts": {
+    "maintainer": "Core Libraries Team",
+    "migrationSupport": "See migration guide"
+  }
+}

@@ -1,0 +1,319 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Common well-known ports presets for quick configuration",
+  "presets": {
+    "web": {
+      "category": "web",
+      "description": "Стандартные веб-порты",
+      "ports": [
+        {
+          "port": 80,
+          "name": "HTTP",
+          "protocol": "http",
+          "type": "system",
+          "category": "web",
+          "description": "Стандартный порт для HTTP-серверов",
+          "priority": 90
+        },
+        {
+          "port": 443,
+          "name": "HTTPS",
+          "protocol": "https",
+          "type": "system",
+          "category": "web",
+          "description": "Стандартный порт для HTTPS-серверов",
+          "priority": 95
+        },
+        {
+          "port": 8080,
+          "name": "HTTP Alternative",
+          "protocol": "http",
+          "type": "service",
+          "category": "web",
+          "description": "Альтернативный порт для HTTP (без root)",
+          "priority": 70
+        },
+        {
+          "port": 8443,
+          "name": "HTTPS Alternative",
+          "protocol": "https",
+          "type": "service",
+          "category": "web",
+          "description": "Альтернативный порт для HTTPS",
+          "priority": 70
+        },
+        {
+          "port": 3000,
+          "name": "Development Web Server",
+          "protocol": "http",
+          "type": "development",
+          "category": "web",
+          "description": "Часто используется для разработки веб-приложений",
+          "priority": 50
+        }
+      ]
+    },
+    "databases": {
+      "category": "database",
+      "description": "Стандартные порты баз данных",
+      "ports": [
+        {
+          "port": 5432,
+          "name": "PostgreSQL",
+          "protocol": "tcp",
+          "type": "service",
+          "category": "database",
+          "description": "Стандартный порт PostgreSQL",
+          "priority": 80
+        },
+        {
+          "port": 3306,
+          "name": "MySQL",
+          "protocol": "tcp",
+          "type": "service",
+          "category": "database",
+          "description": "Стандартный порт MySQL/MariaDB",
+          "priority": 80
+        },
+        {
+          "port": 27017,
+          "name": "MongoDB",
+          "protocol": "tcp",
+          "type": "service",
+          "category": "database",
+          "description": "Стандартный порт MongoDB",
+          "priority": 80
+        },
+        {
+          "port": 1433,
+          "name": "MSSQL",
+          "protocol": "tcp",
+          "type": "service",
+          "category": "database",
+          "description": "Стандартный порт Microsoft SQL Server",
+          "priority": 80
+        },
+        {
+          "port": 5984,
+          "name": "CouchDB",
+          "protocol": "http",
+          "type": "service",
+          "category": "database",
+          "description": "Стандартный порт CouchDB",
+          "priority": 70
+        }
+      ]
+    },
+    "cache": {
+      "category": "cache",
+      "description": "Порты систем кеширования",
+      "ports": [
+        {
+          "port": 6379,
+          "name": "Redis",
+          "protocol": "tcp",
+          "type": "service",
+          "category": "cache",
+          "description": "Стандартный порт Redis",
+          "priority": 80
+        },
+        {
+          "port": 11211,
+          "name": "Memcached",
+          "protocol": "tcp",
+          "type": "service",
+          "category": "cache",
+          "description": "Стандартный порт Memcached",
+          "priority": 80
+        }
+      ]
+    },
+    "development": {
+      "category": "development",
+      "description": "Порты для инструментов разработки",
+      "ports": [
+        {
+          "port": 5173,
+          "name": "Vite Dev Server",
+          "protocol": "http",
+          "type": "development",
+          "category": "development",
+          "description": "Стандартный порт Vite development server",
+          "priority": 60
+        },
+        {
+          "port": 3001,
+          "name": "React Dev Server",
+          "protocol": "http",
+          "type": "development",
+          "category": "development",
+          "description": "Часто используется для React приложений",
+          "priority": 60
+        },
+        {
+          "port": 4200,
+          "name": "Angular Dev Server",
+          "protocol": "http",
+          "type": "development",
+          "category": "development",
+          "description": "Стандартный порт Angular CLI",
+          "priority": 60
+        },
+        {
+          "port": 8000,
+          "name": "Python Dev Server",
+          "protocol": "http",
+          "type": "development",
+          "category": "development",
+          "description": "Часто используется для Python приложений",
+          "priority": 60
+        },
+        {
+          "port": 9229,
+          "name": "Node.js Inspector",
+          "protocol": "tcp",
+          "type": "development",
+          "category": "development",
+          "description": "Node.js debug inspector",
+          "priority": 50
+        }
+      ]
+    },
+    "api": {
+      "category": "api",
+      "description": "API-сервисы",
+      "ports": [
+        {
+          "port": 3000,
+          "name": "REST API",
+          "protocol": "http",
+          "type": "service",
+          "category": "api",
+          "description": "Общий порт для REST API",
+          "priority": 70
+        },
+        {
+          "port": 4000,
+          "name": "GraphQL API",
+          "protocol": "http",
+          "type": "service",
+          "category": "api",
+          "description": "Часто используется для GraphQL endpoints",
+          "priority": 70
+        },
+        {
+          "port": 50051,
+          "name": "gRPC",
+          "protocol": "tcp",
+          "type": "service",
+          "category": "api",
+          "description": "Стандартный порт для gRPC сервисов",
+          "priority": 70
+        }
+      ]
+    },
+    "monitoring": {
+      "category": "monitoring",
+      "description": "Системы мониторинга и метрик",
+      "ports": [
+        {
+          "port": 9090,
+          "name": "Prometheus",
+          "protocol": "http",
+          "type": "service",
+          "category": "monitoring",
+          "description": "Стандартный порт Prometheus",
+          "priority": 75
+        },
+        {
+          "port": 3000,
+          "name": "Grafana",
+          "protocol": "http",
+          "type": "service",
+          "category": "monitoring",
+          "description": "Стандартный порт Grafana",
+          "priority": 75
+        },
+        {
+          "port": 9200,
+          "name": "Elasticsearch",
+          "protocol": "http",
+          "type": "service",
+          "category": "monitoring",
+          "description": "Стандартный порт Elasticsearch HTTP API",
+          "priority": 75
+        },
+        {
+          "port": 5601,
+          "name": "Kibana",
+          "protocol": "http",
+          "type": "service",
+          "category": "monitoring",
+          "description": "Стандартный порт Kibana",
+          "priority": 75
+        }
+      ]
+    },
+    "system": {
+      "category": "system",
+      "description": "Системные порты",
+      "ports": [
+        {
+          "port": 22,
+          "name": "SSH",
+          "protocol": "tcp",
+          "type": "system",
+          "category": "system",
+          "description": "Secure Shell (SSH)",
+          "priority": 100
+        },
+        {
+          "port": 21,
+          "name": "FTP",
+          "protocol": "tcp",
+          "type": "system",
+          "category": "system",
+          "description": "File Transfer Protocol",
+          "priority": 90
+        },
+        {
+          "port": 25,
+          "name": "SMTP",
+          "protocol": "tcp",
+          "type": "system",
+          "category": "system",
+          "description": "Simple Mail Transfer Protocol",
+          "priority": 90
+        },
+        {
+          "port": 53,
+          "name": "DNS",
+          "protocol": "udp",
+          "type": "system",
+          "category": "system",
+          "description": "Domain Name System",
+          "priority": 100
+        },
+        {
+          "port": 110,
+          "name": "POP3",
+          "protocol": "tcp",
+          "type": "system",
+          "category": "system",
+          "description": "Post Office Protocol v3",
+          "priority": 80
+        },
+        {
+          "port": 143,
+          "name": "IMAP",
+          "protocol": "tcp",
+          "type": "system",
+          "category": "system",
+          "description": "Internet Message Access Protocol",
+          "priority": 80
+        }
+      ]
+    }
+  }
+}
+

@@ -1,0 +1,210 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Testing Task Manager Configuration Schema",
+  "description": "Schema for the unified testing task manager configuration.",
+  "type": "object",
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "Version of the configuration schema."
+    },
+    "generalSettings": {
+      "type": "object",
+      "properties": {
+        "scanDirectories": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Directories to scan for test files."
+        },
+        "testPatterns": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Patterns to match test files."
+        },
+        "ignorePatterns": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Patterns to ignore files/directories."
+        },
+        "testFramework": {
+          "type": "string",
+          "enum": ["jest", "mocha", "vitest", "cypress"],
+          "description": "The testing framework to use."
+        },
+        "jestConfig": {
+          "type": "string",
+          "description": "Path to custom Jest configuration file."
+        },
+        "parallelExecution": {
+          "type": "boolean",
+          "description": "Enable/disable parallel test execution."
+        },
+        "maxConcurrency": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Maximum number of concurrent test runs."
+        },
+        "timeout": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Default test timeout in milliseconds."
+        },
+        "retryFailedTests": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of retries for failed tests."
+        },
+        "generateReports": {
+          "type": "boolean",
+          "description": "Enable/disable test report generation."
+        },
+        "reportFormats": {
+          "type": "array",
+          "items": {"type": "string", "enum": ["json", "html", "junit", "lcov"]},
+          "description": "Formats for generated test reports."
+        },
+        "logLevel": {
+          "type": "string",
+          "enum": ["error", "warn", "info", "debug", "trace"],
+          "description": "Logging level for the test runner."
+        }
+      },
+      "required": [
+        "scanDirectories", "testPatterns", "ignorePatterns", "testFramework",
+        "parallelExecution", "maxConcurrency", "timeout", "retryFailedTests",
+        "generateReports", "reportFormats", "logLevel"
+      ],
+      "description": "General settings for the testing task manager."
+    },
+    "libraryPaths": {
+      "type": "object",
+      "patternProperties": {
+        "^[a-zA-Z0-9_-]+$": {"type": "string"}
+      },
+      "additionalProperties": false,
+      "description": "Aliases for common library paths."
+    },
+    "testCategories": {
+      "type": "object",
+      "patternProperties": {
+        "^[a-zA-Z0-9_-]+$": {
+          "type": "object",
+          "properties": {
+            "description": {"type": "string"},
+            "paths": {
+              "type": "array",
+              "items": {"type": "string"}
+            }
+          },
+          "required": ["description", "paths"]
+        }
+      },
+      "additionalProperties": false,
+      "description": "Definitions for test categories."
+    },
+    "systemDefaults": {
+      "type": "object",
+      "properties": {
+        "daemon": {
+          "type": "object",
+          "properties": {
+            "port": {"type": "integer", "minimum": 1024, "maximum": 65535},
+            "maxWorkers": {"type": "integer", "minimum": 1},
+            "heartbeatInterval": {"type": "integer", "minimum": 1000},
+            "electionTimeout": {"type": "integer", "minimum": 1000},
+            "enabled": {"type": "boolean"},
+            "scanInterval": {"type": "integer", "minimum": 0},
+            "maxConcurrentTasks": {"type": "integer", "minimum": 1},
+            "logLevel": {"type": "string", "enum": ["error", "warn", "info", "debug"]},
+            "autoRestart": {"type": "boolean"},
+            "taskTimeout": {"type": "integer", "minimum": 0},
+            "configCheckInterval": {"type": "integer", "minimum": 0},
+            "logPath": {"type": "string"},
+            "pidFile": {"type": "string"},
+            "stateFile": {"type": "string"},
+            "tasksFile": {"type": "string"},
+            "testsFile": {"type": "string"},
+            "lastUpdate": {"type": "integer", "minimum": 0}
+          },
+          "required": ["port", "maxWorkers", "heartbeatInterval", "electionTimeout", "enabled", "scanInterval", "maxConcurrentTasks", "logLevel", "autoRestart", "taskTimeout", "configCheckInterval", "logPath", "pidFile", "stateFile", "tasksFile", "testsFile", "lastUpdate"]
+        },
+        "mcp": {
+          "type": "object",
+          "properties": {
+            "servers": {
+              "type": "array",
+              "items": {"type": "string", "format": "uri"}
+            },
+            "retryAttempts": {"type": "integer", "minimum": 0},
+            "timeout": {"type": "integer", "minimum": 0}
+          },
+          "required": ["servers", "retryAttempts", "timeout"]
+        },
+        "logging": {
+          "type": "object",
+          "properties": {
+            "level": {"type": "string", "enum": ["error", "warn", "info", "debug", "trace"]},
+            "format": {"type": "string", "enum": ["json", "text"]},
+            "output": {"type": "string", "enum": ["console", "file", "both"]}
+          },
+          "required": ["level", "format", "output"]
+        }
+      },
+      "required": ["daemon", "mcp", "logging"],
+      "description": "Default system settings for various components."
+    },
+    "testSuiteTemplate": {
+      "type": "object",
+      "properties": {
+        "tests": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {"type": "string"},
+              "path": {"type": "string"},
+              "category": {"type": "string"},
+              "enabled": {"type": "boolean"}
+            },
+            "required": ["name", "path", "category", "enabled"]
+          }
+        },
+        "categories": {
+          "type": "object",
+          "patternProperties": {
+            "^[a-zA-Z0-9_-]+$": {
+              "type": "object",
+              "properties": {
+                "enabled": {"type": "boolean"},
+                "description": {"type": "string"},
+                "path": {"type": "string"}
+              },
+              "required": ["enabled", "description", "path"]
+            }
+          },
+          "additionalProperties": false
+        },
+        "settings": {
+          "type": "object",
+          "properties": {
+            "enabled": {"type": "boolean"},
+            "defaultTimeout": {"type": "integer", "minimum": 0},
+            "maxConcurrency": {"type": "integer", "minimum": 1},
+            "generateReports": {"type": "boolean"}
+          },
+          "required": ["enabled", "defaultTimeout", "maxConcurrency", "generateReports"]
+        }
+      },
+      "required": ["tests", "categories", "settings"],
+      "description": "Template for defining individual test suites."
+    }
+  },
+  "required": [
+    "version",
+    "generalSettings",
+    "libraryPaths",
+    "testCategories",
+    "systemDefaults",
+    "testSuiteTemplate"
+  ]
+}

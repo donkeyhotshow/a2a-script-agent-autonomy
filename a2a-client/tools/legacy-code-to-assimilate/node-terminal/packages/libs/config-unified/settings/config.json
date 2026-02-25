@@ -1,0 +1,70 @@
+{
+  "connection": {
+    "serverUrl": "http://localhost:3000/api",
+    "websocketUrl": "ws://localhost:3000/websocket",
+    "timeout": 5000,
+    "retries": 3
+  },
+  "performance": {
+    "autoRefresh": true,
+    "refreshInterval": 5000,
+    "realTimeMonitoring": true,
+    "maxMemoryRecords": 1000,
+    "dataCompression": false
+  },
+  "security": {
+    "requireAuth": false,
+    "apiKey": "",
+    "useHttps": false,
+    "verifySsl": true,
+    "sessionTimeout": 60
+  },
+  "logging": {
+    "level": "info",
+    "retentionDays": 30
+  },
+  "interface": {
+    "theme": "dark",
+    "language": "ru",
+    "dateFormat": "DD.MM.YYYY",
+    "dashboardWidgets": [
+      { "id": "widget-1", "type": "summary" },
+      { "id": "widget-2", "type": "status" }
+    ]
+  },
+  "notifications": {
+    "enabled": true,
+    "systemNotifications": true,
+    "errorNotifications": true,
+    "completionNotifications": false,
+    "soundNotifications": false,
+    "soundVolume": 50
+  },
+  "systemInfo": {
+    "appVersion": "2.1.0",
+    "os": "Windows 11 Pro",
+    "arch": "x64",
+    "memory": "16 GB",
+    "freeSpace": "256 GB",
+    "uptime": "2 дня 14 часов"
+  },
+  "metadata": {
+    "created": "2024-09-08T03:00:00.000Z",
+    "version": "1.0.0",
+    "description": "Конфигурация настроек"
+  },
+  "featureFlags": {
+    "USE_CORE_ERROR_HANDLER": true,
+    "USE_UNIFIED_CONFIG": true,
+    "USE_SYSTEM_FILE_OPS": true,
+    "USE_CORE_VALIDATION": true,
+    "USE_CORE_LOGGING": true,
+    "USE_UNIFIED_NETWORK_CLIENT": true,
+    "USE_NPM_WRAPPER_CLI": false,
+    "USE_NPM_WRAPPER_VALIDATION": false,
+    "USE_NPM_WRAPPER_FILE_OPS": false,
+    "USE_NPM_WRAPPER_PATH_TOOLS": false,
+    "USE_NPM_WRAPPER_API_CLIENT": false,
+    "USE_NPM_WRAPPER_ATOMIC_OPS": false
+  }
+}

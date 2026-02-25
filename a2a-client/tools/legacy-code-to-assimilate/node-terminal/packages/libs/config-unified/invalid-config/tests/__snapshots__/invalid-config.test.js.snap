@@ -1,0 +1,5 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`invalid-config > should handle invalid JSON gracefully (if module under test does) 1`] = `[SyntaxError: "undefined" is not valid JSON]`;
+
+exports[`invalid-config > should handle missing config.json gracefully (if module under test does) 1`] = `[SyntaxError: "undefined" is not valid JSON]`;

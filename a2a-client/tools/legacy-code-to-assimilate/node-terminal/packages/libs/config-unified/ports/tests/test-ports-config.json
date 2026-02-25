@@ -1,0 +1,17 @@
+{
+  "ports": [
+    {
+      "name": "test-port",
+      "port": 3000,
+      "protocol": "http",
+      "description": "Test port"
+    }
+  ],
+  "singlePorts": [],
+  "ranges": [],
+  "metadata": {
+    "created": "2025-10-13T06:29:34.001Z",
+    "version": "1.0.0",
+    "description": "Test configuration"
+  }
+}

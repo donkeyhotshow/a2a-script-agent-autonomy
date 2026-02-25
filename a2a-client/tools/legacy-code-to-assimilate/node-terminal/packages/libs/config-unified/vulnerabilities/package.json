@@ -1,0 +1,13 @@
+{
+  "name": "@libs/config-unified/vulnerabilities",
+  "version": "1.0.0",
+  "description": "Vulnerabilities configuration manager",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest --config=../../jest.config.mjs vulnerabilities/tests/vulnerabilities.test.js"
+  },
+  "keywords": ["vulnerabilities", "config", "manager"],
+  "author": "",
+  "license": "ISC"
+}

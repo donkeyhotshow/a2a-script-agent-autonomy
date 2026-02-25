@@ -1,0 +1,29 @@
+{
+  "name": "@mcp/markdown-utils",
+  "version": "1.0.0",
+  "description": "Утилиты для работы с Markdown и YAML front matter",
+  "main": "./src/front-matter-parser.js",
+  "type": "commonjs",
+  "files": [
+    "src/"
+  ],
+  "scripts": {
+    "test": "jest",
+    "test:watch": "jest --watch"
+  },
+  "keywords": [
+    "mcp",
+    "markdown",
+    "yaml",
+    "front-matter",
+    "utils"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "dependencies": {
+    "js-yaml": "^4.1.0"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
+  }
+}

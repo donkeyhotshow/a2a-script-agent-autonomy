@@ -1,0 +1,10 @@
+{
+  "status": "active",
+  "since": "2025-10",
+  "replacement": "validation/validation/index.js",
+  "notes": "This is the primary validation library. No deprecation is planned, but consumers should refer to validation/validation/index.js for the core API.",
+  "contacts": {
+    "maintainer": "Core Libraries Team",
+    "migrationSupport": "N/A"
+  }
+}

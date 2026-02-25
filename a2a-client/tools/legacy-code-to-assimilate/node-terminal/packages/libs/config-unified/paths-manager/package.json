@@ -1,0 +1,21 @@
+{
+  "name": "@libs/config-unified-paths-manager",
+  "version": "1.0.0",
+  "description": "Unified configuration library for project paths and test categories.",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "jest --config=../../../jest.config.mjs paths-manager/tests/paths-manager.test.js"
+  },
+  "keywords": [
+    "config",
+    "paths",
+    "test-categories",
+    "system-run"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "dependencies": {
+    "ajv": "^8.17.1"
+  }
+}

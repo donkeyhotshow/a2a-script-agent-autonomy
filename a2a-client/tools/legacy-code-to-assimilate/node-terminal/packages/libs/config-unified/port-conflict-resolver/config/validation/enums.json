@@ -1,0 +1,23 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Enumerations for Port Conflict Resolver",
+  "enums": {
+    "resolutionOptions": {
+      "values": [
+        "chooseNewPort",
+        "terminateConflictingProcess",
+        "ignore"
+      ],
+      "labels": {
+        "chooseNewPort": "Choose a new port automatically",
+        "terminateConflictingProcess": "Terminate the conflicting process",
+        "ignore": "Ignore and proceed"
+      },
+      "descriptions": {
+        "chooseNewPort": "Automatically selects an available port for the service.",
+        "terminateConflictingProcess": "Attempts to identify and terminate the process currently using the port.",
+        "ignore": "Continues with the current port assignment, potentially leading to service failure."
+      }
+    }
+  }
+}

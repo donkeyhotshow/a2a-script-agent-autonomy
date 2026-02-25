@@ -1,0 +1,93 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Unified Settings Configuration Schema",
+  "description": "Schema for the unified application settings file.",
+  "type": "object",
+  "properties": {
+    "connection": {
+      "type": "object",
+      "properties": {
+        "serverUrl": { "type": "string", "format": "uri" },
+        "websocketUrl": { "type": "string", "format": "uri" },
+        "timeout": { "type": "integer", "minimum": 0 },
+        "retries": { "type": "integer", "minimum": 0 }
+      },
+      "required": ["serverUrl", "websocketUrl", "timeout", "retries"]
+    },
+    "performance": {
+      "type": "object",
+      "properties": {
+        "autoRefresh": { "type": "boolean" },
+        "refreshInterval": { "type": "integer", "minimum": 0 },
+        "realTimeMonitoring": { "type": "boolean" },
+        "maxMemoryRecords": { "type": "integer", "minimum": 0 },
+        "dataCompression": { "type": "boolean" }
+      },
+      "required": ["autoRefresh", "refreshInterval", "realTimeMonitoring", "maxMemoryRecords", "dataCompression"]
+    },
+    "security": {
+      "type": "object",
+      "properties": {
+        "requireAuth": { "type": "boolean" },
+        "apiKey": { "type": "string" },
+        "useHttps": { "type": "boolean" },
+        "verifySsl": { "type": "boolean" },
+        "sessionTimeout": { "type": "integer", "minimum": 0 }
+      },
+      "required": ["requireAuth", "apiKey", "useHttps", "verifySsl", "sessionTimeout"]
+    },
+    "logging": {
+      "type": "object",
+      "properties": {
+        "level": { "type": "string", "enum": ["debug", "info", "warn", "error"] },
+        "retentionDays": { "type": "integer", "minimum": 0 }
+      },
+      "required": ["level", "retentionDays"]
+    },
+    "interface": {
+      "type": "object",
+      "properties": {
+        "theme": { "type": "string" },
+        "language": { "type": "string" },
+        "dateFormat": { "type": "string" },
+        "dashboardWidgets": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "type": { "type": "string" }
+            },
+            "required": ["id", "type"]
+          }
+        }
+      },
+      "required": ["theme", "language", "dateFormat", "dashboardWidgets"]
+    },
+    "notifications": {
+      "type": "object",
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "systemNotifications": { "type": "boolean" },
+        "errorNotifications": { "type": "boolean" },
+        "completionNotifications": { "type": "boolean" },
+        "soundNotifications": { "type": "boolean" },
+        "soundVolume": { "type": "integer", "minimum": 0, "maximum": 100 }
+      },
+      "required": ["enabled", "systemNotifications", "errorNotifications", "completionNotifications", "soundNotifications", "soundVolume"]
+    },
+    "systemInfo": {
+      "type": "object",
+      "properties": {
+        "appVersion": { "type": "string" },
+        "os": { "type": "string" },
+        "arch": { "type": "string" },
+        "memory": { "type": "string" },
+        "freeSpace": { "type": "string" },
+        "uptime": { "type": "string" }
+      },
+      "required": ["appVersion", "os", "arch", "memory", "freeSpace", "uptime"]
+    }
+  },
+  "required": ["connection", "performance", "security", "logging", "interface", "notifications", "systemInfo"]
+}

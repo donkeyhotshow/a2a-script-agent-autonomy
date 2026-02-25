@@ -1,0 +1,26 @@
+{
+  "projects": [
+    {
+      "id": "project-alpha",
+      "name": "Alpha Project",
+      "status": "active",
+      "priority": 80,
+      "description": "Main development project for new features.",
+      "startDate": "2024-01-01"
+    },
+    {
+      "id": "project-beta",
+      "name": "Beta Feature",
+      "status": "on-hold",
+      "priority": 30,
+      "description": "Research and development for future integration.",
+      "startDate": "2024-03-15"
+    }
+  ],
+  "metadata": {
+    "created": "2024-10-15T00:00:00Z",
+    "version": "1.0.0",
+    "description": "Initial projects configurations"
+  }
+}
+

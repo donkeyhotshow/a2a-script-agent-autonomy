@@ -1,0 +1,57 @@
+{
+  "routes": [
+    {
+      "path": "/api/*",
+      "target": "http://localhost:3012",
+      "strategy": "proxy"
+    },
+    {
+      "path": "/ui/*",
+      "target": "http://localhost:3000",
+      "strategy": "proxy"
+    },
+    {
+      "path": "/health",
+      "target": "http://localhost:3012/health",
+      "strategy": "health-check"
+    },
+    {
+      "path": "/metrics",
+      "target": "http://localhost:3012/metrics",
+      "strategy": "metrics"
+    },
+    {
+      "path": "/docs",
+      "target": "http://localhost:3012/docs",
+      "strategy": "static"
+    }
+  ],
+  "policies": {
+    "authentication": {
+      "enabled": false,
+      "type": "jwt",
+      "secret": "your-secret-key"
+    },
+    "rateLimiting": {
+      "enabled": true,
+      "windowMs": 900000,
+      "max": 100
+    },
+    "caching": {
+      "enabled": true,
+      "ttl": 300,
+      "maxSize": 1000
+    },
+    "logging": {
+      "enabled": true,
+      "level": "info",
+      "format": "combined"
+    }
+  },
+  "metadata": {
+    "created": "2024-09-08T02:20:00.000Z",
+    "version": "1.0.0",
+    "description": "Конфигурация шлюза",
+    "migratedFrom": "projects-manager/data/gateway.json"
+  }
+}

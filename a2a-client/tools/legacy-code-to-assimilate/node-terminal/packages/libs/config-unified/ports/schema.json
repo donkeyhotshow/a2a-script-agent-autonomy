@@ -1,0 +1,114 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Ports Configuration",
+  "description": "Schema for managing network ports, ranges, and associated systems.",
+  "type": "object",
+  "properties": {
+    "ports": {
+      "type": "array",
+      "description": "List of ports configured for specific systems (legacy, being replaced by singlePorts/ranges)",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string", "minLength": 1, "description": "Name of the port configuration" },
+          "port": { "type": "integer", "minimum": 1, "maximum": 65535, "description": "Port number" },
+          "protocol": { "type": "string", "enum": ["tcp", "udp", "http", "https", "ws", "wss"], "default": "tcp" },
+          "description": { "type": "string" },
+          "status": { "type": "string", "enum": ["in_use", "available", "reserved", "blocked"], "default": "available" },
+          "systemId": { "type": "string" },
+          "systemName": { "type": "string" },
+          "priority": { "type": "integer", "minimum": 0, "maximum": 100, "default": 50 }
+        },
+        "required": ["name", "port", "protocol"],
+        "additionalProperties": true
+      }
+    },
+    "reserved": {
+      "type": "array",
+      "description": "List of globally reserved/unavailable ports by number.",
+      "items": { "type": "integer", "minimum": 1, "maximum": 65535 },
+      "uniqueItems": true
+    },
+    "systems": {
+      "type": "array",
+      "description": "List of systems configured with ports.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "name": { "type": "string", "minLength": 1 },
+          "type": { "type": "string" },
+          "description": { "type": "string" },
+          "ports": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "port": { "type": "integer", "minimum": 1, "maximum": 65535 },
+                "protocol": { "type": "string", "enum": ["tcp", "udp", "http", "https", "ws", "wss"], "default": "tcp" }
+              },
+              "required": ["port", "protocol"]
+            }
+          }
+        },
+        "required": ["id", "name", "type"],
+        "additionalProperties": true
+      }
+    },
+    "ranges": {
+      "type": "array",
+      "description": "Configured port ranges with rules.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "minLength": 1, "description": "Unique ID for the range" },
+          "from": { "type": "integer", "minimum": 1, "maximum": 65535 },
+          "to": { "type": "integer", "minimum": 1, "maximum": 65535 },
+          "description": { "type": "string" },
+          "enabled": { "type": "boolean", "default": true },
+          "type": { "type": "string", "enum": ["allowed", "blocked", "development"], "default": "allowed" },
+          "priority": { "type": "integer", "minimum": 0, "maximum": 100, "default": 50 }
+        },
+        "required": ["id", "from", "to", "type"],
+        "additionalProperties": true
+      }
+    },
+    "singlePorts": {
+      "type": "array",
+      "description": "Configured individual port rules.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "minLength": 1, "description": "Unique ID for the single port" },
+          "port": { "type": "integer", "minimum": 1, "maximum": 65535 },
+          "name": { "type": "string", "minLength": 1 },
+          "protocol": { "type": "string", "enum": ["tcp", "udp", "http", "https", "ws", "wss"], "default": "tcp" },
+          "description": { "type": "string" },
+          "enabled": { "type": "boolean", "default": true },
+          "type": { "type": "string", "enum": ["allowed", "blocked", "system", "service", "utility", "development", "testing", "custom"], "default": "allowed" },
+          "priority": { "type": "integer", "minimum": 0, "maximum": 100, "default": 50 }
+        },
+        "required": ["id", "port", "name", "type"],
+        "additionalProperties": true
+      }
+    },
+    "unavailablePorts": {
+      "type": "array",
+      "description": "Globally unavailable ports (distinct from reserved, for OS-level or external blocking).",
+      "items": { "type": "integer", "minimum": 1, "maximum": 65535 },
+      "uniqueItems": true
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "created": { "type": "string", "format": "date-time" },
+        "version": { "type": "string" },
+        "description": { "type": "string" }
+      },
+      "required": ["created", "version"],
+      "additionalProperties": false
+    }
+  },
+  "required": ["ports", "reserved", "systems", "ranges", "singlePorts", "unavailablePorts", "metadata"],
+  "additionalProperties": false
+}

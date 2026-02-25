@@ -1,0 +1,31 @@
+{
+  "name": "@mcp/utils-logging",
+  "version": "1.0.0",
+  "description": "Logging Utilities",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {},
+  "devDependencies": {
+    "jest": "^30.0.5",
+    "@babel/core": "^7.28.3",
+    "@babel/preset-env": "^7.28.3",
+    "babel-jest": "^30.0.5"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "testMatch": [
+      "<rootDir>/tests/unit/**/*.test.js"
+    ],
+    "transform": {
+      "^(.*\\\\.js|\\\\.ts)$": "babel-jest"
+    },
+    "transformIgnorePatterns": [
+      "/node_modules/(?!eventemitter3)"
+    ]
+  }
+}

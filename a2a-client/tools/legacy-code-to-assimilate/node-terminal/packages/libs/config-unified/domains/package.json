@@ -1,0 +1,26 @@
+{
+  "name": "@libs/config-unified/domains",
+  "version": "1.0.0",
+  "description": "Конфигурационный менеджер для доменов",
+  "type": "module",
+  "main": "./index.cjs",
+  "module": "./index.js",
+  "exports": {
+    ".": {
+      "import": "./index.js",
+      "require": "./index.cjs"
+    },
+    "./config.json": "./config.json"
+  },
+  "keywords": ["config", "configuration", "domains", "networking"],
+  "author": "Auto-generated",
+  "license": "MIT",
+  "scripts": {
+    "test": "vitest",
+    "test:watch": "vitest --watch",
+    "test:coverage": "vitest --coverage"
+  },
+  "devDependencies": {
+    "vitest": "^0.34.6"
+  }
+}

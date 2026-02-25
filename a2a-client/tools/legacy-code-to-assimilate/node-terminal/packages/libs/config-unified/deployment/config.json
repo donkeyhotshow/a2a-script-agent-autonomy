@@ -1,0 +1,77 @@
+{
+  "providers": {
+    "aws": {
+      "region": "us-east-1",
+      "scaling": {
+        "minInstances": 1,
+        "maxInstances": 5
+      }
+    },
+    "gcp": {
+      "region": "us-central1",
+      "scaling": {
+        "minInstances": 1,
+        "maxInstances": 3,
+        "targetCPUUtilization": 60
+      }
+    },
+    "azure": {
+      "region": "eastus",
+      "scaling": {
+        "minInstances": 1,
+        "maxInstances": 4,
+        "targetCPUUtilization": 65
+      }
+    }
+  },
+  "policies": {
+    "backup": {
+      "enabled": true,
+      "frequency": "daily",
+      "retention": "30days",
+      "storage": "s3://backups"
+    },
+    "monitoring": {
+      "enabled": true,
+      "metrics": [
+        "cpu",
+        "memory",
+        "disk",
+        "network"
+      ],
+      "alerts": {
+        "cpu_threshold": 80,
+        "memory_threshold": 85,
+        "disk_threshold": 90
+      }
+    },
+    "security": {
+      "ssl": true,
+      "firewall": {
+        "allowedPorts": [
+          80,
+          443,
+          3012
+        ],
+        "allowedIPs": [
+          "0.0.0.0/0"
+        ]
+      },
+      "encryption": {
+        "atRest": true,
+        "inTransit": true
+      }
+    },
+    "rollback": {
+      "enabled": true,
+      "maxVersions": 5,
+      "autoRollback": true
+    }
+  },
+  "metadata": {
+    "created": "2024-09-08T01:33:00.000Z",
+    "version": "1.0.0",
+    "description": "Конфигурация развертывания",
+    "migratedFrom": "projects-manager/data/deployment.json"
+  }
+}

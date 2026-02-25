@@ -1,0 +1,41 @@
+{
+  "vulnerabilities": [
+    {
+      "id": "VULN-003",
+      "title": "New Vulnerability",
+      "description": "A newly discovered vulnerability.",
+      "severity": "Low",
+      "status": "Open",
+      "foundDate": "2023-03-01T00:00:00.000Z"
+    },
+    {
+      "id": "VULN-003",
+      "title": "New Vulnerability",
+      "description": "A newly discovered vulnerability.",
+      "severity": "Low",
+      "status": "Open",
+      "foundDate": "2023-03-01T00:00:00.000Z"
+    },
+    {
+      "id": "VULN-004",
+      "title": "Another Vulnerability",
+      "description": "Another new vulnerability.",
+      "severity": "High",
+      "status": "Open",
+      "foundDate": "2023-03-02T00:00:00.000Z"
+    },
+    {
+      "id": "VULN-003",
+      "title": "New Vulnerability",
+      "description": "A newly discovered vulnerability.",
+      "severity": "Low",
+      "status": "Open",
+      "foundDate": "2023-03-01T00:00:00.000Z"
+    }
+  ],
+  "metadata": {
+    "created": "2023-01-01T00:00:00.000Z",
+    "version": "1.0.0",
+    "description": "Test Vulnerabilities Configuration"
+  }
+}

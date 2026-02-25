@@ -1,0 +1,22 @@
+{
+  "appId": "projects-manager",
+  "name": "Level 3 - Advanced Tests",
+  "description": "E2E тесты, тесты производительности и другие продвинутые тесты для projects-manager",
+  "level": 3,
+  "tests": [],
+  "dependencies": [
+    "level2-complete"
+  ],
+  "postConditions": {
+    "artifacts": [
+      "e2e-reports",
+      "performance-reports",
+      "security-reports"
+    ],
+    "notifications": [
+      "slack",
+      "email",
+      "dashboard"
+    ]
+  }
+}

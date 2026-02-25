@@ -1,0 +1,88 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Gateway Configuration",
+  "description": "Schema for managing API gateway routing rules.",
+  "type": "object",
+  "properties": {
+    "rules": {
+      "type": "array",
+      "description": "List of configured gateway rules.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[a-z0-9-]+$",
+            "description": "Unique ID for the gateway rule (lowercase, alphanumeric, hyphens)"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Display name for the gateway rule"
+          },
+          "path": {
+            "type": "string",
+            "minLength": 1,
+            "description": "URL path regex for the rule (e.g., ^/api/v1/users/)"
+          },
+          "targetUrl": {
+            "type": "string",
+            "format": "uri",
+            "description": "Target URL to redirect or proxy to (e.g., http://localhost:3001/users)"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["active", "inactive", "deprecated"],
+            "default": "active",
+            "description": "Current status of the rule"
+          },
+          "priority": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100,
+            "default": 50,
+            "description": "Priority for rule matching (higher means evaluated first)"
+          },
+          "description": {
+            "type": "string",
+            "description": "Optional detailed description of the rule"
+          },
+          "created": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "updated": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          }
+        },
+        "required": ["id", "name", "path", "targetUrl", "status", "priority"],
+        "additionalProperties": false
+      },
+      "uniqueItems": true
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "created": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "version": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        }
+      },
+      "required": ["created", "version", "description"],
+      "additionalProperties": false
+    }
+  },
+  "required": ["rules", "metadata"],
+  "additionalProperties": false
+}
+

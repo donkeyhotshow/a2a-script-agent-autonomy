@@ -1,0 +1,35 @@
+{
+  "name": "@mcp/core-thread-manager",
+  "version": "1.0.0",
+  "description": "Библиотека для организации потоков выполнения кода с поддержкой приоритетов, очередей и мониторинга",
+  "main": "index.js",
+  "type": "commonjs",
+  "scripts": {
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "lint": "eslint .",
+    "docs": "jsdoc -c jsdoc.json"
+  },
+  "keywords": [
+    "threads",
+    "async",
+    "queue",
+    "priority",
+    "worker",
+    "concurrency",
+    "task-management"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "eventemitter3": "^5.0.1",
+    "p-queue": "^7.4.1",
+    "p-timeout": "^5.1.0",
+    "p-retry": "^5.0.0"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "eslint": "^8.57.0",
+    "jsdoc": "^4.0.2"
+  }
+}

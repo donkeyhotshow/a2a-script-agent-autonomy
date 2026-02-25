@@ -1,0 +1,20 @@
+{
+  "status": "deprecated",
+  "since": "2025-10",
+  "replacement": "config-unified/core",
+  "migration": "docs/migrations/config-to-config-unified.md",
+  "notes": "config/ is deprecated. Please migrate to config-unified/core for a unified and more flexible configuration management system. The new system supports schema validation and domain-specific configuration models.",
+  "deprecationWarning": {
+    "enabled": false,
+    "message": "This library is deprecated. Please migrate to {replacement}. See {migration} for details.",
+    "logLevel": "warn"
+  },
+  "sunset": {
+    "planned": "2026-04",
+    "removeAfter": "2026-10"
+  },
+  "contacts": {
+    "maintainer": "Core Libraries Team",
+    "migrationSupport": "See migration guide"
+  }
+}

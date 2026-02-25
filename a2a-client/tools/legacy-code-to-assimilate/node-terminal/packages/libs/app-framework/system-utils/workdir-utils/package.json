@@ -1,0 +1,32 @@
+{
+  "name": "mcp-core-workdir-utils",
+  "version": "1.0.0",
+  "description": "Библиотека для управления рабочими директориями - поиск корня проекта, смена директорий, инициализация",
+  "main": "index.cjs",
+  "type": "commonjs",
+  "scripts": {
+    "test": "jest",
+    "lint": "eslint .",
+    "docs": "jsdoc -c jsdoc.json"
+  },
+  "keywords": [
+    "workdir",
+    "project-root",
+    "directory-management",
+    "workspace",
+    "path-resolution"
+  ],
+  "author": "MCP Team",
+  "license": "MIT",
+  "dependencies": {
+    "fs-extra": "^11.3.1"
+  },
+  "devDependencies": {
+    "eslint": "^8.57.0",
+    "jsdoc": "^4.0.2",
+    "jest": "^29.7.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

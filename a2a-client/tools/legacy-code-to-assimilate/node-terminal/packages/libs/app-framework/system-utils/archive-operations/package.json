@@ -1,0 +1,37 @@
+{
+  "name": "mcp-core-archive-operations",
+  "version": "1.1.0",
+  "description": "Библиотека для работы с архивами и атомарными операциями - создание, извлечение, поиск, управление, атомарные операции с файлами",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "jest",
+    "lint": "eslint .",
+    "docs": "jsdoc -c jsdoc.json"
+  },
+  "keywords": [
+    "archive",
+    "compression",
+    "file-management",
+    "backup",
+    "extraction",
+    "atomic-operations",
+    "file-operations"
+  ],
+  "author": "MCP Team",
+  "license": "MIT",
+  "dependencies": {
+    "archiver": "^6.0.2",
+    "fs-extra": "^11.3.1",
+    "tar": "^6.2.1",
+    "unzipper": "^0.10.14",
+    "write-file-atomic": "^5.0.0"
+  },
+  "devDependencies": {
+    "eslint": "^8.57.0",
+    "jsdoc": "^4.0.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

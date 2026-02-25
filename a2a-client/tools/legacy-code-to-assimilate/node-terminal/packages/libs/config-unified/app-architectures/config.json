@@ -1,0 +1,45 @@
+{
+  "architectures": {
+    "microservices": {
+      "description": "Архитектура, основанная на небольших, независимо развертываемых сервисах.",
+      "components": [
+        "API Gateway",
+        "Service Registry",
+        "Config Server",
+        "Individual Services"
+      ]
+    },
+    "monolithic": {
+      "description": "Традиционная архитектура, где все компоненты приложения объединены в один модуль.",
+      "components": [
+        "Frontend",
+        "Backend",
+        "Database"
+      ]
+    }
+  },
+  "templates": {
+    "nodejs-express": {
+      "description": "Шаблон для Node.js приложения с использованием Express.js.",
+      "techStack": [
+        "Node.js",
+        "Express.js",
+        "MongoDB"
+      ]
+    },
+    "vue-frontend": {
+      "description": "Шаблон для фронтенд-приложения на Vue.js.",
+      "techStack": [
+        "Vue.js",
+        "Vite",
+        "Tailwind CSS"
+      ]
+    }
+  },
+  "metadata": {
+    "created": "2024-09-08T02:55:00.000Z",
+    "version": "1.0.0",
+    "description": "Конфигурация архитектур приложений",
+    "migratedFrom": "projects-manager/data/app-architectures.json"
+  }
+}

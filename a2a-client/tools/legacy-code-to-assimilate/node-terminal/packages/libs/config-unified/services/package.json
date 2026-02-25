@@ -1,0 +1,17 @@
+{
+  "name": "@mcp/config-unified-services",
+  "version": "1.0.0",
+  "description": "Unified services configuration library.",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "jest --config=../../../jest.config.mjs services/tests/config-manager.test.js"
+  },
+  "keywords": [
+    "config",
+    "services",
+    "unified"
+  ],
+  "author": "Your Name",
+  "license": "MIT"
+}

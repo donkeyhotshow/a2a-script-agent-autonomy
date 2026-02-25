@@ -1,0 +1,21 @@
+{
+  "packages": {
+    "test-package-1": {
+      "name": "test-package-1",
+      "version": "1.0.0",
+      "path": "./packages/test-package-1",
+      "tests": [
+        "./tests/unit/test-package-1.test.js"
+      ]
+    }
+  },
+  "scripts": {
+    "build-all": "lerna run build",
+    "test-all": "lerna run test"
+  },
+  "metadata": {
+    "created": "2023-10-27T10:00:00Z",
+    "version": "1.0.0",
+    "description": "Package testing configuration"
+  }
+}

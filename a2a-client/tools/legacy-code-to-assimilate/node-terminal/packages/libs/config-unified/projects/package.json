@@ -1,0 +1,27 @@
+{
+  "name": "@libs/config-unified/projects",
+  "version": "1.0.0",
+  "description": "Конфигурационный менеджер для проектов",
+  "type": "module",
+  "main": "./index.cjs",
+  "module": "./index.js",
+  "exports": {
+    ".": {
+      "import": "./index.js",
+      "require": "./index.cjs"
+    },
+    "./config.json": "./config.json"
+  },
+  "keywords": ["config", "configuration", "projects", "development"],
+  "author": "Auto-generated",
+  "license": "MIT",
+  "scripts": {
+    "test": "vitest",
+    "test:watch": "vitest --watch",
+    "test:coverage": "vitest --coverage"
+  },
+  "devDependencies": {
+    "vitest": "^0.34.6"
+  }
+}
+

@@ -1,0 +1,147 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "All enumeration values used across the ports plugin",
+  "enums": {
+    "protocols": {
+      "values": ["tcp", "udp", "http", "https", "ws", "wss"],
+      "labels": {
+        "tcp": "TCP",
+        "udp": "UDP",
+        "http": "HTTP",
+        "https": "HTTPS",
+        "ws": "WebSocket",
+        "wss": "WebSocket Secure"
+      },
+      "descriptions": {
+        "tcp": "Transmission Control Protocol - надежный протокол с установкой соединения",
+        "udp": "User Datagram Protocol - быстрый протокол без установки соединения",
+        "http": "HyperText Transfer Protocol - протокол передачи гипертекста",
+        "https": "HTTP Secure - защищенный протокол передачи гипертекста",
+        "ws": "WebSocket - протокол двунаправленной связи",
+        "wss": "WebSocket Secure - защищенный протокол двунаправленной связи"
+      }
+    },
+    "types": {
+      "values": ["system", "service", "utility", "development", "testing", "custom"],
+      "labels": {
+        "system": "Системный",
+        "service": "Сервис",
+        "utility": "Утилита",
+        "development": "Разработка",
+        "testing": "Тестирование",
+        "custom": "Пользовательский"
+      },
+      "descriptions": {
+        "system": "Системный порт для критичных компонентов ОС",
+        "service": "Порт для сервисов и фоновых процессов",
+        "utility": "Порт для вспомогательных утилит",
+        "development": "Порт для разработки и отладки",
+        "testing": "Порт для тестирования приложений",
+        "custom": "Пользовательский порт"
+      }
+    },
+    "categories": {
+      "values": ["web", "api", "database", "cache", "monitoring", "development", "system", "custom"],
+      "labels": {
+        "web": "Веб",
+        "api": "API",
+        "database": "База данных",
+        "cache": "Кеш",
+        "monitoring": "Мониторинг",
+        "development": "Разработка",
+        "system": "Система",
+        "custom": "Пользовательская"
+      },
+      "descriptions": {
+        "web": "Веб-серверы и приложения",
+        "api": "API-сервисы и REST/GraphQL endpoints",
+        "database": "Системы управления базами данных",
+        "cache": "Системы кеширования (Redis, Memcached)",
+        "monitoring": "Системы мониторинга и метрик",
+        "development": "Инструменты разработки",
+        "system": "Системные компоненты",
+        "custom": "Пользовательская категория"
+      }
+    },
+    "rangeTypes": {
+      "values": ["allowed", "blocked", "restricted"],
+      "labels": {
+        "allowed": "Разрешено",
+        "blocked": "Заблокировано",
+        "restricted": "Ограничено"
+      },
+      "descriptions": {
+        "allowed": "Порты в диапазоне разрешены для использования",
+        "blocked": "Порты в диапазоне заблокированы",
+        "restricted": "Порты в диапазоне ограничены (требуется специальное разрешение)"
+      }
+    },
+    "systemTypes": {
+      "values": ["web-server", "api-server", "database", "cache", "development", "custom"],
+      "labels": {
+        "web-server": "Веб-сервер",
+        "api-server": "API-сервер",
+        "database": "База данных",
+        "cache": "Кеш-сервер",
+        "development": "Разработка",
+        "custom": "Пользовательская"
+      },
+      "descriptions": {
+        "web-server": "HTTP/HTTPS веб-сервер (Apache, Nginx, etc.)",
+        "api-server": "API-сервер (REST, GraphQL, gRPC)",
+        "database": "Сервер баз данных (PostgreSQL, MySQL, MongoDB)",
+        "cache": "Кеш-сервер (Redis, Memcached)",
+        "development": "Среда разработки",
+        "custom": "Пользовательская система"
+      }
+    },
+    "environments": {
+      "values": ["development", "testing", "staging", "production"],
+      "labels": {
+        "development": "Разработка",
+        "testing": "Тестирование",
+        "staging": "Предпродакшн",
+        "production": "Продакшн"
+      },
+      "descriptions": {
+        "development": "Среда разработки",
+        "testing": "Среда тестирования",
+        "staging": "Предпродакшн среда",
+        "production": "Продакшн среда"
+      }
+    },
+    "statuses": {
+      "values": ["running", "stopped", "error", "starting", "stopping"],
+      "labels": {
+        "running": "Запущена",
+        "stopped": "Остановлена",
+        "error": "Ошибка",
+        "starting": "Запускается",
+        "stopping": "Останавливается"
+      },
+      "colors": {
+        "running": "#10b981",
+        "stopped": "#6b7280",
+        "error": "#ef4444",
+        "starting": "#f59e0b",
+        "stopping": "#f59e0b"
+      }
+    },
+    "monitorStatuses": {
+      "values": ["active", "inactive", "error", "unknown"],
+      "labels": {
+        "active": "Активен",
+        "inactive": "Неактивен",
+        "error": "Ошибка",
+        "unknown": "Неизвестно"
+      },
+      "descriptions": {
+        "active": "Порт активен и отвечает",
+        "inactive": "Порт неактивен или не отвечает",
+        "error": "Ошибка мониторинга порта",
+        "unknown": "Статус порта неизвестен"
+      }
+    }
+  }
+}
+

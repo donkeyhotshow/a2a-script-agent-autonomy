@@ -1,0 +1,41 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Hosting Configuration",
+  "description": "Schema for managing hosting servers and their properties.",
+  "type": "object",
+  "properties": {
+    "servers": {
+      "type": "array",
+      "description": "List of configured hosting servers.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "minLength": 1, "description": "Unique ID for the server" },
+          "name": { "type": "string", "minLength": 1, "description": "Server name" },
+          "ipAddress": { "type": "string", "format": "ipv4", "description": "Server IP address" },
+          "status": { "type": "string", "enum": ["online", "offline", "maintenance"], "default": "online" },
+          "priority": { "type": "integer", "minimum": 0, "maximum": 100, "default": 50, "description": "Priority for server selection or load balancing" },
+          "description": { "type": "string" },
+          "created": { "type": "string", "format": "date-time" },
+          "updated": { "type": "string", "format": "date-time" }
+        },
+        "required": ["id", "name", "ipAddress", "status"],
+        "additionalProperties": true
+      },
+      "uniqueItems": true
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "created": { "type": "string", "format": "date-time" },
+        "version": { "type": "string" },
+        "description": { "type": "string" }
+      },
+      "required": ["created", "version"],
+      "additionalProperties": false
+    }
+  },
+  "required": ["servers", "metadata"],
+  "additionalProperties": false
+}
+

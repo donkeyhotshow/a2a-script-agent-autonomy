@@ -1,0 +1,161 @@
+{
+  "version": "1.0.0",
+  "generalSettings": {
+    "scanDirectories": [
+      "./src",
+      "./tests",
+      "./utils",
+      "./scripts",
+      "../../libs/app-framework/**/tests",
+      "../../libs/system/**/tests",
+      "../../libs/security/**/tests",
+      "../../libs/network/**/tests",
+      "../../libs/logging-monitoring/**/tests",
+      "../../libs/error-management/**/tests",
+      "../../libs/validation/**/tests",
+      "../../libs/testing/**/tests",
+      "../../libs/standards/**/tests",
+      "../../libs/docs/**/tests",
+      "../../libs/assets/**/tests"
+    ],
+    "testPatterns": [
+      "**/*.test.js",
+      "**/*.spec.js",
+      "**/tests/**/*.js",
+      "**/unit/**/*.test.js",
+      "**/integration/**/*.test.js",
+      "**/e2e/**/*.test.js"
+    ],
+    "ignorePatterns": [
+      "**/node_modules/**",
+      "**/coverage/**",
+      "**/.git/**",
+      "**/dist/**",
+      "**/build/**"
+    ],
+    "testFramework": "jest",
+    "jestConfig": "./jest.config.js",
+    "parallelExecution": true,
+    "maxConcurrency": 4,
+    "timeout": 30000,
+    "retryFailedTests": 2,
+    "generateReports": true,
+    "reportFormats": [
+      "json",
+      "html",
+      "junit"
+    ],
+    "logLevel": "info"
+  },
+  "libraryPaths": {
+    "app-framework": "../../libs/app-framework",
+    "system": "../../libs/system",
+    "security": "../../libs/security",
+    "network": "../../libs/network",
+    "logging-monitoring": "../../libs/logging-monitoring",
+    "error-management": "../../libs/error-management",
+    "validation": "../../libs/validation",
+    "testing": "../../libs/testing",
+    "standards": "../../libs/standards",
+    "docs": "../../libs/docs",
+    "assets": "../../libs/assets"
+  },
+  "testCategories": {
+    "core": {
+      "description": "Базовые библиотеки",
+      "paths": [
+        "../../libs/system/file-operations/tests",
+        "../../libs/app-framework/core/shared/tests",
+        "../../libs/app-framework/core/json-utils/tests",
+        "../../libs/app-framework/core/time/tests",
+        "../../libs/app-framework/core/templates/tests",
+        "../../libs/app-framework/core/markdown-utils/tests",
+        "../../libs/app-framework/core/configuration/configuration-loader/tests"
+      ]
+    },
+    "network": {
+      "description": "Сетевые библиотеки",
+      "paths": [
+        "../../libs/network/api/tests",
+        "../../libs/network/api-client/tests",
+        "../../libs/logging-monitoring/logging/tests",
+        "../../libs/logging-monitoring/monitoring/tests",
+        "../../libs/error-management/error-handler/tests",
+        "../../libs/validation/validation/tests"
+      ]
+    },
+    "integration": {
+      "description": "Интеграционные библиотеки",
+      "paths": [
+        "../../libs/security/authentication/tests",
+        "../../libs/app-framework/api/api/gateway/tests",
+        "../../libs/app-framework/project-management/project/testing/utils/tests",
+        "../../libs/system/process-management/tests",
+        "../../libs/system/service-management/tests",
+        "../../libs/system/task-management/tests"
+      ]
+    }
+  },
+  "systemDefaults": {
+    "daemon": {
+      "port": 3012,
+      "maxWorkers": 4,
+      "heartbeatInterval": 3000,
+      "electionTimeout": 5000,
+      "enabled": true,
+      "scanInterval": 5000,
+      "maxConcurrentTasks": 1,
+      "logLevel": "info",
+      "autoRestart": true,
+      "taskTimeout": 30000,
+      "configCheckInterval": 2000,
+      "logPath": "logs/json-daemon.log",
+      "pidFile": "state/daemon.pid",
+      "stateFile": "state/daemon-state.json",
+      "tasksFile": "config/tasks.json",
+      "testsFile": "config/test-suite.json",
+      "lastUpdate": 1753054602364
+    },
+    "mcp": {
+      "servers": [],
+      "retryAttempts": 3,
+      "timeout": 10000
+    },
+    "logging": {
+      "level": "info",
+      "format": "json",
+      "output": "console"
+    }
+  },
+  "testSuiteTemplate": {
+    "tests": [],
+    "categories": {
+      "unit": {
+        "enabled": true,
+        "description": "Unit tests",
+        "path": "tests/unit"
+      },
+      "e2e": {
+        "enabled": false,
+        "description": "End-to-end tests",
+        "path": "tests/e2e"
+      },
+      "integration": {
+        "enabled": false,
+        "description": "Integration tests",
+        "path": "tests/integration"
+      }
+    },
+    "settings": {
+      "enabled": true,
+      "defaultTimeout": 30000,
+      "maxConcurrency": 1,
+      "generateReports": true
+    }
+  },
+  "metadata": {
+    "created": "2024-09-08T03:00:00.000Z",
+    "version": "1.0.0",
+    "description": "Конфигурация менеджера тестирования"
+  }
+}

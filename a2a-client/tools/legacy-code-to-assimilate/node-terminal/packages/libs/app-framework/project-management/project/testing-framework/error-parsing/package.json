@@ -1,0 +1,13 @@
+{
+  "name": "@mcp/project-testing-error-parsing",
+  "version": "1.0.0",
+  "description": "Error parsing library for testing framework",
+  "main": "index.cjs",
+  "type": "commonjs",
+  "dependencies": {
+    "split2": "^4.2.0"
+  },
+  "keywords": ["error", "parsing", "testing"],
+  "author": "",
+  "license": "MIT"
+}

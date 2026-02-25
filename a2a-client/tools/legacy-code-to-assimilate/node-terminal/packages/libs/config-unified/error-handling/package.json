@@ -1,0 +1,17 @@
+{
+  "name": "@mcp/config-unified-error-handling",
+  "version": "1.0.0",
+  "description": "Unified error handling configuration library.",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "config",
+    "error-handling",
+    "unified"
+  ],
+  "author": "Your Name",
+  "license": "MIT"
+}

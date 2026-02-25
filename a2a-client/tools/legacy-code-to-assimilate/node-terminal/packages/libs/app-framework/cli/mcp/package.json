@@ -1,0 +1,45 @@
+{
+  "name": "@mcp/mcp",
+  "version": "1.0.0",
+  "description": "MCP (Model Context Protocol) library with enhanced architecture and core integration",
+  "main": "index.js",
+  "type": "commonjs",
+  "scripts": {
+    "test": "jest",
+    "lint": "eslint src/",
+    "docs": "jsdoc src/"
+  },
+  "dependencies": {
+    "@mcp/core-logger-core": "file:../core/domain-logger",
+    "@mcp/core-error-handler": "file:../core/error-handler",
+    "@mcp/core-config-manager": "file:../core/config-manager",
+    "@mcp/core-utils": "file:../core/file-utils",
+    "@mcp/core-unified-controller": "file:../core/unified-controller",
+    "ws": "^8.18.2",
+    "uuid": "^9.0.0",
+    "eventemitter3": "^5.0.1",
+    "axios": "^1.6.0",
+    "cors": "^2.8.5",
+    "helmet": "^7.1.0"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "eslint": "^8.0.0"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "terminal",
+    "rules-engine",
+    "test-controller",
+    "command-executor",
+    "archive-manager",
+    "atomic-operations",
+    "data-manager",
+    "protocol",
+    "messaging",
+    "connections"
+  ],
+  "author": "",
+  "license": "MIT"
+}

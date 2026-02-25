@@ -1,0 +1,85 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Paths Configuration Schema",
+  "description": "Schema for defining base paths, log directories, report directories, and system-run specific paths, along with test categories.",
+  "type": "object",
+  "properties": {
+    "basePath": { "type": "string", "description": "Base path for the application." },
+    "logBaseDir": { "type": "string", "description": "Base directory for logs." },
+    "reportsBaseDir": { "type": "string", "description": "Base directory for reports." },
+    "systemRun": {
+      "type": "object",
+      "properties": {
+        "base": { "type": "string" },
+        "cli": { "type": "string" },
+        "config": { "type": "string" },
+        "docs": { "type": "string" },
+        "executionPipelines": { "type": "string" },
+        "executionPipelinesPhase02": { "type": "string" },
+        "labSyntaxFix": { "type": "string" },
+        "libs": { "type": "string" },
+        "logs": { "type": "string" },
+        "nodeModules": { "type": "string" },
+        "reports": { "type": "string" },
+        "scripts": { "type": "string" },
+        "temp": { "type": "string" },
+        "tests": { "type": "string" },
+        "upgradeWork": { "type": "string" },
+        "utils": { "type": "string" },
+        "work": { "type": "string" },
+        "testingTaskManager": { "type": "string" },
+        "projectsManager": { "type": "string" },
+        "labSyntaxFixPatterns": { "type": "string" },
+        "labSyntaxFixSamples": { "type": "string" }
+      },
+      "required": [
+        "base", "cli", "config", "docs", "executionPipelines",
+        "executionPipelinesPhase02", "labSyntaxFix", "libs", "logs",
+        "nodeModules", "reports", "scripts", "temp", "tests",
+        "upgradeWork", "utils", "work", "testingTaskManager", "projectsManager",
+        "labSyntaxFixPatterns", "labSyntaxFixSamples"
+      ],
+      "additionalProperties": false,
+      "description": "Paths specific to the system-run project."
+    },
+    "testCoverageAnalysis": {
+      "type": "object",
+      "properties": {
+        "logFile": { "type": "string" },
+        "reportMarkdownFile": { "type": "string" },
+        "reportJsonFile": { "type": "string" },
+        "tasksFile": { "type": "string" }
+      },
+      "required": ["logFile", "reportMarkdownFile", "reportJsonFile", "tasksFile"],
+      "additionalProperties": false,
+      "description": "Configuration for test coverage analysis."
+    },
+    "testCategories": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "patterns": { "type": "array", "items": { "type": "string" } },
+          "testSubdir": { "type": "string" },
+          "fileSuffix": { "type": "string" }
+        },
+        "required": ["name", "patterns", "testSubdir", "fileSuffix"],
+        "additionalProperties": false
+      },
+      "description": "Definitions for different categories of tests."
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "created": { "type": "string", "format": "date-time" },
+        "version": { "type": "string" },
+        "description": { "type": "string" }
+      },
+      "required": ["created", "version", "description"],
+      "additionalProperties": false
+    }
+  },
+  "required": ["basePath", "logBaseDir", "reportsBaseDir", "systemRun", "testCoverageAnalysis", "testCategories", "metadata"],
+  "additionalProperties": false
+}

@@ -1,0 +1,452 @@
+const fs = require('fs').promises;
+const path = require('path');
+const { readFileSync } = require('fs');
+
+const Ajv = require('ajv');
+const addFormats = require('ajv-formats');
+
+const configPath = path.join(__dirname, 'config.json');
+const schemaPath = path.join(__dirname, 'schema.json');
+
+class ErrorHandlingConfigManager {
+  constructor() {
+    this.configPath = configPath;
+    this.schemaPath = schemaPath;
+    this.cache = null;
+    this.lastModified = null;
+    this.watchers = new Set();
+
+    this.ajv = new Ajv();
+    addFormats(this.ajv);
+    try {
+      const schema = JSON.parse(readFileSync(this.schemaPath, 'utf8'));
+      this.validate = this.ajv.compile(schema);
+    } catch (error) {
+      console.error(`Failed to load or compile schema for error-handling config: ${error.message}`);
+    }
+  }
+
+  async getConfig(forceReload = false) {
+    try {
+      if (!forceReload && this.cache) {
+        const stats = await fs.stat(this.configPath);
+        if (stats.mtime.getTime() === this.lastModified) {
+          return this.cache;
+        }
+      }
+
+      const config = await this.loadConfig();
+      this.cache = config;
+      this.lastModified = (await fs.stat(this.configPath)).mtime.getTime();
+
+      return config;
+    } catch (error) {
+      console.error('Ошибка получения конфигурации обработки ошибок:', error);
+      return this.getDefaultConfig();
+    }
+  }
+
+  async loadConfig() {
+    try {
+      const content = await fs.readFile(this.configPath, 'utf-8');
+      const configData = JSON.parse(content);
+      if (this.validate && !this.validate(configData)) {
+        const errorMessage = `Error Handling Configuration failed validation: ${this.ajv.errorsText(this.validate.errors)}`;
+        console.error(errorMessage);
+        // throw new Error(errorMessage);
+      }
+      return configData;
+    } catch (error) {
+      console.warn('Не удалось загрузить конфигурацию обработки ошибок, используется по умолчанию');
+      return this.getDefaultConfig();
+    }
+  }
+
+  async saveConfig(config) {
+    try {
+      await fs.writeFile(this.configPath, JSON.stringify(config, null, 2), 'utf-8');
+      this.cache = config;
+      this.lastModified = (await fs.stat(this.configPath)).mtime.getTime();
+      this.notifyWatchers(config);
+    } catch (error) {
+      console.error('Ошибка сохранения конфигурации обработки ошибок:', error);
+      throw error;
+    }
+  }
+
+  getDefaultConfig() {
+    return {
+      enabled: true,
+      logLevel: 'info',
+      maxRetries: 5,
+      retryDelay: 5000,
+      batchSize: 100,
+      system: {
+        name: 'Projects Manager Error Handling System',
+        version: '2.0.0'
+      },
+      directories: {
+        work: './work',
+        errors: './work/errors',
+        reports: './work/reports',
+        backups: './work/backups',
+        logs: './logs',
+        errorLogs: './logs/errors'
+      },
+      taskManager: {
+        enabled: true,
+        autoCreateTasks: true,
+        taskCategories: ['error', 'warning', 'info', 'critical'],
+        defaultPriority: 'medium',
+        database: {
+          path: './data/tasks.json',
+          backup: true,
+          backupInterval: 3600000
+        },
+        tasks: {
+          maxRetries: 5,
+          retryDelay: 5000,
+          timeout: 30000,
+          autoResolve: false
+        },
+        cleanup: {
+          enabled: true,
+          interval: 86400000,
+          maxAge: 2592000000,
+          keepResolved: false
+        },
+        notifications: {
+          enabled: true,
+          criticalOnly: false,
+          webhook: '',
+          email: {
+            enabled: false,
+            smtp: '',
+            user: '',
+            pass: '',
+            from: '',
+            to: ''
+          }
+        },
+        cli: {
+          enabled: true,
+          commands: [
+            'list',
+            'create',
+            'update',
+            'delete',
+            'resolve',
+            'stats',
+            'cleanup'
+          ]
+        }
+      },
+      monitoring: {
+        enabled: true,
+        interval: 60000,
+        metrics: {
+          diskSpace: {
+            enabled: true,
+            threshold: 90
+          },
+          memoryUsage: {
+            enabled: true,
+            threshold: 80
+          },
+          cpuUsage: {
+            enabled: true,
+            threshold: 90
+          },
+          processCount: {
+            enabled: true,
+            threshold: 100
+          }
+        },
+        alerts: {
+          critical: {
+            enabled: true,
+            immediate: true
+          },
+          high: {
+            enabled: true,
+            delay: 300000
+          },
+          medium: {
+            enabled: true,
+            delay: 900000
+          },
+          low: {
+            enabled: false
+          }
+        },
+        threshold: 5,
+        notifications: {
+          enabled: true,
+          webhook: '',
+          email: {
+            enabled: false,
+            smtp: '',
+            user: '',
+            pass: '',
+            from: '',
+            to: ''
+          }
+        }
+      },
+      logging: {
+        level: 'info',
+        format: 'json',
+        timestamp: true,
+        file: {
+          enabled: true,
+          path: './logs/errors',
+          maxSize: '10m',
+          maxFiles: 5,
+          compress: true
+        },
+        console: {
+          enabled: true,
+          colors: true,
+          timestamp: true
+        },
+        levels: {
+          error: {
+            file: true,
+            console: true,
+            notify: true
+          },
+          warn: {
+            file: true,
+            console: true,
+            notify: false
+          },
+          info: {
+            file: true,
+            console: false,
+            notify: false
+          },
+          debug: {
+            file: false,
+            console: false,
+            notify: false
+          }
+        },
+        filters: {
+          excludePatterns: [
+            'node_modules',
+            'logs',
+            'temp'
+          ],
+          includePatterns: [
+            '*.js',
+            '*.json'
+          ]
+        },
+        errorLogging: {
+          enabled: true,
+          level: 'error',
+          file: true,
+          console: true
+        },
+        requestLogging: {
+          enabled: true,
+          level: 'info',
+          file: true,
+          console: false
+        }
+      },
+      notifications: {
+        enabled: true,
+        webhook: '',
+        email: {
+          enabled: false,
+          smtp: '',
+          user: '',
+          pass: '',
+          from: '',
+          to: ''
+        }
+      },
+      templates: {
+        default: {
+          title: 'Отчет об ошибке: {errorCode}',
+          description: 'Описание ошибки: {message}',
+          priority: 'medium',
+          autoCreate: true
+        },
+        critical: {
+          title: 'КРИТИЧЕСКАЯ ОШИБКА: {errorCode}',
+          description: 'Критическая ошибка системы: {message}',
+          priority: 'critical',
+          autoCreate: true,
+          notify: true
+        },
+        warning: {
+          title: 'ПРЕДУПРЕЖДЕНИЕ: {errorCode}',
+          description: 'Предупреждение системы: {message}',
+          priority: 'medium',
+          autoCreate: true
+        },
+        info: {
+          title: 'ИНФОРМАЦИЯ: {errorCode}',
+          description: 'Информационное сообщение: {message}',
+          priority: 'low',
+          autoCreate: true
+        },
+        memory: {
+          title: 'Ошибка памяти: {errorCode}',
+          description: 'Недостаточно памяти в куче JavaScript. Попробуйте увеличить лимит памяти или оптимизировать код.',
+          priority: 'high',
+          autoCreate: true
+        },
+        network: {
+          title: 'Сетевая ошибка: {errorCode}',
+          description: 'Проблема с сетевым соединением: {message}',
+          priority: 'medium',
+          autoCreate: true
+        },
+        database: {
+          title: 'Ошибка базы данных: {errorCode}',
+          description: 'Проблема с базой данных: {message}',
+          priority: 'high',
+          autoCreate: true
+        },
+        file: {
+          title: 'Ошибка файловой системы: {errorCode}',
+          description: 'Проблема с файловой системой: {message}',
+          priority: 'medium',
+          autoCreate: true
+        },
+        port: {
+          title: 'Ошибка порта: {errorCode}',
+          description: 'Проблема с портом: {message}',
+          priority: 'medium',
+          autoCreate: true
+        },
+        config: {
+          title: 'Ошибка конфигурации: {errorCode}',
+          description: 'Проблема с конфигурацией: {message}',
+          priority: 'high',
+          autoCreate: true
+        },
+        auth: {
+          title: 'Ошибка аутентификации: {errorCode}',
+          description: 'Проблема с аутентификацией: {message}',
+          priority: 'medium',
+          autoCreate: true
+        },
+        timeout: {
+          title: 'Ошибка таймаута: {errorCode}',
+          description: 'Превышено время ожидания: {message}',
+          priority: 'medium',
+          autoCreate: true
+        }
+      },
+      priorities: {
+        low: {
+          color: 'blue',
+          icon: 'ℹ️',
+          autoResolve: true
+        },
+        medium: {
+          color: 'yellow',
+          icon: '⚠️',
+          autoResolve: false
+        },
+        high: {
+          color: 'orange',
+          icon: '🚨',
+          autoResolve: false
+        },
+        critical: {
+          color: 'red',
+          icon: '💥',
+          autoResolve: false,
+          immediate: true
+        }
+      },
+      metadata: {
+        created: new Date().toISOString(),
+        version: '1.0.0',
+        description: 'Конфигурация обработки ошибок'
+      }
+    };
+  }
+
+  async getLoggingConfig() {
+    const config = await this.getConfig();
+    return config.logging;
+  }
+
+  async getMonitoringConfig() {
+    const config = await this.getConfig();
+    return config.monitoring;
+  }
+
+  async getTemplates() {
+    const config = await this.getConfig();
+    return config.templates;
+  }
+
+  async getPriorities() {
+    const config = await this.getConfig();
+    return config.priorities;
+  }
+
+  async getTaskManagerConfig() {
+    const config = await this.getConfig();
+    return config.taskManager;
+  }
+
+  async getNotificationsConfig() {
+    const config = await this.getConfig();
+    return config.notifications;
+  }
+
+  async getGlobalConfig() {
+    const config = await this.getConfig();
+    return {
+      enabled: config.enabled,
+      logLevel: config.logLevel,
+      maxRetries: config.maxRetries,
+      retryDelay: config.retryDelay,
+      batchSize: config.batchSize,
+      system: config.system,
+      directories: config.directories
+    };
+  }
+
+  addWatcher(callback) {
+    this.watchers.add(callback);
+    return () => this.watchers.delete(callback);
+  }
+
+  notifyWatchers(config) {
+    this.watchers.forEach(callback => {
+      try {
+        callback(config);
+      } catch (error) {
+        console.error('Ошибка в наблюдателе конфигурации обработки ошибок:', error);
+      }
+    });
+  }
+
+  clearCache() {
+    this.cache = null;
+    this.lastModified = null;
+  }
+
+  getInfo() {
+    return {
+      name: 'error-handling',
+      path: this.configPath,
+      hasCache: !!this.cache,
+      watchersCount: this.watchers.size,
+      lastModified: this.lastModified
+    };
+  }
+}
+
+const errorHandlingConfigManager = new ErrorHandlingConfigManager();
+
+module.exports = errorHandlingConfigManager;

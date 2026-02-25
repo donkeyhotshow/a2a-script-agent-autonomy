@@ -1,0 +1,120 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Business rules and constraints for port management",
+  "rules": {
+    "portConflicts": {
+      "enabled": true,
+      "checkOverlap": true,
+      "priorityOverride": true,
+      "description": "Проверка конфликтов портов и приоритетное переопределение",
+      "errorMessages": {
+        "conflict": "Порт {port} уже используется",
+        "overlap": "Порт {port} находится в конфликтующем диапазоне",
+        "reserved": "Порт {port} зарезервирован системой"
+      }
+    },
+    "rangeValidation": {
+      "enabled": true,
+      "allowOverlap": false,
+      "maxRangeSize": 10000,
+      "minRangeSize": 1,
+      "description": "Правила валидации диапазонов портов",
+      "errorMessages": {
+        "overlap": "Диапазон {from}-{to} пересекается с существующим диапазоном",
+        "tooLarge": "Диапазон не может содержать более {max} портов",
+        "tooSmall": "Диапазон должен содержать минимум {min} портов",
+        "invalid": "Начало диапазона должно быть меньше или равно концу"
+      }
+    },
+    "singlePortPriority": {
+      "enabled": true,
+      "overrideRange": true,
+      "defaultPriority": 50,
+      "description": "Одиночные порты имеют приоритет над диапазонами",
+      "priorityLevels": {
+        "critical": 100,
+        "high": 75,
+        "medium": 50,
+        "low": 25,
+        "minimal": 0
+      }
+    },
+    "systemPorts": {
+      "enabled": true,
+      "wellKnownRange": {
+        "from": 0,
+        "to": 1023,
+        "description": "Well-known ports (системные порты)"
+      },
+      "registeredRange": {
+        "from": 1024,
+        "to": 49151,
+        "description": "Registered ports (зарегистрированные порты)"
+      },
+      "dynamicRange": {
+        "from": 49152,
+        "to": 65535,
+        "description": "Dynamic/Private ports (динамические/частные порты)"
+      },
+      "warnings": {
+        "wellKnown": "Используется системный порт (0-1023). Требуются права администратора.",
+        "registered": "Используется зарегистрированный порт (1024-49151). Убедитесь, что он не занят."
+      }
+    },
+    "unavailablePorts": {
+      "enabled": true,
+      "description": "Список портов, которые нельзя использовать",
+      "errorMessages": {
+        "unavailable": "Порт {port} недоступен для использования"
+      }
+    },
+    "reservedPorts": {
+      "enabled": true,
+      "description": "Список зарезервированных портов",
+      "commonReserved": [22, 25, 53, 80, 110, 135, 139, 143, 443, 445, 3389],
+      "errorMessages": {
+        "reserved": "Порт {port} зарезервирован и не может быть изменен"
+      }
+    },
+    "portAssignment": {
+      "enabled": true,
+      "autoAssign": true,
+      "autoAssignRange": {
+        "from": 3000,
+        "to": 9999
+      },
+      "description": "Правила автоматического назначения портов",
+      "strategy": "sequential"
+    },
+    "systemAssignment": {
+      "enabled": true,
+      "maxPortsPerSystem": 100,
+      "requireUniquePorts": true,
+      "description": "Правила назначения портов системам",
+      "errorMessages": {
+        "maxPorts": "Система не может иметь более {max} портов",
+        "duplicate": "Порт {port} уже назначен другой системе"
+      }
+    },
+    "validation": {
+      "strictMode": true,
+      "validateOnChange": true,
+      "showWarnings": true,
+      "description": "Настройки валидации"
+    },
+    "constraints": {
+      "maxTotalPorts": 1000,
+      "maxRanges": 50,
+      "maxSinglePorts": 500,
+      "maxSystems": 100,
+      "description": "Общие ограничения системы",
+      "errorMessages": {
+        "maxPorts": "Достигнут лимит общего количества портов ({max})",
+        "maxRanges": "Достигнут лимит количества диапазонов ({max})",
+        "maxSinglePorts": "Достигнут лимит количества одиночных портов ({max})",
+        "maxSystems": "Достигнут лимит количества систем ({max})"
+      }
+    }
+  }
+}
+

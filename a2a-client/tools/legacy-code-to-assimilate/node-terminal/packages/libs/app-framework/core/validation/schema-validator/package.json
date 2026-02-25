@@ -1,0 +1,40 @@
+{
+  "name": "@mcp/validation-schema-validator",
+  "version": "1.0.0",
+  "description": "Универсальная библиотека валидации схем данных",
+  "main": "index.js",
+  "type": "commonjs",
+  "scripts": {
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "lint": "eslint src/",
+    "build": "babel src/ -d dist/",
+    "docs": "jsdoc src/ -d docs/"
+  },
+  "keywords": [
+    "validation",
+    "schema",
+    "validator",
+    "data-validation",
+    "form-validation"
+  ],
+  "author": "ML Dron",
+  "license": "MIT",
+  "dependencies": {
+    "@mcp/core-logger-core": "file:../../core/domain-logger",
+    "@mcp/core-error-handler": "file:../../core/error-handler",
+    "@mcp/core-utils": "file:../../core/file-utils"
+  },
+  "devDependencies": {
+    "jest": "^29.0.0",
+    "eslint": "^8.0.0",
+    "@babel/core": "^7.0.0",
+    "@babel/preset-env": "^7.0.0",
+    "jsdoc": "^4.0.0"
+  },
+  "peerDependencies": {
+    "@mcp/core-logger-core": "file:../../core/domain-logger",
+    "@mcp/core-error-handler": "file:../../core/error-handler",
+    "@mcp/core-utils": "file:../../core/file-utils"
+  }
+}

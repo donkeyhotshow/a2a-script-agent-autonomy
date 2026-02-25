@@ -1,0 +1,59 @@
+{
+  "name": "@mcp/libs",
+  "version": "1.0.0",
+  "description": "Centralized application libraries",
+  "main": "index.js",
+  "type": "commonjs",
+  "scripts": {
+    "build": "node build/build-config.js",
+    "test": "npx jest",
+    "test:error-handler": "npx jest core/error-handler/tests/",
+    "test:ui-automation": "npx jest --config ./os-gui/ui-automation/jest.config.js",
+    "lint": "eslint src/",
+    "docs": "jsdoc src/",
+    "link": "npm run build && npm link",
+    "unlink": "npm unlink"
+  },
+  "exports": {
+    ".": "./index.js"
+  },
+  "dependencies": {
+    "axios": "^1.11.0",
+    "bcryptjs": "^3.0.2",
+    "chokidar": "^4.0.3",
+    "eventemitter3": "^5.0.1",
+    "fs-extra": "^11.3.1",
+    "jsonwebtoken": "^9.0.2",
+    "module-alias": "^2.2.3",
+    "split2": "^4.2.0",
+    "typescript": "^5.9.2",
+    "winston": "^3.17.0",
+    "winston-daily-rotate-file": "^5.0.0"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.24.0",
+    "@babel/preset-env": "^7.24.0",
+    "@vue/test-utils": "^2.4.6",
+    "@vue/vue3-jest": "^29.2.6",
+    "babel-jest": "^29.7.0",
+    "babel-plugin-module-resolver": "^5.0.0",
+    "eslint": "^8.0.0",
+    "express": "^5.1.0",
+    "jest": "^29.7.0",
+    "jest-guard": "0.1.0",
+    "jsdoc": "^4.0.0",
+    "supertest": "^7.1.4",
+    "vue": "^3.5.19"
+  },
+  "keywords": [
+    "libraries",
+    "ui-automation",
+    "gateway",
+    "mcp",
+    "project-management",
+    "testing",
+    "integration"
+  ],
+  "author": "",
+  "license": "MIT"
+}

@@ -1,0 +1,30 @@
+{
+  "servers": {
+    "gateway": {
+      "port": 3012,
+      "ssl": {
+        "enabled": false,
+        "cert": "./certs/server.crt",
+        "key": "./certs/server.key"
+      },
+      "rateLimit": {
+        "enabled": true,
+        "windowMs": 900000,
+        "max": 100,
+        "message": "Too many requests from this IP"
+      },
+      "cors": {
+        "origin": ["http://localhost:3000", "https://ui.example.com"],
+        "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        "allowedHeaders": ["Content-Type", "Authorization"],
+        "credentials": true
+      }
+    }
+  },
+  "metadata": {
+    "created": "2024-09-08T01:19:00.000Z",
+    "version": "1.0.0",
+    "description": "Конфигурация серверов",
+    "migratedFrom": "projects-manager/data/servers.json"
+  }
+}

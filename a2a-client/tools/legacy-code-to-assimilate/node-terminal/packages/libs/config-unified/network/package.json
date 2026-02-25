@@ -1,0 +1,22 @@
+{
+  "name": "@libs/config-unified/network",
+  "version": "1.0.0",
+  "description": "Конфигурационный менеджер для сети",
+  "type": "module",
+  "main": "index.js",
+  "exports": {
+    ".": "./index.js",
+    "./config.json": "./config.json"
+  },
+  "keywords": ["config", "configuration", "network"],
+  "author": "Auto-generated",
+  "license": "MIT",
+  "created": "2024-09-08T02:10:00.000Z",
+  "scripts": {
+    "test": "jest --config=../../../jest.config.mjs network/tests/network.test.js",
+    "test:watch": "jest --config=../../../jest.config.mjs network/tests/network.test.js --watch",
+    "test:coverage": "jest --config=../../../jest.config.mjs network/tests/network.test.js --coverage"
+  },
+  "devDependencies": {
+  }
+}

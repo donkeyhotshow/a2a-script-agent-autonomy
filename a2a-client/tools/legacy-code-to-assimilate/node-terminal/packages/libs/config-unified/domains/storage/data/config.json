@@ -1,0 +1,23 @@
+{
+  "domains": [
+    {
+      "id": "example-com",
+      "name": "example.com",
+      "status": "active",
+      "priority": 70,
+      "ipAddress": "192.168.1.1"
+    },
+    {
+      "id": "test-net",
+      "name": "test.net",
+      "status": "pending",
+      "priority": 30,
+      "ipAddress": "10.0.0.5"
+    }
+  ],
+  "metadata": {
+    "created": "2024-10-15T00:00:00Z",
+    "version": "1.0.0",
+    "description": "Initial domain configurations"
+  }
+}

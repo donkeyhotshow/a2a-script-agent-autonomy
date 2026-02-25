@@ -1,0 +1,13 @@
+{
+  "name": "@libs/app-framework",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "index.js",
+  "exports": {
+    ".": "./index.js",
+    "./error-handling/error-report-manager": "./error-handling/error-report-manager/index.js"
+  },
+  "keywords": ["app-framework", "error-reporting"],
+  "author": "Projects Manager",
+  "license": "MIT"
+}

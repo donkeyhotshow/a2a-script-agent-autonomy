@@ -1,0 +1,12 @@
+{
+  "name": "@libs/app-framework/system-utils/work-directory-manager",
+  "version": "1.0.0",
+  "description": "Модуль для управления рабочей директорией",
+  "main": "index.js",
+  "dependencies": {
+    "@libs/app-framework/core/file-utils/file-system": "1.0.0"
+  },
+  "keywords": ["work-directory", "file-management", "system-utils"],
+  "author": "System Team",
+  "license": "MIT"
+}

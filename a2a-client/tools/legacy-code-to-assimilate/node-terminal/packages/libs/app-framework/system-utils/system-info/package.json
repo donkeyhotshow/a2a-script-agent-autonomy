@@ -1,0 +1,10 @@
+{
+  "name": "@libs/app-framework/system-utils/system-info",
+  "version": "1.0.0",
+  "description": "Модуль для сбора информации об окружении",
+  "main": "index.js",
+  "dependencies": {},
+  "keywords": ["system-info", "environment", "system-utils"],
+  "author": "System Team",
+  "license": "MIT"
+}

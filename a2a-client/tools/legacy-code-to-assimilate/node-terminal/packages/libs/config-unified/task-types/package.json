@@ -1,0 +1,21 @@
+{
+  "name": "@libs/config-unified-task-types",
+  "version": "1.0.0",
+  "description": "Unified configuration library for task types, quality thresholds, and generation settings.",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "jest --config=../../../jest.config.mjs task-types/tests/task-types.test.js"
+  },
+  "keywords": [
+    "config",
+    "task-types",
+    "automation",
+    "development"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "dependencies": {
+    "ajv": "^8.17.1"
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "name": "@mcp/history-manager",
+  "version": "1.0.0",
+  "description": "History Manager for MCP",
+  "main": "src/history-manager.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "dependencies": {
+    "fs-extra": "^11.1.1"
+  },
+  "devDependencies": {
+    "jest": "^29.6.2",
+    "@babel/core": "^7.22.10",
+    "@babel/preset-env": "^7.22.10",
+    "babel-jest": "^29.6.2"
+  },
+  "author": "System",
+  "license": "MIT"
+}

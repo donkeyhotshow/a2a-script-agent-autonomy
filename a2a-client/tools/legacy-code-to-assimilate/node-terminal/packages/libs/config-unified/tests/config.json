@@ -1,0 +1,47 @@
+{
+  "types": {
+    "unit": {
+      "command": "npm run test:unit",
+      "report": "reports/unit-tests.json"
+    },
+    "integration": {
+      "command": "npm run test:integration",
+      "report": "reports/integration-tests.json"
+    },
+    "e2e": {
+      "command": "npm run test:e2e",
+      "report": "reports/e2e-tests.json"
+    },
+    "performance": {
+      "command": "npm run test:performance",
+      "report": "reports/performance-tests.json"
+    },
+    "security": {
+      "command": "npm run test:security",
+      "report": "reports/security-tests.json"
+    }
+  },
+  "matrix": [
+    {
+      "appId": "projects-manager-ui",
+      "types": ["unit", "e2e", "performance"]
+    },
+    {
+      "appId": "desktop-app-clicker",
+      "types": ["unit", "integration"]
+    },
+    {
+      "appId": "api-gateway",
+      "types": ["unit", "integration", "security"]
+    },
+    {
+      "appId": "test-service",
+      "types": ["unit", "integration"]
+    }
+  ],
+  "metadata": {
+    "created": "2024-09-08T02:50:00.000Z",
+    "version": "1.0.0",
+    "description": "Конфигурация тестов"
+  }
+}

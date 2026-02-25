@@ -1,0 +1,17 @@
+{
+  "name": "@mcp/config-unified-apps-list",
+  "version": "1.0.0",
+  "description": "Unified application list configuration library.",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "config",
+    "apps-list",
+    "unified"
+  ],
+  "author": "Your Name",
+  "license": "MIT"
+}

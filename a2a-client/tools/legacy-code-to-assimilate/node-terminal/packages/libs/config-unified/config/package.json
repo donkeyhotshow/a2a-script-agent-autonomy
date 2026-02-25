@@ -1,0 +1,20 @@
+{
+  "name": "@libs/config-unified-config",
+  "version": "1.0.0",
+  "description": "General application configuration manager",
+  "type": "module",
+  "main": "./index.cjs",
+  "module": "./index.js",
+  "exports": {
+    ".": {
+      "import": "./index.js",
+      "require": "./index.cjs"
+    }
+  },
+  "scripts": {
+    "test": "node --experimental-modules ./index.js"
+  },
+  "keywords": ["config", "configuration", "manager"],
+  "author": "",
+  "license": "ISC"
+}

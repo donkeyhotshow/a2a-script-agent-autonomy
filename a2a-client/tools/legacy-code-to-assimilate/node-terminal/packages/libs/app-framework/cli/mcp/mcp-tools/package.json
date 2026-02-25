@@ -1,0 +1,17 @@
+{
+  "name": "@mcp/mcp-tools",
+  "version": "1.0.0",
+  "description": "MCP tools for applications",
+  "main": "index.js",
+  "type": "commonjs",
+  "keywords": [
+    "mcp",
+    "tools",
+    "model-context-protocol"
+  ],
+  "author": "MCP Team",
+  "license": "MIT",
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}

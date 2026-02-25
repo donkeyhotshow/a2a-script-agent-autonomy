@@ -1,0 +1,40 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Domains Configuration",
+  "description": "Schema for managing domains and their properties.",
+  "type": "object",
+  "properties": {
+    "domains": {
+      "type": "array",
+      "description": "List of configured domains.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "minLength": 1, "description": "Unique ID for the domain" },
+          "name": { "type": "string", "minLength": 1, "description": "Domain name" },
+          "status": { "type": "string", "enum": ["active", "inactive", "pending"], "default": "active" },
+          "priority": { "type": "integer", "minimum": 0, "maximum": 100, "default": 50, "description": "Priority for domain resolution or processing" },
+          "ipAddress": { "type": "string", "format": "ipv4", "description": "Associated IP address" },
+          "description": { "type": "string" },
+          "created": { "type": "string", "format": "date-time" },
+          "updated": { "type": "string", "format": "date-time" }
+        },
+        "required": ["id", "name", "status", "ipAddress"],
+        "additionalProperties": true
+      },
+      "uniqueItems": true
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "created": { "type": "string", "format": "date-time" },
+        "version": { "type": "string" },
+        "description": { "type": "string" }
+      },
+      "required": ["created", "version"],
+      "additionalProperties": false
+    }
+  },
+  "required": ["domains", "metadata"],
+  "additionalProperties": false
+}
