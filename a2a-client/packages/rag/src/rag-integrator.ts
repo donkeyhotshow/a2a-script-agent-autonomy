@@ -88,11 +88,11 @@ export class RAGIntegrator {
       ignored: this.scanner.excludePatterns,
     });
     this.watcher
-      .on('add', (p) => this.handleFileChange('add', p))
-      .on('change', (p) => this.handleFileChange('change', p))
-      .on('unlink', (p) => this.handleFileChange('unlink', p))
-      .on('addDir', (p) => this.handleDirectoryChange('add', p))
-      .on('unlinkDir', (p) => this.handleDirectoryChange('unlink', p));
+      .on('add', (p: string) => this.handleFileChange('add', p))
+      .on('change', (p: string) => this.handleFileChange('change', p))
+      .on('unlink', (p: string) => this.handleFileChange('unlink', p))
+      .on('addDir', (p: string) => this.handleDirectoryChange('add', p))
+      .on('unlinkDir', (p: string) => this.handleDirectoryChange('unlink', p));
     this.isWatching = true;
   }
 
