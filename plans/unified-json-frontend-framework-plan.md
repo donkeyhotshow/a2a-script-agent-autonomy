@@ -12,22 +12,33 @@
 
 ```
 a2a-server/src/
-├── actions/
-│   ├── definitions/          # MD файлы с экшенами
+├── actions/                  # Основная логика экшенов
+│   ├── definitions/         # MD файлы с экшенами
 │   │   ├── fix-vue-imports.md
-│   │   ├── analysis/
-│   │   ├── generation/
-│   │   ├── graph/
-│   │   ├── hybrid/
-│   │   └── yaml/
-│   ├── action-processor.ts   # Обработчик экшенов
-│   ├── action-registry.ts    # Реестр экшенов
-│   └── action-service.ts     # Сервис экшенов
-├── protocol/                 # Протокол коммуникации
-├── types/                    # TypeScript типы
-│   └── index.ts             # ContextBlock, Task, FileBlock
-└── controllers/             # HTTP контроллеры
+│   │   ├── analysis/        # 8 экшенов анализа
+│   │   ├── generation/      # 7 экшенов генерации
+│   │   ├── graph/          # 6 экшенов графа
+│   │   ├── hybrid/         # 4 гибридных экшена
+│   │   ├── context/        # 5 экшенов контекста
+│   │   └── yaml/           # YAML определения
+│   ├── action-processor.ts # Обработчик экшенов
+│   ├── action-registry.ts  # Реестр экшенов
+│   ├── action-service.ts   # Сервис экшенов
+│   ├── action-executor.ts  # Исполнитель шагов
+│   └── dsl/               # DSL парсер и валидатор
+├── services/               # Бизнес-логика
+│   ├── request-processor.service.ts  # Обработка запросов
+│   ├── context-manager.service.ts     # Управление контекстом
+│   ├── message.service.ts             # Сообщения
+│   ├── phase-machine.service.ts      # Фазовая машина
+│   └── graph-store.service.ts         # Хранение графа
+├── protocol/               # Протокол коммуникации
+├── types/                  # TypeScript типы
+├── controllers/           # HTTP контроллеры
+└── websocket/             # WebSocket обработка
 ```
+
+**Всего:** ~30+ экшенов
 
 ### 1.2 a2a-client (C:\workspace\org-carrier\a2a-script-agent\a2a-client)
 

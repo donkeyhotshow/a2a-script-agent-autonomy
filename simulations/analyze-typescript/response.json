@@ -1,0 +1,86 @@
+{
+  "success": true,
+  "data": {
+    "id": "req_analyze_ts_001",
+    "promiseId": "cmm1qf1t9000066n5jv10n4c5",
+    "clientId": "simulation-client",
+    "status": "completed",
+    "priority": 0,
+    "context": {
+      "task": "проверить TypeScript типы",
+      "action": "task_request",
+      "version": "1.0",
+      "session_id": "stateless"
+    },
+    "message": "проверить TypeScript типы",
+    "codeBlocks": null,
+    "result": {
+      "context": {
+        "tasks": [
+          {
+            "id": "analyze-typescript",
+            "type": "analyze",
+            "status": "in_progress",
+            "progress": 0
+          }
+        ],
+        "version": "1.0",
+        "session_id": "stateless"
+      },
+      "outcome": "completed",
+      "fallbackActions": [
+        {
+          "mode": "auto-ai",
+          "title": "AI Action Generator",
+          "description": "Сгенерировать новый экшен с помощью LLM",
+          "fallbackType": "llm_generation"
+        },
+        {
+          "mode": "task-decomposition",
+          "title": "Декомпозиция задачи",
+          "description": "Разбить задачу на подзадачи вручную",
+          "fallbackType": "manual"
+        }
+      ],
+      "proposedActions": [
+        {
+          "title": "Анализ TypeScript кода — проверка типов, интерфейсов, общих ошибок и рекомендаций по улучшению",
+          "actionId": "analyze-typescript",
+          "priority": 10,
+          "matchScore": 2.7,
+          "subActions": [
+            {
+              "title": "Сканирование TypeScript файлов — поиск всех .ts и .tsx файлов в проекте",
+              "actionId": "scan-ts-files"
+            },
+            {
+              "title": "Проверка типов — анализ использования типов, интерфейсов, type aliases",
+              "actionId": "check-types"
+            },
+            {
+              "title": "Обнаружение any типов — поиск мест с небезопасным использованием 'any'",
+              "actionId": "detect-any-types"
+            },
+            {
+              "title": "Анализ дженериков — проверка корректности использования generics",
+              "actionId": "analyze-generics"
+            },
+            {
+              "title": "Проверка импортов типов — анализ проблем с type-only импортами",
+              "actionId": "check-type-imports"
+            },
+            {
+              "title": "Генерация отчёта по TypeScript",
+              "actionId": "generate-ts-report"
+            }
+          ],
+          "description": "Комплексный анализ TypeScript кода: проверка типов, обнаружение проблем с 'any', анализ дженериков и генерация рекомендаций."
+        }
+      ]
+    },
+    "error": null,
+    "createdAt": "2026-02-25T08:43:00.000Z",
+    "startedAt": "2026-02-25T08:43:01.000Z",
+    "completedAt": "2026-02-25T08:43:02.000Z"
+  }
+}
