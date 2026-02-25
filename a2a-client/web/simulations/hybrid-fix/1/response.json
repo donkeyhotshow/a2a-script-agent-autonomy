@@ -1,0 +1,54 @@
+{
+  "context": {
+    "task": "виправити помилки в коді з AI"
+  },
+  "proposedActions": [
+    {
+      "actionId": "hybrid-fix",
+      "title": "Гібридне виправлення помилок",
+      "description": "Використовує AI для виявлення та виправлення проблем в коді",
+      "priority": 10,
+      "matchScore": 0.95,
+      "subActions": [
+        {
+          "actionId": "detect-issues",
+          "title": "Виявити проблеми",
+          "description": "Використовує AI для аналізу коду та виявлення помилок",
+          "priority": 10,
+          "input": "none",
+          "output": "issues[]"
+        },
+        {
+          "actionId": "apply-fix",
+          "title": "Застосувати виправлення",
+          "description": "Застосовує виправлення до коду на основі знайдених проблем",
+          "priority": 9,
+          "input": "issues[]",
+          "output": "fixed_files[]"
+        },
+        {
+          "actionId": "verify-fix",
+          "title": "Верифікувати виправлення",
+          "description": "Перевіряє що виправлення працює коректно",
+          "priority": 8,
+          "input": "fixed_files[]",
+          "output": "verification_result"
+        }
+      ]
+    }
+  ],
+  "fallbackActions": [
+    {
+      "mode": "auto-ai",
+      "title": "AI Action Generator",
+      "description": "Згенерувати новий екшен за допомогою LLM",
+      "fallbackType": "llm_generation"
+    },
+    {
+      "mode": "task-decomposition",
+      "title": "Декомпозиція задачі",
+      "description": "Розбити задачу на підзадачі вручну",
+      "fallbackType": "manual"
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "action": "approve_action",
+  "selectedAction": {
+    "actionId": "generate-crud"
+  },
+  "context": {
+    "task": "створити повний CRUD для сутності User"
+  }
+}

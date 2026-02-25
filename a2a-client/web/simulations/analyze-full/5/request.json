@@ -1,0 +1,44 @@
+{
+  "action": "step_result",
+  "stepId": "generate-report",
+  "result": {
+    "report": {
+      "report_id": "analyze-20260225-001",
+      "generated_at": "2026-02-25T14:30:00.000Z",
+      "summary": {
+        "files_scanned": 10,
+        "total_lines": 5423,
+        "code_lines": 4210,
+        "comment_lines": 456,
+        "blank_lines": 757,
+        "avg_complexity": 2.3,
+        "test_coverage": 78,
+        "duplicate_lines": 89
+      },
+      "structure": {
+        "typescript": { "files": 4, "lines": 3456 },
+        "vue": { "files": 2, "lines": 1967 },
+        "json": { "files": 2, "lines": 357 },
+        "test": { "files": 2, "lines": 912 }
+      },
+      "recommendations": [
+        "Зменшити дублювання коду (89 рядків)",
+        "Покращити покриття тестами до 85%",
+        "Додати документацію до 3 файлів"
+      ]
+    }
+  },
+  "context": {
+    "task": "проаналізувати проект",
+    "execution": {
+      "actionId": "analyze-full",
+      "currentActionId": "generate-report",
+      "status": "completed",
+      "history": [
+        { "step": 1, "actionId": "scan-files", "status": "completed", "result": { "file_count": 10 } },
+        { "step": 2, "actionId": "analyze-code", "status": "completed", "result": { "totalLines": 5423, "coverage": 78 } },
+        { "step": 3, "actionId": "generate-report", "status": "completed", "result": { "report_id": "analyze-20260225-001" } }
+      ]
+    }
+  }
+}

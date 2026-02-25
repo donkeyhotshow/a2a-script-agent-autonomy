@@ -1,0 +1,4 @@
+{
+  "action": "task_request",
+  "task": "створити модель User з полями name, email, password"
+}

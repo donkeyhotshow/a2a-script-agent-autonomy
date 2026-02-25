@@ -1,0 +1,18 @@
+{
+  "action": "step_result",
+  "stepId": "validate-test",
+  "result": {
+    "validation_result": {
+      "valid": true,
+      "errors": []
+    }
+  },
+  "context": {
+    "task": "створити тест для UserController",
+    "execution": {
+      "actionId": "generate-test",
+      "currentActionId": "validate-test",
+      "history": ["analyze-target", "generate-test"]
+    }
+  }
+}

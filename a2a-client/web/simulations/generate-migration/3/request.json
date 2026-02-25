@@ -1,0 +1,29 @@
+{
+  "action": "step_result",
+  "stepId": "analyze-table",
+  "result": {
+    "table_spec": {
+      "name": "users",
+      "columns": [
+        { "name": "id", "type": "bigInteger", "primary": true, "autoIncrement": true },
+        { "name": "name", "type": "string", "length": 255 },
+        { "name": "email", "type": "string", "length": 255, "unique": true },
+        { "name": "password", "type": "string", "length": 255 },
+        { "name": "remember_token", "type": "string", "length": 100, "nullable": true },
+        { "name": "created_at", "type": "timestamp", "nullable": true },
+        { "name": "updated_at", "type": "timestamp", "nullable": true }
+      ],
+      "indexes": [
+        { "columns": ["email"], "type": "unique" }
+      ]
+    }
+  },
+  "context": {
+    "task": "створити міграцію для таблиці users",
+    "execution": {
+      "actionId": "generate-migration",
+      "currentActionId": "analyze-table",
+      "history": []
+    }
+  }
+}

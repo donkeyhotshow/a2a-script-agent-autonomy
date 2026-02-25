@@ -1,0 +1,10 @@
+{
+  "action": "task_request",
+  "task": "найти все файлы которые используют модель User",
+  "options": {
+    "searchType": "entity_usage",
+    "entityType": "model",
+    "entityName": "User",
+    "maxResults": 50
+  }
+}

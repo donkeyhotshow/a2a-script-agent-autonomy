@@ -1,0 +1,20 @@
+{
+  "action": "step_result",
+  "stepId": "analyze-vue-props",
+  "result": {
+    "components": [
+      { "name": "Button", "props": [{ "name": "variant", "type": "String", "required": false }] },
+      { "name": "Modal", "props": [{ "name": "isOpen", "type": "Boolean", "required": true }] }
+    ]
+  },
+  "context": {
+    "task": "проаналізувати Vue компоненти",
+    "execution": {
+      "actionId": "analyze-vue",
+      "currentActionId": "analyze-vue-props",
+      "history": [
+        { "step": 1, "actionId": "scan-vue-files", "status": "completed", "result": { "total": 45 } }
+      ]
+    }
+  }
+}

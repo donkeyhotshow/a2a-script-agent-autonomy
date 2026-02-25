@@ -1,0 +1,38 @@
+{
+  "context": {
+    "task": "створити повний CRUD для сутності User",
+    "execution": {
+      "actionId": "generate-crud",
+      "currentActionId": "generate-code",
+      "status": "completed",
+      "history": [
+        { "step": 1, "actionId": "prepare-model", "status": "completed", "result": { "model_spec": { "name": "User" } } },
+        { "step": 2, "actionId": "generate-code", "status": "completed", "result": { "files_generated": 7 } }
+      ]
+    }
+  },
+  "previousStep": {
+    "actionId": "generate-code",
+    "result": {
+      "generated_files": {
+        "model": { "path": "app/Models/User.php" },
+        "controller": { "path": "app/Http/Controllers/UserController.php" },
+        "migration": { "path": "database/migrations/2024_01_01_000001_create_users_table.php" },
+        "views": [
+          "resources/views/users/index.blade.php",
+          "resources/views/users/create.blade.php",
+          "resources/views/users/show.blade.php",
+          "resources/views/users/edit.blade.php"
+        ]
+      }
+    }
+  },
+  "executingAction": {
+    "actionId": "generate-crud",
+    "title": "Генерація повного CRUD",
+    "description": "Завершення генерації",
+    "priority": 10,
+    "status": "completed"
+  },
+  "nextSteps": []
+}

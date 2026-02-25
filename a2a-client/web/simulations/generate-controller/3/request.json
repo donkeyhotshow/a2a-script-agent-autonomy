@@ -1,0 +1,30 @@
+{
+  "action": "step_result",
+  "stepId": "analyze-model",
+  "result": {
+    "model_spec": {
+      "name": "User",
+      "table": "users",
+      "fields": [
+        { "name": "id", "type": "bigint", "primary": true },
+        { "name": "name", "type": "string", "fillable": true },
+        { "name": "email", "type": "string", "fillable": true, "unique": true },
+        { "name": "password", "type": "string", "fillable": true, "hidden": true },
+        { "name": "role", "type": "enum", "fillable": true },
+        { "name": "is_active", "type": "boolean", "fillable": true },
+        { "name": "created_at", "type": "timestamp" },
+        { "name": "updated_at", "type": "timestamp" }
+      ],
+      "fillable": ["name", "email", "password", "role", "is_active"],
+      "relationships": []
+    }
+  },
+  "context": {
+    "task": "створити контролер для моделі User",
+    "execution": {
+      "actionId": "generate-controller",
+      "currentActionId": "analyze-model",
+      "history": []
+    }
+  }
+}

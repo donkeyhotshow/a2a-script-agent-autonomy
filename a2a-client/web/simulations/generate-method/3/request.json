@@ -1,0 +1,26 @@
+{
+  "action": "step_result",
+  "stepId": "analyze-class",
+  "result": {
+    "class_spec": {
+      "name": "User",
+      "namespace": "App\\Models",
+      "extends": "Model",
+      "path": "app/Models/User.php",
+      "methods": ["index", "show", "store", "update", "destroy"],
+      "properties": {
+        "fillable": ["name", "email", "password"],
+        "hidden": ["password"],
+        "casts": { "email_verified_at": "datetime" }
+      }
+    }
+  },
+  "context": {
+    "task": "додати метод getActiveUsers до моделі User",
+    "execution": {
+      "actionId": "generate-method",
+      "currentActionId": "analyze-class",
+      "history": []
+    }
+  }
+}

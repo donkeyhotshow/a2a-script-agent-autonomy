@@ -1,0 +1,45 @@
+{
+  "context": {
+    "task": "проаналізувати архітектуру проекту",
+    "execution": {
+      "actionId": "analyze-architecture",
+      "currentActionId": "generate-arch-docs",
+      "status": "completed",
+      "history": [
+        { "step": 1, "actionId": "detect-patterns", "status": "completed", "result": { "patterns": ["MVC", "Repository", "Service Layer"] } },
+        { "step": 2, "actionId": "analyze-components", "status": "completed", "result": { "components": { "controllers": 15, "models": 22, "services": 18 } } },
+        { "step": 3, "actionId": "generate-arch-docs", "status": "completed", "result": { "arch_doc": "generated" } }
+      ]
+    }
+  },
+  "previousStep": {
+    "actionId": "generate-arch-docs",
+    "result": {
+      "arch_doc": "# Архітектура проекту\n\n## Виявлені паттерни\n- **MVC** (confidence: 0.95)\n- **Repository** (confidence: 0.88)\n- **Service Layer** (confidence: 0.82)\n\n## Компонентна структура\n- Controllers: 15\n- Models: 22\n- Services: 18\n- Repositories: 12\n- Views: 45\n- Middleware: 8\n\n## Висновок\nПроект використовує класичну MVC архітектуру з елементами Service Layer та Repository паттернів."
+    }
+  },
+  "finalResult": {
+    "actionId": "analyze-architecture",
+    "summary": {
+      "patterns_found": 3,
+      "total_components": 120,
+      "architecture_type": "MVC with Service Layer"
+    },
+    "details": {
+      "patterns": [
+        { "name": "MVC", "confidence": 0.95, "description": "Model-View-Controller pattern" },
+        { "name": "Repository", "confidence": 0.88, "description": "Data access abstraction" },
+        { "name": "Service Layer", "confidence": 0.82, "description": "Business logic encapsulation" }
+      ],
+      "components": {
+        "controllers": { "count": 15, "path": "app/Http/Controllers/*" },
+        "models": { "count": 22, "path": "app/Models/*" },
+        "services": { "count": 18, "path": "app/Services/*" },
+        "repositories": { "count": 12, "path": "app/Repositories/*" },
+        "views": { "count": 45, "path": "resources/views/*" },
+        "middleware": { "count": 8, "path": "app/Http/Middleware/*" }
+      },
+      "documentation": "# Архітектура проекту\n\n## Виявлені паттерни\n- **MVC** (confidence: 0.95)\n- **Repository** (confidence: 0.88)\n- **Service Layer** (confidence: 0.82)\n\n## Компонентна структура\n- Controllers: 15\n- Models: 22\n- Services: 18\n- Repositories: 12\n- Views: 45\n- Middleware: 8\n\n## Висновок\nПроект використовує класичну MVC архітектуру з елементами Service Layer та Repository паттернів."
+    }
+  }
+}

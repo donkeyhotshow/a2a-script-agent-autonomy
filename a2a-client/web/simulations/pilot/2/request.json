@@ -1,0 +1,9 @@
+{
+  "action": "approve_action",
+  "selectedAction": {
+    "actionId": "fix-vue-imports"
+  },
+  "context": {
+    "task": "исправить импорты в vue компонентах"
+  }
+}

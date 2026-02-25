@@ -1,0 +1,30 @@
+{
+  "context": {
+    "task": "исправить импорты в vue компонентах",
+    "execution": {
+      "actionId": "fix-vue-imports",
+      "currentActionId": "vue-import-detect",
+      "history": []
+    }
+  },
+  "executingAction": {
+    "actionId": "vue-import-detect",
+    "title": "Определить сломанные импорты",
+    "description": "Сканирует Vue файлы и находит битые импорты",
+    "priority": 10,
+    "dsl": {
+      "script": "vue-import-detect",
+      "input": {
+        "rootDir": ".",
+        "filePattern": "**/*.vue"
+      },
+      "output": "broken_imports[]"
+    },
+    "dslScript": "```typescript\n// vue-import-detect.dsl\n// Определение сломанных импортов в Vue файлах\n\nconst result = await script.execute('vue-import-detect', {\n   filePattern: '**/*.vue'\n });\n\n// result = [\n//   { file: 'resources/js/Pages/Auth/Login.vue', line: 3, specifier: '../components/Header' },\n//   { file: 'resources/js/Pages/Auth/Register.vue', line: 5, specifier: '../../utils/helpers' },\n//   { file: 'resources/js/components/UserCard.vue', line: 2, specifier: '@/stores/user' }\n// ]\n```"
+  },
+  "nextSteps": [
+    { "actionId": "vue-import-resolve", "title": "Разрешить правильные пути" },
+    { "actionId": "vue-import-apply", "title": "Применить исправления" },
+    { "actionId": "vue-import-cleanup", "title": "Очистить" }
+  ]
+}

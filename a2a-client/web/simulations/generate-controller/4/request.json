@@ -1,0 +1,20 @@
+{
+  "action": "step_result",
+  "stepId": "generate-controller",
+  "result": {
+    "controller_file": {
+      "path": "app/Http/Controllers/UserController.php",
+      "content": "<?php\n\nnamespace App\\Http\\Controllers;\n\nuse App\\Models\\User;\nuse Illuminate\\Http\\Request;\n\nclass UserController extends Controller\n{\n    /**\n     * Display a listing of the resource.\n     */\n    public function index()\n    {\n        $users = User::all();\n        return view('users.index', compact('users'));\n    }\n\n    /**\n     * Show the form for creating a new resource.\n     */\n    public function create()\n    {\n        return view('users.create');\n    }\n\n    /**\n     * Store a newly created resource in storage.\n     */\n    public function store(Request $request)\n    {\n        $validated = $request->validate([\n            'name' => 'required|string|max:255',\n            'email' => 'required|email|unique:users',\n            'password' => 'required|string|min:8',\n            'role' => 'in:admin,user,guest',\n            'is_active' => 'boolean'\n        ]);\n\n        User::create($validated);\n        return redirect()->route('users.index');\n    }\n\n    /**\n     * Display the specified resource.\n     */\n    public function show(User $user)\n    {\n        return view('users.show', compact('user'));\n    }\n\n    /**\n     * Show the form for editing the specified resource.\n     */\n    public function edit(User $user)\n    {\n        return view('users.edit', compact('user'));\n    }\n\n    /**\n     * Update the specified resource in storage.\n     */\n    public function update(Request $request, User $user)\n    {\n        $validated = $request->validate([\n            'name' => 'sometimes|required|string|max:255',\n            'email' => 'sometimes|required|email|unique:users,email,' . $user->id,\n            'password' => 'sometimes|required|string|min:8',\n            'role' => 'in:admin,user,guest',\n            'is_active' => 'boolean'\n        ]);\n\n        $user->update($validated);\n        return redirect()->route('users.show', $user);\n    }\n\n    /**\n     * Remove the specified resource from storage.\n     */\n    public function destroy(User $user)\n    {\n        $user->delete();\n        return redirect()->route('users.index');\n    }\n}"
+    }
+  },
+  "context": {
+    "task": "створити контролер для моделі User",
+    "execution": {
+      "actionId": "generate-controller",
+      "currentActionId": "generate-controller",
+      "history": [
+        { "step": 1, "actionId": "analyze-model", "status": "completed", "result": { "model_spec": { "name": "User" } } }
+      ]
+    }
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "action": "step_result",
+  "stepId": "analyze-fields",
+  "result": {
+    "field_spec": {
+      "name": "User",
+      "table": "users",
+      "fields": [
+        { "name": "id", "type": "bigint", "primary": true },
+        { "name": "name", "type": "string", "fillable": true },
+        { "name": "email", "type": "string", "fillable": true, "unique": true },
+        { "name": "password", "type": "string", "fillable": true, "hidden": true },
+        { "name": "created_at", "type": "timestamp" },
+        { "name": "updated_at", "type": "timestamp" }
+      ],
+      "fillable": ["name", "email", "password"],
+      "hidden": ["password"],
+      "casts": { "email_verified_at": "datetime", "is_active": "boolean" }
+    }
+  },
+  "context": {
+    "task": "створити модель User з полями name, email, password",
+    "execution": {
+      "actionId": "generate-model",
+      "currentActionId": "analyze-fields",
+      "history": []
+    }
+  }
+}

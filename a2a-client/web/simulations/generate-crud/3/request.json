@@ -1,0 +1,35 @@
+{
+  "action": "step_result",
+  "stepId": "prepare-model",
+  "result": {
+    "model_spec": {
+      "name": "User",
+      "table": "users",
+      "fields": [
+        { "name": "id", "type": "bigint", "primary": true },
+        { "name": "name", "type": "string", "required": true },
+        { "name": "email", "type": "string", "required": true, "unique": true },
+        { "name": "password", "type": "string", "required": true },
+        { "name": "role", "type": "enum", "required": false, "values": ["admin", "user", "guest"] },
+        { "name": "is_active", "type": "boolean", "default": true },
+        { "name": "created_at", "type": "timestamp" },
+        { "name": "updated_at", "type": "timestamp" }
+      ],
+      "validations": {
+        "name": "required|string|max:255",
+        "email": "required|email|unique:users",
+        "password": "required|string|min:8",
+        "role": "in:admin,user,guest",
+        "is_active": "boolean"
+      }
+    }
+  },
+  "context": {
+    "task": "створити повний CRUD для сутності User",
+    "execution": {
+      "actionId": "generate-crud",
+      "currentActionId": "prepare-model",
+      "history": []
+    }
+  }
+}

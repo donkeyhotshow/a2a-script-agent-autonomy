@@ -1,0 +1,54 @@
+{
+  "context": {
+    "task": "знайти застарілі PHPUnit методи"
+  },
+  "proposedActions": [
+    {
+      "actionId": "phpunit-deprecations",
+      "title": "Пошук застарілих PHPUnit методів",
+      "description": "Виявлення deprecated методів у PHPUnit тестах",
+      "priority": 10,
+      "matchScore": 0.98,
+      "subActions": [
+        {
+          "actionId": "scan-phpunit",
+          "title": "Сканування PHPUnit тестів",
+          "description": "Пошук PHPUnit тестів у проекті",
+          "priority": 10,
+          "input": "none",
+          "output": "phpunit_files[]"
+        },
+        {
+          "actionId": "detect-deprecations",
+          "title": "Виявлення deprecated методів",
+          "description": "Виявлення deprecated методів: assertEquals, assertInternalType, etc.",
+          "priority": 9,
+          "input": "phpunit_files[]",
+          "output": "deprecations[]"
+        },
+        {
+          "actionId": "generate-deprecations-report",
+          "title": "Генерація звіту",
+          "description": "Створення звіту з рекомендаціями",
+          "priority": 8,
+          "input": "deprecations[]",
+          "output": "deprecations_report"
+        }
+      ]
+    }
+  ],
+  "fallbackActions": [
+    {
+      "mode": "auto-ai",
+      "title": "AI Action Generator",
+      "description": "Згенерувати новий екшен за допомогою LLM",
+      "fallbackType": "llm_generation"
+    },
+    {
+      "mode": "task-decomposition",
+      "title": "Декомпозиція задачі",
+      "description": "Розбити задачу на підзадачі вручну",
+      "fallbackType": "manual"
+    }
+  ]
+}

@@ -1,0 +1,51 @@
+{
+  "context": {
+    "task": "створити міграцію для таблиці users",
+    "execution": {
+      "actionId": "generate-migration",
+      "currentActionId": "generate-migration",
+      "history": [
+        { "step": 1, "actionId": "analyze-table", "status": "completed", "result": { "table_spec": { "name": "users" } } }
+      ]
+    }
+  },
+  "previousStep": {
+    "actionId": "analyze-table",
+    "result": {
+      "table_spec": {
+        "name": "users",
+        "columns": [
+          { "name": "id", "type": "bigInteger", "primary": true },
+          { "name": "name", "type": "string" },
+          { "name": "email", "type": "string", "unique": true },
+          { "name": "password", "type": "string" },
+          { "name": "timestamps", "type": "timestamps" }
+        ]
+      }
+    }
+  },
+  "executingAction": {
+    "actionId": "generate-migration",
+    "title": "Генерація міграції",
+    "description": "Створення файлу міграції",
+    "priority": 9,
+    "dsl": {
+      "script": "generate-migration",
+      "input": {
+        "table_name": "users",
+        "table_spec": {
+          "columns": [
+            { "name": "id", "type": "bigInteger", "primary": true },
+            { "name": "name", "type": "string" },
+            { "name": "email", "type": "string", "unique": true },
+            { "name": "password", "type": "string" },
+            { "name": "timestamps", "type": "timestamps" }
+          ]
+        }
+      },
+      "output": "migration_file"
+    },
+    "dslScript": "```typescript\n// generate-migration.dsl\n// Генерація міграції\n\nconst result = await script.execute('generate-migration', {\n  table_name: 'users',\n  table_spec: {\n    columns: [...]\n  },\n  template: 'laravel'\n});\n\n// result = {\n//   migration_file: {\n//     path: 'database/migrations/2024_01_01_000001_create_users_table.php',\n//     content: '<?php ...'\n//   }\n// }\n```"
+  },
+  "nextSteps": []
+}

@@ -1,0 +1,19 @@
+{
+  "success": false,
+  "data": {
+    "id": "req_1772029702941_talcfjt1q",
+    "promiseId": "cmm24qdlv0000zriu3jwwn6qb",
+    "clientId": "simulation-client",
+    "status": "pending",
+    "priority": 0,
+    "context": {
+      "version": "1.0",
+      "session_id": "stateless"
+    },
+    "message": "создать форму редактирования профиля пользователя",
+    "codeBlocks": null,
+    "result": null,
+    "error": null,
+    "createdAt": "2026-02-25T14:28:23.011Z"
+  }
+}

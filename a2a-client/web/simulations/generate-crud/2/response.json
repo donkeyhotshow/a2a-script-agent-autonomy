@@ -1,0 +1,37 @@
+{
+  "context": {
+    "task": "створити повний CRUD для сутності User",
+    "execution": {
+      "actionId": "generate-crud",
+      "currentActionId": "prepare-model",
+      "history": []
+    }
+  },
+  "executingAction": {
+    "actionId": "prepare-model",
+    "title": "Підготовка даних моделі",
+    "description": "Визначення полів, типів даних та валідації для сутності User",
+    "priority": 10,
+    "dsl": {
+      "script": "prepare-model",
+      "input": {
+        "entity_name": "User",
+        "fields": [
+          { "name": "name", "type": "string", "required": true },
+          { "name": "email", "type": "string", "required": true, "unique": true },
+          { "name": "password", "type": "string", "required": true },
+          { "name": "role", "type": "enum", "required": false, "values": ["admin", "user", "guest"] },
+          { "name": "is_active", "type": "boolean", "default": true }
+        ]
+      },
+      "output": "model_spec"
+    },
+    "dslScript": "```typescript\n// prepare-model.dsl\n// Підготовка специфікації моделі\n\nconst result = await script.execute('prepare-model', {\n  entity_name: 'User',\n  fields: [\n    { name: 'name', type: 'string', required: true },\n    { name: 'email', type: 'string', required: true, unique: true },\n    { name: 'password', type: 'string', required: true },\n    { name: 'role', type: 'enum', required: false, values: ['admin', 'user', 'guest'] },\n    { name: 'is_active', type: 'boolean', default: true }\n  ]\n});\n\n// result = {\n//   model_spec: {\n//     name: 'User',\n//     table: 'users',\n//     fields: [...],\n//     validations: {...}\n//   }\n// }\n```"
+  },
+  "nextSteps": [
+    { "actionId": "generate-model", "title": "Генерація моделі" },
+    { "actionId": "generate-controller", "title": "Генерація контролера" },
+    { "actionId": "generate-migration", "title": "Генерація міграції" },
+    { "actionId": "generate-views", "title": "Генерація представлень" }
+  ]
+}

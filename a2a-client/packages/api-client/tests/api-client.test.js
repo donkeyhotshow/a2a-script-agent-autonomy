@@ -8,6 +8,7 @@ import { ApiClient, ApiError } from '../src/index.js';
 
 // Mock node-fetch
 vi.mock('node-fetch', () => ({
+  __esModule: true,
   default: vi.fn(),
 }));
 
@@ -79,14 +80,41 @@ describe('@a2a/api-client', () => {
     });
 
     describe('createSession()', () => {
-      it('should create session via POST /sessions - STUB', () => {
-        // TODO: Implement test
-        expect(true).toBe(true);
+      it('should create session via POST /sessions', async () => {
+        const mockFetch = vi.fn();
+        global.fetch = mockFetch;
+        
+        mockFetch.mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve({ data: { session_id: 'test-123' } })
+        });
+
+        const client = new ApiClient({ serverUrl: 'http://test/api/v1' });
+        const result = await client.createSession('project-1');
+
+        expect(mockFetch).toHaveBeenCalledWith(
+          'http://test/api/v1/sessions',
+          expect.objectContaining({
+            method: 'POST',
+            body: JSON.stringify({ project_id: 'project-1' })
+          })
+        );
+        expect(result).toEqual({ session_id: 'test-123' });
       });
 
-      it('should return session data - STUB', () => {
-        // TODO: Implement test
-        expect(true).toBe(true);
+      it('should return session data', async () => {
+        const mockFetch = vi.fn();
+        global.fetch = mockFetch;
+        
+        mockFetch.mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve({ data: { session_id: 'session-456', status: 'active' } })
+        });
+
+        const client = new ApiClient({ serverUrl: 'http://test/api/v1' });
+        const result = await client.createSession('project-2');
+
+        expect(result).toHaveProperty('session_id', 'session-456');
       });
     });
 

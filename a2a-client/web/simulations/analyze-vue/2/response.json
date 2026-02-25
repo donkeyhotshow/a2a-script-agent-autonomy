@@ -1,0 +1,30 @@
+{
+  "context": {
+    "task": "проаналізувати Vue компоненти",
+    "execution": {
+      "actionId": "analyze-vue",
+      "currentActionId": "scan-vue-files",
+      "history": []
+    }
+  },
+  "executingAction": {
+    "actionId": "scan-vue-files",
+    "title": "Сканування Vue файлів",
+    "description": "Пошук всіх .vue файлів в проекті",
+    "priority": 10,
+    "dsl": {
+      "script": "scan-vue-files",
+      "input": {
+        "rootDir": ".",
+        "patterns": ["src/**/*.vue", "components/**/*.vue"]
+      },
+      "output": "vue_files[]"
+    },
+    "dslScript": "```typescript\n// scan-vue-files.dsl\n// Сканування Vue файлів\n\nconst result = await script.execute('scan-vue-files', {\n  rootDir: '.',\n  patterns: ['src/**/*.vue', 'components/**/*.vue'],\n  exclude: ['node_modules/**']\n});\n\n// result = {\n//   files: [\n//     { path: 'src/components/Button.vue', size: 1234 },\n//     { path: 'src/components/Modal.vue', size: 567 },\n//     { path: 'src/views/Home.vue', size: 890 },\n//     ...\n//   ],\n//   total: 45\n// }\n```"
+  },
+  "nextSteps": [
+    { "actionId": "analyze-vue-props", "title": "Аналіз props" },
+    { "actionId": "analyze-vue-emits", "title": "Аналіз emits" },
+    { "actionId": "generate-vue-report", "title": "Генерація звіту по Vue" }
+  ]
+}

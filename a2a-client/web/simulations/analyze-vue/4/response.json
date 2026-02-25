@@ -1,0 +1,39 @@
+{
+  "context": {
+    "task": "проаналізувати Vue компоненти",
+    "execution": {
+      "actionId": "analyze-vue",
+      "currentActionId": "generate-vue-report",
+      "history": [
+        { "step": 1, "actionId": "scan-vue-files", "status": "completed", "result": { "total": 45 } },
+        { "step": 2, "actionId": "analyze-vue-props", "status": "completed", "result": { "components": 2 } }
+      ]
+    }
+  },
+  "previousStep": {
+    "actionId": "analyze-vue-props",
+    "result": {
+      "components": [
+        { "name": "Button", "props": [{ "name": "variant", "type": "String", "required": false }] },
+        { "name": "Modal", "props": [{ "name": "isOpen", "type": "Boolean", "required": true }] }
+      ]
+    }
+  },
+  "executingAction": {
+    "actionId": "generate-vue-report",
+    "title": "Генерація звіту по Vue",
+    "description": "Створення комплексного звіту",
+    "priority": 4,
+    "dsl": {
+      "script": "generate-vue-report",
+      "input": {
+        "files": 45,
+        "components": 2,
+        "props": 2
+      },
+      "output": "vue_report"
+    },
+    "dslScript": "```typescript\n// generate-vue-report.dsl\n// Генерація звіту по Vue\n\nconst result = await script.execute('generate-vue-report', {\n  files: 45,\n  components: 2,\n  format: 'markdown'\n});\n\n// result = { report: '# Vue Analysis\\n\\n## Components\\n- Button\\n- Modal\\n...' }\n```"
+  },
+  "nextSteps": []
+}

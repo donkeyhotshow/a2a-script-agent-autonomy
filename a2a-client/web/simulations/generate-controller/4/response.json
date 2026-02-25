@@ -1,0 +1,30 @@
+{
+  "context": {
+    "task": "створити контролер для моделі User",
+    "execution": {
+      "actionId": "generate-controller",
+      "currentActionId": "generate-controller",
+      "status": "completed",
+      "history": [
+        { "step": 1, "actionId": "analyze-model", "status": "completed", "result": { "model_spec": { "name": "User" } } },
+        { "step": 2, "actionId": "generate-controller", "status": "completed", "result": { "controller_file": "generated" } }
+      ]
+    }
+  },
+  "previousStep": {
+    "actionId": "generate-controller",
+    "result": {
+      "controller_file": {
+        "path": "app/Http/Controllers/UserController.php"
+      }
+    }
+  },
+  "executingAction": {
+    "actionId": "generate-controller",
+    "title": "Генерація контролера",
+    "description": "Завершення генерації",
+    "priority": 10,
+    "status": "completed"
+  },
+  "nextSteps": []
+}

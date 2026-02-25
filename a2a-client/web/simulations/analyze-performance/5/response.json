@@ -1,0 +1,41 @@
+{
+  "context": {
+    "task": "проаналізувати продуктивність проекту",
+    "execution": {
+      "actionId": "analyze-performance",
+      "currentActionId": "generate-perf-report",
+      "status": "completed",
+      "history": [
+        { "step": 1, "actionId": "scan-performance", "status": "completed", "result": { "metrics": { "complexity": 45, "nPlusOne": 3 } } },
+        { "step": 2, "actionId": "analyze-bottlenecks", "status": "completed", "result": { "bottlenecks": 2 } },
+        { "step": 3, "actionId": "generate-perf-report", "status": "completed", "result": { "report": "generated" } }
+      ]
+    }
+  },
+  "previousStep": {
+    "actionId": "generate-perf-report",
+    "result": {
+      "report": "# Performance Аналіз\n\n## Вузькі місця\n- **nPlusOne** (high): app/Models/Post.php\n- **complexity** (medium): app/Services/UserService.php\n\n## Метрики\n- Complexity: 45\n- N+1 Queries: 3"
+    }
+  },
+  "finalResult": {
+    "actionId": "analyze-performance",
+    "summary": {
+      "bottlenecks_found": 2,
+      "complexity": 45,
+      "nPlusOne": 3
+    },
+    "details": {
+      "bottlenecks": [
+        { "type": "nPlusOne", "location": "app/Models/Post.php", "severity": "high" },
+        { "type": "complexity", "location": "app/Services/UserService.php", "severity": "medium" }
+      ],
+      "metrics": {
+        "complexity": 45,
+        "nPlusOne": 3,
+        "memoryLeaks": 1
+      },
+      "documentation": "# Performance Аналіз\n\n## Вузькі місця\n- **nPlusOne** (high): app/Models/Post.php\n- **complexity** (medium): app/Services/UserService.php\n\n## Метрики\n- Complexity: 45\n- N+1 Queries: 3"
+    }
+  }
+}

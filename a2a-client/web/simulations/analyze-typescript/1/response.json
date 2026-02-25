@@ -1,0 +1,78 @@
+{
+  "context": {
+    "task": "перевірити TypeScript типи"
+  },
+  "proposedActions": [
+    {
+      "actionId": "analyze-typescript",
+      "title": "Аналіз TypeScript коду",
+      "description": "Перевірка типів, інтерфейсів, загальних помилок і рекомендацій",
+      "priority": 10,
+      "matchScore": 0.98,
+      "subActions": [
+        {
+          "actionId": "scan-ts-files",
+          "title": "Сканування TypeScript файлів",
+          "description": "Пошук всіх .ts та .tsx файлів в проекті",
+          "priority": 10,
+          "input": "none",
+          "output": "ts_files[]"
+        },
+        {
+          "actionId": "check-types",
+          "title": "Перевірка типів",
+          "description": "Аналіз використання типів, інтерфейсів, type aliases",
+          "priority": 9,
+          "input": "ts_files[]",
+          "output": "types_report{}"
+        },
+        {
+          "actionId": "detect-any-types",
+          "title": "Виявлення any типів",
+          "description": "Пошук місць з небезпечним використанням 'any'",
+          "priority": 8,
+          "input": "ts_files[]",
+          "output": "any_types[]"
+        },
+        {
+          "actionId": "analyze-generics",
+          "title": "Аналіз дженериків",
+          "description": "Перевірка коректності використання generics",
+          "priority": 7,
+          "input": "ts_files[]",
+          "output": "generics_report{}"
+        },
+        {
+          "actionId": "check-type-imports",
+          "title": "Перевірка імпортів типів",
+          "description": "Аналіз проблем з type-only імпортами",
+          "priority": 6,
+          "input": "ts_files[]",
+          "output": "imports_report{}"
+        },
+        {
+          "actionId": "generate-ts-report",
+          "title": "Генерація звіту по TypeScript",
+          "description": "Створення комплексного звіту",
+          "priority": 5,
+          "input": "types_report{},any_types[],generics_report{}",
+          "output": "ts_report"
+        }
+      ]
+    }
+  ],
+  "fallbackActions": [
+    {
+      "mode": "auto-ai",
+      "title": "AI Action Generator",
+      "description": "Згенерувати новий екшен за допомогою LLM",
+      "fallbackType": "llm_generation"
+    },
+    {
+      "mode": "task-decomposition",
+      "title": "Декомпозиція задачі",
+      "description": "Розбити задачу на підзадачі вручну",
+      "fallbackType": "manual"
+    }
+  ]
+}

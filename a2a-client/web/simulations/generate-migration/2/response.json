@@ -1,0 +1,27 @@
+{
+  "context": {
+    "task": "створити міграцію для таблиці users",
+    "execution": {
+      "actionId": "generate-migration",
+      "currentActionId": "analyze-table",
+      "history": []
+    }
+  },
+  "executingAction": {
+    "actionId": "analyze-table",
+    "title": "Аналіз структури таблиці users",
+    "description": "Визначення полів та їх типів для міграції",
+    "priority": 10,
+    "dsl": {
+      "script": "analyze-table",
+      "input": {
+        "table_name": "users"
+      },
+      "output": "table_spec"
+    },
+    "dslScript": "```typescript\n// analyze-table.dsl\n// Аналіз структури таблиці\n\nconst result = await script.execute('analyze-table', {\n  table_name: 'users',\n  infer_from: 'model_or_context'\n});\n\n// result = {\n//   table_spec: {\n//     name: 'users',\n//     columns: [\n//       { name: 'id', type: 'bigInteger', primary: true },\n//       { name: 'name', type: 'string' },\n//       { name: 'email', type: 'string', unique: true },\n//       { name: 'password', type: 'string' },\n//       { name: 'timestamps', type: 'timestamps' }\n//     ]\n//   }\n// }\n```"
+  },
+  "nextSteps": [
+    { "actionId": "generate-migration", "title": "Генерація міграції" }
+  ]
+}

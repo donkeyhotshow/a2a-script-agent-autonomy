@@ -1,0 +1,9 @@
+{
+  "action": "approve_action",
+  "selectedAction": {
+    "actionId": "analyze-architecture"
+  },
+  "context": {
+    "task": "проаналізувати архітектуру проекту"
+  }
+}

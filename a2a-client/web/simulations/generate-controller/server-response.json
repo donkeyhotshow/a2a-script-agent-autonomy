@@ -1,0 +1,19 @@
+{
+  "success": false,
+  "data": {
+    "id": "req_1772029718651_hd3qnyjg5",
+    "promiseId": "cmm24qpq90000rstcbyuf5p9t",
+    "clientId": "simulation-client",
+    "status": "pending",
+    "priority": 0,
+    "context": {
+      "version": "1.0",
+      "session_id": "stateless"
+    },
+    "message": "создать контроллер для управления товарами",
+    "codeBlocks": null,
+    "result": null,
+    "error": null,
+    "createdAt": "2026-02-25T14:28:38.721Z"
+  }
+}

@@ -1,0 +1,62 @@
+{
+  "context": {
+    "task": "исправить импорты в vue компонентах"
+  },
+  "proposedActions": [
+    {
+      "actionId": "fix-vue-imports",
+      "title": "Исправить сломанные импорты в Vue файлах",
+      "description": "Автоматически определить и исправить проблемы с импортами в Vue компонентах",
+      "priority": 10,
+      "matchScore": 0.95,
+      "subActions": [
+        {
+          "actionId": "vue-import-detect",
+          "title": "Определить сломанные импорты",
+          "description": "Сканирует Vue файлы и находит битые импорты",
+          "priority": 10,
+          "input": "none",
+          "output": "broken_imports[]"
+        },
+        {
+          "actionId": "vue-import-resolve",
+          "title": "Разрешить правильные пути",
+          "description": "На основе списка битых импортов находит правильные пути",
+          "priority": 9,
+          "input": "broken_imports[]",
+          "output": "patches[]"
+        },
+        {
+          "actionId": "vue-import-apply",
+          "title": "Применить исправления",
+          "description": "Применяет исправления к файлам",
+          "priority": 8,
+          "input": "patches[]",
+          "output": "fixed_files[]"
+        },
+        {
+          "actionId": "vue-import-cleanup",
+          "title": "Очистить временные файлы",
+          "description": "Удаляет временные файлы после работы",
+          "priority": 7,
+          "input": "none",
+          "output": "cleanup_count"
+        }
+      ]
+    }
+  ],
+  "fallbackActions": [
+    {
+      "mode": "auto-ai",
+      "title": "AI Action Generator",
+      "description": "Сгенерировать новый экшен с помощью LLM (rnj-1 через Ollama)",
+      "fallbackType": "llm_generation"
+    },
+    {
+      "mode": "task-decomposition",
+      "title": "Декомпозиция задачи",
+      "description": "Разбить задачу на подзадачи вручную",
+      "fallbackType": "manual"
+    }
+  ]
+}

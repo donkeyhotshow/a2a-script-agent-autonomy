@@ -1,0 +1,30 @@
+{
+  "context": {
+    "task": "створити міграцію для таблиці users",
+    "execution": {
+      "actionId": "generate-migration",
+      "currentActionId": "generate-migration",
+      "status": "completed",
+      "history": [
+        { "step": 1, "actionId": "analyze-table", "status": "completed", "result": { "table_spec": { "name": "users" } } },
+        { "step": 2, "actionId": "generate-migration", "status": "completed", "result": { "migration_file": "generated" } }
+      ]
+    }
+  },
+  "previousStep": {
+    "actionId": "generate-migration",
+    "result": {
+      "migration_file": {
+        "path": "database/migrations/2024_01_01_000001_create_users_table.php"
+      }
+    }
+  },
+  "executingAction": {
+    "actionId": "generate-migration",
+    "title": "Генерація міграції",
+    "description": "Завершення генерації",
+    "priority": 10,
+    "status": "completed"
+  },
+  "nextSteps": []
+}

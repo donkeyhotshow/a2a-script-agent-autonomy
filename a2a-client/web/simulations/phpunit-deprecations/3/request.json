@@ -1,0 +1,19 @@
+{
+  "action": "step_result",
+  "stepId": "scan-phpunit",
+  "result": {
+    "files": [
+      { "path": "tests/Unit/UserTest.php" },
+      { "path": "tests/Feature/AuthTest.php" }
+    ],
+    "total": 45
+  },
+  "context": {
+    "task": "знайти застарілі PHPUnit методи",
+    "execution": {
+      "actionId": "phpunit-deprecations",
+      "currentActionId": "scan-phpunit",
+      "history": []
+    }
+  }
+}

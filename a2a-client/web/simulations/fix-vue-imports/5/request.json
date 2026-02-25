@@ -1,0 +1,23 @@
+{
+  "action": "step_result",
+  "stepId": "vue-import-apply",
+  "result": {
+    "fixed_files": [
+      { "file": "resources/js/Pages/Auth/Login.vue", "status": "fixed" },
+      { "file": "resources/js/Pages/Auth/Register.vue", "status": "fixed" },
+      { "file": "resources/js/components/UserCard.vue", "status": "fixed" }
+    ]
+  },
+  "context": {
+    "task": "виправити імпорти у vue компонентах",
+    "execution": {
+      "actionId": "fix-vue-imports",
+      "currentActionId": "vue-import-apply",
+      "history": [
+        { "step": 1, "actionId": "vue-import-detect", "status": "completed", "result": { "broken_imports": 3 } },
+        { "step": 2, "actionId": "vue-import-resolve", "status": "completed", "result": { "patches": 3 } },
+        { "step": 3, "actionId": "vue-import-apply", "status": "completed", "result": { "fixed_files": 3 } }
+      ]
+    }
+  }
+}

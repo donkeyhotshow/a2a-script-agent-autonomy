@@ -1,0 +1,29 @@
+{
+  "context": {
+    "task": "виправити помилки в коді з AI",
+    "execution": {
+      "actionId": "hybrid-fix",
+      "currentActionId": "detect-issues",
+      "history": []
+    }
+  },
+  "executingAction": {
+    "actionId": "detect-issues",
+    "title": "Виявити проблеми",
+    "description": "Використовує AI для аналізу коду та виявлення помилок",
+    "priority": 10,
+    "dsl": {
+      "script": "detect-issues",
+      "input": {
+        "scanPaths": ["src/"],
+        "analysisType": "full"
+      },
+      "output": "issues[]"
+    },
+    "dslScript": "```typescript\n// detect-issues.dsl\n// Виявлення проблем в коді за допомогою AI\n\nconst result = await script.execute('detect-issues', {\n  scanPaths: ['src/'],\n  analysisType: 'full'\n});\n\n// result = [\n//   { id: 1, file: 'src/services/api.ts', line: 42, type: 'error', message: 'Невизначена змінна' },\n//   { id: 2, file: 'src/utils/helpers.ts', line: 15, type: 'warning', message: 'Невживаний імпорт' },\n//   { id: 3, file: 'src/components/Button.vue', line: 8, type: 'error', message: 'Пропущена властивість' },\n//   ...\n// ]\n```"
+  },
+  "nextSteps": [
+    { "actionId": "apply-fix", "title": "Застосувати виправлення" },
+    { "actionId": "verify-fix", "title": "Верифікувати виправлення" }
+  ]
+}

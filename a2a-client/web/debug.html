@@ -3,713 +3,317 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>A2A Debug - Server Response Visualizer</title>
+  <title>A2A Debug - VueFlow</title>
   <link rel="stylesheet" href="css/style.css">
-  
-  <!-- Import Map for Vue and VueFlow modules -->
   <script type="importmap">
   {
     "imports": {
       "vue": "https://esm.sh/vue@3.4.0/vue.esm-browser.js",
-      "vue/dist/vue.esm-browser.js": "https://esm.sh/vue@3.4.0/vue.esm-browser.js",
       "@vue-flow/core": "https://esm.sh/@vue-flow/core@1.48.2",
       "@vue-flow/background": "https://esm.sh/@vue-flow/background@1.3.2",
       "@vue-flow/controls": "https://esm.sh/@vue-flow/controls@1.1.3",
       "@vue-flow/minimap": "https://esm.sh/@vue-flow/minimap@1.5.4"
-    },
-    "alias": {
-      "vue": "vue/dist/vue.esm-browser.js"
     }
   }
   </script>
-  
-  <!-- VueFlow Styles -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@vue-flow/core@1.48.2/dist/style.css">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@vue-flow/background@1.3.2/dist/style.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@vue-flow/controls@1.1.3/dist/style.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@vue-flow/minimap@1.5.4/dist/style.css">
-  
   <style>
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      margin: 0;
-      background: #f8fafc;
-    }
-    
-    .debug-header {
-      background: #1e293b;
-      color: white;
-      padding: 12px 20px;
-      display: flex;
-      align-items: center;
-      gap: 20px;
-    }
-    
-    .debug-header h1 {
-      margin: 0;
-      font-size: 18px;
-    }
-    
-    .debug-layout {
-      display: flex;
-      height: calc(100vh - 50px);
-    }
-    
-    .debug-sidebar {
-      width: 300px;
-      background: white;
-      border-right: 1px solid #e2e8f0;
-      padding: 16px;
-      overflow-y: auto;
-    }
-    
-    .debug-section {
-      margin-bottom: 16px;
-    }
-    
-    .debug-section label {
-      display: block;
-      font-weight: 600;
-      margin-bottom: 6px;
-      color: #334155;
-      font-size: 13px;
-    }
-    
-    .debug-select {
-      width: 100%;
-      padding: 8px 12px;
-      border: 1px solid #e2e8f0;
-      border-radius: 6px;
-      font-size: 14px;
-      background: white;
-    }
-    
-    .debug-radio-group {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-    
-    .debug-radio-group label {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-weight: normal;
-      cursor: pointer;
-    }
-    
-    .debug-textarea {
-      width: 100%;
-      height: 150px;
-      padding: 8px;
-      border: 1px solid #e2e8f0;
-      border-radius: 6px;
-      font-size: 12px;
-      font-family: monospace;
-      resize: vertical;
-    }
-    
-    .debug-divider {
-      border: none;
-      border-top: 1px solid #e2e8f0;
-      margin: 16px 0;
-    }
-    
-    .debug-stat {
-      display: flex;
-      justify-content: space-between;
-      padding: 6px 0;
-      border-bottom: 1px solid #f1f5f9;
-    }
-    
-    .debug-stat-label {
-      color: #64748b;
-    }
-    
-    .debug-stat-value {
-      font-weight: 600;
-      color: #334155;
-    }
-    
-    .debug-main {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-    }
-    
-    .debug-graph-container {
-      flex: 1;
-      min-height: 300px;
-      border-bottom: 1px solid #e2e8f0;
-    }
-    
-    #debug-vueflow-graph {
-      width: 100%;
-      height: 100%;
-    }
-    
-    .debug-json-container {
-      height: 250px;
-      background: #1e293b;
-      color: #e2e8f0;
-      overflow: auto;
-    }
-    
-    .debug-json-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 8px 12px;
-      background: #0f172a;
-      font-size: 12px;
-      font-weight: 600;
-    }
-    
-    .debug-json-content {
-      margin: 0;
-      padding: 12px;
-      font-size: 12px;
-      font-family: monospace;
-      white-space: pre-wrap;
-      word-break: break-all;
-    }
-    
-    .btn {
-      padding: 8px 16px;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 14px;
-      font-weight: 500;
-    }
-    
-    .btn-primary {
-      background: #3b82f6;
-      color: white;
-    }
-    
-    .btn-primary:hover {
-      background: #2563eb;
-    }
-    
-    .btn-secondary {
-      background: #f1f5f9;
-      color: #334155;
-      border: 1px solid #e2e8f0;
-    }
-    
-    .btn-secondary:hover {
-      background: #e2e8f0;
-    }
-    
-    .btn-small {
-      padding: 4px 8px;
-      font-size: 12px;
-    }
-    
-    /* Loading state */
-    .debug-loading {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      height: 100%;
-      color: #64748b;
-    }
-    
-    /* Legend */
-    .debug-legend {
-      position: absolute;
-      bottom: 10px;
-      left: 10px;
-      background: rgba(255, 255, 255, 0.95);
-      border: 1px solid #e2e8f0;
-      border-radius: 8px;
-      padding: 12px;
-      font-size: 11px;
-      z-index: 10;
-    }
-    
-    .debug-legend-title {
-      font-weight: 600;
-      margin-bottom: 8px;
-    }
-    
-    .debug-legend-item {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      padding: 2px 0;
-    }
-    
-    .debug-legend-color {
-      width: 12px;
-      height: 12px;
-      border-radius: 3px;
-    }
+    body { font-family: -apple-system, sans-serif; margin: 0; background: #f8fafc; }
+    .header { background: #1e293b; color: white; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; }
+    .header h1 { margin: 0; font-size: 18px; }
+    .layout { display: flex; height: calc(100vh - 50px); }
+    .sidebar { width: 280px; background: white; border-right: 1px solid #e2e8f0; padding: 16px; overflow-y: auto; }
+    .section { margin-bottom: 16px; }
+    .section label { display: block; font-weight: 600; margin-bottom: 6px; }
+    select, input { width: 100%; padding: 8px; border: 1px solid #e2e8f0; border-radius: 6px; box-sizing: border-box; }
+    .btn { padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; width: 100%; margin-top: 8px; }
+    .btn-primary { background: #3b82f6; color: white; }
+    .btn-primary:hover { background: #2563eb; }
+    .main { flex: 1; position: relative; }
+    .graph { width: 100%; height: 100%; min-height: 500px; background: #f8fafc; }
+    .status { padding: 8px 12px; background: #e2e8f0; border-radius: 4px; font-size: 12px; margin-top: 8px; }
+    .status.error { background: #fee2e2; color: #dc2626; }
+    .status.success { background: #dcfce7; color: #16a34a; }
+    .controls { position: absolute; top: 10px; right: 10px; z-index: 10; display: flex; gap: 4px; }
+    .controls button { padding: 6px 12px; background: white; border: 1px solid #e2e8f0; border-radius: 4px; cursor: pointer; }
+    .controls button:hover { background: #f1f5f9; }
   </style>
 </head>
 <body>
-  <header class="debug-header">
-    <h1>🧪 A2A Debug - Server Response Visualizer</h1>
-    <a href="index.html" style="color: #94a3b8; text-decoration: none; font-size: 14px;">← Back to Main</a>
+  <header class="header">
+    <h1>A2A Debug - VueFlow</h1>
+    <div id="status"></div>
   </header>
   
-  <div class="debug-layout">
-    <aside class="debug-sidebar">
-      <div class="debug-section">
-        <label>Select Simulation:</label>
-        <select id="simulationSelect" class="debug-select">
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="section">
+        <label>Simulation:</label>
+        <select id="simSelect">
           <option value="">-- Select --</option>
         </select>
       </div>
+      <button class="btn btn-primary" id="loadBtn">Load JSON</button>
       
-      <div class="debug-section">
-        <label>Step:</label>
-        <select id="stepSelect" class="debug-select">
-          <option value="">-- Select --</option>
-        </select>
+      <div class="section">
+        <label>Or enter path:</label>
+        <input type="text" id="jsonPath" placeholder="simulations/demo/graph-data.json">
       </div>
-      
-      <div class="debug-section">
-        <label>JSON Type:</label>
-        <div class="debug-radio-group">
-          <label><input type="radio" name="jsonType" value="request" checked> Request</label>
-          <label><input type="radio" name="jsonType" value="response"> Response (Gold)</label>
-          <label><input type="radio" name="jsonType" value="server"> Server Response</label>
-        </div>
-      </div>
-      
-      <button class="btn btn-primary" id="loadDebugData" style="width: 100%;">
-        Load & Visualize
-      </button>
-      
-      <hr class="debug-divider">
-      
-      <div class="debug-section">
-        <label>Or paste JSON:</label>
-        <textarea id="manualJsonInput" class="debug-textarea" placeholder='{"type": "action_proposal", ...}'></textarea>
-      </div>
-      
-      <button class="btn btn-secondary" id="loadManualJson" style="width: 100%;">
-        Load Manual JSON
-      </button>
-      
-      <hr class="debug-divider">
-      
-      <div class="debug-section" id="debugStats" style="display: none;">
-        <div class="debug-stat">
-          <span class="debug-stat-label">Nodes:</span>
-          <span class="debug-stat-value" id="statNodes">0</span>
-        </div>
-        <div class="debug-stat">
-          <span class="debug-stat-label">Edges:</span>
-          <span class="debug-stat-value" id="statEdges">0</span>
-        </div>
-        <div class="debug-stat">
-          <span class="debug-stat-label">Actions:</span>
-          <span class="debug-stat-value" id="statActions">0</span>
-        </div>
-      </div>
+      <button class="btn btn-primary" id="loadPathBtn">Load Path</button>
     </aside>
     
-    <div class="debug-main">
-      <!-- Flow Graph -->
-      <div class="debug-graph-container">
-        <div id="debug-vueflow-graph">
-          <div class="debug-loading">Loading VueFlow...</div>
-          <!-- Legend -->
-          <div class="debug-legend">
-            <div class="debug-legend-title">Entity Types</div>
-            <div class="debug-legend-item"><span class="debug-legend-color" style="background:#a855f7"></span>🤖 AGENTS</div>
-            <div class="debug-legend-item"><span class="debug-legend-color" style="background:#3b82f6"></span>🔵 NODES</div>
-            <div class="debug-legend-item"><span class="debug-legend-color" style="background:#f97316"></span>⚡ ACTIONS</div>
-            <div class="debug-legend-item"><span class="debug-legend-color" style="background:#06b6d4"></span>🔧 SERVICES</div>
-            <div class="debug-legend-item"><span class="debug-legend-color" style="background:#84cc16"></span>📋 TASKS</div>
-            <div class="debug-legend-item"><span class="debug-legend-color" style="background:#ef4444"></span>🛑 TERMINATORS</div>
-          </div>
-        </div>
+    <main class="main">
+      <div class="controls">
+        <button id="fitView">Fit</button>
+        <button id="zoomIn">+</button>
+        <button id="zoomOut">-</button>
       </div>
-      
-      <!-- JSON Preview -->
-      <div class="debug-json-container">
-        <div class="debug-json-header">
-          <span>JSON Preview</span>
-          <button class="btn btn-small" id="copyJson" style="background: #334155; color: white;">📋 Copy</button>
-        </div>
-        <pre id="debugJsonPreview" class="debug-json-content">Select a simulation and click "Load & Visualize"</pre>
-      </div>
-    </div>
+      <div id="graph" class="graph"></div>
+    </main>
   </div>
 
-  <!-- VueFlow and Nodes -->
-  <script src="js/flow/nodes.js" type="module"></script>
-  <script src="js/flow/protocol.js" type="module"></script>
-  
-  <!-- Vue App for Debug Page -->
   <script type="module">
-    import { createApp, ref, onMounted, h } from 'vue';
-    import { VueFlow, useVueFlow } from '@vue-flow/core';
+    import { createApp, ref, h, toRaw } from 'vue';
+    import { VueFlow } from '@vue-flow/core';
     import { Background } from '@vue-flow/background';
     import { Controls } from '@vue-flow/controls';
     import { MiniMap } from '@vue-flow/minimap';
     
-    // List of simulations
-    const SIMULATIONS = [
-      'pilot', 'fix-vue-imports', 'analyze-full', 'analyze-architecture',
-      'analyze-laravel', 'analyze-typescript', 'analyze-vue',
-      'generate-crud', 'generate-controller', 'generate-model', 'generate-migration',
-      'graph-build', 'graph-query', 'graph-impact',
-      'hybrid-fix', 'hybrid-refactor', 'dialog'
-    ];
+    const SIMULATIONS = ['demo', 'pilot', 'fix-vue-imports', 'analyze-full', 'analyze-architecture'];
     
-    let debugVueApp = null;
-    let debugNodes = [];
-    let debugEdges = [];
-    let currentJsonData = null;
+    const nodes = ref([]);
+    const edges = ref([]);
     
-    // Initialize simulation selector
-    function initSimulationSelector() {
-      const select = document.getElementById('simulationSelect');
-      SIMULATIONS.forEach(sim => {
-        const option = document.createElement('option');
-        option.value = sim;
-        option.textContent = sim;
-        select.appendChild(option);
+    let vueFlowRef = null;
+    let app = null;
+    
+    // Simple debug log to console only (NOT to nodes to avoid infinite loop)
+    function debugLog(msg) {
+      console.log('[DEBUG] ' + msg);
+    }
+    
+    function showStatus(msg, type = 'info') {
+      const el = document.getElementById('status');
+      el.textContent = msg;
+      el.className = 'status ' + type;
+      debugLog('STATUS: ' + msg);
+    }
+    
+    function initSelector() {
+      const sel = document.getElementById('simSelect');
+      SIMULATIONS.forEach(s => {
+        const opt = document.createElement('option');
+        opt.value = s;
+        opt.textContent = s;
+        sel.appendChild(opt);
+      });
+    }
+    
+    function getNodeStyle(type) {
+      const colors = {
+        task: { background: '#fee2e2', border: '#ef4444' },
+        action: { background: '#fef3c7', border: '#f59e0b' },
+        result: { background: '#dcfce7', border: '#22c55e' },
+        agent: { background: '#f3e8ff', border: '#a855f7' },
+        service: { background: '#cffafe', border: '#06b6d4' }
+      };
+      const style = colors[type] || { background: '#f1f5f9', border: '#94a3b8' };
+      return { 
+        background: style.background, 
+        border: '2px solid ' + style.border,
+        borderRadius: '8px',
+        padding: '10px',
+        fontSize: '12px'
+      };
+    }
+    
+    function renderGraph(data) {
+      if (!data) return;
+      
+      debugLog('renderGraph called');
+      
+      const newNodes = [];
+      const newEdges = [];
+      
+      let entities = data.entities || data.nodes || [];
+      let relations = data.relations || data.edges || [];
+      
+      if (Array.isArray(data)) {
+        entities = data;
+      }
+      
+      debugLog(`Entities: ${entities.length}, Relations: ${relations.length}`);
+      
+      entities.forEach((entity, index) => {
+        const id = entity.id || entity.name || 'node-' + index;
+        const label = entity.label || entity.title || entity.name || id;
+        
+        newNodes.push({
+          id: id,
+          label: label,
+          position: entity.position || { x: 100 + (index % 4) * 200, y: 100 + Math.floor(index / 4) * 150 },
+          type: entity.type || 'default',
+          style: getNodeStyle(entity.type),
+          data: entity
+        });
       });
       
-      select.addEventListener('change', () => loadSteps(select.value));
-    }
-    
-    // Load steps for selected simulation
-    async function loadSteps(simName) {
-      if (!simName) return;
-      
-      const stepSelect = document.getElementById('stepSelect');
-      stepSelect.innerHTML = '<option value="">-- Select --</option>';
-      
-      // Try to load steps 1-10
-      for (let i = 1; i <= 10; i++) {
-        const response = await fetch(`../simulations/${simName}/${i}/request.json`);
-        if (response.ok) {
-          const option = document.createElement('option');
-          option.value = i;
-          option.textContent = `Step ${i}`;
-          stepSelect.appendChild(option);
-        }
-      }
-    }
-    
-    // Load JSON data from simulation
-    async function loadSimulationJson(simName, step, jsonType) {
-      const fileMap = {
-        'request': 'request.json',
-        'response': 'response.json',
-        'server': 'server-response.json'
-      };
-      
-      const url = `../simulations/${simName}/${step}/${fileMap[jsonType]}`;
-      const response = await fetch(url);
-      
-      if (!response.ok) {
-        throw new Error(`File not found: ${url}`);
-      }
-      
-      return await response.json();
-    }
-    
-    // Convert JSON data to flow nodes and edges
-    function jsonToFlow(jsonData) {
-      const nodes = [];
-      const edges = [];
-      let nodeId = 0;
-      
-      // Helper to create unique ID
-      const createId = () => `node-${++nodeId}`;
-      
-      // Check for different response types
-      if (jsonData.proposedActions || jsonData.context) {
-        // Action proposal response
-        const taskNodeId = createId();
-        nodes.push({
-          id: taskNodeId,
-          type: 'taskInput',
-          data: { 
-            label: jsonData.context?.task || 'Task',
-            messageType: 'task_request'
-          },
-          position: { x: 250, y: 0 }
-        });
-        
-        // Add proposed actions
-        if (jsonData.proposedActions) {
-          let actionY = 120;
-          jsonData.proposedActions.forEach((action, idx) => {
-            const actionNodeId = createId();
-            nodes.push({
-              id: actionNodeId,
-              type: 'actionProposal',
-              data: { 
-                label: action.title || action.actionId,
-                description: action.description,
-                messageType: 'action_proposal'
-              },
-              position: { x: 250, y: actionY }
-            });
-            
-            // Edge from task to action
-            edges.push({
-              id: `edge-${taskNodeId}-${actionNodeId}`,
-              source: taskNodeId,
-              target: actionNodeId,
-              type: 'smoothstep',
-              animated: true,
-              style: { stroke: '#22c55e', strokeWidth: 2 }
-            });
-            
-            // Add sub-actions
-            if (action.subActions) {
-              let subY = actionY + 80;
-              action.subActions.forEach((subAction, subIdx) => {
-                const subNodeId = createId();
-                nodes.push({
-                  id: subNodeId,
-                  type: 'subAction',
-                  data: { 
-                    label: subAction.title || subAction.actionId,
-                    description: subAction.description,
-                    messageType: 'action_executing'
-                  },
-                  position: { x: 450, y: subY }
-                });
-                
-                // Edge from action to sub-action
-                edges.push({
-                  id: `edge-${actionNodeId}-${subNodeId}`,
-                  source: actionNodeId,
-                  target: subNodeId,
-                  type: 'smoothstep',
-                  style: { stroke: '#3b82f6', strokeWidth: 2 }
-                });
-                
-                subY += 70;
-              });
-            }
-            
-            actionY += 120;
+      relations.forEach((rel, index) => {
+        const source = rel.from || rel.source || rel.fromId;
+        const target = rel.to || rel.target || rel.toId;
+        if (source && target) {
+          newEdges.push({
+            id: 'edge-' + index,
+            source: source,
+            target: target,
+            label: rel.label || rel.type || '',
+            type: 'smoothstep',
+            animated: true,
+            style: { stroke: '#64748b' },
+            labelStyle: { fill: '#64748b' }
           });
         }
-        
-        // Add fallback actions
-        if (jsonData.fallbackActions) {
-          const fallbackY = Math.max(120, nodes.length * 80);
-          jsonData.fallbackActions.forEach((fallback, idx) => {
-            const fallbackNodeId = createId();
-            nodes.push({
-              id: fallbackNodeId,
-              type: 'result',
-              data: { 
-                label: fallback.title || 'Fallback',
-                description: fallback.description,
-                messageType: 'step_result'
-              },
-              position: { x: 50, y: fallbackY + idx * 70 }
-            });
-          });
-        }
-      } else if (jsonData.executingAction || jsonData.nextSteps) {
-        // Action executing response
-        const execNodeId = createId();
-        nodes.push({
-          id: execNodeId,
-          type: 'subAction',
-          data: { 
-            label: jsonData.executingAction?.title || 'Executing',
-            messageType: 'action_executing'
-          },
-          position: { x: 250, y: 100 }
-        });
-        
-        // Add next steps
-        if (jsonData.nextSteps) {
-          let stepY = 200;
-          jsonData.nextSteps.forEach((step, idx) => {
-            const stepNodeId = createId();
-            nodes.push({
-              id: stepNodeId,
-              type: 'actionProposal',
-              data: { 
-                label: step.title || step.actionId,
-                messageType: 'action_proposal'
-              },
-              position: { x: 250, y: stepY }
-            });
-            
-            edges.push({
-              id: `edge-${execNodeId}-${stepNodeId}`,
-              source: execNodeId,
-              target: stepNodeId,
-              type: 'smoothstep',
-              animated: true,
-              style: { stroke: '#22c55e', strokeWidth: 2 }
-            });
-            
-            stepY += 80;
-          });
-        }
-      } else if (jsonData.type) {
-        // Direct protocol message
-        const msgNodeId = createId();
-        const typeMap = {
-          'task_request': 'taskInput',
-          'action_proposal': 'actionProposal',
-          'action_executing': 'subAction',
-          'step_result': 'result',
-          'action_complete': 'actionComplete'
-        };
-        
-        nodes.push({
-          id: msgNodeId,
-          type: typeMap[jsonData.type] || 'default',
-          data: { 
-            label: jsonData.type,
-            messageType: jsonData.type,
-            ...jsonData
-          },
-          position: { x: 250, y: 100 }
-        });
-      } else {
-        // Unknown format - create a generic node
-        const unknownNodeId = createId();
-        nodes.push({
-          id: unknownNodeId,
-          type: 'default',
-          data: { 
-            label: 'Unknown Data',
-            raw: JSON.stringify(jsonData, null, 2).substring(0, 200)
-          },
-          position: { x: 250, y: 100 }
-        });
-      }
+      });
       
-      return { nodes, edges };
+      // Update refs
+      nodes.value = newNodes;
+      edges.value = newEdges;
+      
+      debugLog(`Set ${newNodes.length} nodes, ${newEdges.length} edges`);
     }
     
-    // Render flow in debug graph
-    function renderFlow(nodes, edges) {
-      debugNodes = nodes;
-      debugEdges = edges;
-      
-      if (debugVueApp) {
-        debugVueApp.setNodes(nodes);
-        debugVueApp.setEdges(edges);
-        setTimeout(() => debugVueApp.fitView(), 100);
-      }
-      
-      // Update stats
-      document.getElementById('debugStats').style.display = 'block';
-      document.getElementById('statNodes').textContent = nodes.length;
-      document.getElementById('statEdges').textContent = edges.length;
-      
-      const actionCount = nodes.filter(n => n.data?.messageType === 'action_proposal').length;
-      document.getElementById('statActions').textContent = actionCount;
-    }
-    
-    // Handle load button click
-    document.getElementById('loadDebugData').addEventListener('click', async () => {
-      const simName = document.getElementById('simulationSelect').value;
-      const step = document.getElementById('stepSelect').value;
-      const jsonType = document.querySelector('input[name="jsonType"]:checked').value;
-      
-      if (!simName || !step) {
-        alert('Please select simulation and step');
+    async function loadSimulation(simName) {
+      if (!simName) {
+        showStatus('Please select a simulation', 'error');
         return;
       }
       
-      try {
-        const jsonData = await loadSimulationJson(simName, step, jsonType);
-        currentJsonData = jsonData;
-        
-        // Update JSON preview
-        document.getElementById('debugJsonPreview').textContent = JSON.stringify(jsonData, null, 2);
-        
-        // Convert to flow and render
-        const { nodes, edges } = jsonToFlow(jsonData);
-        renderFlow(nodes, edges);
-        
-        console.log('Loaded:', simName, 'step', step, jsonType);
-      } catch (err) {
-        alert('Error loading data: ' + err.message);
-        console.error(err);
-      }
-    });
-    
-    // Handle manual JSON input
-    document.getElementById('loadManualJson').addEventListener('click', () => {
-      const jsonStr = document.getElementById('manualJsonInput').value.trim();
+      showStatus('Loading ' + simName + '...');
+      debugLog('loadSimulation: ' + simName);
       
-      if (!jsonStr) {
-        alert('Please paste JSON data');
+      if (simName === 'demo') {
+        try {
+          debugLog('Fetching demo data...');
+          const response = await fetch('/simulations/demo/graph-data.json');
+          debugLog('Response status: ' + response.status);
+          if (!response.ok) throw new Error('Not found');
+          const data = await response.json();
+          debugLog('JSON parsed, keys: ' + Object.keys(data).join(', '));
+          renderGraph(data);
+          showStatus('Loaded: demo', 'success');
+          return;
+        } catch (e) {
+          debugLog('ERROR: ' + e.message);
+          showStatus('Error: ' + e.message, 'error');
+          return;
+        }
+      }
+      
+      try {
+        const response = await fetch(`/simulations/${simName}/1/request.json`);
+        if (!response.ok) throw new Error('Not found');
+        const data = await response.json();
+        renderGraph(data);
+        showStatus('Loaded: ' + simName, 'success');
+      } catch (e) {
+        try {
+          const response = await fetch(`/simulations/${simName}/request.json`);
+          if (!response.ok) throw new Error('Not found');
+          const data = await response.json();
+          renderGraph(data);
+          showStatus('Loaded: ' + simName, 'success');
+        } catch (e2) {
+          showStatus('Error: ' + e2.message, 'error');
+        }
+      }
+    }
+    
+    async function loadFromPath(path) {
+      if (!path) {
+        showStatus('Enter path', 'error');
         return;
       }
-      
+      showStatus('Loading...');
       try {
-        const jsonData = JSON.parse(jsonStr);
-        currentJsonData = jsonData;
-        
-        // Update JSON preview
-        document.getElementById('debugJsonPreview').textContent = JSON.stringify(jsonData, null, 2);
-        
-        // Convert to flow and render
-        const { nodes, edges } = jsonToFlow(jsonData);
-        renderFlow(nodes, edges);
-        
-        console.log('Loaded manual JSON');
-      } catch (err) {
-        alert('Invalid JSON: ' + err.message);
+        const response = await fetch('/' + path);
+        if (!response.ok) throw new Error('Not found');
+        const data = await response.json();
+        renderGraph(data);
+        showStatus('Loaded: ' + path, 'success');
+      } catch (e) {
+        showStatus('Error: ' + e.message, 'error');
       }
-    });
+    }
     
-    // Copy JSON button
-    document.getElementById('copyJson').addEventListener('click', () => {
-      if (currentJsonData) {
-        navigator.clipboard.writeText(JSON.stringify(currentJsonData, null, 2));
-        alert('JSON copied to clipboard!');
-      }
-    });
-    
-    // Initialize VueFlow for debug page
-    onMounted(() => {
-      initSimulationSelector();
+    function initVueFlow() {
+      debugLog('initVueFlow started');
       
-      const container = document.getElementById('debug-vueflow-graph');
+      initSelector();
+      
+      const container = document.getElementById('graph');
+      debugLog('Container found: ' + (!!container));
+      
       if (!container) return;
       
-      const { fitView, setNodes, setEdges } = useVueFlow();
-      
-      debugVueApp = { fitView, setNodes, setEdges };
-      
-      createApp({
+      app = createApp({
         components: { VueFlow, Background, Controls, MiniMap },
         setup() {
-          const nodes = ref([]);
-          const edges = ref([]);
+          debugLog('Vue setup called');
           
-          return { nodes, edges };
+          return { 
+            nodes: nodes,
+            edges: edges 
+          };
         },
         render() {
-          return h(VueFlow, { nodes: this.nodes, edges: this.edges, fitViewOnInit: true }, {
-            default: () => [
-              h(Background, { patternColor: '#aaa', gap: 8 }),
-              h(MiniMap),
-              h(Controls)
-            ]
-          });
+          debugLog('Render: nodes=' + nodes.value.length + ' edges=' + edges.value.length);
+          return h(VueFlow, { 
+            nodes: toRaw(nodes.value), 
+            edges: toRaw(edges.value),
+            fitViewOnInit: true
+          }, () => [
+            h(Background, { patternColor: '#aaa', gap: 16 }),
+            h(Controls),
+            h(MiniMap, { nodeColor: '#f8fafc' })
+          ]);
         }
-      }).mount(container);
+      });
       
-      console.log('Debug VueFlow initialized');
-    });
+      app.mount(container);
+      debugLog('App mounted!');
+      
+      // Try to get vueFlow instance
+      setTimeout(() => {
+        const graphEl = document.querySelector('.vue-flow');
+        debugLog('Found .vue-flow: ' + !!graphEl);
+      }, 500);
+      
+      // Event listeners
+      document.getElementById('loadBtn').addEventListener('click', () => {
+        const sim = document.getElementById('simSelect').value;
+        debugLog('Load clicked: ' + sim);
+        loadSimulation(sim);
+      });
+      
+      document.getElementById('loadPathBtn').addEventListener('click', () => {
+        const path = document.getElementById('jsonPath').value;
+        loadFromPath(path);
+      });
+      
+      document.getElementById('fitView').addEventListener('click', () => {
+        debugLog('Fit clicked');
+      });
+      document.getElementById('zoomIn').addEventListener('click', () => debugLog('Zoom+ clicked'));
+      document.getElementById('zoomOut').addEventListener('click', () => debugLog('Zoom- clicked'));
+    }
+    
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initVueFlow);
+    } else {
+      initVueFlow();
+    }
   </script>
 </body>
 </html>

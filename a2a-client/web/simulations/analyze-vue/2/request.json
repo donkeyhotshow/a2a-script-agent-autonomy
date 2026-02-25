@@ -1,0 +1,9 @@
+{
+  "action": "approve_action",
+  "selectedAction": {
+    "actionId": "analyze-vue"
+  },
+  "context": {
+    "task": "проаналізувати Vue компоненти"
+  }
+}

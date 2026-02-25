@@ -1,0 +1,44 @@
+{
+  "context": {
+    "task": "перевірити TypeScript типи",
+    "execution": {
+      "actionId": "analyze-typescript",
+      "currentActionId": "generate-ts-report",
+      "history": [
+        { "step": 1, "actionId": "scan-ts-files", "status": "completed", "result": { "total": 89 } },
+        { "step": 2, "actionId": "check-types", "status": "completed", "result": { "interfaces": 2, "typeAliases": 1 } }
+      ]
+    }
+  },
+  "previousStep": {
+    "actionId": "check-types",
+    "result": {
+      "interfaces": [
+        { "name": "User", "properties": ["id", "name", "email"] },
+        { "name": "ApiResponse", "properties": ["data", "status"] }
+      ],
+      "typeAliases": [
+        { "name": "UserId", "type": "string" }
+      ],
+      "errors": []
+    }
+  },
+  "executingAction": {
+    "actionId": "generate-ts-report",
+    "title": "Генерація звіту по TypeScript",
+    "description": "Створення комплексного звіту",
+    "priority": 5,
+    "dsl": {
+      "script": "generate-ts-report",
+      "input": {
+        "files": 89,
+        "interfaces": 2,
+        "typeAliases": 1,
+        "errors": 0
+      },
+      "output": "ts_report"
+    },
+    "dslScript": "```typescript\n// generate-ts-report.dsl\n// Генерація звіту по TypeScript\n\nconst result = await script.execute('generate-ts-report', {\n  files: 89,\n  interfaces: 2,\n  typeAliases: 1,\n  format: 'markdown'\n});\n\n// result = { report: '# TypeScript Analysis\\n\\n## Types\\n- User\\n- ApiResponse\\n...' }\n```"
+  },
+  "nextSteps": []
+}

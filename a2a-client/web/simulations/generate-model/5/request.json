@@ -1,0 +1,18 @@
+{
+  "action": "step_result",
+  "stepId": "generate-model",
+  "result": {
+    "status": "completed",
+    "file_created": "app/Models/User.php"
+  },
+  "context": {
+    "task": "створити модель User з полями name, email, password",
+    "execution": {
+      "actionId": "generate-model",
+      "currentActionId": "generate-model",
+      "history": [
+        { "step": 1, "actionId": "analyze-fields", "status": "completed", "result": { "field_spec": { "name": "User" } } }
+      ]
+    }
+  }
+}

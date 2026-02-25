@@ -1,0 +1,64 @@
+{
+  "success": true,
+  "data": {
+    "id": "req_1772005746680_7jtpftbl3",
+    "promiseId": "cmm1qgwu30000xq85d8mnkusx",
+    "clientId": "simulation-client",
+    "status": "completed",
+    "priority": 0,
+    "context": {
+      "action": "step_result",
+      "stepId": "vue-import-resolve",
+      "version": "1.0",
+      "session_id": "stateless",
+      "stepResult": {
+        "patches": [
+          {
+            "to": "@/components/Header",
+            "file": "resources/js/Pages/Auth/Login.vue",
+            "from": "../components/Header",
+            "line": 3
+          },
+          {
+            "to": "@/utils/helpers",
+            "file": "resources/js/Pages/Auth/Register.vue",
+            "from": "../../utils/helpers",
+            "line": 5
+          },
+          {
+            "to": "@/stores/userStore",
+            "file": "resources/js/components/UserCard.vue",
+            "from": "@/stores/user",
+            "line": 2
+          }
+        ]
+      }
+    },
+    "message": null,
+    "codeBlocks": null,
+    "result": {
+      "context": {
+        "tasks": [
+          {
+            "id": "fix-vue-imports",
+            "type": "analyze",
+            "status": "in_progress",
+            "progress": 40
+          }
+        ],
+        "version": "1.0",
+        "session_id": "stateless"
+      },
+      "outcome": "completed",
+      "nextSteps": [],
+      "executingAction": {
+        "title": "Detect broken imports",
+        "actionId": "detect"
+      }
+    },
+    "error": null,
+    "createdAt": "2026-02-25T07:49:06.748Z",
+    "startedAt": "2026-02-25T07:49:07.929Z",
+    "completedAt": "2026-02-25T07:49:07.932Z"
+  }
+}

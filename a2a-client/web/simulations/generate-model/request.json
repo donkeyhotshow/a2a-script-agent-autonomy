@@ -1,0 +1,4 @@
+{
+  "action": "task_request",
+  "task": "создать модель Order с полями: id, user_id, total_amount, status, created_at, updated_at"
+}

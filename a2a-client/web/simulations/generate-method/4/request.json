@@ -1,0 +1,18 @@
+{
+  "action": "step_result",
+  "stepId": "generate-method",
+  "result": {
+    "method_code": "public function scopeGetActiveUsers($query)\n{\n    return $query->where('is_active', true);\n}",
+    "location": "app/Models/User.php"
+  },
+  "context": {
+    "task": "додати метод getActiveUsers до моделі User",
+    "execution": {
+      "actionId": "generate-method",
+      "currentActionId": "generate-method",
+      "history": [
+        { "step": 1, "actionId": "analyze-class", "status": "completed", "result": { "class_spec": { "name": "User" } } }
+      ]
+    }
+  }
+}

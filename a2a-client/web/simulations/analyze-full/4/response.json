@@ -1,0 +1,49 @@
+{
+  "context": {
+    "task": "проаналізувати проект",
+    "execution": {
+      "actionId": "analyze-full",
+      "currentActionId": "generate-report",
+      "history": [
+        { "step": 1, "actionId": "scan-files", "status": "completed", "result": { "file_count": 10 } },
+        { "step": 2, "actionId": "analyze-code", "status": "completed", "result": { "totalLines": 5423, "coverage": 78 } }
+      ]
+    }
+  },
+  "previousStep": {
+    "actionId": "analyze-code",
+    "result": {
+      "totalLines": 5423,
+      "codeLines": 4210,
+      "commentLines": 456,
+      "blankLines": 757,
+      "avgComplexity": 2.3,
+      "coverage": 78,
+      "duplicateLines": 89
+    }
+  },
+  "executingAction": {
+    "actionId": "generate-report",
+    "title": "Згенерувати звіт",
+    "description": "Генерує фінальний звіт з аналізу",
+    "priority": 8,
+    "dsl": {
+      "script": "generate-report",
+      "input": {
+        "file_count": 10,
+        "metrics": {
+          "totalLines": 5423,
+          "codeLines": 4210,
+          "commentLines": 456,
+          "blankLines": 757,
+          "avgComplexity": 2.3,
+          "coverage": 78,
+          "duplicateLines": 89
+        }
+      },
+      "output": "report"
+    },
+    "dslScript": "```typescript\n// generate-report.dsl\n// Генерація звіту з аналізу\n\nconst result = await script.execute('generate-report', {\n  file_count: 10,\n  metrics: {\n    totalLines: 5423,\n    codeLines: 4210,\n    commentLines: 456,\n    blankLines: 757,\n    avgComplexity: 2.3,\n    coverage: 78,\n    duplicateLines: 89\n  }\n});\n\n// result = { report_id: 'abc123', generated_at: '2024-01-15T10:30:00Z' }\n```"
+  },
+  "nextSteps": []
+}

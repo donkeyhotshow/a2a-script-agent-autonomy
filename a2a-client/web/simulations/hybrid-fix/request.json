@@ -1,0 +1,10 @@
+{
+  "action": "task_request",
+  "task": "исправить ошибку в модуле Order и обновить зависимости",
+  "options": {
+    "targetModule": "Order",
+    "fixType": "error_and_deps",
+    "includeTests": true,
+    "updatePackageJson": true
+  }
+}

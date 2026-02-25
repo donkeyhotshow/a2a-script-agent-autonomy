@@ -1,0 +1,18 @@
+{
+  "action": "step_result",
+  "stepId": "generate-sec-report",
+  "result": {
+    "report": "# Security Аналіз\n\n## Вразливості\n- **XSS** (high): app/Http/Controllers/PostController.php\n- **SQL Injection** (critical): app/Http/Controllers/UserController.php\n\n## Перевірки\n- SQL Injection: OK\n- XSS: Issues found\n- CSRF: OK"
+  },
+  "context": {
+    "task": "проаналізувати безпеку проекту",
+    "execution": {
+      "actionId": "analyze-security",
+      "currentActionId": "generate-sec-report",
+      "history": [
+        { "step": 1, "actionId": "scan-security", "status": "completed", "result": { "checks": { "sqlInjection": true, "xss": true } } },
+        { "step": 2, "actionId": "detect-vulnerabilities", "status": "completed", "result": { "vulnerabilities": 2 } }
+      ]
+    }
+  }
+}

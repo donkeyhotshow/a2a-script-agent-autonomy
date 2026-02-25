@@ -1,0 +1,56 @@
+{
+  "context": {
+    "task": "створити форму редагування профілю користувача",
+    "execution": {
+      "actionId": "generate-view",
+      "currentActionId": "generate-view",
+      "history": [
+        { "step": 1, "actionId": "analyze-model", "status": "completed", "result": { "model_spec": { "name": "User", "fields": 6 } } }
+      ]
+    }
+  },
+  "previousStep": {
+    "actionId": "analyze-model",
+    "result": {
+      "model_spec": {
+        "name": "User",
+        "fields": [
+          { "name": "name", "type": "string", "required": true },
+          { "name": "email", "type": "email", "required": true },
+          { "name": "avatar", "type": "file", "required": false },
+          { "name": "bio", "type": "textarea", "required": false },
+          { "name": "phone", "type": "tel", "required": false },
+          { "name": "birthdate", "type": "date", "required": false }
+        ]
+      }
+    }
+  },
+  "executingAction": {
+    "actionId": "generate-view",
+    "title": "Генерація Vue компонента ProfileEditForm",
+    "description": "Створення форми редагування профілю на Vue 3 з Composition API",
+    "priority": 9,
+    "dsl": {
+      "script": "generate-vue-component",
+      "input": {
+        "component_name": "ProfileEditForm",
+        "component_type": "form",
+        "model_spec": {
+          "name": "User",
+          "fields": [
+            { "name": "name", "type": "string", "required": true },
+            { "name": "email", "type": "email", "required": true },
+            { "name": "avatar", "type": "file", "required": false },
+            { "name": "bio", "type": "textarea", "required": false },
+            { "name": "phone", "type": "tel", "required": false },
+            { "name": "birthdate", "type": "date", "required": false }
+          ]
+        },
+        "features": ["validation", "file_upload", "loading_states"]
+      },
+      "output": "view_file"
+    },
+    "dslScript": "```typescript\n// generate-vue-component.dsl\n// Генерація Vue компонента\n\nconst result = await script.execute('generate-vue-component', {\n  component_name: 'ProfileEditForm',\n  component_type: 'form',\n  model_spec: {\n    name: 'User',\n    fields: [...]\n  },\n  features: ['validation', 'file_upload', 'loading_states']\n});\n\n// result = {\n//   view_file: {\n//     path: 'resources/js/components/ProfileEditForm.vue',\n//     code: '<template>...</template>'\n//   }\n// }\n```"
+  },
+  "nextSteps": []
+}

@@ -1,0 +1,26 @@
+{
+  "context": {
+    "task": "створити тест для UserController",
+    "execution": {
+      "actionId": "generate-test",
+      "currentActionId": "validate-test",
+      "history": ["analyze-target", "generate-test"]
+    }
+  },
+  "executingAction": {
+    "actionId": "validate-test",
+    "title": "Валідація тесту",
+    "description": "Перевірка згенерованого тестового коду",
+    "priority": 8,
+    "dsl": {
+      "script": "validate-test",
+      "input": {
+        "test_file": {
+          "path": "tests/Feature/UserControllerTest.php"
+        }
+      },
+      "output": "validation_result"
+    }
+  },
+  "nextSteps": []
+}

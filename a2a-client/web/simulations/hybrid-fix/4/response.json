@@ -1,0 +1,46 @@
+{
+  "context": {
+    "task": "виправити помилки в коді з AI",
+    "execution": {
+      "actionId": "hybrid-fix",
+      "currentActionId": "verify-fix",
+      "history": [
+        { "step": 1, "actionId": "detect-issues", "status": "completed", "result": { "issues_count": 4 } },
+        { "step": 2, "actionId": "apply-fix", "status": "completed", "result": { "fixed": 3, "skipped": 1 } }
+      ]
+    }
+  },
+  "previousStep": {
+    "actionId": "apply-fix",
+    "result": {
+      "fixed": 3,
+      "skipped": 1,
+      "files": [
+        { "file": "src/services/api.ts", "status": "fixed" },
+        { "file": "src/utils/helpers.ts", "status": "fixed" },
+        { "file": "src/components/Button.vue", "status": "fixed" },
+        { "file": "src/stores/userStore.ts", "status": "skipped" }
+      ]
+    }
+  },
+  "executingAction": {
+    "actionId": "verify-fix",
+    "title": "Верифікувати виправлення",
+    "description": "Перевіряє що виправлення працює коректно",
+    "priority": 8,
+    "dsl": {
+      "script": "verify-fix",
+      "input": {
+        "fixed_files": [
+          "src/services/api.ts",
+          "src/utils/helpers.ts",
+          "src/components/Button.vue"
+        ]
+      },
+      "verificationType": "lint_and_typecheck"
+    },
+    "output": "verification_result"
+  },
+  "dslScript": "```typescript\n// verify-fix.dsl\n// Верифікація виправлень\n\nconst result = await script.execute('verify-fix', {\n  fixed_files: [\n    'src/services/api.ts',\n    'src/utils/helpers.ts',\n    'src/components/Button.vue'\n  ],\n  verificationType: 'lint_and_typecheck'\n});\n\n// result = {\n//   success: true,\n//   errors: 0,\n//   warnings: 0,\n//   typecheck: 'passed',\n//   lint: 'passed'\n// }\n```",
+  "nextSteps": []
+}

@@ -1,0 +1,40 @@
+{
+  "context": {
+    "task": "додати метод getActiveUsers до моделі User"
+  },
+  "proposedActions": [
+    {
+      "actionId": "generate-method",
+      "title": "Генерація методу",
+      "description": "Додавання нового методу до класу",
+      "priority": 10,
+      "matchScore": 0.93,
+      "subActions": [
+        {
+          "actionId": "analyze-class",
+          "title": "Аналіз класу",
+          "description": "Аналіз існуючого класу та його структури",
+          "priority": 10,
+          "input": "class_name, class_path",
+          "output": "class_spec"
+        },
+        {
+          "actionId": "generate-method",
+          "title": "Генерація методу",
+          "description": "Створення нового методу",
+          "priority": 9,
+          "input": "class_spec, method_spec",
+          "output": "method_code"
+        }
+      ]
+    }
+  ],
+  "fallbackActions": [
+    {
+      "mode": "auto-ai",
+      "title": "AI Action Generator",
+      "description": "Згенерувати новий екшен за допомогою LLM",
+      "fallbackType": "llm_generation"
+    }
+  ]
+}

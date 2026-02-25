@@ -1,0 +1,1155 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>A2A Script Agent - Variant 4 (VueFlow + VueForm)</title>
+  
+  <!-- Import Map for Vue and VueFlow -->
+  <script type="importmap">
+  {
+    "imports": {
+      "vue": "https://esm.sh/vue@3.4.0/vue.esm-browser.js",
+      "@vue-flow/core": "https://esm.sh/@vue-flow/core@1.48.2",
+      "@vue-flow/background": "https://esm.sh/@vue-flow/background@1.3.2",
+      "@vue-flow/controls": "https://esm.sh/@vue-flow/controls@1.1.3"
+    }
+  }
+  </script>
+  
+  <!-- VueFlow CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@vue-flow/core@1.48.2/dist/style.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@vue-flow/controls@1.1.3/dist/style.css">
+  
+  <style>
+    /* Variant 4 - VueFlow Canvas + VueForm Floating Panel */
+    :root {
+      --panel-bg: #1a1a2e;
+      --panel-border: #30363d;
+      --task-accent: #6366f1;
+      --task-success: #22c55e;
+      --task-warning: #f97316;
+      --task-info: #3b82f6;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font: 13px/1.5 -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #0d1117;
+      color: #e6edf3;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .app-container {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+
+    /* Header */
+    .app-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      height: 48px;
+      background: #161b22;
+      border-bottom: 1px solid var(--panel-border);
+      z-index: 100;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+
+    .logo {
+      font-weight: 700;
+      font-size: 16px;
+      color: var(--task-accent);
+    }
+
+    .header-controls {
+      display: flex;
+      gap: 12px;
+    }
+
+    .header-select {
+      padding: 6px 12px;
+      background: #21262d;
+      border: 1px solid var(--panel-border);
+      border-radius: 6px;
+      color: #e6edf3;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    .header-select:focus {
+      outline: none;
+      border-color: var(--task-accent);
+    }
+
+    .header-right {
+      display: flex;
+      gap: 8px;
+    }
+
+    .header-btn {
+      padding: 6px 12px;
+      background: #21262d;
+      border: 1px solid var(--panel-border);
+      border-radius: 6px;
+      color: #e6edf3;
+      font-size: 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .header-btn:hover {
+      background: #30363d;
+    }
+
+    .header-btn.primary {
+      background: var(--task-accent);
+      border-color: var(--task-accent);
+    }
+
+    .header-btn.primary:hover {
+      background: #818cf8;
+    }
+
+    .header-btn.active {
+      background: var(--task-warning);
+      border-color: var(--task-warning);
+      color: #0d1117;
+    }
+
+    /* Main Layout */
+    .main-layout {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* VueFlow Canvas */
+    .vueflow-container {
+      flex: 1;
+      height: 100%;
+      background: #0d1117;
+    }
+
+    #vueflow-canvas {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Custom Node Styles */
+    .custom-node {
+      padding: 12px;
+      border-radius: 8px;
+      min-width: 180px;
+      font-size: 12px;
+      color: white;
+    }
+
+    .task-node {
+      background: var(--task-info);
+      border: 2px solid var(--task-info);
+    }
+
+    .proposed-node {
+      background: #eab308;
+      border: 2px solid #eab308;
+      color: #0d1117;
+    }
+
+    .executing-node {
+      background: var(--task-warning);
+      border: 2px solid var(--task-warning);
+    }
+
+    .history-node {
+      background: #6b7280;
+      border: 2px solid #6b7280;
+    }
+
+    .result-node {
+      background: var(--task-success);
+      border: 2px solid var(--task-success);
+    }
+
+    .node-label {
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .node-content {
+      font-size: 11px;
+      opacity: 0.95;
+    }
+
+    .node-status {
+      font-size: 10px;
+      padding: 2px 6px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 4px;
+      margin-top: 8px;
+      display: inline-block;
+    }
+
+    .action-item {
+      padding: 6px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 4px;
+      margin-bottom: 6px;
+    }
+
+    .action-title {
+      font-weight: 600;
+      font-size: 11px;
+    }
+
+    .action-desc {
+      font-size: 10px;
+      opacity: 0.8;
+      margin-top: 2px;
+    }
+
+    .action-score {
+      font-size: 9px;
+      margin-top: 4px;
+    }
+
+    .progress-bar {
+      height: 6px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 3px;
+      overflow: hidden;
+      margin-top: 8px;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: white;
+      transition: width 0.3s ease;
+    }
+
+    .history-list {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin-top: 8px;
+    }
+
+    .history-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 10px;
+    }
+
+    .step-num {
+      width: 16px;
+      height: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255,255,255,0.2);
+      border-radius: 50%;
+      font-size: 9px;
+    }
+
+    /* Floating Panel */
+    .floating-panel {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      width: 320px;
+      min-width: 280px;
+      max-width: 400px;
+      background: var(--panel-bg);
+      border: 1px solid var(--panel-border);
+      border-radius: 12px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .floating-panel.dragging {
+      box-shadow: 0 12px 48px rgba(0, 0, 0, 0.6);
+      cursor: moving;
+    }
+
+    .floating-panel.resizing {
+      cursor: se-resize;
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--panel-border);
+      cursor: grab;
+      background: #21262d;
+      border-radius: 12px 12px 0 0;
+    }
+
+    .panel-title {
+      font-weight: 600;
+      font-size: 13px;
+      color: #e6edf3;
+    }
+
+    .panel-controls {
+      display: flex;
+      gap: 4px;
+    }
+
+    .panel-control-btn {
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      border: none;
+      border-radius: 4px;
+      color: #8b949e;
+      cursor: pointer;
+      font-size: 12px;
+    }
+
+    .panel-control-btn:hover {
+      background: #30363d;
+      color: #e6edf3;
+    }
+
+    .panel-content {
+      padding: 16px;
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    .panel-resize-handle {
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      width: 20px;
+      height: 20px;
+      cursor: se-resize;
+      background: linear-gradient(135deg, transparent 50%, var(--panel-border) 50%);
+      border-radius: 0 0 12px 0;
+    }
+
+    /* Task Form */
+    .task-form { display: flex; flex-direction: column; gap: 12px; }
+    .form-label { font-size: 11px; font-weight: 600; text-transform: uppercase; color: #8b949e; margin-bottom: 4px; }
+    .task-input {
+      width: 100%; padding: 10px 14px; background: #0d1117; border: 1px solid var(--panel-border);
+      border-radius: 6px; color: #e6edf3; font-size: 14px; resize: none; min-height: 80px;
+    }
+    .task-input:focus { outline: none; border-color: var(--task-accent); }
+    .task-input::placeholder { color: #6e7681; }
+    .form-actions { display: flex; gap: 8px; }
+    .send-btn { flex: 1; padding: 10px 20px; background: var(--task-accent); border: none; border-radius: 6px; color: white; cursor: pointer; font-size: 14px; font-weight: 500; }
+    .send-btn:hover { background: #818cf8; }
+    .cancel-btn { padding: 10px 16px; background: #21262d; border: 1px solid var(--panel-border); border-radius: 6px; color: #e6edf3; cursor: pointer; font-size: 14px; }
+    .cancel-btn:hover { background: #30363d; }
+
+    /* Proposed Actions */
+    .proposed-actions-form { display: flex; flex-direction: column; gap: 12px; }
+    .proposed-item { padding: 12px; background: #0d1117; border: 1px solid var(--panel-border); border-radius: 6px; }
+    .proposed-item-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .proposed-title { font-weight: 500; color: #e6edf3; font-size: 13px; }
+    .proposed-score { font-size: 11px; padding: 2px 6px; background: var(--task-success); color: white; border-radius: 4px; }
+    .proposed-description { font-size: 12px; color: #8b949e; margin-bottom: 8px; }
+    .proposed-subactions { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+    .subaction-tag { font-size: 11px; padding: 3px 8px; background: #21262d; border-radius: 4px; color: #8b949e; }
+    .action-buttons { display: flex; gap: 8px; }
+    .btn-approve { flex: 1; padding: 8px 16px; background: var(--task-success); border: none; border-radius: 6px; color: white; cursor: pointer; font-size: 13px; }
+    .btn-approve:hover { background: #16a34a; }
+    .btn-dismiss { flex: 1; padding: 8px 16px; background: #21262d; border: 1px solid var(--panel-border); border-radius: 6px; color: #e6edf3; cursor: pointer; font-size: 13px; }
+    .btn-dismiss:hover { background: #30363d; }
+
+    /* Executing */
+    .executing-form { display: flex; flex-direction: column; gap: 12px; }
+    .executing-title { font-weight: 600; color: var(--task-warning); font-size: 14px; }
+    .executing-description { font-size: 12px; color: #8b949e; }
+    .progress-container { margin-bottom: 8px; }
+    .executing-controls { display: flex; gap: 8px; }
+    .btn-continue { flex: 1; padding: 8px 16px; background: var(--task-warning); border: none; border-radius: 6px; color: white; cursor: pointer; font-size: 13px; }
+    .btn-continue:hover { background: #ea580c; }
+    .btn-stop { padding: 8px 16px; background: #21262d; border: 1px solid #f85149; border-radius: 6px; color: #f85149; cursor: pointer; font-size: 13px; }
+    .btn-stop:hover { background: #f85149; color: white; }
+
+    /* Result */
+    .result-form { display: flex; flex-direction: column; gap: 12px; }
+    .result-header { text-align: center; }
+    .result-icon { font-size: 32px; margin-bottom: 4px; }
+    .result-title { font-size: 16px; font-weight: 600; color: var(--task-success); }
+    .result-summary { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+    .summary-card { padding: 10px; background: #0d1117; border-radius: 6px; text-align: center; }
+    .summary-value { font-size: 20px; font-weight: 700; color: var(--task-accent); }
+    .summary-label { font-size: 10px; color: #8b949e; margin-top: 2px; }
+    .btn-new-task-form { padding: 10px 24px; background: var(--task-accent); border: none; border-radius: 6px; color: white; cursor: pointer; font-size: 14px; width: 100%; }
+    .btn-new-task-form:hover { background: #818cf8; }
+
+    /* Idle Panel */
+    .idle-panel { text-align: center; padding: 20px; }
+    .idle-icon { font-size: 48px; margin-bottom: 12px; }
+    .idle-text { color: #8b949e; margin-bottom: 16px; font-size: 13px; }
+    .new-task-btn { padding: 12px 32px; background: var(--task-accent); border: none; border-radius: 8px; color: white; cursor: pointer; font-size: 14px; font-weight: 500; }
+    .new-task-btn:hover { background: #818cf8; }
+
+    /* Debug Panel */
+    .debug-panel {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      background: #1a1a2e; border-top: 1px solid var(--panel-border); padding: 12px;
+    }
+    .debug-header { font-size: 11px; font-weight: 600; text-transform: uppercase; color: #8b949e; margin-bottom: 10px; }
+    .debug-buttons { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+    .debug-btn { padding: 6px 12px; border: none; border-radius: 4px; font-size: 11px; cursor: pointer; transition: all 0.2s; }
+    .debug-btn.task { background: #4a90d9; color: white; }
+    .debug-btn.approve { background: #22c55e; color: white; }
+    .debug-btn.continue { background: #f97316; color: white; }
+    .debug-btn.complete { background: #8b5cf6; color: white; }
+    .debug-btn.reset { background: #6b7280; color: white; }
+    .debug-btn:hover { filter: brightness(1.1); }
+    .debug-btn:active { transform: scale(0.98); }
+    .mock-response { background: #0d1117; padding: 10px; border-radius: 4px; font-family: ui-monospace, monospace; font-size: 11px; color: #a5d6ff; max-height: 80px; overflow: auto; white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="header-left">
+        <div class="logo">🤖 A2A Script Agent</div>
+        <div class="header-controls">
+          <select class="header-select" id="projectSelect">
+            <option value="">Select Project...</option>
+            <option value="project-1">My App</option>
+            <option value="project-2">E-Commerce</option>
+            <option value="project-3">Dashboard</option>
+          </select>
+          <select class="header-select" id="sessionSelect">
+            <option value="">Select Session...</option>
+            <option value="session-1">Session #1</option>
+            <option value="session-2">Session #2</option>
+          </select>
+        </div>
+      </div>
+      <div class="header-right">
+        <button class="header-btn" id="newTaskBtn">📝 New Task</button>
+        <button class="header-btn primary" id="connectBtn">🔗 Connect</button>
+        <button class="header-btn" id="debugModeBtn">🐛 Debug Mode</button>
+        <button class="header-btn" id="settingsBtn">⚙️ Settings</button>
+      </div>
+    </header>
+
+    <!-- Main Layout -->
+    <div class="main-layout">
+      <!-- VueFlow Canvas -->
+      <div class="vueflow-container">
+        <div id="vueflow-canvas"></div>
+      </div>
+
+      <!-- Floating Panel -->
+      <div class="floating-panel" id="floatingPanel">
+        <div class="panel-header" id="panelHeader">
+          <span class="panel-title">📋 Task Panel</span>
+          <div class="panel-controls">
+            <button class="panel-control-btn" title="Minimize">−</button>
+            <button class="panel-control-btn" title="Maximize">□</button>
+            <button class="panel-control-btn" title="Close">×</button>
+          </div>
+        </div>
+        <div class="panel-content" id="panelContent">
+          <!-- Content will be rendered by JavaScript -->
+        </div>
+        <div class="panel-resize-handle" id="panelResizeHandle"></div>
+      </div>
+
+      <!-- Debug Panel -->
+      <div class="debug-panel" id="debugPanel">
+        <div class="debug-header">🔧 DEBUG CONTROLS / СИМУЛЯЦІЯ</div>
+        <div class="debug-buttons">
+          <button class="debug-btn task" onclick="simTaskRequest()">1️⃣ Sim Task Request</button>
+          <button class="debug-btn approve" onclick="simApprove()">2️⃣ Sim Approve</button>
+          <button class="debug-btn continue" onclick="simContinue1()">3️⃣ Sim Continue #1</button>
+          <button class="debug-btn continue" onclick="simContinue2()">4️⃣ Sim Continue #2</button>
+          <button class="debug-btn complete" onclick="simComplete()">5️⃣ Sim Complete</button>
+          <button class="debug-btn reset" onclick="resetPanel()">🔄 Reset Panel</button>
+        </div>
+        <div class="mock-response" id="mockResponse">// Натисніть кнопку симуляції...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Vue 3 + VueFlow Scripts -->
+  <script type="module">
+    import { createApp, ref, reactive, h, onMounted } from 'vue';
+    import { VueFlow, useVueFlow } from '@vue-flow/core';
+    import { Background } from '@vue-flow/background';
+    import { Controls } from '@vue-flow/controls';
+
+    // ============================================
+    // MOCK DATA
+    // ============================================
+
+    const mockTaskRequest = {
+      taskId: "task-001",
+      input: "Виправити зламані імпорти у Vue файлах",
+      proposedActions: [
+        {
+          actionId: "fix-vue-imports",
+          title: "Виправити зламані імпорти",
+          description: "Автоматично визначити та виправити проблеми",
+          priority: 10,
+          matchScore: 0.95,
+          subActions: [
+            { actionId: "vue-import-detect", title: "Визначити зламані імпорти", priority: 10 },
+            { actionId: "vue-import-resolve", title: "Вирішити шляхи", priority: 9 },
+            { actionId: "vue-import-apply", title: "Застосувати виправлення", priority: 8 },
+            { actionId: "vue-import-cleanup", title: "Очистити", priority: 7 }
+          ]
+        }
+      ]
+    };
+
+    const mockApprove = {
+      executingAction: {
+        actionId: "vue-import-detect",
+        title: "Визначити зламані імпорти",
+        description: "Сканує Vue файли",
+        priority: 10
+      },
+      nextSteps: [
+        { actionId: "vue-import-resolve", title: "Вирішити шляхи" },
+        { actionId: "vue-import-apply", title: "Застосувати" },
+        { actionId: "vue-import-cleanup", title: "Очистити" }
+      ]
+    };
+
+    const mockContinue1 = {
+      context: {
+        execution: {
+          actionId: "fix-vue-imports",
+          currentActionId: "vue-import-resolve",
+          history: [
+            { step: 1, actionId: "vue-import-detect", status: "completed", result: { broken_imports: 3 } }
+          ]
+        }
+      },
+      previousStep: { actionId: "vue-import-detect", result: { broken_imports: 3 } },
+      executingAction: {
+        actionId: "vue-import-resolve",
+        title: "Вирішити шляхи",
+        description: "Знаходить правильні шляхи"
+      },
+      nextSteps: [
+        { actionId: "vue-import-apply", title: "Застосувати" },
+        { actionId: "vue-import-cleanup", title: "Очистити" }
+      ]
+    };
+
+    const mockContinue2 = {
+      context: {
+        execution: {
+          actionId: "fix-vue-imports",
+          currentActionId: "vue-import-apply",
+          history: [
+            { step: 1, actionId: "vue-import-detect", status: "completed", result: { broken_imports: 3 } },
+            { step: 2, actionId: "vue-import-resolve", status: "completed", result: { patches: 3 } }
+          ]
+        }
+      },
+      previousStep: { actionId: "vue-import-resolve", result: { patches: 3 } },
+      executingAction: {
+        actionId: "vue-import-apply",
+        title: "Застосувати виправлення",
+        description: "Застосовує виправлення"
+      },
+      nextSteps: [
+        { actionId: "vue-import-cleanup", title: "Очистити" }
+      ]
+    };
+
+    const mockComplete = {
+      context: {
+        execution: {
+          actionId: "fix-vue-imports",
+          currentActionId: "vue-import-cleanup",
+          status: "completed",
+          history: [
+            { step: 1, actionId: "vue-import-detect", status: "completed", result: { broken_imports: 3 } },
+            { step: 2, actionId: "vue-import-resolve", status: "completed", result: { patches: 3 } },
+            { step: 3, actionId: "vue-import-apply", status: "completed", result: { fixed_files: 3 } },
+            { step: 4, actionId: "vue-import-cleanup", status: "completed", result: { cleanup_count: 0 } }
+          ]
+        }
+      },
+      finalResult: {
+        actionId: "fix-vue-imports",
+        summary: { broken_imports_found: 3, patches_resolved: 3, files_fixed: 3, cleanup_count: 0 }
+      }
+    };
+
+    // ============================================
+    // STATE MANAGEMENT
+    // ============================================
+
+    let panelState = {
+      status: 'idle',
+      taskId: null,
+      taskInput: null,
+      proposedActions: null,
+      executingAction: null,
+      history: [],
+      previousStep: null,
+      finalResult: null,
+      continueStep: 0
+    };
+
+    // ============================================
+    // Vue 3 App
+    // ============================================
+
+    const App = {
+      components: { VueFlow, Background, Controls },
+      setup() {
+        const { fitView, addNodes, addEdges, removeNodes, findNode, setNodes, setEdges } = useVueFlow();
+        
+        const nodes = ref([]);
+        const edges = ref([]);
+        const isReady = ref(false);
+
+        onMounted(() => {
+          isReady.value = true;
+          initFloatingPanel();
+          renderIdlePanel();
+          setTimeout(() => fitView(), 100);
+        });
+
+        function addTaskNode(taskId, input, status = 'pending') {
+          const nodeId = 'task-node';
+          const existing = findNode(nodeId);
+          if (existing) removeNodes(nodeId);
+
+          const node = {
+            id: nodeId,
+            type: 'task',
+            position: { x: 100, y: 100 },
+            data: { label: '📝 Task', taskId, input, status }
+          };
+          addNodes([node]);
+          return nodeId;
+        }
+
+        function addProposedActionsNode(actions) {
+          const nodeId = 'proposed-node';
+          const existing = findNode(nodeId);
+          if (existing) removeNodes(nodeId);
+
+          const node = {
+            id: nodeId,
+            type: 'proposed',
+            position: { x: 400, y: 50 },
+            data: { label: '📋 Proposed Actions', actions }
+          };
+          addNodes([node]);
+
+          if (findNode('task-node')) {
+            addEdges([{ id: 'edge-task-proposed', source: 'task-node', target: nodeId, animated: true, style: { stroke: '#eab308', strokeWidth: 2 } }]);
+          }
+          return nodeId;
+        }
+
+        function addExecutingNode(action, progress = 0) {
+          const nodeId = 'executing-node';
+          const existing = findNode(nodeId);
+          if (existing) removeNodes(nodeId);
+
+          const node = {
+            id: nodeId,
+            type: 'executing',
+            position: { x: 400, y: 200 },
+            data: { label: '⚡ Executing', action, progress }
+          };
+          addNodes([node]);
+
+          const sourceId = findNode('history-node') ? 'history-node' : (findNode('proposed-node') ? 'proposed-node' : null);
+          if (sourceId) {
+            addEdges([{ id: `edge-${sourceId}-executing`, source: sourceId, target: nodeId, animated: true, style: { stroke: '#f97316', strokeWidth: 2 } }]);
+          }
+          return nodeId;
+        }
+
+        function addHistoryNode(history) {
+          const nodeId = 'history-node';
+          const existing = findNode(nodeId);
+          if (existing) removeNodes(nodeId);
+
+          const node = {
+            id: nodeId,
+            type: 'history',
+            position: { x: 400, y: 350 },
+            data: { label: '🔗 History', history }
+          };
+          addNodes([node]);
+          return nodeId;
+        }
+
+        function addResultNode(result) {
+          const nodeId = 'result-node';
+          const existing = findNode(nodeId);
+          if (existing) removeNodes(nodeId);
+
+          const node = {
+            id: nodeId,
+            type: 'result',
+            position: { x: 400, y: 500 },
+            data: { label: '✅ Result', result }
+          };
+          addNodes([node]);
+
+          if (findNode('executing-node')) {
+            addEdges([{ id: 'edge-executing-result', source: 'executing-node', target: nodeId, animated: true, style: { stroke: '#22c55e', strokeWidth: 2 } }]);
+          }
+          return nodeId;
+        }
+
+        function clearAllNodes() {
+          setNodes([]);
+          setEdges([]);
+        }
+
+        // Simulation functions
+        window.simTaskRequest = function() {
+          const response = mockTaskRequest;
+          panelState.status = 'proposed';
+          panelState.taskId = response.taskId;
+          panelState.taskInput = response.input;
+          panelState.proposedActions = response.proposedActions;
+          panelState.continueStep = 0;
+
+          addTaskNode(response.taskId, response.input, 'proposed');
+          addProposedActionsNode(response.proposedActions);
+          renderProposedPanel(response.proposedActions);
+          document.getElementById('mockResponse').textContent = JSON.stringify(response, null, 2);
+          setTimeout(() => fitView(), 100);
+        };
+
+        window.simApprove = function() {
+          if (panelState.status !== 'proposed') { alert('Спочатку натисніть "Sim Task Request"'); return; }
+          const response = mockApprove;
+          panelState.status = 'running';
+          panelState.executingAction = response.executingAction;
+          panelState.history = [];
+          panelState.continueStep = 1;
+
+          addExecutingNode(response.executingAction, 25);
+          renderExecutingPanel(response.executingAction, response.nextSteps);
+          document.getElementById('mockResponse').textContent = JSON.stringify(response, null, 2);
+          setTimeout(() => fitView(), 100);
+        };
+
+        window.simContinue1 = function() {
+          if (panelState.status !== 'running') { alert('Спочатку натисніть "Sim Approve"'); return; }
+          const response = mockContinue1;
+          panelState.executingAction = response.executingAction;
+          panelState.history = response.context.execution.history;
+          panelState.previousStep = response.previousStep;
+          panelState.continueStep = 2;
+
+          addHistoryNode(panelState.history);
+          addExecutingNode(response.executingAction, 50);
+          renderExecutingPanel(response.executingAction, response.nextSteps);
+          document.getElementById('mockResponse').textContent = JSON.stringify(response, null, 2);
+          setTimeout(() => fitView(), 100);
+        };
+
+        window.simContinue2 = function() {
+          if (panelState.status !== 'running' || panelState.continueStep < 2) { alert('Спочатку натисніть "Sim Continue #1"'); return; }
+          const response = mockContinue2;
+          panelState.executingAction = response.executingAction;
+          panelState.history = response.context.execution.history;
+          panelState.previousStep = response.previousStep;
+          panelState.continueStep = 3;
+
+          addHistoryNode(panelState.history);
+          addExecutingNode(response.executingAction, 75);
+          renderExecutingPanel(response.executingAction, response.nextSteps);
+          document.getElementById('mockResponse').textContent = JSON.stringify(response, null, 2);
+          setTimeout(() => fitView(), 100);
+        };
+
+        window.simComplete = function() {
+          if (panelState.status !== 'running' || panelState.continueStep < 3) { alert('Спочатку натисніть "Sim Continue #2"'); return; }
+          const response = mockComplete;
+          panelState.status = 'completed';
+          panelState.finalResult = response.finalResult;
+          panelState.history = response.context.execution.history;
+          panelState.previousStep = response.previousStep;
+          panelState.executingAction = null;
+
+          addHistoryNode(panelState.history);
+          addResultNode(response.finalResult);
+          renderResultPanel(response.finalResult);
+          document.getElementById('mockResponse').textContent = JSON.stringify(response, null, 2);
+          setTimeout(() => fitView(), 100);
+        };
+
+        window.resetPanel = function() {
+          panelState = { status: 'idle', taskId: null, taskInput: null, proposedActions: null, executingAction: null, history: [], previousStep: null, finalResult: null, continueStep: 0 };
+          clearAllNodes();
+          renderIdlePanel();
+          document.getElementById('mockResponse').textContent = '// Панель скинута';
+        };
+
+        window.showTaskForm = showTaskForm;
+        window.submitTask = submitTask;
+
+        return { nodes, edges, isReady };
+      },
+      template: `
+        <div v-if="isReady" style="width: 100%; height: 100%;">
+          <VueFlow :nodes="nodes" :edges="edges" :fit-view-on-init="true" :default-edge-options="{ style: { stroke: '#6366f1', strokeWidth: 2 }, animated: true }">
+            <Background variant="dots" :gap="20" :size="1" color="#30363d" />
+            <Controls />
+            
+            <!-- Task Node -->
+            <template #node-task="{ data }">
+              <div class="custom-node task-node">
+                <div class="node-label">📝 Task</div>
+                <div class="node-content">
+                  <div><strong>ID:</strong> {{data.taskId}}</div>
+                  <div><strong>Input:</strong> {{data.input}}</div>
+                </div>
+                <div class="node-status">{{data.status}}</div>
+              </div>
+            </template>
+
+            <!-- Proposed Node -->
+            <template #node-proposed="{ data }">
+              <div class="custom-node proposed-node">
+                <div class="node-label">📋 Proposed Actions</div>
+                <div class="node-content">
+                  <div v-for="action in data.actions" :key="action.actionId" class="action-item">
+                    <div class="action-title">{{action.title}}</div>
+                    <div class="action-desc">{{action.description}}</div>
+                    <div class="action-score">Score: {{Math.round(action.matchScore*100)}}%</div>
+                  </div>
+                </div>
+              </div>
+            </template>
+
+            <!-- Executing Node -->
+            <template #node-executing="{ data }">
+              <div class="custom-node executing-node">
+                <div class="node-label">⚡ Executing</div>
+                <div class="node-content">
+                  <div><strong>Action:</strong> {{data.action.title}}</div>
+                  <div class="action-desc">{{data.action.description}}</div>
+                </div>
+                <div class="progress-bar"><div class="progress-fill" :style="{width: data.progress + '%'}"></div></div>
+              </div>
+            </template>
+
+            <!-- History Node -->
+            <template #node-history="{ data }">
+              <div class="custom-node history-node">
+                <div class="node-label">🔗 History Chain</div>
+                <div class="history-list">
+                  <div v-for="item in data.history" :key="item.step" class="history-item">
+                    <span class="step-num">{{item.step}}</span>
+                    <span>{{item.actionId}}</span>
+                    <span style="opacity:0.6">- {{item.status}}</span>
+                  </div>
+                </div>
+              </div>
+            </template>
+
+            <!-- Result Node -->
+            <template #node-result="{ data }">
+              <div class="custom-node result-node">
+                <div class="node-label">✅ Task Complete</div>
+                <div class="node-content">
+                  <div><strong>Found:</strong> {{data.result.summary.broken_imports_found}}</div>
+                  <div><strong>Resolved:</strong> {{data.result.summary.patches_resolved}}</div>
+                  <div><strong>Fixed:</strong> {{data.result.summary.files_fixed}}</div>
+                </div>
+              </div>
+            </template>
+          </VueFlow>
+        </div>
+        <div v-else style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: #8b949e;">
+          Loading VueFlow...
+        </div>
+      `
+    };
+
+    // Mount Vue app
+    const container = document.getElementById('vueflow-canvas');
+    if (container) {
+      const app = createApp(App);
+      app.mount(container);
+      console.log('Variant 4 VueFlow app mounted');
+    }
+
+    // ============================================
+    // Floating Panel Functions
+    // ============================================
+
+    function initFloatingPanel() {
+      const panel = document.getElementById('floatingPanel');
+      const header = document.getElementById('panelHeader');
+      const resizeHandle = document.getElementById('panelResizeHandle');
+      
+      const GRID_SIZE = 200;
+      
+      // State variables for drag
+      let isDragging = false;
+      let dragStartX = 0;
+      let dragStartY = 0;
+      let panelStartLeft = 0;
+      let panelStartTop = 0;
+      
+      // State variables for resize
+      let isResizing = false;
+      let resizeStartX = 0;
+      let resizeStartY = 0;
+      let panelStartWidth = 0;
+      let panelStartHeight = 0;
+      let panelLeft = 0;
+      let panelTop = 0;
+
+      // Snap to grid function
+      function snapToGrid(value) {
+        return Math.round(value / GRID_SIZE) * GRID_SIZE;
+      }
+
+      // ============================================
+      // DRAG LOGIC (перетаскивание за заголовок)
+      // ============================================
+      
+      header.addEventListener('mousedown', (e) => {
+        // Ignore clicks on control buttons
+        if (e.target.closest('.panel-controls')) return;
+        
+        isDragging = true;
+        dragStartX = e.clientX;
+        dragStartY = e.clientY;
+        
+        // Get current panel position
+        const rect = panel.getBoundingClientRect();
+        panelStartLeft = rect.left;
+        panelStartTop = rect.top;
+        
+        panel.classList.add('dragging');
+        e.preventDefault();
+      });
+
+      // ============================================
+      // RESIZE LOGIC (изменение размера за угол)
+      // ============================================
+      
+      resizeHandle.addEventListener('mousedown', (e) => {
+        isResizing = true;
+        resizeStartX = e.clientX;
+        resizeStartY = e.clientY;
+        
+        // Get current panel dimensions and position
+        const rect = panel.getBoundingClientRect();
+        panelStartWidth = rect.width;
+        panelStartHeight = rect.height;
+        panelLeft = rect.left;
+        panelTop = rect.top;
+        
+        panel.classList.add('resizing');
+        e.preventDefault();
+        e.stopPropagation();
+      });
+
+      // ============================================
+      // MOUSEMOVE - обработка перемещения и изменения размера
+      // ============================================
+      
+      document.addEventListener('mousemove', (e) => {
+        // DRAG: перетаскивание панели
+        if (isDragging) {
+          // Calculate delta from start position
+          const deltaX = e.clientX - dragStartX;
+          const deltaY = e.clientY - dragStartY;
+          
+          // New position = start position + delta
+          const newLeft = panelStartLeft + deltaX;
+          const newTop = panelStartTop + deltaY;
+          
+          // Apply position immediately (no snap during drag)
+          panel.style.left = `${newLeft}px`;
+          panel.style.top = `${newTop}px`;
+          panel.style.right = 'auto';
+        }
+        
+        // RESIZE: изменение размера
+        if (isResizing) {
+          // Calculate new dimensions based on cursor position
+          const deltaX = e.clientX - resizeStartX;
+          const deltaY = e.clientY - resizeStartY;
+          
+          let newWidth = panelStartWidth + deltaX;
+          let newHeight = panelStartHeight + deltaY;
+          
+          // Apply dimensions immediately (no snap during resize)
+          panel.style.width = `${newWidth}px`;
+          panel.style.height = `${newHeight}px`;
+        }
+      });
+
+      // ============================================
+      // MOUSEUP - завершение перетаскивания/изменения размера
+      // ============================================
+      
+      document.addEventListener('mouseup', (e) => {
+        // DRAG END: применить snapToGrid
+        if (isDragging) {
+          const rect = panel.getBoundingClientRect();
+          
+          // Apply snapToGrid to position
+          const snappedLeft = snapToGrid(rect.left);
+          const snappedTop = snapToGrid(rect.top);
+          
+          panel.style.left = `${snappedLeft}px`;
+          panel.style.top = `${snappedTop}px`;
+          
+          isDragging = false;
+          panel.classList.remove('dragging');
+        }
+        
+        // RESIZE END: применить snapToGrid к размерам
+        if (isResizing) {
+          const rect = panel.getBoundingClientRect();
+          
+          // Apply snapToGrid to dimensions
+          const snappedWidth = snapToGrid(rect.width);
+          const snappedHeight = snapToGrid(rect.height);
+          
+          panel.style.width = `${snappedWidth}px`;
+          panel.style.height = `${snappedHeight}px`;
+          
+          isResizing = false;
+          panel.classList.remove('resizing');
+        }
+      });
+
+      // Set initial position
+      panel.style.left = 'auto';
+      panel.style.right = '20px';
+      panel.style.top = '20px';
+    }
+
+    function renderIdlePanel() {
+      document.getElementById('panelContent').innerHTML = `
+        <div class="idle-panel">
+          <div class="idle-icon">🎯</div>
+          <p class="idle-text">Створіть нову задачу</p>
+          <button class="new-task-btn" onclick="showTaskForm()">📝 New Task</button>
+        </div>`;
+    }
+
+    function showTaskForm() {
+      document.getElementById('panelContent').innerHTML = `
+        <div class="task-form">
+          <label class="form-label">Опис задачі</label>
+          <textarea class="task-input" id="taskInputPanel" placeholder="Що зробити?">${panelState.taskInput || ''}</textarea>
+          <div class="form-actions">
+            <button class="send-btn" onclick="submitTask()">🚀 Send</button>
+            <button class="cancel-btn" onclick="renderIdlePanel()">Cancel</button>
+          </div>
+        </div>`;
+      document.getElementById('taskInputPanel').focus();
+    }
+
+    function submitTask() {
+      const input = document.getElementById('taskInputPanel').value;
+      if (input.trim()) {
+        panelState.taskInput = input;
+        window.simTaskRequest();
+      }
+    }
+
+    function renderProposedPanel(actions) {
+      const action = actions[0];
+      document.getElementById('panelContent').innerHTML = `
+        <div class="proposed-actions-form">
+          <div class="proposed-item">
+            <div class="proposed-item-header">
+              <span class="proposed-title">${action.title}</span>
+              <span class="proposed-score">${Math.round(action.matchScore * 100)}%</span>
+            </div>
+            <p class="proposed-description">${action.description}</p>
+            <div class="proposed-subactions">${action.subActions.map(sa => `<span class="subaction-tag">${sa.title}</span>`).join('')}</div>
+          </div>
+          <div class="action-buttons">
+            <button class="btn-approve" onclick="window.simApprove()">✅ Approve</button>
+            <button class="btn-dismiss" onclick="window.resetPanel()">❌ Reject</button>
+          </div>
+        </div>`;
+    }
+
+    function renderExecutingPanel(action) {
+      document.getElementById('panelContent').innerHTML = `
+        <div class="executing-form">
+          <div class="executing-title">⚡ ${action.title}</div>
+          <p class="executing-description">${action.description || ''}</p>
+          <div class="progress-container"><div class="progress-bar"><div class="progress-fill" style="width: 50%"></div></div></div>
+          <div class="executing-controls">
+            <button class="btn-continue" onclick="continueNextStep()">Continue ▶</button>
+            <button class="btn-stop" onclick="window.resetPanel()">■ Stop</button>
+          </div>
+        </div>`;
+    }
+
+    function renderResultPanel(result) {
+      const s = result.summary;
+      document.getElementById('panelContent').innerHTML = `
+        <div class="result-form">
+          <div class="result-header"><div class="result-icon">🎉</div><div class="result-title">TASK COMPLETE</div></div>
+          <div class="result-summary">
+            <div class="summary-card"><div class="summary-value">${s.broken_imports_found}</div><div class="summary-label">Found</div></div>
+            <div class="summary-card"><div class="summary-value">${s.patches_resolved}</div><div class="summary-label">Resolved</div></div>
+            <div class="summary-card"><div class="summary-value">${s.files_fixed}</div><div class="summary-label">Fixed</div></div>
+            <div class="summary-card"><div class="summary-value">${s.cleanup_count}</div><div class="summary-label">Cleaned</div></div>
+          </div>
+          <button class="btn-new-task-form" onclick="window.resetPanel()">🔄 New Task</button>
+        </div>`;
+    }
+
+    function continueNextStep() {
+      if (panelState.continueStep === 1) window.simContinue1();
+      else if (panelState.continueStep === 2) window.simContinue2();
+    }
+
+    // Header button handlers
+    document.getElementById('newTaskBtn').addEventListener('click', () => { panelState.taskInput = null; showTaskForm(); });
+    document.getElementById('connectBtn').addEventListener('click', function() {
+      this.classList.toggle('active');
+      this.textContent = this.classList.contains('active') ? '🔌 Disconnect' : '🔗 Connect';
+    });
+    document.getElementById('debugModeBtn').addEventListener('click', function() {
+      this.classList.toggle('active');
+      document.getElementById('debugPanel').style.display = this.classList.contains('active') ? 'block' : 'none';
+    });
+    document.getElementById('settingsBtn').addEventListener('click', () => alert('Settings panel would open here'));
+  </script>
+</body>
+</html>

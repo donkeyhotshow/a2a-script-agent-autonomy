@@ -1,0 +1,19 @@
+{
+  "action": "step_result",
+  "stepId": "scan-security",
+  "result": {
+    "checks": {
+      "sqlInjection": true,
+      "xss": true,
+      "csrf": true
+    }
+  },
+  "context": {
+    "task": "проаналізувати безпеку проекту",
+    "execution": {
+      "actionId": "analyze-security",
+      "currentActionId": "scan-security",
+      "history": []
+    }
+  }
+}

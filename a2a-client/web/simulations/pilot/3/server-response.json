@@ -1,0 +1,61 @@
+{
+  "success": true,
+  "data": {
+    "id": "req_1772005728063_ssowfqagy",
+    "promiseId": "cmm1qgign0000k3vqbckycydh",
+    "clientId": "simulation-client",
+    "status": "completed",
+    "priority": 0,
+    "context": {
+      "action": "step_result",
+      "stepId": "vue-import-detect",
+      "version": "1.0",
+      "session_id": "stateless",
+      "stepResult": {
+        "broken_imports": [
+          {
+            "file": "resources/js/Pages/Auth/Login.vue",
+            "line": 3,
+            "specifier": "../components/Header"
+          },
+          {
+            "file": "resources/js/Pages/Auth/Register.vue",
+            "line": 5,
+            "specifier": "../../utils/helpers"
+          },
+          {
+            "file": "resources/js/components/UserCard.vue",
+            "line": 2,
+            "specifier": "@/stores/user"
+          }
+        ]
+      }
+    },
+    "message": null,
+    "codeBlocks": null,
+    "result": {
+      "context": {
+        "tasks": [
+          {
+            "id": "fix-vue-imports",
+            "type": "analyze",
+            "status": "in_progress",
+            "progress": 20
+          }
+        ],
+        "version": "1.0",
+        "session_id": "stateless"
+      },
+      "outcome": "completed",
+      "nextSteps": [],
+      "executingAction": {
+        "title": "Find import statements",
+        "actionId": "analyze"
+      }
+    },
+    "error": null,
+    "createdAt": "2026-02-25T07:48:48.120Z",
+    "startedAt": "2026-02-25T07:48:52.909Z",
+    "completedAt": "2026-02-25T07:48:52.913Z"
+  }
+}

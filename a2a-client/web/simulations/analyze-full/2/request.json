@@ -1,0 +1,9 @@
+{
+  "action": "approve_action",
+  "selectedAction": {
+    "actionId": "analyze-full"
+  },
+  "context": {
+    "task": "проаналізувати проект"
+  }
+}
