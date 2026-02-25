@@ -2,10 +2,7 @@
  * Sessions - server-side storage with async protocol
  * Uses API for all operations, with localStorage caching for flow nodes
  * 
- * New protocol: package.json + composer.json on first request
- * VueFlow integration for protocol visualization
- * 
- * NEW: Session tracking with localStorage persistence
+ * NEW: SSE integration for real-time updates (replaces polling)
  */
 
 const Sessions = {
@@ -24,14 +21,18 @@ const Sessions = {
       executionState: null,
       logs: [],
       isRunning: false,
-      approved: false, // NEW: track if action was approved
+      approved: false,
     },
   },
 
   api: '/api/v1',
   pollInterval: 5000,
+  useSSE: true,  // Enable SSE by default
 
   init() {
+    // Load SSE client script dynamically
+    this.loadSSEClient();
+    
     document.getElementById('newSession')?.addEventListener('click', () => this.create());
     document.getElementById('sendMessage')?.addEventListener('click', () => this.send());
     document.getElementById('btnContinue')?.addEventListener('click', () => this.sendContinue());
@@ -47,7 +48,6 @@ const Sessions = {
     });
     document.getElementById('action-run')?.addEventListener('click', () => this.runAction());
     document.getElementById('action-cancel')?.addEventListener('click', () => this.cancelAction());
-    // NEW: Approve button handler
     document.getElementById('action-approve')?.addEventListener('click', () => this.approveAction());
     document.getElementById('showFlow')?.addEventListener('click', () => this.showFlow());
     document.getElementById('flowToggle')?.addEventListener('click', () => this.toggleFlow());
@@ -56,42 +56,169 @@ const Sessions = {
     document.getElementById('flowFitView')?.addEventListener('click', () => window.fitView?.());
     document.getElementById('flowClose')?.addEventListener('click', () => this.hideFlow());
     
-    // Initialize VueFlow when modules are loaded
     this.initVueFlow();
-    
-    // Initialize Action Details Card
     this.initActionDetailsCard();
-    
-    // NEW: Restore saved flow nodes from localStorage after a delay
     setTimeout(() => this.restoreFlowFromStorage(), 500);
+  },
+
+  /**
+   * Load SSE client script dynamically
+   */
+  loadSSEClient() {
+    if (window.SSEClient) {
+      console.log('[Sessions] SSEClient already loaded');
+      this.setupSSEHandlers();
+      return;
+    }
+    
+    const script = document.createElement('script');
+    script.src = '/js/sse-client.js';
+    script.onload = () => {
+      console.log('[Sessions] SSE client loaded');
+      this.setupSSEHandlers();
+    };
+    script.onerror = () => {
+      console.error('[Sessions] Failed to load SSE client, falling back to polling');
+      this.useSSE = false;
+    };
+    document.head.appendChild(script);
+  },
+
+  /**
+   * Setup SSE event handlers
+   */
+  setupSSEHandlers() {
+    if (!window.SSEClient) return;
+    
+    const client = window.SSEClient;
+    
+    // Connected
+    client.on('connected', (data) => {
+      console.log('[Sessions] SSE connected:', data);
+      this.addActionLog('Connected to real-time updates', 'info');
+    });
+    
+    // Log events
+    client.on('log', (data) => {
+      console.log('[Sessions] SSE log:', data);
+      this.addActionLog(data.message, data.level || 'info');
+    });
+    
+    // Progress events
+    client.on('progress', (data) => {
+      console.log('[Sessions] SSE progress:', data);
+      this.updateProgress(data.current, data.total, data.message);
+    });
+    
+    // Status events
+    client.on('status', (data) => {
+      console.log('[Sessions] SSE status:', data);
+      this.handleStatusUpdate(data);
+    });
+    
+    // Complete events
+    client.on('complete', (data) => {
+      console.log('[Sessions] SSE complete:', data);
+      this.handleComplete(data.result);
+    });
+    
+    // Error events
+    client.on('error', (data) => {
+      console.error('[Sessions] SSE error:', data);
+      this.addActionLog(data.error || 'Unknown error', 'error');
+    });
+    
+    // Max reconnect
+    client.on('maxReconnect', (data) => {
+      console.error('[Sessions] SSE max reconnect reached');
+      this.addActionLog('Connection lost. Using fallback to polling.', 'warn');
+      this.useSSE = false;
+    });
+  },
+
+  /**
+   * Connect to SSE for current session
+   */
+  connectSSE(sessionId) {
+    if (!this.useSSE || !window.SSEClient) {
+      console.log('[Sessions] SSE disabled or not available');
+      return;
+    }
+    
+    // Disconnect existing
+    window.SSEClient.disconnect();
+    
+    // Connect to session-specific stream
+    window.SSEClient.connect(sessionId, this.api);
+    console.log('[Sessions] Connecting to SSE for session:', sessionId);
+  },
+
+  /**
+   * Update progress bar from SSE
+   */
+  updateProgress(current, total, message) {
+    const progressBar = document.getElementById('action-progress-bar');
+    const progressText = document.getElementById('action-progress-text');
+    
+    if (progressBar && total > 0) {
+      const percent = (current / total) * 100;
+      progressBar.style.width = percent + '%';
+    }
+    
+    if (progressText) {
+      progressText.textMessage = `${current}/${total}${message ? ': ' + message : ''}`;
+    }
+  },
+
+  /**
+   * Handle status update from SSE
+   */
+  handleStatusUpdate(data) {
+    // Update UI based on status
+    if (data.status === 'running') {
+      this.state.action.isRunning = true;
+    } else if (data.status === 'completed') {
+      this.state.action.isRunning = false;
+    }
+    
+    this.renderActionProgress();
+  },
+
+  /**
+   * Handle completion from SSE
+   */
+  handleComplete(result) {
+    this.state.action.isRunning = false;
+    
+    if (result) {
+      this.state.action.executionState = result.executionState;
+      this.updateFlowWithResponse(result);
+    }
+    
+    this.renderActionProgress();
   },
 
   initVueFlow() {
     let attempts = 0;
-    const maxAttempts = 50; // 5 seconds max
+    const maxAttempts = 50;
     
     const checkAndInit = () => {
       attempts++;
       if (window.setFlowNodes && window.setFlowEdges) {
         console.log('VueFlow initialized from Sessions.init()');
-        
-        // After init, try to load context if there are messages
         if (this.state.messages?.length > 0) {
           this.updateFlowFromMessages();
         }
       } else if (attempts < maxAttempts) {
-        // Retry after a short delay if modules haven't loaded yet
         setTimeout(checkAndInit, 100);
       } else {
         console.warn('VueFlow modules not loaded after 5 seconds');
       }
     };
     
-    // Start checking after a short delay to let modules load first
     setTimeout(checkAndInit, 100);
   },
 
-  // NEW: Restore flow nodes from localStorage
   restoreFlowFromStorage() {
     if (!window.SessionFlowStorage) {
       console.log('SessionFlowStorage not available yet, retrying...');
@@ -117,6 +244,12 @@ const Sessions = {
     this.state.frameworks = null;
     this.resetActionState();
     window.clearFlowView?.();
+    
+    // Disconnect SSE when switching projects
+    if (window.SSEClient) {
+      window.SSEClient.disconnect();
+    }
+    
     if (id) this.load();
     else this.renderEmpty();
   },
@@ -188,6 +321,9 @@ const Sessions = {
         this.renderList();
         this.renderView();
         window.clearFlowView?.();
+        
+        // Connect to SSE for new session
+        this.connectSSE(this.state.current.id);
       }
     } catch (err) {
       console.error('Failed to create session:', err);
@@ -207,9 +343,18 @@ const Sessions = {
         );
         this.renderView();
         this.updateFlowFromMessages();
+        
+        // Connect to SSE for this session
+        this.connectSSE(id);
+        
         this.state.messages.forEach(m => {
           if (m.status === 'pending' && m.promiseId) {
-            this.startPolling(m.promiseId, m.id);
+            // Use SSE for real-time updates instead of polling
+            if (!this.useSSE) {
+              this.startPolling(m.promiseId, m.id);
+            } else {
+              console.log('[Sessions] Waiting for SSE update for:', m.promiseId);
+            }
           }
         });
       }
@@ -248,151 +393,6 @@ const Sessions = {
     if (btnContinue) btnContinue.disabled = hasPending;
 
     if (msg) {
-      if (!this.state.messages.length) {
-        msg.innerHTML = '<div class="empty">Send a message to start</div>';
-      } else {
-        msg.innerHTML = this.state.messages.map((m) => {
-          const isPending = m.status === 'pending';
-          const spinner = isPending ? '<span class="spinner"></span>' : '';
-          const statusClass = isPending ? 'pending' : (m.status === 'failed' ? 'failed' : '');
-          
-          let contentHtml = '';
-          if (m.outcome === 'graph_incomplete') {
-            contentHtml = this.renderGraphIncomplete(m);
-          } else if (m.graph) {
-            contentHtml = this.renderCompleted(m);
-          } else {
-            contentHtml = this.fmt(m.contentText || m.content);
-          }
-          
-          return `<div class="msg ${m.role === 'user' ? 'user' : 'server'} ${statusClass}">
-            <div class="msg-role">${m.role === 'user' ? 'You' : 'Server'} ${spinner}</div>
-            <div class="msg-content">${contentHtml}</div>
-          </div>`;
-        }).join('');
-        msg.scrollTop = msg.scrollHeight;
-      }
-    }
-    
-    this.renderGraphPanel();
-  },
-
-  renderGraphIncomplete(m) {
-    const questions = m.questions || [];
-    const missing = m.missing || [];
-    const frameworks = m.frameworks;
-    
-    let html = '<div class="result-card incomplete">';
-    html += '<div class="result-status">📋 Graph Incomplete</div>';
-    
-    if (frameworks) {
-      html += '<div class="result-frameworks"><strong>Frameworks:</strong> ';
-      html += [...(frameworks.frontend || []), ...(frameworks.backend || [])].join(', ');
-      html += '</div>';
-    }
-    
-    if (questions.length) {
-      html += '<div class="result-questions"><strong>Questions:</strong><ul>';
-      questions.forEach(q => { html += `<li>${A2A.escape(q)}</li>`; });
-      html += '</ul></div>';
-    }
-    
-    if (missing.length) {
-      html += '<div class="result-missing"><strong>Missing:</strong> ' + A2A.escape(missing.join(', ')) + '</div>';
-    }
-    
-    html += '</div>';
-    return html;
-  },
-
-  renderCompleted(m) {
-    const graph = m.graph || { entities: [], relations: [] };
-    const neurons = m.activated_neuron_ids || [];
-    
-    let html = '<div class="result-card completed">';
-    html += '<div class="result-status">✅ Completed</div>';
-    
-    if (graph.entities && graph.entities.length) {
-      html += '<div class="result-entities"><strong>Entities:</strong> ' + graph.entities.length + ' ';
-      html += graph.entities.slice(0, 5).map(e => 
-        `<span class="entity-badge ${e.type}">${A2A.escape(e.name)}</span>`
-      ).join(' ');
-      if (graph.entities.length > 5) {
-        html += ` <span class="more">+${graph.entities.length - 5} more</span>`;
-      }
-      html += '</div>';
-    }
-    
-    if (neurons.length) {
-      html += `<div class="result-neurons"><strong>Activated neurons:</strong> ${neurons.length}</div>`;
-    }
-    
-    html += '</div>';
-    return html;
-  },
-
-  renderGraphPanel() {
-    const panel = document.getElementById('graphPanel');
-    if (!panel) return;
-    
-    const graph = this.state.graph;
-    if (!graph.entities || graph.entities.length === 0) {
-      panel.innerHTML = '<div class="empty">No entities in graph</div>';
-      return;
-    }
-    
-    const byType = {};
-    graph.entities.forEach(e => {
-      if (!byType[e.type]) byType[e.type] = [];
-      byType[e.type].push(e);
-    });
-    
-    let html = '<div class="graph-stats">';
-    html += Object.entries(byType).map(([type, entities]) => 
-      `<span class="type-count">${type}: ${entities.length}</span>`
-    ).join(' · ');
-    html += '</div><div class="graph-entities">';
-    
-    Object.entries(byType).forEach(([type, entities]) => {
-      html += `<div class="entity-group"><strong>${type}:</strong> `;
-      html += entities.map(e => 
-        `<span class="entity-badge ${type}" title="${A2A.escape(e.path)}">${A2A.escape(e.name)}</span>`
-      ).join(' ');
-      html += '</div>';
-    });
-    html += '</div>';
-    
-    panel.innerHTML = html;
-  },
-
-  fmt(c) {
-    if (!c) return '';
-    if (typeof c === 'object') return `<pre>${A2A.escape(JSON.stringify(c, null, 2))}</pre>`;
-    return A2A.escape(c).replace(/\n/g, '<br>');
-  },
-
-  async send() {
-    const input = document.getElementById('messageInput');
-    const text = input?.value.trim();
-    if (!text) return;
-
-    if (!this.state.current) {
-      await this.create();
-      if (!this.state.current) return;
-    }
-
-    const sessionId = this.state.current.id;
-    const isFirstMessage = this.state.messages.length === 0;
-
-    const tempId = `temp_${Date.now()}`;
-    const tempMessage = {
-      id: tempId,
-      role: 'user',
-      contentText: text,
-      content: { text },
-      status: 'pending',
-      createdAt: new Date().toISOString(),
-    };
     this.state.messages.push(tempMessage);
     input.value = '';
     this.renderView();

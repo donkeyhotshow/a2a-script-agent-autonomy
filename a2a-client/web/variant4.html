@@ -428,6 +428,151 @@
     .debug-btn:hover { filter: brightness(1.1); }
     .debug-btn:active { transform: scale(0.98); }
     .mock-response { background: #0d1117; padding: 10px; border-radius: 4px; font-family: ui-monospace, monospace; font-size: 11px; color: #a5d6ff; max-height: 80px; overflow: auto; white-space: pre-wrap; }
+
+    /* Droppable Zones */
+    .drop-zone {
+      position: fixed;
+      border: 2px dashed #ccc;
+      opacity: 0;
+      transition: all 0.3s ease;
+      pointer-events: none;
+      z-index: 500;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 600;
+      color: #888;
+    }
+
+    .drop-zone.visible {
+      opacity: 0.3;
+      pointer-events: auto;
+    }
+
+    .drop-zone.active,
+    .drop-zone.drag-over {
+      opacity: 0.8;
+      border-color: #4CAF50;
+      background: rgba(76, 175, 80, 0.1);
+    }
+
+    .drop-zone.drag-over {
+      border-width: 3px;
+    }
+
+    .zone-left {
+      left: 0;
+      top: 50px;
+      width: 150px;
+      height: calc(100vh - 100px);
+    }
+
+    .zone-right {
+      right: 0;
+      top: 50px;
+      width: 400px;
+      height: calc(100vh - 100px);
+    }
+
+    .zone-bottom {
+      bottom: 0;
+      left: 150px;
+      right: 150px;
+      height: 200px;
+    }
+
+    .zone-label {
+      writing-mode: vertical-rl;
+      text-orientation: mixed;
+      transform: rotate(180deg);
+    }
+
+    .zone-right .zone-label,
+    .zone-bottom .zone-label {
+      writing-mode: horizontal-tb;
+      transform: none;
+    }
+
+    /* Minimized Cube */
+    .minimized-cube {
+      position: fixed;
+      width: 50px;
+      height: 50px;
+      background: var(--panel-bg);
+      border: 2px solid var(--task-accent);
+      border-radius: 8px;
+      z-index: 1001;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: grab;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .minimized-cube.visible {
+      display: flex;
+    }
+
+    .minimized-cube.dragging {
+      cursor: grabbing;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+      transform: scale(1.1);
+    }
+
+    .cube-status {
+      position: absolute;
+      top: 2px;
+      right: 2px;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--task-success);
+    }
+
+    .cube-status.running {
+      background: var(--task-warning);
+      animation: pulse 1s infinite;
+    }
+
+    .cube-status.completed {
+      background: var(--task-success);
+    }
+
+    .cube-status.idle {
+      background: #6b7280;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .cube-btn {
+      width: 30px;
+      height: 20px;
+      background: var(--task-accent);
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .cube-btn:hover {
+      background: #818cf8;
+    }
+
+    /* Header button for opening panel */
+    .header-btn.panel-toggle {
+      background: var(--task-accent);
+      border-color: var(--task-accent);
+    }
+
+    .header-btn.panel-toggle:hover {
+      background: #818cf8;
+    }
   </style>
 </head>
 <body>
@@ -452,6 +597,7 @@
       </div>
       <div class="header-right">
         <button class="header-btn" id="newTaskBtn">📝 New Task</button>
+        <button class="header-btn panel-toggle" id="togglePanelBtn">📋 Panel</button>
         <button class="header-btn primary" id="connectBtn">🔗 Connect</button>
         <button class="header-btn" id="debugModeBtn">🐛 Debug Mode</button>
         <button class="header-btn" id="settingsBtn">⚙️ Settings</button>
@@ -470,15 +616,32 @@
         <div class="panel-header" id="panelHeader">
           <span class="panel-title">📋 Task Panel</span>
           <div class="panel-controls">
-            <button class="panel-control-btn" title="Minimize">−</button>
+            <button class="panel-control-btn" id="minimizeBtn" title="Minimize">−</button>
             <button class="panel-control-btn" title="Maximize">□</button>
-            <button class="panel-control-btn" title="Close">×</button>
+            <button class="panel-control-btn" id="closeBtn" title="Close">×</button>
           </div>
         </div>
         <div class="panel-content" id="panelContent">
           <!-- Content will be rendered by JavaScript -->
         </div>
         <div class="panel-resize-handle" id="panelResizeHandle"></div>
+      </div>
+
+      <!-- Droppable Zones -->
+      <div class="drop-zone zone-left" data-zone="left">
+        <span class="zone-label">📜 History</span>
+      </div>
+      <div class="drop-zone zone-right" data-zone="right">
+        <span class="zone-label">📋 Details</span>
+      </div>
+      <div class="drop-zone zone-bottom" data-zone="bottom">
+        <span class="zone-label">📊 Results</span>
+      </div>
+
+      <!-- Minimized Cube -->
+      <div class="minimized-cube" id="minimizedCube">
+        <div class="cube-status idle" id="cubeStatus"></div>
+        <button class="cube-btn" id="cubeBtn"></button>
       </div>
 
       <!-- Debug Panel -->
@@ -1138,6 +1301,464 @@
       document.getElementById('debugPanel').style.display = this.classList.contains('active') ? 'block' : 'none';
     });
     document.getElementById('settingsBtn').addEventListener('click', () => alert('Settings panel would open here'));
+
+    // ============================================
+    // Floating Panel Advanced Features
+    // ============================================
+
+    // Panel state
+    let isPanelOpen = true;
+    let isMinimized = false;
+    let currentZone = null;
+    let panelPosition = { left: 20, top: 20 };
+    let panelSize = { width: 320, height: null };
+
+    // Zone configurations
+    const zoneConfigs = {
+      left: { width: 150, height: 'calc(100vh - 100px)', isVertical: true },
+      right: { width: 400, height: 'calc(100vh - 100px)', isVertical: true },
+      bottom: { width: 'calc(100% - 300px)', height: 200, isVertical: false }
+    };
+
+    // DOM Elements
+    const floatingPanel = document.getElementById('floatingPanel');
+    const minimizedCube = document.getElementById('minimizedCube');
+    const cubeBtn = document.getElementById('cubeBtn');
+    const cubeStatus = document.getElementById('cubeStatus');
+    const dropZones = document.querySelectorAll('.drop-zone');
+    const closeBtn = document.getElementById('closeBtn');
+    const minimizeBtn = document.getElementById('minimizeBtn');
+    const togglePanelBtn = document.getElementById('togglePanelBtn');
+
+    // Initialize panel position
+    floatingPanel.style.left = panelPosition.left + 'px';
+    floatingPanel.style.top = panelPosition.top + 'px';
+
+    // Helper: get random color
+    function getRandomColor() {
+      const colors = ['#6366f1', '#22c55e', '#f97316', '#3b82f6', '#8b5cf6', '#ec4899', '#14b8a6', '#f59e0b'];
+      return colors[Math.floor(Math.random() * colors.length)];
+    }
+
+    // Helper: update cube status based on task state
+    function updateCubeStatus() {
+      const status = panelState.status;
+      cubeStatus.className = 'cube-status ' + status;
+    }
+
+    // Open panel from minimized state or button
+    function openPanel() {
+      isPanelOpen = true;
+      isMinimized = false;
+      floatingPanel.classList.remove('minimized');
+      floatingPanel.style.display = 'flex';
+      minimizedCube.classList.remove('visible');
+      
+      // Reset size if coming from a zone
+      if (currentZone) {
+        floatingPanel.style.width = panelSize.width + 'px';
+        floatingPanel.style.height = '';
+        floatingPanel.style.left = panelPosition.left + 'px';
+        floatingPanel.style.top = panelPosition.top + 'px';
+        floatingPanel.style.right = '';
+        floatingPanel.style.bottom = '';
+        currentZone = null;
+      }
+      
+      // Update button
+      if (togglePanelBtn) {
+        togglePanelBtn.classList.add('active');
+      }
+    }
+
+    // Close panel (minimize to cube if task is active)
+    function closePanel() {
+      if (panelState.status !== 'idle') {
+        // Minimize to cube
+        minimizeToCube();
+      } else {
+        // Just reset
+        resetPanelState();
+      }
+    }
+
+    // Minimize to cube
+    function minimizeToCube() {
+      isPanelOpen = false;
+      isMinimized = true;
+      
+      // Save current position before minimizing
+      const rect = floatingPanel.getBoundingClientRect();
+      panelPosition = { left: rect.left, top: rect.top };
+      
+      floatingPanel.style.display = 'none';
+      minimizedCube.classList.add('visible');
+      
+      // Position cube at saved position
+      minimizedCube.style.left = panelPosition.left + 'px';
+      minimizedCube.style.top = panelPosition.top + 'px';
+      
+      updateCubeStatus();
+      
+      // Update button
+      if (togglePanelBtn) {
+        togglePanelBtn.classList.remove('active');
+      }
+    }
+
+    // Reset panel to initial state (but keep task state)
+    function resetPanelState() {
+      floatingPanel.style.display = 'flex';
+      floatingPanel.style.left = '20px';
+      floatingPanel.style.top = '20px';
+      floatingPanel.style.width = '320px';
+      floatingPanel.style.height = '';
+      floatingPanel.style.right = '';
+      floatingPanel.style.bottom = '';
+      
+      panelPosition = { left: 20, top: 20 };
+      currentZone = null;
+      
+      renderIdlePanel();
+      
+      if (togglePanelBtn) {
+        togglePanelBtn.classList.add('active');
+      }
+    }
+
+    // Toggle panel button in header
+    if (togglePanelBtn) {
+      togglePanelBtn.addEventListener('click', () => {
+        if (isPanelOpen) {
+          closePanel();
+        } else {
+          openPanel();
+        }
+      });
+    }
+
+    // Close button handler
+    if (closeBtn) {
+      closeBtn.addEventListener('click', () => {
+        closePanel();
+      });
+    }
+
+    // Minimize button handler
+    if (minimizeBtn) {
+      minimizeBtn.addEventListener('click', () => {
+        minimizeToCube();
+      });
+    }
+
+    // Cube button - change color
+    if (cubeBtn) {
+      cubeBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        cubeBtn.style.backgroundColor = getRandomColor();
+      });
+    }
+
+    // Click on cube to open panel
+    if (minimizedCube) {
+      minimizedCube.addEventListener('click', () => {
+        openPanel();
+      });
+    }
+
+    // ============================================
+    // Drag and Drop for Minimized Cube
+    // ============================================
+
+    let cubeDragging = false;
+    let cubeStartX, cubeStartY, cubeStartLeft, cubeStartTop;
+
+    if (minimizedCube) {
+      minimizedCube.addEventListener('mousedown', (e) => {
+        if (e.target === cubeBtn) return; // Don't drag when clicking button
+        
+        cubeDragging = true;
+        cubeStartX = e.clientX;
+        cubeStartY = e.clientY;
+        cubeStartLeft = parseInt(minimizedCube.style.left) || 20;
+        cubeStartTop = parseInt(minimizedCube.style.top) || 20;
+        
+        minimizedCube.classList.add('dragging');
+        e.preventDefault();
+      });
+
+      document.addEventListener('mousemove', (e) => {
+        if (!cubeDragging) return;
+        
+        const dx = e.clientX - cubeStartX;
+        const dy = e.clientY - cubeStartY;
+        minimizedCube.style.left = (cubeStartLeft + dx) + 'px';
+        minimizedCube.style.top = (cubeStartTop + dy) + 'px';
+      });
+
+      document.addEventListener('mouseup', () => {
+        if (cubeDragging) {
+          cubeDragging = false;
+          minimizedCube.classList.remove('dragging');
+          
+          // Update saved position
+          panelPosition.left = parseInt(minimizedCube.style.left) || 20;
+          panelPosition.top = parseInt(minimizedCube.style.top) || 20;
+        }
+      });
+    }
+
+    // ============================================
+    // Drag and Drop for Panel with Droppable Zones
+    // ============================================
+
+    let isPanelDragging = false;
+    let panelDragStartX, panelDragStartY, panelDragStartLeft, panelDragStartTop;
+    let draggedFromZone = false;
+
+    // Show drop zones on drag start
+    function showDropZones() {
+      dropZones.forEach(zone => zone.classList.add('visible'));
+    }
+
+    // Hide drop zones
+    function hideDropZones() {
+      dropZones.forEach(zone => {
+        zone.classList.remove('visible', 'drag-over');
+      });
+    }
+
+    // Apply zone transformation (preview or actual)
+    function applyZoneTransform(zoneType, isPreview = false) {
+      const config = zoneConfigs[zoneType];
+      if (!config) return;
+      
+      currentZone = zoneType;
+      
+      if (zoneType === 'left') {
+        floatingPanel.style.left = '0';
+        floatingPanel.style.top = '50px';
+        floatingPanel.style.width = config.width + 'px';
+        floatingPanel.style.height = config.height;
+        floatingPanel.style.right = '';
+        floatingPanel.style.bottom = '';
+      } else if (zoneType === 'right') {
+        floatingPanel.style.right = '0';
+        floatingPanel.style.top = '50px';
+        floatingPanel.style.width = config.width + 'px';
+        floatingPanel.style.height = config.height;
+        floatingPanel.style.left = '';
+        floatingPanel.style.bottom = '';
+      } else if (zoneType === 'bottom') {
+        floatingPanel.style.bottom = '0';
+        floatingPanel.style.left = '150px';
+        floatingPanel.style.width = config.width;
+        floatingPanel.style.height = config.height + 'px';
+        floatingPanel.style.top = '';
+        floatingPanel.style.right = '';
+      }
+      
+      if (!isPreview) {
+        // Save position when actually dropped
+        panelPosition = { left: parseInt(floatingPanel.style.left) || 20, top: parseInt(floatingPanel.style.top) || 20 };
+      }
+    }
+
+    // Reset panel from zone transform
+    function resetFromZone() {
+      currentZone = null;
+      floatingPanel.style.width = panelSize.width + 'px';
+      floatingPanel.style.height = '';
+      floatingPanel.style.left = panelPosition.left + 'px';
+      floatingPanel.style.top = panelPosition.top + 'px';
+      floatingPanel.style.right = '';
+      floatingPanel.style.bottom = '';
+    }
+
+    // Modify the existing drag handlers to support drop zones
+    const header = document.getElementById('panelHeader');
+    const resizeHandle = document.getElementById('panelResizeHandle');
+
+    // Override existing mousedown handler for header
+    if (header) {
+      const originalMousedown = header.onmousedown;
+      header.addEventListener('mousedown', (e) => {
+        // Only handle if not clicking on control buttons
+        if (e.target.closest('.panel-control-btn')) return;
+        
+        isPanelDragging = true;
+        draggedFromZone = currentZone !== null;
+        
+        panelDragStartX = e.clientX;
+        panelDragStartY = e.clientY;
+        
+        // Get current position
+        const styleLeft = floatingPanel.style.left;
+        const styleTop = floatingPanel.style.top;
+        const styleRight = floatingPanel.style.right;
+        const styleBottom = floatingPanel.style.bottom;
+        
+        if (styleLeft && styleLeft !== 'auto') {
+          panelDragStartLeft = parseInt(styleLeft) || 0;
+        } else if (styleRight) {
+          panelDragStartLeft = window.innerWidth - parseInt(styleRight) - floatingPanel.offsetWidth;
+        } else {
+          panelDragStartLeft = 20;
+        }
+        
+        if (styleTop && styleTop !== 'auto') {
+          panelDragStartTop = parseInt(styleTop) || 0;
+        } else if (styleBottom) {
+          panelDragStartTop = window.innerHeight - parseInt(styleBottom) - floatingPanel.offsetHeight;
+        } else {
+          panelDragStartTop = 20;
+        }
+        
+        floatingPanel.classList.add('dragging');
+        showDropZones();
+        
+        // If dragging from zone, make panel full size immediately
+        if (draggedFromZone) {
+          resetFromZone();
+        }
+        
+        e.preventDefault();
+      });
+    }
+
+    // Modify document mousemove to handle drop zones
+    const originalMousemove = document.onmousemove;
+    document.addEventListener('mousemove', (e) => {
+      if (isPanelDragging) {
+        const dx = e.clientX - panelDragStartX;
+        const dy = e.clientY - panelDragStartY;
+        
+        floatingPanel.style.left = (panelDragStartLeft + dx) + 'px';
+        floatingPanel.style.top = (panelDragStartTop + dy) + 'px';
+        floatingPanel.style.right = '';
+        floatingPanel.style.bottom = '';
+        
+        // Check which zone we're over
+        let overZone = null;
+        dropZones.forEach(zone => {
+          const rect = zone.getBoundingClientRect();
+          if (e.clientX >= rect.left && e.clientX <= rect.right &&
+              e.clientY >= rect.top && e.clientY <= rect.bottom) {
+            overZone = zone.dataset.zone;
+          }
+          zone.classList.remove('drag-over');
+        });
+        
+        if (overZone) {
+          const zone = document.querySelector(`[data-zone="${overZone}"]`);
+          if (zone) {
+            zone.classList.add('drag-over');
+            applyZoneTransform(overZone, true); // Preview
+          }
+        } else if (currentZone) {
+          // Not over any zone, reset preview
+          resetFromZone();
+        }
+      }
+    });
+
+    // Modify document mouseup to handle drop
+    const originalMouseup = document.onmouseup;
+    document.addEventListener('mouseup', (e) => {
+      if (isPanelDragging) {
+        // Check if dropped on a zone
+        let droppedOnZone = null;
+        dropZones.forEach(zone => {
+          const rect = zone.getBoundingClientRect();
+          if (e.clientX >= rect.left && e.clientX <= rect.right &&
+              e.clientY >= rect.top && e.clientY <= rect.bottom) {
+            droppedOnZone = zone.dataset.zone;
+          }
+          zone.classList.remove('drag-over');
+        });
+        
+        if (droppedOnZone) {
+          // Apply zone transformation
+          applyZoneTransform(droppedOnZone, false);
+        } else {
+          // Not dropped on zone, keep current position
+          const left = parseInt(floatingPanel.style.left) || 20;
+          const top = parseInt(floatingPanel.style.top) || 20;
+          
+          // Boundary constraints
+          const maxLeft = window.innerWidth - floatingPanel.offsetWidth;
+          const maxTop = window.innerHeight - floatingPanel.offsetHeight;
+          
+          panelPosition.left = Math.max(0, Math.min(left, maxLeft));
+          panelPosition.top = Math.max(0, Math.min(top, maxTop));
+          
+          floatingPanel.style.left = panelPosition.left + 'px';
+          floatingPanel.style.top = panelPosition.top + 'px';
+          
+          // Reset from zone if was in one
+          if (currentZone) {
+            resetFromZone();
+          }
+        }
+        
+        floatingPanel.classList.remove('dragging');
+        hideDropZones();
+        isPanelDragging = false;
+        draggedFromZone = false;
+      }
+    });
+
+    // Update panel state functions to handle minimized cube
+    const originalSimTaskRequest = window.simTaskRequest;
+    window.simTaskRequest = function() {
+      originalSimTaskRequest();
+      updateCubeStatus();
+      if (!isPanelOpen) {
+        minimizeToCube();
+      }
+    };
+
+    const originalSimApprove = window.simApprove;
+    window.simApprove = function() {
+      originalSimApprove();
+      updateCubeStatus();
+    };
+
+    const originalSimContinue1 = window.simContinue1;
+    window.simContinue1 = function() {
+      originalSimContinue1();
+      updateCubeStatus();
+    };
+
+    const originalSimContinue2 = window.simContinue2;
+    window.simContinue2 = function() {
+      originalSimContinue2();
+      updateCubeStatus();
+    };
+
+    const originalSimComplete = window.simComplete;
+    window.simComplete = function() {
+      originalSimComplete();
+      updateCubeStatus();
+    };
+
+    const originalResetPanel = window.resetPanel;
+    window.resetPanel = function() {
+      originalResetPanel();
+      updateCubeStatus();
+      isPanelOpen = true;
+      isMinimized = false;
+      floatingPanel.style.display = 'flex';
+      minimizedCube.classList.remove('visible');
+      currentZone = null;
+      resetFromZone();
+      if (togglePanelBtn) {
+        togglePanelBtn.classList.add('active');
+      }
+    };
+
+    // Initialize cube status
+    updateCubeStatus();
   </script>
 </body>
 </html>

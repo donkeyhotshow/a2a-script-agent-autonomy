@@ -1,15 +1,9 @@
-# SSE Implementation Plan
+в # SSE Implementation - Complete
 
-## Выбор: Server-Sent Events (SSE)
+## Overview
+Server-Sent Events (SSE) для real-time коммуникации между клиентом и сервером.
 
-### Почему SSE:
-- ✅ Проще в реализации чем WebSockets
-- ✅ Работает через обычный HTTP
-- ✅ Автоматическое переподключение
-- ✅ Идеально для: логов, прогресса, уведомлений
-- ✅ Один запрос от клиента - много событий от сервера
-
-### Architecture
+## Architecture
 
 ```
 Клиент (браузер)  <--HTTP-->  Сервер (Express)
@@ -20,41 +14,151 @@
       (логи, прогресс, статусы)
 ```
 
-## Plan
+## API Endpoints
 
-### 1. Server: Add SSE endpoint
-- New route: `GET /api/v1/events`
-- Support for session-specific streams
-- Event types: `log`, `progress`, `status`, `complete`, `error`
+### Server
 
-### 2. Client: EventSource implementation
-- Replace polling with EventSource
-- Handle events: onmessage, onerror, onopen
-- Auto-reconnection
+**GET /api/v1/sse**
+- Глобальный поток событий
+- Требует аутентификации
 
-### 3. Use Cases
-- Real-time action logs
-- Progress updates
-- Session status changes
+**GET /api/v1/sse/:sessionId**
+- Поток событий для конкретной сессии
+- Требует аутентификации
+- Параметры: `sessionId` - ID сессии
 
-## Implementation Steps
+### Event Types
 
-### Step 1: Server - SSE Route
-File: `a2a-server/src/routes/sse.routes.ts`
-- Create new route
-- Implement EventEmitter for broadcasting
-- Support multiple subscribers
+| Event | Description | Data |
+|-------|-------------|------|
+| `connected` | Установлено соединение | `{ sessionId, timestamp }` |
+| `log` | Лог сообщение | `{ message, level, timestamp }` |
+| `progress` | Прогресс выполнения | `{ current, total, message, timestamp }` |
+| `status` | Изменение статуса | `{ status, details, timestamp }` |
+| `complete` | Завершено | `{ result, timestamp }` |
+| `error` | Ошибка | `{ error, timestamp }` |
 
-### Step 2: Client - EventSource
-File: `a2a-client/web/js/sse.js`
-- Create SSE manager class
-- Connect to server
-- Handle incoming events
-- Update UI in real-time
+## Client Usage
 
-### Step 3: Integration
-- Replace polling in sessions.js with SSE
-- Add log viewer component
-- Show progress in real-time
+### Initialization
+```
+javascript
+// Подключить скрипт в HTML
+<script src="/js/sse-client.js"></script>
 
-## Ready to implement?
+// Подключиться к сессии
+SSEClient.connect('session-123');
+
+// Или к глобальному потоку
+SSEClient.connect();
+```
+
+### Event Handlers
+```
+javascript
+// Логи
+SSEClient.on('log', (data) => {
+  console.log(data.message, data.level);
+});
+
+// Прогресс
+SSEClient.on('progress', (data) => {
+  console.log(`${data.current}/${data.total}`, data.message);
+});
+
+// Статус
+SSEClient.on('status', (data) => {
+  console.log('Status:', data.status);
+});
+
+// Завершено
+SSEClient.on('complete', (data) => {
+  console.log('Result:', data.result);
+});
+
+// Ошибка
+SSEClient.on('error', (data) => {
+  console.error(data.error);
+});
+```
+
+### Methods
+```
+javascript
+// Отключиться
+SSEClient.disconnect();
+
+// Проверить подключение
+SSEClient.isConnected();
+
+// Удалить обработчик
+SSEClient.off('log', myHandler);
+```
+
+## Integration with Sessions
+
+### Before (Polling)
+```
+javascript
+// Старый код с polling
+setInterval(async () => {
+  const status = await fetch(`/api/v1/requests/${promiseId}/status`);
+  // ...
+}, 5000);
+```
+
+### After (SSE)
+```
+javascript
+// Новый код с SSE
+SSEClient.connect(sessionId);
+
+SSEClient.on('progress', (data) => {
+  updateProgressBar(data.current, data.total);
+});
+
+SSEClient.on('log', (data) => {
+  appendLog(data.message, data.level);
+});
+
+SSEClient.on('complete', (data) => {
+  showResult(data.result);
+});
+```
+
+## Server Events API
+
+### From Server Code
+```
+javascript
+import { sseManager } from './routes/sse.routes.js';
+
+// Отправить лог
+sseManager.log(sessionId, 'Starting process...', 'info');
+
+// Отправить прогресс
+sseManager.progress(sessionId, 5, 10, 'Processing files...');
+
+// Отправить статус
+sseManager.status(sessionId, 'running', { step: 5 });
+
+// Завершено
+sseManager.complete(sessionId, { success: true, data: {} });
+
+// Ошибка
+sseManager.error(sessionId, 'Failed to process file');
+```
+
+## Files
+
+- `a2a-server/src/routes/sse.routes.ts` - Server implementation
+- `a2a-client/web/js/sse-client.js` - Client implementation
+
+## Benefits vs Polling
+
+| Polling | SSE |
+|---------|-----|
+| Запрос каждые 5 сек | Мгновенная доставка |
+| Лишний трафик | Одно постоянное соединение |
+| Задержка до 5 сек | Реальное время |
+| many HTTP requests | 1 connection |
