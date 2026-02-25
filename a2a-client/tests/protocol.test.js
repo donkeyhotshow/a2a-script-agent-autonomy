@@ -152,6 +152,72 @@ describe('Protocol Mapping', () => {
       expect(proposalNode.data.subActions).toHaveLength(5);
       expect(proposalNode.data.stepsCount).toBe(5);
     });
+
+    it('should map step_result response with success', () => {
+      const response = {
+        outcome: 'step_result',
+        previousStep: {
+          actionId: 'step1',
+          result: {
+            success: true,
+            message: 'Step 1 completed successfully',
+            changes: ['Updated file A', 'Fixed syntax error']
+          }
+        },
+        context: {
+          execution: {
+            history: [
+              { actionId: 'step1', status: 'completed' }
+            ],
+            actionId: 'fix-imports'
+          }
+        }
+      };
+
+      const result = mapSimulationResponseToFlow(response);
+      
+      // Should have task + proposal + result node
+      expect(result.nodes).toHaveLength(3);
+      expect(result.edges).toHaveLength(2);
+      
+      // Check result node
+      const resultNode = result.nodes[2];
+      expect(resultNode.type).toBe('result');
+      expect(resultNode.data.success).toBe(true);
+      expect(resultNode.data.message).toBe('Step 1 completed successfully');
+      expect(resultNode.data.changes).toHaveLength(2);
+    });
+
+    it('should map step_result response with failure', () => {
+      const response = {
+        outcome: 'step_result',
+        previousStep: {
+          actionId: 'step2',
+          result: {
+            success: false,
+            message: 'Step 2 failed',
+            error: 'File not found'
+          }
+        },
+        context: {
+          execution: {
+            history: [
+              { actionId: 'step1', status: 'completed' },
+              { actionId: 'step2', status: 'failed' }
+            ],
+            actionId: 'fix-imports'
+          }
+        }
+      };
+
+      const result = mapSimulationResponseToFlow(response);
+      
+      const resultNode = result.nodes[2];
+      expect(resultNode.type).toBe('result');
+      expect(resultNode.data.success).toBe(false);
+      expect(resultNode.data.message).toBe('Step 2 failed');
+      expect(resultNode.data.result.error).toBe('File not found');
+    });
   });
 
   describe('mapContextToFlow', () => {

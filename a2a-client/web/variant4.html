@@ -267,12 +267,14 @@
 
     /* Floating Panel */
     .floating-panel {
-      position: absolute;
+      position: fixed;
       top: 20px;
       right: 20px;
       width: 320px;
       min-width: 280px;
       max-width: 400px;
+      max-width: 100vw;
+      max-height: 100vh;
       background: var(--panel-bg);
       border: 1px solid var(--panel-border);
       border-radius: 12px;
@@ -285,6 +287,7 @@
     .floating-panel.dragging {
       box-shadow: 0 12px 48px rgba(0, 0, 0, 0.6);
       cursor: moving;
+      transition: none !important;
     }
 
     .floating-panel.resizing {
@@ -911,150 +914,135 @@
 
     function initFloatingPanel() {
       const panel = document.getElementById('floatingPanel');
-      const header = document.getElementById('panelHeader');
-      const resizeHandle = document.getElementById('panelResizeHandle');
+      if (!panel) return;
       
-      const GRID_SIZE = 200;
+      const header = panel.querySelector('.panel-header');
+      const resizeHandle = panel.querySelector('.panel-resize-handle');
       
-      // State variables for drag
       let isDragging = false;
-      let dragStartX = 0;
-      let dragStartY = 0;
-      let panelStartLeft = 0;
-      let panelStartTop = 0;
-      
-      // State variables for resize
       let isResizing = false;
-      let resizeStartX = 0;
-      let resizeStartY = 0;
-      let panelStartWidth = 0;
-      let panelStartHeight = 0;
-      let panelLeft = 0;
-      let panelTop = 0;
-
-      // Snap to grid function
-      function snapToGrid(value) {
-        return Math.round(value / GRID_SIZE) * GRID_SIZE;
-      }
-
-      // ============================================
-      // DRAG LOGIC (перетаскивание за заголовок)
-      // ============================================
+      let startX, startY, startLeft, startTop, startWidth, startHeight;
       
-      header.addEventListener('mousedown', (e) => {
-        // Ignore clicks on control buttons
-        if (e.target.closest('.panel-controls')) return;
+      // Функция для получения текущей позиции панели
+      // Использует getBoundingClientRect() для надёжного получения позиции
+      // вне зависимости от того, задана ли она через left/top или right/top
+      function getPanelPosition() {
+        // Сначала пробуем получить из inline стилей (они могут быть установлены после drag)
+        const styleLeft = panel.style.left;
+        const styleTop = panel.style.top;
         
-        isDragging = true;
-        dragStartX = e.clientX;
-        dragStartY = e.clientY;
+        if (styleLeft && styleTop) {
+          return {
+            left: parseInt(styleLeft) || 0,
+            top: parseInt(styleTop) || 0
+          };
+        }
         
-        // Get current panel position
+        // Если inline стили не заданы, используем getBoundingClientRect()
+        // Это работает правильно с position: fixed
         const rect = panel.getBoundingClientRect();
-        panelStartLeft = rect.left;
-        panelStartTop = rect.top;
-        
-        panel.classList.add('dragging');
-        e.preventDefault();
-      });
-
-      // ============================================
-      // RESIZE LOGIC (изменение размера за угол)
-      // ============================================
+        return {
+          left: rect.left,
+          top: rect.top
+        };
+      }
       
+      // DRAG - только за заголовок
+      header.addEventListener('mousedown', (e) => {
+        isDragging = true;
+        startX = e.clientX;
+        startY = e.clientY;
+        
+        // Получаем правильную позицию панели
+        const pos = getPanelPosition();
+        startLeft = pos.left;
+        startTop = pos.top;
+        
+        // Добавляем класс для визуальной обратной связи
+        panel.classList.add('dragging');
+        
+        e.preventDefault(); // предотвратить выделение текста
+      });
+      
+      // RESIZE - только за угол
       resizeHandle.addEventListener('mousedown', (e) => {
         isResizing = true;
-        resizeStartX = e.clientX;
-        resizeStartY = e.clientY;
-        
-        // Get current panel dimensions and position
-        const rect = panel.getBoundingClientRect();
-        panelStartWidth = rect.width;
-        panelStartHeight = rect.height;
-        panelLeft = rect.left;
-        panelTop = rect.top;
-        
-        panel.classList.add('resizing');
+        startX = e.clientX;
+        startY = e.clientY;
+        startWidth = panel.offsetWidth;
+        startHeight = panel.offsetHeight;
         e.preventDefault();
         e.stopPropagation();
       });
-
-      // ============================================
-      // MOUSEMOVE - обработка перемещения и изменения размера
-      // ============================================
       
+      // Обработчик движения на document
       document.addEventListener('mousemove', (e) => {
-        // DRAG: перетаскивание панели
         if (isDragging) {
-          // Calculate delta from start position
-          const deltaX = e.clientX - dragStartX;
-          const deltaY = e.clientY - dragStartY;
-          
-          // New position = start position + delta
-          const newLeft = panelStartLeft + deltaX;
-          const newTop = panelStartTop + deltaY;
-          
-          // Apply position immediately (no snap during drag)
-          panel.style.left = `${newLeft}px`;
-          panel.style.top = `${newTop}px`;
-          panel.style.right = 'auto';
+          const dx = e.clientX - startX;
+          const dy = e.clientY - startY;
+          panel.style.left = (startLeft + dx) + 'px';
+          panel.style.top = (startTop + dy) + 'px';
         }
-        
-        // RESIZE: изменение размера
         if (isResizing) {
-          // Calculate new dimensions based on cursor position
-          const deltaX = e.clientX - resizeStartX;
-          const deltaY = e.clientY - resizeStartY;
-          
-          let newWidth = panelStartWidth + deltaX;
-          let newHeight = panelStartHeight + deltaY;
-          
-          // Apply dimensions immediately (no snap during resize)
-          panel.style.width = `${newWidth}px`;
-          panel.style.height = `${newHeight}px`;
+          const dx = e.clientX - startX;
+          const dy = e.clientY - startY;
+          panel.style.width = Math.max(200, startWidth + dx) + 'px';
+          panel.style.height = Math.max(150, startHeight + dy) + 'px';
         }
       });
-
-      // ============================================
-      // MOUSEUP - завершение перетаскивания/изменения размера
-      // ============================================
       
-      document.addEventListener('mouseup', (e) => {
-        // DRAG END: применить snapToGrid
+      // Обработчик окончания на document
+      document.addEventListener('mouseup', () => {
         if (isDragging) {
-          const rect = panel.getBoundingClientRect();
+          // Snap to grid только для позиции
+          const left = parseInt(panel.style.left || 0);
+          const top = parseInt(panel.style.top || 0);
+          const snappedLeft = Math.round(left / 20) * 20;
+          const snappedTop = Math.round(top / 20) * 20;
           
-          // Apply snapToGrid to position
-          const snappedLeft = snapToGrid(rect.left);
-          const snappedTop = snapToGrid(rect.top);
+          // Boundary constraints - не давать выйти за экран
+          const maxLeft = window.innerWidth - panel.offsetWidth;
+          const maxTop = window.innerHeight - panel.offsetHeight;
           
-          panel.style.left = `${snappedLeft}px`;
-          panel.style.top = `${snappedTop}px`;
+          const finalLeft = Math.max(0, Math.min(snappedLeft, maxLeft));
+          const finalTop = Math.max(0, Math.min(snappedTop, maxTop));
+          
+          // Добавить transition для плавного snap
+          panel.style.transition = 'left 0.2s ease-out, top 0.2s ease-out';
+          panel.style.left = finalLeft + 'px';
+          panel.style.top = finalTop + 'px';
+          
+          // Убрать класс dragging
+          panel.classList.remove('dragging');
+          
+          // Убрать transition после анимации
+          setTimeout(() => {
+            panel.style.transition = '';
+          }, 200);
           
           isDragging = false;
-          panel.classList.remove('dragging');
         }
-        
-        // RESIZE END: применить snapToGrid к размерам
         if (isResizing) {
-          const rect = panel.getBoundingClientRect();
+          // Snap to grid только для размера
+          const width = parseInt(panel.style.width || 0);
+          const height = parseInt(panel.style.height || 0);
           
-          // Apply snapToGrid to dimensions
-          const snappedWidth = snapToGrid(rect.width);
-          const snappedHeight = snapToGrid(rect.height);
+          // Boundary constraints - не давать выходить за экран
+          const maxWidth = window.innerWidth - panel.offsetLeft;
+          const maxHeight = window.innerHeight - panel.offsetTop;
           
-          panel.style.width = `${snappedWidth}px`;
-          panel.style.height = `${snappedHeight}px`;
+          const snappedWidth = Math.max(200, Math.round(width / 20) * 20);
+          const snappedHeight = Math.max(150, Math.round(height / 20) * 20);
+          
+          const finalWidth = Math.min(snappedWidth, maxWidth);
+          const finalHeight = Math.min(snappedHeight, maxHeight);
+          
+          panel.style.width = finalWidth + 'px';
+          panel.style.height = finalHeight + 'px';
           
           isResizing = false;
-          panel.classList.remove('resizing');
         }
       });
-
-      // Set initial position
-      panel.style.left = 'auto';
-      panel.style.right = '20px';
-      panel.style.top = '20px';
     }
 
     function renderIdlePanel() {

@@ -51,4 +51,10 @@ describe('ApiClient', () => {
     expect(client.clientId).toBe('my-client');
     expect(client.timeout).toBe(10000);
   });
+
+  it('has async client property', () => {
+    const client = new ApiClient({});
+    expect(client.async).toBeDefined();
+    expect(typeof client.async).toBe('object');
+  });
 });
