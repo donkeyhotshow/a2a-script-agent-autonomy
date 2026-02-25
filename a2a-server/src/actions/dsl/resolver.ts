@@ -1,5 +1,7 @@
 /**
  * DSL Resolver - resolves mixin references and variable interpolation
+ *
+ * Реализация на основе плана: plans/pivots/pivot-3-dsl-composability.md
  */
 
 import type { DSLAction, DSLStep, DSLMixin, DSLAST } from './parser.js';

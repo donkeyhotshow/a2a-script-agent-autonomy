@@ -1,5 +1,8 @@
 /**
  * Message Service
+ *
+ * Реализация на основе плана: plans/message-service-improvements.md
+ *
  * CRUD operations for messages
  */
 

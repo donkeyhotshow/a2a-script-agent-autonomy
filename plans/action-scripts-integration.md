@@ -2,6 +2,32 @@
 
 > **Относится к:** a2a-server (actions)
 
+## Задачи
+
+- [ ] [Модифицировать request-processor.service.ts для интеграции ActionProcessor](#модифицировать-request-processorservicets-для-интеграции-actionprocessor)
+- [ ] [Обновить формат ответа сервера (action_proposal, action_executing)](#обновить-формат-ответа-сервера-action_proposal-action_executing)
+- [ ] [Реализовать обработку continue с step_result](#реализовать-обработку-continue-с-step_result)
+- [ ] [Обновить клиента для поддержки нового формата](#обновить-клиента-для-поддержки-нового-формата)
+- [ ] [Написать тесты для интеграции](#написать-тесты-для-интеграции)
+
+---
+
+### Модифицировать request-processor.service.ts для интеграции ActionProcessor
+
+
+### Обновить формат ответа сервера (action_proposal, action_executing)
+
+
+### Реализовать обработку continue с step_result
+
+
+### Обновить клиента для поддержки нового формата
+
+
+### Написать тесты для интеграции
+
+---
+
 ## Текущий протокол
 
 ```

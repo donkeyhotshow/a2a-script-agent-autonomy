@@ -1,4 +1,8 @@
-/** Knowledge types: neurons, questions. */
+/**
+ * Knowledge types: neurons, questions
+ *
+ * Реализация на основе плана: plans/types-improvements.md
+ */
 
 export interface BuiltQuestion {
   question: string;

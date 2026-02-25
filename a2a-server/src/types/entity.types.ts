@@ -1,5 +1,8 @@
 /**
  * Entity Types for Knowledge Graph
+ *
+ * Реализация на основе плана: plans/types-improvements.md
+ *
  * Recognized entities from code analysis
  */
 

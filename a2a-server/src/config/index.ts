@@ -2,6 +2,8 @@ import dotenv from 'dotenv';
 import path from 'path';
 import { z } from 'zod';
 
+// Реализация на основе плана: plans/a2a-server-implementation-plan.md
+
 // Load environment variables
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 

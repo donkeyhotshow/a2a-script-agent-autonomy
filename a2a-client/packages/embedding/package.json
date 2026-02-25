@@ -2,8 +2,10 @@
   "name": "@a2a/embedding",
   "version": "1.0.0",
   "description": "Embedding client for A2A - Provides embeddings for semantic search",
-  "main": "src/index.js",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "scripts": {
+    "build": "tsc",
     "test": "jest --bail"
   },
   "keywords": ["a2a", "embedding", "semantic", "search", "ai"],
@@ -11,17 +13,10 @@
   "license": "MIT",
   "dependencies": {},
   "devDependencies": {
-    "jest": "^29.7.0"
+    "jest": "^29.7.0",
+    "typescript": "^5.0.0"
   },
-  "engines": {
-    "node": ">=18.0.0"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/org-carrier/a2a-app.git",
-    "directory": "packages/embedding"
-  },
-  "publishConfig": {
-    "access": "public"
-  }
+  "engines": { "node": ">=18.0.0" },
+  "repository": { "type": "git", "url": "https://github.com/org-carrier/a2a-app.git", "directory": "packages/embedding" },
+  "publishConfig": { "access": "public" }
 }

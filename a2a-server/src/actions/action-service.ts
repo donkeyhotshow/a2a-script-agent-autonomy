@@ -1,5 +1,7 @@
 /**
  * Action Service - интеграция всех компонентов системы действий
+ *
+ * Реализация на основе плана: plans/action-scripts-integration.md
  */
 
 import * as path from 'path';

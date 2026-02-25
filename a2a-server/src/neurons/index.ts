@@ -1,5 +1,7 @@
 import type { Neuron } from '../types/knowledge.types.js';
 
+// Реализация на основе плана: plans/custom-lint-neurons.md
+
 // New task analysis neurons
 import { taskSemanticAnalyzerNeuron } from './task-semantic-analyzer.neuron.js';
 import { projectContextDetectorNeuron } from './project-context-detector.neuron.js';

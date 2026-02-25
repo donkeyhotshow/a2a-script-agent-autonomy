@@ -1,5 +1,7 @@
 /**
  * DSL Validator - validates YAML action definitions against schema
+ *
+ * Реализация на основе плана: plans/pivots/pivot-3-dsl-composability.md
  */
 
 import type { DSLAction, DSLMixin, DSLStep, DSLAST } from './parser.js';

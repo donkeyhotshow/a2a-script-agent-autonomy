@@ -1,5 +1,8 @@
 /**
  * Validation neuron – activates for validation/FormRequest/Laravel context.
+ *
+ * Реализация на основе плана: plans/custom-lint-neurons.md
+ *
  * Etalon: docs/etalon-neuron-activation.md scenario B.
  */
 

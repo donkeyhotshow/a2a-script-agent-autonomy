@@ -1,5 +1,8 @@
 /**
  * Message Builder
+ *
+ * Реализация на основе плана: plans/message-builder-improvements.md
+ *
  * Builds messages according to A2A protocol format
  * Production-ready: validation, serialization, type safety
  */

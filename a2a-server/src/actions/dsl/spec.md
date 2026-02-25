@@ -1,5 +1,7 @@
 # DSL Specification for Action Definitions
 
+> **Реализация на основе плана: plans/pivots/pivot-3-dsl-composability.md**
+>
 > YAML-based Domain-Specific Language for defining actions with composition, mixins, and inheritance.
 
 ## File Structure

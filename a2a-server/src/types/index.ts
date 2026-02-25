@@ -1,3 +1,5 @@
+// Реализация на основе плана: plans/types-improvements.md
+
 // Protocol types based on a2a-codebase-agen-v1.md
 
 // ============================================

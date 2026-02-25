@@ -1,8 +1,8 @@
 /**
  * FileScanner unit tests
  */
-const FileScanner = require('../src/file-scanner');
-const GlobMatcher = require('../src/glob-matcher');
+const FileScanner = require('../dist/file-scanner');
+const GlobMatcher = require('../dist/glob-matcher');
 const path = require('path');
 
 describe('FileScanner', () => {

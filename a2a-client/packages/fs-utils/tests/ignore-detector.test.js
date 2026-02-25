@@ -1,7 +1,7 @@
 /**
  * IgnoreDetector unit tests
  */
-const IgnoreDetector = require('../src/ignore-detector');
+const IgnoreDetector = require('../dist/ignore-detector');
 
 describe('IgnoreDetector', () => {
   describe('constructor', () => {

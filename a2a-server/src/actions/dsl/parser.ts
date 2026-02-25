@@ -1,5 +1,7 @@
 /**
  * DSL Parser - parses YAML action definitions into AST
+ *
+ * Реализация на основе плана: plans/pivots/pivot-3-dsl-composability.md
  */
 
 import { readFileSync } from 'node:fs';

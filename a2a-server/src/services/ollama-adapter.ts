@@ -1,5 +1,7 @@
 /**
- * Ollama / external-ai-hub promise-based adapter (per plans/ollama-proxy-integration.md).
+ * Ollama / external-ai-hub promise-based adapter
+ *
+ * Реализация на основе плана: plans/ollama-proxy-integration.md
  */
 
 const AI_HUB_URL = process.env.AI_HUB_URL ?? 'http://localhost:11434';

@@ -1,20 +1,20 @@
 {
   "name": "@a2a/fs-utils",
   "version": "1.0.0",
-  "description": "Общие утилиты для работы с файловой системой в A2A",
-  "main": "src/index.js",
+  "description": "File system utilities for A2A",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "scripts": {
+    "build": "tsc",
     "test": "node tests/run-all.js",
     "test:glob": "node tests/glob-matcher.test.js",
     "test:ignore": "node tests/ignore-detector.test.js",
     "test:scanner": "node tests/file-scanner.test.js"
   },
-  "keywords": [
-    "a2a",
-    "filesystem",
-    "ignore",
-    "glob"
-  ],
+  "keywords": ["a2a", "filesystem", "ignore", "glob"],
   "author": "A2A Team",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
 }

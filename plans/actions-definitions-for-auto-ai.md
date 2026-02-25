@@ -357,13 +357,27 @@ definitions/
 
 ---
 
-## Приоритеты реализации
+---
+
+## План реализации
+
+### Приоритеты реализации
 
 1. **Высокий** - context-query, analyze-full (основные функции)
 2. **Высокий** - hybrid-fix (основной use case)
 3. **Средний** - graph-build
 4. **Средний** - generation (CRUD, model, controller)
 5. **Низкий** - specialized анализы (security, performance)
+
+### Следующие шаги
+
+- [ ] Реализовать context-query action
+- [ ] Реализовать analyze-full action
+- [ ] Реализовать hybrid-fix action
+- [ ] Реализовать graph-build action
+- [ ] Реализовать generation actions (CRUD, model, controller)
+- [ ] Добавить тесты для каждого action
+- [ ] Документировать все action definitions
 
 ---
 

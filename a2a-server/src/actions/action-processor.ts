@@ -1,5 +1,8 @@
 /**
  * Action Processor - обработка actions без AI
+ *
+ * Реализация на основе плана: plans/action-scripts-integration.md
+ *
  * Для use-case "no-ai" - выполняет actions из MD файлов
  * 
  * Поток:

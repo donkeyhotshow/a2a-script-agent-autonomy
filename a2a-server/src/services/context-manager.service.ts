@@ -1,6 +1,8 @@
 /**
  * Context Manager Service
- * 
+ *
+ * Реализация на основе плана: plans/context-manager-improvements.md
+ *
  * Управляет контекстом запроса на сервере.
  * Интегрируется с PhaseMachine для управления сложными сценариями.
  * 

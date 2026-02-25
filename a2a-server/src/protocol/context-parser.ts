@@ -1,5 +1,8 @@
 /**
  * Context Parser
+ *
+ * Реализация на основе плана: plans/context-parser-improvements.md
+ *
  * Parses and validates Context Blocks according to A2A protocol
  * Production-ready: validation, error handling, type guards
  */

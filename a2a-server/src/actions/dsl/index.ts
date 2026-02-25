@@ -1,6 +1,8 @@
 /**
  * DSL Module - Domain-Specific Language for Action Definitions
- * 
+ *
+ * Реализация на основе плана: plans/pivots/pivot-3-dsl-composability.md
+ *
  * Provides:
  * - Parser: YAML to AST
  * - Validator: Schema validation

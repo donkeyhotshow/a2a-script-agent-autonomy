@@ -1,5 +1,7 @@
 /**
  * Action Registry - Service for loading and searching actions from MD and YAML files
+ *
+ * Реализация на основе плана: plans/action-scripts-integration.md
  * 
  * Supports:
  * - YAML format (DSL): definitions/yaml/actions/*.yaml

@@ -3,14 +3,14 @@
   "version": "1.0.0",
   "description": "Script runner for executing TypeScript code from MD action files",
   "type": "module",
-  "main": "src/index.js",
-  "types": "src/index.d.ts",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "scripts": {
+    "build": "tsc",
     "test": "node tests/index.test.js"
   },
-  "dependencies": {
-    "vm2": "^3.9.19"
-  },
+  "dependencies": { "vm2": "^3.9.19" },
+  "devDependencies": { "typescript": "^5.0.0" },
   "keywords": ["a2a", "script", "runner", "vm"],
   "license": "MIT"
 }

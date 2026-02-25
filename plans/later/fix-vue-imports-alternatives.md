@@ -514,3 +514,13 @@ function resolveImport(sourceFile: SourceFile, specifier: string): string | null
 2. Should all methods share common utilities?
 3. How to handle method selection in the system?
 4. Need for a unified interface across methods?
+
+---
+
+## Todo List
+
+- [ ] Choose priority method for implementation
+- [ ] Implement fix-vue-imports-batch
+- [ ] Add tests for batch method
+- [ ] Implement fix-vue-imports-ast for TypeScript projects
+- [ ] Document chosen approach

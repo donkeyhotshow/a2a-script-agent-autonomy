@@ -1,7 +1,7 @@
 /**
  * Script Runner unit tests
  */
-import { executeScript, ScriptRunner, scriptRunner } from '../src/index.js';
+import { executeScript, ScriptRunner, scriptRunner } from '../dist/index.js';
 
 // Simple test runner
 let passed = 0;

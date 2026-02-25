@@ -2,8 +2,8 @@
  * file-scanner.ignore integration tests (plan 4.2)
  */
 const path = require('path');
-const { filterByIgnore, scanWithIgnore } = require('../src/file-scanner.ignore');
-const IgnoreDetector = require('../src/ignore-detector');
+const { filterByIgnore, scanWithIgnore } = require('../dist/file-scanner.ignore');
+const IgnoreDetector = require('../dist/ignore-detector');
 
 async function main() {
   const detector = new IgnoreDetector({ projectPath: process.cwd() });

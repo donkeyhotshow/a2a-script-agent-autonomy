@@ -1,5 +1,7 @@
 /**
  * Action Executor - система выполнения итеративных шагов
+ *
+ * Реализация на основе плана: plans/action-scripts-integration.md
  */
 
 import {

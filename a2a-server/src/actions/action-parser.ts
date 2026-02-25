@@ -1,5 +1,7 @@
 /**
  * Markdown parser for iterative Actions system
+ *
+ * Реализация на основе плана: plans/action-scripts-integration.md
  */
 
 import * as fs from 'fs/promises';

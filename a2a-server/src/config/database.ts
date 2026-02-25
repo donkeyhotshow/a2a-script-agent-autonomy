@@ -2,6 +2,9 @@ import { PrismaClient } from '@prisma/client';
 
 /**
  * Database Configuration
+ *
+ * Реализация на основе плана: plans/a2a-server-implementation-plan.md
+ *
  * Prisma client setup and connection management
  */
 

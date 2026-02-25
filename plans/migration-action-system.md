@@ -52,27 +52,55 @@ subActions:  # action ids
 ### 1. Формат Actions
 
 **Файл:** `a2a-server/src/actions/`
-- [ ] Переделать структуру с priority
-- [ ] subActions = только action ids
-- [ ] Оставить полные данные на сервере
+- [ ] [Переделать структуру с priority](#переделать-структуру-с-priority)
+- [ ] [subActions = только action ids](#subactions--только-action-ids)
+- [ ] [Оставить полные данные на сервере](#оставить-полные-данные-на-сервере)
 
 ### 2. API
 
 **Файл:** `a2a-server/src/routes/`
-- [ ] GET /api/v1/actions/:actionId
-- [ ] GET /api/v1/actions/search?q=
+- [ ] [GET /api/v1/actions/:actionId](#get-apiv1actionsactionid)
+- [ ] [GET /api/v1/actions/search?q=](#get-apiv1actionssearchq)
 
 ### 4. Web UI
 
 **Файл:** `a2a-client/web/`
-- [ ] Запрос actionId → сервер
-- [ ] Сортировка по priority
-- [ ] Подтверждение запуска
+- [ ] [Запрос actionId → сервер](#запрос-actionid--сервер)
+- [ ] [Сортировка по priority](#сортировка-по-priority)
+- [ ] [Подтверждение запуска](#подтверждение-запуска)
 
 ### 5. Ollama (Fallback)
 
 **Папка:** `external-ai-hub/`
-- [ ] Интеграция для генерации если action не найден
+- [ ] [Интеграция для генерации если action не найден](#интеграция-для-генерации-если-action-не-найден)
+
+---
+
+### Переделать структуру с priority
+
+
+### subActions = только action ids
+
+
+### Оставить полные данные на сервере
+
+
+### GET /api/v1/actions/:actionId
+
+
+### GET /api/v1/actions/search?q=
+
+
+### Запрос actionId → сервер
+
+
+### Сортировка по priority
+
+
+### Подтверждение запуска
+
+
+### Интеграция для генерации если action не найден
 
 ## Зависимые файлы
 

@@ -15,11 +15,11 @@ Order by dependency (leaf first):
 
 | Order | Package       | Current        | Action |
 |-------|---------------|----------------|--------|
-| 1     | **types**     | JS + JSDoc     | Convert to `.ts`; keep single source of truth for protocol/context/file types. |
-| 2     | **fs-utils**  | JS, no types   | Add `tsconfig`, rename to `.ts`, add types. |
-| 3     | **embedding** | JS, no types   | Add `tsconfig`, rename to `.ts`. |
-| 4     | **script-runner** | JS (ESM), index.d.ts | Convert to `.ts`; keep ESM; vm2 types if needed. |
-| 5     | **api-client**| JS + types/    | Convert to `.ts`; consume @a2a/types. |
+| 1     | **types**     | ~~JS + JSDoc~~ → **TS** | Done: `src/index.ts`, build → `dist/`, CJS. |
+| 2     | **fs-utils**  | ~~JS~~ → **TS** | Done: all modules `.ts`, build → `dist/`, tests use `dist/`. |
+| 3     | **embedding** | ~~JS~~ → **TS** | Done: `src/index.ts`, build → `dist/`, CJS. |
+| 4     | **script-runner** | ~~JS~~ → **TS** | Done: ESM, `vm2.d.ts`, build → `dist/`, tests pass. |
+| 5     | **api-client**| ~~JS~~ → **TS** | Done: protocol, async-client, action-handler, index → `dist/`. |
 | 6     | **rag**       | JS + types/    | Convert to `.ts`; consume @a2a/types, @a2a/fs-utils, @a2a/embedding. |
 | 7     | **agent**     | JS + types/    | Convert to `.ts`; consume api-client, rag, fs-utils. |
 
@@ -77,7 +77,9 @@ Per-package steps:
 
 ## Checklist (summary)
 
-- [ ] packages: types → fs-utils → embedding → script-runner → api-client → rag → agent (TS migration).
+- [x] packages: **types** → **fs-utils** migrated to TS (done).
+- [x] **embedding**, **script-runner**, **api-client** migrated to TS.
+- [ ] packages: rag → agent (TS migration).
 - [ ] Single source for protocol/context types: `@a2a/types`.
 - [ ] src: use `@a2a/types`; remove duplicate types (mark **удалить** where removed).
 - [ ] context-parser: move to package or keep in src; document.

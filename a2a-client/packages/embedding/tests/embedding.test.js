@@ -2,7 +2,7 @@
  * Tests for @a2a/embedding
  */
 
-const { EmbeddingClient, createEmbeddingClient, DIMENSIONS, DEFAULT_MODELS } = require('../src/index');
+const { EmbeddingClient, createEmbeddingClient, DIMENSIONS, DEFAULT_MODELS } = require('../dist/index');
 
 describe('EmbeddingClient', () => {
   describe('constructor', () => {
@@ -147,8 +147,8 @@ describe('EmbeddingClient', () => {
 
   describe('DEFAULT_MODELS', () => {
     test('should have default models defined', () => {
-      expect(DEFAULT_MODELS.code).toBe('nomic-embed-text');
-      expect(DEFAULT_MODELS.general).toBe('mxbai-embed-large');
+      expect(DEFAULT_MODELS.ollama).toBe('nomic-embed-text');
+      expect(DEFAULT_MODELS.openai).toBe('text-embedding-3-small');
     });
   });
 });

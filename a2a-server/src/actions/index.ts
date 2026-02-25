@@ -1,5 +1,7 @@
 /**
  * Index file for Actions system - exports all modules
+ *
+ * Реализация на основе плана: plans/action-scripts-integration.md
  * 
  * Usage:
  * ```typescript
