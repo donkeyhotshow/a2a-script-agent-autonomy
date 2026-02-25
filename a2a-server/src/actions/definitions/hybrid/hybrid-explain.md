@@ -1,6 +1,6 @@
 # hybrid-explain
 
-Explain code with AI and context.
+Explain code with AI and context. **План:** [actions-definitions-for-auto-ai](../../../../plans/actions-definitions-for-auto-ai.md). **Use-case:** [5-hybrid](../../../../docs/use-cases/auto-ai/5-hybrid.md).
 
 ## Priority
 75

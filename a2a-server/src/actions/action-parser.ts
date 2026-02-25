@@ -335,30 +335,40 @@ export function parseActionFromMarkdown(content: string, filename: string): Acti
 }
 
 /**
- * Read all .md files from a directory and parse them as actions
+ * Recursively collect all .md paths from a directory (skip README.md).
+ */
+async function collectMarkdownFiles(dirPath: string, out: string[] = []): Promise<string[]> {
+  const entries = await fs.readdir(dirPath, { withFileTypes: true });
+  for (const e of entries) {
+    const full = path.join(dirPath, e.name);
+    if (e.isDirectory()) {
+      await collectMarkdownFiles(full, out);
+    } else if (e.name.endsWith('.md') && e.name.toLowerCase() !== 'readme.md') {
+      out.push(full);
+    }
+  }
+  return out;
+}
+
+/**
+ * Read all .md files from a directory (and subdirs) and parse them as actions.
  */
 export async function parseAllActionsFromDirectory(directoryPath: string): Promise<ActionDefinition[]> {
   const actions: ActionDefinition[] = [];
-  
   try {
-    const files = await fs.readdir(directoryPath);
-    
-    for (const file of files) {
-      // Skip README files - they are documentation, not action definitions
-      if (file.endsWith('.md') && file.toLowerCase() !== 'readme.md') {
-        const filePath = path.join(directoryPath, file);
-        try {
-          const content = await fs.readFile(filePath, 'utf-8');
-          const action = parseActionFromMarkdown(content, file);
-          actions.push(action);
-        } catch (error) {
-          console.error(`Error parsing action file ${file}:`, error);
-        }
+    const mdFiles = await collectMarkdownFiles(directoryPath);
+    for (const filePath of mdFiles) {
+      try {
+        const content = await fs.readFile(filePath, 'utf-8');
+        const baseName = path.basename(filePath);
+        const action = parseActionFromMarkdown(content, baseName);
+        actions.push(action);
+      } catch (error) {
+        console.error(`Error parsing action file ${filePath}:`, error);
       }
     }
   } catch (error) {
     console.error(`Error reading directory ${directoryPath}:`, error);
   }
-  
   return actions;
 }

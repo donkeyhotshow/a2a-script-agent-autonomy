@@ -1,6 +1,6 @@
 # ai-analyze
 
-Generic AI-based code analysis. Priority: 15.
+Generic AI-based code analysis. Priority: 15. **План:** [actions-definitions-for-auto-ai](../../../../plans/actions-definitions-for-auto-ai.md).
 
 ## Context
 ```json
@@ -35,5 +35,17 @@ Run analysis via LLM.
 ```typescript
 export default async function run(input: { context: unknown; task: string }): Promise<{ findings: unknown[] }> {
   return { findings: [] };
+}
+```
+
+### 3. ai-analyze-report
+Format findings as report for user.
+
+**Input:** findings[]  
+**Output:** report
+
+```typescript
+export default async function run(input: { findings: unknown[] }): Promise<{ report: string }> {
+  return { report: '' };
 }
 ```

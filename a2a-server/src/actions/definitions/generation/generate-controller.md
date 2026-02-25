@@ -1,6 +1,6 @@
 # generate-controller
 
-Generate controller with actions.
+Generate controller with actions. **План:** [actions-definitions-for-auto-ai](../../../../plans/actions-definitions-for-auto-ai.md). **Use-case:** [4-code-generation](../../../../docs/use-cases/auto-ai/4-code-generation.md).
 
 ## Priority
 80
@@ -21,5 +21,17 @@ Create controller file with stub actions.
 ```typescript
 export default async function run(input: { controllerName: string; actions?: string[] }): Promise<{ filePath: string }> {
   return { filePath: '' };
+}
+```
+
+### 2. generate-controller-routes
+Register REST routes for controller.
+
+**Input:** filePath, controllerName, actions[]  
+**Output:** routesRegistered
+
+```typescript
+export default async function run(input: { filePath: string; controllerName: string; actions?: string[] }): Promise<{ routesRegistered: string[] }> {
+  return { routesRegistered: [] };
 }
 ```

@@ -1,6 +1,6 @@
 # ai-fallback
 
-Generic LLM handling when no specific action matches. Priority: 10.
+Generic LLM handling when no specific action matches. Priority: 10. **План:** [actions-definitions-for-auto-ai](../../../../plans/actions-definitions-for-auto-ai.md).
 
 ## Context
 ```json
@@ -33,5 +33,17 @@ Call external AI with prompt.
 ```typescript
 export default async function run(input: { prompt: string }): Promise<{ response: string }> {
   return { response: '' };
+}
+```
+
+### 3. ai-fallback-respond
+Format response for user (message block).
+
+**Input:** response  
+**Output:** message
+
+```typescript
+export default async function run(input: { response: string }): Promise<{ message: string }> {
+  return { message: input.response };
 }
 ```

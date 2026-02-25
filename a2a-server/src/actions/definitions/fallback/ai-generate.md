@@ -1,6 +1,6 @@
 # ai-generate
 
-Generic AI-based code generation. Priority: 15.
+Generic AI-based code generation. Priority: 15. **План:** [actions-definitions-for-auto-ai](../../../../plans/actions-definitions-for-auto-ai.md).
 
 ## Context
 ```json
@@ -35,5 +35,17 @@ Call LLM for code generation.
 ```typescript
 export default async function run(input: { prompt: string }): Promise<{ draft: string; diff?: string }> {
   return { draft: '' };
+}
+```
+
+### 3. ai-generate-apply
+Optionally apply draft (with confirm).
+
+**Input:** draft, diff?, confirm?  
+**Output:** applied[]
+
+```typescript
+export default async function run(input: { draft: string; diff?: string; confirm?: boolean }): Promise<{ applied: string[] }> {
+  return { applied: [] };
 }
 ```
