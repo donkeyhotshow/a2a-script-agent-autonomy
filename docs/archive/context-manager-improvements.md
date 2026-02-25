@@ -51,73 +51,72 @@
 **Текущее:** Статический набор из 10 типов
 
 **Предложения:**
-- [ ] Динамические типы контекста (пользовательские)
-- [ ] Поддержка вложенных структур (nested context)
-- [ ] Typed context для каждого типа (сейчас `unknown`)
+- [x] Динамические типы контекста (пользовательские)
+- [x] Поддержка вложенных структур (nested context)
+- [x] Typed context для каждого типа (сейчас `unknown`)
 
 ### 2. Улучшение управления памятью
 
 **Текущее:** Простой LRU eviction по приоритету
 
 **Предложения:**
-- [ ] Компрессия данных (gzip для больших graph)
-- [ ] Инкрементальное хранение (delta updates)
+- [x] Компрессия данных (gzip для больших graph)
+- [x] Инкрементальное хранение (delta updates)
 - [ ] Memory-mapped файлы для больших данных
-- [ ] TTL для каждого типа контекста
+- [x] TTL для каждого типа контекста
 
 ### 3. Сериализация и персистентность
 
 **Текущее:** JSON serialize/deserialize
 
 **Предложения:**
-- [ ] Бинарная сериализация (MessagePack/ProtoBuf)
-- [ ] Сохранение в Redis для распределённости
-- [ ] Snapshot состояния между фазами
+- [x] Бинарная сериализация (MessagePack/ProtoBuf)
+- [x] Сохранение в Redis для распределённости
+- [x] Snapshot состояния между фазами
 
 ### 4. Валидация и типизация
 
 **Текущее:** Generic `T = unknown`
 
 **Предложения:**
-- [ ] Zod схемы для каждого типа контекста
-- [ ] Runtime валидация при set()
-- [ ] Type-safe API
+- [x] Zod схемы для каждого типа контекста
+- [x] Runtime валидация при set()
+- [x] Type-safe API
 
 ### 5. Событийная модель
 
 **Текущее:** Отсутствует
 
 **Предложения:**
-- [ ] Event emitter для изменений контекста
-- [ ] WebSocket уведомления клиенту
-- [ ] Middleware для intercept
+- [x] Event emitter для изменений контекста
+- [x] Middleware для intercept
 
 ### 6. Дифф и синхронизация
 
 **Текущее:** Полная перезапись
 
 **Предложения:**
-- [ ] Context diff (что изменилось)
-- [ ] Incremental sync с клиентом
-- [ ] Conflict resolution
+- [x] Context diff (что изменилось)
+- [x] Incremental sync с клиентом
+- [x] Conflict resolution
 
 ### 7. Кэширование
 
 **Текущее:** Отсутствует
 
 **Предложения:**
-- [ ] L2 кэш для часто используемых данных
-- [ ] Предвычисление getForPhase()
-- [ ] Кэш результатов expensive операций
+- [x] L2 кэш для часто используемых данных
+- [x] Предвычисление getForPhase()
+- [x] Кэш результатов expensive операций
 
 ### 8. Мониторинг и метрики
 
 **Текущее:** Basic logging
 
 **Предложения:**
-- [ ] Prometheus метрики
-- [ ] Alert при превышении лимитов
-- [ ] Performance profiling
+- [x] Prometheus метрики
+- [x] Alert при превышении лимитов
+- [x] Performance profiling
 
 ---
 
@@ -125,7 +124,8 @@
 
 ### Существующие методы
 
-```typescript
+```
+typescript
 class ContextManager {
   // Основные операции
   set(type: ContextType, data: unknown): ContextResult;
@@ -152,7 +152,8 @@ class ContextManager {
 
 ### Предлагаемые новые методы
 
-```typescript
+```
+typescript
 class ContextManager {
   // Валидация
   validate(type: ContextType, data: unknown): ValidationResult;
@@ -184,7 +185,8 @@ class ContextManager {
 
 ### Текущие зависимости
 
-```json
+```
+json
 {
   "dependencies": {
     "zod": "^3.x" // Валидация конфигов
@@ -198,7 +200,8 @@ class ContextManager {
 
 ### Предлагаемые зависимости
 
-```json
+```
+json
 {
   "dependencies": {
     "zod": "^3.x",
@@ -240,7 +243,6 @@ class ContextManager {
 **Задачи:**
 1. Event emitter для изменений
 2. Hooks: onChange, onEvict, onClear
-3. Интеграция с WebSocket для клиента
 
 **Файлы:**
 - `a2a-server/src/services/context-manager.events.ts` — события
@@ -282,7 +284,8 @@ class ContextManager {
 
 ### Базовое использование
 
-```typescript
+```
+typescript
 import { ContextManager, type ContextType } from './services/context-manager.service.js';
 
 const ctx = new ContextManager(50000); // 50KB limit
@@ -301,7 +304,8 @@ const phaseContext = ctx.getForPhase('analysis');
 
 ### С валидацией (после Фазы 2)
 
-```typescript
+```
+typescript
 import { contextSchemas } from './services/context-manager.types.js';
 
 const ctx = new ContextManager();
@@ -316,7 +320,8 @@ try {
 
 ### С событиями (после Фазы 3)
 
-```typescript
+```
+typescript
 const ctx = new ContextManager();
 
 ctx.on('evict', (data) => {
@@ -324,8 +329,8 @@ ctx.on('evict', (data) => {
 });
 
 ctx.on('change', (data) => {
-  // Sync с клиентом
-  ws.send({ type: 'context-update', data });
+  // Handle context change
+  console.log('Context changed:', data.type);
 });
 ```
 

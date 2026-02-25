@@ -371,11 +371,11 @@ definitions/
 
 ### Следующие шаги
 
-- [ ] Реализовать context-query action
-- [ ] Реализовать analyze-full action
-- [ ] Реализовать hybrid-fix action
-- [ ] Реализовать graph-build action
-- [ ] Реализовать generation actions (CRUD, model, controller)
+- [x] Реализовать context-query action
+- [x] Реализовать analyze-full action
+- [x] Реализовать hybrid-fix action
+- [x] Реализовать graph-build action
+- [x] Реализовать generation actions (CRUD, model, controller)
 - [ ] Добавить тесты для каждого action
 - [ ] Документировать все action definitions
 

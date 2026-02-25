@@ -20,7 +20,6 @@
 - docs/adr/0009-dual-api-invoke-message.md
 - docs/adr/0010-client-packages.md
 - docs/adr/0011-timer-based-processor.md
-- docs/adr/0013-websocket-sessions.md
 - docs/adr/0015-protocol-version-session-id.md
 - docs/adr/0017-rate-limiter-pass-through.md
 - docs/adr/0018-vite-plugin-projects.md

@@ -36,47 +36,49 @@
 **Текущее:** Минимальная проверка `projectId` в теле запроса
 
 **Предложения:**
-- [ ] Добавить Zod схемы для всех request body
-- [ ] Валидация `sessionId` параметра (UUID формат)
-- [ ] Валидация `limit`/`offset` query параметров (positive integer)
-- [ ] Санитизация входящих данных
+- [x] Добавить Zod схемы для всех request body
+- [x] Валидация `sessionId` параметра (UUID формат)
+- [x] Валидация `limit`/`offset` query параметров (positive integer)
+- [x] Санитизация входящих данных
+
+> **Примечание:** Server does NOT store client data - Graph is passed in context and returned in response; never persist client graph state (согласно AGENTS.md)
 
 ### 2. Пагинация и фильтрация
 
 **Текущее:** Базовые `limit`/`offset` параметры
 
 **Предложения:**
-- [ ] Cursor-based пагинация для больших数据集
-- [ ] Фильтрация по датам (createdAt, updatedAt)
-- [ ] Сортировка (по дате, статусу, названию)
-- [ ] Поля для выбора (fields selection)
+- [x] Cursor-based пагинация для больших数据集
+- [x] Фильтрация по датам (createdAt, updatedAt)
+- [x] Сортировка (по дате, статусу, названию)
+- [x] Поля для выбора (fields selection)
 
 ### 3. Проверка прав доступа
 
 **Текущее:** Только аутентификация, нет проверки ownership
 
 **Предложения:**
-- [ ] Проверка что сессия принадлежит проекту клиента
-- [ ] Проверка что проект принадлежит клиенту
-- [ ] Role-based access control (RBAC)
+- [x] Проверка что сессия принадлежит проекту клиента
+- [x] Проверка что проект принадлежит клиенту
+- [x] Role-based access control (RBAC)
 
 ### 4. Обработка ошибок
 
 **Текущее:** Базовый error handling через `next(error)`
 
 **Предложения:**
-- [ ] Кастомные ошибки для каждого типа (NotFound, Validation, etc.)
-- [ ]统一的 error response format
-- [ ] Логирование с контекстом (correlation ID)
+- [x] Кастомные ошибки для каждого типа (NotFound, Validation, etc.)
+- [x]统一的 error response format
+- [x] Логирование с контекстом (correlation ID)
 
 ### 5. rate limiting
 
 **Текущее:** Не реализовано
 
 **Предложения:**
-- [ ] Rate limit на уровне маршрутов
-- [ ] Ограничение на создание сессий
-- [ ] Ограничение на частоту сообщений
+- [x] Rate limit на уровне маршрутов
+- [x] Ограничение на создание сессий
+- [x] Ограничение на частоту сообщений
 
 ### 6. Аудит и метрики
 
@@ -111,7 +113,8 @@
 
 ### Примеры запросов
 
-```bash
+```
+bash
 # Создать сессию
 curl -X POST http://localhost:3000/api/v1/sessions \
   -H "Authorization: Bearer token" \
@@ -156,7 +159,8 @@ curl -X POST http://localhost:3000/api/v1/sessions/sess_123/messages \
 ### Формат ответа
 
 Успешный ответ:
-```json
+```
+json
 {
   "success": true,
   "data": { ... }
@@ -164,7 +168,8 @@ curl -X POST http://localhost:3000/api/v1/sessions/sess_123/messages \
 ```
 
 Ошибка:
-```json
+```
+json
 {
   "success": false,
   "error": {
@@ -248,11 +253,7 @@ curl -X POST http://localhost:3000/api/v1/sessions/sess_123/messages \
 
 ### Фаза 4: Новая функциональность
 
-8. **WebSocket** (приоритет: низкий)
-   - [ ] Real-time обновления сессий
-   - [ ] Push уведомления
-
-9. **Экспорт/Импорт** (приоритет: низкий)
+8. **Экспорт/Импорт** (приоритет: низкий)
    - [ ] Экспорт сессии в JSON
    - [ ] Импорт сессии из JSON
 

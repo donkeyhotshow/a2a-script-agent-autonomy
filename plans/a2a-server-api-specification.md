@@ -36,7 +36,8 @@ X-API-Key: <api_key>
 Создание нового запроса.
 
 **Request Body:**
-```json
+```
+json
 {
   "task": "проанализируй проект",
   "sessionId": "uuid",
@@ -46,7 +47,8 @@ X-API-Key: <api_key>
 ```
 
 **Response:**
-```json
+```
+json
 {
   "promiseId": "req_xxx",
   "status": "pending",
@@ -63,7 +65,8 @@ X-API-Key: <api_key>
 Получение статуса запроса.
 
 **Response:**
-```json
+```
+json
 {
   "promiseId": "req_xxx",
   "status": "completed|failed|pending",
@@ -87,7 +90,8 @@ X-API-Key: <api_key>
 - `offset` - смещение
 
 **Response:**
-```json
+```
+json
 {
   "sessions": [],
   "total": 0,
@@ -104,7 +108,8 @@ X-API-Key: <api_key>
 Отправка сообщения в сессию.
 
 **Request Body:**
-```json
+```
+json
 {
   "message": {
     "role": "user",
@@ -126,7 +131,8 @@ X-API-Key: <api_key>
 Получение списка проектов.
 
 **Response:**
-```json
+```
+json
 {
   "projects": []
 }
@@ -140,21 +146,12 @@ X-API-Key: <api_key>
 
 - [ ] [Реализовать создание проекта](#реализовать-создание-проекта)
 
-## WebSocket
-
-### WS /ws
-
-Real-time коммуникация.
-
-- [ ] [Поддержка WebSocket соединений](#поддержка-websocket-соединений)
-- [ ] [Обработка событий](#обработка-событий)
-- [ ] [Heartbeat/ping-pong](#heartbeatping-pong)
-
 ## Error Responses
 
 ### 400 Bad Request
 
-```json
+```
+json
 {
   "error": {
     "code": "VALIDATION_ERROR",
@@ -165,7 +162,8 @@ Real-time коммуникация.
 
 ### 401 Unauthorized
 
-```json
+```
+json
 {
   "error": {
     "code": "UNAUTHORIZED",
@@ -176,7 +174,8 @@ Real-time коммуникация.
 
 ### 404 Not Found
 
-```json
+```
+json
 {
   "error": {
     "code": "NOT_FOUND",
@@ -187,7 +186,8 @@ Real-time коммуникация.
 
 ### 500 Internal Server Error
 
-```json
+```
+json
 {
   "error": {
     "code": "INTERNAL_ERROR",
@@ -235,15 +235,6 @@ Real-time коммуникация.
 
 
 ### Реализовать создание проекта
-
-
-### Поддержка WebSocket соединений
-
-
-### Обработка событий
-
-
-### Heartbeat/ping-pong
 
 
 ### Стандартизация формата ошибок

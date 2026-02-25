@@ -34,7 +34,6 @@
 
 - [`auth.controller.ts`](a2a-server/src/controllers/auth.controller.ts) — HTTP эндпоинты
 - [`auth.middleware.ts`](a2a-client/src/middleware/auth.middleware.ts) — верификация токенов
-- WebSocket хендлеры — аутентификация соединений
 
 ---
 
@@ -118,7 +117,8 @@
 
 ### Существующие методы
 
-```typescript
+```
+typescript
 // Регистрация
 function register(input: RegisterInput): Promise<RegisterResult>;
 interface RegisterInput { name: string; email: string; password: string; }
@@ -142,7 +142,8 @@ function verifyToken(token: string): JwtPayload;
 
 ### Предлагаемые новые методы
 
-```typescript
+```
+typescript
 // RBAC
 function assignRole(clientId: string, role: Role): Promise<void>;
 function hasPermission(clientId: string, permission: Permission): Promise<boolean>;
@@ -207,7 +208,8 @@ interface SessionInfo {
 
 ### Текущие зависимости
 
-```json
+```
+json
 {
   "dependencies": {
     "jsonwebtoken": "^9.x"
@@ -223,7 +225,8 @@ interface SessionInfo {
 
 ### Предлагаемые зависимости
 
-```json
+```
+json
 {
   "dependencies": {
     "jsonwebtoken": "^9.x",
@@ -317,7 +320,8 @@ interface SessionInfo {
 
 ### Базовое использование
 
-```typescript
+```
+typescript
 import { register, getTokenByCredentials, refreshToken } from './services/auth.service.js';
 
 // Регистрация
@@ -338,7 +342,8 @@ const newTokens = await refreshToken(tokens.refreshToken);
 
 ### С RBAC (после Фазы 3)
 
-```typescript
+```
+typescript
 import { checkPermission } from './services/auth.service.js';
 
 // Middleware
@@ -358,7 +363,8 @@ app.delete('/admin/users', requirePermission('admin'), deleteUser);
 
 ### С 2FA (после Фазы 5)
 
-```typescript
+```
+typescript
 import { enable2FA, verify2FA } from './services/auth.service.js';
 
 // Включение
@@ -371,7 +377,8 @@ const tokens = await verify2FA(clientId, '123456');
 
 ### С сессиями (после Фазы 4)
 
-```typescript
+```
+typescript
 import { revokeAllClientSessions } from './services/auth.service.js';
 
 // Logout everywhere

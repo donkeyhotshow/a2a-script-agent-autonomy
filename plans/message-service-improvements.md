@@ -1,4 +1,4 @@
-# План: Message Service (7KB)
+ # План: Message Service (7KB)
 
 ## Текущее состояние
 
@@ -8,7 +8,8 @@
 
 #### Модель данных (Prisma):
 
-```prisma
+```
+prisma
 model Message {
   id         String          @id
   sessionId  String          @map("session_id")
@@ -47,7 +48,6 @@ model Message {
 
 - [`request-processor.service.ts`](a2a-server/src/services/request-processor.service.ts) — создание сообщений при обработке запросов
 - [`SessionService`](a2a-server/src/services/session.service.ts) — связь сессий с сообщениями
-- WebSocket хендлеры — отправка/получение сообщений
 
 ---
 
@@ -58,26 +58,26 @@ model Message {
 **Текущее:** Generic `content: Record<string, unknown>`
 
 **Предложения:**
-- [ ] Typed content schema (ContentType enum)
-- [ ] Zod валидация для content
-- [ ] Type-safe методы с дженериками
+- [x] Typed content schema (ContentType enum)
+- [x] Zod валидация для content
+- [x] Type-safe методы с дженериками
 
 ### 2. Пакетные операции
 
 **Текущее:** Только одиночные операции
 
 **Предложения:**
-- [ ] `createMany()` — массовое создание
-- [ ] `updateMany()` — массовое обновление
-- [ ] `deleteBySessionId()` — удаление всех сообщений сессии
-- [ ] Транзакции для связанных операций
+- [x] `createMany()` — массовое создание
+- [x] `updateMany()` — массовое обновление
+- [x] `deleteBySessionId()` — удаление всех сообщений сессии
+- [x] Транзакции для связанных операций
 
 ### 3. Пагинация и курсоры
 
 **Текущее:** Простой `limit`/`offset`
 
 **Предложения:**
-- [ ] Cursor-based пагинация
+- [x] Cursor-based пагинация
 - [ ] Metadata в ответе (total, hasMore)
 - [ ] `getMessagesCursor(sessionId, cursor, limit)`
 
@@ -123,7 +123,6 @@ model Message {
 
 **Предложения:**
 - [ ] Event emitter: onCreate, onUpdate, onDelete
-- [ ] WebSocket push при изменениях
 - [ ] Хуки для бизнес-логики
 
 ---
@@ -132,7 +131,8 @@ model Message {
 
 ### Существующие методы
 
-```typescript
+```
+typescript
 class MessageService {
   // CRUD
   create(data: CreateMessageData): Promise<Message>;
@@ -163,7 +163,8 @@ interface UpdateMessageData {
 
 ### Предлагаемые новые методы
 
-```typescript
+```
+typescript
 class MessageService {
   // Пакетные операции
   createMany(data: CreateMessageData[]): Promise<Message[]>;
@@ -217,7 +218,8 @@ interface MessageFilters {
 
 ### Текущие зависимости
 
-```json
+```
+json
 {
   "dependencies": {
     "@prisma/client": "^5.x"
@@ -230,7 +232,8 @@ interface MessageFilters {
 
 ### Предлагаемые зависимости
 
-```json
+```
+json
 {
   "dependencies": {
     "@prisma/client": "^5.x",
@@ -299,8 +302,7 @@ interface MessageFilters {
 
 **Задачи:**
 1. Event emitter
-2. WebSocket push
-3. Хуки для бизнес-логики
+2. Хуки для бизнес-логики
 
 **Файлы:**
 - `a2a-server/src/services/message.events.ts`
@@ -321,7 +323,8 @@ interface MessageFilters {
 
 ### Базовое использование
 
-```typescript
+```
+typescript
 import { messageService, type CreateMessageData } from './services/message.service.js';
 
 // Создание
@@ -342,7 +345,8 @@ await messageService.update(msg.id, { status: 'pending' });
 
 ### С пагинацией (после Фазы 4)
 
-```typescript
+```
+typescript
 const result = await messageService.getMessagesPaginated('sess_123', {
   limit: 20,
   cursor: 'msg_12345',
@@ -355,9 +359,10 @@ console.log(result.nextCursor); // string | null
 
 ### С событиями (после Фазы 6)
 
-```typescript
+```
+typescript
 messageService.on('create', (msg) => {
-  ws.broadcast({ type: 'message', data: msg });
+  // Handle new message
 });
 
 messageService.on('delete', ({ messageId, sessionId }) => {
@@ -368,7 +373,8 @@ messageService.on('delete', ({ messageId, sessionId }) => {
 
 ### С кэшированием (после Фазы 5)
 
-```typescript
+```
+typescript
 // Автоматический кэш
 const cached = await messageService.getById('msg_123');
 // При обновлении кэш инвалидируется

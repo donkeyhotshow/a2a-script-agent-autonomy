@@ -160,47 +160,6 @@ export interface PaginatedResponse<T> {
 }
 
 // ============================================
-// WebSocket Event Types (for future use)
-// ============================================
-
-export interface WsEvent<T = unknown> {
-  type: WsEventType;
-  payload: T;
-  timestamp: Date;
-}
-
-export type WsEventType = 
-  | 'task:progress'
-  | 'task:completed'
-  | 'files:updated'
-  | 'files:requested'
-  | 'error';
-
-export interface TaskProgressPayload {
-  task_id: string;
-  progress: number;
-  status: TaskStatus;
-}
-
-export interface TaskCompletedPayload {
-  task_id: string;
-  result: unknown;
-}
-
-export interface FilesUpdatedPayload {
-  files: FileBlock[];
-}
-
-export interface FilesRequestedPayload {
-  paths: string[];
-}
-
-export interface ErrorPayload {
-  code: string;
-  message: string;
-}
-
-// ============================================
 // Architectural Feature Types
 // ============================================
 

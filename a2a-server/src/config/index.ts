@@ -43,10 +43,6 @@ const configSchema = z.object({
   logLevel: z.enum(['error', 'warn', 'info', 'debug']).default('info'),
   logFormat: z.enum(['json', 'pretty']).default('json'),
 
-  // WebSocket
-  wsPort: z.coerce.number().default(3001),
-  wsHeartbeatIntervalMs: z.coerce.number().default(30000),
-
   // Queue
   queueConcurrency: z.coerce.number().default(5),
   indexingConcurrency: z.coerce.number().default(2),
@@ -85,8 +81,6 @@ function loadConfig() {
     rateLimitMaxRequests: process.env.RATE_LIMIT_MAX_REQUESTS,
     logLevel: process.env.LOG_LEVEL,
     logFormat: process.env.LOG_FORMAT,
-    wsPort: process.env.WS_PORT,
-    wsHeartbeatIntervalMs: process.env.WS_HEARTBEAT_INTERVAL_MS,
     queueConcurrency: process.env.QUEUE_CONCURRENCY,
     indexingConcurrency: process.env.INDEXING_CONCURRENCY,
     embeddingDimension: process.env.EMBEDDING_DIMENSION,

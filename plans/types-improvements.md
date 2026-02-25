@@ -14,9 +14,8 @@
    - Message Types: [`ClientMessage`](a2a-server/src/types/index.ts:59), [`ServerMessage`](a2a-server/src/types/index.ts:64)
    - Search Types: [`SearchQuery`](a2a-server/src/types/index.ts:89), [`SearchResult`](a2a-server/src/types/index.ts:109), [`SearchMatch`](a2a-server/src/types/index.ts:116)
    - API Types: [`ApiResponse`](a2a-server/src/types/index.ts:141), [`ApiError`](a2a-server/src/types/index.ts:147), [`PaginatedResponse`](a2a-server/src/types/index.ts:153)
-   - WebSocket Types: [`WsEvent`](a2a-server/src/types/index.ts:164), [`WsEventType`](a2a-server/src/types/index.ts:170)
-   - Architectural Feature: [`ArchitecturalFeature`](a2a-server/src/types/index.ts:205)
-   - Request API Result: [`RequestContextBlock`](a2a-server/src/types/index.ts:221), [`RequestApiResult`](a2a-server/src/types/index.ts:242)
+   - Architectural Feature: [`ArchitecturalFeature`](a2a-server/src/types/index.ts:167)
+   - Request API Result: [`RequestContextBlock`](a2a-server/src/types/index.ts:183), [`RequestApiResult`](a2a-server/src/types/index.ts:204)
 
 2. **[`entity.types.ts`](a2a-server/src/types/entity.types.ts:1)** — Типы для Knowledge Graph
    - Entity Types: [`EntityTypeName`](a2a-server/src/types/entity.types.ts:7), [`RelationTypeName`](a2a-server/src/types/entity.types.ts:23)

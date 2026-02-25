@@ -96,34 +96,34 @@ interface RequestApiResult {
 **Текущее:** Базовые проверки типов через type guards
 
 **Предложения:**
-- [ ] Схема валидации с Zod для всех типов сообщений
-- [ ] Валидация session_id (формат UUID)
-- [ ] Валидация version (semver)
-- [ ] Валидация TaskStatus (enum)
-- [ ] Валидация outcome (enum)
-- [ ] Custom error codes с описаниями
-- [ ] Dry-run validation (без throw)
+- [x] Схема валидации с Zod для всех типов сообщений
+- [x] Валидация session_id (формат UUID)
+- [x] Валидация version (semver)
+- [x] Валидация TaskStatus (enum)
+- [x] Валидация outcome (enum)
+- [x] Custom error codes с описаниями
+- [x] Dry-run validation (без throw)
 
 ### 2. Template Engine
 
 **Текущее:** Ручное построение объектов
 
 **Предложения:**
-- [ ] Message templates (预设消息模板)
-- [ ] Template inheritance
-- [ ] Variable interpolation
-- [ ] Conditional fields
-- [ ] Template registry/caching
+- [x] Message templates (预设消息模板)
+- [x] Template inheritance
+- [x] Variable interpolation
+- [x] Conditional fields
+- [x] Template registry/caching
 
 ### 3. Fluent API
 
 **Текущее:** Функциональный стиль с отдельными функциями
 
 **Предложения:**
-- [ ] Builder pattern для сложных сообщений
-- [ ] Method chaining
-- [ ] Default values
-- [ ] Partial builders
+- [x] Builder pattern для сложных сообщений
+- [x] Method chaining
+- [x] Default values
+- [x] Partial builders
 
 ```typescript
 // Пример Fluent API
@@ -140,54 +140,54 @@ const message = new MessageBuilder()
 **Текущее:** Ограниченный набор типов
 
 **Предложения:**
-- [ ] Stream消息 (серверные события)
-- [ ] Ping/Pong сообщения
-- [ ] Batch сообщения (множественные задачи)
-- [ ] Push notifications
-- [ ] Typing indicator
-- [ ] Message reactions
+- [x] Stream消息 (серверные события)
+- [x] Ping/Pong сообщения
+- [x] Batch сообщения (множественные задачи)
+- [x] Push notifications
+- [x] Typing indicator
+- [x] Message reactions
 
 ### 5. Сериализация
 
 **Текущее:** Только JSON
 
 **Предложения:**
-- [ ] MessagePack для компактности
-- [ ] Gzip compression для больших сообщений
-- [ ] Schema versioning
-- [ ] Backward/forward compatibility
-- [ ] Binary protocol support
+- [x] MessagePack для компактности
+- [x] Gzip compression для больших сообщений
+- [x] Schema versioning
+- [x] Backward/forward compatibility
+- [x] Binary protocol support
 
 ### 6. Производительность
 
 **Текущее:** Синхронная обработка
 
 **Предложения:**
-- [ ] Object pooling для часто создаваемых сообщений
-- [ ] Lazy serialization
-- [ ] Immutable message objects
-- [ ] Structural sharing для partial updates
-- [ ] Freeze/unfreeze для safety
+- [x] Object pooling для часто создаваемых сообщений
+- [x] Lazy serialization
+- [x] Immutable message objects
+- [x] Structural sharing для partial updates
+- [x] Freeze/unfreeze для safety
 
 ### 7. Message History
 
 **Текущее:** Stateless — нет хранения истории
 
 **Предложения:**
-- [ ] Message history tracking
-- [ ] Message diff (изменения между сообщениями)
-- [ ] Message replay
-- [ ] Undo/redo для сообщений
+- [x] Message history tracking
+- [x] Message diff (изменения между сообщениями)
+- [x] Message replay
+- [x] Undo/redo для сообщений
 
 ### 8. Интеграция с Context
 
 **Текущее:** Частичная интеграция с context-parser
 
 **Предложения:**
-- [ ] Unified context builder
-- [ ] Context templates
-- [ ] Context validation
-- [ ] Context merging
+- [x] Unified context builder
+- [x] Context templates
+- [x] Context validation
+- [x] Context merging
 
 ---
 

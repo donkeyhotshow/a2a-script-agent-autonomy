@@ -3,7 +3,7 @@
 ## Scope
 
 - **packages/** (`a2a-client/packages`): working JS; migrate to TS gradually.
-- **src/** (`a2a-client/src`): TS server app (Express, WebSocket, phase machine, neurons). Plan merge and classify: **use on client** vs **remove**.
+- **src/** (`a2a-client/src`): TS server app (Express, phase machine, neurons). Plan merge and classify: **use on client** vs **remove**.
 
 Boundary (from AGENTS.md): client = indexes, history, runs commands; server = logic, controls client. Code in `packages/` is client-side; `src/` is currently the server app (no `@a2a/*` imports).
 
@@ -48,7 +48,7 @@ Per-package steps:
 - `config/`, `middleware/`, `routes/`, `repositories/` (Prisma, Redis, DB).
 - `services/`: request-processor, phase-machine, context-manager, neuron-activator, entity-recognizer, graph-store, session, request, auth, invoke, llm-router, file-cache, repo-map, watchdog, etc.
 - `neurons/` (all).
-- `websocket/`, `app.ts`, `index.ts`.
+- `app.ts`, `index.ts`.
 - `ml/`: embedding.service, indexer.service, search.service, plexe.client, tfidf.service — depend on Prisma/repos; **server-only**. Client RAG lives in `packages/rag` + `packages/embedding`.
 
 ### 2.3 Remove (after merge / when redundant)
@@ -84,5 +84,5 @@ Per-package steps:
 - [ ] src: use `@a2a/types`; remove duplicate types (mark **удалить** where removed).
 - [ ] context-parser: move to package or keep in src; document.
 - [ ] message-builder: keep in src (server-only).
-- [ ] Server-only: config, middleware, routes, repos, services, neurons, ml, websocket — no merge.
+- [ ] Server-only: config, middleware, routes, repos, services, neurons, ml — no merge.
 - [ ] Later: consider replacing src/ml with packages/rag + embedding; mark src/ml **удалить**.

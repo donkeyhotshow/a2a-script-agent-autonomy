@@ -46,7 +46,8 @@ Server: Re-активация нейронов с новым контентом
 
 ## Root Context Structure
 
-```typescript
+```
+typescript
 interface RootContext {
   projectName: string;
   projectType: string;
@@ -111,7 +112,8 @@ interface DirectoryTreeNode {
 
 ### Root Context
 
-```json
+```
+json
 {
   "projectName": "WebsiteStore E-commerce Platform",
   "projectType": "real-world-development",
@@ -197,7 +199,8 @@ interface DirectoryTreeNode {
 
 ### File Masks
 
-```json
+```
+json
 {
   "projectName": "WebsiteStore E-commerce Platform",
   "updatedAt": "2026-02-11T00:00:00Z",
@@ -220,7 +223,8 @@ interface DirectoryTreeNode {
 
 ### Active Actions
 
-```json
+```
+json
 {
   "projectName": "WebsiteStore E-commerce Platform",
   "updatedAt": "2026-02-11T00:00:00Z",
@@ -285,7 +289,8 @@ Root Context:
 
 ## Flow: Первое сообщение
 
-```mermaid
+```
+mermaid
 sequenceDiagram
     participant C as Client
     participant S as Server
@@ -293,7 +298,7 @@ sequenceDiagram
     participant NA as Neuron Activator
     participant CI as Context Injector
     
-    C->>S: WebSocket Connect
+    C->>S: HTTP Request (Start Session)
     S->>CH: createSessionContext(sessionId, projectId)
     CH-->>S: SessionContext
     
@@ -315,7 +320,8 @@ sequenceDiagram
 
 Создание новой сессии
 
-```typescript
+```
+typescript
 // Request
 {
   "projectId": "project-123",
@@ -328,16 +334,14 @@ sequenceDiagram
 {
   "sessionId": "session-456",
   "context": { ... },
-  "activatedNeurons": ["eloquent", "routing", "validation"],
-  "injectedContent": "## Laravel 11 Context..."
+  "activatedNeurons": ["eloquent", "routing", "validation"]  
 }
 ```
 
-### POST /sessions/:id/message
+Язык программирования TypeScript продолжает развиваться, предлагая разработчикам новые инструменты для создания надежных и масштабируемых приложений. Современные возможности языка позволяют эффективно работать с различными архитектурными паттернами и обеспечивать высокую производительность при минимальных затратах времени на разработку.
 
-Отправка сообщения в сессию
-
-```typescript
+```
+typescript
 // Request (new_task)
 {
   "context": {
@@ -367,7 +371,7 @@ sequenceDiagram
 
 ---
 
-## WebSocket Events
+## API Events
 
 ### Client → Server
 

@@ -293,16 +293,16 @@ export async function execute(code, context = {}) {
 
 ### 5.1 Unit тесты
 
-- [ ] Тест парсинга MD с TypeScript блоками
-- [ ] Тест actionProcessor.processTaskRequest
-- [ ] Тест actionProcessor.processStepResult
-- [ ] Тест итеративного обмена
+- [x] Тест парсинга MD с TypeScript блоками
+- [x] Тест actionProcessor.processTaskRequest
+- [x] Тест actionProcessor.processStepResult
+- [x] Тест итеративного обмена
 
 ### 5.2 Integration тесты
 
-- [ ] Полный цикл fix-vue-imports
-- [ ] Обработка ошибок при выполнении кода
-- [ ] Timeout при долгом выполнении
+- [x] Полный цикл fix-vue-imports
+- [x] Обработка ошибок при выполнении кода
+- [x] Timeout при долгом выполнении
 
 ## Приоритеты реализации
 

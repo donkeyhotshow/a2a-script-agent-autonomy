@@ -3,7 +3,6 @@ import app from './app.js';
 import { config } from './config/index.js';
 import { logger } from './utils/logger.js';
 import { setDatabaseLogger } from './config/database.js';
-import { initWebSocket } from './websocket/index.js';
 import { startRequestProcessor, stopRequestProcessor } from './services/request-processor.service.js';
 
 // Create HTTP server
@@ -11,9 +10,6 @@ const server = http.createServer(app);
 
 // Wire shared logger into database layer without introducing config↔utils cycles
 setDatabaseLogger(logger);
-
-// WebSocket (handles upgrade on /ws/sessions/*)
-initWebSocket(server);
 
 // Request processor: timer loop picks first pending request
 startRequestProcessor(config.requestProcessorIntervalMs);

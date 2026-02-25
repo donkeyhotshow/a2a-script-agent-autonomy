@@ -22,7 +22,8 @@ Agent-to-Agent сервер для интеллектуального анали
 
 ### Установка
 
-```bash
+```
+bash
 # Клонировать репозиторий
 cd a2a-server
 
@@ -47,7 +48,8 @@ npm run dev
 
 ### Проверка
 
-```bash
+```
+bash
 # Health check
 curl http://localhost:3000/health
 
@@ -70,10 +72,8 @@ a2a-server/
 │   ├── middleware/           # Express middleware
 │   ├── types/                # TypeScript типы
 │   ├── utils/                # Утилиты
-│   ├── ml/                   # ML интеграции
 │   ├── protocol/             # Протокол A2A
-│   ├── queue/                # Очереди задач
-│   └── websocket/            # WebSocket handlers
+│   └── queue/                # Очереди задач
 ├── prisma/
 │   └── schema.prisma         # Схема БД
 ├── tests/                    # Тесты
@@ -114,7 +114,8 @@ a2a-server/
 
 ## Скрипты
 
-```bash
+```
+bash
 npm run dev          # Запуск в режиме разработки
 npm run build        # Сборка TypeScript
 npm run start        # Запуск production сборки

@@ -46,7 +46,3 @@ Ollama (rnj-1) ищет подходящий action по семантике desc
 | Парсинг MD | [action-parser.ts](../action-parser.ts) |
 | Экспорт + Auto-AI индекс | [actions/index.ts](../index.ts), [definitions/auto-ai-index.ts](auto-ai-index.ts) |
 | Сервис выполнения | [action-service.ts](../action-service.ts) |
-
-## Архив
-
-Старые actions: `archive/actions-legacy/`

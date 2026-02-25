@@ -4,13 +4,15 @@
 
 ## Installation
 
-```bash
+```
+bash
 npm install @a2a/types
 ```
 
 ## Usage
 
-```javascript
+```
+javascript
 const { createContextBlock, createTask, createFileBlock, createSearchQuery } = require('@a2a/types');
 
 // Create context block
@@ -48,7 +50,8 @@ const query = createSearchQuery({
 
 ### ContextBlock
 
-```typescript
+```
+typescript
 interface ContextBlock {
   version: '1.0';
   session_id: string;
@@ -64,7 +67,8 @@ interface ContextBlock {
 
 ### Task
 
-```typescript
+```
+typescript
 interface Task {
   id: string;
   type: TaskType;
@@ -79,7 +83,8 @@ type TaskStatus = 'pending' | 'in_progress' | 'completed' | 'failed' | 'cancelle
 
 ### FileBlock
 
-```typescript
+```
+typescript
 interface FileBlock {
   path: string;
   content: string;
@@ -90,7 +95,8 @@ interface FileBlock {
 
 ### SearchQuery
 
-```typescript
+```
+typescript
 interface SearchQuery {
   query: string;
   filters?: SearchFilters;
@@ -114,7 +120,8 @@ interface SearchOptions {
 
 ### SearchResult
 
-```typescript
+```
+typescript
 interface SearchResult {
   results: SearchMatch[];
   total: number;
@@ -132,7 +139,8 @@ interface SearchMatch {
 
 ### RAG Types
 
-```typescript
+```
+typescript
 interface RAGConfig {
   projectPath: string;
   includePatterns?: string[];
@@ -168,7 +176,8 @@ interface IndexStats {
 
 ### API Types
 
-```typescript
+```
+typescript
 interface ApiResponse<T> {
   success: boolean;
   data?: T;
@@ -187,23 +196,6 @@ interface PaginatedResponse<T> {
   page: number;
   per_page: number;
 }
-```
-
-### WebSocket Types
-
-```typescript
-interface WsEvent<T = unknown> {
-  type: WsEventType;
-  payload: T;
-  timestamp: Date;
-}
-
-type WsEventType = 
-  | 'task:progress'
-  | 'task:completed'
-  | 'files:updated'
-  | 'files:requested'
-  | 'error';
 ```
 
 ## License

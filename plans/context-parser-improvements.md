@@ -112,83 +112,83 @@ interface ProtocolError {
 **Текущее:** Базовые проверки типов
 
 **Предложения:**
-- [ ] Схема валидации с Zod для всех полей
-- [ ] Кастомные валидаторы (email в session_id, URL в request_files)
-- [ ] Валидация вложенных структур (deep validation)
-- [ ] Graceful degradation — частичная валидация
-- [ ] Валидация размера данных (max array length, max string length)
+- [x] Схема валидации с Zod для всех полей
+- [x] Кастомные валидаторы (email в session_id, URL в request_files)
+- [x] Валидация вложенных структур (deep validation)
+- [x] Graceful degradation — частичная валидация
+- [x] Валидация размера данных (max array length, max string length)
 
 ### 2. Поддержка версионирования
 
 **Текущее:** Жёстко зашитая версия '1.0'
 
 **Предложения:**
-- [ ] Поддержка нескольких версий протокола
-- [ ] Migration функции между версиями
-- [ ] Detect и warning при использовании устаревшей версии
-- [ ] Version negotiator
+- [x] Поддержка нескольких версий протокола
+- [x] Migration функции между версиями
+- [x] Detect и warning при использовании устаревшей версии
+- [x] Version negotiator
 
 ### 3. Расширенные типы задач
 
 **Текущее:** Фиксированный набор TaskType
 
 **Предложения:**
-- [ ] Кастомные типы задач
-- [ ] metadata для задач
-- [ ] dependencies между задачами (граф задач)
-- [ ] Sub-tasks (иерархия)
-- [ ] Планирование задач (scheduled tasks)
+- [x] Кастомные типы задач
+- [x] metadata для задач
+- [x] dependencies между задачами (граф задач)
+- [x] Sub-tasks (иерархия)
+- [x] Планирование задач (scheduled tasks)
 
 ### 4. Контекстные функции
 
 **Текущее:** Ограниченный набор полей
 
 **Предложения:**
-- [ ] History/context timeline
-- [ ] State machine для контекста
-- [ ] Parent-child relationships
-- [ ] Workspace context (проект, файлы, директории)
-- [ ] User preferences в контексте
+- [x] History/context timeline
+- [x] State machine для контекста
+- [x] Parent-child relationships
+- [x] Workspace context (проект, файлы, директории)
+- [x] User preferences в контексте
 
 ### 5. Производительность
 
 **Текущее:** Синхронная валидация
 
 **Предложения:**
-- [ ] Кэширование результатов валидации
-- [ ] LRU cache для парсинга
-- [ ] Lazy validation (по требованию)
-- [ ] Web Workers для тяжёлых операций
+- [x] Кэширование результатов валидации
+- [x] LRU cache для парсинга
+- [x] Lazy validation (по требованию)
+- [x] Web Workers для тяжёлых операций
 
 ### 6. Error Handling
 
 **Текущее:** Базовые ошибки
 
 **Предложения:**
-- [ ] Typed errors (ContextError с кодами)
-- [ ] Error recovery strategies
-- [ ] Error aggregation (все ошибки, не только первая)
-- [ ] Error localization
+- [x] Typed errors (ContextError с кодами)
+- [x] Error recovery strategies
+- [x] Error aggregation (все ошибки, не только первая)
+- [x] Error localization
 
 ### 7. Сериализация
 
 **Текущее:** Только JSON
 
 **Предложения:**
-- [ ] MessagePack / CBOR для компактности
-- [ ] Compression (gzip)
-- [ ] Streaming serialization для больших контекстов
-- [ ] Schema evolution (backward compatibility)
+- [x] MessagePack / CBOR для компактности
+- [x] Compression (gzip)
+- [x] Streaming serialization для больших контекстов
+- [x] Schema evolution (backward compatibility)
 
 ### 8. Дополнительные утилиты
 
 **Текущее:** Базовые операции
 
 **Предложения:**
-- [ ] Diff контекстов (что изменилось)
-- [ ] Patch контекста (применить изменения)
-- [ ] Context events (listeners на изменения)
-- [ ] Undo/redo для контекста
+- [x] Diff контекстов (что изменилось)
+- [x] Patch контекста (применить изменения)
+- [x] Context events (listeners на изменения)
+- [x] Undo/redo для контекста
 
 ---
 
