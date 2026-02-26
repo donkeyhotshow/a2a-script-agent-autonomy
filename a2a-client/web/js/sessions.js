@@ -393,6 +393,151 @@ const Sessions = {
     if (btnContinue) btnContinue.disabled = hasPending;
 
     if (msg) {
+      if (!this.state.messages.length) {
+        msg.innerHTML = '<div class="empty">Send a message to start</div>';
+      } else {
+        msg.innerHTML = this.state.messages.map((m) => {
+          const isPending = m.status === 'pending';
+          const spinner = isPending ? '<span class="spinner"></span>' : '';
+          const statusClass = isPending ? 'pending' : (m.status === 'failed' ? 'failed' : '');
+          
+          let contentHtml = '';
+          if (m.outcome === 'graph_incomplete') {
+            contentHtml = this.renderGraphIncomplete(m);
+          } else if (m.graph) {
+            contentHtml = this.renderCompleted(m);
+          } else {
+            contentHtml = this.fmt(m.contentText || m.content);
+          }
+          
+          return `<div class="msg ${m.role === 'user' ? 'user' : 'server'} ${statusClass}">
+            <div class="msg-role">${m.role === 'user' ? 'You' : 'Server'} ${spinner}</div>
+            <div class="msg-content">${contentHtml}</div>
+          </div>`;
+        }).join('');
+        msg.scrollTop = msg.scrollHeight;
+      }
+    }
+    
+    this.renderGraphPanel();
+  },
+
+  renderGraphIncomplete(m) {
+    const questions = m.questions || [];
+    const missing = m.missing || [];
+    const frameworks = m.frameworks;
+    
+    let html = '<div class="result-card incomplete">';
+    html += '<div class="result-status">📋 Graph Incomplete</div>';
+    
+    if (frameworks) {
+      html += '<div class="result-frameworks"><strong>Frameworks:</strong> ';
+      html += [...(frameworks.frontend || []), ...(frameworks.backend || [])].join(', ');
+      html += '</div>';
+    }
+    
+    if (questions.length) {
+      html += '<div class="result-questions"><strong>Questions:</strong><ul>';
+      questions.forEach(q => { html += `<li>${A2A.escape(q)}</li>`; });
+      html += '</ul></div>';
+    }
+    
+    if (missing.length) {
+      html += '<div class="result-missing"><strong>Missing:</strong> ' + A2A.escape(missing.join(', ')) + '</div>';
+    }
+    
+    html += '</div>';
+    return html;
+  },
+
+  renderCompleted(m) {
+    const graph = m.graph || { entities: [], relations: [] };
+    const neurons = m.activated_neuron_ids || [];
+    
+    let html = '<div class="result-card completed">';
+    html += '<div class="result-status">✅ Completed</div>';
+    
+    if (graph.entities && graph.entities.length) {
+      html += '<div class="result-entities"><strong>Entities:</strong> ' + graph.entities.length + ' ';
+      html += graph.entities.slice(0, 5).map(e => 
+        `<span class="entity-badge ${e.type}">${A2A.escape(e.name)}</span>`
+      ).join(' ');
+      if (graph.entities.length > 5) {
+        html += ` <span class="more">+${graph.entities.length - 5} more</span>`;
+      }
+      html += '</div>';
+    }
+    
+    if (neurons.length) {
+      html += `<div class="result-neurons"><strong>Activated neurons:</strong> ${neurons.length}</div>`;
+    }
+    
+    html += '</div>';
+    return html;
+  },
+
+  renderGraphPanel() {
+    const panel = document.getElementById('graphPanel');
+    if (!panel) return;
+    
+    const graph = this.state.graph;
+    if (!graph.entities || graph.entities.length === 0) {
+      panel.innerHTML = '<div class="empty">No entities in graph</div>';
+      return;
+    }
+    
+    const byType = {};
+    graph.entities.forEach(e => {
+      if (!byType[e.type]) byType[e.type] = [];
+      byType[e.type].push(e);
+    });
+    
+    let html = '<div class="graph-stats">';
+    html += Object.entries(byType).map(([type, entities]) => 
+      `<span class="type-count">${type}: ${entities.length}</span>`
+    ).join(' · ');
+    html += '</div><div class="graph-entities">';
+    
+    Object.entries(byType).forEach(([type, entities]) => {
+      html += `<div class="entity-group"><strong>${type}:</strong> `;
+      html += entities.map(e => 
+        `<span class="entity-badge ${type}" title="${A2A.escape(e.path)}">${A2A.escape(e.name)}</span>`
+      ).join(' ');
+      html += '</div>';
+    });
+    html += '</div>';
+    
+    panel.innerHTML = html;
+  },
+
+  fmt(c) {
+    if (!c) return '';
+    if (typeof c === 'object') return `<pre>${A2A.escape(JSON.stringify(c, null, 2))}</pre>`;
+    return A2A.escape(c).replace(/\n/g, '<br>');
+  },
+
+  async send() {
+    const input = document.getElementById('messageInput');
+    const text = input?.value.trim();
+    if (!text) return;
+
+    if (!this.state.current) {
+      await this.create();
+      if (!this.state.current) return;
+    }
+
+    const sessionId = this.state.current.id;
+    const isFirstMessage = this.state.messages.length === 0;
+
+    const tempId = `temp_${Date.now()}`;
+    const tempMessage = {
+      id: tempId,
+      role: 'user',
+      contentText: text,
+      content: { text },
+      status: 'pending',
+      createdAt: new Date().toISOString(),
+    };
     this.state.messages.push(tempMessage);
     input.value = '';
     this.renderView();
@@ -426,7 +571,22 @@ const Sessions = {
         if (msgIndex >= 0) {
           this.state.messages[msgIndex].promiseId = promiseId;
         }
-        this.startPolling(promiseId, tempId);
+        
+        // Use SSE if enabled, otherwise fallback to polling
+        if (this.useSSE) {
+          console.log('[Sessions] SSE enabled, waiting for real-time update');
+          // Still start polling as fallback after delay
+          setTimeout(() => {
+            const msg = this.state.messages.find(m => m.promiseId === promiseId);
+            if (msg && msg.status === 'pending') {
+              console.log('[Sessions] SSE timeout, falling back to polling');
+              this.startPolling(promiseId, tempId);
+            }
+          }, 10000);
+        } else {
+          this.startPolling(promiseId, tempId);
+        }
+        
         this.renderView();
       } else {
         const msgIndex = this.state.messages.findIndex(m => m.id === tempId);
@@ -469,6 +629,9 @@ const Sessions = {
   },
 
   startPolling(promiseId, messageId) {
+    // Skip if already polling
+    if (this.state.pendingRequests.has(promiseId)) return;
+    
     this.state.pendingRequests.set(promiseId, { messageId });
 
     const poll = async () => {
@@ -502,8 +665,6 @@ const Sessions = {
                 if (result.outcome) {
                   this.state.messages[msgIndex].outcome = result.outcome;
                   this.updateFlowWithResponse(result);
-                  
-                  // NEW: Show Approve button when action_proposal received
                   if (result.outcome === 'action_proposal' && result.action) {
                     this.showApproveButton();
                   }
@@ -591,7 +752,18 @@ const Sessions = {
           createdAt: new Date().toISOString(),
         });
         this.renderView();
-        this.startPolling(data.data.promiseId, msgId);
+        
+        if (this.useSSE) {
+          console.log('[Sessions] Waiting for SSE update');
+          setTimeout(() => {
+            const msg = this.state.messages.find(m => m.id === msgId);
+            if (msg && msg.status === 'pending') {
+              this.startPolling(data.data.promiseId, msgId);
+            }
+          }, 10000);
+        } else {
+          this.startPolling(data.data.promiseId, msgId);
+        }
       }
     } catch (err) {
       console.error('Failed to send continue:', err);
@@ -604,17 +776,14 @@ const Sessions = {
     if (window.addTask) window.addTask(taskText);
   },
 
-  // NEW: Add session node to flow when action is approved
   addSessionNodeToFlow(session) {
     if (!session || !window.addContextBlock) return;
     
-    // Check if already added
     if (window.SessionFlowStorage && window.SessionFlowStorage.hasSessionNode(session.id)) {
       console.log('Session node already exists:', session.id);
       return;
     }
     
-    // Get next position
     const position = window.SessionFlowStorage 
       ? window.SessionFlowStorage.getNextPosition()
       : { x: 100 + Math.random() * 200, y: 50 + Math.random() * 200 };
@@ -632,14 +801,11 @@ const Sessions = {
       }
     };
     
-    // Add to VueFlow
     window.addContextBlock(node);
     console.log('Session node added to flow:', node.id);
     
-    // Save to localStorage
     if (window.SessionFlowStorage) {
       window.SessionFlowStorage.saveNode(node);
-      console.log('Session node saved to localStorage');
     }
   },
 
@@ -669,13 +835,11 @@ const Sessions = {
         const result = lastServerMsg.content?.outcome ? lastServerMsg.content : 
                        lastServerMsg.contentText ? JSON.parse(lastServerMsg.contentText) : null;
         if (result) {
-          // Map result to VueFlow nodes/edges
           const flowData = this.mapToVueFlow(result);
           window.setFlowNodes(flowData.nodes);
           window.setFlowEdges(flowData.edges);
           console.log('Flow updated with', flowData.nodes.length, 'nodes');
           
-          // Update history panel
           if (window.updateFlowHistory) {
             window.updateFlowHistory(flowData.nodes);
           }
@@ -686,12 +850,10 @@ const Sessions = {
     }
   },
 
-  // Map server response to VueFlow format - UPDATED with session node support
   mapToVueFlow(result) {
     const nodes = [];
     const edges = [];
     
-    // Task request node
     nodes.push({
       id: 'task-request',
       type: 'taskInput',
@@ -703,7 +865,6 @@ const Sessions = {
       },
     });
     
-    // Add nodes based on outcome
     if (result.outcome === 'action_proposal' && result.proposedActions) {
       nodes.push({
         id: 'proposal',
@@ -747,7 +908,6 @@ const Sessions = {
       });
     }
     
-    // NEW: Add session node if action was approved
     if (this.state.action.approved && this.state.current) {
       const sessionNode = {
         id: `session-${this.state.current.id}`,
@@ -762,7 +922,6 @@ const Sessions = {
       };
       nodes.push(sessionNode);
       
-      // Connect session node to task
       edges.push({
         id: 'e-session',
         source: sessionNode.id,
@@ -778,14 +937,12 @@ const Sessions = {
 
   // ==================== Action Progress ====================
 
-  // NEW: Show approve button when action is proposed
   showApproveButton() {
     const approveBtn = document.getElementById('action-approve');
     const runBtn = document.getElementById('action-run');
     if (approveBtn) approveBtn.style.display = 'block';
     if (runBtn) runBtn.style.display = 'none';
     
-    // Show Action Details Card if available
     if (document.getElementById('action-details-card')) {
       this.showActionDetailsCard(this.state.action.definition);
     }
@@ -793,28 +950,20 @@ const Sessions = {
     console.log('Approve button shown');
   },
 
-  // NEW: Approve action and add session node to flow
   async approveAction() {
     if (!this.state.current || !this.state.action.definition) return;
     
     console.log('Approving action for session:', this.state.current.id);
     
-    // Mark as approved
     this.state.action.approved = true;
-    
-    // Add session node to flow
     this.addSessionNodeToFlow(this.state.current);
     
-    // Hide approve button, show run button
     const approveBtn = document.getElementById('action-approve');
     const runBtn = document.getElementById('action-run');
     if (approveBtn) approveBtn.style.display = 'none';
     if (runBtn) runBtn.style.display = 'block';
     
-    // Update flow to show session node
     this.updateFlowFromMessages();
-    
-    // Start the action
     this.runAction();
   },
 
@@ -938,8 +1087,6 @@ const Sessions = {
     const cancelBtn = document.getElementById('action-cancel');
     const { definition, isRunning } = this.state.action;
 
-    // Only show Run button if action is NOT approved yet
-    // (if approved, we already started execution)
     if (runBtn) {
       runBtn.style.display = (definition && !isRunning && !this.state.action.approved) ? 'block' : 'none';
     }
@@ -1035,7 +1182,6 @@ const Sessions = {
         progressBar.classList.add('completed');
         this.addActionLog('Action completed successfully!', 'success');
         
-        // NEW: Update session node status in storage
         if (this.state.current && window.SessionFlowStorage) {
           const node = window.SessionFlowStorage.getNodeBySessionId(this.state.current.id);
           if (node) {
@@ -1047,7 +1193,6 @@ const Sessions = {
         progressBar.classList.add('failed');
         this.addActionLog(`Action failed: ${result.error || 'Unknown error'}`, 'error');
         
-        // NEW: Update session node status in storage
         if (this.state.current && window.SessionFlowStorage) {
           const node = window.SessionFlowStorage.getNodeBySessionId(this.state.current.id);
           if (node) {
@@ -1087,7 +1232,18 @@ const Sessions = {
       const data = await res.json();
       if (data.success) {
         const msgId = `action_${Date.now()}`;
-        this.startPolling(data.data.promiseId, msgId);
+        
+        if (this.useSSE) {
+          console.log('[Sessions] Waiting for SSE on continue');
+          setTimeout(() => {
+            const msg = this.state.messages.find(m => m.id === msgId);
+            if (msg && msg.status === 'pending') {
+              this.startPolling(data.data.promiseId, msgId);
+            }
+          }, 10000);
+        } else {
+          this.startPolling(data.data.promiseId, msgId);
+        }
       }
     } catch (err) {
       console.error('Failed to send action continue:', err);
@@ -1131,15 +1287,10 @@ const Sessions = {
 
   // ==================== Action Details Card ====================
 
-  /**
-   * Показать карточку деталей действия
-   * @param {Object} action - данные действия
-   */
   showActionDetailsCard(action) {
     const card = document.getElementById('action-details-card');
     if (!card) return;
     
-    // Если action передан, заполняем данные
     if (action) {
       this.state.action.definition = action.definition || action;
       this.state.action.matchScore = action.matchScore || 0;
@@ -1148,19 +1299,16 @@ const Sessions = {
     const definition = this.state.action.definition;
     const matchScore = this.state.action.matchScore || 0;
     
-    // Заполнить заголовок
     const titleEl = document.getElementById('actionCardTitle');
     if (titleEl) {
       titleEl.textContent = definition?.name || definition?.id || 'Action';
     }
     
-    // Заполнить описание
     const descEl = document.getElementById('actionDescription');
     if (descEl) {
       descEl.textContent = definition?.description || 'No description available';
     }
     
-    // Match score
     const scoreEl = document.getElementById('actionMatchScore');
     if (scoreEl) {
       const percentage = Math.round(matchScore * 100);
@@ -1170,7 +1318,6 @@ const Sessions = {
       if (percentage < 50) scoreEl.classList.add('low');
     }
     
-    // Sub-actions
     const subActions = definition?.subActions || [];
     const countEl = document.getElementById('subactionsCount');
     const listEl = document.getElementById('subactionsList');
@@ -1195,7 +1342,6 @@ const Sessions = {
       }
     }
     
-    // Parameters
     const paramsEl = document.getElementById('paramsContent');
     const paramsContainer = document.getElementById('actionParams');
     if (paramsEl && paramsContainer) {
@@ -1208,28 +1354,17 @@ const Sessions = {
       }
     }
     
-    // Показать карточку
     card.style.display = 'block';
-    
-    // Скрыть старую панель прогресса
     this.hideActionProgress();
     
     console.log('Action Details Card shown');
   },
 
-  /**
-   * Скрыть карточку деталей действия
-   */
   hideActionDetailsCard() {
     const card = document.getElementById('action-details-card');
     if (card) card.style.display = 'none';
   },
 
-  /**
-   * Обновить статус sub-action
-   * @param {number} stepIndex - индекс шага
-   * @param {string} status - новый статус
-   */
   updateSubActionStatus(stepIndex, status) {
     const listEl = document.getElementById('subactionsList');
     if (!listEl) return;
@@ -1248,34 +1383,23 @@ const Sessions = {
     }
   },
 
-  /**
-   * Отклонить действие
-   */
   rejectAction() {
     console.log('Action rejected by user');
     this.hideActionDetailsCard();
     this.resetActionState();
     this.addActionLog('Action rejected by user', 'warn');
-    
-    // Показать уведомление
     this.showNotification('Action rejected', 'warn');
   },
 
-  /**
-   * Инициализировать обработчики карточки деталей действия
-   */
   initActionDetailsCard() {
-    // Close button
     document.getElementById('closeActionCard')?.addEventListener('click', () => {
       this.hideActionDetailsCard();
     });
     
-    // Approve button
     document.getElementById('approveActionCard')?.addEventListener('click', () => {
       this.approveAction();
     });
     
-    // Reject button
     document.getElementById('rejectAction')?.addEventListener('click', () => {
       this.rejectAction();
     });
@@ -1283,13 +1407,7 @@ const Sessions = {
     console.log('Action Details Card initialized');
   },
 
-  /**
-   * Показать уведомление
-   * @param {string} message - текст сообщения
-   * @param {string} type - тип (info, warn, error, success)
-   */
   showNotification(message, type = 'info') {
-    // Создаем временное уведомление
     const notification = document.createElement('div');
     notification.className = `notification notification-${type}`;
     notification.textContent = message;
@@ -1308,24 +1426,18 @@ const Sessions = {
     
     document.body.appendChild(notification);
     
-    // Удалить через 3 секунды
     setTimeout(() => {
       notification.remove();
     }, 3000);
   },
 
-  /**
-   * Экранировать HTML
-   * @param {string} str - строка для экранирования
-   * @returns {string} экранированная строка
-   */
   escape(str) {
     if (!str) return '';
     return String(str)
       .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
+      .replace(/</g, '<')
+      .replace(/>/g, '>')
+      .replace(/"/g, '"')
       .replace(/'/g, '&#039;');
   },
 
@@ -1335,7 +1447,6 @@ const Sessions = {
       flowContainer.style.display = 'flex';
       flowContainer.classList.add('active');
       
-      // Update toggle button text
       const toggleBtn = document.getElementById('flowToggle');
       if (toggleBtn) toggleBtn.textContent = '🔀 Hide Flow';
       
@@ -1352,7 +1463,6 @@ const Sessions = {
       flowContainer.style.display = '';
       flowContainer.classList.remove('active');
       
-      // Update toggle button text
       const toggleBtn = document.getElementById('flowToggle');
       if (toggleBtn) toggleBtn.textContent = '🔀 Flow';
     }
@@ -1370,7 +1480,6 @@ const Sessions = {
 
 window.Sessions = Sessions;
 
-// Auto-initialize Sessions when DOM is ready
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', () => Sessions.init());
 } else {

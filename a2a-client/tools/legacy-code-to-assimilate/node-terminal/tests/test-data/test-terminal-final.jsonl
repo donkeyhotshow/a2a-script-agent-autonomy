@@ -1,6 +1,0 @@
-{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"structured-terminal","arguments":{"action":"workspace","subAction":"set","workspace":"C:\\apps"}}}
-{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"terminal","arguments":{"command":"echo Hello from simplified terminal!"}}}
-{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"terminal","arguments":{"command":"cd"}}}
-{"jsonrpc":"2.0","id":4,"method":"tools/call","params":{"name":"terminal","arguments":{"command":"dir /b"}}}
-{"jsonrpc":"2.0","id":5,"method":"tools/call","params":{"name":"terminal","arguments":{"command":"node --version"}}}
-{"jsonrpc":"2.0","id":6,"method":"tools/call","params":{"name":"terminal","arguments":{"command":"npm --version"}}}

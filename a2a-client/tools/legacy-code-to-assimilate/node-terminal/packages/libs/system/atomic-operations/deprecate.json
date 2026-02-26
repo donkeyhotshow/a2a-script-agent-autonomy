@@ -1,5 +1,0 @@
-{
-  "deprecated": true,
-  "migration_instructions": "This library is deprecated. Please migrate to `system/file-operations/` for all atomic file operation functionalities. The `system/file-operations/` library provides a unified and robust set of tools for file and directory manipulation, and should be extended to cover all use cases previously handled by `atomic-operations`. Refer to its documentation for usage details.",
-  "replacement_library": "system/file-operations/"
-}

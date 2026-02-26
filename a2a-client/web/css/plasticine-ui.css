@@ -1,0 +1,230 @@
+/* Plasticine UI – adaptive panel kit. Use data-slot and container size to change layout. */
+
+:root {
+  --pui-bg: #1a1a2e;
+  --pui-border: #30363d;
+  --pui-accent: #6366f1;
+  --pui-success: #22c55e;
+  --pui-warning: #f97316;
+  --pui-danger: #f85149;
+  --pui-text: #e6edf3;
+  --pui-muted: #8b949e;
+  --pui-header-bg: #21262d;
+}
+
+/* Single panel container – use container-type for queries */
+.pui-panel {
+  --pui-panel-w: 350px;
+  --pui-panel-h: 500px;
+  position: fixed;
+  display: flex;
+  flex-direction: column;
+  background: var(--pui-bg);
+  border: 1px solid var(--pui-border);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  z-index: 1000;
+  transition: all 0.3s ease-in-out;
+  container-type: size;
+  container-name: pui-panel;
+  min-width: 120px;
+  min-height: 40px;
+}
+
+.pui-panel.dragging { box-shadow: 0 12px 48px rgba(0, 0, 0, 0.6); cursor: moving; transition: none; }
+.pui-panel.resizing { cursor: se-resize; }
+.pui-panel.pui-critical { border-color: var(--pui-warning); border-width: 2px; }
+
+/* Header */
+.pui-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--pui-border);
+  cursor: grab;
+  background: var(--pui-header-bg);
+  border-radius: 12px 12px 0 0;
+  flex-shrink: 0;
+}
+.pui-panel-title { font-weight: 600; font-size: 13px; color: var(--pui-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pui-panel-controls { display: flex; gap: 4px; flex-shrink: 0; }
+.pui-panel-control-btn {
+  width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;
+  background: transparent; border: none; border-radius: 4px; color: var(--pui-muted); cursor: pointer; font-size: 12px;
+}
+.pui-panel-control-btn:hover { background: #30363d; color: var(--pui-text); }
+
+.pui-panel-content {
+  padding: 14px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.pui-panel-resize {
+  position: absolute;
+  bottom: 0; right: 0;
+  width: 18px; height: 18px;
+  cursor: se-resize;
+  background: linear-gradient(135deg, transparent 50%, var(--pui-border) 50%);
+  border-radius: 0 0 12px 0;
+}
+
+/* States: expanded (default), minimized, docked-* */
+.pui-panel.expanded {
+  width: var(--pui-panel-w);
+  height: var(--pui-panel-h);
+}
+
+.pui-panel.minimized .pui-panel-content,
+.pui-panel.minimized .pui-panel-resize,
+.pui-panel.docked-left .pui-panel-content,
+.pui-panel.docked-left .pui-panel-resize,
+.pui-panel.docked-right .pui-panel-content,
+.pui-panel.docked-right .pui-panel-resize,
+.pui-panel.docked-bottom .pui-panel-content,
+.pui-panel.docked-bottom .pui-panel-resize { display: none; }
+
+.pui-panel.minimized {
+  width: 50px; height: 50px;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.pui-panel.docked-left .pui-panel-header,
+.pui-panel.docked-right .pui-panel-header {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  transform: rotate(180deg);
+  padding: 8px 4px;
+}
+.pui-panel.docked-bottom .pui-panel-header { padding: 6px 10px; }
+.pui-panel.docked-bottom .pui-panel-title { font-size: 11px; }
+.pui-panel.docked-bottom .pui-panel-controls { flex-direction: row; }
+
+/* Slot presets – applied to panel or wrapper to set default size/position */
+.pui-slot-floating { top: 20px; right: 20px; }
+.pui-slot-left {
+  --pui-panel-w: 280px;
+  --pui-panel-h: 280px;
+  top: 60px;
+  left: 10px;
+  right: auto;
+}
+.pui-slot-right {
+  --pui-panel-w: 280px;
+  --pui-panel-h: 280px;
+  top: 60px;
+  right: 10px;
+  left: auto;
+}
+.pui-slot-bottom {
+  --pui-panel-w: 60%;
+  --pui-panel-h: 56px;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  top: auto;
+  right: auto;
+  max-width: 800px;
+}
+.pui-slot-header {
+  --pui-panel-w: 100%;
+  --pui-panel-h: 40px;
+  top: 0;
+  left: 0;
+  right: 0;
+  border-radius: 0;
+  border-left: none;
+  border-right: none;
+}
+
+/* Container query: narrow → header-only feel (content already hidden in minimized/docked; this is for small floating) */
+@container pui-panel (max-width: 160px) {
+  .pui-panel .pui-panel-content { display: none; }
+  .pui-panel .pui-panel-resize { display: none; }
+}
+@container pui-panel (max-height: 80px) {
+  .pui-panel .pui-panel-content { display: none; }
+  .pui-panel .pui-panel-resize { display: none; }
+}
+
+/* Cube (minimized representation) – one per panel or shared */
+.pui-cube {
+  position: fixed;
+  width: 50px; height: 50px;
+  background: var(--pui-bg);
+  border: 2px solid var(--pui-accent);
+  border-radius: 8px;
+  z-index: 1001;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.pui-cube.visible { display: flex; }
+.pui-cube.dragging { cursor: grabbing; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6); transform: scale(1.08); }
+.pui-cube.pui-critical { border-color: var(--pui-warning); border-width: 3px; }
+.pui-cube-status {
+  position: absolute;
+  top: 2px; right: 2px;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: #6b7280;
+}
+.pui-cube-status.running { background: var(--pui-warning); animation: pui-pulse 1s infinite; }
+.pui-cube-status.completed { background: var(--pui-success); }
+.pui-cube-status.idle { background: #6b7280; }
+@keyframes pui-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+.pui-cube-btn {
+  width: 28px; height: 18px;
+  background: var(--pui-accent);
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.pui-cube-btn:hover { filter: brightness(1.15); }
+
+/* Mini drop zones */
+.pui-zones {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9998;
+  display: none;
+}
+.pui-zones.active { display: block; }
+.pui-zone {
+  position: absolute;
+  width: 56px; height: 56px;
+  border: 2px dashed rgba(100, 100, 100, 0.5);
+  border-radius: 8px;
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  background: rgba(0, 0, 0, 0.25);
+  color: var(--pui-muted);
+  font-size: 18px;
+}
+.pui-zone:hover { background: rgba(100, 100, 100, 0.2); border-color: var(--pui-accent); transform: scale(1.1); color: var(--pui-text); }
+.pui-zone.drag-over { border-color: var(--pui-success); background: rgba(34, 197, 94, 0.25); transform: scale(1.12); color: var(--pui-success); }
+.pui-zone.left { left: 16px; top: 50%; transform: translateY(-50%); }
+.pui-zone.left:hover, .pui-zone.left.drag-over { transform: translateY(-50%) scale(1.1); }
+.pui-zone.right { right: 16px; top: 50%; transform: translateY(-50%); }
+.pui-zone.right:hover, .pui-zone.right.drag-over { transform: translateY(-50%) scale(1.1); }
+.pui-zone.bottom { bottom: 16px; left: 50%; transform: translateX(-50%); }
+.pui-zone.bottom:hover, .pui-zone.bottom.drag-over { transform: translateX(-50%) scale(1.1); }
+
+/* Workflow placeholders */
+.pui-placeholder { padding: 8px; font-size: 12px; color: var(--pui-muted); min-height: 60px; }
+.pui-placeholder pre, .pui-log-output, .pui-debug-output { margin: 0; font-size: 11px; max-height: 200px; overflow: auto; white-space: pre-wrap; }
+.pui-chat-messages { min-height: 80px; margin-bottom: 8px; }
+.pui-chat-input-row { display: flex; gap: 6px; }
+.pui-chat-input { flex: 1; padding: 6px 8px; background: #21262d; border: 1px solid var(--pui-border); border-radius: 4px; color: var(--pui-text); }
+.pui-session-list, .pui-alert-list { list-style: none; padding: 0; margin: 0; }
+.pui-session-list li, .pui-alert-list > div { padding: 6px 8px; border-bottom: 1px solid var(--pui-border); }

@@ -9,7 +9,7 @@
   <script type="importmap">
   {
     "imports": {
-      "vue": "https://esm.sh/vue@3.4.0/vue.esm-browser.js",
+      "vue": "https://cdn.jsdelivr.net/npm/vue@3.4.21/dist/vue.esm-browser.js",
       "@vue-flow/core": "https://esm.sh/@vue-flow/core@1.48.2",
       "@vue-flow/background": "https://esm.sh/@vue-flow/background@1.3.2",
       "@vue-flow/controls": "https://esm.sh/@vue-flow/controls@1.1.3"
@@ -20,6 +20,7 @@
   <!-- VueFlow CSS -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@vue-flow/core@1.48.2/dist/style.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@vue-flow/controls@1.1.3/dist/style.css">
+  <link rel="stylesheet" href="css/plasticine-ui.css">
   
   <style>
     /* Variant 4 - VueFlow Canvas + VueForm Floating Panel */
@@ -265,15 +266,14 @@
       font-size: 9px;
     }
 
-    /* Floating Panel */
+    /* Floating Panel - Base Styles with Transitions */
     .floating-panel {
       position: fixed;
       top: 20px;
       right: 20px;
-      width: 320px;
+      width: 350px;
       min-width: 280px;
       max-width: 400px;
-      max-width: 100vw;
       max-height: 100vh;
       background: var(--panel-bg);
       border: 1px solid var(--panel-border);
@@ -282,6 +282,92 @@
       z-index: 1000;
       display: flex;
       flex-direction: column;
+      /* TRANSITION FOR ALL PROPERTIES */
+      transition: all 0.3s ease-in-out;
+    }
+
+    /* Floating Panel States */
+    .floating-panel.expanded {
+      width: 350px;
+      height: 500px;
+      top: 20px;
+      right: 20px;
+    }
+
+    .floating-panel.minimized {
+      width: 50px;
+      height: 50px;
+      top: auto;
+      right: auto;
+      bottom: 20px;
+      right: 20px;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .floating-panel.docked-left {
+      width: 60px;
+      height: calc(100vh - 100px);
+      top: 50px;
+      left: 10px;
+      right: auto;
+      border-radius: 8px;
+    }
+
+    .floating-panel.docked-right {
+      width: 60px;
+      height: calc(100vh - 100px);
+      top: 50px;
+      right: 10px;
+      border-radius: 8px;
+    }
+
+    .floating-panel.docked-bottom {
+      width: calc(100% - 300px);
+      height: 60px;
+      bottom: 10px;
+      left: 150px;
+      top: auto;
+      right: auto;
+      border-radius: 8px;
+    }
+    
+    /* Hide content in minimized/docked states */
+    .floating-panel.minimized .panel-content,
+    .floating-panel.docked-left .panel-content,
+    .floating-panel.docked-right .panel-content,
+    .floating-panel.docked-bottom .panel-content {
+      display: none;
+    }
+    
+    /* Hide resize handle in minimized/docked states */
+    .floating-panel.minimized .panel-resize-handle,
+    .floating-panel.docked-left .panel-resize-handle,
+    .floating-panel.docked-right .panel-resize-handle,
+    .floating-panel.docked-bottom .panel-resize-handle {
+      display: none;
+    }
+    
+    /* Adjust header for docked states */
+    .floating-panel.docked-left .panel-header,
+    .floating-panel.docked-right .panel-header {
+      writing-mode: vertical-rl;
+      text-orientation: mixed;
+      transform: rotate(180deg);
+      padding: 8px 4px;
+    }
+    
+    .floating-panel.docked-bottom .panel-header {
+      flex-direction: row;
+      padding: 4px 8px;
+    }
+    
+    .floating-panel.docked-bottom .panel-title {
+      font-size: 10px;
+    }
+    
+    .floating-panel.docked-bottom .panel-controls {
+      flex-direction: row;
     }
 
     .floating-panel.dragging {
@@ -429,71 +515,6 @@
     .debug-btn:active { transform: scale(0.98); }
     .mock-response { background: #0d1117; padding: 10px; border-radius: 4px; font-family: ui-monospace, monospace; font-size: 11px; color: #a5d6ff; max-height: 80px; overflow: auto; white-space: pre-wrap; }
 
-    /* Droppable Zones */
-    .drop-zone {
-      position: fixed;
-      border: 2px dashed #ccc;
-      opacity: 0;
-      transition: all 0.3s ease;
-      pointer-events: none;
-      z-index: 500;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 14px;
-      font-weight: 600;
-      color: #888;
-    }
-
-    .drop-zone.visible {
-      opacity: 0.3;
-      pointer-events: auto;
-    }
-
-    .drop-zone.active,
-    .drop-zone.drag-over {
-      opacity: 0.8;
-      border-color: #4CAF50;
-      background: rgba(76, 175, 80, 0.1);
-    }
-
-    .drop-zone.drag-over {
-      border-width: 3px;
-    }
-
-    .zone-left {
-      left: 0;
-      top: 50px;
-      width: 150px;
-      height: calc(100vh - 100px);
-    }
-
-    .zone-right {
-      right: 0;
-      top: 50px;
-      width: 400px;
-      height: calc(100vh - 100px);
-    }
-
-    .zone-bottom {
-      bottom: 0;
-      left: 150px;
-      right: 150px;
-      height: 200px;
-    }
-
-    .zone-label {
-      writing-mode: vertical-rl;
-      text-orientation: mixed;
-      transform: rotate(180deg);
-    }
-
-    .zone-right .zone-label,
-    .zone-bottom .zone-label {
-      writing-mode: horizontal-tb;
-      transform: none;
-    }
-
     /* Minimized Cube */
     .minimized-cube {
       position: fixed;
@@ -509,7 +530,7 @@
       justify-content: center;
       cursor: grab;
       box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
-      transition: transform 0.2s, box-shadow 0.2s;
+      transition: transform 0.2s, box-shadow 0.2s, all 0.3s ease-in-out;
     }
 
     .minimized-cube.visible {
@@ -564,6 +585,97 @@
       background: #818cf8;
     }
 
+    /* Mini Zones Container - appears on drag */
+    .mini-zones {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 9998;
+      display: none;
+    }
+
+    .mini-zones.active {
+      display: block;
+    }
+
+    /* Mini Zones - маленькие 60x60px */
+    .mini-zone {
+      position: absolute;
+      width: 60px;
+      height: 60px;
+      border: 2px dashed rgba(100, 100, 100, 0.5);
+      border-radius: 8px;
+      pointer-events: auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+      background: rgba(0, 0, 0, 0.3);
+      color: #8b949e;
+      font-size: 20px;
+    }
+
+    .mini-zone:hover {
+      background: rgba(100, 100, 100, 0.2);
+      border-color: #4a90d9;
+      transform: scale(1.1);
+      color: #e6edf3;
+    }
+
+    /* Позиции мини-зон */
+    .mini-zone.left {
+      left: 20px;
+      top: 50%;
+      transform: translateY(-50%);
+    }
+
+    .mini-zone.left:hover {
+      transform: translateY(-50%) scale(1.1);
+    }
+
+    .mini-zone.right {
+      right: 20px;
+      top: 50%;
+      transform: translateY(-50%);
+    }
+
+    .mini-zone.right:hover {
+      transform: translateY(-50%) scale(1.1);
+    }
+
+    .mini-zone.bottom {
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+
+    .mini-zone.bottom:hover {
+      transform: translateX(-50%) scale(1.1);
+    }
+
+    /* Drag over state */
+    .mini-zone.drag-over {
+      border-color: #4CAF50;
+      background: rgba(76, 175, 80, 0.3);
+      transform: scale(1.15);
+      color: #4CAF50;
+    }
+
+    .mini-zone.left.drag-over {
+      transform: translateY(-50%) scale(1.15);
+    }
+
+    .mini-zone.right.drag-over {
+      transform: translateY(-50%) scale(1.15);
+    }
+
+    .mini-zone.bottom.drag-over {
+      transform: translateX(-50%) scale(1.15);
+    }
+
     /* Header button for opening panel */
     .header-btn.panel-toggle {
       background: var(--task-accent);
@@ -573,6 +685,27 @@
     .header-btn.panel-toggle:hover {
       background: #818cf8;
     }
+    .header-form {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex: 1;
+      max-width: 320px;
+      margin: 0 16px;
+    }
+    .header-input {
+      flex: 1;
+      min-width: 0;
+      padding: 6px 12px;
+      background: #21262d;
+      border: 1px solid var(--panel-border);
+      border-radius: 6px;
+      color: #e6edf3;
+      font-size: 13px;
+    }
+    .header-input::placeholder { color: #6e7681; }
+    .header-input:focus { outline: none; border-color: var(--task-accent); }
+    .header-btn-add { flex-shrink: 0; }
   </style>
 </head>
 <body>
@@ -595,6 +728,10 @@
           </select>
         </div>
       </div>
+      <form class="header-form" id="newPanelForm" action="#" method="get">
+        <input type="text" class="header-input" id="newPanelTitle" placeholder="Panel title…" maxlength="80" />
+        <button type="submit" class="header-btn header-btn-add">Add panel</button>
+      </form>
       <div class="header-right">
         <button class="header-btn" id="newTaskBtn">📝 New Task</button>
         <button class="header-btn panel-toggle" id="togglePanelBtn">📋 Panel</button>
@@ -611,38 +748,8 @@
         <div id="vueflow-canvas"></div>
       </div>
 
-      <!-- Floating Panel -->
-      <div class="floating-panel" id="floatingPanel">
-        <div class="panel-header" id="panelHeader">
-          <span class="panel-title">📋 Task Panel</span>
-          <div class="panel-controls">
-            <button class="panel-control-btn" id="minimizeBtn" title="Minimize">−</button>
-            <button class="panel-control-btn" title="Maximize">□</button>
-            <button class="panel-control-btn" id="closeBtn" title="Close">×</button>
-          </div>
-        </div>
-        <div class="panel-content" id="panelContent">
-          <!-- Content will be rendered by JavaScript -->
-        </div>
-        <div class="panel-resize-handle" id="panelResizeHandle"></div>
-      </div>
-
-      <!-- Droppable Zones -->
-      <div class="drop-zone zone-left" data-zone="left">
-        <span class="zone-label">📜 History</span>
-      </div>
-      <div class="drop-zone zone-right" data-zone="right">
-        <span class="zone-label">📋 Details</span>
-      </div>
-      <div class="drop-zone zone-bottom" data-zone="bottom">
-        <span class="zone-label">📊 Results</span>
-      </div>
-
-      <!-- Minimized Cube -->
-      <div class="minimized-cube" id="minimizedCube">
-        <div class="cube-status idle" id="cubeStatus"></div>
-        <button class="cube-btn" id="cubeBtn"></button>
-      </div>
+      <!-- Plasticine UI panels + zones (created by plasticine-ui.js) -->
+      <div id="puiMount"></div>
 
       <!-- Debug Panel -->
       <div class="debug-panel" id="debugPanel">
@@ -660,6 +767,8 @@
     </div>
   </div>
 
+  <script src="js/plasticine-ui.js"></script>
+  <script src="js/plasticine-workflow.js"></script>
   <!-- Vue 3 + VueFlow Scripts -->
   <script type="module">
     import { createApp, ref, reactive, h, onMounted } from 'vue';
@@ -800,7 +909,7 @@
 
         onMounted(() => {
           isReady.value = true;
-          initFloatingPanel();
+          initPlasticinePanels();
           renderIdlePanel();
           setTimeout(() => fitView(), 100);
         });
@@ -1063,153 +1172,34 @@
       `
     };
 
-    // Mount Vue app
-    const container = document.getElementById('vueflow-canvas');
-    if (container) {
-      const app = createApp(App);
-      app.mount(container);
-      console.log('Variant 4 VueFlow app mounted');
-    }
+    // Plasticine UI – dynamic panels (must be before app.mount so onMounted can call initPlasticinePanels)
+    let pui = null;
+    function getTaskPanel() { return pui?.getPanel('task-panel') || null; }
+    function getPanelContent() { return pui?.getContentEl('task-panel') || null; }
 
-    // ============================================
-    // Floating Panel Functions
-    // ============================================
-
-    function initFloatingPanel() {
-      const panel = document.getElementById('floatingPanel');
-      if (!panel) return;
-      
-      const header = panel.querySelector('.panel-header');
-      const resizeHandle = panel.querySelector('.panel-resize-handle');
-      
-      let isDragging = false;
-      let isResizing = false;
-      let startX, startY, startLeft, startTop, startWidth, startHeight;
-      
-      // Функция для получения текущей позиции панели
-      // Использует getBoundingClientRect() для надёжного получения позиции
-      // вне зависимости от того, задана ли она через left/top или right/top
-      function getPanelPosition() {
-        // Сначала пробуем получить из inline стилей (они могут быть установлены после drag)
-        const styleLeft = panel.style.left;
-        const styleTop = panel.style.top;
-        
-        if (styleLeft && styleTop) {
-          return {
-            left: parseInt(styleLeft) || 0,
-            top: parseInt(styleTop) || 0
-          };
-        }
-        
-        // Если inline стили не заданы, используем getBoundingClientRect()
-        // Это работает правильно с position: fixed
-        const rect = panel.getBoundingClientRect();
-        return {
-          left: rect.left,
-          top: rect.top
-        };
-      }
-      
-      // DRAG - только за заголовок
-      header.addEventListener('mousedown', (e) => {
-        isDragging = true;
-        startX = e.clientX;
-        startY = e.clientY;
-        
-        // Получаем правильную позицию панели
-        const pos = getPanelPosition();
-        startLeft = pos.left;
-        startTop = pos.top;
-        
-        // Добавляем класс для визуальной обратной связи
-        panel.classList.add('dragging');
-        
-        e.preventDefault(); // предотвратить выделение текста
-      });
-      
-      // RESIZE - только за угол
-      resizeHandle.addEventListener('mousedown', (e) => {
-        isResizing = true;
-        startX = e.clientX;
-        startY = e.clientY;
-        startWidth = panel.offsetWidth;
-        startHeight = panel.offsetHeight;
-        e.preventDefault();
-        e.stopPropagation();
-      });
-      
-      // Обработчик движения на document
-      document.addEventListener('mousemove', (e) => {
-        if (isDragging) {
-          const dx = e.clientX - startX;
-          const dy = e.clientY - startY;
-          panel.style.left = (startLeft + dx) + 'px';
-          panel.style.top = (startTop + dy) + 'px';
-        }
-        if (isResizing) {
-          const dx = e.clientX - startX;
-          const dy = e.clientY - startY;
-          panel.style.width = Math.max(200, startWidth + dx) + 'px';
-          panel.style.height = Math.max(150, startHeight + dy) + 'px';
+    function initPlasticinePanels() {
+      const mount = document.getElementById('puiMount');
+      if (!mount) return;
+      const result = PlasticineWorkflow.run(mount, {
+        types: ['task', 'logs', 'chat', 'debug', 'sessions'],
+        hooks: {
+          onPanelReady(id, panel, contentEl) {
+            if (id === 'task-panel') {
+              const cubeBtn = panel.cubeEl?.querySelector('.pui-cube-btn');
+              if (cubeBtn) cubeBtn.addEventListener('click', (e) => { e.stopPropagation(); cubeBtn.style.backgroundColor = ['#6366f1','#22c55e','#f97316','#3b82f6'][Math.floor(Math.random()*4)]; });
+              renderIdlePanel();
+            }
+          }
         }
       });
-      
-      // Обработчик окончания на document
-      document.addEventListener('mouseup', () => {
-        if (isDragging) {
-          // Snap to grid только для позиции
-          const left = parseInt(panel.style.left || 0);
-          const top = parseInt(panel.style.top || 0);
-          const snappedLeft = Math.round(left / 20) * 20;
-          const snappedTop = Math.round(top / 20) * 20;
-          
-          // Boundary constraints - не давать выйти за экран
-          const maxLeft = window.innerWidth - panel.offsetWidth;
-          const maxTop = window.innerHeight - panel.offsetHeight;
-          
-          const finalLeft = Math.max(0, Math.min(snappedLeft, maxLeft));
-          const finalTop = Math.max(0, Math.min(snappedTop, maxTop));
-          
-          // Добавить transition для плавного snap
-          panel.style.transition = 'left 0.2s ease-out, top 0.2s ease-out';
-          panel.style.left = finalLeft + 'px';
-          panel.style.top = finalTop + 'px';
-          
-          // Убрать класс dragging
-          panel.classList.remove('dragging');
-          
-          // Убрать transition после анимации
-          setTimeout(() => {
-            panel.style.transition = '';
-          }, 200);
-          
-          isDragging = false;
-        }
-        if (isResizing) {
-          // Snap to grid только для размера
-          const width = parseInt(panel.style.width || 0);
-          const height = parseInt(panel.style.height || 0);
-          
-          // Boundary constraints - не давать выходить за экран
-          const maxWidth = window.innerWidth - panel.offsetLeft;
-          const maxHeight = window.innerHeight - panel.offsetTop;
-          
-          const snappedWidth = Math.max(200, Math.round(width / 20) * 20);
-          const snappedHeight = Math.max(150, Math.round(height / 20) * 20);
-          
-          const finalWidth = Math.min(snappedWidth, maxWidth);
-          const finalHeight = Math.min(snappedHeight, maxHeight);
-          
-          panel.style.width = finalWidth + 'px';
-          panel.style.height = finalHeight + 'px';
-          
-          isResizing = false;
-        }
-      });
+      pui = result.pui;
+      renderIdlePanel();
     }
 
     function renderIdlePanel() {
-      document.getElementById('panelContent').innerHTML = `
+      const el = getPanelContent();
+      if (!el) return;
+      el.innerHTML = `
         <div class="idle-panel">
           <div class="idle-icon">🎯</div>
           <p class="idle-text">Створіть нову задачу</p>
@@ -1218,7 +1208,9 @@
     }
 
     function showTaskForm() {
-      document.getElementById('panelContent').innerHTML = `
+      const el = getPanelContent();
+      if (!el) return;
+      el.innerHTML = `
         <div class="task-form">
           <label class="form-label">Опис задачі</label>
           <textarea class="task-input" id="taskInputPanel" placeholder="Що зробити?">${panelState.taskInput || ''}</textarea>
@@ -1227,7 +1219,7 @@
             <button class="cancel-btn" onclick="renderIdlePanel()">Cancel</button>
           </div>
         </div>`;
-      document.getElementById('taskInputPanel').focus();
+      document.getElementById('taskInputPanel')?.focus();
     }
 
     function submitTask() {
@@ -1240,7 +1232,9 @@
 
     function renderProposedPanel(actions) {
       const action = actions[0];
-      document.getElementById('panelContent').innerHTML = `
+      const el = getPanelContent();
+      if (!el) return;
+      el.innerHTML = `
         <div class="proposed-actions-form">
           <div class="proposed-item">
             <div class="proposed-item-header">
@@ -1258,7 +1252,9 @@
     }
 
     function renderExecutingPanel(action) {
-      document.getElementById('panelContent').innerHTML = `
+      const el = getPanelContent();
+      if (!el) return;
+      el.innerHTML = `
         <div class="executing-form">
           <div class="executing-title">⚡ ${action.title}</div>
           <p class="executing-description">${action.description || ''}</p>
@@ -1272,7 +1268,9 @@
 
     function renderResultPanel(result) {
       const s = result.summary;
-      document.getElementById('panelContent').innerHTML = `
+      const el = getPanelContent();
+      if (!el) return;
+      el.innerHTML = `
         <div class="result-form">
           <div class="result-header"><div class="result-icon">🎉</div><div class="result-title">TASK COMPLETE</div></div>
           <div class="result-summary">
@@ -1290,6 +1288,15 @@
       else if (panelState.continueStep === 2) window.simContinue2();
     }
 
+    // Expose functions to global scope for inline onclick handlers
+    window.renderIdlePanel = renderIdlePanel;
+    window.showTaskForm = showTaskForm;
+    window.submitTask = submitTask;
+    window.renderProposedPanel = renderProposedPanel;
+    window.renderExecutingPanel = renderExecutingPanel;
+    window.renderResultPanel = renderResultPanel;
+    window.continueNextStep = continueNextStep;
+
     // Header button handlers
     document.getElementById('newTaskBtn').addEventListener('click', () => { panelState.taskInput = null; showTaskForm(); });
     document.getElementById('connectBtn').addEventListener('click', function() {
@@ -1302,463 +1309,57 @@
     });
     document.getElementById('settingsBtn').addEventListener('click', () => alert('Settings panel would open here'));
 
-    // ============================================
-    // Floating Panel Advanced Features
-    // ============================================
+    document.getElementById('newPanelForm')?.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const input = document.getElementById('newPanelTitle');
+      const title = input?.value?.trim();
+      if (!title || !pui) return;
+      pui.addPanel({
+        id: 'panel-' + Date.now(),
+        title: title,
+        slot: 'floating',
+        contentHTML: '<div class="pui-placeholder">Custom panel</div>'
+      });
+      input.value = '';
+    });
 
-    // Panel state
-    let isPanelOpen = true;
-    let isMinimized = false;
-    let currentZone = null;
-    let panelPosition = { left: 20, top: 20 };
-    let panelSize = { width: 320, height: null };
-
-    // Zone configurations
-    const zoneConfigs = {
-      left: { width: 150, height: 'calc(100vh - 100px)', isVertical: true },
-      right: { width: 400, height: 'calc(100vh - 100px)', isVertical: true },
-      bottom: { width: 'calc(100% - 300px)', height: 200, isVertical: false }
-    };
-
-    // DOM Elements
-    const floatingPanel = document.getElementById('floatingPanel');
-    const minimizedCube = document.getElementById('minimizedCube');
-    const cubeBtn = document.getElementById('cubeBtn');
-    const cubeStatus = document.getElementById('cubeStatus');
-    const dropZones = document.querySelectorAll('.drop-zone');
-    const closeBtn = document.getElementById('closeBtn');
-    const minimizeBtn = document.getElementById('minimizeBtn');
-    const togglePanelBtn = document.getElementById('togglePanelBtn');
-
-    // Initialize panel position
-    floatingPanel.style.left = panelPosition.left + 'px';
-    floatingPanel.style.top = panelPosition.top + 'px';
-
-    // Helper: get random color
-    function getRandomColor() {
-      const colors = ['#6366f1', '#22c55e', '#f97316', '#3b82f6', '#8b5cf6', '#ec4899', '#14b8a6', '#f59e0b'];
-      return colors[Math.floor(Math.random() * colors.length)];
-    }
-
-    // Helper: update cube status based on task state
+    // Panel cube status and header toggle
     function updateCubeStatus() {
-      const status = panelState.status;
-      cubeStatus.className = 'cube-status ' + status;
+      getTaskPanel()?.setCubeStatus(panelState.status);
     }
-
-    // Open panel from minimized state or button
-    function openPanel() {
-      isPanelOpen = true;
-      isMinimized = false;
-      floatingPanel.classList.remove('minimized');
-      floatingPanel.style.display = 'flex';
-      minimizedCube.classList.remove('visible');
-      
-      // Reset size if coming from a zone
-      if (currentZone) {
-        floatingPanel.style.width = panelSize.width + 'px';
-        floatingPanel.style.height = '';
-        floatingPanel.style.left = panelPosition.left + 'px';
-        floatingPanel.style.top = panelPosition.top + 'px';
-        floatingPanel.style.right = '';
-        floatingPanel.style.bottom = '';
-        currentZone = null;
-      }
-      
-      // Update button
-      if (togglePanelBtn) {
-        togglePanelBtn.classList.add('active');
-      }
-    }
-
-    // Close panel (minimize to cube if task is active)
-    function closePanel() {
-      if (panelState.status !== 'idle') {
-        // Minimize to cube
-        minimizeToCube();
-      } else {
-        // Just reset
-        resetPanelState();
-      }
-    }
-
-    // Minimize to cube
-    function minimizeToCube() {
-      isPanelOpen = false;
-      isMinimized = true;
-      
-      // Save current position before minimizing
-      const rect = floatingPanel.getBoundingClientRect();
-      panelPosition = { left: rect.left, top: rect.top };
-      
-      floatingPanel.style.display = 'none';
-      minimizedCube.classList.add('visible');
-      
-      // Position cube at saved position
-      minimizedCube.style.left = panelPosition.left + 'px';
-      minimizedCube.style.top = panelPosition.top + 'px';
-      
-      updateCubeStatus();
-      
-      // Update button
-      if (togglePanelBtn) {
-        togglePanelBtn.classList.remove('active');
-      }
-    }
-
-    // Reset panel to initial state (but keep task state)
-    function resetPanelState() {
-      floatingPanel.style.display = 'flex';
-      floatingPanel.style.left = '20px';
-      floatingPanel.style.top = '20px';
-      floatingPanel.style.width = '320px';
-      floatingPanel.style.height = '';
-      floatingPanel.style.right = '';
-      floatingPanel.style.bottom = '';
-      
-      panelPosition = { left: 20, top: 20 };
-      currentZone = null;
-      
-      renderIdlePanel();
-      
-      if (togglePanelBtn) {
-        togglePanelBtn.classList.add('active');
-      }
-    }
-
-    // Toggle panel button in header
-    if (togglePanelBtn) {
-      togglePanelBtn.addEventListener('click', () => {
-        if (isPanelOpen) {
-          closePanel();
-        } else {
-          openPanel();
-        }
-      });
-    }
-
-    // Close button handler
-    if (closeBtn) {
-      closeBtn.addEventListener('click', () => {
-        closePanel();
-      });
-    }
-
-    // Minimize button handler
-    if (minimizeBtn) {
-      minimizeBtn.addEventListener('click', () => {
-        minimizeToCube();
-      });
-    }
-
-    // Cube button - change color
-    if (cubeBtn) {
-      cubeBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        cubeBtn.style.backgroundColor = getRandomColor();
-      });
-    }
-
-    // Click on cube to open panel
-    if (minimizedCube) {
-      minimizedCube.addEventListener('click', () => {
-        openPanel();
-      });
-    }
-
-    // ============================================
-    // Drag and Drop for Minimized Cube
-    // ============================================
-
-    let cubeDragging = false;
-    let cubeStartX, cubeStartY, cubeStartLeft, cubeStartTop;
-
-    if (minimizedCube) {
-      minimizedCube.addEventListener('mousedown', (e) => {
-        if (e.target === cubeBtn) return; // Don't drag when clicking button
-        
-        cubeDragging = true;
-        cubeStartX = e.clientX;
-        cubeStartY = e.clientY;
-        cubeStartLeft = parseInt(minimizedCube.style.left) || 20;
-        cubeStartTop = parseInt(minimizedCube.style.top) || 20;
-        
-        minimizedCube.classList.add('dragging');
-        e.preventDefault();
-      });
-
-      document.addEventListener('mousemove', (e) => {
-        if (!cubeDragging) return;
-        
-        const dx = e.clientX - cubeStartX;
-        const dy = e.clientY - cubeStartY;
-        minimizedCube.style.left = (cubeStartLeft + dx) + 'px';
-        minimizedCube.style.top = (cubeStartTop + dy) + 'px';
-      });
-
-      document.addEventListener('mouseup', () => {
-        if (cubeDragging) {
-          cubeDragging = false;
-          minimizedCube.classList.remove('dragging');
-          
-          // Update saved position
-          panelPosition.left = parseInt(minimizedCube.style.left) || 20;
-          panelPosition.top = parseInt(minimizedCube.style.top) || 20;
-        }
-      });
-    }
-
-    // ============================================
-    // Drag and Drop for Panel with Droppable Zones
-    // ============================================
-
-    let isPanelDragging = false;
-    let panelDragStartX, panelDragStartY, panelDragStartLeft, panelDragStartTop;
-    let draggedFromZone = false;
-
-    // Show drop zones on drag start
-    function showDropZones() {
-      dropZones.forEach(zone => zone.classList.add('visible'));
-    }
-
-    // Hide drop zones
-    function hideDropZones() {
-      dropZones.forEach(zone => {
-        zone.classList.remove('visible', 'drag-over');
-      });
-    }
-
-    // Apply zone transformation (preview or actual)
-    function applyZoneTransform(zoneType, isPreview = false) {
-      const config = zoneConfigs[zoneType];
-      if (!config) return;
-      
-      currentZone = zoneType;
-      
-      if (zoneType === 'left') {
-        floatingPanel.style.left = '0';
-        floatingPanel.style.top = '50px';
-        floatingPanel.style.width = config.width + 'px';
-        floatingPanel.style.height = config.height;
-        floatingPanel.style.right = '';
-        floatingPanel.style.bottom = '';
-      } else if (zoneType === 'right') {
-        floatingPanel.style.right = '0';
-        floatingPanel.style.top = '50px';
-        floatingPanel.style.width = config.width + 'px';
-        floatingPanel.style.height = config.height;
-        floatingPanel.style.left = '';
-        floatingPanel.style.bottom = '';
-      } else if (zoneType === 'bottom') {
-        floatingPanel.style.bottom = '0';
-        floatingPanel.style.left = '150px';
-        floatingPanel.style.width = config.width;
-        floatingPanel.style.height = config.height + 'px';
-        floatingPanel.style.top = '';
-        floatingPanel.style.right = '';
-      }
-      
-      if (!isPreview) {
-        // Save position when actually dropped
-        panelPosition = { left: parseInt(floatingPanel.style.left) || 20, top: parseInt(floatingPanel.style.top) || 20 };
-      }
-    }
-
-    // Reset panel from zone transform
-    function resetFromZone() {
-      currentZone = null;
-      floatingPanel.style.width = panelSize.width + 'px';
-      floatingPanel.style.height = '';
-      floatingPanel.style.left = panelPosition.left + 'px';
-      floatingPanel.style.top = panelPosition.top + 'px';
-      floatingPanel.style.right = '';
-      floatingPanel.style.bottom = '';
-    }
-
-    // Modify the existing drag handlers to support drop zones
-    const header = document.getElementById('panelHeader');
-    const resizeHandle = document.getElementById('panelResizeHandle');
-
-    // Override existing mousedown handler for header
-    if (header) {
-      const originalMousedown = header.onmousedown;
-      header.addEventListener('mousedown', (e) => {
-        // Only handle if not clicking on control buttons
-        if (e.target.closest('.panel-control-btn')) return;
-        
-        isPanelDragging = true;
-        draggedFromZone = currentZone !== null;
-        
-        panelDragStartX = e.clientX;
-        panelDragStartY = e.clientY;
-        
-        // Get current position
-        const styleLeft = floatingPanel.style.left;
-        const styleTop = floatingPanel.style.top;
-        const styleRight = floatingPanel.style.right;
-        const styleBottom = floatingPanel.style.bottom;
-        
-        if (styleLeft && styleLeft !== 'auto') {
-          panelDragStartLeft = parseInt(styleLeft) || 0;
-        } else if (styleRight) {
-          panelDragStartLeft = window.innerWidth - parseInt(styleRight) - floatingPanel.offsetWidth;
-        } else {
-          panelDragStartLeft = 20;
-        }
-        
-        if (styleTop && styleTop !== 'auto') {
-          panelDragStartTop = parseInt(styleTop) || 0;
-        } else if (styleBottom) {
-          panelDragStartTop = window.innerHeight - parseInt(styleBottom) - floatingPanel.offsetHeight;
-        } else {
-          panelDragStartTop = 20;
-        }
-        
-        floatingPanel.classList.add('dragging');
-        showDropZones();
-        
-        // If dragging from zone, make panel full size immediately
-        if (draggedFromZone) {
-          resetFromZone();
-        }
-        
-        e.preventDefault();
-      });
-    }
-
-    // Modify document mousemove to handle drop zones
-    const originalMousemove = document.onmousemove;
-    document.addEventListener('mousemove', (e) => {
-      if (isPanelDragging) {
-        const dx = e.clientX - panelDragStartX;
-        const dy = e.clientY - panelDragStartY;
-        
-        floatingPanel.style.left = (panelDragStartLeft + dx) + 'px';
-        floatingPanel.style.top = (panelDragStartTop + dy) + 'px';
-        floatingPanel.style.right = '';
-        floatingPanel.style.bottom = '';
-        
-        // Check which zone we're over
-        let overZone = null;
-        dropZones.forEach(zone => {
-          const rect = zone.getBoundingClientRect();
-          if (e.clientX >= rect.left && e.clientX <= rect.right &&
-              e.clientY >= rect.top && e.clientY <= rect.bottom) {
-            overZone = zone.dataset.zone;
-          }
-          zone.classList.remove('drag-over');
-        });
-        
-        if (overZone) {
-          const zone = document.querySelector(`[data-zone="${overZone}"]`);
-          if (zone) {
-            zone.classList.add('drag-over');
-            applyZoneTransform(overZone, true); // Preview
-          }
-        } else if (currentZone) {
-          // Not over any zone, reset preview
-          resetFromZone();
-        }
-      }
+    document.getElementById('togglePanelBtn')?.addEventListener('click', () => {
+      getTaskPanel()?.toggle();
     });
 
-    // Modify document mouseup to handle drop
-    const originalMouseup = document.onmouseup;
-    document.addEventListener('mouseup', (e) => {
-      if (isPanelDragging) {
-        // Check if dropped on a zone
-        let droppedOnZone = null;
-        dropZones.forEach(zone => {
-          const rect = zone.getBoundingClientRect();
-          if (e.clientX >= rect.left && e.clientX <= rect.right &&
-              e.clientY >= rect.top && e.clientY <= rect.bottom) {
-            droppedOnZone = zone.dataset.zone;
-          }
-          zone.classList.remove('drag-over');
-        });
-        
-        if (droppedOnZone) {
-          // Apply zone transformation
-          applyZoneTransform(droppedOnZone, false);
-        } else {
-          // Not dropped on zone, keep current position
-          const left = parseInt(floatingPanel.style.left) || 20;
-          const top = parseInt(floatingPanel.style.top) || 20;
-          
-          // Boundary constraints
-          const maxLeft = window.innerWidth - floatingPanel.offsetWidth;
-          const maxTop = window.innerHeight - floatingPanel.offsetHeight;
-          
-          panelPosition.left = Math.max(0, Math.min(left, maxLeft));
-          panelPosition.top = Math.max(0, Math.min(top, maxTop));
-          
-          floatingPanel.style.left = panelPosition.left + 'px';
-          floatingPanel.style.top = panelPosition.top + 'px';
-          
-          // Reset from zone if was in one
-          if (currentZone) {
-            resetFromZone();
-          }
-        }
-        
-        floatingPanel.classList.remove('dragging');
-        hideDropZones();
-        isPanelDragging = false;
-        draggedFromZone = false;
-      }
-    });
-
-    // Update panel state functions to handle minimized cube
     const originalSimTaskRequest = window.simTaskRequest;
     window.simTaskRequest = function() {
       originalSimTaskRequest();
       updateCubeStatus();
-      if (!isPanelOpen) {
-        minimizeToCube();
-      }
+      if (getTaskPanel()?.state === 'minimized') getTaskPanel()?.cubeEl?.classList.add('visible');
     };
-
     const originalSimApprove = window.simApprove;
-    window.simApprove = function() {
-      originalSimApprove();
-      updateCubeStatus();
-    };
-
+    window.simApprove = function() { originalSimApprove(); updateCubeStatus(); };
     const originalSimContinue1 = window.simContinue1;
-    window.simContinue1 = function() {
-      originalSimContinue1();
-      updateCubeStatus();
-    };
-
+    window.simContinue1 = function() { originalSimContinue1(); updateCubeStatus(); };
     const originalSimContinue2 = window.simContinue2;
-    window.simContinue2 = function() {
-      originalSimContinue2();
-      updateCubeStatus();
-    };
-
+    window.simContinue2 = function() { originalSimContinue2(); updateCubeStatus(); };
     const originalSimComplete = window.simComplete;
-    window.simComplete = function() {
-      originalSimComplete();
-      updateCubeStatus();
-    };
-
+    window.simComplete = function() { originalSimComplete(); updateCubeStatus(); };
     const originalResetPanel = window.resetPanel;
     window.resetPanel = function() {
       originalResetPanel();
       updateCubeStatus();
-      isPanelOpen = true;
-      isMinimized = false;
-      floatingPanel.style.display = 'flex';
-      minimizedCube.classList.remove('visible');
-      currentZone = null;
-      resetFromZone();
-      if (togglePanelBtn) {
-        togglePanelBtn.classList.add('active');
-      }
+      getTaskPanel()?.expand();
     };
-
-    // Initialize cube status
     updateCubeStatus();
+
+    // Mount Vue app (after pui/initPlasticinePanels so onMounted can use them)
+    const container = document.getElementById('vueflow-canvas');
+    if (container) {
+      const app = createApp(App);
+      app.mount(container);
+      console.log('Variant 4 VueFlow app mounted');
+    }
   </script>
 </body>
 </html>

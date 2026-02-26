@@ -1,3 +1,5 @@
+
+
 # План: Unified JSON Frontend - Расширенный анализ
 
 ## 1. Анализ текущего состояния
@@ -12,23 +14,23 @@
 **Файлы:**
 ```
 a2a-client/web/
-├── index.html          # 4631 chars - основная страница
+├── index.html          # Основная страница
 ├── css/
-│   └── style.css      # 19632 chars - стили
+│   └── style.css      # Стили
 └── js/
-    ├── sessions.js    # 28948 chars - управление сессиями
+    ├── sessions.js    # Управление сессиями
     └── flow/
-        ├── index.js   # 17834 chars - инициализация VueFlow
-        ├── nodes.js  # 16150 chars - кастомные ноды
-        └── protocol.js # 25568 chars - маппинг протокола
+        ├── index.js   # Инициализация VueFlow
+        ├── nodes.js   # Кастомные ноды
+        └── protocol.js # Маппинг протокола
 ```
 
 ### 1.2 Типы данных (a2a-client/packages/types/)
 
-```typescript
+```
+typescript
 // Текущие типы в a2a-client/packages/types/src/index.ts
 
-// Task
 type TaskType = 'analyze' | 'refactor' | 'test' | 'document' | 'fix' | 'create' | 'delete';
 type TaskStatus = 'pending' | 'in_progress' | 'completed' | 'failed' | 'cancelled';
 
@@ -40,7 +42,6 @@ interface Task {
   progress?: number;
 }
 
-// ContextBlock
 interface ContextBlock {
   version: '1.0';
   session_id: string;
@@ -49,7 +50,6 @@ interface ContextBlock {
   errors?: ProtocolError[];
 }
 
-// Action
 interface Action {
   id?: string;
   title?: string;
@@ -58,138 +58,76 @@ interface Action {
 }
 ```
 
-### 1.3 Существующий план (a2a-client/plans/unified-ui-plan.md)
-
-Уже есть план на 247 строк с:
-- Структура страницы на VueFlow
-- User Flow
-- Компоненты (Search Bar, Action Cards, Tickets Panel)
-- 4 этапа реализации
-- Маппинг протокола на VueFlow
-
 ---
 
 ## 2. Расширенный анализ: что нужно для Unified JSON
 
-### 2.1 Типы ответов сервера (из симуляций)
+### 2.1 Типы ответов сервера
 
-**Action Proposal (task_request → action_proposal):**
-```json
+**Action Proposal:**
+```
+json
 {
   "result": {
-    "context": {
-      "tasks": [{
-        "id": "fix-vue-imports",
-        "type": "analyze",
-        "status": "in_progress",
-        "progress": 0
-      }]
-    },
-    "proposedActions": [{
-      "actionId": "fix-vue-imports-batch",
-      "title": "Исправить сломанные импорты",
-      "subActions": [...]
-    }],
+    "context": { "tasks": [...] },
+    "proposedActions": [...],
     "fallbackActions": [...]
   }
 }
 ```
 
-**Action Executing (approve_action → action_executing):**
-```json
+**Action Executing:**
+```
+json
 {
   "result": {
-    "executingAction": {
-      "actionId": "collect",
-      "title": "Collect Vue and TypeScript files",
-      "dsl": {...}
-    },
+    "executingAction": { "actionId": "collect" },
     "nextSteps": [...]
   }
 }
 ```
 
-**Action Progress (step_result → action_progress):**
-```json
+**Action Progress:**
+```
+json
 {
   "result": {
-    "context": {
-      "tasks": [{
-        "id": "fix-vue-imports",
-        "status": "in_progress",
-        "progress": 25
-      }]
-    },
+    "context": { "tasks": [...] },
     "executingAction": {...},
     "nextSteps": [...]
   }
 }
 ```
 
-### 2.2 Что уже реализовано в web/js/flow/
+### 2.2 Что уже реализовано
 
-**protocol.js:**
 - ✅ A2AClient класс для коммуникации с сервером
-- ✅ Методы: request(), createRequest(), waitForCompletion()
-- ✅ Обработка различных типов ответов
-
-**nodes.js:**
-- ✅ Custom VueFlow узлы через Vue 3 h() функции
-- ✅ createNodeWrapper() - базовая обертка
-- ✅ Поддержка target/source handles
-
-**index.js:**
+- ✅ Custom VueFlow узлы
 - ✅ Инициализация VueFlow
-- ✅ Добавление нод
-- ✅ Подключение event listeners
+- ✅ Обработка различных типов ответов
 
 ### 2.3 Что НЕ реализовано
 
-1. **Парсинг Unified JSON ответов** - нет единого парсера
-2. **Валидация ответов** - нет Zod/JSON Schema
-3. **Обработка всех типов действий** - только базовые
-4. **UI для subActions** - нет рендеринга вложенных действий
-5. **Progress tracking** - нет визуализации прогресса
-6. **Error handling UI** - нет отображения ошибок
+1. Парсинг Unified JSON ответов
+2. Валидация ответов (Zod)
+3. Обработка всех типов действий
+4. UI для subActions
+5. Progress tracking
+6. Error handling UI
 
 ---
 
-## 3. План реализации (детальный)
+## 3. План реализации
 
-### Этап 1: Unified JSON Parser (2 дня)
+### Этап 1: Unified JSON Parser
 
-**1.1 Создать парсер ответов**
-```
-a2a-client/src/json/
-├── parser.ts        # Основной парсер
-├── types.ts         # TypeScript типы для ответов
-├── validator.ts     # Валидация через Zod
-└── mapper.ts       # Маппинг на VueFlow
-```
+Создать парсер ответов:
+- parser.ts - основной парсер
+- types.ts - TypeScript типы
+- validator.ts - валидация через Zod
+- mapper.ts - маппинг на VueFlow
 
-**1.2 Определить типы ответов**
-```typescript
-type ResponseType = 
-  | 'action_proposal'    // предложение действий
-  | 'action_executing'  // начало выполнения
-  | 'action_progress'   // прогресс выполнения
-  | 'action_completed'  // завершено
-  | 'action_error';     // ошибка
-
-interface ServerResponse {
-  success: boolean;
-  data: {
-    id: string;
-    status: string;
-    context: ContextBlock;
-    result: ActionResult;
-  };
-}
-```
-
-### Этап 2: VueFlow компоненты (3 дня)
-
-**2.1 Кастомные ноды для каждого типа**
+### Этап 2: VueFlow компоненты
 
 | Тип ответа | Нода | Описание |
 |------------|------|----------|
@@ -199,105 +137,31 @@ interface ServerResponse {
 | action_completed | ResultNode | Результат |
 | action_error | ErrorNode | Ошибка |
 
-**2.2 SubActions визуализация**
-- Вложенный список внутри ProposalNode
-- Connecting edges между主 узлами
+### Этап 3: UI компоненты
 
-### Этап 3: UI компоненты (2 дня)
-
-**3.1 Основные компоненты**
 - SearchBar с debounce
 - ActionCardsList
-- TicketPanel (активные тикеты)
+- TicketPanel
 - PropertiesPanel
 
-**3.2 Интерактивность**
-- Drag & drop нод
-- Zoom & pan
-- Node selection
+### Этап 4: Интеграция
 
-### Этап 4: Интеграция (2 дня)
-
-**4.1 Подключение к API**
-- Использовать существующий A2AClient
-- WebSocket для real-time обновлений
-
-**4.2 Обработка ошибок**
+- Подключение к API (A2AClient)
+- Обработка ошибок
 - Timeout handling
-- Retry логика
-- Error display
 
 ---
 
-## 4. Технические детали
+## 4. Критерии готовности
 
-### 4.1 Структура файлов после реализации
-
-```
-a2a-client/
-├── packages/
-│   └── json/              # НОВЫЙ ПАКЕТ
-│       ├── src/
-│       │   ├── parser.ts
-│       │   ├── types.ts
-│       │   ├── validator.ts
-│       │   └── index.ts
-│       └── package.json
-├── web/
-│   ├── js/
-│   │   ├── app.js        # Обновить
-│   │   ├── flow/
-│   │   │   ├── nodes.js  # Расширить
-│   │   │   └── protocol.js # Расширить
-│   │   └── json/         # НОВЫЙ
-│   │       └── ui.ts    # UI компоненты
-│   └── index.html
-└── plans/
-    └── frontend-unified-json-plan.md
-```
-
-### 4.2 Dependencies
-
-```json
-{
-  "dependencies": {
-    "@vue-flow/core": "^1.48.2",
-    "@vue-flow/background": "^1.3.2",
-    "@vue-flow/controls": "^1.1.3",
-    "@vue-flow/minimap": "^1.5.4",
-    "zod": "^3.22.0"  // Добавить для валидации
-  }
-}
-```
-
----
-
-## 5. Критерии готовности
-
-### Должно работать:
 - [ ] Парсинг любого типа ответа сервера
 - [ ] Валидация через Zod схемы
 - [ ] Отображение ProposalNode с subActions
 - [ ] Отображение ExecutingNode с progress
-- [ ] Connecting edges между主 узлами
 - [ ] SearchBar с поиском по экшенам
 - [ ] TicketPanel с активными тикетами
-
-### Тесты:
-- [ ] Unit тесты для парсера
-- [ ] Integration тесты для VueFlow
-- [ ] E2E тесты через Playwright
-
----
-
-## 6. Связанные файлы
-
-- [a2a-client/plans/unified-ui-plan.md](./unified-ui-plan.md) - Базовый план
-- [plans/IMPLEMENTATION_PLANS.md](../plans/IMPLEMENTATION_PLANS.md) - Общие планы
-- [simulations/pilot/schemas.ts](../simulations/pilot/schemas.ts) - Схемы валидации
-- [a2a-client/packages/types/src/index.ts](../packages/types/src/index.ts) - Базовые типы
 
 ---
 
 **Дата:** 2026-02-25
-**Статус:** Анализ завершен, готов к реализации
+**Статус:** Анализ завершен

@@ -1,5 +1,0 @@
-{
-  "deprecated": true,
-  "migration_instructions": "The module `error-management/error-handler/validation-utils.js` is deprecated. Please migrate all validation logic to `validation/validation/index.js` which provides a unified and extensible `ValidationUtils` class. The `validateInput` function in `error-management/error-handler/index.mjs` will be updated to use the new unified validation system when the `USE_CORE_VALIDATION` feature flag is enabled. Refer to `validation/validation/index.js` for usage details.",
-  "replacement_library": "validation/validation/index.js"
-}

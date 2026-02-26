@@ -1,2 +1,0 @@
-The `projects` model library is now standardized. It provides a `ProjectsConfigManager` for CRUD operations on project configurations, backed by a `schema.json` for validation and helper functions in `helpers.browser.js` for data normalization and basic validation. The `package.json` is configured for proper ESM/CJS exports and testing. This library serves as the authoritative source of truth for project-related data within the `config-unified` system.
-
