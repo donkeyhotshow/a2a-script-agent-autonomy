@@ -1,0 +1,10 @@
+{
+  "outcome": "action_approved",
+  "message": "Екшен context-scan підтверджено",
+  "context": { "version": "1.0", "session_id": "test-session-context-scan" },
+  "executingAction": { "actionId": "context-scan", "title": "Просканувати контекст проекту", "status": "running" },
+  "nextSteps": [
+    { "actionId": "ctx-scan-files", "title": "Сканувати файли" },
+    { "actionId": "ctx-scan-analyze", "title": "Аналізувати контекст" }
+  ]
+}

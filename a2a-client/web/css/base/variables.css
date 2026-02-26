@@ -1,0 +1,27 @@
+/* Plasticine UI - CSS Variables */
+
+:root {
+  /* Colors */
+  --pui-bg: #1a1a2e;
+  --pui-border: #30363d;
+  --pui-accent: #6366f1;
+  --pui-success: #22c55e;
+  --pui-warning: #f97316;
+  --pui-danger: #f85149;
+  --pui-text: #e6edf3;
+  --pui-muted: #8b949e;
+  --pui-header-bg: #21262d;
+  
+  /* Panel dimensions */
+  --pui-panel-w: 350px;
+  --pui-panel-h: 500px;
+  
+  /* Cube dimensions */
+  --pui-cube-size: 50px;
+  
+  /* Zone dimensions */
+  --pui-zone-size: 56px;
+  
+  /* Footer */
+  --pui-footer-height: 50px;
+}

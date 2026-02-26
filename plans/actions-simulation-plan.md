@@ -220,57 +220,94 @@ for (const action of actions) {
 
 ---
 
-## TODO List для симуляцій
+## Поточний статус симуляцій
+
+### ✅ Існуючі симуляції
+
+| # | Екшен | Папка | Статус |
+|---|-------|-------|--------|
+| 1 | fix-vue-imports | `simulations/fix-vue-imports/` | ✅ Існує |
+| 2 | analyze-full | `simulations/analyze-full/` | ✅ Існує |
+| 3 | hybrid-fix | `simulations/hybrid-fix/` | ✅ Існує |
+| 4 | dialog | `simulations/dialog/` | ✅ Існує |
+| 5 | analyze-architecture | `simulations/analyze-architecture/` | ✅ Існує |
+| 6 | analyze-laravel | `simulations/analyze-laravel/` | ✅ Існує |
+| 7 | analyze-performance | `simulations/analyze-performance/` | ✅ Існує |
+| 8 | analyze-security | `simulations/analyze-security/` | ✅ Існує |
+| 9 | analyze-typescript | `simulations/analyze-typescript/` | ✅ Існує |
+| 10 | analyze-vue | `simulations/analyze-vue/` | ✅ Існує |
+| 11 | phpunit-deprecations | `simulations/phpunit-deprecations/` | ✅ Існує |
+| 12 | generate-crud | `simulations/generate-crud/` | ✅ Існує |
+| 13 | generate-controller | `simulations/generate-controller/` | ✅ Існує |
+| 14 | generate-model | `simulations/generate-model/` | ✅ Існує |
+| 15 | generate-migration | `simulations/generate-migration/` | ✅ Існує |
+| 16 | generate-method | `simulations/generate-method/` | ✅ Існує |
+| 17 | generate-test | `simulations/generate-test/` | ✅ Існує |
+| 18 | generate-view | `simulations/generate-view/` | ✅ Існує |
+| 19 | graph-build | `simulations/graph-build/` | ✅ Існує |
+| 20 | graph-impact | `simulations/graph-impact/` | ✅ Існує |
+| 21 | graph-query | `simulations/graph-query/` | ✅ Існує |
+| 22 | hybrid-refactor | `simulations/hybrid-refactor/` | ✅ Існує |
+| - | pilot | `simulations/pilot/` | ✅ Референс |
+| - | schemas | `simulations/schemas/` | ✅ Допоміжний |
+
+### ✅ Всі симуляції створені!
+
+Усі 32 симуляції успішно створені. Детальніше див. TODO List вище.
+
+---
+
+## TODO List для симуляцій (актуальний)
 
 ### Фаза 1: Базова функціональність (4 екшени)
 
-- [ ] 1. fix-vue-imports
-- [ ] 2. analyze-full  
-- [ ] 3. hybrid-fix
-- [ ] 4. dialog
+- [x] 1. fix-vue-imports
+- [x] 2. analyze-full  
+- [x] 3. hybrid-fix
+- [x] 4. dialog
 
 ### Фаза 2: Аналіз (7 екшенів)
 
-- [ ] 5. analyze-architecture
-- [ ] 6. analyze-laravel
-- [ ] 7. analyze-performance
-- [ ] 8. analyze-security
-- [ ] 9. analyze-typescript
-- [ ] 10. analyze-vue
-- [ ] 11. phpunit-deprecations
+- [x] 5. analyze-architecture
+- [x] 6. analyze-laravel
+- [x] 7. analyze-performance
+- [x] 8. analyze-security
+- [x] 9. analyze-typescript
+- [x] 10. analyze-vue
+- [x] 11. phpunit-deprecations
 
 ### Фаза 3: Генерація (7 екшенів)
 
-- [ ] 12. generate-crud
-- [ ] 13. generate-controller
-- [ ] 14. generate-model
-- [ ] 15. generate-migration
-- [ ] 16. generate-method
-- [ ] 17. generate-test
-- [ ] 18. generate-view
+- [x] 12. generate-crud
+- [x] 13. generate-controller
+- [x] 14. generate-model
+- [x] 15. generate-migration
+- [x] 16. generate-method
+- [x] 17. generate-test
+- [x] 18. generate-view
 
 ### Фаза 4: Графи (6 екшенів)
 
-- [ ] 19. graph-build
-- [ ] 20. graph-extract-entities
-- [ ] 21. graph-extract-relations
-- [ ] 22. graph-impact
-- [ ] 23. graph-query
-- [ ] 24. graph-visualize
+- [x] 19. graph-build
+- [x] 20. graph-extract-entities
+- [x] 21. graph-extract-relations
+- [x] 22. graph-impact
+- [x] 23. graph-query
+- [x] 24. graph-visualize
 
 ### Фаза 5: Контекст (5 екшенів)
 
-- [ ] 25. context-scan
-- [ ] 26. context-query
-- [ ] 27. context-rank
-- [ ] 28. context-index
-- [ ] 29. context-format
+- [x] 25. context-scan
+- [x] 26. context-query
+- [x] 27. context-rank
+- [x] 28. context-index
+- [x] 29. context-format
 
 ### Фаза 6: Гібридні (3 екшени)
 
-- [ ] 30. hybrid-explain
-- [ ] 31. hybrid-improve
-- [ ] 32. hybrid-refactor
+- [x] 30. hybrid-explain
+- [x] 31. hybrid-improve
+- [x] 32. hybrid-refactor
 
 ---
 

@@ -1,0 +1,11 @@
+{
+  "action": "action_complete",
+  "actionId": "graph-extract-relations",
+  "result": {
+    "status": "completed",
+    "relations_extracted": 198,
+    "by_type": { "import": 134, "extends": 20, "implements": 10, "calls": 34 },
+    "output": { "format": "json", "relations": [] }
+  },
+  "context": { "version": "1.0", "session_id": "test-session-graph-extract-relations" }
+}

@@ -1,0 +1,8 @@
+{
+  "outcome": "step_continue",
+  "message": "Дедуплікація завершена, переходимо до форматування",
+  "context": { "version": "1.0", "session_id": "test-session-graph-extract-relations" },
+  "previousStep": { "actionId": "graph-rel-dedupe", "result": { "relations_unique": 198, "duplicates_removed": 36 } },
+  "executingAction": { "actionId": "graph-rel-format", "title": "Форматування результатів", "status": "running" },
+  "nextSteps": []
+}

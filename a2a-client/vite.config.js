@@ -7,8 +7,13 @@ export default {
     port: 5173,
     proxy: {
       '/api': {
-        // Must match a2a-server PORT (see a2a-server .env)
+        // a2a-server (main server)
         target: 'http://localhost:8080',
+        changeOrigin: true,
+      },
+      '/client-api': {
+        // a2a-client API (local functions: terminal, fs-utils, etc.)
+        target: 'http://localhost:3000',
         changeOrigin: true,
       },
     },

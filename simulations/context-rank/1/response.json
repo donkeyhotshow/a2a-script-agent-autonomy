@@ -1,0 +1,7 @@
+{
+  "outcome": "action_proposal",
+  "context": { "version": "1.0", "session_id": "test-session-context-rank" },
+  "proposedActions": [
+    { "actionId": "context-rank", "title": "Ранжувати контекст", "matchScore": 0.95, "subActions": [{ "actionId": "ctx-rank-exec", "title": "Ранжувати" }] }
+  ]
+}

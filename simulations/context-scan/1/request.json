@@ -1,0 +1,5 @@
+{
+  "action": "task_request",
+  "task": "просканувати контекст проекту",
+  "context": { "version": "1.0", "session_id": "test-session-context-scan" }
+}

@@ -1,0 +1,12 @@
+{
+  "action": "step_result",
+  "actionId": "graph-rel-parse",
+  "result": {
+    "relations_found": 234,
+    "sample": [
+      { "source": "UserController", "target": "UserService", "type": "import" },
+      { "source": "UserService", "target": "UserModel", "type": "import" }
+    ]
+  },
+  "context": { "version": "1.0", "session_id": "test-session-graph-extract-relations" }
+}

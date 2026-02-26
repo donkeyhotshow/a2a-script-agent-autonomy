@@ -1,0 +1,18 @@
+{
+  "action": "step_result",
+  "actionId": "graph-entities-dedupe",
+  "result": {
+    "entities_unique": 142,
+    "duplicates_removed": 14,
+    "by_type": {
+      "class": 22,
+      "function": 78,
+      "module": 30,
+      "variable": 12
+    }
+  },
+  "context": {
+    "version": "1.0",
+    "session_id": "test-session-graph-extract-entities"
+  }
+}

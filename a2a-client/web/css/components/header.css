@@ -1,0 +1,140 @@
+/* Plasticine UI - Header Styles */
+
+/* App header bar */
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 16px;
+  background: var(--bg2, #161b22);
+  border-bottom: 1px solid var(--border, #30363d);
+  flex-shrink: 0;
+}
+
+.app-header .header-left,
+.app-header .header-right { display: flex; align-items: center; gap: 8px; }
+
+.app-header .header-center {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  justify-content: center;
+  min-width: 0;
+}
+
+.header-doc-form { display: flex; align-items: center; gap: 8px; }
+
+.header-doc-form .header-input {
+  width: 180px;
+  padding: 6px 10px;
+  background: var(--bg3, #21262d);
+  border: 1px solid var(--border, #30363d);
+  border-radius: 6px;
+  color: var(--fg, #e6edf3);
+  font-size: 13px;
+}
+
+.header-doc-form .header-input:focus { outline: none; border-color: var(--accent, #58a6ff); }
+
+.header-btn {
+  padding: 6px 12px;
+  background: var(--bg3, #21262d);
+  border: 1px solid var(--border, #30363d);
+  border-radius: 6px;
+  color: var(--fg, #e6edf3);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.header-btn:hover { background: var(--border, #30363d); }
+
+.header-btn.primary { background: var(--accent, #58a6ff); border-color: var(--accent, #58a6ff); color: #fff; }
+
+/* Header */
+.pui-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--pui-border);
+  cursor: grab;
+  background: var(--pui-header-bg);
+  border-radius: 12px 12px 0 0;
+  flex-shrink: 0;
+}
+
+.pui-panel-title {
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--pui-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pui-panel-controls {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.pui-panel-control-btn {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  color: var(--pui-muted);
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.pui-panel-control-btn:hover {
+  background: #30363d;
+  color: var(--pui-text);
+}
+
+/* Header action buttons (Save/Load/Clear panels) */
+.header-actions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin-left: 12px;
+  padding-left: 12px;
+  border-left: 1px solid var(--pui-border);
+}
+
+.header-actions button {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid var(--pui-border);
+  border-radius: 6px;
+  color: var(--pui-muted);
+  cursor: pointer;
+  font-size: 16px;
+  transition: all 0.2s ease;
+}
+
+.header-actions button:hover {
+  background: var(--pui-accent);
+  border-color: var(--pui-accent);
+  color: var(--pui-text);
+}
+
+.header-actions button:active {
+  transform: scale(0.95);
+}
+
+.header-actions button[aria-label="Clear panels"]:hover {
+  background: var(--pui-danger);
+  border-color: var(--pui-danger);
+}

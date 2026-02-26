@@ -1,0 +1,6 @@
+{
+  "action": "action_complete",
+  "actionId": "graph-visualize",
+  "result": { "status": "completed", "nodes": 142, "edges": 198, "formats": ["dot", "svg", "vueflow"] },
+  "context": { "version": "1.0", "session_id": "test-session-graph-visualize" }
+}

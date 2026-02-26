@@ -1,0 +1,8 @@
+{
+  "outcome": "step_continue",
+  "message": "Сканування файлів завершено",
+  "context": { "version": "1.0", "session_id": "test-session-context-scan" },
+  "previousStep": { "actionId": "ctx-scan-files", "result": { "files_found": 156 } },
+  "executingAction": { "actionId": "ctx-scan-analyze", "title": "Аналізувати контекст", "status": "running" },
+  "nextSteps": []
+}

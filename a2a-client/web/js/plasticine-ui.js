@@ -21,6 +21,7 @@
       this._slotClass = SLOTS[this.slot] || SLOTS.floating;
       this._drag = { on: false, startX: 0, startY: 0, startLeft: 0, startTop: 0 };
       this._resize = { on: false, startX: 0, startY: 0, startW: 0, startH: 0 };
+      this._cubeEventsBound = false;
       this._bind();
     }
 
@@ -92,8 +93,8 @@
         document.removeEventListener('mouseup', up);
       };
 
-      minimizeBtn?.addEventListener('click', () => this.minimize());
-      closeBtn?.addEventListener('click', () => { this.minimize(); this.onClose(this); });
+      minimizeBtn?.addEventListener('click', () => this.minimizeToFooter());
+      closeBtn?.addEventListener('click', (e) => this.closeToCube(e));
     }
 
     _showZones() {
@@ -170,6 +171,12 @@
         styles.top = 'auto';
         styles.right = 'auto';
         styles.bottom = '10px';
+      } else if (newState === 'closed-via-cube') {
+        this.container.style.display = 'none';
+        if (this.cubeEl) {
+          this.cubeEl.classList.add('visible');
+          this._bindCubeEvents();
+        }
       }
       this.onStateChange(this.state);
     }
@@ -177,9 +184,111 @@
     expand() {
       this.container.style.display = '';
       this.setState('expanded');
-      if (this.cubeEl) this.cubeEl.classList.remove('visible');
+      if (this.cubeEl) {
+        this.cubeEl.classList.remove('visible');
+        // Reset cube position to default (bottom right)
+        const idx = Array.from(this.cubeEl.parentElement?.querySelectorAll('.pui-cube') || []).indexOf(this.cubeEl);
+        this.cubeEl.style.right = (20 + idx * 54) + 'px';
+        this.cubeEl.style.bottom = '20px';
+        this.cubeEl.style.left = 'auto';
+        this.cubeEl.style.top = 'auto';
+      }
     }
     minimize() { this.setState('minimized'); }
+    
+    /** Minimize to footer - narrow strip with only title */
+    minimizeToFooter() {
+      this.setState('docked-bottom');
+      if (this.cubeEl) this.cubeEl.classList.remove('visible');
+    }
+    
+    /** Close to cube - hide panel, show cube at cursor position */
+    closeToCube(e) {
+      e = e || window.event;
+      // Hide the panel
+      this.container.style.display = 'none';
+      // Show cube at cursor position
+      if (this.cubeEl) {
+        const x = e.clientX || e.pageX || window.innerWidth / 2;
+        const y = e.clientY || e.pageY || window.innerHeight / 2;
+        this.cubeEl.style.left = (x - 25) + 'px'; // Center cube (50px/2)
+        this.cubeEl.style.top = (y - 25) + 'px';
+        this.cubeEl.style.right = 'auto';
+        this.cubeEl.style.bottom = 'auto';
+        this.cubeEl.classList.add('visible');
+        this._bindCubeEvents();
+      }
+      this.state = 'closed-via-cube';
+      this.onStateChange(this.state);
+    }
+    
+    /** Bind drag and right-click events to cube */
+    _bindCubeEvents() {
+      if (!this.cubeEl || this._cubeEventsBound) return;
+      
+      const cube = this.cubeEl;
+      let isDragging = false;
+      let dragOffsetX = 0;
+      let dragOffsetY = 0;
+      
+      // Colors for right-click cycling
+      const colors = ['#6366f1', '#22c55e', '#f97316', '#f85149', '#8b949e'];
+      let colorIndex = 0;
+      
+      // Left mouse button drag
+      cube.addEventListener('mousedown', (e) => {
+        if (e.button === 0) { // Left button
+          isDragging = true;
+          dragOffsetX = e.clientX - cube.offsetLeft;
+          dragOffsetY = e.clientY - cube.offsetTop;
+          cube.classList.add('dragging');
+          e.preventDefault();
+          e.stopPropagation();
+        }
+      });
+      
+      // Mouse move for drag (also handle outside cube)
+      const handleMouseMove = (e) => {
+        if (isDragging) {
+          cube.style.left = (e.clientX - dragOffsetX) + 'px';
+          cube.style.top = (e.clientY - dragOffsetY) + 'px';
+          cube.style.right = 'auto';
+          cube.style.bottom = 'auto';
+        }
+      };
+      document.addEventListener('mousemove', handleMouseMove);
+      
+      // Mouse up to stop drag
+      const handleMouseUp = (e) => {
+        if (e.button === 0 && isDragging) {
+          isDragging = false;
+          cube.classList.remove('dragging');
+        }
+      };
+      document.addEventListener('mouseup', handleMouseUp);
+      
+      // Also need global mousemove for dragging outside cube
+      
+      // Right click - change color
+      cube.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        colorIndex = (colorIndex + 1) % colors.length;
+        cube.style.borderColor = colors[colorIndex];
+        const statusEl = cube.querySelector('.pui-cube-status');
+        if (statusEl) {
+          statusEl.style.background = colors[colorIndex];
+        }
+      });
+      
+      // Left click - restore panel
+      cube.addEventListener('click', (e) => {
+        if (!isDragging) {
+          this.expand();
+        }
+      });
+      
+      this._cubeEventsBound = true;
+    }
     toggle() { this.state === 'minimized' ? this.expand() : this.minimize(); }
     setCritical(c) { this.critical = !!c; this.container.classList.toggle('pui-critical', this.critical); if (this.cubeEl) this.cubeEl.classList.toggle('pui-critical', this.critical); }
     setCubeStatus(status) { if (this.cubeEl) { const s = this.cubeEl.querySelector('.pui-cube-status'); if (s) s.className = 'pui-cube-status ' + (status || 'idle'); } }
@@ -240,7 +349,85 @@
       this.zonesContainer = null;
       this.panels = new Map();
       this.cubes = new Map();
+      this._maxZIndex = 1000;
+      this._activePanelId = null;
       this._ensureZones();
+    }
+
+    /**
+     * Get next z-index for panels/cubes
+     * @returns {number}
+     */
+    _getNextZIndex() {
+      return ++this._maxZIndex;
+    }
+
+    /**
+     * Bring panel/cube to front
+     * @param {string} id - panel ID
+     */
+    bringToFront(id) {
+      const panel = this.panels.get(id);
+      if (panel) {
+        const zIndex = this._getNextZIndex();
+        panel.container.style.zIndex = zIndex;
+        this._activePanelId = id;
+      }
+      const cube = this.cubes.get(id);
+      if (cube) {
+        const zIndex = this._getNextZIndex();
+        cube.style.zIndex = zIndex;
+      }
+    }
+
+    /**
+     * Get occupied positions for cubes (for non-overlap positioning)
+     * @returns {Array} array of {x, y, width, height} rectangles
+     */
+    _getOccupiedCubePositions() {
+      const positions = [];
+      this.cubes.forEach((cube) => {
+        if (cube.classList.contains('visible') || cube.style.display !== 'none') {
+          const r = cube.getBoundingClientRect();
+          positions.push({
+            x: r.left,
+            y: r.top,
+            width: r.width,
+            height: r.height
+          });
+        }
+      });
+      return positions;
+    }
+
+    /**
+     * Find non-overlapping position for a new cube
+     * @returns {Object} {x, y} position
+     */
+    _findNonOverlappingCubePosition() {
+      const cubeSize = 54; // 50px + 4px margin
+      const margin = 10;
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+      const occupied = this._getOccupiedCubePositions();
+      
+      // Try positions from bottom-right corner, moving left and up
+      for (let y = viewportHeight - cubeSize - margin; y >= margin; y -= cubeSize) {
+        for (let x = viewportWidth - cubeSize - margin; x >= margin; x -= cubeSize) {
+          const overlaps = occupied.some(pos => {
+            return !(x + cubeSize + margin < pos.x || 
+                     x > pos.x + pos.width + margin ||
+                     y + cubeSize + margin < pos.y || 
+                     y > pos.y + pos.height + margin);
+          });
+          if (!overlaps) {
+            return { x, y };
+          }
+        }
+      }
+      
+      // Fallback: cascade from top-left
+      return { x: margin + (this.cubes.size * 10) % (viewportWidth - cubeSize), y: margin + (this.cubes.size * 10) % (viewportHeight - cubeSize) };
     }
 
     _ensureZones() {
@@ -257,9 +444,19 @@
       const el = opts.element || createPanelDOM({ ...opts, id });
       if (!opts.element) this.mount.appendChild(el);
       const cubeEl = createCubeDOM(id, !!opts.critical);
-      const idx = this.cubes.size;
-      cubeEl.style.right = (20 + idx * 54) + 'px';
-      cubeEl.style.bottom = '20px';
+      
+      // Use non-overlapping position for cube
+      const pos = this._findNonOverlappingCubePosition();
+      cubeEl.style.right = 'auto';
+      cubeEl.style.bottom = 'auto';
+      cubeEl.style.left = pos.x + 'px';
+      cubeEl.style.top = pos.y + 'px';
+      
+      // Set initial z-index
+      const zIndex = this._getNextZIndex();
+      el.style.zIndex = zIndex;
+      cubeEl.style.zIndex = zIndex;
+      
       this.mount.appendChild(cubeEl);
       const panel = new PlasticinePanel(el, {
         id,
@@ -270,7 +467,23 @@
         onStateChange: opts.onStateChange
       });
       panel.cubeEl = cubeEl;
-      cubeEl.addEventListener('click', () => { panel.expand(); });
+      
+      // Click on cube expands panel (also handled in _bindCubeEvents for closed-via-cube)
+      cubeEl.addEventListener('click', () => { 
+        if (panel.state === 'closed-via-cube') {
+          panel.expand();
+        } else if (panel.state === 'minimized') {
+          panel.expand();
+        }
+        this.bringToFront(id);
+      });
+      
+      // Bring to front on panel header mousedown
+      const header = el.querySelector('.pui-panel-header');
+      header?.addEventListener('mousedown', () => {
+        this.bringToFront(id);
+      });
+      
       this.panels.set(id, panel);
       this.cubes.set(id, cubeEl);
       return panel;

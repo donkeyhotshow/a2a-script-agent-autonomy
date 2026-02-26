@@ -1,0 +1,27 @@
+<!-- Graph Panel Template - VueFlow Container -->
+<div class="pui-panel pui-graph-panel pui-slot-floating" data-panel-id="{{panelId}}" data-panel-type="graph" data-panel-slot="{{slot}}">
+  <div class="pui-panel-header">
+    <span class="pui-panel-title">📊 Flow Graph</span>
+    <div class="pui-panel-controls">
+      <button class="pui-panel-control-btn" id="panelZoomIn" title="Zoom In">+</button>
+      <button class="pui-panel-control-btn" id="panelZoomOut" title="Zoom Out">−</button>
+      <button class="pui-panel-control-btn" id="panelFitView" title="Fit View">⊡</button>
+      <button class="pui-panel-control-btn" id="panelClear" title="Clear Graph">🗑</button>
+      <button class="pui-panel-control-btn" data-action="minimize" title="Minimize">−</button>
+      <button class="pui-panel-control-btn" data-action="close" title="Close">×</button>
+    </div>
+  </div>
+  <div class="pui-panel-content pui-graph-content">
+    <div id="vueflow-graph" class="vueflow-container"></div>
+    <div class="vueflow-toolbar">
+      <button class="flow-toolbar-btn" id="flowZoomIn" title="Zoom In">🔍+</button>
+      <button class="flow-toolbar-btn" id="flowZoomOut" title="Zoom Out">🔍-</button>
+      <button class="flow-toolbar-btn" id="flowFitView" title="Fit View">⊡</button>
+      <button class="flow-toolbar-btn" id="flowClear" title="Clear">🗑</button>
+      <button class="flow-toolbar-btn" id="flowLoadSimple" title="Simple Demo">1</button>
+      <button class="flow-toolbar-btn" id="flowLoadWorkflow" title="Workflow Demo">2</button>
+      <button class="flow-toolbar-btn" id="flowLoadAgents" title="Agents Demo">3</button>
+    </div>
+  </div>
+  <div class="pui-panel-resize-handle"></div>
+</div>

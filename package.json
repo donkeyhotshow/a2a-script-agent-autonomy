@@ -5,10 +5,11 @@
     "sim:run": "node simulations/run-simulation.js",
     "sim:run-all": "node simulations/run-all-simulations.js",
     "questions": "node scripts/questions-cli.js",
-    "dev": "npm run dev:kill-ports && node scripts/wait-for-ports-free.js 5173 5174 3000 8080 && concurrently \"npm run dev:web\" \"npm run dev:api\"",
+    "dev": "npm run dev:kill-ports && node scripts/wait-for-ports-free.js 5173 5174 3000 8080 && concurrently \"npm run dev:web\" \"npm run dev:client-api\" \"npm run dev:server-api\"",
     "dev:kill-ports": "npx --yes kill-port 5173 5174 3000 8080 || exit 0",
     "dev:web": "npm run dev --prefix a2a-client",
-    "dev:api": "npm run dev --prefix a2a-server",
+    "dev:client-api": "npm run dev --prefix a2a-client/packages/api-server",
+    "dev:server-api": "npm run dev --prefix a2a-server",
     "test": "npm run test --prefix a2a-client"
   },
   "devDependencies": {

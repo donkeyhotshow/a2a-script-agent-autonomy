@@ -1,0 +1,13 @@
+{
+  "action": "step_result",
+  "actionId": "graph-entities-scan",
+  "result": {
+    "files_scanned": 42,
+    "file_types": [".js", ".ts", ".vue", ".jsx", ".tsx"],
+    "total_lines": 8543
+  },
+  "context": {
+    "version": "1.0",
+    "session_id": "test-session-graph-extract-entities"
+  }
+}

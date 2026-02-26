@@ -1,0 +1,149 @@
+/* Plasticine UI - Floating Panel Styles */
+
+/* Single panel container – use container-type for queries */
+.pui-panel {
+  --pui-panel-w: 350px;
+  --pui-panel-h: 500px;
+  position: fixed;
+  display: flex;
+  flex-direction: column;
+  background: var(--pui-bg);
+  border: 1px solid var(--pui-border);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  z-index: 1000;
+  transition: all 0.3s ease-in-out;
+  container-type: size;
+  container-name: pui-panel;
+  min-width: 120px;
+  min-height: 40px;
+}
+
+.pui-panel.dragging {
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.6);
+  cursor: moving;
+  transition: none;
+}
+
+.pui-panel.resizing {
+  cursor: se-resize;
+}
+
+.pui-panel.pui-critical {
+  border-color: var(--pui-warning);
+  border-width: 2px;
+}
+
+/* Panel content */
+.pui-panel-content {
+  padding: 14px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+/* Doc panel: raw markdown in pre */
+.pui-doc-panel .pui-doc-content { padding: 12px; }
+.pui-doc-panel .pui-doc-body {
+  margin: 0;
+  font: 12px/1.5 ui-monospace, monospace;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: var(--pui-text, #e6edf3);
+}
+
+/* Panel resize handle */
+.pui-panel-resize {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 18px;
+  height: 18px;
+  cursor: se-resize;
+  background: linear-gradient(135deg, transparent 50%, var(--pui-border) 50%);
+  border-radius: 0 0 12px 0;
+}
+
+/* Panel states */
+.pui-panel.expanded {
+  width: var(--pui-panel-w);
+  height: var(--pui-panel-h);
+}
+
+.pui-panel.minimized {
+  width: 50px;
+  height: 50px;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+/* Hide content and resize for minimized/docked states */
+.pui-panel.minimized .pui-panel-content,
+.pui-panel.minimized .pui-panel-resize,
+.pui-panel.docked-left .pui-panel-content,
+.pui-panel.docked-left .pui-panel-resize,
+.pui-panel.docked-right .pui-panel-content,
+.pui-panel.docked-right .pui-panel-resize,
+.pui-panel.docked-bottom .pui-panel-content,
+.pui-panel.docked-bottom .pui-panel-resize,
+.pui-panel.minimized-to-footer .pui-panel-content,
+.pui-panel.minimized-to-footer .pui-panel-resize,
+.pui-panel.closed-via-cube .pui-panel-content,
+.pui-panel.closed-via-cube .pui-panel-resize {
+  display: none;
+}
+
+/* Container query: narrow → header-only feel */
+@container pui-panel (max-width: 160px) {
+  .pui-panel .pui-panel-content {
+    display: none;
+  }
+  .pui-panel .pui-panel-resize {
+    display: none;
+  }
+}
+
+@container pui-panel (max-height: 80px) {
+  .pui-panel .pui-panel-content {
+    display: none;
+  }
+  .pui-panel .pui-panel-resize {
+    display: none;
+  }
+}
+
+/* Workflow placeholders */
+.pui-placeholder {
+  padding: 8px;
+  font-size: 12px;
+  color: var(--pui-muted);
+  min-height: 60px;
+}
+
+.pui-placeholder pre,
+.pui-log-output,
+.pui-debug-output {
+  margin: 0;
+  font-size: 11px;
+  max-height: 200px;
+  overflow: auto;
+  white-space: pre-wrap;
+}
+
+.pui-chat-messages {
+  min-height: 80px;
+  margin-bottom: 8px;
+}
+
+.pui-chat-input-row {
+  display: flex;
+  gap: 6px;
+}
+
+.pui-chat-input {
+  flex: 1;
+  padding: 6px 8px;
+  background: #21262d;
+  border: 1px solid var(--pui-border);
+  border-radius: 4px;
+  color: var(--pui-text);
+}

@@ -2,6 +2,7 @@
  * VueFlow integration for A2A Protocol visualization
  * 
  * This module initializes VueFlow and provides integration with the UI
+ * Uses SSE for real-time updates instead of polling
  */
 
 import { VueFlow, useVueFlow } from '@vue-flow/core';
@@ -41,6 +42,7 @@ import {
 /**
  * A2A Flow Manager class
  * Manages VueFlow instance and protocol visualization
+ * Uses SSE for real-time updates
  */
 class A2AFlowManager {
   constructor(containerId = 'vueflow-graph') {
@@ -52,12 +54,16 @@ class A2AFlowManager {
     this.sessionId = null;
     this.promiseId = null;
     this.pollingInterval = null;
+    this.useSSE = true; // Use SSE by default instead of polling
+    this.sseConnected = false;
     this.onTaskResponse = null;
     this.onProposalReceived = null;
     this.onActionApproved = null;
     this.onResultReceived = null;
     this.onComplete = null;
     this.onError = null;
+    this.onLog = null;
+    this.onProgress = null;
   }
 
   /**
@@ -125,11 +131,276 @@ class A2AFlowManager {
   }
 
   /**
+   * Set callback for log messages
+   * 
+   * @param {Function} callback - Callback function
+   */
+  onLog(callback) {
+    this.onLog = callback;
+  }
+
+  /**
+   * Set callback for progress updates
+   * 
+   * @param {Function} callback - Callback function
+   */
+  onProgress(callback) {
+    this.onProgress = callback;
+  }
+
+  /**
+   * Connect to SSE for real-time updates
+   * 
+   * @param {string} sessionId - Session ID to connect to
+   * @param {string} apiBase - API base URL
+   */
+  connectSSE(sessionId, apiBase = '/api/v1') {
+    if (typeof SSEClient === 'undefined') {
+      console.error('[Flow] SSEClient not found. Make sure sse-client.js is loaded.');
+      if (this.onError) this.onError(new Error('SSEClient not found'));
+      return;
+    }
+
+    this.sessionId = sessionId;
+    
+    // Configure SSE client
+    SSEClient.configureApi(apiBase);
+    
+    // Setup event handlers
+    this.setupSSEHandlers();
+    
+    // Connect
+    SSEClient.connect(sessionId, apiBase);
+    this.sseConnected = true;
+  }
+
+  /**
+   * Setup SSE event handlers
+   */
+  setupSSEHandlers() {
+    // Connected
+    SSEClient.on('connected', (data) => {
+      console.log('[Flow] SSE Connected:', data);
+      this.sessionId = data.sessionId || this.sessionId;
+      this.promiseId = data.promiseId || this.promiseId;
+    });
+
+    // Disconnected
+    SSEClient.on('disconnected', (data) => {
+      console.log('[Flow] SSE Disconnected:', data);
+      this.sseConnected = false;
+    });
+
+    // Log messages
+    SSEClient.on('log', (data) => {
+      console.log('[Flow] Log:', data);
+      if (this.onLog) this.onLog(data);
+      
+      // Add log as a node if it has significant content
+      if (data.message) {
+        this.addLogNode(data);
+      }
+    });
+
+    // Progress updates
+    SSEClient.on('progress', (data) => {
+      console.log('[Flow] Progress:', data);
+      if (this.onProgress) this.onProgress(data);
+      
+      // Update progress in the flow
+      if (data.nodeId) {
+        this.updateNode(data.nodeId, {
+          progress: data.progress,
+          status: data.status
+        });
+      }
+    });
+
+    // Task response
+    SSEClient.on('task_response', (data) => {
+      console.log('[Flow] Task Response:', data);
+      this.handleServerResponse(data);
+      if (this.onTaskResponse) this.onTaskResponse(data);
+    });
+
+    // Action proposal
+    SSEClient.on('action_proposal', (data) => {
+      console.log('[Flow] Action Proposal:', data);
+      this.handleActionProposal(data);
+      if (this.onProposalReceived) this.onProposalReceived(data);
+    });
+
+    // Action executing
+    SSEClient.on('action_executing', (data) => {
+      console.log('[Flow] Action Executing:', data);
+      if (data.nodeId) {
+        this.updateNode(data.nodeId, {
+          status: 'executing',
+          progress: data.progress
+        });
+      }
+    });
+
+    // Step result
+    SSEClient.on('step_result', (data) => {
+      console.log('[Flow] Step Result:', data);
+      this.handleStepResult(data);
+      if (this.onResultReceived) this.onResultReceived(data);
+    });
+
+    // Complete
+    SSEClient.on('complete', (data) => {
+      console.log('[Flow] Complete:', data);
+      this.handleComplete(data);
+      if (this.onComplete) this.onComplete(data);
+    });
+
+    // Error
+    SSEClient.on('error', (data) => {
+      console.error('[Flow] SSE Error:', data);
+      if (this.onError) this.onError(new Error(data?.message || 'SSE Error'));
+      
+      // Update node with error if nodeId provided
+      if (data.nodeId) {
+        this.updateNode(data.nodeId, {
+          status: 'error',
+          error: data.message
+        });
+      }
+    });
+
+    // Node added
+    SSEClient.on('node_added', (data) => {
+      console.log('[Flow] Node Added:', data);
+      if (data.node) {
+        this.currentFlow = addNodeToFlow(this.currentFlow, data.node);
+        this.render();
+      }
+    });
+
+    // Node updated
+    SSEClient.on('node_updated', (data) => {
+      console.log('[Flow] Node Updated:', data);
+      if (data.nodeId && data.updates) {
+        this.updateNode(data.nodeId, data.updates);
+      }
+    });
+
+    // Edge added
+    SSEClient.on('edge_added', (data) => {
+      console.log('[Flow] Edge Added:', data);
+      if (data.edge) {
+        this.currentFlow.edges.push(data.edge);
+        this.render();
+      }
+    });
+
+    // Session update
+    SSEClient.on('session_update', (data) => {
+      console.log('[Flow] Session Update:', data);
+      // Handle session state changes
+      if (data.state) {
+        // Update based on session state
+      }
+    });
+  }
+
+  /**
+   * Add a log node to the flow
+   */
+  addLogNode(data) {
+    const logNode = {
+      id: `log-${Date.now()}`,
+      type: 'log',
+      data: {
+        label: 'Log',
+        message: data.message,
+        level: data.level || 'info',
+        timestamp: data.timestamp || new Date().toISOString()
+      },
+      position: { x: 0, y: 0 }
+    };
+    this.currentFlow = addNodeToFlow(this.currentFlow, logNode);
+    this.render();
+  }
+
+  /**
+   * Handle action proposal from SSE
+   */
+  handleActionProposal(data) {
+    const proposalBlock = createProposalContextBlock(data);
+    this.currentFlow = addNodeToFlow(this.currentFlow, {
+      id: proposalBlock.id,
+      type: 'action_proposal',
+      ...proposalBlock
+    });
+    
+    // Connect to previous node
+    const lastNode = this.currentFlow.nodes[this.currentFlow.nodes.length - 2];
+    if (lastNode) {
+      this.currentFlow = addEdgeToFlow(
+        this.currentFlow,
+        lastNode.id,
+        proposalBlock.id
+      );
+    }
+    
+    this.render();
+  }
+
+  /**
+   * Handle step result from SSE
+   */
+  handleStepResult(data) {
+    const resultBlock = createResultContextBlock(data);
+    this.currentFlow = addNodeToFlow(this.currentFlow, {
+      id: resultBlock.id,
+      type: 'step_result',
+      ...resultBlock
+    });
+    this.render();
+  }
+
+  /**
+   * Handle completion from SSE
+   */
+  handleComplete(data) {
+    const completeBlock = createCompleteContextBlock(data);
+    this.currentFlow = addNodeToFlow(this.currentFlow, {
+      id: completeBlock.id,
+      type: 'action_complete',
+      ...completeBlock
+    });
+    this.render();
+  }
+
+  /**
+   * Disconnect from SSE
+   */
+  disconnectSSE() {
+    if (typeof SSEClient !== 'undefined') {
+      SSEClient.disconnect();
+    }
+    this.sseConnected = false;
+  }
+
+  /**
+   * Enable or disable SSE
+   */
+  setUseSSE(enabled) {
+    this.useSSE = enabled;
+    if (!enabled && this.pollingInterval) {
+      this.stopPolling();
+    }
+  }
+
+  /**
    * Send a task request to the server
    * Creates Input node and initiates server communication
+   * Uses SSE for real-time updates if enabled
    * 
    * @param {string} taskText - Task description
-   * @param {Object} options - Optional parameters (projectPath, codeBlocks)
+   * @param {Object} options - Optional parameters (projectPath, codeBlocks, useSSE)
    */
   async sendTask(taskText, options = {}) {
     if (!this.a2aClient) {
@@ -137,6 +408,9 @@ class A2AFlowManager {
       if (this.onError) this.onError(new Error('A2A client not configured'));
       return;
     }
+
+    // Determine whether to use SSE or polling
+    const useSSE = options.useSSE !== undefined ? options.useSSE : this.useSSE;
 
     // Create and add task request node
     const contextBlock = createTaskContextBlock(taskText);
@@ -163,8 +437,15 @@ class A2AFlowManager {
       this.promiseId = result.promiseId;
       this.sessionId = result.sessionId;
 
-      // Start polling for response
-      this.startPolling();
+      // Use SSE or polling based on configuration
+      if (useSSE) {
+        // Connect to SSE for real-time updates
+        console.log('[Flow] Connecting to SSE for session:', this.sessionId);
+        this.connectSSE(this.sessionId, this.a2aClient.serverUrl);
+      } else {
+        // Start polling for response
+        this.startPolling();
+      }
 
       return result;
     } catch (error) {
@@ -383,7 +664,9 @@ class A2AFlowManager {
   async cancelRequest() {
     if (!this.a2aClient || !this.promiseId) return;
 
+    // Stop polling or disconnect SSE
     this.stopPolling();
+    this.disconnectSSE();
     
     try {
       await this.a2aClient.cancelRequest(this.promiseId);
@@ -850,6 +1133,26 @@ export function onError(callback) {
   flowManager.onError(callback);
 }
 
+export function onLog(callback) {
+  flowManager.onLog(callback);
+}
+
+export function onProgress(callback) {
+  flowManager.onProgress(callback);
+}
+
+export function connectSSE(sessionId, apiBase) {
+  flowManager.connectSSE(sessionId, apiBase);
+}
+
+export function disconnectSSE() {
+  flowManager.disconnectSSE();
+}
+
+export function setUseSSE(enabled) {
+  flowManager.setUseSSE(enabled);
+}
+
 // Make functions available globally (for non-module scripts)
 if (typeof window !== 'undefined') {
   window.initFlow = initFlow;
@@ -874,6 +1177,11 @@ if (typeof window !== 'undefined') {
   window.onResult = onResult;
   window.onComplete = onComplete;
   window.onError = onError;
+  window.onLog = onLog;
+  window.onProgress = onProgress;
+  window.connectSSE = connectSSE;
+  window.disconnectSSE = disconnectSSE;
+  window.setUseSSE = setUseSSE;
   window.flowManager = flowManager;
 }
 

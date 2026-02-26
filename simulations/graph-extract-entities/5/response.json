@@ -1,0 +1,22 @@
+{
+  "outcome": "step_continue",
+  "message": "Дедуплікація завершена, переходимо до форматування",
+  "context": {
+    "version": "1.0",
+    "session_id": "test-session-graph-extract-entities"
+  },
+  "previousStep": {
+    "actionId": "graph-entities-dedupe",
+    "result": {
+      "entities_unique": 142,
+      "duplicates_removed": 14
+    }
+  },
+  "executingAction": {
+    "actionId": "graph-entities-format",
+    "title": "Форматування результатів",
+    "description": "Форматуємо результати у вигляді JSON",
+    "status": "running"
+  },
+  "nextSteps": []
+}

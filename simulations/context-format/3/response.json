@@ -1,0 +1,5 @@
+{
+  "outcome": "completed",
+  "context": { "version": "1.0", "session_id": "test-session-context-format" },
+  "finalResult": { "actionId": "context-format", "status": "completed", "summary": { "format": "json" } }
+}

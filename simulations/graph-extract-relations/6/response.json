@@ -1,0 +1,15 @@
+{
+  "outcome": "completed",
+  "message": "Витягування зв'язків завершено успішно",
+  "context": { "version": "1.0", "session_id": "test-session-graph-extract-relations" },
+  "finalResult": {
+    "actionId": "graph-extract-relations",
+    "status": "completed",
+    "summary": {
+      "relations_extracted": 198,
+      "duplicates_removed": 36,
+      "by_type": { "import": 134, "extends": 20, "implements": 10, "calls": 34 }
+    },
+    "output": { "format": "json" }
+  }
+}

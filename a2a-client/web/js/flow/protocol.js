@@ -13,7 +13,7 @@ import { getNodeType, getNodeColor } from './nodes.js';
  */
 export class A2AClient {
   constructor(config = {}) {
-    this.serverUrl = config.serverUrl || 'http://localhost:3000/api/v1';
+    this.serverUrl = config.serverUrl || 'http://localhost:8080/api/v1';
     this.serverUrl = this.serverUrl.replace(/\/?$/, '');
     this.token = config.token;
     this.clientId = config.clientId;

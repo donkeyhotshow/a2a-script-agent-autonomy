@@ -1,0 +1,11 @@
+{
+  "outcome": "action_approved",
+  "message": "Екшен graph-visualize підтверджено",
+  "context": { "version": "1.0", "session_id": "test-session-graph-visualize" },
+  "executingAction": { "actionId": "graph-visualize", "title": "Візуалізувати граф залежностей", "status": "running" },
+  "nextSteps": [
+    { "actionId": "graph-viz-prepare", "title": "Підготувати дані" },
+    { "actionId": "graph-viz-generate", "title": "Згенерувати візуалізацію" },
+    { "actionId": "graph-viz-format", "title": "Форматувати вивід" }
+  ]
+}

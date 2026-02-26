@@ -1,0 +1,8 @@
+{
+  "outcome": "step_continue",
+  "message": "Класифікація завершена, переходимо до дедуплікації",
+  "context": { "version": "1.0", "session_id": "test-session-graph-extract-relations" },
+  "previousStep": { "actionId": "graph-rel-classify", "result": { "by_type": { "import": 156, "extends": 23, "implements": 12, "calls": 43 } } },
+  "executingAction": { "actionId": "graph-rel-dedupe", "title": "Дедуплікація зв'язків", "status": "running" },
+  "nextSteps": [{ "actionId": "graph-rel-format", "title": "Форматування результатів" }]
+}

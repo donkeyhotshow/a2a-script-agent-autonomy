@@ -1,0 +1,1163 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>A2A Script Agent - Unified UI</title>
+  
+  <!-- Import maps for VueFlow and Vue -->
+  <script type="importmap">
+  {
+    "imports": {
+      "vue": "https://unpkg.com/vue@3/dist/vue.esm-browser.js",
+      "@vue-flow/core": "https://unpkg.com/@vue-flow/core@1.33.5/dist/vue-flow.esm-browser.js",
+      "@vue-flow/background": "https://unpkg.com/@vue-flow/background@1.33.5/dist/vue-flow-background.esm-browser.js",
+      "@vue-flow/controls": "https://unpkg.com/@vue-flow/controls@1.33.5/dist/vue-flow-controls.esm-browser.js",
+      "@vue-flow/minimap": "https://unpkg.com/@vue-flow/minimap@1.33.5/dist/vue-flow-minimap.esm-browser.js"
+    }
+  }
+  </script>
+  
+  <!-- VueFlow styles -->
+  <link rel="stylesheet" href="https://unpkg.com/@vue-flow/core@1.33.5/dist/style.css">
+  <link rel="stylesheet" href="https://unpkg.com/@vue-flow/controls@1.33.5/dist/style.css">
+  <link rel="stylesheet" href="https://unpkg.com/@vue-flow/minimap@1.33.5/dist/style.css">
+  
+  <style>
+    :root {
+      --primary-color: #22c55e;
+      --secondary-color: #3b82f6;
+      --warning-color: #eab308;
+      --error-color: #ef4444;
+      --gray-color: #6b7280;
+      --bg-color: #1a1a2e;
+      --surface-color: #16213e;
+      --border-color: #0f3460;
+      --text-primary: #ffffff;
+      --text-secondary: #94a3b8;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-primary);
+      min-height: 100vh;
+    }
+
+    /* App Container */
+    #app {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+
+    /* HEADER */
+    .header {
+      background-color: var(--surface-color);
+      border-bottom: 1px solid var(--border-color);
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-shrink: 0;
+    }
+
+    .header h1 {
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--primary-color);
+      white-space: nowrap;
+    }
+
+    /* Search Container */
+    .search-container {
+      flex: 1;
+      max-width: 600px;
+      position: relative;
+    }
+
+    .search-input-wrapper {
+      display: flex;
+      align-items: center;
+      background-color: var(--bg-color);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 8px 16px;
+      transition: border-color 0.2s;
+    }
+
+    .search-input-wrapper:focus-within {
+      border-color: var(--primary-color);
+    }
+
+    .search-icon {
+      color: var(--text-secondary);
+      margin-right: 12px;
+      font-size: 18px;
+    }
+
+    .search-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: var(--text-primary);
+      font-size: 14px;
+      outline: none;
+    }
+
+    .search-input::placeholder {
+      color: var(--text-secondary);
+    }
+
+    .ai-btn {
+      background-color: var(--secondary-color);
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: background-color 0.2s;
+    }
+
+    .ai-btn:hover {
+      background-color: #2563eb;
+    }
+
+    /* MAIN CONTENT */
+    .main-content {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* LEFT PANEL - Search Results */
+    .left-panel {
+      width: 400px;
+      border-right: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .panel-section {
+      padding: 16px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .panel-section h2 {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 12px;
+    }
+
+    /* Search Results */
+    .search-results {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+    }
+
+    .action-card {
+      background-color: var(--surface-color);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 12px;
+      cursor: pointer;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+
+    .action-card:hover {
+      border-color: var(--primary-color);
+      transform: translateY(-2px);
+    }
+
+    .action-card-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .action-icon {
+      font-size: 18px;
+    }
+
+    .action-name {
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .action-description {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-bottom: 12px;
+      line-height: 1.5;
+    }
+
+    .action-tags {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .action-tag {
+      background-color: var(--bg-color);
+      color: var(--text-secondary);
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+    }
+
+    .action-run-btn {
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      margin-top: 12px;
+      width: 100%;
+      transition: background-color 0.2s;
+    }
+
+    .action-run-btn:hover {
+      background-color: #16a34a;
+    }
+
+    /* AI Agent Section */
+    .ai-agent-card {
+      background: linear-gradient(135deg, var(--surface-color), #1e3a5f);
+      border: 1px solid var(--secondary-color);
+      border-radius: 8px;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .ai-agent-icon {
+      font-size: 48px;
+      margin-bottom: 12px;
+    }
+
+    .ai-agent-title {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .ai-agent-description {
+      color: var(--text-secondary);
+      font-size: 14px;
+      margin-bottom: 16px;
+    }
+
+    .ai-agent-btn {
+      background: linear-gradient(135deg, var(--secondary-color), #1d4ed8);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: transform 0.2s;
+    }
+
+    .ai-agent-btn:hover {
+      transform: scale(1.05);
+    }
+
+    /* No results */
+    .no-results {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-secondary);
+    }
+
+    .no-results-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+    }
+
+    /* CENTER PANEL - Flow Canvas */
+    .center-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .flow-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 16px;
+      background-color: var(--surface-color);
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .toolbar-btn {
+      background-color: var(--bg-color);
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+      padding: 8px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      transition: all 0.2s;
+    }
+
+    .toolbar-btn:hover {
+      border-color: var(--primary-color);
+      color: var(--primary-color);
+    }
+
+    .flow-canvas {
+      flex: 1;
+      background-color: var(--bg-color);
+    }
+
+    /* RIGHT PANEL - Tickets */
+    .right-panel {
+      width: 350px;
+      border-left: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .tickets-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+    }
+
+    .ticket-card {
+      background-color: var(--surface-color);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      margin-bottom: 12px;
+      overflow: hidden;
+    }
+
+    .ticket-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .ticket-id {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .ticket-name {
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .ticket-status {
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .ticket-status.running {
+      background-color: rgba(234, 179, 8, 0.2);
+      color: var(--warning-color);
+    }
+
+    .ticket-status.completed {
+      background-color: rgba(34, 197, 94, 0.2);
+      color: var(--primary-color);
+    }
+
+    .ticket-status.failed {
+      background-color: rgba(239, 68, 68, 0.2);
+      color: var(--error-color);
+    }
+
+    .ticket-body {
+      padding: 12px 16px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      font-family: 'Consolas', 'Monaco', monospace;
+      max-height: 150px;
+      overflow-y: auto;
+      background-color: var(--bg-color);
+    }
+
+    .ticket-log-line {
+      padding: 2px 0;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    .ticket-result {
+      padding: 12px 16px;
+      border-top: 1px solid var(--border-color);
+      font-size: 13px;
+    }
+
+    .ticket-result.success {
+      color: var(--primary-color);
+    }
+
+    .ticket-result.error {
+      color: var(--error-color);
+    }
+
+    /* Empty state */
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      color: var(--text-secondary);
+      padding: 20px;
+      text-align: center;
+    }
+
+    .empty-state-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+      opacity: 0.5;
+    }
+
+    /* Action Form Modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(0, 0, 0, 0.7);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal-content {
+      background-color: var(--surface-color);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      width: 500px;
+      max-width: 90vw;
+      max-height: 90vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .modal-header h3 {
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 24px;
+      cursor: pointer;
+      padding: 4px;
+      line-height: 1;
+    }
+
+    .modal-close:hover {
+      color: var(--text-primary);
+    }
+
+    .modal-body {
+      padding: 20px;
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+
+    .form-input,
+    .form-textarea {
+      width: 100%;
+      background-color: var(--bg-color);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 10px 12px;
+      color: var(--text-primary);
+      font-size: 14px;
+      font-family: inherit;
+    }
+
+    .form-input:focus,
+    .form-textarea:focus {
+      outline: none;
+      border-color: var(--primary-color);
+    }
+
+    .form-textarea {
+      min-height: 100px;
+      resize: vertical;
+    }
+
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      padding: 16px 20px;
+      border-top: 1px solid var(--border-color);
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-secondary {
+      background-color: transparent;
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--text-secondary);
+      color: var(--text-primary);
+    }
+
+    .btn-primary {
+      background-color: var(--primary-color);
+      border: none;
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background-color: #16a34a;
+    }
+
+    /* VueFlow custom styles */
+    .vue-flow__node {
+      border-radius: 8px;
+    }
+
+    .vue-flow__node-input {
+      border-color: var(--primary-color);
+    }
+
+    .vue-flow__node-output {
+      border-color: var(--primary-color);
+    }
+
+    .vue-flow__edge-path {
+      stroke: var(--border-color);
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <!-- HEADER -->
+    <header class="header">
+      <h1>🤖 A2A Script Agent</h1>
+      
+      <div class="search-container">
+        <div class="search-input-wrapper">
+          <span class="search-icon">🔍</span>
+          <input 
+            type="text" 
+            id="search-input" 
+            class="search-input" 
+            placeholder="Что вы хотите сделать? (создать файл, запустить скрипт...)"
+          >
+        </div>
+      </div>
+      
+      <button class="ai-btn" id="aiModeBtn">🤖 AI Mode</button>
+    </header>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+      
+      <!-- LEFT PANEL - Search Results -->
+      <aside class="left-panel">
+        <div class="panel-section">
+          <h2>📋 Результаты поиска</h2>
+        </div>
+        
+        <div class="search-results" id="searchResults">
+          <!-- Action Cards will be inserted here -->
+          <div class="no-results">
+            <div class="no-results-icon">🔍</div>
+            <p>Введите запрос для поиска действий</p>
+          </div>
+        </div>
+      </aside>
+
+      <!-- CENTER PANEL - Flow Canvas -->
+      <section class="center-panel">
+        <div class="flow-toolbar">
+          <button class="toolbar-btn" id="zoomIn">➕ Zoom In</button>
+          <button class="toolbar-btn" id="zoomOut">➖ Zoom Out</button>
+          <button class="toolbar-btn" id="fitView">⬜ Fit View</button>
+          <button class="toolbar-btn" id="clearFlow">🗑️ Clear</button>
+          <button class="toolbar-btn" id="loadDemo">📚 Load Demo</button>
+        </div>
+        
+        <div id="flow-canvas" class="flow-canvas">
+          <!-- VueFlow will be mounted here -->
+        </div>
+      </section>
+
+      <!-- RIGHT PANEL - Tickets -->
+      <aside class="right-panel">
+        <div class="panel-section">
+          <h2>🎫 Активные тикеты</h2>
+        </div>
+        
+        <div class="tickets-list" id="ticketsList">
+          <!-- Tickets will be inserted here -->
+          <div class="empty-state">
+            <div class="empty-state-icon">📋</div>
+            <p>Нет активных тикетов</p>
+          </div>
+        </div>
+      </aside>
+
+    </main>
+  </div>
+
+  <!-- Action Form Modal -->
+  <div class="modal-overlay" id="actionModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="modalTitle">Выполнить действие</h3>
+        <button class="modal-close" id="closeModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div id="actionForm">
+          <!-- Form fields will be inserted here -->
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="cancelAction">Отмена</button>
+        <button class="btn btn-primary" id="executeAction">Выполнить</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    // Import VueFlow and components
+    import { VueFlow, useVueFlow } from '@vue-flow/core';
+    import { Background } from '@vue-flow/background';
+    import { Controls } from '@vue-flow/controls';
+    import { MiniMap } from '@vue-flow/minimap';
+
+    // App State
+    const state = {
+      searchQuery: '',
+      actions: [],
+      tickets: [],
+      aiMode: false,
+      selectedAction: null,
+      debounceTimer: null
+    };
+
+    // Initialize VueFlow
+    const { 
+      addNodes, 
+      addEdges, 
+      onConnect, 
+      fitView, 
+      zoomIn, 
+      zoomOut, 
+      clear,
+      findNode,
+      getNodes,
+      getEdges
+    } = useVueFlow();
+
+    // Demo data for actions
+    const demoActions = [
+      {
+        id: 'action_1',
+        name: 'Создать файл',
+        description: 'Создать новый файл с указанным содержимым',
+        tags: ['file', 'create'],
+        icon: '📄'
+      },
+      {
+        id: 'action_2',
+        name: 'Запустить скрипт',
+        description: 'Выполнить PowerShell или Bash скрипт',
+        tags: ['script', 'execute'],
+        icon: '⚡'
+      },
+      {
+        id: 'action_3',
+        name: 'Найти код',
+        description: 'Поиск по коду в проекте с использованием RAG',
+        tags: ['search', 'rag'],
+        icon: '🔍'
+      },
+      {
+        id: 'action_4',
+        name: 'Анализ безопасности',
+        description: 'Проверить код на уязвимости',
+        tags: ['security', 'analysis'],
+        icon: '🛡️'
+      },
+      {
+        id: 'action_5',
+        name: 'Lint кода',
+        description: 'Запустить линтер для проверки стиля кода',
+        tags: ['lint', 'code'],
+        icon: '✅'
+      }
+    ];
+
+    // Demo data for tickets
+    const demoTickets = [
+      {
+        id: 123,
+        name: 'Создать файл',
+        status: 'running',
+        log: 'Initializing...\nLoading configuration...\nConnecting to server...'
+      },
+      {
+        id: 124,
+        name: 'Анализ безопасности',
+        status: 'completed',
+        log: 'Scan complete\nNo vulnerabilities found',
+        result: 'Success: 0 issues'
+      }
+    ];
+
+    // Search functionality with debounce
+    function setupSearch() {
+      const searchInput = document.getElementById('searchInput');
+      
+      searchInput?.addEventListener('input', (e) => {
+        clearTimeout(state.debounceTimer);
+        state.debounceTimer = setTimeout(() => {
+          state.searchQuery = e.target.value;
+          performSearch(state.searchQuery);
+        }, 300);
+      });
+    }
+
+    // Perform search
+    function performSearch(query) {
+      const resultsContainer = document.getElementById('searchResults');
+      
+      if (!query.trim()) {
+        resultsContainer.innerHTML = `
+          <div class="no-results">
+            <div class="no-results-icon">🔍</div>
+            <p>Введите запрос для поиска действий</p>
+          </div>
+        `;
+        return;
+      }
+
+      const filteredActions = demoActions.filter(action => 
+        action.name.toLowerCase().includes(query.toLowerCase()) ||
+        action.description.toLowerCase().includes(query.toLowerCase()) ||
+        action.tags.some(tag => tag.toLowerCase().includes(query.toLowerCase()))
+      );
+
+      if (filteredActions.length > 0) {
+        renderActionCards(filteredActions);
+      } else {
+        // Show AI Agent option when no actions found
+        renderAIAgent();
+      }
+    }
+
+    // Render action cards
+    function renderActionCards(actions) {
+      const resultsContainer = document.getElementById('searchResults');
+      
+      resultsContainer.innerHTML = actions.map(action => `
+        <div class="action-card" data-action-id="${action.id}">
+          <div class="action-card-header">
+            <span class="action-icon">${action.icon}</span>
+            <span class="action-name">${action.name}</span>
+          </div>
+          <p class="action-description">${action.description}</p>
+          <div class="action-tags">
+            ${action.tags.map(tag => `<span class="action-tag">${tag}</span>`).join('')}
+          </div>
+          <button class="action-run-btn" data-action-id="${action.id}">Запустить</button>
+        </div>
+      `).join('');
+
+      // Add click handlers
+      resultsContainer.querySelectorAll('.action-run-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const actionId = btn.dataset.actionId;
+          openActionModal(actionId);
+        });
+      });
+    }
+
+    // Render AI Agent option
+    function renderAIAgent() {
+      const resultsContainer = document.getElementById('searchResults');
+      
+      resultsContainer.innerHTML = `
+        <div class="ai-agent-card">
+          <div class="ai-agent-icon">🤖</div>
+          <div class="ai-agent-title">AI Агент</div>
+          <p class="ai-agent-description">
+            Ни одно действие не найдено. AI агент подберёт оптимальное решение на основе доступных алгоритмов.
+          </p>
+          <button class="ai-agent-btn" id="aiAgentBtn">Запустить AI</button>
+        </div>
+      `;
+
+      document.getElementById('aiAgentBtn')?.addEventListener('click', () => {
+        runAIAgent();
+      });
+    }
+
+    // Open action modal
+    function openActionModal(actionId) {
+      const action = demoActions.find(a => a.id === actionId);
+      if (!action) return;
+
+      state.selectedAction = action;
+      
+      document.getElementById('modalTitle').textContent = action.name;
+      document.getElementById('actionForm').innerHTML = `
+        <div class="form-group">
+          <label class="form-label">Описание</label>
+          <p>${action.description}</p>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Параметры</label>
+          <textarea class="form-textarea" id="actionParams" placeholder="Введите параметры действия..."></textarea>
+        </div>
+      `;
+
+      document.getElementById('actionModal').classList.add('active');
+    }
+
+    // Close modal
+    function closeModal() {
+      document.getElementById('actionModal').classList.remove('active');
+      state.selectedAction = null;
+    }
+
+    // Execute action
+    function executeAction() {
+      if (!state.selectedAction) return;
+
+      const params = document.getElementById('actionParams')?.value || '';
+      const ticketId = Math.floor(Math.random() * 1000) + 100;
+      
+      // Add new ticket
+      const newTicket = {
+        id: ticketId,
+        name: state.selectedAction.name,
+        status: 'running',
+        log: `Starting action: ${state.selectedAction.name}\nParameters: ${params || 'none'}\n`
+      };
+
+      state.tickets.unshift(newTicket);
+      renderTickets();
+      closeModal();
+
+      // Simulate completion
+      setTimeout(() => {
+        const ticket = state.tickets.find(t => t.id === ticketId);
+        if (ticket) {
+          ticket.status = 'completed';
+          ticket.log += 'Action completed successfully\n';
+          ticket.result = 'Success';
+          renderTickets();
+          
+          // Add node to flow
+          addFlowNode(ticketId, state.selectedAction.name);
+        }
+      }, 3000);
+    }
+
+    // Run AI Agent
+    function runAIAgent() {
+      const ticketId = Math.floor(Math.random() * 1000) + 100;
+      
+      const newTicket = {
+        id: ticketId,
+        name: 'AI Agent',
+        status: 'running',
+        log: 'Analyzing request...\nSearching algorithms...\nGenerating solution...\n'
+      };
+
+      state.tickets.unshift(newTicket);
+      renderTickets();
+
+      // Simulate AI completion
+      setTimeout(() => {
+        const ticket = state.tickets.find(t => t.id === ticketId);
+        if (ticket) {
+          ticket.status = 'completed';
+          ticket.log += 'Solution generated\nExecuting...';
+          ticket.result = 'AI Suggestion: Use create_file action';
+          renderTickets();
+        }
+      }, 4000);
+    }
+
+    // Render tickets
+    function renderTickets() {
+      const ticketsContainer = document.getElementById('ticketsList');
+      
+      if (state.tickets.length === 0) {
+        ticketsContainer.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">📋</div>
+            <p>Нет активных тикетов</p>
+          </div>
+        `;
+        return;
+      }
+
+      ticketsContainer.innerHTML = state.tickets.map(ticket => `
+        <div class="ticket-card">
+          <div class="ticket-header">
+            <div>
+              <span class="ticket-id">#${ticket.id}</span>
+              <span class="ticket-name">${ticket.name}</span>
+            </div>
+            <span class="ticket-status ${ticket.status}">${getStatusText(ticket.status)}</span>
+          </div>
+          <div class="ticket-body">
+            ${ticket.log.split('\n').map(line => `<div class="ticket-log-line">${line}</div>`).join('')}
+          </div>
+          ${ticket.result ? `<div class="ticket-result ${ticket.status === 'completed' ? 'success' : 'error'}">${ticket.result}</div>` : ''}
+        </div>
+      `).join('');
+    }
+
+    // Get status text
+    function getStatusText(status) {
+      switch (status) {
+        case 'running': return '⏳ Running';
+        case 'completed': return '✅ Completed';
+        case 'failed': return '❌ Failed';
+        default: return status;
+      }
+    }
+
+    // Add node to flow
+    function addFlowNode(ticketId, actionName) {
+      const nodes = getNodes.value;
+      const position = {
+        x: Math.random() * 400 + 100,
+        y: Math.random() * 300 + 100
+      };
+
+      addNodes([{
+        id: `node-${ticketId}`,
+        type: 'default',
+        position,
+        label: `${actionName}\n#${ticketId}`,
+        style: {
+          background: '#16213e',
+          border: '1px solid #22c55e',
+          borderRadius: '8px',
+          padding: '10px',
+          color: '#fff'
+        }
+      }]);
+    }
+
+    // Setup toolbar
+    function setupToolbar() {
+      document.getElementById('zoomIn')?.addEventListener('click', zoomIn);
+      document.getElementById('zoomOut')?.addEventListener('click', zoomOut);
+      document.getElementById('fitView')?.addEventListener('click', () => fitView({ padding: 0.2 }));
+      document.getElementById('clearFlow')?.addEventListener('click', clear);
+      
+      document.getElementById('loadDemo')?.addEventListener('click', () => {
+        loadDemo();
+      });
+
+      // Modal handlers
+      document.getElementById('closeModal')?.addEventListener('click', closeModal);
+      document.getElementById('cancelAction')?.addEventListener('click', closeModal);
+      document.getElementById('executeAction')?.addEventListener('click', executeAction);
+      document.getElementById('aiModeBtn')?.addEventListener('click', () => {
+        state.aiMode = !state.aiMode;
+        document.getElementById('aiModeBtn').textContent = state.aiMode ? '🎯 AI Active' : '🤖 AI Mode';
+      });
+
+      // Close modal on overlay click
+      document.getElementById('actionModal')?.addEventListener('click', (e) => {
+        if (e.target.id === 'actionModal') closeModal();
+      });
+    }
+
+    // Load demo
+    function loadDemo() {
+      // Clear existing
+      clear();
+      state.tickets = [];
+
+      // Add demo nodes
+      addNodes([
+        {
+          id: 'node-1',
+          type: 'input',
+          position: { x: 100, y: 100 },
+          label: 'Task Request',
+          style: { background: '#16213e', border: '1px solid #22c55e', borderRadius: '8px', padding: '10px', color: '#fff' }
+        },
+        {
+          id: 'node-2',
+          type: 'default',
+          position: { x: 300, y: 100 },
+          label: 'Action Proposal',
+          style: { background: '#16213e', border: '1px solid #eab308', borderRadius: '8px', padding: '10px', color: '#fff' }
+        },
+        {
+          id: 'node-3',
+          type: 'default',
+          position: { x: 500, y: 100 },
+          label: 'Executing...',
+          style: { background: '#16213e', border: '1px solid #3b82f6', borderRadius: '8px', padding: '10px', color: '#fff' }
+        },
+        {
+          id: 'node-4',
+          type: 'output',
+          position: { x: 700, y: 100 },
+          label: 'Result',
+          style: { background: '#16213e', border: '1px solid #22c55e', borderRadius: '8px', padding: '10px', color: '#fff' }
+        }
+      ]);
+
+      addEdges([
+        { id: 'e1-2', source: 'node-1', target: 'node-2', animated: true },
+        { id: 'e2-3', source: 'node-2', target: 'node-3', animated: true },
+        { id: 'e3-4', source: 'node-3', target: 'node-4', animated: true }
+      ]);
+
+      fitView({ padding: 0.2 });
+    }
+
+    // Initialize VueFlow
+    function initVueFlow() {
+      const app = document.getElementById('app');
+      
+      // Mount VueFlow
+      const flowContainer = document.getElementById('flow-canvas');
+      
+      // Create VueFlow instance manually
+      const vueFlow = new VueFlow({
+        nodes: [],
+        edges: [],
+        fitViewOnInit: true,
+        defaultEdgeOptions: {
+          type: 'smoothstep',
+          animated: true,
+          style: { stroke: '#6b7280' }
+        }
+      });
+
+      vueFlow.mount(flowContainer);
+
+      // Add components
+      const background = new Background({
+        props: {
+          variant: 'dots',
+          gap: 20,
+          color: '#6b7280'
+        }
+      });
+
+      const controls = new Controls();
+      const minimap = new MiniMap();
+
+      vueFlow.add(background);
+      vueFlow.add(controls);
+      vueFlow.add(minimap);
+
+      // Setup connection handler
+      vueFlow.onConnect((params) => {
+        vueFlow.addEdges(params);
+      });
+
+      // Make functions available globally
+      window.flowManager = {
+        zoomIn: () => vueFlow.zoomIn(),
+        zoomOut: () => vueFlow.zoomOut(),
+        fitView: () => vueFlow.fitView(),
+        clear: () => {
+          vueFlow.nodes.value = [];
+          vueFlow.edges.value = [];
+        },
+        addNode: (node) => vueFlow.addNodes([node])
+      };
+
+      return vueFlow;
+    }
+
+    // Initialize app
+    document.addEventListener('DOMContentLoaded', () => {
+      console.log('[App] Initializing Unified UI...');
+      
+      initVueFlow();
+      setupSearch();
+      setupToolbar();
+      renderTickets();
+      
+      // Load demo after a short delay
+      setTimeout(loadDemo, 500);
+      
+      console.log('[App] Initialized');
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,8 @@
+{
+  "action": "task_request",
+  "task": "витягнути сутності з коду проекту для побудови графа залежностей",
+  "context": {
+    "version": "1.0",
+    "session_id": "test-session-graph-extract-entities"
+  }
+}

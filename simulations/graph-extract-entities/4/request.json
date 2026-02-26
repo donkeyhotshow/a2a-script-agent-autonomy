@@ -1,0 +1,22 @@
+{
+  "action": "step_result",
+  "actionId": "graph-entities-parse",
+  "result": {
+    "entities_found": 156,
+    "by_type": {
+      "class": 23,
+      "function": 87,
+      "module": 34,
+      "variable": 12
+    },
+    "sample_entities": [
+      { "name": "UserController", "type": "class", "file": "src/controllers/UserController.ts" },
+      { "name": "getUser", "type": "function", "file": "src/services/UserService.ts" },
+      { "name": "AuthModule", "type": "module", "file": "src/modules/Auth.ts" }
+    ]
+  },
+  "context": {
+    "version": "1.0",
+    "session_id": "test-session-graph-extract-entities"
+  }
+}

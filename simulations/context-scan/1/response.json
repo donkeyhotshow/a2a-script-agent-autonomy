@@ -1,0 +1,18 @@
+{
+  "outcome": "action_proposal",
+  "message": "Знайдено відповідний екшен для сканування контексту",
+  "context": { "version": "1.0", "session_id": "test-session-context-scan", "task": "просканувати контекст проекту" },
+  "proposedActions": [
+    {
+      "actionId": "context-scan",
+      "title": "Просканувати контекст проекту",
+      "description": "Сканувати структуру проекту та зібрати контекстну інформацію",
+      "priority": 10,
+      "matchScore": 0.95,
+      "subActions": [
+        { "actionId": "ctx-scan-files", "title": "Сканувати файли", "input": "patterns", "output": "file_list" },
+        { "actionId": "ctx-scan-analyze", "title": "Аналізувати контекст", "input": "file_list", "output": "context_data" }
+      ]
+    }
+  ]
+}

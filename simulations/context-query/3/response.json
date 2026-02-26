@@ -1,0 +1,5 @@
+{
+  "outcome": "completed",
+  "context": { "version": "1.0", "session_id": "test-session-context-query" },
+  "finalResult": { "actionId": "context-query", "status": "completed", "summary": { "results_count": 2 } }
+}

@@ -1,0 +1,5 @@
+{
+  "action": "approve_action",
+  "actionId": "hybrid-improve",
+  "context": { "version": "1.0", "session_id": "test-session-hybrid-improve" }
+}

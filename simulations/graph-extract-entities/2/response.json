@@ -1,0 +1,33 @@
+{
+  "outcome": "action_approved",
+  "message": "Екшен graph-extract-entities підтверджено",
+  "context": {
+    "version": "1.0",
+    "session_id": "test-session-graph-extract-entities"
+  },
+  "executingAction": {
+    "actionId": "graph-extract-entities",
+    "title": "Витягнути сутності з коду",
+    "description": "Проаналізувати код і витягнути сутності",
+    "priority": 10,
+    "status": "running"
+  },
+  "nextSteps": [
+    {
+      "actionId": "graph-entities-scan",
+      "title": "Сканувати файли проекту"
+    },
+    {
+      "actionId": "graph-entities-parse",
+      "title": "Парсити код і витягувати сутності"
+    },
+    {
+      "actionId": "graph-entities-dedupe",
+      "title": "Дедуплікація і нормалізація"
+    },
+    {
+      "actionId": "graph-entities-format",
+      "title": "Форматування результатів"
+    }
+  ]
+}

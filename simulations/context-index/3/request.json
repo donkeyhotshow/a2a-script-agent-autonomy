@@ -1,0 +1,6 @@
+{
+  "action": "action_complete",
+  "actionId": "context-index",
+  "result": { "status": "completed", "indexed": 156 },
+  "context": { "version": "1.0", "session_id": "test-session-context-index" }
+}

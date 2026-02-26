@@ -1,0 +1,6 @@
+{
+  "action": "step_result",
+  "actionId": "ctx-scan-files",
+  "result": { "files_found": 156, "by_type": { ".js": 45, ".ts": 67, ".vue": 23, ".json": 21 } },
+  "context": { "version": "1.0", "session_id": "test-session-context-scan" }
+}

@@ -1,0 +1,8 @@
+{
+  "action": "approve_action",
+  "actionId": "graph-extract-relations",
+  "context": {
+    "version": "1.0",
+    "session_id": "test-session-graph-extract-relations"
+  }
+}

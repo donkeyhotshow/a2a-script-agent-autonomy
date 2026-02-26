@@ -1,0 +1,19 @@
+{
+  "outcome": "action_proposal",
+  "message": "Знайдено відповідний екшен для візуалізації графа",
+  "context": { "version": "1.0", "session_id": "test-session-graph-visualize", "task": "візуалізувати граф залежностей проекту" },
+  "proposedActions": [
+    {
+      "actionId": "graph-visualize",
+      "title": "Візуалізувати граф залежностей",
+      "description": "Створити візуальне представлення графа",
+      "priority": 10,
+      "matchScore": 0.95,
+      "subActions": [
+        { "actionId": "graph-viz-prepare", "title": "Підготувати дані", "input": "entities+relations", "output": "graph_data" },
+        { "actionId": "graph-viz-generate", "title": "Згенерувати візуалізацію", "input": "graph_data", "output": "viz_output" },
+        { "actionId": "graph-viz-format", "title": "Форматувати вивід", "input": "viz_output", "output": "final_output" }
+      ]
+    }
+  ]
+}

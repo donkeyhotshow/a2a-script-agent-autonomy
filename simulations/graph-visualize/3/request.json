@@ -1,0 +1,6 @@
+{
+  "action": "step_result",
+  "actionId": "graph-viz-prepare",
+  "result": { "nodes": 142, "edges": 198, "format": "graphson" },
+  "context": { "version": "1.0", "session_id": "test-session-graph-visualize" }
+}

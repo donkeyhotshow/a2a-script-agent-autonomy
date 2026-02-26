@@ -1,0 +1,5 @@
+{
+  "action": "approve_action",
+  "actionId": "context-format",
+  "context": { "version": "1.0", "session_id": "test-session-context-format" }
+}

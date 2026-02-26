@@ -1,0 +1,7 @@
+{
+  "outcome": "action_proposal",
+  "context": { "version": "1.0", "session_id": "test-session-context-format" },
+  "proposedActions": [
+    { "actionId": "context-format", "title": "Форматувати контекст", "matchScore": 0.95, "subActions": [{ "actionId": "ctx-format-exec", "title": "Форматувати" }] }
+  ]
+}
