@@ -15,13 +15,9 @@ const SSEClient = {
   lastEventId: null,
   _errorNotification: null,
   
-  // A2A API configuration
   apiBase: '/api/v1',
   apiClient: null,
 
-  /**
-   * Configure API client
-   */
   configureApi(apiBase, token = null) {
     this.apiBase = apiBase.replace(/\/?$/, '');
     this.apiClient = {
@@ -47,7 +43,6 @@ const SSEClient = {
           }
           return data;
         } catch (err) {
-          // Re-throw network errors but handle them
           if (err.name === 'TypeError' && err.message === 'Failed to fetch') {
             this.handleApiError({ message: 'Network error. Server may be unreachable.' });
           }
@@ -55,7 +50,6 @@ const SSEClient = {
         }
       },
 
-      // Session endpoints
       async createSession(projectId, title) {
         const res = await this.request('POST', '/sessions', { projectId, title });
         return res.data;
@@ -71,7 +65,6 @@ const SSEClient = {
         return res.data;
       },
 
-      // Request/Task endpoints
       async createRequest(data) {
         const res = await this.request('POST', '/requests', data);
         return res.data;
@@ -92,13 +85,11 @@ const SSEClient = {
         return res.data;
       },
 
-      // Action approval
       async approveAction(sessionId, approved) {
         const res = await this.request('POST', `/sessions/${sessionId}/actions/approve`, { approved });
         return res.data;
       },
 
-      // Send step result
       async sendStepResult(sessionId, stepResult) {
         const res = await this.request('POST', `/sessions/${sessionId}/steps`, stepResult);
         return res.data;
@@ -106,18 +97,13 @@ const SSEClient = {
     };
   },
 
-  /**
-   * Connect to SSE endpoint
-   */
   connect(sessionId, apiBase = '/api/v1') {
     this.sessionId = sessionId;
     
-    // Configure API if not already done
     if (!this.apiClient || this.apiBase !== apiBase) {
       this.configureApi(apiBase);
     }
     
-    // Close existing connection
     if (this.eventSource) {
       this.disconnect();
     }
@@ -157,7 +143,6 @@ const SSEClient = {
         this.emit('error', error);
         this._handleDisconnect();
         
-        // Try to reconnect if not manually closed
         if (this.eventSource && this.reconnectAttempts < this.maxReconnectAttempts) {
           this.reconnectAttempts++;
           console.log(`[SSE] Reconnecting... (${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
@@ -170,7 +155,6 @@ const SSEClient = {
         }
       };
 
-      // Register event handlers
       this.setupEventHandlers();
 
     } catch (e) {
@@ -179,13 +163,9 @@ const SSEClient = {
     }
   },
 
-  /**
-   * Setup named event handlers for A2A protocol
-   */
   setupEventHandlers() {
     if (!this.eventSource) return;
 
-    // Connected event - session established
     this.eventSource.addEventListener('connected', (event) => {
       try {
         const data = JSON.parse(event.data);
@@ -198,7 +178,6 @@ const SSEClient = {
       }
     });
 
-    // Log event - streaming logs
     this.eventSource.addEventListener('log', (event) => {
       try {
         const data = JSON.parse(event.data);
@@ -209,7 +188,6 @@ const SSEClient = {
       }
     });
 
-    // Progress event - task progress updates
     this.eventSource.addEventListener('progress', (event) => {
       try {
         const data = JSON.parse(event.data);
@@ -220,7 +198,6 @@ const SSEClient = {
       }
     });
 
-    // Status event - request status changes
     this.eventSource.addEventListener('status', (event) => {
       try {
         const data = JSON.parse(event.data);
@@ -232,7 +209,6 @@ const SSEClient = {
       }
     });
 
-    // Task response event - A2A protocol response
     this.eventSource.addEventListener('task_response', (event) => {
       try {
         const data = JSON.parse(event.data);
@@ -243,7 +219,6 @@ const SSEClient = {
       }
     });
 
-    // Action proposal event
     this.eventSource.addEventListener('action_proposal', (event) => {
       try {
         const data = JSON.parse(event.data);
@@ -254,7 +229,6 @@ const SSEClient = {
       }
     });
 
-    // Action executing event
     this.eventSource.addEventListener('action_executing', (event) => {
       try {
         const data = JSON.parse(event.data);
@@ -265,7 +239,6 @@ const SSEClient = {
       }
     });
 
-    // Step result event
     this.eventSource.addEventListener('step_result', (event) => {
       try {
         const data = JSON.parse(event.data);
@@ -276,7 +249,6 @@ const SSEClient = {
       }
     });
 
-    // Complete event - request completed
     this.eventSource.addEventListener('complete', (event) => {
       try {
         const data = JSON.parse(event.data);
@@ -287,7 +259,6 @@ const SSEClient = {
       }
     });
 
-    // Error event
     this.eventSource.addEventListener('error', (event) => {
       try {
         const data = JSON.parse(event.data);
@@ -298,7 +269,6 @@ const SSEClient = {
       }
     });
 
-    // Session events
     this.eventSource.addEventListener('session_update', (event) => {
       try {
         const data = JSON.parse(event.data);
@@ -309,7 +279,6 @@ const SSEClient = {
       }
     });
 
-    // Node events (for graph visualization)
     this.eventSource.addEventListener('node_added', (event) => {
       try {
         const data = JSON.parse(event.data);
@@ -341,9 +310,6 @@ const SSEClient = {
     });
   },
 
-  /**
-   * Register event handler
-   */
   on(event, handler) {
     if (!this.handlers[event]) {
       this.handlers[event] = [];
@@ -351,9 +317,6 @@ const SSEClient = {
     this.handlers[event].push(handler);
   },
 
-  /**
-   * Unregister event handler
-   */
   off(event, handler) {
     if (!this.handlers[event]) return;
     const index = this.handlers[event].indexOf(handler);
@@ -362,9 +325,6 @@ const SSEClient = {
     }
   },
 
-  /**
-   * Emit event to handlers
-   */
   emit(event, data) {
     if (!this.handlers[event]) return;
     this.handlers[event].forEach(handler => {
@@ -376,9 +336,6 @@ const SSEClient = {
     });
   },
 
-  /**
-   * Disconnect from SSE
-   */
   disconnect() {
     if (this.eventSource) {
       this.eventSource.close();
@@ -389,25 +346,14 @@ const SSEClient = {
     }
   },
 
-  /**
-   * Check if connected
-   */
   isConnected() {
     return this.eventSource && this.eventSource.readyState === EventSource.OPEN;
   },
 
-  /**
-   * Check if connecting
-   */
   isConnectingTo() {
     return this.isConnecting;
   },
 
-  /**
-   * Show error notification
-   * @param {string} message - error message
-   * @param {string} type - error type: 'sse', 'api', 'reconnect'
-   */
   showErrorNotification(message, type) {
     type = type || 'sse';
     this._removeErrorNotification();
@@ -433,15 +379,10 @@ const SSEClient = {
     document.body.appendChild(notification);
     this._errorNotification = notification;
     
-    // Auto-hide after 10 seconds for reconnect, 30 seconds for errors
     const timeout = type === 'reconnect' ? 10000 : 30000;
     setTimeout(() => this._removeErrorNotification(), timeout);
   },
 
-  /**
-   * Remove error notification
-   * @private
-   */
   _removeErrorNotification() {
     if (this._errorNotification) {
       this._errorNotification.remove();
@@ -449,10 +390,6 @@ const SSEClient = {
     }
   },
 
-  /**
-   * Update cube status for all panels
-   * @param {string} status - status: idle, running, completed, disconnected, error, reconnecting
-   */
   updateCubeStatus(status) {
     const cubes = document.querySelectorAll('.pui-cube');
     cubes.forEach(cube => {
@@ -463,39 +400,22 @@ const SSEClient = {
     });
   },
 
-  /**
-   * Handle SSE disconnection
-   * @private
-   */
   _handleDisconnect() {
     this.updateCubeStatus('disconnected');
     this.showErrorNotification('SSE connection lost. Attempting to reconnect...', 'sse');
   },
 
-  /**
-   * Handle successful reconnection
-   * @private
-   */
   _handleReconnect() {
     this.updateCubeStatus('idle');
     this._removeErrorNotification();
   },
 
-  /**
-   * Handle API error
-   * @param {Object} error - error data
-   */
   handleApiError(error) {
     this.updateCubeStatus('error');
     const message = error?.message || error?.error?.message || 'API request failed';
     this.showErrorNotification(message, 'api');
   },
 
-  // ========== API Helper Methods ==========
-
-  /**
-   * Create a new session via API
-   */
   async createSession(projectId, title) {
     if (!this.apiClient) {
       throw new Error('API client not configured. Call configureApi() first.');
@@ -503,9 +423,6 @@ const SSEClient = {
     return this.apiClient.createSession(projectId, title);
   },
 
-  /**
-   * Get session details
-   */
   async getSession(sessionId) {
     if (!this.apiClient) {
       throw new Error('API client not configured. Call configureApi() first.');
@@ -513,9 +430,6 @@ const SSEClient = {
     return this.apiClient.getSession(sessionId);
   },
 
-  /**
-   * List sessions
-   */
   async listSessions(projectId) {
     if (!this.apiClient) {
       throw new Error('API client not configured. Call configureApi() first.');
@@ -523,9 +437,6 @@ const SSEClient = {
     return this.apiClient.listSessions(projectId);
   },
 
-  /**
-   * Create a new request (task)
-   */
   async createRequest(data) {
     if (!this.apiClient) {
       throw new Error('API client not configured. Call configureApi() first.');
@@ -533,9 +444,6 @@ const SSEClient = {
     return this.apiClient.createRequest(data);
   },
 
-  /**
-   * Approve action
-   */
   async approveAction(sessionId, approved) {
     if (!this.apiClient) {
       throw new Error('API client not configured. Call configureApi() first.');
@@ -543,9 +451,6 @@ const SSEClient = {
     return this.apiClient.approveAction(sessionId, approved);
   },
 
-  /**
-   * Send step result
-   */
   async sendStepResult(sessionId, stepResult) {
     if (!this.apiClient) {
       throw new Error('API client not configured. Call configureApi() first.');
@@ -553,9 +458,6 @@ const SSEClient = {
     return this.apiClient.sendStepResult(sessionId, stepResult);
   },
 
-  /**
-   * Cancel request
-   */
   async cancelRequest(promiseId) {
     if (!this.apiClient) {
       throw new Error('API client not configured. Call configureApi() first.');
@@ -564,10 +466,8 @@ const SSEClient = {
   }
 };
 
-// Make global
 window.SSEClient = SSEClient;
 
-// Auto-connect if sessionId is provided in URL
 document.addEventListener('DOMContentLoaded', () => {
   const urlParams = new URLSearchParams(window.location.search);
   const sessionId = urlParams.get('session');
@@ -579,5 +479,3 @@ document.addEventListener('DOMContentLoaded', () => {
     SSEClient.connect(sessionId);
   }
 });
-
-export default SSEClient;
