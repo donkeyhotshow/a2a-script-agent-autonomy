@@ -13,7 +13,7 @@
         {
           "actionId": "vue-import-detect",
           "title": "Визначити зламані імпорти",
-          "description": "Сканує Vue файли і знаходить біті імпорти",
+          "description": "Сканує Vue файли і знаходить биті імпорти",
           "priority": 10,
           "input": "none",
           "output": "broken_imports[]"
@@ -21,7 +21,7 @@
         {
           "actionId": "vue-import-resolve",
           "title": "Вирішити правильні шляхи",
-          "description": "На основі списку бітих імпортів знаходить правильні шляхи",
+          "description": "На основі списку битих імпортів знаходить правильні шляхи",
           "priority": 9,
           "input": "broken_imports[]",
           "output": "patches[]"
