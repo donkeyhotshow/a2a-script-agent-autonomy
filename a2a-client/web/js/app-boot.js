@@ -390,6 +390,136 @@ const AppBoot = {
     window.addNotification = (message, type = 'info') => {
       this._addNotification(message, type);
     };
+    
+    // Global Toast notification function (using uiManager if available)
+    window.showToast = (message, type = 'info', options = {}) => {
+      const { duration = 3000, position = 'top-right' } = options;
+      
+      // Try to use uiManager's createToast if available
+      if (window.uiManager?.createToast) {
+        const toast = window.uiManager.createToast(message, { type });
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), duration);
+        return;
+      }
+      
+      // Fallback: Create toast manually
+      this._createToastElement(message, type, duration, position);
+    };
+    
+    // Error Boundary setup
+    this._setupErrorBoundary();
+  },
+
+  /**
+   * Create toast element manually
+   */
+  _createToastElement(message, type, duration, position) {
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.innerHTML = `
+      <span class="toast-icon">${this._getToastIcon(type)}</span>
+      <span class="toast-message">${message}</span>
+      <button class="toast-close">&times;</button>
+    `;
+    
+    // Position
+    toast.style.position = 'fixed';
+    switch (position) {
+      case 'top-left':
+        toast.style.top = '20px';
+        toast.style.left = '20px';
+        break;
+      case 'top-right':
+        toast.style.top = '20px';
+        toast.style.right = '20px';
+        break;
+      case 'bottom-left':
+        toast.style.bottom = '20px';
+        toast.style.left = '20px';
+        break;
+      case 'bottom-right':
+        toast.style.bottom = '20px';
+        toast.style.right = '20px';
+        break;
+      default:
+        toast.style.top = '20px';
+        toast.style.right = '20px';
+    }
+    
+    // Close button
+    toast.querySelector('.toast-close')?.addEventListener('click', () => {
+      toast.remove();
+    });
+    
+    document.body.appendChild(toast);
+    
+    // Auto-remove
+    setTimeout(() => {
+      toast.classList.add('toast-fade-out');
+      setTimeout(() => toast.remove(), 300);
+    }, duration);
+  },
+
+  /**
+   * Get toast icon by type
+   */
+  _getToastIcon(type) {
+    const icons = {
+      success: '✓',
+      error: '✗',
+      warning: '⚠',
+      info: 'ℹ'
+    };
+    return icons[type] || icons.info;
+  },
+
+  /**
+   * Setup Error Boundary
+   */
+  _setupErrorBoundary() {
+    // Global error handler for uncaught errors
+    window.onerror = (message, source, lineno, colno, error) => {
+      console.error('[Global Error]', { message, source, lineno, colno, error });
+      this._handleError(error || new Error(message), { source, lineno, colno });
+      return false; // Let default error handling continue
+    };
+    
+    // Unhandled promise rejection handler
+    window.onunhandledrejection = (event) => {
+      console.error('[Unhandled Promise Rejection]', event.reason);
+      this._handleError(event.reason, { type: 'unhandled-rejection' });
+    };
+  },
+
+  /**
+   * Handle error with user-friendly message
+   */
+  _handleError(error, context = {}) {
+    const errorMessage = error?.message || String(error);
+    
+    // Log to console
+    console.error('[AppBoot] Error:', errorMessage, context);
+    
+    // Show toast notification
+    this._showErrorToast(errorMessage);
+    
+    // Emit error event for other components
+    document.dispatchEvent(new CustomEvent('appError', {
+      detail: { error, context, message: errorMessage }
+    }));
+  },
+
+  /**
+   * Show error toast
+   */
+  _showErrorToast(message) {
+    // Truncate long messages
+    const displayMessage = message.length > 100 
+      ? message.substring(0, 100) + '...' 
+      : message;
+    
+    window.showToast?.(displayMessage, 'error', { duration: 5000 });
   },
 
   /**

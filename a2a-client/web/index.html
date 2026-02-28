@@ -29,6 +29,12 @@
   <link rel="stylesheet" href="css/components/panel-dock.css">
   <link rel="stylesheet" href="css/components/graph-panel.css">
   <link rel="stylesheet" href="css/components/ui-components.css">
+  <link rel="stylesheet" href="css/components/action-panel.css">
+  <link rel="stylesheet" href="css/components/toast.css">
+  <link rel="stylesheet" href="css/components/task-queue.css">
+  <link rel="stylesheet" href="css/components/statistics.css">
+  <link rel="stylesheet" href="css/components/command-palette.css">
+  <link rel="stylesheet" href="css/components/modals.css">
   <link rel="stylesheet" href="css/style.css">
   
   <!-- VueFlow styles -->
@@ -98,7 +104,7 @@
     </div>
   </div>
 
-  <!-- Session List Modal -->
+  <!-- Sessions Modal -->
   <div id="sessionsModal" class="modal" style="display: none;">
     <div class="modal-content modal-large">
       <div class="modal-header">
@@ -112,6 +118,69 @@
         <div class="sessions-list" id="sessionsListContainer">
           <div class="loading-indicator">Loading sessions...</div>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Import/Export Modal -->
+  <div id="importExportModal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Import / Export</h2>
+        <button class="modal-close" id="closeImportExportModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="import-export-section">
+          <h3>Export Graph</h3>
+          <div class="export-options">
+            <button class="btn btn-primary" id="exportJSON">
+              <span class="btn-icon">📄</span> Export as JSON
+            </button>
+            <button class="btn btn-secondary" id="exportPNG">
+              <span class="btn-icon">🖼</span> Export as PNG
+            </button>
+          </div>
+          <p class="help-text">JSON export includes all nodes, edges, and viewport state.</p>
+        </div>
+        
+        <div class="import-export-section">
+          <h3>Import Graph</h3>
+          <div class="import-options">
+            <input type="file" id="importFile" accept=".json" class="file-input">
+            <label for="importFile" class="file-label">
+              <span class="file-icon">📁</span> Choose JSON file
+            </label>
+            <button class="btn btn-primary" id="importJSON">
+              <span class="btn-icon">⬆</span> Import
+            </button>
+          </div>
+          <div id="importPreview" class="import-preview"></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="cancelImportExport">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Projects Modal -->
+  <div id="projectsModal" class="modal" style="display: none;">
+    <div class="modal-content modal-large">
+      <div class="modal-header">
+        <h2>Projects</h2>
+        <button class="modal-close" id="closeProjectsModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="projects-toolbar">
+          <input type="text" id="projectSearch" placeholder="Search projects..." class="search-input">
+          <button class="btn btn-primary" id="newProjectBtn">+ New Project</button>
+        </div>
+        <div class="projects-grid" id="projectsGrid">
+          <div class="loading-indicator">Loading projects...</div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="cancelProjects">Close</button>
       </div>
     </div>
   </div>
@@ -145,7 +214,7 @@
     <div class="command-palette-results" id="commandResults"></div>
   </div>
 
-  <!-- Node Editor Modal -->
+  <!-- Node Editor Modal - ENHANCED -->
   <div id="nodeEditorModal" class="modal" style="display: none;">
     <div class="modal-content modal-large">
       <div class="modal-header">
@@ -161,6 +230,32 @@
           <div class="form-group">
             <label>Label</label>
             <input type="text" id="nodeEditorLabel" class="form-input">
+          </div>
+          <div class="form-group">
+            <label>Type</label>
+            <select id="nodeEditorType" class="form-input">
+              <option value="default">Default</option>
+              <option value="task_request">Task Request</option>
+              <option value="action_proposal">Action Proposal</option>
+              <option value="step_result">Step Result</option>
+              <option value="action_complete">Action Complete</option>
+              <option value="agent">Agent</option>
+              <option value="file">File</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Description</label>
+            <textarea id="nodeEditorDescription" class="form-input" rows="3"></textarea>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Position X</label>
+              <input type="number" id="nodeEditorPosX" class="form-input">
+            </div>
+            <div class="form-group">
+              <label>Position Y</label>
+              <input type="number" id="nodeEditorPosY" class="form-input">
+            </div>
           </div>
         </div>
       </div>
@@ -231,19 +326,78 @@
     <div class="toolbar-separator"></div>
     <button class="toolbar-btn" id="graphAutoLayout" title="Auto Layout">📐</button>
     <button class="toolbar-btn" id="graphActionPanel" title="Action Panel">⚡</button>
+    <button class="toolbar-btn" id="graphTaskQueue" title="Task Queue">📋</button>
+    <button class="toolbar-btn" id="graphStatistics" title="Statistics">📊</button>
   </div>
 
-  <!-- Action Panel -->
+  <!-- Action Panel - ENHANCED -->
   <div id="actionPanel" class="action-panel" style="display: none;">
     <div class="action-panel-header">
       <h3>Actions</h3>
       <button class="action-panel-close" id="closeActionPanel">&times;</button>
     </div>
-    <div class="action-panel-search">
-      <input type="text" id="actionSearchInput" placeholder="Search actions...">
+    <div class="action-panel-filters">
+      <input type="text" id="actionSearchInput" placeholder="Search actions..." class="action-search-input">
+      <select id="actionCategoryFilter" class="action-category-filter">
+        <option value="">All Categories</option>
+        <option value="file">📁 Files</option>
+        <option value="script">⚡ Scripts</option>
+        <option value="search">🔍 Search</option>
+        <option value="git">📦 Git</option>
+      </select>
     </div>
     <div class="action-panel-list" id="actionsListContainer">
       <div class="empty-message">Loading actions...</div>
+    </div>
+    <div class="action-form-container" id="actionFormContainer" style="display: none;"></div>
+  </div>
+
+  <!-- Task Queue Panel -->
+  <div id="taskQueuePanel" class="task-queue-panel" style="display: none;">
+    <div class="task-queue-header">
+      <h3>Task Queue</h3>
+      <div class="task-queue-controls">
+        <button id="clearCompletedTasks" title="Clear Completed">✓</button>
+        <button id="closeTaskQueuePanel">&times;</button>
+      </div>
+    </div>
+    <div class="task-queue-stats" id="taskQueueStats">
+      <span class="stat-pending">0 pending</span>
+      <span class="stat-running">0 running</span>
+      <span class="stat-completed">0 completed</span>
+    </div>
+    <div class="task-queue-list" id="taskQueueList">
+      <div class="task-queue-empty">No tasks in queue</div>
+    </div>
+  </div>
+
+  <!-- Statistics Panel -->
+  <div id="statisticsPanel" class="statistics-panel" style="display: none;">
+    <div class="statistics-header">
+      <span>Graph Statistics</span>
+      <button id="closeStatisticsPanel">&times;</button>
+    </div>
+    <div class="statistics-content" id="statisticsContent">
+      <div class="stat-item">
+        <span class="stat-label">Total Nodes:</span>
+        <span class="stat-value" id="statTotalNodes">0</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">Total Edges:</span>
+        <span class="stat-value" id="statTotalEdges">0</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">Completed:</span>
+        <span class="stat-value" id="statCompletedNodes">0</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">Running:</span>
+        <span class="stat-value" id="statRunningNodes">0</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">Failed:</span>
+        <span class="stat-value" id="statFailedNodes">0</span>
+      </div>
     </div>
   </div>
 
@@ -258,6 +412,9 @@
   <script src="js/graph-improvements.js"></script>
   <script src="js/action-panel.js"></script>
   <script src="js/graph-layout.js"></script>
+  <script src="js/task-queue.js"></script>
+  <script src="js/graph-statistics.js"></script>
+  <script src="js/batch-operations.js"></script>
 
   <!-- Main App Script -->
   <script>
@@ -313,6 +470,49 @@
           window.addNotification?.('Auto layout applied', 'success');
         }
       });
+      
+      // Task Queue button
+      const taskQueueBtn = document.getElementById('graphTaskQueue');
+      taskQueueBtn?.addEventListener('click', () => {
+        if (window.taskQueueManager) {
+          window.taskQueueManager.toggle();
+        }
+      });
+      
+      // Statistics button
+      const statisticsBtn = document.getElementById('graphStatistics');
+      statisticsBtn?.addEventListener('click', () => {
+        if (window.graphStatisticsManager) {
+          window.graphStatisticsManager.toggle();
+        }
+      });
+
+      // Initialize Task Queue Manager
+      if (window.taskQueueManager) {
+        window.taskQueueManager.init();
+        console.log('[App] Task Queue Manager initialized');
+      }
+
+      // Initialize Graph Statistics Manager
+      if (window.graphStatisticsManager) {
+        window.graphStatisticsManager.init();
+        console.log('[App] Graph Statistics Manager initialized');
+      }
+
+      // Initialize Batch Operations Manager
+      if (window.batchOperationsManager) {
+        window.batchOperationsManager.init();
+        console.log('[App] Batch Operations Manager initialized');
+      }
+
+      // Initialize Flow if available
+      if (window.initFlow) {
+        window.initFlow();
+        console.log('[App] Flow initialized');
+      }
+
+      // Setup toolbar event handlers
+      setupToolbarHandlers();
 
       // Keyboard shortcuts
       document.addEventListener('keydown', (e) => {
@@ -335,6 +535,53 @@
       console.log('[App] Initialized');
     });
 
+    // Setup toolbar button handlers
+    function setupToolbarHandlers() {
+      // Zoom controls
+      document.getElementById('graphZoomIn')?.addEventListener('click', () => {
+        window.flowManager?.zoomIn?.();
+      });
+      
+      document.getElementById('graphZoomOut')?.addEventListener('click', () => {
+        window.flowManager?.zoomOut?.();
+      });
+      
+      document.getElementById('graphFitView')?.addEventListener('click', () => {
+        window.flowManager?.fitView?.();
+      });
+
+      // Undo/Redo
+      document.getElementById('graphUndo')?.addEventListener('click', () => {
+        window.UndoRedoManager?.undo?.();
+      });
+      
+      document.getElementById('graphRedo')?.addEventListener('click', () => {
+        window.UndoRedoManager?.redo?.();
+      });
+
+      // Toggle panels
+      document.getElementById('graphToggleMinimap')?.addEventListener('click', () => {
+        const minimap = document.querySelector('.vue-flow__minimap');
+        if (minimap) {
+          minimap.style.display = minimap.style.display === 'none' ? 'block' : 'none';
+        }
+      });
+
+      document.getElementById('graphToggleConsole')?.addEventListener('click', () => {
+        const consolePanel = document.getElementById('consolePanel');
+        if (consolePanel) {
+          consolePanel.style.display = consolePanel.style.display === 'none' ? 'flex' : 'none';
+        }
+      });
+
+      document.getElementById('graphToggleProperties')?.addEventListener('click', () => {
+        const propertiesPanel = document.getElementById('propertiesPanel');
+        if (propertiesPanel) {
+          propertiesPanel.style.display = propertiesPanel.style.display === 'none' ? 'flex' : 'none';
+        }
+      });
+    }
+
     // Global notification function
     window.addNotification = function(message, type) {
       const panel = document.getElementById('notificationsPanel');
@@ -348,6 +595,44 @@
       list.insertBefore(item, list.firstChild);
       
       setTimeout(() => item.remove(), 5000);
+    };
+
+    // Global toast function
+    window.showToast = function(message, type, options = {}) {
+      const duration = options.duration || 3000;
+      const position = options.position || 'top-right';
+      
+      const toast = document.createElement('div');
+      toast.className = 'toast toast-' + (type || 'info');
+      toast.innerHTML = '<span class="toast-message">' + message + '</span>';
+      
+      // Position
+      toast.style.position = 'fixed';
+      switch (position) {
+        case 'top-left':
+          toast.style.top = '20px';
+          toast.style.left = '20px';
+          break;
+        case 'top-right':
+          toast.style.top = '20px';
+          toast.style.right = '20px';
+          break;
+        case 'bottom-left':
+          toast.style.bottom = '20px';
+          toast.style.left = '20px';
+          break;
+        case 'bottom-right':
+          toast.style.bottom = '20px';
+          toast.style.right = '20px';
+          break;
+      }
+      
+      document.body.appendChild(toast);
+      
+      setTimeout(() => {
+        toast.classList.add('toast-fade-out');
+        setTimeout(() => toast.remove(), 300);
+      }, duration);
     };
   </script>
 </body>
