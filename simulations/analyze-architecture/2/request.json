@@ -1,9 +1,11 @@
 {
-  "action": "approve_action",
-  "selectedAction": {
-    "actionId": "analyze-architecture"
-  },
   "context": {
-    "task": "проаналізувати архітектуру проекту"
+    "sessionId": "sess_xxx",
+    "projectId": "proj_xxx",
+    "task": "проаналізувати архітектуру проекту",
+    "action": "approve_action",
+    "selectedAction": {
+      "actionId": "analyze-architecture"
+    }
   }
 }

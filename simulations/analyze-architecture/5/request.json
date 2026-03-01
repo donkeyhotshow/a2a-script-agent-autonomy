@@ -1,18 +1,12 @@
 {
-  "action": "step_result",
-  "stepId": "generate-arch-docs",
-  "result": {
-    "arch_doc": "# Архітектура проекту\n\n## Виявлені паттерни\n- **MVC** (confidence: 0.95)\n- **Repository** (confidence: 0.88)\n- **Service Layer** (confidence: 0.82)\n\n## Компонентна структура\n- Controllers: 15\n- Models: 22\n- Services: 18\n- Repositories: 12\n- Views: 45\n- Middleware: 8\n\n## Висновок\nПроект використовує класичну MVC архітектуру з елементами Service Layer та Repository паттернів."
-  },
   "context": {
+    "sessionId": "sess_xxx",
+    "projectId": "proj_xxx",
     "task": "проаналізувати архітектуру проекту",
-    "execution": {
-      "actionId": "analyze-architecture",
-      "currentActionId": "generate-arch-docs",
-      "history": [
-        { "step": 1, "actionId": "detect-patterns", "status": "completed", "result": { "patterns": ["MVC", "Repository", "Service Layer"] } },
-        { "step": 2, "actionId": "analyze-components", "status": "completed", "result": { "components": { "controllers": 15, "models": 22, "services": 18 } } }
-      ]
+    "action": "step_result",
+    "stepId": "generate-arch-docs",
+    "result": {
+      "arch_doc": "# Архітектура проекту\n\n## Виявлені паттерни\n- **MVC** (confidence: 0.95)\n- **Repository** (confidence: 0.88)\n- **Service Layer** (confidence: 0.82)\n\n## Компонентна структура\n- Controllers: 15\n- Models: 22\n- Services: 18\n- Repositories: 12\n- Views: 45\n- Middleware: 8\n\n## Висновок\nПроект використовує класичну MVC архітектуру з елементами Service Layer та Repository паттернів."
     }
   }
 }

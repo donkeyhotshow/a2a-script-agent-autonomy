@@ -3,17 +3,7 @@
     "task": "виправити імпорти у vue компонентах",
     "execution": {
       "actionId": "fix-vue-imports",
-      "currentActionId": "vue-import-apply",
-      "history": [
-        { "step": 1, "actionId": "vue-import-detect", "status": "completed", "result": { "broken_imports": 3 } },
-        { "step": 2, "actionId": "vue-import-resolve", "status": "completed", "result": { "patches": 3 } }
-      ]
-    }
-  },
-  "previousStep": {
-    "actionId": "vue-import-resolve",
-    "result": {
-      "patches": 3
+      "currentActionId": "vue-import-apply"
     }
   },
   "executingAction": {
@@ -33,8 +23,5 @@
       "output": "fixed_files[]"
     },
     "dslScript": "```typescript\n// vue-import-apply.dsl\n// Застосування виправлень до файлів\n\nconst result = await script.execute('vue-import-apply', {\n  patches: [\n    { file: 'resources/js/Pages/Auth/Login.vue', line: 3, from: '../components/Header', to: '@/components/Header' },\n    { file: 'resources/js/Pages/Auth/Register.vue', line: 5, from: '../../utils/helpers', to: '@/utils/helpers' },\n    { file: 'resources/js/components/UserCard.vue', line: 2, from: '@/stores/user', to: '@/stores/userStore' }\n  ]\n});\n\n// result = { fixed_files: 3 }\n```"
-  },
-  "nextSteps": [
-    { "actionId": "vue-import-cleanup", "title": "Очистити" }
-  ]
+  }
 }

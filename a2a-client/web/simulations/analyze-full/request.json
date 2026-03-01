@@ -1,8 +1,0 @@
-{
-  "action": "task_request",
-  "task": "проанализировать кодовую базу",
-  "options": {
-    "includeHidden": false,
-    "maxDepth": 10
-  }
-}

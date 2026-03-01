@@ -1,9 +1,0 @@
-{
-  "action": "approve_action",
-  "selectedAction": {
-    "actionId": "hybrid-fix"
-  },
-  "context": {
-    "task": "виправити помилки в коді з AI"
-  }
-}
