@@ -139,4 +139,8 @@ simulations/
 }
 ```
 
+**execute (canonical):** key = action type, value = params. No flat `"action": "<name>"`. Examples: `"read-file": { "path": "..." }`, `"write-file": { "path": "...", "content": "..." }`, `"rag-search": { "query": "..." }`, `"form": { "input": [...] }`, `"script": { "input", "output", "code" }`.
+
+**result for read-file:** use action-key shape so server has path + content: `result: { "read-file": { "path": "src/auth.js", "content": "..." } }`. Not just `result: { "content": "..." }`.
+
 Каноничная схема: **simulations/SCHEMA.md**. Примеры .md промптов: **simulations/dialog/3/request.md**, **simulations/dialog/3/response.md**.

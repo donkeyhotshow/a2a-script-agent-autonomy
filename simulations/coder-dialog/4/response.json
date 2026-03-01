@@ -68,7 +68,8 @@
     "files": ["src/auth.js", "src/middleware/auth.ts", "src/utils/jwt.js"]
   },
   "execute": {
-    "action": "read-file",
-    "file": "src/auth.js"
+    "read-file": {
+      "path": "src/auth.js"
+    }
   }
 }

@@ -95,24 +95,17 @@ interface Step {
 
 ## 5. Execute
 
+Canonical: **each key = action type**, value = params. No flat `action` + params as siblings.
+
 ```typescript
-interface Execute {
-  script: Script;
-  promiseId?: string;            // Для асинхронных запросов
-  finalResult?: FinalResult;
-}
-
-interface Script {
-  input: Record<string, any>;
-  output: string;
-  code: string;                 // DSL код
-}
-
-interface FinalResult {
-  action: string;
-  summary: Record<string, any>;
-}
+// One key = action type, value = params. Examples:
+// script: { input, output, code }; form: { input }; read-file: { path }; write-file: { path, content }; rag-search: { query }; etc.
+type Execute = Record<string, unknown>;
+// Optional: promiseId, finalResult for async flows
 ```
+
+**Good:** `execute: { "read-file": { "path": "src/auth.js" } }`, `execute: { "write-file": { "path": "...", "content": "..." } }`, `execute: { "form": { "input": [...] } }`.  
+**Bad:** `execute: { "action": "read-file", "file": "src/auth.js" }`.
 
 ---
 

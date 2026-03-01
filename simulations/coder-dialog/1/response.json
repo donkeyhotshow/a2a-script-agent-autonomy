@@ -8,15 +8,7 @@
       "title": "Діалог з AI-кодером",
       "description": "AI-асистент для аналізу коду з можливістю пошуку та читання файлів",
       "priority": 10,
-      "matchScore": 0.95,
-      "steps": [
-        {
-          "action": "coder-dialog",
-          "title": "Діалог з AI-кодером",
-          "description": "Почати діалог з AI-асистентом",
-          "priority": 10
-        }
-      ]
+      "matchScore": 0.95
     }
   ],
   "fallbackActions": [

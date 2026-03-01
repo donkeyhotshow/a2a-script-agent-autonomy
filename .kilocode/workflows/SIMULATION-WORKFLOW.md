@@ -92,7 +92,7 @@ MARKDOWN: секція **System Prompt**, опис формату відпові
 
 ### response.json (Server → Client)
 
-context + history + execute.form з полем для наступного повідомлення:
+context + history + **execute** (canonical: key = action type, value = params). No flat `"action": "<name>"`.
 
 ```json
 {
@@ -111,6 +111,8 @@ context + history + execute.form з полем для наступного по�
   }
 }
 ```
+
+Execute format: `execute.<action-type> = params`, e.g. `"read-file": { "path": "..." }`, `"write-file": { "path": "...", "content": "..." }`, `"rag-search": { "query": "..." }`, `"form": { "input": [...] }`, `"script": { "input", "output", "code" }`.
 
 ## Правила
 
