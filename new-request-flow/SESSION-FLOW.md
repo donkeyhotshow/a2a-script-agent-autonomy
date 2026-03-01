@@ -24,16 +24,16 @@
      │                │
      │                │     ┌─────────┐
      └───────────────▶│ CANCELLED │
-                       └─────────┘
+                        └─────────┘
 ```
 
 | Состояние | Описание |
 |-----------|----------|
-| `PENDING` | Сессия создана, ожидает выбора действия из `proposedActions` |
+| `PENDING` | Сессия создана, ожидает выбора действия из `actions` |
 | `READY` | Пользователь выбрал действие, готова к выполнению |
-| `IN_PROGRESS` | Выполняются поддействия (subActions) |
+| `IN_PROGRESS` | Выполняются шаги (steps) |
 | `WAITING_CONFIRMATION` | Ожидает подтверждения от пользователя |
-| `COMPLETED` | Все поддействия выполнены успешно |
+| `COMPLETED` | Все шаги выполнены успешно |
 | `ERROR` | Ошибка при выполнении |
 | `CANCELLED` | Отменена пользователем |
 
@@ -59,8 +59,8 @@
 │       task: "виправити імпорти у vue компонентах"                  │
 │     }                                                              │
 └─────────────────────────────────────────────────────────────────────┘
-                               │
-                               ▼
+                                │
+                                ▼
 ┌─────────────────────────────────────────────────────────────────────┐
 │                     CLIENT API                                      │
 │                                                                      │
@@ -70,51 +70,53 @@
 │       id: "sess_abc",                                             │
 │       projectId: "proj_123",                                      │
 │       task: "виправити імпорти...",                                │
-│       status: "PENDING"                                           │
+│       status: "PENDING",                                           │
+│       context: { task: "виправити імпорти..." }                   │
 │     }                                                              │
 │                                                                      │
 │  5. Отправить запрос на SERVER:                                    │
-│     POST /api/v1/sessions/:projectId/message                       │
+│     POST /api/v1/invoke                                            │
 │     {                                                              │
-│       context: { task, sessionId: "sess_abc" },                    │
-│       new_task: ["виправити імпорти..."]                          │
+│       task: "виправити імпорти..."                                 │
 │     }                                                              │
 └─────────────────────────────────────────────────────────────────────┘
-                               │
-                               ▼
+                                │
+                                ▼
 ┌─────────────────────────────────────────────────────────────────────┐
 │                       SERVER                                        │
 │                                                                      │
 │  6. Обработать запрос                                              │
-│  7. Вернуть proposedActions:                                       │
+│  7. Вернуть actions:                                       │
 │     {                                                              │
-│       proposedActions: [                                           │
-│         { actionId: "fix-vue-imports", subActions: [...] }        │
+│       context: { task: "виправити імпорти..." },                   │
+│       actions: [                                                   │
+│         { action: "fix-vue-imports", steps: [...] }               │
 │       ],                                                           │
 │       fallbackActions: [...]                                       │
 │     }                                                              │
 └─────────────────────────────────────────────────────────────────────┘
-                               │
-                               ▼
+                                │
+                                ▼
 ┌─────────────────────────────────────────────────────────────────────┐
 │                     CLIENT API                                      │
 │                                                                      │
-│  8. Сохранить proposedActions в сессию                            │
+│  8. Сохранить actions в сессию                                     │
 │  9. Вернуть ответ web:                                              │
 │     {                                                              │
 │       sessionId: "sess_abc",                                       │
 │       status: "PENDING",                                           │
-│       proposedActions: [...],                                       │
+│       context: { task: "виправити імпорти..." },                   │
+│       actions: [...],                                              │
 │       fallbackActions: [...]                                       │
 │     }                                                              │
 └─────────────────────────────────────────────────────────────────────┘
-                               │
-                               ▼
+                                │
+                                ▼
 ┌─────────────────────────────────────────────────────────────────────┐
 │                         WEB UI                                      │
 │                                                                      │
 │  10. Создать панель сессии (SessionPanel)                         │
-│      - Показать список proposedActions                             │
+│      - Показать список actions                                      │
 │      - Кнопки "Выбрать" для каждого действия                        │
 │      - SessionPanel в состоянии "неактивна" (серый цвет)          │
 └─────────────────────────────────────────────────────────────────────┘
@@ -128,7 +130,7 @@
 ┌─────────────────────────────────────────────────────────────────────┐
 │                         WEB UI                                      │
 │                                                                      │
-│  1. Пользователь видит список proposedActions:                      │
+│  1. Пользователь видит список actions:                              │
 │     ┌─────────────────────────────────────────────────────────┐   │
 │     │  Выберите действие:                                      │   │
 │     │                                                          │   │
@@ -145,36 +147,33 @@
 │                              ▼                                      │
 │  2. POST /api/sessions/:sessionId/action                           │
 │     {                                                              │
-│       selectedActionId: "fix-vue-imports"                          │
+│       selectedAction: "fix-vue-imports"                             │
 │     }                                                              │
 └─────────────────────────────────────────────────────────────────────┘
-                               │
-                               ▼
+                                │
+                                ▼
 ┌─────────────────────────────────────────────────────────────────────┐
 │                     CLIENT API                                      │
 │                                                                      │
 │  3. Обновить сессию:                                               │
-│     - selectedActionId = "fix-vue-imports"                         │
+│     - selectedAction = "fix-vue-imports"                          │
 │     - status = "READY"                                             │
-│     - currentSubActionIndex = 0                                    │
-│                                                                      │
+│     - context.execution = { action: "fix-vue-imports", step: "vue-import-detect" }\n│                                                                      │
 │  4. Вернуть:                                                        │
 │     {                                                              │
 │       status: "READY",                                             │
-│       selectedAction: { actionId, subActions: [...] },             │
-│       currentSubAction: subActions[0],                             │
-│       canContinue: true,                                           │
+│       context: { task: "...", execution: { action: "fix-vue-imports", step: "vue-import-detect" } },\n│       selectedAction: { action: "fix-vue-imports", steps: [...] },\n│       canContinue: true,                                          │
 │       canAuto: true                                                │
 │     }                                                              │
 └─────────────────────────────────────────────────────────────────────┘
-                               │
-                               ▼
+                                │
+                                ▼
 ┌─────────────────────────────────────────────────────────────────────┐
 │                         WEB UI                                      │
 │                                                                      │
 │  5. Обновить UI:                                                   │
-│     - Скрыть список proposedActions                                │
-│     - Показать subActions:                                         │
+│     - Скрыть список actions                                         │
+│     - Показать steps:                                               │
 │       ┌─────────────────────────────────────────────────────────┐ │
 │       │  ● vue-import-detect     [Выполняется...]              │ │
 │       │  ○ vue-import-resolve   [Ожидает]                      │ │
@@ -206,59 +205,65 @@
 │       mode: "manual"                                               │
 │     }                                                              │
 └─────────────────────────────────────────────────────────────────────┘
-                               │
-                               ▼
+                                │
+                                ▼
 ┌─────────────────────────────────────────────────────────────────────┐
 │                     CLIENT API                                      │
 │                                                                      │
 │  3. Отправить на SERVER:                                           │
-│     POST /api/v1/sessions/:sessionId/continue                      │
+│     POST /api/v1/invoke                                            │
 │     {                                                              │
-│       context: { sessionId, actionId: "vue-import-detect" }        │
-│     }                                                              │
+│       context: {                                                    │
+│         task: "виправити імпорти...",                               │
+│         execution: { action: "fix-vue-imports", step: "vue-import-detect" }\n│       },                                                              │
+│       result: { action: "fix-vue-imports" }  // Выбранное действие\n│     }                                                              │
 └─────────────────────────────────────────────────────────────────────┘
-                               │
-                               ▼
+                                │
+                                ▼
 ┌─────────────────────────────────────────────────────────────────────┐
 │                       SERVER                                        │
 │                                                                      │
-│  4. Выполнить subAction: vue-import-detect                         │
-│  5. Вернуть результат:                                             │
+│  4. Выполнить шаг: vue-import-detect                               │
+│  5. Вернуть результат:                                              │
 │     {                                                              │
-│       subAction: { actionId: "vue-import-resolve", ... },          │
-│       stepResult: {                                                │
-│         actionId: "vue-import-detect",                              │
-│         status: "success",                                         │
-│         output: { broken_imports: [...] }                          │
+│       context: {                                                   │
+│         task: "...",                                               │
+│         execution: { action: "fix-vue-imports", step: "vue-import-resolve" }\n│       },                                                              │
+│       execute: {                                                   │
+│         script: {                                                  │
+│           input: { rootDir: ".", filePattern: "**/*.vue" },       │
+│           output: "broken_imports[]",                              │
+│           code: "// vue-import-detect.dsl..."                     │
+│         }                                                          │
 │       }                                                            │
 │     }                                                              │
 └─────────────────────────────────────────────────────────────────────┘
-                               │
-                               ▼
+                                │
+                                ▼
 ┌─────────────────────────────────────────────────────────────────────┐
 │                     CLIENT API                                      │
 │                                                                      │
 │  6. Сохранить результат в сессию:                                  │
-│     - results.push(stepResult)                                     │
-│     - currentSubActionIndex++                                       │
+│     - results.push({ step: "vue-import-detect", output: {...} })  │
+│     - currentStepIndex++                                           │
 │                                                                      │
-│  7. Вернуть web:                                                    │
+│  7. Выполнить script локально                                      │
+│                                                                      │
+│  8. Вернуть web:                                                    │
 │     {                                                              │
 │       status: "IN_PROGRESS",                                       │
-│       currentSubAction: { ... },                                   │
-│       stepResult: { ... },                                         │
-│       canContinue: true,                                          │
-│       canStop: true                                               │
+│       context: { task: "...", execution: { action: "...", step: "vue-import-resolve" } },\n│       execute: { script: { input: {...}, output: "...", code: "..." } },\n│       canContinue: true,                                          │
+│       canStop: true                                                │
 │     }                                                              │
 └─────────────────────────────────────────────────────────────────────┘
-                               │
-                               ▼
+                                │
+                                ▼
 ┌─────────────────────────────────────────────────────────────────────┐
 │                         WEB UI                                      │
 │                                                                      │
-│  8. Обновить UI:                                                   │
-│     - Отметить текущий subAction как выполненный (✓)               │
-│     - Перейти к следующему subAction                                │
+│  9. Обновить UI:                                                   │
+│     - Отметить текущий step как выполненный (✓)                    │
+│     - Перейти к следующему step                                     │
 │     - Показать результат (output)                                    │
 │                                                                      │
 │     ┌─────────────────────────────────────────────────────────┐   │
@@ -290,40 +295,39 @@
 │       mode: "auto"                                                  │
 │     }                                                              │
 └─────────────────────────────────────────────────────────────────────┘
-                               │
-                               ▼
+                                │
+                                ▼
 ┌─────────────────────────────────────────────────────────────────────┐
 │                     CLIENT API                                      │
 │                                                                      │
-│  3. Цикл пока есть subActions:                                     │
+│  3. Цикл пока есть steps:                                           │
 │                                                                      │
-│     a) POST /api/v1/sessions/:sessionId/continue                   │
+│     a) POST /api/v1/invoke { context, result }                    │
 │                                                                      │
-│     b) Если promiseId:                                              │
-│        - Опрос GET /api/v1/requests/:promiseId/status              │
-│        - Ждать пока status === "completed"                          │
+│     b) SERVER возвращает { execute: { script: ... } }              │
 │                                                                      │
-│     c) Получить результат:                                          │
-│        - GET /api/v1/requests/:promiseId/result                    │
+│     c) CLIENT выполняет script локально                            │
 │                                                                      │
-│     d) Сохранить stepResult                                        │
-│     e) currentSubActionIndex++                                      │
+│     d) CLIENT отправляет результат:                                 │
+│        POST /api/v1/invoke { context, result: {...} }             │
+│                                                                      │
+│     e) currentStepIndex++                                          │
 │                                                                      │
 │     f) Если есть ошибка: остановить                                 │
 │                                                                      │
 │  4. Вернуть финальный результат                                     │
 └─────────────────────────────────────────────────────────────────────┘
-                               │
-                               ▼
+                                │
+                                ▼
 ┌─────────────────────────────────────────────────────────────────────┐
 │                         WEB UI                                      │
 │                                                                      │
 │  - Кнопка "Авто" меняется на "Стоп ◼"                              │
-│  - SubActions выполняются визуально один за другим                 │
+│  - Steps выполняются визуально один за другим                       │
 │  - После завершения всех:                                            │
 │    - status = "COMPLETED"                                          │
 │    - Кнопка "Далее" пропадает                                       │
-│    - Показать итоговый результат                                   │
+│    - Показать итоговый результат (finalResult)                    │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -335,7 +339,7 @@
 ┌─────────────────────────────────────────────────────────────────────┐
 │                         WEB UI                                      │
 │                                                                      │
-│  1. Все subActions выполнены (status = "COMPLETED")               │
+│  1. Все steps выполнены (status = "COMPLETED")                     │
 │                                                                      │
 │     ┌─────────────────────────────────────────────────────────┐   │
 │     │  ✓ vue-import-detect     [Выполнено]                   │   │
@@ -345,9 +349,13 @@
 │     │                                                      │   │
 │     │  ══════════════════════════════════════════════════  │   │
 │     │  Завершено! Исправлено 15 файлов                      │   │
+│     │  finalResult: {                                      │   │
+│     │    broken_imports_found: 3,                          │   │
+│     │    files_fixed: 3                                    │   │
+│     │  }                                                   │   │
 │     └─────────────────────────────────────────────────────────┘   │
 │                                                                      │
-│  2. Кнопки: [Новая задача +] [Закрыть ✕]                           │
+│  2. Кнопки: [Новая задача +] [Закрыть ✕]                          │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -365,19 +373,17 @@
 │                              ▼                                      │
 │  2. POST /api/sessions/:sessionId/cancel                           │
 └─────────────────────────────────────────────────────────────────────┘
-                               │
-                               ▼
+                                │
+                                ▼
 ┌─────────────────────────────────────────────────────────────────────┐
 │                     CLIENT API                                      │
 │                                                                      │
 │  3. Обновить статус: status = "CANCELLED"                          │
-│  4. Если есть active promiseId:                                    │
-│     - DELETE /api/v1/requests/:promiseId                           │
 │                                                                      │
-│  5. Вернуть: { status: "CANCELLED" }                              │
+│  4. Вернуть: { status: "CANCELLED" }                              │
 └─────────────────────────────────────────────────────────────────────┘
-                               │
-                               ▼
+                                │
+                                ▼
 ┌─────────────────────────────────────────────────────────────────────┐
 │                         WEB UI                                      │
 │                                                                      │
@@ -423,7 +429,7 @@
 │  │ Output:                                                  │ │
 │  │ Found 5 broken imports:                                  │ │
 │  │ - src/components/Header.vue                            │ │
-│  │ - src/components/Footer.vue                             │ │
+│  │ - src/components/Footer.vue                           │ │
 │  │ ...                                                     │ │
 │  └─────────────────────────────────────────────────────────┘ │
 │                                                              │
@@ -458,16 +464,25 @@
   "projectId": "proj_xyz789",
   "task": "виправити імпорти у vue компонентах",
   "status": "IN_PROGRESS",
-  "selectedActionId": "fix-vue-imports",
-  "selectedAction": {
-    "actionId": "fix-vue-imports",
-    "title": "...",
-    "subActions": [...]
+  "context": {
+    "task": "виправити імпорти у vue компонентах",
+    "execution": {
+      "action": "fix-vue-imports",
+      "step": "vue-import-resolve"
+    }
   },
-  "currentSubActionIndex": 1,
+  "selectedAction": "fix-vue-imports",
+  "actions": [
+    {
+      "action": "fix-vue-imports",
+      "title": "...",
+      "steps": [...]
+    }
+  ],
+  "currentStepIndex": 1,
   "results": [
     {
-      "actionId": "vue-import-detect",
+      "step": "vue-import-detect",
       "status": "success",
       "output": { "broken_imports": [...] },
       "timestamp": "2024-01-15T10:30:00Z"
@@ -497,3 +512,18 @@
 | `POST` | `/api/sessions/:id/next` | Следующий шаг |
 | `POST` | `/api/sessions/:id/cancel` | Отменить |
 | `DELETE` | `/api/sessions/:id` | Удалить сессию |
+
+---
+
+## Ключевые изменения терминологии
+
+| Старое (неправильно) | Новое (правильно) |
+|---------------------|-------------------|
+| `proposedActions` | `actions` |
+| `subActions` | `steps` |
+| `actionId` | `action` |
+| `currentActionId` | `execution.step` |
+| `executingAction` | `execute` |
+| `subActionResult` | `result` |
+| `currentSubAction` | `currentStepIndex` |
+| `promiseId` | (не используется) |

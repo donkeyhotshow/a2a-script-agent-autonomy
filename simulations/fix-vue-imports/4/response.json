@@ -16,7 +16,7 @@
         ]
       },
       "output": "fixed_files[]",
-      "code": "// vue-import-apply.dsl\n// Застосування виправлень до файлів\n\nconst result = await script.execute('vue-import-apply', {\n  patches: [\n    { file: 'resources/js/Pages/Auth/Login.vue', line: 3, from: '../components/Header', to: '@/components/Header' },\n    { file: 'resources/js/Pages/Auth/Register.vue', line: 5, from: '../../utils/helpers', to: '@/utils/helpers' },\n    { file: 'resources/js/components/UserCard.vue', line: 2, from: '@/stores/user', to: '@/stores/userStore' }\n  ]\n});\n\n// result = { fixed_files: 3 }"
+      "code": "// vue-import-apply.dsl\n// Застосування виправлень до файлів\n\nconst result = await script.execute('vue-import-apply', { patches });"
     }
   }
 }

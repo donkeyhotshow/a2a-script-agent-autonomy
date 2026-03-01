@@ -7,22 +7,22 @@
 ## Workflow
 
 ```
-1. Client → Server: task_request (task: "виправити імпорти у vue компонентах")
+1. Client → Server: { task: "виправити імпорти у vue компонентах" }
               ↓
-2. Server → Client: action_proposal + context (пропонує fix-vue-imports з 4 sub-actions)
+2. Server → Client: { context, actions: [fix-vue-imports з 4 steps] }
               ↓
-3. Client → Server: approve_action + context
+3. Client → Server: { context, result: { actionId: "fix-vue-imports" } }
               ↓
-4. Server → Client: action_executing + context
+4. Server → Client: { context, execute: { script } }
               ↓
-5. Client → Server: step_result (vue-import-detect) + context
+5. Client → Server: { context, result: { ... } }
               ↓
-6. Server → Client: action_executing + context
+6. Server → Client: { context, execute: { script } }
               ↓
-... повторюється для кожного sub-action
+... повторюється для кожного step
 ```
 
-## Sub-actions
+## Steps
 
 1. **vue-import-detect** - сканує файли, знаходить зламані імпорти
 2. **vue-import-resolve** - знаходить правильні шляхи
@@ -31,6 +31,13 @@
 
 ## Очікувані результати
 
-- Сервер пропонує екшен fix-vue-imports з 4 sub-actions
-- Кожен крок повертає action_executing з оновленим context
-- Фінальний крок повертає action_complete
+- Сервер пропонує екшен fix-vue-imports з 4 steps
+- Кожен крок повертає execute з script
+- Фінальний крок повертає finalResult
+
+## Правила
+
+1. **Context**: Сервер повністю керує context. Клієнт НЕ додає нічого до context.
+2. **Result**: Результат клієнта завжди поза context.
+3. **Context propagation**: У кожному новому запиті context такий самий як у попередній відповіді.
+4. **Stateless server**: Сервер не зберігає sessionId/projectId - вони залишаються на боці клієнта.

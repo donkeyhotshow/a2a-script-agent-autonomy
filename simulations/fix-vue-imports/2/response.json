@@ -13,7 +13,7 @@
         "filePattern": "**/*.vue"
       },
       "output": "broken_imports[]",
-      "code": "// vue-import-detect.dsl\n// Сканування Vue файлів і пошук битих імпортів\n\nconst result = await script.execute('vue-import-detect', {\n  rootDir: '.',\n  filePattern: '**/*.vue'\n});\n\n// result = { broken_imports: [...] }"
+      "code": "// vue-import-detect.dsl\n// Сканування Vue файлів і пошук битих імпортів\n\nconst result = await script.execute('vue-import-detect', { rootDir, filePattern });"
     }
   }
 }

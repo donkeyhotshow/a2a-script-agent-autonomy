@@ -6,29 +6,31 @@
 - **Web → Client API** (порт 3001)
 - **Client API → Server** (порт 3000)
 
+**ВАЖНО:** Сервер полностью STATELESS - не хранит сессии, только обрабатывает запросы.
+
 ## Схемы запросов/ответов
 
-### 1. Первый запрос: Поиск сервисов (task_request)
+### 1. Первый запрос: Поиск сервисов
 
 Пользователь вводит задачу, система предлагает доступные действия.
-
-**Поток:** Web → Client API (URL содержит sessionId) → Server (stateless)
 
 #### Запрос (Web → Client API)
 
 ```typescript
-// В URL: POST /api/sessions/:sessionId/tasks
+// В URL: POST /api/sessions
 interface TaskRequest {
   task: string;                    // Описание задачи пользователя
-  provider?: string;                // Провайдер (опционально)
+  provider?: string;               // Провайдер (опционально)
+  projectId: string;               // ID проекта
 }
 ```
 
 **Пример:**
 ```json
-// POST /api/sessions/sess_abcde/tasks
+// POST /api/sessions
 {
-  "task": "виправити імпорти у vue компонентах"
+  "task": "виправити імпорти у vue компонентах",
+  "projectId": "proj_12345"
 }
 ```
 
@@ -37,30 +39,29 @@ interface TaskRequest {
 ```typescript
 interface ServerResponse {
   context: {
-    action: string;                 // task_request, approve_action, step_result
     task: string;
     // НЕТ sessionId/projectId - сервер stateless!
   };
-  // ... остальные поля
+  actions: Action[];               // Предложенные действия
+  fallbackActions?: FallbackAction[];
 }
-```
 
-interface ProposedAction {
-  actionId: string;
+interface Action {
+  action: string;                  // ID действия (например: "fix-vue-imports")
   title: string;
   description: string;
   priority: number;
   matchScore: number;
-  subActions: SubAction[];
+  steps: Step[];
 }
 
-interface SubAction {
-  actionId: string;
+interface Step {
+  action: string;                  // ID шага (например: "vue-import-detect")
   title: string;
   description: string;
   priority: number;
-  input: string;                  // none | broken_imports[] | patches[]
-  output: string;                 // broken_imports[] | patches[] | fixed_files[]
+  input: string;                    // none | broken_imports[] | patches[] | fixed_files[]
+  output: string;                   // broken_imports[] | patches[] | fixed_files[] | cleanup_count
 }
 
 interface FallbackAction {
@@ -75,20 +76,18 @@ interface FallbackAction {
 ```json
 {
   "context": {
-    "task": "виправити імпорти у vue компонентах",
-    "sessionId": "sess_abcde",
-    "projectId": "proj_12345"
+    "task": "виправити імпорти у vue компонентах"
   },
-  "proposedActions": [
+  "actions": [
     {
-      "actionId": "fix-vue-imports",
+      "action": "fix-vue-imports",
       "title": "Виправити зламані імпорти у Vue файлах",
       "description": "Автоматично визначити та виправити проблеми з імпортами",
       "priority": 10,
       "matchScore": 0.95,
-      "subActions": [
+      "steps": [
         {
-          "actionId": "vue-import-detect",
+          "action": "vue-import-detect",
           "title": "Визначити зламані імпорти",
           "description": "Сканує Vue файли і знаходить биті імпорти",
           "priority": 10,
@@ -96,7 +95,7 @@ interface FallbackAction {
           "output": "broken_imports[]"
         },
         {
-          "actionId": "vue-import-resolve",
+          "action": "vue-import-resolve",
           "title": "Вирішити правильні шляхи",
           "description": "На основі списку битих імпортів знаходить правильні шляхи",
           "priority": 9,
@@ -104,7 +103,7 @@ interface FallbackAction {
           "output": "patches[]"
         },
         {
-          "actionId": "vue-import-apply",
+          "action": "vue-import-apply",
           "title": "Застосувати виправлення",
           "description": "Застосовує виправлення до файлів",
           "priority": 8,
@@ -112,7 +111,7 @@ interface FallbackAction {
           "output": "fixed_files[]"
         },
         {
-          "actionId": "vue-import-cleanup",
+          "action": "vue-import-cleanup",
           "title": "Очистити тимчасові файли",
           "description": "Видаляє тимчасові файли після роботи",
           "priority": 7,
@@ -141,7 +140,7 @@ interface FallbackAction {
 
 ---
 
-### 2. Выбор действия (action_selection)
+### 2. Выбор действия
 
 Пользователь выбирает действие из предложенных.
 
@@ -152,7 +151,7 @@ interface ActionSelectionRequest {
   action: 'action_selection';
   sessionId: string;
   projectId: string;
-  selectedActionId: string;
+  selectedAction: string;           // ID выбранного действия
 }
 ```
 
@@ -162,123 +161,167 @@ interface ActionSelectionRequest {
   "action": "action_selection",
   "sessionId": "sess_abcde",
   "projectId": "proj_12345",
-  "selectedActionId": "fix-vue-imports"
-}
-```
-
-#### Ответ (Client API → Web)
-
-```typescript
-interface ActionSelectionResponse {
-  status: 'accepted' | 'rejected';
-  selectedAction: ProposedAction;
-  currentSubAction?: SubAction;   // Текущее поддействие
-  canAuto: boolean;                // Можно ли авто-выполнение
-  canContinue: boolean;            // Можно ли продолжить
+  "selectedAction": "fix-vue-imports"
 }
 ```
 
 ---
 
-### 3. Следующий шаг (continue)
+### 3. Выполнение шага (Server → Client)
 
-Пользователь нажимает "Далее" для выполнения следующего поддействия.
+Сервер отправпт для выполляет скринения на клиенте.
 
-#### Запрос (Web → Client API)
-
-```typescript
-interface ContinueRequest {
-  action: 'continue';
-  sessionId: string;
-  projectId: string;
-  mode: 'manual' | 'auto';         // manual - пошагово, auto - авто
-}
-```
-
-**Пример:**
-```json
-{
-  "action": "continue",
-  "sessionId": "sess_abcde",
-  "projectId": "proj_12345",
-  "mode": "manual"
-}
-```
-
-#### Ответ (Client API → Web)
+#### Ответ от Server (через Client API)
 
 ```typescript
-interface ContinueResponse {
-  status: 'in_progress' | 'completed' | 'waiting_confirmation';
-  currentSubAction?: SubAction;
-  stepResult?: StepResult;
-  promiseId?: string;              // Для асинхронного выполнения
-  canContinue: boolean;
-  canStop: boolean;
-}
-
-interface StepResult {
-  actionId: string;
-  status: 'success' | 'error';
-  output: unknown;
-  logs?: string[];
-  filesModified?: string[];
+interface ExecuteResponse {
+  context: {
+    task: string;
+    execution: {
+      action: string;              // ID текущего действия
+      step: string;                // ID текущего шага
+      status?: string;             // "completed" для последнего шага
+    };
+  };
+  execute: {
+    script: {
+      input: Record<string, any>;  // Входные данные для скрипта
+      output: string;              // Ожидаемый формат вывода
+      code: string;                // DSL код для выполнения
+    };
+  };
+  finalResult?: {                  // Присутствует только в последнем ответе
+    action: string;
+    summary: Record<string, any>;
+  };
 }
 ```
 
-**Пример:**
+**Пример (первый шаг):**
 ```json
 {
-  "status": "in_progress",
-  "currentSubAction": {
-    "actionId": "vue-import-resolve",
-    "title": "Вирішити правильні шляхи",
-    "description": "На основі списку битих імпортів знаходить правильні шляхи",
-    "priority": 9,
-    "input": "broken_imports[]",
-    "output": "patches[]"
+  "context": {
+    "task": "виправити імпорти у vue компонентах",
+    "execution": {
+      "action": "fix-vue-imports",
+      "step": "vue-import-detect"
+    }
   },
-  "canContinue": true,
-  "canStop": true
+  "execute": {
+    "script": {
+      "input": {
+        "rootDir": ".",
+        "filePattern": "**/*.vue"
+      },
+      "output": "broken_imports[]",
+      "code": "// vue-import-detect.dsl\nconst result = await script.execute('vue-import-detect', { rootDir, filePattern });"
+    }
+  }
 }
 ```
 
 ---
 
-### 4. Подтверждение (confirm)
+### 4. Результат выполнения (Client → Server)
 
-Пользователь подтверждает изменения.
+Клиент отправляет результат выполнения скрипта.
 
-#### Запрос (Web → Client API)
+#### Запрос (Client API → Server)
 
 ```typescript
-interface ConfirmRequest {
-  action: 'confirm';
-  sessionId: string;
-  projectId: string;
-  confirmed: boolean;
-  files?: FileBlockLike[];         // Файлы для отправки
+interface StepResultRequest {
+  context: {
+    task: string;
+    execution: {
+      action: string;
+      step: string;
+    };
+  };
+  result: Record<string, any>;      // Результат выполнения скрипта
 }
+```
 
-interface FileBlockLike {
-  path: string;
-  content: string;
+**Пример:**
+```json
+{
+  "context": {
+    "task": "виправити імпорти у vue компонентах",
+    "execution": {
+      "action": "fix-vue-imports",
+      "step": "vue-import-detect"
+    }
+  },
+  "result": {
+    "broken_imports": [
+      { "file": "resources/js/Pages/Auth/Login.vue", "line": 3, "import": "import Header from '../components/Header'" },
+      { "file": "resources/js/Pages/Auth/Register.vue", "line": 5, "import": "import { helper } from '../../utils/helpers'" }
+    ]
+  }
 }
 ```
 
 ---
 
-### 5. Отмена (cancel)
+### 5. Ответ сервера на результат
 
-Пользователь отменяет сессию.
+Сервер отправляет следующий шаг или завершает выполнение.
 
-#### Запрос (Web → Client API)
+**Пример (второй шаг):**
+```json
+{
+  "context": {
+    "task": "виправити імпорти у vue компонентах",
+    "execution": {
+      "action": "fix-vue-imports",
+      "step": "vue-import-resolve"
+    }
+  },
+  "execute": {
+    "script": {
+      "input": {
+        "broken_imports": [
+          { "file": "resources/js/Pages/Auth/Login.vue", "line": 3, "import": "import Header from '../components/Header'" }
+        ],
+        "aliases": { "@": "resources/js", "~": "resources" }
+      },
+      "output": "patches[]",
+      "code": "// vue-import-resolve.dsl\nconst result = await script.execute('vue-import-resolve', { broken_imports, aliases });"
+    }
+  }
+}
+```
 
-```typescript
-interface CancelRequest {
-  action: 'cancel';
-  sessionId: string;
-  projectId: string;
+---
+
+### 6. Завершение (финальный результат)
+
+**Пример:**
+```json
+{
+  "context": {
+    "task": "виправити імпорти у vue компонентах",
+    "execution": {
+      "action": "fix-vue-imports",
+      "step": "vue-import-cleanup",
+      "status": "completed"
+    }
+  },
+  "execute": {
+    "script": {
+      "input": {},
+      "output": "cleanup_count",
+      "code": "// vue-import-cleanup.dsl\nconst result = await script.execute('vue-import-cleanup', {});"
+    }
+  },
+  "finalResult": {
+    "action": "fix-vue-imports",
+    "summary": {
+      "broken_imports_found": 3,
+      "patches_resolved": 3,
+      "files_fixed": 3,
+      "cleanup_count": 0
+    }
+  }
 }
 ```
 
@@ -301,7 +344,8 @@ interface CancelRequest {
 {
   sessionId: string;
   status: 'pending' | 'ready';
-  proposedActions?: ProposedAction[];
+  context: { task: string };
+  actions?: Action[];
   fallbackActions?: FallbackAction[];
 }
 ```
@@ -335,10 +379,27 @@ interface SessionSummary {
   projectId: string;
   task: string;
   status: SessionStatus;
-  selectedActionId?: string;
-  currentSubActionIndex?: number;
+  context: { task: string; execution?: { action: string; step: string } };
+  selectedAction?: string;
+  currentStepIndex?: number;
   results: StepResult[];
   logs: string[];
+}
+```
+
+### POST /api/sessions/:sessionId/action
+Выбрать действие.
+
+```typescript
+// Request
+{
+  selectedAction: string;
+}
+
+// Response
+{
+  status: 'ready';
+  context: { task: string; execution: { action: string; step: string } };
 }
 ```
 
@@ -352,7 +413,14 @@ interface SessionSummary {
 }
 
 // Response
-ContinueResponse
+{
+  status: 'in_progress' | 'completed' | 'waiting_confirmation';
+  context: { task: string; execution: { action: string; step: string } };
+  execute?: { script: { input: any; output: string; code: string } };
+  finalResult?: { action: string; summary: any };
+  canContinue: boolean;
+  canStop: boolean;
+}
 ```
 
 ### POST /api/sessions/:sessionId/cancel
@@ -377,49 +445,24 @@ ContinueResponse
 ### POST /api/v1/invoke
 
 ```typescript
-// Request (sessionId/projectId - в URL пути, например /api/v1/sessions/:sessionId/invoke)
+// Request
 {
   context?: {
-    action?: string;           // action_proposal, approve_action, step_result
     task?: string;
-    message?: string;
-    selectedAction?: { actionId: string };
-    stepId?: string;
-    result?: unknown;
+    execution?: {
+      action: string;
+      step: string;
+    };
   };
-  code_blocks?: FileBlockLike[];
+  result?: Record<string, any>;    // Результат выполнения (для шагов после первого)
 }
 
 // Ответ сервера (stateless - не содержит sessionId)
 {
-  promiseId: string;
-  status: 'pending';
-}
-```
-
-### GET /api/v1/requests/:promiseId/status
-Получить статус запроса.
-
-```typescript
-// Response
-{
-  status: 'pending' | 'processing' | 'completed' | 'failed';
-  progress?: number;
-}
-```
-
-### GET /api/v1/requests/:promiseId/result
-Получить результат запроса (когда status === 'completed').
-
-```typescript
-// Response
-{
-  status: 'completed';
-  result: {
-    proposedActions?: ProposedAction[];
-    fallbackActions?: FallbackAction[];
-    stepResult?: StepResult;
-  };
+  context: { ... };
+  actions?: Action[];              // Только в первом ответе
+  execute?: { script: { input, output, code } };
+  finalResult?: { action: string; summary: any };
 }
 ```
 
@@ -431,85 +474,31 @@ ContinueResponse
 |--------|----------|
 | `pending` | Создана, ожидает выбора действия |
 | `ready` | Выбрано действие, готова к выполнению |
-| `in_progress` | Выполняются поддействия |
+| `in_progress` | Выполняются шаги (steps) |
 | `waiting_confirmation` | Ожидает подтверждения пользователя |
-| `completed` | Все поддействия выполнены |
+| `completed` | Все шаги выполнены |
 | `cancelled` | Отменена пользователем |
 | `error` | Ошибка при выполнении |
 
 ---
 
-## Обработка асинхронных операций (promiseId)
+## Ключевые термины
 
-Некоторые операции могут выполняться асинхронно. Сервер возвращает `promiseId` для отслеживания.
-
-### Опрос статуса
-
-```
-GET /api/v1/requests/:promiseId/status
-
-// Response
-{
-  status: 'pending' | 'processing' | 'completed' | 'failed';
-  progress?: number;
-}
-```
-
-### Получение результата
-
-```
-GET /api/v1/requests/:promiseId/result
-
-// Response (когда status === 'completed')
-{
-  status: 'completed';
-  result: StepResult;
-}
-```
+| Старое (неправильно) | Новое (правильно) |
+|---------------------|-------------------|
+| `proposedActions` | `actions` |
+| `subActions` | `steps` |
+| `actionId` (в actions) | `action` |
+| `currentActionId` | `execution.step` |
+| `executingAction` | `execute` |
+| `dsl` + `dslScript` | `script` с `input`, `output`, `code` |
+| `promiseId` | (не используется - сервер синхронный) |
 
 ---
 
-## Схемы файлов
+## Правила
 
-### Session (хранится на Client)
-
-```typescript
-interface Session {
-  id: string;
-  projectId: string;
-  task: string;
-  status: SessionStatus;
-  selectedActionId?: string;
-  selectedAction?: ProposedAction;
-  currentSubActionIndex: number;
-  results: StepResult[];
-  logs: string[];
-  createdAt: string;
-  updatedAt: string;
-}
-```
-
-### Project (хранится на Client)
-
-```typescript
-interface Project {
-  id: string;
-  name: string;
-  path: string;                    // Путь к проекту на файловой системе
-  description?: string;
-  provider?: string;               // Провайдер для LLM
-  createdAt: string;
-  updatedAt: string;
-}
-```
-
-### Config (хранится на Client)
-
-```typescript
-interface Config {
-  provider: string;                // Текущий провайдер
-  apiKeys: Record<string, string>;  // API ключи провайдеров
-  serverUrl?: string;              // URL сервера (опционально)
-  clientApiUrl?: string;          // URL Client API
-}
-```
+1. **Context propagation**: Контекст ВСЕГДА передается от сервера к клиенту и от клиента к серверу без изменений.
+2. **Result outside context**: Результат выполнения клиента ВСЕГДА находится вне context.
+3. **Server stateless**: Сервер не хранит состояние между запросами.
+4. **Client executes scripts**: Сервер отправляет DSL скрипты, клиент их выполняет и возвращает результат.

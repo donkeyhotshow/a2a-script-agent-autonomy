@@ -38,8 +38,8 @@
 │  - HTTP сервер: localhost:3000                                   │
 │  - API: /api/v1/*                                               │
 │  - Обрабатывает задачи                                          │
-│  - Возвращает предложения действий (proposedActions)             │
-│  - Выполняет subActions                                         │
+│  - Возвращает предложения действий (actions)             │
+│  - Выполняет steps                                         │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -54,7 +54,7 @@ const response = await fetch('/api/v1/projects');
 
 Это **НЕПРАВИЛЬНО** по следующим причинам:
 1. Web не должен знать о существовании сервера
-2. Web не может обрабатывать ответы сервера (proposedActions, promiseId)
+2. Web не может обрабатывать ответы сервера (actions, execute)
 3. Нарушается принцип разделения ответственности
 
 ## Правильная архитектура
@@ -104,7 +104,7 @@ const response = await fetch('/api/v1/projects');
 │  │ - Знает адрес сервера (localhost:3000)                      ││
 │  │ - Создает сессии на сервере                                  ││
 │  │ - Отправляет задачи                                          ││
-│  │ - Обрабатывает ответы (proposedActions, promiseId)           ││
+│  │ - Обрабатывает ответы (actions, execute)           ││
 │  └─────────────────────────────────────────────────────────────┘│
 └──────────────────────────────────────────────────────────────────┘
                               │
@@ -117,7 +117,7 @@ const response = await fetch('/api/v1/projects');
 │  │ POST /api/v1/invoke          - основной эндпоинт            ││
 │  │ POST /api/v1/requests       - создать запрос                ││
 │  │ GET  /api/v1/requests/:id/status   - статус запроса         ││
-│  │ GET  /api/v1/requests/:id/result   - результат запроса       ││
+│  │ GET  /api/v1/requests/:id/result   - результат запроса      ││
 │  │ DELETE /api/v1/requests/:id - отменить запрос              ││
 │  │ GET  /api/v1/actions/:id   - получить действие             ││
 │  │ GET  /api/v1/sse/:sessionId - SSE подписка                 ││
@@ -141,24 +141,24 @@ const response = await fetch('/api/v1/projects');
    - Создает сессию локально (в памяти/файле)
    - Отправляет POST /api/v1/invoke на SERVER
    - SERVER возвращает promiseId
-   - CLIENT API сохраняет сессию с proposedActions
+   - CLIENT API сохраняет сессию с actions
    
    │
-4. CLIENT API: возвращает { sessionId, proposedActions[] }
+4. CLIENT API: возвращает { sessionId, actions[] }
    │
-5. WEB: отображает панель сессии с proposedActions[]
+5. WEB: отображает панель сессии с actions[]
 ```
 
 ### 2. Выбор действия
 
 ```
-1. USER: выбирает действие из proposedActions[]
+1. USER: выбирает действие из actions[]
    │
-2. WEB: отправляет POST /api/sessions/:id/action { actionId }
+2. WEB: отправляет POST /api/sessions/:id/action { action }
    │
 3. CLIENT API: обновляет состояние сессии
    │
-4. WEB: показывает subActions[], кнопки "Далее" / "Авто"
+4. WEB: показывает steps[], кнопки "Далее" / "Авто"
 ```
 
 ### 3. Выполнение шагов
@@ -169,9 +169,9 @@ const response = await fetch('/api/v1/projects');
 2. WEB: отправляет POST /api/sessions/:id/next
    │
 3. CLIENT API: 
-   - Отправляет POST /api/v1/invoke { context, action: 'continue', stepId }
-   - SERVER возвращает promiseId
-   - CLIENT API опрашивает /api/v1/requests/:id/status
+   - Отправляет POST /api/v1/invoke { context, result: { action } }
+   - SERVER возвращает execute с script
+   - CLIENT API выполняет script
    - CLIENT API сохраняет результаты в сессии
    │
 4. CLIENT API: возвращает результат

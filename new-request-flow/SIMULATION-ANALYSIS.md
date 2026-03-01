@@ -3,207 +3,212 @@
 ## Расположение
 `simulations/fix-vue-imports/`
 
-> **Уточнение:** Эта симуляция показывает **Client → Server** взаимодействие, а не Web → Client!
+> **ВАЖНО:** Эта симуляция показывает **Client → Server** взаимодействие (через `/invoke`).
 > 
-> У Client API может быть много эндпоинтов для разных задач.
+> Ключевое правило: **Сервер полностью STATELESS** - НЕ хранит sessionId/projectId!
 
-## Что не так с симуляцией
+---
 
-### 1. НЕТ sessionId и projectId (КРИТИЧНО)
+## Правильный формат (из симуляций)
 
-**Шаг 1 - request.json (Текущее - НЕПРАВИЛЬНО):**
+### Шаг 1: Первый запрос
+
+**request.json:**
 ```json
 {
-  "action": "task_request",
   "task": "виправити імпорти у vue компонентах"
 }
 ```
+> Только `task` - сервер не знает sessionId/projectId, это на стороне Client
 
-**Проблемы:**
-- ❌ НЕТ `sessionId` - сервер не знает какую сессию обновлять
-- ❌ НЕТ `projectId` - непонятно для какого проекта
-- ❌ НЕТ `context` - сервер stateless, но не получает контекст
-
-**Как должно быть (ПРАВИЛЬНО):**
+**response.json:**
 ```json
 {
   "context": {
-    "sessionId": "sess_abc123",
-    "projectId": "proj_vue_project",
-    "action": "task_request",
+    "task": "виправити імпорти у vue компонентах"
+  },
+  "actions": [
+    {
+      "action": "fix-vue-imports",
+      "title": "...",
+      "steps": [
+        { "action": "vue-import-detect", "input": "none", "output": "broken_imports[]" },
+        ...
+      ]
+    }
+  ]
+}
+```
+
+---
+
+### Шаг 2: Выбор действия
+
+**request.json:**
+```json
+{
+  "context": {
+    "task": "виправити імпорти у vue компонентах"
+  },
+  "result": {
+    "action": "fix-vue-imports"
+  }
+}
+```
+> Контекст возвращается как есть из предыдущего ответа!
+> `result.action` - выбранное пользователем действие
+
+**response.json:**
+```json
+{
+  "context": {
     "task": "виправити імпорти у vue компонентах",
-    "timestamp": "..."
+    "execution": {
+      "action": "fix-vue-imports",
+      "step": "vue-import-detect"
+    }
+  },
+  "execute": {
+    "script": {
+      "input": { "rootDir": ".", "filePattern": "**/*.vue" },
+      "output": "broken_imports[]",
+      "code": "// vue-import-detect.dsl..."
+    }
   }
 }
 ```
 
 ---
 
-### 2. Контекст не передается явно (ИЗБЫТОЧНО)
+### Шаг 3: Результат первого шага
 
-**Шаг 2 - request.json (Текущее - НЕПРАВИЛЬНО):**
-```json
-{
-  "selectedAction": { "actionId": "fix-vue-imports" },
-  "context": { 
-    "task": "виправити імпорти...",
-    "action": "approve_action"  // action ВНУТРИ context!
-  }
-}
-```
-
-**Проблема:**
-- ❌ `action`, `selectedAction` вне context - должны быть ВНУТРИ
-
-**Как должно быть (ПРАВИЛЬНО):**
+**request.json:**
 ```json
 {
   "context": {
-    "sessionId": "sess_xxx",
-    "projectId": "proj_xxx",
-    "action": "approve_action",
-    "selectedAction": { "actionId": "fix-vue-imports" }
+    "task": "виправити імпорти у vue компонентах",
+    "execution": {
+      "action": "fix-vue-imports",
+      "step": "vue-import-detect"
+    }
+  },
+  "result": {
+    "broken_imports": [...]
   }
 }
 ```
+> Контекст точно такой же как в предыдущем ответе!
+> `result` содержит выходные данные предыдущего шага
 
----
-
-### 3. Избыточность в шагах (ИЗБЫТОЧНО)
-
-**Шаг 2 - request.json:**
-```json
-{
-  "action": "approve_action",
-  "selectedAction": { "actionId": "fix-vue-imports" },
-  "context": { "task": "виправити імпорти..." }
-}
-```
-
-**Проблема:**
-- ❌ `context` передается каждый раз - но сервер stateless!
-- ❌ Контекст должен храниться на Client API, а не передаваться туда-обратно
-
----
-
-**Шаг 3 - request.json (Текущее - НЕПРАВИЛЬНО):**
-```json
-{
-  "action": "step_result",
-  "stepId": "vue-import-detect",
-  "result": { "broken_imports": [...] },
-  "context": {
-    "task": "виправити імпорти..."
-  }
-}
-```
-
-**Проблема:**
-- ❌ `action`, `stepId`, `result` находятся вне context - должны быть ВНУТРИ
-
-**Как должно быть (ПРАВИЛЬНО):**
+**response.json:**
 ```json
 {
   "context": {
-    "sessionId": "sess_xxx",
-    "projectId": "proj_xxx",
-    "action": "step_result",
-    "stepId": "vue-import-detect",
-    "result": { "broken_imports": [...] }
+    "task": "виправити імпорти у vue компонентах",
+    "execution": {
+      "action": "fix-vue-imports",
+      "step": "vue-import-resolve"
+    }
+  },
+  "execute": {
+    "script": {
+      "input": { "broken_imports": [...], "aliases": {...} },
+      "output": "patches[]",
+      "code": "// vue-import-resolve.dsl..."
+    }
   }
 }
 ```
 
 ---
 
-### 4. Нет promiseId для асинхронных операций
+### Шаг 5: Завершение
 
-Сервер возвращает результат синхронно в `server-response.json`. 
-
-**В реальности:**
-- Сервер должен возвращать `promiseId`
-- Client API должен опрашивать `/api/v1/requests/:promiseId/status`
-- Результат приходит через `/api/v1/requests/:promiseId/result`
-
----
-
-### 5. response vs server-response - дублирование
-
-В папке каждого шага есть:
-- `response.json` - (предположительно) ответ для web
-- `server-response.json` - ответ от сервера
-
-**Проблема:** Они одинаковые! Должно быть:
-- Client API получает от сервера
-- Client API трансформирует для web
-- Web получает упрощенный ответ
-
----
-
-## Правильный поток (Client → Server)
-
-### Шаг 1: task_request (Client → Server)
-
-```
-Client отправляет:
+**response.json (финальный):**
+```json
 {
-  "action": "task_request",
-  "task": "виправити імпорти...",
   "context": {
-    "sessionId": "sess_xxx",
-    "projectId": "proj_xxx",
-    "timestamp": "..."
+    "task": "виправити імпорти у vue компонентах",
+    "execution": {
+      "action": "fix-vue-imports",
+      "step": "vue-import-cleanup",
+      "status": "completed"
+    }
+  },
+  "execute": {
+    "script": {...}
+  },
+  "finalResult": {
+    "action": "fix-vue-imports",
+    "summary": {
+      "broken_imports_found": 3,
+      "files_fixed": 3
+    }
   }
 }
-
-Server возвращает:
-{
-  "promiseId": "req_xxx",
-  "status": "pending"
-}
-```
-
-Client затем опрашивает /requests/:promiseId/status пока не получит result.
-
-### Шаг 2: approve_action
-
-```
-Client отправляет:
-{
-  "action": "approve_action",
-  "selectedAction": { "actionId": "fix-vue-imports" },
-  "context": { "sessionId": "sess_xxx", "projectId": "proj_xxx" }
-}
-```
-
-### Шаг 3: step_result
-
-```
-Client отправляет:
-{
-  "action": "step_result",
-  "stepId": "vue-import-detect",
-  "result": { "broken_imports": [...] },
-  "context": { "sessionId": "sess_xxx", "projectId": "proj_xxx" }
-}
 ```
 
 ---
 
-## Что исправить в симуляции (Client → Server)
+## Ключевые правила
 
-1. **Добавить context с sessionId и projectId** во все request.json
-2. **Добавить promiseId** в server-response.json - показать асинхронность
-3. **Разделить response.json и server-response.json** - это разные вещи
+### 1. Context Propagation
+- Контекст **ВСЕГДА** возвращается сервером
+- Клиент **ВСЕГДА** отправляет тот же контекст обратно
+- Контекст не должен содержать sessionId/projectId (сервер stateless!)
+
+### 2. Result Outside Context
+- Результат выполнения **ВСЕГДА** находится вне context
+- Это выходные данные предыдущего шага
+
+### 3. Server Sends Scripts
+- Сервер отправляет `execute.script` с `input`, `output`, `code`
+- Клиент выполняет скрипт локально
+- Клиент отправляет результат обратно
+
+### 4. No promiseId
+- Сервер **НЕ** использует promiseId для асинхронности
+- Всё синхронно - сервер отправляет скрипт, клиент выполняет и возвращает результат
 
 ---
 
-## Файлы для исправления
+## Терминология
 
-| Файл | Что не так | Исправление |
-|------|------------|-------------|
-| `1/request.json` | Нет sessionId, projectId | Добавить поля |
-| `2/request.json` | Нет sessionId, лишний context | Исправить |
-| `3/request.json` | Нет sessionId, избыточный context | Исправить |
-| `4/request.json` | Нет sessionId | Исправить |
-| `5/request.json` | Нет sessionId | Исправить |
+| Термин | Описание |
+|--------|----------|
+| `actions` | Список предложенных действий (было `proposedActions`) |
+| `steps` | Подшаги действия (было `subActions`) |
+| `action` | ID действия/шага (было `actionId`) |
+| `execution` | Текущее состояние выполнения |
+| `step` | Текущий шаг в execution |
+| `execute.script` | Скрипт для выполнения на клиенте |
+| `finalResult` | Итоговый результат (только в конце) |
+
+---
+
+## Файлы симуляции
+
+| Файл | Назначение |
+|------|------------|
+| `1/request.json` | Первый запрос - только task |
+| `1/response.json` | Ответ с actions и steps |
+| `2/request.json` | Выбор действия |
+| `2/response.json` | Первый execute с script |
+| `3/request.json` | Результат первого шага |
+| `3/response.json` | Следующий execute |
+| `4/request.json` | Результат второго шага |
+| `4/response.json` | Следующий execute |
+| `5/request.json` | Результат третьего шага |
+| `5/response.json` | finalResult |
+| `analysis.md` | Этот файл |
+
+---
+
+## Что НЕправильно (старые симуляции)
+
+❌ `sessionId`/`projectId` в context - сервер stateless!  
+❌ `promiseId` - не используется, синхронное выполнение  
+❌ `proposedActions` - правильно `actions`  
+❌ `subActions` - правильно `steps`  
+❌ `actionId` - правильно `action`  
+❌ `dsl` + `dslScript` - правильно `script` с `input`, `output`, `code`

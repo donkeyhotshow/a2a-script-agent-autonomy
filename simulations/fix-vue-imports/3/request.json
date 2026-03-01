@@ -2,15 +2,15 @@
   "context": {
     "task": "виправити імпорти у vue компонентах",
     "execution": {
-      "actionId": "fix-vue-imports",
-      "currentActionId": "vue-import-detect"
+      "action": "fix-vue-imports",
+      "step": "vue-import-detect"
     }
   },
   "result": {
     "broken_imports": [
-      { "file": "resources/js/Pages/Auth/Login.vue", "line": 3, "specifier": "../components/Header" },
-      { "file": "resources/js/Pages/Auth/Register.vue", "line": 5, "specifier": "../../utils/helpers" },
-      { "file": "resources/js/components/UserCard.vue", "line": 2, "specifier": "@/stores/user" }
+      { "file": "resources/js/Pages/Auth/Login.vue", "line": 3, "import": "import Header from '../components/Header'" },
+      { "file": "resources/js/Pages/Auth/Register.vue", "line": 5, "import": "import { helper } from '../../utils/helpers'" },
+      { "file": "resources/js/components/UserCard.vue", "line": 2, "import": "import { userStore } from '@/stores/user'" }
     ]
   }
 }

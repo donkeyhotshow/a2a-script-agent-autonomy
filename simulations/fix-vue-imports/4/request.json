@@ -2,8 +2,8 @@
   "context": {
     "task": "виправити імпорти у vue компонентах",
     "execution": {
-      "actionId": "fix-vue-imports",
-      "currentActionId": "vue-import-resolve"
+      "action": "fix-vue-imports",
+      "step": "vue-import-resolve"
     }
   },
   "result": {

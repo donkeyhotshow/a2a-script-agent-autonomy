@@ -11,7 +11,7 @@
     "script": {
       "input": {},
       "output": "cleanup_count",
-      "code": "// vue-import-cleanup.dsl\n// Очищення тимчасових файлів\n\nconst result = await script.execute('vue-import-cleanup', {});\n\n// result = { cleanup_count: 0 }"
+      "code": "// vue-import-cleanup.dsl\n// Очищення тимчасових файлів\n\nconst result = await script.execute('vue-import-cleanup', {});"
     }
   },
   "finalResult": {
