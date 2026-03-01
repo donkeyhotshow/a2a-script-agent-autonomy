@@ -14,7 +14,7 @@
           "action": "coder-dialog",
           "title": "Діалог з AI-кодером",
           "description": "Почати діалог з AI-асистентом",
-          "priority": 10,
+          "priority": 10
         }
       ]
     }
@@ -25,6 +25,12 @@
       "title": "AI Action Generator",
       "description": "Згенерувати новий екшен за допомогою LLM",
       "fallbackType": "llm_generation"
+    },
+    {
+      "mode": "task-decomposition",
+      "title": "Декомпозиція задачі",
+      "description": "Розбити задачу на підзадачі вручну",
+      "fallbackType": "manual"
     }
   ]
 }

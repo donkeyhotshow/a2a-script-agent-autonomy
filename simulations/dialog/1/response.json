@@ -8,7 +8,8 @@
       "title": "AI діалог з користувачем",
       "description": "Провести діалог з користувачем для уточнення завдання",
       "priority": 10,
-      "repeatSteps":[0],
+      "matchScore": 0.95,
+      "repeatSteps": [0],
       "steps": [
         {
           "action": "request",
@@ -17,6 +18,20 @@
           "priority": 10
         }
       ]
+    }
+  ],
+  "fallbackActions": [
+    {
+      "mode": "auto-ai",
+      "title": "AI Action Generator",
+      "description": "Згенерувати новий екшен за допомогою LLM",
+      "fallbackType": "llm_generation"
+    },
+    {
+      "mode": "task-decomposition",
+      "title": "Декомпозиція задачі",
+      "description": "Розбити задачу на підзадачі вручну",
+      "fallbackType": "manual"
     }
   ]
 }

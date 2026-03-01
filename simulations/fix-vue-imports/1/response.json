@@ -11,7 +11,7 @@
       "matchScore": 0.95,
       "steps": [
         {
-        "action": "vue-import-detect",
+          "action": "vue-import-detect",
           "title": "Визначити зламані імпорти",
           "description": "Сканує Vue файли і знаходить биті імпорти",
           "priority": 10,
@@ -19,7 +19,7 @@
           "output": "broken_imports[]"
         },
         {
-        "action": "vue-import-resolve",
+          "action": "vue-import-resolve",
           "title": "Вирішити правильні шляхи",
           "description": "На основі списку битих імпортів знаходить правильні шляхи",
           "priority": 9,
@@ -27,7 +27,7 @@
           "output": "patches[]"
         },
         {
-        "action": "vue-import-apply",
+          "action": "vue-import-apply",
           "title": "Застосувати виправлення",
           "description": "Застосовує виправлення до файлів",
           "priority": 8,
@@ -35,7 +35,7 @@
           "output": "fixed_files[]"
         },
         {
-        "action": "vue-import-cleanup",
+          "action": "vue-import-cleanup",
           "title": "Очистити тимчасові файли",
           "description": "Видаляє тимчасові файли після роботи",
           "priority": 7,

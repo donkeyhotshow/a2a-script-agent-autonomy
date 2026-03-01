@@ -10,9 +10,24 @@
     "script": {
       "input": {
         "patches": [
-          { "file": "resources/js/Pages/Auth/Login.vue", "line": 3, "from": "../components/Header", "to": "@/components/Header" },
-          { "file": "resources/js/Pages/Auth/Register.vue", "line": 5, "from": "../../utils/helpers", "to": "@/utils/helpers" },
-          { "file": "resources/js/components/UserCard.vue", "line": 2, "from": "@/stores/user", "to": "@/stores/userStore" }
+          {
+            "file": "resources/js/Pages/Auth/Login.vue",
+            "line": 3,
+            "from": "../components/Header",
+            "to": "@/components/Header"
+          },
+          {
+            "file": "resources/js/Pages/Auth/Register.vue",
+            "line": 5,
+            "from": "../../utils/helpers",
+            "to": "@/utils/helpers"
+          },
+          {
+            "file": "resources/js/components/UserCard.vue",
+            "line": 2,
+            "from": "@/stores/user",
+            "to": "@/stores/userStore"
+          }
         ]
       },
       "output": "fixed_files[]",

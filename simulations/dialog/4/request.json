@@ -5,16 +5,16 @@
       "action": "dialog",
       "step": "llm-request"
     },
-      "history": [
-        {
-          "role": "user",
-          "message": "hello world"
-        },
-        {
-          "role": "assistant",
-          "message": "hello world"
-        }
-      ]
+    "history": [
+      {
+        "role": "user",
+        "message": "hello world"
+      },
+      {
+        "role": "assistant",
+        "message": "hello world"
+      }
+    ]
   },
   "result": {
     "message": "Дякую!"
