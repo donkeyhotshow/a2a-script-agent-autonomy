@@ -8,12 +8,9 @@
 
 ```
 simulations/
-├── dialog/
-│   ├── 1/ - только .json файлы
-│   ├── 2/ - только .json файлы  
-│   ├── 3/ - .json + .md файлы (есть LLM вызов!)
-│   └── 4/ - .json + .md файлы (есть LLM вызов!)
-├── fix-vue-imports/
+├── dialog/                    # Диалог с LLM
+├── coder-dialog/              # Диалог с RAG + запись файлов
+├── fix-vue-imports/           # Исправление Vue импортов
 ├── analyze-architecture/
 └── ...
 ```

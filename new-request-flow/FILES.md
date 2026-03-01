@@ -149,6 +149,7 @@ external-ai-hub/
 | `CURRENT-ISSUES.md` | Текущие проблемы |
 | `SIMULATION-ANALYSIS.md` | Анализ симуляций |
 | `SIMULATION-FIX-VUE-IMPORTS.md` | Симуляция без AI |
+| `SIMULATION-CODER-DIALOG.md` | Симуляция с RAG + запись файлов |
 | `SIMULATION-WITH-AI.md` | Симуляция с AI через promiseId |
 | `FILES.md` | Этот файл - карта проекта |
 
@@ -164,6 +165,7 @@ simulations/
 ├── analyze-typescript/         # Анализ TypeScript
 ├── analyze-vue/               # Анализ Vue
 ├── dialog/                    # Диалог
+├── coder-dialog/              # Диалог с RAG + запись файлов
 └── fix-vue-imports/           # Исправление Vue импортов (относится к SIMULATION-FIX-VUE-IMPORTS.md)
 ```
 
