@@ -1,0 +1,29 @@
+{
+  "context": {
+    "task": "виправити імпорти у vue компонентах",
+    "execution": {
+      "action": "fix-vue-imports-batched",
+      "step": "search-exporter",
+      "progress": {
+        "totalFiles": 50,
+        "currentFile": 2
+      }
+    },
+    "vite_config": {
+      "file": "vite.config.js"
+    },
+    "aliases": {
+      "@": "resources/js",
+      "~": "resources"
+    }
+  },
+  "result": {
+    "file": "resources/js/Pages/Auth/Register.vue",
+    "exporter_found": "resources/js/utils/helpers.js",
+    "fixed": true,
+    "patch": {
+      "from": "../../utils/helpers",
+      "to": "@/utils/helpers"
+    }
+  }
+}

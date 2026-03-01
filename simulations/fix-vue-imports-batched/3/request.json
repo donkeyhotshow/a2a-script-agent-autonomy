@@ -1,0 +1,15 @@
+{
+  "context": {
+    "task": "виправити імпорти у vue компонентах",
+    "execution": {
+      "action": "fix-vue-imports-batched",
+      "step": "search-vite-file"
+    }
+  },
+  "result": {
+    "vite_config_files": [
+      "vite.config.js",
+      "vite.config.ts"
+    ]
+  }
+}

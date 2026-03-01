@@ -1,0 +1,19 @@
+{
+  "context": {
+    "task": "dialog",
+    "execution": {
+      "action": "dialog",
+      "step": "llm-request"
+    },
+    "history": [
+      {
+        "role": "user",
+        "message": "hello world"
+      },
+      {
+        "role": "assistant",
+        "message": "hello world"
+      }
+    ]
+  }
+}

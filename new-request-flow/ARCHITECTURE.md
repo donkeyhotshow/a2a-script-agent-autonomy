@@ -128,6 +128,46 @@ const response = await fetch('/api/v1/projects');
 └──────────────────────────────────────────────────────────────────┘
 ```
 
+```
+
+## External AI Hub
+
+External AI Hub - это прокси-сервис, который:
+
+1. Перенаправляет запросы к Ollama (порт 11434 → 11435)
+2. Поддерживает асинхронный режим через `promiseId`
+3. Может симулировать ответы LLM (для тестирования)
+4. Логирует все запросы
+
+### Как работает promiseId
+
+```
+1. Server отправляет запрос к External AI Hub с заголовком X-Promise: true
+2. Hub сразу возвращает promiseId (статус pending)
+3. Server продолжает работу, не дожидаясь ответа от LLM
+4. Server периодически опрашивает Hub: GET /promise/{id}
+5. Когда статус done → получает результат: GET /promise/{id}/response
+```
+
+### Endpoints External AI Hub
+
+| Endpoint | Описание |
+|----------|----------|
+| GET /health | Проверка здоровья |
+| GET /api/tags | Список моделей |
+| POST /api/chat | Чат с LLM |
+| POST /api/generate | Генерация |
+| GET /promise/<id> | Статус promise |
+| GET /promise/<id>/response | Результат promise |
+
+### Переменные окружения
+
+```
+PROXY_PORT=11434          # Порт прокси
+OLLAMA_HOST=http://localhost:11435  # Хост Ollama
+SIMULATION_ENABLED=false  # Включить симуляцию
+```
+
 ## Потоки данных
 
 ### 1. Создание новой задачи
@@ -179,6 +219,31 @@ const response = await fetch('/api/v1/projects');
 5. WEB: отображает результат, кнопка "Далее" / "Стоп"
 ```
 
+### 4. AI запрос через External AI Hub
+
+```
+1. SERVER: решает отправить запрос к LLM
+   │
+2. SERVER → EXTERNAL AI HUB: POST /api/chat { model, messages }
+   - Заголовок X-Promise: true
+   │
+3. EXTERNAL AI HUB: 
+   - Создает promise (pending)
+   - Возвращает promiseId сразу
+   │
+4. SERVER: 
+   - Сохраняет promiseId в контексте
+   - Продолжает workflow (отправляет execute клиенту)
+   │
+5. SERVER: периодически опрашивает GET /promise/{id}
+   │
+6. EXTERNAL AI HUB: возвращает { status: "pending" | "done" }
+   │
+7. Когда done: SERVER → GET /promise/{id}/response
+   │
+8. SERVER: использует результат для следующих действий
+```
+
 ## Файловая структура
 
 ### a2a-client/packages/
@@ -226,6 +291,46 @@ a2a-client/web/
 | Server    | 3000 | HTTP API |
 | Client API| 3001 | HTTP API для web |
 | Web UI    | 5173 | Vite dev server |
+| External AI Hub | 11434 | Прокси для Ollama |
+| Ollama    | 11435 | Локальная LLM |
+
+## External AI Hub
+
+External AI Hub - это прокси-сервис, который:
+
+1. Перенаправляет запросы к Ollama (порт 11434 → 11435)
+2. Поддерживает асинхронный режим через `promiseId`
+3. Может симулировать ответы LLM (для тестирования)
+4. Логирует все запросы
+
+### Как работает promiseId
+
+```
+1. Server отправляет запрос к External AI Hub с заголовком X-Promise: true
+2. Hub сразу возвращает promiseId (статус pending)
+3. Server продолжает работу, не дожидаясь ответа от LLM
+4. Server периодически опрашивает Hub: GET /promise/{id}
+5. Когда статус done → получает результат: GET /promise/{id}/response
+```
+
+### Endpoints External AI Hub
+
+| Endpoint | Описание |
+|----------|----------|
+| GET /health | Проверка здоровья |
+| GET /api/tags | Список моделей |
+| POST /api/chat | Чат с LLM |
+| POST /api/generate | Генерация |
+| GET /promise/<id> | Статус promise |
+| GET /promise/<id>/response | Результат promise |
+
+### Переменные окружения
+
+```
+PROXY_PORT=11434          # Порт прокси
+OLLAMA_HOST=http://localhost:11435  # Хост Ollama
+SIMULATION_ENABLED=false  # Включить симуляцию
+```
 
 ## Переменные окружения
 

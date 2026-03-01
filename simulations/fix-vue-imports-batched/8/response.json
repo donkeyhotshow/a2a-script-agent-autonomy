@@ -1,0 +1,37 @@
+ {
+  "context": {
+    "task": "виправити імпорти у vue компонентах",
+    "execution": {
+      "action": "fix-vue-imports-batched",
+      "step": "vue-import-cleanup",
+      "status": "completed",
+      "progress": {
+        "totalFiles": 50,
+        "currentFile": 50
+      }
+    },
+    "vite_config": {
+      "file": "vite.config.js"
+    },
+    "aliases": {
+      "@": "resources/js",
+      "~": "resources"
+    }
+  },
+  "execute": {
+    "script": {
+      "input": {},
+      "output": "cleanup_count",
+      "code": "// vue-import-cleanup.dsl\n// Очищення тимчасових файлів\n\nconst result = await script.execute('vue-import-cleanup', {});"
+    }
+  },
+  "finalResult": {
+    "action": "fix-vue-imports-batched",
+    "summary": {
+      "total_files_found": 50,
+      "files_processed": 50,
+      "files_fixed": 50,
+      "cleanup_count": 0
+    }
+  }
+}

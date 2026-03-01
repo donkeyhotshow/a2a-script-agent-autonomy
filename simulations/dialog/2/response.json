@@ -1,28 +1,14 @@
 {
   "context": {
-    "task": "запитати у користувача яку версію Node.js він використовує",
+    "task": "dialog",
     "execution": {
-      "actionId": "dialog",
-      "currentActionId": "user-question",
-      "history": []
+      "action": "dialog",
+      "step": "llm-request"
     }
   },
-  "executingAction": {
-    "actionId": "user-question",
-    "title": "Запитати версію Node.js",
-    "description": "Задає питання користувачу про версію Node.js",
-    "priority": 10,
-    "question": {
-      "text": "Яку версію Node.js ви використовуєте?",
-      "type": "multiple-choice",
-      "options": [
-        { "value": "v18.x", "label": "Node.js v18.x (LTS)" },
-        { "value": "v20.x", "label": "Node.js v20.x (LTS)" },
-        { "value": "v22.x", "label": "Node.js v22.x (Current)" },
-        { "value": "other", "label": "Інша версія" }
-      ]
-    },
-    "dslScript": "```typescript\n// user-question.dsl\n// Задання питання користувачу\n\nconst result = await script.execute('user-question', {\n  question: {\n    text: 'Яку версію Node.js ви використовуєте?',\n    type: 'multiple-choice',\n    options: ['v18.x', 'v20.x', 'v22.x', 'Інша']\n  },\n  timeout: 60000\n});\n\n// result = {\n//   response: 'v20.x',\n//   timestamp: '2024-01-15T10:30:00Z'\n// }\n```"
-  },
-  "nextSteps": []
+  "execute": {
+    "form": {
+      "input": [{"message":"text"}]
+    }
+  }
 }

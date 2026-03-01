@@ -62,6 +62,7 @@ interface Step {
   priority: number;
   input: string;                    // none | broken_imports[] | patches[] | fixed_files[]
   output: string;                   // broken_imports[] | patches[] | fixed_files[] | cleanup_count
+  llmPrompt?: string;              // Ссылка на MD файл с prompt для LLM
 }
 
 interface FallbackAction {
@@ -442,6 +443,93 @@ interface SessionSummary {
 - SessionId/ProjectId передаются в URL пути, а не в теле запроса
 - Client API сама хранит всю информацию о сессиях
 
+### Два типа ответов
+
+Сервер может ответить синхронно или асинхронно.
+
+#### Синхронный ответ
+
+Сервер обрабатывает запрос без внешних AI - сразу возвращает результат:
+
+```json
+{
+  "context": { ... },
+  "actions?: Action[],     // Только в первом ответе
+  "execute?: { script: { input, output, code } },
+  "finalResult?: { action: string; summary: any }
+}
+```
+
+#### Асинхронный ответ (с External AI Hub)
+
+Когда сервер отправляет запрос к External AI Hub (прокси для Ollama), он использует `promiseId`:
+
+```json
+{
+  "promiseId": "abc123def456",
+  "status": "pending"
+}
+```
+
+**Как работает promiseId:**
+
+1. Сервер отправляет запрос к External AI Hub (порт 11434) с заголовком `X-Promise: true`
+2. Hub сразу возвращает `promiseId` (статус pending)
+3. Сервер продолжает workflow - отправляет execute клиенту
+4. Сервер периодически опрашивает `GET /promise/{id}` для проверки статуса
+5. Когда статус `done` - получает результат через `GET /promise/{id}/response`
+
+**External AI Hub Endpoints:**
+
+| Endpoint | Описание |
+|----------|----------|
+| `GET /promise/<id>` | Статус promise (pending/done/error) |
+| `GET /promise/<id>/response` | Получить результат |
+
+### llmPrompt - Markdown для LLM
+
+Поле `llmPrompt` в Step содержит ссылку на MD файл с prompt для LLM.
+
+```typescript
+interface Step {
+  action: string;
+  title: string;
+  description: string;
+  priority: number;
+  input: string;
+  output: string;
+  llmPrompt?: string;  // Ссылка на MD файл (например: "ai-analyze-prompt.md")
+}
+```
+
+**Как это работает:**
+
+1. Server возвращает Action со Step, который содержит `llmPrompt`
+2. Когда пользователь одобряет action, Server читает MD файл
+3. Server отправляет содержимое MD файла как prompt к External AI Hub
+4. External AI Hub возвращает `promiseId`
+5. Server продолжает workflow, клиент ждёт результат
+
+**Пример MD файла:**
+
+```markdown
+# AI Аналіз коду
+
+Ти - експерт з аналізу коду.
+
+## Завдання
+Проаналізуй наступний код та надай детальні покращення.
+
+## Формат відповіді
+
+## 1. Проблеми продуктивності
+- [проблема 1]
+
+## 2. Рекомендовані покращення
+### Високий пріоритет
+1. [покращення 1]
+```
+
 ### POST /api/v1/invoke
 
 ```typescript
@@ -457,12 +545,18 @@ interface SessionSummary {
   result?: Record<string, any>;    // Результат выполнения (для шагов после первого)
 }
 
-// Ответ сервера (stateless - не содержит sessionId)
+// Ответ сервера (синхронный - без LLM)
 {
   context: { ... };
   actions?: Action[];              // Только в первом ответе
   execute?: { script: { input, output, code } };
-  finalResult?: { action: string; summary: any };
+  finalResult?: { action: string; summary: any }
+}
+
+// Ответ сервера (асинхронный - с LLM)
+{
+  promiseId: string;
+  status: 'pending';
 }
 ```
 
@@ -492,7 +586,7 @@ interface SessionSummary {
 | `currentActionId` | `execution.step` |
 | `executingAction` | `execute` |
 | `dsl` + `dslScript` | `script` с `input`, `output`, `code` |
-| `promiseId` | (не используется - сервер синхронный) |
+| - | `promiseId` - используется для async AI запросов |
 
 ---
 

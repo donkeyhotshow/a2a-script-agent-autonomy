@@ -16,11 +16,7 @@
         }
       ]
   },
-  "execute": {
-    "form": {
-      "input": {},
-      "output": "message",
-      "required": ["messages"]
-    }
+  "result": {
+    "message": "Дякую!"
   }
 }

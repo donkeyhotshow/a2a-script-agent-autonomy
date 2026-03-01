@@ -3,7 +3,7 @@
     "task": "dialog",
     "execution": {
       "action": "dialog",
-      "step": "llm-request"
+      "step": "completed"
     },
       "history": [
         {
@@ -13,14 +13,17 @@
         {
           "role": "assistant",
           "message": "hello world"
+        },
+        {
+          "role": "user",
+          "message": "Дякую!"
         }
       ]
   },
   "execute": {
-    "form": {
-      "input": {},
-      "output": "message",
-      "required": ["messages"]
+    "result": {
+      "status": "completed",
+      "summary": "Dialog completed"
     }
   }
 }

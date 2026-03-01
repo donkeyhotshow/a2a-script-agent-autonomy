@@ -1,9 +1,8 @@
 {
-  "action": "approve_action",
-  "selectedAction": {
-    "actionId": "dialog"
-  },
   "context": {
-    "task": "запитати у користувача яку версію Node.js він використовує"
+    "task": "dialog"
+  },
+  "result": {
+    "action": "dialog"
   }
 }

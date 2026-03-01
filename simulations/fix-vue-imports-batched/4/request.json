@@ -1,0 +1,13 @@
+{
+  "context": {
+    "task": "виправити імпорти у vue компонентах",
+    "execution": {
+      "action": "fix-vue-imports-batched",
+      "step": "request-vite-file"
+    }
+  },
+  "result": {
+    "file": "vite.config.js",
+    "content": "import { defineConfig } from 'vite';\nimport vue from '@vitejs/plugin-vue';\nimport path from 'path';\n\nexport default defineConfig({\n  plugins: [vue()],\n  resolve: {\n    alias: {\n      '@': path.resolve(__dirname, './resources/js'),\n      '~': path.resolve(__dirname, './resources')\n    }\n  }\n});"
+  }
+}
