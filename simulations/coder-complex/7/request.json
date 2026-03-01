@@ -1,0 +1,7 @@
+{
+  "action": "test-endpoint-result",
+  "tests": [
+    { "name": "GET /api/users/1/profile без токена", "result": "401 Unauthorized", "passed": true },
+    { "name": "GET /api/users/1/profile з токеном", "result": "200 OK", "passed": true }
+  ]
+}

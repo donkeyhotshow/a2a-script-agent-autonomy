@@ -1,0 +1,5 @@
+{
+  "action": "write-file-result",
+  "path": "docs/auth-analysis.md",
+  "success": true
+}

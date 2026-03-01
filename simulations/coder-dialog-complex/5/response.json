@@ -1,0 +1,42 @@
+{
+  "context": {
+    "task": "проаналізуй як працює система авторизації в проекті",
+    "execution": {
+      "action": "coder-dialog",
+      "step": 4
+    },
+    "history": [
+      {
+        "role": "user",
+        "message": "проаналізуй як працює система авторизації в проекті"
+      },
+      {
+        "role": "assistant",
+        "message": "Знаходжу файли, пов'язані з авторизацією...",
+        "action": "rag-search"
+      },
+      {
+        "role": "assistant",
+        "message": "Читаю знайдені файли...",
+        "action": "read-file"
+      }
+    ],
+    "filesRead": [
+      "src/middleware/auth.js",
+      "src/services/auth.js",
+      "src/routes/auth.js"
+    ]
+  },
+  "result": {
+    "message": "## Система авторизації в проекті\n\nСистема авторизації складається з трьох основних компонентів:\n\n### 1. Middleware (src/middleware/auth.js)\n`authMiddleware` - перевіряє JWT токен з заголовку Authorization\n\n### 2. Сервіс (src/services/auth.js)\n`AuthService` - методи login, validateToken, refreshToken\n\n### 3. Routes (src/routes/auth.js)\nЕндпоінти: /login, /refresh, /logout",
+    "completed": false
+  },
+  "execute": {
+    "form": {
+      "type": "input",
+      "name": "message",
+      "label": "Продовжити діалог",
+      "placeholder": "Що ще хочете дізнатись?"
+    }
+  }
+}

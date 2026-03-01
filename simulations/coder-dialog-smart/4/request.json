@@ -1,0 +1,9 @@
+{
+  "action": "analyze-intent-result",
+  "intent_analysis": {
+    "task_type": "analyze",
+    "complexity": "high",
+    "requires_analysis": true,
+    "keywords": ["проаналізуй", "проект", "покращення", "архітектури"]
+  }
+}

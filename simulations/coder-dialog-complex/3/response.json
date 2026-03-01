@@ -1,0 +1,22 @@
+{
+  "context": {
+    "task": "проаналізуй як працює система авторизації в проекті",
+    "execution": {
+      "action": "coder-dialog",
+      "step": 2
+    },
+    "history": [
+      {
+        "role": "user",
+        "message": "проаналізуй як працює система авторизації в проекті"
+      }
+    ]
+  },
+  "result": {
+    "message": "Знаходжу файли, пов'язані з авторизацією..."
+  },
+  "execute": {
+    "action": "rag-search",
+    "query": "auth JWT login middleware authorization"
+  }
+}

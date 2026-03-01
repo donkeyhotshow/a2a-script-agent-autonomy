@@ -62,3 +62,89 @@ C:\workspace\org-carrier\a2a-script-agent\simulations\fix-vue-imports\5\response
 # что я понял .
 
 web должен командывать клиентом , через апи клиента . веб приложение само ничего не запускает , а только вносит данные и командует клиентом . у клиента свои обязаности . поетому надо отвязать web от сервера , потому что web не сможет обрабатывать ответы сервера напрямую .
+
+## coder-complex - складний workflow з чеклістом
+
+Це симуляція для складних завдань , де LLM робить:
+1. Перший reasoning - аналізує задачу
+2. Context gathering - RAG пошук файлів
+3. Другий reasoning - створює чекліст задач
+4. Виконання задач по черзі - кожна задача виконується окремо
+
+### workflow:
+- Step 1: Користувач відправляє задачу
+- Step 2: Сервер повертає доступні дії
+- Step 3: LLM робить reasoning → викликає rag-search
+- Step 4: Повертаються результати RAG пошуку
+- Step 5: LLM створює чекліст і виконує першу задачу
+- Step 6: Клієнт виконує задачу → повертає результат
+- Step 7: Сервер оновлює чекліст → наступна задача або завершення
+
+---
+
+---
+
+## coder-dialog-smart - діалог + контекст
+
+Діалогова симуляція для створення MD документу контексту. Поєднує:
+- Формат діалогу з coder-dialog
+- Логіку ai-session-context.md
+
+### workflow:
+- Step 1: User задає задачу
+- Step 2: Обирає coder-dialog-smart
+- Step 3: capture-task → captured_task
+- Step 4: analyze-intent → intent_analysis
+- Step 5: llm-first-iteration → study_plan
+- Step 6: create-context-document → MD документ
+
+---
+
+## coder-dialog-complex - діалог з читанням файлів
+
+### workflow:
+- Step 1: Користувач відправляє задачу
+- Step 2: Сервер повертає доступні дії
+- Step 3: Користувач обирає coder-dialog
+- Step 4: LLM робить RAG пошук
+- Step 5: LLM читає знайдені файли (read-file)
+- Step 6: LLM відповідає
+- Step 7: Користувач просить записати звіт
+- Step 8: LLM записує файл (write-file)
+
+### файли симуляції:
+- C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\coder-dialog-complex\\1\\request.json
+- C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\coder-dialog-complex\\1\\response.json
+- C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\coder-dialog-complex\\2\\request.json
+- C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\coder-dialog-complex\\2\\response.json
+- C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\coder-dialog-complex\\3\\request.json
+- C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\coder-dialog-complex\\3\\response.json
+- C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\coder-dialog-complex\\4\\request.json
+- C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\coder-dialog-complex\\4\\response.json
+- C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\coder-dialog-complex\\5\\request.json
+- C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\coder-dialog-complex\\5\\response.json
+- C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\coder-dialog-complex\\6\\request.json
+- C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\coder-dialog-complex\\6\\response.json
+- C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\coder-dialog-complex\\7\\request.json
+- C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\coder-dialog-complex\\7\\response.json
+
+Це симуляція для створення MD документу контексту задачі на основі легасі документа ai-session-context.md.
+
+### workflow:
+- Step 1: Користувач відправляє задачу
+- Step 2: Сервер виконує capture-task → повертає captured_task
+- Step 3: Сервер виконує analyze-intent → повертає intent_analysis
+- Step 4: LLM створює план вивчення (llm-first-iteration) → study_plan
+- Step 5: Сервер генерує MD документ контексту (create-context-document)
+
+### файли симуляції:
+- C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\coder-smart\\1\\request.json
+- C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\coder-smart\\1\\response.json
+- C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\coder-smart\\2\\request.json
+- C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\coder-smart\\2\\response.json
+- C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\coder-smart\\3\\request.json
+- C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\coder-smart\\3\\response.json
+- C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\coder-smart\\4\\request.json
+- C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\coder-smart\\4\\response.json
+- C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\coder-smart\\5\\request.json
+- C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\coder-smart\\5\\response.json

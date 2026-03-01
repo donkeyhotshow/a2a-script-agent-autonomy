@@ -1,0 +1,27 @@
+{
+  "session_id": "session_123",
+  "project_id": "project_456",
+  "task": "проаналізуй архітектуру проекту та створи план покращення",
+  "availableActions": [
+    {
+      "id": "capture-task",
+      "title": "Захоплення задачі",
+      "description": "Створити базову структуру задачі"
+    },
+    {
+      "id": "analyze-intent",
+      "title": "Аналіз наміру",
+      "description": "Визначити тип та складність задачі"
+    },
+    {
+      "id": "llm-first-iteration",
+      "title": "Перша ітерація LLM",
+      "description": "Створити план вивчення проблеми"
+    },
+    {
+      "id": "create-context-document",
+      "title": "Створити документ контексту",
+      "description": "Згенерувати MD документ з планом"
+    }
+  ]
+}

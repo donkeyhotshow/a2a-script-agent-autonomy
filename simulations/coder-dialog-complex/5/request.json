@@ -1,0 +1,8 @@
+{
+  "action": "read-file-result",
+  "files": {
+    "src/middleware/auth.js": "export function authMiddleware(req, res, next) {\n  const token = req.headers.authorization?.replace('Bearer ', '');\n  if (!token) return res.status(401).json({ error: 'No token' });\n  try {\n    req.user = jwt.verify(token, process.env.JWT_SECRET);\n    next();\n  } catch (e) {\n    res.status(401).json({ error: 'Invalid token' });\n  }\n}",
+    "src/services/auth.js": "export class AuthService {\n  async login(credentials) {\n    const user = await this.findUser(credentials.email);\n    if (!user || !bcrypt.compare(credentials.password, user.password)) {\n      throw new Error('Invalid credentials');\n    }\n    return this.generateTokens(user);\n  }\n  \n  async validateToken(token) {\n    try {\n      return jwt.verify(token, process.env.JWT_SECRET);\n    } catch {\n      return null;\n    }\n  }\n  \n  async refreshToken(oldToken) {\n    const user = await this.validateToken(oldToken);\n    if (!user) throw new Error('Invalid token');\n    return this.generateTokens(user);\n  }\n}",
+    "src/routes/auth.js": "import { Router } from 'express';\nimport { AuthService } from '../services/auth.js';\n\nconst router = Router();\nconst authService = new AuthService();\n\nrouter.post('/login', async (req, res) => {\n  try {\n    const tokens = await authService.login(req.body);\n    res.json(tokens);\n  } catch (e) {\n    res.status(401).json({ error: e.message });\n  }\n});\n\nrouter.post('/refresh', async (req, res) => {\n  try {\n    const tokens = await authService.refreshToken(req.body.token);\n    res.json(tokens);\n  } catch (e) {\n    res.status(401).json({ error: e.message });\n  }\n});\n\nexport default router;"
+  }
+}
