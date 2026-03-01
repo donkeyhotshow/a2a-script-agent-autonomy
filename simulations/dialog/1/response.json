@@ -2,27 +2,23 @@
   "context": {
     "task": "диалог"
   },
-  "actions": [
-    {
-      "action": "dialog",
-      "title": "AI діалог з користувачем",
-      "description": "Провести діалог з користувачем для уточнення завдання",
-      "priority": 10,
-      "matchScore": 0.95
+  "execute": {
+    "form": {
+      "title": "Оберіть спосіб виконання",
+      "choices": [
+        {
+          "id": "dialog",
+          "label": "AI діалог з користувачем"
+        },
+        {
+          "id": "auto-ai",
+          "label": "AI Action Generator"
+        },
+        {
+          "id": "task-decomposition",
+          "label": "Декомпозиція задачі"
+        }
+      ]
     }
-  ],
-  "fallbackActions": [
-    {
-      "mode": "auto-ai",
-      "title": "AI Action Generator",
-      "description": "Згенерувати новий екшен за допомогою LLM",
-      "fallbackType": "llm_generation"
-    },
-    {
-      "mode": "task-decomposition",
-      "title": "Декомпозиція задачі",
-      "description": "Розбити задачу на підзадачі вручну",
-      "fallbackType": "manual"
-    }
-  ]
+  }
 }

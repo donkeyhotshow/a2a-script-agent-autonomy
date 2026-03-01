@@ -2,77 +2,23 @@
   "context": {
     "task": "створи задачу і виконай"
   },
-  "actions": [
-    {
-      "action": "coder-smart",
-      "title": "Smart Coder — задача через документ",
-      "description": "Послідовний аналіз: RAG для уточнення задачі → план дослідження коду → чеклист → запис у .carrier/tasks/ → виконання по пунктах",
-      "priority": 10,
-      "matchScore": 0.95,
-      "steps": [
+  "execute": {
+    "form": {
+      "title": "Оберіть спосіб виконання",
+      "choices": [
         {
-          "action": "user-request",
-          "title": "Запит користувача",
-          "description": "Віртуальний док: секція 1 (запит)",
-          "priority": 10,
-          "input": "none",
-          "output": "doc_section_1"
+          "id": "coder-smart",
+          "label": "Smart Coder — задача через документ"
         },
         {
-          "action": "rag-clarify",
-          "title": "RAG для уточнення задачі",
-          "description": "RAG-пошук → LLM уточнена формулювання → док 1+2",
-          "priority": 9,
-          "input": "doc_section_1",
-          "output": "doc_sections_1_2"
+          "id": "auto-ai",
+          "label": "AI Action Generator"
         },
         {
-          "action": "rag-research-plan",
-          "title": "RAG план дослідження коду",
-          "description": "RAG за уточненою задачею → LLM план дослідження → док 1+2+3",
-          "priority": 8,
-          "input": "doc_sections_1_2",
-          "output": "doc_sections_1_2_3"
-        },
-        {
-          "action": "checklist",
-          "title": "Чеклист виконання",
-          "description": "LLM формує чеклист → док 1+2+3(done)+4",
-          "priority": 7,
-          "input": "doc_sections_1_2_3",
-          "output": "doc_full"
-        },
-        {
-          "action": "write-doc",
-          "title": "Записати документ",
-          "description": "Запис у .carrier/tasks/",
-          "priority": 6,
-          "input": "doc_full",
-          "output": "doc_path"
-        },
-        {
-          "action": "execute-item",
-          "title": "Виконання пункту чеклиста",
-          "description": "History = [doc], LLM виконує пункт, оновлення доку, повтор",
-          "priority": 5,
-          "input": "doc_content",
-          "output": "updated_doc"
+          "id": "task-decomposition",
+          "label": "Декомпозиція задачі"
         }
       ]
     }
-  ],
-  "fallbackActions": [
-    {
-      "mode": "auto-ai",
-      "title": "AI Action Generator",
-      "description": "Згенерувати новий екшен за допомогою LLM",
-      "fallbackType": "llm_generation"
-    },
-    {
-      "mode": "task-decomposition",
-      "title": "Декомпозиція задачі",
-      "description": "Розбити задачу на підзадачі вручну",
-      "fallbackType": "manual"
-    }
-  ]
+  }
 }

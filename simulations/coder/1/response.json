@@ -2,27 +2,23 @@
   "context": {
     "task": "допоможи розібратись з кодом"
   },
-  "actions": [
-    {
-      "action": "coder-dialog",
-      "title": "Діалог з AI-кодером",
-      "description": "AI-асистент для аналізу коду з можливістю пошуку та читання файлів",
-      "priority": 10,
-      "matchScore": 0.95
+  "execute": {
+    "form": {
+      "title": "Оберіть спосіб виконання",
+      "choices": [
+        {
+          "id": "coder-dialog",
+          "label": "Діалог з AI-кодером"
+        },
+        {
+          "id": "auto-ai",
+          "label": "AI Action Generator"
+        },
+        {
+          "id": "task-decomposition",
+          "label": "Декомпозиція задачі"
+        }
+      ]
     }
-  ],
-  "fallbackActions": [
-    {
-      "mode": "auto-ai",
-      "title": "AI Action Generator",
-      "description": "Згенерувати новий екшен за допомогою LLM",
-      "fallbackType": "llm_generation"
-    },
-    {
-      "mode": "task-decomposition",
-      "title": "Декомпозиція задачі",
-      "description": "Розбити задачу на підзадачі вручну",
-      "fallbackType": "manual"
-    }
-  ]
+  }
 }

@@ -2,77 +2,27 @@
   "context": {
     "task": "виправити імпорти у vue компонентах"
   },
-  "actions": [
-    {
-      "action": "fix-vue-imports-batched",
-      "title": "Виправити зламані імпорти у Vue файлах (batched)",
-      "description": "Автоматично визначити та виправити проблеми з імпортами у Vue компонентах. Обробляє файли по одному для кращого контролю.",
-      "priority": 10,
-      "matchScore": 0.95,
-      "steps": [
+  "execute": {
+    "form": {
+      "title": "Оберіть спосіб виконання",
+      "choices": [
         {
-          "action": "search-vite-file",
-          "title": "Знайти файл конфігурації Vite",
-          "description": "Шукає файли конфігурації Vite (vite.config.js, vite.config.ts)",
-          "priority": 10,
-          "input": "none",
-          "output": "vite_config_files[]"
+          "id": "fix-vue-imports-batched",
+          "label": "Виправити зламані імпорти у Vue файлах (batched)"
         },
         {
-          "action": "request-vite-file",
-          "title": "Отримати вміст Vite конфігурації",
-          "description": "Зчитує вміст файлу конфігурації Vite для отримання аліасів",
-          "priority": 9,
-          "input": "vite_config_files[]",
-          "output": "aliases"
+          "id": "fix-vue-imports",
+          "label": "Виправити зламані імпорти у Vue файлах"
         },
         {
-          "action": "request-files-to-fix",
-          "title": "Отримати список файлів для виправлення",
-          "description": "Сканує файли і повертає список зламаних імпортів",
-          "priority": 8,
-          "input": "aliases",
-          "output": "broken_imports[]"
+          "id": "auto-ai",
+          "label": "AI Action Generator"
         },
         {
-          "action": "search-exporter",
-          "title": "Знайти експортера класу",
-          "description": "Шукає файл, який експортує клас, вказаний у помилці імпорту",
-          "priority": 7,
-          "input": "error_string",
-          "output": "exporter_file"
-        },
-        {
-          "action": "apply-fix",
-          "title": "Застосувати виправлення",
-          "description": "Застосовує виправлення до одного файлу",
-          "priority": 6,
-          "input": "patch",
-          "output": "fixed"
-        },
-        {
-          "action": "vue-import-cleanup",
-          "title": "Очистити тимчасові файли",
-          "description": "Видаляє тимчасові файли після роботи",
-          "priority": 5,
-          "input": "none",
-          "output": "cleanup_count"
+          "id": "task-decomposition",
+          "label": "Декомпозиція задачі"
         }
       ]
     }
-  ],
-  "fallbackActions": [
-    {
-      "mode": "auto-ai",
-      "title": "AI Action Generator",
-      "description": "Згенерувати новий екшен за допомогою LLM",
-      "fallbackType": "llm_generation"
-    },
-    {
-      "mode": "task-decomposition",
-      "title": "Декомпозиція задачі",
-      "description": "Розбити задачу на підзадачі вручну",
-      "fallbackType": "manual"
-    }
-  ]
+  }
 }

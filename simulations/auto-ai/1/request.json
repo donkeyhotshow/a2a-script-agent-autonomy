@@ -1,1 +1,1 @@
-{"task":"add a health check endpoint and run the test suite"}
+{"task":"Refactor the API: add a logging middleware, add a health check endpoint, update the API tests, run lint and tests, and write a short report to .carrier/reports/."}

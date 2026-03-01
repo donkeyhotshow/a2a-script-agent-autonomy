@@ -1,40 +1,26 @@
-# Auto-AI Simulation — Workflow
+# Auto-AI — Workflow (extensive case)
 
-## File types (same as coder-dialog / dialog)
+See **[ACTIONS-MAP.md](ACTIONS-MAP.md)** for all execute.* / result.* shapes.
 
-| File | Direction | Description |
-|------|-----------|-------------|
-| `request.json` | Client → Server | Payload from client |
-| `server-transforms-request.md` | — | How server builds LLM input. Optional. |
-| `request.md` | Server → LLM | Prompt + context (markdown) |
-| `response.md` | LLM → Server | LLM reply |
-| `server-transforms-response.md` | — | How server builds client payload. Optional. |
-| `response.json` | Server → Client | execute.* and/or result |
-
-Steps without LLM: only `request.json` and `response.json`.
-
-## Flow (true case)
+## Flow (16 steps)
 
 ```
 1. task → actions [auto-ai]
-2. result.action: auto-ai → execute.form (message)
+2. result.action → execute.form (message)
 3. result.message → LLM → execute.rag-search
-4. result.rag-search → LLM → execute.read-file
-5. result.read-file → LLM → execute.write-file
-6. result.write-file → LLM → execute.execute-command (npm test)
-7. result.execute-command → LLM → completed + form
-8. (optional) result.message "thanks" → completed, form again
+4. result.rag-search → LLM → execute.list-directory (src/)
+5. result.list-directory → LLM → execute.read-file (app.js)
+6. result.read-file → LLM → execute.read-file (routes)
+7. result.read-file → LLM → execute.write-file (health)
+8. result.write-file → LLM → execute.write-file (logging)
+9. result.write-file → LLM → execute.grep-search
+10. result.grep-search → LLM → execute.read-file (test)
+11. result.read-file → LLM → execute.write-file (test)
+12. result.write-file → LLM → execute.execute-command (lint)
+13. result.execute-command → LLM → execute.execute-command (npm test)
+14. result.execute-command → LLM → execute.write-file (report)
+15. result.write-file → LLM → completed + form
+16. result.message (optional) → completed, form
 ```
 
-## Capabilities exercised
-
-- **form** — user message
-- **rag-search** — natural-language code search
-- **read-file** — read file by path
-- **write-file** — write content to path
-- **execute-command** — run shell command (e.g. npm test)
-- **completed** — task done, optional continue form
-
-## Purpose
-
-Validate system behavior when the AI has full capabilities (dialog, RAG, read, write, run commands). Use this simulation to test orchestration, context, and safety/UX.
+Actions used: form, rag-search, list-directory, read-file (×3), write-file (×4), grep-search, execute-command (×2), completed.

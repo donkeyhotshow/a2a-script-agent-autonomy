@@ -8,14 +8,15 @@
 
 ## 1. Session
 
-```typescript
+```
+typescript
 interface Session {
   id: string;                    // sess_xxx
   projectId: string;             // proj_xxx
   task: string;                  // Текст задачи пользователя
   status: SessionStatus;
   context: Context;
-  actions?: Action[];            // Предложенные действия
+  actions?: Action[];            // Предложенные действия (устарело, использовать execute.form.choices)
   fallbackActions?: FallbackAction[];
   selectedAction?: Action;       // Выбранное действие
   currentStepIndex: number;      // Текущий шаг
@@ -39,7 +40,8 @@ type SessionStatus =
 
 ## 2. Context
 
-```typescript
+```
+typescript
 interface Context {
   task: string;
   execution?: {
@@ -56,7 +58,8 @@ interface Context {
 
 ## 3. Action
 
-```typescript
+```
+typescript
 interface Action {
   action: string;              // ID: "fix-vue-imports"
   title: string;               // "Виправити імпорти"
@@ -79,7 +82,8 @@ interface FallbackAction {
 
 ## 4. Step
 
-```typescript
+```
+typescript
 interface Step {
   action: string;              // ID шага: "vue-import-detect"
   title: string;
@@ -97,7 +101,8 @@ interface Step {
 
 Canonical: **each key = action type**, value = params. No flat `action` + params as siblings.
 
-```typescript
+```
+typescript
 // One key = action type, value = params. Examples:
 // script: { input, output, code }; form: { input }; read-file: { path }; write-file: { path, content }; rag-search: { query }; execute-command: { command }; etc.
 type Execute = Record<string, unknown>;
@@ -107,17 +112,45 @@ type Execute = Record<string, unknown>;
 **Good:** `execute: { "read-file": { "path": "src/auth.js" } }`, `execute: { "write-file": { "path": "...", "content": "..." } }`, `execute: { "form": { "input": [...] } }`, `execute: { "execute-command": { "command": "npm test" } }`.  
 **Bad:** `execute: { "action": "read-file", "file": "src/auth.js" }`.
 
+### Execute Form з choices (для вибору дій)
+
+```
+typescript
+interface FormChoice {
+  id: string;       // ID вибору: "fix-vue-imports", "auto-ai", "task-decomposition"
+  label: string;   // Label: "Виправити імпорти", "AI Action Generator" тощо
+}
+
+interface FormWithChoices {
+  title?: string;   // Заголовок форми: "Оберіть спосіб виконання"
+  choices: FormChoice[];
+}
+
+// Приклад execute.form з choices:
+execute: {
+  "form": {
+    "title": "Оберіть спосіб виконання",
+    "choices": [
+      { "id": "fix-vue-imports", "label": "Виправити імпорти" },
+      { "id": "auto-ai", "label": "AI Action Generator" },
+      { "id": "task-decomposition", "label": "Декомпозиція задачі" }
+    ]
+  }
+}
+```
+
 ---
 
 ## 6. Request (Client → Server)
 
-```typescript
+```
+typescript
 // Первый запрос — только task (см. simulations/SCHEMA.md)
 // POST /api/v1/invoke
 interface InvokeRequest {
   task?: string;                 // Первый запрос: только task
   context?: Context;              // Последующие: context с сервера
-  result?: { action?: string; message?: string; [k: string]: any }; // result.action = выбранное действие
+  result?: { choice?: string; action?: string; message?: string; [k: string]: any }; // result.choice = выбранный id из execute.form.choices; result.action = выбранное действие
 }
 ```
 
@@ -126,7 +159,18 @@ interface InvokeRequest {
 ## 7. Response (Server → Client)
 
 ```typescript
-// Первый ответ (actions)
+// Первый ответ с execute.form.choices (новый формат)
+interface FormChoicesResponse {
+  context: Context;
+  execute: {
+    form: {
+      title?: string;
+      choices: Array<{ id: string; label: string }>;
+    };
+  };
+}
+
+// Первый ответ (actions) - устарело, использовать execute.form.choices
 interface ActionsResponse {
   context: Context;
   actions: Action[];
@@ -156,7 +200,8 @@ interface PendingResponse {
 
 ## 8. Web → Client API
 
-```typescript
+```
+typescript
 // POST /api/sessions
 interface CreateSessionRequest {
   projectId: string;
@@ -168,12 +213,17 @@ interface CreateSessionResponse {
   sessionId: string;
   status: 'pending';
   context: Context;
-  actions: Action[];
+  execute: {
+    form: {
+      title?: string;
+      choices: Array<{ id: string; label: string }>;
+    };
+  };
 }
 
 // POST /api/sessions/:id/action
 interface SelectActionRequest {
-  selectedAction: string;
+  selectedAction: string;  // або selectedChoice: string
 }
 
 // POST /api/sessions/:id/next
@@ -194,9 +244,39 @@ interface NextStepResponse {
 
 ## Примеры
 
-### Пример: Session (файл)
+### Пример: execute.form.choices (новый формат)
 
 ```json
+{
+  "context": {
+    "task": "виправити імпорти у vue компонентах"
+  },
+  "execute": {
+    "form": {
+      "title": "Оберіть спосіб виконання",
+      "choices": [
+        {
+          "id": "fix-vue-imports",
+          "label": "Виправити зламані імпорти у Vue файлах"
+        },
+        {
+          "id": "auto-ai",
+          "label": "AI Action Generator"
+        },
+        {
+          "id": "task-decomposition",
+          "label": "Декомпозиція задачі"
+        }
+      ]
+    }
+  }
+}
+```
+
+### Пример: Session (файл)
+
+```
+json
 {
   "id": "sess_abc123",
   "projectId": "proj_xyz789",
@@ -241,3 +321,9 @@ interface NextStepResponse {
 | Execute | Server → Client |
 | InvokeRequest | Client → Server |
 | InvokeResponse | Server → Client |
+
+---
+
+## История изменений
+
+- **2025-01**: Добавлен новый формат `execute.form.choices` для первого ответа сервера. Вместо `actions[]` и `fallbackActions[]` теперь используется `execute.form.choices` с массивом объектов `{ id, label }`.
