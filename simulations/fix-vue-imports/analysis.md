@@ -9,9 +9,9 @@
 ```
 1. Client → Server: { task: "виправити імпорти у vue компонентах" }
               ↓
-2. Server → Client: { context, actions: [fix-vue-imports з 4 steps] }
+2. Server → Client: { context, execute.form: choices [fix-vue-imports, auto-ai, task-decomposition] }  (no-LLM first, fallback merged)
               ↓
-3. Client → Server: { context, result: { actionId: "fix-vue-imports" } }
+3. Client → Server: { context, result: { choice: "fix-vue-imports" } }
               ↓
 4. Server → Client: { context, execute: { script } }
               ↓
@@ -31,7 +31,7 @@
 
 ## Очікувані результати
 
-- Сервер пропонує екшен fix-vue-imports з 4 steps
+- Сервер пропонує форму вибору: fix-vue-imports (без LLM, пріоритет), auto-ai, task-decomposition (fallback злиті в choices)
 - Кожен крок повертає execute з script
 - Фінальний крок повертає finalResult
 

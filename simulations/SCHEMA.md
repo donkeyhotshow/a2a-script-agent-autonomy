@@ -22,14 +22,14 @@ Not every step has all 6 files: steps without LLM typically have only `request.j
 ## Request
 
 - **First request**: `{ "task": "..." }` only.
-- **Client chose action**: `result.action` (not `actionId`). Example: `{ "context": {...}, "result": { "action": "fix-vue-imports" } }`.
+- **Client chose action**: when server sent `actions[]` use `result.action`; when server sent `execute.form` use `result.choice` (id of selected option). Example: `{ "context": {...}, "result": { "choice": "fix-vue-imports" } }`.
 - **Later steps**: `context` + `result` or `input` as per flow.
 - **result for read-file**: use action-key shape so server has path + content. Good: `result: { "read-file": { "path": "src/auth.js", "content": "..." } }`. Bad: `result: { "content": "..." }` (path unknown).
 - **result for rag-search**: use action-key shape so server can pass results to LLM as `ragResults`. Good: `result: { "rag-search": { "results": [ { "file": "...", "score": 0.95, "snippet": "..." } ], "files": ["path1", "path2"] } }`. Optional: `"query": "..."` for traceability. Bad: `result: { "results": [...], "files": [...] }` (no action key).
 
 ## Response (server)
 
-- **First response**: `context`, `actions[]`, optionally `fallbackActions[]`.
+- **First response**: either (1) `context`, `actions[]`, optionally `fallbackActions[]`; or (2) `context`, `execute.form` with `choices`. When using form: no-LLM actions first (higher priority), then fallbackActions merged into same choices; client replies with `result.choice`.
 - **Action object**: `action`, `title`, `description`, `priority`; optional `matchScore`, `steps[]`, `repeatSteps[]`.
 - **Step object**: `action`, `title`, `description`, `priority`; optional `input`, `output`.
 - **fallbackActions** (when present): `mode`, `title`, `description`, `fallbackType`. Use same two entries: `auto-ai` (llm_generation), `task-decomposition` (manual).
@@ -51,7 +51,7 @@ When response includes both message and form (e.g. coder-dialog), use `"message"
 
 ## Reference sims
 
-- fix-vue-imports, fix-vue-imports-batched: full steps + fallbackActions.
+- fix-vue-imports: first response = execute.form with choices (no-LLM first, fallback merged); then script steps. fix-vue-imports-batched: batched variant.
 - dialog: repeatSteps + fallbackActions + matchScore (aligned with coder-dialog).
 - coder-dialog: single step + fallbackActions.
 - coder-smart: steps user-request → rag-clarify → rag-research-plan → checklist → write-doc → execute-item; virtual doc (1→1+2→1+2+3→full), write to .carrier/tasks/; then loop (history = [doc], LLM do item, update doc).
