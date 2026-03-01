@@ -2,22 +2,18 @@
   "context": {
     "task": "виправити імпорти у vue компонентах",
     "execution": {
-      "actionId": "fix-vue-imports",
-      "currentActionId": "vue-import-detect"
+      "action": "fix-vue-imports",
+      "step": "vue-import-detect"
     }
   },
-  "executingAction": {
-    "actionId": "vue-import-detect",
-    "title": "Визначити зламані імпорти",
-    "description": "Сканує Vue файли і знаходить біті імпорти",
-    "priority": 10,
-    "dsl": {
-      "script": "vue-import-detect",
+  "execute": {
+    "script": {
       "input": {
         "rootDir": ".",
         "filePattern": "**/*.vue"
       },
-      "output": "broken_imports[]"
+      "output": "broken_imports[]",
+      "code": "// vue-import-detect.dsl\n// Сканування Vue файлів і пошук битих імпортів\n\nconst result = await script.execute('vue-import-detect', {\n  rootDir: '.',\n  filePattern: '**/*.vue'\n});\n\n// result = { broken_imports: [...] }"
     }
   }
 }

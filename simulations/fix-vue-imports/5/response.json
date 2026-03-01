@@ -2,25 +2,20 @@
   "context": {
     "task": "виправити імпорти у vue компонентах",
     "execution": {
-      "actionId": "fix-vue-imports",
-      "currentActionId": "vue-import-cleanup",
+      "action": "fix-vue-imports",
+      "step": "vue-import-cleanup",
       "status": "completed"
     }
   },
-  "executingAction": {
-    "actionId": "vue-import-cleanup",
-    "title": "Очистити тимчасові файли",
-    "description": "Видаляє тимчасові файли після роботи",
-    "priority": 7,
-    "dsl": {
-      "script": "vue-import-cleanup",
+  "execute": {
+    "script": {
       "input": {},
-      "output": "cleanup_count"
-    },
-    "dslScript": "```typescript\n// vue-import-cleanup.dsl\n// Очищення тимчасових файлів\n\nconst result = await script.execute('vue-import-cleanup', {});\n\n// result = { cleanup_count: 0 }\n```"
+      "output": "cleanup_count",
+      "code": "// vue-import-cleanup.dsl\n// Очищення тимчасових файлів\n\nconst result = await script.execute('vue-import-cleanup', {});\n\n// result = { cleanup_count: 0 }"
+    }
   },
   "finalResult": {
-    "actionId": "fix-vue-imports",
+    "action": "fix-vue-imports",
     "summary": {
       "broken_imports_found": 3,
       "patches_resolved": 3,
