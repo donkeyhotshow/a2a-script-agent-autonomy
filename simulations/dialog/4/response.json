@@ -21,9 +21,15 @@
       ]
   },
   "execute": {
-    "result": {
-      "status": "completed",
-      "summary": "Dialog completed"
+    "form": {
+      "input": [
+        {
+          "name": "message",
+          "type": "text",
+          "label": "Повідомлення",
+          "required": true
+        }
+      ]
     }
   }
 }

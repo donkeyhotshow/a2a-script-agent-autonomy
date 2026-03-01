@@ -18,9 +18,14 @@
   },
   "execute": {
     "form": {
-      "input": {},
-      "output": "message",
-      "required": ["messages"]
+      "input": [
+        {
+          "name": "message",
+          "type": "text",
+          "label": "Повідомлення",
+          "required": true
+        }
+      ]
     }
   }
 }

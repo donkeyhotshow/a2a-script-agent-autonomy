@@ -47,7 +47,13 @@
       "action": "coder-dialog",
       "step": "llm-request"
     },
-    "history": []
+    "history": [
+      {
+        
+            "role": "user",
+        "message": "як працює система авторизації?"
+      }
+    ]
   },
   "message": "як працює система авторизації?"
 }

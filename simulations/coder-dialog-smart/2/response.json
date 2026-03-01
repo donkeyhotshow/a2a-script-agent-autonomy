@@ -2,18 +2,23 @@
   "context": {
     "task": "проаналізуй проект та створи план покращення архітектури",
     "execution": {
-      "action": "coder-dialog-smart",
-      "step": 1
-    }
-  },
-  "result": {
-    "message": "Починаю аналіз задачі..."
+      "action": "coder-dialog",
+      "step": "llm-request"
+    },
+    "history": []
   },
   "execute": {
-    "action": "capture-task",
-    "input": {
-      "userMessage": "проаналізуй проект та створи план покращення архітектури",
-      "sessionId": "session_123"
+    "form": {
+      "title": "Діалог з AI-кодером",
+      "input": [
+        {
+          "name": "message",
+          "type": "text",
+          "label": "Повідомлення",
+          "placeholder": "Проаналізуй проект та створи план покращення архітектури",
+          "required": true
+        }
+      ]
     }
   }
 }

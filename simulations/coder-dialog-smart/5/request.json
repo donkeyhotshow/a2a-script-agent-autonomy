@@ -1,12 +1,32 @@
 {
-  "action": "llm-first-iteration",
-  "captured_task": {
-    "id": "task_1709280000000",
-    "original_message": "проаналізуй проект та створи план покращення архітектури"
+  "context": {
+    "task": "проаналізуй проект та створи план покращення архітектури",
+    "execution": {
+      "action": "coder-dialog",
+      "step": "llm-request"
+    },
+    "history": [
+      {
+        "role": "user",
+        "message": "проаналізуй проект та створи план покращення архітектури"
+      },
+      {
+        "role": "assistant",
+        "message": "Створюю контекст задачі та аналізую намір...",
+        "action": "capture-task"
+      }
+    ],
+    "captured_task": {
+      "id": "task_1709280000000",
+      "original_message": "проаналізуй проект та створи план покращення архітектури"
+    }
   },
-  "intent_analysis": {
-    "task_type": "analyze",
-    "complexity": "high",
-    "keywords": ["проаналізуй", "проект", "покращення", "архітектури"]
+  "result": {
+    "intent_analysis": {
+      "task_type": "analyze",
+      "complexity": "high",
+      "requires_analysis": true,
+      "keywords": ["проаналізуй", "проект", "покращення", "архітектури"]
+    }
   }
 }

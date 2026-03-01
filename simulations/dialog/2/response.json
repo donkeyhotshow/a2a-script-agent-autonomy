@@ -8,7 +8,14 @@
   },
   "execute": {
     "form": {
-      "input": [{"message":"text"}]
+      "input": [
+        {
+          "name": "message",
+          "type": "text",
+          "label": "Повідомлення",
+          "required": true
+        }
+      ]
     }
   }
 }

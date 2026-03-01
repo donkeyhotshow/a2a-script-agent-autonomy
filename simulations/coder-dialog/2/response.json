@@ -3,19 +3,17 @@
     "task": "допоможи розібратись з кодом",
     "execution": {
       "action": "coder-dialog",
-      "step": "llm-request"
+      "step": "coder-dialog"
     },
     "history": []
   },
   "execute": {
     "form": {
-      "title": "Діалог з AI-кодером",
       "input": [
         {
           "name": "message",
           "type": "text",
           "label": "Повідомлення",
-          "placeholder": "Про що хочеш запитати?",
           "required": true
         }
       ]

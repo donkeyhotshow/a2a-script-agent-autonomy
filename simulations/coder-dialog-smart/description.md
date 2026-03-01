@@ -2,17 +2,24 @@
 
 ## Опис
 
-Діалогова симуляція для створення MD документу контексту задачі. Поєднує:
-- Формат діалогу з coder-dialog
-- Логіку створення контексту з ai-session-context.md (capture-task → analyze-intent → llm-first-iteration → create-context-document)
+Симуляція показує діалог з AI-асистентом який:
+- Починає як звичайний coder-dialog
+- Автоматично створює контекст задачі (capture-task + analyze-intent)
+- Генерує план вивчення (llm-first-iteration)
+- Створює MD документ контексту (create-context-document)
+
+Це комбінація:
+- `coder-dialog` - діалоговий формат
+- `ai-session-context.md` - автоматичне створення контексту
 
 ## Workflow
 
-| Step | Опис |
-|------|------|
-| 1 | User відправляє задачу |
-| 2 | Сервер повертає доступні дії |
-| 3 | User обирає coder-dialog |
-| 4 | LLM аналізує задачу → capture-task + analyze-intent |
-| 5 | LLM створює план вивчення (llm-first-iteration) |
-| 6 | LLM генерує MD документ |
+| Step | Request | Response |
+|------|---------|----------|
+| 1 | task | actions |
+| 2 | result.actionId: "coder-dialog" | execute.form |
+| 3 | input.message | LLM → capture-task + analyze-intent |
+| 4 | result | execute: llm-first-iteration |
+| 5 | input.message | LLM → study_plan |
+| 6 | result | execute: create-context-document |
+| 7 | result | context_document (MD) + completed |

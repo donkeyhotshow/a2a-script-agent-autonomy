@@ -3,11 +3,11 @@
     "task": "допоможи розібратись з кодом",
     "execution": {
       "action": "coder-dialog",
-      "step": "llm-request"
+      "step": "coder-dialog"
     },
     "history": []
   },
-  "input": {
+  "result": {
     "message": "як працює система авторизації?"
   }
 }

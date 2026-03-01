@@ -15,31 +15,8 @@
           "title": "Діалог з AI-кодером",
           "description": "Почати діалог з AI-асистентом",
           "priority": 10,
-          "input": "none",
-          "output": "none"
         }
       ]
-    },
-    {
-      "action": "rag-search",
-      "title": "RAG пошук",
-      "description": "Пошук коду за натуральним запитом через @a2a/rag",
-      "priority": 5,
-      "matchScore": 0.3
-    },
-    {
-      "action": "read-file",
-      "title": "Читання файлу",
-      "description": "Читання вмісту файлу",
-      "priority": 4,
-      "matchScore": 0.2
-    },
-    {
-      "action": "execute-command",
-      "title": "Виконання команди",
-      "description": "Виконання команд в терміналі",
-      "priority": 3,
-      "matchScore": 0.1
     }
   ],
   "fallbackActions": [

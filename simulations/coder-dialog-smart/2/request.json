@@ -1,3 +1,8 @@
 {
-  "action": "coder-dialog-smart"
+  "context": {
+    "task": "проаналізуй проект та створи план покращення архітектури"
+  },
+  "result": {
+    "actionId": "coder-dialog"
+  }
 }

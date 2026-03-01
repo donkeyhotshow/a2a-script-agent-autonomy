@@ -6,16 +6,9 @@
     {
       "action": "coder-dialog",
       "title": "Діалог з AI-кодером",
-      "description": "AI-асистент для аналізу коду та створення плану",
+      "description": "AI-асистент для аналізу коду з можливістю пошуку та читання файлів",
       "priority": 10,
       "matchScore": 0.95
-    },
-    {
-      "action": "coder-dialog-smart",
-      "title": "AI Аналіз з контекстом",
-      "description": "Створити MD документ з планом аналізу проекту",
-      "priority": 9,
-      "matchScore": 0.9
     },
     {
       "action": "rag-search",

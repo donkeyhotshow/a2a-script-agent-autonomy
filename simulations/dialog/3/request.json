@@ -6,11 +6,7 @@
       "step": "llm-request"
     }
   },
-  "input": {
-    "messages": [
-      {
-        "content": "hello world"
-      }
-    ]
+  "result": {
+    "message": "hello world"
   }
 }

@@ -2,37 +2,40 @@
   "context": {
     "task": "проаналізуй проект та створи план покращення архітектури",
     "execution": {
-      "action": "coder-dialog-smart",
-      "step": 3
+      "action": "coder-dialog",
+      "step": "llm-request"
     },
+    "history": [
+      {
+        "role": "user",
+        "message": "проаналізуй проект та створи план покращення архітектури"
+      },
+      {
+        "role": "assistant",
+        "message": "Створюю контекст задачі та аналізую намір...",
+        "action": "capture-task"
+      }
+    ],
     "captured_task": {
       "id": "task_1709280000000",
       "original_message": "проаналізуй проект та створи план покращення архітектури"
-    },
-    "intent_analysis": {
-      "task_type": "analyze",
-      "complexity": "high"
     }
   },
   "result": {
-    "intent_analysis": {
-      "task_type": "analyze",
-      "complexity": "high",
-      "requires_analysis": true,
-      "keywords": ["проаналізуй", "проект", "покращення", "архітектури"]
+    "captured_task": {
+      "id": "task_1709280000000",
+      "session_id": "session_123",
+      "original_message": "проаналізуй проект та створи план покращення архітектури",
+      "created_at": "2024-03-01T12:00:00.000Z",
+      "status": "captured"
     }
   },
   "execute": {
-    "action": "llm-first-iteration",
+    "action": "analyze-intent",
     "input": {
       "captured_task": {
         "id": "task_1709280000000",
         "original_message": "проаналізуй проект та створи план покращення архітектури"
-      },
-      "intent_analysis": {
-        "task_type": "analyze",
-        "complexity": "high",
-        "keywords": ["проаналізуй", "проект", "покращення", "архітектури"]
       }
     }
   }

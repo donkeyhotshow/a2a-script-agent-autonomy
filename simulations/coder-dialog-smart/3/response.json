@@ -2,31 +2,29 @@
   "context": {
     "task": "проаналізуй проект та створи план покращення архітектури",
     "execution": {
-      "action": "coder-dialog-smart",
-      "step": 2
+      "action": "coder-dialog",
+      "step": "llm-request"
     },
-    "captured_task": {
-      "id": "task_1709280000000",
-      "session_id": "session_123",
-      "original_message": "проаналізуй проект та створи план покращення архітектури"
-    }
+    "history": [
+      {
+        "role": "user",
+        "message": "проаналізуй проект та створи план покращення архітектури"
+      },
+      {
+        "role": "assistant",
+        "message": "Створюю контекст задачі та аналізую намір...",
+        "action": "capture-task"
+      }
+    ]
   },
   "result": {
-    "captured_task": {
-      "id": "task_1709280000000",
-      "session_id": "session_123",
-      "original_message": "проаналізуй проект та створи план покращення архітектури",
-      "created_at": "2024-03-01T12:00:00.000Z",
-      "status": "captured"
-    }
+    "message": "Створюю контекст задачі та аналізую намір..."
   },
   "execute": {
-    "action": "analyze-intent",
+    "action": "capture-task",
     "input": {
-      "captured_task": {
-        "id": "task_1709280000000",
-        "original_message": "проаналізуй проект та створи план покращення архітектури"
-      }
+      "userMessage": "проаналізуй проект та створи план покращення архітектури",
+      "sessionId": "session_123"
     }
   }
 }
