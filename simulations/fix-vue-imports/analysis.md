@@ -13,26 +13,44 @@
               ↓
 3. Client → Server: { context, result: { choice: "fix-vue-imports" } }
               ↓
-4. Server → Client: { context, execute: { script } }
+4. Server → Client: { context, execute: { rag-search } } - internal step: vue-import-detect
               ↓
-5. Client → Server: { context, result: { ... } }
+5. Client → Server: { context, result: { "rag-search": { results: [...] } } }
               ↓
-6. Server → Client: { context, execute: { script } }
+6. Server → Client: { context, execute: { rag-search } } - internal step: vue-import-resolve
               ↓
-... повторюється для кожного step
+7. Client → Server: { context, result: { "rag-search": { results: [...] } } }
+              ↓
+8. Server → Client: { context, execute: { write-file } } - internal step: vue-import-apply
+              ↓
+9. Client → Server: { context, result: { "write-file": { path: "...", success: true } } }
+              ↓
+10. Server → Client: { context, execute: { execute-command } } - internal step: vue-import-cleanup
+              ↓
+11. Client → Server: { context, result: { "execute-command": { exitCode: 0 } } }
+              ↓
+N. Server → Client: { context, finalResult }
 ```
 
-## Steps
+## Internal Steps (server-side only)
 
-1. **vue-import-detect** - сканує файли, знаходить зламані імпорти
-2. **vue-import-resolve** - знаходить правильні шляхи
-3. **vue-import-apply** - застосовує виправлення
-4. **vue-import-cleanup** - очищує тимчасові файли
+These are internal identifiers used by the server to track progress. The actual client actions are:
+
+1. **vue-import-detect** (internal) → executes `rag-search` on client
+2. **vue-import-resolve** (internal) → executes `rag-search` on client
+3. **vue-import-apply** (internal) → executes `write-file` on client
+4. **vue-import-cleanup** (internal) → executes `execute-command` on client
+
+## Actual Client Actions
+
+- `rag-search` - для пошуку файлів та битих імпортів
+- `write-file` - для запису виправлень
+- `execute-command` - для запуску команд (очищення)
 
 ## Очікувані результати
 
 - Сервер пропонує форму вибору: fix-vue-imports (без LLM, пріоритет), auto-ai, task-decomposition (fallback злиті в choices)
-- Кожен крок повертає execute з script
+- Кожен крок повертає execute з відповідною дією клієнта
 - Фінальний крок повертає finalResult
 
 ## Правила

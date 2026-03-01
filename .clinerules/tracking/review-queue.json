@@ -62,6 +62,16 @@
         "Formatting standards met",
         "Visual elements reviewed"
       ]
+    },
+    {
+      "name": "Cline Documentation Review",
+      "description": "Review for Cline documentation moved to docs/cline/ directory",
+      "checklist": [
+        "Documentation moved to docs/cline/ directory",
+        "Original files archived in tracking",
+        "Review queue updated accordingly",
+        "Documentation structure verified"
+      ]
     }
   ]
 }

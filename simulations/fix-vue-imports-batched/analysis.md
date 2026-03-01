@@ -13,37 +13,46 @@
               ↓
 3. Client → Server: { context, result: { actionId: "fix-vue-imports-batched" } }
               ↓
-4. Server → Client: { context, execute: { script } } - search-vite-file
+4. Server → Client: { context, execute: { rag-search } } - internal step: search-vite-file
               ↓
-5. Client → Server: { context, result: { files: ["vite.config.js", ...] } }
+5. Client → Server: { context, result: { "rag-search": { results: [...] } } }
               ↓
-6. Server → Client: { context, execute: { script } } - request-vite-file
+6. Server → Client: { context, execute: { read-file } } - internal step: request-vite-file
               ↓
-7. Client → Server: { context, result: { file: "vite.config.js", content: "..." } }
+7. Client → Server: { context, result: { "read-file": { path: "...", content: "..." } } }
               ↓
-8. Server → Client: { context, execute: { script } } - request-files-to-fix
+8. Server → Client: { context, execute: { rag-search } } - internal step: request-files-to-fix
               ↓
-9. Client → Server: { context, result: { files: many, saved_locally: true } }
+9. Client → Server: { context, result: { "rag-search": { results: [...] } } }
               ↓
 ... цикл для кожного файлу (50 файлів):
-10. Server → Client: { context, execute: { script: search-exporter }, 
-                       result: { totalFiles: 50, currentFile: 1 } }
+10. Server → Client: { context, execute: { rag-search } }, 
+                       result: { totalFiles: 50, currentFile: 1 }
               ↓
-11. Client → Server: { context, result: { file: "...", fixed: true } }
+11. Client → Server: { context, result: { ... } }
               ↓
 ... повторюється для всіх файлів
               ↓
 N. Server → Client: { context, finalResult }
 ```
 
-## Steps
+## Internal Steps (server-side only)
 
-1. **search-vite-file** - шукає файли конфігурації vite
-2. **request-vite-file** - запитує конкретний файл vite, зберігає aliases в контекст
-3. **request-files-to-fix** - запитує файли для виправлення
-4. **search-exporter** - для одного файлу, шукає хто експортує клас з помилки
-5. **apply-fix** - застосовує виправлення до одного файлу
-6. **vue-import-cleanup** - очищує тимчасові файли
+These are internal identifiers used by the server to track progress. The actual client actions are:
+
+1. **search-vite-file** (internal) → executes `rag-search` on client
+2. **request-vite-file** (internal) → executes `read-file` on client
+3. **request-files-to-fix** (internal) → executes `rag-search` on client
+4. **search-exporter** (internal) → executes `rag-search` on client
+5. **apply-fix** (internal) → executes `write-file` on client
+6. **vue-import-cleanup** (internal) → executes `execute-command` on client
+
+## Actual Client Actions
+
+- `rag-search` - для пошуку файлів (використовує параметр `pattern`)
+- `read-file` - для читання вмісту файлів
+- `write-file` - для запису виправлень
+- `execute-command` - для запуску команд (наприклад, для очищення)
 
 ## Ключові зміни
 
