@@ -10,6 +10,7 @@
 2. **PROTOCOL.md** - Протокол взаимодействия
 3. **SESSION-FLOW.md** - Поток сессий
 4. **SIMULATION-*.md** - Анализ симуляций
+5. **SIMULATION-FORMAT.md** - Формат файлов симуляций
 
 ### Что реализовано (Текущая система)
 
@@ -100,11 +101,9 @@ a2a-client/server/
 │   │   ├── sessions.ts   # /api/sessions
 │   │   ├── projects.ts   # /api/projects
 │   │   └── config.ts     # /api/config
-│   ├── services/
-│   │   ├── session-store.ts
-│   │   └── api-client.ts # Вызовы   └── types к Server
-│/
-│       └── index.ts
+│   └── services/
+│       ├── session-store.ts
+│       └── api-client.ts
 └── package.json
 ```
 
@@ -181,6 +180,40 @@ const response = await fetch('http://localhost:3001/api/projects');
 | `app/` | Python FastAPI приложение |
 | `docs/` | Документация |
 | `plans/` | Планы развития |
+
+---
+
+## Симуляции
+
+Симуляции находятся в папке `simulations/`.
+
+### Формат файлов симуляций
+
+Каждый шаг может содержать:
+
+| Файл | Направление | Описание |
+|------|-------------|----------|
+| `request.json` | Client → Server | Запрос от клиента |
+| `request.md` | Server → LLM | **MARKDOWN** с system prompt! |
+| `response.md` | LLM → Server | Ответ от LLM |
+| `response.json` | Server → Client | Ответ клиенту |
+
+**ВАЖНО: request.md - это MARKDOWN с system prompt!**
+
+```markdown
+## System Prompt
+
+продолжи диалог в json . ответь обновленным json 
+
+```json
+{
+  "context": {
+    "task": "dialog",
+    ...
+  }
+}
+```
+```
 
 ---
 

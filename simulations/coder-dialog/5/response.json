@@ -1,0 +1,75 @@
+{
+  "context": {
+    "task": "допоможи розібратись з кодом",
+    "execution": {
+      "action": "coder-dialog",
+      "step": "llm-request"
+    },
+    "history": [
+      {
+        "role": "user",
+        "message": "як працює система авторизації?"
+      },
+      {
+        "role": "assistant",
+        "message": "Щоб відповісти на це питання, мені потрібно спочатку пошукати в коді про авторизацію.",
+        "action": "rag-search"
+      },
+      {
+        "role": "system",
+        "message": "RAG знайшов: src/auth.js (0.95), src/middleware/auth.ts (0.87), src/utils/jwt.js (0.82)"
+      },
+      {
+        "role": "assistant",
+        "message": "Знайшов файли авторизації. Зараз прочитаю основний файл.",
+        "action": "read-file"
+      },
+      {
+        "role": "system",
+        "message": "Прочитано файл src/auth.js"
+      },
+      {
+        "role": "assistant",
+        "message": "Система авторизації працює наступним чином:\n\n1. **Реєстрація** (`register`):\n   - Пароль хешується за допомогою bcrypt з солтю\n   - Зберігається хеш пароля (не сам пароль!)\n   - Повертається email та id користувача\n\n2. **Вхід** (`login`):\n   - Користувач вводить email та пароль\n   - Перевіряється пароль через `bcrypt.compare`\n   - Якщо пароль вірний - генерується JWT токен\n   - Токен містить email користувача\n   - Токен діє 24 години\n\n3. **Верифікація** (`verifyToken`):\n   - Перевіряє валідність токену\n   - Повертає дані з токену (email)\n   - Використовується в middleware для захисту маршрутів\n\nВикористовуються бібліотеки:\n- `jsonwebtoken` - для JWT токенів\n- `bcrypt` - для хешування паролів",
+        "action": "continue"
+      }
+    ],
+    "ragResults": [
+      {
+        "file": "src/auth.js",
+        "score": 0.95,
+        "snippet": "async function login..."
+      },
+      {
+        "file": "src/auth.js",
+        "score": 0.92,
+        "snippet": "async function register..."
+      },
+      {
+        "file": "src/middleware/auth.ts",
+        "score": 0.87,
+        "snippet": "export function verifyToken..."
+      }
+    ],
+    "fileContents": {
+      "src/auth.js": "const jwt = require('jsonwebtoken');\nconst bcrypt = require('bcrypt');\n\nconst JWT_SECRET = process.env.JWT_SECRET || 'secret-key';\nconst JWT_EXPIRES_IN = '24h';\n\nasync function register(email, password) {\n  const hashedPassword = await bcrypt.hash(password, 10);\n  return { email, id: 1 };\n}\n\nasync function login(email, password) {\n  const isValid = await bcrypt.compare(password, storedHash);\n  if (!isValid) {\n    throw new Error('Invalid credentials');\n  }\n  const token = jwt.sign({ email }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });\n  return { token, user: { email } };\n}\n\nfunction verifyToken(token) {\n  return jwt.verify(token, JWT_SECRET);\n}\n\nmodule.exports = { register, login, verifyToken };"
+    }
+  },
+  "result": {
+    "message": "Система авторизації працює наступним чином:\n\n1. **Реєстрація** (`register`):\n   - Пароль хешується за допомогою bcrypt з солтю\n   - Зберігається хеш пароля (не сам пароль!)\n   - Повертається email та id користувача\n\n2. **Вхід** (`login`):\n   - Користувач вводить email та пароль\n   - Перевіряється пароль через `bcrypt.compare`\n   - Якщо пароль вірний - генерується JWT токен\n   - Токен містить email користувача\n   - Токен діє 24 години\n\n3. **Верифікація** (`verifyToken`):\n   - Перевіряє валідність токену\n   - Повертає дані з токену (email)\n   - Використовується в middleware для захисту маршрутів\n\nВикористовуються бібліотеки:\n- `jsonwebtoken` - для JWT токенів\n- `bcrypt` - для хешування паролів"
+  },
+  "execute": {
+    "form": {
+      "title": "Продовжити діалог",
+      "input": [
+        {
+          "name": "message",
+          "type": "text",
+          "label": "Повідомлення",
+          "placeholder": "Про що ще хочеш запитати?",
+          "required": true
+        }
+      ]
+    }
+  }
+}

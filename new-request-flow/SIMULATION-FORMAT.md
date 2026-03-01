@@ -2,7 +2,7 @@
 
 ## Обзор
 
-Каждая симуляция в папке `simulations/` содержит пошаговое взаимодействие.
+Каждая симуляция в папке `simulations/` содержит пошаговое взаимодействие Client ↔ Server ↔ LLM.
 
 ## Структура
 
@@ -13,6 +13,9 @@ simulations/
 │   ├── 2/ - только .json файлы  
 │   ├── 3/ - .json + .md файлы (есть LLM вызов!)
 │   └── 4/ - .json + .md файлы (есть LLM вызов!)
+├── fix-vue-imports/
+├── analyze-architecture/
+└── ...
 ```
 
 ## Типы файлов
@@ -20,12 +23,23 @@ simulations/
 | Файл | Направление | Описание |
 |------|-------------|----------|
 | `request.json` | Client → Server | Запрос от клиента |
-| `request.md` | Server → LLM | Запрос к LLM (MARKDOWN!) |
+| `request.md` | Server → LLM | **MARKDOWN** с system prompt! |
 | `response.md` | LLM → Server | Ответ от LLM |
 | `response.json` | Server → Client | Ответ клиенту |
 
+**НЕ все шаги содержат все 4 файла!** Шаги с LLM содержат .md файлы, остальные только .json.
+
 ## ВАЖНО: request.md - это MARKDOWN!
 
+**НЕ** используй формат:
+```json
+{
+  "model": "qwen3:8b",
+  "messages": [...]
+}
+```
+
+**ИСПОЛЬЗУЙ** формат (MARKDOWN!):
 ```markdown
 ## System Prompt
 
@@ -50,11 +64,64 @@ simulations/
 ```
 ```
 
-Это **НЕ** JSON с полями model/messages. Это **MARKDOWN** с system prompt!
-
 ## Правила
 
 1. **request.md = MARKDOWN с system prompt** - LLM должен ответить JSON
 2. **Client отправляет content без role** - сервер добавляет role
 3. **response.md = context с history** - что будет отправлено LLM в следующем шаге
 4. **response.json = response.md + execute** - добавляется форма или результат
+
+## Пример: Dialog Simulation
+
+### Шаг 1: request.json (Client → Server)
+```json
+{
+  "context": { "task": "dialog" },
+  "input": { "messages": [{ "content": "hello" }] }
+}
+```
+
+### Шаг 3: request.md (Server → LLM)
+```markdown
+## System Prompt
+
+продолжи диалог в json . ответь обновленным json 
+
+```json
+{
+  "context": {
+    "task": "dialog",
+    "history": [{ "role": "user", "message": "hello" }]
+  }
+}
+```
+```
+
+### Шаг 3: response.md (LLM → Server)
+```json
+{
+  "context": {
+    "task": "dialog",
+    "history": [
+      { "role": "user", "message": "hello" },
+      { "role": "assistant", "message": "hi there!" }
+    ]
+  }
+}
+```
+
+### Шаг 3: response.json (Server → Client)
+```json
+{
+  "context": {
+    "task": "dialog",
+    "history": [
+      { "role": "user", "message": "hello" },
+      { "role": "assistant", "message": "hi there!" }
+    ]
+  },
+  "execute": {
+    "form": { "input": {}, "output": "message", "required": ["messages"] }
+  }
+}
+```

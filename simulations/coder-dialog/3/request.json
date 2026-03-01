@@ -1,0 +1,13 @@
+{
+  "context": {
+    "task": "допоможи розібратись з кодом",
+    "execution": {
+      "action": "coder-dialog",
+      "step": "llm-request"
+    },
+    "history": []
+  },
+  "input": {
+    "message": "як працює система авторизації?"
+  }
+}
