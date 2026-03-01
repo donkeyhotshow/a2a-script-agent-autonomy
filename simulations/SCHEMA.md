@@ -2,6 +2,23 @@
 
 Align all simulations to avoid redundant or conflicting values.
 
+## File layout (per step)
+
+Each step folder can contain up to 6 files, in pipeline order:
+
+| File | Direction | Description |
+|------|------------|-------------|
+| `request.json` | Client → Server | Payload from client. |
+| `server-transforms-request.md` | — | How the server processes `request.json` and builds the LLM input (transformation before calling LLM). Optional. |
+| `request.md` | Server → LLM | Markdown sent to LLM (system prompt + current state). |
+| `response.md` | LLM → Server | Expected LLM output (e.g. JSON with `message`, `action`). |
+| `server-transforms-response.md` | — | How the server processes `response.md` and builds the client payload (transformation before sending to client). Optional. |
+| `response.json` | Server → Client | Payload sent to client (context + execute, etc.). |
+
+**Order:** request.json → server-transforms-request.md → request.md → response.md → server-transforms-response.md → response.json.
+
+Not every step has all 6 files: steps without LLM typically have only `request.json` and `response.json`; steps with LLM add the .md files; transform docs are optional and describe server logic.
+
 ## Request
 
 - **First request**: `{ "task": "..." }` only.

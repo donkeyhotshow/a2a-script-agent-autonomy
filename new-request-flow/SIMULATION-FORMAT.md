@@ -19,12 +19,16 @@ simulations/
 
 | Файл | Направление | Описание |
 |------|-------------|----------|
-| `request.json` | Client → Server | Запрос от клиента |
-| `request.md` | Server → LLM | **MARKDOWN** с system prompt! |
-| `response.md` | LLM → Server | Ответ от LLM |
-| `response.json` | Server → Client | Ответ клиенту |
+| `request.json` | Client → Server | Запрос от клиента. |
+| `server-transforms-request.md` | — | Обработка `request.json`, трансформация перед запросом в LLM. Опционально. |
+| `request.md` | Server → LLM | **MARKDOWN** с system prompt и состоянием. |
+| `response.md` | LLM → Server | Ответ от LLM. |
+| `server-transforms-response.md` | — | Обработка `response.md`, трансформация перед возвратом клиенту. Опционально. |
+| `response.json` | Server → Client | Ответ клиенту. |
 
-**НЕ все шаги содержат все 4 файла!** Шаги с LLM содержат .md файлы, остальные только .json.
+**Порядок:** request.json → server-transforms-request.md → request.md → response.md → server-transforms-response.md → response.json.
+
+Не в каждом шаге есть все 6 файлов: шаги без LLM — обычно только request.json и response.json; шаги с LLM добавляют .md; transform-файлы опциональны и описывают логику сервера.
 
 ## ВАЖНО: request.md - это MARKDOWN!
 

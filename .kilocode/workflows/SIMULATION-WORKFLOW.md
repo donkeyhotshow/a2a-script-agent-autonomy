@@ -12,7 +12,7 @@ simulations/
 │   ├── 1/ request.json, response.json
 │   ├── 2/ request.json, response.json
 │   ├── 3/ request.json, request.md, response.json, response.md
-│   ├── 4/ request.json, request.md, response.json, response.md
+│   ├── 4/ request.json, request.md, response.json, response.md  (+ optional server-transforms-*.md)
 ├── coder-dialog/        # Діалог + RAG + файли
 ├── fix-vue-imports/
 ├── fix-vue-imports-batched/
@@ -23,26 +23,31 @@ simulations/
 
 | File | Direction | Description |
 |------|-----------|-------------|
-| `request.json` | Client → Server | Запрос клієнта |
-| `request.md` | Server → LLM | MARKDOWN: system prompt + поточний стан (JSON у блоці) |
-| `response.md` | LLM → Server | Очікуваний вивід LLM (наприклад `{ "message": "..." }`) |
-| `response.json` | Server → Client | Відповідь клієнту (context + execute) |
+| `request.json` | Client → Server | Запит клієнта. |
+| `server-transforms-request.md` | — | Обробка `request.json`, трансформація перед запитом у LLM. Опційно. |
+| `request.md` | Server → LLM | MARKDOWN: system prompt + поточний стан (JSON у блоці). |
+| `response.md` | LLM → Server | Очікуваний вивід LLM (наприклад `{ "message": "..." }`). |
+| `server-transforms-response.md` | — | Обробка `response.md`, трансформація перед поверненням клієнту. Опційно. |
+| `response.json` | Server → Client | Відповідь клієнту (context + execute). |
 
-У кроках з LLM є .md; інші — лише .json.
+**Порядок:** request.json → server-transforms-request.md → request.md → response.md → server-transforms-response.md → response.json.
+
+У кроках з LLM є .md; інші — лише .json; transform-файли опційні.
 
 ## Flow
 
 ```
-Client              Server              LLM
-  │                   │                   │
-  │ request.json      │                   │
-  │──────────────────>│                   │
-  │                   │ request.md        │
-  │                   │──────────────────>│
-  │                   │    response.md    │
-  │                   │<──────────────────│
-  │ response.json     │                   │
-  │<──────────────────│                   │
+Client              Server (transforms)       LLM
+  │                   │                         │
+  │ request.json      │                         │
+  │──────────────────>│                         │
+  │                   │ server-transforms-request.md → request.md
+  │                   │─────────────────────────>│
+  │                   │         response.md     │
+  │                   │<─────────────────────────│
+  │                   │ server-transforms-response.md → response.json
+  │ response.json     │                         │
+  │<──────────────────│                         │
 ```
 
 ## Dialog: формати
