@@ -26,7 +26,7 @@
 ## Потік
 
 | Крок | Request | Response |
-|-----|---------|----------|
+|------|---------|----------|
 | 1 | task: "допомоги з кодом" | actions з llmPrompt + fileActions |
 | 2 | result.action: "coder-dialog" | execute.form запитує message |
 | 3 | input.message | LLM request → аналізує → виконує RAG пошук |
@@ -61,10 +61,37 @@ simulations/coder-dialog/
 │   ├── response.json
 │   ├── request.md
 │   └── response.md
-├── ...
+├── 4/
+│   ├── request.json
+│   ├── server-transforms-request.md
+│   ├── request.md
+│   ├── response.md
+│   ├── server-transforms-response.md
+│   └── response.json
+├── 5/
+│   ├── request.json
+│   ├── server-transforms-request.md
+│   ├── request.md
+│   ├── response.md
+│   ├── server-transforms-response.md
+│   └── response.json
+├── 6/
+│   ├── request.json
+│   ├── response.json
+│   ├── request.md
+│   └── response.md
+├── 7/
+│   ├── request.json
+│   ├── server-transforms-request.md
+│   ├── request.md
+│   ├── response.md
+│   ├── server-transforms-response.md
+│   └── response.json
 └── 8/
     ├── request.json
     ├── response.json
     ├── request.md
     └── response.md
 ```
+
+> **Примітка:** Файли `server-transforms-request.md` та `server-transforms-response.md` є опціональними і показують трансформацію даних на сервері перед відправкою до LLM та після отримання відповіді відповідно. Деякі кроки можуть містити ці файли для демонстрації серверної обробки.

@@ -1,119 +1,110 @@
-# Сравнение: Видение vs Реализация
+# Статус реалізації
 
-## Текущее состояние
+## Поточний стан
 
-### Что есть в new-request-flow (Видение)
+### Що є в new-request-flow (Бачення)
 
-Документы в `new-request-flow/` описывают идеальную архитектуру:
+Документи в `new-request-flow/` описують ідеальну архітектуру:
 
-1. **ARCHITECTURE.md** - Полная архитектура системы
-2. **PROTOCOL.md** - Протокол взаимодействия
-3. **SESSION-FLOW.md** - Поток сессий
-4. **SIMULATION-*.md** - Анализ симуляций
-5. **SIMULATION-FORMAT.md** - Формат файлов симуляций
+1. **ARCHITECTURE.md** - Повна архітектура системи
+2. **PROTOCOL.md** - Протокол взаємодії
+3. **SCHEMAS.md** - Схеми даних
+4. **SESSION-FLOW.md** - Потік сесій
 
-### Что реализовано (Текущая система)
+### Що реалізовано (Поточна система)
 
 ```
 a2a-client/web/        # Web UI (порт 5173)
-a2a-server/            # Server API (порт 3000)
-external-ai-hub/       # Proxy для Ollama (порт 11434)
+a2a-client/packages/api-server/   # Client API (поки НЕ на 3001)
+a2a-client/packages/api-client/  # HTTP клієнт для Server
+a2a-server/             # Server API (порт 3000)
 ```
 
 ---
 
-## Проблемы
+## Що вже зроблено
 
-### 1. Web → Server напрямую
+| Компонент | Стан | Нотатки |
+|-----------|------|---------|
+| Server (3000) | ✅ Готовий | Stateless потрібен |
+| api-client | ✅ Готовий | В a2a-client/packages/api-client |
+| api-server | ⚠️ Частковий | Є в a2a-client/packages/api-server, але немає session management |
+| External AI Hub | ✅ Готовий | Порт 11434 |
+| Web → Server | ❌ Потрібно виправити | Має бути Web → Client API |
+
+---
+
+## Що потрібно виправити
+
+### 1. Web → Server напряму
 
 **По документу:**
 ```
 Web → Client API (3001) → Server (3000)
 ```
 
-**Как сейчас:**
+**Як зараз:**
 ```
-Web → Server (3000) напрямую
-```
-
-**Где исправлять:**
-- `a2a-client/web/js/web-api-client.js` - нужно переписать на Client API
-- Нужно создать Client API сервер на порту 3001
-
-### 2. Session хранятся на Server
-
-**По документу:**
-```
-Server - STATELESS, не хранит сессии
-Client API - хранит сессии
+Web → Server (3000) напряму
 ```
 
-**Как сейчас:**
-```
-Server хранит сессии в базе данных
-```
+**Де виправляти:**
+- `a2a-client/web/js/web-api-client.js` - потрібно переписати на Client API
+- Потрібно створити Client API сервер на порту 3001
 
-**Где исправлять:**
-- Убрать session storage из `a2a-server/`
-- Добавить session storage в `a2a-client/`
-
-### 3. Client API не существует
+### 2. api-server не має session management
 
 **По документу:**
 ```
-Должен быть Client API сервер (порт 3001)
+Client API повинен мати:
+- POST /api/sessions - створити сесію
+- GET /api/sessions - список сесій
+- GET /api/sessions/:id - стан сесії
+- POST /api/sessions/:id/action - обрати дію
+- POST /api/sessions/:id/next - наступний крок
+- POST /api/sessions/:id/cancel - відмінити
+- GET /api/projects - список проектів
+- POST /api/projects - створити проект
+- GET /api/config - конфігурація
+- POST /api/config - зберегти конфігурацію
 ```
 
-**Как сейчас:**
+**Як зараз (a2a-client/packages/api-server):**
 ```
-Client API сервера нет
+є тільки:
+- /api/terminal/execute
+- /api/terminal/action
+- /api/fs/scan
+- /api/fs/read
+- /api/fs/write
+- /api/fs/list
+- /api/fs/exists
 ```
-
-**Что нужно создать:**
-- HTTP сервер на Node.js
-- Эндпоинты: `/api/sessions`, `/api/projects`, `/api/config`
 
 ---
 
-## План исправлений
+## План виправлень
 
-### Этап 1: Создать Client API
+### Етап 1: Оновити api-server (пріоритет: ВИСОКИЙ)
 
-**Задачи:**
-1. [ ] Создать `a2a-client/server/` - HTTP сервер на порту 3001
-2. [ ] Реализовать endpoints:
-   - `POST /api/sessions` - создать сессию
-   - `GET /api/sessions` - список сессий
-   - `GET /api/sessions/:id` - получить сессию
-   - `POST /api/sessions/:id/task` - отправить задачу
-   - `POST /api/sessions/:id/next` - следующий шаг
-   - `GET /api/projects` - список проектов
-   - `POST /api/projects` - создать проект
-   - `GET /api/config` - конфигурация
-   - `POST /api/config` - сохранить конфигурацию
+**Задачі:**
+1. [ ] Змінити порт з 3000 на 3001
+2. [ ] Додати endpoints для session management:
+   - `POST /api/sessions` - створити сесію
+   - `GET /api/sessions` - список сесій
+   - `GET /api/sessions/:id` - отримати сесію
+   - `POST /api/sessions/:id/action` - обрати дію
+   - `POST /api/sessions/:id/next` - наступний крок
+   - `POST /api/sessions/:id/cancel` - відмінити
+3. [ ] Інтегрувати api-client для зв'язку з Server
 
-**Где создавать:**
-```
-a2a-client/server/
-├── src/
-│   ├── index.ts          # Точка входа
-│   ├── routes/
-│   │   ├── sessions.ts   # /api/sessions
-│   │   ├── projects.ts   # /api/projects
-│   │   └── config.ts     # /api/config
-│   └── services/
-│       ├── session-store.ts
-│       └── api-client.ts
-└── package.json
-```
+### Етап 2: Переписати Web API Client (пріоритет: ВИСОКИЙ)
 
-### Этап 2: Переписать Web API Client
+**Задачі:**
+1. [ ] Переписати `a2a-client/web/js/web-api-client.js`
+2. [ ] Змінити всі fetch() виклики на Client API
 
-**Задачи:**
-1. [ ] Переписать `a2a-client/web/js/web-api-client.js`
-2. [ ] Изменить все fetch() вызовы на Client API
-
-**Было:**
+**Було:**
 ```javascript
 const response = await fetch('/api/v1/projects');
 ```
@@ -123,93 +114,81 @@ const response = await fetch('/api/v1/projects');
 const response = await fetch('http://localhost:3001/api/projects');
 ```
 
-### Этап 3: Убрать сессии из Server
+### Етап 3: Оновити UI (пріоритет: СЕРЕДНІЙ)
 
-**Задачи:**
-1. [ ] Удалить session storage из `a2a-server/`
-2. [ ] Сделать Server полностью stateless
-
-**Где удалять:**
-- `a2a-server/src/repositories/session.repository.ts`
-- Все связи с сессиями в routes
-
-### Этап 4: Обновить UI
-
-**Задачи:**
-1. [ ] Добавить панель конфигурации (provider, projects)
-2. [ ] Реализовать панели сессий (drag & drop, сворачивание)
-3. [ ] Добавить кнопки "Отменить" / "Применить"
+**Задачі:**
+1. [ ] Додати панель конфігурації (provider, projects)
+2. [ ] Реалізувати панелі сесій (drag & drop, згортання)
+3. [ ] Додати кнопки "Відмінити" / "Застосувати"
 
 ---
 
-## Куда класть код
+## Куди класти код
 
 ### a2a-client/packages/
 
-| Пакет | Назначение |
+| Пакет | Призначення |
 |-------|------------|
-| `api-client` | HTTP клиент для Server |
-| `agent` | Агент для выполнения задач |
-| `fs-utils` | Файловые утилиты |
-| `rag` | RAG функциональность |
-| `script-runner` | Запуск скриптов |
-| `terminal` | Терминал |
-| `types` | Общие типы |
+| `api-client` | HTTP клієнт для Server |
+| `api-server` | HTTP сервер для Web (ПОТРІБНО ДОПОВНИТИ) |
+| `agent` | Агент для виконання задач |
+| `fs-utils` | Файлові утиліти |
+| `rag` | RAG функціональність |
+| `script-runner` | Запуск скриптів |
+| `terminal` | Термінал |
+| `types` | Спільні типи |
 
 ### a2a-client/web/
 
-| Папка | Назначение |
+| Папка | Призначення |
 |-------|------------|
 | `js/flow/` | Flow UI (nodes, panels) |
 | `js/json/` | JSON UI |
-| `css/components/` | UI компоненты |
+| `css/components/` | UI компоненти |
 
 ### a2a-server/
 
-| Папка | Назначение |
+| Папка | Призначення |
 |-------|------------|
 | `src/routes/` | API endpoints |
-| `src/services/` | Бизнес-логика |
-| `src/neurons/` | Нейроны (AI логика) |
-| `src/protocol/` | Обработка протокола |
-
-### external-ai-hub/
-
-| Папка | Назначение |
-|-------|------------|
-| `app/` | Python FastAPI приложение |
-| `docs/` | Документация |
-| `plans/` | Планы развития |
+| `src/services/` | Бізнес-логіка |
+| `src/neurons/` | Нейрони (AI логіка) |
+| `src/protocol/` | Обробка протоколу |
+| `src/actions/definitions/` | Визначення дій |
 
 ---
 
-## Симуляции
+## Симуляції
 
-Симуляции находятся в папке `simulations/`.
+Симуляції знаходяться в папці `simulations/`.
 
-### Формат файлов симуляций
+### Формат файлів симуляцій
 
-Каждый шаг может содержать:
+Кожен крок може містити:
 
-| Файл | Направление | Описание |
-|------|-------------|----------|
-| `request.json` | Client → Server | Запрос от клиента |
-| `request.md` | Server → LLM | **MARKDOWN** с system prompt! |
-| `response.md` | LLM → Server | Ответ от LLM |
-| `response.json` | Server → Client | Ответ клиенту |
+| Файл | Напрям | Опис |
+|------|--------|------|
+| `request.json` | Client → Server | Запит від клієнта |
+| `server-transforms-request.md` | Server (опціонально) | Трансформація запиту перед відправкою до LLM |
+| `request.md` | Server → LLM | **MARKDOWN** з system prompt! |
+| `response.md` | LLM → Server | Відповідь від LLM |
+| `server-transforms-response.md` | Server (опціонально) | Трансформація відповіді перед поверненням клієнту |
+| `response.json` | Server → Client | Відповідь клієнту |
 
-Формат симуляций і request.md/response.md: **simulations/SCHEMA.md**, **.kilocode/workflows/SIMULATION-WORKFLOW.md**.
+> **Примітка:** Файли `server-transforms-request.md` та `server-transforms-response.md` є опціональними і показують серверну обробку/трансформацію даних. Не всі кроки обов'язково містять ці файли.
+
+Формат симуляцій: **simulations/SCHEMA.md**.
 
 ---
 
-## Команды для запуска
+## Команди для запуску
 
 ```bash
 # 1. Server (порт 3000)
 cd a2a-server && npm run dev
 
-# 2. Client API (порт 3001) - ЕЩЕ НЕТ
-cd a2a-client && npm run server
+# 2. Client API (порт 3001) - ПОТРІБНО ВПРОВАДДИТИ
+cd a2a-client/packages/api-server && npm run dev
 
 # 3. Web UI (порт 5173)
 cd a2a-client && npm run dev
@@ -220,12 +199,11 @@ cd external-ai-hub && python app/main.py
 
 ---
 
-## Статус реализации
+## Посилання
 
-| Компонент | Статус | Notes |
-|-----------|--------|-------|
-| Server (3000) | ✅ Готов | Stateless нужен |
-| Client API (3001) | ❌ Нет | Нужно создать |
-| Web → Server | ❌ Нужно исправить | Должно быть Web → Client API |
-| External AI Hub | ✅ Готов | |
-| Session storage | ❌ На Server | Должно быть на Client API |
+- [ARCHITECTURE.md](ARCHITECTURE.md) - Архітектура системи
+- [PROTOCOL.md](PROTOCOL.md) - Протокол взаємодії
+- [SCHEMAS.md](SCHEMAS.md) - Схеми даних
+- [SESSION-FLOW.md](SESSION-FLOW.md) - Потік сесій
+- [COMPARISON.md](COMPARISON.md) - Порівняння бачення з реалізацією
+- [CURRENT-ISSUES.md](CURRENT-ISSUES.md) - Поточні проблеми

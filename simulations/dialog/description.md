@@ -28,8 +28,8 @@
 simulations/dialog/
 ├── description.md
 ├── 1/
-│  │   └── response ├── request.json
-.json
+│   ├── request.json
+│   └── response.json
 ├── 2/
 │   ├── request.json
 │   └── response.json
@@ -56,3 +56,5 @@ simulations/dialog/
 └── steps/
     └── ai-analyze-prompt.md
 ```
+
+> **Примітка:** Файли `server-transforms-request.md` та `server-transforms-response.md` є опціональними і показують трансформацію даних на сервері перед відправкою до LLM та після отримання відповіді відповідно. Деякі кроки можуть містити ці файли для демонстрації серверної обробки.

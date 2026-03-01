@@ -38,10 +38,10 @@ simulations/analyze-dialog/
 ├── description.md
 ├── 1/ request.json, response.json
 ├── 2/ request.json, response.json
-├── 3/ request.json, request.md, response.md, response.json
-├── 4/ request.json, request.md, response.md, response.json
+├── 3/ request.json, server-transforms-request.md, request.md, response.md, server-transforms-response.md, response.json
+├── 4/ request.json, server-transforms-request.md, request.md, response.md, server-transforms-response.md, response.json
 ├── 5/ request.json, response.json
-├── 6/ request.json, request.md, response.md, response.json
-├── 7/ request.json, request.md, response.md, response.json
+├── 6/ request.json, server-transforms-request.md, request.md, response.md, server-transforms-response.md, response.json
+├── 7/ request.json, server-transforms-request.md, request.md, response.md, server-transforms-response.md, response.json
 └── 8/ request.json, response.json
-```
+

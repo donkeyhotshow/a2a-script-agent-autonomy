@@ -20,31 +20,6 @@
       }
     ]
   },
-  "result": {
-    "results": [
-      {
-        "file": "src/auth.js",
-        "score": 0.95,
-        "snippet": "async function login..."
-      },
-      {
-        "file": "src/auth.js",
-        "score": 0.92,
-        "snippet": "async function register..."
-      },
-      {
-        "file": "src/middleware/auth.ts",
-        "score": 0.87,
-        "snippet": "export function verifyToken..."
-      },
-      {
-        "file": "src/utils/jwt.js",
-        "score": 0.82,
-        "snippet": "const jwt = require..."
-      }
-    ],
-    "files": ["src/auth.js", "src/middleware/auth.ts", "src/utils/jwt.js"]
-  },
   "execute": {
     "read-file": {
       "path": "src/auth.js"

@@ -1,0 +1,1 @@
+{"context":{"task":"виправити імпорти у vue компонентах"},"execute":{"form":{"title":"Оберіть спосіб виконання","choices":[{"id":"fix-vue-imports","label":"Виправити зламані імпорти у Vue файлах (автомат)"},{"id":"auto-ai","label":"AI Action Generator — згенерувати екшен за допомогою LLM"},{"id":"task-decomposition","label":"Декомпозиція задачі вручну"}]}}}

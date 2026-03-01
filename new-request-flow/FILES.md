@@ -1,19 +1,19 @@
-# Карта файлов проекта
+# Карта файлів проекту
 
-## Обзор
+## Огляд
 
-Этот документ показывает структуру проекта и где какой код находится.
+Цей документ показує структуру проекту і де який код знаходиться.
 
-## Основные директории
+## Основні директорії
 
 ```
 c:/workspace/org-carrier/a2a-script-agent/
-├── a2a-client/           # Клиентская часть
-│   ├── packages/        # npm пакеты (agent, api-client, fs-utils, rag, etc.)
-│   └── web/            # Web UI (порт 5173)
-├── a2a-server/          # Серверная часть (порт 3000)
-├── external-ai-hub/    # Прокси для Ollama (порт 11434)
-└── new-request-flow/    # Документация и планы
+├── a2a-client/           # Клієнтська частина
+│   ├── packages/        # npm пакети (api-client, api-server, fs-utils, rag, etc.)
+│   └── web/             # Web UI (порт 5173)
+├── a2a-server/          # Серверна частина (порт 3000)
+├── external-ai-hub/    # Проксі для Ollama (порт 11434)
+└── new-request-flow/    # Документація та плани
 ```
 
 ---
@@ -22,103 +22,105 @@ c:/workspace/org-carrier/a2a-script-agent/
 
 ### a2a-client/web/
 
-Web интерфейс (UI). Работает на порту 5173 (Vite dev server).
+Web інтерфейс (UI). Працює на порту 5173 (Vite dev server).
 
-| Файл | Описание |
-|------|----------|
-| `index.html` | Главная HTML страница |
-| `js/app-boot.js` | Инициализация приложения |
-| `js/app-init.js` | Настройка приложения |
-| `js/app-state.js` | Управление состоянием |
-| `js/sessions.js` | Управление сессиями в UI |
-| `js/actions-manager.js` | Менеджер действий |
-| `js/sse-client.js` | SSE клиент для real-time обновлений |
-| `js/web-api-client.js` | API клиент для связи с Client API |
-| `js/flow/` | Flow-based UI компоненты |
-| `js/json/` | JSON UI компоненты |
-| `css/` | Стили |
+| Файл | Опис |
+|------|------|
+| `index.html` | Головна HTML сторінка |
+| `js/app-boot.js` | Ініціалізація додатку |
+| `js/app-init.js` | Налаштування додатку |
+| `js/app-state.js` | Управління станом |
+| `js/sessions.js` | Управління сесіями в UI |
+| `js/actions-manager.js` | Менеджер дій |
+| `js/sse-client.js` | SSE клієнт для real-time оновлень |
+| `js/web-api-client.js` | API клієнт для зв'язку з Client API |
+| `js/flow/` | Flow-based UI компоненти |
+| `js/json/` | JSON UI компоненти |
+| `css/` | Стилі |
 
 ### a2a-client/packages/
 
-NPM пакеты внутри monorepo:
+NPM пакети всередині monorepo:
 
-| Пакет | Путь | Описание |
-|-------|------|----------|
-| `api-client` | `packages/api-client/` | HTTP клиент для Server API |
-| `agent` | `packages/agent/` | Агент |
-| `fs-utils` | `packages/fs-utils/` | Файловые утилиты |
-| `rag` | `packages/rag/` | RAG функциональность |
-| `script-runner` | `packages/script-runner/` | Запуск скриптов |
-| `terminal` | `packages/terminal/` | Терминал |
-| `types` | `packages/types/` | Общие типы |
+| Пакет | Шлях | Опис |
+|-------|------|------|
+| `api-client` | `packages/api-client/` | HTTP клієнт для Server API |
+| `api-server` | `packages/api-server/` | HTTP сервер для Web (ПОТРІБНО ДОПОВНИТИ) |
+| `fs-utils` | `packages/fs-utils/` | Файлові утиліти |
+| `rag` | `packages/rag/` | RAG функціональність |
+| `script-runner` | `packages/script-runner/` | Запуск скриптів |
+| `terminal` | `packages/terminal/` | Термінал |
+| `types` | `packages/types/` | Спільні типи |
+| `embedding` | `packages/embedding/` | Ембедінги |
 
 ---
 
 ## A2A Server
 
-Сервер (Stateless). Работает на порту 3000.
+Сервер (поки що не повністю Stateless). Працює на порту 3000.
 
-| Файл/Директория | Описание |
-|-----------------|----------|
-| `src/index.ts` | Точка входа |
-| `src/server.ts` | Основной сервер |
-| `src/routes/` | API маршруты |
-| `src/services/` | Бизнес-логика |
-| `src/agents/` | Агенты |
-| `tests/` | Тесты |
+| Файл/Директорія | Опис |
+|-----------------|------|
+| `src/index.ts` | Точка входу |
+| `src/server.ts` | Основний сервер |
+| `src/routes/` | API маршрути |
+| `src/services/` | Бізнес-логіка |
+| `src/actions/definitions/` | Визначення дій (actions) |
+| `src/protocol/` | Обробка протоколу |
+| `tests/` | Тести |
 
 ---
 
 ## External AI Hub
 
-Прокси-сервис для Ollama с поддержкой promiseId. Работает на порту 11434.
+Проксі-сервіс для Ollama з підтримкою promiseId. Працює на порту 11434.
 
 ### Структура
 
 ```
 external-ai-hub/
-├── proxy/                      # Flask приложение
+├── proxy/                      # Flask додаток
 │   ├── __init__.py            # Flask app
-│   ├── __main__.py            # Точка входа
-│   ├── config.py              # Конфигурация
-│   ├── routes.py              # API маршруты
-│   ├── proxy_handler.py       # Обработка запросов
-│   ├── ollama_manager.py      # Управление Ollama
+│   ├── __main__.py            # Точка входу
+│   ├── config.py              # Конфігурація
+│   ├── routes.py              # API маршрути
+│   ├── proxy_handler.py       # Обробка запитів
+│   ├── ollama_manager.py      # Управління Ollama
 │   ├── promises.py            # Promise система
-│   ├── ai_hub_config.py      # AI Hub конфиг
-│   └── views.py               # Дополнительные view
+│   ├── ai_hub_config.py      # AI Hub конфіг
+│   └── views.py               # Додаткові view
 │
-├── simulation/                 # ML симуляция
-│   ├── config.py              # Конфигурация
-│   ├── storage.py             # Хранение данных
-│   ├── learner.py             # Обучение эмбеддингов
-│   ├── engine.py              # Движок симуляции
-│   └── prompt_manager.py      # Управление промптами
+├── simulation/                 # ML симуляція
+│   ├── config.py              # Конфігурація
+│   ├── storage.py             # Зберігання даних
+│   ├── learner.py             # Навчання ембедінгів
+│   ├── engine.py              # Двигун симуляції
+│   └── prompt_manager.py      # Управління промптами
 │
-├── scripts/                    # Утилиты
-│   ├── train.py               # Обучение
+├── scripts/                    # Утиліти
+│   ├── train.py               # Навчання
 │   └── benchmark.py           # Бенчмарки
 │
-├── docs/                       # Документация
+├── docs/                       # Документація
 │   └── promise-viewer-plan.md # План UI для promise viewer
 │
-└── plans/                      # Планы разработки
-    └── promise-queue-plan.md   # План очереди promise
+└── plans/                      # Плани розробки
+    └── promise-queue-plan.md   # План черги promise
 ```
 
-### Ключевые endpoints
+### Ключові endpoints
 
-| Endpoint | Метод | Описание |
-|----------|-------|----------|
-| `/health` | GET | Проверка здоровья |
+| Endpoint | Метод | Опис |
+|----------|-------|------|
+| `/health` | GET | Перевірка здоров'я |
 | `/api/tags` | GET | Список моделей |
-| `/api/chat` | POST | Чат с LLM |
-| `/api/generate` | POST | Генерация текста |
+| `/api/chat` | POST | Чат з LLM |
+| `/api/generate` | POST | Генерація тексту |
 | `/promise/<id>` | GET | Статус promise |
 | `/promise/<id>/response` | GET | Результат promise |
 | `/ollama/status` | GET | Статус Ollama |
-| `/ollama/start` | POST | Запустить Ollama |
-| `/ollama/stop` | POST | Остановить Ollama |
+| `/ollama/start` | POST | Запустити Ollama |
+| `/ollama/stop` | POST | Зупинити Ollama |
 
 ### Promise Flow
 
@@ -127,32 +129,34 @@ external-ai-hub/
 2. Proxy → Client: { promiseId: "abc123", status: "pending" } (202)
 3. Client → Proxy: GET /promise/abc123
 4. Proxy → Client: { promiseId: "abc123", status: "pending" }
-   (повторять пока не done)
+   (повторювати поки не done)
 5. Client → Proxy: GET /promise/abc123/response
 6. Proxy → Client: { response from Ollama }
 ```
 
 ---
 
-## New Request Flow (Документация)
+## New Request Flow (Документація)
 
-Директория `new-request-flow/` содержит документацию и планы.
+Директорія `new-request-flow/` містить документацію та плани.
 
-### Основные файлы
+### Основні файли
 
-| Файл | Описание |
-|------|----------|
-| `README.md` | Общее описание системы |
-| `ARCHITECTURE.md` | Архитектура системы |
-| `PROTOCOL.md` | Протокол взаимодействия |
-| `SESSION-FLOW.md` | Поток сессий |
-| `CURRENT-ISSUES.md` | Текущие проблемы и план |
-| `SIMULATION-ANALYSIS.md` | Анализ симуляций |
-| `SIMULATION-FIX-VUE-IMPORTS.md` | Симуляция без AI |
-| `SIMULATION-CODER-DIALOG.md` | Симуляция с RAG + запись файлов |
-| `FILES.md` | Этот файл — карта проекта |
+| Файл | Опис |
+|------|------|
+| [`README.md`](README.md) | Загальний опис системи |
+| [`ARCHITECTURE.md`](ARCHITECTURE.md) | Архітектура системи |
+| [`PROTOCOL.md`](PROTOCOL.md) | Протокол взаємодії |
+| [`SCHEMAS.md`](SCHEMAS.md) | Схеми даних |
+| [`SESSION-FLOW.md`](SESSION-FLOW.md) | Потік сесій |
+| [`COMPARISON.md`](COMPARISON.md) | Порівняння бачення з реалізацією |
+| [`CURRENT-ISSUES.md`](CURRENT-ISSUES.md) | Поточні проблеми |
+| [`IMPLEMENTATION-STATUS.md`](IMPLEMENTATION-STATUS.md) | Статус реалізації |
+| [`ACTION-MAP.md`](ACTION-MAP.md) | Карта коду - де який код |
+| [`ROADMAP.md`](ROADMAP.md) | План розвитку |
+| [`FILES.md`](FILES.md) | Цей файл - карта проекту |
 
-### Симуляции
+### Симуляції
 
 Канон: **simulations/SCHEMA.md**.
 
@@ -164,25 +168,30 @@ simulations/
 ├── fix-vue-imports/           # Виправлення Vue імпортів
 ├── fix-vue-imports-batched/
 ├── analyze-architecture/
+├── analyze-performance/
+├── analyze-security/
+├── analyze-typescript/
+├── analyze-vue/
+├── analyze-laravel/
 ├── phpunit-deprecations/
 └── ...
 ```
 
 ---
 
-## Порты
+## Порти
 
-| Компонент | Порт | Описание |
-|-----------|------|----------|
+| Компонент | Порт | Опис |
+|-----------|------|------|
 | Server | 3000 | A2A Server HTTP API |
-| Client API | 3001 | HTTP API для web |
+| Client API | 3001 | HTTP API для web (ПОТРІБНО ВПРОВАДДИТИ) |
 | Web UI | 5173 | Vite dev server |
-| External AI Hub | 11434 | Прокси для Ollama |
-| Ollama | 11435 | Локальная LLM |
+| External AI Hub | 11434 | Проксі для Ollama |
+| Ollama | 11435 | Локальна LLM |
 
 ---
 
-## Переменные окружения
+## Змінні оточення
 
 ### Server (.env)
 
@@ -206,9 +215,17 @@ OLLAMA_IDLE_TIMEOUT=300
 
 ---
 
-## Следующие шаги
+## Наступні кроки
 
-1. **Интеграция External AI Hub в Server**: Server должен отправлять запросы к Hub с X-Promise: true
-2. **Polling логика**: Добавить периодический опрос promise статуса
-3. **Обработка результатов**: Когда promise done, использовать результат для следующих действий
-4. **UI обновления**: Показывать статус "AI обрабатывает..." пока promise pending
+1. **Інтеграція External AI Hub в Server**: Server повинен відправляти запити до Hub з X-Promise: true
+2. **Polling логіка**: Додати періодичний опитування promise статусу
+3. **Обробка результатів**: Коли promise done, використовувати результат для наступних дій
+4. **UI оновлення**: Показувати статус "AI обробляє..." поки promise pending
+
+---
+
+## Посилання
+
+- [ACTION-MAP.md](ACTION-MAP.md) - Де який код знаходиться
+- [ROADMAP.md](ROADMAP.md) - План розвитку
+- [IMPLEMENTATION-STATUS.md](IMPLEMENTATION-STATUS.md) - Статус реалізації
