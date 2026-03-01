@@ -1,9 +1,21 @@
 {
   "tracking_version": "1.0.0",
   "last_updated": "2026-03-02T00:00:00Z",
-  "total_documents": 0,
+  "total_documents": 1,
   "outdated_documents": [],
   "needs_update_documents": [],
   "review_documents": [],
-  "archived_documents": []
+  "archived_documents": [
+    {
+      "path": "docs/NEW-test-documentation.md",
+      "marked_at": "2026-03-01T22:27:50.025Z",
+      "status": "completed",
+      "updated_at": "2026-03-02T00:31:00Z",
+      "review_results": [
+        "Technical accuracy verified",
+        "Language clarity assessed",
+        "Format compliance checked"
+      ]
+    }
+  ]
 }
