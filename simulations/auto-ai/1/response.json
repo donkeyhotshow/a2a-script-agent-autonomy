@@ -1,0 +1,20 @@
+{
+  "context": {
+    "task": "add a health check endpoint and run the test suite"
+  },
+  "execute": {
+    "form": {
+      "title": "Оберіть спосіб виконання",
+      "choices": [
+        {
+          "id": "auto-ai",
+          "label": "Auto-AI — повний агент"
+        },
+        {
+          "id": "task-decomposition",
+          "label": "Декомпозиція задачі"
+        }
+      ]
+    }
+  }
+}

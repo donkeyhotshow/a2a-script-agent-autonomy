@@ -51,7 +51,7 @@ a2a-server/scripts/
 
 #### Фаза 1: analyze-* (5 экшенов)
 1. **analyze-full** - полный анализ кодовой базы
-2. **analyze-architecture** - анализ архитектуры
+2. **analyze** - анализ архитектуры
 3. **analyze-typescript** - анализ TypeScript
 4. **analyze-vue** - анализ Vue компонентов
 5. **analyze-laravel** - анализ Laravel кода

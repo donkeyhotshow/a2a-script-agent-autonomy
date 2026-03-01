@@ -26,8 +26,9 @@
     ]
   },
   "result": {
-    "success": true,
-    "path": "docs/auth-report.md",
-    "bytesWritten": 1847
+    "write-file": {
+      "path": "docs/auth-report.md",
+      "ok": true
+    }
   }
 }

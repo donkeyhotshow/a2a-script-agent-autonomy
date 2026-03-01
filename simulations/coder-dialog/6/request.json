@@ -31,14 +31,19 @@
         "role": "assistant",
         "message": "Система авторизації працює наступним чином..."
       }
-    ],
-    "ragResults": [
-      {
-        "file": "src/auth.js",
-        "score": 0.95,
-        "snippet": "async function login..."
-      }
     ]
+  },
+  "result": {
+    "rag-search": {
+      "results": [
+        {
+          "file": "src/auth.js",
+          "score": 0.95,
+          "snippet": "async function login..."
+        }
+      ],
+      "files": ["src/auth.js"]
+    }
   },
   "input": {
     "message": "дякую!"

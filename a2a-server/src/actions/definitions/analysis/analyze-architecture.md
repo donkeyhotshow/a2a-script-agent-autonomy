@@ -1,4 +1,4 @@
-# analyze-architecture
+# analyze
 
 Analyze project architecture and layers. **План:** [actions-definitions-for-auto-ai](../../../../plans/actions-definitions-for-auto-ai.md). **Use-case:** [2-code-analysis](../../../../docs/use-cases/auto-ai/2-code-analysis.md).
 

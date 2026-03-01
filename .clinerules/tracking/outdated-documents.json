@@ -16,6 +16,51 @@
         "Language clarity assessed",
         "Format compliance checked"
       ]
+    },
+    {
+      "path": "docs/NEW-TEST-new-documentation.md",
+      "marked_at": "2026-03-02T01:25:10.000Z",
+      "status": "moved",
+      "updated_at": "2026-03-02T01:25:10.000Z",
+      "review_results": [
+        "Moved to docs/cline/ directory"
+      ]
+    },
+    {
+      "path": "docs/NEW-TEST-cli-documentation.md",
+      "marked_at": "2026-03-02T01:25:35.000Z",
+      "status": "moved",
+      "updated_at": "2026-03-02T01:25:35.000Z",
+      "review_results": [
+        "Moved to docs/cline/ directory"
+      ]
+    },
+    {
+      "path": "docs/REVIEW-WORKFLOW-SUMMARY.md",
+      "marked_at": "2026-03-02T01:24:49.000Z",
+      "status": "moved",
+      "updated_at": "2026-03-02T01:24:49.000Z",
+      "review_results": [
+        "Moved to docs/cline/ directory"
+      ]
+    },
+    {
+      "path": "docs/INTEGRATION-GUIDE.md",
+      "marked_at": "2026-03-02T01:26:41.000Z",
+      "status": "moved",
+      "updated_at": "2026-03-02T01:26:41.000Z",
+      "review_results": [
+        "Moved to docs/cline/ directory"
+      ]
+    },
+    {
+      "path": "docs/DOCUMENTATION-REVIEW-WORKFLOW.md",
+      "marked_at": "2026-03-02T01:27:32.000Z",
+      "status": "moved",
+      "updated_at": "2026-03-02T01:27:32.000Z",
+      "review_results": [
+        "Moved to docs/cline/ directory"
+      ]
     }
   ]
 }

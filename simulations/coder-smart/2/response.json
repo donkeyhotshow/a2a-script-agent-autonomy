@@ -3,7 +3,7 @@
     "task": "створи задачу і виконай",
     "execution": {
       "action": "coder-smart",
-      "step": "coder-smart"
+      "step": "user-request"
     },
     "history": []
   },

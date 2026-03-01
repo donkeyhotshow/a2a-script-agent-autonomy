@@ -15,7 +15,7 @@
     }
   },
   "execute": {
-    "search": {
+    "rag-search": {
       "pattern": "**/*.vue",
       "rootDir": ".",
       "description": "Сканування Vue файлів і пошук битих імпортів",

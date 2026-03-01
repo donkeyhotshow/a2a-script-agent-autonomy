@@ -70,7 +70,7 @@
 | `analyze-full` | Полный анализ проекта | Запуск всех активных нейронов |
 | `analyze-performance` | Анализ производительности | N+1 queries, missing indexes, memory leaks |
 | `analyze-security` | Анализ безопасности | SQL injection, XSS, CSRF, secrets |
-| `analyze-architecture` | Анализ архитектуры | God objects, duplicated code |
+| `analyze` | Анализ архитектуры | God objects, duplicated code |
 | `analyze-typescript` | Анализ TypeScript | Any types, missing props |
 | `analyze-laravel` | Анализ Laravel | Missing validation, eager loading |
 | `analyze-vue` | Анализ Vue | Prop drilling, Options API, a11y |
@@ -345,7 +345,7 @@ export default async function run(input: { files: string[] }) {
 ```
 definitions/
 ├── context/     → context-scan.md, context-index.md, context-query.md, context-rank.md, context-format.md
-├── analysis/    → analyze-full.md, analyze-performance.md, analyze-security.md, analyze-architecture.md, analyze-test.md
+├── analysis/    → analyze-full.md, analyze-performance.md, analyze-security.md, analyze.md, analyze-test.md
 ├── graph/       → graph-build.md, graph-query.md, graph-impact.md
 ├── generation/  → generate-crud.md, generate-model.md, generate-controller.md
 ├── hybrid/      → hybrid-fix.md, hybrid-refactor.md, hybrid-improve.md, hybrid-explain.md

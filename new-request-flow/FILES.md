@@ -167,7 +167,7 @@ simulations/
 ├── coder-smart/               # Контекст-документ (MD)
 ├── fix-vue-imports/           # Виправлення Vue імпортів
 ├── fix-vue-imports-batched/
-├── analyze-architecture/
+├── analyze/
 ├── analyze-performance/
 ├── analyze-security/
 ├── analyze-typescript/

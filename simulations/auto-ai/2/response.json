@@ -1,0 +1,1 @@
+{"context":{"task":"add a health check endpoint and run the test suite","execution":{"action":"auto-ai","step":"llm-request"},"history":[]},"execute":{"form":{"input":[{"name":"message","type":"text","label":"Message","placeholder":"What should I do?","required":true}]}}}

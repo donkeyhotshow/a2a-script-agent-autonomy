@@ -93,7 +93,8 @@ Client              Server (transforms)       LLM
   "execute": {
     "rag-search": { "query": "..." },
     "read-file": { "path": "..." },
-    "write-file": { "path": "...", "content": "..." }
+    "write-file": { "path": "...", "content": "..." },
+    "execute-command": { "command": "npm test" }
   }
 }
 ```

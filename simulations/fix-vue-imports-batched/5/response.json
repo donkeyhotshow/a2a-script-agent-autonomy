@@ -23,7 +23,7 @@
     ]
   },
   "execute": {
-    "search": {
+    "rag-search": {
       "query": "export class Header",
       "description": "Пошук файлу, який експортує клас 'Header' з помилки",
       "output": "exporter_file"

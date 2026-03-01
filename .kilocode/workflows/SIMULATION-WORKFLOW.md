@@ -117,7 +117,7 @@ context + history + **execute** (canonical: key = action type, value = params). 
 }
 ```
 
-Execute format: `execute.<action-type> = params`, e.g. `"read-file": { "path": "..." }`, `"write-file": { "path": "...", "content": "..." }`, `"rag-search": { "query": "..." }`, `"form": { "input": [...] }`, `"script": { "input", "output", "code" }`.
+Execute format: `execute.<action-type> = params`, e.g. `"read-file": { "path": "..." }`, `"write-file": { "path": "...", "content": "..." }`, `"rag-search": { "query": "..." }`, `"form": { "input": [...] }`, `"script": { "input", "output", "code" }`, `"execute-command": { "command": "npm test" }`. Client returns `result["execute-command"]` with `command`, `exitCode`, `stdout`, `stderr`.
 
 ## Правила
 

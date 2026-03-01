@@ -11,7 +11,7 @@ simulations/
 ├── dialog/                    # Диалог с LLM
 ├── coder-dialog/              # Диалог с RAG + запись файлов
 ├── fix-vue-imports/           # Исправление Vue импортов
-├── analyze-architecture/
+├── analyze/
 └── ...
 ```
 
@@ -143,10 +143,12 @@ simulations/
 }
 ```
 
-**execute (canonical):** key = action type, value = params. No flat `"action": "<name>"`. Examples: `"read-file": { "path": "..." }`, `"write-file": { "path": "...", "content": "..." }`, `"rag-search": { "query": "..." }`, `"form": { "input": [...] }`, `"script": { "input", "output", "code" }`.
+**execute (canonical):** key = action type, value = params. No flat `"action": "<name>"`. Examples: `"read-file": { "path": "..." }`, `"write-file": { "path": "...", "content": "..." }`, `"rag-search": { "query": "..." }`, `"form": { "input": [...] }`, `"script": { "input", "output", "code" }`, `"execute-command": { "command": "npm test" }`.
 
 **result for read-file:** use action-key shape so server has path + content: `result: { "read-file": { "path": "src/auth.js", "content": "..." } }`. Not just `result: { "content": "..." }`.
 
 **result for rag-search:** use action-key shape so server can pass to LLM as `ragResults`: `result: { "rag-search": { "results": [ { "file", "score", "snippet" } ], "files": ["path1", ...] } }`. Optional `"query"`. Not flat `result: { "results", "files" }`.
+
+**result for execute-command:** use action-key shape: `result: { "execute-command": { "command": "npm test", "exitCode": 0, "stdout": "...", "stderr": "" } }`. Server can pass to LLM for summary or next step.
 
 Каноничная схема: **simulations/SCHEMA.md**. Примеры .md промптов: **simulations/dialog/3/request.md**, **simulations/dialog/3/response.md**.

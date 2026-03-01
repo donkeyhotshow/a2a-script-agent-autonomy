@@ -18,7 +18,7 @@
     }
   },
   "execute": {
-    "search": {
+    "rag-search": {
       "query": "export userStore",
       "description": "Пошук файлу, який експортує 'userStore' з помилки",
       "output": "exporter_file"

@@ -15,7 +15,7 @@ export const AUTO_AI_CATEGORIES = {
     'analyze-full',
     'analyze-performance',
     'analyze-security',
-    'analyze-architecture',
+    'analyze',
     'analyze-test',
     'analyze-typescript',
     'analyze-laravel',

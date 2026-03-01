@@ -24,7 +24,7 @@ const simulationsPath = join(__dirname);
 const simulationCategories = [
   'pilot',
   'analyze-full',
-  'analyze-architecture', 
+  'analyze', 
   'analyze-typescript',
   'analyze-vue',
   'analyze-laravel',

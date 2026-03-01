@@ -136,7 +136,7 @@ simulations/<action-id>/
 
 ### 3.2 Екшени для аналізу
 
-- `analyze-architecture` - аналіз архітектури
+- `analyze` - аналіз архітектури
 - `analyze-laravel` - аналіз Laravel коду
 - `analyze-performance` - аналіз продуктивності
 - `analyze-security` - аналіз безпеки

@@ -18,7 +18,7 @@ steps: "Шаги"
 ## Каталоги (по плану actions-definitions-for-auto-ai)
 
 - **context/** — context-scan, context-index, context-query, context-rank, context-format
-- **analysis/** — analyze-full, analyze-performance, analyze-security, analyze-architecture, analyze-test, analyze-typescript, analyze-laravel, analyze-vue
+- **analysis/** — analyze-full, analyze-performance, analyze-security, analyze, analyze-test, analyze-typescript, analyze-laravel, analyze-vue
 - **graph/** — graph-build, graph-query, graph-impact, graph-extract-entities, graph-extract-relations, graph-visualize
 - **generation/** — generate-crud, generate-model, generate-controller, generate-method, generate-migration, generate-view, generate-test
 - **hybrid/** — hybrid-fix, hybrid-refactor, hybrid-improve, hybrid-explain

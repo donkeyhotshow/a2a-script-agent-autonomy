@@ -99,12 +99,12 @@ Canonical: **each key = action type**, value = params. No flat `action` + params
 
 ```typescript
 // One key = action type, value = params. Examples:
-// script: { input, output, code }; form: { input }; read-file: { path }; write-file: { path, content }; rag-search: { query }; etc.
+// script: { input, output, code }; form: { input }; read-file: { path }; write-file: { path, content }; rag-search: { query }; execute-command: { command }; etc.
 type Execute = Record<string, unknown>;
 // Optional: promiseId, finalResult for async flows
 ```
 
-**Good:** `execute: { "read-file": { "path": "src/auth.js" } }`, `execute: { "write-file": { "path": "...", "content": "..." } }`, `execute: { "form": { "input": [...] } }`.  
+**Good:** `execute: { "read-file": { "path": "src/auth.js" } }`, `execute: { "write-file": { "path": "...", "content": "..." } }`, `execute: { "form": { "input": [...] } }`, `execute: { "execute-command": { "command": "npm test" } }`.  
 **Bad:** `execute: { "action": "read-file", "file": "src/auth.js" }`.
 
 ---

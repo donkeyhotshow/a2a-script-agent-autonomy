@@ -8,5 +8,5 @@
 4. Update `context.files_to_fix` with batched file list.
 5. Next step: "search-exporter" - find exporter for first broken import.
 6. Build response: update `context.execution.step` = "search-exporter", add progress info.
-7. Execute action step: call `search` with query to find exporter file.
-8. Return `response.json` with `execute.search`. No LLM needed.
+7. Execute action step: call `rag-search` with query to find exporter file.
+8. Return `response.json` with `execute.rag-search`. No LLM needed.

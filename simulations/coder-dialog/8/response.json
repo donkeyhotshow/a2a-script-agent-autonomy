@@ -32,17 +32,7 @@
         "message": "Звіт успішно записано! Файл docs/auth-report.md створено. Якщо потрібно щось ще - звертайся!",
         "action": "completed"
       }
-    ],
-    "ragResults": [
-      {
-        "file": "src/auth.js",
-        "score": 0.95,
-        "snippet": "async function login..."
-      }
-    ],
-    "fileContents": {
-      "src/auth.js": "const jwt = require('jsonwebtoken');\nconst bcrypt = require('bcrypt');"
-    }
+    ]
   },
   "result": {
     "message": "Звіт успішно записано! Файл docs/auth-report.md створено (1847 байт). Якщо потрібно щось ще - звертайся!",

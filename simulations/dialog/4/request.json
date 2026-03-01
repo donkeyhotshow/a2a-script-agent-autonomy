@@ -1,6 +1,6 @@
 {
   "context": {
-    "task": "dialog",
+    "task": "диалог",
     "execution": {
       "action": "dialog",
       "step": "llm-request"

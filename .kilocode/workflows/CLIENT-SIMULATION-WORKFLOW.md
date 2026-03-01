@@ -40,7 +40,8 @@ a2a-client/simulations/
 5. **result.rag-search** — коли сервер прислав execute.rag-search.
 6. **result.read-file** — коли сервер прислав execute.read-file.
 7. **result.write-file** — коли сервер прислав execute.write-file.
-8. **input.message** — коли сервер прислав form і потрібно ввести message.
+8. **result.execute-command** — коли сервер прислав execute.execute-command (command, exitCode, stdout, stderr).
+9. **input.message** — коли сервер прислав form і потрібно ввести message.
 
 ## Приклади
 
@@ -122,4 +123,5 @@ a2a-client/simulations/
 | `fix-vue-imports` | form (choice) → script steps → finalResult |
 | `dialog` | actions → result.action; form (message) → result.message |
 | `coder-dialog` | form (message) → result.message; execute.rag-search → result.rag-search; execute.read-file → result.read-file |
+| `auto-ai` | form, rag-search, read-file, write-file, execute-command → result.execute-command (command, exitCode, stdout, stderr) |
 | `analyze-dialog` | form з choices (continue_search / save_report) → result.choice |

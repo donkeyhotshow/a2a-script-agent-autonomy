@@ -9,5 +9,5 @@
 5. Next step: continue "search-exporter" for next file.
 6. Extract next file from batch list.
 7. Build response: update `context.execution.step` = "search-exporter", update progress.
-8. Execute action step: call `search` with query for next exporter.
-9. Return `response.json` with `execute.search`. No LLM needed.
+8. Execute action step: call `rag-search` with query for next exporter.
+9. Return `response.json` with `execute.rag-search`. No LLM needed.

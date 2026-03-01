@@ -18,7 +18,7 @@
     }
   },
   "execute": {
-    "search": {
+    "rag-search": {
       "query": "export { helper }",
       "description": "Пошук файлу, який експортує 'helper' з помилки",
       "output": "exporter_file"
