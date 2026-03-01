@@ -1,6 +1,0 @@
-{
-  "action": "action_complete",
-  "actionId": "context-rank",
-  "result": { "status": "completed", "ranked": ["file1.ts", "file2.ts", "file3.ts"] },
-  "context": { "version": "1.0", "session_id": "test-session-context-rank" }
-}

@@ -1,8 +1,0 @@
-{
-  "action": "approve_action",
-  "actionId": "graph-extract-entities",
-  "context": {
-    "version": "1.0",
-    "session_id": "test-session-graph-extract-entities"
-  }
-}

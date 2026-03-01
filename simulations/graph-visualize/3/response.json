@@ -1,8 +1,0 @@
-{
-  "outcome": "step_continue",
-  "message": "Підготовка даних завершена",
-  "context": { "version": "1.0", "session_id": "test-session-graph-visualize" },
-  "previousStep": { "actionId": "graph-viz-prepare", "result": { "nodes": 142, "edges": 198 } },
-  "executingAction": { "actionId": "graph-viz-generate", "title": "Згенерувати візуалізацію", "status": "running" },
-  "nextSteps": [{ "actionId": "graph-viz-format", "title": "Форматувати вивід" }]
-}

@@ -1,6 +1,0 @@
-{
-  "outcome": "action_approved",
-  "context": { "version": "1.0", "session_id": "test-session-context-query" },
-  "executingAction": { "actionId": "context-query", "status": "running" },
-  "nextSteps": [{ "actionId": "ctx-query-exec", "title": "Виконати запит" }]
-}

@@ -1,6 +1,0 @@
-{
-  "outcome": "action_approved",
-  "context": { "version": "1.0", "session_id": "test-session-hybrid-improve" },
-  "executingAction": { "actionId": "hybrid-improve", "status": "running" },
-  "nextSteps": [{ "actionId": "hybrid-improve-exec", "title": "Покращити" }]
-}

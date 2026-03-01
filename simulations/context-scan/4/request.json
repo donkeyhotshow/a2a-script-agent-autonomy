@@ -1,6 +1,0 @@
-{
-  "action": "action_complete",
-  "actionId": "context-scan",
-  "result": { "status": "completed", "files_found": 156, "context": { "languages": ["TypeScript", "JavaScript", "Vue"], "frameworks": ["Vue 3", "Express"] } },
-  "context": { "version": "1.0", "session_id": "test-session-context-scan" }
-}

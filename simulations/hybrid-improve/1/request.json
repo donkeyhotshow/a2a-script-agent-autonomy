@@ -1,5 +1,0 @@
-{
-  "action": "task_request",
-  "task": "покращити цей код",
-  "context": { "version": "1.0", "session_id": "test-session-hybrid-improve" }
-}

@@ -1,7 +1,0 @@
-{
-  "outcome": "action_proposal",
-  "context": { "version": "1.0", "session_id": "test-session-context-index" },
-  "proposedActions": [
-    { "actionId": "context-index", "title": "Індексувати контекст", "matchScore": 0.95, "subActions": [{ "actionId": "ctx-index-exec", "title": "Індексувати" }] }
-  ]
-}

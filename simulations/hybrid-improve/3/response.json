@@ -1,5 +1,0 @@
-{
-  "outcome": "completed",
-  "context": { "version": "1.0", "session_id": "test-session-hybrid-improve" },
-  "finalResult": { "actionId": "hybrid-improve", "status": "completed", "summary": { "improvements_count": 2 } }
-}

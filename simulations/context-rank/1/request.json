@@ -1,5 +1,0 @@
-{
-  "action": "task_request",
-  "task": "ранжувати контекст за релевантністю",
-  "context": { "version": "1.0", "session_id": "test-session-context-rank" }
-}

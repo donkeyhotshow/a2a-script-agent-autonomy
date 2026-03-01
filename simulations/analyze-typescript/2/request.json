@@ -1,9 +1,0 @@
-{
-  "action": "approve_action",
-  "selectedAction": {
-    "actionId": "analyze-typescript"
-  },
-  "context": {
-    "task": "перевірити TypeScript типи"
-  }
-}

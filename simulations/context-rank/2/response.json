@@ -1,6 +1,0 @@
-{
-  "outcome": "action_approved",
-  "context": { "version": "1.0", "session_id": "test-session-context-rank" },
-  "executingAction": { "actionId": "context-rank", "status": "running" },
-  "nextSteps": [{ "actionId": "ctx-rank-exec", "title": "Ранжувати" }]
-}

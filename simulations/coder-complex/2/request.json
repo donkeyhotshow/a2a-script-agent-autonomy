@@ -1,8 +1,0 @@
-{
-  "context": {
-    "task": "потрібно додати авторизацію до нового API ендпоінту /api/users/{id}/profile"
-  },
-  "result": {
-    "actionId": "coder-complex"
-  }
-}

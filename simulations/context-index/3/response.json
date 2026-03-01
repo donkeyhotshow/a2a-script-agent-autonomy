@@ -1,5 +1,0 @@
-{
-  "outcome": "completed",
-  "context": { "version": "1.0", "session_id": "test-session-context-index" },
-  "finalResult": { "actionId": "context-index", "status": "completed", "summary": { "indexed": 156 } }
-}

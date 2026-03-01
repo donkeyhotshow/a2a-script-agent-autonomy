@@ -1,5 +1,0 @@
-{
-  "outcome": "completed",
-  "context": { "version": "1.0", "session_id": "test-session-hybrid-explain" },
-  "finalResult": { "actionId": "hybrid-explain", "status": "completed", "summary": { "explained": true } }
-}

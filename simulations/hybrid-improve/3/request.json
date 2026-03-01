@@ -1,6 +1,0 @@
-{
-  "action": "action_complete",
-  "actionId": "hybrid-improve",
-  "result": { "status": "completed", "improvements": ["added type hints", "optimized imports"] },
-  "context": { "version": "1.0", "session_id": "test-session-hybrid-improve" }
-}

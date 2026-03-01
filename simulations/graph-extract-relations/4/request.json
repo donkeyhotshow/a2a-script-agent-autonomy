@@ -1,9 +1,0 @@
-{
-  "action": "step_result",
-  "actionId": "graph-rel-classify",
-  "result": {
-    "by_type": { "import": 156, "extends": 23, "implements": 12, "calls": 43 },
-    "classified": 234
-  },
-  "context": { "version": "1.0", "session_id": "test-session-graph-extract-relations" }
-}

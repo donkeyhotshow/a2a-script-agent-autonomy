@@ -1,5 +1,0 @@
-{
-  "action": "task_request",
-  "task": "форматувати контекст",
-  "context": { "version": "1.0", "session_id": "test-session-context-format" }
-}

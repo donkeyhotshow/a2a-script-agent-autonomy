@@ -1,5 +1,0 @@
-{
-  "action": "approve_action",
-  "actionId": "context-index",
-  "context": { "version": "1.0", "session_id": "test-session-context-index" }
-}

@@ -1,6 +1,0 @@
-{
-  "outcome": "action_approved",
-  "context": { "version": "1.0", "session_id": "test-session-context-format" },
-  "executingAction": { "actionId": "context-format", "status": "running" },
-  "nextSteps": [{ "actionId": "ctx-format-exec", "title": "Форматувати" }]
-}

@@ -1,5 +1,0 @@
-{
-  "action": "task_request",
-  "task": "візуалізувати граф залежностей проекту",
-  "context": { "version": "1.0", "session_id": "test-session-graph-visualize" }
-}

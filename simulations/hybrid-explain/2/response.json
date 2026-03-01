@@ -1,6 +1,0 @@
-{
-  "outcome": "action_approved",
-  "context": { "version": "1.0", "session_id": "test-session-hybrid-explain" },
-  "executingAction": { "actionId": "hybrid-explain", "status": "running" },
-  "nextSteps": [{ "actionId": "hybrid-explain-exec", "title": "Пояснити" }]
-}

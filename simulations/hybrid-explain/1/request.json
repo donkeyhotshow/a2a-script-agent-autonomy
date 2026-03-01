@@ -1,5 +1,0 @@
-{
-  "action": "task_request",
-  "task": "пояснити як працює цей код",
-  "context": { "version": "1.0", "session_id": "test-session-hybrid-explain" }
-}

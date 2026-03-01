@@ -1,6 +1,0 @@
-{
-  "action": "action_complete",
-  "actionId": "hybrid-explain",
-  "result": { "status": "completed", "explanation": "Код реалізує паттерн Repository..." },
-  "context": { "version": "1.0", "session_id": "test-session-hybrid-explain" }
-}

@@ -1,6 +1,0 @@
-{
-  "outcome": "completed",
-  "message": "Сканування контексту завершено",
-  "context": { "version": "1.0", "session_id": "test-session-context-scan" },
-  "finalResult": { "actionId": "context-scan", "status": "completed", "summary": { "files_found": 156 } }
-}

@@ -1,8 +1,0 @@
-{
-  "outcome": "step_continue",
-  "message": "Генерація візуалізації завершена",
-  "context": { "version": "1.0", "session_id": "test-session-graph-visualize" },
-  "previousStep": { "actionId": "graph-viz-generate", "result": { "formats": ["dot", "svg", "vueflow"] } },
-  "executingAction": { "actionId": "graph-viz-format", "title": "Форматувати вивід", "status": "running" },
-  "nextSteps": []
-}

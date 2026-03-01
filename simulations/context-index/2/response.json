@@ -1,6 +1,0 @@
-{
-  "outcome": "action_approved",
-  "context": { "version": "1.0", "session_id": "test-session-context-index" },
-  "executingAction": { "actionId": "context-index", "status": "running" },
-  "nextSteps": [{ "actionId": "ctx-index-exec", "title": "Індексувати" }]
-}

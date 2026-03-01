@@ -1,6 +1,0 @@
-{
-  "action": "action_complete",
-  "actionId": "context-query",
-  "result": { "status": "completed", "results": ["src/controllers/UserController.ts", "src/services/UserService.ts"] },
-  "context": { "version": "1.0", "session_id": "test-session-context-query" }
-}

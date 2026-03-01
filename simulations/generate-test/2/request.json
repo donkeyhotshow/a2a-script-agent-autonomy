@@ -1,9 +1,0 @@
-{
-  "action": "approve_action",
-  "selectedAction": {
-    "actionId": "generate-test"
-  },
-  "context": {
-    "task": "створити тест для UserController"
-  }
-}

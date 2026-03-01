@@ -1,9 +1,0 @@
-{
-  "action": "approve_action",
-  "selectedAction": {
-    "actionId": "analyze-laravel"
-  },
-  "context": {
-    "task": "проаналізувати Laravel код"
-  }
-}

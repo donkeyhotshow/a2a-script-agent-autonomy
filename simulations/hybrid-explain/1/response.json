@@ -1,7 +1,0 @@
-{
-  "outcome": "action_proposal",
-  "context": { "version": "1.0", "session_id": "test-session-hybrid-explain" },
-  "proposedActions": [
-    { "actionId": "hybrid-explain", "title": "Пояснити код", "matchScore": 0.95, "subActions": [{ "actionId": "hybrid-explain-exec", "title": "Пояснити" }] }
-  ]
-}

@@ -1,6 +1,6 @@
 {
   "context": {
-    "task": "dialog"
+    "task": "диалог"
   },
   "actions": [
     {
@@ -8,11 +8,10 @@
       "title": "AI діалог з користувачем",
       "description": "Провести діалог з користувачем для уточнення завдання",
       "priority": 10,
-      "matchScore": 0.95,
       "repeatSteps":[0],
       "steps": [
         {
-          "action": "llm-request",
+          "action": "request",
           "title": "Запит до AI",
           "description": "Відправити код на аналіз до AI",
           "priority": 10

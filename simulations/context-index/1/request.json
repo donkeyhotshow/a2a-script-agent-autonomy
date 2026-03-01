@@ -1,5 +1,0 @@
-{
-  "action": "task_request",
-  "task": "проіндексувати контекст проекту",
-  "context": { "version": "1.0", "session_id": "test-session-context-index" }
-}

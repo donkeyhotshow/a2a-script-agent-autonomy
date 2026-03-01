@@ -1,6 +1,0 @@
-{
-  "action": "step_result",
-  "actionId": "graph-viz-generate",
-  "result": { "formats": ["dot", "svg", "vueflow"], "generated": true },
-  "context": { "version": "1.0", "session_id": "test-session-graph-visualize" }
-}
