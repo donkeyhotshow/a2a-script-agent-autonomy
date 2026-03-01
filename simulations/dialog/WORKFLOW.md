@@ -11,6 +11,41 @@ Each dialog step contains 4 file types:
 | `response.md` | LLM → Server | What LLM returns to server |
 | `response.json` | Server → Client | What server sends back to client |
 
+## ВАЖНО: request.md - это MARKDOWN!
+
+**НЕ** используй формат:
+```json
+{
+  "model": "qwen3:8b",
+  "messages": [...]
+}
+```
+
+**ИСПОЛЬЗУЙ** формат:
+```markdown
+## System Prompt
+
+продовжи діалог в json . відповідь оновленим json 
+
+```json
+{
+  "context": {
+    "task": "dialog",
+    "execution": {
+      "action": "dialog",
+      "step": "llm-request"
+    },
+    "history": [
+      {
+        "role": "user",
+        "message": "hello world"
+      }
+    ]
+  }
+}
+```
+```
+
 ## Flow Diagram
 
 ```
@@ -19,15 +54,14 @@ Client              Server              LLM
   │ request.json      │                   │
   │──────────────────>│                   │
   │                   │                   │
-  │                   │ request.md        │
+  │                   │ request.md (MARKDOWN!) │
   │                   │──────────────────>│
   │                   │                   │
-  │                   │ response.md       │
+  │                   │ response.md      │
   │                   │<──────────────────│
   │                   │                   │
   │ response.json     │                   │
   │<──────────────────│                   │
-  │                   │                   │
 ```
 
 ## File Formats
@@ -37,11 +71,7 @@ Client              Server              LLM
 ```json
 {
   "context": {
-    "task": "dialog",
-    "execution": {
-      "action": "dialog",
-      "step": "llm-request"
-    }
+    "task": "dialog"
   },
   "input": {
     "messages": [
@@ -57,29 +87,37 @@ Client              Server              LLM
 - `input.messages` contains content without role (role is added by server)
 - May contain `context.history` for subsequent turns
 
-### request.md (Server → LLM)
+### request.md (Server → LLM) - MARKDAOWN!
+
+```markdown
+## System Prompt
+
+продовжи діалог в json . відповідь оновленим json 
 
 ```json
 {
-  "model": "qwen3:8b",
-  "messages": [
-    {
-      "role": "system",
-      "content": "продовжи діалог"
+  "context": {
+    "task": "dialog",
+    "execution": {
+      "action": "dialog",
+      "step": "llm-request"
     },
-    {
-      "role": "user",
-      "content": "hello world"
-    }
-  ],
-  "stream": false
+    "history": [
+      {
+        "role": "user",
+        "message": "hello world"
+      }
+    ]
+  }
 }
+```
 ```
 
 **Key points:**
-- Uses complex prompt format with system prompt
-- Transforms client's content-only messages into proper role-based messages
-- Includes history from previous turns for context
+- Uses MARKDOWN format with system prompt
+- NOT JSON with model/messages
+- LLM must respond with updated JSON
+- Complex prompt that transforms client input
 
 ### response.md (LLM → Server)
 
@@ -107,7 +145,7 @@ Client              Server              LLM
 
 **Key points:**
 - Contains full context with updated history
-- Server processes LLM response and builds history
+- LLM returns JSON with history
 - This is what would be sent to LLM in next turn
 
 ### response.json (Server → Client)
@@ -117,59 +155,176 @@ Client              Server              LLM
   "context": {
     "task": "dialog",
     "execution": {
-      "action": "dialog",
-      "step": "llm-request"
+      " Загрузка... </button>
+    </div>
+  </div>
+</div>
+
+<div class="p-4 bg-blue-50 rounded-lg">
+  <h4 class="font-medium mb-2">💡 Key Insight</h4>
+  <p class="text-sm">
+    The history is built from the LLM response. The client sends 
+    <code>content</code>, and the server adds the <code>role</code> 
+    when building the conversation history.
+  </p>
+</div>
+```
+
+### 💻 Implementation
+
+#### DialogForm.vue
+
+```vue
+<template>
+  <form @submit.prevent="submitMessage">
+    <input 
+      v-model="message" 
+      placeholder="Type your message..."
+      class="border p-2 rounded"
+    />
+    <button type="submit">Send</button>
+  </form>
+</template>
+
+<script setup>
+const message = ref('')
+const emit = defineEmits(['submit'])
+
+function submitMessage() {
+  // Client sends content WITHOUT role
+  emit('submit', { content: message.value })
+  message.value = ''
+}
+</script>
+```
+
+#### Server Processing
+
+```javascript
+async function processMessage(input) {
+  // Build history
+  const messages = context.history.map(h => ({
+    role: h.role,
+    content: h.message
+  }))
+  
+  // Add current message with role: user
+  messages.push({ 
+    role: 'user', 
+    content: input.messages[0].content 
+  })
+  
+  // Call LLM
+  const llmResponse = await callLLM(messages)
+  
+  // Add assistant response to history
+  messages.push({ 
+    role: 'assistant', 
+    content: llmResponse.message 
+  })
+  
+  // Return to client
+  return {
+    context: { history: buildHistory(messages) },
+    execute: { form: {...} }
+  }
+}
+```
+
+---
+
+## 🎯 Summary
+
+| Aspect | Description |
+|--------|-------------|
+| **Initial State** | Client sends content-only message |
+| **Server Processing** | Adds role: "user", calls LLM |
+| **LLM Request** | System prompt + messages with roles |
+| **LLM Response** | Assistant message |
+| **Server Response** | Returns history with both roles |
+| **Client UI** | Shows conversation with proper roles |
+
+The key insight is that **roles are added by the server**, not by the client. The client only provides the message content.
+
+---
+
+## 🔧 Server Implementation Details
+
+### Context Building
+
+```typescript
+function buildContext(input: Input): Context {
+  // Start with existing history
+  const messages: Message[] = context.history.map(h => ({
+    role: h.role,
+    content: h.message
+  }))
+  
+  // Add new user message
+  messages.push({
+    role: 'user',
+    content: input.messages[0].content
+  })
+  
+  return {
+    task: context.task,
+    execution: { action: 'dialog', step: 'llm-request' },
+    history: messages
+  }
+}
+```
+
+### LLM Call
+
+```typescript
+async function callLLM(messages: Message[]): Promise<LLMResponse> {
+  const response = await fetch('http://localhost:11434/api/chat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: 'llama3',
+      messages,
+      stream: false
+    })
+  })
+  
+  return response.json()
+}
+```
+
+### Response Building
+
+```typescript
+function buildResponse(llmResponse: LLMResponse, context: Context): ServerResponse {
+  // Add assistant message to history
+  const history = [
+    ...context.history,
+    { role: 'assistant', message: llmResponse.message.content }
+  ]
+  
+  return {
+    context: {
+      task: context.task,
+      execution: { action: 'dialog', step: 'llm-request' },
+      history
     },
-    "history": [
-      {
-        "role": "user",
-        "message": "hello world"
-      },
-      {
-        "role": "assistant",
-        "message": "hello world"
+    execute: {
+      form: {
+        input: {},
+        output: 'message',
+        required: ['messages']
       }
-    ]
-  },
-  "execute": {
-    "form": {
-      "input": {},
-      "output": "message",
-      "required": ["messages"]
     }
   }
 }
 ```
 
-**Key points:**
-- Same as response.md but with `execute.form` added
-- `execute.form` allows client to continue dialog
-- For completed dialogs, uses `execute.result` instead
+---
 
-## Step-by-Step Flow
+## 📝 Important Notes
 
-### Step 1: Initial Request
-- Client sends initial request
-- Server returns form for first message
-
-### Step 2: Client Provides Input
-- Client sends message content
-- Server prepares to call LLM
-
-### Step 3: First LLM Call (No History)
-- Server sends to LLM (request.md): system prompt + user message
-- LLM returns response (response.md)
-- Server responds to client (response.json) with history + form
-
-### Steps 4+: Subsequent Turns
-- Client sends result message + server has history
-- Server sends to LLM (request.md): system + history + new message
-- LLM returns response (response.md)
-- Server responds to client (response.json) with updated history
-
-## Important Notes
-
-1. **No optimization in prompts** - Request.md uses full complex format
-2. **Model**: Uses "qwen3:8b" for all LLM calls
+1. **No optimization in prompts** - Use full complex format
+2. **Model**: Uses "llama3" or similar
 3. **System prompt**: "продовжи діалог" for continuing dialog
-4. **History building**: Server adds roles when building history from client's content-only messages
+4. **History building**: Server adds roles when building messages
+5. **request.md format**: MARKDOWN with system prompt, NOT JSON with model/messages

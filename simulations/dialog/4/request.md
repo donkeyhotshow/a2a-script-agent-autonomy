@@ -1,22 +1,29 @@
+## System Prompt
+
+продолжи диалог в json . ответь обновленным json 
+
+```json
 {
-  "model": "qwen3:8b",
-  "messages": [
-    {
-      "role": "system",
-      "content": "продолжи диалог"
+  "context": {
+    "task": "dialog",
+    "execution": {
+      "action": "dialog",
+      "step": "llm-request"
     },
-    {
-      "role": "user",
-      "content": "hello world"
-    },
-    {
-      "role": "assistant",
-      "content": "hello world"
-    },
-    {
-      "role": "user",
-      "content": "Дякую!"
-    }
-  ],
-  "stream": false
+    "history": [
+      {
+        "role": "user",
+        "message": "hello world"
+      },
+      {
+        "role": "assistant",
+        "message": "hello world"
+      },
+      {
+        "role": "user",
+        "message": "Дякую!"
+      }
+    ]
+  }
 }
+```
