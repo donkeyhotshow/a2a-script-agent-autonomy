@@ -1,5 +1,8 @@
 {
-  "action": "capture-task",
-  "userMessage": "проаналізуй архітектуру проекту та створи план покращення",
-  "sessionId": "session_123"
+  "context": {
+    "task": "створи задачу і виконай"
+  },
+  "result": {
+    "action": "coder-smart"
+  }
 }

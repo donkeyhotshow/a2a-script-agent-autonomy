@@ -2,47 +2,33 @@
 
 ## Overview
 
-Симуляции находятся в папке `simulations/`. Каждая симуляция представляет собой сценарий взаимодействия Client ↔ Server ↔ LLM.
+Симуляции в `simulations/`. Каждый шаг — Client → Server → (LLM) → Server → Client. Каноничная схема: `simulations/SCHEMA.md`.
 
 ## Structure
 
 ```
 simulations/
-├── dialog/                 # Симуляция диалога
-│   ├── 1/
-│   │   ├── request.json    # Client → Server
-│   │   └── response.json  # Server → Client
-│   ├── 2/
-│   │   ├── request.json
-│   │   └── response.json
-│   ├── 3/
-│   │   ├── request.json
-│   │   ├── request.md     # Server → LLM (Complex prompt format!)
-│   │   ├── response.json
-│   │   └── response.md    # LLM → Server
-│   ├── 4/
-│   │   ├── request.json
-│   │   ├── request.md
-│   │   ├── response.json
-│   │   └── response.md
-│   └── ...
-├── fix-vue-imports/        # Симуляция fix-vue-imports
-├── analyze-architecture/   # Симуляция анализа архитектуры
+├── dialog/              # Діалог з LLM
+│   ├── 1/ request.json, response.json
+│   ├── 2/ request.json, response.json
+│   ├── 3/ request.json, request.md, response.json, response.md
+│   ├── 4/ request.json, request.md, response.json, response.md
+├── coder-dialog/        # Діалог + RAG + файли
+├── fix-vue-imports/
+├── fix-vue-imports-batched/
 └── ...
 ```
 
 ## File Types
 
-Каждый шаг симуляции содержит:
-
 | File | Direction | Description |
 |------|-----------|-------------|
-| `request.json` | Client → Server | Что клиент отправляет на сервер |
-| `request.md` | Server → LLM | Что сервер отправляет в External AI Hub |
-| `response.md` | LLM → Server | Что LLM возвращает серверу |
-| `response.json` | Server → Client | Что сервер возвращает клиенту |
+| `request.json` | Client → Server | Запрос клієнта |
+| `request.md` | Server → LLM | MARKDOWN: system prompt + поточний стан (JSON у блоці) |
+| `response.md` | LLM → Server | Очікуваний вивід LLM (наприклад `{ "message": "..." }`) |
+| `response.json` | Server → Client | Відповідь клієнту (context + execute) |
 
-**ВАЖНО:** Не все шаги содержат все 4 файла. Шаги с LLM содержат .md файлы, остальные только .json.
+У кроках з LLM є .md; інші — лише .json.
 
 ## Flow
 
@@ -51,105 +37,68 @@ Client              Server              LLM
   │                   │                   │
   │ request.json      │                   │
   │──────────────────>│                   │
-  │                   │                   │
   │                   │ request.md        │
   │                   │──────────────────>│
-  │                   │                   │
-  │                   │ response.md       │
+  │                   │    response.md    │
   │                   │<──────────────────│
-  │                   │                   │
   │ response.json     │                   │
   │<──────────────────│                   │
 ```
 
-## Dialog Simulation - Форматы файлов
+## Dialog: формати
 
-### request.json (Client → Server)
+### Крок 1 — request.json (Client → Server)
+
+```json
+{
+  "task": "диалог"
+}
+```
+
+### Крок 2 — request.json (вибір дії)
+
+```json
+{
+  "context": { "task": "диалог" },
+  "result": { "action": "dialog" }
+}
+```
+
+### Крок 3 — request.json (повідомлення користувача)
 
 ```json
 {
   "context": {
-    "task": "dialog"
+    "task": "диалог",
+    "execution": { "action": "dialog", "step": "request" }
   },
-  "input": {
-    "messages": [
-      {
-        "content": "user message"
-      }
-    ]
-  }
+  "result": { "message": "hello world" }
 }
 ```
 
-**Ключевые моменты:**
-- `input.messages` содержит content БЕЗ role (сервер добавляет role)
-- history передается через context.history
+### request.md (Server → LLM)
 
-### request.md (Server → LLM) - Complex Prompt!
-
-```markdown
-## System Prompt
-
-продолжи диалог в json . ответь обновленным json 
-
-```json
-{
-  "context": {
-    "task": "dialog",
-    "execution": {
-      "action": "dialog",
-      "step": "llm-request"
-    },
-    "history": [
-      {
-        "role": "user",
-        "message": "hello world"
-      }
-    ]
-  }
-}
-```
-```
-
-**Ключевые моменты:**
-- ЭТО MARKDOWN С SYSTEM PROMPT!
-- Не JSON!
-- LLM должен ответить JSON с обновленным context
-- НЕ используется оптимизированный формат (model, messages)
-- Это сложный промпт который требует трансформации
+MARKDOWN: секція **System Prompt**, опис формату відповіді (JSON з полем `message`), потім секція **Поточний стан** з JSON контексту та історії. Приклад структури — у `simulations/dialog/3/request.md`.
 
 ### response.md (LLM → Server)
 
+Тільки вивід LLM:
+
 ```json
 {
-  "context": {
-    "task": "dialog",
-    "execution": {
-      "action": "dialog",
-      "step": "llm-request"
-    },
-    "history": [
-      { "role": "user", "message": "hello world" },
-      { "role": "assistant", "message": "hello world" }
-    ]
-  }
+  "message": "hello world"
 }
 ```
 
-**Ключевые моменты:**
-- Содержит context с обновленным history
-- LLM вернул JSON с историей
-
 ### response.json (Server → Client)
+
+context + history + execute.form з полем для наступного повідомлення:
 
 ```json
 {
   "context": {
     "task": "dialog",
-    "execution": {
-      "action": "dialog",
-      "step": "llm-request"
-    },
+    "execution": { "action": "dialog", "step": "llm-request" },
     "history": [
       { "role": "user", "message": "hello world" },
       { "role": "assistant", "message": "hello world" }
@@ -157,43 +106,16 @@ Client              Server              LLM
   },
   "execute": {
     "form": {
-      "input": {},
-      "output": "message",
-      "required": ["messages"]
+      "input": [{ "name": "message", "type": "text", "label": "Повідомлення", "required": true }]
     }
   }
 }
 ```
 
-**Ключевые моменты:**
-- К response.md добавляется поле execute
-- execute.form - для продолжения диалога
-- execute.result - для завершения
+## Правила
 
-## Пошаговый Flow
-
-### Шаг 1: Initial Request
-- Client: отправляет task
-- Server: возвращает form для первого сообщения
-
-### Шаг 2: Client Provides Input
-- Client: отправляет message content
-- Server: готовится вызвать LLM
-
-### Шаг 3: First LLM Call (No History) - ЕСТЬ .md ФАЙЛЫ!
-- Server → LLM (request.md): system prompt + user message в markdown
-- LLM → Server (response.md): JSON с history
-- Server → Client (response.json): history + form
-
-### Шаг 4+: Subsequent Turns - ЕСТЬ .md ФАЙЛЫ!
-- Client: отправляет result message + server имеет history
-- Server → LLM (request.md): system + history + new message
-- LLM → Server (response.md): JSON с updated history
-- Server → Client (response.json): updated history + form/result
-
-## Главные правила
-
-1. **request.md - это MARKDOWN с system prompt**, не просто JSON с model/messages
-2. **Client отправляет content без role** - сервер добавляет role при построении history
-3. **response.md возвращает context с history** - это что будет отправлено LLM в следующем запросе
-4. **response.json = response.md + execute** - сервер добавляет execute.form или execute.result
+1. **Перший запит** — лише `{ "task": "..." }`.
+2. **Вибір дії** — `result.action` (не actionId).
+3. **request.md** — завжди MARKDOWN (system prompt + стан), не чистий JSON з model/messages.
+4. **response.md** — лише очікуваний вивід LLM (наприклад один об’єкт з `message`).
+5. **response.json** = контекст із сервера + execute (form або result).

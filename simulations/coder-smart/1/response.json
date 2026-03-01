@@ -1,27 +1,28 @@
 {
-  "session_id": "session_123",
-  "project_id": "project_456",
-  "task": "проаналізуй архітектуру проекту та створи план покращення",
-  "availableActions": [
+  "context": {
+    "task": "створи задачу і виконай"
+  },
+  "actions": [
     {
-      "id": "capture-task",
-      "title": "Захоплення задачі",
-      "description": "Створити базову структуру задачі"
+      "action": "coder-smart",
+      "title": "Smart Coder — задача через документ",
+      "description": "Створює MD-документ задачі (запит, формулювання, план, чеклист) і виконує пункти через LLM з єдиним контекстом",
+      "priority": 10,
+      "matchScore": 0.95
+    }
+  ],
+  "fallbackActions": [
+    {
+      "mode": "auto-ai",
+      "title": "AI Action Generator",
+      "description": "Згенерувати новий екшен за допомогою LLM",
+      "fallbackType": "llm_generation"
     },
     {
-      "id": "analyze-intent",
-      "title": "Аналіз наміру",
-      "description": "Визначити тип та складність задачі"
-    },
-    {
-      "id": "llm-first-iteration",
-      "title": "Перша ітерація LLM",
-      "description": "Створити план вивчення проблеми"
-    },
-    {
-      "id": "create-context-document",
-      "title": "Створити документ контексту",
-      "description": "Згенерувати MD документ з планом"
+      "mode": "task-decomposition",
+      "title": "Декомпозиція задачі",
+      "description": "Розбити задачу на підзадачі вручну",
+      "fallbackType": "manual"
     }
   ]
 }

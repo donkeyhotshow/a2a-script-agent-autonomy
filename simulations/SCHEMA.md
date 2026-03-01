@@ -24,3 +24,4 @@ Align all simulations to avoid redundant or conflicting values.
 - fix-vue-imports, fix-vue-imports-batched: full steps + fallbackActions.
 - dialog: repeatSteps + fallbackActions + matchScore (aligned with coder-dialog).
 - coder-dialog: single step + fallbackActions.
+- coder-smart: no steps — single LLM flow; creates task MD (запит, формулювання, план, чеклист) on client, then execute loop (history = [task doc], LLM does next checklist item, MD updated).

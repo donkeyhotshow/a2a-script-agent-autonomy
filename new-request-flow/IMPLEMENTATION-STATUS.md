@@ -198,22 +198,7 @@ const response = await fetch('http://localhost:3001/api/projects');
 | `response.md` | LLM → Server | Ответ от LLM |
 | `response.json` | Server → Client | Ответ клиенту |
 
-**ВАЖНО: request.md - это MARKDOWN с system prompt!**
-
-```markdown
-## System Prompt
-
-продолжи диалог в json . ответь обновленным json 
-
-```json
-{
-  "context": {
-    "task": "dialog",
-    ...
-  }
-}
-```
-```
+Формат симуляций і request.md/response.md: **simulations/SCHEMA.md**, **.kilocode/workflows/SIMULATION-WORKFLOW.md**.
 
 ---
 

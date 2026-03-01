@@ -30,11 +30,6 @@ a2a-client/server/
 - Обращаться к Client API (порт 3001)
 - endpoints: `/api/sessions`, `/api/sessions/:id/action`, etc.
 
-#### 3. Исправить симуляции
-Добавить `sessionId` и `projectId` в запросы:
-- `simulations/fix-vue-imports/1/request.json`
-- Все другие симуляции
-
 ---
 
 ### 🟡 Средний приоритет
@@ -80,7 +75,7 @@ a2a-client/server/
 | Файл | Что исправить |
 |------|---------------|
 | `a2a-client/web/js/web-api-client.js` | Обращаться к Client API, не Server |
-| `simulations/*/1/request.json` | Добавить sessionId, projectId |
+| `simulations/*/1/request.json` | Первый запрос — только task (см. simulations/SCHEMA.md) |
 
 ---
 

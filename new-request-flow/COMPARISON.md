@@ -87,27 +87,12 @@ serverUrl: 'http://localhost:8080/api/v1'
 
 ## 6. Первый запрос
 
-### Видение (README.md)
-> по сути , мы делаем поисковый запрос сервисов сервера .
+### Симуляции (simulations/SCHEMA.md)
+Первый запрос к серверу в симуляциях — только `{ "task": "..." }`. sessionId/projectId — слой Client API (клієнт додає їх при виклику, симуляції їх не містять).
 
-### Реальность (fix-vue-imports/1/request.json)
+### Приклад (fix-vue-imports/1/request.json)
 ```json
-{
-  "task": "виправити імпорти у vue компонентах"
-}
-```
-
-### Проблема
-> в C:\workspace\org-carrier\a2a-script-agent\simulations\fix-vue-imports\1\request.json 
-> отображено запрос , там точно чегото нехватает . поля номерок сессии и номерок проекта.
-
-### Нужно добавить
-```json
-{
-  "sessionId": "sess_xxx",
-  "projectId": "proj_xxx", 
-  "task": "виправити імпорти..."
-}
+{ "task": "виправити імпорти у vue компонентах" }
 ```
 
 ---
@@ -147,5 +132,4 @@ Client → Server: /invoke { context, result }
 |---|----------|------|-----------|
 | 1 | Web → Server напрямую | web-api-client.js | 🔴 Высокий |
 | 2 | Нет Client API | Нужно создать | 🔴 Высокий |
-| 3 | request.json без sessionId/projectId | simulations/ | 🟡 Средний |
-| 4 | UI панелей не соответствует | sessions.js | 🟡 Средний |
+| 3 | UI панелей не соответствует | sessions.js | 🟡 Средний |

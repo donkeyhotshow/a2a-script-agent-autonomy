@@ -1,8 +1,13 @@
 {
-  "action": "analyze-intent-result",
-  "captured_task": {
-    "id": "task_1709280000000",
-    "session_id": "session_123",
-    "original_message": "проаналізуй архітектуру проекту та створи план покращення"
+  "context": {
+    "task": "створи задачу і виконай",
+    "execution": {
+      "action": "coder-smart",
+      "step": "create-task-doc"
+    },
+    "history": []
+  },
+  "result": {
+    "message": "додати логінування в API та оновити тести"
   }
 }

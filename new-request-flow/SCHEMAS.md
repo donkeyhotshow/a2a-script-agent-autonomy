@@ -119,10 +119,12 @@ interface FinalResult {
 ## 6. Request (Client → Server)
 
 ```typescript
+// Первый запрос — только task (см. simulations/SCHEMA.md)
 // POST /api/v1/invoke
 interface InvokeRequest {
-  context: Context;
-  result?: Record<string, any>; // Результат предыдущего шага
+  task?: string;                 // Первый запрос: только task
+  context?: Context;              // Последующие: context с сервера
+  result?: { action?: string; message?: string; [k: string]: any }; // result.action = выбранное действие
 }
 ```
 

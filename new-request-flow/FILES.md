@@ -146,27 +146,26 @@ external-ai-hub/
 | `ARCHITECTURE.md` | Архитектура системы |
 | `PROTOCOL.md` | Протокол взаимодействия |
 | `SESSION-FLOW.md` | Поток сессий |
-| `CURRENT-ISSUES.md` | Текущие проблемы |
+| `CURRENT-ISSUES.md` | Текущие проблемы и план |
 | `SIMULATION-ANALYSIS.md` | Анализ симуляций |
 | `SIMULATION-FIX-VUE-IMPORTS.md` | Симуляция без AI |
 | `SIMULATION-CODER-DIALOG.md` | Симуляция с RAG + запись файлов |
-| `SIMULATION-WITH-AI.md` | Симуляция с AI через promiseId |
-| `FILES.md` | Этот файл - карта проекта |
+| `FILES.md` | Этот файл — карта проекта |
 
 ### Симуляции
 
+Канон: **simulations/SCHEMA.md**.
+
 ```
 simulations/
-├── analyze-architecture/       # Симуляция анализа архитектуры
-├── analyze-full/              # Полный анализ
-├── analyze-laravel/           # Анализ Laravel
-├── analyze-performance/        # Анализ производительности
-├── analyze-security/          # Анализ безопасности
-├── analyze-typescript/         # Анализ TypeScript
-├── analyze-vue/               # Анализ Vue
-├── dialog/                    # Диалог
-├── coder-dialog/              # Диалог с RAG + запись файлов
-└── fix-vue-imports/           # Исправление Vue импортов (относится к SIMULATION-FIX-VUE-IMPORTS.md)
+├── dialog/                    # Діалог з LLM
+├── coder-dialog/              # Діалог + RAG + read/write файлів
+├── coder-smart/               # Контекст-документ (MD)
+├── fix-vue-imports/           # Виправлення Vue імпортів
+├── fix-vue-imports-batched/
+├── analyze-architecture/
+├── phpunit-deprecations/
+└── ...
 ```
 
 ---

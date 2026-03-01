@@ -72,9 +72,22 @@ simulations/
 
 ### Шаг 1: request.json (Client → Server)
 ```json
+{ "task": "диалог" }
+```
+
+### Шаг 2: request.json (выбор действия)
+```json
 {
-  "context": { "task": "dialog" },
-  "input": { "messages": [{ "content": "hello" }] }
+  "context": { "task": "диалог" },
+  "result": { "action": "dialog" }
+}
+```
+
+### Шаг 3: request.json (сообщение пользователя)
+```json
+{
+  "context": { "task": "диалог", "execution": { "action": "dialog", "step": "request" } },
+  "result": { "message": "hello world" }
 }
 ```
 
@@ -112,13 +125,18 @@ simulations/
 {
   "context": {
     "task": "dialog",
+    "execution": { "action": "dialog", "step": "llm-request" },
     "history": [
       { "role": "user", "message": "hello" },
       { "role": "assistant", "message": "hi there!" }
     ]
   },
   "execute": {
-    "form": { "input": {}, "output": "message", "required": ["messages"] }
+    "form": {
+      "input": [{ "name": "message", "type": "text", "label": "Повідомлення", "required": true }]
+    }
   }
 }
 ```
+
+Каноничная схема: **simulations/SCHEMA.md**. Примеры .md промптов: **simulations/dialog/3/request.md**, **simulations/dialog/3/response.md**.
