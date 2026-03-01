@@ -8,6 +8,7 @@ Align all simulations to avoid redundant or conflicting values.
 - **Client chose action**: `result.action` (not `actionId`). Example: `{ "context": {...}, "result": { "action": "fix-vue-imports" } }`.
 - **Later steps**: `context` + `result` or `input` as per flow.
 - **result for read-file**: use action-key shape so server has path + content. Good: `result: { "read-file": { "path": "src/auth.js", "content": "..." } }`. Bad: `result: { "content": "..." }` (path unknown).
+- **result for rag-search**: use action-key shape so server can pass results to LLM as `ragResults`. Good: `result: { "rag-search": { "results": [ { "file": "...", "score": 0.95, "snippet": "..." } ], "files": ["path1", "path2"] } }`. Optional: `"query": "..."` for traceability. Bad: `result: { "results": [...], "files": [...] }` (no action key).
 
 ## Response (server)
 
@@ -25,6 +26,8 @@ Align all simulations to avoid redundant or conflicting values.
 
 When response includes both message and form (e.g. coder-dialog), use `"message"` at top level of response if needed; `execute` stays action-key only (e.g. `execute.form` or `execute["read-file"]`).
 
+**execute.form with choices:** optional `form.title`, `form.choices` = `[{ "id": "...", "label": "..." }]` (e.g. continue_search, save_report). Client sends `result.choice` + optional `result.message` / `result.path`. Save path default: `.carrier/reports/` (e.g. `architecture-report.md`).
+
 ## JSON
 
 - No trailing commas. Valid JSON only.
@@ -35,3 +38,4 @@ When response includes both message and form (e.g. coder-dialog), use `"message"
 - dialog: repeatSteps + fallbackActions + matchScore (aligned with coder-dialog).
 - coder-dialog: single step + fallbackActions.
 - coder-smart: steps user-request → rag-clarify → rag-research-plan → checklist → write-doc → execute-item; virtual doc (1→1+2→1+2+3→full), write to .carrier/tasks/; then loop (history = [doc], LLM do item, update doc).
+- analyze-architecture: dialog like coder-dialog; AI searches arch docs (RAG), confirms facts or lists discrepancies; optional write-file report.

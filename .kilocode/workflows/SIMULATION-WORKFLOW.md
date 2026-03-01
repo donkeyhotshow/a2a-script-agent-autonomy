@@ -118,6 +118,7 @@ Execute format: `execute.<action-type> = params`, e.g. `"read-file": { "path": "
 
 1. **Перший запит** — лише `{ "task": "..." }`.
 2. **Вибір дії** — `result.action` (не actionId).
-3. **request.md** — завжди MARKDOWN (system prompt + стан), не чистий JSON з model/messages.
-4. **response.md** — лише очікуваний вивід LLM (наприклад один об’єкт з `message`).
-5. **response.json** = контекст із сервера + execute (form або result).
+3. **Результат rag-search** — клієнт повертає `result: { "rag-search": { "results": [...], "files": [...] } }` (action-key), не плоский `result.results`/`result.files`.
+4. **request.md** — завжди MARKDOWN (system prompt + стан), не чистий JSON з model/messages.
+5. **response.md** — лише очікуваний вивід LLM (наприклад один об’єкт з `message`).
+6. **response.json** = контекст із сервера + execute (form або result).

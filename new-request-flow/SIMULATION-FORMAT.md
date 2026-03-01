@@ -143,4 +143,6 @@ simulations/
 
 **result for read-file:** use action-key shape so server has path + content: `result: { "read-file": { "path": "src/auth.js", "content": "..." } }`. Not just `result: { "content": "..." }`.
 
+**result for rag-search:** use action-key shape so server can pass to LLM as `ragResults`: `result: { "rag-search": { "results": [ { "file", "score", "snippet" } ], "files": ["path1", ...] } }`. Optional `"query"`. Not flat `result: { "results", "files" }`.
+
 Каноничная схема: **simulations/SCHEMA.md**. Примеры .md промптов: **simulations/dialog/3/request.md**, **simulations/dialog/3/response.md**.
