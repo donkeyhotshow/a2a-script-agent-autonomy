@@ -6,9 +6,59 @@
     {
       "action": "coder-smart",
       "title": "Smart Coder — задача через документ",
-      "description": "Створює MD-документ задачі (запит, формулювання, план, чеклист) і виконує пункти через LLM з єдиним контекстом",
+      "description": "Послідовний аналіз: RAG для уточнення задачі → план дослідження коду → чеклист → запис у .carrier/tasks/ → виконання по пунктах",
       "priority": 10,
-      "matchScore": 0.95
+      "matchScore": 0.95,
+      "steps": [
+        {
+          "action": "user-request",
+          "title": "Запит користувача",
+          "description": "Віртуальний док: секція 1 (запит)",
+          "priority": 10,
+          "input": "none",
+          "output": "doc_section_1"
+        },
+        {
+          "action": "rag-clarify",
+          "title": "RAG для уточнення задачі",
+          "description": "RAG-пошук → LLM уточнена формулювання → док 1+2",
+          "priority": 9,
+          "input": "doc_section_1",
+          "output": "doc_sections_1_2"
+        },
+        {
+          "action": "rag-research-plan",
+          "title": "RAG план дослідження коду",
+          "description": "RAG за уточненою задачею → LLM план дослідження → док 1+2+3",
+          "priority": 8,
+          "input": "doc_sections_1_2",
+          "output": "doc_sections_1_2_3"
+        },
+        {
+          "action": "checklist",
+          "title": "Чеклист виконання",
+          "description": "LLM формує чеклист → док 1+2+3(done)+4",
+          "priority": 7,
+          "input": "doc_sections_1_2_3",
+          "output": "doc_full"
+        },
+        {
+          "action": "write-doc",
+          "title": "Записати документ",
+          "description": "Запис у .carrier/tasks/",
+          "priority": 6,
+          "input": "doc_full",
+          "output": "doc_path"
+        },
+        {
+          "action": "execute-item",
+          "title": "Виконання пункту чеклиста",
+          "description": "History = [doc], LLM виконує пункт, оновлення доку, повтор",
+          "priority": 5,
+          "input": "doc_content",
+          "output": "updated_doc"
+        }
+      ]
     }
   ],
   "fallbackActions": [

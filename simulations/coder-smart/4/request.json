@@ -3,7 +3,7 @@
     "task": "створи задачу і виконай",
     "execution": {
       "action": "coder-smart",
-      "step": "task-doc-created"
+      "step": "rag-clarify"
     },
     "history": [
       {
@@ -13,7 +13,18 @@
     ]
   },
   "result": {
-    "written": true,
-    "path": ".a2a/task.md"
+    "results": [
+      {
+        "file": "src/auth.js",
+        "score": 0.92,
+        "snippet": "async function login(email, password) { ... }"
+      },
+      {
+        "file": "src/middleware/auth.ts",
+        "score": 0.88,
+        "snippet": "export function verifyToken(token: string) { ... }"
+      }
+    ],
+    "files": ["src/auth.js", "src/middleware/auth.ts"]
   }
 }

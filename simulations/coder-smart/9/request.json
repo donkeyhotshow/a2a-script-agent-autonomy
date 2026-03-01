@@ -3,11 +3,12 @@
     "task": "створи задачу і виконай",
     "execution": {
       "action": "coder-smart",
-      "step": "coder-smart"
+      "step": "execute-item"
     },
     "history": []
   },
   "result": {
-    "message": "додати логінування в API та оновити тести"
+    "written": true,
+    "path": ".carrier/tasks/task-1.md"
   }
 }

@@ -3,20 +3,22 @@
     "task": "створи задачу і виконай",
     "execution": {
       "action": "coder-smart",
-      "step": "execute-checklist-item"
+      "step": "rag-research-plan"
     },
-    "history": []
+    "history": [
+      {
+        "role": "user",
+        "message": "додати логінування в API та оновити тести"
+      }
+    ],
+    "docVirtual": {
+      "section1": "додати логінування в API та оновити тести",
+      "section2": "Реалізувати автентифікацію (логінування) для API на основі JWT та оновити або додати інтеграційні тести для перевірки захищених ендпоінтів."
+    }
   },
   "execute": {
-    "form": {
-      "input": [
-        {
-          "name": "message",
-          "type": "text",
-          "label": "Контент документу задачі (.a2a/task.md)",
-          "required": true
-        }
-      ]
+    "rag-search": {
+      "query": "JWT автентифікація API middleware захист ендпоінтів тести"
     }
   }
 }
