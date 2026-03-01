@@ -236,10 +236,14 @@ simulation-name/
 │   └── ...
 ├── N/
 │   ├── request.json  # Запит
+│   ├── server-transforms-request.md   # Трансформація запиту (опціонально)
 │   ├── request.md    # Markdown для LLM (якщо є)
-│   ├── response.json # Відповідь
-│   └── response.md   # Markdown від LLM (якщо є)
+│   ├── response.md   # Markdown від LLM (якщо є)
+│   ├── server-transforms-response.md  # Трансформація відповіді (опціонально)
+│   └── response.json # Відповідь
 ```
+
+**Порядок:** request.json → server-transforms-request.md → request.md → response.md → server-transforms-response.md → response.json.
 
 ---
 

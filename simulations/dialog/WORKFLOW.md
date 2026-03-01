@@ -2,14 +2,20 @@
 
 ## File Types
 
-Each dialog step contains 4 file types:
+Each dialog step can contain up to 6 files, in pipeline order:
 
 | File | Direction | Description |
 |------|-----------|-------------|
 | `request.json` | Client → Server | What client sends to server |
+| `server-transforms-request.md` | — | How the server processes `request.json` and builds the LLM input. Optional. |
 | `request.md` | Server → LLM | What server sends to External AI Hub (LLM) |
 | `response.md` | LLM → Server | What LLM returns to server |
+| `server-transforms-response.md` | — | How the server processes `response.md` and builds the client payload. Optional. |
 | `response.json` | Server → Client | What server sends back to client |
+
+**Order:** request.json → server-transforms-request.md → request.md → response.md → server-transforms-response.md → response.json.
+
+Not every step has all 6 files: steps without LLM typically have only `request.json` and `response.json`; transform docs are optional and describe server logic.
 
 ## ВАЖНО: request.md - это MARKDOWN!
 

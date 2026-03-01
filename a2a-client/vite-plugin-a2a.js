@@ -1,11 +1,11 @@
 /**
  * Vite plugin: serve .a2a data from project folders.
- * Projects stored in .a2a-client/projects.json
+ * Projects stored in storage/projects.json
  */
 import fs from 'fs';
 import path from 'path';
 
-const PROJECTS_FILE = '.a2a-client/projects.json';
+const PROJECTS_FILE = 'storage/projects.json';
 const API_PREFIX = '/api/a2a';
 
 function loadProjects(cwd) {

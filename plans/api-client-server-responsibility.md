@@ -19,7 +19,7 @@
 
 | Данные | Путь | Описание |
 |--------|------|----------|
-| **Список проектов** | `a2a-client/.a2a-client/projects.json` | Массив: `{ id, name, path }` |
+| **Список проектов** | `a2a-client/storage/projects.json` | Массив: `{ id, name, path }` |
 | **Конфигурация** | В папке проекта `.a2a/config.json` | Настройки проекта |
 | **Сессии** | В папке проекта `.a2a/sessions/` | Файлы JSON |
 | **Граф знаний** | В папке проекта `.a2a/graph.json` | Кеш графа |
@@ -133,7 +133,7 @@ sequenceDiagram
 
 ## Структура данных проекта (локально)
 
-### Список проектов (`a2a-client/.a2a-client/projects.json`)
+### Список проектов (`a2a-client/storage/projects.json`)
 
 ```json
 {
@@ -151,10 +151,10 @@ sequenceDiagram
 
 | Операция | Метод | Путь |
 |----------|-------|------|
-| `getProjects()` | Чтение | `a2a-client/.a2a-client/projects.json` |
-| `addProject(project)` | Запись | `a2a-client/.a2a-client/projects.json` |
-| `updateProject(id, data)` | Запись | `a2a-client/.a2a-client/projects.json` |
-| `removeProject(id)` | Запись | `a2a-client/.a2a-client/projects.json` |
+| `getProjects()` | Чтение | `a2a-client/storage/projects.json` |
+| `addProject(project)` | Запись | `a2a-client/storage/projects.json` |
+| `updateProject(id, data)` | Запись | `a2a-client/storage/projects.json` |
+| `removeProject(id)` | Запись | `a2a-client/storage/projects.json` |
 
 ### Конфигурация проекта (.a2a/config.json)
 
@@ -193,7 +193,7 @@ interface Session {
 
 | Компонент | Локально (Файл) | Сервер |
 |-----------|-----------------|--------|
-| **Список проектов** | ✅ Да (`a2a-client/.a2a-client/projects.json`) | ❌ Нет |
+| **Список проектов** | ✅ Да (`a2a-client/storage/projects.json`) | ❌ Нет |
 | **Метаданные проекта** | ✅ Да (в `.a2a/config.json` проекта) | ❌ Нет |
 | **Сессии** | ✅ Да (в `.a2a/sessions/` проекта) | ❌ Нет |
 | **Сообщения** | ✅ Да (в сессии) | ❌ Нет |
@@ -208,7 +208,7 @@ interface Session {
 ## Рекомендуемые изменения в коде
 
 ### 1. Модифицировать `app-state.js`
-- Добавить загрузку/сохранение списка проектов из `a2a-client/.a2a-client/projects.json`
+- Добавить загрузку/сохранение списка проектов из `a2a-client/storage/projects.json`
 - Реализовать методы `loadProjects()`, `saveProject()`, `deleteProject()`
 
 ### 2. Создать сервис работы с файлами проекта

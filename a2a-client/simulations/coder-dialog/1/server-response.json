@@ -1,0 +1,1 @@
+{"context":{"task":"допоможи розібратись з кодом"},"execute":{"form":{"title":"Оберіть спосіб виконання","choices":[{"id":"coder-dialog","label":"Діалог з AI-кодером"},{"id":"auto-ai","label":"AI Action Generator — згенерувати екшен за допомогою LLM"},{"id":"task-decomposition","label":"Декомпозиція задачі вручну"}]}}}

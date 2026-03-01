@@ -1,41 +1,46 @@
-# Simulation: phpunit-deprecations
+# Simulation: phpunit-deprecations-v2
 
-## Опис
+## Description
 
-Тестуємо екшен "Пошук застарілих PHPUnit методів" - виявлення deprecated методів у PHPUnit тестах.
+Test action "Search for deprecated PHPUnit methods" - detecting deprecated methods in PHPUnit tests.
 
-## Workflow
+## Workflow (NEW FORMAT)
 
 ```
-1. Client → Server: task_request (task: "знайти застарілі PHPUnit методи")
+1. Client → Server: { "task": "знайти застарілі PHPUnit методи" }
            ↓
-2. Server → Client: action_proposal + context (пропонує phpunit-deprecations з sub-actions)
+2. Server → Client: { "context": {...}, "execute": { "form": { "choices": [...] } } }
            ↓
-3. Client → Server: approve_action + context
+3. Client → Server: { "context": {...}, "result": { "choice": "phpunit-deprecations" } }
            ↓
-4. Server → Client: action_executing + context (scan-phpunit)
+4. Server → Client: { "context": {...}, "execute": { "script": {...} } }
            ↓
-5. Client → Server: step_result (scan-phpunit) + context
+5. Client → Server: { "context": {...}, "result": { "scan-phpunit": {...} } }
            ↓
-6. Server → Client: action_executing + context (detect-deprecations)
+6. Server → Client: { "context": {...}, "execute": { "script": {...} } }
            ↓
-7. Client → Server: step_result (detect-deprecations) + context
+... (repeat for detect-deprecations, generate-deprecations-report)
            ↓
-8. Server → Client: action_executing + context (generate-deprecations-report)
-           ↓
-9. Client → Server: step_result (generate-deprecations-report) + context
-           ↓
-10. Server → Client: action_complete
+Final: Server → Client: { "context": {...}, "result": {...} }
 ```
 
-## Sub-actions
+## Sub-actions (steps)
 
-1. **scan-phpunit** - сканування PHPUnit тестів
-2. **detect-deprecations** - виявлення deprecated методів
-3. **generate-deprecations-report** - генерація звіту
+1. **scan-phpunit** - scanning PHPUnit tests
+2. **detect-deprecations** - detecting deprecated methods
+3. **generate-deprecations-report** - generating report
 
-## Очікувані результати
+## Expected results
 
-- Сервер пропонує екшен phpunit-deprecations з sub-actions
-- Кожен крок повертає action_executing з відповідним sub-action
-- Фінальний крок повертає action_complete з звітом
+- Server returns `execute.form` with choices for action selection
+- Client responds with `result.choice`
+- Each step returns `execute.script` for execution
+- Client responds with action-key result format (e.g., `result: { "scan-phpunit": {...} }`)
+- Final step returns `result` with the report
+
+## Format Notes
+
+- Uses canonical format from `simulations/SCHEMA.md`
+- Request: `{ "task": "..." }` → `{ "context": {...}, "result": { "choice": "..." } }` → `{ "context": {...}, "result": { "action-key": {...} } }`
+- Response: `execute.form` for choices → `execute.script` for steps → `result` for final
+- Uses action-key shape for results (e.g., `"scan-phpunit": { "files": [...] }`)

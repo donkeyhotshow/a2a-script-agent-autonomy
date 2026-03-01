@@ -1,0 +1,57 @@
+{
+  "tracking_version": "1.0.0",
+  "last_updated": "2026-03-02T00:00:00Z",
+  "total_reviews": 1,
+  "pending_reviews": [],
+  "active_reviews": [],
+  "completed_reviews": [
+    {
+      "id": 1772403650275,
+      "document_path": "docs\\NEW-test-documentation.md",
+      "review_type": "content",
+      "reviewer": "auto-reviewer",
+      "status": "completed",
+      "created_at": "2026-03-01T22:20:50.275Z",
+      "checklist": [],
+      "started_at": "2026-03-01T22:22:37.514Z",
+      "completed_at": "2026-03-01T22:22:45.030Z",
+      "results": [
+        "Technical accuracy verified",
+        "Language clarity assessed",
+        "Format compliance checked"
+      ]
+    }
+  ],
+  "review_templates": [
+    {
+      "name": "Technical Review",
+      "description": "Review for technical accuracy and completeness",
+      "checklist": [
+        "Technical accuracy verified",
+        "Code examples tested",
+        "API references validated",
+        "Cross-references checked"
+      ]
+    },
+    {
+      "name": "Content Review",
+      "description": "Review for clarity and user experience",
+      "checklist": [
+        "Language clarity assessed",
+        "Completeness verified",
+        "Structure evaluated",
+        "User perspective considered"
+      ]
+    },
+    {
+      "name": "Style Review",
+      "description": "Review for consistency with existing documentation",
+      "checklist": [
+        "Format compliance checked",
+        "Terminology consistency verified",
+        "Formatting standards met",
+        "Visual elements reviewed"
+      ]
+    }
+  ]
+}
