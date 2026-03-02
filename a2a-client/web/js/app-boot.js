@@ -14,7 +14,7 @@
 const AppBoot = {
     // Configuration
     config: {
-        serverUrl: 'http://localhost:8080/api/v1',
+        serverUrl: '/api/v1',
         useSSE: true,
         autoSave: true,
         showMinimap: true,
@@ -944,7 +944,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Initialize boot
     const success = await AppBoot.init({
-        serverUrl: 'http://localhost:8080/api/v1',
+        serverUrl: '/api/v1',
         useSSE: true,
         autoSave: true
     });

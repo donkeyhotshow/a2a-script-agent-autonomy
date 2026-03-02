@@ -22,6 +22,11 @@ const Sessions = {
             logs: [],
             isRunning: false,
             approved: false,
+            // New fields for execute.* protocol
+            choices: [],
+            formTitle: '',
+            currentStepCode: null,
+            currentStepInput: {},
         },
     },
 
@@ -971,6 +976,46 @@ const Sessions = {
     },
 
     handleActionResponse(result) {
+        // Support both legacy (result.action) and new execute.* protocol formats
+        
+        // Handle new execute.form.choices format
+        if (result.execute?.form?.choices) {
+            this.state.action.choices = result.execute.form.choices;
+            this.state.action.formTitle = result.execute.form.title || 'Выберите действие';
+            this.showActionChoices();
+            return;
+        }
+        
+        // Handle new execute.message format
+        if (result.execute?.message) {
+            this.addActionLog(result.execute.message, 'info');
+            this.finalizeAction(result);
+            return;
+        }
+        
+        // Handle new execute.script format (for step execution)
+        if (result.execute?.script) {
+            this.state.action.currentStepCode = result.execute.script.code;
+            this.state.action.currentStepInput = result.execute.script.input || {};
+            // Also check legacy action format for compatibility
+            if (result.action) {
+                this.state.action.definition = result.action.action;
+                this.state.action.matchScore = result.action.matchScore;
+            }
+            if (result.executionState) {
+                this.state.action.executionState = result.executionState;
+            }
+            this.showActionProgress();
+            this.renderActionProgress();
+            
+            // Auto-execute the script
+            if (!this.state.action.isRunning) {
+                this.executeCurrentStep();
+            }
+            return;
+        }
+        
+        // Legacy format handling (action.currentStep)
         if (!result.action && !result.executionState) return;
 
         if (result.action) {
@@ -989,6 +1034,78 @@ const Sessions = {
         }
         if (result.outcome === 'completed' || result.outcome === 'failed') {
             this.finalizeAction(result);
+        }
+    },
+
+    /**
+     * Show action choices form (new execute.form.choices format)
+     */
+    showActionChoices() {
+        const choices = this.state.action.choices || [];
+        if (!choices.length) return;
+        
+        // Find or create choices modal/panel
+        let choicesPanel = document.getElementById('action-choices-panel');
+        if (!choicesPanel) {
+            choicesPanel = document.createElement('div');
+            choicesPanel.id = 'action-choices-panel';
+            choicesPanel.className = 'action-choices-panel';
+            document.body.appendChild(choicesPanel);
+        }
+        
+        const title = this.state.action.formTitle || 'Выберите действие';
+        choicesPanel.innerHTML = `
+            <div class="choices-overlay">
+                <div class="choices-modal">
+                    <h3>${title}</h3>
+                    <div class="choices-list">
+                        ${choices.map(choice => `
+                            <button class="choice-btn" data-action-id="${choice.id}">
+                                ${choice.label}
+                            </button>
+                        `).join('')}
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Add click handlers
+        choicesPanel.querySelectorAll('.choice-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const actionId = e.target.dataset.actionId;
+                this.selectAction(actionId);
+                choicesPanel.remove();
+            });
+        });
+        
+        choicesPanel.style.display = 'block';
+    },
+
+    /**
+     * Select an action from choices
+     */
+    async selectAction(actionId) {
+        if (!this.state.current) return;
+        
+        this.addActionLog(`Selected action: ${actionId}`, 'info');
+        
+        // Send approve_action request to server
+        try {
+            const res = await fetch(`${this.api}/sessions/${this.state.current.id}/action`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    selectedAction: { actionId }
+                }),
+            });
+            const data = res.json();
+            if (data.success) {
+                this.state.action.definition = { id: actionId };
+                this.state.action.approved = true;
+                this.addActionLog(`Action ${actionId} approved, starting execution...`, 'info');
+            }
+        } catch (err) {
+            this.addActionLog(`Error selecting action: ${err.message}`, 'error');
         }
     },
 
@@ -1106,7 +1223,70 @@ const Sessions = {
     },
 
     async executeCurrentStep() {
-        const {definition, executionState} = this.state.action;
+        const {definition, executionState, currentStepCode, currentStepInput} = this.state.action;
+        
+        // Support new execute.script format - code is provided directly from server
+        if (currentStepCode) {
+            this.state.action.isRunning = true;
+            this.addActionLog(`Executing script step...`, 'info');
+            this.renderActionProgress();
+
+            try {
+                // Send step_result with the executed code result
+                const stepResult = await this.executeScriptCode(currentStepCode, currentStepInput || {});
+                
+                // Send continue request with step result
+                const res = await fetch(`${this.api}/sessions/${this.state.current.id}/continue`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        context: {
+                            version: '1.0',
+                            session_id: this.state.current.id,
+                            continue: true,
+                            step_id: executionState?.currentStepIndex || 'current',
+                            step_result: stepResult
+                        }
+                    }),
+                });
+
+                const data = await res.json();
+
+                if (data.success || data.data) {
+                    const result = data.data || data;
+                    
+                    // Handle execute.* response from server
+                    if (result.execute) {
+                        this.handleActionResponse(result);
+                    } else {
+                        // Legacy format
+                        if (result.executionState) {
+                            this.state.action.executionState = result.executionState;
+                        }
+                        if (result.outcome === 'completed') {
+                            this.finalizeAction(result);
+                        } else {
+                            // Continue to next step
+                            this.state.action.currentStepCode = null;
+                            this.state.action.currentStepInput = {};
+                            setTimeout(() => this.executeCurrentStep(), 500);
+                        }
+                    }
+                } else {
+                    this.addActionLog(`API error: ${data.error || 'Unknown error'}`, 'error');
+                    this.state.action.isRunning = false;
+                }
+            } catch (err) {
+                console.error('Failed to execute step:', err);
+                this.addActionLog(`Error: ${err.message}`, 'error');
+                this.state.action.isRunning = false;
+            }
+            
+            this.renderActionProgress();
+            return;
+        }
+        
+        // Legacy format - definition-based step execution
         if (!definition || !executionState) return;
 
         const currentStep = definition.subActions[executionState.currentStepIndex];
@@ -1166,6 +1346,36 @@ const Sessions = {
         }
 
         this.renderActionProgress();
+    },
+
+    /**
+     * Execute script code using script-runner
+     */
+    async executeScriptCode(code, input) {
+        // Check if script-runner is available globally
+        if (window.scriptRunner?.execute) {
+            return await window.scriptRunner.execute(code, input, {
+                workingDir: this.state.projectPath,
+                sessionId: this.state.current?.id
+            });
+        }
+        
+        // Fallback: execute via API
+        const res = await fetch(`${this.api}/script/execute`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                code,
+                input,
+                context: {
+                    workingDir: this.state.projectPath,
+                    sessionId: this.state.current?.id
+                }
+            }),
+        });
+        
+        const data = await res.json();
+        return data.data || data;
     },
 
     getPreviousStepOutput() {

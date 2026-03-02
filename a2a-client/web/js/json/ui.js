@@ -938,7 +938,18 @@ class UnifiedJSONManager {
 
         // Extract context and actions based on response type
         if (response.type === 'action_proposal') {
-            this.proposedActions = response.result?.proposedActions || [];
+            // Support both legacy proposedActions and new execute.form.choices format
+            const choices = response.result?.execute?.form?.choices;
+            if (choices) {
+                // Convert choices to proposedActions format for UI
+                this.proposedActions = choices.map(choice => ({
+                    id: choice.id,
+                    title: choice.label,
+                    description: choice.label
+                }));
+            } else {
+                this.proposedActions = response.result?.proposedActions || [];
+            }
             this.currentContext = response.result?.context || null;
 
             // Update components

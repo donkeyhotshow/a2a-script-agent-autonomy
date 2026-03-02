@@ -4,7 +4,7 @@
  */
 
 const WebAPIClient = {
-    serverUrl: 'http://localhost:8080/api/v1',
+    serverUrl: '/api/v1',
     token: null,
     clientId: null,
     timeout: 30000,

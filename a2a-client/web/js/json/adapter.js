@@ -111,12 +111,14 @@ export function validateResponse(response) {
 
     // Check type-specific fields
     if (response.type === 'action_proposal') {
-        if (!response.result?.proposedActions) {
-            errors.push('action_proposal requires result.proposedActions');
+        // Support both legacy proposedActions and new execute.form.choices format
+        if (!response.result?.proposedActions && !response.result?.execute?.form?.choices) {
+            errors.push('action_proposal requires result.proposedActions or result.execute.form.choices');
         }
     } else if (response.type === 'action_executing') {
-        if (!response.result?.executingAction) {
-            errors.push('action_executing requires result.executingAction');
+        // Support both legacy executingAction and new execute.script format
+        if (!response.result?.executingAction && !response.result?.execute?.script) {
+            errors.push('action_executing requires result.executingAction or result.execute.script');
         }
     } else if (response.type === 'action_progress') {
         if (!response.result?.actionId) {
@@ -231,6 +233,27 @@ export function convertToVueFlowNodes(response) {
         });
 
         // Proposed actions
+        // Support both legacy proposedActions and new execute.form.choices format
+        const choices = result.execute?.form?.choices;
+        if (choices) {
+            // New execute.form.choices format
+            choices.forEach((choice) => {
+                nodes.push({
+                    id: `action_${choice.id}`,
+                    type: 'actionProposal',
+                    position: calculatePosition(index++),
+                    data: {
+                        label: choice.label,
+                        description: choice.label,
+                        actionId: choice.id,
+                        status: 'proposed',
+                        messageType: 'action_proposal',
+                    },
+                });
+            });
+        }
+        
+        // Legacy proposedActions format
         result.proposedActions?.forEach((action) => {
             nodes.push({
                 id: `action_${action.id}`,

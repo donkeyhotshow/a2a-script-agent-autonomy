@@ -107,6 +107,19 @@ interface ProcessResult {
         } | null;
         nextSteps?: Array<{ id: string; title: string }>;
     } | null | undefined;
+    /** Execute command for client (new protocol format) */
+    execute?: {
+        form?: {
+            title?: string;
+            choices?: Array<{ id: string; label: string }>;
+        };
+        script?: {
+            input: Record<string, unknown>;
+            output: string;
+            code: string;
+        };
+        message?: string;
+    } | undefined;
 }
 
 function parseTaskText(ctx: Record<string, unknown>): string {
@@ -234,12 +247,20 @@ export async function processOneRequest(): Promise<ProcessResult | null> {
             // Determine response type: action_executing if more steps, action_complete if done
             const responseType = result.continue ? 'action_executing' : 'action_complete';
 
-            // Format result based on response type
+            // Format result based on response type with execute.* format
             let resultData: Record<string, unknown>;
             if (result.continue) {
-                // More steps remaining - return action_executing format
+                // More steps remaining - return execute.script format
+                const currentStep = result.currentStep;
                 resultData = {
                     context: result.message.context,
+                    execute: currentStep?.code ? {
+                        script: {
+                            input: {},
+                            output: 'step_result',
+                            code: currentStep.code
+                        }
+                    } : undefined,
                     executingAction: result.message.executingAction || {
                         actionId: result.currentStep?.id || '',
                         title: result.currentStep?.title || '',
@@ -247,10 +268,12 @@ export async function processOneRequest(): Promise<ProcessResult | null> {
                     nextSteps: result.message.nextSteps || [],
                 };
             } else {
-                // All steps completed - return action_complete format
+                // All steps completed - return execute.message format
                 resultData = {
                     context: result.message.context,
-                    message: result.message.message || 'Action completed',
+                    execute: {
+                        message: result.message.message || 'Action completed'
+                    },
                     completed: true,
                 };
             }
@@ -261,12 +284,33 @@ export async function processOneRequest(): Promise<ProcessResult | null> {
                 ...resultData,
             });
 
-            return {
-                outcome: 'completed',
-                context: result.message.context,
-                activated_neuron_ids: result.actionId ? [result.actionId] : undefined,
-                action: result.message.action,
-            };
+            // Return result with execute.* format
+            if (result.continue) {
+                const currentStep = result.currentStep;
+                return {
+                    outcome: 'completed',
+                    context: result.message.context,
+                    activated_neuron_ids: result.actionId ? [result.actionId] : undefined,
+                    action: result.message.action,
+                    execute: currentStep?.code ? {
+                        script: {
+                            input: {},
+                            output: 'step_result',
+                            code: currentStep.code
+                        }
+                    } : undefined,
+                };
+            } else {
+                return {
+                    outcome: 'completed',
+                    context: result.message.context,
+                    activated_neuron_ids: result.actionId ? [result.actionId] : undefined,
+                    action: result.message.action,
+                    execute: {
+                        message: result.message.message || 'Action completed'
+                    },
+                };
+            }
         }
 
         // Handle task_request - client sends new task, we propose actions
@@ -284,34 +328,28 @@ export async function processOneRequest(): Promise<ProcessResult | null> {
                         step: actionResult.currentStep?.id,
                     });
 
-                    // Format result for action_proposal response (gold standard format)
+                    // Format result for action_proposal response (execute.form.choices format - new protocol)
                     const resultData = {
                         context: actionResult.message.context,
-                        proposedActions: actionResult.message.action ? [{
-                            actionId: actionResult.message.action.id || actionResult.actionId,
-                            title: actionResult.message.action.title,
-                            description: actionResult.message.action.title,
-                            priority: 10,
-                            matchScore: actionResult.message.action.matchScore,
-                            subActions: actionResult.message.action.nextSteps?.map(ns => ({
-                                actionId: ns.id,
-                                title: ns.title,
-                            })) || [],
-                        }] : [],
-                        fallbackActions: [
-                            {
-                                mode: 'auto-ai',
-                                title: 'AI Action Generator',
-                                description: 'Сгенерировать новый экшен с помощью LLM',
-                                fallbackType: 'llm_generation'
-                            },
-                            {
-                                mode: 'task-decomposition',
-                                title: 'Декомпозиция задачи',
-                                description: 'Разбить задачу на подзадачи вручную',
-                                fallbackType: 'manual'
-                            },
-                        ],
+                        execute: {
+                            form: {
+                                title: 'Оберіть спосіб виконання',
+                                choices: [
+                                    ...(actionResult.message.action ? [{
+                                        id: actionResult.message.action.id || actionResult.actionId,
+                                        label: actionResult.message.action.title
+                                    }] : []),
+                                    {
+                                        id: 'auto-ai',
+                                        label: 'AI Action Generator — сгенерировать экшен с помощью LLM'
+                                    },
+                                    {
+                                        id: 'task-decomposition',
+                                        label: 'Декомпозиция задачи вручную'
+                                    }
+                                ]
+                            }
+                        }
                     };
 
                     // Update request status to completed with action result
@@ -320,12 +358,31 @@ export async function processOneRequest(): Promise<ProcessResult | null> {
                         ...resultData,
                     });
 
-                    // Return action_proposal response
+                    // Return action_proposal response with execute.form.choices format
                     return {
                         outcome: 'action_proposal',
                         context: actionResult.message.context,
                         activated_neuron_ids: [actionResult.actionId],
                         action: actionResult.message.action,
+                        execute: {
+                            form: {
+                                title: 'Оберіть спосіб виконання',
+                                choices: [
+                                    ...(actionResult.message.action ? [{
+                                        id: actionResult.message.action.id || actionResult.actionId,
+                                        label: actionResult.message.action.title
+                                    }] : []),
+                                    {
+                                        id: 'auto-ai',
+                                        label: 'AI Action Generator — сгенерировать экшен с помощью LLM'
+                                    },
+                                    {
+                                        id: 'task-decomposition',
+                                        label: 'Декомпозиция задачи вручную'
+                                    }
+                                ]
+                            }
+                        }
                     };
                 }
             }
@@ -346,9 +403,17 @@ export async function processOneRequest(): Promise<ProcessResult | null> {
             // Start action execution
             const actionResult = await actionProcessor.approveAction(sessionId, selectedAction?.actionId || '');
 
-            // Format result for action_executing response (gold standard format)
+            // Format result for action_executing response (execute.script format - new protocol)
+            const currentStep = actionResult.currentStep;
             const resultData = {
                 context: actionResult.message.context,
+                execute: currentStep?.code ? {
+                    script: {
+                        input: {},
+                        output: 'step_result',
+                        code: currentStep.code
+                    }
+                } : undefined,
                 executingAction: actionResult.message.executingAction,
                 nextSteps: actionResult.message.nextSteps,
             };
@@ -359,12 +424,19 @@ export async function processOneRequest(): Promise<ProcessResult | null> {
                 ...resultData,
             });
 
-            // Return action_executing response
+            // Return action_executing response with execute.script format
             return {
                 outcome: 'completed',
                 context: actionResult.message.context,
                 activated_neuron_ids: actionResult.actionId ? [actionResult.actionId] : undefined,
                 action: actionResult.message.action,
+                execute: currentStep?.code ? {
+                    script: {
+                        input: {},
+                        output: 'step_result',
+                        code: currentStep.code
+                    }
+                } : undefined,
             };
         }
 

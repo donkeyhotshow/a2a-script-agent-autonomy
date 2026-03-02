@@ -1,0 +1,12 @@
+{
+  "context": {
+    "task": "тест вибору дій",
+    "execution": {
+      "action": "test-action-flow",
+      "step": "user-choice"
+    }
+  },
+  "result": {
+    "choice": "action-1"
+  }
+}

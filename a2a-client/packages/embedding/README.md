@@ -4,7 +4,7 @@
 
 ## Features
 
-- **Multiple providers**: Ollama (local), OpenAI, Cohere, Voyage AI
+- **Multiple providers**: Ollama (local)
 - **Batch processing**: Efficient embedding of multiple texts
 - **Caching**: In-memory and file-based caching
 - **Deterministic fallback**: For testing without API keys
@@ -40,36 +40,6 @@ const client = createEmbeddingClient({
   provider: 'ollama',
   baseUrl: process.env.OLLAMA_BASE_URL || 'http://localhost:11434',
   model: 'nomic-embed-text', // or bge-m3, bge-small
-});
-```
-
-### OpenAI
-
-```javascript
-const client = createEmbeddingClient({
-  provider: 'openai',
-  apiKey: process.env.OPENAI_API_KEY,
-  model: 'text-embedding-3-small', // or text-embedding-3-large, ada-002
-});
-```
-
-### Cohere
-
-```javascript
-const client = createEmbeddingClient({
-  provider: 'cohere',
-  apiKey: process.env.COHERE_API_KEY,
-  model: 'embed-multilingual-v3.0',
-});
-```
-
-### Voyage AI
-
-```javascript
-const client = createEmbeddingClient({
-  provider: 'voyage',
-  apiKey: process.env.VOYAGE_API_KEY,
-  model: 'voyage-code-2', // or voyage-law-2
 });
 ```
 

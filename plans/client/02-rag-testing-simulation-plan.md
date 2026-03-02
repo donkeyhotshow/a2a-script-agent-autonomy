@@ -936,3 +936,232 @@ jobs:
 - **Mitigation**: Use multiple accuracy measures and manual validation
 
 This comprehensive testing plan ensures the RAG package is thoroughly validated with simulated data, providing visibility into both input and output for each test case.
+
+---
+
+## Protocol Alignment Fixes
+
+### Problem Statement
+
+The original protocol used legacy format with `proposedActions[]` which is deprecated. The new A2A protocol requires using `execute.form.choices` for first response and action-key shape for execute/result.
+
+### Changes Made
+
+#### 1. Server (a2a-server/src/routes/)
+
+The server now returns `execute.form.choices` instead of deprecated `proposedActions[]`:
+
+```json
+{
+  "execute": {
+    "form": {
+      "title": "Choose an action",
+      "choices": [
+        { "id": "action-1", "label": "Action 1" },
+        { "id": "action-2", "label": "Action 2" }
+      ]
+    }
+  }
+}
+```
+
+**Files modified:**
+- [`requests.routes.ts`](a2a-server/src/routes/requests.routes.ts) - Main request handling with execute response
+
+#### 2. Client (a2a-client/web/js/)
+
+The client handles `execute.*` responses:
+
+| Execute Type | Handler |
+|--------------|---------|
+| `execute.form` | Display interactive form with choices |
+| `execute.message` | Display message to user |
+| `execute.script` | Execute JavaScript in sandbox |
+| `execute.rag-search` | Perform RAG search |
+| `execute.read-file` | Read file contents |
+| `execute.write-file` | Write data to file |
+| `execute.execute-command` | Execute shell commands |
+
+**Files modified:**
+- [`sessions.js`](a2a-client/web/js/sessions.js) - Session management with execute handling
+- [`actions-manager.js`](a2a-client/web/js/actions-manager.js) - Action execution management
+
+#### 3. Web UI (a2a-client/web/js/)
+
+Web handles all execute types:
+
+- **Forms**: Display choice buttons and input fields
+- **Messages**: Show informational messages
+- **Scripts**: Run JavaScript in sandboxed environment
+- **RAG-Search**: Perform retrieval-augmented search
+- **File Operations**: Read/write files with confirmation
+- **Commands**: Execute shell commands with output display
+
+**Key implementation:**
+```javascript
+// Handle execute response from server
+function handleExecuteResponse(execute) {
+  if (execute.form) {
+    renderForm(execute.form);
+  } else if (execute.message) {
+    showMessage(execute.message);
+  } else if (execute.script) {
+    executeScript(execute.script);
+  } else if (execute['rag-search']) {
+    performRagSearch(execute['rag-search']);
+  }
+  // ... other execute types
+}
+```
+
+### Protocol Flow
+
+```
+User Request
+    ↓
+[Server] - Process request, determine action
+    ↓
+execute.form.choices → execute.form.choices
+    ↓
+[Client] - Receive execute response
+    ↓
+execute.* (form/message/script/rag-search/...)
+    ↓
+[Web UI] - Render appropriate UI
+    ↓
+User Choice → result → [Server]
+    ↓
+Continue or Complete
+```
+
+---
+
+## Simulation Testing: test-action-flow
+
+### Overview
+
+Created simulation `simulations/test-action-flow/` to test the complete protocol flow from server to client to web.
+
+### Simulation Structure
+
+```
+simulations/test-action-flow/
+├── description.md           # Ukrainian description
+├── 1/
+│   ├── request.json         # Initial request: { "task": "тест вибору дій" }
+│   ├── request.md           # Processed request for LLM
+│   ├── response.json        # LLM response with choices
+│   ├── response.md          # Formatted response
+│   ├── server-response.json # Server's complete response
+│   └── server-transforms-response.json  # Transformed response
+├── 2/
+│   ├── request.json         # User's choice: { "result": { "choice": "action-1" } }
+│   ├── request.md           # Processed choice for LLM
+│   ├── response.json        # LLM completion response
+│   └── server-transforms-response.json  # Final transformation
+```
+
+### Test Flow
+
+#### Step 1: Initial Request
+- **Request**: `{ "task": "тест вибору дій" }`
+- **Expected Response**: Form with choices
+
+```json
+{
+  "execute": {
+    "form": {
+      "title": "Виберіть дію",
+      "choices": [
+        { "id": "action-1", "label": "Дія 1" },
+        { "id": "action-2", "label": "Дія 2" }
+      ]
+    }
+  }
+}
+```
+
+#### Step 2: User Selection
+- **Request**: `{ "result": { "choice": "action-1" } }`
+- **Expected Response**: Completion message
+
+### Running the Simulation
+
+```bash
+# Run test-action-flow simulation
+cd a2a-server
+npm run sim test-action-flow
+
+# Or use the simulation runner
+node scripts/run-simulation.ts test-action-flow
+```
+
+---
+
+## Files Modified
+
+### RAG Package Improvements
+
+| File | Changes |
+|------|---------|
+| [`a2a-client/packages/rag/src/query-understanding.ts`](a2a-client/packages/rag/src/query-understanding.ts) | Smart file type detection |
+| [`a2a-client/packages/rag/src/searcher.ts`](a2a-client/packages/rag/src/searcher.ts) | File type boosting, result deduplication |
+| [`a2a-client/packages/rag/src/bm25.ts`](a2a-client/packages/rag/src/bm25.ts) | BM25 scoring with caching |
+| [`a2a-client/packages/rag/src/indexer.ts`](a2a-client/packages/rag/src/indexer.ts) | Incremental reindexing with MD5 hashing |
+
+### Protocol Alignment
+
+| File | Changes |
+|------|---------|
+| [`a2a-server/src/routes/requests.routes.ts`](a2a-server/src/routes/requests.routes.ts) | Execute form response |
+| [`a2a-client/web/js/sessions.js`](a2a-client/web/js/sessions.js) | Execute handling |
+| [`a2a-client/web/js/actions-manager.js`](a2a-client/web/js/actions-manager.js) | Action execution |
+
+### Simulation
+
+| File | Purpose |
+|------|---------|
+| [`simulations/test-action-flow/description.md`](simulations/test-action-flow/description.md) | Test description |
+| [`simulations/test-action-flow/1/request.json`](simulations/test-action-flow/1/request.json) | Initial request |
+| [`simulations/test-action-flow/1/response.json`](simulations/test-action-flow/1/response.json) | Form response |
+| [`simulations/test-action-flow/2/request.json`](simulations/test-action-flow/2/request.json) | User choice |
+
+---
+
+## Next Steps
+
+### Immediate Improvements
+
+1. **Add more test cases** to `test-action-flow` simulation
+   - Test `execute.message` type
+   - Test `execute.script` type
+   - Test `execute.rag-search` type
+
+2. **Improve error handling**
+   - Handle malformed execute responses
+   - Add fallback for unsupported execute types
+
+3. **Performance optimization**
+   - Cache frequently accessed indexes
+   - Parallel search across engines
+
+### Long-term Goals
+
+1. **Full protocol compliance**
+   - Implement all execute types
+   - Add support for streaming responses
+
+2. **Enhanced RAG capabilities**
+   - Vector embeddings for semantic search
+   - Cross-project index sharing
+   - Real-time index updates
+
+3. **Testing infrastructure**
+   - Automated regression tests
+   - Performance benchmarking
+   - Integration with CI/CD
+
+4. **Documentation**
+   - API documentation for execute types
+   - Protocol specification
+   - Migration guide for legacy format

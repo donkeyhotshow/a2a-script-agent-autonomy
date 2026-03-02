@@ -1,0 +1,12 @@
+{
+  "execute": {
+    "form": {
+      "title": "Виберіть дію",
+      "choices": [
+        { "id": "action-1", "label": "Дія 1" },
+        { "id": "action-2", "label": "Дія 2" }
+      ]
+    }
+  }
+}
+```

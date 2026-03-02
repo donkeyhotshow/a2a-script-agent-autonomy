@@ -13,7 +13,7 @@ import {getNodeType, getNodeColor} from './nodes.js';
  */
 export class A2AClient {
     constructor(config = {}) {
-        this.serverUrl = config.serverUrl || 'http://localhost:8080/api/v1';
+        this.serverUrl = config.serverUrl || '/api/v1';
         this.serverUrl = this.serverUrl.replace(/\/?$/, '');
         this.token = config.token;
         this.clientId = config.clientId;
@@ -465,11 +465,27 @@ export function mapSimulationResponseToFlow(response) {
     nodes.push(taskNode);
 
     if (outcome === 'action_proposal' || outcome === 'action_executing' || outcome === 'action_complete') {
+        // Support both legacy proposedActions and new execute.form.choices format
+        let proposedActions = response.proposedActions;
+        let choices = [];
+        
+        // New execute.form.choices format
+        if (response.execute?.form?.choices) {
+            choices = response.execute.form.choices;
+            // Convert choices to proposedActions format for compatibility
+            proposedActions = choices.map(choice => ({
+                actionId: choice.id,
+                title: choice.label,
+                description: choice.label,
+            }));
+        }
+        
         // Add action proposal node
         const proposalNode = mapContextBlockToNode({
             id: 'action-proposal',
             outcome: 'action_proposal',
-            proposedActions: response.proposedActions,
+            proposedActions: proposedActions,
+            executeFormChoices: choices,
             message: response.message
         }, 1, 10);
         nodes.push(proposalNode);
@@ -482,6 +498,53 @@ export function mapSimulationResponseToFlow(response) {
             type: 'smoothstep',
             style: {stroke: '#eab308', strokeWidth: 2},
             markerEnd: {type: 'arrowclosed', color: '#eab308'}
+        });
+    }
+
+    // Handle new execute.script format for step execution
+    if (response.execute?.script) {
+        const scriptNode = mapContextBlockToNode({
+            id: 'script-execution',
+            outcome: 'action_executing',
+            executingAction: {
+                actionId: execution.action || 'script',
+                title: 'Script Execution',
+                description: 'Executing script code'
+            },
+            script: response.execute.script,
+            context: {execution},
+            stepIndex: 1,
+            status: 'in_progress'
+        }, 1, 10);
+        nodes.push(scriptNode);
+        
+        edges.push({
+            id: 'edge-task-script',
+            source: taskNode.id,
+            target: scriptNode.id,
+            type: 'smoothstep',
+            style: {stroke: '#3b82f6', strokeWidth: 2},
+            markerEnd: {type: 'arrowclosed', color: '#3b82f6'}
+        });
+    }
+
+    // Handle new execute.message format for completion messages
+    if (response.execute?.message) {
+        const messageNode = mapContextBlockToNode({
+            id: 'message',
+            outcome: 'action_complete',
+            message: response.execute.message,
+            status: 'completed'
+        }, 1, 10);
+        nodes.push(messageNode);
+        
+        edges.push({
+            id: 'edge-task-message',
+            source: taskNode.id,
+            target: messageNode.id,
+            type: 'smoothstep',
+            style: {stroke: '#22c55e', strokeWidth: 2},
+            markerEnd: {type: 'arrowclosed', color: '#22c55e'}
         });
     }
 

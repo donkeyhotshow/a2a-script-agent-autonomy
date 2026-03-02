@@ -7,7 +7,7 @@ class App {
     constructor() {
         this.initialized = false;
         this.config = {
-            serverUrl: 'http://localhost:8080/api/v1',
+            serverUrl: '/api/v1',
             useSSE: true,
             theme: 'dark'
         };
@@ -442,7 +442,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     try {
         await app.init({
-            serverUrl: 'http://localhost:8080/api/v1',
+            serverUrl: '/api/v1',
             useSSE: true
         });
 

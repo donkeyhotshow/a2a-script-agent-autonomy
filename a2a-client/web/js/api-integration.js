@@ -5,7 +5,7 @@
 
 class APIIntegration {
     constructor() {
-        this.serverUrl = 'http://localhost:8080/api/v1';
+        this.serverUrl = '/api/v1';
         this.token = null;
         this.connected = false;
         this.sseConnected = false;
@@ -85,14 +85,12 @@ class APIIntegration {
                     version: '1.0',
                     ...context
                 },
-                data: {
-                    codeBlocks
-                }
+                code_blocks: codeBlocks
             };
 
             const result = await this.request('POST', '/invoke', requestData);
 
-            this.currentPromiseId = result.promise_id;
+            this.currentPromiseId = result.promiseId || result.promise_id;
 
             if (window.appState) {
                 window.appState.set('loading.tasks', false);

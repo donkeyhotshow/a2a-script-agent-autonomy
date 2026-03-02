@@ -1,0 +1,53 @@
+{
+  "success": true,
+  "data": {
+    "id": "req_1772477960470_dyugvb3ce",
+    "promiseId": "cmm9jm3bx0000vhorrw0mhmgx",
+    "clientId": "simulation-client",
+    "status": "completed",
+    "priority": 0,
+    "context": {
+      "task": "тест вибору дій",
+      "version": "1.0",
+      "session_id": "stateless"
+    },
+    "message": "тест вибору дій",
+    "codeBlocks": null,
+    "result": {
+      "graph": {
+        "entities": [],
+        "relations": []
+      },
+      "context": {
+        "graph": {
+          "entities": [],
+          "relations": []
+        },
+        "new_task": [
+          "тест вибору дій"
+        ],
+        "request_files": [
+          "No entities recognized"
+        ]
+      },
+      "message": "Graph incomplete, need more context",
+      "missing": [
+        "No entities recognized"
+      ],
+      "outcome": "graph_incomplete",
+      "questions": [
+        "Please provide the relevant code files (controller, model, service, or Vue components)."
+      ],
+      "graph_stats": {
+        "entityCount": 0,
+        "entityTypes": {},
+        "relationCount": 0,
+        "relationTypes": {}
+      }
+    },
+    "error": null,
+    "createdAt": "2026-03-02T18:59:20.541Z",
+    "startedAt": "2026-03-02T18:59:21.083Z",
+    "completedAt": "2026-03-02T18:59:21.110Z"
+  }
+}

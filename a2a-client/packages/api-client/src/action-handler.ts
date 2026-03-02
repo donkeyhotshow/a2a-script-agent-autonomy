@@ -16,18 +16,49 @@ export interface HandleActionResult {
     error?: string;
 }
 
+/**
+ * Extract step info from response (supports both legacy action.currentStep and new execute.script formats)
+ */
+function extractStepInfo(response: {
+    action?: { currentStep?: { id?: string; code?: string } };
+    execute?: { script?: { code?: string } };
+    context?: { session_id?: string };
+}): { stepId: string; code: string; sessionId: string } | null {
+    // New format: execute.script
+    if (response?.execute?.script?.code) {
+        const stepId = response.action?.currentStep?.id || 'current';
+        return {
+            stepId,
+            code: response.execute.script.code,
+            sessionId: response.context?.session_id || '',
+        };
+    }
+    
+    // Legacy format: action.currentStep
+    const step = response?.action?.currentStep;
+    if (step?.code && response?.context?.session_id) {
+        return {
+            stepId: step.id || 'current',
+            code: step.code,
+            sessionId: response.context.session_id,
+        };
+    }
+    
+    return null;
+}
+
 export async function handleActionResponse(
     response: {
         action?: { currentStep?: { id?: string; code?: string } };
+        execute?: { script?: { code?: string } };
         context?: { session_id?: string };
     },
     options: HandleActionOptions = {} as HandleActionOptions
 ): Promise<HandleActionResult> {
-    const step = response?.action?.currentStep;
-    const code = step?.code;
-    const sessionId = response?.context?.session_id;
-
-    if (!code || !sessionId || !step?.id) {
+    // Support both new execute.script format and legacy action.currentStep format
+    const stepInfo = extractStepInfo(response);
+    
+    if (!stepInfo || !stepInfo.code || !stepInfo.sessionId) {
         return {handled: false};
     }
 
@@ -37,21 +68,39 @@ export async function handleActionResponse(
     }
 
     const context: Record<string, unknown> = {
-        sessionId,
-        stepId: step.id,
+        sessionId: stepInfo.sessionId,
+        stepId: stepInfo.stepId,
         projectPath: options.projectPath,
         previousOutput: options.previousOutput,
     };
 
     let stepResult: unknown;
     try {
-        stepResult = await executeCode(code, context);
+        stepResult = await executeCode(stepInfo.code, context);
     } catch (err) {
         return {handled: true, error: err instanceof Error ? err.message : String(err)};
     }
 
-    const nextResponse = await sendContinue(sessionId, step.id, stepResult);
+    const nextResponse = await sendContinue(stepInfo.sessionId, stepInfo.stepId, stepResult);
     return {handled: true, stepResult, nextResponse};
+}
+
+/**
+ * Check if response contains execute.form.choices (new protocol format)
+ */
+export function hasFormChoices(response: unknown): boolean {
+    return !!(response && typeof response === 'object' && 'execute' in response && 
+        (response as {execute?: {form?: {choices?: unknown}}}).execute?.form?.choices);
+}
+
+/**
+ * Extract form choices from response (new protocol format)
+ */
+export function extractFormChoices(response: unknown): Array<{id: string; label: string}> {
+    if (!response || typeof response !== 'object') return [];
+    const exec = (response as {execute?: {form?: {choices?: unknown}}}).execute;
+    if (!exec?.form?.choices) return [];
+    return exec.form.choices as Array<{id: string; label: string}>;
 }
 
 export type ExecuteScriptFn = (
