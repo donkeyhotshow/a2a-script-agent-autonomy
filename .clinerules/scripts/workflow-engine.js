@@ -828,6 +828,14 @@ class WorkflowEngine {
                 organizationScore: organizationScore
             };
 
+            // Get user decisions for QA if QTU is available
+            let userDecisions = {};
+            if (this.qtuIntegration) {
+                console.log('\n🎯 Getting user input for QA metrics review...');
+                userDecisions = await this.qtuIntegration.qaDecisions(context);
+                console.log('✅ User decisions collected');
+            }
+
             const decision = await this.decisionEngine.makeDecision('qa', 'quality_verification', context);
 
             // Update progress
@@ -849,8 +857,12 @@ class WorkflowEngine {
             console.log(`📊 Completion rate: ${completionRate}%`);
             console.log(`🎯 Accuracy score: ${accuracyScore}%`);
             console.log(`📋 Organization score: ${organizationScore}%`);
+            
+            if (Object.keys(userDecisions).length > 0) {
+                console.log(`👤 User decisions:`, JSON.stringify(userDecisions, null, 2));
+            }
 
-            return {metrics: context, decision};
+            return {metrics: context, decision, userDecisions};
         } catch (error) {
             console.error('❌ Quality metrics review failed:', error.message);
             return null;

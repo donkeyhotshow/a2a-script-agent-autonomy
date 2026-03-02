@@ -40,21 +40,7 @@
         "message": "Будь ласка! Звертайся ще, якщо будуть питання про код.",
         "action": "completed"
       }
-    ],
-    "ragResults": [
-      {
-        "file": "src/auth.js",
-        "score": 0.95,
-        "snippet": "async function login..."
-      }
-    ],
-    "fileContents": {
-      "src/auth.js": "const jwt = require('jsonwebtoken');\nconst bcrypt = require('bcrypt');\n\nconst JWT_SECRET = process.env.JWT_SECRET || 'secret-key';\nconst JWT_EXPIRES_IN = '24h';\n\nasync function register(email, password) {\n  const hashedPassword = await bcrypt.hash(password, 10);\n  return { email, id: 1 };\n}\n\nasync function login(email, password) {\n  const isValid = await bcrypt.compare(password, storedHash);\n  if (!isValid) {\n    throw new Error('Invalid credentials');\n  }\n  const token = jwt.sign({ email }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });\n  return { token, user: { email } };\n}\n\nfunction verifyToken(token) {\n  return jwt.verify(token, JWT_SECRET);\n}\n\nmodule.exports = { register, login, verifyToken };"
-    }
-  },
-  "result": {
-    "message": "Будь ласка! Звертайся ще, якщо будуть питання про код.",
-    "completed": true
+    ]
   },
   "execute": {
     "form": {
@@ -68,6 +54,7 @@
           "required": true
         }
       ]
-    }
+    },
+    "message": "Будь ласка! Звертайся ще, якщо будуть питання про код."
   }
 }

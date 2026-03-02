@@ -1,0 +1,16 @@
+{
+  "qtuVersion": "1.0.0",
+  "outputFormat": "structured",
+  "defaultTimeout": 60,
+  "defaultPort": 8765,
+  "backwardCompatibility": true,
+  "errorHandling": {
+    "retryAttempts": 3,
+    "retryDelay": 1000
+  },
+  "logging": {
+    "enabled": true,
+    "level": "info",
+    "file": ".clinerules/logs/qtu.log"
+  }
+}

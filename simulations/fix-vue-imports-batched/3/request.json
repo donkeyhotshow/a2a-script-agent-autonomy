@@ -9,8 +9,12 @@
   "result": {
     "rag-search": {
       "results": [
-        "vite.config.js",
-        "vite.config.ts"
+        {
+          "file": "vite.config.js"
+        },
+        {
+          "file": "vite.config.ts"
+        }
       ],
       "files": [
         "vite.config.js",

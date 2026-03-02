@@ -12,8 +12,6 @@
     }
   },
   "result": {
-    "form": {
-      "proceed": true
-    }
+    "choice": true
   }
 }

@@ -18,6 +18,7 @@ class QTUIntegration {
         this.questionsDir = '.clinerules/questions';
         this.answersFile = '.clinerules/user-answers.json';
         this.sessionId = `cline_${Date.now()}`;
+        this.answerProcessor = null;
     }
 
     /**
@@ -30,6 +31,16 @@ class QTUIntegration {
             
             // Initialize answers file
             await this.ensureAnswersFile();
+            
+            // Initialize Answer Processor
+            const { AnswerProcessor } = require('./answer-processor.js');
+            this.answerProcessor = new AnswerProcessor();
+            const processorInitialized = await this.answerProcessor.initialize();
+            
+            if (!processorInitialized) {
+                console.log('⚠️  Answer Processor initialization failed, continuing without caching');
+                this.answerProcessor = null;
+            }
             
             console.log('✅ QTU Integration initialized');
             return true;
@@ -68,6 +79,15 @@ class QTUIntegration {
         try {
             console.log(`\n❓ Asking user: ${question}`);
             
+            // Check cache first if AnswerProcessor is available
+            if (this.answerProcessor) {
+                const cachedAnswer = await this.answerProcessor.processQTUResponse(question, `q_${Date.now()}`, '');
+                if (cachedAnswer.success && cachedAnswer.source === 'cache') {
+                    console.log(`🔄 Using cached answer: ${cachedAnswer.answer}`);
+                    return cachedAnswer.answer;
+                }
+            }
+            
             // Build QTU command
             let command = `powershell -ExecutionPolicy Bypass -File "${this.qtuScriptPath}"`;
             command += ` -Question "${question}"`;
@@ -86,16 +106,55 @@ class QTUIntegration {
                 timeout: (timeout + 10) * 1000 // Add buffer for startup
             });
 
-            // Parse JSON response from stdout
-            const jsonMatch = result.match(/\{[\s\S]*\}/);
-            if (!jsonMatch) {
-                throw new Error('No JSON response received from QTU');
+            console.log('QTU raw output:', result);
+
+            // Process QTU response using AnswerProcessor
+            if (this.answerProcessor) {
+                const processedResult = await this.answerProcessor.processQTUResponse(
+                    question, 
+                    `q_${Date.now()}`, 
+                    result
+                );
+                
+                if (processedResult.success) {
+                    console.log(`✅ User answered: ${processedResult.answer}`);
+                    return processedResult.answer;
+                } else {
+                    console.log(`❌ Failed to process QTU response: ${processedResult.error}`);
+                    return null;
+                }
             }
 
-            const response = JSON.parse(jsonMatch[0]);
+            // Fallback to original parsing if AnswerProcessor not available
+            let response;
+            try {
+                // Try to extract JSON from output
+                const jsonMatch = result.match(/\{[\s\S]*\}/);
+                if (jsonMatch) {
+                    response = JSON.parse(jsonMatch[0]);
+                } else {
+                    // If no JSON found, create basic response
+                    response = {
+                        answer: result.trim(),
+                        questionId: `q_${Date.now()}`,
+                        timestamp: new Date().toISOString(),
+                        options: options
+                    };
+                }
+            } catch (parseError) {
+                console.log('JSON parse error, using fallback:', parseError.message);
+                // Fallback: use the raw output as answer
+                response = {
+                    answer: result.trim(),
+                    questionId: `q_${Date.now()}`,
+                    timestamp: new Date().toISOString(),
+                    options: options
+                };
+            }
+
             const answer = response.answer;
 
-            // Save answer to file
+            // Save answer to file with enhanced error handling
             await this.saveUserAnswer(question, answer, response);
 
             console.log(`✅ User answered: ${answer}`);
@@ -116,20 +175,36 @@ class QTUIntegration {
      */
     async saveUserAnswer(question, answer, response) {
         try {
-            const answersData = JSON.parse(await fs.readFile(this.answersFile, 'utf8'));
+            let answersData;
+            
+            // Try to read existing file
+            try {
+                const fileContent = await fs.readFile(this.answersFile, 'utf8');
+                answersData = JSON.parse(fileContent);
+            } catch (readError) {
+                // File doesn't exist or is invalid, create new structure
+                answersData = {
+                    sessionId: this.sessionId,
+                    answers: {},
+                    questions: {},
+                    lastUpdated: new Date().toISOString()
+                };
+            }
             
             const questionId = response.questionId;
             answersData.answers[questionId] = answer;
             answersData.questions[questionId] = {
                 question: question,
                 timestamp: response.timestamp,
-                type: options ? 'multiple_choice' : 'text'
+                type: response.options ? 'multiple_choice' : 'text'
             };
             answersData.lastUpdated = new Date().toISOString();
 
             await fs.writeFile(this.answersFile, JSON.stringify(answersData, null, 2));
+            console.log(`✅ Answer saved: ${questionId} = ${answer}`);
         } catch (error) {
             console.error('❌ Error saving user answer:', error.message);
+            console.error('Stack trace:', error.stack);
         }
     }
 

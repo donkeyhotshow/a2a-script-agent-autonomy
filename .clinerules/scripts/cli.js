@@ -49,6 +49,12 @@ class DocumentationReviewCLI {
                 case 'test':
                     await this.runTests();
                     break;
+                case 'ask':
+                    await this.askUser(args.slice(1));
+                    break;
+                case 'qtu-test':
+                    await this.testQTU(args.slice(1));
+                    break;
                 default:
                     console.log(`Unknown command: ${command}`);
                     this.showHelp();
@@ -297,6 +303,97 @@ Examples:
             }
         } catch (error) {
             console.log('❌ CLI test error:', error.message);
+        }
+    }
+
+    async askUser(args) {
+        try {
+            // Check if QTU integration is available
+            const { QTUIntegration } = require('./qtu-integration.js');
+            const qtu = new QTUIntegration();
+
+            const initialized = await qtu.initialize();
+            if (!initialized) {
+                console.log('❌ QTU integration not available');
+                return;
+            }
+
+            const question = args[0];
+            const options = args[1] ? args[1].split(',') : null;
+            const timeout = args[2] ? parseInt(args[2]) : 60;
+
+            if (!question) {
+                console.log('Usage: node cli.js ask <question> [options] [timeout]');
+                console.log('Example: node cli.js ask "Choose option" "Option1,Option2,Option3" 30');
+                return;
+            }
+
+            console.log(`❓ Asking user: ${question}`);
+            
+            const answer = await qtu.askUser(question, options, timeout);
+            
+            if (answer) {
+                console.log(`✅ User answered: ${answer}`);
+            } else {
+                console.log('⏰ User did not respond within timeout');
+            }
+
+        } catch (error) {
+            console.error('❌ Error asking user:', error.message);
+        }
+    }
+
+    async testQTU(args) {
+        try {
+            // Check if QTU integration is available
+            const { QTUIntegration } = require('./qtu-integration.js');
+            const qtu = new QTUIntegration();
+
+            const initialized = await qtu.initialize();
+            if (!initialized) {
+                console.log('❌ QTU integration not available');
+                return;
+            }
+
+            console.log('🧪 Testing QTU integration...');
+            
+            // Test 1: Simple text question
+            console.log('\n📝 Test 1: Simple text question');
+            const textAnswer = await qtu.askUser(
+                'How are you feeling today?',
+                null,
+                30
+            );
+            console.log(`Answer: ${textAnswer || 'No response'}`);
+
+            // Test 2: Multiple choice question
+            console.log('\n📋 Test 2: Multiple choice question');
+            const choiceAnswer = await qtu.askUser(
+                'What is your preferred processing mode?',
+                ['Sequential', 'Batch', 'Hybrid'],
+                45
+            );
+            console.log(`Answer: ${choiceAnswer || 'No response'}`);
+
+            // Test 3: Priority question
+            console.log('\n🎯 Test 3: Priority question');
+            const priorityAnswer = await qtu.askUser(
+                'What priority should we use for this workflow?',
+                ['High', 'Medium', 'Low'],
+                30
+            );
+            console.log(`Answer: ${priorityAnswer || 'No response'}`);
+
+            // Show answer history
+            console.log('\n📊 Answer History:');
+            const history = await qtu.getAnswerHistory();
+            console.log(`Total answers: ${Object.keys(history.answers).length}`);
+            console.log(`Questions asked: ${Object.keys(history.questions).length}`);
+
+            console.log('\n✅ QTU integration test complete');
+
+        } catch (error) {
+            console.error('❌ QTU test error:', error.message);
         }
     }
 }

@@ -16,8 +16,8 @@
       }
     ]
   },
-  "message": "hello world",
   "execute": {
+    "message": "hello world",
     "form": {
       "input": [
         {

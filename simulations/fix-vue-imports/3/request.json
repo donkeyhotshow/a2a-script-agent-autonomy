@@ -7,7 +7,8 @@
     }
   },
   "result": {
-    "broken_imports": [
+    "script": {
+      "broken_imports": [
       {
         "file": "resources/js/Pages/Auth/Login.vue",
         "line": 3,
@@ -24,5 +25,6 @@
         "import": "import { userStore } from '@/stores/user'"
       }
     ]
+    }
   }
 }

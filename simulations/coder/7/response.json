@@ -53,25 +53,13 @@
           "content": "..."
         }
       }
-    ],
-    "ragResults": [
-      {
-        "file": "src/auth.js",
-        "score": 0.95,
-        "snippet": "async function login..."
-      }
-    ],
-    "fileContents": {
-      "src/auth.js": "const jwt = require('jsonwebtoken');\nconst bcrypt = require('bcrypt');\n\nconst JWT_SECRET = process.env.JWT_SECRET || 'secret-key';\nconst JWT_EXPIRES_IN = '24h';\n\nasync function register(email, password) {\n  const hashedPassword = await bcrypt.hash(password, 10);\n  return { email, id: 1 };\n}\n\nasync function login(email, password) {\n  const isValid = await bcrypt.compare(password, storedHash);\n  if (!isValid) {\n    throw new Error('Invalid credentials');\n  }\n  const token = jwt.sign({ email }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });\n  return { token, user: { email } };\n}\n\nfunction verifyToken(token) {\n  return jwt.verify(token, JWT_SECRET);\n}\n\nmodule.exports = { register, login, verifyToken };"
-    }
-  },
-  "result": {
-    "message": "Запишу детальний звіт про систему авторизації у файл docs/auth-report.md"
+    ]
   },
   "execute": {
     "write-file": {
       "path": "docs/auth-report.md",
       "content": "# Звіт: Система Авторизації\n\n## Огляд\n\nДосліджено систему авторизації в проекті. Основний код знаходиться в `src/auth.js`.\n\n---\n\n## Функції\n\n### 1. Реєстрація користувача (`register`)\n\n```javascript\nasync function register(email, password) {\n  const hashedPassword = await bcrypt.hash(password, 10);\n  return { email, id: 1 };\n}\n```\n\n**Опис:**\n- Пароль хешується за допомогою bcrypt з солтю (cost factor = 10)\n- Зберігається хеш пароля, а не сам пароль\n- Повертається email та id нового користувача\n\n---\n\n### 2. Вхід користувача (`login`)\n\n```javascript\nasync function login(email, password) {\n  const isValid = await bcrypt.compare(password, storedHash);\n  if (!isValid) {\n    throw new Error('Invalid credentials');\n  }\n  const token = jwt.sign({ email }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });\n  return { token, user: { email } };\n}\n```\n\n**Опис:**\n- Користувач вводить email та пароль\n- Перевірка пароля через bcrypt.compare()\n- При успіху генерується JWT токен\n- Токен містить email користувача\n- Термін дії токена: 24 години\n\n---\n\n### 3. Верифікація токену (`verifyToken`)\n\n```javascript\nfunction verifyToken(token) {\n  return jwt.verify(token, JWT_SECRET);\n}\n```\n\n**Опис:**\n- Перевіряє валідність JWT токену\n- Повертає дані з токену (payload)\n- Використовується в middleware для захисту маршрутів\n\n---\n\n## Використані бібліотеки\n\n| Бібліотека | Призначення |\n|------------|-------------|\n| jsonwebtoken | Створення та верифікація JWT токенів |\n| bcrypt | Хешування паролів |\n\n---\n\n## Конфігурація\n\n```javascript\nconst JWT_SECRET = process.env.JWT_SECRET || 'secret-key';\nconst JWT_EXPIRES_IN = '24h';\n```\n\n---\n\n## Потік авторизації\n\n1. Користувач реєструється → пароль хешується, дані зберігаються\n2. Користувач входить → пароль перевіряється, видається токен\n3. При запитах → токен верифікується в middleware\n\n---\n\n## Джерела\n\n- `src/auth.js` - основний модуль авторизації\n- `src/middleware/auth.ts` - middleware для захисту маршрутів\n- `src/utils/jwt.js` - утиліти для роботи з JWT"
-    }
+    },
+    "message": "Запишу детальний звіт про систему авторизації у файл docs/auth-report.md"
   }
 }

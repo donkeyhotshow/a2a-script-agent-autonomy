@@ -45,9 +45,7 @@
       "files": [
         "src/auth.js"
       ]
-    }
-  },
-  "result": {
+    },
     "form": {
       "message": "дякую!"
     }

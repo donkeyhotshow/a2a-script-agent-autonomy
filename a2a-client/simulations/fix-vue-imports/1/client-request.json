@@ -1,8 +1,0 @@
-{
-  "context": {
-    "task": "виправити імпорти у vue компонентах"
-  },
-  "result": {
-    "choice": "fix-vue-imports"
-  }
-}

@@ -3,20 +3,20 @@
     "task": "знайти застарілі PHPUnit методи",
     "execution": {
       "action": "phpunit-deprecations",
-      "step": "detect-deprecations",
-      "history": [
-        {
-          "step": "scan-phpunit",
-          "status": "completed",
-          "result": {
-            "total": 45
-          }
+      "step": "detect-deprecations"
+    },
+    "history": [
+      {
+        "step": "scan-phpunit",
+        "status": "completed",
+        "result": {
+          "total": 45
         }
-      ]
-    }
+      }
+    ]
   },
   "result": {
-    "detect-deprecations": {
+    "script": {
       "deprecations": [
         {
           "method": "assertEquals",

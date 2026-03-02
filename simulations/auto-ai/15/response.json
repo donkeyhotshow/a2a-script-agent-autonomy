@@ -21,10 +21,6 @@
         "action": "completed"
       }
     ],
-    "result": {
-      "message": "Refactor done: health route, logging middleware, tests updated, lint and test passed, report in .carrier/reports/refactor-report.md.",
-      "completed": true
-    },
     "execute": {
       "form": {
         "input": [
@@ -36,6 +32,8 @@
             "required": false
           }
         ]
-      }
+      },
+      "message": "Refactor done: health route, logging middleware, tests updated, lint and test passed, report in .carrier/reports/refactor-report.md."
     }
   }
+}

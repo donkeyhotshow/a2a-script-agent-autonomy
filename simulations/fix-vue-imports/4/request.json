@@ -7,7 +7,8 @@
     }
   },
   "result": {
-    "patches": [
+    "script": {
+      "patches": [
       {
         "file": "resources/js/Pages/Auth/Login.vue",
         "line": 3,
@@ -27,5 +28,6 @@
         "to": "@/stores/userStore"
       }
     ]
+    }
   }
 }

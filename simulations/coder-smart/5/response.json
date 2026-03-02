@@ -18,8 +18,6 @@
     }
   },
   "execute": {
-    "message": {
-      "content": "checklist"
-    }
+    "message": "checklist"
   }
 }

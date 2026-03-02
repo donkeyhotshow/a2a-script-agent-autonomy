@@ -30,8 +30,10 @@
     }
   },
   "result": {
-    "totalFiles": 50,
-    "currentFile": 1,
-    "message": "Обробляю файл 1 з 50: resources/js/Pages/Auth/Login.vue"
+    "script": {
+      "totalFiles": 50,
+      "currentFile": 1,
+      "message": "Обробляю файл 1 з 50: resources/js/Pages/Auth/Login.vue"
+    }
   }
 }

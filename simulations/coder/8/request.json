@@ -28,7 +28,7 @@
   "result": {
     "write-file": {
       "path": "docs/auth-report.md",
-      "ok": true
+      "success": true
     }
   }
 }

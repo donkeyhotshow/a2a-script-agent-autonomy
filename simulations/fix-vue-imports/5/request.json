@@ -7,7 +7,8 @@
     }
   },
   "result": {
-    "fixed_files": [
+    "script": {
+      "fixed_files": [
       {
         "file": "resources/js/Pages/Auth/Login.vue",
         "status": "fixed"
@@ -21,5 +22,6 @@
         "status": "fixed"
       }
     ]
+    }
   }
 }
