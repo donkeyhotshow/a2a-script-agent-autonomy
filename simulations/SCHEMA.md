@@ -17,7 +17,7 @@ Each step folder can contain up to 6 files, in pipeline order:
 
 **Order:** request.json → server-transforms-request.md → request.md → response.md → server-transforms-response.md → response.json.
 
-Not every step has all 6 files: steps without LLM typically have only `request.json` and `response.json`; steps with LLM add the .md files; transform docs are optional and describe server logic.
+Not every step has all 6 files: steps without LLM typically have `request.json`, `server-transforms-request.md`, `server-transforms-response.md`, and `response.json`; steps with LLM add the .md files; transform docs describe server logic even when no LLM is involved.
 
 ## Request
 

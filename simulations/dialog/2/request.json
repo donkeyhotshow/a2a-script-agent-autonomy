@@ -3,6 +3,6 @@
     "task": "диалог"
   },
   "result": {
-    "action": "dialog"
+    "choice": "dialog"
   }
 }

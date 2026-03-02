@@ -3,6 +3,6 @@
     "task": "виправити імпорти у vue компонентах"
   },
   "result": {
-    "action": "fix-vue-imports-batched"
+    "choice": "fix-vue-imports-batched"
   }
 }
