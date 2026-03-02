@@ -7,9 +7,15 @@
     }
   },
   "result": {
-    "vite_config_files": [
-      "vite.config.js",
-      "vite.config.ts"
-    ]
+    "rag-search": {
+      "results": [
+        "vite.config.js",
+        "vite.config.ts"
+      ],
+      "files": [
+        "vite.config.js",
+        "vite.config.ts"
+      ]
+    }
   }
 }

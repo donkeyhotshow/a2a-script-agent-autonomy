@@ -13,6 +13,7 @@ class WorkflowEngine {
         this.progress = null;
         this.config = null;
         this.decisionEngine = new DecisionEngine();
+        this.qtuIntegration = null;
     }
 
     async initialize() {
@@ -25,11 +26,33 @@ class WorkflowEngine {
             // Initialize decision engine
             await this.decisionEngine.initialize();
 
+            // Initialize QTU integration
+            await this.initializeQTU();
+
             console.log('✅ Workflow Engine initialized');
             return true;
         } catch (error) {
             console.error('❌ Workflow Engine initialization failed:', error.message);
             return false;
+        }
+    }
+
+    async initializeQTU() {
+        try {
+            // Check if QTU integration is available
+            const { WorkflowDecisionPoints } = require('./qtu-integration.js');
+            this.qtuIntegration = new WorkflowDecisionPoints();
+            
+            const initialized = await this.qtuIntegration.initialize();
+            if (initialized) {
+                console.log('✅ QTU Integration initialized');
+            } else {
+                console.log('⚠️  QTU Integration not available');
+                this.qtuIntegration = null;
+            }
+        } catch (error) {
+            console.log('⚠️  QTU Integration not available:', error.message);
+            this.qtuIntegration = null;
         }
     }
 
@@ -430,7 +453,21 @@ class WorkflowEngine {
                 processingTime: this.estimateProcessingTime()
             };
 
+            // Get user decisions if QTU is available
+            let userDecisions = {};
+            if (this.qtuIntegration) {
+                console.log('\n🎯 Getting user input for resource assessment...');
+                userDecisions = await this.qtuIntegration.discoveryDecisions(context);
+                console.log('✅ User decisions collected');
+            }
+
             const decision = await this.decisionEngine.makeDecision('discovery', 'resource_assessment', context);
+
+            // Combine automated and user decisions
+            const finalDecision = {
+                ...decision,
+                userDecisions: userDecisions
+            };
 
             // Update progress
             this.progress.phases.discovery.status = 'completed';
@@ -446,8 +483,11 @@ class WorkflowEngine {
 
             console.log(`✅ Resource assessment complete`);
             console.log(`🎯 Decision: ${decision.action}`);
+            if (Object.keys(userDecisions).length > 0) {
+                console.log(`👤 User decisions:`, JSON.stringify(userDecisions, null, 2));
+            }
 
-            return decision;
+            return finalDecision;
         } catch (error) {
             console.error('❌ Resource assessment failed:', error.message);
             return null;
@@ -507,6 +547,17 @@ class WorkflowEngine {
 
             console.log(`🚀 Processing ${mediumPriorityDocs.length} medium priority documents in batches...`);
 
+            // Get user decisions for processing if QTU is available
+            let userDecisions = {};
+            if (this.qtuIntegration) {
+                console.log('\n🎯 Getting user input for medium priority processing...');
+                userDecisions = await this.qtuIntegration.processingDecisions({
+                    processingMode: 'medium',
+                    documentCount: mediumPriorityDocs.length
+                });
+                console.log('✅ User decisions collected');
+            }
+
             // Process in batches
             const batchSize = this.config.batch_size.medium;
             let processed = 0;
@@ -548,6 +599,9 @@ class WorkflowEngine {
             await this.saveState();
 
             console.log(`✅ Medium priority processing complete: ${processed}/${mediumPriorityDocs.length} documents`);
+            if (Object.keys(userDecisions).length > 0) {
+                console.log(`👤 User decisions:`, JSON.stringify(userDecisions, null, 2));
+            }
             return {processed, total: mediumPriorityDocs.length};
         } catch (error) {
             console.error('❌ Medium priority processing failed:', error.message);

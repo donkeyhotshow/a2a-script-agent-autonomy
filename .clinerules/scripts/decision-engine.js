@@ -466,43 +466,66 @@ class DecisionEngine {
     }
 }
 
-// CLI interface
-if (require.main === module) {
+  // CLI interface
+  if (require.main === module) {
     const engine = new DecisionEngine();
-
+    
     const args = process.argv.slice(2);
     const command = args[0];
     const phase = args[1];
     const step = args[2];
-
-    if (!command || !phase || !step) {
-        console.log('Usage: node decision-engine.js <command> <phase> <step> [context]');
-        console.log('Commands: decide, recommend, status');
-        process.exit(1);
+    
+    if (!command) {
+      console.log('Usage: node decision-engine.js <command> [phase] [step] [context]');
+      console.log('Commands:');
+      console.log('  status                                    Show current state');
+      console.log('  decide <phase> <step> [context]          Make decision for phase/step');
+      console.log('  recommend <phase> <step> [context]       Get recommendations');
+      console.log('');
+      console.log('Examples:');
+      console.log('  node decision-engine.js status');
+      console.log('  node decision-engine.js decide discovery inventory_analysis');
+      console.log('  node decision-engine.js recommend processing batch_size');
+      process.exit(1);
     }
 
     engine.initialize().then(async () => {
-        switch (command) {
-            case 'decide':
-                const context = args[3] ? JSON.parse(args[3]) : {};
-                const decision = await engine.makeDecision(phase, step, context);
-                console.log('Decision:', JSON.stringify(decision, null, 2));
-                break;
-
-            case 'recommend':
-                const recContext = args[3] ? JSON.parse(args[3]) : {};
-                const recommendations = await engine.getRecommendations(phase, step, recContext);
-                console.log('Recommendations:', JSON.stringify(recommendations, null, 2));
-                break;
-
-            case 'status':
-                console.log('Current State:', JSON.stringify(engine.state, null, 2));
-                break;
-
-            default:
-                console.log('Unknown command:', command);
-        }
+      switch (command) {
+        case 'decide':
+          if (!phase || !step) {
+            console.log('❌ Error: Phase and step are required for decide command');
+            console.log('Usage: node decision-engine.js decide <phase> <step> [context]');
+            process.exit(1);
+          }
+          const context = args[3] ? JSON.parse(args[3]) : {};
+          const decision = await engine.makeDecision(phase, step, context);
+          console.log('Decision:', JSON.stringify(decision, null, 2));
+          break;
+      
+        case 'recommend':
+          if (!phase || !step) {
+            console.log('❌ Error: Phase and step are required for recommend command');
+            console.log('Usage: node decision-engine.js recommend <phase> <step> [context]');
+            process.exit(1);
+          }
+          const recContext = args[3] ? JSON.parse(args[3]) : {};
+          const recommendations = await engine.getRecommendations(phase, step, recContext);
+          console.log('Recommendations:', JSON.stringify(recommendations, null, 2));
+          break;
+      
+        case 'status':
+          if (engine.state) {
+            console.log('Current State:', JSON.stringify(engine.state, null, 2));
+          } else {
+            console.log('No active state found. Initialize the engine first.');
+          }
+          break;
+      
+        default:
+          console.log('Unknown command:', command);
+          console.log('Available commands: status, decide, recommend');
+      }
     });
-}
+  }
 
 module.exports = DecisionEngine;

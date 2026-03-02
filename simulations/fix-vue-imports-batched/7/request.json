@@ -18,12 +18,14 @@
     }
   },
   "result": {
-    "file": "resources/js/Pages/Auth/Register.vue",
-    "exporter_found": "resources/js/utils/helpers.js",
-    "fixed": true,
-    "patch": {
-      "from": "../../utils/helpers",
-      "to": "@/utils/helpers"
+    "script": {
+      "file": "resources/js/Pages/Auth/Register.vue",
+      "exporter_found": "resources/js/utils/helpers.js",
+      "fixed": true,
+      "patch": {
+        "from": "../../utils/helpers",
+        "to": "@/utils/helpers"
+      }
     }
   }
 }

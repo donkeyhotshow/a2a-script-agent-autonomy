@@ -47,7 +47,9 @@
       ]
     }
   },
-  "input": {
-    "message": "дякую!"
+  "result": {
+    "form": {
+      "message": "дякую!"
+    }
   }
 }

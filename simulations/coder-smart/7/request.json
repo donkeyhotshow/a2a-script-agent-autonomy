@@ -8,7 +8,9 @@
     "history": []
   },
   "result": {
-    "written": true,
-    "path": ".carrier/tasks/task-1.md"
+    "write-file": {
+      "path": ".carrier/tasks/task-1.md",
+      "ok": true
+    }
   }
 }

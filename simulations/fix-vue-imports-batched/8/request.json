@@ -18,12 +18,14 @@
     }
   },
   "result": {
-    "file": "resources/js/components/UserCard.vue",
-    "exporter_found": "resources/js/stores/userStore.js",
-    "fixed": true,
-    "patch": {
-      "from": "@/stores/user",
-      "to": "@/stores/userStore"
+    "script": {
+      "file": "resources/js/components/UserCard.vue",
+      "exporter_found": "resources/js/stores/userStore.js",
+      "fixed": true,
+      "patch": {
+        "from": "@/stores/user",
+        "to": "@/stores/userStore"
+      }
     }
   }
 }

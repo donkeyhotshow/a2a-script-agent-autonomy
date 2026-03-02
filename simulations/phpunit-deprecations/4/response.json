@@ -24,7 +24,6 @@
   },
   "execute": {
     "script": {
-      "name": "generate-deprecations-report",
       "input": {
         "deprecations": [
           {

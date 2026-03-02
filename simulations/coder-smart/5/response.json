@@ -18,8 +18,8 @@
     }
   },
   "execute": {
-    "llm": {
-      "purpose": "checklist"
+    "message": {
+      "content": "checklist"
     }
   }
 }

@@ -18,12 +18,14 @@
     }
   },
   "result": {
-    "file": "resources/js/Pages/Auth/Login.vue",
-    "exporter_found": "resources/js/components/Header.vue",
-    "fixed": true,
-    "patch": {
-      "from": "../components/Header",
-      "to": "@/components/Header"
+    "script": {
+      "file": "resources/js/Pages/Auth/Login.vue",
+      "exporter_found": "resources/js/components/Header.vue",
+      "fixed": true,
+      "patch": {
+        "from": "../components/Header",
+        "to": "@/components/Header"
+      }
     }
   }
 }
