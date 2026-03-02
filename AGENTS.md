@@ -39,21 +39,21 @@ import x from '@/services/x.js'
 
 ## A2A Protocol Conventions
 
-> For detailed documentation, see [`new-request-flow/`](new-request-flow/) directory.
+> For detailed documentation, see [`docs/new-request-flow/`](docs/new-request-flow/) directory.
 > 
 > **Important:** Legacy format (`actions[]`, `proposedActions`, `subActions`, `executingAction`, `dslScript`) is deprecated.
 > Use `execute.form.choices` for first response and action-key shape for execute/result.
 > 
 > See:
-> - [`new-request-flow/PROTOCOL.md`](new-request-flow/PROTOCOL.md) - Main protocol documentation
+> - [`docs/new-request-flow/PROTOCOL.md`](docs/new-request-flow/PROTOCOL.md) - Main protocol documentation
 > - [`simulations/SCHEMA.md`](simulations/SCHEMA.md) - Simulation schema
 > - [`simulations/REFERENCE.md`](simulations/REFERENCE.md) - Action reference
-> - [`new-request-flow/SIMULATION-LLM-PROXY.md`](new-request-flow/SIMULATION-LLM-PROXY.md) - Async flow with promiseId
+> - [`docs/new-request-flow/SIMULATION-LLM-PROXY.md`](docs/new-request-flow/SIMULATION-LLM-PROXY.md) - Async flow with promiseId
 
 ### Action-Key Shape (Critical)
 
 > **⚠️ CRITICAL:** This is the canonical format - all result and execute objects MUST use action-type keys.
-> See [`new-request-flow/PROTOCOL.md`](new-request-flow/PROTOCOL.md#action-key-shape-обязательно) for details.
+> See [`docs/new-request-flow/PROTOCOL.md`](docs/new-request-flow/PROTOCOL.md#action-key-shape-обязательно) for details.
 
 Action results and execute requests **MUST** use action-type keys, not generic `content` or `action` fields.
 

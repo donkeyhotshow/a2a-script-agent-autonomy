@@ -3,7 +3,7 @@
 > **⚠️ УСТАРЕВШИЙ ДОКУМЕНТ**
 > 
 > Этот документ описывает старую реализацию SSE. Актуальная документация:
-> - [new-request-flow/SIMULATION-LLM-PROXY.md](../../new-request-flow/SIMULATION-LLM-PROXY.md)
+> - [docs/new-request-flow/SIMULATION-LLM-PROXY.md](../../docs/new-request-flow/SIMULATION-LLM-PROXY.md)
 
 ## Overview
 

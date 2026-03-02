@@ -3,8 +3,8 @@
 > **⚠️ УСТАРЕВШИЙ ДОКУМЕНТ**
 > 
 > Этот документ описывает старый формат протокола. Актуальный формат см.:
-> - [new-request-flow/PROTOCOL.md](../new-request-flow/PROTOCOL.md)
-> - [new-request-flow/SESSION-FLOW.md](../new-request-flow/SESSION-FLOW.md)
+> - [docs/new-request-flow/PROTOCOL.md](../new-request-flow/PROTOCOL.md)
+> - [docs/new-request-flow/SESSION-FLOW.md](../new-request-flow/SESSION-FLOW.md)
 > - [simulations/SCHEMA.md](../simulations/SCHEMA.md)
 
 ## Overview
@@ -36,7 +36,7 @@ Based on `simulations/pilot/` data, here's the complete action execution flow:
 
 > **⚠️ УСТАРЕВШЕЕ:** Ранее использовался формат `proposedActions` → `executingAction` → `actionId` → `subActions` → `dslScript`.
 > 
-> **Актуальный формат см.:** [new-request-flow/PROTOCOL.md](../new-request-flow/PROTOCOL.md)
+> **Актуальный формат см.:** [docs/new-request-flow/PROTOCOL.md](../new-request-flow/PROTOCOL.md)
 
 ### Flow Sequence:
 

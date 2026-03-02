@@ -220,12 +220,12 @@ Total files found: 1700+
 
 ### Main Documentation
 
-- `external-ai-hub/README.md` - External AI hub documentation
+- `ai-integration/README.md` - External AI hub documentation
 
 ### Plans and Scripts
 
-- `external-ai-hub/plans/` - Planning documents
-- `external-ai-hub/scripts/` - Script documentation
+- `ai-integration/plans/` - Planning documents
+- `ai-integration/scripts/` - Script documentation
 
 ## Plans and Proposals
 

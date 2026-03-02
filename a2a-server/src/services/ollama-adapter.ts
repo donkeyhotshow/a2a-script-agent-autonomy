@@ -1,5 +1,5 @@
 /**
- * Ollama / external-ai-hub promise-based adapter
+ * Ollama / ai-integration promise-based adapter
  *
  * Реализация на основе плана: plans/ollama-proxy-integration.md
  */

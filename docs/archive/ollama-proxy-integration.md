@@ -1,14 +1,14 @@
-# План: Интеграция a2a-server с external-ai-hub (Ollama Proxy) в режиме Promise
+# План: Интеграция a2a-server с ai-integration (Ollama Proxy) в режиме Promise
 
 > **⚠️ УСТАРЕВШИЙ ДОКУМЕНТ**
 > 
 > Этот документ описывает старую реализацию promiseId. Актуальная документация:
-> - [new-request-flow/SIMULATION-LLM-PROXY.md](../../new-request-flow/SIMULATION-LLM-PROXY.md)
-> - [new-request-flow/json-schemas/server-invoke-response-pending.schema.json](../../new-request-flow/json-schemas/server-invoke-response-pending.schema.json)
+> - [docs/new-request-flow/SIMULATION-LLM-PROXY.md](../../docs/new-request-flow/SIMULATION-LLM-PROXY.md)
+> - [docs/new-request-flow/json-schemas/server-invoke-response-pending.schema.json](../../docs/new-request-flow/json-schemas/server-invoke-response-pending.schema.json)
 
 ## Задачи
 
-- [x] [Настроить external-ai-hub на порту 11434](#настроить-external-ai-hub-на-порту-11434)
+- [x] [Настроить ai-integration на порту 11434](#настроить-ai-integration-на-порту-11434)
 - [x] [Создать OllamaAdapter с promise-based интерфейсом](#создать-ollamaadapter-с-promise-based-интерфейсом)
 - [x] [Реализовать polling механизм](#реализовать-polling-механизм)
 - [x] [Обновить LLM сервис для использования асинхронного режима](#обновить-llm-сервис-для-использования-асинхронного-режима)
@@ -17,7 +17,7 @@
 
 ---
 
-### Настроить external-ai-hub на порту 11434
+### Настроить ai-integration на порту 11434
 
 ### Создать OllamaAdapter с promise-based интерфейсом
 
@@ -33,7 +33,7 @@
 
 ## Текущее состояние
 
-### external-ai-hub (proxy.py)
+### ai-integration (proxy.py)
 
 Уже имеет promise-based систему:
 
@@ -50,7 +50,7 @@
 
 - Синхронный вызов OpenAI API
 - Блокирующий await fetch()
-- Нет интеграции с external-ai-hub
+- Нет интеграции с ai-integration
 
 ### Проблема
 
@@ -64,9 +64,9 @@
 
 Создать интеграцию, которая:
 
-1. Отправляет запросы в external-ai-hub с `?promise=1`
+1. Отправляет запросы в ai-integration с `?promise=1`
 2. Возвращает **promiseId** сразу (не блокируется)
-3. Периодически **ping-ует** external-ai-hub на статус
+3. Периодически **ping-ует** ai-integration на статус
 4. Получает ответ когда он готов
 
 ---
@@ -77,7 +77,7 @@
 sequenceDiagram
     participant C as Client
     participant S as a2a-server
-    participant H as external-ai-hub
+    participant H as ai-integration
     participant O as Ollama
 
     Note over C,O: Режим Promise (non-blocking)
@@ -101,11 +101,11 @@ sequenceDiagram
 
 ## План реализации
 
-### Этап 1: Настройка external-ai-hub
+### Этап 1: Настройка ai-integration
 
-1. Запустить external-ai-hub на порту 11434:
+1. Запустить ai-integration на порту 11434:
    ```bash
-   cd external-ai-hub
+   cd ai-integration
    python proxy.py
    ```
 
@@ -141,7 +141,7 @@ export interface PromiseStatus {
 }
 
 /**
- * Отправить запрос в external-ai-hub в режиме promise
+ * Отправить запрос в ai-integration в режиме promise
  * Возвращает promiseId сразу (non-blocking)
  */
 export async function createOllamaPromise(request: OllamaRequest): Promise<{ promiseId: string }> {
@@ -381,7 +381,7 @@ POLL_TIMEOUT_MS=120000
 После интеграции будут доступны:
 
 ```typescript
-// В external-ai-hub
+// В ai-integration
 GET  /promise/:id          // Статус
 GET  /promise/:id/response // Результат
 
@@ -406,8 +406,8 @@ logger.error('[Ollama] Promise error', { promiseId, error });
 ## Тестирование
 
 ```bash
-# Запуск external-ai-hub
-cd external-ai-hub && python proxy.py &
+# Запуск ai-integration
+cd ai-integration && python proxy.py &
 
 # Запуск a2a-server
 cd a2a-server && npm run dev

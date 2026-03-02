@@ -1,8 +1,8 @@
 /**
- * LLM Adapter — external AI integration (OpenAI, Ollama via external-ai-hub).
+ * LLM Adapter — external AI integration (OpenAI, Ollama via ai-integration).
  *
  * Ollama path is intentionally promise-based (non-blocking HTTP): we create a promise in
- * external-ai-hub and then poll it until completion.
+ * ai-integration and then poll it until completion.
  */
 
 import {logger} from '../utils/logger.js';

@@ -3,7 +3,7 @@
 > **⚠️ УСТАРЕВШИЙ ДОКУМЕНТ**
 > 
 > Этот документ описывает старый формат протокола. Актуальный формат см.:
-> - [new-request-flow/PROTOCOL.md](../../new-request-flow/PROTOCOL.md)
+> - [docs/new-request-flow/PROTOCOL.md](../../docs/new-request-flow/PROTOCOL.md)
 > - [simulations/SCHEMA.md](../../simulations/SCHEMA.md)
 
 ## Выбрано пользователем (qtu):
