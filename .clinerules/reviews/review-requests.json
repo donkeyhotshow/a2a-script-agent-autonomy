@@ -1,7 +1,7 @@
 {
   "tracking_version": "1.0.0",
   "last_updated": "2026-03-02T00:00:00Z",
-  "total_requests": 29,
+  "total_requests": 35,
   "pending_requests": [
     {
       "id": 1772410790173,
@@ -64,6 +64,60 @@
       "reviewer": "auto-reviewer",
       "status": "pending",
       "created_at": "2026-03-02T06:52:03.155Z",
+      "checklist": []
+    },
+    {
+      "id": 1772440848743,
+      "document_path": "docs\\NEW-API-REFERENCE.md",
+      "review_type": "content",
+      "reviewer": "auto-reviewer",
+      "status": "pending",
+      "created_at": "2026-03-02T08:40:48.743Z",
+      "checklist": []
+    },
+    {
+      "id": 1772440866003,
+      "document_path": "docs\\NEW-README.md",
+      "review_type": "content",
+      "reviewer": "auto-reviewer",
+      "status": "pending",
+      "created_at": "2026-03-02T08:41:06.003Z",
+      "checklist": []
+    },
+    {
+      "id": 1772440881817,
+      "document_path": "docs\\NEW-WORKFLOW-TYPES.md",
+      "review_type": "content",
+      "reviewer": "auto-reviewer",
+      "status": "pending",
+      "created_at": "2026-03-02T08:41:21.817Z",
+      "checklist": []
+    },
+    {
+      "id": 1772440897663,
+      "document_path": "docs\\NEW-ARCHITECTURE.md",
+      "review_type": "content",
+      "reviewer": "auto-reviewer",
+      "status": "pending",
+      "created_at": "2026-03-02T08:41:37.663Z",
+      "checklist": []
+    },
+    {
+      "id": 1772440897678,
+      "document_path": "docs\\NEW-TROUBLESHOOTING.md",
+      "review_type": "content",
+      "reviewer": "auto-reviewer",
+      "status": "pending",
+      "created_at": "2026-03-02T08:41:37.678Z",
+      "checklist": []
+    },
+    {
+      "id": 1772440897686,
+      "document_path": "docs\\NEW-INTEGRATION-GUIDE.md",
+      "review_type": "content",
+      "reviewer": "auto-reviewer",
+      "status": "pending",
+      "created_at": "2026-03-02T08:41:37.686Z",
       "checklist": []
     }
   ],

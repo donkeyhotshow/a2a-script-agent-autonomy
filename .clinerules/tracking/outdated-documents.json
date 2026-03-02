@@ -1,7 +1,7 @@
 {
   "tracking_version": "1.0.0",
   "last_updated": "2026-03-02T00:00:00Z",
-  "total_documents": 12,
+  "total_documents": 17,
   "outdated_documents": [
     {
       "path": "README.md",
@@ -56,6 +56,31 @@
     {
       "path": "docs/README.md",
       "marked_at": "2026-03-02T07:45:17.442Z",
+      "status": "pending_update"
+    },
+    {
+      "path": "docs/API-REFERENCE.md",
+      "marked_at": "2026-03-02T08:40:48.740Z",
+      "status": "pending_update"
+    },
+    {
+      "path": "docs/README.md",
+      "marked_at": "2026-03-02T08:41:05.999Z",
+      "status": "pending_update"
+    },
+    {
+      "path": "docs/WORKFLOW-TYPES.md",
+      "marked_at": "2026-03-02T08:41:21.813Z",
+      "status": "pending_update"
+    },
+    {
+      "path": "docs/TROUBLESHOOTING.md",
+      "marked_at": "2026-03-02T08:41:37.675Z",
+      "status": "pending_update"
+    },
+    {
+      "path": "docs/INTEGRATION-GUIDE.md",
+      "marked_at": "2026-03-02T08:41:37.683Z",
       "status": "pending_update"
     }
   ],

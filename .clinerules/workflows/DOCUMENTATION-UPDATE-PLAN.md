@@ -106,50 +106,67 @@ node .clinerules/scripts/workflow-engine.js --report --format json
 - Генерация финальных отчетов
 - Убеждение в полноте обновления
 
-## Команды для использования системы
+## Команды для создания и управления задачами
 
-### Основные команды
+### Основные команды для задач
+
 ```bash
-# Запуск системы
+# Создание задач
+node .clinerules/scripts/task-generator.js generate-all
+node .clinerules/scripts/task-generator.js generate-update docs/API-REFERENCE.md "Update API endpoints"
+node .clinerules/scripts/task-generator.js generate-create docs/ARCHITECTURE.md "Create architecture docs"
+node .clinerules/scripts/task-generator.js list
+node .clinerules/scripts/task-generator.js report
+
+# Управление задачами
+node .clinerules/scripts/task-manager.js execute task-1
+node .clinerules/scripts/task-manager.js execute-all
+node .clinerules/scripts/task-manager.js list
+node .clinerules/scripts/task-manager.js stats
+
+# Интеграция с workflow
 node .clinerules/scripts/workflow-engine.js --start --priority medium
-
-# Проверка статуса
 node .clinerules/scripts/workflow-engine.js --status
+node .clinerules/scripts/workflow-engine.js --report --format json
 
-# Генерация отчета
-node .clinerules/scripts/workflow-engine.js --report --format markdown
-
-# CLI для документации
-node .clinerules/scripts/cli.js create docs/new.md "Content"
-node .clinerules/scripts/cli.js outdated docs/old.md
-node .clinerules/scripts/cli.js start 123456
-node .clinerules/scripts/cli.js complete 123456 "Review completed"
-
-# Мониторинг
+# Мониторинг процесса
 node .clinerules/scripts/dashboard.js --render
 ```
+
+### Приоритеты задач
+
+- **high** - Критически важные документы (API, README)
+- **medium** - Важная документация (инструкции, гайды)
+- **low** - Дополнительная документация (справочники, примеры)
+
+## Важные моменты
+
+**ЗАДАЧИ - ЭТО СВЯТОЕ!**
+- Каждая задача должна быть четко определена
+- Задачи должны иметь понятные инструкции
+- Приоритеты задач должны быть обоснованы
+- Зависимости между задачами должны быть учтены
 
 ## Результаты
 
 ### Ожидаемые результаты
-- **Обновленная документация** - все документы актуальны
-- **Контролируемое качество** - документы прошли ревью
-- **Систематизированная структура** - документация организована
-- **Готовые отчеты** - есть метрики и статистика
+- **Структурированные задачи** - все задачи четко определены и приоритизированы
+- **Понятные инструкции** - каждая задача имеет подробные инструкции
+- **Систематизированная структура** - задачи организованы по приоритетам и зависимостям
+- **Готовые отчеты** - есть метрики и статистика по задачам
 
 ### Метрики успеха
-- [ ] Все документы актуальны
-- [ ] Процент завершенных ревью > 90%
-- [ ] Качество документации > 8/10
-- [ ] Время обновления < 5 дней
+- [ ] Все задачи созданы и классифицированы
+- [ ] Приоритеты задач обоснованы и понятны
+- [ ] Инструкции к задачам подробные и понятные
+- [ ] Зависимости между задачами учтены
 
 ## Важно
 
-**Не развивать систему - использовать ее!**
-Система уже работает, нужно:
-1. Запустить ее
-2. Использовать для обновления документации
-3. Контролировать качество
-4. Получить результат
+**ЗАДАЧИ - ЭТО СВЯТОЕ!**
+- Сейчас мы создаем основу для всего процесса
+- Качество задач определяет успех всего проекта
+- Каждая задача должна быть тщательно продумана
+- Не торопитесь - делайте качественно
 
 **Система готова к использованию - пора применять!**

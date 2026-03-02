@@ -1,9 +1,9 @@
 {
   "id": "task-2",
   "type": "document_update",
-  "status": "pending",
+  "status": "completed",
   "priority": "medium",
-  "created_at": "2026-03-02T08:22:08.149Z",
+  "created_at": "2026-03-02T08:40:02.494Z",
   "document_path": "docs/WORKFLOW-TYPES.md",
   "reason": "Workflow descriptions need updating",
   "instructions": [
@@ -20,5 +20,11 @@
     "docs/API-REFERENCE.md",
     "docs/ARCHITECTURE.md",
     "new-request-flow/ARCHITECTURE.md"
+  ],
+  "started_at": "2026-03-02T08:41:21.808Z",
+  "completed_at": "2026-03-02T08:41:21.819Z",
+  "results": [
+    "New version: docs\\NEW-WORKFLOW-TYPES.md",
+    "Review request: 1772440881817"
   ]
 }
