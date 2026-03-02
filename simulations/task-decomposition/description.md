@@ -61,7 +61,7 @@ simulations/task-decomposition/
 ├── 1/ request.json, response.json   # task → actions with steps
 ├── 2/ request.json, response.json   # choose action → form (message)
 ├── 3/ request.json, response.json   # result.message (task) → decompose-subtasks
-├── 4/ request.json, server-transforms-request.md, request.md, response.md, server-transforms-response.md, response.json  # LLM subtasks → doc 1+2, decompose-steps
+├── 4/ request.json, server-transforms-request.json, request.md, response.md, server-transforms-response.json, response.json  # LLM subtasks → doc 1+2, decompose-steps
 ├── 5/ ...   # LLM steps → doc 1+2+3, decompose-actions
 ├── 6/ ...   # LLM actions → doc full, write-file
 ├── 7/ request.json, response.json   # result.written → execute.form (doc content)

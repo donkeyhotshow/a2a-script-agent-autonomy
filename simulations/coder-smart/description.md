@@ -64,10 +64,10 @@ simulations/coder-smart/
 ├── 1/ request.json, response.json   # task → actions з steps
 ├── 2/ request.json, response.json   # вибір action → form (message)
 ├── 3/ request.json, response.json   # result.message (запит) → execute.rag-search (clarify)
-├── 4/ request.json, server-transforms-request.md, request.md, response.md, server-transforms-response.md, response.json  # RAG results → LLM clarify → doc 1+2, execute.rag-search (plan)
-├── 5/ request.json, server-transforms-request.md, request.md, response.md, server-transforms-response.md, response.json  # RAG results → LLM research plan → doc 1+2+3
-├── 6/ request.json, server-transforms-request.md, request.md, response.md, server-transforms-response.md, response.json  # LLM checklist → doc 1+2+3(done)+4, execute.write-file
+├── 4/ request.json, server-transforms-request.json, request.md, response.md, server-transforms-response.json, response.json  # RAG results → LLM clarify → doc 1+2, execute.rag-search (plan)
+├── 5/ request.json, server-transforms-request.json, request.md, response.md, server-transforms-response.json, response.json  # RAG results → LLM research plan → doc 1+2+3
+├── 6/ request.json, server-transforms-request.json, request.md, response.md, server-transforms-response.json, response.json  # LLM checklist → doc 1+2+3(done)+4, execute.write-file
 ├── 7/ request.json, response.json   # result.written → execute.form (doc content)
-├── 8/ request.json, server-transforms-request.md, request.md, response.md, server-transforms-response.md, response.json   # result.message (doc) → LLM execute item → write-file
+├── 8/ request.json, server-transforms-request.json, request.md, response.md, server-transforms-response.json, response.json   # result.message (doc) → LLM execute item → write-file
 └── 9/ request.json, response.json   # result.written → execute.form (наступна ітерація)
 

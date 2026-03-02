@@ -23,8 +23,8 @@ execute-command (npm test) → write-file (report) → completed. So the sim exe
 ## File structure (per simulations/SCHEMA.md)
 
 - **Steps without LLM** (1, 2, 16): only `request.json`, `response.json`.
-- **Steps with LLM** (3–15): all 6 files in pipeline order — `request.json` → `server-transforms-request.md` →
-  `request.md` → `response.md` → `server-transforms-response.md` → `response.json`.
+- **Steps with LLM** (3–15): all 6 files in pipeline order — `request.json` → `server-transforms-request.json` →
+  `request.md` → `response.md` → `server-transforms-response.json` → `response.json`.
 
 ```
 simulations/auto-ai/
@@ -34,7 +34,7 @@ simulations/auto-ai/
 ├── WORKFLOW.md
 ├── 1/   request.json, response.json
 ├── 2/   request.json, response.json
-├── 3/ … 15/   request.json, server-transforms-request.md, request.md, response.md, server-transforms-response.md, response.json
+├── 3/ … 15/   request.json, server-transforms-request.json, request.md, response.md, server-transforms-response.json, response.json
 └── 16/  request.json, response.json
 ```
 

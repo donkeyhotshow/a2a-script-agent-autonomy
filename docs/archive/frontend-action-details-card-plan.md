@@ -1,5 +1,11 @@
 # Frontend Action Details Card Plan
 
+> **⚠️ УСТАРЕВШИЙ ДОКУМЕНТ**
+> 
+> Этот документ описывает старый формат протокола. Актуальный формат см.:
+> - [new-request-flow/PROTOCOL.md](../../new-request-flow/PROTOCOL.md)
+> - [simulations/SCHEMA.md](../../simulations/SCHEMA.md)
+
 ## Выбрано пользователем (qtu):
 
 **Action Details Card (детали действия)**
@@ -29,7 +35,7 @@
 - ✅ Базовое отображение серверных ответов
 - ✅ Кнопка Approve
 - ❌ Нет детальной карточки с информацией
-- ❌ Нет списка sub-actions
+- ❌ Нет списка **steps** (ранее subActions)
 - ❌ Нет match score визуализации
 - ❌ Нет параметров действия
 

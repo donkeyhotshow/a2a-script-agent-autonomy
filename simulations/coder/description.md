@@ -70,17 +70,17 @@ simulations/coder/
 │   └── response.md
 ├── 4/
 │   ├── request.json
-│   ├── server-transforms-request.md
+│   ├── server-transforms-request.json
 │   ├── request.md
 │   ├── response.md
-│   ├── server-transforms-response.md
+│   ├── server-transforms-response.json
 │   └── response.json
 ├── 5/
 │   ├── request.json
-│   ├── server-transforms-request.md
+│   ├── server-transforms-request.json
 │   ├── request.md
 │   ├── response.md
-│   ├── server-transforms-response.md
+│   ├── server-transforms-response.json
 │   └── response.json
 ├── 6/
 │   ├── request.json
@@ -89,10 +89,10 @@ simulations/coder/
 │   └── response.md
 ├── 7/
 │   ├── request.json
-│   ├── server-transforms-request.md
+│   ├── server-transforms-request.json
 │   ├── request.md
 │   ├── response.md
-│   ├── server-transforms-response.md
+│   ├── server-transforms-response.json
 │   └── response.json
 └── 8/
     ├── request.json
@@ -101,6 +101,6 @@ simulations/coder/
     └── response.md
 ```
 
-> **Примітка:** Файли `server-transforms-request.md` та `server-transforms-response.md` є опціональними і показують
+> **Примітка:** Файли `server-transforms-request.json` та `server-transforms-response.json` є опціональними і показують
 > трансформацію даних на сервері перед відправкою до LLM та після отримання відповіді відповідно. Деякі кроки можуть
 > містити ці файли для демонстрації серверної обробки.

@@ -1,5 +1,13 @@
 # План: Система итеративных Actions на основе MD файлов
 
+> **⚠️ УСТАРЕВШИЙ ДОКУМЕНТ**
+> 
+> Этот документ описывает старый формат протокола. Актуальный формат см.:
+> - [new-request-flow/PROTOCOL.md](../new-request-flow/PROTOCOL.md)
+> - [new-request-flow/SESSION-FLOW.md](../new-request-flow/SESSION-FLOW.md)
+> - [simulations/SCHEMA.md](../simulations/SCHEMA.md)
+> - [simulations/REFERENCE.md](../simulations/REFERENCE.md)
+
 > **Относится к:** a2a-server (actions)
 
 ## Контекст
@@ -28,6 +36,10 @@
     - Контекста выполнения (aliases, patterns)
 
 **Предлагаемая структура MD файла:**
+
+> **⚠️ УСТАРЕВШЕЕ:** Ранее использовались термины `subActions`, `dsl`.
+> 
+> **Актуальный формат:** используйте `steps`, `script` с `input`, `output`, `code`.
 
 ```markdown
 # action-id
@@ -95,9 +107,12 @@ interface SubAction {
   priority: number;
   input: string;      // что ожидает на вход
   output: string;    // что возвращает
-  dsl: {
-    script: string;  // имя скрипта
-    input: object;   // параметры
+  // УСТАРЕЛО: dsl: { script: string; input: object; }
+  // АКТУАЛЬНО:
+  script: {
+    name: string;     // имя скрипта
+    input: object;    // параметры
+    output: string;   // ожидаемый формат вывода
   };
 }
 
@@ -184,13 +199,17 @@ class ActionExecutor {
 
 ### Этап 6: Формирование ответов (по формату симуляции)
 
-**Задачи:**
-
-1. Реализовать формирование response.json по формату из simulation-true:
-    - `outcome`: action_proposal → action_executing → completed
-    - `executingAction`: текущий шаг
-    - `nextSteps`: оставшиеся шаги
-    - `history`: история выполненных
+> **⚠️ УСТАРЕВШЕЕ:**
+> - `outcome`: action_proposal → action_executing → completed
+> - `executingAction`: текущий шаг
+> - `nextSteps`: оставшиеся шаги
+> 
+> **Актуальный формат:**
+> - Используйте `execute.form.choices` для первого ответа
+> - Используйте `execute.script` с action-key shape для шагов
+> - Используйте `context.execution.status: "completed"` для завершения
+> 
+> **См.:** [new-request-flow/PROTOCOL.md](../new-request-flow/PROTOCOL.md)
 
 2. Обработка различных исходов:
     - Успешное выполнение всех шагов
@@ -251,19 +270,28 @@ graph TD
 **Система:**
 
 1. Парсит MD файл `fix-vue-imports.md`
-2. Находит sub-actions: detect → resolve → apply → cleanup
+2. Находит **steps** (ранее subActions): detect → resolve → apply → cleanup
 3. Выполняет первый шаг
-4. Возвращает response с executingAction
+4. Возвращает response с **execute.script** (ранее executingAction)
 
 **Выход (к клиенту):**
 
-```json
-{
-  "outcome": "action_executing",
-  "executingAction": { "actionId": "vue-import-detect", ... },
-  "nextSteps": [...]
-}
-```
+> **⚠️ УСТАРЕВШЕЕ:**
+> ```json
+> {
+>   "outcome": "action_executing",
+>   "executingAction": { "actionId": "vue-import-detect", ... },
+>   "nextSteps": [...]
+> }
+> ```
+>
+> **Актуальный формат:**
+> ```json
+> {
+>   "context": { "execution": { "action": "fix-vue-imports", "step": "vue-import-detect" } },
+>   "execute": { "script": { "input": {...}, "output": "broken_imports[]", "code": "..." } }
+> }
+> ```
 
 ---
 

@@ -1,5 +1,9 @@
 # План: Requests Routes (4KB)
 
+> **См. также:** Актуальная документация по async flow с promiseId:
+> - [new-request-flow/SIMULATION-LLM-PROXY.md](../../new-request-flow/SIMULATION-LLM-PROXY.md)
+> - [new-request-flow/json-schemas/server-invoke-response-pending.schema.json](../../new-request-flow/json-schemas/server-invoke-response-pending.schema.json)
+
 ## Текущее состояние
 
 ### Что делает модуль

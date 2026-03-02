@@ -40,8 +40,20 @@ import x from '@/services/x.js'
 ## A2A Protocol Conventions
 
 > For detailed documentation, see [`new-request-flow/`](new-request-flow/) directory.
+> 
+> **Important:** Legacy format (`actions[]`, `proposedActions`, `subActions`, `executingAction`, `dslScript`) is deprecated.
+> Use `execute.form.choices` for first response and action-key shape for execute/result.
+> 
+> See:
+> - [`new-request-flow/PROTOCOL.md`](new-request-flow/PROTOCOL.md) - Main protocol documentation
+> - [`simulations/SCHEMA.md`](simulations/SCHEMA.md) - Simulation schema
+> - [`simulations/REFERENCE.md`](simulations/REFERENCE.md) - Action reference
+> - [`new-request-flow/SIMULATION-LLM-PROXY.md`](new-request-flow/SIMULATION-LLM-PROXY.md) - Async flow with promiseId
 
 ### Action-Key Shape (Critical)
+
+> **⚠️ CRITICAL:** This is the canonical format - all result and execute objects MUST use action-type keys.
+> See [`new-request-flow/PROTOCOL.md`](new-request-flow/PROTOCOL.md#action-key-shape-обязательно) for details.
 
 Action results and execute requests **MUST** use action-type keys, not generic `content` or `action` fields.
 
@@ -97,12 +109,14 @@ Execute actions are categorized by their target executor:
 
 ### Simulation Pipeline
 
+> See [`simulations/SCHEMA.md`](simulations/SCHEMA.md) for canonical simulation format.
+
 Simulations follow a strict transformation pipeline:
 
 ```
 request.json
     ↓
-server-transforms-request.md  (server preprocessing)
+server-transforms-request.json  (server preprocessing)
     ↓
 request.md  (ready for LLM)
     ↓
@@ -110,7 +124,7 @@ request.md  (ready for LLM)
     ↓
 response.md  (LLM output)
     ↓
-server-transforms-response.md  (server postprocessing)
+server-transforms-response.json  (server postprocessing)
     ↓
 response.json
 ```

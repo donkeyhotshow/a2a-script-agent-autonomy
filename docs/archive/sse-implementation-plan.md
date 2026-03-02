@@ -1,4 +1,9 @@
-в # SSE Implementation - Complete
+# SSE Implementation - Complete
+
+> **⚠️ УСТАРЕВШИЙ ДОКУМЕНТ**
+> 
+> Этот документ описывает старую реализацию SSE. Актуальная документация:
+> - [new-request-flow/SIMULATION-LLM-PROXY.md](../../new-request-flow/SIMULATION-LLM-PROXY.md)
 
 ## Overview
 

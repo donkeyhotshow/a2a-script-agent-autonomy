@@ -1,5 +1,10 @@
 # Поток сессий (Session Flow)
 
+> **⚠️ Важно:** Старый формат (`actions[]`, `proposedActions`, `subActions`, `executingAction`, `dslScript`) устарел.
+> Используйте `execute.form.choices` для первого ответа.
+> 
+> **См.:** [PROTOCOL.md](PROTOCOL.md), [SCHEMA.md](SCHEMA.md)
+
 > **ВАЖНО:** Сервер (a2a-server) STATELESS - не хранит сессии!
 > Все сессии хранятся на Client API. Сервер только обрабатывает запросы через `/invoke`.
 

@@ -1,5 +1,12 @@
 # План реализации A2A Server
 
+> **⚠️ УСТАРЕВШИЙ ДОКУМЕНТ**
+> 
+> Этот документ описывает старую реализацию. Актуальная документация:
+> - [new-request-flow/PROTOCOL.md](../../new-request-flow/PROTOCOL.md)
+> - [new-request-flow/SESSION-FLOW.md](../../new-request-flow/SESSION-FLOW.md)
+> - [simulations/SCHEMA.md](../../simulations/SCHEMA.md)
+
 > **Относится к:** a2a-server
 
 ## Фазы реализации

@@ -4,6 +4,11 @@
 
 Система состоит из трёх основных компонентов:
 
+> **⚠️ Важно:** Старый формат (`actions[]`, `executingAction`, `actionId`) устарел.
+> Используйте `execute.form.choices` для первого ответа и action-key shape для execute/result.
+> 
+> **См.:** [PROTOCOL.md](PROTOCOL.md)
+
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                         WEB (a2a-client/web)                    │
@@ -190,9 +195,9 @@ SIMULATION_ENABLED=false # Включить симуляцию
     - CLIENT API сохраняет сессию с actions
 
    │
-4. CLIENT API: возвращает { sessionId, actions[] }
+4. CLIENT API: возвращает { sessionId, **execute.form.choices** } (ранее `actions[]`)
    │
-5. WEB: отображает панель сессии с actions[]
+5. WEB: отображает панель сессии с **execute.form.choices** (ранее `actions[]`)
 
 ```
 
@@ -200,7 +205,7 @@ SIMULATION_ENABLED=false # Включить симуляцию
 
 ```
 
-1. USER: выбирает действие из actions[]
+1. USER: выбирает действие из **execute.form.choices** (ранее `actions[]`)
    │
 2. WEB: отправляет POST /api/sessions/:id/action { action }
    │

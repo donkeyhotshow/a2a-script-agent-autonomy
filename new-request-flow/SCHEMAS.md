@@ -336,8 +336,15 @@ json
 
 ## История изменений
 
+> **⚠️ Важно:** Старый формат (`actions[]`, `proposedActions`, `subActions`, `executingAction`, `dslScript`) устарел.
+> Используйте `execute.form.choices` для первого ответа и action-key shape.
+> 
+> **См.:** [PROTOCOL.md](PROTOCOL.md)
+
 - **2025-01**: Добавлен новый формат `execute.form.choices` для первого ответа сервера. Вместо `actions[]` и
   `fallbackActions[]` теперь используется `execute.form.choices` с массивом объектов `{ id, label }`.
+  
+  > **Примечание:** Формат с `actions[]` и `fallbackActions[]` считается **legacy** и используется только для совместимости.
  - **2026-03**: `server-transforms-request.md` / `server-transforms-response.md` мигрируют в
    `server-transforms-request.json` / `server-transforms-response.json` с JSONPath‑based pipeline (см.
    `json-schemas/server-transform.schema.json`).

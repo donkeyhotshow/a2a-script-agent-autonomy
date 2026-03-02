@@ -12,17 +12,17 @@ Each step folder can contain up to 6 files, in pipeline order:
 | File                            | Direction       | Description                                                                                                               |
 |---------------------------------|-----------------|---------------------------------------------------------------------------------------------------------------------------|
 | `request.json`                  | Client → Server | Payload from client.                                                                                                      |
-| `server-transforms-request.md`  | —               | How the server processes `request.json` and builds the LLM input (transformation before calling LLM). Optional.           |
+| `server-transforms-request.json`  | —               | How the server processes `request.json` and builds the LLM input (transformation before calling LLM). Optional.           |
 | `request.md`                    | Server → LLM    | Markdown sent to LLM (system prompt + current state).                                                                     |
 | `response.md`                   | LLM → Server    | Expected LLM output (e.g. JSON with `message`, `action`).                                                                 |
-| `server-transforms-response.md` | —               | How the server processes `response.md` and builds the client payload (transformation before sending to client). Optional. |
+| `server-transforms-response.json` | —               | How the server processes `response.md` and builds the client payload (transformation before sending to client). Optional. |
 | `response.json`                 | Server → Client | Payload sent to client (context + execute, etc.).                                                                         |
 
-**Order:** request.json → server-transforms-request.md → request.md → response.md → server-transforms-response.md →
+**Order:** request.json → server-transforms-request.json → request.md → response.md → server-transforms-response.json →
 response.json.
 
-Not every step has all 6 files: steps without LLM typically have `request.json`, `server-transforms-request.md`,
-`server-transforms-response.md`, and `response.json`; steps with LLM add the .md files; transform docs describe server
+Not every step has all 6 files: steps without LLM typically have `request.json`, `server-transforms-request.json`,
+`server-transforms-response.json`, and `response.json`; steps with LLM add the .md files; transform docs describe server
 logic even when no LLM is involved.
 
 ## Request

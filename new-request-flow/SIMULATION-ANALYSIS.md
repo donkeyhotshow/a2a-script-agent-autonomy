@@ -1,5 +1,9 @@
 # Анализ симуляции fix-vue-imports
 
+> **⚠️ Важно:** Этот документ для исторической справки. Актуальная документация:
+> - [PROTOCOL.md](PROTOCOL.md)
+> - [SCHEMA.md](SCHEMA.md)
+
 ## Расположение
 
 `simulations/fix-vue-imports/`

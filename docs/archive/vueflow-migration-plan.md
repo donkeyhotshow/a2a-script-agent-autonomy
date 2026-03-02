@@ -1,4 +1,11 @@
-икVueFlow Migration Plan for a2a-client/web
+# VueFlow Migration Plan for a2a-client/web
+
+> **⚠️ УСТАРЕВШИЙ ДОКУМЕНТ**
+> 
+> Этот документ описывает старый формат протокола. Актуальный формат см.:
+> - [new-request-flow/PROTOCOL.md](../new-request-flow/PROTOCOL.md)
+> - [new-request-flow/SESSION-FLOW.md](../new-request-flow/SESSION-FLOW.md)
+> - [simulations/SCHEMA.md](../simulations/SCHEMA.md)
 
 ## Overview
 
@@ -27,6 +34,10 @@ installed and partial implementation in `js/flow/` folder.
 
 Based on `simulations/pilot/` data, here's the complete action execution flow:
 
+> **⚠️ УСТАРЕВШЕЕ:** Ранее использовался формат `proposedActions` → `executingAction` → `actionId` → `subActions` → `dslScript`.
+> 
+> **Актуальный формат см.:** [new-request-flow/PROTOCOL.md](../new-request-flow/PROTOCOL.md)
+
 ### Flow Sequence:
 
 ```
@@ -42,6 +53,17 @@ Based on `simulations/pilot/` data, here's the complete action execution flow:
 ```
 
 ### Response Types & Data Structures:
+
+> **⚠️ УСТАРЕВШЕЕ:** 
+> ```json
+> {
+>   "outcome": "action_proposal",
+>   "proposedActions": [...],
+>   "subActions": [...]
+> }
+> ```
+> 
+> **Актуальный формат:** используйте `execute.form.choices` вместо `proposedActions`.
 
 #### 1. task_request → action_proposal (Simulation 1)
 
@@ -68,6 +90,20 @@ json
 }
 ```
 
+> **⚠️ УСТАРЕВШЕЕ:** 
+> ```json
+> {
+>   "executingAction": { "actionId": "...", "dsl": {...} }
+> }
+> ```
+> 
+> **Актуальный формат:** используйте `execute` с action-key shape:
+> ```json
+> {
+>   "execute": { "script": { "input": {...}, "output": "...", "code": "..." } }
+> }
+> ```
+
 #### 2. action_proposal → action_executing (Simulation 2)
 
 ```
@@ -86,6 +122,14 @@ json
   ]
 }
 ```
+
+> **⚠️ УСТАРЕВШЕЕ:** 
+> ```json
+> {
+>   "executingAction": { "actionId": "..." },
+>   "nextSteps": [...]
+> }
+> ```
 
 #### 3-4. Step Execution (Simulations 3-4)
 
@@ -108,6 +152,14 @@ json
   }
 }
 ```
+
+> **⚠️ УСТАРЕВШЕЕ:** 
+> ```json
+> {
+>   "outcome": "action_complete",
+>   "finalResult": { "actionId": "...", "summary": {...} }
+> }
+> ```
 
 #### 5. action_complete (Simulation 5)
 
@@ -161,10 +213,10 @@ Task 1.3: Add new node types for sub-actions
 
 ```
 Task 2.1: Update protocol.js for new response structures
-- ✅ Map proposedActions to ActionProposalNode
-- ✅ Map executingAction to SubActionNode
-- ✅ Map history to step tracking
-- ✅ Map finalResult to ActionCompleteNode
+- ✅ Map **proposedActions** → используйте `execute.form.choices`
+- ✅ Map **executingAction** → используйте `execute` с action-key shape
+- ✅ Map **history** → используйте `context.history`
+- ✅ Map **finalResult** → используйте `context.execution.status: "completed"`
 - ✅ Added mapSimulationResponseToFlow() function
 
 Task 2.2: Add edge animations
@@ -204,13 +256,13 @@ Task 4.2: Visual feedback
 
 ## Node Types Required
 
-| Node Type        | Purpose                  | Color            | Data Fields                                                 |
-|------------------|--------------------------|------------------|-------------------------------------------------------------|
-| `taskInput`      | Initial task request     | #22c55e (green)  | task, timestamp                                             |
-| `actionProposal` | Proposed action(s)       | #eab308 (yellow) | actionId, title, description, matchScore, subActions[]      |
-| `subAction`      | Currently executing step | #3b82f6 (blue)   | actionId, title, description, dsl, input, output, stepIndex |
-| `result`         | Step result (optional)   | #6b7280 (gray)   | actionId, result data                                       |
-| `actionComplete` | Final action result      | #22c55e (green)  | actionId, summary, totalSteps, duration                     |
+| Node Type        | Purpose                  | Color            | Data Fields (УСТАРЕВШЕЕ)                                                    | Data Fields (АКТУАЛЬНО)                                                                                             |
+|------------------|--------------------------|------------------|----------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------|
+| `taskInput`      | Initial task request     | #22c55e (green)  | task, timestamp                                                            | task, timestamp                                                                                                  |
+| `actionProposal` | Proposed action(s)       | #eab308 (yellow) | actionId, title, description, matchScore, **subActions[]** (устарело)    | action, title, description, matchScore, **steps[]** → используйте `execute.form.choices` (см. PROTOCOL.md)       |
+| `subAction`      | Currently executing step | #3b82f6 (blue)   | actionId, title, description, **dsl**, input, output, stepIndex (устарело) | action, title, description, **script** с input/output/code → используйте action-key shape (см. PROTOCOL.md)       |
+| `result`         | Step result (optional)   | #6b7280 (gray)   | actionId, result data                                                       | используйте action-key shape: `{ "result": { "script": {...} } }`                                              |
+| `actionComplete` | Final action result      | #22c55e (green)  | actionId, summary, totalSteps, duration                                   | action, summary, используйте `execution.status: "completed"`                                                     |
 
 ---
 

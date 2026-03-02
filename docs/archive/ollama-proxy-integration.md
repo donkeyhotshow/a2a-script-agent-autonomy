@@ -1,5 +1,11 @@
 # План: Интеграция a2a-server с external-ai-hub (Ollama Proxy) в режиме Promise
 
+> **⚠️ УСТАРЕВШИЙ ДОКУМЕНТ**
+> 
+> Этот документ описывает старую реализацию promiseId. Актуальная документация:
+> - [new-request-flow/SIMULATION-LLM-PROXY.md](../../new-request-flow/SIMULATION-LLM-PROXY.md)
+> - [new-request-flow/json-schemas/server-invoke-response-pending.schema.json](../../new-request-flow/json-schemas/server-invoke-response-pending.schema.json)
+
 ## Задачи
 
 - [x] [Настроить external-ai-hub на порту 11434](#настроить-external-ai-hub-на-порту-11434)

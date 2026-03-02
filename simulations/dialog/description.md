@@ -61,6 +61,6 @@ simulations/dialog/
     └── ai-analyze-prompt.md
 ```
 
-> **Примітка:** Файли `server-transforms-request.md` та `server-transforms-response.md` є опціональними і показують
+> **Примітка:** Файли `server-transforms-request.json` та `server-transforms-response.json` є опціональними і показують
 > трансформацію даних на сервері перед відправкою до LLM та після отримання відповіді відповідно. Деякі кроки можуть
 > містити ці файли для демонстрації серверної обробки.
