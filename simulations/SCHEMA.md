@@ -2,6 +2,8 @@
 
 Align all simulations to avoid redundant or conflicting values.
 
+> **Примечание о context:** Поля внутри `context` (включая `history`) имеют свободный формат и регулируются системой. Эти поля не проверяются на соответствие схеме.
+
 ## File layout (per step)
 
 Each step folder can contain up to 6 files, in pipeline order:

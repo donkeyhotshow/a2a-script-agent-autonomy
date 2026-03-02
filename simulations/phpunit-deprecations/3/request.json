@@ -7,8 +7,7 @@
     }
   },
   "result": {
-    "script": {
-      "scan-phpunit": {
+    "scan-phpunit": {
       "files": [
         {
           "path": "tests/Unit/UserTest.php"
@@ -18,7 +17,6 @@
         }
       ],
       "total": 45
-    }
     }
   }
 }

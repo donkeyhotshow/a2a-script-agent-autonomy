@@ -28,12 +28,5 @@
       "description": "Пошук файлу, який експортує клас 'Header' з помилки",
       "output": "exporter_file"
     }
-  },
-  "result": {
-    "script": {
-      "totalFiles": 50,
-      "currentFile": 1,
-      "message": "Обробляю файл 1 з 50: resources/js/Pages/Auth/Login.vue"
-    }
   }
 }

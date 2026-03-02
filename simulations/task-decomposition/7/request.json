@@ -8,6 +8,8 @@
     "history": []
   },
   "result": {
-    "script": ".carrier/tasks/task-1.md"
+    "script": {
+      "path": ".carrier/tasks/task-1.md"
+    }
   }
 }
