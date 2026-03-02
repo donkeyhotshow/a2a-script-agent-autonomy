@@ -58,6 +58,8 @@ interface Context {
 
 ## 3. Action
 
+Два типа в первой ответе сервера: **actions** (первоочередно) — шаги захардкожены, сервер переключает шаг; **ai-actions** (второчередно) — список доступных шагов для отображения, следующий шаг из ответа LLM, возможен отдельный запрос на шаг.
+
 ```
 typescript
 interface Action {
@@ -67,7 +69,7 @@ interface Action {
   priority: number;
   matchScore: number;
   llmPrompt?: string;          // Markdown для LLM
-  steps: Step[];
+  steps: Step[];               // actions: hardcoded; ai-actions: available steps, next from LLM
 }
 
 interface FallbackAction {
@@ -81,6 +83,8 @@ interface FallbackAction {
 ---
 
 ## 4. Step
+
+Для **actions**: шаги в definition задают последовательность; сервер сам переключает. Для **ai-actions**: шаги — список доступных (для отображения); какой шаг следующий решает LLM по своему ответу.
 
 ```
 typescript

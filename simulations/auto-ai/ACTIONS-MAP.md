@@ -1,6 +1,6 @@
 # Client actions (execute.*) — full map
 
-All actions the LLM/agent can request. The client must support each via `execute.<action>` and return `result.<action>` with the described shape.
+All actions the LLM/agent can request (ai-action flow: next step from LLM response; separate request per step possible). The client must support each via `execute.<action>` and return `result.<action>` with the described shape.
 
 ## Canonical rule
 

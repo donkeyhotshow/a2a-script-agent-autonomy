@@ -4,6 +4,8 @@
 
 Final simulation: **all agent capabilities** the client must support or will support. Auto-AI is the reference for what the LLM can ask the client to do via `execute.<action>`.
 
+**Type: ai-action.** Steps are not hardcoded; server shows available steps, LLM chooses next from its response; each step can be a separate LLM request.
+
 Full list of actions: **[ACTIONS-MAP.md](ACTIONS-MAP.md)**.
 
 ## Use case (this simulation) — extensive

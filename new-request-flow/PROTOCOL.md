@@ -12,7 +12,7 @@
 
 ### 1. Первый запрос: Поиск сервисов
 
-Пользователь вводит задачу, система предлагает доступные действия.
+Пользователь вводит задачу, система предлагает доступные действия. Два типа: **actions** (первоочередно) — шаги захардкожены, сервер сам переключает шаг по `result`; **ai-actions** (второстепенно, напр. диалог с LLM) — шаги не в фиксированной последовательности: отображается список доступных шагов, следующий шаг определяется из ответа LLM, возможен отдельный запрос на каждый шаг.
 
 #### Запрос (Web → Client API)
 
@@ -52,7 +52,7 @@ interface Action {
   description: string;
   priority: number;
   matchScore: number;
-  steps: Step[];
+  steps: Step[];                   // actions: hardcoded, server advances; ai-actions: available steps for display, next step from LLM response
 }
 
 interface Step {

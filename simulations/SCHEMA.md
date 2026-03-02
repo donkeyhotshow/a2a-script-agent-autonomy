@@ -30,7 +30,8 @@ Not every step has all 6 files: steps without LLM typically have `request.json`,
 ## Response (server)
 
 - **First response**: either (1) `context`, `actions[]`, optionally `fallbackActions[]`; or (2) `context`, `execute.form` with `choices`. When using form: no-LLM actions first (higher priority), then fallbackActions merged into same choices; client replies with `result.choice`.
-- **Action object**: `action`, `title`, `description`, `priority`; optional `matchScore`, `steps[]`, `repeatSteps[]`.
+- **Two types of offerings in first response:** (1) **actions** — primary; hardcoded steps, server determines next step from `result`. (2) **ai-actions** — secondary (e.g. LLM dialog); steps are not a fixed sequence; server shows a list of *available* steps; next step is derived from LLM response; each step can be a separate request to LLM.
+- **Action object**: `action`, `title`, `description`, `priority`; optional `matchScore`, `steps[]`, `repeatSteps[]`. For **actions**: `steps[]` are hardcoded so the server can advance; for **ai-actions**: `steps[]` (if present) are available steps for display only — LLM chooses next from its answer.
 - **Step object**: `action`, `title`, `description`, `priority`; optional `input`, `output`.
 - **fallbackActions** (when present): `mode`, `title`, `description`, `fallbackType`. Use same two entries: `auto-ai` (llm_generation), `task-decomposition` (manual).
 

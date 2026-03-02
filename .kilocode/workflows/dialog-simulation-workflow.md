@@ -1,6 +1,6 @@
 # Dialog Simulation — workflow
 
-Посилання на канон: `simulations/SCHEMA.md` та `simulations/dialog/description.md`.
+Посилання на канон: `simulations/SCHEMA.md` та `simulations/dialog/description.md`. Dialog — **ai-action**: кроки не захардкоджені; наступний крок з відповіді LLM, можливі окремі запити на крок.
 
 ## Файли кроку
 
