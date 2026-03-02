@@ -26,8 +26,35 @@ simulations/
 | `server-transforms-response.md` | —               | Обработка `response.md`, трансформация перед возвратом клиенту. Опционально. |
 | `response.json`                 | Server → Client | Ответ клиенту.                                                               |
 
-**Порядок:** request.json → server-transforms-request.md → request.md → response.md → server-transforms-response.md →
-response.json.
+**Порядок (pipeline):**
+
+```
+request.json → server-transforms-request.md → request.md → response.md → server-transforms-response.md → response.json
+```
+
+**Визуально:**
+
+```
+Client              Server (transforms)       LLM
+  │                   │                         │
+  │ request.json      │                         │
+  │──────────────────>│                         │
+  │                   │ server-transforms-request.md → request.md
+  │                   │─────────────────────────>│
+  │                   │         response.md     │
+  │                   │<─────────────────────────│
+  │                   │ server-transforms-response.md → response.json
+  │ response.json     │                         │
+  │<──────────────────│                         │
+```
+
+**Когда какие файлы нужны:**
+
+| Тип шага | Файлы |
+|----------|-------|
+| Без LLM (только Actions) | `request.json`, `response.json` (опционально: `server-transforms-*.md`) |
+| С LLM (AI-Actions) | Все 6 файлов |
+| Transform-логика | `server-transforms-request.md`, `server-transforms-response.md` (опциональны) |
 
 Не в каждом шаге есть все 6 файлов: шаги без LLM — обычно только request.json и response.json; шаги с LLM добавляют .md;
 transform-файлы опциональны и описывают логику сервера.
@@ -169,5 +196,143 @@ transform-файлы опциональны и описывают логику �
 `result: { "execute-command": { "command": "npm test", "exitCode": 0, "stdout": "...", "stderr": "" } }`. Server can
 pass to LLM for summary or next step.
 
-Каноничная схема: **simulations/SCHEMA.md**. Примеры .md промптов: **simulations/dialog/3/request.md**, *
-*simulations/dialog/3/response.md**.
+Каноничная схема: **simulations/SCHEMA.md**. Примеры .md промптов: **simulations/dialog/3/request.md**,
+**simulations/dialog/3/response.md**.
+
+---
+
+## Naming Conventions
+
+### Директории симуляций
+
+- **kebab-case** для имён директорий
+- **Описательные**, отражающие суть сценария
+- **Примеры:** `fix-vue-imports`, `phpunit-deprecations`, `task-decomposition`, `coder-smart`
+
+### Шаги (steps) внутри директорий
+
+- Нумерация: `1/`, `2/`, `3/` и т.д.
+- Последовательная, без пропусков
+- Каждый шаг — отдельная директория с файлами
+
+### Идентификаторы actions
+
+- **kebab-case** для имён действий
+- **Формат:** `<domain>-<operation>` или `<domain>-<operation>-<suboperation>`
+- **Примеры:**
+  - `fix-vue-imports` (домен: vue, операция: fix imports)
+  - `vue-import-detect` (домен: vue-import, операция: detect)
+  - `scan-phpunit` (домен: scan, операция: phpunit)
+  - `dialog` (простое действие)
+
+### Идентификаторы form choices
+
+- **snake_case** для ID выборов
+- **Примеры:** `continue_search`, `save_report`, `skip_step`, `start_over`
+
+### Имена файлов
+
+| Файл | Паттерн | Пример |
+|------|---------|--------|
+| Request | `request.json` | `simulations/coder/3/request.json` |
+| Server transform (request) | `server-transforms-request.md` | `simulations/coder/3/server-transforms-request.md` |
+| LLM request | `request.md` | `simulations/coder/3/request.md` |
+| LLM response | `response.md` | `simulations/coder/3/response.md` |
+| Server transform (response) | `server-transforms-response.md` | `simulations/coder/3/server-transforms-response.md` |
+| Response | `response.json` | `simulations/coder/3/response.json` |
+
+---
+
+## Context поля (system-managed)
+
+Поля внутри `context` курируются системой и имеют свободный формат. Не проверять и не изменять вручную.
+
+### Обязательные поля
+
+| Поле | Тип | Описание |
+|------|-----|----------|
+| `context.task` | string | Исходная задача пользователя |
+| `context.execution.action` | string | ID текущего действия |
+| `context.execution.step` | string | ID текущего шага |
+| `context.execution.status` | string | `"completed"` для финального шага |
+
+### System-managed поля
+
+| Поле | Тип | Описание |
+|------|-----|----------|
+| `context.history` | array | История взаимодействия (user ↔ assistant) |
+| `context.execution` | object | Состояние выполнения (action, step, progress) |
+| `context.docVirtual` | object | Виртуальный документ (для сложных AI-Actions) |
+| `context.aliases` | object | Алиасы путей (например, `{ "@": "resources/js" }`) |
+| `context.vite_config` | object | Конфигурация Vite (если применимо) |
+
+**Важно:** Эти поля управляются системой автоматически. При создании симуляций копируйте их из предыдущих шагов без изменений.
+
+---
+
+## Action-key shape в симуляциях
+
+Всегда используйте action-key shape для `result` и `execute`:
+
+### Правильно (✅)
+
+```json
+// request.json (result от клиента)
+{
+  "context": { ... },
+  "result": {
+    "script": {
+      "broken_imports": [...]
+    }
+  }
+}
+
+// response.json (execute от сервера)
+{
+  "context": { ... },
+  "execute": {
+    "read-file": {
+      "path": "src/auth.js"
+    }
+  }
+}
+```
+
+### Неправильно (❌)
+
+```json
+// request.json — нет action-key
+{
+  "context": { ... },
+  "result": {
+    "content": "..."  // непонятно, от какого действия
+  }
+}
+
+// response.json — flat action
+{
+  "context": { ... },
+  "execute": {
+    "action": "read-file",  // коллизия имён!
+    "file": "src/auth.js"
+  }
+}
+```
+
+---
+
+## Типы execute
+
+| Тип | Обрабатывается | Описание |
+|-----|----------------|----------|
+| `message` | Web UI only | Показывает текстовое сообщение пользователю |
+| `form` | Web UI only | Показывает форму ввода (choices или input) |
+| `script` | Client only | Выполняет DSL-скрипт на клиенте |
+| `rag-search` | Client only | Выполняет RAG-поиск |
+| `read-file` | Client only | Читает файл |
+| `write-file` | Client only | Записывает файл |
+| `execute-command` | Client only | Выполняет shell-команду |
+
+**Разделение ответственности:**
+- `message`, `form` — отображаются в Web UI
+- `script`, `rag-search`, `read-file`, `write-file`, `execute-command` — выполняются Client API

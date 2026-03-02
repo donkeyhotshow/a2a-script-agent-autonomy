@@ -36,6 +36,36 @@ response.json.
 
 У кроках з LLM є .md; інші — лише .json; transform-файли опційні.
 
+## Pipeline файлів
+
+```
+request.json → server-transforms-request.md → request.md → response.md → server-transforms-response.md → response.json
+```
+
+**Візуально:**
+
+```
+Client              Server (transforms)       LLM
+  │                   │                         │
+  │ request.json      │                         │
+  │──────────────────>│                         │
+  │                   │ server-transforms-request.md → request.md
+  │                   │─────────────────────────>│
+  │                   │         response.md     │
+  │                   │<─────────────────────────│
+  │                   │ server-transforms-response.md → response.json
+  │ response.json     │                         │
+  │<──────────────────│                         │
+```
+
+**Коли які файли потрібні:**
+
+| Тип кроку | Файли |
+|-----------|-------|
+| Без LLM (тільки Actions) | `request.json`, `response.json` |
+| З LLM (AI-Actions) | Всі 6 файлів |
+| Transform-логіка | `server-transforms-*.md` (опційно) |
+
 ## Flow
 
 ```
@@ -222,5 +252,98 @@ Execute format: `execute.<action-type> = params`, e.g. `"read-file": { "path": "
 3. **Результат rag-search** — клієнт повертає `result: { "rag-search": { "results": [...], "files": [...] } }` (
    action-key), не плоский `result.results`/`result.files`.
 4. **request.md** — завжди MARKDOWN (system prompt + стан), не чистий JSON з model/messages.
-5. **response.md** — лише очікуваний вивід LLM (наприклад один об’єкт з `message`).
+5. **response.md** — лише очікуваний вивід LLM (наприклад один об'єкт з `message`).
 6. **response.json** = контекст із сервера + execute (form або result).
+
+## Валідація: Action-key shape (ОБОВ'ЯЗКОВО)
+
+Всі `result` і `execute` повинні використовувати **action-key shape**:
+
+### ✅ Правильно
+
+```json
+// request.json (result від клієнта)
+{
+  "result": {
+    "script": { "broken_imports": [...] },
+    "rag-search": { "results": [...], "files": [...] },
+    "read-file": { "path": "...", "content": "..." },
+    "execute-command": { "command": "...", "exitCode": 0, "stdout": "..." }
+  }
+}
+
+// response.json (execute від сервера)
+{
+  "execute": {
+    "script": { "input": {...}, "output": "...", "code": "..." },
+    "read-file": { "path": "..." },
+    "write-file": { "path": "...", "content": "..." },
+    "rag-search": { "query": "..." },
+    "execute-command": { "command": "..." },
+    "form": { "input": [...] },
+    "message": "..."
+  }
+}
+```
+
+### ❌ Неправильно
+
+```json
+// Немає action-key — незрозуміло, від якої дії
+{
+  "result": {
+    "content": "...",
+    "results": [...]
+  }
+}
+
+// Flat action — колізія імен!
+{
+  "execute": {
+    "action": "read-file",
+    "file": "..."
+  }
+}
+```
+
+## Чеклист валідації симуляції
+
+### Структура
+
+- [ ] Директорія названа в kebab-case (наприклад, `fix-vue-imports`)
+- [ ] Шаги пронумеровані послідовно (1, 2, 3...)
+- [ ] Всі необхідні файли присутні (згідно з типом кроку)
+
+### Pipeline файлів
+
+- [ ] `request.json` → `server-transforms-request.md` (опц.) → `request.md` → `response.md` → `server-transforms-response.md` (опц.) → `response.json`
+- [ ] Логіка transform-файлів описана чітко
+
+### Action-key shape
+
+- [ ] `result` в `request.json` використовує action-key shape
+- [ ] `execute` в `response.json` використовує action-key shape
+- [ ] Немає flat `"action": "..."` з параметрами як сусіди
+
+### Context
+
+- [ ] `context.task` присутній
+- [ ] `context.execution.action` присутній для кроків після першого
+- [ ] `context.execution.step` присутній
+- [ ] `context.history` оновлюється коректно (для AI-Actions)
+
+### Naming
+
+- [ ] Action IDs в kebab-case
+- [ ] Step IDs в форматі `<domain>-<operation>`
+- [ ] Form choice IDs в snake_case
+
+### Два типи дій
+
+- [ ] Для Actions: кроки захардкожені, `execution.step` змінюється сервером
+- [ ] Для AI-Actions: `execution.step` часто `"llm-request"`, наступний крок визначається LLM
+
+### Execute типи
+
+- [ ] `message`, `form` — для Web UI
+- [ ] `script`, `rag-search`, `read-file`, `write-file`, `execute-command` — для Client

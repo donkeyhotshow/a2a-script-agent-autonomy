@@ -9,6 +9,112 @@
 
 **ВАЖНО:** Сервер полностью STATELESS - не хранит сессии, только обрабатывает запросы.
 
+## Action-key shape (ОБЯЗАТЕЛЬНО)
+
+Все `result` и `execute` объекты должны использовать **action-key shape** — результат и параметры действия оборачиваются в ключ с названием действия:
+
+```json
+// ✅ Правильно:
+{ "result": { "script": { "broken_imports": [...] } } }
+{ "execute": { "read-file": { "path": "..." } } }
+{ "result": { "rag-search": { "results": [...], "files": [...] } } }
+
+// ❌ Неправильно:
+{ "result": { "content": "..." } }
+{ "execute": { "action": "read-file", "file": "..." } }
+```
+
+### Правила action-key shape
+
+| Действие | Правильная структура execute | Правильная структура result |
+|----------|------------------------------|-----------------------------|
+| `script` | `"execute": { "script": { "input": {...}, "output": "...", "code": "..." } }` | `"result": { "script": { "output": "..." } }` |
+| `read-file` | `"execute": { "read-file": { "path": "..." } }` | `"result": { "read-file": { "path": "...", "content": "..." } }` |
+| `write-file` | `"execute": { "write-file": { "path": "...", "content": "..." } }` | `"result": { "write-file": { "path": "...", "success": true } }` |
+| `rag-search` | `"execute": { "rag-search": { "query": "..." } }` | `"result": { "rag-search": { "results": [...], "files": [...] } }` |
+| `execute-command` | `"execute": { "execute-command": { "command": "..." } }` | `"result": { "execute-command": { "command": "...", "exitCode": 0, "stdout": "...", "stderr": "" } }` |
+| `form` | `"execute": { "form": { "input": [...] } }` | `"result": { "message": "..." }` или `"result": { "choice": "..." }` |
+| `message` | `"execute": { "message": "..." }` | — (UI only) |
+
+**Почему это важно:**
+- Сервер точно знает, какое действие выполнялось
+- Избегаем коллизий имён параметров (например, `action` как ключ и как имя действия)
+- Упрощается отладка и логирование
+
+## Два типа действий: Actions vs AI-Actions
+
+В первом ответе сервер предлагает два типа действий с разной логикой шагов:
+
+### 1. Actions (первоочередные, hardcoded steps)
+
+**Характеристики:**
+- Кроки захардкожены в definition действия
+- Сервер сам переключает `execution.step` на основе `result`
+- Предсказуемый, алгоритмический поток
+- **Примеры:** [`fix-vue-imports`](simulations/fix-vue-imports/description.md), [`phpunit-deprecations`](simulations/phpunit-deprecations/description.md)
+
+**Структура execution:**
+```json
+{
+  "execution": {
+    "action": "fix-vue-imports",
+    "step": "vue-import-detect"
+  }
+}
+```
+
+**Поток выполнения:**
+```
+request.json → response.json (execute.script, step: "vue-import-detect")
+     ↑________________↓
+request.json (result.script) → response.json (execute.script, step: "vue-import-resolve")
+     ↑________________↓
+...автоматическое переключение шагов...
+```
+
+**Важно:** Клиент не выбирает следующий шаг — сервер определяет его из `context.execution.step` и `result` предыдущего шага.
+
+### 2. AI-Actions (второстепенные, LLM-управляемые)
+
+**Характеристики:**
+- Кроки не в фиксированной последовательности
+- Сервер показывает список *доступных* шагов
+- Следующий шаг определяется из ответа LLM
+- Возможны отдельные запросы на каждый шаг
+- **Примеры:** [`dialog`](simulations/dialog/description.md), [`coder`](simulations/coder/description.md), [`coder-smart`](simulations/coder-smart/description.md)
+
+**Структура execution:**
+```json
+{
+  "execution": {
+    "action": "coder",
+    "step": "llm-request"
+  }
+}
+```
+
+**Поток выполнения:**
+```
+request.json → request.md (LLM prompt) → response.md (LLM output)
+                                          ↓
+                   response.json ← server-transforms-response.md
+                          ↓
+              (execute.message, execute.form, или execute.read-file/rag-search/...)
+```
+
+**Важно:** LLM решает, какое действие выполнить следующим. Сервер транслирует ответ LLM в `execute` для клиента.
+
+### Сравнительная таблица
+
+| Аспект | Actions | AI-Actions |
+|--------|---------|------------|
+| Определение шагов | Hardcoded в definition | Динамические, LLM-выбранные |
+| Переключение шагов | Сервер автоматически | LLM определяет из ответа |
+| Нужен LLM | Нет (только для первого matching) | Да, на каждый шаг |
+| `execution.step` | Конкретное имя шага | Часто просто `"llm-request"` |
+| Примеры | fix-vue-imports, phpunit-deprecations | dialog, coder, auto-ai |
+| Сложность | Простая, алгоритмическая | Сложная, требует рассуждений |
+
 ## Схемы запросов/ответов
 
 ### 1. Первый запрос: Поиск сервисов
@@ -262,10 +368,12 @@ interface StepResultRequest {
     }
   },
   "result": {
-    "broken_imports": [
-      { "file": "resources/js/Pages/Auth/Login.vue", "line": 3, "import": "import Header from '../components/Header'" },
-      { "file": "resources/js/Pages/Auth/Register.vue", "line": 5, "import": "import { helper } from '../../utils/helpers'" }
-    ]
+    "script": {
+      "broken_imports": [
+        { "file": "resources/js/Pages/Auth/Login.vue", "line": 3, "import": "import Header from '../components/Header'" },
+        { "file": "resources/js/Pages/Auth/Register.vue", "line": 5, "import": "import { helper } from '../../utils/helpers'" }
+      ]
+    }
   }
 }
 ```
