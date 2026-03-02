@@ -27,20 +27,20 @@
 │ Client  │                              │ Server  │
 └────┬────┘                              └────┬────┘
      │                                        │
-     │  1. new_task                           │
+     │  1. task (top-level)                   │
      │ ──────────────────────────────────────>│
      │                                        │ Поиск подходящего action
      │                                        │
-     │  2. action_proposal + currentStep      │
+     │  2. execute.script (action-key shape)  │
      │ <──────────────────────────────────────│
      │                                        │
      │  [Выполнение кода на клиенте]          │
      │                                        │
-     │  3. continue + step_result             │
+     │  3. result.script (action-key shape)   │
      │ ──────────────────────────────────────>│
      │                                        │ Переход к следующему шагу
      │                                        │
-     │  4. nextStep или completed             │
+     │  4. next execute или завершение        │
      │ <──────────────────────────────────────│
      │                                        │
      │  [Повторять пока есть шаги]            │
@@ -59,60 +59,46 @@
 
 ## 2. Протокол обмена
 
-### Запрос new_task
+### Запрос task (первый запрос)
 
 Инициирует поиск подходящего action по описанию задачи.
 
-**Endpoint:** `POST /api/v1/requests`
+**Endpoint:** `POST /api/sessions`
 
 ```json
 {
-  "sessionId": "sess_abc123",
-  "context": {
-    "version": "1.0",
-    "session_id": "sess_abc123",
-    "new_task": "Исправить сломанные импорты в Vue файлах",
-    "project_path": "/path/to/project"
-  }
+  "task": "Исправить сломанные импорты в Vue файлах",
+  "projectId": "proj_abc123"
 }
 ```
 
-### Ответ action_proposal
+### Ответ с execute (action-key shape)
 
-Сервер находит подходящий action и возвращает первый шаг.
+Сервер находит подходящий action и возвращает первый шаг для выполнения.
 
 ```json
 {
   "context": {
-    "version": "1.0",
-    "session_id": "sess_abc123",
-    "tasks": [{
-      "id": "fix-vue-imports",
-      "type": "analyze",
-      "status": "in_progress",
-      "progress": 0
-    }]
+    "task": "Исправить сломанные импорты в Vue файлах",
+    "execution": {
+      "action": "fix-vue-imports",
+      "step": "vue-import-detect"
+    }
   },
-  "message": "Action found: fix-vue-imports. Starting execution...",
-  "action": {
-    "id": "fix-vue-imports",
-    "title": "Исправить сломанные импорты в Vue файлах",
-    "matchScore": 0.95,
-    "currentStep": {
-      "id": "vue-import-detect",
-      "title": "Определить сломанные импорты",
-      "code": "// TypeScript code..."
-    },
-    "nextSteps": [
-      { "id": "vue-import-resolve", "title": "Разрешить пути" },
-      { "id": "vue-import-apply", "title": "Применить исправления" },
-      { "id": "vue-import-cleanup", "title": "Очистить временные файлы" }
-    ]
+  "execute": {
+    "script": {
+      "input": {
+        "rootDir": ".",
+        "filePattern": "**/*.vue"
+      },
+      "output": "broken_imports[]",
+      "code": "// vue-import-detect.dsl\nconst result = await script.execute('vue-import-detect', { rootDir, filePattern });"
+    }
   }
 }
 ```
 
-### Запрос continue с step_result
+### Запрос result (action-key shape)
 
 Клиент выполняет код и отправляет результат.
 
@@ -120,13 +106,15 @@
 
 ```json
 {
-  "sessionId": "sess_abc123",
   "context": {
-    "version": "1.0",
-    "session_id": "sess_abc123",
-    "continue": true,
-    "step_id": "vue-import-detect",
-    "step_result": {
+    "task": "Исправить сломанные импорты в Vue файлах",
+    "execution": {
+      "action": "fix-vue-imports",
+      "step": "vue-import-detect"
+    }
+  },
+  "result": {
+    "script": {
       "broken_imports": [
         { "file": "src/App.vue", "line": 5, "specifier": "./components/Header" }
       ]
@@ -142,26 +130,22 @@
 ```json
 {
   "context": {
-    "version": "1.0",
-    "session_id": "sess_abc123",
-    "tasks": [{
-      "id": "fix-vue-imports",
-      "type": "analyze",
-      "status": "in_progress",
-      "progress": 50
-    }]
+    "task": "Исправить сломанные импорты в Vue файлах",
+    "execution": {
+      "action": "fix-vue-imports",
+      "step": "vue-import-resolve"
+    }
   },
-  "message": "Step completed. Moving to: vue-import-resolve",
-  "action": {
-    "currentStep": {
-      "id": "vue-import-resolve",
-      "title": "Разрешить пути для сломанных импортов",
-      "code": "// TypeScript code..."
-    },
-    "nextSteps": [
-      { "id": "vue-import-apply", "title": "Применить исправления" },
-      { "id": "vue-import-cleanup", "title": "Очистить временные файлы" }
-    ]
+  "execute": {
+    "script": {
+      "input": {
+        "broken_imports": [
+          { "file": "src/App.vue", "line": 5, "specifier": "./components/Header" }
+        ]
+      },
+      "output": "patches[]",
+      "code": "// vue-import-resolve.dsl\nconst result = await script.execute('vue-import-resolve', { broken_imports });"
+    }
   }
 }
 ```
@@ -171,16 +155,27 @@
 ```json
 {
   "context": {
-    "version": "1.0",
-    "session_id": "sess_abc123",
-    "tasks": [{
-      "id": "action",
-      "type": "analyze",
-      "status": "completed",
-      "progress": 100
-    }]
+    "task": "Исправить сломанные импорты в Vue файлах",
+    "execution": {
+      "action": "fix-vue-imports",
+      "step": "vue-import-cleanup",
+      "status": "completed"
+    }
   },
-  "message": "Action completed. Fixed 3 files."
+  "execute": {
+    "script": {
+      "input": {},
+      "output": "cleanup_count",
+      "code": "// vue-import-cleanup.dsl\nconst result = await script.execute('vue-import-cleanup', {});"
+    }
+  },
+  "finalResult": {
+    "action": "fix-vue-imports",
+    "summary": {
+      "broken_imports_found": 3,
+      "files_fixed": 3
+    }
+  }
 }
 ```
 
@@ -195,97 +190,117 @@
 // Запросы
 // ============================================
 
-/** Запрос new_task */
-interface NewTaskRequest {
-  sessionId?: string;
-  context: {
-    version: '1.0';
-    session_id: string;
-    new_task: string;
-    project_path?: string;
-  };
+/** Первый запрос - task */
+interface TaskRequest {
+  task: string;                    // Описание задачи пользователя
+  projectId: string;               // ID проекта
+  provider?: string;               // Провайдер (опционально)
 }
 
-/** Запрос continue */
-interface ContinueRequest {
-  sessionId?: string;
+/** Запрос с результатом выполнения */
+interface StepResultRequest {
   context: {
-    version: '1.0';
-    session_id: string;
-    continue: true;
-    step_id: string;
-    step_result: unknown;
+    task: string;
+    execution: {
+      action: string;              // ID текущего действия
+      step: string;                // ID текущего шага
+    };
   };
+  result: Record<string, any>;      // Результат выполнения (action-key shape)
 }
 
 // ============================================
 // Ответы
 // ============================================
 
-/** Контекст ответа */
-interface ContextBlock {
-  version: string;
-  session_id: string;
-  tasks: Array<{
-    id: string;
-    type: string;
-    status: 'pending' | 'in_progress' | 'completed' | 'failed';
-    progress: number;
-  }>;
+/** Контекст выполнения */
+interface ExecutionContext {
+  task: string;
+  execution: {
+    action: string;                // ID текущего действия
+    step: string;                  // ID текущего шага
+    status?: 'completed';          // Присутствует только при завершении
+  };
 }
 
-/** Информация о шаге */
-interface StepInfo {
-  id: string;
-  title: string;
-  code?: string;
-}
-
-/** Блок action в ответе */
-interface ActionBlock {
-  id?: string;
-  title?: string;
-  matchScore?: number;
-  currentStep: StepInfo | null;
-  nextSteps: Array<{ id: string; title: string }>;
+/** Execute с action-key shape */
+interface ExecuteBlock {
+  script?: {
+    input: Record<string, any>;
+    output: string;
+    code: string;
+  };
+  'read-file'?: {
+    path: string;
+  };
+  'write-file'?: {
+    path: string;
+    content: string;
+  };
+  'rag-search'?: {
+    query: string;
+  };
+  'execute-command'?: {
+    command: string;
+  };
+  form?: {
+    choices?: Array<{ id: string; label: string }>;
+    input?: Array<{ id: string; label: string; type: string }>;
+  };
+  message?: string;
 }
 
 /** Полный ответ сервера */
-interface ServerMessage {
-  context: ContextBlock;
-  message: string;
-  action?: ActionBlock;
-  error?: string;
+interface ServerResponse {
+  context: ExecutionContext;
+  execute: ExecuteBlock;
+  finalResult?: {                  // Присутствует только в последнем ответе
+    action: string;
+    summary: Record<string, any>;
+  };
 }
 
 // ============================================
-// Результаты выполнения
+// Результаты выполнения (action-key shape)
 // ============================================
 
-/** Результат выполнения шага */
-interface StepResult {
-  stepId: string;
-  status: 'completed' | 'failed';
-  result: unknown;
-  nextStepAvailable: boolean;
-  nextStep?: SubAction;
+/** Результат выполнения скрипта */
+interface ScriptResult {
+  script: Record<string, any>;      // Данные от скрипта
 }
 
-/** Результат выполнения всего action */
-interface ActionResult {
-  actionId: string;
-  status: 'completed' | 'failed';
-  stepsCompleted: number;
-  totalSteps: number;
-  history: StepHistory[];
-  finalResult: unknown;
+/** Результат чтения файла */
+interface ReadFileResult {
+  'read-file': {
+    path: string;
+    content: string;
+  };
 }
 
-/** История выполнения шага */
-interface StepHistory {
-  stepId: string;
-  status: 'completed' | 'failed' | 'skipped';
-  result: unknown;
+/** Результат записи файла */
+interface WriteFileResult {
+  'write-file': {
+    path: string;
+    success: boolean;
+  };
+}
+
+/** Результат RAG поиска */
+interface RagSearchResult {
+  'rag-search': {
+    results: Array<{ score: number; content: string }>;
+    files: string[];
+  };
+}
+
+/** Результат выполнения команды */
+interface ExecuteCommandResult {
+  'execute-command': {
+    command: string;
+    exitCode: number;
+    stdout: string;
+    stderr: string;
+  };
 }
 ```
 
@@ -480,16 +495,15 @@ export default async function run(input: { rootDir: string }): Promise<{ broken_
 ```json
 {
   "context": {
-    "version": "1.0",
-    "session_id": "sess_abc123",
-    "tasks": [{
-      "id": "action",
-      "type": "analyze",
-      "status": "failed",
-      "progress": 25
-    }]
+    "task": "Исправить сломанные импорты в Vue файлах",
+    "execution": {
+      "action": "fix-vue-imports",
+      "step": "vue-import-resolve"
+    }
   },
-  "message": "Step vue-import-resolve failed: Cannot resolve module './missing'",
+  "execute": {
+    "message": "Step vue-import-resolve failed: Cannot resolve module './missing'"
+  },
   "error": "Cannot resolve module './missing'"
 }
 ```
@@ -501,16 +515,17 @@ export default async function run(input: { rootDir: string }): Promise<{ broken_
 ```json
 {
   "context": {
-    "version": "1.0",
-    "session_id": "sess_abc123",
-    "tasks": [{
-      "id": "action-search",
-      "type": "analyze",
-      "status": "completed",
-      "progress": 100
-    }]
+    "task": "Deploy to production"
   },
-  "message": "No suitable action found for task: Deploy to production"
+  "actions": [],
+  "fallbackActions": [
+    {
+      "mode": "auto-ai",
+      "title": "AI Action Generator",
+      "description": "Згенерувати новий екшен за допомогою LLM",
+      "fallbackType": "llm_generation"
+    }
+  ]
 }
 ```
 
@@ -562,33 +577,34 @@ const result = await client.executeAction({
 
 ```javascript
 // Шаг 1: Отправить задачу
-const { promiseId } = await client.createRequest({
-  sessionId: 'sess_abc123',
-  context: {
-    version: '1.0',
-    session_id: 'sess_abc123',
-    new_task: 'Исправить импорты',
-  },
+const { sessionId } = await client.createSession({
+  projectId: 'proj_abc123',
+  task: 'Исправить импорты',
 });
 
-let result = await client.waitForResult(promiseId);
+let result = await client.getSession(sessionId);
 
 // Шаг 2: Выполнить шаги вручную
-while (result.action?.currentStep) {
-  const step = result.action.currentStep;
+while (result.execute?.script) {
+  const step = result.context.execution.step;
+  const code = result.execute.script.code;
   
   // Выполнить код шага
-  const stepResult = await executeStepCode(step.code);
+  const scriptResult = await executeStepCode(code);
   
-  // Отправить результат
-  result = await client.continueAction(
-    'sess_abc123',
-    step.id,
-    stepResult
-  );
+  // Отправить результат (action-key shape)
+  result = await client.sendResult(sessionId, {
+    context: {
+      task: result.context.task,
+      execution: result.context.execution
+    },
+    result: {
+      script: scriptResult  // action-key shape
+    }
+  });
 }
 
-console.log('Final result:', result);
+console.log('Final result:', result.finalResult);
 ```
 
 ### Интеграция с ScriptRunner

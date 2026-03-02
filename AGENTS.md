@@ -34,3 +34,93 @@ import x from '@/services/x.js'
 - `SKIP_AUTH=1` - Bypass authentication in development
 - `ENCRYPTION_KEY` - Must be exactly 32 characters
 - `JWT_SECRET` - Minimum 32 characters
+
+---
+
+## A2A Protocol Conventions
+
+> For detailed documentation, see [`new-request-flow/`](new-request-flow/) directory.
+
+### Action-Key Shape (Critical)
+
+Action results and execute requests **MUST** use action-type keys, not generic `content` or `action` fields.
+
+**Correct:**
+```typescript
+// Result with action-type key
+{ result: { "read-file": { path: "...", content: "..." } } }
+
+// Execute with action-type key
+{ execute: { "script": { input: {}, output: "...", code: "..." } } }
+```
+
+**Incorrect:**
+```typescript
+// Wrong: flat content structure
+{ result: { content: "..." } }
+
+// Wrong: generic action field
+{ execute: { action: "read-file", file: "..." } }
+```
+
+### Action Types
+
+The system distinguishes between two types of actions:
+
+| Type | Description | Control |
+|------|-------------|---------|
+| **Actions** | Server-driven, hardcoded steps | Server controls execution flow |
+| **AI-Actions** | Dynamic steps where LLM chooses next action | LLM decides execution flow |
+
+### Naming Conventions
+
+| Element | Convention | Example |
+|---------|------------|---------|
+| Simulation directories | `kebab-case` | `user-onboarding`, `data-migration` |
+| Step names | `<domain>-<operation>` | `file-read`, `db-query`, `api-call` |
+| Form choice IDs | `snake_case` | `confirm_action`, `skip_step` |
+
+### Execute Types
+
+Execute actions are categorized by their target executor:
+
+**UI-Only Types:**
+- `form` - Interactive forms with `choices` and/or `input` fields
+- `message` - Display-only messages to the user
+
+**Client Types (executed on client):**
+- `script` - Execute JavaScript code in sandbox
+- `rag-search` - Perform RAG (Retrieval-Augmented Generation) search
+- `read-file` - Read file contents
+- `write-file` - Write data to file
+- `execute-command` - Execute shell commands
+
+### Simulation Pipeline
+
+Simulations follow a strict transformation pipeline:
+
+```
+request.json
+    ↓
+server-transforms-request.md  (server preprocessing)
+    ↓
+request.md  (ready for LLM)
+    ↓
+[LLM Processing]
+    ↓
+response.md  (LLM output)
+    ↓
+server-transforms-response.md  (server postprocessing)
+    ↓
+response.json
+```
+
+### Context Fields (System-Managed)
+
+The following context fields are automatically maintained by the system:
+
+- `context.history` - Array of execution records, tracking all steps taken
+- `context.execution` - Current execution state: `{ action, step, progress }`
+- `context.docVirtual` - Virtual document state for accumulating content across steps
+
+Do not manually modify these fields unless implementing custom state management.

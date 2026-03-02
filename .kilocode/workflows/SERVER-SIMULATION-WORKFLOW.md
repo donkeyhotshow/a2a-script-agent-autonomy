@@ -245,3 +245,130 @@ LLM, можливий окремий запит на крок.
 3. **request.md** — завжди MARKDOWN (system prompt + стан), не чистий JSON.
 4. **response.md** — лише очікуваний вивід LLM.
 5. **response.json** = контекст із сервера + execute (form або result).
+
+---
+
+## Action-key shape (ОБОВ'ЯЗКОВО)
+
+Сервер завжди використовує action-key shape для `execute`:
+
+### ✅ Правильно
+
+```json
+{
+  "context": { ... },
+  "execute": {
+    "script": { "input": {...}, "output": "...", "code": "..." },
+    "rag-search": { "query": "..." },
+    "read-file": { "path": "..." },
+    "write-file": { "path": "...", "content": "..." },
+    "execute-command": { "command": "..." },
+    "form": { "input": [...] },
+    "message": "..."
+  }
+}
+```
+
+### ❌ Неправильно
+
+```json
+{
+  "context": { ... },
+  "execute": {
+    "action": "read-file",  // flat action!
+    "file": "..."           // параметр як сусід
+  }
+}
+```
+
+### Чому це важливо
+
+- **Уникнення колізій:** `action` як ключ vs `action` як поле
+- **Однозначність:** Завжди зрозуміло, яке дійснення виконується
+- **Сумісність:** Клієнт очікує action-key shape у `result`
+
+---
+
+## Чеклист валідації server-симуляції
+
+### Структура директорії
+
+- [ ] Директорія названа в kebab-case
+- [ ] Шаги пронумеровані послідовно (1, 2, 3...)
+- [ ] Опціональні файли: `description.md`, `analysis.md`
+
+### Pipeline файлів
+
+- [ ] request.json → server-transforms-request.md (опц.) → request.md → response.md → server-transforms-response.md (опц.) → response.json
+- [ ] Шаги без LLM: тільки `request.json`, `response.json`
+- [ ] Шаги з LLM: всі 6 файлів
+
+### request.json (Client → Server)
+
+- [ ] Перший запит: `{ "task": "..." }`
+- [ ] Вибір дії: `result.choice` або `result.action`
+- [ ] Результат виконання: `result` з action-key shape
+- [ ] `context` скопійований з попередньої відповіді сервера
+
+### request.md (Server → LLM)
+
+- [ ] MARKDOWN формат (не чистий JSON)
+- [ ] Секція "System Prompt"
+- [ ] Секція "Поточний стан" з JSON
+- [ ] `context` включає `task`, `execution`, `history`
+
+### response.md (LLM → Server)
+
+- [ ] Тільки очікуваний вивід LLM
+- [ ] JSON формат всередині markdown
+- [ ] Для AI-Actions: `message`, `action`, `params`
+
+### response.json (Server → Client)
+
+- [ ] `context` з `task`, `execution`
+- [ ] `context.execution.action` — ID дії
+- [ ] `context.execution.step` — ID кроку
+- [ ] `execute` з action-key shape
+- [ ] Фінальний шаг: `"status": "completed"`
+
+### Action-key shape
+
+- [ ] `execute` використовує action-key shape
+- [ ] `result` (у request.json) використовує action-key shape
+- [ ] Немає flat `"action": "..."`
+
+### Два типи дій
+
+- [ ] **Actions:** `execution.step` змінюється автоматично
+- [ ] **AI-Actions:** `execution.step` = "llm-request", наступний крок визначає LLM
+
+### Context (system-managed)
+
+- [ ] `context.history` оновлюється для AI-Actions
+- [ ] `context.execution` присутній після вибору дії
+- [ ] Поля `context` не змінюються вручну
+
+### Naming
+
+- [ ] Action IDs: kebab-case (`fix-vue-imports`)
+- [ ] Step IDs: `<domain>-<operation>` (`vue-import-detect`)
+- [ ] Form choice IDs: snake_case (`continue_search`)
+
+### Фіналізація
+
+- [ ] Фінальний шаг має `"status": "completed"`
+- [ ] Опціонально: `finalResult` з підсумком
+- [ ] Повідомлення користувачу через `execute.form` або `execute.message`
+
+---
+
+## Синхронізація з client-симуляціями
+
+Server-симуляції є source of truth. Client-симуляції похідні:
+
+| Server | Client | Призначення |
+|--------|--------|-------------|
+| `response.json` | `server-response.json` | Що сервер відправляє |
+| Наступний `request.json` | `client-request.json` | Правильна відповідь клієнта |
+
+При зміні server-симуляції — оновити відповідну client-симуляцію.

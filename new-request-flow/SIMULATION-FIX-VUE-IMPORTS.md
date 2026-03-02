@@ -50,7 +50,7 @@
 Эта симуляция демонстрирует полный поток выполнения екшена:
 
 1. Пользователь отправляет задачу
-2. Сервер предлагает действия (actions) со шагами (steps)
+2. Сервер предлагает варианты виконання через `execute.form.choices` (список опцій)
 3. Пользователь выбирает действие
 4. Сервер отправляет скрипты для выполнения на клиенте
 5. Клиент выполняет скрипты и возвращает результаты
@@ -81,63 +81,25 @@
   "context": {
     "task": "виправити імпорти у vue компонентах"
   },
-  "actions": [
-    {
-      "action": "fix-vue-imports",
-      "title": "Виправити зламані імпорти у Vue файлах",
-      "description": "Автоматично визначити та виправити проблеми з імпортами у Vue компонентах",
-      "priority": 10,
-      "matchScore": 0.95,
-      "steps": [
+  "execute": {
+    "form": {
+      "title": "Оберіть спосіб виконання",
+      "choices": [
         {
-          "action": "vue-import-detect",
-          "title": "Визначити зламані імпорти",
-          "description": "Сканує Vue файли і знаходить биті імпорти",
-          "priority": 10,
-          "input": "none",
-          "output": "broken_imports[]"
+          "id": "fix-vue-imports",
+          "label": "Виправити зламані імпорти у Vue файлах (автомат)"
         },
         {
-          "action": "vue-import-resolve",
-          "title": "Вирішити правильні шляхи",
-          "description": "На основі списку битих імпортів знаходить правильні шляхи",
-          "priority": 9,
-          "input": "broken_imports[]",
-          "output": "patches[]"
+          "id": "auto-ai",
+          "label": "AI Action Generator — згенерувати екшен за допомогою LLM"
         },
         {
-          "action": "vue-import-apply",
-          "title": "Застосувати виправлення",
-          "description": "Застосовує виправлення до файлів",
-          "priority": 8,
-          "input": "patches[]",
-          "output": "fixed_files[]"
-        },
-        {
-          "action": "vue-import-cleanup",
-          "title": "Очистити тимчасові файли",
-          "description": "Видаляє тимчасові файли після роботи",
-          "priority": 7,
-          "input": "none",
-          "output": "cleanup_count"
+          "id": "task-decomposition",
+          "label": "Декомпозиція задачі вручну"
         }
       ]
     }
-  ],
-  "fallbackActions": [
-    {
-      "mode": "auto-ai",
-      "title": "AI Action Generator",
-      "description": "Згенерувати новий екшен за допомогою LLM",
-      "fallbackType": "llm_generation"
-    },
-    {
-      "mode": "task-decomposition",
-      "title": "Декомпозиція задачі",
-      "description": "Розбити задачу на підзадачі вручну",
-      "fallbackType": "manual"
-    }
-  ]
+  }
 }
 ```
 
@@ -155,7 +117,7 @@
     "task": "виправити імпорти у vue компонентах"
   },
   "result": {
-    "action": "fix-vue-imports"
+    "choice": "fix-vue-imports"
   }
 }
 ```
@@ -424,22 +386,22 @@ interface Execute {
 │                          SERVER (a2a-server) - STATELESS                    │
 │                                                                              │
 │  5. Server обрабатывает task                                                │
-│  6. Server возвращает { context, actions, steps }                         │
+│  6. Server возвращает { context, execute: { form: { choices } } }          │
 └─────────────────────────────────────────────────────────────────────────────┘
                                     │
                                     ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │                          CLIENT API (a2a-client)                             │
 │                                                                              │
-│  7. Client API сохраняет actions в сессию                                  │
-│  8. Client API возвращает { sessionId, actions } на Web                   │
+│  7. Client API сохраняет form.choices (список опцій) в сессию              │
+│  8. Client API возвращает { sessionId, execute.form.choices } на Web       │
 └─────────────────────────────────────────────────────────────────────────────┘
                                     │
                                     ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │                              WEB (a2a-client/web)                           │
 │                                                                              │
-│  9. Web отображает список actions                                          │
+│  9. Web отображает список опцій (choices)                                  │
 │ 10. Пользователь выбирает действие "fix-vue-imports"                      │
 └─────────────────────────────────────────────────────────────────────────────┘
                                     │
@@ -447,7 +409,7 @@ interface Execute {
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │                          CLIENT API (a2a-client)                             │
 │                                                                              │
-│ 11. Client API отправляет { context, result: { action } }                  │
+│ 11. Client API отправляет { context, result: { choice } }                  │
 │     на Server                                                              │
 └─────────────────────────────────────────────────────────────────────────────┘
                                     │

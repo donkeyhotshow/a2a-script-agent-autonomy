@@ -1,0 +1,153 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://a2a-script-agent/new-request-flow/json-schemas/server-transform.schema.json",
+  "title": "Server Transform Pipeline",
+  "description": "Declarative JSONPath-based transform for one simulation step (replaces server-transforms-request.md / server-transforms-response.md). Each step describes how to transform current JSON state into the next file in the pipeline (request.md or response.json, etc.).",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "type": {
+      "type": "string",
+      "enum": ["pipeline"],
+      "description": "Transform document type. For now only 'pipeline' is supported."
+    },
+    "steps": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "description": "Single transform operation.",
+        "oneOf": [
+          {
+            "title": "copy",
+            "type": "object",
+            "properties": {
+              "op": { "const": "copy" },
+              "from": {
+                "type": "string",
+                "description": "JSONPath expression in input document."
+              },
+              "to": {
+                "type": "string",
+                "description": "JSONPath expression in output document ($out)."
+              }
+            },
+            "required": ["op", "from", "to"],
+            "additionalProperties": false
+          },
+          {
+            "title": "set",
+            "type": "object",
+            "properties": {
+              "op": { "const": "set" },
+              "path": {
+                "type": "string",
+                "description": "JSONPath in $out to write to."
+              },
+              "value": {
+                "description": "Literal value to set.",
+                "nullable": true
+              },
+              "valueFrom": {
+                "type": "string",
+                "description": "JSONPath in input or $out; if provided, takes precedence over 'value'."
+              }
+            },
+            "required": ["op", "path"],
+            "additionalProperties": false
+          },
+          {
+            "title": "append-to-array",
+            "type": "object",
+            "properties": {
+              "op": { "const": "append-to-array" },
+              "to": {
+                "type": "string",
+                "description": "JSONPath in $out pointing to an array."
+              },
+              "value": {
+                "description": "Value to append. May contain 'template' placeholders.",
+                "type": "object",
+                "additionalProperties": true
+              }
+            },
+            "required": ["op", "to", "value"],
+            "additionalProperties": false
+          },
+          {
+            "title": "parse-json-from-md",
+            "type": "object",
+            "properties": {
+              "op": { "const": "parse-json-from-md" },
+              "fromFile": {
+                "type": "string",
+                "description": "Relative file name to read markdown from (e.g. response.md)."
+              },
+              "jsonPath": {
+                "type": "string",
+                "description": "JSONPath inside parsed JSON. Default '$'.",
+                "default": "$"
+              },
+              "to": {
+                "type": "string",
+                "description": "JSONPath in $out to place parsed JSON (e.g. $llm)."
+              }
+            },
+            "required": ["op", "fromFile", "to"],
+            "additionalProperties": false
+          },
+          {
+            "title": "render-markdown",
+            "type": "object",
+            "properties": {
+              "op": { "const": "render-markdown" },
+              "templateRef": {
+                "type": "string",
+                "description": "Reference to markdown template (e.g. actions/definitions/coder.md#system-prompt)."
+              },
+              "data": {
+                "type": "string",
+                "description": "JSONPath (usually '$out' or '$') used as template data context."
+              },
+              "outputFile": {
+                "type": "string",
+                "description": "File name to write markdown to (e.g. request.md)."
+              }
+            },
+            "required": ["op", "templateRef", "data", "outputFile"],
+            "additionalProperties": false
+          },
+          {
+            "title": "switch",
+            "type": "object",
+            "properties": {
+              "op": { "const": "switch" },
+              "discriminator": {
+                "type": "string",
+                "description": "JSONPath expression whose value is used to pick a case (e.g. '$llm.action')."
+              },
+              "cases": {
+                "type": "object",
+                "description": "Map from discriminator value to a single nested op (inline).",
+                "additionalProperties": {
+                  "type": "object",
+                  "description": "Any op object from this schema, without its own 'op' field if you use a shorthand, or with explicit 'op'.",
+                  "additionalProperties": true
+                }
+              },
+              "default": {
+                "type": "object",
+                "description": "Optional default op if no case matches.",
+                "additionalProperties": true
+              }
+            },
+            "required": ["op", "discriminator", "cases"],
+            "additionalProperties": false
+          }
+        ]
+      }
+    }
+  },
+  "required": ["type", "steps"]
+}
+

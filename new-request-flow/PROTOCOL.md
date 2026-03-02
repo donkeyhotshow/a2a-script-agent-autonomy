@@ -119,10 +119,10 @@ request.json → request.md (LLM prompt) → response.md (LLM output)
 
 ### 1. Первый запрос: Поиск сервисов
 
-Пользователь вводит задачу, система предлагает доступные действия. Два типа: **actions** (первоочередно) — шаги
-захардкожены, сервер сам переключает шаг по `result`; **ai-actions** (второстепенно, напр. диалог с LLM) — шаги не в
-фиксированной последовательности: отображается список доступных шагов, следующий шаг определяется из ответа LLM,
-возможен отдельный запрос на каждый шаг.
+Пользователь вводит задачу, система предлагает доступные варианты виконання. **Канон (по симуляциям/SCHEMA.md):**
+перший ответ йде через `execute.form.choices` (список опцій), де `choices[].id` — ID дії (`fix-vue-imports`,
+`auto-ai`, `task-decomposition` тощо). Формат с `actions[]` и `fallbackActions[]` в ответе считается **legacy** и
+используется только для совместимости.
 
 #### Запрос (Web → Client API)
 
@@ -145,111 +145,56 @@ interface TaskRequest {
 }
 ```
 
-#### Ответ от Server (через Client API)
+#### Ответ от Server (через Client API, новый формат — канон)
 
 ```typescript
-interface ServerResponse {
+interface FirstResponseFormChoices {
   context: {
     task: string;
     // НЕТ sessionId/projectId - сервер stateless!
   };
-  actions: Action[];               // Предложенные действия
-  fallbackActions?: FallbackAction[];
-}
-
-interface Action {
-  action: string;                  // ID действия (например: "fix-vue-imports")
-  title: string;
-  description: string;
-  priority: number;
-  matchScore: number;
-  steps: Step[];                   // actions: hardcoded, server advances; ai-actions: available steps for display, next step from LLM response
-}
-
-interface Step {
-  action: string;                  // ID шага (например: "vue-import-detect")
-  title: string;
-  description: string;
-  priority: number;
-  input: string;                    // none | broken_imports[] | patches[] | fixed_files[]
-  output: string;                   // broken_imports[] | patches[] | fixed_files[] | cleanup_count
-  llmPrompt?: string;              // Ссылка на MD файл с prompt для LLM
-}
-
-interface FallbackAction {
-  mode: 'auto-ai' | 'task-decomposition';
-  title: string;
-  description: string;
-  fallbackType: 'llm_generation' | 'manual';
+  execute: {
+    form: {
+      title?: string;
+      choices: Array<{ id: string; label: string }>;
+    };
+  };
 }
 ```
 
-**Пример:**
+**Пример (как в simulations/fix-vue-imports/1/response.json):**
 
 ```json
 {
   "context": {
     "task": "виправити імпорти у vue компонентах"
   },
-  "actions": [
-    {
-      "action": "fix-vue-imports",
-      "title": "Виправити зламані імпорти у Vue файлах",
-      "description": "Автоматично визначити та виправити проблеми з імпортами",
-      "priority": 10,
-      "matchScore": 0.95,
-      "steps": [
+  "execute": {
+    "form": {
+      "title": "Оберіть спосіб виконання",
+      "choices": [
         {
-          "action": "vue-import-detect",
-          "title": "Визначити зламані імпорти",
-          "description": "Сканує Vue файли і знаходить биті імпорти",
-          "priority": 10,
-          "input": "none",
-          "output": "broken_imports[]"
+          "id": "fix-vue-imports",
+          "label": "Виправити зламані імпорти у Vue файлах (автомат)"
         },
         {
-          "action": "vue-import-resolve",
-          "title": "Вирішити правильні шляхи",
-          "description": "На основі списку битих імпортів знаходить правильні шляхи",
-          "priority": 9,
-          "input": "broken_imports[]",
-          "output": "patches[]"
+          "id": "auto-ai",
+          "label": "AI Action Generator — згенерувати екшен за допомогою LLM"
         },
         {
-          "action": "vue-import-apply",
-          "title": "Застосувати виправлення",
-          "description": "Застосовує виправлення до файлів",
-          "priority": 8,
-          "input": "patches[]",
-          "output": "fixed_files[]"
-        },
-        {
-          "action": "vue-import-cleanup",
-          "title": "Очистити тимчасові файли",
-          "description": "Видаляє тимчасові файли після роботи",
-          "priority": 7,
-          "input": "none",
-          "output": "cleanup_count"
+          "id": "task-decomposition",
+          "label": "Декомпозиція задачі вручну"
         }
       ]
     }
-  ],
-  "fallbackActions": [
-    {
-      "mode": "auto-ai",
-      "title": "AI Action Generator",
-      "description": "Згенерувати новий екшен за допомогою LLM",
-      "fallbackType": "llm_generation"
-    },
-    {
-      "mode": "task-decomposition",
-      "title": "Декомпозиція задачі",
-      "description": "Розбити задачу на підзадачі вручну",
-      "fallbackType": "manual"
-    }
-  ]
+  }
 }
 ```
+
+#### Legacy-формат ответа (actions[])
+
+Для старых симуляций/реализаций допускается формат с `actions[]` и `fallbackActions[]` (см. также `SCHEMAS.md`), но
+новые симуляции и сервер должны ориентироваться на `execute.form.choices`.
 
 ---
 

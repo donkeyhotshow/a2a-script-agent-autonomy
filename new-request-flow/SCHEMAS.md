@@ -330,6 +330,7 @@ json
 | Execute        | Server → Client    |
 | InvokeRequest  | Client → Server    |
 | InvokeResponse | Server → Client    |
+| ServerTransform| Simulations (per‑step JSON transforms) |
 
 ---
 
@@ -337,3 +338,6 @@ json
 
 - **2025-01**: Добавлен новый формат `execute.form.choices` для первого ответа сервера. Вместо `actions[]` и
   `fallbackActions[]` теперь используется `execute.form.choices` с массивом объектов `{ id, label }`.
+ - **2026-03**: `server-transforms-request.md` / `server-transforms-response.md` мигрируют в
+   `server-transforms-request.json` / `server-transforms-response.json` с JSONPath‑based pipeline (см.
+   `json-schemas/server-transform.schema.json`).

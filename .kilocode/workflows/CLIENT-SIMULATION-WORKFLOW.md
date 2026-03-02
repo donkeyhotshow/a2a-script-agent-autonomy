@@ -241,3 +241,95 @@ a2a-client/simulations/
 | Очікування вводу    | Ні (execute.script)   | Так (execute.form)               |
 | Повідомлення        | Ні                    | Так (execute.message)            |
 | result              | script output         | message / choice / action result |
+
+---
+
+## Action-key shape (ОБОВ'ЯЗКОВО)
+
+Клієнт завжди повертає `result` у форматі action-key shape:
+
+### ✅ Правильно
+
+```json
+{
+  "context": { ... },
+  "result": {
+    "script": { "output": "..." },
+    "rag-search": { "results": [...], "files": [...] },
+    "read-file": { "path": "...", "content": "..." },
+    "write-file": { "path": "...", "success": true },
+    "execute-command": { "command": "...", "exitCode": 0, "stdout": "..." },
+    "choice": "continue_search",
+    "message": "текст повідомлення"
+  }
+}
+```
+
+### ❌ Неправильно
+
+```json
+{
+  "context": { ... },
+  "result": {
+    "content": "...",      // немає action-key
+    "results": [...],      // немає action-key
+    "success": true        // немає action-key
+  }
+}
+```
+
+### Маппінг execute → result
+
+| execute від сервера | result від клієнта |
+|---------------------|-------------------|
+| `execute.script` | `result.script` |
+| `execute.rag-search` | `result.rag-search` |
+| `execute.read-file` | `result.read-file` |
+| `execute.write-file` | `result.write-file` |
+| `execute.execute-command` | `result.execute-command` |
+| `execute.form.input` | `result.message` |
+| `execute.form.choices` | `result.choice` |
+
+---
+
+## Чеклист валідації client-симуляції
+
+### Структура
+
+- [ ] Файли названі правильно: `server-response.json`, `client-request.json`
+- [ ] Шаги пронумеровані послідовно
+- [ ] `server-response.json` відповідає `simulations/<sim>/<step>/response.json`
+- [ ] `client-request.json` відповідає `simulations/<sim>/<step+1>/request.json`
+
+### Context
+
+- [ ] `context` з `server-response.json` копіюється в `client-request.json` без змін
+- [ ] `context.execution` присутній для кроків після першого
+- [ ] `context.history` обновляється для AI-Actions
+
+### Action-key shape
+
+- [ ] `result` використовує action-key shape
+- [ ] Ключ `result` відповідає `execute` з `server-response.json`
+- [ ] Немає flat полів без action-key
+
+### Типи execute
+
+- [ ] `execute.form` → `result.choice` або `result.message`
+- [ ] `execute.script` → `result.script`
+- [ ] `execute.rag-search` → `result.rag-search`
+- [ ] `execute.read-file` → `result.read-file`
+- [ ] `execute.write-file` → `result.write-file`
+- [ ] `execute.execute-command` → `result.execute-command`
+
+### Два типи дій
+
+- [ ] **Actions:** клієнт отримує `execute.script`, повертає `result.script`
+- [ ] **AI-Actions:** клієнт отримує `execute.form`/`execute.message`, повертає `result.message`/`result.choice`
+
+### Повний цикл
+
+- [ ] Перший запит: `client-request.json` з `{ "task": "..." }`
+- [ ] Вибір дії: `client-request.json` з `result.choice`
+- [ ] Виконання: `server-response.json` з `execute` → `client-request.json` з `result`
+- [ ] Фінал: `server-response.json` з `"status": "completed"`

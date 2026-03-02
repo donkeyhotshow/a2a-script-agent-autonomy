@@ -1,1 +1,0 @@
-Documentation inventory and classification report for the A2A Script Agent project.

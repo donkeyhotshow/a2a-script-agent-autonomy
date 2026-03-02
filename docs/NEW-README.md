@@ -1,1 +1,3 @@
-Main project documentation
+# OUTDATED: docs/README.md
+
+This document has been replaced. See the new version.

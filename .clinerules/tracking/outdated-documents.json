@@ -1,7 +1,7 @@
 {
   "tracking_version": "1.0.0",
   "last_updated": "2026-03-02T00:00:00Z",
-  "total_documents": 9,
+  "total_documents": 12,
   "outdated_documents": [
     {
       "path": "README.md",
@@ -41,6 +41,21 @@
     {
       "path": "new-request-flow/ARCHITECTURE.md",
       "marked_at": "2026-03-02T00:09:57.170Z",
+      "status": "pending_update"
+    },
+    {
+      "path": "docs/API-REFERENCE.md",
+      "marked_at": "2026-03-02T07:44:45.965Z",
+      "status": "pending_update"
+    },
+    {
+      "path": "docs/WORKFLOW-TYPES.md",
+      "marked_at": "2026-03-02T07:45:02.003Z",
+      "status": "pending_update"
+    },
+    {
+      "path": "docs/README.md",
+      "marked_at": "2026-03-02T07:45:17.442Z",
       "status": "pending_update"
     }
   ],

@@ -17,19 +17,19 @@ simulations/
 
 ## Типы файлов
 
-| Файл                            | Направление     | Описание                                                                     |
-|---------------------------------|-----------------|------------------------------------------------------------------------------|
-| `request.json`                  | Client → Server | Запрос от клиента.                                                           |
-| `server-transforms-request.md`  | —               | Обработка `request.json`, трансформация перед запросом в LLM. Опционально.   |
-| `request.md`                    | Server → LLM    | **MARKDOWN** с system prompt и состоянием.                                   |
-| `response.md`                   | LLM → Server    | Ответ от LLM.                                                                |
-| `server-transforms-response.md` | —               | Обработка `response.md`, трансформация перед возвратом клиенту. Опционально. |
-| `response.json`                 | Server → Client | Ответ клиенту.                                                               |
+| Файл                               | Направление     | Описание                                                                                          |
+|------------------------------------|-----------------|---------------------------------------------------------------------------------------------------|
+| `request.json`                     | Client → Server | Запрос от клиента.                                                                                |
+| `server-transforms-request.json`   | —               | **JSON‑описание** трансформации `request.json` → `request.md` (JSONPath‑pipeline, per‑step). Опц. |
+| `request.md`                       | Server → LLM    | **MARKDOWN** с system prompt и состоянием.                                                        |
+| `response.md`                      | LLM → Server    | Ответ от LLM.                                                                                     |
+| `server-transforms-response.json`  | —               | **JSON‑описание** трансформации `response.md` → `response.json` (JSONPath‑pipeline, per‑step). Опц.|
+| `response.json`                    | Server → Client | Ответ клиенту.                                                                                    |
 
 **Порядок (pipeline):**
 
 ```
-request.json → server-transforms-request.md → request.md → response.md → server-transforms-response.md → response.json
+request.json → server-transforms-request.json → request.md → response.md → server-transforms-response.json → response.json
 ```
 
 **Визуально:**
@@ -50,14 +50,15 @@ Client              Server (transforms)       LLM
 
 **Когда какие файлы нужны:**
 
-| Тип шага | Файлы |
-|----------|-------|
-| Без LLM (только Actions) | `request.json`, `response.json` (опционально: `server-transforms-*.md`) |
-| С LLM (AI-Actions) | Все 6 файлов |
-| Transform-логика | `server-transforms-request.md`, `server-transforms-response.md` (опциональны) |
+| Тип шага                  | Файлы                                                                                     |
+|---------------------------|--------------------------------------------------------------------------------------------|
+| Без LLM (только Actions)  | `request.json`, `response.json` (опционально: `server-transforms-*.json`)                |
+| С LLM (AI-Actions)        | Все 6 файлов                                                                              |
+| Transform-логика          | `server-transforms-request.json`, `server-transforms-response.json` (per‑step, опциональны) |
 
-Не в каждом шаге есть все 6 файлов: шаги без LLM — обычно только request.json и response.json; шаги с LLM добавляют .md;
-transform-файлы опциональны и описывают логику сервера.
+Не в каждом шаге есть все 6 файлов: шаги без LLM — обычно только `request.json` и `response.json`; шаги с LLM добавляют
+`request.md`/`response.md`; transform‑файлы (`server-transforms-*.json`) опциональны і описывают конкретну per‑step
+JSONPath‑pipeline (див. `json-schemas/server-transform.schema.json`).
 
 ## ВАЖНО: request.md - это MARKDOWN!
 

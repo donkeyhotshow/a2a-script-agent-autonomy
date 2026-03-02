@@ -1,0 +1,122 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://a2a-script-agent/new-request-flow/json-schemas/server-invoke-response-execute.schema.json",
+  "title": "Server Invoke Response - Execute Step",
+  "description": "Generic execute response for POST /api/v1/invoke: context + execute{...} (+ optional finalResult / top-level result for final step).",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "context": {
+      "type": "object",
+      "description": "Execution context echoed back to client. System-managed, free-form.",
+      "required": ["task"],
+      "properties": {
+        "task": { "type": "string" },
+        "execution": {
+          "type": "object",
+          "description": "Current server-side execution state.",
+          "required": ["action", "step"],
+          "properties": {
+            "action": { "type": "string" },
+            "step": { "type": "string" },
+            "status": {
+              "type": "string",
+              "enum": ["completed"],
+              "description": "Present and equal to 'completed' on final step."
+            }
+          },
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": true
+    },
+    "execute": {
+      "type": "object",
+      "description": "Command(s) for client or web UI. Each key is an action type (form, script, read-file, write-file, rag-search, execute-command, message, etc.).",
+      "minProperties": 1,
+      "additionalProperties": true,
+      "properties": {
+        "form": {
+          "type": "object",
+          "description": "Form to be rendered in Web UI (input fields and/or choices).",
+          "additionalProperties": true
+        },
+        "message": {
+          "description": "Text message to display in Web UI.",
+          "oneOf": [
+            { "type": "string" },
+            { "type": "object", "additionalProperties": true }
+          ]
+        },
+        "script": {
+          "type": "object",
+          "description": "DSL script to run on client (Actions).",
+          "required": ["input", "output", "code"],
+          "properties": {
+            "input": { "type": "object", "additionalProperties": true },
+            "output": { "type": "string" },
+            "code": { "type": "string" }
+          },
+          "additionalProperties": true
+        },
+        "read-file": {
+          "type": "object",
+          "description": "Request to read a file.",
+          "properties": {
+            "path": { "type": "string" }
+          },
+          "required": ["path"],
+          "additionalProperties": true
+        },
+        "write-file": {
+          "type": "object",
+          "description": "Request to write a file.",
+          "properties": {
+            "path": { "type": "string" },
+            "content": { "type": "string" }
+          },
+          "required": ["path", "content"],
+          "additionalProperties": true
+        },
+        "rag-search": {
+          "type": "object",
+          "description": "Request to perform RAG search.",
+          "properties": {
+            "query": { "type": "string" }
+          },
+          "required": ["query"],
+          "additionalProperties": true
+        },
+        "execute-command": {
+          "type": "object",
+          "description": "Request to execute shell command.",
+          "properties": {
+            "command": { "type": "string" }
+          },
+          "required": ["command"],
+          "additionalProperties": true
+        }
+      }
+    },
+    "finalResult": {
+      "type": "object",
+      "description": "Optional summary object for algorithmic Actions (e.g. fix-vue-imports) on the final step.",
+      "required": ["action", "summary"],
+      "properties": {
+        "action": { "type": "string" },
+        "summary": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "result": {
+      "type": "object",
+      "description": "Optional top-level result for final AI-Actions step (per simulations/SCHEMA.md).",
+      "additionalProperties": true
+    }
+  },
+  "required": ["context", "execute"]
+}
+

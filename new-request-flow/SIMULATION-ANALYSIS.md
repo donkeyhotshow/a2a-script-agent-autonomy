@@ -31,16 +31,25 @@
   "context": {
     "task": "виправити імпорти у vue компонентах"
   },
-  "actions": [
-    {
-      "action": "fix-vue-imports",
-      "title": "...",
-      "steps": [
-        { "action": "vue-import-detect", "input": "none", "output": "broken_imports[]" },
-        ...
+  "execute": {
+    "form": {
+      "title": "Оберіть спосіб виконання",
+      "choices": [
+        {
+          "id": "fix-vue-imports",
+          "label": "Виправити зламані імпорти у Vue файлах (автомат)"
+        },
+        {
+          "id": "auto-ai",
+          "label": "AI Action Generator — згенерувати екшен за допомогою LLM"
+        },
+        {
+          "id": "task-decomposition",
+          "label": "Декомпозиція задачі вручну"
+        }
       ]
     }
-  ]
+  }
 }
 ```
 
@@ -56,7 +65,7 @@
     "task": "виправити імпорти у vue компонентах"
   },
   "result": {
-    "action": "fix-vue-imports"
+    "choice": "fix-vue-imports"
   }
 }
 ```
@@ -206,7 +215,7 @@
 | Файл              | Назначение                  |
 |-------------------|-----------------------------|
 | `1/request.json`  | Первый запрос - только task |
-| `1/response.json` | Ответ с actions и steps     |
+| `1/response.json` | Ответ с execute.form.choices |
 | `2/request.json`  | Выбор действия              |
 | `2/response.json` | Первый execute с script     |
 | `3/request.json`  | Результат первого шага      |

@@ -1,33 +1,33 @@
 {
-  "timestamp": "2026-03-02T04:41:57.748Z",
+  "timestamp": "2026-03-02T07:24:29.817Z",
   "total_tests": 18,
-  "passed_tests": 17,
-  "failed_tests": 1,
-  "success_rate": "94.4",
+  "passed_tests": 16,
+  "failed_tests": 2,
+  "success_rate": "88.9",
   "test_results": [
     {
       "name": "State Initialization",
       "success": true,
       "message": "Success",
-      "timestamp": "2026-03-02T04:41:57.513Z"
+      "timestamp": "2026-03-02T07:24:29.587Z"
     },
     {
       "name": "State Structure Valid",
       "success": "discovery",
       "message": "Success",
-      "timestamp": "2026-03-02T04:41:57.515Z"
+      "timestamp": "2026-03-02T07:24:29.588Z"
     },
     {
       "name": "Progress Structure Valid",
       "success": {
         "discovery": {
           "status": "in_progress",
-          "start_time": "2026-03-02T02:35:15.216Z",
+          "start_time": "2026-03-02T06:52:31.628Z",
           "end_time": null,
           "tasks": {
             "inventory_analysis": {
               "status": "in_progress",
-              "start_time": "2026-03-02T02:35:15.216Z",
+              "start_time": "2026-03-02T06:52:31.628Z",
               "end_time": null,
               "duration": 0,
               "success": null
@@ -127,97 +127,97 @@
         }
       },
       "message": "Success",
-      "timestamp": "2026-03-02T04:41:57.515Z"
+      "timestamp": "2026-03-02T07:24:29.588Z"
     },
     {
       "name": "State Persistence",
       "success": true,
       "message": "Success",
-      "timestamp": "2026-03-02T04:41:57.518Z"
+      "timestamp": "2026-03-02T07:24:29.590Z"
     },
     {
       "name": "Decision Engine Initialization",
       "success": true,
       "message": "Success",
-      "timestamp": "2026-03-02T04:41:57.520Z"
+      "timestamp": "2026-03-02T07:24:29.592Z"
     },
     {
       "name": "Inventory Analysis Decision",
       "success": true,
       "message": "Success",
-      "timestamp": "2026-03-02T04:41:57.523Z"
+      "timestamp": "2026-03-02T07:24:29.595Z"
     },
     {
       "name": "Priority Classification Decision",
       "success": true,
       "message": "Success",
-      "timestamp": "2026-03-02T04:41:57.525Z"
+      "timestamp": "2026-03-02T07:24:29.597Z"
     },
     {
       "name": "Quality Verification Decision",
       "success": true,
       "message": "Success",
-      "timestamp": "2026-03-02T04:41:57.527Z"
+      "timestamp": "2026-03-02T07:24:29.600Z"
     },
     {
       "name": "Workflow Start",
       "success": true,
       "message": "Success",
-      "timestamp": "2026-03-02T04:41:57.530Z"
+      "timestamp": "2026-03-02T07:24:29.604Z"
     },
     {
       "name": "Status Reporting",
       "success": true,
       "message": "Success",
-      "timestamp": "2026-03-02T04:41:57.531Z"
+      "timestamp": "2026-03-02T07:24:29.605Z"
     },
     {
       "name": "Report Generation",
       "success": true,
       "message": "Success",
-      "timestamp": "2026-03-02T04:41:57.531Z"
+      "timestamp": "2026-03-02T07:24:29.605Z"
     },
     {
       "name": "Phase Completion",
       "success": true,
       "message": "Success",
-      "timestamp": "2026-03-02T04:41:57.533Z"
+      "timestamp": "2026-03-02T07:24:29.608Z"
     },
     {
       "name": "CLI Integration",
       "success": true,
       "message": "Success",
-      "timestamp": "2026-03-02T04:41:57.655Z"
+      "timestamp": "2026-03-02T07:24:29.717Z"
     },
     {
       "name": "Decision Engine CLI",
       "success": true,
       "message": "Success",
-      "timestamp": "2026-03-02T04:41:57.742Z"
+      "timestamp": "2026-03-02T07:24:29.810Z"
     },
     {
       "name": "File System Integration",
-      "success": true,
-      "message": "Success",
-      "timestamp": "2026-03-02T04:41:57.743Z"
+      "success": false,
+      "message": "Required files missing",
+      "timestamp": "2026-03-02T07:24:29.812Z"
     },
     {
       "name": "Invalid Command Handling",
       "success": true,
       "message": "Gracefully handled invalid command",
-      "timestamp": "2026-03-02T04:41:57.746Z"
+      "timestamp": "2026-03-02T07:24:29.815Z"
     },
     {
       "name": "Missing Config Handling",
       "success": false,
       "message": "Should have failed with missing config",
-      "timestamp": "2026-03-02T04:41:57.746Z"
+      "timestamp": "2026-03-02T07:24:29.816Z"
     },
     {
       "name": "File System Error Handling",
       "success": true,
       "message": "File system operations working",
-      "timestamp": "2026-03-02T04:41:57.747Z"
+      "timestamp": "2026-03-02T07:24:29.816Z"
     }
   ]
 }

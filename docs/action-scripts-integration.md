@@ -29,16 +29,18 @@
 ```
 Клиент                              Сервер
    │                                   │
-   │─── POST /api/v1/requests ────────▶│
-   │    { context: { new_task } }      │
+   │─── POST /api/sessions ────────▶│
+   │    { task: "..." }               │
    │                                   │
-   │◀─── response { context, action } ─│
+   │◀─── response { context,          │
+   │          execute }                │
    │                                   │
-   │─── POST /api/v1/requests ────────▶│
-   │    { context: { continue },       │
-   │      files: [ результат ] }       │
+   │─── POST /api/v1/requests ──────▶│
+   │    { context: { execution },     │
+   │      result: { script: {...} } } │  (action-key shape)
    │                                   │
-   │◀─── response { context, action } ─│
+   │◀─── response { context,          │
+   │          execute }                │
    │                                   │
    ... повторяем пока не completed ...
 ```
@@ -52,74 +54,77 @@ import { actionProcessor } from '../actions/action-processor.js';
 
 // В processOneRequest():
 
-// 1. Проверяем new_task
-if (ctx['new_task']) {
-  const taskText = parseTaskText(ctx);
+// 1. Проверяем task (top-level поле)
+if (ctx['task']) {
+  const taskText = ctx['task'];
   
   // Ищем подходящий action
   const result = await actionProcessor.processTaskRequest(sessionId, taskText);
   
   if (result.continue) {
-    // Возвращаем action_proposal с кодом
+    // Возвращаем execute с action-key shape
     return {
-      outcome: 'action_proposal',
+      outcome: 'execute',
       context: result.message.context,
-      action: result.message.action,
+      execute: result.message.execute,
     };
   }
 }
 
-// 2. Проверяем continue с результатом выполнения
-if (ctx['continue'] && ctx['step_result']) {
+// 2. Проверяем result с action-key shape
+if (ctx['result']) {
   const result = await actionProcessor.processStepResult(
     sessionId,
-    ctx['step_id'],
-    ctx['step_result']
+    ctx['execution'].step,
+    ctx['result']  // уже содержит action-key: { script: {...} }
   );
   
   return {
-    outcome: result.continue ? 'action_executing' : 'completed',
+    outcome: result.continue ? 'execute' : 'completed',
     context: result.message.context,
-    action: result.message.action,
+    execute: result.message.execute,
+    finalResult: result.finalResult,
   };
 }
 ```
 
-### Формат ответа сервера
+### Формат ответа сервера (execute с action-key shape)
 
 ```json
 {
   "context": {
-    "version": "1.0",
-    "session_id": "xxx",
-    "tasks": [{ "id": "fix-vue-imports", "status": "in_progress" }]
+    "task": "Исправить сломанные импорты",
+    "execution": {
+      "action": "fix-vue-imports",
+      "step": "vue-import-detect"
+    }
   },
-  "action": {
-    "id": "fix-vue-imports",
-    "currentStep": {
-      "id": "vue-import-detect",
-      "title": "Определить сломанные импорты",
+  "execute": {
+    "script": {
+      "input": {
+        "rootDir": ".",
+        "filePattern": "**/*.vue"
+      },
+      "output": "broken_imports[]",
       "code": "export default async function run(...) { ... }"
-    },
-    "nextSteps": [
-      { "id": "vue-import-resolve", "title": "Разрешить пути" },
-      { "id": "vue-import-apply", "title": "Применить исправления" },
-      { "id": "vue-import-cleanup", "title": "Очистить" }
-    ]
+    }
   }
 }
 ```
 
-### Формат запроса клиента (continue)
+### Формат запроса клиента (result с action-key shape)
 
 ```json
 {
   "context": {
-    "version": "1.0",
-    "session_id": "xxx",
-    "continue": true,
-    "step_id": "vue-import-detect",
-    "step_result": { "broken_imports": [...] }
+    "task": "Исправить сломанные импорты",
+    "execution": {
+      "action": "fix-vue-imports",
+      "step": "vue-import-detect"
+    }
+  },
+  "result": {
+    "script": { "broken_imports": [...] }
   }
 }
 ```

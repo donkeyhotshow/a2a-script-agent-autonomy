@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://a2a-script-agent/new-request-flow/json-schemas/server-invoke-request.schema.json",
+  "title": "Server Invoke Request",
+  "description": "Request body for POST /api/v1/invoke (canonical, per simulations/SCHEMA.md).",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "task": {
+      "type": "string",
+      "description": "User task description. Present only in the very first request."
+    },
+    "context": {
+      "type": "object",
+      "description": "Execution context echoed from previous server response. System-managed, free-form.",
+      "additionalProperties": true
+    },
+    "result": {
+      "type": "object",
+      "description": "Client result for the previous execute step (action-key shape or form result).",
+      "additionalProperties": true,
+      "properties": {
+        "choice": {
+          "type": "string",
+          "description": "ID selected from execute.form.choices (e.g. fix-vue-imports, auto-ai, task-decomposition)."
+        },
+        "action": {
+          "type": "string",
+          "description": "Legacy field for selected action. New flows should prefer result.choice."
+        },
+        "message": {
+          "type": "string",
+          "description": "Free text message from user (execute.form.input → result.message)."
+        }
+      }
+    }
+  },
+  "oneOf": [
+    {
+      "description": "First request: only task is sent.",
+      "required": ["task"],
+      "properties": {
+        "context": { "maxProperties": 0 },
+        "result": { "maxProperties": 0 }
+      }
+    },
+    {
+      "description": "Subsequent requests: context + result.",
+      "required": ["context", "result"]
+    }
+  ]
+}
+
