@@ -2,14 +2,13 @@
   "context": {
     "task": "допоможи розібратись з кодом",
     "execution": {
-      "action": "coder",
-      "step": "coder"
+      "action": "coder"
     },
     "history": []
   },
   "execute": {
     "form": {
-      "title": "Оберіть спосіб виконання",
+      "title": "Ваш запит",
       "input": [
         {
           "name": "message",

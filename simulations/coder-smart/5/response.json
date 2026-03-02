@@ -18,6 +18,10 @@
     }
   },
   "execute": {
-    "message": "checklist"
+    "form": {
+      "choices": [
+        { "id": "proceed", "label": "Продовжити" }
+      ]
+    }
   }
 }

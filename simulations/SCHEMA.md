@@ -65,8 +65,7 @@ as siblings.
   `result: { "execute-command": { "command": "npm test", "exitCode": 0, "stdout": "...", "stderr": "" } }` (action-key
   shape). Server can pass to LLM for summary or next step.
 
-When response includes both message and form (e.g. coder), use `"message"` at top level of response if needed; `execute`
-stays action-key only (e.g. `execute.form` or `execute["read-file"]`).
+When response includes both message and form (e.g. coder), use `"message"` inside `execute` (e.g. `execute.message`).
 
 **execute.form with choices:** optional `form.title`, `form.choices` = `[{ "id": "...", "label": "..." }]` (e.g.
 continue_search, save_report). Client sends `result.choice` + optional `result.message` / `result.path`. Save path

@@ -50,17 +50,14 @@
   "context": {
     "task": "допоможи розібратись з кодом",
     "execution": {
-      "action": "coder",
-      "step": "llm-request"
+      "action": "coder"
     },
     "history": [
       {
-        
-            "role": "user",
+        "role": "user",
         "message": "як працює система авторизації?"
       }
     ]
-  },
-  "message": "як працює система авторизації?"
+  }
 }
 ```

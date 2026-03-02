@@ -12,7 +12,6 @@
     "execution": { "action": "coder-smart", "step": "rag-clarify" },
     "history": [{ "role": "user", "message": "додати логінування в API та оновити тести" }]
   },
-  "message": "додати логінування в API та оновити тести",
   "ragResults": [
     { "file": "src/auth.js", "score": 0.92, "snippet": "async function login..." },
     { "file": "src/middleware/auth.ts", "score": 0.88, "snippet": "export function verifyToken..." }
