@@ -1,0 +1,24 @@
+{
+  "type": "pipeline",
+  "steps": [
+    {
+      "op": "copy",
+      "from": "$",
+      "to": "$out"
+    },
+    {
+      "op": "append-to-array",
+      "to": "$.context.history",
+      "value": {
+        "role": "user",
+        "message": "$.result.message"
+      }
+    },
+    {
+      "op": "render-markdown",
+      "templateRef": "simulations/dialog/4/request.md",
+      "data": "$out",
+      "outputFile": "request.md"
+    }
+  ]
+}

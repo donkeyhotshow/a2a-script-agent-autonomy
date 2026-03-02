@@ -1,0 +1,39 @@
+{
+  "type": "pipeline",
+  "steps": [
+    {
+      "op": "parse-json-from-md",
+      "fromFile": "response.md",
+      "jsonPath": "$",
+      "to": "$llm"
+    },
+    {
+      "op": "copy",
+      "from": "$.context",
+      "to": "$.context"
+    },
+    {
+      "op": "switch",
+      "discriminator": "$.llm.action",
+      "cases": {
+        "continue": {
+          "op": "set",
+          "path": "$.execute",
+          "value": {
+            "form": {
+              "title": "Продовжити",
+              "input": []
+            }
+          }
+        },
+        "completed": {
+          "op": "set",
+          "path": "$.result",
+          "value": {
+            "completed": true
+          }
+        }
+      }
+    }
+  ]
+}

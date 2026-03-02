@@ -1,0 +1,41 @@
+{
+  "type": "pipeline",
+  "steps": [
+    {
+      "op": "parse-json-from-md",
+      "fromFile": "response.md",
+      "jsonPath": "$",
+      "to": "$llm"
+    },
+    {
+      "op": "copy",
+      "from": "$.context",
+      "to": "$.context"
+    },
+    {
+      "op": "switch",
+      "discriminator": "$.llm.action",
+      "cases": {
+        "read-file": {
+          "op": "set",
+          "path": "$.execute",
+          "value": {
+            "read-file": {
+              "path": "$.llm.params.file"
+            }
+          }
+        },
+        "write-file": {
+          "op": "set",
+          "path": "$.execute",
+          "value": {
+            "write-file": {
+              "path": "$.llm.params.path",
+              "content": "$.llm.params.content"
+            }
+          }
+        }
+      }
+    }
+  ]
+}

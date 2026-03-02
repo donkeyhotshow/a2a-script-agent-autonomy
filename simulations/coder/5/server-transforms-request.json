@@ -1,0 +1,21 @@
+{
+  "type": "pipeline",
+  "steps": [
+    {
+      "op": "copy",
+      "from": "$",
+      "to": "$out"
+    },
+    {
+      "op": "set",
+      "path": "$.context.fileContent",
+      "value": "$.result.read-file.content"
+    },
+    {
+      "op": "render-markdown",
+      "templateRef": "simulations/coder/5/request.md",
+      "data": "$out",
+      "outputFile": "request.md"
+    }
+  ]
+}

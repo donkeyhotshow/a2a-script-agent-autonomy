@@ -1,0 +1,35 @@
+{
+  "type": "pipeline",
+  "steps": [
+    {
+      "op": "parse-json-from-md",
+      "fromFile": "response.md",
+      "jsonPath": "$",
+      "to": "$llm"
+    },
+    {
+      "op": "copy",
+      "from": "$.context",
+      "to": "$.context"
+    },
+    {
+      "op": "set",
+      "path": "$.execute",
+      "value": {
+        "write-file": {
+          "path": "$.llm.params.path",
+          "content": "$.llm.params.content"
+        }
+      }
+    },
+    {
+      "op": "set",
+      "path": "$.result",
+      "value": {
+        "completed": true,
+        "action": "coder",
+        "report_written": true
+      }
+    }
+  ]
+}

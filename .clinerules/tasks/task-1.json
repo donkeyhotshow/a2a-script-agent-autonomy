@@ -1,0 +1,24 @@
+{
+  "id": "task-1",
+  "type": "document_update",
+  "status": "pending",
+  "priority": "high",
+  "created_at": "2026-03-02T08:22:08.145Z",
+  "document_path": "docs/API-REFERENCE.md",
+  "reason": "API endpoints and examples need updating",
+  "instructions": [
+    "Review current API endpoints and their documentation",
+    "Update endpoint descriptions with latest changes",
+    "Add examples for new endpoints",
+    "Verify all parameters are documented",
+    "Check authentication requirements",
+    "Update response format examples"
+  ],
+  "dependencies": [],
+  "estimated_time": "2-4 hours",
+  "links": [
+    "docs/WORKFLOW-TYPES.md",
+    "docs/INTEGRATION-GUIDE.md",
+    "a2a-server/docs/action-api.md"
+  ]
+}

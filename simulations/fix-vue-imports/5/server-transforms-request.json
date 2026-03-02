@@ -1,0 +1,18 @@
+{
+  "type": "pipeline",
+  "steps": [
+    {
+      "op": "copy",
+      "from": "$",
+      "to": "$out"
+    },
+    {
+      "op": "set",
+      "path": "$.result",
+      "value": {
+        "completed": true,
+        "action": "fix-vue-imports"
+      }
+    }
+  ]
+}

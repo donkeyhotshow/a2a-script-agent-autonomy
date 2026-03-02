@@ -1,0 +1,35 @@
+{
+  "type": "pipeline",
+  "steps": [
+    {
+      "op": "copy",
+      "from": "$.context",
+      "to": "$.context"
+    },
+    {
+      "op": "set",
+      "path": "$.context.execution",
+      "value": {
+        "action": "dialog",
+        "step": "dialog"
+      }
+    },
+    {
+      "op": "set",
+      "path": "$.execute",
+      "value": {
+        "form": {
+          "title": "Повідомлення",
+          "input": [
+            {
+              "name": "message",
+              "type": "text",
+              "label": "Ваше повідомлення",
+              "required": true
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

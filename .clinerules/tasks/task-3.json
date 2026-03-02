@@ -1,0 +1,24 @@
+{
+  "id": "task-3",
+  "type": "document_update",
+  "status": "pending",
+  "priority": "high",
+  "created_at": "2026-03-02T08:22:08.151Z",
+  "document_path": "docs/README.md",
+  "reason": "Main documentation needs updating",
+  "instructions": [
+    "Update project description with current status",
+    "Review and update installation instructions",
+    "Verify all dependencies are listed",
+    "Update usage examples",
+    "Check links and references",
+    "Add recent changes or updates"
+  ],
+  "dependencies": [],
+  "estimated_time": "30 minutes - 1 hour",
+  "links": [
+    "docs/QUICK-START.md",
+    "docs/TROUBLESHOOTING.md",
+    "docs/INTEGRATION-GUIDE.md"
+  ]
+}

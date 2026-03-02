@@ -1,0 +1,21 @@
+{
+  "type": "pipeline",
+  "steps": [
+    {
+      "op": "copy",
+      "from": "$",
+      "to": "$out"
+    },
+    {
+      "op": "set",
+      "path": "$.context.ragResults",
+      "value": "$.result.rag-search.results"
+    },
+    {
+      "op": "render-markdown",
+      "templateRef": "simulations/coder/4/request.md",
+      "data": "$out",
+      "outputFile": "request.md"
+    }
+  ]
+}

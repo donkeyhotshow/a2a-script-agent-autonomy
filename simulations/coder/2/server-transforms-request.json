@@ -1,0 +1,40 @@
+{
+  "type": "pipeline",
+  "steps": [
+    {
+      "op": "copy",
+      "from": "$.context",
+      "to": "$.context"
+    },
+    {
+      "op": "set",
+      "path": "$.context.execution",
+      "value": {
+        "action": "coder",
+        "step": "coder"
+      }
+    },
+    {
+      "op": "set",
+      "path": "$.context.history",
+      "value": []
+    },
+    {
+      "op": "set",
+      "path": "$.execute",
+      "value": {
+        "form": {
+          "title": "Повідомлення",
+          "input": [
+            {
+              "name": "message",
+              "type": "text",
+              "label": "Ваше запитання",
+              "required": true
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

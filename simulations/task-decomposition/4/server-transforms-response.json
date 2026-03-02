@@ -1,0 +1,32 @@
+{
+  "type": "pipeline",
+  "steps": [
+    {
+      "op": "parse-json-from-md",
+      "fromFile": "response.md",
+      "jsonPath": "$",
+      "to": "$llm"
+    },
+    {
+      "op": "copy",
+      "from": "$.context",
+      "to": "$.context"
+    },
+    {
+      "op": "switch",
+      "discriminator": "$.llm.action",
+      "cases": {
+        "decompose-subtasks": {
+          "op": "set",
+          "path": "$.execute",
+          "value": {
+            "form": {
+              "title": "Підзадачі",
+              "input": []
+            }
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "type": "pipeline",
+  "steps": [
+    {
+      "op": "copy",
+      "from": "$.context",
+      "to": "$.context"
+    },
+    {
+      "op": "set",
+      "path": "$.context.execution",
+      "value": {
+        "action": "task-decomposition",
+        "step": "task-decomposition"
+      }
+    },
+    {
+      "op": "set",
+      "path": "$.execute",
+      "value": {
+        "form": {
+          "title": "Опис задачі",
+          "input": [
+            {
+              "name": "task",
+              "type": "text",
+              "label": "Опишіть вашу задачу",
+              "required": true
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

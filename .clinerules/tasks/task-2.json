@@ -1,0 +1,24 @@
+{
+  "id": "task-2",
+  "type": "document_update",
+  "status": "pending",
+  "priority": "medium",
+  "created_at": "2026-03-02T08:22:08.149Z",
+  "document_path": "docs/WORKFLOW-TYPES.md",
+  "reason": "Workflow descriptions need updating",
+  "instructions": [
+    "Review existing workflow descriptions",
+    "Add documentation for new workflow types",
+    "Update workflow diagrams if needed",
+    "Verify all workflow steps are documented",
+    "Add usage examples for each workflow type",
+    "Update configuration requirements"
+  ],
+  "dependencies": [],
+  "estimated_time": "1-2 hours",
+  "links": [
+    "docs/API-REFERENCE.md",
+    "docs/ARCHITECTURE.md",
+    "new-request-flow/ARCHITECTURE.md"
+  ]
+}

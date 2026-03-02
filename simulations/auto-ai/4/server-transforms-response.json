@@ -1,0 +1,49 @@
+{
+  "type": "pipeline",
+  "steps": [
+    {
+      "op": "parse-json-from-md",
+      "fromFile": "response.md",
+      "jsonPath": "$",
+      "to": "$llm"
+    },
+    {
+      "op": "copy",
+      "from": "$.context",
+      "to": "$.context"
+    },
+    {
+      "op": "switch",
+      "discriminator": "$.llm.action",
+      "cases": {
+        "list-directory": {
+          "op": "set",
+          "path": "$.execute",
+          "value": {
+            "list-directory": {
+              "path": "$.llm.params.path"
+            }
+          }
+        },
+        "read-file": {
+          "op": "set",
+          "path": "$.execute",
+          "value": {
+            "read-file": {
+              "path": "$.llm.params.file"
+            }
+          }
+        },
+        "rag-search": {
+          "op": "set",
+          "path": "$.execute",
+          "value": {
+            "rag-search": {
+              "query": "$.llm.params.query"
+            }
+          }
+        }
+      }
+    }
+  ]
+}

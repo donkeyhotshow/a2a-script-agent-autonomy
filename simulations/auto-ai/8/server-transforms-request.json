@@ -1,0 +1,16 @@
+{
+  "type": "pipeline",
+  "steps": [
+    {
+      "op": "copy",
+      "from": "$",
+      "to": "$out"
+    },
+    {
+      "op": "render-markdown",
+      "templateRef": "simulations/auto-ai/8/request.md",
+      "data": "$out",
+      "outputFile": "request.md"
+    }
+  ]
+}
