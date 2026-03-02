@@ -3,12 +3,24 @@
     "task": "виправити імпорти у vue компонентах",
     "execution": {
       "action": "fix-vue-imports-batched",
-      "step": "search-vite-file"
+      "step": "request-files-to-fix"
+    },
+    "vite_config": {
+      "file": "vite.config.js"
+    },
+    "aliases": {
+      "@": "resources/js",
+      "~": "resources"
     }
   },
   "execute": {
-    "rag-search": {
-      "query": "vite.config.{js,ts,mjs,cjs}"
+    "script": {
+      "input": {
+        "rootDir": ".",
+        "filePattern": "**/*.vue"
+      },
+      "output": "broken_imports_count",
+      "code": "// request-files-to-fix.dsl\n// Отримання списку файлів з битими імпортами\n\nconst result = await script.execute('request-files-to-fix', { rootDir, filePattern });"
     }
   }
 }

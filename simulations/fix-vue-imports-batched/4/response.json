@@ -3,11 +3,14 @@
     "task": "виправити імпорти у vue компонентах",
     "execution": {
       "action": "fix-vue-imports-batched",
-      "step": "request-files-to-fix"
+      "step": "search-exporter",
+      "progress": {
+        "totalFiles": 50,
+        "currentFile": 2
+      }
     },
     "vite_config": {
-      "file": "vite.config.js",
-      "content": "import { defineConfig } from 'vite';\nimport vue from '@vitejs/plugin-vue';\nimport path from 'path';\n\nexport default defineConfig({\n  plugins: [vue()],\n  resolve: {\n    alias: {\n      '@': path.resolve(__dirname, './resources/js'),\n      '~': path.resolve(__dirname, './resources')\n    }\n  }\n});"
+      "file": "vite.config.js"
     },
     "aliases": {
       "@": "resources/js",
@@ -16,8 +19,9 @@
   },
   "execute": {
     "rag-search": {
-      "pattern": "**/*.vue",
-      "rootDir": "."
+      "query": "export { helper }",
+      "description": "Пошук файлу, який експортує 'helper' з помилки",
+      "output": "exporter_file"
     }
   }
 }

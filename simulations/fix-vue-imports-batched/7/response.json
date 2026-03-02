@@ -3,10 +3,11 @@
     "task": "виправити імпорти у vue компонентах",
     "execution": {
       "action": "fix-vue-imports-batched",
-      "step": "search-exporter",
+      "step": "completed",
+      "status": "completed",
       "progress": {
         "totalFiles": 50,
-        "currentFile": 3
+        "currentFile": 50
       }
     },
     "vite_config": {
@@ -18,15 +19,18 @@
     }
   },
   "execute": {
-    "rag-search": {
-      "query": "export userStore"
+    "form": {
+      "title": "Готово! Виправлено 50 файлів",
+      "choices": [
+        {
+          "id": "done",
+          "label": "OK"
+        }
+      ]
     }
   },
   "result": {
-    "script": {
-      "totalFiles": 50,
-      "currentFile": 3,
-      "message": "Обробляю файл 3 з 50: resources/js/components/UserCard.vue"
-    }
+    "completed": true,
+    "fixed_count": 50
   }
 }

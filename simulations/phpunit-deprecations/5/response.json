@@ -24,7 +24,9 @@
         "step": "generate-deprecations-report",
         "status": "completed",
         "result": {
-          "report": "generated"
+          "report": {
+            "status": "generated"
+          }
         }
       }
     ]

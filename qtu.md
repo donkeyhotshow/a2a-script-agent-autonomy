@@ -40,12 +40,12 @@ qtu -Question "Ваш вопрос?" -Timeout 300
 
 ## Параметры
 
-| Параметр | Описание | По умолчанию |
-|----------|----------|--------------|
-| `-Question` | Текст вопроса (обязательный) | - |
-| `-Options` | Варианты ответа через запятую | нет |
-| `-Port` | Порт PHP сервера | 8765 |
-| `-Timeout` | Таймаут в секундах | 600 |
+| Параметр    | Описание                      | По умолчанию |
+|-------------|-------------------------------|--------------|
+| `-Question` | Текст вопроса (обязательный)  | -            |
+| `-Options`  | Варианты ответа через запятую | нет          |
+| `-Port`     | Порт PHP сервера              | 8765         |
+| `-Timeout`  | Таймаут в секундах            | 600          |
 
 ## Примеры
 
@@ -84,29 +84,29 @@ qtu -Question "Ваш вопрос?" -Port 9000 -Timeout 120
 
 ```typescript
 // Пример вызова qtu из Node.js
-import { exec } from 'child_process';
+import {exec} from 'child_process';
 
 function askUser(question: string, options?: string[]): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const opts = options ? `-Options "${options.join(',')}"` : '';
-    const cmd = `powershell -ExecutionPolicy Bypass -Command "qtu -Question '${question}' ${opts}"`;
-    
-    exec(cmd, { encoding: 'utf8' }, (error, stdout, stderr) => {
-      if (error) {
-        reject(error);
-        return;
-      }
-      
-      // Парсинг JSON ответа из stdout
-      const jsonMatch = stdout.match(/\{.*\}/);
-      if (jsonMatch) {
-        const result = JSON.parse(jsonMatch[0]);
-        resolve(result.answer);
-      } else {
-        reject(new Error('Не удалось получить ответ'));
-      }
+    return new Promise((resolve, reject) => {
+        const opts = options ? `-Options "${options.join(',')}"` : '';
+        const cmd = `powershell -ExecutionPolicy Bypass -Command "qtu -Question '${question}' ${opts}"`;
+
+        exec(cmd, {encoding: 'utf8'}, (error, stdout, stderr) => {
+            if (error) {
+                reject(error);
+                return;
+            }
+
+            // Парсинг JSON ответа из stdout
+            const jsonMatch = stdout.match(/\{.*\}/);
+            if (jsonMatch) {
+                const result = JSON.parse(jsonMatch[0]);
+                resolve(result.answer);
+            } else {
+                reject(new Error('Не удалось получить ответ'));
+            }
+        });
     });
-  });
 }
 
 // Использование

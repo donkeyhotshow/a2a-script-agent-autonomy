@@ -20,7 +20,7 @@ function loadProjects(cwd) {
 }
 
 function saveProjects(cwd, projects) {
-    const dir = path.join(cwd, '.a2a-client');
+    const dir = path.join(cwd, 'storage');
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, {recursive: true});
     fs.writeFileSync(path.join(dir, 'projects.json'), JSON.stringify({projects}, null, 2));
 }

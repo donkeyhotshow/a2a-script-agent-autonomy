@@ -20,7 +20,10 @@
   "execute": {
     "form": {
       "choices": [
-        { "id": "proceed", "label": "Продовжити" }
+        {
+          "id": "proceed",
+          "label": "Продовжити"
+        }
       ]
     }
   }

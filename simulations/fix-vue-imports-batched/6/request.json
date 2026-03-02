@@ -6,7 +6,7 @@
       "step": "search-exporter",
       "progress": {
         "totalFiles": 50,
-        "currentFile": 1
+        "currentFile": 3
       }
     },
     "vite_config": {
@@ -18,14 +18,17 @@
     }
   },
   "result": {
-    "script": {
-      "file": "resources/js/Pages/Auth/Login.vue",
-      "exporter_found": "resources/js/components/Header.vue",
-      "fixed": true,
-      "patch": {
-        "from": "../components/Header",
-        "to": "@/components/Header"
-      }
+    "rag-search": {
+      "results": [
+        {
+          "file": "resources/js/stores/userStore.js",
+          "score": 0.88,
+          "snippet": "export const userStore = defineStore"
+        }
+      ],
+      "files": [
+        "resources/js/stores/userStore.js"
+      ]
     }
   }
 }

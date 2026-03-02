@@ -3,12 +3,30 @@
     "task": "виправити імпорти у vue компонентах",
     "execution": {
       "action": "fix-vue-imports-batched",
-      "step": "request-vite-file"
-    }
+      "step": "search-exporter",
+      "progress": {
+        "totalFiles": 50,
+        "currentFile": 1
+      }
+    },
+    "vite_config": {
+      "file": "vite.config.js"
+    },
+    "aliases": {
+      "@": "resources/js",
+      "~": "resources"
+    },
+    "files_to_fix": [
+      "resources/js/Pages/Auth/Login.vue",
+      "resources/js/Pages/Auth/Register.vue",
+      "resources/js/components/UserCard.vue"
+    ]
   },
   "execute": {
-    "read-file": {
-      "path": "vite.config.js"
+    "rag-search": {
+      "query": "export class Header",
+      "description": "Пошук файлу, який експортує клас 'Header' з помилки",
+      "output": "exporter_file"
     }
   }
 }

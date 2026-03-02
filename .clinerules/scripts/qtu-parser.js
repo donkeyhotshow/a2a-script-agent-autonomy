@@ -2,7 +2,7 @@
 
 /**
  * Unified QTU Parser
- * 
+ *
  * Handles both legacy and structured QTU output formats with consistent error handling.
  */
 
@@ -52,15 +52,15 @@ class QTUParser {
             // Look for JSON object in response
             const jsonMatch = responseText.match(/\{[\s\S]*\}/);
             if (!jsonMatch) {
-                return { success: false, error: 'No JSON found in response' };
+                return {success: false, error: 'No JSON found in response'};
             }
 
             const jsonData = JSON.parse(jsonMatch[0]);
-            
+
             // Validate required fields
             const requiredFields = ['status', 'question', 'answer', 'timestamp'];
             const missingFields = requiredFields.filter(field => !jsonData[field]);
-            
+
             if (missingFields.length > 0) {
                 return {
                     success: false,
@@ -105,7 +105,7 @@ class QTUParser {
                 try {
                     const jsonStr = jsonMatch[0].replace('JSON Output:', '').trim();
                     const jsonData = JSON.parse(jsonStr);
-                    
+
                     return {
                         success: true,
                         format: 'legacy-json',
@@ -182,7 +182,7 @@ class QTUParser {
                 }
             }
 
-            return { success: false, error: 'No legacy format patterns matched' };
+            return {success: false, error: 'No legacy format patterns matched'};
 
         } catch (error) {
             return {
@@ -280,7 +280,7 @@ class QTUParser {
 // CLI interface
 if (require.main === module) {
     const parser = new QTUParser();
-    
+
     const args = process.argv.slice(2);
     const command = args[0];
     const responseText = args.slice(1).join(' ');
@@ -314,4 +314,4 @@ if (require.main === module) {
     }
 }
 
-module.exports = { QTUParser };
+module.exports = {QTUParser};

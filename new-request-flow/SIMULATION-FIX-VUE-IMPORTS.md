@@ -57,7 +57,8 @@
 6. Сервер завершает выполнение и возвращает финальный результат
 
 > **Примечание:** Это простой пример с **предопределёнными actions** (без LLM). Для взаимодействия с LLM используется
-> другой поток с `promiseId` (см. [`new-request-flow/SIMULATION-LLM-PROXY.md`](new-request-flow/SIMULATION-LLM-PROXY.md)).
+> другой поток с `promiseId` (см. [
+`new-request-flow/SIMULATION-LLM-PROXY.md`](new-request-flow/SIMULATION-LLM-PROXY.md)).
 
 ---
 

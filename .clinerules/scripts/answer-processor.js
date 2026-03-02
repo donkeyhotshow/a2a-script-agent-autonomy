@@ -5,7 +5,7 @@ const path = require('path');
 
 /**
  * Answer Processor for QTU Integration
- * 
+ *
  * This module processes QTU responses to extract clean answers,
  * implements caching to prevent duplicate questions, and provides
  * proper notifications for cached responses.
@@ -146,7 +146,7 @@ class AnswerProcessor {
 
         // Normalize question text for comparison
         const normalizedQuestion = this.normalizeQuestion(questionText);
-        
+
         return this.cache.questions[normalizedQuestion] !== undefined;
     }
 
@@ -184,7 +184,7 @@ class AnswerProcessor {
                 console.log(`🔄 Using cached answer for question: ${questionText}`);
                 console.log(`💾 Cached answer: ${cached.answer}`);
                 console.log(`⏰ Cached at: ${cached.timestamp}`);
-                
+
                 return {
                     success: true,
                     answer: cached.answer,
@@ -195,7 +195,7 @@ class AnswerProcessor {
 
             // Extract clean answer
             const cleanAnswer = this.extractCleanAnswer(qtuOutput);
-            
+
             if (!cleanAnswer) {
                 console.log(`❌ Could not extract clean answer from QTU output`);
                 return {
@@ -208,7 +208,7 @@ class AnswerProcessor {
 
             // Save to answers file
             const normalizedQuestion = this.normalizeQuestion(questionText);
-            
+
             this.data.answers[questionId] = cleanAnswer;
             this.data.questions[questionId] = {
                 question: questionText,
@@ -264,7 +264,7 @@ class AnswerProcessor {
                 console.log(`💾 Answer: ${cached.answer}`);
                 console.log(`⏰ Answered at: ${cached.timestamp}`);
                 console.log(`💡 Use cached answer or rephrase question to get new response`);
-                
+
                 return {
                     success: true,
                     answer: cached.answer,
@@ -275,7 +275,7 @@ class AnswerProcessor {
             }
 
             // Import QTU integration to ask the question
-            const { QTUIntegration } = require('./qtu-integration.js');
+            const {QTUIntegration} = require('./qtu-integration.js');
             const qtu = new QTUIntegration();
 
             const initialized = await qtu.initialize();
@@ -284,10 +284,10 @@ class AnswerProcessor {
             }
 
             console.log(`❓ Asking user: ${questionText}`);
-            
+
             // Ask user via QTU
             const qtuOutput = await qtu.askUser(questionText, options, timeout);
-            
+
             if (!qtuOutput) {
                 return {
                     success: false,
@@ -299,7 +299,7 @@ class AnswerProcessor {
 
             // Process the QTU response
             const result = await this.processQTUResponse(questionText, `q_${Date.now()}`, qtuOutput);
-            
+
             return result;
 
         } catch (error) {
@@ -337,7 +337,7 @@ class AnswerProcessor {
      */
     getCacheStats() {
         if (!this.cache) {
-            return { questions: 0, questionIds: 0, lastUpdated: null };
+            return {questions: 0, questionIds: 0, lastUpdated: null};
         }
 
         return {
@@ -352,7 +352,7 @@ class AnswerProcessor {
      */
     getAnswersStats() {
         if (!this.data) {
-            return { answers: 0, questions: 0, lastUpdated: null };
+            return {answers: 0, questions: 0, lastUpdated: null};
         }
 
         return {
@@ -399,7 +399,7 @@ class AnswerProcessor {
 // CLI interface
 if (require.main === module) {
     const processor = new AnswerProcessor();
-    
+
     const args = process.argv.slice(2);
     const command = args[0];
 
@@ -422,7 +422,7 @@ if (require.main === module) {
                 const question = args[1];
                 const questionId = args[2];
                 const qtuOutput = args.slice(3).join(' ');
-                
+
                 if (!question || !questionId || !qtuOutput) {
                     console.log('Usage: node answer-processor.js process <question> <questionId> <qtuOutput>');
                     process.exit(1);
@@ -481,7 +481,7 @@ if (require.main === module) {
             case 'stats':
                 const cacheStats = processor.getCacheStats();
                 const answerStats = processor.getAnswersStats();
-                
+
                 console.log('📊 Answer Processor Statistics');
                 console.log('='.repeat(40));
                 console.log('Cache Stats:');
@@ -514,4 +514,4 @@ if (require.main === module) {
     });
 }
 
-module.exports = { AnswerProcessor };
+module.exports = {AnswerProcessor};

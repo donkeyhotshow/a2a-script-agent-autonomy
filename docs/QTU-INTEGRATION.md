@@ -2,11 +2,13 @@
 
 ## Overview
 
-This document provides comprehensive guidance on integrating QTU (Question to User) functionality into the Cline Documentation Review System, enabling interactive user decision points throughout the workflow.
+This document provides comprehensive guidance on integrating QTU (Question to User) functionality into the Cline
+Documentation Review System, enabling interactive user decision points throughout the workflow.
 
 ## What is QTU?
 
-QTU (Question to User) is an interactive system that allows the workflow to pause and ask users questions at key decision points, collecting their input to guide the processing flow. This enables:
+QTU (Question to User) is an interactive system that allows the workflow to pause and ask users questions at key
+decision points, collecting their input to guide the processing flow. This enables:
 
 - **Interactive Decision Making**: Users can provide input at critical workflow junctures
 - **Customizable Processing**: Workflow behavior can be adjusted based on user preferences
@@ -18,19 +20,19 @@ QTU (Question to User) is an interactive system that allows the workflow to paus
 ### Core Components
 
 1. **QTUIntegration Class** (`.clinerules/scripts/qtu-integration.js`)
-   - Main integration wrapper for QTU functionality
-   - Handles QTU script execution and response parsing
-   - Manages user answer history and session data
+    - Main integration wrapper for QTU functionality
+    - Handles QTU script execution and response parsing
+    - Manages user answer history and session data
 
 2. **WorkflowDecisionPoints Class** (`.clinerules/scripts/qtu-integration.js`)
-   - Provides workflow-specific decision point implementations
-   - Maps workflow phases to appropriate user questions
-   - Handles phase-specific context and decision logic
+    - Provides workflow-specific decision point implementations
+    - Maps workflow phases to appropriate user questions
+    - Handles phase-specific context and decision logic
 
 3. **Workflow Engine Integration** (`.clinerules/scripts/workflow-engine.js`)
-   - Integrates QTU calls at key workflow decision points
-   - Combines automated decisions with user input
-   - Manages user decision persistence and logging
+    - Integrates QTU calls at key workflow decision points
+    - Combines automated decisions with user input
+    - Manages user decision persistence and logging
 
 ### Integration Points
 
@@ -105,6 +107,7 @@ async reviewQualityMetrics() {
 **When**: Large inventory detected (> 50 documents)
 **Question**: "Выберите режим обработки документов:"
 **Options**:
+
 - Последовательная обработка (качество)
 - Пакетная обработка (скорость)
 - Гибридный режим (баланс)
@@ -116,6 +119,7 @@ async reviewQualityMetrics() {
 **When**: Many existing reviews detected (> 30)
 **Question**: "Обнаружено много существующих ревью. Что приоритетнее?"
 **Options**:
+
 - Сначала обработать новые документы
 - Сначала привести в порядок существующие
 - Смешанный подход
@@ -135,6 +139,7 @@ async reviewQualityMetrics() {
 **When**: Batch or hybrid processing mode selected
 **Question**: "Выберите размер пачки для обработки:"
 **Options**:
+
 - Маленькая (5 документов)
 - Средняя (10 документов)
 - Большая (20 документов)
@@ -145,6 +150,7 @@ async reviewQualityMetrics() {
 
 **Question**: "Как поступать при ошибках обработки?"
 **Options**:
+
 - Остановить и уведомить
 - Пропустить и продолжить
 - Автоматически повторить
@@ -155,6 +161,7 @@ async reviewQualityMetrics() {
 
 **Question**: "Выберите тип ревью для документов:"
 **Options**:
+
 - Техническое ревью
 - Контент-ревью
 - Полное ревью
@@ -168,6 +175,7 @@ async reviewQualityMetrics() {
 
 **Question**: "Выберите структуру каталогов:"
 **Options**:
+
 - По типу документа
 - По приоритету
 - По дате создания
@@ -179,6 +187,7 @@ async reviewQualityMetrics() {
 
 **Question**: "Стратегия создания перекрестных ссылок:"
 **Options**:
+
 - Только между документами одного типа
 - Между всеми связанными документами
 - Только для высокоприоритетных документов
@@ -189,6 +198,7 @@ async reviewQualityMetrics() {
 
 **Question**: "Уровень очистки устаревших документов:"
 **Options**:
+
 - Только архивация
 - Архивация + удаление дубликатов
 - Полная очистка
@@ -201,6 +211,7 @@ async reviewQualityMetrics() {
 
 **Question**: "На чем сосредоточиться при проверке качества?"
 **Options**:
+
 - Техническая точность
 - Читаемость и понятность
 - Структура и организация
@@ -260,6 +271,7 @@ node .clinerules/scripts/workflow-engine.js --execute
 ### QTU Script Path
 
 The QTU integration expects the QTU PowerShell script at:
+
 ```
 C:\workspace\bin\qtu.ps1
 ```
@@ -453,8 +465,12 @@ The QTU integration is designed to be extensible:
 
 ## Conclusion
 
-The QTU integration provides a powerful way to make the Cline Documentation Review System more interactive and user-friendly. By strategically placing user decision points throughout the workflow, users can guide the processing according to their specific needs and preferences.
+The QTU integration provides a powerful way to make the Cline Documentation Review System more interactive and
+user-friendly. By strategically placing user decision points throughout the workflow, users can guide the processing
+according to their specific needs and preferences.
 
-The integration is designed to be robust, with comprehensive error handling and graceful fallbacks. It provides a solid foundation for interactive workflow management while maintaining the system's reliability and performance.
+The integration is designed to be robust, with comprehensive error handling and graceful fallbacks. It provides a solid
+foundation for interactive workflow management while maintaining the system's reliability and performance.
 
-For questions or issues with QTU integration, refer to the troubleshooting section or run the built-in test suite to diagnose problems.
+For questions or issues with QTU integration, refer to the troubleshooting section or run the built-in test suite to
+diagnose problems.

@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 
-const { execSync } = require('child_process');
+const {execSync} = require('child_process');
 const fs = require('fs').promises;
 const path = require('path');
 
 /**
  * QTU Integration for Cline Documentation Workflow System
- * 
+ *
  * This module provides integration between QTU (Question to User) and the
  * Unified Documentation Workflow System, allowing for user input at
  * decision points in the workflow.
@@ -27,21 +27,21 @@ class QTUIntegration {
     async initialize() {
         try {
             // Create questions directory
-            await fs.mkdir(this.questionsDir, { recursive: true });
-            
+            await fs.mkdir(this.questionsDir, {recursive: true});
+
             // Initialize answers file
             await this.ensureAnswersFile();
-            
+
             // Initialize Answer Processor
-            const { AnswerProcessor } = require('./answer-processor.js');
+            const {AnswerProcessor} = require('./answer-processor.js');
             this.answerProcessor = new AnswerProcessor();
             const processorInitialized = await this.answerProcessor.initialize();
-            
+
             if (!processorInitialized) {
                 console.log('⚠️  Answer Processor initialization failed, continuing without caching');
                 this.answerProcessor = null;
             }
-            
+
             console.log('✅ QTU Integration initialized');
             return true;
         } catch (error) {
@@ -78,7 +78,7 @@ class QTUIntegration {
     async askUser(question, options = null, timeout = 60, port = 8765) {
         try {
             console.log(`\n❓ Asking user: ${question}`);
-            
+
             // Check cache first if AnswerProcessor is available
             if (this.answerProcessor) {
                 const cachedAnswer = await this.answerProcessor.processQTUResponse(question, `q_${Date.now()}`, '');
@@ -87,21 +87,21 @@ class QTUIntegration {
                     return cachedAnswer.answer;
                 }
             }
-            
+
             // Build QTU command
             let command = `powershell -ExecutionPolicy Bypass -File "${this.qtuScriptPath}"`;
             command += ` -Question "${question}"`;
             command += ` -Timeout ${timeout}`;
             command += ` -Port ${port}`;
-            
+
             if (options && options.length > 0) {
                 command += ` -Options "${options.join(',')}"`;
             }
 
             console.log(`🚀 Executing: ${command}`);
-            
+
             // Execute QTU command
-            const result = execSync(command, { 
+            const result = execSync(command, {
                 encoding: 'utf8',
                 timeout: (timeout + 10) * 1000 // Add buffer for startup
             });
@@ -111,11 +111,11 @@ class QTUIntegration {
             // Process QTU response using AnswerProcessor
             if (this.answerProcessor) {
                 const processedResult = await this.answerProcessor.processQTUResponse(
-                    question, 
-                    `q_${Date.now()}`, 
+                    question,
+                    `q_${Date.now()}`,
                     result
                 );
-                
+
                 if (processedResult.success) {
                     console.log(`✅ User answered: ${processedResult.answer}`);
                     return processedResult.answer;
@@ -176,7 +176,7 @@ class QTUIntegration {
     async saveUserAnswer(question, answer, response) {
         try {
             let answersData;
-            
+
             // Try to read existing file
             try {
                 const fileContent = await fs.readFile(this.answersFile, 'utf8');
@@ -190,7 +190,7 @@ class QTUIntegration {
                     lastUpdated: new Date().toISOString()
                 };
             }
-            
+
             const questionId = response.questionId;
             answersData.answers[questionId] = answer;
             answersData.questions[questionId] = {
@@ -217,7 +217,7 @@ class QTUIntegration {
             return answersData;
         } catch (error) {
             console.error('❌ Error reading answer history:', error.message);
-            return { answers: {}, questions: {}, sessionId: this.sessionId };
+            return {answers: {}, questions: {}, sessionId: this.sessionId};
         }
     }
 
@@ -260,7 +260,7 @@ class WorkflowDecisionPoints {
      */
     async discoveryDecisions(context) {
         console.log('\n🔍 DISCOVERY PHASE - User Decision Points');
-        
+
         const decisions = {};
 
         // Decision 1: Processing Mode Selection
@@ -301,7 +301,7 @@ class WorkflowDecisionPoints {
      */
     async processingDecisions(context) {
         console.log('\n⚙️  PROCESSING PHASE - User Decision Points');
-        
+
         const decisions = {};
 
         // Decision 1: Batch Size
@@ -338,7 +338,7 @@ class WorkflowDecisionPoints {
      */
     async organizationDecisions(context) {
         console.log('\n🗂️  ORGANIZATION PHASE - User Decision Points');
-        
+
         const decisions = {};
 
         // Decision 1: Directory Structure
@@ -373,7 +373,7 @@ class WorkflowDecisionPoints {
      */
     async qaDecisions(context) {
         console.log('\n✅ QA PHASE - User Decision Points');
-        
+
         const decisions = {};
 
         // Decision 1: Quality Metrics Focus
@@ -491,7 +491,7 @@ if (require.main === module) {
                 await decisionPoints.initialize();
                 const phase = args[1];
                 const context = args[2] ? JSON.parse(args[2]) : {};
-                
+
                 let decisions;
                 switch (phase) {
                     case 'discovery':
@@ -510,7 +510,7 @@ if (require.main === module) {
                         console.log('Unknown phase. Use: discovery, processing, organization, qa');
                         return;
                 }
-                
+
                 console.log('Decisions:', JSON.stringify(decisions, null, 2));
                 break;
 
@@ -533,4 +533,4 @@ if (require.main === module) {
     run().catch(console.error);
 }
 
-module.exports = { QTUIntegration, WorkflowDecisionPoints };
+module.exports = {QTUIntegration, WorkflowDecisionPoints};

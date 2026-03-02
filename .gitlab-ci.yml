@@ -43,18 +43,18 @@ documentation-workflow:
           CURRENT_PHASE=$(echo "$STATUS" | jq -r '.current_phase')
           PROGRESS=$(echo "$STATUS" | jq -r '.progress_percentage')
           echo "Progress: $PROGRESS% - Phase: $CURRENT_PHASE"
-          
+      
           if [ "$CURRENT_PHASE" = "completed" ]; then
             echo "✅ Workflow completed successfully!"
             break
           fi
         fi
-        
+      
         if [ $i -eq 240 ]; then
           echo "❌ Workflow did not complete within 2 hours"
           exit 1
         fi
-        
+      
         sleep 30
       done
   only:
@@ -110,18 +110,18 @@ documentation-emergency:
           CURRENT_PHASE=$(echo "$STATUS" | jq -r '.current_phase')
           PROGRESS=$(echo "$STATUS" | jq -r '.progress_percentage')
           echo "Progress: $PROGRESS% - Phase: $CURRENT_PHASE"
-          
+      
           if [ "$CURRENT_PHASE" = "completed" ]; then
             echo "✅ Emergency workflow completed successfully!"
             break
           fi
         fi
-        
+      
         if [ $i -eq 120 ]; then
           echo "❌ Emergency workflow did not complete within 1 hour"
           exit 1
         fi
-        
+      
         sleep 30
       done
   when: manual
@@ -155,18 +155,18 @@ documentation-cleanup:
           CURRENT_PHASE=$(echo "$STATUS" | jq -r '.current_phase')
           PROGRESS=$(echo "$STATUS" | jq -r '.progress_percentage')
           echo "Progress: $PROGRESS% - Phase: $CURRENT_PHASE"
-          
+      
           if [ "$CURRENT_PHASE" = "completed" ]; then
             echo "✅ Cleanup workflow completed successfully!"
             break
           fi
         fi
-        
+      
         if [ $i -eq 480 ]; then
           echo "❌ Cleanup workflow did not complete within 4 hours"
           exit 1
         fi
-        
+      
         sleep 30
       done
   when: manual
@@ -198,18 +198,18 @@ documentation-daily:
           CURRENT_PHASE=$(echo "$STATUS" | jq -r '.current_phase')
           PROGRESS=$(echo "$STATUS" | jq -r '.progress_percentage')
           echo "Progress: $PROGRESS% - Phase: $CURRENT_PHASE"
-          
+      
           if [ "$CURRENT_PHASE" = "completed" ]; then
             echo "✅ Daily workflow completed successfully!"
             break
           fi
         fi
-        
+      
         if [ $i -eq 360 ]; then
           echo "❌ Daily workflow did not complete within 3 hours"
           exit 1
         fi
-        
+      
         sleep 30
       done
   only:

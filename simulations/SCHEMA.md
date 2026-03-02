@@ -2,7 +2,8 @@
 
 Align all simulations to avoid redundant or conflicting values.
 
-> **Примечание о context:** Поля внутри `context` (включая `history`) имеют свободный формат и регулируются системой. Эти поля не проверяются на соответствие схеме.
+> **Примечание о context:** Поля внутри `context` курируются системой и имеют свободный формат. Не проверять и не
+> трогать. Сюда входят `history`, `execution`, `vite_config`, `aliases` и любые другие поля.
 
 ## File layout (per step)
 
@@ -67,7 +68,43 @@ as siblings.
   `result: { "execute-command": { "command": "npm test", "exitCode": 0, "stdout": "...", "stderr": "" } }` (action-key
   shape). Server can pass to LLM for summary or next step.
 
-When response includes both message and form (e.g. coder), use `"message"` inside `execute` (e.g. `execute.message`).
+**Правильная структура execute:**
+
+```json
+{
+  "context": { ... },
+  "execute": {
+    "form": { ... },
+    "script": { ... },
+    "rag-search": { ... }
+  }
+}
+```
+
+- **Прямые ключи** (`form`, `script`, `rag-search`) в `execute` — это ПРАВИЛЬНО
+- **`execute.message` с `role` и `content`** — НЕ НУЖНО, это избыточно
+
+### result на верхнем уровне (только для финального шага)
+
+Поле `result` на верхнем уровне `response.json` используется ТОЛЬКО для финального шага:
+
+```json
+{
+  "context": { ... },
+  "execute": {
+    "form": {
+      "title": "Готово",
+      "choices": [{ "label": "OK", "value": "done" }]
+    }
+  },
+  "result": {
+    "completed": true,
+    "fixed_count": 50
+  }
+}
+```
+
+Для промежуточных шагов `result` передаётся только в `request.json` (от клиента к серверу).
 
 **execute.form with choices:** optional `form.title`, `form.choices` = `[{ "id": "...", "label": "..." }]` (e.g.
 continue_search, save_report). Client sends `result.choice` + optional `result.message` / `result.path`. Save path

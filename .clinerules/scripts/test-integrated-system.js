@@ -155,7 +155,7 @@ class IntegratedSystemTestSuite {
 
         try {
             // Test CLI module loading
-            const { execSync } = require('child_process');
+            const {execSync} = require('child_process');
 
             // Test help command
             try {
@@ -168,7 +168,10 @@ class IntegratedSystemTestSuite {
 
             // Test QTU test command
             try {
-                const qtuTestOutput = execSync('node .clinerules/scripts/cli.js qtu-test', {encoding: 'utf8', timeout: 10000});
+                const qtuTestOutput = execSync('node .clinerules/scripts/cli.js qtu-test', {
+                    encoding: 'utf8',
+                    timeout: 10000
+                });
                 const qtuTestValid = qtuTestOutput.includes('QTU integration test complete') || qtuTestOutput.includes('QTU integration not available');
                 this.addTestResult('CLI QTU Test Command', qtuTestValid, qtuTestValid ? 'Success' : 'Failed');
             } catch (qtuTestError) {

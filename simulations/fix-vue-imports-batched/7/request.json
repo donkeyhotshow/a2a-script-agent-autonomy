@@ -3,10 +3,11 @@
     "task": "виправити імпорти у vue компонентах",
     "execution": {
       "action": "fix-vue-imports-batched",
-      "step": "search-exporter",
+      "step": "vue-import-cleanup",
+      "status": "completed",
       "progress": {
         "totalFiles": 50,
-        "currentFile": 2
+        "currentFile": 50
       }
     },
     "vite_config": {
@@ -19,13 +20,12 @@
   },
   "result": {
     "script": {
-      "file": "resources/js/Pages/Auth/Register.vue",
-      "exporter_found": "resources/js/utils/helpers.js",
-      "fixed": true,
-      "patch": {
-        "from": "../../utils/helpers",
-        "to": "@/utils/helpers"
-      }
+      "cleanup_count": 50,
+      "fixed_files": [
+        "resources/js/Pages/Auth/Login.vue",
+        "resources/js/Pages/Auth/Register.vue",
+        "resources/js/components/UserCard.vue"
+      ]
     }
   }
 }

@@ -40,9 +40,9 @@ class WorkflowEngine {
     async initializeQTU() {
         try {
             // Check if QTU integration is available
-            const { WorkflowDecisionPoints } = require('./qtu-integration.js');
+            const {WorkflowDecisionPoints} = require('./qtu-integration.js');
             this.qtuIntegration = new WorkflowDecisionPoints();
-            
+
             const initialized = await this.qtuIntegration.initialize();
             if (initialized) {
                 console.log('✅ QTU Integration initialized');
@@ -857,7 +857,7 @@ class WorkflowEngine {
             console.log(`📊 Completion rate: ${completionRate}%`);
             console.log(`🎯 Accuracy score: ${accuracyScore}%`);
             console.log(`📋 Organization score: ${organizationScore}%`);
-            
+
             if (Object.keys(userDecisions).length > 0) {
                 console.log(`👤 User decisions:`, JSON.stringify(userDecisions, null, 2));
             }

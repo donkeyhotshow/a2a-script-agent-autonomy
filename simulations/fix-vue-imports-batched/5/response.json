@@ -6,7 +6,7 @@
       "step": "search-exporter",
       "progress": {
         "totalFiles": 50,
-        "currentFile": 1
+        "currentFile": 3
       }
     },
     "vite_config": {
@@ -15,17 +15,12 @@
     "aliases": {
       "@": "resources/js",
       "~": "resources"
-    },
-    "files_to_fix": [
-      "resources/js/Pages/Auth/Login.vue",
-      "resources/js/Pages/Auth/Register.vue",
-      "resources/js/components/UserCard.vue"
-    ]
+    }
   },
   "execute": {
     "rag-search": {
-      "query": "export class Header",
-      "description": "Пошук файлу, який експортує клас 'Header' з помилки",
+      "query": "export userStore",
+      "description": "Пошук файлу, який експортує 'userStore' з помилки",
       "output": "exporter_file"
     }
   }

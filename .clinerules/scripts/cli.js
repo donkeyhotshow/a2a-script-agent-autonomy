@@ -309,7 +309,7 @@ Examples:
     async askUser(args) {
         try {
             // Check if QTU integration is available
-            const { QTUIntegration } = require('./qtu-integration.js');
+            const {QTUIntegration} = require('./qtu-integration.js');
             const qtu = new QTUIntegration();
 
             const initialized = await qtu.initialize();
@@ -329,9 +329,9 @@ Examples:
             }
 
             console.log(`❓ Asking user: ${question}`);
-            
+
             const answer = await qtu.askUser(question, options, timeout);
-            
+
             if (answer) {
                 console.log(`✅ User answered: ${answer}`);
             } else {
@@ -346,7 +346,7 @@ Examples:
     async testQTU(args) {
         try {
             // Check if QTU integration is available
-            const { QTUIntegration } = require('./qtu-integration.js');
+            const {QTUIntegration} = require('./qtu-integration.js');
             const qtu = new QTUIntegration();
 
             const initialized = await qtu.initialize();
@@ -356,7 +356,7 @@ Examples:
             }
 
             console.log('🧪 Testing QTU integration...');
-            
+
             // Test 1: Simple text question
             console.log('\n📝 Test 1: Simple text question');
             const textAnswer = await qtu.askUser(

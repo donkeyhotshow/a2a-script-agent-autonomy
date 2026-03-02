@@ -1,14 +1,14 @@
 {
-  "session_id": "workflow-2026-03-02T04-41-57-528Z",
+  "session_id": "workflow-2026-03-02T06-28-52-425Z",
   "phases": {
     "discovery": {
-      "status": "completed",
-      "start_time": "2026-03-02T04:41:57.528Z",
-      "end_time": "2026-03-02T04:41:57.531Z",
+      "status": "in_progress",
+      "start_time": "2026-03-02T06:28:52.426Z",
+      "end_time": null,
       "tasks": {
         "inventory_analysis": {
           "status": "in_progress",
-          "start_time": "2026-03-02T04:41:57.528Z",
+          "start_time": "2026-03-02T06:28:52.426Z",
           "end_time": null,
           "duration": 0,
           "success": null
@@ -28,11 +28,11 @@
       "end_time": null,
       "tasks": {
         "high_priority_processing": {
-          "status": "completed",
-          "start_time": "2026-03-02T04:41:57.744Z",
-          "end_time": "2026-03-02T04:41:57.744Z",
+          "status": "pending",
+          "start_time": null,
+          "end_time": null,
           "duration": 0,
-          "success": true
+          "success": null
         },
         "medium_priority_processing": {
           "status": "pending",

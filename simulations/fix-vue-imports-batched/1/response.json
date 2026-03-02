@@ -8,19 +8,15 @@
       "choices": [
         {
           "id": "fix-vue-imports-batched",
-          "label": "Виправити зламані імпорти у Vue файлах (batched)"
-        },
-        {
-          "id": "fix-vue-imports",
-          "label": "Виправити зламані імпорти у Vue файлах"
+          "label": "Виправити зламані імпорти у Vue файлах (пакетна обробка)"
         },
         {
           "id": "auto-ai",
-          "label": "AI Action Generator"
+          "label": "AI Action Generator — згенерувати екшен за допомогою LLM"
         },
         {
           "id": "task-decomposition",
-          "label": "Декомпозиція задачі"
+          "label": "Декомпозиція задачі вручну"
         }
       ]
     }

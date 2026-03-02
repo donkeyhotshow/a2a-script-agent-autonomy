@@ -3,11 +3,8 @@
     "task": "виправити імпорти у vue компонентах",
     "execution": {
       "action": "fix-vue-imports-batched",
-      "step": "search-exporter",
-      "progress": {
-        "totalFiles": 50,
-        "currentFile": 3
-      }
+      "step": "completed",
+      "status": "completed"
     },
     "vite_config": {
       "file": "vite.config.js"
@@ -18,14 +15,6 @@
     }
   },
   "result": {
-    "script": {
-      "file": "resources/js/components/UserCard.vue",
-      "exporter_found": "resources/js/stores/userStore.js",
-      "fixed": true,
-      "patch": {
-        "from": "@/stores/user",
-        "to": "@/stores/userStore"
-      }
-    }
+    "choice": "done"
   }
 }
