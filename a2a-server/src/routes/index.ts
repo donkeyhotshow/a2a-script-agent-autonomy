@@ -6,6 +6,7 @@ import {invoke} from '../services/invoke.service.js';
 import requestsRoutes from './requests.routes.js';
 import actionsRoutes from './actions.routes.js';
 import sseRoutes from './sse.routes.js';
+import sessionsRoutes from './sessions.routes.js';
 
 /**
  * a2a-server: async protocol with requests.
@@ -21,6 +22,9 @@ router.use('/actions', actionsRoutes);
 
 // Mount SSE routes
 router.use('/sse', sseRoutes);
+
+// Mount sessions routes
+router.use('/sessions', sessionsRoutes);
 
 async function handleInvoke(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {

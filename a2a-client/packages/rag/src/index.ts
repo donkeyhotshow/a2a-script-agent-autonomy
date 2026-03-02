@@ -16,6 +16,7 @@ import {ASTChunker, createASTChunker} from './ast-chunker';
 import {QueryUnderstandingEngine, createQueryUnderstandingEngine, INTENT_TYPES} from './query-understanding';
 import {SearchSuggestionsEngine, createSuggestionsEngine, QueryExpander, createQueryExpander} from './suggestions';
 import {CodeSimilarityEngine, createSimilarityEngine} from './code-similarity';
+import type {FileRelevanceModel} from './file-relevance';
 
 export interface RAGConfig {
     projectPath?: string;
@@ -28,6 +29,11 @@ export interface RAGConfig {
     maxFiles?: number;
     embeddingModel?: string;
     embeddingProvider?: string;
+    /**
+     * Optional ML model used to adjust per-file relevance.
+     * If not provided, only heuristics are used.
+     */
+    fileRelevanceModel?: FileRelevanceModel;
 }
 
 export interface RAGInstance {

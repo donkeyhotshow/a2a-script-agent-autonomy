@@ -92,3 +92,18 @@ web должен командывать клиентом , через апи к�
 - **dialog** — діалог з LLM (request.md/response.md у кроках з LLM).
 - **coder** — діалог + RAG + read-file/write-file.
 - **coder-smart** — контекст-документ (capture-task → analyze-intent → llm-first-iteration → create-context-document).
+
+## Документация
+
+| Документ | Описание |
+|----------|----------|
+| [ARCHITECTURE.md](ARCHITECTURE.md) | Общая архитектура системы |
+| [DATA-FLOW.md](DATA-FLOW.md) | Полная диаграмма потока данных |
+| [PROTOCOL.md](PROTOCOL.md) | Протокол взаимодействия |
+| [WEB-UI.md](WEB-UI.md) | Web UI документация |
+| [API-SERVER.md](API-SERVER.md) | Client API Server документация |
+| [API-CLIENT.md](API-CLIENT.md) | API Client документация |
+| [SESSION-FLOW.md](SESSION-FLOW.md) | Поток сессий |
+| [SCHEMAS.md](SCHEMAS.md) | JSON схемы |
+| [SIMULATION-FORMAT.md](SIMULATION-FORMAT.md) | Формат симуляций |
+| [simulations/SCHEMA.md](../../simulations/SCHEMA.md) | Каноничная схема симуляций |

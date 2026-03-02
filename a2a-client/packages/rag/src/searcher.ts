@@ -9,12 +9,19 @@ import {TFIDFService} from './tfidf.js';
 import {QueryUnderstandingEngine, INTENT_TYPES} from './query-understanding.js';
 import {CodeSimilarityEngine} from './code-similarity.js';
 import {BM25Scorer} from './bm25.js';
+import {scoreFileRelevance} from './file-relevance.js';
 import type {Chunk} from './chunk-manager.js';
 import type {RAGIndexData, IndexFileInfo} from './indexer.js';
+import type {FileRelevanceModel} from './file-relevance';
 
 export interface RAGSearcherConfig {
     projectPath?: string;
     useTFIDF?: boolean;
+    /**
+     * Optional ML model used to adjust per-file relevance.
+     * If not provided, only heuristics are used.
+     */
+    fileRelevanceModel?: FileRelevanceModel;
 }
 
 export interface SearchOptions {
@@ -72,6 +79,8 @@ export class RAGSearcher {
     bm25: BM25Scorer | null;
     private bm25Indexed = false;
     private similarityIndexed = false;
+    private fileRelevanceModel?: FileRelevanceModel;
+    private fileRelevanceCache: Map<string, number>;
 
     constructor(config: RAGSearcherConfig = {}) {
         this.projectPath = config.projectPath ?? process.cwd();
@@ -83,6 +92,8 @@ export class RAGSearcher {
         this.queryUnderstanding = new QueryUnderstandingEngine();
         this.codeSimilarity = new CodeSimilarityEngine();
         this.bm25 = new BM25Scorer();
+        this.fileRelevanceModel = config.fileRelevanceModel;
+        this.fileRelevanceCache = new Map();
     }
 
     /**
@@ -170,6 +181,23 @@ export class RAGSearcher {
             const indexPath = path.join(this.indexPath, 'rag-files.json');
             const content = await fs.readFile(indexPath, 'utf-8');
             this.index = JSON.parse(content) as RAGIndexData;
+
+            // Build per-file relevance cache (blend stored value with current model/heuristics)
+            this.fileRelevanceCache.clear();
+            for (const file of this.index.files) {
+                const relevance = scoreFileRelevance(
+                    {
+                        relativePath: file.path,
+                        ext: file.ext,
+                        size: file.size,
+                    },
+                    this.fileRelevanceModel
+                );
+                file.relevanceScore = relevance.relevance;
+                file.relevanceLabel = relevance.label;
+                file.relevanceReasons = relevance.reasons;
+                this.fileRelevanceCache.set(file.path, relevance.relevance);
+            }
             return this.index;
         } catch {
             this.index = {version: '1.0', timestamp: '', projectPath: this.projectPath, files: [], chunks: []};
@@ -486,8 +514,21 @@ export class RAGSearcher {
                 }
             }
         }
+
+        // 6. File-level relevance boost / penalty (archives, backups, storage, etc.)
+        let relevanceBoost = 1.0;
+        if (this.index) {
+            const fileRelevance = this.fileRelevanceCache.get(chunk.filePath);
+            if (typeof fileRelevance === 'number') {
+                relevanceBoost = fileRelevance;
+            }
+        }
         
-        const totalScore = (keywordScore * 1.0 + bm25Score * 0.8 + similarityScore * 0.5) * intentBoost * fileTypeBoost;
+        const totalScore =
+            (keywordScore * 1.0 + bm25Score * 0.8 + similarityScore * 0.5) *
+            intentBoost *
+            fileTypeBoost *
+            relevanceBoost;
         
         return { keywordScore, bm25Score, similarityScore, totalScore };
     }

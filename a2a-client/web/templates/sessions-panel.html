@@ -1,0 +1,135 @@
+<!-- Sessions Management UI Template -->
+<!-- Sidebar + Chat Area Layout -->
+
+<div class="sessions-ui-container">
+    <!-- Sidebar: Sessions List -->
+    <aside class="sessions-sidebar" id="sessionsSidebar">
+        <div class="sessions-sidebar-header">
+            <h2 class="sessions-sidebar-title">Sessions</h2>
+            <button class="btn-new-session" id="newSession" title="New Session">
+                <span class="icon-plus">+</span>
+            </button>
+        </div>
+        
+        <!-- Search/Filter -->
+        <div class="sessions-search">
+            <input 
+                type="text" 
+                id="sessionSearchInput" 
+                placeholder="Search sessions..." 
+                class="sessions-search-input"
+            />
+            <select id="sessionFilter" class="sessions-filter-select">
+                <option value="all">All</option>
+                <option value="active">Active</option>
+                <option value="waiting">Waiting</option>
+                <option value="completed">Completed</option>
+            </select>
+        </div>
+        
+        <!-- Sessions List -->
+        <div class="sessions-list" id="sessionsList">
+            <!-- Session items will be rendered here by JavaScript -->
+            <div class="empty">No sessions. Click + to create</div>
+        </div>
+    </aside>
+
+    <!-- Main Chat Area -->
+    <main class="sessions-chat" id="sessionsChat">
+        <!-- Chat Header -->
+        <header class="chat-header" id="sessionHeader">
+            <div class="chat-header-info">
+                <h3 class="chat-session-title" id="chatSessionTitle">Select a session</h3>
+                <span class="chat-session-status" id="chatSessionStatus"></span>
+            </div>
+            <div class="chat-header-actions">
+                <button class="btn-icon" id="showFlow" title="Show Flow Graph">
+                    📊
+                </button>
+                <button class="btn-icon btn-delete-session" id="deleteSession" title="Delete Session" disabled>
+                    🗑️
+                </button>
+            </div>
+        </header>
+
+        <!-- Messages Area -->
+        <div class="chat-messages" id="sessionMessages">
+            <div class="empty">Select a session to view messages</div>
+        </div>
+
+        <!-- Action Details Card (for execute.* protocol) -->
+        <div class="action-details-card" id="actionDetailsCard" style="display: none;">
+            <div class="action-details-header">
+                <h4 class="action-title" id="actionTitle">Action Required</h4>
+                <button class="btn-close" id="closeActionDetails">&times;</button>
+            </div>
+            <div class="action-details-body" id="actionDetailsBody">
+                <!-- Dynamic action content -->
+            </div>
+            <div class="action-details-footer" id="actionDetailsFooter">
+                <button class="btn btn-secondary" id="actionCancel">Cancel</button>
+                <button class="btn btn-primary" id="actionApprove">Approve</button>
+            </div>
+        </div>
+
+        <!-- Chat Input Area -->
+        <div class="chat-input-area">
+            <div class="chat-input-container">
+                <textarea 
+                    id="messageInput" 
+                    class="chat-input" 
+                    placeholder="Type your message..." 
+                    rows="2"
+                ></textarea>
+                <div class="chat-input-actions">
+                    <button class="btn-chat-continue" id="btnContinue">Делаем</button>
+                    <button class="btn-chat-send" id="sendMessage">Send</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Flow Graph Toggle -->
+        <div class="flow-controls" id="flowControls" style="display: none;">
+            <button class="flow-toggle-btn" id="flowToggle" title="Toggle Flow Graph">
+                📊 Flow
+            </button>
+            <div class="flow-zoom-controls">
+                <button class="flow-zoom-btn" id="flowZoomIn" title="Zoom In">+</button>
+                <button class="flow-zoom-btn" id="flowZoomOut" title="Zoom Out">−</button>
+                <button class="flow-zoom-btn" id="flowFitView" title="Fit View">⊡</button>
+                <button class="flow-zoom-btn" id="flowClose" title="Close">×</button>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- Template for individual session item -->
+<template id="sessionItemTemplate">
+    <div class="session-item" data-id="{{sessionId}}">
+        <div class="session-item-header">
+            <span class="session-title">{{title}}</span>
+            <button class="btn-delete-session-item" title="Delete">
+                🗑️
+            </button>
+        </div>
+        <div class="session-item-preview">{{preview}}</div>
+        <div class="session-item-meta">
+            <span class="session-status status-{{status}}">{{status}}</span>
+            <span class="session-date">{{date}}</span>
+        </div>
+    </div>
+</template>
+
+<!-- Template for chat message -->
+<template id="chatMessageTemplate">
+    <div class="chat-message {{role}}" data-message-id="{{messageId}}">
+        <div class="message-role">
+            {{roleLabel}}
+            {{#if pending}}<span class="spinner"></span>{{/if}}
+        </div>
+        <div class="message-content">
+            {{content}}
+        </div>
+        <div class="message-timestamp">{{timestamp}}</div>
+    </div>
+</template>

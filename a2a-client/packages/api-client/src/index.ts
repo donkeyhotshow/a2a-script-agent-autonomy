@@ -195,3 +195,16 @@ export {
     parseMessage,
     type FileBlockLike,
 } from './protocol';
+
+// Session Manager
+export {SessionManager} from './SessionManager.js';
+export type {
+    Session,
+    SessionMetadata,
+    DialogMessage,
+    DialogRole,
+    SequenceEntry,
+    SessionIndex,
+    SessionIndexEntry,
+    SessionManagerConfig,
+} from './types/session.js';

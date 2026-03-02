@@ -6,6 +6,8 @@ import fs from 'fs/promises';
 import path from 'path';
 import {IgnoreDetector} from '@a2a/fs-utils';
 import {ChunkManager, type Chunk, type ChunkManagerConfig} from './chunk-manager.js';
+import {scoreFileRelevance} from './file-relevance.js';
+import type {FileRelevanceLabel, FileRelevanceModel} from './file-relevance';
 
 export interface RAGIndexerConfig {
     projectPath: string;
@@ -21,6 +23,13 @@ export interface IndexFileInfo {
     modified: string;
     hash: string;
     language: string;
+    /**
+     * Optional relevance score and metadata produced by file-relevance module.
+     * Used by RAG searcher to downrank low-signal files (archives, backups, storage, etc).
+     */
+    relevanceScore?: number;
+    relevanceLabel?: FileRelevanceLabel;
+    relevanceReasons?: string[];
 }
 
 export interface RAGIndexData {
@@ -46,6 +55,7 @@ export class RAGIndexer {
     private _initIgnoreDetectorPromise: Promise<void>;
     private chunkManager: ChunkManager;
     index: RAGIndexData | null = null;
+    private fileRelevanceModel?: FileRelevanceModel;
 
     constructor(config: RAGIndexerConfig) {
         this.projectPath = config.projectPath;
@@ -53,6 +63,7 @@ export class RAGIndexer {
         this.includePatterns = config.includePatterns ?? ['**/*.php', '**/*.js', '**/*.vue', '**/*.ts', '**/*.tsx', '**/*.json', '**/*.md', '**/*.sql'];
         this.excludePatterns = config.excludePatterns ?? DEFAULT_EXCLUDE;
         this.chunkManager = new ChunkManager(config as unknown as ChunkManagerConfig);
+        this.fileRelevanceModel = (config as unknown as {fileRelevanceModel?: FileRelevanceModel}).fileRelevanceModel;
         this._initIgnoreDetectorPromise = this._initIgnoreDetector(config);
     }
 
@@ -194,6 +205,18 @@ export class RAGIndexer {
             hash: this.chunkManager.hashContent(content),
             language: this.detectLanguage(ext),
         };
+        // Compute per-file relevance once during indexing.
+        const relevance = scoreFileRelevance(
+            {
+                relativePath,
+                ext,
+                size: stats.size,
+            },
+            this.fileRelevanceModel
+        );
+        file.relevanceScore = relevance.relevance;
+        file.relevanceLabel = relevance.label;
+        file.relevanceReasons = relevance.reasons;
         const chunks = this.chunkManager.chunkFile(relativePath, content, ext);
         return {file, chunks};
     }

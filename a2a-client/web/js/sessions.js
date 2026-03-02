@@ -63,6 +63,7 @@ const Sessions = {
 
         this.initVueFlow();
         this.initActionDetailsCard();
+        this.initSearch();
         setTimeout(() => this.restoreFlowFromStorage(), 500);
     },
 
@@ -300,12 +301,23 @@ const Sessions = {
                 s.messages?.[s.messages.length - 1]?.content?.text?.slice(0, 40) || 'New';
             const date = s.createdAt ? new Date(s.createdAt).toLocaleString() : '';
             return `<div class="session-item ${this.state.current?.id === s.id ? 'active' : ''}" data-id="${s.id}">
+        <div class="session-item-header">
+            <span class="session-title">#${(s.id || '').slice(0, 8)}</span>
+            <button class="btn-delete-session-item" data-id="${s.id}" title="Delete">🗑️</button>
+        </div>
         <div class="session-item-preview">${A2A.escape(preview)}</div>
-        <div class="session-item-meta">${s.status || 'active'} · ${date}</div>
+        <div class="session-item-meta">
+            <span class="session-status status-${s.status || 'active'}">${s.status || 'active'}</span>
+            <span class="session-date">${date}</span>
+        </div>
       </div>`;
         }).join('');
         el.querySelectorAll('.session-item').forEach((item) => {
             item.addEventListener('click', () => this.open(item.dataset.id));
+        });
+        // Attach delete handlers
+        el.querySelectorAll('.btn-delete-session-item').forEach((btn) => {
+            btn.addEventListener('click', (e) => this.handleSessionItemDelete(e, btn.dataset.id));
         });
     },
 
@@ -375,7 +387,15 @@ const Sessions = {
         const sendBtn = document.getElementById('sendMessage');
 
         if (!this.state.current) {
-            if (hdr) hdr.innerHTML = '';
+            if (hdr) hdr.innerHTML = `
+                <div class="chat-header-info">
+                    <h3 class="chat-session-title">Select a session</h3>
+                    <span class="chat-session-status"></span>
+                </div>
+                <div class="chat-header-actions">
+                    <button class="btn-icon" id="showFlow" title="Show Flow Graph">📊</button>
+                    <button class="btn-icon btn-delete-session" id="deleteSession" title="Delete Session" disabled>🗑️</button>
+                </div>`;
             if (msg) msg.innerHTML = '<div class="empty">Select or create a session</div>';
             return;
         }
@@ -384,13 +404,19 @@ const Sessions = {
         const hasPending = this.state.messages.some(m => m.status === 'pending');
         const statusText = hasPending ? 'Waiting...' : (s.status || 'active');
 
-        let headerHtml = `<span>#${(s.id || '').slice(0, 8)}</span><span class="${hasPending ? 'warn' : ''}">${statusText}</span>`;
-        if (this.state.frameworks) {
-            const fw = this.state.frameworks;
-            const fwList = [...(fw.frontend || []), ...(fw.backend || [])].slice(0, 4).join(', ');
-            headerHtml += `<span class="frameworks" title="${A2A.escape(JSON.stringify(fw))}">${A2A.escape(fwList)}</span>`;
-        }
-        if (hdr) hdr.innerHTML = headerHtml;
+        if (hdr) hdr.innerHTML = `
+            <div class="chat-header-info">
+                <h3 class="chat-session-title">#${(s.id || '').slice(0, 8)}</h3>
+                <span class="chat-session-status ${hasPending ? 'pending' : ''}">${statusText}</span>
+            </div>
+            <div class="chat-header-actions">
+                <button class="btn-icon" id="showFlow" title="Show Flow Graph">📊</button>
+                <button class="btn-icon btn-delete-session" id="deleteSession" title="Delete Session">🗑️</button>
+            </div>`;
+
+        // Re-attach event listeners for header buttons
+        document.getElementById('showFlow')?.addEventListener('click', () => this.showFlow());
+        document.getElementById('deleteSession')?.addEventListener('click', () => this.delete());
 
         const btnContinue = document.getElementById('btnContinue');
         if (input) input.disabled = hasPending;
@@ -405,6 +431,8 @@ const Sessions = {
                     const isPending = m.status === 'pending';
                     const spinner = isPending ? '<span class="spinner"></span>' : '';
                     const statusClass = isPending ? 'pending' : (m.status === 'failed' ? 'failed' : '');
+                    const roleLabel = m.role === 'user' ? 'You' : 'Server';
+                    const roleClass = m.role === 'user' ? 'user' : 'server';
 
                     let contentHtml = '';
                     if (m.outcome === 'graph_incomplete') {
@@ -415,9 +443,10 @@ const Sessions = {
                         contentHtml = this.fmt(m.contentText || m.content);
                     }
 
-                    return `<div class="msg ${m.role === 'user' ? 'user' : 'server'} ${statusClass}">
-            <div class="msg-role">${m.role === 'user' ? 'You' : 'Server'} ${spinner}</div>
-            <div class="msg-content">${contentHtml}</div>
+                    return `<div class="chat-message ${roleClass} ${statusClass}" data-message-id="${m.id}">
+            <div class="message-role">${roleLabel} ${spinner}</div>
+            <div class="message-content">${contentHtml}</div>
+            <div class="message-timestamp">${m.createdAt ? new Date(m.createdAt).toLocaleTimeString() : ''}</div>
           </div>`;
                 }).join('');
                 msg.scrollTop = msg.scrollHeight;
@@ -1688,6 +1717,236 @@ const Sessions = {
         } else {
             this.showFlow();
         }
+    },
+
+    /**
+     * Delete a session
+     */
+    async delete(id) {
+        if (!id) {
+            id = this.state.current?.id;
+        }
+        if (!id) return;
+
+        if (!confirm('Are you sure you want to delete this session?')) {
+            return;
+        }
+
+        try {
+            const res = await fetch(`${this.api}/sessions/${id}`, {
+                method: 'DELETE',
+            });
+            const text = await res.text();
+            const data = text ? JSON.parse(text) : {};
+
+            if (data.success) {
+                // Remove from list
+                this.state.list = this.state.list.filter(s => s.id !== id);
+                
+                // Clear current if deleted
+                if (this.state.current?.id === id) {
+                    this.state.current = null;
+                    this.state.messages = [];
+                }
+                
+                this.renderList();
+                this.renderView();
+            }
+        } catch (err) {
+            console.error('Failed to delete session:', err);
+        }
+    },
+
+    /**
+     * Handle session item delete button click
+     */
+    handleSessionItemDelete(e, sessionId) {
+        e.stopPropagation();
+        this.delete(sessionId);
+    },
+
+    /**
+     * Filter sessions by search query
+     */
+    filterSessions(query) {
+        if (!query) {
+            this.renderList();
+            return;
+        }
+
+        const filtered = this.state.list.filter(s => {
+            const title = s.title || '';
+            const preview = s.messages?.[s.messages.length - 1]?.contentText || '';
+            const searchLower = query.toLowerCase();
+            return title.toLowerCase().includes(searchLower) || 
+                   preview.toLowerCase().includes(searchLower);
+        });
+
+        const el = document.getElementById('sessionsList');
+        if (!el) return;
+
+        if (!filtered.length) {
+            el.innerHTML = '<div class="empty">No matching sessions</div>';
+            return;
+        }
+
+        el.innerHTML = filtered.map((s) => {
+            const preview = s.messages?.[s.messages.length - 1]?.contentText?.slice(0, 40) ||
+                s.messages?.[s.messages.length - 1]?.content?.text?.slice(0, 40) || 'New';
+            const date = s.createdAt ? new Date(s.createdAt).toLocaleString() : '';
+            return `<div class="session-item ${this.state.current?.id === s.id ? 'active' : ''}" data-id="${s.id}">
+        <div class="session-item-header">
+            <span class="session-title">#${(s.id || '').slice(0, 8)}</span>
+            <button class="btn-delete-session-item" data-id="${s.id}" title="Delete">🗑️</button>
+        </div>
+        <div class="session-item-preview">${A2A.escape(preview)}</div>
+        <div class="session-item-meta">
+            <span class="session-status status-${s.status || 'active'}">${s.status || 'active'}</span>
+            <span class="session-date">${date}</span>
+        </div>
+      </div>`;
+        }).join('');
+
+        // Re-attach click events
+        el.querySelectorAll('.session-item').forEach((item) => {
+            item.addEventListener('click', () => this.open(item.dataset.id));
+        });
+
+        // Re-attach delete events
+        el.querySelectorAll('.btn-delete-session-item').forEach((btn) => {
+            btn.addEventListener('click', (e) => this.handleSessionItemDelete(e, btn.dataset.id));
+        });
+    },
+
+    /**
+     * Setup search input handler
+     */
+    initSearch() {
+        const searchInput = document.getElementById('sessionSearchInput');
+        if (searchInput) {
+            let debounceTimer;
+            searchInput.addEventListener('input', (e) => {
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(() => {
+                    this.filterSessions(e.target.value);
+                }, 300);
+            });
+        }
+
+        // Setup delete session button in header
+        const deleteBtn = document.getElementById('deleteSession');
+        if (deleteBtn) {
+            deleteBtn.addEventListener('click', () => this.delete());
+        }
+
+        // Enable delete button when session is selected
+        this.updateDeleteButton();
+    },
+
+    /**
+     * Update delete button state based on current session
+     */
+    updateDeleteButton() {
+        const deleteBtn = document.getElementById('deleteSession');
+        if (deleteBtn) {
+            deleteBtn.disabled = !this.state.current;
+        }
+    },
+
+    /**
+     * Render chat header with new format
+     */
+    renderChatHeader() {
+        const hdr = document.getElementById('sessionHeader');
+        if (!hdr) return;
+
+        if (!this.state.current) {
+            hdr.innerHTML = `
+                <div class="chat-header-info">
+                    <h3 class="chat-session-title">Select a session</h3>
+                    <span class="chat-session-status"></span>
+                </div>
+                <div class="chat-header-actions">
+                    <button class="btn-icon" id="showFlow" title="Show Flow Graph">📊</button>
+                    <button class="btn-icon btn-delete-session" id="deleteSession" title="Delete Session" disabled>🗑️</button>
+                </div>`;
+            return;
+        }
+
+        const s = this.state.current;
+        const hasPending = this.state.messages.some(m => m.status === 'pending');
+        const statusText = hasPending ? 'Waiting...' : (s.status || 'active');
+
+        hdr.innerHTML = `
+            <div class="chat-header-info">
+                <h3 class="chat-session-title">#${(s.id || '').slice(0, 8)}</h3>
+                <span class="chat-session-status ${hasPending ? 'pending' : ''}">${statusText}</span>
+            </div>
+            <div class="chat-header-actions">
+                <button class="btn-icon" id="showFlow" title="Show Flow Graph">📊</button>
+                <button class="btn-icon btn-delete-session" id="deleteSession" title="Delete Session">🗑️</button>
+            </div>`;
+
+        // Re-attach event listeners
+        document.getElementById('showFlow')?.addEventListener('click', () => this.showFlow());
+        document.getElementById('deleteSession')?.addEventListener('click', () => this.delete());
+    },
+
+    /**
+     * Render messages with new format
+     */
+    renderMessages() {
+        const msg = document.getElementById('sessionMessages');
+        if (!msg) return;
+
+        if (!this.state.messages.length) {
+            msg.innerHTML = '<div class="empty">Send a message to start</div>';
+            return;
+        }
+
+        msg.innerHTML = this.state.messages.map((m) => {
+            const isPending = m.status === 'pending';
+            const spinner = isPending ? '<span class="spinner"></span>' : '';
+            const roleLabel = m.role === 'user' ? 'You' : 'Server';
+            const roleClass = m.role === 'user' ? 'user' : 'server';
+
+            let contentHtml = '';
+            if (m.outcome === 'graph_incomplete') {
+                contentHtml = this.renderGraphIncomplete(m);
+            } else if (m.graph) {
+                contentHtml = this.renderCompleted(m);
+            } else {
+                contentHtml = this.fmt(m.contentText || m.content);
+            }
+
+            return `<div class="chat-message ${roleClass} ${isPending ? 'pending' : ''}" data-message-id="${m.id}">
+                <div class="message-role">${roleLabel} ${spinner}</div>
+                <div class="message-content">${contentHtml}</div>
+                <div class="message-timestamp">${m.createdAt ? new Date(m.createdAt).toLocaleTimeString() : ''}</div>
+            </div>`;
+        }).join('');
+
+        msg.scrollTop = msg.scrollHeight;
+    },
+
+    /**
+     * Override renderView for new UI format
+     */
+    renderViewNew() {
+        this.renderChatHeader();
+        this.renderMessages();
+        this.updateDeleteButton();
+
+        const input = document.getElementById('messageInput');
+        const sendBtn = document.getElementById('sendMessage');
+        const btnContinue = document.getElementById('btnContinue');
+
+        const hasPending = this.state.messages.some(m => m.status === 'pending');
+        if (input) input.disabled = hasPending;
+        if (sendBtn) sendBtn.disabled = hasPending;
+        if (btnContinue) btnContinue.disabled = hasPending;
+
+        this.renderGraphPanel();
     },
 };
 

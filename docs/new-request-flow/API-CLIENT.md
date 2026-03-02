@@ -662,8 +662,10 @@ try {
 - [SCHEMAS.md](SCHEMAS.md) — JSON схемы
 - [SIMULATION-LLM-PROXY.md](SIMULATION-LLM-PROXY.md) — Асинхронный поток с promiseId
 - [SIMULATION-FORMAT.md](SIMULATION-FORMAT.md) — Формат симуляций
+- [simulations/SCHEMA.md](../../simulations/SCHEMA.md) — Схема симуляций (canonical)
 - [WEB-UI.md](WEB-UI.md) — Web UI
 - [API-SERVER.md](API-SERVER.md) — Client API Server
+- [DATA-FLOW.md](DATA-FLOW.md) — Полная диаграмма потока данных
 - [json-schemas](json-schemas/) — JSON схемы запросов/ответов
   - `server-invoke-request.schema.json`
   - `server-invoke-response-execute.schema.json`

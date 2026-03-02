@@ -385,3 +385,16 @@ CLIENT_API_URL=http://localhost:3001
 3. Добавить sessionId и projectId во все запросы
 4. Реализовать хранение сессий на стороне клиента
 5. Обновить UI для работы с панелями сессий
+
+## Перекрёстные ссылки
+
+- [DATA-FLOW.md](DATA-FLOW.md) — Полная диаграмма потока данных
+- [WEB-UI.md](WEB-UI.md) — Web UI документация
+- [API-SERVER.md](API-SERVER.md) — Client API Server документация
+- [API-CLIENT.md](API-CLIENT.md) — API Client документация
+- [PROTOCOL.md](PROTOCOL.md) — Протокол взаимодействия
+- [SESSION-FLOW.md](SESSION-FLOW.md) — Поток сессий
+- [SCHEMAS.md](SCHEMAS.md) — JSON схемы
+- [SIMULATION-FORMAT.md](SIMULATION-FORMAT.md) — Формат симуляций
+- [SIMULATION-LLM-PROXY.md](SIMULATION-LLM-PROXY.md) — Async flow с promiseId
+- [simulations/SCHEMA.md](../../simulations/SCHEMA.md) — Каноничная схема симуляций

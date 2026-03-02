@@ -337,3 +337,15 @@ pass to LLM for summary or next step.
 **Разделение ответственности:**
 - `message`, `form` — отображаются в Web UI
 - `script`, `rag-search`, `read-file`, `write-file`, `execute-command` — выполняются Client API
+
+---
+
+## Перекрёстные ссылки
+
+- [simulations/SCHEMA.md](../../simulations/SCHEMA.md) — Каноничная схема симуляций
+- [DATA-FLOW.md](DATA-FLOW.md) — Полная диаграмма потока данных
+- [ARCHITECTURE.md](ARCHITECTURE.md) — Общая архитектура системы
+- [PROTOCOL.md](PROTOCOL.md) — Протокол взаимодействия
+- [WEB-UI.md](WEB-UI.md) — Web UI документация
+- [API-SERVER.md](API-SERVER.md) — Client API Server документация
+- [API-CLIENT.md](API-CLIENT.md) — API Client документация
