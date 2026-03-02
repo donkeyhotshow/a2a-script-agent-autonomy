@@ -1,7 +1,7 @@
 {
   "tracking_version": "1.0.0",
   "last_updated": "2026-03-02T00:00:00Z",
-  "total_requests": 12,
+  "total_requests": 15,
   "pending_requests": [
     {
       "id": 1772406564145,
@@ -28,6 +28,33 @@
       "reviewer": "auto-reviewer",
       "status": "pending",
       "created_at": "2026-03-02T00:11:30.135Z",
+      "checklist": []
+    },
+    {
+      "id": 1772410727050,
+      "document_path": "docs\\NEW-README.md",
+      "review_type": "content",
+      "reviewer": "auto-reviewer",
+      "status": "pending",
+      "created_at": "2026-03-02T00:18:47.050Z",
+      "checklist": []
+    },
+    {
+      "id": 1772410750728,
+      "document_path": "docs\\NEW-AGENTS.md",
+      "review_type": "content",
+      "reviewer": "auto-reviewer",
+      "status": "pending",
+      "created_at": "2026-03-02T00:19:10.728Z",
+      "checklist": []
+    },
+    {
+      "id": 1772410771044,
+      "document_path": "docs\\NEW-cline-workflow.md",
+      "review_type": "content",
+      "reviewer": "auto-reviewer",
+      "status": "pending",
+      "created_at": "2026-03-02T00:19:31.044Z",
       "checklist": []
     }
   ],

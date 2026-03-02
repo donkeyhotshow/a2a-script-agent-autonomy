@@ -1,6 +1,12 @@
 # fix-vue-imports (client validation)
 
-After each server response, client must reply with the matching request shape.
+> **Type: Actions** (server-managed workflow)
+
+This simulation demonstrates a **server-controlled workflow** where the server defines the exact sequence of steps. The client executes each step and returns results, without making autonomous decisions.
+
+## Behavior
+
+The server sends a predefined list of actions (`actions[]`) that the client must execute in order:
 
 | Step | Server sends | Client must send |
 |------|--------------|------------------|

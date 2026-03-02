@@ -1,5 +1,7 @@
 # analyze-dialog (client validation)
 
+> **Type: AI-Actions** (LLM-managed workflow)
+
 | Step | Server sends | Client must send |
 |------|--------------|------------------|
 | 1 | actions[] + fallbackActions[] | context + result.action |
