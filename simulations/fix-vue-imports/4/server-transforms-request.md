@@ -1,6 +1,7 @@
 # Server: request → response (step 4)
 
-**Input:** `request.json` = `{ "context": { ..., "execution": { "step": "vue-import-resolve" } }, "result": { "patches": [...] } }`.
+**Input:** `request.json` =
+`{ "context": { ..., "execution": { "step": "vue-import-resolve" } }, "result": { "patches": [...] } }`.
 
 1. Take `context` from request.
 2. Advance `execution.step` to `"vue-import-apply"`.

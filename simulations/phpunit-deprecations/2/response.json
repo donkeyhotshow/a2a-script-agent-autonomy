@@ -8,12 +8,12 @@
   },
   "execute": {
     "script": {
-      "name": "scan-phpunit",
       "input": {
         "rootDir": ".",
         "patterns": ["tests/**/*.php"]
       },
-      "output": "phpunit_files[]"
+      "output": "phpunit_files[]",
+      "code": "scan-phpunit"
     }
   }
 }

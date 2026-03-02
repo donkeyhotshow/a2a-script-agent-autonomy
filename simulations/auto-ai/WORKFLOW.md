@@ -23,4 +23,5 @@ See **[ACTIONS-MAP.md](ACTIONS-MAP.md)** for all execute.* / result.* shapes.
 16. result.message (optional) → completed, form
 ```
 
-Actions used: form, rag-search, list-directory, read-file (×3), write-file (×4), grep-search, execute-command (×2), completed.
+Actions used: form, rag-search, list-directory, read-file (×3), write-file (×4), grep-search, execute-command (×2),
+completed.

@@ -1,1 +1,5 @@
-{"message": "Adding health route test.", "action": "write-file", "params": {"path": "tests/api.test.js", "content": "const request = require('supertest'); const app = require('../src/app'); describe('API routes', () => { it('GET /api/users', async () => { const r = await request(app).get('/api/users'); expect(r.status).toBe(200); }); it('GET /health returns ok', async () => { const r = await request(app).get('/health'); expect(r.status).toBe(200); expect(r.body.status).toBe('ok'); }); });"}}
+{"message": "Adding health route test.", "action": "write-file", "params": {"path": "tests/api.test.js", "content": "
+const request = require('supertest'); const app = require('../src/app'); describe('API routes', () => { it('GET
+/api/users', async () => { const r = await request(app).get('/api/users'); expect(r.status).toBe(200); }); it('GET
+/health returns ok', async () => { const r = await request(app).get('/health'); expect(r.status).toBe(200); expect(
+r.body.status).toBe('ok'); }); });"}}

@@ -7,8 +7,8 @@
 1. Extract `input.message` from user response
 2. Add user message to `history`
 3. Create `request.md`:
-   - System prompt for closing conversation
-   - Current state with `context` + `history`
+    - System prompt for closing conversation
+    - Current state with `context` + `history`
 4. Return `request.md` (markdown) to send to LLM.
 
 ---

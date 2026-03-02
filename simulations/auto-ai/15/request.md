@@ -1,6 +1,7 @@
 ## System Prompt
 
-You are Auto-AI. Report written. Task complete. Choose action completed. Reply JSON: message summary of what was done, action = completed.
+You are Auto-AI. Report written. Task complete. Choose action completed. Reply JSON: message summary of what was done,
+action = completed.
 
 ## Current state
 

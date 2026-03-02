@@ -1,106 +1,38 @@
-# Documentation Review System
+# .clinerules Directory - ONLY PLACE FOR TEMPORARY FILES
 
-This system provides a comprehensive workflow for reviewing and managing documentation quality.
+## ВАЖНО: НЕ СРАТЬ В КОРНЕ ПРОЕКТА!
 
-## Overview
+Эта директория (.clinerules) - ЕДИНСТВЕННОЕ место для:
+- Временных файлов
+- Промежуточных результатов
+- Черновиков
+- Всей "срани" во время разработки
 
-The documentation review system includes:
-- Review workflow management
-- Tracking and status monitoring
-- Automated review requests
-- Quality metrics and reporting
+## Запрещено:
+- Создавать файлы в корне проекта (кроме основных файлов проекта)
+- Оставлять временные файлы после завершения задач
+- "Срать" где-то кроме .clinerules
 
-## Installation
+## Разрешено:
+- Создавать любые файлы в .clinerules/
+- Создавать поддиректории в .clinerules/ для организации
+- Использовать .clinerules/ как временную "помойку" во время разработки
+- Очищать .clinerules/ после завершения задач
 
-1. Ensure Node.js is installed (v18+)
-2. Install dependencies: `npm install`
-3. Set up review tracking: `node .clinerules/scripts/review-workflow.js`
+## Примеры:
+✅ Правильно: `.clinerules/temp-results.txt`
+❌ Неправильно: `temp-results.txt` в корне
 
-## Usage
+✅ Правильно: `.clinerules/work/inventory.md`
+❌ Неправильно: `work/inventory.md` в корне
 
-### Creating New Documentation
+✅ Правильно: `.clinerules/docs/temp.md`
+❌ Неправильно: `docs/temp.md` в корне
 
-```bash
-node .clinerules/scripts/documentation-manager.js \
-  --create docs/NEW-document.md \
-  --content "# Your documentation content here"
-```
+## Для агентов:
+Когда вам нужно создать временный файл - сразу создавайте его в .clinerules/
+Если не знаете куда положить - кладите в .clinerules/
+Забудете - получите по жопе!
 
-### Marking Documentation as Outdated
-
-```bash
-node .clinerules/scripts/documentation-manager.js \
-  --outdated docs/existing-document.md
-```
-
-### Managing Reviews
-
-```bash
-# Start a review
-node .clinerules/scripts/review-workflow.js --start 123456
-
-# Complete a review
-node .clinerules/scripts/review-workflow.js --complete 123456
-
-# Get review status
-node .clinerules/scripts/review-workflow.js --status 123456
-
-# Generate report
-node .clinerules/scripts/review-workflow.js --report
-```
-
-## Review Types
-
-### Technical Review
-- Verifies technical accuracy
-- Tests code examples
-- Validates API references
-
-### Content Review
-- Assesses clarity and completeness
-- Evaluates structure and flow
-- Considers user perspective
-
-### Style Review
-- Checks format compliance
-- Verifies terminology consistency
-- Ensures visual quality
-
-## Quality Standards
-
-### Technical Accuracy
-- All technical information must be verified
-- Code examples must be tested and working
-- API references must be current and accurate
-
-### Content Quality
-- Documentation must be clear and understandable
-- Information must be complete and relevant
-- Structure must be logical and user-friendly
-
-### Style Consistency
-- Documentation must follow established style guidelines
-- Formatting must be consistent across all documents
-- Terminology must be used consistently
-
-## Review Metrics
-
-- **Accuracy Rate**: Percentage of technically accurate documentation
-- **Clarity Score**: User assessment of documentation clarity
-- **Completeness Index**: Coverage of required information
-- **Consistency Rating**: Adherence to style guidelines
-
-## Continuous Improvement
-
-The system supports:
-- Regular process optimization
-- Reviewer feedback implementation
-- Quality metric analysis
-- Training and support for reviewers
-
-## Support
-
-For issues or questions, check the review logs in `.clinerules/reviews/` or run the test workflow:
-
-```bash
-node .clinerules/scripts/test-review-workflow.js
+## Current Status: ✅ CLEAN
+Last cleanup: 2026-03-02

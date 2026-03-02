@@ -6,7 +6,10 @@
       "step": "rag-research-plan"
     },
     "history": [
-      { "role": "user", "message": "додати логінування в API та оновити тести" }
+      {
+        "role": "user",
+        "message": "додати логінування в API та оновити тести"
+      }
     ],
     "docVirtual": {
       "section1": "додати логінування в API та оновити тести",
@@ -16,10 +19,21 @@
   "result": {
     "rag-search": {
       "results": [
-        { "file": "src/routes/api.js", "score": 0.9, "snippet": "router.use(authMiddleware);" },
-        { "file": "tests/api.test.js", "score": 0.85, "snippet": "describe('POST /login'" }
+        {
+          "file": "src/routes/api.js",
+          "score": 0.9,
+          "snippet": "router.use(authMiddleware);"
+        },
+        {
+          "file": "tests/api.test.js",
+          "score": 0.85,
+          "snippet": "describe('POST /login'"
+        }
       ],
-      "files": ["src/routes/api.js", "tests/api.test.js"]
+      "files": [
+        "src/routes/api.js",
+        "tests/api.test.js"
+      ]
     }
   }
 }

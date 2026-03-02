@@ -6,9 +6,9 @@
 
 1. Extract text from `response.md` (checklist)
 2. Build `response.json`:
-   - `context`: preserve from request
-   - `result`: checklist text
-   - `execute`: proceed to write-file with checklist
+    - `context`: preserve from request
+    - `result`: checklist text
+    - `execute`: proceed to write-file with checklist
 3. Return `response.json` to client.
 
 ---

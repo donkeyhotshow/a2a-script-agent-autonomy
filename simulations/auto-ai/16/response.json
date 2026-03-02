@@ -1,1 +1,39 @@
-{"context":{"task":"Refactor the API: add a logging middleware, add a health check endpoint, update the API tests, run lint and tests, and write a short report to .carrier/reports/.","execution":{"action":"auto-ai","step":"completed"},"history":[{"role":"assistant","message":"Refactor done.","action":"completed"},{"role":"user","message":"thanks, that's all"},{"role":"assistant","message":"You're welcome. Ask anytime for more."}],"result":{"message":"You're welcome. Ask anytime for more.","completed":true},"execute":{"form":{"input":[{"name":"message","type":"text","label":"Message","required":false}]}}}
+{
+  "context": {
+    "task": "Refactor the API: add a logging middleware, add a health check endpoint, update the API tests, run lint and tests, and write a short report to .carrier/reports/.",
+    "execution": {
+      "action": "auto-ai",
+      "step": "completed"
+    },
+    "history": [
+      {
+        "role": "assistant",
+        "message": "Refactor done.",
+        "action": "completed"
+      },
+      {
+        "role": "user",
+        "message": "thanks, that's all"
+      },
+      {
+        "role": "assistant",
+        "message": "You're welcome. Ask anytime for more."
+      }
+    ],
+    "result": {
+      "message": "You're welcome. Ask anytime for more.",
+      "completed": true
+    },
+    "execute": {
+      "form": {
+        "input": [
+          {
+            "name": "message",
+            "type": "text",
+            "label": "Message",
+            "required": false
+          }
+        ]
+      }
+    }
+  }

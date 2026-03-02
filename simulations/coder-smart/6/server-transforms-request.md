@@ -6,8 +6,8 @@
 
 1. Extract `context.docVirtual` (task, clarified, research plan)
 2. Create `request.md`:
-   - System prompt for creating checklist
-   - Current state with `context` + `docVirtual`
+    - System prompt for creating checklist
+    - Current state with `context` + `docVirtual`
 4. Return `request.md` (markdown) to send to LLM.
 
 ---

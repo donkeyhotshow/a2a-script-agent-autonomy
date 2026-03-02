@@ -7,9 +7,9 @@
 1. Parse LLM JSON output from `response.md`
 2. Extract `message` and `action` fields
 3. Build `response.json`:
-   - `context`: preserve from request
-   - `result`: LLM response (completion message)
-   - `finalResult`: action summary (coder fully completed)
+    - `context`: preserve from request
+    - `result`: LLM response (completion message)
+    - `finalResult`: action summary (coder fully completed)
 4. Return `response.json` to client.
 
 ---

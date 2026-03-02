@@ -49,7 +49,8 @@ These are internal identifiers used by the server to track progress. The actual 
 
 ## Очікувані результати
 
-- Сервер пропонує форму вибору: fix-vue-imports (без LLM, пріоритет), auto-ai, task-decomposition (fallback злиті в choices)
+- Сервер пропонує форму вибору: fix-vue-imports (без LLM, пріоритет), auto-ai, task-decomposition (fallback злиті в
+  choices)
 - Кожен крок повертає execute з відповідною дією клієнта
 - Фінальний крок повертає finalResult
 

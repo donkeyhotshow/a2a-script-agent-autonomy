@@ -1,7 +1,10 @@
 {
   "context": {
     "task": "створи задачу і виконай",
-    "execution": { "action": "coder-smart", "step": "write-doc" },
+    "execution": {
+      "action": "coder-smart",
+      "step": "write-doc"
+    },
     "history": []
   },
   "execute": {

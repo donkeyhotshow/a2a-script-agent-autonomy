@@ -1,1 +1,41 @@
-{"context":{"task":"Refactor the API: add a logging middleware, add a health check endpoint, update the API tests, run lint and tests, and write a short report to .carrier/reports/.","execution":{"action":"auto-ai","step":"completed"},"history":[{"role":"assistant","message":"Writing report.","action":"write-file"},{"role":"system","message":"Wrote .carrier/reports/refactor-report.md"},{"role":"assistant","message":"Refactor done: health route, logging middleware, tests updated, lint and test passed, report in .carrier/reports/refactor-report.md.","action":"completed"}],"result":{"message":"Refactor done: health route, logging middleware, tests updated, lint and test passed, report in .carrier/reports/refactor-report.md.","completed":true},"execute":{"form":{"input":[{"name":"message","type":"text","label":"Message","placeholder":"Continue or new task?","required":false}]}}}
+{
+  "context": {
+    "task": "Refactor the API: add a logging middleware, add a health check endpoint, update the API tests, run lint and tests, and write a short report to .carrier/reports/.",
+    "execution": {
+      "action": "auto-ai",
+      "step": "completed"
+    },
+    "history": [
+      {
+        "role": "assistant",
+        "message": "Writing report.",
+        "action": "write-file"
+      },
+      {
+        "role": "system",
+        "message": "Wrote .carrier/reports/refactor-report.md"
+      },
+      {
+        "role": "assistant",
+        "message": "Refactor done: health route, logging middleware, tests updated, lint and test passed, report in .carrier/reports/refactor-report.md.",
+        "action": "completed"
+      }
+    ],
+    "result": {
+      "message": "Refactor done: health route, logging middleware, tests updated, lint and test passed, report in .carrier/reports/refactor-report.md.",
+      "completed": true
+    },
+    "execute": {
+      "form": {
+        "input": [
+          {
+            "name": "message",
+            "type": "text",
+            "label": "Message",
+            "placeholder": "Continue or new task?",
+            "required": false
+          }
+        ]
+      }
+    }
+  }

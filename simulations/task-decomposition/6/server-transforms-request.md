@@ -5,7 +5,8 @@
 **Transformation steps:**
 
 1. Read task, subtasks, steps from docVirtual
-2. Build request.md: system prompt — for each step output 1–3 concrete actions (what to do in code/CLI). Format: "## Step N.M\n- Action N.M.1\n..."
+2. Build request.md: system prompt — for each step output 1–3 concrete actions (what to do in code/CLI). Format: "##
+   Step N.M\n- Action N.M.1\n..."
 3. Return request.md to LLM.
 
 ---

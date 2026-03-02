@@ -1,0 +1,117 @@
+{
+  "session_id": "workflow-2026-03-02T00-57-15-582Z",
+  "phases": {
+    "discovery": {
+      "status": "completed",
+      "start_time": "2026-03-02T00:57:15.582Z",
+      "end_time": "2026-03-02T00:57:15.587Z",
+      "tasks": {
+        "inventory_analysis": {
+          "status": "in_progress",
+          "start_time": "2026-03-02T00:57:15.582Z",
+          "end_time": null,
+          "duration": 0,
+          "success": null
+        },
+        "priority_classification": {
+          "status": "pending",
+          "start_time": null,
+          "end_time": null,
+          "duration": 0,
+          "success": null
+        }
+      }
+    },
+    "processing": {
+      "status": "pending",
+      "start_time": null,
+      "end_time": null,
+      "tasks": {
+        "high_priority_processing": {
+          "status": "completed",
+          "start_time": "2026-03-02T00:57:15.825Z",
+          "end_time": "2026-03-02T00:57:15.825Z",
+          "duration": 0,
+          "success": true
+        },
+        "medium_priority_processing": {
+          "status": "pending",
+          "start_time": null,
+          "end_time": null,
+          "duration": 0,
+          "success": null
+        },
+        "low_priority_processing": {
+          "status": "pending",
+          "start_time": null,
+          "end_time": null,
+          "duration": 0,
+          "success": null
+        }
+      }
+    },
+    "organization": {
+      "status": "pending",
+      "start_time": null,
+      "end_time": null,
+      "tasks": {
+        "directory_reorganization": {
+          "status": "pending",
+          "start_time": null,
+          "end_time": null,
+          "duration": 0,
+          "success": null
+        },
+        "cross_reference_creation": {
+          "status": "pending",
+          "start_time": null,
+          "end_time": null,
+          "duration": 0,
+          "success": null
+        },
+        "tracking_file_updates": {
+          "status": "pending",
+          "start_time": null,
+          "end_time": null,
+          "duration": 0,
+          "success": null
+        }
+      }
+    },
+    "qa": {
+      "status": "pending",
+      "start_time": null,
+      "end_time": null,
+      "tasks": {
+        "completeness_verification": {
+          "status": "pending",
+          "start_time": null,
+          "end_time": null,
+          "duration": 0,
+          "success": null
+        },
+        "quality_metrics_review": {
+          "status": "pending",
+          "start_time": null,
+          "end_time": null,
+          "duration": 0,
+          "success": null
+        },
+        "organization_verification": {
+          "status": "pending",
+          "start_time": null,
+          "end_time": null,
+          "duration": 0,
+          "success": null
+        }
+      }
+    }
+  },
+  "metrics": {
+    "total_documents": 0,
+    "processed_documents": 0,
+    "quality_score": 0,
+    "completion_rate": 0,
+    "average_processing_time": 0
+  }
+}

@@ -1,14 +1,23 @@
 {
   "context": {
     "task": "аналіз",
-    "execution": {"action": "analyze"},
+    "execution": {
+      "action": "analyze"
+    },
     "history": [
-      {"role": "user", "message": "опиши поточну архітектуру бекенду"},
-      {"role": "assistant", "message": "Шукаю документи по архітектурі бекенду.", "action": "rag-search"}
+      {
+        "role": "user",
+        "message": "опиши поточну архітектуру бекенду"
+      },
+      {
+        "role": "assistant",
+        "message": "Шукаю документи по архітектурі бекенду.",
+        "action": "rag-search"
+      }
     ]
   },
+  "message": "Шукаю документи по архітектурі бекенду.",
   "execute": {
-    "message": "Шукаю документи по архітектурі бекенду.",
     "rag-search": {
       "query": "архітектура бекенд сервіси API слої компоненти"
     }

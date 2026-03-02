@@ -10,14 +10,14 @@
 
 ## Поток
 
-| Шаг | Request | Response |
-|-----|---------|----------|
-| 1 | task: "dialog" | actions с llmPrompt |
-| 2 | result.action: "dialog" | execute.form запрашивает messages |
-| 3 | input.messages | LLM request → history +1 |
-| 4 | result.message | LLM request → history +1, completed |
-| 5 | input.messages | LLM request → history +1 |
-| 6 | result.message | LLM request → history +1, completed |
+| Шаг | Request                 | Response                            |
+|-----|-------------------------|-------------------------------------|
+| 1   | task: "dialog"          | actions с llmPrompt                 |
+| 2   | result.action: "dialog" | execute.form запрашивает messages   |
+| 3   | input.messages          | LLM request → history +1            |
+| 4   | result.message          | LLM request → history +1, completed |
+| 5   | input.messages          | LLM request → history +1            |
+| 6   | result.message          | LLM request → history +1, completed |
 
 ## История диалога
 
@@ -61,4 +61,6 @@ simulations/dialog/
     └── ai-analyze-prompt.md
 ```
 
-> **Примітка:** Файли `server-transforms-request.md` та `server-transforms-response.md` є опціональними і показують трансформацію даних на сервері перед відправкою до LLM та після отримання відповіді відповідно. Деякі кроки можуть містити ці файли для демонстрації серверної обробки.
+> **Примітка:** Файли `server-transforms-request.md` та `server-transforms-response.md` є опціональними і показують
+> трансформацію даних на сервері перед відправкою до LLM та після отримання відповіді відповідно. Деякі кроки можуть
+> містити ці файли для демонстрації серверної обробки.

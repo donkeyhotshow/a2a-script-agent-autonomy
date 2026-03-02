@@ -1,1 +1,23 @@
-{"context":{"task":"Refactor the API: add a logging middleware, add a health check endpoint, update the API tests, run lint and tests, and write a short report to .carrier/reports/.","execution":{"action":"auto-ai","step":"llm-request"},"history":[{"role":"assistant","message":"Adding logging middleware.","action":"write-file"}]},"result":{"write-file":{"path":"src/middleware/logger.js","success":true,"bytesWritten":89}}}
+{
+  "context": {
+    "task": "Refactor the API: add a logging middleware, add a health check endpoint, update the API tests, run lint and tests, and write a short report to .carrier/reports/.",
+    "execution": {
+      "action": "auto-ai",
+      "step": "llm-request"
+    },
+    "history": [
+      {
+        "role": "assistant",
+        "message": "Adding logging middleware.",
+        "action": "write-file"
+      }
+    ]
+  },
+  "result": {
+    "write-file": {
+      "path": "src/middleware/logger.js",
+      "success": true,
+      "bytesWritten": 89
+    }
+  }
+}

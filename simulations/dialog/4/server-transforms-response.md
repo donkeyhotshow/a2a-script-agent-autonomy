@@ -7,9 +7,9 @@
 1. Parse LLM JSON output from `response.md`
 2. Extract `message` field
 3. Build `response.json`:
-   - `context`: preserve from request (with updated history)
-   - `result.message`: LLM response
-   - `execute`: empty (dialog continues, client will send next message)
+    - `context`: preserve from request (with updated history)
+    - `result.message`: LLM response
+    - `execute`: empty (dialog continues, client will send next message)
 4. Return `response.json` to client.
 
 ---

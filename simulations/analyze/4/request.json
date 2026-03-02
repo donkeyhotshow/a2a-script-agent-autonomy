@@ -1,19 +1,39 @@
 {
   "context": {
     "task": "аналіз",
-    "execution": {"action": "analyze"},
+    "execution": {
+      "action": "analyze"
+    },
     "history": [
-      {"role": "user", "message": "опиши поточну архітектуру бекенду"},
-      {"role": "assistant", "message": "Шукаю документи по архітектурі бекенду.", "action": "rag-search"}
+      {
+        "role": "user",
+        "message": "опиши поточну архітектуру бекенду"
+      },
+      {
+        "role": "assistant",
+        "message": "Шукаю документи по архітектурі бекенду.",
+        "action": "rag-search"
+      }
     ]
   },
   "result": {
     "rag-search": {
       "results": [
-        {"file": "docs/ARCHITECTURE.md", "score": 0.92, "snippet": "## Backend\n\n- API layer (Express), service layer, DB (Postgres)."},
-        {"file": "README.md", "score": 0.88, "snippet": "Сервіси: auth, request-processor. Порт 3000."}
+        {
+          "file": "docs/ARCHITECTURE.md",
+          "score": 0.92,
+          "snippet": "## Backend\n\n- API layer (Express), service layer, DB (Postgres)."
+        },
+        {
+          "file": "README.md",
+          "score": 0.88,
+          "snippet": "Сервіси: auth, request-processor. Порт 3000."
+        }
       ],
-      "files": ["docs/ARCHITECTURE.md", "README.md"]
+      "files": [
+        "docs/ARCHITECTURE.md",
+        "README.md"
+      ]
     }
   }
 }

@@ -1,6 +1,7 @@
 # Server Transform: request.json → request.md
 
-**Input:** `request.json` = `{ "context": { ..., "history": [...] }, "result": { "read-file": { "path": "...", "content": "..." } } }`.
+**Input:** `request.json` =
+`{ "context": { ..., "history": [...] }, "result": { "read-file": { "path": "...", "content": "..." } } }`.
 
 **Transformation steps:**
 
@@ -8,8 +9,8 @@
 2. Add assistant message with read-file action to `history`
 3. Add file content to context
 4. Create `request.md`:
-   - System prompt for answering based on file content
-   - Current state with `context` + `history` + file content
+    - System prompt for answering based on file content
+    - Current state with `context` + `history` + file content
 5. Return `request.md` (markdown) to send to LLM.
 
 ---

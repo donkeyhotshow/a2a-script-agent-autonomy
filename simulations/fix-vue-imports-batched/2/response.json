@@ -8,9 +8,7 @@
   },
   "execute": {
     "rag-search": {
-      "pattern": "vite.config.{js,ts,mjs,cjs}",
-      "description": "Пошук файлів конфігурації Vite",
-      "output": "vite_config_files[]"
+      "query": "vite.config.{js,ts,mjs,cjs}"
     }
   }
 }

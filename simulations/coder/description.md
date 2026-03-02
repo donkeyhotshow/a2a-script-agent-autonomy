@@ -7,6 +7,7 @@
 ## Опис
 
 Симуляція показує діалог з AI-асистентом (кодером), який може:
+
 - Вести діалог з користувачем
 - Шукати файли в проекті за натуральним запитом (RAG)
 - Читати вміст файлів
@@ -14,6 +15,7 @@
 - Виконувати команди
 
 Це комбінована симуляція, яка поєднує:
+
 - `dialog` - LLM-діалог
 - `fix-vue-imports-batched` - файлові операції
 - `@a2a/rag` - пошук за натуральним запитом
@@ -21,6 +23,7 @@
 ## RAG можливості
 
 На клієнті доступний пакет `@a2a/rag` з:
+
 - **BM25/TF-IDF** - точний пошук коду
 - **Semantic search** - семантичний пошук з Ollama
 - **Hybrid search** - гібридний пошук
@@ -29,16 +32,16 @@
 
 ## Потік
 
-| Крок | Request | Response |
-|------|---------|----------|
-| 1 | task: "допомоги з кодом" | actions з llmPrompt + fileActions |
-| 2 | result.action: "coder" | execute.form запитує message |
-| 3 | input.message | LLM request → аналізує → виконує RAG пошук |
-| 4 | result + execute | LLM request → читає файл |
-| 5 | input.message | LLM відповідає + form |
-| 6 | input.message | "дякую!" → completed + form |
-| 7 | input.message | "запиши звіт" → write-file |
-| 8 | result | Файл записано → completed |
+| Крок | Request                  | Response                                   |
+|------|--------------------------|--------------------------------------------|
+| 1    | task: "допомоги з кодом" | actions з llmPrompt + fileActions          |
+| 2    | result.action: "coder"   | execute.form запитує message               |
+| 3    | input.message            | LLM request → аналізує → виконує RAG пошук |
+| 4    | result + execute         | LLM request → читає файл                   |
+| 5    | input.message            | LLM відповідає + form                      |
+| 6    | input.message            | "дякую!" → completed + form                |
+| 7    | input.message            | "запиши звіт" → write-file                 |
+| 8    | result                   | Файл записано → completed                  |
 
 ## Можливі дії
 
@@ -98,4 +101,6 @@ simulations/coder/
     └── response.md
 ```
 
-> **Примітка:** Файли `server-transforms-request.md` та `server-transforms-response.md` є опціональними і показують трансформацію даних на сервері перед відправкою до LLM та після отримання відповіді відповідно. Деякі кроки можуть містити ці файли для демонстрації серверної обробки.
+> **Примітка:** Файли `server-transforms-request.md` та `server-transforms-response.md` є опціональними і показують
+> трансформацію даних на сервері перед відправкою до LLM та після отримання відповіді відповідно. Деякі кроки можуть
+> містити ці файли для демонстрації серверної обробки.

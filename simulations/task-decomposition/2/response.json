@@ -1,1 +1,22 @@
-{"context":{"task":"add auth and refactor API","execution":{"action":"task-decomposition","step":"capture-task"},"history":[]},"execute":{"form":{"input":[{"name":"message","type":"text","label":"Task description","required":true}]}}}
+{
+  "context": {
+    "task": "add auth and refactor API",
+    "execution": {
+      "action": "task-decomposition",
+      "step": "capture-task"
+    },
+    "history": []
+  },
+  "execute": {
+    "form": {
+      "input": [
+        {
+          "name": "message",
+          "type": "text",
+          "label": "Task description",
+          "required": true
+        }
+      ]
+    }
+  }
+}

@@ -6,7 +6,10 @@
       "step": "checklist"
     },
     "history": [
-      { "role": "user", "message": "додати логінування в API та оновити тести" }
+      {
+        "role": "user",
+        "message": "додати логінування в API та оновити тести"
+      }
     ],
     "docVirtual": {
       "section1": "додати логінування в API та оновити тести",
@@ -15,6 +18,8 @@
     }
   },
   "execute": {
-    "llm": { "purpose": "checklist" }
+    "llm": {
+      "purpose": "checklist"
+    }
   }
 }

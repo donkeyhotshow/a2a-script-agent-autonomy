@@ -6,9 +6,9 @@
 
 1. Extract text from `response.md` (clarified task)
 2. Build `response.json`:
-   - `context`: preserve from request
-   - `result`: clarified task description
-   - `execute`: next step - rag-search for implementation plan
+    - `context`: preserve from request
+    - `result`: clarified task description
+    - `execute`: next step - rag-search for implementation plan
 3. Return `response.json` to client.
 
 ---

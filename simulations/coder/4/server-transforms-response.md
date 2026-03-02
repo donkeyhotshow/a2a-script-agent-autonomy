@@ -8,9 +8,9 @@
 2. Extract `message`, `action`, and `params` fields
 3. Map action to execute format (read-file, rag-search, continue)
 4. Build `response.json`:
-   - `context`: preserve from request
-   - `result`: LLM response
-   - `execute`: mapped action
+    - `context`: preserve from request
+    - `result`: LLM response
+    - `execute`: mapped action
 5. Return `response.json` to client.
 
 ---

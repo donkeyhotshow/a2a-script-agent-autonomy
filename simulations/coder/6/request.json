@@ -42,7 +42,9 @@
           "snippet": "async function login..."
         }
       ],
-      "files": ["src/auth.js"]
+      "files": [
+        "src/auth.js"
+      ]
     }
   },
   "input": {

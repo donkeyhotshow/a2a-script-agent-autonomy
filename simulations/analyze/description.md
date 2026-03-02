@@ -3,6 +3,7 @@
 ## Опис
 
 Симуляція діалогу з AI для аналізу архітектури проекту. AI:
+
 - Постійно шукає документи по архітектурі (RAG)
 - Підтверджує факти з документації або з коду
 - Виписує розбіжності (де код не відповідає опису, застарілі документи)
@@ -12,16 +13,16 @@
 
 ## Потік
 
-| Крок | Request | Response |
-|------|---------|----------|
-| 1 | task: "проаналізуй архітектуру проекту" | actions [analyze] |
-| 2 | result.action: "analyze" | execute.form (message) |
-| 3 | result.message: "опиши архітектуру бекенду" | LLM → rag-search (арх. документи) |
-| 4 | result + ragResults | LLM → підтверджені факти + розбіжності, form (продовжити пошук \| зберегти) |
-| 5 | result.choice: "continue_search", result.message | execute.rag-search (другий пошук) |
-| 6 | result["rag-search"] (другі результати) | LLM → оновлені факти + розбіжності, form знову |
-| 7 | result.choice: "save_report", result.path | LLM → write-file в .carrier/reports/ |
-| 8 | result["write-file"] success | completed + form |
+| Крок | Request                                          | Response                                                                    |
+|------|--------------------------------------------------|-----------------------------------------------------------------------------|
+| 1    | task: "проаналізуй архітектуру проекту"          | actions [analyze]                                                           |
+| 2    | result.action: "analyze"                         | execute.form (message)                                                      |
+| 3    | result.message: "опиши архітектуру бекенду"      | LLM → rag-search (арх. документи)                                           |
+| 4    | result + ragResults                              | LLM → підтверджені факти + розбіжності, form (продовжити пошук \| зберегти) |
+| 5    | result.choice: "continue_search", result.message | execute.rag-search (другий пошук)                                           |
+| 6    | result["rag-search"] (другі результати)          | LLM → оновлені факти + розбіжності, form знову                              |
+| 7    | result.choice: "save_report", result.path        | LLM → write-file в .carrier/reports/                                        |
+| 8    | result["write-file"] success                     | completed + form                                                            |
 
 ## Дії
 

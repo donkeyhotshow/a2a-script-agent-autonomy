@@ -1,6 +1,7 @@
 # Server Transform: request.json → request.md
 
-**Input:** `request.json` = `{ "context": { ..., "history": [...] }, "result": { "rag-search": { "results": [...] } } }`.
+**Input:** `request.json` =
+`{ "context": { ..., "history": [...] }, "result": { "rag-search": { "results": [...] } } }`.
 
 **Transformation steps:**
 
@@ -8,8 +9,8 @@
 2. Add assistant message with rag-search action to `history`
 3. Add `ragResults` to context with search results
 4. Create `request.md`:
-   - System prompt for analyzing RAG results
-   - Current state with `context` + `history` + `ragResults`
+    - System prompt for analyzing RAG results
+    - Current state with `context` + `history` + `ragResults`
 5. Return `request.md` (markdown) to send to LLM.
 
 ---
