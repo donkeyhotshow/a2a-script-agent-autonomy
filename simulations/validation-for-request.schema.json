@@ -1,0 +1,296 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/org-carrier/a2a-script-agent/simulations/validation-for-request.schema.json",
+  "title": "Simulation Request Schema",
+  "description": "JSON Schema for validating simulation request.json files (Client → Server)",
+  "type": "object",
+  "oneOf": [
+    {
+      "description": "First request - only task field",
+      "required": ["task"],
+      "properties": {
+        "task": {
+          "type": "string",
+          "description": "Initial task description from user"
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "description": "Request with context and optional result",
+      "anyOf": [
+        {
+          "required": ["context"],
+          "properties": {
+            "context": { "$ref": "#/definitions/context" },
+            "result": { "$ref": "#/definitions/result" }
+          }
+        },
+        {
+          "required": ["context", "result"],
+          "properties": {
+            "context": { "$ref": "#/definitions/context" },
+            "result": { "$ref": "#/definitions/result" }
+          }
+        }
+      ]
+    }
+  ],
+  "definitions": {
+    "context": {
+      "type": "object",
+      "description": "Context object containing task state, execution info, and history",
+      "properties": {
+        "task": {
+          "type": "string",
+          "description": "The original task description"
+        },
+        "execution": {
+          "$ref": "#/definitions/execution"
+        },
+        "history": {
+          "type": "array",
+          "description": "Conversation history between user and assistant",
+          "items": {
+            "$ref": "#/definitions/historyEntry"
+          },
+          "default": []
+        },
+        "docVirtual": {
+          "type": "object",
+          "description": "Virtual document for multi-step workflows (coder-smart, task-decomposition)",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "ragResults": {
+          "type": "array",
+          "description": "RAG search results passed from client",
+          "items": {
+            "type": "object",
+            "properties": {
+              "file": { "type": "string" },
+              "score": { "type": "number" },
+              "snippet": { "type": "string" }
+            }
+          }
+        }
+      },
+      "additionalProperties": true
+    },
+    "execution": {
+      "type": "object",
+      "description": "Execution state tracking",
+      "properties": {
+        "action": {
+          "type": "string",
+          "description": "Current action being executed (e.g., 'auto-ai', 'dialog', 'coder-smart', 'fix-vue-imports')"
+        },
+        "step": {
+          "type": "string",
+          "description": "Current step within the action (e.g., 'llm-request', 'user-request', 'completed')"
+        }
+      },
+      "required": ["action"]
+    },
+    "historyEntry": {
+      "type": "object",
+      "description": "A single entry in conversation history",
+      "properties": {
+        "role": {
+          "type": "string",
+          "enum": ["user", "assistant", "system"],
+          "description": "Role of the message sender"
+        },
+        "message": {
+          "type": "string",
+          "description": "The message content"
+        },
+        "action": {
+          "type": "string",
+          "description": "Action taken by assistant (e.g., 'rag-search', 'read-file', 'write-file')"
+        },
+        "params": {
+          "type": "object",
+          "description": "Parameters for the action"
+        }
+      },
+      "required": ["role", "message"]
+    },
+    "result": {
+      "type": "object",
+      "description": "Result from client - action-key format",
+      "additionalProperties": true,
+      "properties": {
+        "choice": {
+          "description": "Selected option from form choices (id of choice or boolean for submit)",
+          "oneOf": [
+            { "type": "string" },
+            { "type": "boolean" }
+          ]
+        },
+        "message": {
+          "type": "string",
+          "description": "User message response"
+        },
+        "action": {
+          "type": "string",
+          "description": "Selected action from actions list"
+        },
+        "path": {
+          "type": "string",
+          "description": "File path for file operations"
+        },
+        "read-file": {
+          "$ref": "#/definitions/resultReadFile"
+        },
+        "write-file": {
+          "$ref": "#/definitions/resultWriteFile"
+        },
+        "rag-search": {
+          "$ref": "#/definitions/resultRagSearch"
+        },
+        "execute-command": {
+          "$ref": "#/definitions/resultExecuteCommand"
+        },
+        "list-directory": {
+          "$ref": "#/definitions/resultListDirectory"
+        },
+        "grep-search": {
+          "$ref": "#/definitions/resultGrepSearch"
+        },
+        "script": {
+          "type": "object",
+          "description": "Script execution result"
+        }
+      },
+      "not": {
+        "required": ["execute"]
+      }
+    },
+    "resultReadFile": {
+      "type": "object",
+      "description": "Result of read-file action",
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "Path to the file that was read"
+        },
+        "content": {
+          "type": "string",
+          "description": "Content of the file"
+        }
+      },
+      "required": ["path"]
+    },
+    "resultWriteFile": {
+      "type": "object",
+      "description": "Result of write-file action",
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "Path where file was written"
+        },
+        "success": {
+          "type": "boolean",
+          "description": "Whether the write was successful"
+        },
+        "bytesWritten": {
+          "type": "integer",
+          "description": "Number of bytes written"
+        }
+      },
+      "required": ["path"]
+    },
+    "resultRagSearch": {
+      "type": "object",
+      "description": "Result of rag-search action",
+      "properties": {
+        "query": {
+          "type": "string",
+          "description": "Original search query"
+        },
+        "results": {
+          "type": "array",
+          "description": "Search results",
+          "items": {
+            "type": "object",
+            "properties": {
+              "file": { "type": "string" },
+              "score": { "type": "number" },
+              "snippet": { "type": "string" }
+            }
+          }
+        },
+        "files": {
+          "type": "array",
+          "description": "List of files found",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "resultExecuteCommand": {
+      "type": "object",
+      "description": "Result of execute-command action",
+      "properties": {
+        "command": {
+          "type": "string",
+          "description": "Command that was executed"
+        },
+        "exitCode": {
+          "type": "integer",
+          "description": "Exit code of the command"
+        },
+        "stdout": {
+          "type": "string",
+          "description": "Standard output"
+        },
+        "stderr": {
+          "type": "string",
+          "description": "Standard error"
+        }
+      },
+      "required": ["command"]
+    },
+    "resultListDirectory": {
+      "type": "object",
+      "description": "Result of list-directory action",
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "Path that was listed"
+        },
+        "entries": {
+          "type": "array",
+          "description": "Directory entries",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "type": { "type": "string", "enum": ["file", "dir"] }
+            }
+          }
+        }
+      },
+      "required": ["path"]
+    },
+    "resultGrepSearch": {
+      "type": "object",
+      "description": "Result of grep-search action",
+      "properties": {
+        "matches": {
+          "type": "array",
+          "description": "Grep matches",
+          "items": {
+            "type": "object",
+            "properties": {
+              "file": { "type": "string" },
+              "line": { "type": "integer" },
+              "text": { "type": "string" }
+            }
+          }
+        }
+      }
+    }
+  }
+}
