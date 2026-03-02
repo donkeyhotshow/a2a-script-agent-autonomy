@@ -1,41 +1,23 @@
-<!-- Header Template -->
+<!-- Header: task form only -->
 <header class="app-header" role="banner">
     <div class="header-left">
         <div class="logo">🤖 A2A Script Agent</div>
         <div class="header-controls">
             <select class="header-select" id="projectSelect">
                 <option value="">Select Project...</option>
-                <option value="project-1">My App</option>
-                <option value="project-2">E-Commerce</option>
-                <option value="project-3">Dashboard</option>
-            </select>
-            <select class="header-select" id="sessionSelect">
-                <option value="">Select Session...</option>
             </select>
         </div>
     </div>
-
     <div class="header-center">
-        <form class="header-doc-form" id="docOpenForm" role="search" aria-label="Open doc">
-            <input type="text" class="header-input" id="docOpenInput" placeholder="ACTIONS, TODO, README…"
-                   list="docList" aria-label="Doc name" autocomplete="off"/>
-            <datalist id="docList"></datalist>
-            <button type="submit" class="header-btn">Open</button>
+        <form class="header-task-form" id="taskSendForm" role="form" aria-label="Send task">
+            <input type="text" class="header-input" id="taskInputField" placeholder="Task (from project)…"
+                   aria-label="Task" autocomplete="off"/>
+            <button type="submit" class="header-btn primary" id="taskSendBtn">Send</button>
         </form>
-        <div class="sse-status" id="sseStatus">
-            <span class="status-dot"></span>
-            <span class="status-text">Disconnected</span>
-        </div>
     </div>
-
     <div class="header-right">
-        <div class="header-actions">
-            <button id="loadDemoBtn" aria-label="Load Demo">📂 Demo</button>
-            <button id="savePanelsBtn" aria-label="Save panels">💾</button>
-            <button id="clearPanelsBtn" aria-label="Clear panels">🗑️</button>
-        </div>
         <button class="header-btn" id="newTaskBtn">📝 New Task</button>
-        <button class="header-btn primary" id="connectBtn">🔗 Connect</button>
+        <button class="header-btn" id="projectsBtn">📁 Projects</button>
         <button class="header-btn" id="settingsBtn">⚙️ Settings</button>
     </div>
 </header>

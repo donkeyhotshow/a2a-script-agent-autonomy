@@ -45,6 +45,7 @@ Web UI (`a2a-client/web`) — это пользовательский интер
 | [`app-boot.js`](../../a2a-client/web/js/app-boot.js) | Главная точка входа, 6 фаз инициализации |
 | [`app-init.js`](../../a2a-client/web/js/app-init.js) | Дополнительная инициализация |
 | [`app-state.js`](../../a2a-client/web/js/app-state.js) | Центральное управление состоянием |
+| [`task-flow.js`](../../a2a-client/web/js/task-flow.js) | Поле задачи + Send, панель (прелоадер → пластилин), сессия → invoke → первый ответ |
 | [`index.html`](../../a2a-client/web/index.html) | HTML-шаблон |
 
 ### Фазы инициализации AppBoot
@@ -118,11 +119,13 @@ AppBoot = {
 | `GET` | `/api/config` | Получить текущую конфигурацию |
 | `POST` | `/api/config` | Сохранить конфигурацию |
 
-#### Invoke (Прокси к серверу)
+#### Invoke и первый ответ (прокси к серверу)
 
 | Метод | Endpoint | Описание |
 |-------|----------|----------|
-| `POST` | `/api/v1/invoke` | Проксировать запрос к серверу |
+| `POST` | `/api/v1/invoke` | Проксировать запрос к серверу (первый запрос: body `{ task }`) |
+| `GET` | `/api/v1/requests/:promiseId/status` | Опрос статуса до `completed`/`failed` |
+| `GET` | `/api/v1/requests/:promiseId/result` | Получить первый ответ (context + execute) |
 
 #### SSE (Server-Sent Events)
 
@@ -131,6 +134,19 @@ AppBoot = {
 | `GET` | `/api/v1/sse/:sessionId` | Получить SSE поток для сессии |
 
 ## Формат запросов и ответов
+
+### Поток задачи (Task Flow)
+
+Задача создаётся **от имени проекта**. В шапке: поле ввода задачи + кнопка **Send**.
+
+1. **Send** → открывается панель с прелоадером.
+2. **POST /api/v1/sessions** с `{ projectId, task, title }` → Client API сохраняет сессию и возвращает `id` (и `projectId`).
+3. **Фиксация** — клиент сохраняет идентификаторы; панель становится **незакрываемой** и **пластилиновой** (Plasticine UI).
+4. **POST /api/v1/invoke** с `{ task }` (через Client API на сервер) → сервер возвращает `promiseId`.
+5. Опрос **GET /api/v1/requests/:promiseId/status** до `completed`/`failed`, затем **GET .../result**.
+6. В панели отображается **первый ответ** сервера (context + execute).
+
+Реализация: [`task-flow.js`](../../a2a-client/web/js/task-flow.js), форма в [`templates/header.html`](../../a2a-client/web/templates/header.html) (`#taskSendForm`, `#taskInputField`). Используется Plasticine UI для панели.
 
 ### Создание сессии
 
@@ -461,8 +477,9 @@ Web UI использует схемы из [`json-schemas/`](json-schemas/):
 │                              localhost:5173                             │
 │                                                                          │
 │  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐                │
-│  │  TaskInput  │    │ SessionsPanel│    │ ActionsPanel│                │
-│  │  (ввод задачи)│    │ (панель сессий)│   │ (панель действий)│           │
+│  │ Task bar    │    │ SessionsPanel│    │ ActionsPanel│                │
+│  │ (input+Send)│    │ (панель сессий)│   │ (панель действий)│           │
+│  │ task-flow.js│    │              │    │              │                │
 │  └──────┬──────┘    └──────┬──────┘    └──────┬──────┘                │
 │         │                  │                  │                         │
 │         ▼                  ▼                  ▼                         │

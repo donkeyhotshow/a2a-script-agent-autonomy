@@ -5,18 +5,24 @@
  * ai-integration and then poll it until completion.
  */
 
+import {readFile} from 'node:fs/promises';
+import {resolve as resolvePath} from 'node:path';
+
 import {logger} from '../utils/logger.js';
 import {createOllamaPromise, waitForPromise} from './ollama-adapter.js';
+import {AIService} from './ai-service.js';
 
 const PLACEHOLDER = 'Request processed (placeholder for ChatGPT)';
 const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions';
+const AI_PROXY_URL = (process.env.AI_HUB_URL ?? 'http://localhost:11434').trim();
 
-type LlmProvider = 'openai' | 'ollama' | 'placeholder';
+type LlmProvider = 'openai' | 'ollama' | 'proxy' | 'placeholder';
 
 function getProvider(): LlmProvider {
     const explicit = (process.env.LLM_PROVIDER ?? '').trim().toLowerCase();
     if (explicit === 'ollama') return 'ollama';
     if (explicit === 'openai') return 'openai';
+    if (explicit === 'proxy') return 'proxy';
 
     // Back-compat toggle from plans/ollama-proxy-integration.md
     const useOllama = (process.env.USE_OLLAMA ?? '').trim().toLowerCase();
@@ -24,6 +30,26 @@ function getProvider(): LlmProvider {
 
     if ((process.env.OPENAI_API_KEY ?? '').trim()) return 'openai';
     return 'placeholder';
+}
+
+let cachedProxyService: AIService | null = null;
+
+function getProxyService(): AIService | null {
+    if (!AI_PROXY_URL) return null;
+    if (cachedProxyService) return cachedProxyService;
+    try {
+        cachedProxyService = new AIService({
+            proxy: {
+                baseUrl: AI_PROXY_URL,
+            },
+        });
+        logger.info('[LLM/Proxy] AIService initialized', {baseUrl: AI_PROXY_URL});
+        return cachedProxyService;
+    } catch (err) {
+        logger.warn('[LLM/Proxy] Failed to initialize AIService', {error: String(err)});
+        cachedProxyService = null;
+        return null;
+    }
 }
 
 function getOllamaModel(): string {
@@ -40,8 +66,40 @@ export interface LLMInput {
  * Call external LLM with context block. Returns placeholder when unavailable.
  */
 export async function callLLM(input: LLMInput): Promise<string> {
+    const replayDir = (process.env.LLM_REPLAY_DIR ?? '').trim();
+    if (replayDir) {
+        try {
+            const responsePath = resolvePath(replayDir, 'response.md');
+            const content = await readFile(responsePath, 'utf8');
+            logger.info('[LLM] Replaying response from simulations', {replayDir});
+            return content.trim();
+        } catch (err) {
+            logger.warn('[LLM] Replay from simulations failed, falling back to provider', {
+                replayDir,
+                error: String(err),
+            });
+        }
+    }
+
     const prompt = buildPrompt(input);
     const provider = getProvider();
+
+    if (provider === 'proxy') {
+        const svc = getProxyService();
+        if (!svc) {
+            logger.warn('[LLM/Proxy] Service not available, falling back to placeholder');
+            return PLACEHOLDER;
+        }
+        try {
+            const result = await svc.generateText(prompt, {
+                model: process.env.OPENAI_MODEL ?? undefined,
+            });
+            return result.text?.trim() || PLACEHOLDER;
+        } catch (err) {
+            logger.warn('[LLM/Proxy] Request failed', {error: String(err)});
+            return PLACEHOLDER;
+        }
+    }
 
     if (provider === 'ollama') {
         try {

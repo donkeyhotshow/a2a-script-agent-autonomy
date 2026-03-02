@@ -1,0 +1,17 @@
+/* App layout */
+.app-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+.app-main {
+    padding: 16px;
+    flex: 1;
+    min-height: 0;
+}
+
+.app-main-hint {
+    color: var(--fg2);
+    font-size: 12px;
+}

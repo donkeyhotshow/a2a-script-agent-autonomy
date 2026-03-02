@@ -7,7 +7,9 @@
 
 import express from 'express';
 import cors from 'cors';
+import multer from 'multer';
 import {scanFiles} from '@a2a/fs-utils';
+import {MeilisearchClient, MeilisearchDocument} from '@a2a/rag';
 import path from 'path';
 import {fileURLToPath} from 'url';
 import fs from 'fs/promises';
@@ -68,7 +70,7 @@ type Session = {
 
 const packageRoot = path.resolve(__dirname, '..');
 const a2aClientRoot = path.resolve(packageRoot, '../..');
-const storageDir = path.join(a2aClientRoot, 'storage');
+const storageDir = process.env.A2A_CLIENT_STORAGE_DIR || path.join(a2aClientRoot, 'storage');
 const PROJECTS_FILE = path.join(storageDir, 'projects.json');
 const CONFIG_FILE = path.join(storageDir, 'config.json');
 
@@ -749,6 +751,283 @@ app.get('/api/fs/cwd', (req, res) => {
     res.json({cwd: process.cwd()});
 });
 
+// ==================== RAG API ====================
+
+// RAG configuration
+const RAG_STORAGE_PATH = process.env['RAG_STORAGE_PATH'] || './rag-storage';
+const ALLOWED_EXTENSIONS = ['.txt', '.md', '.json', '.js', '.ts', '.html', '.css'];
+
+// In-memory file metadata store
+interface FileMetadata {
+    id: string;
+    filename: string;
+    originalName: string;
+    size: number;
+    uploadedAt: string;
+    indexed: boolean;
+    path: string;
+    extension: string;
+}
+
+const filesStore: Map<string, FileMetadata> = new Map();
+
+// Ensure storage directory exists
+async function ensureStorageDir(): Promise<void> {
+    try {
+        await fs.mkdir(RAG_STORAGE_PATH, {recursive: true});
+    } catch {
+        // Directory may already exist
+    }
+}
+
+// Validate file extension
+function isAllowedExtension(filename: string): boolean {
+    const ext = path.extname(filename).toLowerCase();
+    return ALLOWED_EXTENSIONS.includes(ext);
+}
+
+// POST /api/rag/search - Search through indexed documents
+app.post('/api/rag/search', async (req, res) => {
+    try {
+        const {query, limit = 10, filters} = req.body as {
+            query?: string;
+            limit?: number;
+            filters?: Record<string, unknown>;
+        };
+
+        if (!query || typeof query !== 'string') {
+            return res.status(400).json({error: 'Query is required and must be a string'});
+        }
+
+        const validLimit = typeof limit === 'number' ? Math.min(Math.max(1, limit), 100) : 10;
+
+        // Build filter string
+        let filter: string[] | undefined;
+        if (filters && Object.keys(filters).length > 0) {
+            filter = Object.entries(filters).map(([key, value]) => {
+                if (typeof value === 'string') {
+                    return `${key} = "${value}"`;
+                }
+                return `${key} = ${value}`;
+            });
+        }
+
+        const client = new MeilisearchClient({
+            host: process.env['MEILISEARCH_HOST'] || 'http://localhost:7700',
+            apiKey: process.env['MEILISEARCH_API_KEY'] ?? undefined,
+            indexName: process.env['MEILISEARCH_INDEX'] || 'code',
+        });
+
+        const isAvailable = await client.isAvailable();
+        if (!isAvailable) {
+            return res.status(503).json({error: 'Search service is not available'});
+        }
+
+        const results = await client.search(query, {
+            limit: validLimit,
+            filter: filter,
+            attributesToRetrieve: ['id', 'path', 'content', 'name', 'extension', 'type'],
+        });
+
+        const formattedResults = results.hits.map((hit) => {
+            const hitRecord = hit as Record<string, unknown>;
+            return {
+                id: hitRecord['id'],
+                content: hitRecord['content'] || '',
+                score: (hitRecord['_rankingScore'] as number) || 0,
+                metadata: {
+                    path: hitRecord['path'],
+                    name: hitRecord['name'],
+                    extension: hitRecord['extension'],
+                    type: hitRecord['type'],
+                },
+            };
+        });
+
+        res.json({
+            results: formattedResults,
+            total: formattedResults.length,
+            query,
+        });
+    } catch (error: any) {
+        console.error('RAG search error:', error);
+        res.status(500).json({error: error.message});
+    }
+});
+
+// POST /api/rag/upload - Upload files for indexing
+const upload = multer({
+    storage: multer.memoryStorage(),
+    fileFilter: (_req, file, cb) => {
+        const ext = file.originalname.substring(file.originalname.lastIndexOf('.')).toLowerCase();
+        if (ALLOWED_EXTENSIONS.includes(ext)) {
+            cb(null, true);
+        } else {
+            cb(new Error(`File type not allowed. Allowed: ${ALLOWED_EXTENSIONS.join(', ')}`));
+        }
+    },
+    limits: {
+        fileSize: 10 * 1024 * 1024, // 10MB
+        files: 20,
+    },
+});
+
+app.post('/api/rag/upload', upload.array('files', 20), async (req, res) => {
+    try {
+        await ensureStorageDir();
+
+        const files = req.files as Express.Multer.File[] | undefined;
+
+        if (!files || files.length === 0) {
+            return res.status(400).json({error: 'No files provided for upload'});
+        }
+
+        const uploaded: Array<{id: string; filename: string; size: number}> = [];
+        const failed: Array<{filename: string; error: string}> = [];
+        const indexed: Array<{id: string; filename: string}> = [];
+
+        const client = new MeilisearchClient({
+            host: process.env['MEILISEARCH_HOST'] || 'http://localhost:7700',
+            apiKey: process.env['MEILISEARCH_API_KEY'] ?? undefined,
+            indexName: process.env['MEILISEARCH_INDEX'] || 'code',
+        });
+
+        for (const file of files) {
+            try {
+                if (!isAllowedExtension(file.originalname)) {
+                    failed.push({
+                        filename: file.originalname,
+                        error: `File type not allowed. Allowed: ${ALLOWED_EXTENSIONS.join(', ')}`,
+                    });
+                    continue;
+                }
+
+                const {randomUUID} = await import('crypto');
+                const fileId = randomUUID();
+                const ext = path.extname(file.originalname);
+                const storedFilename = `${fileId}${ext}`;
+                const filePath = path.join(RAG_STORAGE_PATH, storedFilename);
+
+                await fs.writeFile(filePath, file.buffer);
+
+                const metadata: FileMetadata = {
+                    id: fileId,
+                    filename: storedFilename,
+                    originalName: file.originalname,
+                    size: file.size,
+                    uploadedAt: new Date().toISOString(),
+                    indexed: false,
+                    path: filePath,
+                    extension: ext.slice(1),
+                };
+
+                filesStore.set(fileId, metadata);
+                uploaded.push({id: fileId, filename: file.originalname, size: file.size});
+
+                // Index file content
+                try {
+                    const document = {
+                        id: fileId,
+                        path: filePath,
+                        name: file.originalname,
+                        content: file.buffer.toString('utf-8'),
+                        extension: ext.slice(1),
+                        type: 'file',
+                    };
+
+                    await client.addDocuments([document]);
+                    metadata.indexed = true;
+                    indexed.push({id: fileId, filename: file.originalname});
+                } catch (indexError) {
+                    console.error(`Failed to index file ${file.originalname}:`, indexError);
+                }
+            } catch (fileError) {
+                failed.push({
+                    filename: file.originalname,
+                    error: fileError instanceof Error ? fileError.message : 'Unknown error',
+                });
+            }
+        }
+
+        res.json({uploaded, failed, indexed});
+    } catch (error: any) {
+        console.error('RAG upload error:', error);
+        res.status(500).json({error: error.message});
+    }
+});
+
+// GET /api/rag/files/:fileId - Get file metadata
+app.get('/api/rag/files/:fileId', async (req, res) => {
+    try {
+        const {fileId} = req.params;
+
+        if (!fileId) {
+            return res.status(400).json({error: 'File ID is required'});
+        }
+
+        const metadata = filesStore.get(fileId);
+
+        if (!metadata) {
+            return res.status(404).json({error: 'File not found'});
+        }
+
+        res.json({
+            id: metadata.id,
+            filename: metadata.originalName,
+            size: metadata.size,
+            uploadedAt: metadata.uploadedAt,
+            indexed: metadata.indexed,
+            extension: metadata.extension,
+        });
+    } catch (error: any) {
+        console.error('RAG get file error:', error);
+        res.status(500).json({error: error.message});
+    }
+});
+
+// DELETE /api/rag/files/:fileId - Delete file
+app.delete('/api/rag/files/:fileId', async (req, res) => {
+    try {
+        const {fileId} = req.params;
+
+        if (!fileId) {
+            return res.status(400).json({error: 'File ID is required'});
+        }
+
+        const metadata = filesStore.get(fileId);
+
+        if (!metadata) {
+            return res.status(404).json({error: 'File not found'});
+        }
+
+        // Delete from storage
+        try {
+            await fs.unlink(metadata.path);
+        } catch {
+            // File may not exist
+        }
+
+        // Delete from search index
+        try {
+            const client = new MeilisearchClient({
+                host: process.env['MEILISEARCH_HOST'] || 'http://localhost:7700',
+                apiKey: process.env['MEILISEARCH_API_KEY'] ?? undefined,
+                indexName: process.env['MEILISEARCH_INDEX'] || 'code',
+            });
+            await client.deleteDocument(fileId);
+        } catch {
+            // Index may not have the document
+        }
+
+        filesStore.delete(fileId);
+
+        res.json({success: true, message: 'File deleted successfully', id: fileId});
+    } catch (error: any) {
+        console.error('RAG delete file error:', error);
+        res.status(500).json({error: error.message});
+    }
+});
+
 // ==================== HEALTH CHECK ====================
 
 app.get('/health', (req, res) => {
@@ -761,11 +1040,13 @@ app.get('/health', (req, res) => {
 
 // ==================== START SERVER ====================
 
-app.listen(PORT, HOST, () => {
-    console.log(`A2A Client API Server started on http://${HOST}:${PORT}`);
-    console.log(`Health check: http://${HOST}:${PORT}/health`);
-    console.log(`Terminal: http://${HOST}:${PORT}/api/terminal/execute`);
-    console.log(`File System: http://${HOST}:${PORT}/api/fs/*`);
-});
+if (process.env.NODE_ENV !== 'test') {
+    app.listen(PORT, HOST, () => {
+        console.log(`A2A Client API Server started on http://${HOST}:${PORT}`);
+        console.log(`Health check: http://${HOST}:${PORT}/health`);
+        console.log(`Terminal: http://${HOST}:${PORT}/api/terminal/execute`);
+        console.log(`File System: http://${HOST}:${PORT}/api/fs/*`);
+    });
+}
 
 export default app;

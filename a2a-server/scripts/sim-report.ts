@@ -279,12 +279,34 @@ function findSimulations(baseDir: string): SimulationInfo[] {
             const fullPath = join(baseDir, entry);
             const stat = statSync(fullPath);
 
-            if (stat.isDirectory()) {
-                const requestPath = join(fullPath, 'request.json');
-                if (existsSync(requestPath)) {
-                    const info = validateSimulation(fullPath, entry);
+            if (!stat.isDirectory()) continue;
+
+            // Старый формат: simulations/<name>/request.json (одиночная симуляция без шагов)
+            const legacyRequestPath = join(fullPath, 'request.json');
+            if (existsSync(legacyRequestPath)) {
+                const info = validateSimulation(fullPath, entry);
+                simulations.push(info);
+                continue;
+            }
+
+            // Новый формат (SCHEMA.md): simulations/<name>/<step>/request.json
+            try {
+                const stepEntries = readdirSync(fullPath);
+                for (const step of stepEntries) {
+                    const stepPath = join(fullPath, step);
+                    const stepStat = statSync(stepPath);
+                    if (!stepStat.isDirectory()) continue;
+
+                    const stepRequestPath = join(stepPath, 'request.json');
+                    if (!existsSync(stepRequestPath)) continue;
+
+                    // Имя в отчёте и CLI: "<name>/<step>" (совместимо с sim:run dialog/3 и т.п.)
+                    const simName = `${entry}/${step}`;
+                    const info = validateSimulation(stepPath, simName);
                     simulations.push(info);
                 }
+            } catch (innerErr: any) {
+                console.error(`Error reading steps for ${fullPath}: ${innerErr.message}`);
             }
         }
     } catch (err: any) {

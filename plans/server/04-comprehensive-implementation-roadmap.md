@@ -771,3 +771,18 @@ By following this roadmap, the team can successfully implement all planned enhan
 4. Start implementation according to the detailed timeline
 
 The successful completion of this roadmap will result in a significantly enhanced A2A Script Agent system with improved user experience, better performance, comprehensive testing, and robust integration capabilities.
+
+---
+
+## Current Implementation Notes (2026-03)
+
+- **LLM proxy integration (baseline)**:
+  - Implemented minimal HTTP bridge from `a2a-server` to `ai-integration` proxy via a dedicated `ProxyClient` and `AIService` with basic caching.
+  - Added high-level proxy endpoints `/api/v1/generate` and `/api/v1/embed` that normalize Ollama/OpenAI responses for the server.
+  - Proxy now exposes lightweight metrics (`/metrics`) and health details (`/health`) for observability without overcomplicating the core.
+- **Simulation-driven LLM replay**:
+  - Server supports `LLM_REPLAY_DIR`, allowing `llm-adapter` to replay LLM answers directly from `response.md` in a chosen simulation step instead of calling a live model.
+  - This makes `sim:run` deterministic for LLM-heavy flows and aligns with ADR‑0001 (“Simulations as Golden Standard”).
+- **Simulation tooling (batch mode) aligned with SCHEMA.md**:
+  - `sim-run` uses the repo-level `simulations/` directory and supports step paths like `dialog/3`.
+  - `sim-report` and `sim-compare` now understand step-based simulations (`simulations/<name>/<step>/request.json`) and produce per-step status, similarity, and JSON reports.

@@ -1,0 +1,73 @@
+/* Task flow panel – preloader, fixated, response */
+.task-flow-preloader {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    gap: 12px;
+}
+
+.task-flow-spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: task-flow-spin 0.8s linear infinite;
+}
+
+@keyframes task-flow-spin {
+    to { transform: rotate(360deg); }
+}
+
+.task-flow-fixated {
+    padding: 12px;
+    font-size: 12px;
+}
+
+.task-flow-fixated code {
+    background: var(--bg3);
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.task-flow-status {
+    color: var(--fg2);
+    margin-top: 8px;
+}
+
+.task-flow-response {
+    padding: 12px;
+    overflow: auto;
+    max-height: 280px;
+}
+
+.task-flow-response-section {
+    margin-bottom: 12px;
+}
+
+.task-flow-response-section pre {
+    background: var(--bg3);
+    padding: 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    overflow: auto;
+    white-space: pre-wrap;
+}
+
+.task-flow-error {
+    padding: 12px;
+    color: var(--error);
+    font-size: 12px;
+}
+
+.header-task-form {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.header-task-form .header-input {
+    width: 200px;
+}

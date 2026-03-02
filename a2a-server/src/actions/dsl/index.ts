@@ -29,6 +29,8 @@ export type {ResolvedAction, ResolvedStep} from './resolver.js';
 /**
  * Main DSL class - combines all components
  */
+import * as fs from 'node:fs/promises';
+import * as path from 'node:path';
 import {DSLParser} from './parser.js';
 import {DSLValidator} from './validator.js';
 import {DSLResolver} from './resolver.js';
@@ -57,8 +59,43 @@ export class DSL {
      * Load all mixins from directory
      */
     async loadMixins(dirPath: string): Promise<void> {
-        // TODO: Implement file system scanning
-        // For now, use registerMixin manually
+        const yamlFiles = await this.collectYamlFiles(dirPath);
+
+        for (const filePath of yamlFiles) {
+            try {
+                const ast = await this.parser.parseMixin(filePath);
+                const mixin = ast.data as DSLMixin;
+                this.registerMixin(mixin);
+            } catch (error) {
+                console.error(`[DSL] Failed to load mixin ${filePath}:`, error);
+            }
+        }
+    }
+
+    private async collectYamlFiles(dirPath: string): Promise<string[]> {
+        const files: string[] = [];
+
+        let entries: fs.Dirent[];
+        try {
+            entries = await fs.readdir(dirPath, {withFileTypes: true});
+        } catch {
+            return files;
+        }
+
+        for (const entry of entries) {
+            const fullPath = path.join(dirPath, entry.name);
+
+            if (entry.isDirectory()) {
+                files.push(...await this.collectYamlFiles(fullPath));
+                continue;
+            }
+
+            if (entry.isFile() && (entry.name.endsWith('.yaml') || entry.name.endsWith('.yml'))) {
+                files.push(fullPath);
+            }
+        }
+
+        return files;
     }
 
     /**

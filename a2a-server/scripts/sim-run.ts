@@ -18,7 +18,7 @@
  */
 
 import {readFileSync, writeFileSync, existsSync, readdirSync, statSync} from 'node:fs';
-import {join, dirname} from 'node:path';
+import {join, dirname, relative} from 'node:path';
 import {fileURLToPath} from 'node:url';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -35,7 +35,15 @@ if (!isAll && !simDirArg) {
     process.exit(1);
 }
 
-// Найти все директории симуляций
+/** Resolve display name for a sim dir (e.g. "dialog/3"). */
+function simDisplayName(baseDir: string, fullPath: string): string {
+    return relative(baseDir, fullPath).split(/[/\\]/).join('/');
+}
+
+/**
+ * Find all simulation dirs: legacy (simulations/<name>) and step-based (simulations/<name>/<step>).
+ * Aligned with simulations/SCHEMA.md and sim-report.ts.
+ */
 function findSimulationDirs(baseDir: string): string[] {
     const dirs: string[] = [];
 
@@ -46,10 +54,22 @@ function findSimulationDirs(baseDir: string): string[] {
             const fullPath = join(baseDir, entry);
             const stat = statSync(fullPath);
 
-            if (stat.isDirectory()) {
-                const requestPath = join(fullPath, 'request.json');
-                if (existsSync(requestPath)) {
-                    dirs.push(fullPath);
+            if (!stat.isDirectory()) continue;
+
+            const legacyRequestPath = join(fullPath, 'request.json');
+            if (existsSync(legacyRequestPath)) {
+                dirs.push(fullPath);
+                continue;
+            }
+
+            // Step format: simulations/<name>/<step>/request.json
+            const stepEntries = readdirSync(fullPath);
+            for (const step of stepEntries) {
+                const stepPath = join(fullPath, step);
+                const stepStat = statSync(stepPath);
+                if (!stepStat.isDirectory()) continue;
+                if (existsSync(join(stepPath, 'request.json'))) {
+                    dirs.push(stepPath);
                 }
             }
         }
@@ -60,11 +80,11 @@ function findSimulationDirs(baseDir: string): string[] {
     return dirs.sort();
 }
 
-// Запустить одну симуляцию
-async function runSingleSimulation(simDir: string): Promise<boolean> {
+/** Run a single simulation; baseDir is used for display name (e.g. dialog/3). */
+async function runSingleSimulation(simDir: string, baseDir: string): Promise<boolean> {
     const requestPath = join(simDir, 'request.json');
     const responsePath = join(simDir, 'server-response.json');
-    const simName = simDir.split(/[/\\]/).pop() || simDir;
+    const simName = simDisplayName(baseDir, simDir) || simDir.split(/[/\\]/).pop() || simDir;
 
     console.log(`\n📁 Simulation: ${simName}`);
     console.log(`   Path: ${simDir}`);
@@ -194,7 +214,9 @@ async function runSingleSimulation(simDir: string): Promise<boolean> {
 
 // Основная логика
 async function main() {
-    const baseDir = join(__dirname, '..', 'simulations');
+    // Используем корневую папку симуляций на уровне репозитория:
+    // c:/workspace/.../simulations (см. simulations/SCHEMA.md, ADR-0001).
+    const baseDir = join(__dirname, '..', '..', 'simulations');
 
     if (isAll) {
         // Запустить все симуляции
@@ -209,7 +231,7 @@ async function main() {
 
         console.log(`📊 Found ${simDirs.length} simulations:\n`);
         simDirs.forEach((dir, i) => {
-            console.log(`   ${i + 1}. ${dir.split(/[/\\]/).pop()}`);
+            console.log(`   ${i + 1}. ${simDisplayName(baseDir, dir)}`);
         });
         console.log('');
 
@@ -218,11 +240,11 @@ async function main() {
 
         for (let i = 0; i < simDirs.length; i++) {
             const simDir = simDirs[i];
-            const simName = simDir.split(/[/\\]/).pop() || simDir;
+            const simName = simDisplayName(baseDir, simDir);
 
             console.log(`\n[${i + 1}/${simDirs.length}] ${'='.repeat(40)}`);
 
-            const success = await runSingleSimulation(simDir);
+            const success = await runSingleSimulation(simDir, baseDir);
 
             if (success) {
                 successCount++;
@@ -246,18 +268,18 @@ async function main() {
         // Запустить одну симуляцию
         const simDir = join(baseDir, simDirArg!);
 
-        if (!existsSync(simDir)) {
+        if (!existsSync(simDir) || !existsSync(join(simDir, 'request.json'))) {
             console.error(`❌ Simulation not found: ${simDir}`);
             console.error(`   Available simulations:`);
 
             const simDirs = findSimulationDirs(baseDir);
             simDirs.forEach(dir => {
-                console.log(`   - ${dir.split(/[/\\]/).pop()}`);
+                console.log(`   - ${simDisplayName(baseDir, dir)}`);
             });
             process.exit(1);
         }
 
-        const success = await runSingleSimulation(simDir);
+        const success = await runSingleSimulation(simDir, baseDir);
 
         if (success) {
             console.log('\n✅ Симуляция успешно завершена');

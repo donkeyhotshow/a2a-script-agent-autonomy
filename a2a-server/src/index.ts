@@ -4,13 +4,9 @@ import {config} from './config/index.js';
 import {logger} from './utils/logger.js';
 import {setDatabaseLogger} from './config/database.js';
 import {startRequestProcessor, stopRequestProcessor} from './services/request-processor.service.js';
-import {sessionWebSocketManager} from './routes/sessions.websocket.js';
 
 // Create HTTP server
 const server = http.createServer(app);
-
-// Initialize WebSocket server
-sessionWebSocketManager.initialize(server);
 
 // Wire shared logger into database layer without introducing config↔utils cycles
 setDatabaseLogger(logger);
@@ -34,7 +30,6 @@ server.listen(config.port, () => {
 const gracefulShutdown = (signal: string) => {
     logger.info(`Received ${signal}. Starting graceful shutdown...`);
     stopRequestProcessor();
-    sessionWebSocketManager.shutdown();
 
     server.close((err) => {
         if (err) {

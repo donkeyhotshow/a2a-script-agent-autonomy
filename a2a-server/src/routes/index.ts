@@ -6,7 +6,6 @@ import {invoke} from '../services/invoke.service.js';
 import requestsRoutes from './requests.routes.js';
 import actionsRoutes from './actions.routes.js';
 import sseRoutes from './sse.routes.js';
-import sessionsRoutes from './sessions.routes.js';
 
 /**
  * a2a-server: async protocol with requests.
@@ -23,14 +22,13 @@ router.use('/actions', actionsRoutes);
 // Mount SSE routes
 router.use('/sse', sseRoutes);
 
-// Mount sessions routes
-router.use('/sessions', sessionsRoutes);
 
 async function handleInvoke(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-        const body = req.body as { context?: unknown; message?: string; code_blocks?: unknown };
+        const body = req.body as { task?: string; context?: unknown; message?: string; code_blocks?: unknown };
         const clientId = (req as any).client?.id || 'anonymous';
         const {promiseId} = await invoke(clientId, {
+            task: body.task,
             context: body.context,
             message: body.message,
             code_blocks: body.code_blocks as { path: string; content?: string }[] | undefined,

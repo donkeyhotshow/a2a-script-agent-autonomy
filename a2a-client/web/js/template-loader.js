@@ -54,22 +54,32 @@ const TemplateLoader = {
     },
 
     /**
-     * Load all main templates
+     * Load all main templates (header + footer)
      */
     async init() {
         try {
             await Promise.all([
                 this.render('header', 'header-container'),
-                this.render('graph-panel', 'graph-panel-container', {
-                    panelId: 'graph-main',
-                    slot: 'floating'
-                }),
                 this.render('footer', 'footer-container')
             ]);
             console.log('[Templates] All templates loaded');
             return true;
         } catch (error) {
             console.error('[Templates] Failed to load:', error);
+            return false;
+        }
+    },
+
+    /**
+     * Task-only mode: load header only
+     */
+    async initTaskOnly() {
+        try {
+            await this.render('header', 'header-container');
+            console.log('[Templates] Header loaded');
+            return true;
+        } catch (error) {
+            console.error('[Templates] Failed to load header:', error);
             return false;
         }
     }

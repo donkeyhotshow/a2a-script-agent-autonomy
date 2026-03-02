@@ -19,6 +19,27 @@
     gap: 8px;
 }
 
+.header-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.header-select {
+    padding: 6px 10px;
+    background: var(--bg3, #21262d);
+    border: 1px solid var(--border, #30363d);
+    border-radius: 6px;
+    color: var(--fg, #e6edf3);
+    font-size: 13px;
+    min-width: 140px;
+}
+
+.header-select:focus {
+    outline: none;
+    border-color: var(--accent, #58a6ff);
+}
+
 .app-header .header-center {
     display: flex;
     align-items: center;
@@ -28,14 +49,7 @@
     min-width: 0;
 }
 
-.header-doc-form {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.header-doc-form .header-input {
-    width: 180px;
+.header-input {
     padding: 6px 10px;
     background: var(--bg3, #21262d);
     border: 1px solid var(--border, #30363d);
@@ -44,7 +58,7 @@
     font-size: 13px;
 }
 
-.header-doc-form .header-input:focus {
+.header-input:focus {
     outline: none;
     border-color: var(--accent, #58a6ff);
 }

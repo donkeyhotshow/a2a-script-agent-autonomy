@@ -265,3 +265,56 @@ GET /api/v1/requests/req_llm_abc123/result
 - [`SIMULATION-FIX-VUE-IMPORTS.md`](SIMULATION-FIX-VUE-IMPORTS.md) - синхронный поток без LLM
 - [`SIMULATION-coder.md`](SIMULATION-coder.md) - диалог с RAG + запись файлов
 - [`simulations/dialog/`](../../simulations/dialog/) - пример с LLM (требует обновления)
+
+---
+
+## Практика: LLM replay из симуляций (server-only)
+
+Для простого и детерминированного тестирования цепочки **Client → Server** без реального LLM сервер поддерживает
+режим реплея ответов из симуляций.
+
+**Переменная окружения:**
+
+- `LLM_REPLAY_DIR` — путь к конкретному шагу симуляции, где уже записан `response.md`.
+
+**Поведение:**
+
+- если `LLM_REPLAY_DIR` **задан**, `llm-adapter` (функция `callLLM`) вместо обращения к внешнему LLM:
+  - читает файл `<LLM_REPLAY_DIR>/response.md`;
+  - возвращает его содержимое как строку ответа LLM;
+  - не делает сетевых вызовов (ни в OpenAI, ни в ai-integration / Ollama).
+- если чтение `response.md` не удалось — сервер логирует предупреждение и **возвращается к обычному провайдеру**
+  (OpenAI / Ollama / placeholder), чтобы не ломать прод-поток.
+
+**Пример использования с симуляцией:**
+
+- есть шаг симуляции: `simulations/dialog/3/` с заполненными:
+  - `request.json`
+  - `request.md`
+  - `response.md` (записанный ответ LLM)
+- запускаем сервер с:
+
+```bash
+export LLM_REPLAY_DIR=simulations/dialog/3
+npm run dev
+```
+
+- клиент (или `sim-run`) отправляет `request.json` из этого шага;
+- сервер строит тот же `request.md`, но вызов LLM возвращает содержимое `response.md`;
+- вся цепочка `request.json → request.md → response.md → response.json` повторяется **без живой модели**.
+
+Этот режим соответствует ADR про "Simulations as Golden Standard": LLM‑уровень тестируется через
+записанные `response.md`, а серверный код можно безопасно рефакторить, сверяясь с фикстурами.
+
+### Требование к `request.md` при replay
+
+При таком replay‑режиме **недостаточно** сравнивать только пару `request.json` / `response.json`:
+
+- на каждом шаге с LLM сервер обязан воспроизводить **точно такой же `request.md`**, как в директории симуляции;
+- иначе `response.md` реплеится против другого промпта, и проверка `response.json` перестаёт быть надёжной.
+
+Следовательно, для шагов с LLM пайплайн в симуляциях должен проходить три уровня проверки:
+
+1. `request.json → server-transforms-request.json`
+2. `server-transforms-request.json → request.md` (байтово или по устойчивой нормализации)
+3. `request.md ↔ response.md` (LLM‑уровень как фиксированные фикстуры)

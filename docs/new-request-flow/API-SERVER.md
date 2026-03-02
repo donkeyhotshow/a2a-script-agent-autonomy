@@ -96,6 +96,31 @@ interface Project {
 | `POST` | `/api/sessions/:sessionId/cancel` | Отменить выполнение |
 | `POST` | `/api/v1/sessions/:sessionId/cancel` | Отменить выполнение (альтернативный путь) |
 
+#### Создание сессии (задача от имени проекта)
+
+Задача создаётся **от имени проекта**. Web отправляет текст задачи; Client API сохраняет сессию и возвращает идентификаторы.
+
+```typescript
+// POST /api/sessions или POST /api/v1/sessions
+{
+    projectId: string;   // обязательно — задача привязана к проекту
+    title?: string;      // по умолчанию "New Session"
+    task?: string;       // текст задачи
+}
+
+// Ответ 201:
+{
+    id: string;          // sess_<uuid> — зафиксировать на клиенте
+    projectId: string;
+    title: string;
+    task?: string;
+    status: "PENDING";
+    createdAt: string;
+    updatedAt: string;
+    messages?: [];
+}
+```
+
 #### Модель сессии
 
 ```typescript
@@ -127,7 +152,9 @@ interface Session {
 
 | Метод | Endpoint | Описание |
 |-------|----------|----------|
-| `POST` | `/api/v1/invoke` | Проксировать вызов к серверу |
+| `POST` | `/api/v1/invoke` | Проксировать вызов к серверу (body: `{ task }` для первого запроса, см. PROTOCOL.md) |
+| `GET` | `/api/v1/requests/:promiseId/status` | Прокси: статус асинхронного запроса |
+| `GET` | `/api/v1/requests/:promiseId/result` | Прокси: результат запроса (первый ответ: context + execute) |
 | `*` | `/api/v1/requests*` | Проксировать любой запрос к серверу |
 | `GET` | `/api/v1/sse/:sessionId` | Проксировать SSE от сервера |
 
@@ -403,7 +430,7 @@ Client API Server выступает прокси для следующих оп
                                │
                                ▼
 ┌─────────────────────────────────────────────────────────────────────────┐
-│                      EXTERNAL AI HUB (localhost:11434)                  │
+│                      Ai Integration (localhost:11434)                  │
 │                                                                          │
 │  ┌─────────────────────────────────────────────────────────────────┐   │
 │  │              Promise-based Async Flow                           │   │

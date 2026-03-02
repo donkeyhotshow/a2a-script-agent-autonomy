@@ -22,7 +22,8 @@ describe('Action Iteration Flow', () => {
         expect(result.message).toBeDefined();
         expect(result.message.action).toBeDefined();
         expect(result.message.action?.currentStep).toBeDefined();
-        expect(result.message.action?.currentStep?.id).toBe('vue-import-detect');
+        // YAML action definition (src/actions/definitions/yaml/actions) has 'collect' as the first step
+        expect(result.message.action?.currentStep?.id).toBe('collect');
         expect(result.message.action?.currentStep?.code).toBeDefined();
         expect(result.message.action?.currentStep?.code).toContain('export default async function');
     });
@@ -37,23 +38,19 @@ describe('Action Iteration Flow', () => {
         );
 
         expect(startResult.continue).toBe(true);
-        expect(startResult.message.action?.currentStep?.id).toBe('vue-import-detect');
+        expect(startResult.message.action?.currentStep?.id).toBe('collect');
 
         // Step 2: Send step result
-        const stepResult = {
-            broken_imports: [
-                {file: 'src/App.vue', line: 5, specifier: './components/Button'}
-            ]
-        };
+        const stepResult = {files: ['src/App.vue']};
 
         const nextResult = await actionProcessor.processStepResult(
             sessionId,
-            'vue-import-detect',
+            'collect',
             stepResult
         );
 
         expect(nextResult.continue).toBe(true);
-        expect(nextResult.message.action?.currentStep?.id).toBe('vue-import-resolve');
+        expect(nextResult.message.action?.currentStep?.id).toBe('analyze');
         expect(nextResult.message.action?.currentStep?.code).toBeDefined();
     });
 
@@ -63,32 +60,38 @@ describe('Action Iteration Flow', () => {
         // Start
         await actionProcessor.processTaskRequest(sessionId, 'vue import fix');
 
-        // Step 1: detect
-        const result1 = await actionProcessor.processStepResult(sessionId, 'vue-import-detect', {
-            broken_imports: [{file: 'test.vue', line: 1, specifier: './missing'}]
+        // Step 1: collect
+        const result1 = await actionProcessor.processStepResult(sessionId, 'collect', {
+            files: ['test.vue'],
         });
         expect(result1.continue).toBe(true);
 
-        // Step 2: resolve
-        const result2 = await actionProcessor.processStepResult(sessionId, 'vue-import-resolve', {
-            patches: [{file: 'test.vue', line: 1, from: './missing', to: './found'}]
+        // Step 2: analyze
+        const result2 = await actionProcessor.processStepResult(sessionId, 'analyze', {
+            import_matches: [],
         });
         expect(result2.continue).toBe(true);
 
-        // Step 3: apply
-        const result3 = await actionProcessor.processStepResult(sessionId, 'vue-import-apply', {
-            fixed_files: ['test.vue']
+        // Step 3: detect
+        const result3 = await actionProcessor.processStepResult(sessionId, 'detect', {
+            broken_imports: [{file: 'test.vue', line: 1, specifier: './missing'}],
         });
         expect(result3.continue).toBe(true);
 
-        // Step 4: cleanup
-        const result4 = await actionProcessor.processStepResult(sessionId, 'vue-import-cleanup', {
-            cleanup_count: 0
+        // Step 4: resolve
+        const result4 = await actionProcessor.processStepResult(sessionId, 'resolve', {
+            patches: [{file: 'test.vue', type: 'replace', search: './missing', replace: './found'}],
+        });
+        expect(result4.continue).toBe(true);
+
+        // Step 5: apply
+        const result5 = await actionProcessor.processStepResult(sessionId, 'apply', {
+            applied_result: {applied: 1},
         });
 
         // After last step, action should be completed
-        expect(result4.continue).toBe(false);
-        expect(result4.message.context?.tasks?.[0]?.status).toBe('completed');
+        expect(result5.continue).toBe(false);
+        expect(result5.message.context?.tasks?.[0]?.status).toBe('completed');
     });
 
     it('should return no action for unknown task', async () => {
@@ -116,9 +119,9 @@ describe('Action Iteration Flow', () => {
 
         // Code should be valid TypeScript
         const code = result.message.action?.currentStep?.code;
-        expect(code).toContain('import');
         expect(code).toContain('export default async function');
-        expect(code).toContain('broken_imports');
+        expect(code).toContain('interface Input');
+        expect(code).toContain('return {');
     });
 
     it('should track progress through steps', async () => {
@@ -126,11 +129,12 @@ describe('Action Iteration Flow', () => {
 
         // Start
         const start = await actionProcessor.processTaskRequest(sessionId, 'vue imports');
-        expect(start.message.context?.tasks?.[0]?.progress).toBe(0);
+        // action_proposal message doesn't include tasks (see buildActionProposalMessage)
+        expect(start.message.context?.tasks).toBeUndefined();
 
         // After step 1
-        const after1 = await actionProcessor.processStepResult(sessionId, 'vue-import-detect', {
-            broken_imports: []
+        const after1 = await actionProcessor.processStepResult(sessionId, 'collect', {
+            files: [],
         });
         expect(after1.message.context?.tasks?.[0]?.progress).toBeGreaterThan(0);
     });
@@ -155,7 +159,8 @@ describe('Action Message Format', () => {
         // Check context structure
         expect(result.message.context).toHaveProperty('version');
         expect(result.message.context).toHaveProperty('session_id');
-        expect(result.message.context).toHaveProperty('tasks');
+        // action_proposal message doesn't include tasks (see buildActionProposalMessage)
+        expect(result.message.context).not.toHaveProperty('tasks');
 
         // Check action structure
         expect(result.message.action).toHaveProperty('id');

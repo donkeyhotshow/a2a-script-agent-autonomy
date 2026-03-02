@@ -60,6 +60,85 @@ Client              Server (transforms)       LLM
 `request.md`/`response.md`; transform‑файлы (`server-transforms-*.json`) опциональны і описывают конкретну per‑step
 JSONPath‑pipeline (див. `json-schemas/server-transform.schema.json`).
 
+---
+
+## Скрипты batch‑запуска симуляций и выгрузки ответов
+
+### sim:run — запуск симуляций и запись server-response.json
+
+- **Команда**: `npm run sim:run <sim-name>` или `npm run sim:run-all`
+- **Скрипт**: `a2a-server/scripts/sim-run.ts`
+- **Назначение**: прогнать одну или все симуляции через реальный серверный `invoke()` и сохранить ответы сервера в файлы
+  `server-response.json` в каждой папке шага.
+
+**Что делает:**
+
+- ищет директории вида `simulations/<name>/<step>/` с `request.json`;
+- для каждой такой директории:
+  - читает `request.json` (payload клиента);
+  - вызывает `invoke('simulation-client', invokeInput)` на живом сервере;
+  - по `promiseId` опрашивает `requestService.getResult(promiseId)` до статуса `"completed"`;
+  - формирует объект с полным результатом (`status`, `context`, `message`, `result`, таймстемпы и т.п.);
+  - записывает его в `server-response.json` рядом с `request.json`.
+
+**Режимы:**
+
+- `npm run sim:run <sim-name>` — запускает **одну** симуляцию (`simulations/<sim-name>/**/request.json`);
+- `npm run sim:run-all` — находит **все** симуляции в `simulations/` и прогоняет по очереди, печатает краткий свод по
+  “пройдено/провалено”.
+
+> Примечание: при включённом `LLM_REPLAY_DIR` сервер может отвечать по зафиксированным `response.md`, что делает
+> `sim:run` полностью детерминированным, без реального LLM.
+
+### sim:compare — сравнение server-response.json с response.json
+
+- **Команда**: `npm run sim:compare <sim-name> [--verbose] [--json] [--threshold=80]`
+- **Скрипт**: `a2a-server/scripts/sim-compare.ts`
+- **Назначение**: сравнить фактический ответ сервера (`server-response.json`) с “gold standard”
+  (`response.json`) и посчитать similarity‑score.
+
+**Что делает:**
+
+- читает `server-response.json` и `response.json` в шаге симуляции;
+- выделяет “полезные” данные (`response`, `data`, `result`);
+- игнорирует заведомо нестабильные поля (`sessionId`, `promiseId`, timestamps и т.п.);
+- делает глубокое сравнение структур и значений:
+  - собирает список отличий (missing / extra / mismatch по путям);
+  - считает `similarity` в процентах (`matchedKeys / totalKeys`);
+- опционально валидирует структуру через Zod‑схему (`ActionResultSchema`);
+- выводит:
+  - общий verdict (match / mismatch);
+  - similarity‑score;
+  - (в verbose‑режиме) список отличий по полям.
+
+### sim:report — агрегированный отчёт по всем симуляциям
+
+- **Команда**: `npm run sim:report [--status=failed|partial|passed|not-run|all] [--output=file] [--json] [--verbose]`
+- **Скрипт**: `a2a-server/scripts/sim-report.ts`
+- **Назначение**: собрать сводку по всем симуляциям: где есть `request.json`, `response.json`, `server-response.json`,
+  насколько ответы совпадают с эталонами и есть ли структурные ошибки.
+
+**Что делает:**
+
+- сканирует `simulations/**/` и для каждого шага:
+  - проверяет наличие `request.json`, `response.json`, `server-response.json`, `NOTES.md`;
+  - читает `server-response.json`, валидирует по Zod‑схеме `ServerResponseSchema`;
+  - при наличии `response.json`:
+    - сравнивает фактический и эталонный ответы (как в `sim-compare.ts`);
+    - считает similarity‑score и признак полного соответствия;
+  - присваивает статус симуляции: `passed`, `partial`, `failed`, `not-run`;
+- выводит:
+  - суммарную таблицу симуляций со статусами и similarity;
+  - при `--json` — JSON‑объект с подробной структурой;
+  - при `--output` — записывает отчёт в указанный файл.
+
+Вместе эти скрипты обеспечивают полный цикл:
+
+1. **Создать** новую симуляцию (`sim:create`).
+2. **Прогнать** её через сервер и получить фактический `server-response.json` (`sim:run` / `sim:run-all`).
+3. **Сравнить** фактический и эталонный ответы (`sim:compare`).
+4. **Построить отчёт** по всем симуляциям (`sim:report`).
+
 ## ВАЖНО: request.md - это MARKDOWN!
 
 **НЕ** используй формат:

@@ -216,11 +216,12 @@ describe('Action E2E', () => {
 
             // Start
             const start = await actionProcessor.processTaskRequest(sessionId, 'vue imports');
-            expect(start.message.context?.tasks?.[0]?.progress).toBe(0);
+            // action_proposal message doesn't include tasks (see buildActionProposalMessage)
+            expect(start.message.context?.tasks).toBeUndefined();
 
             // After step 1
-            const after1 = await actionProcessor.processStepResult(sessionId, 'vue-import-detect', {
-                broken_imports: []
+            const after1 = await actionProcessor.processStepResult(sessionId, 'collect', {
+                files: [],
             });
             expect(after1.message.context?.tasks?.[0]?.progress).toBeGreaterThan(0);
         });
@@ -230,42 +231,49 @@ describe('Action E2E', () => {
         it('should complete full fix-vue-imports action', async () => {
             const sessionId = `test-e2e-full-${Date.now()}`;
 
-            // 1. Start: detect broken imports
+            // 1. Start: collect files
             const result1 = await actionProcessor.processTaskRequest(sessionId, 'fix vue imports');
-            expect(result1.message.action?.currentStep?.id).toBe('vue-import-detect');
+            expect(result1.message.action?.currentStep?.id).toBe('collect');
             expect(result1.continue).toBe(true);
 
-            // 2. Send detect result, get resolve step
-            const result2 = await actionProcessor.processStepResult(sessionId, 'vue-import-detect', {
-                broken_imports: [
-                    {file: 'src/App.vue', line: 5, specifier: './components/Button'}
-                ]
+            // 2. Send collect result, get analyze step
+            const result2 = await actionProcessor.processStepResult(sessionId, 'collect', {
+                files: ['src/App.vue'],
             });
-            expect(result2.message.action?.currentStep?.id).toBe('vue-import-resolve');
+            expect(result2.message.action?.currentStep?.id).toBe('analyze');
             expect(result2.continue).toBe(true);
 
-            // 3. Send resolve result, get apply step
-            const result3 = await actionProcessor.processStepResult(sessionId, 'vue-import-resolve', {
-                patches: [
-                    {file: 'src/App.vue', line: 5, from: './components/Button', to: './components/Button.vue'}
-                ]
+            // 3. Send analyze result, get detect step
+            const result3 = await actionProcessor.processStepResult(sessionId, 'analyze', {
+                import_matches: [],
             });
-            expect(result3.message.action?.currentStep?.id).toBe('vue-import-apply');
+            expect(result3.message.action?.currentStep?.id).toBe('detect');
             expect(result3.continue).toBe(true);
 
-            // 4. Send apply result, get cleanup step
-            const result4 = await actionProcessor.processStepResult(sessionId, 'vue-import-apply', {
-                fixed_files: ['src/App.vue']
+            // 4. Send detect result, get resolve step
+            const result4 = await actionProcessor.processStepResult(sessionId, 'detect', {
+                broken_imports: [
+                    {file: 'src/App.vue', line: 5, specifier: './components/Button'},
+                ],
             });
-            expect(result4.message.action?.currentStep?.id).toBe('vue-import-cleanup');
+            expect(result4.message.action?.currentStep?.id).toBe('resolve');
             expect(result4.continue).toBe(true);
 
-            // 5. Send cleanup result, action completed
-            const result5 = await actionProcessor.processStepResult(sessionId, 'vue-import-cleanup', {
-                cleanup_count: 0
+            // 5. Send resolve result, get apply step
+            const result5 = await actionProcessor.processStepResult(sessionId, 'resolve', {
+                patches: [
+                    {file: 'src/App.vue', type: 'replace', search: './components/Button', replace: './components/Button.vue'},
+                ],
             });
-            expect(result5.continue).toBe(false);
-            expect(result5.message.context?.tasks?.[0]?.status).toBe('completed');
+            expect(result5.message.action?.currentStep?.id).toBe('apply');
+            expect(result5.continue).toBe(true);
+
+            // 6. Send apply result, action completed
+            const result6 = await actionProcessor.processStepResult(sessionId, 'apply', {
+                applied_result: {applied: 1},
+            });
+            expect(result6.continue).toBe(false);
+            expect(result6.message.context?.tasks?.[0]?.status).toBe('completed');
         });
     });
 });
@@ -331,10 +339,11 @@ describe('ApiClient Mock Test', () => {
 
         // Предопределенные шаги для теста
         private steps: MockActionStep[] = [
-            {id: 'vue-import-detect', title: 'Detect', code: 'async function detect() {}'},
-            {id: 'vue-import-resolve', title: 'Resolve', code: 'async function resolve() {}'},
-            {id: 'vue-import-apply', title: 'Apply', code: 'async function apply() {}'},
-            {id: 'vue-import-cleanup', title: 'Cleanup', code: 'async function cleanup() {}'},
+            {id: 'collect', title: 'Collect', code: 'async function collect() {}'},
+            {id: 'analyze', title: 'Analyze', code: 'async function analyze() {}'},
+            {id: 'detect', title: 'Detect', code: 'async function detect() {}'},
+            {id: 'resolve', title: 'Resolve', code: 'async function resolve() {}'},
+            {id: 'apply', title: 'Apply', code: 'async function apply() {}'},
         ];
 
         constructor(sessionId: string) {
@@ -412,7 +421,7 @@ describe('ApiClient Mock Test', () => {
         // Start
         let result = await client.processTaskRequest('fix vue imports');
         expect(result.continue).toBe(true);
-        expect(result.message.action?.currentStep?.id).toBe('vue-import-detect');
+        expect(result.message.action?.currentStep?.id).toBe('collect');
 
         const executedSteps: string[] = [];
 
@@ -426,10 +435,11 @@ describe('ApiClient Mock Test', () => {
 
         // Verify
         expect(executedSteps).toEqual([
-            'vue-import-detect',
-            'vue-import-resolve',
-            'vue-import-apply',
-            'vue-import-cleanup',
+            'collect',
+            'analyze',
+            'detect',
+            'resolve',
+            'apply',
         ]);
         expect(result.continue).toBe(false);
         expect(result.message.context?.tasks?.[0]?.status).toBe('completed');

@@ -217,8 +217,9 @@
             if (this.cubeEl) this.cubeEl.classList.remove('visible');
         }
 
-        /** Close to cube - hide panel, show cube at cursor position */
+        /** Close to cube - hide panel, show cube at cursor position. No-op when critical. */
         closeToCube(e) {
+            if (this.critical) return;
             e = e || window.event;
             // Hide the panel
             this.container.style.display = 'none';

@@ -1,0 +1,19 @@
+/* App entry – task-only UI. Order matters. */
+@import 'base/variables.css';
+@import 'base/reset.css';
+@import 'base/typography.css';
+@import 'base/theme.css';
+@import 'layouts/main.css';
+@import 'layouts/app.css';
+@import 'components/header.css';
+@import 'components/task-flow.css';
+@import 'components/forms.css';
+@import 'components/notifications.css';
+@import 'components/modals-core.css';
+@import 'components/floating-panel.css';
+@import 'components/panel-cube.css';
+@import 'components/panel-dock.css';
+@import 'components/footer.css';
+@import 'components/mini-zones.css';
+@import 'utils/transitions.css';
+@import 'utils/media.css';

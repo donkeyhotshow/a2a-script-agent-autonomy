@@ -75,6 +75,7 @@ export class ActionRegistry {
             // Initialize DSL parser
             const basePath = path.resolve(process.cwd(), 'src/actions');
             this.dsl = new DSL(basePath);
+            await this.dsl.loadMixins(path.join(basePath, 'definitions', 'yaml', 'mixins'));
 
             // Clear existing actions
             this.actions.clear();
@@ -210,7 +211,7 @@ export class ActionRegistry {
                     script: step.resolvedScript,
                     input: step.resolvedInput,
                 },
-                code: step.script || '',
+                code: step.resolvedScript || step.script || '',
             };
         });
 
