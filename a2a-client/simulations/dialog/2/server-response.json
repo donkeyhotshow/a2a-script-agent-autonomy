@@ -1,1 +1,21 @@
-{"context":{"task":"dialog","execution":{"action":"dialog","step":"request"}},"execute":{"form":{"input":[{"name":"message","type":"text","label":"Повідомлення","required":true}]}}}
+{
+  "context": {
+    "task": "dialog",
+    "execution": {
+      "action": "dialog",
+      "step": "request"
+    }
+  },
+  "execute": {
+    "form": {
+      "input": [
+        {
+          "name": "message",
+          "type": "text",
+          "label": "Повідомлення",
+          "required": true
+        }
+      ]
+    }
+  }
+}

@@ -1,5 +1,3 @@
-
-
 # План: Unified JSON Frontend - Расширенный анализ
 
 ## 1. Анализ текущего состояния
@@ -7,11 +5,13 @@
 ### 1.1 Существующий Frontend (a2a-client/web/)
 
 **Стек:**
+
 - Vanilla JavaScript + VueFlow
 - Vue 3 (через CDN)
 - @vue-flow/core, @vue-flow/controls, @vue-flow/minimap
 
 **Файлы:**
+
 ```
 a2a-client/web/
 ├── index.html          # Основная страница
@@ -65,6 +65,7 @@ interface Action {
 ### 2.1 Типы ответов сервера
 
 **Action Proposal:**
+
 ```
 json
 {
@@ -77,6 +78,7 @@ json
 ```
 
 **Action Executing:**
+
 ```
 json
 {
@@ -88,6 +90,7 @@ json
 ```
 
 **Action Progress:**
+
 ```
 json
 {
@@ -122,6 +125,7 @@ json
 ### Этап 1: Unified JSON Parser
 
 Создать парсер ответов:
+
 - parser.ts - основной парсер
 - types.ts - TypeScript типы
 - validator.ts - валидация через Zod
@@ -129,13 +133,13 @@ json
 
 ### Этап 2: VueFlow компоненты
 
-| Тип ответа | Нода | Описание |
-|------------|------|----------|
-| action_proposal | ProposalNode | Карточка с предложениями |
-| action_executing | ExecutingNode | Выполняемое действие |
-| action_progress | ProgressNode | Прогресс бар |
-| action_completed | ResultNode | Результат |
-| action_error | ErrorNode | Ошибка |
+| Тип ответа       | Нода          | Описание                 |
+|------------------|---------------|--------------------------|
+| action_proposal  | ProposalNode  | Карточка с предложениями |
+| action_executing | ExecutingNode | Выполняемое действие     |
+| action_progress  | ProgressNode  | Прогресс бар             |
+| action_completed | ResultNode    | Результат                |
+| action_error     | ErrorNode     | Ошибка                   |
 
 ### Этап 3: UI компоненты
 

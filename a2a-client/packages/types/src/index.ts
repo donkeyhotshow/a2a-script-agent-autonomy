@@ -11,30 +11,30 @@ export type TaskType = 'analyze' | 'refactor' | 'test' | 'document' | 'fix' | 'c
 export type TaskStatus = 'pending' | 'in_progress' | 'completed' | 'failed' | 'cancelled';
 
 export interface ProtocolError {
-  code: string;
-  message: string;
-  file?: string;
-  line?: number;
+    code: string;
+    message: string;
+    file?: string;
+    line?: number;
 }
 
 export interface Task {
-  id: string;
-  type: TaskType;
-  status: TaskStatus;
-  target?: string;
-  progress?: number;
+    id: string;
+    type: TaskType;
+    status: TaskStatus;
+    target?: string;
+    progress?: number;
 }
 
 export interface ContextBlock {
-  version: '1.0';
-  session_id: string;
-  new_task?: string[];
-  architectural_features?: string[];
-  continue?: boolean;
-  tasks?: Task[];
-  request_files?: string[];
-  confirm?: boolean;
-  errors?: ProtocolError[];
+    version: '1.0';
+    session_id: string;
+    new_task?: string[];
+    architectural_features?: string[];
+    continue?: boolean;
+    tasks?: Task[];
+    request_files?: string[];
+    confirm?: boolean;
+    errors?: ProtocolError[];
 }
 
 // ============================================
@@ -42,16 +42,16 @@ export interface ContextBlock {
 // ============================================
 
 export interface FileBlock {
-  path: string;
-  content: string;
-  startLine?: number;
-  endLine?: number;
+    path: string;
+    content: string;
+    startLine?: number;
+    endLine?: number;
 }
 
 export interface FileBlockRequest {
-  path: string;
-  startLine?: number;
-  endLine?: number;
+    path: string;
+    startLine?: number;
+    endLine?: number;
 }
 
 // ============================================
@@ -59,34 +59,34 @@ export interface FileBlockRequest {
 // ============================================
 
 export interface ClientMessage {
-  context: ContextBlock;
-  files?: FileBlock[];
+    context: ContextBlock;
+    files?: FileBlock[];
 }
 
 export interface CurrentStep {
-  id: string;
-  title: string;
-  code?: string;
+    id: string;
+    title: string;
+    code?: string;
 }
 
 export interface NextStep {
-  id: string;
-  title: string;
+    id: string;
+    title: string;
 }
 
 export interface ActionData {
-  id?: string;
-  title?: string;
-  matchScore?: number;
-  currentStep?: CurrentStep;
-  nextSteps?: NextStep[];
+    id?: string;
+    title?: string;
+    matchScore?: number;
+    currentStep?: CurrentStep;
+    nextSteps?: NextStep[];
 }
 
 export interface ServerMessage {
-  context: ContextBlock;
-  files?: FileBlock[];
-  message?: string;
-  action?: ActionData;
+    context: ContextBlock;
+    files?: FileBlock[];
+    message?: string;
+    action?: ActionData;
 }
 
 // ============================================
@@ -94,51 +94,51 @@ export interface ServerMessage {
 // ============================================
 
 export interface SearchFilters {
-  file_types?: string[];
-  directories?: string[];
-  framework?: string;
-  exclude?: string[];
+    file_types?: string[];
+    directories?: string[];
+    framework?: string;
+    exclude?: string[];
 }
 
 export interface SearchOptions {
-  limit?: number;
-  min_score?: number;
-  include_context?: boolean;
-  highlight_matches?: boolean;
+    limit?: number;
+    min_score?: number;
+    include_context?: boolean;
+    highlight_matches?: boolean;
 }
 
 export interface SearchQuery {
-  query: string;
-  filters?: SearchFilters;
-  options?: SearchOptions;
+    query: string;
+    filters?: SearchFilters;
+    options?: SearchOptions;
 }
 
 export interface MatchDetail {
-  line_start: number;
-  line_end: number;
-  content: string;
-  highlight: string;
-  context_score: number;
+    line_start: number;
+    line_end: number;
+    content: string;
+    highlight: string;
+    context_score: number;
 }
 
 export interface FileMetadata {
-  framework: string;
-  type: string;
-  last_modified: string;
+    framework: string;
+    type: string;
+    last_modified: string;
 }
 
 export interface SearchMatch {
-  file: string;
-  score: number;
-  matches: MatchDetail[];
-  metadata: FileMetadata;
+    file: string;
+    score: number;
+    matches: MatchDetail[];
+    metadata: FileMetadata;
 }
 
 export interface SearchResult {
-  results: SearchMatch[];
-  total: number;
-  query_time_ms: number;
-  algorithm_used: string;
+    results: SearchMatch[];
+    total: number;
+    query_time_ms: number;
+    algorithm_used: string;
 }
 
 // ============================================
@@ -146,35 +146,35 @@ export interface SearchResult {
 // ============================================
 
 export interface RAGConfig {
-  projectPath: string;
-  includePatterns?: string[];
-  excludePatterns?: string[];
-  useTFIDF?: boolean;
-  useBM25?: boolean;
-  useSemantic?: boolean;
-  maxDepth?: number;
-  maxFiles?: number;
-  embeddingModel?: string;
-  embeddingProvider?: string;
+    projectPath: string;
+    includePatterns?: string[];
+    excludePatterns?: string[];
+    useTFIDF?: boolean;
+    useBM25?: boolean;
+    useSemantic?: boolean;
+    maxDepth?: number;
+    maxFiles?: number;
+    embeddingModel?: string;
+    embeddingProvider?: string;
 }
 
 export interface Chunk {
-  id: string;
-  filePath: string;
-  type: string;
-  name: string;
-  content: string;
-  startLine: number;
-  endLine?: number;
-  visibility?: string;
-  method?: string;
+    id: string;
+    filePath: string;
+    type: string;
+    name: string;
+    content: string;
+    startLine: number;
+    endLine?: number;
+    visibility?: string;
+    method?: string;
 }
 
 export interface IndexStats {
-  filesIndexed: number;
-  chunksIndexed: number;
-  lastUpdated: number;
-  indexedExtensions?: string[];
+    filesIndexed: number;
+    chunksIndexed: number;
+    lastUpdated: number;
+    indexedExtensions?: string[];
 }
 
 // ============================================
@@ -182,22 +182,22 @@ export interface IndexStats {
 // ============================================
 
 export interface ApiError {
-  code: string;
-  message: string;
-  details?: Record<string, unknown>;
+    code: string;
+    message: string;
+    details?: Record<string, unknown>;
 }
 
 export interface ApiResponse<T = unknown> {
-  success: boolean;
-  data?: T;
-  error?: ApiError;
+    success: boolean;
+    data?: T;
+    error?: ApiError;
 }
 
 export interface PaginatedResponse<T> {
-  items: T[];
-  total: number;
-  page: number;
-  per_page: number;
+    items: T[];
+    total: number;
+    page: number;
+    per_page: number;
 }
 
 // ============================================
@@ -207,9 +207,9 @@ export interface PaginatedResponse<T> {
 export type WsEventType = 'task:progress' | 'task:completed' | 'files:updated' | 'files:requested' | 'error';
 
 export interface WsEvent<T = unknown> {
-  type: WsEventType;
-  payload: T;
-  timestamp: Date;
+    type: WsEventType;
+    payload: T;
+    timestamp: Date;
 }
 
 // ============================================
@@ -219,11 +219,11 @@ export interface WsEvent<T = unknown> {
 export type ArchitecturalFeatureCategory = 'directory_structure' | 'naming_convention' | 'custom_pattern' | 'framework';
 
 export interface ArchitecturalFeature {
-  name: string;
-  category: ArchitecturalFeatureCategory;
-  description?: string;
-  path?: string;
-  metadata?: Record<string, unknown>;
+    name: string;
+    category: ArchitecturalFeatureCategory;
+    description?: string;
+    path?: string;
+    metadata?: Record<string, unknown>;
 }
 
 // ============================================
@@ -231,24 +231,24 @@ export interface ArchitecturalFeature {
 // ============================================
 
 export interface RequestContextBlock {
-  tasks?: Task[];
-  request_files?: string[];
-  architectural_features?: ArchitecturalFeature[];
-  graph?: Record<string, unknown>;
-  frameworks?: Record<string, unknown>;
-  new_task?: string[];
+    tasks?: Task[];
+    request_files?: string[];
+    architectural_features?: ArchitecturalFeature[];
+    graph?: Record<string, unknown>;
+    frameworks?: Record<string, unknown>;
+    new_task?: string[];
 }
 
 export interface RequestApiResult {
-  outcome: 'completed' | 'graph_incomplete' | 'failed';
-  message?: string;
-  context?: RequestContextBlock;
-  questions?: string[];
-  missing?: string[];
-  graph_stats?: Record<string, unknown>;
-  activated_neuron_ids?: string[];
-  injected_content?: string[];
-  error?: Record<string, unknown>;
+    outcome: 'completed' | 'graph_incomplete' | 'failed';
+    message?: string;
+    context?: RequestContextBlock;
+    questions?: string[];
+    missing?: string[];
+    graph_stats?: Record<string, unknown>;
+    activated_neuron_ids?: string[];
+    injected_content?: string[];
+    error?: Record<string, unknown>;
 }
 
 // ============================================
@@ -256,35 +256,35 @@ export interface RequestApiResult {
 // ============================================
 
 export interface CreateContextBlockOptions {
-  sessionId: string;
-  newTask?: string[];
-  architecturalFeatures?: string[];
-  continue?: boolean;
-  tasks?: Task[];
-  requestFiles?: string[];
-  confirm?: boolean;
-  errors?: ProtocolError[];
+    sessionId: string;
+    newTask?: string[];
+    architecturalFeatures?: string[];
+    continue?: boolean;
+    tasks?: Task[];
+    requestFiles?: string[];
+    confirm?: boolean;
+    errors?: ProtocolError[];
 }
 
 export interface CreateTaskOptions {
-  id?: string;
-  type?: TaskType;
-  status?: TaskStatus;
-  target?: string;
-  progress?: number;
+    id?: string;
+    type?: TaskType;
+    status?: TaskStatus;
+    target?: string;
+    progress?: number;
 }
 
 export interface CreateFileBlockOptions {
-  path: string;
-  content: string;
-  startLine?: number;
-  endLine?: number;
+    path: string;
+    content: string;
+    startLine?: number;
+    endLine?: number;
 }
 
 export interface CreateSearchQueryOptions {
-  query: string;
-  filters?: SearchFilters;
-  options?: SearchOptions;
+    query: string;
+    filters?: SearchFilters;
+    options?: SearchOptions;
 }
 
 // ============================================
@@ -292,42 +292,42 @@ export interface CreateSearchQueryOptions {
 // ============================================
 
 export function createContextBlock(options: CreateContextBlockOptions): ContextBlock {
-  return {
-    version: '1.0',
-    session_id: options.sessionId,
-    new_task: options.newTask,
-    architectural_features: options.architecturalFeatures,
-    continue: options.continue,
-    tasks: options.tasks,
-    request_files: options.requestFiles,
-    confirm: options.confirm,
-    errors: options.errors,
-  };
+    return {
+        version: '1.0',
+        session_id: options.sessionId,
+        new_task: options.newTask,
+        architectural_features: options.architecturalFeatures,
+        continue: options.continue,
+        tasks: options.tasks,
+        request_files: options.requestFiles,
+        confirm: options.confirm,
+        errors: options.errors,
+    };
 }
 
 export function createTask(options: CreateTaskOptions): Task {
-  return {
-    id: options.id ?? `task_${Date.now()}`,
-    type: options.type ?? 'analyze',
-    status: options.status ?? 'pending',
-    target: options.target,
-    progress: options.progress ?? 0,
-  };
+    return {
+        id: options.id ?? `task_${Date.now()}`,
+        type: options.type ?? 'analyze',
+        status: options.status ?? 'pending',
+        target: options.target,
+        progress: options.progress ?? 0,
+    };
 }
 
 export function createFileBlock(options: CreateFileBlockOptions): FileBlock {
-  return {
-    path: options.path,
-    content: options.content,
-    startLine: options.startLine,
-    endLine: options.endLine,
-  };
+    return {
+        path: options.path,
+        content: options.content,
+        startLine: options.startLine,
+        endLine: options.endLine,
+    };
 }
 
 export function createSearchQuery(options: CreateSearchQueryOptions): SearchQuery {
-  return {
-    query: options.query,
-    filters: options.filters,
-    options: options.options,
-  };
+    return {
+        query: options.query,
+        filters: options.filters,
+        options: options.options,
+    };
 }

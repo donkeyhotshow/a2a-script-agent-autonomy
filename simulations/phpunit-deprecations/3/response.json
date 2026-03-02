@@ -5,7 +5,13 @@
       "action": "phpunit-deprecations",
       "step": "detect-deprecations",
       "history": [
-        { "step": "scan-phpunit", "status": "completed", "result": { "total": 45 } }
+        {
+          "step": "scan-phpunit",
+          "status": "completed",
+          "result": {
+            "total": 45
+          }
+        }
       ]
     }
   },
@@ -13,8 +19,12 @@
     "script": {
       "input": {
         "files": [
-          { "path": "tests/Unit/UserTest.php" },
-          { "path": "tests/Feature/AuthTest.php" }
+          {
+            "path": "tests/Unit/UserTest.php"
+          },
+          {
+            "path": "tests/Feature/AuthTest.php"
+          }
         ],
         "deprecatedMethods": [
           "assertEquals",

@@ -58,7 +58,9 @@ interface Context {
 
 ## 3. Action
 
-Два типа в первой ответе сервера: **actions** (первоочередно) — шаги захардкожены, сервер переключает шаг; **ai-actions** (второчередно) — список доступных шагов для отображения, следующий шаг из ответа LLM, возможен отдельный запрос на шаг.
+Два типа в первой ответе сервера: **actions** (первоочередно) — шаги захардкожены, сервер переключает шаг; **ai-actions
+** (второчередно) — список доступных шагов для отображения, следующий шаг из ответа LLM, возможен отдельный запрос на
+шаг.
 
 ```
 typescript
@@ -84,7 +86,8 @@ interface FallbackAction {
 
 ## 4. Step
 
-Для **actions**: шаги в definition задают последовательность; сервер сам переключает. Для **ai-actions**: шаги — список доступных (для отображения); какой шаг следующий решает LLM по своему ответу.
+Для **actions**: шаги в definition задают последовательность; сервер сам переключает. Для **ai-actions**: шаги — список
+доступных (для отображения); какой шаг следующий решает LLM по своему ответу.
 
 ```
 typescript
@@ -113,7 +116,9 @@ type Execute = Record<string, unknown>;
 // Optional: promiseId, finalResult for async flows
 ```
 
-**Good:** `execute: { "read-file": { "path": "src/auth.js" } }`, `execute: { "write-file": { "path": "...", "content": "..." } }`, `execute: { "form": { "input": [...] } }`, `execute: { "execute-command": { "command": "npm test" } }`.  
+**Good:** `execute: { "read-file": { "path": "src/auth.js" } }`,
+`execute: { "write-file": { "path": "...", "content": "..." } }`, `execute: { "form": { "input": [...] } }`,
+`execute: { "execute-command": { "command": "npm test" } }`.  
 **Bad:** `execute: { "action": "read-file", "file": "src/auth.js" }`.
 
 ### Execute Form з choices (для вибору дій)
@@ -316,18 +321,19 @@ json
 
 ## Где используется
 
-| Schema | Где используется |
-|--------|------------------|
-| Session | Client API, Web UI |
-| Context | Server, Client API |
-| Action | Server → Client |
-| Step | Server, Client |
-| Execute | Server → Client |
-| InvokeRequest | Client → Server |
-| InvokeResponse | Server → Client |
+| Schema         | Где используется   |
+|----------------|--------------------|
+| Session        | Client API, Web UI |
+| Context        | Server, Client API |
+| Action         | Server → Client    |
+| Step           | Server, Client     |
+| Execute        | Server → Client    |
+| InvokeRequest  | Client → Server    |
+| InvokeResponse | Server → Client    |
 
 ---
 
 ## История изменений
 
-- **2025-01**: Добавлен новый формат `execute.form.choices` для первого ответа сервера. Вместо `actions[]` и `fallbackActions[]` теперь используется `execute.form.choices` с массивом объектов `{ id, label }`.
+- **2025-01**: Добавлен новый формат `execute.form.choices` для первого ответа сервера. Вместо `actions[]` и
+  `fallbackActions[]` теперь используется `execute.form.choices` с массивом объектов `{ id, label }`.

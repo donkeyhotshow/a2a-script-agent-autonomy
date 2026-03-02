@@ -3,6 +3,7 @@
 ## Обзор
 
 Протокол определяет формат запросов и ответов между компонентами системы:
+
 - **Web → Client API** (порт 3001)
 - **Client API → Server** (порт 3000)
 
@@ -12,7 +13,10 @@
 
 ### 1. Первый запрос: Поиск сервисов
 
-Пользователь вводит задачу, система предлагает доступные действия. Два типа: **actions** (первоочередно) — шаги захардкожены, сервер сам переключает шаг по `result`; **ai-actions** (второстепенно, напр. диалог с LLM) — шаги не в фиксированной последовательности: отображается список доступных шагов, следующий шаг определяется из ответа LLM, возможен отдельный запрос на каждый шаг.
+Пользователь вводит задачу, система предлагает доступные действия. Два типа: **actions** (первоочередно) — шаги
+захардкожены, сервер сам переключает шаг по `result`; **ai-actions** (второстепенно, напр. диалог с LLM) — шаги не в
+фиксированной последовательности: отображается список доступных шагов, следующий шаг определяется из ответа LLM,
+возможен отдельный запрос на каждый шаг.
 
 #### Запрос (Web → Client API)
 
@@ -26,6 +30,7 @@ interface TaskRequest {
 ```
 
 **Пример:**
+
 ```json
 // POST /api/sessions
 {
@@ -74,6 +79,7 @@ interface FallbackAction {
 ```
 
 **Пример:**
+
 ```json
 {
   "context": {
@@ -157,6 +163,7 @@ interface ActionSelectionRequest {
 ```
 
 **Пример:**
+
 ```json
 {
   "action": "action_selection",
@@ -199,6 +206,7 @@ interface ExecuteResponse {
 ```
 
 **Пример (первый шаг):**
+
 ```json
 {
   "context": {
@@ -243,6 +251,7 @@ interface StepResultRequest {
 ```
 
 **Пример:**
+
 ```json
 {
   "context": {
@@ -268,6 +277,7 @@ interface StepResultRequest {
 Сервер отправляет следующий шаг или завершает выполнение.
 
 **Пример (второй шаг):**
+
 ```json
 {
   "context": {
@@ -297,6 +307,7 @@ interface StepResultRequest {
 ### 6. Завершение (финальный результат)
 
 **Пример:**
+
 ```json
 {
   "context": {
@@ -331,6 +342,7 @@ interface StepResultRequest {
 ## Web → Client API эндпоинты
 
 ### POST /api/sessions
+
 Создать новую сессию.
 
 ```typescript
@@ -352,6 +364,7 @@ interface StepResultRequest {
 ```
 
 ### GET /api/sessions
+
 Получить список всех сессий.
 
 ```typescript
@@ -371,6 +384,7 @@ interface SessionSummary {
 ```
 
 ### GET /api/sessions/:sessionId
+
 Получить состояние сессии.
 
 ```typescript
@@ -389,6 +403,7 @@ interface SessionSummary {
 ```
 
 ### POST /api/sessions/:sessionId/action
+
 Выбрать действие.
 
 ```typescript
@@ -405,6 +420,7 @@ interface SessionSummary {
 ```
 
 ### POST /api/sessions/:sessionId/next
+
 Выполнить следующий шаг.
 
 ```typescript
@@ -425,6 +441,7 @@ interface SessionSummary {
 ```
 
 ### POST /api/sessions/:sessionId/cancel
+
 Отменить сессию.
 
 ```typescript
@@ -439,7 +456,8 @@ interface SessionSummary {
 
 ## Client API → Server эндпоинты
 
-**ВАЖНО:** Сервер полностью stateless - не хранит сессии. 
+**ВАЖНО:** Сервер полностью stateless - не хранит сессии.
+
 - SessionId/ProjectId передаются в URL пути, а не в теле запроса
 - Client API сама хранит всю информацию о сессиях
 
@@ -481,10 +499,10 @@ interface SessionSummary {
 
 **External AI Hub Endpoints:**
 
-| Endpoint | Описание |
-|----------|----------|
-| `GET /promise/<id>` | Статус promise (pending/done/error) |
-| `GET /promise/<id>/response` | Получить результат |
+| Endpoint                     | Описание                            |
+|------------------------------|-------------------------------------|
+| `GET /promise/<id>`          | Статус promise (pending/done/error) |
+| `GET /promise/<id>/response` | Получить результат                  |
 
 ### llmPrompt - Markdown для LLM
 
@@ -564,29 +582,29 @@ interface Step {
 
 ## Статусы сессии
 
-| Статус | Описание |
-|--------|----------|
-| `pending` | Создана, ожидает выбора действия |
-| `ready` | Выбрано действие, готова к выполнению |
-| `in_progress` | Выполняются шаги (steps) |
-| `waiting_confirmation` | Ожидает подтверждения пользователя |
-| `completed` | Все шаги выполнены |
-| `cancelled` | Отменена пользователем |
-| `error` | Ошибка при выполнении |
+| Статус                 | Описание                              |
+|------------------------|---------------------------------------|
+| `pending`              | Создана, ожидает выбора действия      |
+| `ready`                | Выбрано действие, готова к выполнению |
+| `in_progress`          | Выполняются шаги (steps)              |
+| `waiting_confirmation` | Ожидает подтверждения пользователя    |
+| `completed`            | Все шаги выполнены                    |
+| `cancelled`            | Отменена пользователем                |
+| `error`                | Ошибка при выполнении                 |
 
 ---
 
 ## Ключевые термины
 
-| Старое (неправильно) | Новое (правильно) |
-|---------------------|-------------------|
-| `proposedActions` | `actions` |
-| `subActions` | `steps` |
-| `actionId` (в actions) | `action` |
-| `currentActionId` | `execution.step` |
-| `executingAction` | `execute` |
-| `dsl` + `dslScript` | `script` с `input`, `output`, `code` |
-| - | `promiseId` - используется для async AI запросов |
+| Старое (неправильно)   | Новое (правильно)                                |
+|------------------------|--------------------------------------------------|
+| `proposedActions`      | `actions`                                        |
+| `subActions`           | `steps`                                          |
+| `actionId` (в actions) | `action`                                         |
+| `currentActionId`      | `execution.step`                                 |
+| `executingAction`      | `execute`                                        |
+| `dsl` + `dslScript`    | `script` с `input`, `output`, `code`             |
+| -                      | `promiseId` - используется для async AI запросов |
 
 ---
 

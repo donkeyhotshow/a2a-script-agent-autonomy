@@ -5,14 +5,16 @@
 - **Description:** Backend services, APIs, external integrations
 
 ## Properties
-| Property | Type | Description |
-|----------|------|-------------|
-| id | string | Unique identifier |
-| name | string | Service name |
-| path | string | File path |
+
+| Property    | Type   | Description         |
+|-------------|--------|---------------------|
+| id          | string | Unique identifier   |
+| name        | string | Service name        |
+| path        | string | File path           |
 | description | string | Service description |
 
 ## Example
+
 ```
 json
 {
@@ -25,6 +27,7 @@ json
 ```
 
 ## Related Types
+
 - Used by: AGENTS, ACTIONS
 - Provides: TASKS, NODES
 - Connected to: SYSTEMS

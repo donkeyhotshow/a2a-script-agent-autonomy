@@ -2,7 +2,8 @@
 
 ## Overview
 
-This document describes alternative approaches to solving the Vue imports problem, each with different architecture and trade-offs.
+This document describes alternative approaches to solving the Vue imports problem, each with different architecture and
+trade-offs.
 
 ---
 
@@ -18,6 +19,7 @@ flowchart LR
 ```
 
 **Characteristics:**
+
 - All code runs on client
 - Server only coordinates
 - Single pass through all files
@@ -40,12 +42,14 @@ flowchart TB
 ```
 
 **Characteristics:**
+
 - Heavy logic on server
 - Batch processing (10 files at a time)
 - State in context
 - Can resume after pause
 
-**See:** [fix-vue-imports-batch.md](fix-vue-imports-batch.md) (план). Definition: [definitions/fix-vue-imports-batch.md](../../a2a-server/src/actions/definitions/fix-vue-imports-batch.md)
+**See:** [fix-vue-imports-batch.md](fix-vue-imports-batch.md) (план).
+Definition: [definitions/fix-vue-imports-batch.md](../../a2a-server/src/actions/definitions/fix-vue-imports-batch.md)
 
 ---
 
@@ -62,6 +66,7 @@ flowchart LR
 ```
 
 **Key Features:**
+
 - Uses TypeScript Language Service
 - 100% accurate module resolution
 - Native tsconfig.json support
@@ -70,6 +75,7 @@ flowchart LR
 **Sub-actions:**
 
 ### 1. ast-create-program
+
 Create TypeScript program with project config.
 
 ```typescript
@@ -102,6 +108,7 @@ export default async function run(input: {
 ```
 
 ### 2. ast-detect-imports
+
 Detect broken imports using TypeScript checker.
 
 ```typescript
@@ -145,6 +152,7 @@ export default async function run(input: {
 ```
 
 ### 3. ast-get-fixes
+
 Get suggested fixes from TypeScript.
 
 ```typescript
@@ -168,11 +176,13 @@ export default async function run(input: {
 ```
 
 **Pros:**
+
 - Most accurate resolution
 - Native tsconfig support
 - Type safety
 
 **Cons:**
+
 - Requires TypeScript
 - Slower on large projects
 - More complex setup
@@ -191,6 +201,7 @@ flowchart LR
 ```
 
 **Key Features:**
+
 - Uses existing ESLint infrastructure
 - IDE integration available
 - Auto-fix support
@@ -198,6 +209,7 @@ flowchart LR
 **Sub-actions:**
 
 ### 1. eslint-check
+
 Run ESLint with import rules.
 
 ```typescript
@@ -244,6 +256,7 @@ export default async function run(input: {
 ```
 
 ### 2. eslint-fix
+
 Apply ESLint auto-fixes.
 
 ```typescript
@@ -274,11 +287,13 @@ export default async function run(input: {
 ```
 
 **Pros:**
+
 - Leverages existing tooling
 - IDE support
 - Configurable rules
 
 **Cons:**
+
 - Requires ESLint setup
 - Not all rules auto-fix
 - Additional dependency
@@ -298,6 +313,7 @@ flowchart LR
 ```
 
 **Key Features:**
+
 - Real-time detection during development
 - Integrated with Vite's resolve system
 - Uses Vite's alias configuration
@@ -374,11 +390,13 @@ function findCandidates(root: string, baseName: string): string[] {
 ```
 
 **Pros:**
+
 - Real-time feedback
 - Uses Vite's config
 - No separate command needed
 
 **Cons:**
+
 - Only works with Vite
 - Dev-time only
 - No auto-fix
@@ -397,6 +415,7 @@ flowchart LR
 ```
 
 **Key Features:**
+
 - Powerful AST transformations
 - Good for mass migrations
 - Precise code manipulation
@@ -461,11 +480,13 @@ function resolveImport(sourceFile: SourceFile, specifier: string): string | null
 ```
 
 **Pros:**
+
 - Precise transformations
 - Good for migrations
 - Dry-run mode built-in
 
 **Cons:**
+
 - Learning curve
 - Separate tool
 - Overkill for simple fixes
@@ -474,27 +495,27 @@ function resolveImport(sourceFile: SourceFile, specifier: string): string | null
 
 ## Comparison Table
 
-| Method | Accuracy | Speed | Auto-fix | Setup | Best For |
-|--------|----------|-------|----------|-------|----------|
-| Current (regex) | Medium | Fast | Yes | Simple | Quick fixes |
-| Batch | Medium | Medium | Yes | Medium | Large projects |
-| AST/TS | High | Slow | Partial | Complex | TS projects |
-| ESLint | High | Medium | Partial | Medium | ESLint users |
-| Vite Plugin | High | Real-time | No | Simple | Vite projects |
-| Codemod | High | Medium | Yes | Complex | Migrations |
+| Method          | Accuracy | Speed     | Auto-fix | Setup   | Best For       |
+|-----------------|----------|-----------|----------|---------|----------------|
+| Current (regex) | Medium   | Fast      | Yes      | Simple  | Quick fixes    |
+| Batch           | Medium   | Medium    | Yes      | Medium  | Large projects |
+| AST/TS          | High     | Slow      | Partial  | Complex | TS projects    |
+| ESLint          | High     | Medium    | Partial  | Medium  | ESLint users   |
+| Vite Plugin     | High     | Real-time | No       | Simple  | Vite projects  |
+| Codemod         | High     | Medium    | Yes      | Complex | Migrations     |
 
 ---
 
 ## Recommendation Matrix
 
-| Scenario | Recommended Method |
-|----------|-------------------|
-| Quick fix for small project | Current (fix-vue-imports) |
-| Large project with many files | Batch (fix-vue-imports-batch) |
-| TypeScript project with tsconfig | AST (fix-vue-imports-ast) |
-| Already using ESLint | ESLint (fix-vue-imports-eslint) |
-| Vite project, want real-time | Vite Plugin |
-| Mass migration/refactor | Codemod |
+| Scenario                         | Recommended Method              |
+|----------------------------------|---------------------------------|
+| Quick fix for small project      | Current (fix-vue-imports)       |
+| Large project with many files    | Batch (fix-vue-imports-batch)   |
+| TypeScript project with tsconfig | AST (fix-vue-imports-ast)       |
+| Already using ESLint             | ESLint (fix-vue-imports-eslint) |
+| Vite project, want real-time     | Vite Plugin                     |
+| Mass migration/refactor          | Codemod                         |
 
 ---
 

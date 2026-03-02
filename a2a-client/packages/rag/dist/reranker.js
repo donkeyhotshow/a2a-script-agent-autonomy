@@ -2,7 +2,7 @@
 /**
  * Reranker Client - Cross-encoder reranking for search results
  */
-Object.defineProperty(exports, "__esModule", { value: true });
+Object.defineProperty(exports, "__esModule", {value: true});
 exports.DEFAULT_CONFIGS = exports.RerankerClient = exports.PROVIDERS = void 0;
 exports.createReranker = createReranker;
 exports.PROVIDERS = {
@@ -11,10 +11,11 @@ exports.PROVIDERS = {
     LOCAL: 'local',
 };
 const DEFAULT_CONFIGS = {
-    cohere: { model: 'rerank-multilingual-v3.0', maxChunks: 1000, returnDocuments: true },
-    jina: { model: 'jina-reranker-v2-base-multilingual', topN: 10 },
+    cohere: {model: 'rerank-multilingual-v3.0', maxChunks: 1000, returnDocuments: true},
+    jina: {model: 'jina-reranker-v2-base-multilingual', topN: 10},
 };
 exports.DEFAULT_CONFIGS = DEFAULT_CONFIGS;
+
 class RerankerClient {
     constructor(config = {}) {
         this.provider = config.provider ?? exports.PROVIDERS.COHERE;
@@ -25,13 +26,15 @@ class RerankerClient {
             ...config.modelOptions,
         };
     }
+
     _getHeaders() {
-        const headers = { 'Content-Type': 'application/json' };
+        const headers = {'Content-Type': 'application/json'};
         if ((this.provider === exports.PROVIDERS.COHERE || this.provider === exports.PROVIDERS.JINA) && this.apiKey) {
             headers['Authorization'] = `Bearer ${this.apiKey}`;
         }
         return headers;
     }
+
     async rerank(query, documents, options = {}) {
         if (!query || !documents?.length)
             return [];
@@ -47,6 +50,7 @@ class RerankerClient {
                 throw new Error(`Unknown provider: ${this.provider}`);
         }
     }
+
     async _rerankCohere(query, documents, topN) {
         const url = this.baseUrl ?? 'https://api.cohere.com/v1/rerank';
         const docStrings = documents.map((doc) => typeof doc === 'string' ? doc : (doc.content ?? doc.text ?? ''));
@@ -70,6 +74,7 @@ class RerankerClient {
             score: result.relevance_score,
         }));
     }
+
     async _rerankJina(query, documents, topN) {
         const url = this.baseUrl ?? 'https://api.jina.ai/v1/rerank';
         const docObjects = documents.map((doc, idx) => ({
@@ -79,7 +84,7 @@ class RerankerClient {
         const response = await fetch(url, {
             method: 'POST',
             headers: this._getHeaders(),
-            body: JSON.stringify({ query, documents: docObjects, model: this.modelOptions.model, top_n: topN }),
+            body: JSON.stringify({query, documents: docObjects, model: this.modelOptions.model, top_n: topN}),
         });
         if (!response.ok)
             throw new Error(`Jina rerank error: ${response.status} ${await response.text()}`);
@@ -90,6 +95,7 @@ class RerankerClient {
             score: result.relevance_score,
         }));
     }
+
     _rerankLocal(query, documents, topN) {
         const queryTerms = query.toLowerCase().split(/\s+/);
         const scored = documents.map((doc, idx) => {
@@ -110,24 +116,27 @@ class RerankerClient {
         scored.sort((a, b) => b.score - a.score);
         return scored.slice(0, topN);
     }
+
     async isAvailable() {
         if (this.provider === exports.PROVIDERS.LOCAL)
             return true;
         try {
             const url = this.baseUrl ??
                 (this.provider === exports.PROVIDERS.COHERE ? 'https://api.cohere.com/v1/models' : 'https://api.jina.ai/v1/models');
-            const response = await fetch(url, { method: 'GET', headers: this._getHeaders() });
+            const response = await fetch(url, {method: 'GET', headers: this._getHeaders()});
             return response.ok;
-        }
-        catch {
+        } catch {
             return false;
         }
     }
+
     getInfo() {
-        return { provider: this.provider, model: String(this.modelOptions.model), available: true };
+        return {provider: this.provider, model: String(this.modelOptions.model), available: true};
     }
 }
+
 exports.RerankerClient = RerankerClient;
+
 function createReranker(config) {
     return new RerankerClient(config);
 }

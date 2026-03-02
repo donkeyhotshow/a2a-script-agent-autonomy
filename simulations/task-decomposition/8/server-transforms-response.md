@@ -5,7 +5,8 @@
 **Transformation steps:**
 
 1. Extract updated doc from LLM response
-2. Build response.json: context, result.updatedDoc or result.message = updated doc, execute.write-file with path .carrier/tasks/task-1.md and updated content
+2. Build response.json: context, result.updatedDoc or result.message = updated doc, execute.write-file with path
+   .carrier/tasks/task-1.md and updated content
 3. Return to client.
 
 ---

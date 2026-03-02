@@ -5,14 +5,16 @@
 - **Description:** Actions, operations, executable tasks
 
 ## Properties
-| Property | Type | Description |
-|----------|------|-------------|
-| id | string | Unique identifier |
-| name | string | Action name |
-| path | string | File path to action |
-| description | string | Action description |
+
+| Property    | Type   | Description         |
+|-------------|--------|---------------------|
+| id          | string | Unique identifier   |
+| name        | string | Action name         |
+| path        | string | File path to action |
+| description | string | Action description  |
 
 ## Example
+
 ```
 json
 {
@@ -25,6 +27,7 @@ json
 ```
 
 ## Related Types
+
 - Initiated by: AGENTS, NODES
 - Uses: SCRIPTS, SERVICES
 - Can trigger: TASKS, NODES

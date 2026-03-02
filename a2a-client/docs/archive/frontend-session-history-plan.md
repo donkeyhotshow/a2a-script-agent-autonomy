@@ -1,7 +1,9 @@
 енения
+
 # Frontend Session History Plan
 
 ## Выбрано пользователем (qtu):
+
 **История сессий (Session History)** - ОДОБРЕНО ✓
 
 **Дополнительное требование:** Сессии должны сохраняться в проекте в папке `.carrier/sessions`
@@ -9,14 +11,17 @@
 ---
 
 ## Overview
+
 Добавить функционал для просмотра и управления историей сессий в интерфейсе A2A Client.
 
 Текущее состояние:
+
 - Сессии отображаются в списке, но без детальной истории
 - Нет возможности фильтровать/искать по сессиям
 - Нет восстановления удалённых сессий
 
 Новое состояние:
+
 - Полная история сессий с фильтрацией
 - Поиск по содержимому сообщений
 - Восстановление сессий
@@ -25,6 +30,7 @@
 ---
 
 ## Current State
+
 - ✅ Отображение списка сессий
 - ✅ Выбор активной сессии
 - ❌ Нет фильтрации сессий
@@ -37,12 +43,14 @@
 ## Plan
 
 ### Phase 1: UI Components
+
 - [ ] Добавить панель фильтров в секции сессий
 - [ ] Создать компонент истории сессий
 - [ ] Добавить строку поиска
 - [ ] Добавить кнопки действий (удалить, восстановить, экспорт)
 
 ### Phase 2: Data Display
+
 - [ ] Показать дату создания сессии
 - [ ] Показать количество сообщений
 - [ ] Показать статус (active, completed, failed)
@@ -50,6 +58,7 @@
 - [ ] Показать тип проекта/фреймворк
 
 ### Phase 3: Interaction
+
 - [ ] Фильтрация по статусу
 - [ ] Поиск по содержимому сообщений
 - [ ] Удаление сессий
@@ -61,6 +70,7 @@
 ## Files to Modify
 
 ### 1. a2a-client/web/index.html
+
 ```
 html
 <!-- Session History Panel -->
@@ -90,6 +100,7 @@ html
 ```
 
 ### 2. a2a-client/web/css/style.css
+
 ```
 css
 /* Session History Styles */
@@ -218,6 +229,7 @@ css
 ```
 
 ### 3. a2a-client/web/js/sessions.js
+
 ```
 javascript
 // Добавить методы для истории сессий
@@ -322,16 +334,19 @@ clearHistory() {
 ## Implementation Steps
 
 ### Step 1: Add HTML Template
+
 - Add Session History Panel container
 - Add filters and search input
 - Add list and footer
 
 ### Step 2: Add CSS Styles
+
 - Panel styles
 - List item styles
 - Filter and search styles
 
 ### Step 3: Update JavaScript
+
 - Add showSessionHistory method
 - Add hideSessionHistory method
 - Add renderSessionHistory method
@@ -340,6 +355,7 @@ clearHistory() {
 - Connect to existing session flow
 
 ### Step 4: Integration
+
 - Add button to toggle history panel
 - Add keyboard shortcut
 - Connect to session list
@@ -347,6 +363,7 @@ clearHistory() {
 ---
 
 ## Dependencies
+
 - VueFlow already loaded
 - No new npm packages required
 
@@ -359,18 +376,21 @@ clearHistory() {
 ## Implementation Log
 
 ### Step 1: Add HTML Template - PENDING
+
 - [ ] Add Session History Panel container
 - [ ] Add header with filters
 - [ ] Add list container
 - [ ] Add footer with buttons
 
 ### Step 2: Add CSS Styles - PENDING
+
 - [ ] Panel styles
 - [ ] List item styles
 - [ ] Status badges
 - [ ] Filter styles
 
 ### Step 3: Update JavaScript - PENDING
+
 - [ ] Add showSessionHistory function
 - [ ] Add hideSessionHistory function
 - [ ] Add renderSessionHistory function
@@ -379,6 +399,7 @@ clearHistory() {
 - [ ] Connect to session flow
 
 ### Step 4: Integration - PENDING
+
 - [ ] Add toggle button
 - [ ] Add keyboard shortcut
 - [ ] Test functionality

@@ -8,31 +8,31 @@ const request = require('supertest');
 
 let app;
 beforeAll(async () => {
-  try {
-    const mod = await import(path.resolve(__dirname, '../../../a2a-server/src/app.ts'));
-    app = mod.default;
-  } catch {
-    app = null;
-  }
+    try {
+        const mod = await import(path.resolve(__dirname, '../../../a2a-server/src/app.ts'));
+        app = mod.default;
+    } catch {
+        app = null;
+    }
 });
 
 describe('ApiClient <-> Server integration', () => {
-  it('should connect to server health', async () => {
-    if (!app) return;
-    const res = await request(app).get('/health');
-    expect(res.status).toBe(200);
-    expect(res.body.status).toBe('ok');
-  });
+    it('should connect to server health', async () => {
+        if (!app) return;
+        const res = await request(app).get('/health');
+        expect(res.status).toBe(200);
+        expect(res.body.status).toBe('ok');
+    });
 
-  it('should return 404 for sessions without auth', async () => {
-    if (!app) return;
-    const res = await request(app).get('/api/v1/sessions');
-    expect(res.status).toBe(404);
-  });
+    it('should return 404 for sessions without auth', async () => {
+        if (!app) return;
+        const res = await request(app).get('/api/v1/sessions');
+        expect(res.status).toBe(404);
+    });
 
-  it('should handle server 404 for unknown route', async () => {
-    if (!app) return;
-    const res = await request(app).get('/api/v1/nonexistent');
-    expect(res.status).toBe(404);
-  });
+    it('should handle server 404 for unknown route', async () => {
+        if (!app) return;
+        const res = await request(app).get('/api/v1/nonexistent');
+        expect(res.status).toBe(404);
+    });
 });

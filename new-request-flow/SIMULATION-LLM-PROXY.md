@@ -2,13 +2,15 @@
 
 ## Обзор
 
-Когда Server обрабатывает запрос с использованием LLM (например, AI-generated actions), обработка занимает время. В этом случае Server использует **promiseId** для асинхронной обработки.
+Когда Server обрабатывает запрос с использованием LLM (например, AI-generated actions), обработка занимает время. В этом
+случае Server использует **promiseId** для асинхронной обработки.
 
 ## Два типа ответов сервера
 
 Сервер может ответить двумя способами:
 
 ### 1. Синхронный ответ (без LLM)
+
 Используется для предопределённых actions (как в fix-vue-imports).
 
 ```json
@@ -19,6 +21,7 @@
 ```
 
 ### 2. Асинхронный ответ (с LLM)
+
 Используется когда Server обращается к LLM.
 
 ```json
@@ -103,6 +106,7 @@
 ## API эндпоинты для promiseId
 
 ### POST /api/v1/invoke
+
 Создать запрос.
 
 ```typescript
@@ -120,6 +124,7 @@
 ```
 
 ### GET /api/v1/requests/:promiseId/status
+
 Получить статус запроса.
 
 ```typescript
@@ -131,6 +136,7 @@
 ```
 
 ### GET /api/v1/requests/:promiseId/result
+
 Получить результат (когда status === 'completed').
 
 ```typescript
@@ -251,29 +257,30 @@ GET /api/v1/requests/req_llm_abc123/result
 
 ## Когда использовать promiseId
 
-| Сценарий | Использует promiseId? |
-|----------|----------------------|
-| Предопределённые actions (fix-vue-imports) | Нет |
-| AI-generated actions | Да |
-| Сложные запросы к LLM | Да |
-| Долгие операции | Да |
+| Сценарий                                   | Использует promiseId? |
+|--------------------------------------------|-----------------------|
+| Предопределённые actions (fix-vue-imports) | Нет                   |
+| AI-generated actions                       | Да                    |
+| Сложные запросы к LLM                      | Да                    |
+| Долгие операции                            | Да                    |
 
 ---
 
 ## Ключевые отличия
 
-| Синхронный (без LLM) | Асинхронный (c LLM) |
-|---------------------|-------------------|
+| Синхронный (без LLM)             | Асинхронный (c LLM)         |
+|----------------------------------|-----------------------------|
 | Server сразу возвращает response | Server возвращает promiseId |
-| Нет обращения к LLM | Server обращается к LLM |
-| Быстрый ответ | Требует опроса status |
-| execute.script сразу в ответе | execute.script в result |
+| Нет обращения к LLM              | Server обращается к LLM     |
+| Быстрый ответ                    | Требует опроса status       |
+| execute.script сразу в ответе    | execute.script в result     |
 
 ---
 
 ## Файлы
 
 См. также:
+
 - [`SIMULATION-FIX-VUE-IMPORTS.md`](SIMULATION-FIX-VUE-IMPORTS.md) - синхронный поток без LLM
 - [`SIMULATION-coder.md`](SIMULATION-coder.md) - диалог с RAG + запись файлов
 - [`simulations/dialog/`](../../simulations/dialog/) - пример с LLM (требует обновления)

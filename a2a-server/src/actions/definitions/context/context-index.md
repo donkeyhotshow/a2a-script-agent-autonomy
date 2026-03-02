@@ -1,16 +1,20 @@
 # context-index
 
-Build searchable index (vector/RAG) from project context. **План:** [actions-definitions-for-auto-ai](../../../../docs/actions-definitions-for-auto-ai.md).
+Build searchable index (vector/RAG) from project context. **План:
+** [actions-definitions-for-auto-ai](../../../../docs/actions-definitions-for-auto-ai.md).
 
 ## Priority
+
 80
 
 ## Context
+
 ```json
 { "type": "index", "requires_embedding": true, "rag_enabled": true }
 ```
 
 ## Triggers
+
 - context index
 - build index
 - index context
@@ -20,6 +24,7 @@ Build searchable index (vector/RAG) from project context. **План:** [actions
 ## Sub-actions
 
 ### 1. context-index-build
+
 Построение индекса из отсканированных файлов (chunking, embeddings для RAG).
 
 **Input:** files[], chunkSize?, overlap?  
@@ -161,6 +166,7 @@ export default async function buildIndex(input: {
 ```
 
 ### 2. context-index-save
+
 Сохранение индекса для последующих запросов.
 
 **Input:** indexId, chunks[], storagePath?  
@@ -236,6 +242,7 @@ export default async function saveIndex(input: {
 ```
 
 ### 3. context-index-update
+
 Обновление индекса с новыми или изменёнными файлами.
 
 **Input:** indexId, newFiles[], deletedPaths[]  

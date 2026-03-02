@@ -1,11 +1,15 @@
 # analyze-typescript
 
-Анализ TypeScript: any types, missing props. **План:** [actions-definitions-for-auto-ai](../../../../plans/actions-definitions-for-auto-ai.md). **Use-case:** [2-code-analysis](../../../../docs/use-cases/auto-ai/2-code-analysis.md).
+Анализ TypeScript: any types, missing props. **План:
+** [actions-definitions-for-auto-ai](../../../../plans/actions-definitions-for-auto-ai.md). **Use-case:
+** [2-code-analysis](../../../../docs/use-cases/auto-ai/2-code-analysis.md).
 
 ## Priority
+
 72
 
 ## Triggers
+
 - typescript analysis
 - analyze typescript
 - any types
@@ -14,6 +18,7 @@
 ## Sub-actions
 
 ### 1. analyze-ts-scan
+
 Scan TS/TSX for any, implicit any, missing props.
 
 **Input:** rootDir  
@@ -181,6 +186,7 @@ export default async function run(input: { rootDir: string }): Promise<{ finding
 ```
 
 ### 2. analyze-ts-report
+
 **Input:** findings[]  
 **Output:** report
 

@@ -100,135 +100,91 @@
 
 ### Инициализация Node.js проекта с TypeScript
 
-
 ### Настройка ESLint и Prettier
-
 
 ### Настройка Prisma ORM
 
-
 ### Конфигурация окружения (dotenv)
-
 
 ### Настройка Express сервера
 
-
 ### Middleware (CORS, helmet, compression)
-
 
 ### Логирование (Winston)
 
-
 ### Обработка ошибок
-
 
 ### Определение моделей (Client, Project, Session, Message, Request)
 
-
 ### Создание миграций
-
 
 ### Seed данные для разработки
 
-
 ### ClientRepository
-
 
 ### ProjectRepository
 
-
 ### SessionRepository
-
 
 ### MessageRepository
 
-
 ### RequestRepository
-
 
 ### JWT middleware
 
-
 ### API Key validation
-
 
 ### Rate limiting
 
-
 ### GET /api/v1/projects
-
 
 ### POST /api/v1/projects
 
-
 ### GET /api/v1/projects/:id
-
 
 ### PUT /api/v1/projects/:id
 
-
 ### DELETE /api/v1/projects/:id
-
 
 ### GET /api/v1/sessions
 
-
 ### POST /api/v1/sessions
-
 
 ### GET /api/v1/sessions/:id
 
-
 ### DELETE /api/v1/sessions/:id
-
 
 ### POST /api/v1/sessions/:id/messages
 
-
 ### POST /api/v1/requests
-
 
 ### GET /api/v1/requests/:promiseId
 
-
 ### Очередь запросов
-
 
 ### Обработка задач
 
-
 ### Интеграция с AI провайдерами
-
 
 ### Управление контекстом
 
-
 ### Интеграция с PhaseMachine
-
 
 ### Action definitions
 
-
 ### Action executor
-
 
 ### Action registry
 
-
 ### Unit тесты
-
 
 ### Integration тесты
 
-
 ### E2E тесты
-
 
 ### Docker контейнеризация
 
-
 ### CI/CD pipeline
-
 
 ### Мониторинг
 

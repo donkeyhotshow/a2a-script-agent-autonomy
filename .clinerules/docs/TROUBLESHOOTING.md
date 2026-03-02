@@ -9,12 +9,15 @@ This guide provides solutions to common issues encountered when using the Cline 
 ### 1. File System Issues
 
 #### Problem: "File not found" errors
+
 **Symptoms**: Errors when loading review queue or saving files
+
 ```bash
 Error loading review queue: Error: ENOENT: no such file or directory
 ```
 
 **Solutions**:
+
 1. **Check directory structure**:
    ```bash
    ls -la .clinerules/
@@ -33,12 +36,15 @@ Error loading review queue: Error: ENOENT: no such file or directory
    ```
 
 #### Problem: Permission denied errors
+
 **Symptoms**: Cannot read or write files
+
 ```bash
 Error: EACCES: permission denied, open '.clinerules/reviews/review-requests.json'
 ```
 
 **Solutions**:
+
 1. **Check file permissions**:
    ```bash
    ls -la .clinerules/reviews/review-requests.json
@@ -59,12 +65,15 @@ Error: EACCES: permission denied, open '.clinerules/reviews/review-requests.json
 ### 2. Node.js Issues
 
 #### Problem: "Module not found" errors
+
 **Symptoms**: Cannot load required modules
+
 ```bash
 Error: Cannot find module './.clinerules/scripts/review-workflow.js'
 ```
 
 **Solutions**:
+
 1. **Check Node.js version**:
    ```bash
    node --version
@@ -83,12 +92,15 @@ Error: Cannot find module './.clinerules/scripts/review-workflow.js'
    ```
 
 #### Problem: Syntax errors in JavaScript files
+
 **Symptoms**: Parse errors when running scripts
+
 ```bash
 SyntaxError: Unexpected token ...
 ```
 
 **Solutions**:
+
 1. **Check Node.js version compatibility**:
    ```bash
    node --version
@@ -103,19 +115,22 @@ SyntaxError: Unexpected token ...
    ```
 
 3. **Check for encoding issues**:
-   - Ensure files are saved with UTF-8 encoding
-   - Remove any BOM (Byte Order Mark) if present
+    - Ensure files are saved with UTF-8 encoding
+    - Remove any BOM (Byte Order Mark) if present
 
 ### 3. CLI Issues
 
 #### Problem: CLI commands not working
+
 **Symptoms**: Commands fail or show help instead of executing
+
 ```bash
 node .clinerules/scripts/cli.js create docs/test.md
 # Shows help instead of creating file
 ```
 
 **Solutions**:
+
 1. **Check command syntax**:
    ```bash
    node .clinerules/scripts/cli.js help
@@ -133,12 +148,15 @@ node .clinerules/scripts/cli.js create docs/test.md
    ```
 
 #### Problem: CLI shows "Unknown command"
+
 **Symptoms**: Command not recognized
+
 ```bash
 Unknown command: create
 ```
 
 **Solutions**:
+
 1. **Check CLI file integrity**:
    ```bash
    head -20 .clinerules/scripts/cli.js
@@ -159,13 +177,16 @@ Unknown command: create
 ### 4. Review Workflow Issues
 
 #### Problem: Reviews not appearing in list
+
 **Symptoms**: `list` command shows no reviews or empty results
+
 ```bash
 node .clinerules/scripts/cli.js list all
 # Shows no reviews
 ```
 
 **Solutions**:
+
 1. **Check review queue file**:
    ```bash
    cat .clinerules/reviews/review-requests.json
@@ -183,13 +204,16 @@ node .clinerules/scripts/cli.js list all
    ```
 
 #### Problem: Review status not updating
+
 **Symptoms**: Reviews stay in "pending" status
+
 ```bash
 node .clinerules/scripts/cli.js status 123456
 # Shows status: pending even after completion
 ```
 
 **Solutions**:
+
 1. **Check review ID**:
    ```bash
    node .clinerules/scripts/cli.js list all
@@ -212,13 +236,16 @@ node .clinerules/scripts/cli.js status 123456
 ### 5. Integration Issues
 
 #### Problem: CI/CD pipeline failures
+
 **Symptoms**: Pipeline fails when running Cline commands
+
 ```bash
 npm run docs:check
 # Fails in CI environment
 ```
 
 **Solutions**:
+
 1. **Check Node.js version in CI**:
    ```yaml
    # In GitHub Actions
@@ -252,13 +279,16 @@ npm run docs:check
    ```
 
 #### Problem: Package.json scripts not working
+
 **Symptoms**: npm scripts fail
+
 ```bash
 npm run docs:create docs/test.md
 # Fails with error
 ```
 
 **Solutions**:
+
 1. **Check script syntax**:
    ```json
    {
@@ -337,9 +367,11 @@ npm run docs:create docs/test.md
 ## Performance Issues
 
 ### Problem: Slow operations
+
 **Symptoms**: Commands take too long to execute
 
 **Solutions**:
+
 1. **Enable caching**:
    ```javascript
    class OptimizedReviewWorkflow extends ReviewWorkflow {
@@ -447,19 +479,19 @@ npm run docs:create docs/test.md
    ```
 
 3. **Contact support**:
-   - Check system documentation in `docs/`
-   - Review integration guide in `docs/INTEGRATION-GUIDE.md`
-   - Run test suite: `node .clinerules/scripts/test-review-workflow.js`
+    - Check system documentation in `docs/`
+    - Review integration guide in `docs/INTEGRATION-GUIDE.md`
+    - Run test suite: `node .clinerules/scripts/test-review-workflow.js`
 
 ### Common Error Codes
 
-| Error Code | Description | Solution |
-|------------|-------------|----------|
-| ENOENT | File not found | Check file paths and permissions |
-| EACCES | Permission denied | Fix file/directory permissions |
-| EISDIR | Is a directory | Check file vs directory usage |
-| JSON_PARSE_ERROR | Invalid JSON | Validate JSON syntax |
-| MODULE_NOT_FOUND | Missing dependency | Install required modules |
+| Error Code       | Description        | Solution                         |
+|------------------|--------------------|----------------------------------|
+| ENOENT           | File not found     | Check file paths and permissions |
+| EACCES           | Permission denied  | Fix file/directory permissions   |
+| EISDIR           | Is a directory     | Check file vs directory usage    |
+| JSON_PARSE_ERROR | Invalid JSON       | Validate JSON syntax             |
+| MODULE_NOT_FOUND | Missing dependency | Install required modules         |
 
 ### Prevention Tips
 
@@ -488,4 +520,5 @@ npm run docs:create docs/test.md
    node .clinerules/scripts/test-review-workflow.js
    ```
 
-This troubleshooting guide covers the most common issues with the Cline Documentation Review System. If problems persist, consult the system documentation or create a detailed issue report with error messages and steps to reproduce.
+This troubleshooting guide covers the most common issues with the Cline Documentation Review System. If problems
+persist, consult the system documentation or create a detailed issue report with error messages and steps to reproduce.

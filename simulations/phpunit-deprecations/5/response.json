@@ -5,9 +5,27 @@
       "action": "phpunit-deprecations",
       "step": "completed",
       "history": [
-        { "step": "scan-phpunit", "status": "completed", "result": { "total": 45 } },
-        { "step": "detect-deprecations", "status": "completed", "result": { "deprecations": 2 } },
-        { "step": "generate-deprecations-report", "status": "completed", "result": { "report": "generated" } }
+        {
+          "step": "scan-phpunit",
+          "status": "completed",
+          "result": {
+            "total": 45
+          }
+        },
+        {
+          "step": "detect-deprecations",
+          "status": "completed",
+          "result": {
+            "deprecations": 2
+          }
+        },
+        {
+          "step": "generate-deprecations-report",
+          "status": "completed",
+          "result": {
+            "report": "generated"
+          }
+        }
       ]
     }
   },
@@ -19,8 +37,18 @@
     },
     "details": {
       "deprecations": [
-        { "method": "assertEquals", "file": "tests/Unit/UserTest.php", "line": 15, "suggestion": "assertEqualsWithDelta" },
-        { "method": "assertInternalType", "file": "tests/Feature/AuthTest.php", "line": 22, "suggestion": "assertIsArray" }
+        {
+          "method": "assertEquals",
+          "file": "tests/Unit/UserTest.php",
+          "line": 15,
+          "suggestion": "assertEqualsWithDelta"
+        },
+        {
+          "method": "assertInternalType",
+          "file": "tests/Feature/AuthTest.php",
+          "line": 22,
+          "suggestion": "assertIsArray"
+        }
       ],
       "documentation": "# PHPUnit Deprecations\n\n## Знайдені deprecated методи\n- **assertEquals** → use assertEqualsWithDelta\n- **assertInternalType** → use assertIsArray\n\n## Файли\n- tests/Unit/UserTest.php:15\n- tests/Feature/AuthTest.php:22\n\n## Всього тестів: 45\n## Знайдено: 2"
     }

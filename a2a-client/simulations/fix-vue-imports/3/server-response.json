@@ -1,1 +1,38 @@
-{"context":{"task":"виправити імпорти у vue компонентах","execution":{"action":"fix-vue-imports","step":"vue-import-resolve"}},"execute":{"script":{"input":{"broken_imports":[{"file":"resources/js/Pages/Auth/Login.vue","line":3,"import":"import Header from '../components/Header'"},{"file":"resources/js/Pages/Auth/Register.vue","line":5,"import":"import { helper } from '../../utils/helpers'"},{"file":"resources/js/components/UserCard.vue","line":2,"import":"import { userStore } from '@/stores/user'"}],"aliases":{"@":"resources/js","~":"resources"}},"output":"patches[]","code":"// vue-import-resolve.dsl\n// Вирішення правильних шляхів для зламаних імпортів\n\nconst result = await script.execute('vue-import-resolve', { broken_imports, aliases });"}}}
+{
+  "context": {
+    "task": "виправити імпорти у vue компонентах",
+    "execution": {
+      "action": "fix-vue-imports",
+      "step": "vue-import-resolve"
+    }
+  },
+  "execute": {
+    "script": {
+      "input": {
+        "broken_imports": [
+          {
+            "file": "resources/js/Pages/Auth/Login.vue",
+            "line": 3,
+            "import": "import Header from '../components/Header'"
+          },
+          {
+            "file": "resources/js/Pages/Auth/Register.vue",
+            "line": 5,
+            "import": "import { helper } from '../../utils/helpers'"
+          },
+          {
+            "file": "resources/js/components/UserCard.vue",
+            "line": 2,
+            "import": "import { userStore } from '@/stores/user'"
+          }
+        ],
+        "aliases": {
+          "@": "resources/js",
+          "~": "resources"
+        }
+      },
+      "output": "patches[]",
+      "code": "// vue-import-resolve.dsl\n// Вирішення правильних шляхів для зламаних імпортів\n\nconst result = await script.execute('vue-import-resolve', { broken_imports, aliases });"
+    }
+  }
+}

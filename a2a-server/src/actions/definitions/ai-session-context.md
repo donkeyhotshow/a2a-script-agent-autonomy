@@ -4,7 +4,8 @@
 
 ## Description
 
-Система для сохранения и использования контекста из предыдущих сессий при работе с новыми задачами. AI создаёт документ на каждую входящую задачу и за первую итерацию выводит до состояния плана изучения проблемы.
+Система для сохранения и использования контекста из предыдущих сессий при работе с новыми задачами. AI создаёт документ
+на каждую входящую задачу и за первую итерацию выводит до состояния плана изучения проблемы.
 
 ## Priority
 
@@ -36,6 +37,7 @@
 ## SubActions
 
 ### Step 1: capture-task
+
 **Title:** Захват входящей задачи
 **Input:** user_message, session_id
 **Output:** captured_task
@@ -60,6 +62,7 @@ export default async function captureTask(input: {
 ```
 
 ### Step 2: analyze-intent
+
 **Title:** Анализ намерения и типа задачи
 **Input:** captured_task
 **Output:** intent_analysis
@@ -108,6 +111,7 @@ export default async function analyzeIntent(input: { captured_task: any }) {
 ```
 
 ### Step 3: collect-session-context
+
 **Title:** Сбор контекста из предыдущих сессий
 **Input:** intent_analysis
 **Output:** session_context
@@ -145,6 +149,7 @@ export default async function collectSessionContext(input: {
 ```
 
 ### Step 4: llm-first-iteration
+
 **Title:** Первая итерация - LLM анализ и план
 **Input:** captured_task, intent_analysis, session_context
 **Output:** study_plan
@@ -215,6 +220,7 @@ function parseStudyPlan(response: string) {
 ```
 
 ### Step 5: create-context-document
+
 **Title:** Создание документа контекста
 **Input:** captured_task, intent_analysis, study_plan
 **Output:** context_document

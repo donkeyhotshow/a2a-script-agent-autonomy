@@ -70,7 +70,7 @@ script: |
               newContent = content.replace(patch.search, patch.replace);
             }
             break;
-            
+  
           case 'insert':
             if (patch.line !== undefined && patch.replace) {
               const lines = content.split('\n');
@@ -78,7 +78,7 @@ script: |
               newContent = lines.join('\n');
             }
             break;
-            
+  
           case 'delete':
             if (patch.search) {
               newContent = content.replace(patch.search, '');
@@ -92,7 +92,7 @@ script: |
 
         results.push({ patch, success: true });
         applied++;
-        
+  
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);
         failed.push({ patch, error: errorMessage });

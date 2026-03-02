@@ -26,10 +26,10 @@ a2a-client/simulations/
 
 ## Типи файлів
 
-| File | Description |
-|------|-------------|
-| `server-response.json` | Що сервер відправляє (те саме що `simulations/<sim>/<step>/response.json`). |
-| `client-request.json` | Правильна відповідь клієнта для валідації (те саме що `simulations/<sim>/<step+1>/request.json`). |
+| File                   | Description                                                                                       |
+|------------------------|---------------------------------------------------------------------------------------------------|
+| `server-response.json` | Що сервер відправляє (те саме що `simulations/<sim>/<step>/response.json`).                       |
+| `client-request.json`  | Правильна відповідь клієнта для валідації (те саме що `simulations/<sim>/<step+1>/request.json`). |
 
 ## Правила для клієнта
 
@@ -48,6 +48,7 @@ a2a-client/simulations/
 ### Крок 1: Сервер прислав form з choices
 
 **server-response.json:**
+
 ```json
 {
   "context": { "task": "..." },
@@ -64,6 +65,7 @@ a2a-client/simulations/
 ```
 
 **client-request.json:**
+
 ```json
 {
   "context": { "task": "..." },
@@ -74,6 +76,7 @@ a2a-client/simulations/
 ### Крок 2: Сервер прислав form з message
 
 **server-response.json:**
+
 ```json
 {
   "context": { "task": "...", "execution": { "action": "dialog", "step": "dialog" } },
@@ -84,6 +87,7 @@ a2a-client/simulations/
 ```
 
 **client-request.json:**
+
 ```json
 {
   "context": { "task": "...", "execution": { "action": "dialog", "step": "dialog" } },
@@ -94,6 +98,7 @@ a2a-client/simulations/
 ### Крок 3: Сервер прислав execute.rag-search
 
 **server-response.json:**
+
 ```json
 {
   "context": { ... },
@@ -104,6 +109,7 @@ a2a-client/simulations/
 ```
 
 **client-request.json:**
+
 ```json
 {
   "context": { ... },
@@ -118,34 +124,38 @@ a2a-client/simulations/
 
 ## Симуляції
 
-| Симуляція | Опис |
-|-----------|------|
-| `fix-vue-imports` | form (choice) → script steps → finalResult |
-| `dialog` | actions → result.action; form (message) → result.message |
-| `coder` | form (message) → result.message; execute.rag-search → result.rag-search; execute.read-file → result.read-file |
-| `auto-ai` | form, rag-search, read-file, write-file, execute-command → result.execute-command (command, exitCode, stdout, stderr) |
-| `analyze-dialog` | form з choices (continue_search / save_report) → result.choice |
+| Симуляція         | Опис                                                                                                                  |
+|-------------------|-----------------------------------------------------------------------------------------------------------------------|
+| `fix-vue-imports` | form (choice) → script steps → finalResult                                                                            |
+| `dialog`          | actions → result.action; form (message) → result.message                                                              |
+| `coder`           | form (message) → result.message; execute.rag-search → result.rag-search; execute.read-file → result.read-file         |
+| `auto-ai`         | form, rag-search, read-file, write-file, execute-command → result.execute-command (command, exitCode, stdout, stderr) |
+| `analyze-dialog`  | form з choices (continue_search / save_report) → result.choice                                                        |
 
 ## Правила для двох типів дій
 
-У першій відповіді сервера: **actions** (первоочергово) — захардкоджені кроки, сервер перемикає; **ai-actions** (другочергово) — список доступних кроків, наступний з відповіді LLM, можливий окремий запит на крок.
+У першій відповіді сервера: **actions** (первоочергово) — захардкоджені кроки, сервер перемикає; **ai-actions** (
+другочергово) — список доступних кроків, наступний з відповіді LLM, можливий окремий запит на крок.
 
 ### 1. Actions (первоочергові, захардкоджені кроки)
 
 **Типові приклади:** `fix-vue-imports`, `fix-vue-imports-batched`
 
 **Поведінка клієнта:**
+
 1. Отримує `execute.script` з інструкцією
 2. Виконує script
 3. Повертає `result.script` з виводом
 4. Сервер автоматично перемикає `execution.step`
 
 **Що очікувати від сервера:**
+
 - `context.execution.step` — назва поточного кроку (з definition)
 - `execute` — конкретна дія для виконання
 - Наступний крок не потребує рішення від клієнта
 
 **Приклад:**
+
 ```json
 // Сервер → Клієнт
 {
@@ -169,6 +179,7 @@ a2a-client/simulations/
 **Типові приклади:** `dialog`, `coder`, `coder-smart`, `auto-ai`
 
 **Поведінка клієнта:**
+
 1. Отримує `execute.form` або `execute.message` або `execute.llm`
 2. Для form: показує форму користувачу
 3. Для message: показує повідомлення
@@ -177,6 +188,7 @@ a2a-client/simulations/
 6. Сервер відправляє контекст до LLM
 
 **Що очікувати від сервера:**
+
 - `context.execution.step` = "llm" (або динамічний)
 - `execute.form` — очікування вводу
 - `execute.message` — повідомлення для відображення
@@ -185,16 +197,17 @@ a2a-client/simulations/
 
 **Формати execute для AI-Actions:**
 
-| execute | Клієнт → result |
-|---------|------------------|
-| `execute.form.input` | `result.message` |
-| `execute.form.choices` | `result.choice` |
-| `execute.rag-search` | `result.rag-search` |
-| `execute.read-file` | `result.read-file` |
-| `execute.write-file` | `result.write-file` |
+| execute                   | Клієнт → result          |
+|---------------------------|--------------------------|
+| `execute.form.input`      | `result.message`         |
+| `execute.form.choices`    | `result.choice`          |
+| `execute.rag-search`      | `result.rag-search`      |
+| `execute.read-file`       | `result.read-file`       |
+| `execute.write-file`      | `result.write-file`      |
 | `execute.execute-command` | `result.execute-command` |
 
 **Приклад діалогу:**
+
 ```json
 // Сервер → Клієнт
 {
@@ -222,9 +235,9 @@ a2a-client/simulations/
 
 ### Різниця в обробці
 
-| Аспект | Actions | AI-Actions |
-|--------|---------|------------|
-| Перехід між кроками | Автоматичний (сервер) | Через LLM |
-| Очікування вводу | Ні (execute.script) | Так (execute.form) |
-| Повідомлення | Ні | Так (execute.message) |
-| result | script output | message / choice / action result |
+| Аспект              | Actions               | AI-Actions                       |
+|---------------------|-----------------------|----------------------------------|
+| Перехід між кроками | Автоматичний (сервер) | Через LLM                        |
+| Очікування вводу    | Ні (execute.script)   | Так (execute.form)               |
+| Повідомлення        | Ні                    | Так (execute.message)            |
+| result              | script output         | message / choice / action result |

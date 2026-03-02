@@ -1,11 +1,15 @@
 # analyze-security
 
-Security-focused analysis: dependencies, patterns, risks. **План:** [actions-definitions-for-auto-ai](../../../../plans/actions-definitions-for-auto-ai.md). **Use-case:** [2-code-analysis](../../../../docs/use-cases/auto-ai/2-code-analysis.md).
+Security-focused analysis: dependencies, patterns, risks. **План:
+** [actions-definitions-for-auto-ai](../../../../plans/actions-definitions-for-auto-ai.md). **Use-case:
+** [2-code-analysis](../../../../docs/use-cases/auto-ai/2-code-analysis.md).
 
 ## Priority
+
 85
 
 ## Triggers
+
 - security analysis
 - analyze security
 - security audit
@@ -13,6 +17,7 @@ Security-focused analysis: dependencies, patterns, risks. **План:** [actions
 ## Sub-actions
 
 ### 1. analyze-security-scan
+
 Scan for common security issues (e.g. hardcoded secrets, unsafe patterns).
 
 **Input:** rootDir  
@@ -176,6 +181,7 @@ export default async function run(input: { rootDir: string }): Promise<{ finding
 ```
 
 ### 2. analyze-security-report
+
 Aggregate findings and produce security report (SQL injection, XSS, CSRF, secrets).
 
 **Input:** findings[]  

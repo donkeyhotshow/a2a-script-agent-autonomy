@@ -2,87 +2,87 @@
 
 /**
  * Скрипт для создания новой симуляции
- * 
+ *
  * Использование:
  *   npm run sim:create <action-name>
- *   
+ *
  * Пример:
  *   npm run sim:create fix-vue-imports
- * 
+ *
  * Результат:
  *   - Создает папку simulations/<action-name>/
  *   - Генерирует request.json, response.json, description.md, NOTES.md
  */
 
-import { mkdirSync, writeFileSync, existsSync } from 'node:fs';
-import { join } from 'node:path';
+import {mkdirSync, writeFileSync, existsSync} from 'node:fs';
+import {join} from 'node:path';
 
 const actionName = process.argv[2];
 
 if (!actionName) {
-  console.error('❌ Usage: npm run sim:create <action-name>');
-  console.error('   Example: npm run sim:create fix-vue-imports');
-  process.exit(1);
+    console.error('❌ Usage: npm run sim:create <action-name>');
+    console.error('   Example: npm run sim:create fix-vue-imports');
+    process.exit(1);
 }
 
 // Валидация имени
 const validNameRegex = /^[a-z0-9-]+$/;
 if (!validNameRegex.test(actionName)) {
-  console.error('❌ Invalid action name. Use lowercase letters, numbers, and hyphens only.');
-  process.exit(1);
+    console.error('❌ Invalid action name. Use lowercase letters, numbers, and hyphens only.');
+    process.exit(1);
 }
 
 const simDir = join(__dirname, '..', 'simulations', actionName);
 
 // Проверка существования
 if (existsSync(simDir)) {
-  console.error(`❌ Simulation already exists: ${simDir}`);
-  console.error('   Use a different name or remove existing simulation.');
-  process.exit(1);
+    console.error(`❌ Simulation already exists: ${simDir}`);
+    console.error('   Use a different name or remove existing simulation.');
+    process.exit(1);
 }
 
 // Создаем директорию
-mkdirSync(simDir, { recursive: true });
+mkdirSync(simDir, {recursive: true});
 console.log(`\n✅ Created directory: ${simDir}`);
 
 // Шаблон request.json
 const requestTemplate = {
-  action: actionName,
-  context: {
-    version: '1.0',
-    session_id: `sim-${actionName}-001`,
-    task: `Выполни экшен ${actionName}`,
-    workspace: {
-      root: '/test/project',
-      files: []
+    action: actionName,
+    context: {
+        version: '1.0',
+        session_id: `sim-${actionName}-001`,
+        task: `Выполни экшен ${actionName}`,
+        workspace: {
+            root: '/test/project',
+            files: []
+        }
     }
-  }
 };
 
 // Шаблон response.json (gold standard)
 const responseTemplate = {
-  sessionId: `sim-${actionName}-001`,
-  response: {
-    type: 'action_proposal',
-    proposedActions: [
-      {
-        id: actionName,
-        name: actionName,
-        description: `Выполнение экшена ${actionName}`
-      }
-    ],
-    execution: {
-      history: [],
-      executingAction: null,
-      currentStep: 0
-    }
-  },
-  nextSteps: [
-    {
-      type: 'approve_action',
-      description: 'Выберите действие для выполнения'
-    }
-  ]
+    sessionId: `sim-${actionName}-001`,
+    response: {
+        type: 'action_proposal',
+        proposedActions: [
+            {
+                id: actionName,
+                name: actionName,
+                description: `Выполнение экшена ${actionName}`
+            }
+        ],
+        execution: {
+            history: [],
+            executingAction: null,
+            currentStep: 0
+        }
+    },
+    nextSteps: [
+        {
+            type: 'approve_action',
+            description: 'Выберите действие для выполнения'
+        }
+    ]
 };
 
 // Шаблон description.md
@@ -139,26 +139,26 @@ const notesTemplate = `# Заметки по симуляции ${actionName}
 
 // Записываем файлы
 writeFileSync(
-  join(simDir, 'request.json'),
-  JSON.stringify(requestTemplate, null, 2)
+    join(simDir, 'request.json'),
+    JSON.stringify(requestTemplate, null, 2)
 );
 console.log('✅ Created: request.json');
 
 writeFileSync(
-  join(simDir, 'response.json'),
-  JSON.stringify(responseTemplate, null, 2)
+    join(simDir, 'response.json'),
+    JSON.stringify(responseTemplate, null, 2)
 );
 console.log('✅ Created: response.json (gold standard)');
 
 writeFileSync(
-  join(simDir, 'description.md'),
-  descriptionTemplate
+    join(simDir, 'description.md'),
+    descriptionTemplate
 );
 console.log('✅ Created: description.md');
 
 writeFileSync(
-  join(simDir, 'NOTES.md'),
-  notesTemplate
+    join(simDir, 'NOTES.md'),
+    notesTemplate
 );
 console.log('✅ Created: NOTES.md');
 

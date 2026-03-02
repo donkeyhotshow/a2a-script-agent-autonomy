@@ -1,11 +1,15 @@
 # analyze-full
 
-Полный анализ проекта: запуск всех активных нейронов. **План:** [actions-definitions-for-auto-ai](../../../../plans/actions-definitions-for-auto-ai.md). **Use-case:** [2-code-analysis](../../../../docs/use-cases/auto-ai/2-code-analysis.md).
+Полный анализ проекта: запуск всех активных нейронов. **План:
+** [actions-definitions-for-auto-ai](../../../../plans/actions-definitions-for-auto-ai.md). **Use-case:
+** [2-code-analysis](../../../../docs/use-cases/auto-ai/2-code-analysis.md).
 
 ## Priority
+
 80
 
 ## Triggers
+
 - full analysis
 - analyze project
 - project analysis
@@ -15,6 +19,7 @@
 ## Sub-actions
 
 ### 1. analyze-collect
+
 Сбор файлов для анализа.
 
 **Input:** rootDir  
@@ -79,6 +84,7 @@ export default async function run(input: { rootDir: string }): Promise<{ files: 
 ```
 
 ### 2. analyze-detect
+
 Запуск детекторов (нейроны, паттерны).
 
 **Input:** files[]  
@@ -145,6 +151,7 @@ export default async function run(input: { files: Array<{ path: string; extensio
 ```
 
 ### 3. analyze-aggregate
+
 Агрегация результатов по файлам/типам.
 
 **Input:** raw_findings[]  
@@ -186,6 +193,7 @@ export default async function run(input: { raw_findings: Array<{ file: string; l
 ```
 
 ### 4. analyze-prioritize
+
 Приоритизация по критичности.
 
 **Input:** aggregated  
@@ -225,6 +233,7 @@ export default async function run(input: { aggregated: { byFile: Record<string, 
 ```
 
 ### 5. analyze-report
+
 Формирование отчёта.
 
 **Input:** prioritized[]  

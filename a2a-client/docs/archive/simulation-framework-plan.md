@@ -2,9 +2,11 @@
 
 ## Вступ
 
-Цей план описує створення симуляційного фреймворку для тестування кожного non-placeholder екшену перед реалізацією unified JSON frontend. 
+Цей план описує створення симуляційного фреймворку для тестування кожного non-placeholder екшену перед реалізацією
+unified JSON frontend.
 
-**Мета:** Створити можливість локально запускати симуляції, зберігати response.json для порівняння, та верифікувати протокол між клієнтом і сервером.
+**Мета:** Створити можливість локально запускати симуляції, зберігати response.json для порівняння, та верифікувати
+протокол між клієнтом і сервером.
 
 ## 1. Аналіз поточної структури
 
@@ -30,6 +32,7 @@ a2a-server/src/
 ```
 
 **Протокол (types/index.ts):**
+
 - `ContextBlock` - версія '1.0', session_id, tasks[], errors[]
 - `Task` - id, type, status, progress
 - `FileBlock` - path, content, startLine, endLine
@@ -120,6 +123,7 @@ simulations/<action-id>/
 ```
 
 **Ключове правило:**
+
 - `response.json` - **Еталон вимог** (створений вручну, цільова поведінка системи)
 - `server-response.json` - реальна відповідь сервера (для порівняння та "дотягування" до еталону)
 
@@ -127,12 +131,12 @@ simulations/<action-id>/
 
 ### 3.1 Основні екшени (з повною імплементацією)
 
-| Екшен | Файл | Sub-actions | Пріоритет |
-|-------|------|-------------|-----------|
-| fix-vue-imports | definitions/fix-vue-imports.md | 4 (detect→resolve→apply→cleanup) | HIGH |
-| analyze-full | definitions/analysis/analyze-full.md | TBD | HIGH |
-| hybrid-fix | definitions/hybrid/hybrid-fix.md | TBD | HIGH |
-| generate-crud | definitions/generation/generate-crud.md | TBD | MEDIUM |
+| Екшен           | Файл                                    | Sub-actions                      | Пріоритет |
+|-----------------|-----------------------------------------|----------------------------------|-----------|
+| fix-vue-imports | definitions/fix-vue-imports.md          | 4 (detect→resolve→apply→cleanup) | HIGH      |
+| analyze-full    | definitions/analysis/analyze-full.md    | TBD                              | HIGH      |
+| hybrid-fix      | definitions/hybrid/hybrid-fix.md        | TBD                              | HIGH      |
+| generate-crud   | definitions/generation/generate-crud.md | TBD                              | MEDIUM    |
 
 ### 3.2 Екшени для аналізу
 
@@ -312,12 +316,12 @@ STEP 3-N: step_result (повторюється для кожного sub-action
 
 ### 5.3 Маппінг екшенів на UI компоненти
 
-| Екшен | UI Компонент | JSON Конфіг |
-|-------|--------------|-------------|
-| search | SearchBar | type: search |
-| action list | ActionCards | type: list, items: actions |
-| execute | ActionForm | type: form |
-| monitor | TicketsPanel | type: tickets |
+| Екшен       | UI Компонент | JSON Конфіг                |
+|-------------|--------------|----------------------------|
+| search      | SearchBar    | type: search               |
+| action list | ActionCards  | type: list, items: actions |
+| execute     | ActionForm   | type: form                 |
+| monitor     | TicketsPanel | type: tickets              |
 
 ## 6. План імплементації
 
@@ -418,11 +422,11 @@ npm run simulate:compare fix-vue-imports
 
 ## 10. Ризики та пом'якшення
 
-| Ризик | Пом'якшення |
-|-------|-------------|
-| Сервер не відповідає | Перевірка доступності перед симуляцією |
-| Протокол змінюється | Версіонування через ContextBlock.version |
-| Велика кількість екшенів | Пріоритизація за business value |
+| Ризик                    | Пом'якшення                              |
+|--------------------------|------------------------------------------|
+| Сервер не відповідає     | Перевірка доступності перед симуляцією   |
+| Протокол змінюється      | Версіонування через ContextBlock.version |
+| Велика кількість екшенів | Пріоритизація за business value          |
 
 ---
 

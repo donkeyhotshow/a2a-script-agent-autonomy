@@ -2,67 +2,67 @@
 
 /* Mobile Responsive Styles for variant4.html */
 @media (max-width: 768px) {
-  .header-form {
-    position: relative;
-  }
+    .header-form {
+        position: relative;
+    }
 
-  .header-form input,
-  .header-form select {
-    display: none;
-  }
+    .header-form input,
+    .header-form select {
+        display: none;
+    }
 
-  .header-form.collapsed {
-    width: 40px;
-  }
+    .header-form.collapsed {
+        width: 40px;
+    }
 
-  .header-form.collapsed input,
-  .header-form.collapsed select {
-    display: none;
-  }
+    .header-form.collapsed input,
+    .header-form.collapsed select {
+        display: none;
+    }
 
-  .header-form:not(.collapsed) {
-    position: absolute;
-    top: 60px;
-    right: 10px;
-    background: #1a1a1a;
-    padding: 10px;
-    border-radius: 8px;
-    z-index: 100;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    width: 200px;
-  }
+    .header-form:not(.collapsed) {
+        position: absolute;
+        top: 60px;
+        right: 10px;
+        background: #1a1a1a;
+        padding: 10px;
+        border-radius: 8px;
+        z-index: 100;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        width: 200px;
+    }
 
-  .header-form:not(.collapsed) input,
-  .header-form:not(.collapsed) select {
-    display: block;
-    width: 100%;
-    margin-bottom: 0;
-  }
+    .header-form:not(.collapsed) input,
+    .header-form:not(.collapsed) select {
+        display: block;
+        width: 100%;
+        margin-bottom: 0;
+    }
 
-  /* Toggle button for mobile */
-  .form-toggle {
-    width: 32px;
-    height: 32px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--pui-accent);
-    border: none;
-    border-radius: 6px;
-    color: white;
-    font-size: 18px;
-    cursor: pointer;
-    flex-shrink: 0;
-  }
+    /* Toggle button for mobile */
+    .form-toggle {
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--pui-accent);
+        border: none;
+        border-radius: 6px;
+        color: white;
+        font-size: 18px;
+        cursor: pointer;
+        flex-shrink: 0;
+    }
 
-  .form-toggle:hover {
-    background: #818cf8;
-  }
+    .form-toggle:hover {
+        background: #818cf8;
+    }
 
-  .form-toggle:focus {
-    outline: 2px solid white;
-    outline-offset: 2px;
-  }
+    .form-toggle:focus {
+        outline: 2px solid white;
+        outline-offset: 2px;
+    }
 }

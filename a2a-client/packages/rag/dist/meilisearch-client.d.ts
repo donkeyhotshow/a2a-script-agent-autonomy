@@ -7,11 +7,13 @@ declare const DEFAULT_SETTINGS: {
     sortableAttributes: string[];
     rankingRules: string[];
 };
+
 export interface MeilisearchConfig {
     host?: string;
     apiKey?: string;
     indexName?: string;
 }
+
 export interface MeilisearchDocument {
     id: string;
     path?: string;
@@ -22,6 +24,7 @@ export interface MeilisearchDocument {
     framework?: string;
     lastModified?: number;
 }
+
 export interface MeilisearchSearchOptions {
     limit?: number;
     offset?: number;
@@ -29,30 +32,46 @@ export interface MeilisearchSearchOptions {
     attributesToRetrieve?: string[];
     attributesToHighlight?: string[];
 }
+
 export interface MeilisearchSearchResult {
     hits: Array<Record<string, unknown>>;
+
     [key: string]: unknown;
 }
+
 export declare class MeilisearchClient {
     host: string;
     apiKey: string | undefined;
     indexName: string;
     index: unknown;
     initialized: boolean;
+
     constructor(config?: MeilisearchConfig);
+
     private _getHeaders;
+
     initialize(): Promise<void>;
+
     private _getIndexes;
     private _createIndex;
     private _waitForIndex;
     private _configureIndex;
+
     addDocuments(documents: MeilisearchDocument[]): Promise<string>;
+
     search(query: string, options?: MeilisearchSearchOptions): Promise<MeilisearchSearchResult>;
+
     deleteDocument(id: string): Promise<string>;
+
     deleteAllDocuments(): Promise<string>;
+
     getStats(): Promise<Record<string, unknown>>;
+
     isAvailable(): Promise<boolean>;
+
     getHealth(): Promise<Record<string, unknown>>;
 }
+
 export declare function createMeilisearchClient(config?: MeilisearchConfig): MeilisearchClient;
-export { DEFAULT_SETTINGS };
+
+export {DEFAULT_SETTINGS};

@@ -4,12 +4,14 @@
  */
 export type TaskType = 'analyze' | 'refactor' | 'test' | 'document' | 'fix' | 'create' | 'delete';
 export type TaskStatus = 'pending' | 'in_progress' | 'completed' | 'failed' | 'cancelled';
+
 export interface ProtocolError {
     code: string;
     message: string;
     file?: string;
     line?: number;
 }
+
 export interface Task {
     id: string;
     type: TaskType;
@@ -17,6 +19,7 @@ export interface Task {
     target?: string;
     progress?: number;
 }
+
 export interface ContextBlock {
     version: '1.0';
     session_id: string;
@@ -28,10 +31,17 @@ export interface ContextBlock {
     confirm?: boolean;
     errors?: ProtocolError[];
 }
+
 /**
  * All possible unified response types
  */
-export type ResponseType = 'action_proposal' | 'action_executing' | 'action_progress' | 'action_completed' | 'action_error';
+export type ResponseType =
+    'action_proposal'
+    | 'action_executing'
+    | 'action_progress'
+    | 'action_completed'
+    | 'action_error';
+
 /**
  * Base interface for all unified responses
  * Contains common fields for all response types
@@ -40,6 +50,7 @@ export interface BaseResponse {
     success: boolean;
     timestamp: string;
 }
+
 /**
  * Proposed action with metadata
  */
@@ -51,6 +62,7 @@ export interface Action {
     dsl?: Record<string, unknown>;
     dslScript?: string;
 }
+
 /**
  * Fallback action - alternative action when primary cannot be executed
  */
@@ -60,6 +72,7 @@ export interface FallbackAction {
     description?: string;
     reason?: string;
 }
+
 /**
  * Result block for action_proposal response
  */
@@ -68,6 +81,7 @@ export interface ActionProposalResult {
     proposedActions: Action[];
     fallbackActions?: FallbackAction[];
 }
+
 /**
  * Response sent when server proposes actions to client
  */
@@ -75,6 +89,7 @@ export interface ActionProposalResponse extends BaseResponse {
     type: 'action_proposal';
     result: ActionProposalResult;
 }
+
 /**
  * Executing action with current state
  */
@@ -86,6 +101,7 @@ export interface ExecutingAction {
     dsl?: Record<string, unknown>;
     dslScript?: string;
 }
+
 /**
  * Next step in the action execution
  */
@@ -93,6 +109,7 @@ export interface NextStep {
     actionId: string;
     title: string;
 }
+
 /**
  * Result block for action_executing response
  */
@@ -100,6 +117,7 @@ export interface ActionExecutingResult {
     executingAction: Action;
     nextSteps: Action[];
 }
+
 /**
  * Response sent when server is executing an action
  */
@@ -107,6 +125,7 @@ export interface ActionExecutingResponse extends BaseResponse {
     type: 'action_executing';
     result: ActionExecutingResult;
 }
+
 /**
  * Progress update for ongoing action
  */
@@ -122,6 +141,7 @@ export interface ActionProgressResult {
     remainingSteps: string[];
     message?: string;
 }
+
 /**
  * Response sent during action execution to report progress
  */
@@ -129,6 +149,7 @@ export interface ActionProgressResponse extends BaseResponse {
     type: 'action_progress';
     result: ActionProgressResult;
 }
+
 /**
  * Completed action result
  */
@@ -139,6 +160,7 @@ export interface ActionCompletedResult {
     filesModified?: string[];
     executionTimeMs?: number;
 }
+
 /**
  * Response sent when action execution is completed
  */
@@ -146,6 +168,7 @@ export interface ActionCompletedResponse extends BaseResponse {
     type: 'action_completed';
     result: ActionCompletedResult;
 }
+
 /**
  * Error details
  */
@@ -155,6 +178,7 @@ export interface ActionError {
     details?: Record<string, unknown>;
     stack?: string;
 }
+
 /**
  * Result block for action_error response
  */
@@ -164,6 +188,7 @@ export interface ActionErrorResult {
     failedStep?: string;
     canRetry: boolean;
 }
+
 /**
  * Response sent when action execution fails
  */
@@ -171,10 +196,17 @@ export interface ActionErrorResponse extends BaseResponse {
     type: 'action_error';
     result: ActionErrorResult;
 }
+
 /**
  * All possible unified responses
  */
-export type UnifiedResponse = ActionProposalResponse | ActionExecutingResponse | ActionProgressResponse | ActionCompletedResponse | ActionErrorResponse;
+export type UnifiedResponse =
+    ActionProposalResponse
+    | ActionExecutingResponse
+    | ActionProgressResponse
+    | ActionCompletedResponse
+    | ActionErrorResponse;
+
 /**
  * VueFlow node representation
  */
@@ -194,6 +226,7 @@ export interface VueFlowNode {
         [key: string]: unknown;
     };
 }
+
 /**
  * VueFlow edge representation
  */
@@ -206,6 +239,7 @@ export interface VueFlowEdge {
     label?: string;
     data?: Record<string, unknown>;
 }
+
 /**
  * Parsed response with metadata
  */
@@ -216,6 +250,7 @@ export interface ParsedResponse {
     data: UnifiedResponse;
     errors?: string[];
 }
+
 /**
  * Validation result
  */
@@ -225,4 +260,5 @@ export interface ValidationResult {
     warnings?: string[];
     data?: UnifiedResponse;
 }
+
 //# sourceMappingURL=types.d.ts.map

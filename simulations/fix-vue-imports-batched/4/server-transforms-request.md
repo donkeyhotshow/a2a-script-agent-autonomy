@@ -1,6 +1,7 @@
 # Server: request → response (step 4)
 
-**Input:** `request.json` = `{ "context": { "execution": { "step": "request-vite-file" } }, "result": { "file": "...", "content": "..." } }`.
+**Input:** `request.json` =
+`{ "context": { "execution": { "step": "request-vite-file" } }, "result": { "file": "...", "content": "..." } }`.
 
 1. Parse `context.execution.step` = "request-vite-file" and `result.file`, `result.content`.
 2. Validate: we have Vite config content.

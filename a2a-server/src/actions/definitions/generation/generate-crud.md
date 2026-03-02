@@ -1,11 +1,15 @@
 # generate-crud
 
-Генерация CRUD: модель, контроллер, миграция. **План:** [actions-definitions-for-auto-ai](../../../../plans/actions-definitions-for-auto-ai.md). **Use-case:** [4-code-generation](../../../../docs/use-cases/auto-ai/4-code-generation.md).
+Генерация CRUD: модель, контроллер, миграция. **План:
+** [actions-definitions-for-auto-ai](../../../../plans/actions-definitions-for-auto-ai.md). **Use-case:
+** [4-code-generation](../../../../docs/use-cases/auto-ai/4-code-generation.md).
 
 ## Priority
+
 80
 
 ## Triggers
+
 - generate crud
 - crud generation
 - create crud
@@ -15,6 +19,7 @@
 ## Sub-actions
 
 ### 1. generate-analyze
+
 Анализ задачи пользователя (ресурс, поля).
 
 **Input:** task, rootDir?  
@@ -61,6 +66,7 @@ export default async function analyze(input: { task: string; rootDir?: string })
 ```
 
 ### 2. generate-context
+
 Сбор контекста (стиль проекта, существующие модели).
 
 **Input:** spec, rootDir?  
@@ -96,6 +102,7 @@ export default async function collectContext(input: { spec: { resourceName: stri
 ```
 
 ### 3. generate-migration
+
 Генерирует миграцию для БД.
 
 **Input:** spec, context  
@@ -143,6 +150,7 @@ export default async function generateMigration(input: { spec: { resourceName: s
 ```
 
 ### 4. generate-model
+
 Генерирует Eloquent модель.
 
 **Input:** spec, context  
@@ -178,6 +186,7 @@ class ${className} extends Model
 ```
 
 ### 5. generate-controller
+
 Генерирует CRUD контроллер.
 
 **Input:** spec  
@@ -273,6 +282,7 @@ class ${className} extends Controller
 ```
 
 ### 6. generate-routes
+
 Генерирует REST routes.
 
 **Input:** spec  
@@ -300,6 +310,7 @@ export default async function generateRoutes(input: { spec: { resourceName: stri
 ```
 
 ### 7. generate-validate
+
 Валидация синтаксиса сгенерированного кода.
 
 **Input:** drafts  
@@ -350,6 +361,7 @@ export default async function validateCode(input: { drafts: { migration?: { up: 
 ```
 
 ### 8. generate-diff
+
 Формирование diff для превью.
 
 **Input:** valid_drafts  
@@ -396,6 +408,7 @@ export default async function createDiff(input: { valid_drafts: { migration?: { 
 ```
 
 ### 9. generate-apply
+
 Применение изменений (опционально, с подтверждением).
 
 **Input:** diff[], confirm?, rootDir?  

@@ -153,14 +153,14 @@ steps:
 
 ## Validation Rules
 
-| Rule | Description |
-|------|-------------|
-| `id` required | Every action must have unique id |
-| `steps` required | At least one step required |
-| `mixin exists` | Referenced mixin must exist |
-| `output unique` | Step output names must be unique |
-| `input valid` | Input references must exist |
-| `no circular` | No circular mixin dependencies |
+| Rule             | Description                      |
+|------------------|----------------------------------|
+| `id` required    | Every action must have unique id |
+| `steps` required | At least one step required       |
+| `mixin exists`   | Referenced mixin must exist      |
+| `output unique`  | Step output names must be unique |
+| `input valid`    | Input references must exist      |
+| `no circular`    | No circular mixin dependencies   |
 
 ## TypeScript Code in Steps
 
@@ -188,6 +188,6 @@ script: |
 
 ## Version History
 
-| Version | Changes |
-|---------|---------|
-| 1.0 | Initial spec |
+| Version | Changes      |
+|---------|--------------|
+| 1.0     | Initial spec |

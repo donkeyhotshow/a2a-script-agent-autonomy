@@ -2,76 +2,76 @@
  * @a2a/rag - RAG Indexing and Search Module
  */
 
-import { RAGIndexer } from './indexer';
-import { RAGSearcher } from './searcher';
-import { ChunkManager } from './chunk-manager';
-import { TFIDFService } from './tfidf';
-import { RAGIntegrator } from './rag-integrator';
-import { SemanticSearcher } from './semantic-search';
-import { BM25Scorer, createBM25Scorer } from './bm25';
-import { RerankerClient, createReranker } from './reranker';
-import { HybridSearcher, createHybridSearcher } from './hybrid-search';
-import { MeilisearchClient, createMeilisearchClient } from './meilisearch-client';
-import { ASTChunker, createASTChunker } from './ast-chunker';
-import { QueryUnderstandingEngine, createQueryUnderstandingEngine, INTENT_TYPES } from './query-understanding';
-import { SearchSuggestionsEngine, createSuggestionsEngine, QueryExpander, createQueryExpander } from './suggestions';
-import { CodeSimilarityEngine, createSimilarityEngine } from './code-similarity';
+import {RAGIndexer} from './indexer';
+import {RAGSearcher} from './searcher';
+import {ChunkManager} from './chunk-manager';
+import {TFIDFService} from './tfidf';
+import {RAGIntegrator} from './rag-integrator';
+import {SemanticSearcher} from './semantic-search';
+import {BM25Scorer, createBM25Scorer} from './bm25';
+import {RerankerClient, createReranker} from './reranker';
+import {HybridSearcher, createHybridSearcher} from './hybrid-search';
+import {MeilisearchClient, createMeilisearchClient} from './meilisearch-client';
+import {ASTChunker, createASTChunker} from './ast-chunker';
+import {QueryUnderstandingEngine, createQueryUnderstandingEngine, INTENT_TYPES} from './query-understanding';
+import {SearchSuggestionsEngine, createSuggestionsEngine, QueryExpander, createQueryExpander} from './suggestions';
+import {CodeSimilarityEngine, createSimilarityEngine} from './code-similarity';
 
 export interface RAGConfig {
-  projectPath?: string;
-  includePatterns?: string[];
-  excludePatterns?: string[];
-  useTFIDF?: boolean;
-  useBM25?: boolean;
-  useSemantic?: boolean;
-  maxDepth?: number;
-  maxFiles?: number;
-  embeddingModel?: string;
-  embeddingProvider?: string;
+    projectPath?: string;
+    includePatterns?: string[];
+    excludePatterns?: string[];
+    useTFIDF?: boolean;
+    useBM25?: boolean;
+    useSemantic?: boolean;
+    maxDepth?: number;
+    maxFiles?: number;
+    embeddingModel?: string;
+    embeddingProvider?: string;
 }
 
 export interface RAGInstance {
-  indexer: RAGIndexer;
-  searcher: RAGSearcher;
-  chunks: ChunkManager;
-  tfidf: TFIDFService;
+    indexer: RAGIndexer;
+    searcher: RAGSearcher;
+    chunks: ChunkManager;
+    tfidf: TFIDFService;
 }
 
 export function createRAG(config: RAGConfig = {}): RAGInstance {
-  const projectPath = config.projectPath ?? process.cwd();
-  const indexerConfig = { ...config, projectPath };
-  const indexer = new RAGIndexer(indexerConfig as import('./indexer').RAGIndexerConfig);
-  const searcher = new RAGSearcher({ ...config, projectPath });
-  const chunks = new ChunkManager(config as import('./chunk-manager').ChunkManagerConfig);
-  const tfidf = new TFIDFService();
-  return { indexer, searcher, chunks, tfidf };
+    const projectPath = config.projectPath ?? process.cwd();
+    const indexerConfig = {...config, projectPath};
+    const indexer = new RAGIndexer(indexerConfig as import('./indexer').RAGIndexerConfig);
+    const searcher = new RAGSearcher({...config, projectPath});
+    const chunks = new ChunkManager(config as import('./chunk-manager').ChunkManagerConfig);
+    const tfidf = new TFIDFService();
+    return {indexer, searcher, chunks, tfidf};
 }
 
-export type { RAGIndexerConfig } from './indexer';
+export type {RAGIndexerConfig} from './indexer';
 export {
-  RAGIndexer,
-  RAGSearcher,
-  ChunkManager,
-  TFIDFService,
-  RAGIntegrator,
-  SemanticSearcher,
-  BM25Scorer,
-  createBM25Scorer,
-  RerankerClient,
-  createReranker,
-  HybridSearcher,
-  createHybridSearcher,
-  MeilisearchClient,
-  createMeilisearchClient,
-  ASTChunker,
-  createASTChunker,
-  QueryUnderstandingEngine,
-  createQueryUnderstandingEngine,
-  INTENT_TYPES,
-  SearchSuggestionsEngine,
-  createSuggestionsEngine,
-  QueryExpander,
-  createQueryExpander,
-  CodeSimilarityEngine,
-  createSimilarityEngine,
+    RAGIndexer,
+    RAGSearcher,
+    ChunkManager,
+    TFIDFService,
+    RAGIntegrator,
+    SemanticSearcher,
+    BM25Scorer,
+    createBM25Scorer,
+    RerankerClient,
+    createReranker,
+    HybridSearcher,
+    createHybridSearcher,
+    MeilisearchClient,
+    createMeilisearchClient,
+    ASTChunker,
+    createASTChunker,
+    QueryUnderstandingEngine,
+    createQueryUnderstandingEngine,
+    INTENT_TYPES,
+    SearchSuggestionsEngine,
+    createSuggestionsEngine,
+    QueryExpander,
+    createQueryExpander,
+    CodeSimilarityEngine,
+    createSimilarityEngine,
 };

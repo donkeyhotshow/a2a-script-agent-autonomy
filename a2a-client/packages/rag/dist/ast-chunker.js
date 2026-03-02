@@ -3,38 +3,38 @@
  * AST-based Chunking - Parse code using AST
  */
 var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
+    return (mod && mod.__esModule) ? mod : {"default": mod};
 };
-Object.defineProperty(exports, "__esModule", { value: true });
+Object.defineProperty(exports, "__esModule", {value: true});
 exports.ASTChunker = void 0;
 exports.createASTChunker = createASTChunker;
 const crypto_1 = __importDefault(require("crypto"));
+
 class ASTChunker {
     constructor(config = {}) {
         this.parsers = {};
         this.config = config;
         this._initParsers();
     }
+
     _initParsers() {
         try {
             this.parsers.javascript = this._parseJavaScript.bind(this);
-        }
-        catch {
+        } catch {
             this.parsers.javascript = null;
         }
         try {
             this.parsers.php = this._parsePHP.bind(this);
-        }
-        catch {
+        } catch {
             this.parsers.php = null;
         }
         try {
             this.parsers.typescript = this._parseTypeScript.bind(this);
-        }
-        catch {
+        } catch {
             this.parsers.typescript = null;
         }
     }
+
     _getParser(ext) {
         const parserMap = {
             '.js': 'javascript', '.jsx': 'javascript', '.ts': 'typescript', '.tsx': 'typescript', '.php': 'php',
@@ -44,59 +44,60 @@ class ASTChunker {
             return this.parsers[name];
         return null;
     }
+
     chunkFile(filePath, content, ext) {
         const parser = this._getParser(ext);
         if (parser) {
             try {
                 return parser(filePath, content);
-            }
-            catch {
+            } catch {
                 return this._chunkFileRegex(filePath, content, ext);
             }
         }
         return this._chunkFileRegex(filePath, content, ext);
     }
+
     _parseJavaScript(filePath, content) {
         const chunks = [];
         let ast;
         try {
             const acorn = require('acorn');
-            ast = acorn.parse(content, { ecmaVersion: 2020, sourceType: 'module', locations: true });
-        }
-        catch {
+            ast = acorn.parse(content, {ecmaVersion: 2020, sourceType: 'module', locations: true});
+        } catch {
             return this._chunkFileRegex(filePath, content, '.js');
         }
         this._extractDeclarations(ast, chunks, filePath, content);
         return chunks;
     }
+
     _parseTypeScript(filePath, content) {
         const chunks = [];
         try {
             const parser = require('@typescript-eslint/parser');
-            const ast = parser.parse(content, { ecmaVersion: 2020, sourceType: 'module' });
+            const ast = parser.parse(content, {ecmaVersion: 2020, sourceType: 'module'});
             this._extractDeclarations(ast, chunks, filePath, content);
-        }
-        catch {
+        } catch {
             return this._chunkFileRegex(filePath, content, '.ts');
         }
         return chunks;
     }
+
     _parsePHP(filePath, content) {
         const chunks = [];
         try {
             const parser = require('php-parser');
             const engine = new parser({
-                parser: { extractDoc: true, php7: true },
-                ast: { withPositions: true, withSource: true },
+                parser: {extractDoc: true, php7: true},
+                ast: {withPositions: true, withSource: true},
             });
             const ast = engine.parseCode(content);
             this._extractPHPDeclarations(ast, chunks, filePath);
-        }
-        catch {
+        } catch {
             return this._chunkFileRegex(filePath, content, '.php');
         }
         return chunks;
     }
+
     _extractDeclarations(ast, chunks, filePath, content) {
         if (!ast?.body)
             return;
@@ -142,6 +143,7 @@ class ASTChunker {
             }
         }
     }
+
     _makeChunk(filePath, type, name, content, node) {
         const startLine = node.loc?.start?.line ?? 1;
         const endLine = node.loc?.end?.line ?? 1;
@@ -155,6 +157,7 @@ class ASTChunker {
             endLine,
         };
     }
+
     _extractPHPDeclarations(ast, chunks, filePath) {
         if (!ast?.children)
             return;
@@ -183,8 +186,7 @@ class ASTChunker {
                         }
                     }
                 }
-            }
-            else if (node.kind === 'function' && node.name) {
+            } else if (node.kind === 'function' && node.name) {
                 chunks.push({
                     id: this._hashContent(`${filePath}:func:${node.name}`),
                     filePath,
@@ -193,8 +195,7 @@ class ASTChunker {
                     content: node.src ?? '',
                     startLine: node.loc?.start?.line ?? 1,
                 });
-            }
-            else if (node.kind === 'interface' && node.name) {
+            } else if (node.kind === 'interface' && node.name) {
                 chunks.push({
                     id: this._hashContent(`${filePath}:interface:${node.name}`),
                     filePath,
@@ -206,6 +207,7 @@ class ASTChunker {
             }
         }
     }
+
     _getMethodVisibility(member) {
         if (member.accessibility)
             return member.accessibility;
@@ -213,6 +215,7 @@ class ASTChunker {
             return 'static';
         return 'public';
     }
+
     _getNodeContent(content, node) {
         if (node.loc) {
             const lines = content.split('\n');
@@ -222,9 +225,11 @@ class ASTChunker {
         }
         return '';
     }
+
     _hashContent(content) {
         return crypto_1.default.createHash('md5').update(content).digest('hex').substring(0, 12);
     }
+
     _chunkFileRegex(filePath, content, ext) {
         const chunks = [];
         const funcRegex = /(?:function\s+(\w+)|(?:const|let|var)\s+(\w+)\s*=\s*(?:async\s*)?\(|class\s+(\w+))/g;
@@ -243,8 +248,7 @@ class ASTChunker {
                     });
                 }
             }
-        }
-        else if (ext === '.php') {
+        } else if (ext === '.php') {
             const classRegex = /class\s+(\w+)/g;
             const funcRegexPhp = /function\s+(\w+)/g;
             while ((match = classRegex.exec(content)) !== null) {
@@ -271,7 +275,9 @@ class ASTChunker {
         return chunks;
     }
 }
+
 exports.ASTChunker = ASTChunker;
+
 function createASTChunker(config) {
     return new ASTChunker(config);
 }

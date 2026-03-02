@@ -1,109 +1,109 @@
 import dotenv from 'dotenv';
 import path from 'path';
-import { z } from 'zod';
+import {z} from 'zod';
 
 // Реализация на основе плана: plans/a2a-server-implementation-plan.md
 
 // Load environment variables
-dotenv.config({ path: path.resolve(__dirname, '../../.env') });
+dotenv.config({path: path.resolve(__dirname, '../../.env')});
 
 // Configuration schema with validation
 const configSchema = z.object({
-  // Server
-  nodeEnv: z.enum(['development', 'production', 'test']).default('development'),
-  port: z.coerce.number().int().min(1).max(65535).default(3000),
-  host: z.string().default('localhost'),
+    // Server
+    nodeEnv: z.enum(['development', 'production', 'test']).default('development'),
+    port: z.coerce.number().int().min(1).max(65535).default(3000),
+    host: z.string().default('localhost'),
 
-  // Database
-  databaseUrl: z.string().url(),
+    // Database
+    databaseUrl: z.string().url(),
 
-  // Auth
-  jwtSecret: z.string().min(32),
-  jwtExpiresIn: z.string().default('1h'),
-  jwtRefreshExpiresIn: z.string().default('7d'),
-  apiKeyPrefix: z.string().default('sk_a2a_'),
+    // Auth
+    jwtSecret: z.string().min(32),
+    jwtExpiresIn: z.string().default('1h'),
+    jwtRefreshExpiresIn: z.string().default('7d'),
+    apiKeyPrefix: z.string().default('sk_a2a_'),
 
-  // Encryption
-  encryptionKey: z.string().min(32).optional(),
+    // Encryption
+    encryptionKey: z.string().min(32).optional(),
 
-  // Plexe ML
-  plexeApiUrl: z.string().url().optional(),
-  plexeApiKey: z.string().optional(),
+    // Plexe ML
+    plexeApiUrl: z.string().url().optional(),
+    plexeApiKey: z.string().optional(),
 
-  // Git
-  gitSshKeyPath: z.string().default('./ssh_keys'),
-  gitCloneBasePath: z.string().default('./repos'),
+    // Git
+    gitSshKeyPath: z.string().default('./ssh_keys'),
+    gitCloneBasePath: z.string().default('./repos'),
 
-  // File Storage
-  fileCachePath: z.string().default('./file_cache'),
-  maxFileSizeMb: z.coerce.number().default(10),
+    // File Storage
+    fileCachePath: z.string().default('./file_cache'),
+    maxFileSizeMb: z.coerce.number().default(10),
 
-  // Rate Limiting
-  rateLimitWindowMs: z.coerce.number().default(60000),
-  rateLimitMaxRequests: z.coerce.number().default(200),
+    // Rate Limiting
+    rateLimitWindowMs: z.coerce.number().default(60000),
+    rateLimitMaxRequests: z.coerce.number().default(200),
 
-  // Logging
-  logLevel: z.enum(['error', 'warn', 'info', 'debug']).default('info'),
-  logFormat: z.enum(['json', 'pretty']).default('json'),
+    // Logging
+    logLevel: z.enum(['error', 'warn', 'info', 'debug']).default('info'),
+    logFormat: z.enum(['json', 'pretty']).default('json'),
 
-  // Queue
-  queueConcurrency: z.coerce.number().default(5),
-  indexingConcurrency: z.coerce.number().default(2),
+    // Queue
+    queueConcurrency: z.coerce.number().default(5),
+    indexingConcurrency: z.coerce.number().default(2),
 
-  // ML / Embeddings
-  embeddingDimension: z.coerce.number().default(768),
-  chunkMaxTokens: z.coerce.number().default(512),
-  chunkOverlapTokens: z.coerce.number().default(50),
+    // ML / Embeddings
+    embeddingDimension: z.coerce.number().default(768),
+    chunkMaxTokens: z.coerce.number().default(512),
+    chunkOverlapTokens: z.coerce.number().default(50),
 
-  // Session
-  sessionTimeoutMs: z.coerce.number().default(3600000),
-  sessionMaxInactiveMs: z.coerce.number().default(1800000),
+    // Session
+    sessionTimeoutMs: z.coerce.number().default(3600000),
+    sessionMaxInactiveMs: z.coerce.number().default(1800000),
 
-  // Request Processor (timer loop)
-  requestProcessorIntervalMs: z.coerce.number().default(5000),
+    // Request Processor (timer loop)
+    requestProcessorIntervalMs: z.coerce.number().default(5000),
 });
 
 // Parse and validate configuration
 function loadConfig() {
-  const rawConfig = {
-    nodeEnv: process.env.NODE_ENV,
-    port: process.env.PORT,
-    host: process.env.HOST,
-    databaseUrl: process.env.DATABASE_URL,
-    jwtSecret: process.env.JWT_SECRET,
-    jwtExpiresIn: process.env.JWT_EXPIRES_IN,
-    jwtRefreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN,
-    apiKeyPrefix: process.env.API_KEY_PREFIX,
-    encryptionKey: process.env.ENCRYPTION_KEY,
-    plexeApiUrl: process.env.PLEXE_API_URL,
-    plexeApiKey: process.env.PLEXE_API_KEY,
-    gitSshKeyPath: process.env.GIT_SSH_KEY_PATH,
-    gitCloneBasePath: process.env.GIT_CLONE_BASE_PATH,
-    fileCachePath: process.env.FILE_CACHE_PATH,
-    maxFileSizeMb: process.env.MAX_FILE_SIZE_MB,
-    rateLimitWindowMs: process.env.RATE_LIMIT_WINDOW_MS,
-    rateLimitMaxRequests: process.env.RATE_LIMIT_MAX_REQUESTS,
-    logLevel: process.env.LOG_LEVEL,
-    logFormat: process.env.LOG_FORMAT,
-    queueConcurrency: process.env.QUEUE_CONCURRENCY,
-    indexingConcurrency: process.env.INDEXING_CONCURRENCY,
-    embeddingDimension: process.env.EMBEDDING_DIMENSION,
-    chunkMaxTokens: process.env.CHUNK_MAX_TOKENS,
-    chunkOverlapTokens: process.env.CHUNK_OVERLAP_TOKENS,
-    sessionTimeoutMs: process.env.SESSION_TIMEOUT_MS,
-    sessionMaxInactiveMs: process.env.SESSION_MAX_INACTIVE_MS,
-    requestProcessorIntervalMs: process.env.REQUEST_PROCESSOR_INTERVAL_MS,
-  };
+    const rawConfig = {
+        nodeEnv: process.env.NODE_ENV,
+        port: process.env.PORT,
+        host: process.env.HOST,
+        databaseUrl: process.env.DATABASE_URL,
+        jwtSecret: process.env.JWT_SECRET,
+        jwtExpiresIn: process.env.JWT_EXPIRES_IN,
+        jwtRefreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN,
+        apiKeyPrefix: process.env.API_KEY_PREFIX,
+        encryptionKey: process.env.ENCRYPTION_KEY,
+        plexeApiUrl: process.env.PLEXE_API_URL,
+        plexeApiKey: process.env.PLEXE_API_KEY,
+        gitSshKeyPath: process.env.GIT_SSH_KEY_PATH,
+        gitCloneBasePath: process.env.GIT_CLONE_BASE_PATH,
+        fileCachePath: process.env.FILE_CACHE_PATH,
+        maxFileSizeMb: process.env.MAX_FILE_SIZE_MB,
+        rateLimitWindowMs: process.env.RATE_LIMIT_WINDOW_MS,
+        rateLimitMaxRequests: process.env.RATE_LIMIT_MAX_REQUESTS,
+        logLevel: process.env.LOG_LEVEL,
+        logFormat: process.env.LOG_FORMAT,
+        queueConcurrency: process.env.QUEUE_CONCURRENCY,
+        indexingConcurrency: process.env.INDEXING_CONCURRENCY,
+        embeddingDimension: process.env.EMBEDDING_DIMENSION,
+        chunkMaxTokens: process.env.CHUNK_MAX_TOKENS,
+        chunkOverlapTokens: process.env.CHUNK_OVERLAP_TOKENS,
+        sessionTimeoutMs: process.env.SESSION_TIMEOUT_MS,
+        sessionMaxInactiveMs: process.env.SESSION_MAX_INACTIVE_MS,
+        requestProcessorIntervalMs: process.env.REQUEST_PROCESSOR_INTERVAL_MS,
+    };
 
-  try {
-    return configSchema.parse(rawConfig);
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      const issues = error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('\n');
-      throw new Error(`Configuration validation failed:\n${issues}`);
+    try {
+        return configSchema.parse(rawConfig);
+    } catch (error) {
+        if (error instanceof z.ZodError) {
+            const issues = error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('\n');
+            throw new Error(`Configuration validation failed:\n${issues}`);
+        }
+        throw error;
     }
-    throw error;
-  }
 }
 
 export const config = loadConfig();

@@ -126,15 +126,15 @@ console.log(models); // ['nomic-embed-text', 'bge-m3', ...]
 
 ## Configuration
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| provider | string | ollama | Provider: ollama, openai, cohere, voyage, mock |
-| baseUrl | string | provider default | Custom API URL |
-| model | string | provider default | Model name |
-| apiKey | string | env | API key |
-| cacheFile | string | null | Cache file path |
-| batchSize | number | 100 | Batch size for API calls |
-| timeout | number | 60000 | Request timeout (ms) |
+| Option    | Type   | Default          | Description                                    |
+|-----------|--------|------------------|------------------------------------------------|
+| provider  | string | ollama           | Provider: ollama, openai, cohere, voyage, mock |
+| baseUrl   | string | provider default | Custom API URL                                 |
+| model     | string | provider default | Model name                                     |
+| apiKey    | string | env              | API key                                        |
+| cacheFile | string | null             | Cache file path                                |
+| batchSize | number | 100              | Batch size for API calls                       |
+| timeout   | number | 60000            | Request timeout (ms)                           |
 
 ## Environment Variables
 
@@ -155,6 +155,7 @@ VOYAGE_API_KEY=...
 ## Models
 
 ### Ollama
+
 - nomic-embed-text (768d)
 - mxbai-embed-large (1536d)
 - bge-m3 (1024d)
@@ -162,15 +163,18 @@ VOYAGE_API_KEY=...
 - bge-small (384d)
 
 ### OpenAI
+
 - text-embedding-3-small (1536d)
 - text-embedding-3-large (3072d)
 - text-embedding-ada-002 (1536d)
 
 ### Cohere
+
 - embed-multilingual-v3.0 (1024d)
 - embed-english-v3.0 (1024d)
 
 ### Voyage AI
+
 - voyage-code-2 (1536d)
 - voyage-law-2 (1024d)
 

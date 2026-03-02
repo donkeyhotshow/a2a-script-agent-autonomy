@@ -16,11 +16,11 @@
 
 Три ESLint правила для автоматической проверки стилизации Vue компонентов:
 
-| Правило | Описание | Уровень |
-|---------|----------|---------|
-| `no-invalid-classes` | Обнаруживает несуществующие классы из реального бандла | `error` |
-| `require-responsive-classes` | Проверяет полноту responsive и dark mode | `warn` |
-| `suggest-styling-improvements` | Предлагает улучшения (экспериментально) | `off` |
+| Правило                        | Описание                                               | Уровень |
+|--------------------------------|--------------------------------------------------------|---------|
+| `no-invalid-classes`           | Обнаруживает несуществующие классы из реального бандла | `error` |
+| `require-responsive-classes`   | Проверяет полноту responsive и dark mode               | `warn`  |
+| `suggest-styling-improvements` | Предлагает улучшения (экспериментально)                | `off`   |
 
 ### Ключевые возможности
 
@@ -37,6 +37,7 @@
 ### 1. Правила уже добавлены в проект
 
 Файлы находятся в `docs/archive/eslint-rules/`:
+
 - `no-invalid-classes.cjs`
 - `require-responsive-classes.cjs`
 - `suggest-styling-improvements.cjs`
@@ -76,6 +77,7 @@ npx eslint "features/**/*.vue"
 **Цель:** Обнаруживает классы, которых нет в собранном бандле.
 
 **Что проверяет:**
+
 - Классы из `public/build/assets/*.css` и `*.js`
 - CSS переменные `[var(--*)]`
 - Пользовательские классы из `features/**/*.css`
@@ -110,6 +112,7 @@ npx eslint "features/**/*.vue"
 **Цель:** Проверяет полноту responsive и dark mode классов.
 
 **Что проверяет:**
+
 - Наличие классов для breakpoints (sm, md, lg, xl, 2xl)
 - Dark mode варианты для цветов
 - Достаточность стилизации (фон → padding, border → shadow)
@@ -149,6 +152,7 @@ npx eslint "features/**/*.vue"
 **Цель:** Предлагает улучшения на основе контекста элемента.
 
 **Типы элементов:**
+
 - Card (карточка)
 - Button (кнопка)
 - Input (поле ввода)
@@ -312,6 +316,7 @@ lint-styles:
 ### Проблема: Много ложных срабатываний
 
 **Решение:**
+
 ```bash
 # Пересоберите проект и извлеките классы заново
 npm run build
@@ -332,6 +337,7 @@ node docs/archive/eslint-rules/extract-classes.cjs
 
 **Решение:**
 Правило автоматически пропускает:
+
 - Computed классы (переменные)
 - Выражения с `{`, `}`, `[`, `]`
 - Условные операторы `?`, `:`
@@ -358,6 +364,7 @@ node docs/archive/eslint-rules/extract-classes.cjs
 ```
 
 ### Примеры найденных CSS переменных:
+
 - `--tw-translate-x`, `--tw-translate-y`
 - `--tw-scale-x`, `--tw-scale-y`
 - `--tw-rotate-x`, `--tw-rotate-y`
@@ -366,6 +373,7 @@ node docs/archive/eslint-rules/extract-classes.cjs
 - `--shadow-md`
 
 ### Примеры найденных Tailwind классов:
+
 - `rounded-lg`, `border`, `p-6`
 - `shadow-sm`, `text-gray-900`
 - `dark:bg-gray-800`

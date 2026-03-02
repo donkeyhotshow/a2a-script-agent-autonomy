@@ -3,24 +3,28 @@
  * Ignore Detector - Detects and parses IDE ignore files
  * Supports .gitignore, .cursorignore, .a2aignore and custom ignore files
  */
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function (o, m, k, k2) {
     if (k2 === undefined) k2 = k;
     var desc = Object.getOwnPropertyDescriptor(m, k);
     if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
+        desc = {
+            enumerable: true, get: function () {
+                return m[k];
+            }
+        };
     }
     Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
+}) : (function (o, m, k, k2) {
     if (k2 === undefined) k2 = k;
     o[k2] = m[k];
 }));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function (o, v) {
+    Object.defineProperty(o, "default", {enumerable: true, value: v});
+}) : function (o, v) {
     o["default"] = v;
 });
 var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
+    var ownKeys = function (o) {
         ownKeys = Object.getOwnPropertyNames || function (o) {
             var ar = [];
             for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
@@ -36,7 +40,7 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
-Object.defineProperty(exports, "__esModule", { value: true });
+Object.defineProperty(exports, "__esModule", {value: true});
 exports.IgnoreDetector = void 0;
 const fs = __importStar(require("fs/promises"));
 const path = __importStar(require("path"));
@@ -49,10 +53,12 @@ const DEFAULT_PATTERNS = [
     'node_modules', 'vendor', '.git', '.svn', '.hg', 'dist', 'build',
     'storage', '.a2a', '.cache', 'coverage',
 ];
+
 class IgnoreDetector {
     get initialized() {
         return this._initialized;
     }
+
     constructor(config = {}) {
         this.ignorePatterns = [];
         this.ignoreFilesFound = [];
@@ -61,6 +67,7 @@ class IgnoreDetector {
         this.customIgnoreFiles = config.customIgnoreFiles ?? [];
         this.additionalPatterns = config.additionalPatterns ?? [];
     }
+
     async initialize() {
         if (this._initialized)
             return this;
@@ -90,9 +97,8 @@ class IgnoreDetector {
                 const content = await fs.readFile(fullPath, 'utf-8');
                 const patterns = this._parseIgnoreFile(content, ignoreFile);
                 this.ignorePatterns.push(...patterns);
-                this.ignoreFilesFound.push({ name: ignoreFile, path: fullPath, patterns: patterns.length });
-            }
-            catch {
+                this.ignoreFilesFound.push({name: ignoreFile, path: fullPath, patterns: patterns.length});
+            } catch {
                 // file doesn't exist
             }
         }
@@ -100,9 +106,10 @@ class IgnoreDetector {
         this._initialized = true;
         return this;
     }
+
     async _scanForIgnoreFiles(dirPath) {
         try {
-            const entries = await fs.readdir(dirPath, { withFileTypes: true });
+            const entries = await fs.readdir(dirPath, {withFileTypes: true});
             for (const entry of entries) {
                 if (!entry.isDirectory())
                     continue;
@@ -123,22 +130,22 @@ class IgnoreDetector {
                             isRootAnchored: false,
                         }));
                         this.ignorePatterns.push(...prefixedPatterns);
-                        this.ignoreFilesFound.push({ name: ignoreFile, path: ignoreFilePath, patterns: patterns.length });
-                    }
-                    catch {
+                        this.ignoreFilesFound.push({name: ignoreFile, path: ignoreFilePath, patterns: patterns.length});
+                    } catch {
                         // skip
                     }
                 }
                 await this._scanForIgnoreFiles(fullPath);
             }
-        }
-        catch {
+        } catch {
             // ignore
         }
     }
+
     _isCommonIgnoredDir(dirName) {
         return COMMON_IGNORED_DIRS.includes(dirName);
     }
+
     _parseIgnoreFile(content, fileName) {
         const patterns = [];
         for (const line of content.split('\n')) {
@@ -155,11 +162,12 @@ class IgnoreDetector {
             if (isDir)
                 trimmed = trimmed.slice(0, -1);
             if (trimmed) {
-                patterns.push({ pattern: trimmed, isNegation, isDir, isRootAnchored, source: fileName });
+                patterns.push({pattern: trimmed, isNegation, isDir, isRootAnchored, source: fileName});
             }
         }
         return patterns;
     }
+
     shouldIgnore(relativePath) {
         if (!this._initialized)
             return false;
@@ -179,8 +187,7 @@ class IgnoreDetector {
                     matchedPattern = pattern;
                     break;
                 }
-            }
-            else {
+            } else {
                 for (const part of pathParts) {
                     if (this._matchComponent(part, patternStr, pattern.isDir)) {
                         ignored = true;
@@ -213,6 +220,7 @@ class IgnoreDetector {
         }
         return ignored;
     }
+
     _matchComponent(component, pattern, isDirPattern) {
         if (pattern.includes('*') || pattern.includes('?'))
             return this._matchPattern(component, pattern);
@@ -222,6 +230,7 @@ class IgnoreDetector {
             return component.endsWith(pattern.slice(1));
         return component === pattern;
     }
+
     _matchPattern(pathStr, pattern) {
         if (pattern.includes('*')) {
             const regexPattern = pattern
@@ -232,8 +241,7 @@ class IgnoreDetector {
                 .replace(/\?/g, '.');
             try {
                 return new RegExp(`^${regexPattern}$`).test(pathStr);
-            }
-            catch {
+            } catch {
                 return false;
             }
         }
@@ -245,12 +253,15 @@ class IgnoreDetector {
         }
         return false;
     }
+
     getIgnoreFiles() {
         return this.ignoreFilesFound;
     }
+
     getPatterns() {
         return this.ignorePatterns;
     }
+
     getDirectoriesToSkip() {
         const dirsToSkip = new Set();
         for (const pattern of this.ignorePatterns) {
@@ -265,15 +276,18 @@ class IgnoreDetector {
         }
         return Array.from(dirsToSkip);
     }
+
     filterEntries(entries) {
         return entries.filter((entry) => !this.shouldIgnore(entry.path));
     }
+
     shouldSkipDirectory(dirName, parentPath = '') {
         if (this._isCommonIgnoredDir(dirName))
             return true;
         const relativePath = parentPath ? `${parentPath}/${dirName}` : dirName;
         return this.shouldIgnore(relativePath);
     }
+
     addPatterns(patterns) {
         const arr = Array.isArray(patterns) ? patterns : [patterns];
         for (const pattern of arr) {
@@ -287,4 +301,5 @@ class IgnoreDetector {
         }
     }
 }
+
 exports.IgnoreDetector = IgnoreDetector;

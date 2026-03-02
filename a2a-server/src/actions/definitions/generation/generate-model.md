@@ -1,11 +1,15 @@
 # generate-model
 
-Generate model/entity from schema or table. **План:** [actions-definitions-for-auto-ai](../../../../plans/actions-definitions-for-auto-ai.md). **Use-case:** [4-code-generation](../../../../docs/use-cases/auto-ai/4-code-generation.md).
+Generate model/entity from schema or table. **План:
+** [actions-definitions-for-auto-ai](../../../../plans/actions-definitions-for-auto-ai.md). **Use-case:
+** [4-code-generation](../../../../docs/use-cases/auto-ai/4-code-generation.md).
 
 ## Priority
+
 80
 
 ## Triggers
+
 - generate model
 - model generation
 - create model
@@ -13,6 +17,7 @@ Generate model/entity from schema or table. **План:** [actions-definitions-f
 ## Sub-actions
 
 ### 1. generate-model-analyze
+
 Analyze task to determine model requirements.
 
 **Input:** task, rootDir?  
@@ -77,6 +82,7 @@ export default async function analyzeModel(input: { task: string; rootDir?: stri
 ```
 
 ### 2. generate-model-create
+
 Create model file with properties.
 
 **Input:** modelSpec, rootDir?  
@@ -158,6 +164,7 @@ ${table ? `    protected $table = '${table}';` : ''}
 ```
 
 ### 3. generate-model-relationships
+
 Add relationships (belongsTo, hasMany, etc.) to model.
 
 **Input:** modelSpec, existingModel?, rootDir?  
@@ -190,6 +197,7 @@ export default async function addRelationships(input: { modelSpec: { name: strin
 ```
 
 ### 4. generate-model-mutators
+
 Add mutators and accessors to model.
 
 **Input:** modelSpec, rootDir?  
@@ -236,6 +244,7 @@ export default async function addMutators(input: { modelSpec: { name: string; fi
 ```
 
 ### 5. generate-model-validate
+
 Validate generated model.
 
 **Input:** modelFile  
@@ -279,6 +288,7 @@ export default async function validateModel(input: { modelFile: { code: string }
 ```
 
 ### 6. generate-model-factory
+
 Generate model factory.
 
 **Input:** modelSpec, rootDir?  

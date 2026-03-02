@@ -11,7 +11,12 @@
     "test:ignore": "node tests/ignore-detector.test.js",
     "test:scanner": "node tests/file-scanner.test.js"
   },
-  "keywords": ["a2a", "filesystem", "ignore", "glob"],
+  "keywords": [
+    "a2a",
+    "filesystem",
+    "ignore",
+    "glob"
+  ],
   "author": "A2A Team",
   "license": "MIT",
   "devDependencies": {

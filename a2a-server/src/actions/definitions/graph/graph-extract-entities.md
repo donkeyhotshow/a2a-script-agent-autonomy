@@ -3,9 +3,11 @@
 Извлечение сущностей: классы, функции, модели, контроллеры. План: actions-definitions-for-auto-ai.
 
 ## Priority
+
 78
 
 ## Triggers
+
 - extract entities
 - graph entities
 - parse code entities
@@ -13,6 +15,7 @@
 ## Sub-actions
 
 ### 1. graph-entities-parse
+
 Parse files and extract entity nodes.
 
 **Input:** files[], rootDir?  

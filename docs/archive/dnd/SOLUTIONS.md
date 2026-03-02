@@ -5,14 +5,16 @@
 - **Description:** Solution patterns, fixes, recommended approaches
 
 ## Properties
-| Property | Type | Description |
-|----------|------|-------------|
-| id | string | Unique identifier |
-| name | string | Solution name |
-| path | string | File path |
+
+| Property    | Type   | Description          |
+|-------------|--------|----------------------|
+| id          | string | Unique identifier    |
+| name        | string | Solution name        |
+| path        | string | File path            |
 | description | string | Solution description |
 
 ## Example
+
 ```
 json
 {
@@ -25,6 +27,7 @@ json
 ```
 
 ## Related Types
+
 - Provided by: AGENTS
 - Applied to: NODES, ACTIONS, SYSTEMS
 - Implements: FEATURES

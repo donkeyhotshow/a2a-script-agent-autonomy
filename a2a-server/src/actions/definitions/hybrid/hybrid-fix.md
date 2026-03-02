@@ -1,11 +1,15 @@
 # hybrid-fix
 
-Исправление проблем: Analyze → AI → Validate → Apply. **План:** [actions-definitions-for-auto-ai](../../../../plans/actions-definitions-for-auto-ai.md). **Use-case:** [5-hybrid](../../../../docs/use-cases/auto-ai/5-hybrid.md).
+Исправление проблем: Analyze → AI → Validate → Apply. **План:
+** [actions-definitions-for-auto-ai](../../../../plans/actions-definitions-for-auto-ai.md). **Use-case:
+** [5-hybrid](../../../../docs/use-cases/auto-ai/5-hybrid.md).
 
 ## Priority
+
 85
 
 ## Triggers
+
 - hybrid fix
 - fix with analysis
 - analyze and fix
@@ -15,6 +19,7 @@
 ## Sub-actions
 
 ### 1. hybrid-collect
+
 Сбор контекста (RAG + Graph).
 
 **Input:** target, rootDir?  
@@ -62,6 +67,7 @@ export default async function run(input: { target: string; rootDir?: string }): 
 ```
 
 ### 2. hybrid-prompt
+
 Формирование промпта для AI.
 
 **Input:** target, context  
@@ -123,6 +129,7 @@ export default async function run(input: { target: string; context: FixContext }
 ```
 
 ### 3. hybrid-analyze
+
 Вызов AI для предложений исправлений.
 
 **Input:** prompt  
@@ -202,6 +209,7 @@ function performStaticAnalysis(prompt: string): StaticAnalysisResult {
 ```
 
 ### 4. hybrid-parse
+
 Парсинг ответа AI (блоки кода, патчи).
 
 **Input:** raw_response  
@@ -271,6 +279,7 @@ interface Patch {
 ```
 
 ### 5. hybrid-validate
+
 Валидация изменений (синтаксис, линт).
 
 **Input:** patches[]  
@@ -350,6 +359,7 @@ function validateSyntax(code: string, type: string): string[] {
 ```
 
 ### 6. hybrid-preview
+
 Превью для пользователя (diff).
 
 **Input:** valid_patches[]  
@@ -409,6 +419,7 @@ export default async function run(input: { valid_patches: Patch[] }): Promise<{ 
 ```
 
 ### 7. hybrid-apply
+
 Применение с подтверждением.
 
 **Input:** valid_patches[], confirm?  
@@ -485,6 +496,7 @@ interface ApplyResult {
 ```
 
 ### 8. hybrid-rollback
+
 Откат при ошибках.
 
 **Input:** applied[], backup  

@@ -4,40 +4,44 @@
 
 ### Что делает сервис
 
-**ContextManager** (`a2a-server/src/services/context-manager.service.ts`) — сервис управления контекстом запроса на сервере. Интегрируется с [`PhaseMachine`](a2a-server/src/services/phase-machine.service.ts) для управления сложными сценариями обработки задач.
+**ContextManager** (`a2a-server/src/services/context-manager.service.ts`) — сервис управления контекстом запроса на
+сервере. Интегрируется с [`PhaseMachine`](a2a-server/src/services/phase-machine.service.ts) для управления сложными
+сценариями обработки задач.
 
 #### Основные функции:
 
 1. **Управление типами контекста** — 10 типов данных:
-   - `task` — описание задачи (permanent)
-   - `graph` — граф знаний (session)
-   - `frameworks` — определённые фреймворки (session)
-   - `entities` — распознанные сущности (current-task)
-   - `questions` — вопросы к клиенту (until-fixed)
-   - `request_files` — запрошенные файлы (until-fixed)
-   - `activated_neurons` — активированные нейроны (current-task)
-   - `style` — стиль кода проекта (session)
-   - `errors` — ошибки обработки (until-fixed)
-   - `history` — история изменений (session)
+    - `task` — описание задачи (permanent)
+    - `graph` — граф знаний (session)
+    - `frameworks` — определённые фреймворки (session)
+    - `entities` — распознанные сущности (current-task)
+    - `questions` — вопросы к клиенту (until-fixed)
+    - `request_files` — запрошенные файлы (until-fixed)
+    - `activated_neurons` — активированные нейроны (current-task)
+    - `style` — стиль кода проекта (session)
+    - `errors` — ошибки обработки (until-fixed)
+    - `history` — история изменений (session)
 
 2. **Политики удержания (Retention Policy)**:
-   - `permanent` — никогда не удаляется
-   - `session` — в рамках сессии
-   - `current-task` — в рамках текущей задачи
-   - `until-fixed` — пока не исправлено
+    - `permanent` — никогда не удаляется
+    - `session` — в рамках сессии
+    - `current-task` — в рамках текущей задачи
+    - `until-fixed` — пока не исправлено
 
 3. **Управление памятью**:
-   - Лимит по умолчанию ~100KB
-   - LRU eviction при превышении лимита
-   - Приоритизация по важности (priority 1-4)
+    - Лимит по умолчанию ~100KB
+    - LRU eviction при превышении лимита
+    - Приоритизация по важности (priority 1-4)
 
 4. **Интеграция с PhaseMachine**:
-   - [`getForPhase()`](a2a-server/src/services/context-manager.service.ts:174) — возвращает контекст для конкретной фазы
-   - Фазы: idle → discovery → recognition → analysis → action → validation → completed
+    - [`getForPhase()`](a2a-server/src/services/context-manager.service.ts:174) — возвращает контекст для конкретной
+      фазы
+    - Фазы: idle → discovery → recognition → analysis → action → validation → completed
 
 #### Текущее использование:
 
 В [`request-processor.service.ts`](a2a-server/src/services/request-processor.service.ts:226-322):
+
 - Инициализация при старте обработки запроса
 - Хранение task, graph, entities
 - Передача контекста между фазами
@@ -51,6 +55,7 @@
 **Текущее:** Статический набор из 10 типов
 
 **Предложения:**
+
 - [x] Динамические типы контекста (пользовательские)
 - [x] Поддержка вложенных структур (nested context)
 - [x] Typed context для каждого типа (сейчас `unknown`)
@@ -60,6 +65,7 @@
 **Текущее:** Простой LRU eviction по приоритету
 
 **Предложения:**
+
 - [x] Компрессия данных (gzip для больших graph)
 - [x] Инкрементальное хранение (delta updates)
 - [ ] Memory-mapped файлы для больших данных
@@ -70,6 +76,7 @@
 **Текущее:** JSON serialize/deserialize
 
 **Предложения:**
+
 - [x] Бинарная сериализация (MessagePack/ProtoBuf)
 - [x] Сохранение в Redis для распределённости
 - [x] Snapshot состояния между фазами
@@ -79,6 +86,7 @@
 **Текущее:** Generic `T = unknown`
 
 **Предложения:**
+
 - [x] Zod схемы для каждого типа контекста
 - [x] Runtime валидация при set()
 - [x] Type-safe API
@@ -88,6 +96,7 @@
 **Текущее:** Отсутствует
 
 **Предложения:**
+
 - [x] Event emitter для изменений контекста
 - [x] Middleware для intercept
 
@@ -96,6 +105,7 @@
 **Текущее:** Полная перезапись
 
 **Предложения:**
+
 - [x] Context diff (что изменилось)
 - [x] Incremental sync с клиентом
 - [x] Conflict resolution
@@ -105,6 +115,7 @@
 **Текущее:** Отсутствует
 
 **Предложения:**
+
 - [x] L2 кэш для часто используемых данных
 - [x] Предвычисление getForPhase()
 - [x] Кэш результатов expensive операций
@@ -114,6 +125,7 @@
 **Текущее:** Basic logging
 
 **Предложения:**
+
 - [x] Prometheus метрики
 - [x] Alert при превышении лимитов
 - [x] Performance profiling
@@ -230,52 +242,62 @@ json
 ### Фаза 2: Типизация и валидация (1 неделя)
 
 **Задачи:**
+
 1. Добавить Zod схемы для каждого типа контекста
 2. Валидация при set()
 3. Type-safe геттеры с дженериками
 
 **Файлы:**
+
 - `a2a-server/src/services/context-manager.types.ts` — схемы
 - `a2a-server/src/services/context-manager.validator.ts` — валидатор
 
 ### Фаза 3: Событийная модель (1 неделя)
 
 **Задачи:**
+
 1. Event emitter для изменений
 2. Hooks: onChange, onEvict, onClear
 
 **Файлы:**
+
 - `a2a-server/src/services/context-manager.events.ts` — события
 
 ### Фаза 4: Оптимизация памяти (1 неделя)
 
 **Задачи:**
+
 1. Компрессия больших данных (graph > 50KB)
 2. Delta updates для graph
 3. L2 кэширование
 
 **Файлы:**
+
 - `a2a-server/src/services/context-manager.compressor.ts`
 - `a2a-server/src/services/context-manager.cache.ts`
 
 ### Фаза 5: Персистентность (2 недели)
 
 **Задачи:**
+
 1. Redis storage adapter
 2. Session persistence
 3. Crash recovery
 
 **Файлы:**
+
 - `a2a-server/src/services/context-manager.storage.ts`
 
 ### Фаза 6: Мониторинг (1 неделя)
 
 **Задачи:**
+
 1. Prometheus метрики
 2. Health check endpoint
 3. Alerting
 
 **Файлы:**
+
 - `a2a-server/src/services/context-manager.metrics.ts`
 
 ---
@@ -347,11 +369,11 @@ ctx.on('change', (data) => {
 
 ## Риски
 
-| Риск | Вероятность | Влияние | Митигация |
-|------|-------------|---------|-----------|
-| Переусложнение API | Средняя | Средняя | Фазированная реализация |
-| Совместимость | Низкая | Высокая | Тесты на каждую фазу |
-| Производительность Redis | Средняя | Средняя | Fallback на in-memory |
+| Риск                     | Вероятность | Влияние | Митигация               |
+|--------------------------|-------------|---------|-------------------------|
+| Переусложнение API       | Средняя     | Средняя | Фазированная реализация |
+| Совместимость            | Низкая      | Высокая | Тесты на каждую фазу    |
+| Производительность Redis | Средняя     | Средняя | Fallback на in-memory   |
 
 ---
 

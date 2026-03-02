@@ -3,200 +3,200 @@
  * Intercepts network requests and returns fixture data
  */
 
-import { fixtures } from './index.js';
+import {fixtures} from './index.js';
 
 /**
  * Creates a mock API handler for Playwright tests
  * Uses page.route() to intercept requests
  */
 export function createMockApiHandler(page) {
-  // Track pending requests for polling simulation
-  const pendingRequests = new Map();
+    // Track pending requests for polling simulation
+    const pendingRequests = new Map();
 
-  // Session storage
-  let sessions = [fixtures.session.data];
-  let currentSessionId = 'session_001';
+    // Session storage
+    let sessions = [fixtures.session.data];
+    let currentSessionId = 'session_001';
 
-  // Request promise ID mapping
-  const requestPromises = new Map();
+    // Request promise ID mapping
+    const requestPromises = new Map();
 
-  // Route handlers
-  page.route('**/api/v1/sessions**', async (route) => {
-    const url = new URL(route.request().url());
-    const method = route.request().method();
+    // Route handlers
+    page.route('**/api/v1/sessions**', async (route) => {
+        const url = new URL(route.request().url());
+        const method = route.request().method();
 
-    // GET /api/v1/sessions
-    if (method === 'GET') {
-      return route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({ success: true, data: sessions })
-      });
-    }
-
-    // POST /api/v1/sessions - create new session
-    if (method === 'POST') {
-      const newSession = {
-        ...fixtures.createSession.data,
-        id: `session_${Date.now()}`,
-        createdAt: new Date().toISOString(),
-        messages: []
-      };
-      sessions.unshift(newSession);
-      currentSessionId = newSession.id;
-      return route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({ success: true, data: newSession })
-      });
-    }
-  });
-
-  // Route for single session
-  page.route(/\/api\/v1\/sessions\/[^/]+$/, async (route) => {
-    const url = route.request().url();
-    const sessionId = url.split('/').pop();
-    const session = sessions.find(s => s.id === sessionId);
-
-    if (session) {
-      return route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({ success: true, data: session })
-      });
-    }
-
-    return route.fulfill({
-      status: 404,
-      contentType: 'application/json',
-      body: JSON.stringify({ success: false, error: { message: 'Session not found' } })
-    });
-  });
-
-  // POST /api/v1/requests - create request
-  page.route('**/api/v1/requests', async (route) => {
-    if (route.request().method() === 'POST') {
-      const body = JSON.parse(route.request().postData() || '{}');
-      const promiseId = `promise_${Date.now()}`;
-      
-      // Store promise for polling
-      requestPromises.set(promiseId, {
-        context: body.context,
-        status: 'completed',
-        result: fixtures.taskRequest.data.result
-      });
-
-      return route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({ success: true, data: { promiseId } })
-      });
-    }
-  });
-
-  // GET /api/v1/requests/:promiseId/status - poll status
-  page.route(/\/api\/v1\/requests\/[^/]+\/status$/, async (route) => {
-    const url = route.request().url();
-    const promiseId = url.split('/').slice(-2)[0];
-    const request = requestPromises.get(promiseId);
-
-    if (request) {
-      return route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({ 
-          success: true, 
-          data: { status: request.status } 
-        })
-      });
-    }
-
-    return route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({ success: true, data: { status: 'processing' } })
-    });
-  });
-
-  // GET /api/v1/requests/:promiseId/result - get result
-  page.route(/\/api\/v1\/requests\/[^/]+\/result$/, async (route) => {
-    const url = route.request().url();
-    const promiseId = url.split('/').slice(-2)[0];
-    const request = requestPromises.get(promiseId);
-
-    if (request) {
-      return route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({ 
-          success: true, 
-          data: { result: request.result } 
-        })
-      });
-    }
-
-    return route.fulfill({
-      status: 404,
-      contentType: 'application/json',
-      body: JSON.stringify({ success: false, error: { message: 'Request not found' } })
-    });
-  });
-
-  // Default API fallback
-  page.route('**/api/**', async (route) => {
-    console.log('[Mock API] Unhandled request:', route.request().url(), route.request().method());
-    return route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({ success: true, data: {} })
-    });
-  });
-
-  return {
-    /**
-     * Simulate a multi-step workflow response
-     */
-    simulateWorkflow: async (promiseId, steps) => {
-      const results = {
-        [promiseId]: {
-          status: 'completed',
-          result: steps[0]
+        // GET /api/v1/sessions
+        if (method === 'GET') {
+            return route.fulfill({
+                status: 200,
+                contentType: 'application/json',
+                body: JSON.stringify({success: true, data: sessions})
+            });
         }
-      };
 
-      // For each subsequent step, create new promise
-      for (let i = 1; i < steps.length; i++) {
-        const stepPromiseId = `promise_${Date.now()}_${i}`;
-        results[stepPromiseId] = {
-          status: 'completed',
-          result: steps[i]
-        };
-        requestPromises.set(stepPromiseId, results[stepPromiseId]);
-      }
+        // POST /api/v1/sessions - create new session
+        if (method === 'POST') {
+            const newSession = {
+                ...fixtures.createSession.data,
+                id: `session_${Date.now()}`,
+                createdAt: new Date().toISOString(),
+                messages: []
+            };
+            sessions.unshift(newSession);
+            currentSessionId = newSession.id;
+            return route.fulfill({
+                status: 200,
+                contentType: 'application/json',
+                body: JSON.stringify({success: true, data: newSession})
+            });
+        }
+    });
 
-      return results;
-    },
+    // Route for single session
+    page.route(/\/api\/v1\/sessions\/[^/]+$/, async (route) => {
+        const url = route.request().url();
+        const sessionId = url.split('/').pop();
+        const session = sessions.find(s => s.id === sessionId);
 
-    /**
-     * Get current sessions
-     */
-    getSessions: () => sessions,
+        if (session) {
+            return route.fulfill({
+                status: 200,
+                contentType: 'application/json',
+                body: JSON.stringify({success: true, data: session})
+            });
+        }
 
-    /**
-     * Clear all sessions
-     */
-    clearSessions: () => {
-      sessions = [];
-      requestPromises.clear();
-    },
+        return route.fulfill({
+            status: 404,
+            contentType: 'application/json',
+            body: JSON.stringify({success: false, error: {message: 'Session not found'}})
+        });
+    });
 
-    /**
-     * Add a session
-     */
-    addSession: (session) => {
-      sessions.unshift(session);
-    }
-  };
+    // POST /api/v1/requests - create request
+    page.route('**/api/v1/requests', async (route) => {
+        if (route.request().method() === 'POST') {
+            const body = JSON.parse(route.request().postData() || '{}');
+            const promiseId = `promise_${Date.now()}`;
+
+            // Store promise for polling
+            requestPromises.set(promiseId, {
+                context: body.context,
+                status: 'completed',
+                result: fixtures.taskRequest.data.result
+            });
+
+            return route.fulfill({
+                status: 200,
+                contentType: 'application/json',
+                body: JSON.stringify({success: true, data: {promiseId}})
+            });
+        }
+    });
+
+    // GET /api/v1/requests/:promiseId/status - poll status
+    page.route(/\/api\/v1\/requests\/[^/]+\/status$/, async (route) => {
+        const url = route.request().url();
+        const promiseId = url.split('/').slice(-2)[0];
+        const request = requestPromises.get(promiseId);
+
+        if (request) {
+            return route.fulfill({
+                status: 200,
+                contentType: 'application/json',
+                body: JSON.stringify({
+                    success: true,
+                    data: {status: request.status}
+                })
+            });
+        }
+
+        return route.fulfill({
+            status: 200,
+            contentType: 'application/json',
+            body: JSON.stringify({success: true, data: {status: 'processing'}})
+        });
+    });
+
+    // GET /api/v1/requests/:promiseId/result - get result
+    page.route(/\/api\/v1\/requests\/[^/]+\/result$/, async (route) => {
+        const url = route.request().url();
+        const promiseId = url.split('/').slice(-2)[0];
+        const request = requestPromises.get(promiseId);
+
+        if (request) {
+            return route.fulfill({
+                status: 200,
+                contentType: 'application/json',
+                body: JSON.stringify({
+                    success: true,
+                    data: {result: request.result}
+                })
+            });
+        }
+
+        return route.fulfill({
+            status: 404,
+            contentType: 'application/json',
+            body: JSON.stringify({success: false, error: {message: 'Request not found'}})
+        });
+    });
+
+    // Default API fallback
+    page.route('**/api/**', async (route) => {
+        console.log('[Mock API] Unhandled request:', route.request().url(), route.request().method());
+        return route.fulfill({
+            status: 200,
+            contentType: 'application/json',
+            body: JSON.stringify({success: true, data: {}})
+        });
+    });
+
+    return {
+        /**
+         * Simulate a multi-step workflow response
+         */
+        simulateWorkflow: async (promiseId, steps) => {
+            const results = {
+                [promiseId]: {
+                    status: 'completed',
+                    result: steps[0]
+                }
+            };
+
+            // For each subsequent step, create new promise
+            for (let i = 1; i < steps.length; i++) {
+                const stepPromiseId = `promise_${Date.now()}_${i}`;
+                results[stepPromiseId] = {
+                    status: 'completed',
+                    result: steps[i]
+                };
+                requestPromises.set(stepPromiseId, results[stepPromiseId]);
+            }
+
+            return results;
+        },
+
+        /**
+         * Get current sessions
+         */
+        getSessions: () => sessions,
+
+        /**
+         * Clear all sessions
+         */
+        clearSessions: () => {
+            sessions = [];
+            requestPromises.clear();
+        },
+
+        /**
+         * Add a session
+         */
+        addSession: (session) => {
+            sessions.unshift(session);
+        }
+    };
 }
 
 export default createMockApiHandler;

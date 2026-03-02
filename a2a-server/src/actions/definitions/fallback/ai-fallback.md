@@ -1,13 +1,16 @@
 # ai-fallback
 
-Generic LLM handling when no specific action matches. Priority: 10. **План:** [actions-definitions-for-auto-ai](../../../../docs/actions-definitions-for-auto-ai.md).
+Generic LLM handling when no specific action matches. Priority: 10. **План:
+** [actions-definitions-for-auto-ai](../../../../docs/actions-definitions-for-auto-ai.md).
 
 ## Context
+
 ```json
 { "type": "fallback", "llm_required": true }
 ```
 
 ## Triggers
+
 - (any unmatched user task text)
 - задай вопрос
 - помоги с
@@ -16,6 +19,7 @@ Generic LLM handling when no specific action matches. Priority: 10. **План:*
 ## Sub-actions
 
 ### 1. ai-fallback-prompt
+
 Построение промпта из задачи и доступного контекста.
 
 **Input:** task, context?, history?  
@@ -112,6 +116,7 @@ export default async function buildPrompt(input: {
 ```
 
 ### 2. ai-fallback-llm
+
 Вызов внешнего AI с промптом.
 
 **Input:** prompt, options?  
@@ -246,6 +251,7 @@ function generateMockResponse(prompt: string): string {
 ```
 
 ### 3. ai-fallback-respond
+
 Форматирование ответа для пользователя (message block).
 
 **Input:** response, format?  

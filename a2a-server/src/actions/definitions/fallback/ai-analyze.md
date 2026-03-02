@@ -1,13 +1,16 @@
 # ai-analyze
 
-Generic AI-based code analysis. Priority: 15. **План:** [actions-definitions-for-auto-ai](../../../../docs/actions-definitions-for-auto-ai.md).
+Generic AI-based code analysis. Priority: 15. **План:
+** [actions-definitions-for-auto-ai](../../../../docs/actions-definitions-for-auto-ai.md).
 
 ## Context
+
 ```json
 { "type": "analysis", "llm_required": true }
 ```
 
 ## Triggers
+
 - analyze with ai
 - ai analysis
 - explain code
@@ -17,6 +20,7 @@ Generic AI-based code analysis. Priority: 15. **План:** [actions-definitions
 ## Sub-actions
 
 ### 1. ai-analyze-context
+
 Сбор контекста кода для анализа.
 
 **Input:** target, rootDir?, options?  
@@ -179,6 +183,7 @@ function walkDir(
 ```
 
 ### 2. ai-analyze-llm
+
 Запуск анализа через LLM.
 
 **Input:** context, task, options?  
@@ -303,6 +308,7 @@ Provide your analysis in the following format:
 ```
 
 ### 3. ai-analyze-report
+
 Форматирование результатов в отчёт для пользователя.
 
 **Input:** findings[], summary, format?  

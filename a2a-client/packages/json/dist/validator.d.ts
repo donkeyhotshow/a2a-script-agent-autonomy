@@ -1,8 +1,9 @@
 /**
  * @a2a/json - Validation schemas using Zod
  */
-import { z } from 'zod';
-import type { ValidationResult, ResponseType } from './types.js';
+import {z} from 'zod';
+import type {ValidationResult, ResponseType} from './types.js';
+
 /**
  * Base response schema
  */
@@ -1896,24 +1897,28 @@ export declare const unifiedResponseSchema: z.ZodUnion<[z.ZodObject<{
         failedStep?: string | undefined;
     };
 }>]>;
+
 /**
  * Validate raw JSON data against unified response schema
  * @param data - Raw JSON data to validate
  * @returns ValidationResult with validation status and parsed data
  */
 export declare function validateResponse(data: unknown): ValidationResult;
+
 /**
  * Validate and extract response type from data
  * @param data - Raw JSON data
  * @returns Response type if valid, undefined otherwise
  */
 export declare function getResponseType(data: unknown): ResponseType | undefined;
+
 /**
  * Check if data is a valid unified response
  * @param data - Data to check
  * @returns True if valid unified response
  */
 export declare function isUnifiedResponse(data: unknown): boolean;
+
 /**
  * Validate specific response type
  * @param data - Data to validate
@@ -1921,4 +1926,5 @@ export declare function isUnifiedResponse(data: unknown): boolean;
  * @returns ValidationResult
  */
 export declare function validateResponseType(data: unknown, type: ResponseType): ValidationResult;
+
 //# sourceMappingURL=validator.d.ts.map

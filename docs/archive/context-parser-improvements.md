@@ -4,51 +4,54 @@
 
 ### Что делает парсер
 
-**ContextParser** ([`a2a-server/src/protocol/context-parser.ts`](a2a-server/src/protocol/context-parser.ts)) — парсер и валидатор контекстных блоков согласно A2A протоколу. Обрабатывает входящие данные от клиента, выполняет валидацию структуры и преобразует сырые данные в типизированные объекты ContextBlock.
+**ContextParser** ([`a2a-server/src/protocol/context-parser.ts`](a2a-server/src/protocol/context-parser.ts)) — парсер и
+валидатор контекстных блоков согласно A2A протоколу. Обрабатывает входящие данные от клиента, выполняет валидацию
+структуры и преобразует сырые данные в типизированные объекты ContextBlock.
 
 #### Основные функции:
 
 1. **Валидация** — [`validateContextBlock()`](a2a-server/src/protocol/context-parser.ts:87)
-   - Проверка версии протокола (только '1.0')
-   - Валидация session_id (обязательное непустое поле)
-   - Проверка типов всех полей: new_task, architectural_features, continue, confirm, tasks, request_files, errors
-   - Возвращает объект с { valid: boolean, errors: string[] }
+    - Проверка версии протокола (только '1.0')
+    - Валидация session_id (обязательное непустое поле)
+    - Проверка типов всех полей: new_task, architectural_features, continue, confirm, tasks, request_files, errors
+    - Возвращает объект с { valid: boolean, errors: string[] }
 
 2. **Парсинг** — [`parseContextBlock()`](a2a-server/src/protocol/context-parser.ts:153)
-   - Парсит сырые данные в типизированный ContextBlock
-   - Выбрасывает Error с описанием ошибок валидации
-   - [`parseContextBlockSafe()`](a2a-server/src/protocol/context-parser.ts:195) — безопасная версия (возвращает null)
+    - Парсит сырые данные в типизированный ContextBlock
+    - Выбрасывает Error с описанием ошибок валидации
+    - [`parseContextBlockSafe()`](a2a-server/src/protocol/context-parser.ts:195) — безопасная версия (возвращает null)
 
 3. **Функции извлечения**:
-   - [`extractNewTask()`](a2a-server/src/protocol/context-parser.ts:210) — извлечение new_task
-   - [`extractRequestedFiles()`](a2a-server/src/protocol/context-parser.ts:220) — извлечение request_files
-   - [`extractArchitecturalFeatures()`](a2a-server/src/protocol/context-parser.ts:230) — извлечение architectural_features
-   - [`parseTasks()`](a2a-server/src/protocol/context-parser.ts:240) — получить все tasks
-   - [`hasContinueFlag()`](a2a-server/src/protocol/context-parser.ts:247) — флаг continue
-   - [`hasConfirmFlag()`](a2a-server/src/protocol/context-parser.ts:254) — флаг confirm
+    - [`extractNewTask()`](a2a-server/src/protocol/context-parser.ts:210) — извлечение new_task
+    - [`extractRequestedFiles()`](a2a-server/src/protocol/context-parser.ts:220) — извлечение request_files
+    - [`extractArchitecturalFeatures()`](a2a-server/src/protocol/context-parser.ts:230) — извлечение
+      architectural_features
+    - [`parseTasks()`](a2a-server/src/protocol/context-parser.ts:240) — получить все tasks
+    - [`hasContinueFlag()`](a2a-server/src/protocol/context-parser.ts:247) — флаг continue
+    - [`hasConfirmFlag()`](a2a-server/src/protocol/context-parser.ts:254) — флаг confirm
 
 4. **Создание и модификация контекста**:
-   - [`createInitialContext()`](a2a-server/src/protocol/context-parser.ts:272) — создать начальный контекст
-   - [`createNewTaskContext()`](a2a-server/src/protocol/context-parser.ts:282) — контекст с задачами
-   - [`createFileRequestContext()`](a2a-server/src/protocol/context-parser.ts:303) — контекст с запросом файлов
-   - [`updateTaskProgress()`](a2a-server/src/protocol/context-parser.ts:317) — обновить прогресс задачи
-   - [`addTaskToContext()`](a2a-server/src/protocol/context-parser.ts:339) — добавить задачу
-   - [`removeTaskFromContext()`](a2a-server/src/protocol/context-parser.ts:362) — удалить задачу
-   - [`addErrorToContext()`](a2a-server/src/protocol/context-parser.ts:376) — добавить ошибку
-   - [`clearErrorsFromContext()`](a2a-server/src/protocol/context-parser.ts:390) — очистить ошибки
+    - [`createInitialContext()`](a2a-server/src/protocol/context-parser.ts:272) — создать начальный контекст
+    - [`createNewTaskContext()`](a2a-server/src/protocol/context-parser.ts:282) — контекст с задачами
+    - [`createFileRequestContext()`](a2a-server/src/protocol/context-parser.ts:303) — контекст с запросом файлов
+    - [`updateTaskProgress()`](a2a-server/src/protocol/context-parser.ts:317) — обновить прогресс задачи
+    - [`addTaskToContext()`](a2a-server/src/protocol/context-parser.ts:339) — добавить задачу
+    - [`removeTaskFromContext()`](a2a-server/src/protocol/context-parser.ts:362) — удалить задачу
+    - [`addErrorToContext()`](a2a-server/src/protocol/context-parser.ts:376) — добавить ошибку
+    - [`clearErrorsFromContext()`](a2a-server/src/protocol/context-parser.ts:390) — очистить ошибки
 
 5. **Сериализация**:
-   - [`serializeContext()`](a2a-server/src/protocol/context-parser.ts:402) — в JSON строку
-   - [`deserializeContext()`](a2a-server/src/protocol/context-parser.ts:409) — из JSON строки
-   - [`deserializeContextSafe()`](a2a-server/src/protocol/context-parser.ts:421) — безопасная версия
+    - [`serializeContext()`](a2a-server/src/protocol/context-parser.ts:402) — в JSON строку
+    - [`deserializeContext()`](a2a-server/src/protocol/context-parser.ts:409) — из JSON строки
+    - [`deserializeContextSafe()`](a2a-server/src/protocol/context-parser.ts:421) — безопасная версия
 
 6. **Утилиты**:
-   - [`mergeContexts()`](a2a-server/src/protocol/context-parser.ts:436) — объединить контексты
-   - [`cloneContext()`](a2a-server/src/protocol/context-parser.ts:451) — глубокое клонирование
-   - [`hasActiveTasks()`](a2a-server/src/protocol/context-parser.ts:458) — есть активные задачи
-   - [`getTaskById()`](a2a-server/src/protocol/context-parser.ts:468) — получить задачу по ID
-   - [`getTasksByStatus()`](a2a-server/src/protocol/context-parser.ts:476) — получить задачи по статусу
-   - [`calculateOverallProgress()`](a2a-server/src/protocol/context-parser.ts:484) — общий прогресс
+    - [`mergeContexts()`](a2a-server/src/protocol/context-parser.ts:436) — объединить контексты
+    - [`cloneContext()`](a2a-server/src/protocol/context-parser.ts:451) — глубокое клонирование
+    - [`hasActiveTasks()`](a2a-server/src/protocol/context-parser.ts:458) — есть активные задачи
+    - [`getTaskById()`](a2a-server/src/protocol/context-parser.ts:468) — получить задачу по ID
+    - [`getTasksByStatus()`](a2a-server/src/protocol/context-parser.ts:476) — получить задачи по статусу
+    - [`calculateOverallProgress()`](a2a-server/src/protocol/context-parser.ts:484) — общий прогресс
 
 #### Type Guards:
 
@@ -112,6 +115,7 @@ interface ProtocolError {
 **Текущее:** Базовые проверки типов
 
 **Предложения:**
+
 - [x] Схема валидации с Zod для всех полей
 - [x] Кастомные валидаторы (email в session_id, URL в request_files)
 - [x] Валидация вложенных структур (deep validation)
@@ -123,6 +127,7 @@ interface ProtocolError {
 **Текущее:** Жёстко зашитая версия '1.0'
 
 **Предложения:**
+
 - [x] Поддержка нескольких версий протокола
 - [x] Migration функции между версиями
 - [x] Detect и warning при использовании устаревшей версии
@@ -133,6 +138,7 @@ interface ProtocolError {
 **Текущее:** Фиксированный набор TaskType
 
 **Предложения:**
+
 - [x] Кастомные типы задач
 - [x] metadata для задач
 - [x] dependencies между задачами (граф задач)
@@ -144,6 +150,7 @@ interface ProtocolError {
 **Текущее:** Ограниченный набор полей
 
 **Предложения:**
+
 - [x] History/context timeline
 - [x] State machine для контекста
 - [x] Parent-child relationships
@@ -155,6 +162,7 @@ interface ProtocolError {
 **Текущее:** Синхронная валидация
 
 **Предложения:**
+
 - [x] Кэширование результатов валидации
 - [x] LRU cache для парсинга
 - [x] Lazy validation (по требованию)
@@ -165,6 +173,7 @@ interface ProtocolError {
 **Текущее:** Базовые ошибки
 
 **Предложения:**
+
 - [x] Typed errors (ContextError с кодами)
 - [x] Error recovery strategies
 - [x] Error aggregation (все ошибки, не только первая)
@@ -175,6 +184,7 @@ interface ProtocolError {
 **Текущее:** Только JSON
 
 **Предложения:**
+
 - [x] MessagePack / CBOR для компактности
 - [x] Compression (gzip)
 - [x] Streaming serialization для больших контекстов
@@ -185,6 +195,7 @@ interface ProtocolError {
 **Текущее:** Базовые операции
 
 **Предложения:**
+
 - [x] Diff контекстов (что изменилось)
 - [x] Patch контекста (применить изменения)
 - [x] Context events (listeners на изменения)
@@ -354,64 +365,76 @@ interface ContextEvent {
 ### Фаза 2: Расширенная валидация (1 неделя)
 
 **Задачи:**
+
 1. Zod схемы для ContextBlock
 2. Typed errors с кодами
 3. Валидация размера данных
 4. Graceful degradation
 
 **Файлы:**
+
 - `a2a-server/src/protocol/context-parser.validator.ts` — Zod схемы
 - `a2a-server/src/protocol/context-parser.errors.ts` — typed errors
 
 ### Фаза 3: Версионирование (1 неделя)
 
 **Задачи:**
+
 1. Поддержка версий протокола
 2. Migration функции
 3. Version detector
 
 **Файлы:**
+
 - `a2a-server/src/protocol/context-parser.versions.ts` — версионирование
 
 ### Фаза 4: Граф задач (1 неделя)
 
 **Задачи:**
+
 1. Dependencies между задачами
 2. Topological sort
 3. Циклические зависимости detection
 
 **Файлы:**
+
 - `a2a-server/src/protocol/context-parser.tasks.ts` — управление задачами
 
 ### Фаза 5: History и Undo/Redo (1 неделя)
 
 **Задачи:**
+
 1. Event history
 2. Undo/redo стек
 3. Context events listeners
 
 **Файлы:**
+
 - `a2a-server/src/protocol/context-parser.history.ts` — история
 
 ### Фаза 6: Производительность (1 неделя)
 
 **Задачи:**
+
 1. LRU cache для валидации
 2. MessagePack сериализация
 3. Compression
 
 **Файлы:**
+
 - `a2a-server/src/protocol/context-parser.cache.ts` — кэширование
 - `a2a-server/src/protocol/context-parser.compress.ts` — компрессия
 
 ### Фаза 7: Diff & Patch (1 неделя)
 
 **Задачи:**
+
 1. Context diff
 2. JSON Patch integration
 3. Patch application
 
 **Файлы:**
+
 - `a2a-server/src/protocol/context-parser.diff.ts` — diff/patch
 
 ---
@@ -484,12 +507,12 @@ const patched = patchContext(baseContext, diff);
 
 ## Риски
 
-| Риск | Вероятность | Влияние | Митигация |
-|------|-------------|---------|-----------|
-| Сложность графа задач | Средняя | Среднее | Простая реализация без циклов |
-| Cache invalidation | Средняя | Среднее | TTL + manual invalidation |
-| Migration breaking changes | Низкая | Высокое | Тесты для каждой версии |
-| Size overhead (history) | Средняя | Низкое | Limit history size |
+| Риск                       | Вероятность | Влияние | Митигация                     |
+|----------------------------|-------------|---------|-------------------------------|
+| Сложность графа задач      | Средняя     | Среднее | Простая реализация без циклов |
+| Cache invalidation         | Средняя     | Среднее | TTL + manual invalidation     |
+| Migration breaking changes | Низкая      | Высокое | Тесты для каждой версии       |
+| Size overhead (history)    | Средняя     | Низкое  | Limit history size            |
 
 ---
 

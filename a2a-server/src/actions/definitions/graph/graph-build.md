@@ -1,11 +1,14 @@
 # graph-build
 
-Построение графа знаний: извлечение сущностей и связей. **План:** [actions-definitions-for-auto-ai](../../../../plans/actions-definitions-for-auto-ai.md).
+Построение графа знаний: извлечение сущностей и связей. **План:
+** [actions-definitions-for-auto-ai](../../../../plans/actions-definitions-for-auto-ai.md).
 
 ## Priority
+
 80
 
 ## Triggers
+
 - graph build
 - build graph
 - knowledge graph
@@ -15,6 +18,7 @@
 ## Sub-actions
 
 ### 1. graph-parse
+
 Парсинг кода (PHP/JS/TS/Vue).
 
 **Input:** rootDir, files[]?  
@@ -121,6 +125,7 @@ export default async function run(input: { rootDir: string; files?: string[] }):
 ```
 
 ### 2. graph-entities
+
 Извлечение сущностей (классы, функции, модели, контроллеры).
 
 **Input:** ast_or_tokens  
@@ -174,6 +179,7 @@ export default async function run(input: { ast_or_tokens: { [file: string]: { ty
 ```
 
 ### 3. graph-relations
+
 Построение связей (imports, extends, uses, calls).
 
 **Input:** entities[], ast_or_tokens  
@@ -283,6 +289,7 @@ export default async function run(input: { entities: Array<{ id: string; type: s
 ```
 
 ### 4. graph-store
+
 Сохранение графа (память/БД).
 
 **Input:** entities[], relations[]  

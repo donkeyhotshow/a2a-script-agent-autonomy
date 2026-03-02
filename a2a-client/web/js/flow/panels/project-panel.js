@@ -4,14 +4,14 @@
  */
 
 const ProjectPanel = {
-  /**
-   * Render the project panel HTML
-   */
-  render(panelData) {
-    const data = panelData?.data || {};
-    const projectData = data.data || {};
-    
-    return `
+    /**
+     * Render the project panel HTML
+     */
+    render(panelData) {
+        const data = panelData?.data || {};
+        const projectData = data.data || {};
+
+        return `
       <div class="project-panel-content">
         <div class="project-info">
           <div class="project-field">
@@ -69,89 +69,89 @@ const ProjectPanel = {
         </div>
       </div>
     `;
-  },
+    },
 
-  /**
-   * Setup event listeners for the panel
-   */
-  setupEvents(panelId) {
-    // Add panel button
-    const addBtn = document.getElementById('addPanelBtn');
-    if (addBtn) {
-      addBtn.addEventListener('click', () => {
-        const selector = document.getElementById('panelTypeSelector');
-        if (selector) {
-          selector.style.display = selector.style.display === 'none' ? 'block' : 'none';
+    /**
+     * Setup event listeners for the panel
+     */
+    setupEvents(panelId) {
+        // Add panel button
+        const addBtn = document.getElementById('addPanelBtn');
+        if (addBtn) {
+            addBtn.addEventListener('click', () => {
+                const selector = document.getElementById('panelTypeSelector');
+                if (selector) {
+                    selector.style.display = selector.style.display === 'none' ? 'block' : 'none';
+                }
+            });
         }
-      });
-    }
 
-    // Panel type buttons
-    const typeButtons = document.querySelectorAll('.panel-type-btn');
-    typeButtons.forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        const type = e.currentTarget.dataset.type;
-        if (type && window.PanelManager) {
-          // Check if panel type already exists
-          if (window.PanelManager.hasPanelType(type)) {
-            alert(`${type} panel already exists!`);
-            return;
-          }
-          
-          // Add new panel
-          const newPanel = window.PanelManager.addPanel(type);
-          
-          // Create edge from project panel to new panel
-          const projectPanel = window.PanelManager.getPanelByType('project');
-          if (projectPanel) {
-            window.PanelManager.connectPanels(projectPanel.id, newPanel.id);
-          }
-          
-          // Update VueFlow
-          this.updateVueFlow();
-          
-          // Hide selector
-          const selector = document.getElementById('panelTypeSelector');
-          if (selector) selector.style.display = 'none';
+        // Panel type buttons
+        const typeButtons = document.querySelectorAll('.panel-type-btn');
+        typeButtons.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const type = e.currentTarget.dataset.type;
+                if (type && window.PanelManager) {
+                    // Check if panel type already exists
+                    if (window.PanelManager.hasPanelType(type)) {
+                        alert(`${type} panel already exists!`);
+                        return;
+                    }
+
+                    // Add new panel
+                    const newPanel = window.PanelManager.addPanel(type);
+
+                    // Create edge from project panel to new panel
+                    const projectPanel = window.PanelManager.getPanelByType('project');
+                    if (projectPanel) {
+                        window.PanelManager.connectPanels(projectPanel.id, newPanel.id);
+                    }
+
+                    // Update VueFlow
+                    this.updateVueFlow();
+
+                    // Hide selector
+                    const selector = document.getElementById('panelTypeSelector');
+                    if (selector) selector.style.display = 'none';
+                }
+            });
+        });
+    },
+
+    /**
+     * Update VueFlow with current panels
+     */
+    updateVueFlow() {
+        if (window.setFlowNodes && window.setFlowEdges) {
+            const nodes = window.PanelManager.getNodes();
+            const edges = window.PanelManager.getEdges();
+
+            window.setFlowNodes(nodes);
+            window.setFlowEdges(edges);
+
+            console.log('ProjectPanel: Updated VueFlow with', nodes.length, 'nodes');
         }
-      });
-    });
-  },
+    },
 
-  /**
-   * Update VueFlow with current panels
-   */
-  updateVueFlow() {
-    if (window.setFlowNodes && window.setFlowEdges) {
-      const nodes = window.PanelManager.getNodes();
-      const edges = window.PanelManager.getEdges();
-      
-      window.setFlowNodes(nodes);
-      window.setFlowEdges(edges);
-      
-      console.log('ProjectPanel: Updated VueFlow with', nodes.length, 'nodes');
-    }
-  },
+    /**
+     * Update panel data
+     */
+    update(panelId, projectData) {
+        if (window.PanelManager) {
+            window.PanelManager.updatePanelData(panelId, {data: projectData});
+            this.updateVueFlow();
+        }
+    },
 
-  /**
-   * Update panel data
-   */
-  update(panelId, projectData) {
-    if (window.PanelManager) {
-      window.PanelManager.updatePanelData(panelId, { data: projectData });
-      this.updateVueFlow();
-    }
-  },
-
-  /**
-   * Escape HTML special characters
-   */
-  escape(str) {
-    if (!str) return '';
-    const div = document.createElement('div');
-    div.textContent = str;
-    return div.innerHTML;
-  },
+    /**
+     * Escape HTML special characters
+     */
+    escape(str) {
+        if (!str) return '';
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    },
 };
 
 // Make available globally

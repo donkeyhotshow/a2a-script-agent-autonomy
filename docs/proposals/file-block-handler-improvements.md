@@ -4,56 +4,61 @@
 
 ### Что делает обработчик файлов
 
-**FileBlockHandler** ([`a2a-server/src/protocol/file-block-handler.ts`](a2a-server/src/protocol/file-block-handler.ts)) — обработчик файловых блоков согласно A2A протоколу. Выполняет парсинг, валидацию, разбиение на чанки и diff операции для файловых данных.
+**FileBlockHandler** ([
+`a2a-server/src/protocol/file-block-handler.ts`](a2a-server/src/protocol/file-block-handler.ts)) — обработчик файловых
+блоков согласно A2A протоколу. Выполняет парсинг, валидацию, разбиение на чанки и diff операции для файловых данных.
 
 #### Основные функции:
 
 1. **Определение языка** — [`detectLanguage()`](a2a-server/src/protocol/file-block-handler.ts:37)
-   - Карта расширений к языкам (php, vue, javascript, typescript, json, markdown, css, scss, html, xml, yaml, sql, bash, dotenv, plaintext)
-   - Поддержка мульти-расширений (.blade.php, .d.ts)
-   - Возвращает идентификатор языка для подсветки синтаксиса
+    - Карта расширений к языкам (php, vue, javascript, typescript, json, markdown, css, scss, html, xml, yaml, sql,
+      bash, dotenv, plaintext)
+    - Поддержка мульти-расширений (.blade.php, .d.ts)
+    - Возвращает идентификатор языка для подсветки синтаксиса
 
 2. **Валидация** — [`validateFileBlock()`](a2a-server/src/protocol/file-block-handler.ts:68)
-   - Проверка path (обязательное непустое поле)
-   - Проверка content (обязательное поле)
-   - Валидация startLine/endLine (положительные числа)
-   - Проверка согласованности диапазона (startLine <= endLine)
-   - Возвращает объект с { valid: boolean, errors: string[] }
+    - Проверка path (обязательное непустое поле)
+    - Проверка content (обязательное поле)
+    - Валидация startLine/endLine (положительные числа)
+    - Проверка согласованности диапазона (startLine <= endLine)
+    - Возвращает объект с { valid: boolean, errors: string[] }
 
 3. **Парсинг** — [`parseFileBlock()`](a2a-server/src/protocol/file-block-handler.ts:122)
-   - Парсит сырые данные в типизированный FileBlock
-   - Выбрасывает Error с описанием ошибок валидации
-   - [`parseFileBlockSafe()`](a2a-server/src/protocol/file-block-handler.ts:164) — безопасная версия (возвращает null)
-   - [`parseFileBlocks()`](a2a-server/src/protocol/file-block-handler.ts:149) — массив блоков
+    - Парсит сырые данные в типизированный FileBlock
+    - Выбрасывает Error с описанием ошибок валидации
+    - [`parseFileBlockSafe()`](a2a-server/src/protocol/file-block-handler.ts:164) — безопасная версия (возвращает null)
+    - [`parseFileBlocks()`](a2a-server/src/protocol/file-block-handler.ts:149) — массив блоков
 
 4. **Создание блоков**:
-   - [`createFileBlock()`](a2a-server/src/protocol/file-block-handler.ts:179) — создать блок из контента
-   - [`createFileBlockRequest()`](a2a-server/src/protocol/file-block-handler.ts:202) — создать запрос на файл
+    - [`createFileBlock()`](a2a-server/src/protocol/file-block-handler.ts:179) — создать блок из контента
+    - [`createFileBlockRequest()`](a2a-server/src/protocol/file-block-handler.ts:202) — создать запрос на файл
 
 5. **Операции со строками**:
-   - [`extractLines()`](a2a-server/src/protocol/file-block-handler.ts:226) — извлечь диапазон строк
-   - [`getLineCount()`](a2a-server/src/protocol/file-block-handler.ts:241) — получить количество строк
-   - [`getLine()`](a2a-server/src/protocol/file-block-handler.ts:248) — получить строку по номеру (1-indexed)
+    - [`extractLines()`](a2a-server/src/protocol/file-block-handler.ts:226) — извлечь диапазон строк
+    - [`getLineCount()`](a2a-server/src/protocol/file-block-handler.ts:241) — получить количество строк
+    - [`getLine()`](a2a-server/src/protocol/file-block-handler.ts:248) — получить строку по номеру (1-indexed)
 
 6. **Разбиение на чанки (Chunking)**:
-   - [`chunkFile()`](a2a-server/src/protocol/file-block-handler.ts:266) — разбить контент на чанки по maxLines
-   - [`chunkFileBlock()`](a2a-server/src/protocol/file-block-handler.ts:291) — разбить блок на чанки с сохранением метаданных
+    - [`chunkFile()`](a2a-server/src/protocol/file-block-handler.ts:266) — разбить контент на чанки по maxLines
+    - [`chunkFileBlock()`](a2a-server/src/protocol/file-block-handler.ts:291) — разбить блок на чанки с сохранением
+      метаданных
 
 7. **Объединение блоков** — [`mergeFileBlocks()`](a2a-server/src/protocol/file-block-handler.ts:312)
-   - Объединяет несколько блоков одного файла
-   - Сортирует по startLine
-   - Заполняет пробелы пустыми строками
+    - Объединяет несколько блоков одного файла
+    - Сортирует по startLine
+    - Заполняет пробелы пустыми строками
 
 8. **Diff операции**:
-   - [`diffFileBlocks()`](a2a-server/src/protocol/file-block-handler.ts:376) — вычислить diff между оригиналом и модификацией
-   - [`applyDiff()`](a2a-server/src/protocol/file-block-handler.ts:416) — применить diff к блоку
-   - Типы изменений: add, delete, modify
-   - Возвращает количество добавлений/удалений и массив изменений
+    - [`diffFileBlocks()`](a2a-server/src/protocol/file-block-handler.ts:376) — вычислить diff между оригиналом и
+      модификацией
+    - [`applyDiff()`](a2a-server/src/protocol/file-block-handler.ts:416) — применить diff к блоку
+    - Типы изменений: add, delete, modify
+    - Возвращает количество добавлений/удалений и массив изменений
 
 9. **Сериализация**:
-   - [`serializeFileBlock()`](a2a-server/src/protocol/file-block-handler.ts:452) — в JSON строку
-   - [`deserializeFileBlock()`](a2a-server/src/protocol/file-block-handler.ts:459) — из JSON строки
-   - [`deserializeFileBlockSafe()`](a2a-server/src/protocol/file-block-handler.ts:473) — безопасная версия
+    - [`serializeFileBlock()`](a2a-server/src/protocol/file-block-handler.ts:452) — в JSON строку
+    - [`deserializeFileBlock()`](a2a-server/src/protocol/file-block-handler.ts:459) — из JSON строки
+    - [`deserializeFileBlockSafe()`](a2a-server/src/protocol/file-block-handler.ts:473) — безопасная версия
 
 10. **Утилиты**:
     - [`getFileExtension()`](a2a-server/src/protocol/file-block-handler.ts:488) — получить расширение
@@ -108,6 +113,7 @@ interface DiffResult {
 **Текущее:** Базовые проверки типов
 
 **Предложения:**
+
 - [ ] Схема валидации с Zod для FileBlock
 - [ ] Валидация path (существующий файл, безопасный путь)
 - [ ] Валидация content (max size, encoding)
@@ -120,6 +126,7 @@ interface DiffResult {
 **Текущее:** Простое разбиение по строкам
 
 **Предложения:**
+
 - [ ] Semantic chunking (по функциям, классам)
 - [ ] Context-aware chunking (учитывать контекст вокруг чанка)
 - [ ] Adaptive chunking (размер чанка зависит от типа файла)
@@ -131,6 +138,7 @@ interface DiffResult {
 **Текущее:** Простой построчный diff
 
 **Предложения:**
+
 - [ ] Unified diff format (традиционный diff)
 - [ ] Side-by-side diff
 - [ ] Word-level diff
@@ -145,6 +153,7 @@ interface DiffResult {
 **Текущее:** Определение бинарных файлов по расширению
 
 **Предложения:**
+
 - [ ] Base64 encoding/decoding для бинарников
 - [ ] Chunked binary transfer
 - [ ] Binary diff (для изображений, etc.)
@@ -156,6 +165,7 @@ interface DiffResult {
 **Текущее:** Только in-memory операции
 
 **Предложения:**
+
 - [ ] Read file from disk
 - [ ] Write file to disk
 - [ ] Watch file changes
@@ -168,6 +178,7 @@ interface DiffResult {
 **Текущее:** Синхронная обработка
 
 **Предложения:**
+
 - [ ] LRU cache для результатов diff
 - [ ] Web Workers для тяжёлых операций
 - [ ] Streaming processing для больших файлов
@@ -179,6 +190,7 @@ interface DiffResult {
 **Текущее:** Базовые операции
 
 **Предложения:**
+
 - [ ] File hashing (MD5, SHA256)
 - [ ] Line ending normalization (LF/CRLF)
 - [ ] Whitespace normalization
@@ -191,6 +203,7 @@ interface DiffResult {
 **Текущее:** Только JSON
 
 **Предложения:**
+
 - [ ] MessagePack для компактности
 - [ ] Gzip compression
 - [ ] Streaming serialization
@@ -381,74 +394,90 @@ enum FileBlockErrorCode {
 ### Фаза 2: Semantic Chunking ✅ (Выполнено)
 
 **Задачи:**
-1. ✅ Функция semantic chunking - [`chunkByDelimiter()`](a2a-server/src/protocol/file-block-handler.semantic-chunk.ts:117)
-2. ✅ Опции для настройки чанкинга - [`ChunkByDelimiterOptions`](a2a-server/src/protocol/file-block-handler.semantic-chunk.ts:10)
-   - `delimiters` - массив разделителей
-   - `includeMetadata` - включение метаданных (type, name)
-   - `language` - язык (php, typescript, javascript)
+
+1. ✅ Функция semantic chunking - [
+   `chunkByDelimiter()`](a2a-server/src/protocol/file-block-handler.semantic-chunk.ts:117)
+2. ✅ Опции для настройки чанкинга - [
+   `ChunkByDelimiterOptions`](a2a-server/src/protocol/file-block-handler.semantic-chunk.ts:10)
+    - `delimiters` - массив разделителей
+    - `includeMetadata` - включение метаданных (type, name)
+    - `language` - язык (php, typescript, javascript)
 3. ✅ Respect structure (не разрывать функции) - реализовано через поиск структурных разделителей
 4. ⚠️ Overlapping chunks - не реализовано (можно добавить позже)
 
 **Файлы:**
+
 - `a2a-server/src/protocol/file-block-handler.semantic-chunk.ts` — семантический чанкинг ✅
 
 **Экспортируемые функции:**
+
 - [`chunkByDelimiter()`](a2a-server/src/protocol/file-block-handler.semantic-chunk.ts:117) - основная функция
-- [`getDefaultDelimiters()`](a2a-server/src/protocol/file-block-handler.semantic-chunk.ts:44) - получить разделители по языку
+- [`getDefaultDelimiters()`](a2a-server/src/protocol/file-block-handler.semantic-chunk.ts:44) - получить разделители по
+  языку
 - [`detectLanguageFromContent()`](a2a-server/src/protocol/file-block-handler.semantic-chunk.ts:60) - определить язык
 - [`chunkByLines()`](a2a-server/src/protocol/file-block-handler.semantic-chunk.ts:224) - построчное разбиение
 
 ### Фаза 3: Enhanced Diff (1 неделя)
 
 **Задачи:**
+
 1. Unified diff format
 2. Word-level diff
 3. Three-way merge
 4. Diff statistics
 
 **Файлы:**
+
 - `a2a-server/src/protocol/file-block-handler.diff.ts` — расширенные diff
 
 ### Фаза 4: Binary Support (1 неделя)
 
 **Задачи:**
+
 1. Base64 encoding
 2. Binary detection (magic bytes)
 3. Chunked binary transfer
 
 **Файлы:**
+
 - `a2a-server/src/protocol/file-block-handler.binary.ts` — бинарные файлы
 
 ### Фаза 5: File System Integration (1 неделя)
 
 **Задачи:**
+
 1. Read/write from disk
 2. File watching
 3. Atomic writes с backup
 
 **Файлы:**
+
 - `a2a-server/src/protocol/file-block-handler.fs.ts` — файловая система
 
 ### Фаза 6: Производительность (1 неделя)
 
 **Задачи:**
+
 1. LRU cache для diff
 2. Web Workers для тяжёлых операций
 3. Streaming processing
 4. Parallel chunking
 
 **Файлы:**
+
 - `a2a-server/src/protocol/file-block-handler.cache.ts` — кэширование
 
 ### Фаза 7: Advanced Utilities (1 неделя)
 
 **Задачи:**
+
 1. Encoding detection
 2. Line ending normalization
 3. File hashing
 4. Delta encoding
 
 **Файлы:**
+
 - `a2a-server/src/protocol/file-block-handler.encoding.ts` — кодировки
 - `a2a-server/src/protocol/file-block-handler.delta.ts` — delta encoding
 
@@ -523,12 +552,12 @@ await writeFileBlockToDisk(block, { backup: true });
 
 ## Риски
 
-| Риск | Вероятность | Влияние | Митигация |
-|------|-------------|---------|-----------|
-| Semantic chunking сложность | Средняя | Среднее | Начать с простых границ (функции, классы) |
-| Binary detection accuracy | Средняя | Среднее | Magic bytes + extension fallback |
-| Memory usage при large files | Высокая | Высокое | Streaming + chunked processing |
-| Merge conflicts complexity | Средняя | Высокое | Простой three-way merge |
+| Риск                         | Вероятность | Влияние | Митигация                                 |
+|------------------------------|-------------|---------|-------------------------------------------|
+| Semantic chunking сложность  | Средняя     | Среднее | Начать с простых границ (функции, классы) |
+| Binary detection accuracy    | Средняя     | Среднее | Magic bytes + extension fallback          |
+| Memory usage при large files | Высокая     | Высокое | Streaming + chunked processing            |
+| Merge conflicts complexity   | Средняя     | Высокое | Простой three-way merge                   |
 
 ---
 

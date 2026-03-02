@@ -1,11 +1,15 @@
 # hybrid-explain
 
-Explain code with AI and context. **План:** [actions-definitions-for-auto-ai](../../../../plans/actions-definitions-for-auto-ai.md). **Use-case:** [5-hybrid](../../../../docs/use-cases/auto-ai/5-hybrid.md).
+Explain code with AI and context. **План:
+** [actions-definitions-for-auto-ai](../../../../plans/actions-definitions-for-auto-ai.md). **Use-case:
+** [5-hybrid](../../../../docs/use-cases/auto-ai/5-hybrid.md).
 
 ## Priority
+
 75
 
 ## Triggers
+
 - explain code
 - hybrid explain
 - what does this do
@@ -13,6 +17,7 @@ Explain code with AI and context. **План:** [actions-definitions-for-auto-ai
 ## Sub-actions
 
 ### 1. hybrid-explain-context
+
 Gather code and related context.
 
 **Input:** target, rootDir?  
@@ -75,6 +80,7 @@ interface CodeContext {
 ```
 
 ### 2. hybrid-explain-llm
+
 Generate explanation via AI.
 
 **Input:** context  

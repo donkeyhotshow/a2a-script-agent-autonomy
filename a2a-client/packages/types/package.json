@@ -15,7 +15,11 @@
     "build": "tsc",
     "test": "echo \"No tests configured\" && exit 0"
   },
-  "keywords": ["a2a", "types", "protocol"],
+  "keywords": [
+    "a2a",
+    "types",
+    "protocol"
+  ],
   "author": "",
   "license": "MIT",
   "devDependencies": {

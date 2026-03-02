@@ -2,7 +2,7 @@
 /**
  * @a2a/json - Validation schemas using Zod
  */
-Object.defineProperty(exports, "__esModule", { value: true });
+Object.defineProperty(exports, "__esModule", {value: true});
 exports.unifiedResponseSchema = exports.actionErrorResponseSchema = exports.actionErrorResultSchema = exports.actionErrorSchema = exports.actionCompletedResponseSchema = exports.actionCompletedResultSchema = exports.actionProgressResponseSchema = exports.actionProgressResultSchema = exports.currentStepSchema = exports.actionExecutingResponseSchema = exports.actionExecutingResultSchema = exports.nextStepSchema = exports.actionProposalResponseSchema = exports.actionProposalResultSchema = exports.fallbackActionSchema = exports.actionSchema = exports.contextBlockSchema = exports.protocolErrorSchema = exports.taskSchema = exports.baseResponseSchema = void 0;
 exports.validateResponse = validateResponse;
 exports.getResponseType = getResponseType;
@@ -229,6 +229,7 @@ function validateResponse(data) {
         errors,
     };
 }
+
 /**
  * Validate and extract response type from data
  * @param data - Raw JSON data
@@ -238,6 +239,7 @@ function getResponseType(data) {
     const result = validateResponse(data);
     return result.valid ? result.data?.type : undefined;
 }
+
 /**
  * Check if data is a valid unified response
  * @param data - Data to check
@@ -246,6 +248,7 @@ function getResponseType(data) {
 function isUnifiedResponse(data) {
     return validateResponse(data).valid;
 }
+
 /**
  * Validate specific response type
  * @param data - Data to validate

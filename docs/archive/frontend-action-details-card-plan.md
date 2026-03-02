@@ -1,18 +1,22 @@
 # Frontend Action Details Card Plan
 
 ## Выбрано пользователем (qtu):
+
 **Action Details Card (детали действия)**
 
 ---
 
 ## Overview
+
 Добавить улучшенный UI компонент для отображения деталей серверного ответа с предложением действия (action_proposal).
 
 Текущее состояние:
+
 - Показывается только кнопка Approve
 - Минимальная информация об action
 
 Новое состояние:
+
 - Полная карточка с деталями действия
 - Информация о sub-actions
 - Match score и описание
@@ -21,6 +25,7 @@
 ---
 
 ## Current State
+
 - ✅ Базовое отображение серверных ответов
 - ✅ Кнопка Approve
 - ❌ Нет детальной карточки с информацией
@@ -33,11 +38,13 @@
 ## Plan
 
 ### Phase 1: UI Components
+
 - [ ] Создать HTML шаблон для Action Details Card
 - [ ] Добавить стили для карточки
 - [ ] Интегрировать в панель прогресса действий
 
 ### Phase 2: Data Display
+
 - [ ] Показать ID и название действия
 - [ ] Показать описание
 - [ ] Показать match score (визуальная оценка)
@@ -45,6 +52,7 @@
 - [ ] Показать параметры/контекст
 
 ### Phase 3: Interaction
+
 - [ ] Кнопка Approve с подтверждением
 - [ ] Кнопка Reject (отклонение)
 - [ ] Кнопка Edit (редактирование параметров)
@@ -55,6 +63,7 @@
 ## Files to Modify
 
 ### 1. a2a-client/web/index.html
+
 ```
 html
 <!-- Action Details Card (добавить в панель прогресса) -->
@@ -97,6 +106,7 @@ html
 ```
 
 ### 2. a2a-client/web/css/style.css
+
 ```
 css
 /* Action Details Card Styles */
@@ -306,6 +316,7 @@ css
 ```
 
 ### 3. a2a-client/web/js/sessions.js
+
 ```
 javascript
 // Добавить методы для управления Action Details Card
@@ -413,12 +424,15 @@ rejectAction() {
 ## Implementation Steps
 
 ### Step 1: Add HTML Template
+
 - Add Action Details Card HTML to index.html
 
 ### Step 2: Add CSS Styles
+
 - Add card styles to style.css
 
 ### Step 3: Update JavaScript
+
 - Add showActionDetailsCard method
 - Add hideActionDetailsCard method
 - Add updateSubActionStatus method
@@ -426,12 +440,14 @@ rejectAction() {
 - Integrate with existing action flow
 
 ### Step 4: Connect to Server Response
+
 - Update showApproveButton to show full card
 - Update handleActionResponse to use new card
 
 ---
 
 ## Dependencies
+
 - VueFlow already loaded
 - No new npm packages required
 
@@ -444,12 +460,14 @@ rejectAction() {
 ## Implementation Log
 
 ### Step 1: Add HTML Template - ✅ DONE
+
 - [x] Add Action Details Card container
 - [x] Add header with title and match score
 - [x] Add body with description and sub-actions
 - [x] Add footer with Approve/Reject buttons
 
 ### Step 2: Add CSS Styles - ✅ DONE
+
 - [x] Card container styles
 - [x] Header styles
 - [x] Sub-actions list styles
@@ -457,6 +475,7 @@ rejectAction() {
 - [x] Button styles
 
 ### Step 3: Update JavaScript - ✅ DONE
+
 - [x] Add showActionDetailsCard function
 - [x] Add hideActionDetailsCard function
 - [x] Add updateSubActionStatus function

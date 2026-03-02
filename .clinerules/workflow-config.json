@@ -26,12 +26,18 @@
     "enabled": true,
     "email": {
       "enabled": false,
-      "recipients": ["admin@example.com"]
+      "recipients": [
+        "admin@example.com"
+      ]
     },
     "webhook": {
       "enabled": false,
       "url": "",
-      "events": ["phase_complete", "error", "success"]
+      "events": [
+        "phase_complete",
+        "error",
+        "success"
+      ]
     }
   },
   "integration": {

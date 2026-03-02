@@ -2,13 +2,14 @@
 
 ## Overview
 
-This guide provides comprehensive instructions for integrating the documentation review workflow system into your development environment and CI/CD pipeline.
+This guide provides comprehensive instructions for integrating the documentation review workflow system into your
+development environment and CI/CD pipeline.
 
 ## Quick Start
 
 ### 1. System Requirements
 
-- Node.js v18+ 
+- Node.js v18+
 - File system access to `.clinerules/` directory
 - Read/write permissions for documentation files
 
@@ -371,6 +372,7 @@ class NotifyingReviewWorkflow extends ReviewWorkflow {
 ### Common Issues
 
 #### File Corruption
+
 ```bash
 # Restore review queue
 rm .clinerules/reviews/review-requests.json
@@ -378,6 +380,7 @@ node .clinerules/scripts/cli.js test
 ```
 
 #### Permission Issues
+
 ```bash
 # Check permissions
 ls -la .clinerules/
@@ -386,6 +389,7 @@ chmod -R 755 .clinerules/
 ```
 
 #### Missing Dependencies
+
 ```bash
 # Reinstall dependencies
 npm install
@@ -394,6 +398,7 @@ node --version
 ```
 
 #### Network Issues
+
 ```bash
 # Check connectivity
 ping google.com
@@ -446,11 +451,13 @@ To update the system:
 
 ## Conclusion
 
-The documentation review system provides a comprehensive framework for maintaining high-quality documentation. By following this integration guide, you can:
+The documentation review system provides a comprehensive framework for maintaining high-quality documentation. By
+following this integration guide, you can:
 
 - **Automate review processes** to save time
 - **Ensure quality standards** are consistently met
 - **Track progress** and identify areas for improvement
 - **Integrate seamlessly** with your existing development workflow
 
-For additional support, refer to the system documentation in the `.clinerules/` directory or run the test suite to verify functionality.
+For additional support, refer to the system documentation in the `.clinerules/` directory or run the test suite to
+verify functionality.

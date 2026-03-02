@@ -1,7 +1,9 @@
 # План: Добавление таблички сессии на VueFlow после подтверждения действия
 
 ## Задача
+
 После подтверждения действия (action_proposal → пользователь нажал "Run/Подтвердить") нужно:
+
 1. Добавить табличку сессии на VueFlow сцену
 2. Запоминать добавленные таблички в localStorage
 3. Восстанавливать таблички при загрузке
@@ -11,12 +13,14 @@
 ## Анализ текущего состояния
 
 ### Существующий процесс
+
 1. Пользователь отправляет задачу → `send()`
 2. Сервер возвращает `action_proposal` с предложением действия
 3. В `action-progress` показываются кнопки "Run" и "Cancel"
 4. При нажатии "Run" → `runAction()` → выполняется действие
 
 ### Проблемы
+
 - Нет кнопки "Approve" для подтверждения action_proposal
 - Узлы сессий не добавляются на VueFlow сцену при подтверждении
 - Нет сохранения состояния в localStorage
@@ -26,26 +30,34 @@
 ## План реализации
 
 ### Шаг 1: Добавить кнопку Approve в UI
+
 В `index.html` добавить кнопку Approve в панель action-progress:
+
 ```
 html
 <button class="btn btn-primary" id="action-approve" style="display: none;">✓ Approve</button>
 ```
 
 ### Шаг 2: Обработка Approve в sessions.js
+
 Добавить:
+
 - `approveAction()` метод
 - Логику показа кнопки Approve когда есть action_proposal
 - Добавление узла на VueFlow после Approve
 
 ### Шаг 3: LocalStorage для запоминания
+
 Добавить:
+
 - `SessionFlowStorage` класс для работы с localStorage
 - Сохранение узлов при добавлении
 - Восстановление при загрузке
 
 ### Шаг 4: Добавить тип узла "SessionNode"
+
 Создать новый тип узла в `nodes.js` для отображения сессии:
+
 - Показать ID сессии
 - Показать статус (active/completed/failed)
 - Показать количество сообщений
@@ -55,6 +67,7 @@ html
 ## Реализация
 
 ### Файл: a2a-client/web/js/sessions/flow-storage.js (НОВЫЙ)
+
 ```
 javascript
 /**
@@ -121,6 +134,7 @@ window.SessionFlowStorage = SessionFlowStorage;
 ### Изменения в sessions.js
 
 1. Добавить импорт storage:
+
 ```
 javascript
 // После загрузки sessions.js загрузить storage
@@ -130,6 +144,7 @@ if (window.SessionFlowStorage) {
 ```
 
 2. Добавить метод `addSessionNodeToFlow()`:
+
 ```
 javascript
 addSessionNodeToFlow(session) {
@@ -168,12 +183,14 @@ getNextNodePosition() {
 ```
 
 3. Добавить обработку Approve кнопки (в init):
+
 ```
 javascript
 document.getElementById('action-approve')?.addEventListener('click', () => this.approveAction());
 ```
 
 4. Добавить метод `approveAction()`:
+
 ```
 javascript
 async approveAction() {
@@ -190,6 +207,7 @@ async approveAction() {
 ```
 
 5. Показать кнопку Approve когда есть action_proposal (в renderActionProgress):
+
 ```
 javascript
 const approveBtn = document.getElementById('action-approve');
@@ -201,6 +219,7 @@ if (approveBtn) {
 ### Изменения в nodes.js
 
 Добавить новый тип узла:
+
 ```
 javascript
 /**
@@ -252,6 +271,7 @@ export const SessionNode = {
 ```
 
 И зарегистрировать в `registerCustomNodes()`:
+
 ```
 javascript
 session: SessionNode,
@@ -262,6 +282,7 @@ session: SessionNode,
 ## UI изменения в index.html
 
 Добавить кнопку Approve:
+
 ```
 html
 <div class="action-actions">
@@ -276,6 +297,7 @@ html
 ## Восстановление при загрузке
 
 В `init()` добавить:
+
 ```
 javascript
 // Восстановить узлы из localStorage при загрузке

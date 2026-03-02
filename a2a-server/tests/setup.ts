@@ -5,7 +5,7 @@
 import dotenv from 'dotenv';
 import path from 'path';
 
-dotenv.config({ path: path.resolve(process.cwd(), '.env') });
+dotenv.config({path: path.resolve(process.cwd(), '.env')});
 
 process.env.NODE_ENV = 'test';
 // SKIP_AUTH=1 bypasses auth - set only when DB available for full integration

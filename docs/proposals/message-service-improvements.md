@@ -4,7 +4,8 @@
 
 ### Что делает сервис
 
-**MessageService** (`a2a-server/src/services/message.service.ts`) — сервис CRUD операций для сообщений в системе A2A. Обеспечивает хранение и управление сообщениями между клиентом и сервером.
+**MessageService** (`a2a-server/src/services/message.service.ts`) — сервис CRUD операций для сообщений в системе A2A.
+Обеспечивает хранение и управление сообщениями между клиентом и сервером.
 
 #### Модель данных (Prisma):
 
@@ -30,23 +31,24 @@ model Message {
 #### Основные функции:
 
 1. **Создание сообщений** — [`create()`](a2a-server/src/services/message.service.ts:32)
-   - Генерация ID: `msg_${timestamp}_${random}`
-   - Автоматический статус по умолчанию: `sent`
-   - Поддержка promiseId для связи с запросами
+    - Генерация ID: `msg_${timestamp}_${random}`
+    - Автоматический статус по умолчанию: `sent`
+    - Поддержка promiseId для связи с запросами
 
 2. **Получение сообщений**:
-   - [`getById()`](a2a-server/src/services/message.service.ts:78) — по ID
-   - [`getBySessionId()`](a2a-server/src/services/message.service.ts:111) — по сессии с пагинацией
+    - [`getById()`](a2a-server/src/services/message.service.ts:78) — по ID
+    - [`getBySessionId()`](a2a-server/src/services/message.service.ts:111) — по сессии с пагинацией
 
 3. **Обновление сообщений**:
-   - [`update()`](a2a-server/src/services/message.service.ts:148) — по ID
-   - [`updateByPromiseId()`](a2a-server/src/services/message.service.ts:196) — по promiseId
+    - [`update()`](a2a-server/src/services/message.service.ts:148) — по ID
+    - [`updateByPromiseId()`](a2a-server/src/services/message.service.ts:196) — по promiseId
 
 4. **Удаление сообщений** — [`delete()`](a2a-server/src/services/message.service.ts:244)
 
 #### Текущее использование:
 
-- [`request-processor.service.ts`](a2a-server/src/services/request-processor.service.ts) — создание сообщений при обработке запросов
+- [`request-processor.service.ts`](a2a-server/src/services/request-processor.service.ts) — создание сообщений при
+  обработке запросов
 
 ---
 
@@ -57,6 +59,7 @@ model Message {
 **Текущее:** Generic `content: Record<string, unknown>`
 
 **Предложения:**
+
 - [x] Typed content schema (ContentType enum)
 - [x] Zod валидация для content
 - [x] Type-safe методы с дженериками
@@ -66,6 +69,7 @@ model Message {
 **Текущее:** Только одиночные операции
 
 **Предложения:**
+
 - [x] `createMany()` — массовое создание
 - [x] `updateMany()` — массовое обновление
 - [x] `deleteBySessionId()` — удаление всех сообщений сессии
@@ -76,6 +80,7 @@ model Message {
 **Текущее:** Простой `limit`/`offset`
 
 **Предложения:**
+
 - [x] Cursor-based пагинация
 - [x] Metadata в ответе (total, hasMore)
 - [x] `getMessagesCursor(sessionId, cursor, limit)`
@@ -85,6 +90,7 @@ model Message {
 **Текущее:** Отсутствует
 
 **Предложения:**
+
 - [ ] LRU кэш для часто читаемых сообщений
 - [ ] Инвалидация по sessionId
 - [ ] Кэш последних сообщений сессии
@@ -94,6 +100,7 @@ model Message {
 **Текущее:** Базовые findUnique/findMany
 
 **Предложения:**
+
 - [ ] Select/include оптимизация
 - [ ] Batch loading для нескольких сессий
 - [ ] Подсчёт количества без получения данных
@@ -103,6 +110,7 @@ model Message {
 **Текущее:** Только по sessionId
 
 **Предложения:**
+
 - [ ] Фильтрация по direction/role/status
 - [ ] Полнотекстовый поиск по contentText
 - [ ] Фильтрация по дате (createdAt range)
@@ -112,6 +120,7 @@ model Message {
 **Текущее:** Жёсткое удаление
 
 **Предложения:**
+
 - [ ] Soft delete с полем `deletedAt`
 - [ ] Аудит изменений
 - [ ] Версионирование сообщений
@@ -121,6 +130,7 @@ model Message {
 **Текущее:** Отсутствует
 
 **Предложения:**
+
 - [ ] Event emitter: onCreate, onUpdate, onDelete
 - [ ] Хуки для бизнес-логики
 
@@ -259,61 +269,73 @@ json
 ### Фаза 2: Типизация и валидация (1 неделя)
 
 **Задачи:**
+
 1. Zod схемы для CreateMessageData/UpdateMessageData
 2. Content type enum и валидация
 3. Type-safe методы с дженериками
 
 **Файлы:**
+
 - `a2a-server/src/services/message.types.ts` — схемы
 - `a2a-server/src/services/message.validator.ts` — валидатор
 
 ### Фаза 3: Пакетные операции (1 неделя)
 
 **Задачи:**
+
 1. createMany() с транзакцией
 2. deleteBySessionId() каскадом
 3. updateMany() с фильтрами
 
 **Файлы:**
+
 - `a2a-server/src/services/message.batch.ts` — пакетные операции
 
 ### Фаза 4: Пагинация и курсоры (1 неделя)
 
 **Задачи:**
+
 1. Cursor-based пагинация
 2. Metadata (total, hasMore)
 3. Фильтрация по полям
 
 **Файлы:**
+
 - `a2a-server/src/services/message.pagination.ts`
 
 ### Фаза 5: Кэширование (1 неделя)
 
 **Задачи:**
+
 1. LRU кэш для сообщений
 2. Инвалидация по sessionId
 3. Кэш последних N сообщений
 
 **Файлы:**
+
 - `a2a-server/src/services/message.cache.ts`
 
 ### Фаза 6: События (1 неделя)
 
 **Задачи:**
+
 1. Event emitter
 2. Хуки для бизнес-логики
 
 **Файлы:**
+
 - `a2a-server/src/services/message.events.ts`
 
 ### Фаза 7: Soft delete и аудит (1 неделя)
 
 **Задачи:**
+
 1. Поле deletedAt
 2. Аудит изменений
 3. History table
 
 **Миграция:**
+
 - Добавление поля `deletedAt` в schema.prisma
 
 ---
@@ -393,11 +415,11 @@ await messageService.update('msg_123', { status: 'pending' });
 
 ## Риски
 
-| Риск | Вероятность | Влияние | Митигация |
-|------|-------------|---------|-----------|
-| Переусложнение API | Средняя | Среднее | Фазированная реализация |
-| Кэш невалидный | Средняя | Высокое | Event-based инвалидация |
-| Большие JSON в content | Средняя | Среднее | Лимиты и компрессия |
+| Риск                   | Вероятность | Влияние | Митигация               |
+|------------------------|-------------|---------|-------------------------|
+| Переусложнение API     | Средняя     | Среднее | Фазированная реализация |
+| Кэш невалидный         | Средняя     | Высокое | Event-based инвалидация |
+| Большие JSON в content | Средняя     | Среднее | Лимиты и компрессия     |
 
 ---
 

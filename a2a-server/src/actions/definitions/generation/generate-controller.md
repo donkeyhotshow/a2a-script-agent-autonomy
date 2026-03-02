@@ -1,11 +1,15 @@
 # generate-controller
 
-Generate controller with actions. **План:** [actions-definitions-for-auto-ai](../../../../plans/actions-definitions-for-auto-ai.md). **Use-case:** [4-code-generation](../../../../docs/use-cases/auto-ai/4-code-generation.md).
+Generate controller with actions. **План:
+** [actions-definitions-for-auto-ai](../../../../plans/actions-definitions-for-auto-ai.md). **Use-case:
+** [4-code-generation](../../../../docs/use-cases/auto-ai/4-code-generation.md).
 
 ## Priority
+
 80
 
 ## Triggers
+
 - generate controller
 - controller generation
 - create controller
@@ -13,6 +17,7 @@ Generate controller with actions. **План:** [actions-definitions-for-auto-ai
 ## Sub-actions
 
 ### 1. generate-controller-analyze
+
 Analyze task to determine controller requirements.
 
 **Input:** task, rootDir?  
@@ -61,6 +66,7 @@ export default async function analyze(input: { task: string; rootDir?: string })
 ```
 
 ### 2. generate-controller-create
+
 Create controller file with basic structure.
 
 **Input:** controllerSpec, rootDir?  
@@ -145,6 +151,7 @@ ${actionsCode}
 ```
 
 ### 3. generate-controller-routes
+
 Register REST routes for controller.
 
 **Input:** controllerSpec, rootDir?  
@@ -187,6 +194,7 @@ export default async function addRoutes(input: { controllerSpec: { name: string;
 ```
 
 ### 4. generate-controller-validate
+
 Validate generated controller code.
 
 **Input:** code, filePath  

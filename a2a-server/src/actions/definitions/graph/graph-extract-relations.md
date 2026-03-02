@@ -3,9 +3,11 @@
 Извлечение связей: imports, extends, uses, calls. План: actions-definitions-for-auto-ai.
 
 ## Priority
+
 78
 
 ## Triggers
+
 - extract relations
 - graph relations
 - build relations
@@ -13,6 +15,7 @@
 ## Sub-actions
 
 ### 1. graph-relations-parse
+
 Build relations between entities from AST/code.
 
 **Input:** entities[], ast_or_files  

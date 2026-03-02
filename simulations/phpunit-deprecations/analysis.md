@@ -41,6 +41,7 @@ Final: Server → Client: { "context": {...}, "result": {...} }
 ## Format Notes
 
 - Uses canonical format from `simulations/SCHEMA.md`
-- Request: `{ "task": "..." }` → `{ "context": {...}, "result": { "choice": "..." } }` → `{ "context": {...}, "result": { "action-key": {...} } }`
+- Request: `{ "task": "..." }` → `{ "context": {...}, "result": { "choice": "..." } }` →
+  `{ "context": {...}, "result": { "action-key": {...} } }`
 - Response: `execute.form` for choices → `execute.script` for steps → `result` for final
 - Uses action-key shape for results (e.g., `"scan-phpunit": { "files": [...] }`)

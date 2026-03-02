@@ -1,17 +1,19 @@
 # План: fix-vue-imports-batch - Альтернативный метод с серверной обработкой
 
-**Definitions:** [fix-vue-imports-batch.md](a2a-server/src/actions/definitions/fix-vue-imports-batch.md) (короткий MD в репо) · [fix-vue-imports.md](a2a-server/src/actions/definitions/fix-vue-imports.md) (основной action) · [definitions/README.md](a2a-server/src/actions/definitions/README.md) (оглавление).
+**Definitions:** [fix-vue-imports-batch.md](a2a-server/src/actions/definitions/fix-vue-imports-batch.md) (короткий MD в
+репо) · [fix-vue-imports.md](a2a-server/src/actions/definitions/fix-vue-imports.md) (основной
+action) · [definitions/README.md](a2a-server/src/actions/definitions/README.md) (оглавление).
 
 ## Концепция
 
 **Ключевое отличие от fix-vue-imports:**
 
-| Аспект | fix-vue-imports (текущий) | fix-vue-imports-batch (новый) |
-|--------|---------------------------|-------------------------------|
-| Где выполняется логика | На клиенте | На сервере |
-| Обработка | Все файлы сразу | Батчами по 10 файлов |
-| Состояние | Не хранится | В контексте сессии |
-| Сервер | Только координирует | Обрабатывает данные |
+| Аспект                 | fix-vue-imports (текущий) | fix-vue-imports-batch (новый) |
+|------------------------|---------------------------|-------------------------------|
+| Где выполняется логика | На клиенте                | На сервере                    |
+| Обработка              | Все файлы сразу           | Батчами по 10 файлов          |
+| Состояние              | Не хранится               | В контексте сессии            |
+| Сервер                 | Только координирует       | Обрабатывает данные           |
 
 ## Архитектура
 
@@ -137,6 +139,7 @@ export default async function run(input: { rootDir: string }): Promise<{
 ```
 
 **Server Processing:**
+
 ```typescript
 // На сервере при получении файлов
 function processConfig(files: FileBlock[]): { aliases: Record<string, string> } {
@@ -166,6 +169,7 @@ function processConfig(files: FileBlock[]): { aliases: Record<string, string> } 
 ---
 
 ### 2. batch-detect
+
 Обнаружение сломанных импортов - батч по 10 файлов.
 
 **Condition:** context.phase === 'detect'
@@ -174,6 +178,7 @@ function processConfig(files: FileBlock[]): { aliases: Record<string, string> } 
 **Output:** brokenImports[0..9], hasMore
 
 **Client Code:**
+
 ```typescript
 import { readdirSync, readFileSync, existsSync } from 'node:fs';
 import { join, dirname, resolve } from 'node:path';
@@ -237,6 +242,7 @@ function exists(p: string): boolean {
 ---
 
 ### 3. batch-resolve
+
 Разрешение импортов на сервере.
 
 **Condition:** context.phase === 'resolve'
@@ -245,6 +251,7 @@ function exists(p: string): boolean {
 **Output:** patches, request_files
 
 **Client Code:**
+
 ```typescript
 export default async function run(input: {
   broken_imports: BrokenImport[],
@@ -272,6 +279,7 @@ export default async function run(input: {
 ```
 
 **Server Processing:**
+
 ```typescript
 // На сервере при получении broken_imports и найденных файлов
 function resolveImports(
@@ -311,6 +319,7 @@ function resolveImports(
 ---
 
 ### 4. batch-apply
+
 Применение исправлений.
 
 **Condition:** context.phase === 'apply'
@@ -319,6 +328,7 @@ function resolveImports(
 **Output:** fixed_files, context
 
 **Client Code:**
+
 ```typescript
 import { readFileSync, writeFileSync } from 'node:fs';
 
@@ -381,6 +391,7 @@ function groupByFile(patches: Patch[]): Record<string, Patch[]> {
 ---
 
 ### 5. batch-completed
+
 Завершение обработки.
 
 **Condition:** context.phase === 'completed'
@@ -389,6 +400,7 @@ function groupByFile(patches: Patch[]): Record<string, Patch[]> {
 **Output:** summary
 
 **Client Code:**
+
 ```typescript
 export default async function run(input: {
   context: { batchIndex: number }

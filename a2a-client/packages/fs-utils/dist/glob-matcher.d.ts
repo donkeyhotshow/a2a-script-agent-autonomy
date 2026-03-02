@@ -14,9 +14,14 @@ export declare class GlobMatcher {
         readonly EXCLUDE: readonly ["node_modules/**", "vendor/**", ".git/**", "dist/**", "build/**", "storage/**", ".a2a/**", "**/*.min.js", "**/*.min.css"];
     };
     private compiledPatterns;
+
     constructor(patterns?: string | string[]);
+
     private compilePattern;
+
     match(filePath: string): boolean;
+
     static match(pattern: string | string[], filePath: string): boolean;
+
     getMatchingPatterns(filePath: string): string[];
 }

@@ -5,14 +5,16 @@
 - **Description:** System components, infrastructure, core modules
 
 ## Properties
-| Property | Type | Description |
-|----------|------|-------------|
-| id | string | Unique identifier |
-| name | string | System name |
-| path | string | File path |
+
+| Property    | Type   | Description        |
+|-------------|--------|--------------------|
+| id          | string | Unique identifier  |
+| name        | string | System name        |
+| path        | string | File path          |
 | description | string | System description |
 
 ## Example
+
 ```
 json
 {
@@ -25,6 +27,7 @@ json
 ```
 
 ## Related Types
+
 - Contains: SERVICES, NODES
 - Uses: PACKAGES
 - Managed by: AGENTS

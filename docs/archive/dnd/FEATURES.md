@@ -5,14 +5,16 @@
 - **Description:** Feature flags, capabilities, toggleable features
 
 ## Properties
-| Property | Type | Description |
-|----------|------|-------------|
-| id | string | Unique identifier |
-| name | string | Feature name |
-| path | string | File path |
+
+| Property    | Type   | Description         |
+|-------------|--------|---------------------|
+| id          | string | Unique identifier   |
+| name        | string | Feature name        |
+| path        | string | File path           |
 | description | string | Feature description |
 
 ## Example
+
 ```
 json
 {
@@ -25,6 +27,7 @@ json
 ```
 
 ## Related Types
+
 - Controlled by: ACTIONS
 - Used by: SYSTEMS, SERVICES
 - Part of: PACKAGES

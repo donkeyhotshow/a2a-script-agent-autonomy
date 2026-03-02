@@ -2,9 +2,10 @@
 /**
  * Code Similarity Detection - Jaccard, cosine, edit distance
  */
-Object.defineProperty(exports, "__esModule", { value: true });
+Object.defineProperty(exports, "__esModule", {value: true});
 exports.CodeSimilarityEngine = void 0;
 exports.createSimilarityEngine = createSimilarityEngine;
+
 class CodeSimilarityEngine {
     constructor(config = {}) {
         this.chunks = [];
@@ -12,6 +13,7 @@ class CodeSimilarityEngine {
         this.config = config;
         this.minSimilarity = config.minSimilarity ?? 0.3;
     }
+
     index(chunks) {
         this.chunks = chunks;
         this.tokenIndex.clear();
@@ -25,6 +27,7 @@ class CodeSimilarityEngine {
             }
         }
     }
+
     _tokenize(content) {
         if (!content)
             return [];
@@ -34,6 +37,7 @@ class CodeSimilarityEngine {
             .split(/\s+/)
             .filter((t) => t.length > 1);
     }
+
     findSimilar(query, options = {}) {
         const limit = options.limit ?? 5;
         const method = options.method ?? 'jaccard';
@@ -70,17 +74,19 @@ class CodeSimilarityEngine {
                     similarity = this._jaccardSimilarity(queryTokens, chunkTokens);
             }
             if (similarity >= threshold) {
-                results.push({ chunk, similarity, sharedTokens: sharedCount });
+                results.push({chunk, similarity, sharedTokens: sharedCount});
             }
         }
         results.sort((a, b) => b.similarity - a.similarity);
         return results.slice(0, limit);
     }
+
     _jaccardSimilarity(a, b) {
         const intersection = new Set([...a].filter((x) => b.has(x)));
         const union = new Set([...a, ...b]);
         return union.size > 0 ? intersection.size / union.size : 0;
     }
+
     _cosineSimilarity(a, b) {
         const intersection = new Set([...a].filter((x) => b.has(x)));
         const magA = Math.sqrt(a.size);
@@ -89,16 +95,19 @@ class CodeSimilarityEngine {
             return 0;
         return intersection.size / (magA * magB);
     }
+
     _overlapCoefficient(a, b) {
         const intersection = new Set([...a].filter((x) => b.has(x)));
         const minSize = Math.min(a.size, b.size);
         return minSize > 0 ? intersection.size / minSize : 0;
     }
+
     _diceCoefficient(a, b) {
         const intersection = new Set([...a].filter((x) => b.has(x)));
         const sum = a.size + b.size;
         return sum > 0 ? (2 * intersection.size) / sum : 0;
     }
+
     findDuplicates(options = {}) {
         const threshold = options.threshold ?? 0.8;
         const duplicates = [];
@@ -118,11 +127,12 @@ class CodeSimilarityEngine {
                 }
             }
             if (group.length > 1) {
-                duplicates.push({ chunks: group, avgSimilarity: this._calculateGroupSimilarity(group) });
+                duplicates.push({chunks: group, avgSimilarity: this._calculateGroupSimilarity(group)});
             }
         }
         return duplicates;
     }
+
     _calculateGroupSimilarity(group) {
         let total = 0;
         let count = 0;
@@ -134,6 +144,7 @@ class CodeSimilarityEngine {
         }
         return count > 0 ? total / count : 0;
     }
+
     getStats() {
         return {
             totalChunks: this.chunks.length,
@@ -142,7 +153,9 @@ class CodeSimilarityEngine {
         };
     }
 }
+
 exports.CodeSimilarityEngine = CodeSimilarityEngine;
+
 function createSimilarityEngine(config) {
     return new CodeSimilarityEngine(config);
 }

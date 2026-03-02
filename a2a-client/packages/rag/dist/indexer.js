@@ -3,9 +3,9 @@
  * RAG Indexer - Local project indexing
  */
 var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
+    return (mod && mod.__esModule) ? mod : {"default": mod};
 };
-Object.defineProperty(exports, "__esModule", { value: true });
+Object.defineProperty(exports, "__esModule", {value: true});
 exports.RAGIndexer = void 0;
 const promises_1 = __importDefault(require("fs/promises"));
 const path_1 = __importDefault(require("path"));
@@ -16,6 +16,7 @@ const DEFAULT_EXCLUDE = [
     '.idea/**', '.vscode/**', 'node_modules/**', 'node_modules/', 'vendor/**', 'storage/**',
     '.git/**', 'dist/**', 'build/**', 'package-lock.json',
 ];
+
 class RAGIndexer {
     constructor(config) {
         this.ignoreDetector = null;
@@ -27,6 +28,7 @@ class RAGIndexer {
         this.chunkManager = new chunk_manager_js_1.ChunkManager(config);
         this._initIgnoreDetectorPromise = this._initIgnoreDetector(config);
     }
+
     async _initIgnoreDetector(config) {
         try {
             this.ignoreDetector = new fs_utils_1.IgnoreDetector({
@@ -34,16 +36,17 @@ class RAGIndexer {
                 customIgnoreFiles: config.customIgnoreFiles ?? [],
             });
             await this.ignoreDetector.initialize();
-        }
-        catch {
+        } catch {
             // ignore
         }
     }
+
     async _ensureIgnoreDetector() {
         await this._initIgnoreDetectorPromise;
     }
+
     async indexProject(force = false) {
-        await promises_1.default.mkdir(this.indexPath, { recursive: true });
+        await promises_1.default.mkdir(this.indexPath, {recursive: true});
         await this._ensureIgnoreDetector();
         const files = await this.walkDirectory(this.projectPath);
         const index = {
@@ -60,22 +63,21 @@ class RAGIndexer {
                     index.files.push(fileInfo.file);
                     index.chunks.push(...fileInfo.chunks);
                 }
-            }
-            catch {
+            } catch {
                 // skip failed files
             }
         }
         const indexFilePath = path_1.default.join(this.indexPath, 'rag-files.json');
         try {
             await promises_1.default.unlink(indexFilePath);
-        }
-        catch {
+        } catch {
             // ignore
         }
         await promises_1.default.writeFile(indexFilePath, JSON.stringify(index, null, 2));
         this.index = index;
         return index;
     }
+
     async indexFile(filePath) {
         const relativePath = path_1.default.relative(this.projectPath, filePath).replace(/\\/g, '/');
         const ext = path_1.default.extname(filePath);
@@ -90,10 +92,11 @@ class RAGIndexer {
             language: this.detectLanguage(ext),
         };
         const chunks = this.chunkManager.chunkFile(relativePath, content, ext);
-        return { file, chunks };
+        return {file, chunks};
     }
+
     async walkDirectory(dir, files = []) {
-        const entries = await promises_1.default.readdir(dir, { withFileTypes: true });
+        const entries = await promises_1.default.readdir(dir, {withFileTypes: true});
         for (const entry of entries) {
             const fullPath = path_1.default.join(dir, entry.name);
             const relativePath = path_1.default.relative(this.projectPath, fullPath).replace(/\\/g, '/');
@@ -105,8 +108,7 @@ class RAGIndexer {
                 if (this.ignoreDetector?.shouldSkipDirectory(entry.name, path_1.default.relative(this.projectPath, dir)))
                     continue;
                 await this.walkDirectory(fullPath, files);
-            }
-            else if (entry.isFile()) {
+            } else if (entry.isFile()) {
                 if (this.shouldExcludeFile(relativePath))
                     continue;
                 if (this.ignoreDetector?.shouldIgnore(relativePath))
@@ -116,9 +118,11 @@ class RAGIndexer {
         }
         return files;
     }
+
     shouldExcludeDir(relativePath) {
         return this.excludePatterns.some((p) => this.matchPattern(relativePath, p));
     }
+
     shouldExcludeFile(relativePath) {
         if (this.excludePatterns.some((p) => this.matchPattern(relativePath, p)))
             return true;
@@ -128,6 +132,7 @@ class RAGIndexer {
         }
         return false;
     }
+
     matchPattern(filePath, pattern) {
         const normalizedPath = filePath.replace(/\\/g, '/');
         const isDirPattern = pattern.endsWith('/');
@@ -138,8 +143,7 @@ class RAGIndexer {
                 if (isDirPattern) {
                     if (part === searchName)
                         return true;
-                }
-                else {
+                } else {
                     if (this.matchFileName(part, searchName))
                         return true;
                 }
@@ -156,6 +160,7 @@ class RAGIndexer {
             .replace(/{{STAR}}/g, '[^/]*');
         return new RegExp('^' + regexPattern + '$').test(normalizedPath);
     }
+
     matchFileName(fileName, pattern) {
         if (fileName === pattern)
             return true;
@@ -165,6 +170,7 @@ class RAGIndexer {
         }
         return false;
     }
+
     detectLanguage(ext) {
         const map = {
             '.php': 'php', '.js': 'javascript', '.ts': 'typescript', '.vue': 'vue',
@@ -172,6 +178,7 @@ class RAGIndexer {
         };
         return map[ext] ?? 'text';
     }
+
     async indexChunk(chunk) {
         if (!this.index)
             return;
@@ -179,6 +186,7 @@ class RAGIndexer {
             this.index.chunks.push(chunk);
         }
     }
+
     async removeFile(filePath) {
         if (!this.index)
             return;
@@ -186,6 +194,7 @@ class RAGIndexer {
         this.index.files = this.index.files.filter((f) => f.path !== relativePath);
         this.index.chunks = this.index.chunks.filter((c) => c.filePath !== relativePath);
     }
+
     async removeDirectory(dirPath) {
         if (!this.index)
             return;
@@ -193,14 +202,18 @@ class RAGIndexer {
         this.index.files = this.index.files.filter((f) => !f.path.startsWith(relativePath));
         this.index.chunks = this.index.chunks.filter((c) => !c.filePath.startsWith(relativePath));
     }
+
     getIndexedFilesCount() {
         return this.index?.files?.length ?? 0;
     }
+
     getIndexedChunksCount() {
         return this.index?.chunks?.length ?? 0;
     }
+
     dispose() {
         this.index = null;
     }
 }
+
 exports.RAGIndexer = RAGIndexer;

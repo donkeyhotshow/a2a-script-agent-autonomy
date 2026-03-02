@@ -136,6 +136,7 @@ npm run lint:styles
 ## Примеры найденных данных
 
 ### CSS переменные:
+
 - `--tw-translate-x`
 - `--tw-translate-y`
 - `--tw-scale-x`
@@ -144,6 +145,7 @@ npm run lint:styles
 - `--shadow-md`
 
 ### Tailwind классы:
+
 - `rounded-lg`
 - `border`
 - `p-6`

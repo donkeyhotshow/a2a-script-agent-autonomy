@@ -19,31 +19,31 @@ const path = require('path');
  * @returns {string} абсолютный путь
  */
 function resolvePathCore(targetPath, currentCwd, getCurrentDirSync) {
-  const baseDir = currentCwd || getCurrentDirSync();
+    const baseDir = currentCwd || getCurrentDirSync();
 
-  if (path.isAbsolute(targetPath)) {
-    return targetPath;
-  }
+    if (path.isAbsolute(targetPath)) {
+        return targetPath;
+    }
 
-  // Обработка специальных случаев
-  if (targetPath === '~') {
-    return process.env.USERPROFILE || process.env.HOME || baseDir;
-  }
+    // Обработка специальных случаев
+    if (targetPath === '~') {
+        return process.env.USERPROFILE || process.env.HOME || baseDir;
+    }
 
-  if (targetPath.startsWith('~/')) {
-    const home = process.env.USERPROFILE || process.env.HOME || baseDir;
-    return path.join(home, targetPath.substring(2));
-  }
+    if (targetPath.startsWith('~/')) {
+        const home = process.env.USERPROFILE || process.env.HOME || baseDir;
+        return path.join(home, targetPath.substring(2));
+    }
 
-  if (targetPath === '..') {
-    return path.dirname(baseDir);
-  }
+    if (targetPath === '..') {
+        return path.dirname(baseDir);
+    }
 
-  if (targetPath === '.') {
-    return baseDir;
-  }
+    if (targetPath === '.') {
+        return baseDir;
+    }
 
-  return path.resolve(baseDir, targetPath);
+    return path.resolve(baseDir, targetPath);
 }
 
 /**
@@ -61,55 +61,55 @@ function resolvePathCore(targetPath, currentCwd, getCurrentDirSync) {
  * @returns {string|null} новый путь или null, если команда не меняет директорию
  */
 function analyzeDirectoryChangeCore(
-  command,
-  currentCwd,
-  resolvePath,
-  getDirStack,
-  setDirStack,
-  getCurrentDirSync
+    command,
+    currentCwd,
+    resolvePath,
+    getDirStack,
+    setDirStack,
+    getCurrentDirSync
 ) {
-  // Разделяем команду по точке с запятой и берем только первую часть
-  // Это позволяет корректно обрабатывать команды вида: cd /path; ls
-  const firstCommand = command.split(';')[0].trim();
-  const cmd = firstCommand.toLowerCase();
-  const originalCmd = firstCommand;
+    // Разделяем команду по точке с запятой и берем только первую часть
+    // Это позволяет корректно обрабатывать команды вида: cd /path; ls
+    const firstCommand = command.split(';')[0].trim();
+    const cmd = firstCommand.toLowerCase();
+    const originalCmd = firstCommand;
 
-  // PowerShell команды
-  if (cmd.startsWith('set-location ') || cmd.startsWith('cd ')) {
-    const parts = originalCmd.split(/\s+/);
-    if (parts.length >= 2) {
-      const targetPath = parts.slice(1).join(' ').replace(/['"]/g, '');
-      return resolvePath(targetPath, currentCwd);
+    // PowerShell команды
+    if (cmd.startsWith('set-location ') || cmd.startsWith('cd ')) {
+        const parts = originalCmd.split(/\s+/);
+        if (parts.length >= 2) {
+            const targetPath = parts.slice(1).join(' ').replace(/['"]/g, '');
+            return resolvePath(targetPath, currentCwd);
+        }
     }
-  }
 
-  // pushd - сохранить текущую директорию в стек и перейти в новую
-  if (cmd.startsWith('pushd ')) {
-    const parts = originalCmd.split(/\s+/);
-    if (parts.length >= 2) {
-      const targetPath = parts.slice(1).join(' ').replace(/['"]/g, '');
-      const newPath = resolvePath(targetPath, currentCwd);
+    // pushd - сохранить текущую директорию в стек и перейти в новую
+    if (cmd.startsWith('pushd ')) {
+        const parts = originalCmd.split(/\s+/);
+        if (parts.length >= 2) {
+            const targetPath = parts.slice(1).join(' ').replace(/['"]/g, '');
+            const newPath = resolvePath(targetPath, currentCwd);
 
-      // Сохраняем текущую директорию в стек
-      const stack = getDirStack();
-      stack.push(currentCwd || getCurrentDirSync());
-      setDirStack(stack);
+            // Сохраняем текущую директорию в стек
+            const stack = getDirStack();
+            stack.push(currentCwd || getCurrentDirSync());
+            setDirStack(stack);
 
-      return newPath;
+            return newPath;
+        }
     }
-  }
 
-  // popd - извлечь директорию из стека
-  if (cmd === 'popd') {
-    const stack = getDirStack();
-    if (stack.length > 0) {
-      const newPath = stack.pop();
-      setDirStack(stack);
-      return newPath;
+    // popd - извлечь директорию из стека
+    if (cmd === 'popd') {
+        const stack = getDirStack();
+        if (stack.length > 0) {
+            const newPath = stack.pop();
+            setDirStack(stack);
+            return newPath;
+        }
     }
-  }
 
-  return null; // Команда не меняет директорию
+    return null; // Команда не меняет директорию
 }
 
 /**
@@ -123,21 +123,21 @@ function analyzeDirectoryChangeCore(
  * @returns {boolean} true, если историю следует сохранять
  */
 function shouldPersistHistoryCore(terminalConfig, initialCwd, currentCwd) {
-  const historyConfig = terminalConfig && terminalConfig.history;
+    const historyConfig = terminalConfig && terminalConfig.history;
 
-  // Если история отключена - не сохраняем
-  if (historyConfig && historyConfig.enabled === false) {
-    return false;
-  }
-
-  // Если включено ограничение по изначальной директории
-  if (historyConfig && historyConfig.restrictToInitialCwd) {
-    if (initialCwd && currentCwd && currentCwd !== initialCwd) {
-      return false;
+    // Если история отключена - не сохраняем
+    if (historyConfig && historyConfig.enabled === false) {
+        return false;
     }
-  }
 
-  return true;
+    // Если включено ограничение по изначальной директории
+    if (historyConfig && historyConfig.restrictToInitialCwd) {
+        if (initialCwd && currentCwd && currentCwd !== initialCwd) {
+            return false;
+        }
+    }
+
+    return true;
 }
 
 /**
@@ -150,16 +150,16 @@ function shouldPersistHistoryCore(terminalConfig, initialCwd, currentCwd) {
  * @returns {boolean} true, если ещё можно сохранять историю
  */
 function checkHistoryLimitCore(terminalConfig, currentCount) {
-  const historyConfig = terminalConfig && terminalConfig.history;
-  const maxItems =
-    historyConfig && historyConfig.maxItems ? historyConfig.maxItems : 1000;
+    const historyConfig = terminalConfig && terminalConfig.history;
+    const maxItems =
+        historyConfig && historyConfig.maxItems ? historyConfig.maxItems : 1000;
 
-  return currentCount < maxItems;
+    return currentCount < maxItems;
 }
 
 module.exports = {
-  resolvePathCore,
-  analyzeDirectoryChangeCore,
-  shouldPersistHistoryCore,
-  checkHistoryLimitCore
+    resolvePathCore,
+    analyzeDirectoryChangeCore,
+    shouldPersistHistoryCore,
+    checkHistoryLimitCore
 };

@@ -3,7 +3,7 @@
  * @a2a/json - VueFlow Mapper
  * Converts UnifiedResponse to VueFlow nodes and edges
  */
-Object.defineProperty(exports, "__esModule", { value: true });
+Object.defineProperty(exports, "__esModule", {value: true});
 exports.resetNodeCounter = resetNodeCounter;
 exports.convertToVueFlowNodes = convertToVueFlowNodes;
 exports.convertToVueFlowEdges = convertToVueFlowEdges;
@@ -15,20 +15,23 @@ const parser_js_1 = require("./parser.js");
  * Node position counter for auto-layout
  */
 let nodeCounter = 0;
+
 /**
  * Reset node counter (useful for testing)
  */
 function resetNodeCounter() {
     nodeCounter = 0;
 }
+
 /**
  * Calculate node position for auto-layout
  */
 function calculatePosition(index) {
     const x = 100;
     const y = 100 + index * 120;
-    return { x, y };
+    return {x, y};
 }
+
 /**
  * Convert UnifiedResponse to VueFlow nodes
  * @param response - UnifiedResponse from server
@@ -177,6 +180,7 @@ function convertToVueFlowNodes(response) {
     nodeCounter = index;
     return nodes;
 }
+
 /**
  * Convert UnifiedResponse to VueFlow edges
  * @param response - UnifiedResponse from server
@@ -242,6 +246,7 @@ function convertToVueFlowEdges(response, nodes) {
     }
     return edges;
 }
+
 /**
  * Convert full UnifiedResponse to VueFlow graph (nodes + edges)
  * @param response - UnifiedResponse from server
@@ -252,8 +257,9 @@ function convertToVueFlowGraph(response) {
     resetNodeCounter();
     const nodes = convertToVueFlowNodes(response);
     const edges = convertToVueFlowEdges(response, nodes);
-    return { nodes, edges };
+    return {nodes, edges};
 }
+
 /**
  * Get node status color for styling
  * @param status - Node status
@@ -272,6 +278,7 @@ function getStatusColor(status) {
     };
     return colors[status] || '#6B7280';
 }
+
 /**
  * Get node type icon for display
  * @param nodeType - VueFlow node type

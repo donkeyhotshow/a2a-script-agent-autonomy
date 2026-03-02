@@ -1,16 +1,21 @@
 # analyze-performance
 
-Анализ производительности: N+1, missing indexes, memory leaks. **План:** [actions-definitions-for-auto-ai](../../../../plans/actions-definitions-for-auto-ai.md). **Use-case:** [2-code-analysis](../../../../docs/use-cases/auto-ai/2-code-analysis.md).
+Анализ производительности: N+1, missing indexes, memory leaks. **План:
+** [actions-definitions-for-auto-ai](../../../../plans/actions-definitions-for-auto-ai.md). **Use-case:
+** [2-code-analysis](../../../../docs/use-cases/auto-ai/2-code-analysis.md).
 
 ## Priority
+
 80
 
 ## Context
+
 ```json
 { "category": "performance", "severity": "warning" }
 ```
 
 ## Triggers
+
 - performance analysis
 - analyze performance
 - bottlenecks
@@ -20,6 +25,7 @@
 ## Sub-actions
 
 ### 1. perf-collect
+
 Сбор файлов для анализа.
 
 **Input:** rootDir  
@@ -75,6 +81,7 @@ export default async function run(input: { rootDir: string }): Promise<{ files: 
 ```
 
 ### 2. perf-detect-n1
+
 Обнаружение N+1 запросов (Laravel/Eloquent и т.п.).
 
 **Input:** files[]  
@@ -170,6 +177,7 @@ export default async function run(input: { files: Array<{ path: string; extensio
 ```
 
 ### 3. perf-detect-missing-indexes
+
 Обнаружение отсутствующих индексов (миграции, запросы).
 
 **Input:** files[]  

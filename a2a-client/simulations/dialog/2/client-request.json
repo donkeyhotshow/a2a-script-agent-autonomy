@@ -1,1 +1,12 @@
-{"context":{"task":"диалог","execution":{"action":"dialog","step":"request"}},"result":{"message":"hello world"}}
+{
+  "context": {
+    "task": "диалог",
+    "execution": {
+      "action": "dialog",
+      "step": "request"
+    }
+  },
+  "result": {
+    "message": "hello world"
+  }
+}

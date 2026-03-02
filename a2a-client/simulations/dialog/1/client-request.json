@@ -1,1 +1,8 @@
-{"context":{"task":"диалог"},"result":{"choice":"dialog"}}
+{
+  "context": {
+    "task": "диалог"
+  },
+  "result": {
+    "choice": "dialog"
+  }
+}

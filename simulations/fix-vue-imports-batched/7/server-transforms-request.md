@@ -1,6 +1,7 @@
 # Server: request → response (step 7)
 
-**Input:** `request.json` = `{ "context": { "execution": { "step": "search-exporter", "progress": { "currentFile": 2 } } }, "result": { "file": "...", "fixed": true, "patch": {...} } }`.
+**Input:** `request.json` =
+`{ "context": { "execution": { "step": "search-exporter", "progress": { "currentFile": 2 } } }, "result": { "file": "...", "fixed": true, "patch": {...} } }`.
 
 1. Parse `context.execution.step` = "search-exporter", progress, and `result`.
 2. Validate: we have exporter file and patch for current file.

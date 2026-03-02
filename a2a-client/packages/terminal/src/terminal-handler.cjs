@@ -9,11 +9,11 @@ const {
     shouldPersistHistoryCore,
     checkHistoryLimitCore
 } = require('./terminal-handler-core.cjs');
-const { CommandExecutor } = require('../lib/command-executor-wrapper.cjs');
-const { commandConverter, CommandConverter } = require('../mcp/command-converter.cjs');
-const { 
-    persistHistoryRecord, 
-    getCurrentSessionId 
+const {CommandExecutor} = require('../lib/command-executor-wrapper.cjs');
+const {commandConverter, CommandConverter} = require('../mcp/command-converter.cjs');
+const {
+    persistHistoryRecord,
+    getCurrentSessionId
 } = require('../lib/history-adapter.cjs');
 
 // Fallback функции для зависимостей, которые могут отсутствовать
@@ -32,11 +32,11 @@ async function getCurrentDir() {
 // Простой анализатор команд для безопасности (без внешних зависимостей)
 function analyzeCommand(command) {
     if (!command || typeof command !== 'string') {
-        return { blocked: false };
+        return {blocked: false};
     }
-    
+
     const cmd = command.toLowerCase().trim();
-    
+
     // Список потенциально опасных команд
     const dangerousPatterns = [
         'rm -rf /',
@@ -49,44 +49,47 @@ function analyzeCommand(command) {
         'reg delete',
         'attrib -r -s -h'
     ];
-    
+
     for (const pattern of dangerousPatterns) {
         if (cmd.includes(pattern.toLowerCase())) {
-            return { 
-                blocked: true, 
-                reason: `Command contains potentially dangerous pattern: ${pattern}` 
+            return {
+                blocked: true,
+                reason: `Command contains potentially dangerous pattern: ${pattern}`
             };
         }
     }
-    
-    return { blocked: false };
+
+    return {blocked: false};
 }
 
 // Валидация параметров выполнения
 function validateExecRunParams(args) {
     const errors = [];
-    
+
     if (!args) {
-        return { isValid: true, errors: [] };
+        return {isValid: true, errors: []};
     }
-    
+
     if (args.command && typeof args.command !== 'string') {
         errors.push('command must be a string');
     }
-    
+
     if (args.timeout !== undefined) {
         const timeout = Number(args.timeout);
         if (Number.isNaN(timeout) || timeout < 1 || timeout > 1200) {
             errors.push('timeout must be between 1 and 1200 seconds');
         }
     }
-    
-    return { isValid: errors.length === 0, errors };
+
+    return {isValid: errors.length === 0, errors};
 }
 
 // Метрики (заглушки)
-function recordCommandMetric() {}
-function recordSecurityMetric() {}
+function recordCommandMetric() {
+}
+
+function recordSecurityMetric() {
+}
 
 class TerminalHandler {
     constructor(server) {
@@ -95,21 +98,21 @@ class TerminalHandler {
             server && server.logger ? server.logger : console,
             server && server.errorHandler ? server.errorHandler : null
         );
-        
+
         // Ключи для хранения сессионных переменных директории
         this.SESSION_CWD_KEY = 'terminal_session_cwd';
         this.SESSION_DIR_STACK_KEY = 'terminal_dir_stack';
         this.INITIAL_CWD_KEY = 'terminal_initial_cwd';
         this.HISTORY_COUNT_KEY = 'terminal_history_count';
         this.CWD_CHANGE_TRACKER_KEY = 'terminal_cwd_change_tracker';
-        
+
         // Сессионные данные (в памяти)
         this._sessionData = {};
     }
 
     // Вспомогательная функция для формирования ответа
     _textResponse(id, s) {
-        return { jsonrpc: '2.0', id, result: { content: [{ type: 'text', text: s }] } };
+        return {jsonrpc: '2.0', id, result: {content: [{type: 'text', text: s}]}};
     }
 
     // Получение текущей рабочей директории сессии
@@ -317,7 +320,7 @@ class TerminalHandler {
 
             const duration = Date.now() - startTime;
             const exitCode = result.return_code || result.exitCode || 0;
-            
+
             // Сохраняем в историю
             await this._persistHistory({
                 command: command,
@@ -331,7 +334,7 @@ class TerminalHandler {
 
             // Метрики
             recordCommandMetric(true, duration, false);
-            recordSecurityMetric('allow', { command, duration });
+            recordSecurityMetric('allow', {command, duration});
 
             // Формируем ответ
             let response = `OK (dur=${duration}, code=${exitCode})`;
@@ -345,7 +348,7 @@ class TerminalHandler {
             return this._textResponse(id, response);
         } catch (runErr) {
             const duration = Date.now() - startTime;
-            this._logFatal('[TERMINAL] Command failed', runErr, { command });
+            this._logFatal('[TERMINAL] Command failed', runErr, {command});
 
             // Сохраняем неудачу в историю
             await this._persistHistory({
@@ -359,7 +362,7 @@ class TerminalHandler {
             });
 
             recordCommandMetric(false, duration, true);
-            recordSecurityMetric('error', { command, error: runErr.message });
+            recordSecurityMetric('error', {command, error: runErr.message});
 
             return this._textResponse(id, `ERROR (dur=${duration}, code=${runErr.exitCode || 1}): ${runErr.message}`);
         }
@@ -415,7 +418,7 @@ class TerminalHandler {
             // Security analysis (предобработка)
             const securityAnalysis = analyzeCommand(command);
             if (securityAnalysis && securityAnalysis.blocked) {
-                recordSecurityMetric('block', { command, reason: securityAnalysis.reason });
+                recordSecurityMetric('block', {command, reason: securityAnalysis.reason});
                 return this._textResponse(id, `Security block: ${securityAnalysis.reason}`);
             }
 
@@ -500,4 +503,4 @@ class TerminalHandler {
     }
 }
 
-module.exports = { TerminalHandler };
+module.exports = {TerminalHandler};

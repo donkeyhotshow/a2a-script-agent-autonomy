@@ -1,13 +1,15 @@
-
 # Frontend Enhanced Search Plan
 
 ## Выбрано пользователем (qtu):
+
 **Enhanced Search (улучшенный поиск в графе)**
 
 ---
 
 ## Overview
+
 Добавить расширенный функционал поиска для VueFlow графа протокола A2A:
+
 - Поиск по названию, типу, ID узлов
 - Фильтрация по статусу и типу
 - Подсветка найденных узлов
@@ -17,6 +19,7 @@
 ---
 
 ## Current State
+
 - ✅ Базовый поиск (search input + кнопка)
 - ❌ Нет подсветки результатов
 - ❌ Нет фильтрации по типу/статусу
@@ -28,38 +31,43 @@
 ## Plan
 
 ### Phase 1: UI Components
+
 - [ ] Расширенная панель поиска с фильтрами
-  - Input для текстового поиска
-  - Dropdown для типа узла (All, Agents, Nodes, Actions, etc.)
-  - Dropdown для статуса (All, Active, Completed, Failed)
-  - Кнопки навигации (prev/next)
-  - Счётчик результатов
+    - Input для текстового поиска
+    - Dropdown для типа узла (All, Agents, Nodes, Actions, etc.)
+    - Dropdown для статуса (All, Active, Completed, Failed)
+    - Кнопки навигации (prev/next)
+    - Счётчик результатов
 
 ### Phase 2: Search Logic
+
 - [ ] Функция поиска по графу
-  - Поиск по label, id, name
-  - Поиск по типу узла
-  - Поиск по содержимому (data.dsl, data.description)
-  - Чувствительность к регистру (опционально)
+    - Поиск по label, id, name
+    - Поиск по типу узла
+    - Поиск по содержимому (data.dsl, data.description)
+    - Чувствительность к регистру (опционально)
 
 ### Phase 3: Highlighting & Navigation
+
 - [ ] Подсветка найденных узлов
-  - Добавить CSS класс для подсветки
-  - Анимация при переходе между результатами
+    - Добавить CSS класс для подсветки
+    - Анимация при переходе между результатами
 - [ ] Навигация между результатами
-  - Кнопки prev/next
-  - Горячие клавиши (Ctrl+F для фокуса, Enter для след.)
+    - Кнопки prev/next
+    - Горячие клавиши (Ctrl+F для фокуса, Enter для след.)
 
 ### Phase 4: Edge Highlighting
+
 - [ ] Подсветка связанных рёбер
-  - Найти рёбра между подсвеченными узлами
-  - Показать путь от одного узла к другому
+    - Найти рёбра между подсвеченными узлами
+    - Показать путь от одного узла к другому
 
 ---
 
 ## Files to Modify
 
 ### 1. a2a-client/web/index.html
+
 ```
 html
 <!-- Расширенная панель поиска -->
@@ -87,6 +95,7 @@ html
 ```
 
 ### 2. a2a-client/web/css/style.css
+
 ```
 css
 /* Enhanced Search Styles */
@@ -151,6 +160,7 @@ css
 ```
 
 ### 3. a2a-client/web/js/flow/search.js (NEW)
+
 ```
 javascript
 /**
@@ -402,19 +412,24 @@ if (document.readyState === 'loading') {
 ## Implementation Steps
 
 ### Step 1: Add HTML Components
+
 - Add enhanced search panel in `index.html`
 
 ### Step 2: Add CSS Styles
+
 - Add search highlighting styles in `style.css`
 
 ### Step 3: Create Search Module
+
 - Create `a2a-client/web/js/flow/search.js`
 
 ### Step 4: Integrate with VueFlow
+
 - Add `getFlowNodes()` function to VueFlow app
 - Connect search module
 
 ### Step 5: Test
+
 - Test search functionality
 - Test navigation
 - Test filters
@@ -422,6 +437,7 @@ if (document.readyState === 'loading') {
 ---
 
 ## Dependencies
+
 - VueFlow already loaded
 - No new npm packages required
 
@@ -434,18 +450,21 @@ if (document.readyState === 'loading') {
 ## Implementation Log
 
 ### Step 1: Update index.html - ✅ DONE
+
 - [x] Add enhanced search panel with filters
-- [x] Add type and status dropdowns  
+- [x] Add type and status dropdowns
 - [x] Add navigation buttons
 - [x] Add getFlowNodes() and getFlowEdges() functions
 - [x] Include search.js script
 
 ### Step 2: Update style.css - ✅ DONE
+
 - [x] Add enhanced search CSS styles
 - [x] Add node highlighting classes
 - [x] Add search animation keyframes
 
 ### Step 3: Create search.js - ✅ DONE
+
 - [x] Create flow search module
 - [x] Implement search logic
 - [x] Add highlighting functions

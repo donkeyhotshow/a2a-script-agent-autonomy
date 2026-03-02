@@ -1,16 +1,20 @@
 # fix-vue-imports-improvements
 
-Improvements and refinements for Vue import fixing. Variant of fix-vue-imports. **План:** [fix-vue-imports-improvements](../../../docs/archive/fix-vue-imports-improvements.md).
+Improvements and refinements for Vue import fixing. Variant of fix-vue-imports. **План:
+** [fix-vue-imports-improvements](../../../docs/archive/fix-vue-imports-improvements.md).
 
 ## Priority
+
 85
 
 ## Context
+
 ```json
 { "type": "fix", "target": "vue-imports", "method": "improvements" }
 ```
 
 ## Triggers
+
 - improve vue imports
 - fix vue imports improvements
 - vue import refinements
@@ -19,6 +23,7 @@ Improvements and refinements for Vue import fixing. Variant of fix-vue-imports. 
 ## Sub-actions
 
 ### 1. vue-import-improvements-analyze
+
 Анализ текущего стиля импортов и предложение улучшений (стиль путей, использование баррелей).
 
 **Input:** rootDir, options?  
@@ -282,6 +287,7 @@ function checkImportOrder(content: string, imports: Array<{ path: string; line: 
 ```
 
 ### 2. vue-import-improvements-apply
+
 Применение предложенных улучшений (опционально батчем).
 
 **Input:** suggestions[], rootDir, confirm?, dryRun?  
@@ -395,6 +401,7 @@ function escapeRegex(str: string): string {
 ```
 
 ### 3. vue-import-improvements-validate
+
 Валидация после применения улучшений.
 
 **Input:** files[], rootDir  

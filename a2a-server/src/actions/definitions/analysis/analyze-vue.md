@@ -1,11 +1,15 @@
 # analyze-vue
 
-Анализ Vue: prop drilling, Options API, a11y. **План:** [actions-definitions-for-auto-ai](../../../../plans/actions-definitions-for-auto-ai.md). **Use-case:** [2-code-analysis](../../../../docs/use-cases/auto-ai/2-code-analysis.md).
+Анализ Vue: prop drilling, Options API, a11y. **План:
+** [actions-definitions-for-auto-ai](../../../../plans/actions-definitions-for-auto-ai.md). **Use-case:
+** [2-code-analysis](../../../../docs/use-cases/auto-ai/2-code-analysis.md).
 
 ## Priority
+
 72
 
 ## Triggers
+
 - vue analysis
 - analyze vue
 - prop drilling
@@ -15,6 +19,7 @@
 ## Sub-actions
 
 ### 1. analyze-vue-scan
+
 Scan Vue files for patterns (prop drilling, Options API, a11y).
 
 **Input:** rootDir  
@@ -190,6 +195,7 @@ export default async function run(input: { rootDir: string }): Promise<{ finding
 ```
 
 ### 2. analyze-vue-report
+
 **Input:** findings[]  
 **Output:** report
 

@@ -4,12 +4,12 @@
 
 ## Кто що робить
 
-| Компонент | Відповідальність | Порт |
-|-----------|-----------------|------|
-| **Web** (a2a-client/web) | Користувальницький інтерфейс, ввід задачі, відображення панелей сесій | 5173 (Vite) |
-| **Client API** (a2a-client) | Зберігання сесій, керування станом, виконання скриптів, координація | 3001 |
-| **Server** (a2a-server) | Stateless - обробка запитів, генерація actions/steps, відправка скриптів | 3000 |
-| **RAG** (@a2a/rag) | Пошук коду: BM25, semantic search, hybrid search | - |
+| Компонент                   | Відповідальність                                                         | Порт        |
+|-----------------------------|--------------------------------------------------------------------------|-------------|
+| **Web** (a2a-client/web)    | Користувальницький інтерфейс, ввід задачі, відображення панелей сесій    | 5173 (Vite) |
+| **Client API** (a2a-client) | Зберігання сесій, керування станом, виконання скриптів, координація      | 3001        |
+| **Server** (a2a-server)     | Stateless - обробка запитів, генерація actions/steps, відправка скриптів | 3000        |
+| **RAG** (@a2a/rag)          | Пошук коду: BM25, semantic search, hybrid search                         | -           |
 
 ### Розподіл обов'язків
 
@@ -65,13 +65,13 @@
 
 ## Можливі дії
 
-| Дія | Опис | Параметри |
-|-----|------|-----------|
-| continue | Продовжити діалог без дій | message |
-| rag-search | RAG пошук за натуральним запитом | query |
-| read-file | Читання вмісту файлу | file |
-| write-file | Запис файлу (звіти, документація) | path, content |
-| execute-command | Виконання команди в терміналі | command |
+| Дія             | Опис                              | Параметри     |
+|-----------------|-----------------------------------|---------------|
+| continue        | Продовжити діалог без дій         | message       |
+| rag-search      | RAG пошук за натуральним запитом  | query         |
+| read-file       | Читання вмісту файлу              | file          |
+| write-file      | Запис файлу (звіти, документація) | path, content |
+| execute-command | Виконання команди в терміналі     | command       |
 
 ## Пакет @a2a/rag
 
@@ -87,27 +87,35 @@
 ## Кроки симуляції
 
 ### Крок 1: Початковий запит
+
 ```json
 { "task": "допоможи розібратись з кодом" }
 ```
 
 ### Крок 2: Вибір екшена
+
 ```json
 { "result": { "actionId": "coder" } }
 ```
+
 Server повертає форму для введення повідомлення.
 
 ### Крок 3: Перше питання
+
 ```json
 { "input": { "message": "як працює система авторизації?" } }
 ```
+
 LLM вирішує зробити RAG пошук:
+
 ```json
 { "action": "rag-search", "params": { "query": "система авторизації JWT токени" } }
 ```
 
 ### Крок 4: Результати RAG пошуку
+
 RAG повертає результати з snippet та score:
+
 ```json
 {
   "results": [
@@ -116,25 +124,33 @@ RAG повертає результати з snippet та score:
   ]
 }
 ```
+
 LLM вирішує прочитати файл:
+
 ```json
 { "action": "read-file", "params": { "file": "src/auth.js" } }
 ```
 
 ### Крок 5: Відповідь LLM
+
 LLM отримує вміст файлу та відповідає на основі коду. Повертає form для продовження.
 
 ### Крок 6: Завершення діалогу
+
 ```json
 { "input": { "message": "дякую!" } }
 ```
+
 LLM повертає `action: completed`, але Server все одно додає form для можливості продовження.
 
 ### Крок 7: Запис звіту
+
 ```json
 { "input": { "message": "запиши весь звіт в docs/auth-report.md" } }
 ```
+
 LLM формує повний MD документ та викликає:
+
 ```json
 {
   "action": "write-file",
@@ -146,6 +162,7 @@ LLM формує повний MD документ та викликає:
 ```
 
 ### Крок 8: Підтвердження
+
 Клієнт підтверджує запис файлу. LLM повертає `action: completed`.
 
 ## Приклад звіту (docs/auth-report.md)
@@ -166,6 +183,7 @@ async function register(email, password) {
 ```
 
 ### 2. Вхід користувача (`login`)
+
 ```javascript
 async function login(email, password) {
   const isValid = await bcrypt.compare(password, storedHash);
@@ -175,8 +193,10 @@ async function login(email, password) {
 ```
 
 ## Джерела
+
 - src/auth.js
 - src/middleware/auth.ts
+
 ```
 
 ## Правила
@@ -192,20 +212,22 @@ async function login(email, password) {
 ## Файли симуляції
 
 ```
+
 simulations/coder/
-├── description.md     # Короткий опис
-├── analysis.md        # Детальний аналіз
+├── description.md # Короткий опис
+├── analysis.md # Детальний аналіз
 ├── 1/
-│   ├── request.json   # Початковий запит
-│   └── response.json # Екшени з llmPrompt
+│ ├── request.json # Початковий запит
+│ └── response.json # Екшени з llmPrompt
 ├── 2/
-│   ├── request.json   # Вибір екшена
-│   └── response.json # Форма
+│ ├── request.json # Вибір екшена
+│ └── response.json # Форма
 ├── 3-8/
-│   ├── request.json   # Запит з history
-│   ├── request.md     # LLM prompt
-│   ├── response.json  # Відповідь з execute
-│   └── response.md    # LLM response
+│ ├── request.json # Запит з history
+│ ├── request.md # LLM prompt
+│ ├── response.json # Відповідь з execute
+│ └── response.md # LLM response
+
 ```
 
 ## Порівняння з іншими симуляціями

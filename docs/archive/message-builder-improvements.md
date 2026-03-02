@@ -4,45 +4,47 @@
 
 ### Что делает билдер сообщений
 
-**Message Builder** ([`a2a-server/src/protocol/message-builder.ts`](a2a-server/src/protocol/message-builder.ts)) — основной компонент для построения сообщений согласно A2A протоколу. Выполняет создание, валидацию, сериализацию и парсинг сообщений клиента и сервера.
+**Message Builder** ([`a2a-server/src/protocol/message-builder.ts`](a2a-server/src/protocol/message-builder.ts)) —
+основной компонент для построения сообщений согласно A2A протоколу. Выполняет создание, валидацию, сериализацию и
+парсинг сообщений клиента и сервера.
 
 #### Основные функции:
 
 1. **Client Message Builders** — построение сообщений от клиента:
-   - [`buildClientMessage()`](a2a-server/src/protocol/message-builder.ts:53) — базовое сообщение с контекстом и файлами
-   - [`buildNewTaskMessage()`](a2a-server/src/protocol/message-builder.ts:69) — сообщение о новой задаче
-   - [`buildContinueMessage()`](a2a-server/src/protocol/message-builder.ts:81) — сообщение continue
-   - [`buildConfirmMessage()`](a2a-server/src/protocol/message-builder.ts:93) — сообщение подтверждения
-   - [`buildFileResponseMessage()`](a2a-server/src/protocol/message-builder.ts:105) — ответ с файлами
+    - [`buildClientMessage()`](a2a-server/src/protocol/message-builder.ts:53) — базовое сообщение с контекстом и файлами
+    - [`buildNewTaskMessage()`](a2a-server/src/protocol/message-builder.ts:69) — сообщение о новой задаче
+    - [`buildContinueMessage()`](a2a-server/src/protocol/message-builder.ts:81) — сообщение continue
+    - [`buildConfirmMessage()`](a2a-server/src/protocol/message-builder.ts:93) — сообщение подтверждения
+    - [`buildFileResponseMessage()`](a2a-server/src/protocol/message-builder.ts:105) — ответ с файлами
 
 2. **Server Message Builders** — построение сообщений от сервера:
-   - [`buildServerMessage()`](a2a-server/src/protocol/message-builder.ts:120) — базовое серверное сообщение
-   - [`buildFileRequestMessage()`](a2a-server/src/protocol/message-builder.ts:143) — запрос файлов
-   - [`buildTaskProgressMessage()`](a2a-server/src/protocol/message-builder.ts:154) — прогресс задачи
-   - [`buildErrorMessage()`](a2a-server/src/protocol/message-builder.ts:178) — сообщение об ошибке
-   - [`buildSessionCompleteMessage()`](a2a-server/src/protocol/message-builder.ts:203) — завершение сессии
-   - [`buildAckMessage()`](a2a-server/src/protocol/message-builder.ts:225) — acknowledgment
-   - [`buildNeuronActivationMessage()`](a2a-server/src/protocol/message-builder.ts:236) — активация нейронов
+    - [`buildServerMessage()`](a2a-server/src/protocol/message-builder.ts:120) — базовое серверное сообщение
+    - [`buildFileRequestMessage()`](a2a-server/src/protocol/message-builder.ts:143) — запрос файлов
+    - [`buildTaskProgressMessage()`](a2a-server/src/protocol/message-builder.ts:154) — прогресс задачи
+    - [`buildErrorMessage()`](a2a-server/src/protocol/message-builder.ts:178) — сообщение об ошибке
+    - [`buildSessionCompleteMessage()`](a2a-server/src/protocol/message-builder.ts:203) — завершение сессии
+    - [`buildAckMessage()`](a2a-server/src/protocol/message-builder.ts:225) — acknowledgment
+    - [`buildNeuronActivationMessage()`](a2a-server/src/protocol/message-builder.ts:236) — активация нейронов
 
 3. **Валидация сообщений**:
-   - [`isValidMessage()`](a2a-server/src/protocol/message-builder.ts:30) — type guard для валидности
-   - [`validateMessage()`](a2a-server/src/protocol/message-builder.ts:297) — полная валидация структуры
-   - [`isClientMessage()`](a2a-server/src/protocol/message-builder.ts:356) — проверка типа ClientMessage
-   - [`isServerMessage()`](a2a-server/src/protocol/message-builder.ts:363) — проверка типа ServerMessage
+    - [`isValidMessage()`](a2a-server/src/protocol/message-builder.ts:30) — type guard для валидности
+    - [`validateMessage()`](a2a-server/src/protocol/message-builder.ts:297) — полная валидация структуры
+    - [`isClientMessage()`](a2a-server/src/protocol/message-builder.ts:356) — проверка типа ClientMessage
+    - [`isServerMessage()`](a2a-server/src/protocol/message-builder.ts:363) — проверка типа ServerMessage
 
 4. **Сериализация/Парсинг**:
-   - [`serializeMessage()`](a2a-server/src/protocol/message-builder.ts:260) — в JSON строку
-   - [`parseMessage()`](a2a-server/src/protocol/message-builder.ts:267) — парсинг из JSON
-   - [`parseMessageSafe()`](a2a-server/src/protocol/message-builder.ts:286) — безопасный парсинг (возвращает null)
+    - [`serializeMessage()`](a2a-server/src/protocol/message-builder.ts:260) — в JSON строку
+    - [`parseMessage()`](a2a-server/src/protocol/message-builder.ts:267) — парсинг из JSON
+    - [`parseMessageSafe()`](a2a-server/src/protocol/message-builder.ts:286) — безопасный парсинг (возвращает null)
 
 5. **Утилиты для работы с сообщениями**:
-   - [`getSessionId()`](a2a-server/src/protocol/message-builder.ts:370) — получить session ID
-   - [`cloneMessage()`](a2a-server/src/protocol/message-builder.ts:377) — глубокое клонирование
-   - [`updateMessageContext()`](a2a-server/src/protocol/message-builder.ts:384) — обновить контекст
+    - [`getSessionId()`](a2a-server/src/protocol/message-builder.ts:370) — получить session ID
+    - [`cloneMessage()`](a2a-server/src/protocol/message-builder.ts:377) — глубокое клонирование
+    - [`updateMessageContext()`](a2a-server/src/protocol/message-builder.ts:384) — обновить контекст
 
 6. **Request API Builders** — для Response:
-   - [`buildRequestContextBlock()`](a2a-server/src/protocol/message-builder.ts:406) — построить контекст блок
-   - [`buildRequestApiResult()`](a2a-server/src/protocol/message-builder.ts:446) — построить полный результат API
+    - [`buildRequestContextBlock()`](a2a-server/src/protocol/message-builder.ts:406) — построить контекст блок
+    - [`buildRequestApiResult()`](a2a-server/src/protocol/message-builder.ts:446) — построить полный результат API
 
 #### Типы данных:
 
@@ -96,6 +98,7 @@ interface RequestApiResult {
 **Текущее:** Базовые проверки типов через type guards
 
 **Предложения:**
+
 - [x] Схема валидации с Zod для всех типов сообщений
 - [x] Валидация session_id (формат UUID)
 - [x] Валидация version (semver)
@@ -109,6 +112,7 @@ interface RequestApiResult {
 **Текущее:** Ручное построение объектов
 
 **Предложения:**
+
 - [x] Message templates (预设消息模板)
 - [x] Template inheritance
 - [x] Variable interpolation
@@ -120,6 +124,7 @@ interface RequestApiResult {
 **Текущее:** Функциональный стиль с отдельными функциями
 
 **Предложения:**
+
 - [x] Builder pattern для сложных сообщений
 - [x] Method chaining
 - [x] Default values
@@ -140,6 +145,7 @@ const message = new MessageBuilder()
 **Текущее:** Ограниченный набор типов
 
 **Предложения:**
+
 - [x] Stream消息 (серверные события)
 - [x] Ping/Pong сообщения
 - [x] Batch сообщения (множественные задачи)
@@ -152,6 +158,7 @@ const message = new MessageBuilder()
 **Текущее:** Только JSON
 
 **Предложения:**
+
 - [x] MessagePack для компактности
 - [x] Gzip compression для больших сообщений
 - [x] Schema versioning
@@ -163,6 +170,7 @@ const message = new MessageBuilder()
 **Текущее:** Синхронная обработка
 
 **Предложения:**
+
 - [x] Object pooling для часто создаваемых сообщений
 - [x] Lazy serialization
 - [x] Immutable message objects
@@ -174,6 +182,7 @@ const message = new MessageBuilder()
 **Текущее:** Stateless — нет хранения истории
 
 **Предложения:**
+
 - [x] Message history tracking
 - [x] Message diff (изменения между сообщениями)
 - [x] Message replay
@@ -184,6 +193,7 @@ const message = new MessageBuilder()
 **Текущее:** Частичная интеграция с context-parser
 
 **Предложения:**
+
 - [x] Unified context builder
 - [x] Context templates
 - [x] Context validation
@@ -359,6 +369,7 @@ enum MessageErrorCode {
 ### Фаза 2: Fluent API (1 неделя)
 
 **Задачи:**
+
 1. MessageBuilder class
 2. Method chaining
 3. Default values handling
@@ -366,11 +377,13 @@ enum MessageErrorCode {
 5. Type-safe setters
 
 **Файлы:**
+
 - `a2a-server/src/protocol/message-builder.fluent.ts` — fluent API
 
 ### Фаза 3: Template Engine (1 неделя)
 
 **Задачи:**
+
 1. Template interface
 2. Template registry
 3. Variable interpolation
@@ -378,11 +391,13 @@ enum MessageErrorCode {
 5. Caching
 
 **Файлы:**
+
 - `a2a-server/src/protocol/message-builder.templates.ts` — templates
 
 ### Фаза 4: Enhanced Validation (1 неделя)
 
 **Задачи:**
+
 1. Zod schemas
 2. Session ID validation
 3. Version validation
@@ -390,11 +405,13 @@ enum MessageErrorCode {
 5. Dry-run validation
 
 **Файлы:**
+
 - `a2a-server/src/protocol/message-builder.validation.ts` — enhanced validation
 
 ### Фаза 5: Extended Types (1 неделя)
 
 **Задачи:**
+
 1. Stream messages
 2. Batch messages
 3. Ping/Pong
@@ -402,11 +419,13 @@ enum MessageErrorCode {
 5. Message reactions
 
 **Файлы:**
+
 - `a2a-server/src/protocol/message-builder.stream.ts` — streaming
 
 ### Фаза 6: Serialization (1 неделя)
 
 **Задачи:**
+
 1. MessagePack support
 2. Gzip compression
 3. Schema versioning
@@ -414,11 +433,13 @@ enum MessageErrorCode {
 5. Binary protocol
 
 **Файлы:**
+
 - `a2a-server/src/protocol/message-builder.serialize.ts` — serialization
 
 ### Фаза 7: Performance & History (1 неделя)
 
 **Задачи:**
+
 1. Object pooling
 2. Message history
 3. Message diff
@@ -426,6 +447,7 @@ enum MessageErrorCode {
 5. Immutability helpers
 
 **Файлы:**
+
 - `a2a-server/src/protocol/message-builder.cache.ts` — caching
 - `a2a-server/src/protocol/message-builder.history.ts` — history
 

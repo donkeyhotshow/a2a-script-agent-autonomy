@@ -1,17 +1,21 @@
 икVueFlow Migration Plan for a2a-client/web
 
 ## Overview
-Migrate `a2a-client/web` to fully use VueFlow for A2A Protocol visualization. The web already has VueFlow dependencies installed and partial implementation in `js/flow/` folder.
+
+Migrate `a2a-client/web` to fully use VueFlow for A2A Protocol visualization. The web already has VueFlow dependencies
+installed and partial implementation in `js/flow/` folder.
 
 ## Current State Analysis
 
 ### Already Implemented (Partial)
+
 - `js/flow/index.js` - A2AFlowManager class for VueFlow initialization
 - `js/flow/nodes.js` - Custom node type definitions (using old API)
 - `js/flow/protocol.js` - Protocol to VueFlow mapping utilities
 - Dependencies installed in `package.json`
 
 ### Issues to Fix
+
 1. Custom nodes in `nodes.js` use deprecated VueFlow API (template strings)
 2. Flow only shown in modal overlay (`#flow-container`)
 3. Custom nodes not properly registered
@@ -24,6 +28,7 @@ Migrate `a2a-client/web` to fully use VueFlow for A2A Protocol visualization. Th
 Based on `simulations/pilot/` data, here's the complete action execution flow:
 
 ### Flow Sequence:
+
 ```
 ┌─────────────────┐     ┌─────────────────────┐     ┌─────────────────────┐
 │  task_request   │────▶│  action_proposal    │────▶│  action_executing   │
@@ -39,6 +44,7 @@ Based on `simulations/pilot/` data, here's the complete action execution flow:
 ### Response Types & Data Structures:
 
 #### 1. task_request → action_proposal (Simulation 1)
+
 ```
 json
 {
@@ -63,6 +69,7 @@ json
 ```
 
 #### 2. action_proposal → action_executing (Simulation 2)
+
 ```
 json
 {
@@ -81,6 +88,7 @@ json
 ```
 
 #### 3-4. Step Execution (Simulations 3-4)
+
 ```json
 {
   "outcome": "action_executing",
@@ -102,6 +110,7 @@ json
 ```
 
 #### 5. action_complete (Simulation 5)
+
 ```
 json
 {
@@ -134,6 +143,7 @@ json
 ## Migration Tasks
 
 ### Phase 1: Fix Custom Nodes (Critical) ✅ COMPLETED
+
 ```
 Task 1.1: Update js/flow/nodes.js to use Vue 3 functional components
 - ✅ Convert template strings to proper Vue 3 components (using h() function)
@@ -148,6 +158,7 @@ Task 1.3: Add new node types for sub-actions
 ```
 
 ### Phase 2: Data Mapping (Protocol → Nodes) ✅ COMPLETED
+
 ```
 Task 2.1: Update protocol.js for new response structures
 - ✅ Map proposedActions to ActionProposalNode
@@ -162,6 +173,7 @@ Task 2.2: Add edge animations
 ```
 
 ### Phase 3: Enhance Flow UI Integration
+
 ```
 Task 3.1: Make VueFlow canvas more prominent
 - Consider persistent side panel or tab instead of modal
@@ -173,6 +185,7 @@ Task 3.2: Add more interactive features
 ```
 
 ### Phase 4: Real-time Updates ✅ COMPLETED
+
 ```
 Task 4.1: Integrate with Sessions.js
 - ✅ Connect flow updates to session polling
@@ -191,13 +204,13 @@ Task 4.2: Visual feedback
 
 ## Node Types Required
 
-| Node Type | Purpose | Color | Data Fields |
-|-----------|---------|-------|--------------|
-| `taskInput` | Initial task request | #22c55e (green) | task, timestamp |
-| `actionProposal` | Proposed action(s) | #eab308 (yellow) | actionId, title, description, matchScore, subActions[] |
-| `subAction` | Currently executing step | #3b82f6 (blue) | actionId, title, description, dsl, input, output, stepIndex |
-| `result` | Step result (optional) | #6b7280 (gray) | actionId, result data |
-| `actionComplete` | Final action result | #22c55e (green) | actionId, summary, totalSteps, duration |
+| Node Type        | Purpose                  | Color            | Data Fields                                                 |
+|------------------|--------------------------|------------------|-------------------------------------------------------------|
+| `taskInput`      | Initial task request     | #22c55e (green)  | task, timestamp                                             |
+| `actionProposal` | Proposed action(s)       | #eab308 (yellow) | actionId, title, description, matchScore, subActions[]      |
+| `subAction`      | Currently executing step | #3b82f6 (blue)   | actionId, title, description, dsl, input, output, stepIndex |
+| `result`         | Step result (optional)   | #6b7280 (gray)   | actionId, result data                                       |
+| `actionComplete` | Final action result      | #22c55e (green)  | actionId, summary, totalSteps, duration                     |
 
 ---
 
@@ -215,6 +228,7 @@ Task 4.2: Visual feedback
 ## VueFlow API Reference
 
 ### Modern Custom Node Pattern (Vue 3)
+
 ```
 javascript
 import { Handle, Position } from '@vue-flow/core'
@@ -236,6 +250,7 @@ export const TaskInputNode = {
 ```
 
 ### Node Registration
+
 ```
 javascript
 import { VueFlow } from '@vue-flow/core'
@@ -257,6 +272,7 @@ const vueflow = new VueFlow({
 ---
 
 ## Success Criteria
+
 1. Custom nodes render correctly without errors
 2. Flow displays protocol messages properly from simulations
 3. Sub-action nodes show progress (current step, history)

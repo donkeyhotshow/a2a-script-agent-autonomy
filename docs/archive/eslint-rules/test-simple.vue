@@ -2,6 +2,7 @@
 interface Props {
   test?: string
 }
+
 defineProps<Props>()
 </script>
 

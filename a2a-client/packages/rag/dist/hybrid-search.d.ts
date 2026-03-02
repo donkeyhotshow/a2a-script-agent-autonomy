@@ -8,6 +8,7 @@ declare const DEFAULT_CONFIG: {
     minScore: number;
     maxResults: number;
 };
+
 export interface SparseSearchLike {
     search(query: string, options: {
         limit?: number;
@@ -19,6 +20,7 @@ export interface SparseSearchLike {
         score?: number;
     }>>;
 }
+
 export interface DenseSearchLike {
     search(query: string, options: {
         limit?: number;
@@ -30,6 +32,7 @@ export interface DenseSearchLike {
         score?: number;
     }>>;
 }
+
 export interface HybridSearchConfig {
     sparseSearch?: SparseSearchLike | {
         search: (q: string, o: {
@@ -48,10 +51,12 @@ export interface HybridSearchConfig {
     denseWeight?: number;
     rrfK?: number;
 }
+
 export interface HybridSearchOptions {
     limit?: number;
     minScore?: number;
 }
+
 interface RRFDoc {
     id?: string;
     docId?: string;
@@ -68,21 +73,29 @@ interface RRFDoc {
         dense: number;
     };
 }
+
 export declare class HybridSearcher {
     sparseSearch: HybridSearchConfig['sparseSearch'];
     denseSearch: HybridSearchConfig['denseSearch'];
     sparseWeight: number;
     denseWeight: number;
     rrfK: number;
+
     constructor(config?: HybridSearchConfig);
+
     search(query: string, options?: HybridSearchOptions): Promise<RRFDoc[]>;
+
     private _searchSparse;
     private _searchDense;
     private _rrfFusion;
     private _applyWeights;
+
     setSparseSearch(sparseSearch: HybridSearchConfig['sparseSearch']): void;
+
     setDenseSearch(denseSearch: HybridSearchConfig['denseSearch']): void;
+
     setWeights(sparseWeight: number, denseWeight: number): void;
+
     getConfig(): {
         sparseWeight: number;
         denseWeight: number;
@@ -91,5 +104,7 @@ export declare class HybridSearcher {
         hasDense: boolean;
     };
 }
+
 export declare function createHybridSearcher(config?: HybridSearchConfig): HybridSearcher;
-export { DEFAULT_CONFIG };
+
+export {DEFAULT_CONFIG};

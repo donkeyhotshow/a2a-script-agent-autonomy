@@ -2,8 +2,8 @@
  * @a2a/json - Validation schemas using Zod
  */
 
-import { z, ZodError } from 'zod';
-import type { UnifiedResponse, ValidationResult, ResponseType } from './types.js';
+import {z, ZodError} from 'zod';
+import type {UnifiedResponse, ValidationResult, ResponseType} from './types.js';
 
 // ============================================
 // Base Schemas
@@ -13,44 +13,44 @@ import type { UnifiedResponse, ValidationResult, ResponseType } from './types.js
  * Base response schema
  */
 export const baseResponseSchema = z.object({
-  success: z.boolean(),
-  timestamp: z.string(),
+    success: z.boolean(),
+    timestamp: z.string(),
 });
 
 /**
  * Task schema
  */
 export const taskSchema = z.object({
-  id: z.string(),
-  type: z.enum(['analyze', 'refactor', 'test', 'document', 'fix', 'create', 'delete']),
-  status: z.enum(['pending', 'in_progress', 'completed', 'failed', 'cancelled']),
-  target: z.string().optional(),
-  progress: z.number().optional(),
+    id: z.string(),
+    type: z.enum(['analyze', 'refactor', 'test', 'document', 'fix', 'create', 'delete']),
+    status: z.enum(['pending', 'in_progress', 'completed', 'failed', 'cancelled']),
+    target: z.string().optional(),
+    progress: z.number().optional(),
 });
 
 /**
  * Protocol error schema
  */
 export const protocolErrorSchema = z.object({
-  code: z.string(),
-  message: z.string(),
-  file: z.string().optional(),
-  line: z.number().optional(),
+    code: z.string(),
+    message: z.string(),
+    file: z.string().optional(),
+    line: z.number().optional(),
 });
 
 /**
  * Context block schema
  */
 export const contextBlockSchema = z.object({
-  version: z.literal('1.0'),
-  session_id: z.string(),
-  new_task: z.array(z.string()).optional(),
-  architectural_features: z.array(z.string()).optional(),
-  continue: z.boolean().optional(),
-  tasks: z.array(taskSchema).optional(),
-  request_files: z.array(z.string()).optional(),
-  confirm: z.boolean().optional(),
-  errors: z.array(protocolErrorSchema).optional(),
+    version: z.literal('1.0'),
+    session_id: z.string(),
+    new_task: z.array(z.string()).optional(),
+    architectural_features: z.array(z.string()).optional(),
+    continue: z.boolean().optional(),
+    tasks: z.array(taskSchema).optional(),
+    request_files: z.array(z.string()).optional(),
+    confirm: z.boolean().optional(),
+    errors: z.array(protocolErrorSchema).optional(),
 });
 
 // ============================================
@@ -61,39 +61,39 @@ export const contextBlockSchema = z.object({
  * Action schema
  */
 export const actionSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  description: z.string().optional(),
-  priority: z.number().optional(),
-  dsl: z.record(z.unknown()).optional(),
-  dslScript: z.string().optional(),
+    id: z.string(),
+    name: z.string(),
+    description: z.string().optional(),
+    priority: z.number().optional(),
+    dsl: z.record(z.unknown()).optional(),
+    dslScript: z.string().optional(),
 });
 
 /**
  * Fallback action schema
  */
 export const fallbackActionSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  description: z.string().optional(),
-  reason: z.string().optional(),
+    id: z.string(),
+    name: z.string(),
+    description: z.string().optional(),
+    reason: z.string().optional(),
 });
 
 /**
  * Action proposal result schema
  */
 export const actionProposalResultSchema = z.object({
-  context: contextBlockSchema,
-  proposedActions: z.array(actionSchema),
-  fallbackActions: z.array(fallbackActionSchema).optional(),
+    context: contextBlockSchema,
+    proposedActions: z.array(actionSchema),
+    fallbackActions: z.array(fallbackActionSchema).optional(),
 });
 
 /**
  * Action proposal response schema
  */
 export const actionProposalResponseSchema = baseResponseSchema.extend({
-  type: z.literal('action_proposal'),
-  result: actionProposalResultSchema,
+    type: z.literal('action_proposal'),
+    result: actionProposalResultSchema,
 });
 
 // ============================================
@@ -104,24 +104,24 @@ export const actionProposalResponseSchema = baseResponseSchema.extend({
  * Next step schema
  */
 export const nextStepSchema = z.object({
-  actionId: z.string(),
-  title: z.string(),
+    actionId: z.string(),
+    title: z.string(),
 });
 
 /**
  * Action executing result schema
  */
 export const actionExecutingResultSchema = z.object({
-  executingAction: actionSchema,
-  nextSteps: z.array(actionSchema),
+    executingAction: actionSchema,
+    nextSteps: z.array(actionSchema),
 });
 
 /**
  * Action executing response schema
  */
 export const actionExecutingResponseSchema = baseResponseSchema.extend({
-  type: z.literal('action_executing'),
-  result: actionExecutingResultSchema,
+    type: z.literal('action_executing'),
+    result: actionExecutingResultSchema,
 });
 
 // ============================================
@@ -132,29 +132,29 @@ export const actionExecutingResponseSchema = baseResponseSchema.extend({
  * Current step schema
  */
 export const currentStepSchema = z.object({
-  id: z.string(),
-  title: z.string(),
-  code: z.string().optional(),
-  progress: z.number(),
+    id: z.string(),
+    title: z.string(),
+    code: z.string().optional(),
+    progress: z.number(),
 });
 
 /**
  * Action progress result schema
  */
 export const actionProgressResultSchema = z.object({
-  actionId: z.string(),
-  currentStep: currentStepSchema,
-  completedSteps: z.array(z.string()),
-  remainingSteps: z.array(z.string()),
-  message: z.string().optional(),
+    actionId: z.string(),
+    currentStep: currentStepSchema,
+    completedSteps: z.array(z.string()),
+    remainingSteps: z.array(z.string()),
+    message: z.string().optional(),
 });
 
 /**
  * Action progress response schema
  */
 export const actionProgressResponseSchema = baseResponseSchema.extend({
-  type: z.literal('action_progress'),
-  result: actionProgressResultSchema,
+    type: z.literal('action_progress'),
+    result: actionProgressResultSchema,
 });
 
 // ============================================
@@ -165,19 +165,19 @@ export const actionProgressResponseSchema = baseResponseSchema.extend({
  * Action completed result schema
  */
 export const actionCompletedResultSchema = z.object({
-  actionId: z.string(),
-  summary: z.string(),
-  output: z.unknown().optional(),
-  filesModified: z.array(z.string()).optional(),
-  executionTimeMs: z.number().optional(),
+    actionId: z.string(),
+    summary: z.string(),
+    output: z.unknown().optional(),
+    filesModified: z.array(z.string()).optional(),
+    executionTimeMs: z.number().optional(),
 });
 
 /**
  * Action completed response schema
  */
 export const actionCompletedResponseSchema = baseResponseSchema.extend({
-  type: z.literal('action_completed'),
-  result: actionCompletedResultSchema,
+    type: z.literal('action_completed'),
+    result: actionCompletedResultSchema,
 });
 
 // ============================================
@@ -188,28 +188,28 @@ export const actionCompletedResponseSchema = baseResponseSchema.extend({
  * Action error schema
  */
 export const actionErrorSchema = z.object({
-  code: z.string(),
-  message: z.string(),
-  details: z.record(z.unknown()).optional(),
-  stack: z.string().optional(),
+    code: z.string(),
+    message: z.string(),
+    details: z.record(z.unknown()).optional(),
+    stack: z.string().optional(),
 });
 
 /**
  * Action error result schema
  */
 export const actionErrorResultSchema = z.object({
-  actionId: z.string(),
-  error: actionErrorSchema,
-  failedStep: z.string().optional(),
-  canRetry: z.boolean(),
+    actionId: z.string(),
+    error: actionErrorSchema,
+    failedStep: z.string().optional(),
+    canRetry: z.boolean(),
 });
 
 /**
  * Action error response schema
  */
 export const actionErrorResponseSchema = baseResponseSchema.extend({
-  type: z.literal('action_error'),
-  result: actionErrorResultSchema,
+    type: z.literal('action_error'),
+    result: actionErrorResultSchema,
 });
 
 // ============================================
@@ -220,11 +220,11 @@ export const actionErrorResponseSchema = baseResponseSchema.extend({
  * Unified response schema - union of all response types
  */
 export const unifiedResponseSchema = z.union([
-  actionProposalResponseSchema,
-  actionExecutingResponseSchema,
-  actionProgressResponseSchema,
-  actionCompletedResponseSchema,
-  actionErrorResponseSchema,
+    actionProposalResponseSchema,
+    actionExecutingResponseSchema,
+    actionProgressResponseSchema,
+    actionCompletedResponseSchema,
+    actionErrorResponseSchema,
 ]);
 
 // ============================================
@@ -237,24 +237,24 @@ export const unifiedResponseSchema = z.union([
  * @returns ValidationResult with validation status and parsed data
  */
 export function validateResponse(data: unknown): ValidationResult {
-  const result = unifiedResponseSchema.safeParse(data);
+    const result = unifiedResponseSchema.safeParse(data);
 
-  if (result.success) {
+    if (result.success) {
+        return {
+            valid: true,
+            data: result.data as UnifiedResponse,
+        };
+    }
+
+    const errors = result.error.errors.map((err) => {
+        const path = err.path.join('.');
+        return path ? `${path}: ${err.message}` : err.message;
+    });
+
     return {
-      valid: true,
-      data: result.data as UnifiedResponse,
+        valid: false,
+        errors,
     };
-  }
-
-  const errors = result.error.errors.map((err) => {
-    const path = err.path.join('.');
-    return path ? `${path}: ${err.message}` : err.message;
-  });
-
-  return {
-    valid: false,
-    errors,
-  };
 }
 
 /**
@@ -263,8 +263,8 @@ export function validateResponse(data: unknown): ValidationResult {
  * @returns Response type if valid, undefined otherwise
  */
 export function getResponseType(data: unknown): ResponseType | undefined {
-  const result = validateResponse(data);
-  return result.valid ? result.data?.type : undefined;
+    const result = validateResponse(data);
+    return result.valid ? result.data?.type : undefined;
 }
 
 /**
@@ -273,7 +273,7 @@ export function getResponseType(data: unknown): ResponseType | undefined {
  * @returns True if valid unified response
  */
 export function isUnifiedResponse(data: unknown): boolean {
-  return validateResponse(data).valid;
+    return validateResponse(data).valid;
 }
 
 /**
@@ -283,18 +283,18 @@ export function isUnifiedResponse(data: unknown): boolean {
  * @returns ValidationResult
  */
 export function validateResponseType(data: unknown, type: ResponseType): ValidationResult {
-  const result = validateResponse(data);
-  
-  if (!result.valid) {
+    const result = validateResponse(data);
+
+    if (!result.valid) {
+        return result;
+    }
+
+    if (result.data?.type !== type) {
+        return {
+            valid: false,
+            errors: [`Expected response type '${type}', got '${result.data?.type}'`],
+        };
+    }
+
     return result;
-  }
-
-  if (result.data?.type !== type) {
-    return {
-      valid: false,
-      errors: [`Expected response type '${type}', got '${result.data?.type}'`],
-    };
-  }
-
-  return result;
 }

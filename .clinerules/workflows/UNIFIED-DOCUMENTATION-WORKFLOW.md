@@ -1,11 +1,14 @@
 # Unified Documentation Workflow System
 
 ## Overview
-This document defines the comprehensive, unified workflow system for managing all documentation processes with state management, session tracking, and intelligent decision-making capabilities.
+
+This document defines the comprehensive, unified workflow system for managing all documentation processes with state
+management, session tracking, and intelligent decision-making capabilities.
 
 ## System Architecture
 
 ### Core Components
+
 1. **Workflow Engine** - Central orchestrator for all documentation processes
 2. **State Manager** - Manages session state and workflow progression
 3. **Decision Engine** - Intelligent routing between different workflow paths
@@ -13,6 +16,7 @@ This document defines the comprehensive, unified workflow system for managing al
 5. **Monitoring System** - Tracks progress and provides real-time feedback
 
 ### State Management
+
 - **Session State**: Stored in `.clinerules/workflow-state.json`
 - **Task Progress**: Tracked in `.clinerules/workflow-progress.json`
 - **Decision History**: Logged in `.clinerules/workflow-logs.json`
@@ -21,6 +25,7 @@ This document defines the comprehensive, unified workflow system for managing al
 ## Workflow States
 
 ### State Definitions
+
 ```json
 {
   "current_phase": "discovery|processing|organization|qa|completed",
@@ -42,6 +47,7 @@ This document defines the comprehensive, unified workflow system for managing al
 ```
 
 ### Phase Transitions
+
 1. **Discovery** → **Processing** (when inventory complete)
 2. **Processing** → **Organization** (when all docs processed)
 3. **Organization** → **QA** (when reorganization complete)
@@ -50,9 +56,11 @@ This document defines the comprehensive, unified workflow system for managing al
 ## Unified Workflow Process
 
 ### Phase 1: Discovery & Assessment
+
 **Objective**: Comprehensive understanding of documentation landscape
 
 #### Step 1.1: System Analysis
+
 ```bash
 # Analyze current system state
 node .clinerules/scripts/cli.js report
@@ -61,22 +69,26 @@ find . -name "*.md" -o -name "*.txt" -o -name "*.docx" > .clinerules/temp/docs-i
 ```
 
 **Decision Points**:
+
 - If inventory > 100 files → Enable batch processing mode
 - If existing reviews > 50% → Prioritize cleanup over new processing
 - If quality score < 70% → Start with quality improvement phase
 
 #### Step 1.2: Priority Classification
+
 ```bash
 # Classify documents by priority
 python3 .clinerules/scripts/classify-docs.py --input .clinerules/temp/docs-inventory.txt
 ```
 
 **Priority Rules**:
+
 - **High**: User-facing docs, API references, critical guides
 - **Medium**: Internal docs, technical guides, process docs
 - **Low**: Reference materials, historical docs, templates
 
 #### Step 1.3: Resource Assessment
+
 ```bash
 # Assess available resources
 node .clinerules/scripts/cli.js list pending
@@ -87,9 +99,11 @@ node --version && npm --version
 ```
 
 ### Phase 2: Systematic Processing
+
 **Objective**: Process all documentation according to priority and type
 
 #### Step 2.1: High Priority Processing
+
 ```bash
 # Process critical documentation first
 for doc in $(cat .clinerules/temp/high-priority.txt); do
@@ -109,11 +123,13 @@ done
 ```
 
 **Decision Points**:
+
 - If processing time > 2 hours → Switch to batch mode
 - If error rate > 10% → Pause and investigate
 - If quality score improves → Continue with current approach
 
 #### Step 2.2: Medium Priority Processing
+
 ```bash
 # Batch process medium priority documents
 batch_size=10
@@ -140,6 +156,7 @@ done
 ```
 
 #### Step 2.3: Low Priority Processing
+
 ```bash
 # Process remaining documents with efficiency focus
 for doc in $(cat .clinerules/temp/low-priority.txt); do
@@ -150,9 +167,11 @@ done
 ```
 
 ### Phase 3: Organization & Cleanup
+
 **Objective**: Systematic organization and cleanup of processed documentation
 
 #### Step 3.1: Directory Reorganization
+
 ```bash
 # Create organized structure
 mkdir -p docs/processed/{technical,user,process,reference,reports}
@@ -166,12 +185,14 @@ done
 ```
 
 #### Step 3.2: Cross-Reference Creation
+
 ```bash
 # Create intelligent cross-references
 node .clinerules/scripts/create-references.js --source docs/processed/ --output docs/processed/cross-references.md
 ```
 
 #### Step 3.3: Tracking File Updates
+
 ```bash
 # Update all tracking files
 node .clinerules/scripts/cli.js report > .clinerules/reports/final-report.txt
@@ -179,9 +200,11 @@ node .clinerules/scripts/update-tracking.js --all
 ```
 
 ### Phase 4: Quality Assurance
+
 **Objective**: Comprehensive quality verification and final validation
 
 #### Step 4.1: Completeness Verification
+
 ```bash
 # Verify 100% processing completion
 processed_count=$(node .clinerules/scripts/cli.js list completed | grep -c "ID:")
@@ -197,6 +220,7 @@ fi
 ```
 
 #### Step 4.2: Quality Metrics Review
+
 ```bash
 # Comprehensive quality assessment
 quality_report=$(node .clinerules/scripts/cli.js report)
@@ -212,6 +236,7 @@ fi
 ```
 
 #### Step 4.3: Final Organization Verification
+
 ```bash
 # Verify organization structure
 if [ -d "docs/processed" ] && [ "$(ls -A docs/processed)" ]; then
@@ -226,6 +251,7 @@ fi
 ## State Management System
 
 ### Session State File (`.clinerules/workflow-state.json`)
+
 ```json
 {
   "session_id": "workflow-2026-03-02-001",
@@ -255,6 +281,7 @@ fi
 ```
 
 ### Progress Tracking (`.clinerules/workflow-progress.json`)
+
 ```json
 {
   "session_id": "workflow-2026-03-02-001",
@@ -285,6 +312,7 @@ fi
 ```
 
 ### Decision Logging (`.clinerules/workflow-logs.json`)
+
 ```json
 {
   "session_id": "workflow-2026-03-02-001",
@@ -305,22 +333,24 @@ fi
 ## Intelligent Decision Engine
 
 ### Decision Rules
+
 1. **Processing Mode Selection**:
-   - Documents > 100 → Batch processing
-   - Documents < 50 → Sequential processing
-   - 50-100 → Hybrid approach
+    - Documents > 100 → Batch processing
+    - Documents < 50 → Sequential processing
+    - 50-100 → Hybrid approach
 
 2. **Priority Override Rules**:
-   - Quality score < 70% → Process quality issues first
-   - Pending reviews > 50% → Cleanup before new processing
-   - System errors > 5% → Pause and investigate
+    - Quality score < 70% → Process quality issues first
+    - Pending reviews > 50% → Cleanup before new processing
+    - System errors > 5% → Pause and investigate
 
 3. **Resource Management**:
-   - Memory usage > 80% → Reduce batch size
-   - Processing time > 2 hours → Optimize workflow
-   - Error rate > 10% → Switch to manual review
+    - Memory usage > 80% → Reduce batch size
+    - Processing time > 2 hours → Optimize workflow
+    - Error rate > 10% → Switch to manual review
 
 ### Decision Implementation
+
 ```javascript
 // .clinerules/scripts/decision-engine.js
 class DecisionEngine {
@@ -378,6 +408,7 @@ class DecisionEngine {
 ## Command Interface
 
 ### Unified Workflow Commands
+
 ```bash
 # Start new workflow session
 node .clinerules/scripts/workflow-engine.js --start --priority high
@@ -402,6 +433,7 @@ node .clinerules/scripts/workflow-engine.js --stop --reason "system_maintenance"
 ```
 
 ### State Management Commands
+
 ```bash
 # Save current state
 node .clinerules/scripts/update-state.js --save
@@ -419,6 +451,7 @@ node .clinerules/scripts/update-state.js --export --format json
 ## Integration Points
 
 ### CI/CD Integration
+
 ```yaml
 # .github/workflows/unified-workflow.yml
 name: Unified Documentation Workflow
@@ -471,6 +504,7 @@ jobs:
 ```
 
 ### Monitoring Dashboard
+
 ```javascript
 // .clinerules/scripts/dashboard.js
 class WorkflowDashboard {
@@ -505,12 +539,14 @@ class WorkflowDashboard {
 ## Error Handling & Recovery
 
 ### Error Recovery Strategies
+
 1. **State Rollback**: Restore previous state on critical errors
 2. **Task Retry**: Automatic retry for failed tasks (max 3 attempts)
 3. **Manual Intervention**: Pause workflow for manual review
 4. **Emergency Stop**: Complete workflow halt with state preservation
 
 ### Recovery Commands
+
 ```bash
 # Rollback to previous state
 node .clinerules/scripts/workflow-engine.js --rollback --steps 3
@@ -528,21 +564,25 @@ node .clinerules/scripts/workflow-engine.js --emergency-stop --save-state
 ## Success Criteria & Metrics
 
 ### Completion Metrics
+
 - **100% Documentation Coverage**: All documents processed
 - **95%+ Quality Score**: High-quality standards maintained
 - **Complete Organization**: Logical directory structure
 - **Zero Unresolved Issues**: All errors addressed
 
 ### Performance Metrics
+
 - **Processing Speed**: Documents per hour
 - **Quality Improvement**: Before/after quality scores
 - **System Efficiency**: Resource utilization optimization
 - **User Satisfaction**: Workflow usability feedback
 
 ### Quality Assurance
+
 - **Technical Accuracy**: Verified through automated checks
 - **Content Clarity**: Assessed through review processes
 - **Organization Consistency**: Maintained through structured approach
 - **Cross-Reference Integrity**: Validated through automated testing
 
-This unified workflow system provides comprehensive documentation management with intelligent decision-making, robust state management, and seamless integration capabilities.
+This unified workflow system provides comprehensive documentation management with intelligent decision-making, robust
+state management, and seamless integration capabilities.

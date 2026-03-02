@@ -3,6 +3,7 @@
 ## Unit Tests (jest/vitest)
 
 ### 1. nodes.test.js - Custom Node Tests
+
 - [ ] Test TaskInputNode renders correctly
 - [ ] Test ActionProposalNode renders with subActions
 - [ ] Test SubActionNode displays DSL/script
@@ -10,6 +11,7 @@
 - [ ] Test ActionCompleteNode shows summary stats
 
 ### 2. protocol.test.js - Protocol Mapping Tests
+
 - [ ] Test mapSimulationResponseToFlow() with action_proposal
 - [ ] Test mapSimulationResponseToFlow() with action_executing
 - [ ] Test mapSimulationResponseToFlow() with action_complete
@@ -17,6 +19,7 @@
 - [ ] Test animated edges for running steps
 
 ### 3. flow-manager.test.js - A2AFlowManager Tests
+
 - [ ] Test init() creates VueFlow instance
 - [ ] Test addTask() adds task node
 - [ ] Test loadContext() updates flow
@@ -26,11 +29,13 @@
 ## Integration Tests
 
 ### 4. web-app.test.js - Updated Tests
+
 - [ ] Test index.html contains VueFlow scripts
 - [ ] Test flow-container exists in layout
 - [ ] Test sessions.js integrates with flow
 
 ## Test Stubs - nodes.test.js
+
 ```
 javascript
 // TODO: Implement node rendering tests
@@ -58,6 +63,7 @@ describe('VueFlow Nodes', () => {
 ```
 
 ## Test Stubs - protocol.test.js
+
 ```
 javascript
 // TODO: Implement protocol mapping tests
@@ -85,6 +91,7 @@ describe('Protocol Mapping', () => {
 ```
 
 ## Test Stubs - flow-manager.test.js
+
 ```
 javascript
 // TODO: Implement flow manager tests

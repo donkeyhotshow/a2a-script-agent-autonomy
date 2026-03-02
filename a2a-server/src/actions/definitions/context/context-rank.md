@@ -1,16 +1,20 @@
 # context-rank
 
-Ранжирование результатов: сортировка по релевантности. **План:** [actions-definitions-for-auto-ai](../../../../docs/actions-definitions-for-auto-ai.md).
+Ранжирование результатов: сортировка по релевантности. **План:
+** [actions-definitions-for-auto-ai](../../../../docs/actions-definitions-for-auto-ai.md).
 
 ## Priority
+
 75
 
 ## Context
+
 ```json
 { "type": "rank", "requires_scoring": true }
 ```
 
 ## Triggers
+
 - context rank
 - rank context
 - relevance filter
@@ -20,6 +24,7 @@
 ## Sub-actions
 
 ### 1. context-rank-score
+
 Оценка контекстных элементов по релевантности к запросу.
 
 **Input:** items[], query, options?  
@@ -167,6 +172,7 @@ function calculatePathScore(path: string, keywords: string[]): number {
 ```
 
 ### 2. context-rank-filter
+
 Фильтрация по порогу оценки или top-k.
 
 **Input:** ranked[], topK?, minScore?, groupBy?  
@@ -279,6 +285,7 @@ export default async function filterItems(input: {
 ```
 
 ### 3. context-rank-explain
+
 Генерация объяснения ranking для пользователя.
 
 **Input:** filtered[], query  

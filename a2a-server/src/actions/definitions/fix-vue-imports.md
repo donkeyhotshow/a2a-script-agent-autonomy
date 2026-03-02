@@ -2,11 +2,14 @@
 
 Исправить сломанные импорты в Vue файлах.
 
-**Планы:** [actions-definitions-for-auto-ai](../../../../plans/actions-definitions-for-auto-ai.md) (пример) · [fix-vue-imports-improvements](../../../../plans/later/fix-vue-imports-improvements.md), [fix-vue-imports-batch](../../../../plans/later/fix-vue-imports-batch.md) (варианты).
+**Планы:** [actions-definitions-for-auto-ai](../../../../plans/actions-definitions-for-auto-ai.md) (
+пример) · [fix-vue-imports-improvements](../../../../plans/later/fix-vue-imports-improvements.md), [fix-vue-imports-batch](../../../../plans/later/fix-vue-imports-batch.md) (
+варианты).
 
 ## Sub-actions (4 steps)
 
 ### 1. vue-import-detect
+
 Определить сломанные импорты в Vue файлах.
 
 **Input:** none  
@@ -88,6 +91,7 @@ function resolveExists(p: string): boolean {
 ```
 
 ### 2. vue-import-resolve
+
 Разрешить правильные пути для сломанных импортов.
 
 **Input:** broken_imports[]  
@@ -188,6 +192,7 @@ function toImportSpecifier(absTarget: string, fromFile: string): string {
 ```
 
 ### 3. vue-import-apply
+
 Применить исправления к файлам.
 
 **Input:** patches[]  
@@ -237,6 +242,7 @@ function groupByFile(patches: ResolvedPatch[]): Record<string, ResolvedPatch[]> 
 ```
 
 ### 4. vue-import-cleanup
+
 Очистить временные файлы.
 
 **Input:** none  

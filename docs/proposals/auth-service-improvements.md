@@ -4,31 +4,33 @@
 
 ### Что делает сервис
 
-**AuthService** (`a2a-server/src/services/auth.service.ts`) — сервис аутентификации и авторизации. Обрабатывает регистрацию клиентов, выдачу и обновление JWT токенов, верификацию учётных данных.
+**AuthService** (`a2a-server/src/services/auth.service.ts`) — сервис аутентификации и авторизации. Обрабатывает
+регистрацию клиентов, выдачу и обновление JWT токенов, верификацию учётных данных.
 
 #### Основные функции:
 
-1. **JWT токены** — [`signAccessToken()`](a2a-server/src/services/auth.service.ts:15), [`signRefreshToken()`](a2a-server/src/services/auth.service.ts:23)
-   - Access token: истекает через `config.jwtExpiresIn`
-   - Refresh token: истекает через `config.jwtRefreshExpiresIn`
-   - Payload: `{ sub: clientId, email, type: 'access' | 'refresh' }`
+1. **JWT токены** — [`signAccessToken()`](a2a-server/src/services/auth.service.ts:15), [
+   `signRefreshToken()`](a2a-server/src/services/auth.service.ts:23)
+    - Access token: истекает через `config.jwtExpiresIn`
+    - Refresh token: истекает через `config.jwtRefreshExpiresIn`
+    - Payload: `{ sub: clientId, email, type: 'access' | 'refresh' }`
 
 2. **Регистрация** — [`register()`](a2a-server/src/services/auth.service.ts:50)
-   - Валидация: name, email, password обязательны
-   - Проверка уникальности email
-   - Хеширование пароля + генерация API ключа
-   - Возвращает: id, name, email, apiKey
+    - Валидация: name, email, password обязательны
+    - Проверка уникальности email
+    - Хеширование пароля + генерация API ключа
+    - Возвращает: id, name, email, apiKey
 
 3. **Аутентификация**:
-   - [`getTokenByApiKey()`](a2a-server/src/services/auth.service.ts:74) — по API ключу
-   - [`getTokenByCredentials()`](a2a-server/src/services/auth.service.ts:83) — по email/password
-   - [`refreshToken()`](a2a-server/src/services/auth.service.ts:100) — обновление токенов
+    - [`getTokenByApiKey()`](a2a-server/src/services/auth.service.ts:74) — по API ключу
+    - [`getTokenByCredentials()`](a2a-server/src/services/auth.service.ts:83) — по email/password
+    - [`refreshToken()`](a2a-server/src/services/auth.service.ts:100) — обновление токенов
 
 4. **Получение данных клиента** — [`getClientById()`](a2a-server/src/services/auth.service.ts:122)
 
 5. **Dev mode** — [`DEV_CREDS`](a2a-server/src/services/auth.service.ts:35)
-   - Email: `dev@example.com`, password: `dev`
-   - Создаёт виртуального клиента `dev-client`
+    - Email: `dev@example.com`, password: `dev`
+    - Создаёт виртуального клиента `dev-client`
 
 #### Текущее использование:
 
@@ -44,6 +46,7 @@
 **Текущее:** Отсутствует ролевая система
 
 **Предложения:**
+
 - [ ] Роли: admin, user, guest
 - [ ] Права на ресурсы (permissions)
 - [ ] Middleware для проверки прав
@@ -54,6 +57,7 @@
 **Текущее:** Базовые проверки
 
 **Предложения:**
+
 - [ ] Rate limiting на логин
 - [ ] Блокировка аккаунта после N неудачных попыток
 - [ ] 2FA / TOTP
@@ -67,6 +71,7 @@
 **Текущее:** Stateless JWT
 
 **Предложения:**
+
 - [ ] Blacklist токенов (logout)
 - [ ] Сессии с device fingerprint
 - [ ] Multiple sessions management
@@ -78,6 +83,7 @@
 **Текущее:** Базовое логирование
 
 **Предложения:**
+
 - [ ] Лог всех попыток входа (success/fail)
 - [ ] Аудит изменений аккаунта
 - [ ] Уведомления о подозрительной активности
@@ -88,6 +94,7 @@
 **Текущее:** Один API ключ при регистрации
 
 **Предложения:**
+
 - [ ] Множественные API ключи
 - [ ] Срок действия ключа
 - [ ] Ограничение по IP
@@ -98,6 +105,7 @@
 **Текущее:** Частичная валидация
 
 **Предложения:**
+
 - [ ] Zod схемы для всех input
 - [ ] Type-safe возвращаемые типы
 - [ ] Strongly typed errors
@@ -107,6 +115,7 @@
 **Текущее:** Синхронные операции
 
 **Предложения:**
+
 - [ ] Кэширование верификации токенов
 - [ ] Асинхронное хеширование паролей (bcrypt rounds)
 - [ ] Connection pooling для БД
@@ -254,64 +263,76 @@ json
 ### Фаза 2: Безопасность (1 неделя)
 
 **Задачи:**
+
 1. Rate limiting на `/login` endpoint
 2. Блокировка аккаунта после 5 неудачных попыток
 3. Zod схемы для RegisterInput
 4. Password validation (сложность, история)
 
 **Файлы:**
+
 - `a2a-server/src/services/auth.validator.ts` — валидация
 - `a2a-server/src/services/auth.security.ts` — security логика
 
 ### Фаза 3: RBAC (1 неделя)
 
 **Задачи:**
+
 1. Role enum и permissions
 2. Middleware для проверки прав
 3. Super admin账户
 
 **Файлы:**
+
 - `a2a-server/src/services/auth.rbac.ts` — роли и права
 
 ### Фаза 4: Сессии (1 неделя)
 
 **Задачи:**
+
 1. Token blacklist (redis/in-memory)
 2. Token rotation
 3. Multiple sessions
 
 **Файлы:**
+
 - `a2a-server/src/services/auth.sessions.ts` — управление сессиями
 
 ### Фаза 5: 2FA и Advanced Security (1 неделя)
 
 **Задачи:**
+
 1. TOTP 2FA
 2. Password reset flow
 3. Email verification
 
 **Файлы:**
+
 - `a2a-server/src/services/auth.2fa.ts` — 2FA логика
 - `a2a-server/src/services/auth.email.ts` — email operations
 
 ### Фаза 6: API Keys Management (1 неделя)
 
 **Задачи:**
+
 1. Множественные ключи
 2. Scope и IP restrictions
 3. Key rotation
 
 **Файлы:**
+
 - `a2a-server/src/services/auth.api-keys.ts`
 
 ### Фаза 7: Аудит и Мониторинг (1 неделя)
 
 **Задачи:**
+
 1. Login history
 2. Audit events
 3. Anomaly detection alerts
 
 **Файлы:**
+
 - `a2a-server/src/services/auth.audit.ts`
 
 ---
@@ -398,11 +419,11 @@ await revokeAllClientSessions(clientId);
 
 ## Риски
 
-| Риск | Вероятность | Влияние | Митигация |
-|------|-------------|---------|-----------|
-| Сложность 2FA | Средняя | Среднее | Фазированная реализация |
-| Token blacklist перформанс | Средняя | Высокое | Redis + in-memory fallback |
-| OAuth интеграция | Низкая | Среднее | Внешние библиотеки |
+| Риск                       | Вероятность | Влияние | Митигация                  |
+|----------------------------|-------------|---------|----------------------------|
+| Сложность 2FA              | Средняя     | Среднее | Фазированная реализация    |
+| Token blacklist перформанс | Средняя     | Высокое | Redis + in-memory fallback |
+| OAuth интеграция           | Низкая      | Среднее | Внешние библиотеки         |
 
 ---
 

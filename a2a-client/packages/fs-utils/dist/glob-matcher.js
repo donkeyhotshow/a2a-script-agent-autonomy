@@ -2,7 +2,7 @@
 /**
  * Glob Matcher - match glob patterns with Windows path support
  */
-Object.defineProperty(exports, "__esModule", { value: true });
+Object.defineProperty(exports, "__esModule", {value: true});
 exports.GlobMatcher = void 0;
 const PATTERNS = {
     PHP: ['**/*.php'],
@@ -18,11 +18,13 @@ const PATTERNS = {
         'storage/**', '.a2a/**', '**/*.min.js', '**/*.min.css',
     ],
 };
+
 class GlobMatcher {
     constructor(patterns = []) {
         const arr = Array.isArray(patterns) ? patterns : [patterns];
         this.compiledPatterns = arr.map((p) => this.compilePattern(p));
     }
+
     compilePattern(pattern) {
         let regexStr = '';
         let i = 0;
@@ -32,46 +34,45 @@ class GlobMatcher {
                 if (pattern[i + 2] === '/') {
                     regexStr += '(?:.*[/\\\\])?';
                     i += 3;
-                }
-                else {
+                } else {
                     regexStr += '.*';
                     i += 2;
                 }
-            }
-            else if (char === '*') {
+            } else if (char === '*') {
                 regexStr += '[^/\\\\]*';
                 i++;
-            }
-            else if (char === '/') {
+            } else if (char === '/') {
                 regexStr += '[/\\\\]';
                 i++;
-            }
-            else if ('.+?^${}()|[]\\'.includes(char)) {
+            } else if ('.+?^${}()|[]\\'.includes(char)) {
                 regexStr += '\\' + char;
                 i++;
-            }
-            else {
+            } else {
                 regexStr += char;
                 i++;
             }
         }
         regexStr = '^' + regexStr + '$';
-        return { pattern, regex: new RegExp(regexStr, 'i') };
+        return {pattern, regex: new RegExp(regexStr, 'i')};
     }
+
     match(filePath) {
         const normalizedPath = filePath.replace(/\\/g, '/');
-        return this.compiledPatterns.some(({ regex }) => regex.test(normalizedPath));
+        return this.compiledPatterns.some(({regex}) => regex.test(normalizedPath));
     }
+
     static match(pattern, filePath) {
         const matcher = new GlobMatcher(pattern);
         return matcher.match(filePath);
     }
+
     getMatchingPatterns(filePath) {
         const normalizedPath = filePath.replace(/\\/g, '/');
         return this.compiledPatterns
-            .filter(({ regex }) => regex.test(normalizedPath))
-            .map(({ pattern }) => pattern);
+            .filter(({regex}) => regex.test(normalizedPath))
+            .map(({pattern}) => pattern);
     }
 }
+
 exports.GlobMatcher = GlobMatcher;
 GlobMatcher.PATTERNS = PATTERNS;

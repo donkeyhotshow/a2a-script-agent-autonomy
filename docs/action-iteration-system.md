@@ -5,8 +5,10 @@
 ## Контекст
 
 **Текущее состояние:**
+
 - Есть симуляции итеративного обмена в `simulation-true/` (JSON формат)
-- MD файлы actions: [`a2a-server/src/actions/definitions/`](a2a-server/src/actions/definitions/) (оглавление: [definitions/README.md](a2a-server/src/actions/definitions/README.md))
+- MD файлы actions: [`a2a-server/src/actions/definitions/`](a2a-server/src/actions/definitions/) (
+  оглавление: [definitions/README.md](a2a-server/src/actions/definitions/README.md))
 
 **Цель:**
 Создать единую систему, где MD файлы определяют структуру action с итеративными шагами, а система парсит их и выполняет.
@@ -18,11 +20,12 @@
 ### Этап 1: Новый формат MD файла для Action
 
 **Задачи:**
+
 1. Разработать структуру MD файла с поддержкой:
-   - Основного описания action (метаданные)
-   - Списка sub-actions (итеративные шаги)
-   - DSL определений для каждого шага
-   - Контекста выполнения (aliases, patterns)
+    - Основного описания action (метаданные)
+    - Списка sub-actions (итеративные шаги)
+    - DSL определений для каждого шага
+    - Контекста выполнения (aliases, patterns)
 
 **Предлагаемая структура MD файла:**
 
@@ -56,19 +59,22 @@
 - Aliases: @ -> resources/js
 ```
 
-**Файлы:** парсер — [action-parser.ts](a2a-server/src/actions/action-parser.ts), реестр — [action-registry.ts](a2a-server/src/actions/action-registry.ts), definitions — [definitions/README.md](a2a-server/src/actions/definitions/README.md)
+**Файлы:** парсер — [action-parser.ts](a2a-server/src/actions/action-parser.ts),
+реестр — [action-registry.ts](a2a-server/src/actions/action-registry.ts),
+definitions — [definitions/README.md](a2a-server/src/actions/definitions/README.md)
 
 ---
 
 ### Этап 2: Парсер MD файлов
 
 **Задачи:**
+
 - [ ] Создать TypeScript структуры для представления Action
 - [ ] Реализовать парсер, который извлекает из MD:
-   - ID, title, description
-   - Sub-actions с их порядком
-   - DSL определения
-   - Контекст
+    - ID, title, description
+    - Sub-actions с их порядком
+    - DSL определения
+    - Контекст
 
 **Структуры данных:**
 
@@ -107,11 +113,13 @@ interface ActionContext {
 ### Этап 3: Action Registry
 
 **Задачи:**
+
 1. Создать сервис для загрузки и кэширования action定义 из MD файлов
 2. Реализовать поиск action по семантике (как в симуляции - matchScore)
 3. Добавить возможность hot-reload при изменении MD файлов
 
 **API:**
+
 ```typescript
 class ActionRegistry {
   // Загрузить все actions из директории
@@ -130,11 +138,13 @@ class ActionRegistry {
 ### Этап 4: Интеграция с фазовой машиной
 
 **Задачи:**
+
 1. Создать новую фазу `action_iterative` или расширить существующую `action`
 2. Интегрировать ActionRegistry в request-processor
 3. Обрабатывать переходы между шагами (sub-actions)
 
 **Поток:**
+
 ```
 task_request → find_action → approve_action → execute_step → step_result → execute_next → ... → completed
 ```
@@ -144,15 +154,16 @@ task_request → find_action → approve_action → execute_step → step_result
 ### Этап 5: Система выполнения шагов
 
 **Задачи:**
+
 1. Создать ActionExecutor, который:
-   - Принимает SubAction и входные данные
-   - Выполняет соответствующий скрипт/neuron
-   - Возвращает результат для следующего шага
+    - Принимает SubAction и входные данные
+    - Выполняет соответствующий скрипт/neuron
+    - Возвращает результат для следующего шага
 
 2. Поддержка разных типов шагов:
-   - `script` - вызов скрипта из external-ai-hub
-   - `neuron` - вызов neuron напрямую
-   - `http` - внешний API вызов
+    - `script` - вызов скрипта из external-ai-hub
+    - `neuron` - вызов neuron напрямую
+    - `http` - внешний API вызов
 
 ```typescript
 class ActionExecutor {
@@ -174,17 +185,18 @@ class ActionExecutor {
 ### Этап 6: Формирование ответов (по формату симуляции)
 
 **Задачи:**
+
 1. Реализовать формирование response.json по формату из simulation-true:
-   - `outcome`: action_proposal → action_executing → completed
-   - `executingAction`: текущий шаг
-   - `nextSteps`: оставшиеся шаги
-   - `history`: история выполненных
+    - `outcome`: action_proposal → action_executing → completed
+    - `executingAction`: текущий шаг
+    - `nextSteps`: оставшиеся шаги
+    - `history`: история выполненных
 
 2. Обработка различных исходов:
-   - Успешное выполнение всех шагов
-   - Ошибка на каком-то шаге
-   - Требование подтверждения от пользователя
-   - Запрос дополнительных файлов
+    - Успешное выполнение всех шагов
+    - Ошибка на каком-то шаге
+    - Требование подтверждения от пользователя
+    - Запрос дополнительных файлов
 
 ---
 
@@ -212,12 +224,14 @@ graph TD
 ## Файлы для модификации/создания
 
 ### Новые файлы:
+
 - `a2a-server/src/actions/action-parser.ts` - парсер MD
 - `a2a-server/src/actions/action-registry.ts` - реестр actions
 - `a2a-server/src/actions/action-executor.ts` - исполнитель шагов
 - `a2a-server/src/actions/types.ts` - типы для action системы
 
 ### Модифицируемые файлы:
+
 - `a2a-server/src/services/request-processor.service.ts` - интеграция
 - `a2a-server/src/protocol/message-builder.ts` - формирование response
 
@@ -226,6 +240,7 @@ graph TD
 ## Пример работы
 
 **Вход (от клиента):**
+
 ```json
 {
   "action": "task_request",
@@ -234,12 +249,14 @@ graph TD
 ```
 
 **Система:**
+
 1. Парсит MD файл `fix-vue-imports.md`
 2. Находит sub-actions: detect → resolve → apply → cleanup
 3. Выполняет первый шаг
 4. Возвращает response с executingAction
 
 **Выход (к клиенту):**
+
 ```json
 {
   "outcome": "action_executing",

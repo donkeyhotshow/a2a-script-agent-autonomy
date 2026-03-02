@@ -7,6 +7,7 @@
 ## Что это
 
 A2A — серверно-клиентская система для:
+
 1. **Извлечения сущностей** из кода (Model, Controller, Service, Vue)
 2. **Построения графа знаний** с связями между сущностями
 3. **Активации нейронов** — детекторы проблем и паттернов
@@ -43,6 +44,7 @@ cd a2a-server && npm run dev:no-auth
 ```
 
 **Первый запрос:**
+
 ```
 json
 POST /api/v1/requests
@@ -59,6 +61,7 @@ POST /api/v1/requests
 ```
 
 **Ответ:**
+
 ```
 json
 {
@@ -80,19 +83,19 @@ json
 
 ### Основные документы
 
-| Документ | Назначение |
-|---------|-----------|
-|[a2a-server/docs/entry-points.md](a2a-server/docs/entry-points.md)|Точки входа API|
-|[a2a-server/docs/action-api.md](a2a-server/docs/action-api.md)|API действий|
-|[a2a-server/docs/use-cases/](a2a-server/docs/use-cases/)|Сценарии использования|
+| Документ                                                           | Назначение             |
+|--------------------------------------------------------------------|------------------------|
+| [a2a-server/docs/entry-points.md](a2a-server/docs/entry-points.md) | Точки входа API        |
+| [a2a-server/docs/action-api.md](a2a-server/docs/action-api.md)     | API действий           |
+| [a2a-server/docs/use-cases/](a2a-server/docs/use-cases/)           | Сценарии использования |
 
 ---
 
 ## Общая документация
 
-| Документ | Назначение |
-|----------|------------|
-| [AGENTS.md](AGENTS.md) | Что делать сейчас |
+| Документ                             | Назначение           |
+|--------------------------------------|----------------------|
+| [AGENTS.md](AGENTS.md)               | Что делать сейчас    |
 | [a2a-server/docs/](a2a-server/docs/) | Документация сервера |
 
 ## Структура проекта
@@ -122,6 +125,7 @@ a2a-client/           # Клиент
 ## Нейроны
 
 ~100 нейронов для детекции:
+
 - N+1 queries, missing indexes
 - Security issues (SQL injection, XSS, CSRF)
 - Missing validation, tests

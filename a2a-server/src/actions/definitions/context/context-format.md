@@ -1,16 +1,21 @@
 # context-format
 
-Форматирование контекста: упаковка для AI. **План:** [actions-definitions-for-auto-ai](../../../../docs/actions-definitions-for-auto-ai.md) (use-case 1-context-collection).
+Форматирование контекста: упаковка для AI. **План:
+** [actions-definitions-for-auto-ai](../../../../docs/actions-definitions-for-auto-ai.md) (use-case
+1-context-collection).
 
 ## Priority
+
 70
 
 ## Context
+
 ```json
 { "type": "format", "requires_serialization": true }
 ```
 
 ## Triggers
+
 - context format
 - format context
 - serialize context
@@ -20,6 +25,7 @@
 ## Sub-actions
 
 ### 1. context-format-serialize
+
 Сериализация контекстного блока для протокольного сообщения.
 
 **Input:** context, format?  
@@ -111,6 +117,7 @@ function serializeAsCompact(context: ContextItem[]): { serialized: string } {
 ```
 
 ### 2. context-format-pack
+
 Упаковка контекста для внешнего AI (структура для Claude/GPT).
 
 **Input:** serialized, maxTokens?, includeMetadata?  
@@ -262,6 +269,7 @@ function estimateTokens(text: string): number {
 ```
 
 ### 3. context-format-validate
+
 Валидация упакованного контекста перед отправкой.
 
 **Input:** packed  

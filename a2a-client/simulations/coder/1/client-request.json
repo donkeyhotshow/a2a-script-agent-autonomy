@@ -1,1 +1,8 @@
-{"context":{"task":"допоможи розібратись з кодом"},"result":{"choice":"coder"}}
+{
+  "context": {
+    "task": "допоможи розібратись з кодом"
+  },
+  "result": {
+    "choice": "coder"
+  }
+}

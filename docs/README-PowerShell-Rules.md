@@ -1,10 +1,12 @@
 # PowerShell ESLint Rules
 
-This document describes the new ESLint rules created for PowerShell script analysis and validation. These rules help maintain code quality, security, and consistency in PowerShell scripts within the project.
+This document describes the new ESLint rules created for PowerShell script analysis and validation. These rules help
+maintain code quality, security, and consistency in PowerShell scripts within the project.
 
 ## Overview
 
-Since ESLint is primarily designed for JavaScript/TypeScript code, these custom rules analyze PowerShell files (`.ps1`) as text files using regex patterns and string analysis to validate PowerShell code quality.
+Since ESLint is primarily designed for JavaScript/TypeScript code, these custom rules analyze PowerShell files (`.ps1`)
+as text files using regex patterns and string analysis to validate PowerShell code quality.
 
 ## Implemented Rules
 
@@ -13,6 +15,7 @@ Since ESLint is primarily designed for JavaScript/TypeScript code, these custom 
 **File:** `powershell-script-standards.mjs`
 
 Comprehensive rule that validates:
+
 - Proper script headers (`#Requires -Version 7.0`)
 - SYNOPSIS comments
 - Error handling setup (`$ErrorActionPreference`)
@@ -26,6 +29,7 @@ Comprehensive rule that validates:
 **File:** `powershell-syntax-validation.mjs`
 
 Validates PowerShell syntax and best practices:
+
 - Approved PowerShell verbs usage
 - Consistent quoting (single quotes for literals)
 - Proper cmdlet naming conventions
@@ -39,6 +43,7 @@ Validates PowerShell syntax and best practices:
 **File:** `powershell-error-handling.mjs`
 
 Ensures proper error handling:
+
 - Try/catch blocks for critical operations
 - `$ErrorActionPreference` configuration
 - Proper error logging before throw
@@ -51,6 +56,7 @@ Ensures proper error handling:
 **File:** `powershell-logging-standards.mjs`
 
 Standardizes logging practices:
+
 - Function entry/exit logging
 - Success operation logging
 - Error logging with proper context
@@ -64,6 +70,7 @@ Standardizes logging practices:
 **File:** `powershell-security-standards.mjs`
 
 Security-focused validations:
+
 - Execution policy restrictions
 - Secure string handling for passwords
 - Input validation for parameters
@@ -78,6 +85,7 @@ Security-focused validations:
 **File:** `powershell-naming-conventions.mjs`
 
 Enforces naming conventions:
+
 - Function names: Verb-Noun format with approved verbs
 - Variable names: PascalCase, camelCase, or UPPER_CASE
 - Parameter names: PascalCase
@@ -91,6 +99,7 @@ Enforces naming conventions:
 **File:** `powershell-structure-validation.mjs`
 
 Validates script structure and organization:
+
 - Proper script sections and comments
 - Parameter block organization
 - Function ordering by purpose
@@ -137,6 +146,7 @@ The rules are configured in `eslint-rules/index.mjs` and can be customized by:
 ## Integration with Development Workflow
 
 These rules integrate with:
+
 - Pre-commit hooks for automatic validation
 - CI/CD pipelines for quality gates
 - IDE integration for real-time feedback
@@ -145,6 +155,7 @@ These rules integrate with:
 ## Future Enhancements
 
 Potential improvements:
+
 - PowerShell AST-based parsing for more accurate analysis
 - Integration with PSScriptAnalyzer
 - Custom formatters for PowerShell-specific output

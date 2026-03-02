@@ -2,24 +2,28 @@
 /**
  * File Scanner - scan directories with include/exclude patterns
  */
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function (o, m, k, k2) {
     if (k2 === undefined) k2 = k;
     var desc = Object.getOwnPropertyDescriptor(m, k);
     if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
+        desc = {
+            enumerable: true, get: function () {
+                return m[k];
+            }
+        };
     }
     Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
+}) : (function (o, m, k, k2) {
     if (k2 === undefined) k2 = k;
     o[k2] = m[k];
 }));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function (o, v) {
+    Object.defineProperty(o, "default", {enumerable: true, value: v});
+}) : function (o, v) {
     o["default"] = v;
 });
 var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
+    var ownKeys = function (o) {
         ownKeys = Object.getOwnPropertyNames || function (o) {
             var ar = [];
             for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
@@ -35,11 +39,12 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
-Object.defineProperty(exports, "__esModule", { value: true });
+Object.defineProperty(exports, "__esModule", {value: true});
 exports.FileScanner = void 0;
 const fs = __importStar(require("fs/promises"));
 const path = __importStar(require("path"));
 const glob_matcher_1 = require("./glob-matcher");
+
 class FileScanner {
     constructor(config = {}) {
         this.rootPath = config.rootPath ?? process.cwd();
@@ -51,6 +56,7 @@ class FileScanner {
         this.includeMatcher = new glob_matcher_1.GlobMatcher(this.includePatterns);
         this.excludeMatcher = new glob_matcher_1.GlobMatcher(this.excludePatterns);
     }
+
     async scan(dir, options = {}) {
         const files = [];
         const stats = {
@@ -61,8 +67,9 @@ class FileScanner {
             errors: [],
         };
         await this.walkDirectory(dir ?? this.rootPath, files, stats, 0, options);
-        return { files, stats, rootPath: this.rootPath };
+        return {files, stats, rootPath: this.rootPath};
     }
+
     async walkDirectory(dir, files, stats, depth, _options) {
         if (files.length >= this.maxFiles)
             return;
@@ -70,10 +77,9 @@ class FileScanner {
             return;
         let entries;
         try {
-            entries = await fs.readdir(dir, { withFileTypes: true });
-        }
-        catch (e) {
-            stats.errors.push({ path: dir, error: e.message });
+            entries = await fs.readdir(dir, {withFileTypes: true});
+        } catch (e) {
+            stats.errors.push({path: dir, error: e.message});
             return;
         }
         for (const entry of entries) {
@@ -86,11 +92,10 @@ class FileScanner {
                     continue;
                 }
                 if (this.onProgress && stats.totalDirs % 100 === 0) {
-                    this.onProgress({ type: 'dir', path: relativePath, stats });
+                    this.onProgress({type: 'dir', path: relativePath, stats});
                 }
                 await this.walkDirectory(fullPath, files, stats, depth + 1, _options);
-            }
-            else if (entry.isFile()) {
+            } else if (entry.isFile()) {
                 stats.totalFiles++;
                 const shouldInclude = this.shouldIncludeFile(relativePath);
                 const shouldExclude = this.shouldExcludeFile(relativePath);
@@ -101,26 +106,30 @@ class FileScanner {
                         name: entry.name,
                         ext: path.extname(entry.name).toLowerCase(),
                     });
-                }
-                else {
+                } else {
                     stats.skippedFiles++;
                 }
             }
         }
     }
+
     shouldIncludeFile(relativePath) {
         return this.includeMatcher.match(relativePath);
     }
+
     shouldExcludeFile(relativePath) {
         return this.excludeMatcher.match(relativePath);
     }
+
     shouldExcludeDir(relativePath) {
         return this.excludeMatcher.match(relativePath + '/') || this.excludeMatcher.match(relativePath);
     }
+
     static async scan(dir, options = {}) {
-        const scanner = new FileScanner({ rootPath: dir, ...options });
+        const scanner = new FileScanner({rootPath: dir, ...options});
         return scanner.scan();
     }
+
     async scanByExtension(dir, extensions) {
         const exts = Array.isArray(extensions) ? extensions : [extensions];
         const normalizedExts = exts.map((e) => (e.startsWith('.') ? e : '.' + e));
@@ -131,4 +140,5 @@ class FileScanner {
         };
     }
 }
+
 exports.FileScanner = FileScanner;

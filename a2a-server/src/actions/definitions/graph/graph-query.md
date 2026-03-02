@@ -1,11 +1,14 @@
 # graph-query
 
-Запрос к графу: поиск связей и зависимостей. **План:** [actions-definitions-for-auto-ai](../../../../plans/actions-definitions-for-auto-ai.md) (use-case 3-knowledge-graph).
+Запрос к графу: поиск связей и зависимостей. **План:
+** [actions-definitions-for-auto-ai](../../../../plans/actions-definitions-for-auto-ai.md) (use-case 3-knowledge-graph).
 
 ## Priority
+
 75
 
 ## Triggers
+
 - graph query
 - query graph
 - search graph
@@ -14,6 +17,7 @@
 ## Sub-actions
 
 ### 1. graph-query-run
+
 Run query against the graph.
 
 **Input:** query, graphId?  
@@ -167,6 +171,7 @@ async function getGraphData(graphId?: string) {
 ```
 
 ### 2. graph-query-format
+
 Format results for client (entities + relations).
 
 **Input:** results[]  

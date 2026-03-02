@@ -9,8 +9,17 @@
     "build": "tsc",
     "test": "node tests/index.test.js"
   },
-  "dependencies": { "vm2": "^3.9.19" },
-  "devDependencies": { "typescript": "^5.0.0" },
-  "keywords": ["a2a", "script", "runner", "vm"],
+  "dependencies": {
+    "vm2": "^3.9.19"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "keywords": [
+    "a2a",
+    "script",
+    "runner",
+    "vm"
+  ],
   "license": "MIT"
 }

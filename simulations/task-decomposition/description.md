@@ -2,7 +2,9 @@
 
 ## Description
 
-Progressive breakdown via LLM: capture task → decompose into subtasks → decompose each subtask into steps → decompose each step into actions. Document is built stepwise (virtually), then optionally written to `.carrier/tasks/` and executed.
+Progressive breakdown via LLM: capture task → decompose into subtasks → decompose each subtask into steps → decompose
+each step into actions. Document is built stepwise (virtually), then optionally written to `.carrier/tasks/` and
+executed.
 
 ## Task document format (MD)
 

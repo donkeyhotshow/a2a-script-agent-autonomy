@@ -1,6 +1,7 @@
 # @a2a/rag - RAG Indexing and Search Module
 
-> Provides local indexing and search capabilities for code projects with BM25, hybrid search, semantic search, query understanding, and more.
+> Provides local indexing and search capabilities for code projects with BM25, hybrid search, semantic search, query
+> understanding, and more.
 
 ## Features
 
@@ -160,6 +161,7 @@ const analysis = engine.analyze('UserService');
 ```
 
 **Detected Intents:**
+
 - `exact_name` - "UserService", "createUser()"
 - `code_pattern` - "->createUser(", "$user->"
 - `semantic` - "how to create user"
@@ -192,6 +194,7 @@ const classes = suggestions.getByType('class', 5);
 ```
 
 **Features:**
+
 - Prefix-based matching
 - Frequency-based ranking
 - Type preferences (class > function > method)
@@ -221,6 +224,7 @@ const duplicates = similarity.findDuplicates({ threshold: 0.8 });
 ```
 
 **Similarity Metrics:**
+
 - **Jaccard** - Intersection over Union
 - **Cosine** - Vector cosine similarity
 - **Overlap** - Overlap coefficient
@@ -284,18 +288,18 @@ async function searchPipeline(query) {
 
 ## API Reference
 
-| Module | Description |
-|--------|-------------|
-| `createRAG` | Main RAG factory |
-| `createBM25Scorer` | BM25 ranking |
-| `createHybridSearcher` | Hybrid search |
-| `createReranker` | Cross-encoder reranking |
-| `createMeilisearchClient` | Meilisearch client |
-| `createASTChunker` | AST-based chunking |
-| `createQueryUnderstandingEngine` | Intent detection |
-| `createSuggestionsEngine` | Autocomplete |
-| `createQueryExpander` | Query expansion |
-| `createSimilarityEngine` | Code similarity |
+| Module                           | Description             |
+|----------------------------------|-------------------------|
+| `createRAG`                      | Main RAG factory        |
+| `createBM25Scorer`               | BM25 ranking            |
+| `createHybridSearcher`           | Hybrid search           |
+| `createReranker`                 | Cross-encoder reranking |
+| `createMeilisearchClient`        | Meilisearch client      |
+| `createASTChunker`               | AST-based chunking      |
+| `createQueryUnderstandingEngine` | Intent detection        |
+| `createSuggestionsEngine`        | Autocomplete            |
+| `createQueryExpander`            | Query expansion         |
+| `createSimilarityEngine`         | Code similarity         |
 
 ## Best Practices
 

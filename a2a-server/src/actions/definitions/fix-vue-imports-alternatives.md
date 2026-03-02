@@ -1,16 +1,20 @@
 # fix-vue-imports-alternatives
 
-Resolve Vue imports using alternative paths (aliases, barrel files). Variant of fix-vue-imports. **План:** [fix-vue-imports-alternatives](../../../docs/archive/fix-vue-imports-alternatives.md).
+Resolve Vue imports using alternative paths (aliases, barrel files). Variant of fix-vue-imports. **План:
+** [fix-vue-imports-alternatives](../../../docs/archive/fix-vue-imports-alternatives.md).
 
 ## Priority
+
 90
 
 ## Context
+
 ```json
 { "type": "fix", "target": "vue-imports", "method": "alternatives" }
 ```
 
 ## Triggers
+
 - vue import alternatives
 - resolve vue aliases
 - fix vue imports alternatives
@@ -19,6 +23,7 @@ Resolve Vue imports using alternative paths (aliases, barrel files). Variant of 
 ## Sub-actions
 
 ### 1. vue-import-alternatives-detect
+
 Обнаружение импортов, которые могут быть разрешены через алиасы или баррель-файлы.
 
 **Input:** rootDir, aliases?, scanDepth?  
@@ -158,6 +163,7 @@ function generatePossiblePaths(alias: AliasConfig, relativePath: string, fromDir
 ```
 
 ### 2. vue-import-alternatives-resolve
+
 Разрешение каждого кандидата в лучший путь (alias vs relative vs barrel).
 
 **Input:** candidates[], aliases?, config?  
@@ -276,6 +282,7 @@ export default async function resolveAlternatives(input: {
 ```
 
 ### 3. vue-import-alternatives-apply
+
 Применение исправлений к файлам.
 
 **Input:** patches[], backup?, validate?  

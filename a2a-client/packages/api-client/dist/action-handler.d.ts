@@ -7,12 +7,14 @@ export interface HandleActionOptions {
     projectPath?: string;
     previousOutput?: unknown;
 }
+
 export interface HandleActionResult {
     handled: boolean;
     stepResult?: unknown;
     nextResponse?: unknown;
     error?: string;
 }
+
 export declare function handleActionResponse(response: {
     action?: {
         currentStep?: {
@@ -24,6 +26,7 @@ export declare function handleActionResponse(response: {
         session_id?: string;
     };
 }, options?: HandleActionOptions): Promise<HandleActionResult>;
+
 export type ExecuteScriptFn = (code: string, input: Record<string, unknown>, context: {
     workingDir?: string;
     sessionId?: string;
@@ -33,6 +36,7 @@ export type ExecuteScriptFn = (code: string, input: Record<string, unknown>, con
     data?: unknown;
     error?: string;
 }>;
+
 /**
  * Create executeCode adapter for @a2a/script-runner executeScript.
  */

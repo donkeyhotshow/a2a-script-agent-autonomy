@@ -3,7 +3,7 @@
  * @a2a/json - Unified JSON Parser
  * Parses server JSON responses into typed UnifiedResponse objects
  */
-Object.defineProperty(exports, "__esModule", { value: true });
+Object.defineProperty(exports, "__esModule", {value: true});
 exports.parseResponse = parseResponse;
 exports.parseResponseString = parseResponseString;
 exports.detectResponseType = detectResponseType;
@@ -23,6 +23,7 @@ const defaultOptions = {
     throwOnError: false,
     returnPartial: true,
 };
+
 /**
  * Parse JSON response from server
  * @param json - Raw JSON data from server
@@ -31,7 +32,7 @@ const defaultOptions = {
  * @throws Error if throwOnError is true and validation fails
  */
 function parseResponse(json, options = {}) {
-    const opts = { ...defaultOptions, ...options };
+    const opts = {...defaultOptions, ...options};
     // Handle null/undefined
     if (json === null || json === undefined) {
         const error = {
@@ -69,6 +70,7 @@ function parseResponse(json, options = {}) {
         data: response,
     };
 }
+
 /**
  * Parse JSON string to UnifiedResponse
  * @param jsonString - JSON string from server
@@ -79,8 +81,7 @@ function parseResponseString(jsonString, options) {
     try {
         const json = JSON.parse(jsonString);
         return parseResponse(json, options);
-    }
-    catch (error) {
+    } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Failed to parse JSON';
         return {
             type: 'action_error',
@@ -91,6 +92,7 @@ function parseResponseString(jsonString, options) {
         };
     }
 }
+
 /**
  * Detect response type from raw JSON without full validation
  * @param json - Raw JSON data
@@ -114,6 +116,7 @@ function detectResponseType(json) {
     ];
     return validTypes.includes(type) ? type : undefined;
 }
+
 /**
  * Check if response is a specific type
  * @param response - UnifiedResponse
@@ -123,24 +126,30 @@ function detectResponseType(json) {
 function isResponseType(response, type) {
     return response.type === type;
 }
+
 /**
  * Type guards for each response type
  */
 function isActionProposalResponse(response) {
     return response.type === 'action_proposal';
 }
+
 function isActionExecutingResponse(response) {
     return response.type === 'action_executing';
 }
+
 function isActionProgressResponse(response) {
     return response.type === 'action_progress';
 }
+
 function isActionCompletedResponse(response) {
     return response.type === 'action_completed';
 }
+
 function isActionErrorResponse(response) {
     return response.type === 'action_error';
 }
+
 /**
  * Extract action ID from response
  * @param response - UnifiedResponse
@@ -162,6 +171,7 @@ function extractActionId(response) {
             return undefined;
     }
 }
+
 /**
  * Extract summary/message from response
  * @param response - UnifiedResponse
@@ -183,6 +193,7 @@ function extractSummary(response) {
             return 'Unknown response type';
     }
 }
+
 /**
  * Create error response helper
  */

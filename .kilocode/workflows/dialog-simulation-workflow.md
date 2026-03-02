@@ -1,15 +1,16 @@
 # Dialog Simulation — workflow
 
-Посилання на канон: `simulations/SCHEMA.md` та `simulations/dialog/description.md`. Dialog — **ai-action**: кроки не захардкоджені; наступний крок з відповіді LLM, можливі окремі запити на крок.
+Посилання на канон: `simulations/SCHEMA.md` та `simulations/dialog/description.md`. Dialog — **ai-action**: кроки не
+захардкоджені; наступний крок з відповіді LLM, можливі окремі запити на крок.
 
 ## Файли кроку
 
-| Файл | Напрямок | Опис |
-|------|----------|------|
-| `request.json` | Client → Server | Запит клієнта (task, context, result) |
-| `request.md` | Server → LLM | **MARKDOWN**: system prompt + формат відповіді + блок поточного стану (JSON) |
-| `response.md` | LLM → Server | Очікуваний вивід LLM (напр. `{ "message": "..." }`) |
-| `response.json` | Server → Client | context + history + execute.form |
+| Файл            | Напрямок        | Опис                                                                         |
+|-----------------|-----------------|------------------------------------------------------------------------------|
+| `request.json`  | Client → Server | Запит клієнта (task, context, result)                                        |
+| `request.md`    | Server → LLM    | **MARKDOWN**: system prompt + формат відповіді + блок поточного стану (JSON) |
+| `response.md`   | LLM → Server    | Очікуваний вивід LLM (напр. `{ "message": "..." }`)                          |
+| `response.json` | Server → Client | context + history + execute.form                                             |
 
 ## Важливо
 

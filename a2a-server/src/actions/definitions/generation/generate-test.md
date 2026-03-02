@@ -1,11 +1,15 @@
 # generate-test
 
-Генерация тестов: Unit/Feature. **План:** [actions-definitions-for-auto-ai](../../../../plans/actions-definitions-for-auto-ai.md). **Use-case:** [4-code-generation](../../../../docs/use-cases/auto-ai/4-code-generation.md).
+Генерация тестов: Unit/Feature. **План:
+** [actions-definitions-for-auto-ai](../../../../plans/actions-definitions-for-auto-ai.md). **Use-case:
+** [4-code-generation](../../../../docs/use-cases/auto-ai/4-code-generation.md).
 
 ## Priority
+
 75
 
 ## Triggers
+
 - generate test
 - create test
 - unit test
@@ -14,6 +18,7 @@
 ## Sub-actions
 
 ### 1. generate-test-spec
+
 Analyze target file and determine test requirements.
 
 **Input:** targetFile, type?, rootDir?  
@@ -73,6 +78,7 @@ export default async function analyzeTest(input: { targetFile: string; type?: st
 ```
 
 ### 2. generate-test-create
+
 Create test file with basic structure.
 
 **Input:** testSpec, rootDir?  
@@ -141,6 +147,7 @@ ${needsSetup ? '    protected function setUp(): void
 ```
 
 ### 3. generate-test-assertions
+
 Generate assertion helpers for test.
 
 **Input:** testSpec, targetFile  
@@ -198,6 +205,7 @@ export default async function generateAssertions(input: { testSpec: { assertions
 ```
 
 ### 4. generate-test-mocks
+
 Generate mock setup for test.
 
 **Input:** testSpec, rootDir?  
@@ -228,6 +236,7 @@ export default async function generateMocks(input: { testSpec: { className: stri
 ```
 
 ### 5. generate-test-validate
+
 Validate generated test code.
 
 **Input:** testFile  
@@ -270,6 +279,7 @@ export default async function validateTest(input: { testFile: { code: string } }
 ```
 
 ### 6. generate-test-run
+
 Run generated tests.
 
 **Input:** testFile, rootDir?  

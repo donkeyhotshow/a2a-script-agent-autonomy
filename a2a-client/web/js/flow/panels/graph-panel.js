@@ -3,11 +3,11 @@
  */
 
 const GraphPanel = {
-  render(panelData) {
-    const data = panelData?.data || {};
-    const graphData = data.data || {};
-    
-    return `
+    render(panelData) {
+        const data = panelData?.data || {};
+        const graphData = data.data || {};
+
+        return `
       <div class="graph-panel-content">
         <div class="graph-toolbar">
           <input type="text" id="graphSearch" placeholder="Search..." class="search-input">
@@ -40,81 +40,81 @@ const GraphPanel = {
         </div>
       </div>
     `;
-  },
+    },
 
-  setupEvents(panelId) {
-    // Zoom controls
-    const zoomIn = document.getElementById('graphZoomIn');
-    const zoomOut = document.getElementById('graphZoomOut');
-    const fitView = document.getElementById('graphFitView');
-    const demo = document.getElementById('graphDemo');
+    setupEvents(panelId) {
+        // Zoom controls
+        const zoomIn = document.getElementById('graphZoomIn');
+        const zoomOut = document.getElementById('graphZoomOut');
+        const fitView = document.getElementById('graphFitView');
+        const demo = document.getElementById('graphDemo');
 
-    if (zoomIn && window.zoomIn) {
-      zoomIn.addEventListener('click', () => window.zoomIn());
-    }
-    if (zoomOut && window.zoomOut) {
-      zoomOut.addEventListener('click', () => window.zoomOut());
-    }
-    if (fitView && window.fitView) {
-      fitView.addEventListener('click', () => window.fitView());
-    }
-    if (demo && window.loadDemoData) {
-      demo.addEventListener('click', () => window.loadDemoData());
-    }
-
-    // Search
-    const searchInput = document.getElementById('graphSearch');
-    if (searchInput) {
-      searchInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter' && window.searchFlow) {
-          window.searchFlow(e.target.value);
+        if (zoomIn && window.zoomIn) {
+            zoomIn.addEventListener('click', () => window.zoomIn());
         }
-      });
-    }
+        if (zoomOut && window.zoomOut) {
+            zoomOut.addEventListener('click', () => window.zoomOut());
+        }
+        if (fitView && window.fitView) {
+            fitView.addEventListener('click', () => window.fitView());
+        }
+        if (demo && window.loadDemoData) {
+            demo.addEventListener('click', () => window.loadDemoData());
+        }
 
-    // Filters
-    const typeFilter = document.getElementById('flowTypeFilter');
-    const statusFilter = document.getElementById('flowStatusFilter');
+        // Search
+        const searchInput = document.getElementById('graphSearch');
+        if (searchInput) {
+            searchInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter' && window.searchFlow) {
+                    window.searchFlow(e.target.value);
+                }
+            });
+        }
 
-    if (typeFilter) {
-      typeFilter.addEventListener('change', () => {
-        window.filterFlow?.(typeFilter.value, statusFilter?.value);
-      });
-    }
-    if (statusFilter) {
-      statusFilter.addEventListener('change', () => {
-        window.filterFlow?.(typeFilter?.value, statusFilter.value);
-      });
-    }
-  },
+        // Filters
+        const typeFilter = document.getElementById('flowTypeFilter');
+        const statusFilter = document.getElementById('flowStatusFilter');
 
-  /**
-   * Update graph with nodes and edges
-   */
-  updateGraph(nodes, edges) {
-    if (window.setFlowNodes && window.setFlowEdges) {
-      window.setFlowNodes(nodes);
-      window.setFlowEdges(edges);
-    }
-  },
+        if (typeFilter) {
+            typeFilter.addEventListener('change', () => {
+                window.filterFlow?.(typeFilter.value, statusFilter?.value);
+            });
+        }
+        if (statusFilter) {
+            statusFilter.addEventListener('change', () => {
+                window.filterFlow?.(typeFilter?.value, statusFilter.value);
+            });
+        }
+    },
 
-  /**
-   * Clear graph
-   */
-  clearGraph() {
-    if (window.clearFlowView) {
-      window.clearFlowView();
-    }
-  },
+    /**
+     * Update graph with nodes and edges
+     */
+    updateGraph(nodes, edges) {
+        if (window.setFlowNodes && window.setFlowEdges) {
+            window.setFlowNodes(nodes);
+            window.setFlowEdges(edges);
+        }
+    },
 
-  /**
-   * Fit view to content
-   */
-  fitToView() {
-    if (window.flowFitView) {
-      window.flowFitView();
-    }
-  },
+    /**
+     * Clear graph
+     */
+    clearGraph() {
+        if (window.clearFlowView) {
+            window.clearFlowView();
+        }
+    },
+
+    /**
+     * Fit view to content
+     */
+    fitToView() {
+        if (window.flowFitView) {
+            window.flowFitView();
+        }
+    },
 };
 
 window.GraphPanel = GraphPanel;

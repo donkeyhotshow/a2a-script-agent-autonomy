@@ -77,17 +77,17 @@ steps:
       
       export default async function run(input: Input): Promise<Output> {
         const broken: BrokenImport[] = [];
-        
+      
         for (const match of input.import_matches) {
           const spec = match.match
             .replace(/from\s+/, '')
             .replace(/require\s*\(/, '')
             .replace(/['"]/g, '');
-          
+      
           // Skip package imports
           if (!spec.startsWith('.')) continue;
           if (spec.startsWith('@/')) continue;
-          
+      
           // Mark as potentially broken - in real implementation,
           // would check if file exists
           broken.push({
@@ -96,7 +96,7 @@ steps:
             specifier: spec,
           });
         }
-        
+      
         return { broken_imports: broken };
       }
     input:
@@ -129,12 +129,12 @@ steps:
       
       export default async function run(input: Input): Promise<Output> {
         const patches: Patch[] = [];
-        
+      
         for (const broken of input.broken_imports) {
           // Generate fix - simplified version
           // In real implementation, would resolve actual path
           const fixedSpecifier = broken.specifier;
-          
+      
           patches.push({
             file: broken.file,
             type: 'replace',
@@ -142,7 +142,7 @@ steps:
             replace: fixedSpecifier,
           });
         }
-        
+      
         return { patches };
       }
     input:

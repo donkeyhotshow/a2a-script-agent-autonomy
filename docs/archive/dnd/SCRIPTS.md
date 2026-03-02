@@ -5,14 +5,16 @@
 - **Description:** Scripts, shell commands, executable code
 
 ## Properties
-| Property | Type | Description |
-|----------|------|-------------|
-| id | string | Unique identifier |
-| name | string | Script name |
-| path | string | Script path |
+
+| Property    | Type   | Description        |
+|-------------|--------|--------------------|
+| id          | string | Unique identifier  |
+| name        | string | Script name        |
+| path        | string | Script path        |
 | description | string | Script description |
 
 ## Example
+
 ```
 json
 {
@@ -25,6 +27,7 @@ json
 ```
 
 ## Related Types
+
 - Executed by: ACTIONS, TASKS
 - Uses: PACKAGES
 - Part of: SYSTEMS, SERVICES

@@ -56,7 +56,7 @@ const testingFirstStandards = require('./testing-first-standards.cjs')
 const securityStandards = require('./security-standards.cjs')
 
 // PowerShell-specific rules
-  const powershellScriptStandards = require('./powershell-script-standards.cjs')
+const powershellScriptStandards = require('./powershell-script-standards.cjs')
 const powershellSyntaxValidation = require('./powershell-syntax-validation.cjs')
 const powershellErrorHandling = require('./powershell-error-handling.cjs')
 const powershellLoggingStandards = require('./powershell-logging-standards.cjs')
@@ -84,74 +84,74 @@ const requireResponsiveClasses = require('./require-responsive-classes.cjs')
 const suggestStylingImprovements = require('./suggest-styling-improvements.cjs')
 
 module.exports = {
-  meta: {
-    name: 'inertia',
-    version: '1.0.0'
-  },
-  rules: {
-    // ADR 508: Навигация
-    'no-anchor-navigation': noAnchorNavigation,
-    'no-window-location': noWindowLocation,
-    'no-unlocalized-navigation': noUnlocalizedNavigation,
-    'router-visit-options': routerVisitOptions,
+    meta: {
+        name: 'inertia',
+        version: '1.0.0'
+    },
+    rules: {
+        // ADR 508: Навигация
+        'no-anchor-navigation': noAnchorNavigation,
+        'no-window-location': noWindowLocation,
+        'no-unlocalized-navigation': noUnlocalizedNavigation,
+        'router-visit-options': routerVisitOptions,
 
-    // ADR 522: Архитектурные нарушения
-    'no-fetch': noFetch,
-    'use-form-required': useFormRequired,
-    'standard-composables': inertiaStandardComposables,
+        // ADR 522: Архитектурные нарушения
+        'no-fetch': noFetch,
+        'use-form-required': useFormRequired,
+        'standard-composables': inertiaStandardComposables,
 
-    // ADR 1025: Head компонент
-    'no-meta-tags-in-vue-templates': noMetaTagsInVueTemplates,
+        // ADR 1025: Head компонент
+        'no-meta-tags-in-vue-templates': noMetaTagsInVueTemplates,
 
-    // ADR 1023: Доступность компонентов
-    'accessibility-rules': accessibilityRules,
+        // ADR 1023: Доступность компонентов
+        'accessibility-rules': accessibilityRules,
 
-    // ADR 1027: Unified Icon Usage Framework
-    'icon-usage-framework': iconUsageFramework,
+        // ADR 1027: Unified Icon Usage Framework
+        'icon-usage-framework': iconUsageFramework,
 
-    // ADR 1036: Component Refactoring Standards
-    'component-refactoring-standards': componentRefactoringStandards,
-    'i18n-standards': i18nStandards,
+        // ADR 1036: Component Refactoring Standards
+        'component-refactoring-standards': componentRefactoringStandards,
+        'i18n-standards': i18nStandards,
 
-    // ADR 1103: Data Flow Domain Alignment Framework
-    'data-flow-domain-alignment': dataFlowDomainAlignment,
+        // ADR 1103: Data Flow Domain Alignment Framework
+        'data-flow-domain-alignment': dataFlowDomainAlignment,
 
-    // Component Styling Standards
-    'component-styling-standards': componentStylingStandards,
-    'base-components-usage': baseComponentsUsage,
+        // Component Styling Standards
+        'component-styling-standards': componentStylingStandards,
+        'base-components-usage': baseComponentsUsage,
 
-    // ADR 2004: Testing-First Standards
-    'testing-first-standards': testingFirstStandards,
+        // ADR 2004: Testing-First Standards
+        'testing-first-standards': testingFirstStandards,
 
-    // ADR 403: Security Standards
-    'security-standards': securityStandards,
+        // ADR 403: Security Standards
+        'security-standards': securityStandards,
 
-    // PowerShell Script Standards
-    'powershell-script-standards': powershellScriptStandards,
-    'powershell-syntax-validation': powershellSyntaxValidation,
-    'powershell-error-handling': powershellErrorHandling,
-    'powershell-logging-standards': powershellLoggingStandards,
-    'powershell-security-standards': powershellSecurityStandards,
-    'powershell-naming-conventions': powershellNamingConventions,
-    'powershell-structure-validation': powershellStructureValidation,
+        // PowerShell Script Standards
+        'powershell-script-standards': powershellScriptStandards,
+        'powershell-syntax-validation': powershellSyntaxValidation,
+        'powershell-error-handling': powershellErrorHandling,
+        'powershell-logging-standards': powershellLoggingStandards,
+        'powershell-security-standards': powershellSecurityStandards,
+        'powershell-naming-conventions': powershellNamingConventions,
+        'powershell-structure-validation': powershellStructureValidation,
 
-    // PHP Code Standards
-    'php-code-standards': phpCodeStandards,
-    'php-security-standards': phpSecurityStandards,
-    'php-testing-standards': phpTestingStandards,
-    'php-invalid-use-statements': phpInvalidUseStatements,
+        // PHP Code Standards
+        'php-code-standards': phpCodeStandards,
+        'php-security-standards': phpSecurityStandards,
+        'php-testing-standards': phpTestingStandards,
+        'php-invalid-use-statements': phpInvalidUseStatements,
 
-    // Testing Standards
-    'typescript-testing-standards': typescriptTestingStandards,
-    'javascript-testing-standards': javascriptTestingStandards,
+        // Testing Standards
+        'typescript-testing-standards': typescriptTestingStandards,
+        'javascript-testing-standards': javascriptTestingStandards,
 
-    // Configuration and Database Standards
-    'configuration-files-standards': configurationFilesStandards,
-    'database-layer-standards': databaseLayerStandards,
+        // Configuration and Database Standards
+        'configuration-files-standards': configurationFilesStandards,
+        'database-layer-standards': databaseLayerStandards,
 
-    // Styling Validation Rules
-    'no-invalid-classes': noInvalidClasses,
-    'require-responsive-classes': requireResponsiveClasses,
-    'suggest-styling-improvements': suggestStylingImprovements
-  }
+        // Styling Validation Rules
+        'no-invalid-classes': noInvalidClasses,
+        'require-responsive-classes': requireResponsiveClasses,
+        'suggest-styling-improvements': suggestStylingImprovements
+    }
 }

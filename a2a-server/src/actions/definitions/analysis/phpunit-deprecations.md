@@ -1,11 +1,14 @@
 # phpunit-deprecations
 
-PHPUnit Deprecations Detector: обнаруживает устаревшие PHPUnit функции и методы, помогает обновить до PHPUnit 11. **План:** [deprecation-detector](../../plans/deprecation-detector.md).
+PHPUnit Deprecations Detector: обнаруживает устаревшие PHPUnit функции и методы, помогает обновить до PHPUnit 11. *
+*План:** [deprecation-detector](../../plans/deprecation-detector.md).
 
 ## Priority
+
 70
 
 ## Triggers
+
 - phpunit deprecations
 - phpunit deprecation
 - detect phpunit deprecations
@@ -15,6 +18,7 @@ PHPUnit Deprecations Detector: обнаруживает устаревшие PHP
 ## Sub-actions
 
 ### 1. parse-output
+
 Parse PHPUnit output to extract deprecation warnings and their locations.
 
 **Input:** phpunitOutput (string)  
@@ -55,6 +59,7 @@ export default async function run(input: { phpunitOutput: string }): Promise<{
 ```
 
 ### 2. identify-deprecations
+
 Identify specific deprecated PHPUnit functions/methods and map to their modern equivalents.
 
 **Input:** deprecations[]  
@@ -142,6 +147,7 @@ export default async function run(input: {
 ```
 
 ### 3. generate-fix-plan
+
 Generate a fix plan with prioritized deprecations and recommendations.
 
 **Input:** identified[]  

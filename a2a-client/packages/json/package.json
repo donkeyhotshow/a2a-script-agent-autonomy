@@ -15,7 +15,13 @@
     "build": "tsc",
     "test": "echo \"No tests configured\" && exit 0"
   },
-  "keywords": ["a2a", "json", "parser", "vueflow", "validator"],
+  "keywords": [
+    "a2a",
+    "json",
+    "parser",
+    "vueflow",
+    "validator"
+  ],
   "author": "",
   "license": "MIT",
   "dependencies": {
@@ -24,7 +30,15 @@
   "devDependencies": {
     "typescript": "^5.0.0"
   },
-  "engines": { "node": ">=18.0.0" },
-  "repository": { "type": "git", "url": "https://github.com/org-carrier/a2a-app.git", "directory": "packages/json" },
-  "publishConfig": { "access": "public" }
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/org-carrier/a2a-app.git",
+    "directory": "packages/json"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
 }

@@ -16,7 +16,9 @@
 
 ### Что такое Actions
 
-**Actions** — это система итеративного выполнения задач без использования AI (no-ai mode). Каждое действие (action) определяется в Markdown файле и состоит из последовательности шагов (SubActions), которые выполняются на стороне клиента.
+**Actions** — это система итеративного выполнения задач без использования AI (no-ai mode). Каждое действие (action)
+определяется в Markdown файле и состоит из последовательности шагов (SubActions), которые выполняются на стороне
+клиента.
 
 ### Как работает итеративный обмен
 
@@ -316,6 +318,7 @@ export default async function run(input: { ... }): Promise<{ ... }> {
 ```
 
 ### 2. step-id-2
+
 Описание второго шага.
 
 **Input:** данные от предыдущего шага  
@@ -330,6 +333,7 @@ export default async function run(input: { ... }): Promise<{ ... }> {
 - Framework: Vue 3
 - Build tool: Vite
 - Aliases: @ -> resources/js, ~ -> resources
+
 ```
 
 ### Структура SubActions
@@ -640,6 +644,7 @@ interface WebhookEvent {
 ### Примеры событий
 
 **action.started:**
+
 ```json
 {
   "id": "evt_abc123",
@@ -653,6 +658,7 @@ interface WebhookEvent {
 ```
 
 **action.step_completed:**
+
 ```json
 {
   "id": "evt_abc124",
@@ -672,6 +678,7 @@ interface WebhookEvent {
 ```
 
 **action.completed:**
+
 ```json
 {
   "id": "evt_abc125",
@@ -792,13 +799,13 @@ main().catch(console.error);
 
 ## Приложение A: Коды ошибок
 
-| Код | Описание |
-|-----|----------|
-| `ACTION_NOT_FOUND` | Подходящий action не найден |
-| `STEP_EXECUTION_FAILED` | Ошибка выполнения шага |
-| `INVALID_STEP_RESULT` | Некорректный результат шага |
-| `SESSION_NOT_FOUND` | Сессия не найдена |
-| `EXECUTION_CANCELLED` | Выполнение отменено |
+| Код                     | Описание                    |
+|-------------------------|-----------------------------|
+| `ACTION_NOT_FOUND`      | Подходящий action не найден |
+| `STEP_EXECUTION_FAILED` | Ошибка выполнения шага      |
+| `INVALID_STEP_RESULT`   | Некорректный результат шага |
+| `SESSION_NOT_FOUND`     | Сессия не найдена           |
+| `EXECUTION_CANCELLED`   | Выполнение отменено         |
 
 ## Приложение B: Ссылки
 

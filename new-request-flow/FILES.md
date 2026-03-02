@@ -24,34 +24,34 @@ c:/workspace/org-carrier/a2a-script-agent/
 
 Web інтерфейс (UI). Працює на порту 5173 (Vite dev server).
 
-| Файл | Опис |
-|------|------|
-| `index.html` | Головна HTML сторінка |
-| `js/app-boot.js` | Ініціалізація додатку |
-| `js/app-init.js` | Налаштування додатку |
-| `js/app-state.js` | Управління станом |
-| `js/sessions.js` | Управління сесіями в UI |
-| `js/actions-manager.js` | Менеджер дій |
-| `js/sse-client.js` | SSE клієнт для real-time оновлень |
-| `js/web-api-client.js` | API клієнт для зв'язку з Client API |
-| `js/flow/` | Flow-based UI компоненти |
-| `js/json/` | JSON UI компоненти |
-| `css/` | Стилі |
+| Файл                    | Опис                                |
+|-------------------------|-------------------------------------|
+| `index.html`            | Головна HTML сторінка               |
+| `js/app-boot.js`        | Ініціалізація додатку               |
+| `js/app-init.js`        | Налаштування додатку                |
+| `js/app-state.js`       | Управління станом                   |
+| `js/sessions.js`        | Управління сесіями в UI             |
+| `js/actions-manager.js` | Менеджер дій                        |
+| `js/sse-client.js`      | SSE клієнт для real-time оновлень   |
+| `js/web-api-client.js`  | API клієнт для зв'язку з Client API |
+| `js/flow/`              | Flow-based UI компоненти            |
+| `js/json/`              | JSON UI компоненти                  |
+| `css/`                  | Стилі                               |
 
 ### a2a-client/packages/
 
 NPM пакети всередині monorepo:
 
-| Пакет | Шлях | Опис |
-|-------|------|------|
-| `api-client` | `packages/api-client/` | HTTP клієнт для Server API |
-| `api-server` | `packages/api-server/` | HTTP сервер для Web (ПОТРІБНО ДОПОВНИТИ) |
-| `fs-utils` | `packages/fs-utils/` | Файлові утиліти |
-| `rag` | `packages/rag/` | RAG функціональність |
-| `script-runner` | `packages/script-runner/` | Запуск скриптів |
-| `terminal` | `packages/terminal/` | Термінал |
-| `types` | `packages/types/` | Спільні типи |
-| `embedding` | `packages/embedding/` | Ембедінги |
+| Пакет           | Шлях                      | Опис                                     |
+|-----------------|---------------------------|------------------------------------------|
+| `api-client`    | `packages/api-client/`    | HTTP клієнт для Server API               |
+| `api-server`    | `packages/api-server/`    | HTTP сервер для Web (ПОТРІБНО ДОПОВНИТИ) |
+| `fs-utils`      | `packages/fs-utils/`      | Файлові утиліти                          |
+| `rag`           | `packages/rag/`           | RAG функціональність                     |
+| `script-runner` | `packages/script-runner/` | Запуск скриптів                          |
+| `terminal`      | `packages/terminal/`      | Термінал                                 |
+| `types`         | `packages/types/`         | Спільні типи                             |
+| `embedding`     | `packages/embedding/`     | Ембедінги                                |
 
 ---
 
@@ -59,15 +59,15 @@ NPM пакети всередині monorepo:
 
 Сервер (поки що не повністю Stateless). Працює на порту 3000.
 
-| Файл/Директорія | Опис |
-|-----------------|------|
-| `src/index.ts` | Точка входу |
-| `src/server.ts` | Основний сервер |
-| `src/routes/` | API маршрути |
-| `src/services/` | Бізнес-логіка |
+| Файл/Директорія            | Опис                     |
+|----------------------------|--------------------------|
+| `src/index.ts`             | Точка входу              |
+| `src/server.ts`            | Основний сервер          |
+| `src/routes/`              | API маршрути             |
+| `src/services/`            | Бізнес-логіка            |
 | `src/actions/definitions/` | Визначення дій (actions) |
-| `src/protocol/` | Обробка протоколу |
-| `tests/` | Тести |
+| `src/protocol/`            | Обробка протоколу        |
+| `tests/`                   | Тести                    |
 
 ---
 
@@ -110,17 +110,17 @@ external-ai-hub/
 
 ### Ключові endpoints
 
-| Endpoint | Метод | Опис |
-|----------|-------|------|
-| `/health` | GET | Перевірка здоров'я |
-| `/api/tags` | GET | Список моделей |
-| `/api/chat` | POST | Чат з LLM |
-| `/api/generate` | POST | Генерація тексту |
-| `/promise/<id>` | GET | Статус promise |
-| `/promise/<id>/response` | GET | Результат promise |
-| `/ollama/status` | GET | Статус Ollama |
-| `/ollama/start` | POST | Запустити Ollama |
-| `/ollama/stop` | POST | Зупинити Ollama |
+| Endpoint                 | Метод | Опис               |
+|--------------------------|-------|--------------------|
+| `/health`                | GET   | Перевірка здоров'я |
+| `/api/tags`              | GET   | Список моделей     |
+| `/api/chat`              | POST  | Чат з LLM          |
+| `/api/generate`          | POST  | Генерація тексту   |
+| `/promise/<id>`          | GET   | Статус promise     |
+| `/promise/<id>/response` | GET   | Результат promise  |
+| `/ollama/status`         | GET   | Статус Ollama      |
+| `/ollama/start`          | POST  | Запустити Ollama   |
+| `/ollama/stop`           | POST  | Зупинити Ollama    |
 
 ### Promise Flow
 
@@ -142,19 +142,19 @@ external-ai-hub/
 
 ### Основні файли
 
-| Файл | Опис |
-|------|------|
-| [`README.md`](README.md) | Загальний опис системи |
-| [`ARCHITECTURE.md`](ARCHITECTURE.md) | Архітектура системи |
-| [`PROTOCOL.md`](PROTOCOL.md) | Протокол взаємодії |
-| [`SCHEMAS.md`](SCHEMAS.md) | Схеми даних |
-| [`SESSION-FLOW.md`](SESSION-FLOW.md) | Потік сесій |
-| [`COMPARISON.md`](COMPARISON.md) | Порівняння бачення з реалізацією |
-| [`CURRENT-ISSUES.md`](CURRENT-ISSUES.md) | Поточні проблеми |
-| [`IMPLEMENTATION-STATUS.md`](IMPLEMENTATION-STATUS.md) | Статус реалізації |
-| [`ACTION-MAP.md`](ACTION-MAP.md) | Карта коду - де який код |
-| [`ROADMAP.md`](ROADMAP.md) | План розвитку |
-| [`FILES.md`](FILES.md) | Цей файл - карта проекту |
+| Файл                                                   | Опис                             |
+|--------------------------------------------------------|----------------------------------|
+| [`README.md`](README.md)                               | Загальний опис системи           |
+| [`ARCHITECTURE.md`](ARCHITECTURE.md)                   | Архітектура системи              |
+| [`PROTOCOL.md`](PROTOCOL.md)                           | Протокол взаємодії               |
+| [`SCHEMAS.md`](SCHEMAS.md)                             | Схеми даних                      |
+| [`SESSION-FLOW.md`](SESSION-FLOW.md)                   | Потік сесій                      |
+| [`COMPARISON.md`](COMPARISON.md)                       | Порівняння бачення з реалізацією |
+| [`CURRENT-ISSUES.md`](CURRENT-ISSUES.md)               | Поточні проблеми                 |
+| [`IMPLEMENTATION-STATUS.md`](IMPLEMENTATION-STATUS.md) | Статус реалізації                |
+| [`ACTION-MAP.md`](ACTION-MAP.md)                       | Карта коду - де який код         |
+| [`ROADMAP.md`](ROADMAP.md)                             | План розвитку                    |
+| [`FILES.md`](FILES.md)                                 | Цей файл - карта проекту         |
 
 ### Симуляції
 
@@ -181,13 +181,13 @@ simulations/
 
 ## Порти
 
-| Компонент | Порт | Опис |
-|-----------|------|------|
-| Server | 3000 | A2A Server HTTP API |
-| Client API | 3001 | HTTP API для web (ПОТРІБНО ВПРОВАДДИТИ) |
-| Web UI | 5173 | Vite dev server |
-| External AI Hub | 11434 | Проксі для Ollama |
-| Ollama | 11435 | Локальна LLM |
+| Компонент       | Порт  | Опис                                    |
+|-----------------|-------|-----------------------------------------|
+| Server          | 3000  | A2A Server HTTP API                     |
+| Client API      | 3001  | HTTP API для web (ПОТРІБНО ВПРОВАДДИТИ) |
+| Web UI          | 5173  | Vite dev server                         |
+| External AI Hub | 11434 | Проксі для Ollama                       |
+| Ollama          | 11435 | Локальна LLM                            |
 
 ---
 

@@ -5,6 +5,7 @@
 ### Существующие зависимости
 
 #### Основные зависимости (dependencies):
+
 ```
 json
 {
@@ -27,6 +28,7 @@ json
 ```
 
 #### Dev зависимости (devDependencies):
+
 ```
 json
 {
@@ -72,6 +74,7 @@ json
 **Текущее:** Express.js
 
 **Предложения:**
+
 - [ ] `fastify` — более быстрый альтернативный фреймворк
 - [ ] `tsoa` — TypeScript OpenAPI генерация
 - [ ] `zod-openapi` — Zod + OpenAPI интеграция
@@ -81,6 +84,7 @@ json
 **Текущее:** Prisma + PostgreSQL
 
 **Предложения:**
+
 - [ ] `drizzle-orm` — легковесная ORM
 - [ ] `node-postgres` — нативный драйвер (уже есть через @types/pg)
 
@@ -89,6 +93,7 @@ json
 **Текущее:** ioredis (Redis)
 
 **Предложения:**
+
 - [x] **Использовать нативный `node:cache`** — встроенный кэш
 - [ ] `cache-manager` — абстракция кэширования
 
@@ -97,6 +102,7 @@ json
 **Текущее:** Отсутствует
 
 **Предложения:**
+
 - [ ] `langchain` — LLM фреймворк
 - [ ] `ollama` — локальные модели (есть в проекте)
 - [ ] `@qdrant/js-client` — vector database
@@ -106,6 +112,7 @@ json
 **Текущее:** simple-git
 
 **Предложения:**
+
 - [ ] `@babel/parser` — парсинг JavaScript/TypeScript
 - [ ] `ts-morph` — TypeScript AST манипуляции
 
@@ -114,6 +121,7 @@ json
 **Текущее:** Node.js built-in
 
 **Предложения:**
+
 - [x] **Использовать нативный `fs` / `fs/promises`** — уже используется
 - [x] **Использовать нативный `path`** — для путей
 - [ ] `chokidar` — только если нужен сложный watching
@@ -123,6 +131,7 @@ json
 **Текущее:** Отсутствует на сервере
 
 **Предложения:**
+
 - [ ] `graphlib` — графовые алгоритмы
 - [ ] `dagre` — DAG layout
 
@@ -131,6 +140,7 @@ json
 **Текущее:** bcrypt, helmet
 
 **Предложения:**
+
 - [x] **Использовать нативный `crypto`** — для шифрования
 - [ ] `express-validator` — валидация input
 
@@ -139,6 +149,7 @@ json
 **Текущее:** Winston
 
 **Предложения:**
+
 - [x] **Использовать нативный `console` с pino-like форматом**
 - [ ] `pino` — более быстрый логгер
 - [ ] `morgan` — HTTP логирование
@@ -148,6 +159,7 @@ json
 **Текущее:** Отсутствует
 
 **Предложения:**
+
 - [ ] `socket.io` — WebSocket абстракция
 - [x] **Использовать нативный `ws`** — нативный WebSocket
 
@@ -156,6 +168,7 @@ json
 **Текущее:** Vitest, supertest
 
 **Предложения:**
+
 - [x] **Использовать встроенные Node.js assertions**
 - [ ] `@faker-js/faker` — генерация тестовых данных
 
@@ -165,28 +178,28 @@ json
 
 Многие npm пакеты можно заменить на встроенные модули Node.js:
 
-| Пакет | Нативная замена | Node.js версия |
-|-------|-----------------|----------------|
-| `uuid` | `crypto.randomUUID()` | 14.17+ |
-| `dotenv` | `process.env` / `dotenv` | 20.6+ |
-| `fs-extra` | `fs`, `fs/promises` | все версии |
-| `glob` | `fs.glob` + RegExp | все версии |
-| `chokidar` | `fs.watch`, `fs.watchFile` | все версии |
-| `rimraf` | `fs.rm` с recursive | 14+ |
-| `mkdirp` | `fs.mkdir` с recursive | 10+ |
-| `nanoid` | `crypto.randomUUID()` | 14.17+ |
-| `md5` / `sha256` | `crypto.createHash()` | все версии |
-| `bcrypt` | `crypto.scrypt` / `argon2` | 10+ |
-| `crypto-js` | `crypto` | все версии |
-| `winston` | `console` + custom format | все версии |
-| `moment` | `Intl.DateTimeFormat` | все версии |
-| `date-fns` | `Intl`, `Date` | все версии |
-| `lodash` | `Object`, `Array` методы | все версии |
-| `ws` | `node:http` / `node:https` | все версии |
-| `compression` | `node:zlib` | все версии |
-| `cors` | `node:http` middleware | все версии |
-| `express` | `node:http` / `fastify` | - |
-| `morgan` | `node:http` logging | все версии |
+| Пакет            | Нативная замена            | Node.js версия |
+|------------------|----------------------------|----------------|
+| `uuid`           | `crypto.randomUUID()`      | 14.17+         |
+| `dotenv`         | `process.env` / `dotenv`   | 20.6+          |
+| `fs-extra`       | `fs`, `fs/promises`        | все версии     |
+| `glob`           | `fs.glob` + RegExp         | все версии     |
+| `chokidar`       | `fs.watch`, `fs.watchFile` | все версии     |
+| `rimraf`         | `fs.rm` с recursive        | 14+            |
+| `mkdirp`         | `fs.mkdir` с recursive     | 10+            |
+| `nanoid`         | `crypto.randomUUID()`      | 14.17+         |
+| `md5` / `sha256` | `crypto.createHash()`      | все версии     |
+| `bcrypt`         | `crypto.scrypt` / `argon2` | 10+            |
+| `crypto-js`      | `crypto`                   | все версии     |
+| `winston`        | `console` + custom format  | все версии     |
+| `moment`         | `Intl.DateTimeFormat`      | все версии     |
+| `date-fns`       | `Intl`, `Date`             | все версии     |
+| `lodash`         | `Object`, `Array` методы   | все версии     |
+| `ws`             | `node:http` / `node:https` | все версии     |
+| `compression`    | `node:zlib`                | все версии     |
+| `cors`           | `node:http` middleware     | все версии     |
+| `express`        | `node:http` / `fastify`    | -              |
+| `morgan`         | `node:http` logging        | все версии     |
 
 ### Примеры замены
 
@@ -288,34 +301,40 @@ json
 }
 ```
 
-Примечание: Многие пакеты могут быть заменены нативными Node.js модулями (uuid, fs-extra, bcrypt, crypto-js, winston, compression, cors, и др.)
+Примечание: Многие пакеты могут быть заменены нативными Node.js модулями (uuid, fs-extra, bcrypt, crypto-js, winston,
+compression, cors, и др.)
 
 ---
 
 ## План развития
 
 ### Фаза 1: Native Modules (1 неделя)
+
 1. Заменить uuid на crypto.randomUUID()
 2. Заменить bcrypt на crypto.scrypt (или оставить bcrypt)
 3. Упростить fs операции
 4. Заменить winston на консоль с форматом
 
 ### Фаза 2: AI/ML Интеграции (2 недели)
+
 1. Добавить LangChain для LLM
 2. Интегрировать Ollama
 3. Добавить Qdrant для векторов
 4. Создать AIService
 
 ### Фаза 3: Graph операции (1 неделя)
+
 1. Добавить graphlib
 2. Интегрировать dagre
 3. Создать GraphService
 
 ### Фаза 4: Real-time (1 неделя)
+
 1. Добавить Socket.IO
 2. Создать WebSocket middleware
 
 ### Фаза 5: Тестирование (1 неделя)
+
 1. Добавить @faker-js/faker
 2. Расширить интеграционные тесты
 
@@ -332,11 +351,11 @@ json
 
 ## Риски
 
-| Риск | Вероятность | Влияние | Митигация |
-|------|-------------|---------|-----------|
-| LangChain размер | Высокая | Среднее | Lazy loading |
-| Native модули | Низкая | Низкое | Хорошая документация |
-| Graph перформанс | Средняя | Среднее | Оптимизация запросов |
+| Риск             | Вероятность | Влияние | Митигация            |
+|------------------|-------------|---------|----------------------|
+| LangChain размер | Высокая     | Среднее | Lazy loading         |
+| Native модули    | Низкая      | Низкое  | Хорошая документация |
+| Graph перформанс | Средняя     | Среднее | Оптимизация запросов |
 
 ---
 

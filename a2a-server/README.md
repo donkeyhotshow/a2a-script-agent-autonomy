@@ -85,12 +85,14 @@ a2a-server/
 ## API Endpoints
 
 ### Auth
+
 - `POST /api/v1/auth/register` - Регистрация клиента
 - `POST /api/v1/auth/token` - Получение JWT токена
 - `POST /api/v1/auth/refresh` - Обновление токена
 - `GET /api/v1/auth/me` - Текущий пользователь
 
 ### Requests (Async Protocol)
+
 - `POST /api/v1/requests` - Создать запрос, возвращает `promiseId`
 - `GET /api/v1/requests/:promiseId/status` - Статус запроса
 - `GET /api/v1/requests/:promiseId/result` - Результат (completed/failed)
@@ -99,6 +101,7 @@ a2a-server/
 - `GET /api/v1/requests/queue/stats` - Статистика очереди
 
 ### Sessions
+
 - `POST /api/v1/sessions` - Создать сессию
 - `GET /api/v1/sessions` - Список сессий (требует projectId)
 - `GET /api/v1/sessions/:sessionId` - Получить сессию
@@ -108,6 +111,7 @@ a2a-server/
 - `POST /api/v1/sessions/:sessionId/messages` - Добавить сообщение
 
 ### Legacy Endpoints
+
 - `POST /api/v1/invoke` - Создать запрос (legacy)
 - `POST /api/v1/message` - Альтернативное имя для invoke
 - `GET /api/v1/health` - Health check

@@ -2,31 +2,32 @@
 
 ## Overview
 
-Cline is a comprehensive documentation review workflow system designed to ensure high-quality documentation standards through automated tracking, review management, and quality assurance processes.
+Cline is a comprehensive documentation review workflow system designed to ensure high-quality documentation standards
+through automated tracking, review management, and quality assurance processes.
 
 ## System Architecture
 
 ### Core Components
 
 1. **Review Workflow Engine** (`.clinerules/scripts/review-workflow.js`)
-   - Manages the complete review lifecycle
-   - Handles status tracking and reporting
-   - Provides API for review operations
+    - Manages the complete review lifecycle
+    - Handles status tracking and reporting
+    - Provides API for review operations
 
 2. **Documentation Manager** (`.clinerules/scripts/documentation-manager.js`)
-   - Manages document lifecycle (new, outdated)
-   - Automatically generates review requests
-   - Integrates with review workflow system
+    - Manages document lifecycle (new, outdated)
+    - Automatically generates review requests
+    - Integrates with review workflow system
 
 3. **CLI Interface** (`.clinerules/scripts/cli.js`)
-   - Command-line interface for easy management
-   - Supports all review operations
-   - Comprehensive help and error handling
+    - Command-line interface for easy management
+    - Supports all review operations
+    - Comprehensive help and error handling
 
 4. **Review Tracking System** (`.clinerules/reviews/review-requests.json`)
-   - JSON-based tracking database
-   - Status management (pending, in_progress, completed, rejected)
-   - Review history and metrics
+    - JSON-based tracking database
+    - Status management (pending, in_progress, completed, rejected)
+    - Review history and metrics
 
 ## Quick Start
 
@@ -111,18 +112,21 @@ Add these scripts to your `package.json`:
 ## Quality Standards
 
 ### Technical Accuracy
+
 - All technical information must be verified
 - Code examples must be tested and working
 - API references must be current and accurate
 - Procedures must be reproducible
 
 ### Content Quality
+
 - Documentation must be clear and understandable
 - Information must be complete and relevant
 - Structure must be logical and user-friendly
 - Language must be appropriate for target audience
 
 ### Style Consistency
+
 - Documentation must follow established style guidelines
 - Formatting must be consistent across all documents
 - Terminology must be used consistently
@@ -131,12 +135,14 @@ Add these scripts to your `package.json`:
 ## Metrics and Reporting
 
 ### Quality Metrics
+
 - **Accuracy Rate**: Percentage of technically accurate documentation
 - **Clarity Score**: User assessment of documentation clarity
 - **Completeness Index**: Coverage of required information
 - **Consistency Rating**: Adherence to style guidelines
 
 ### Performance Metrics
+
 - **Review Time**: Average time to complete review
 - **Revision Rate**: Percentage of documentation requiring revisions
 - **Approval Rate**: Percentage of documentation approved on first review

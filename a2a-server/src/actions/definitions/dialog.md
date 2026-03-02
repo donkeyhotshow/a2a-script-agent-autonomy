@@ -8,7 +8,8 @@
 
 **Название:** Диалог с AI и управление тулзами
 
-**Описание:** AI ведёт интерактивный диалог с пользователем, анализирует запросы и управляет тулзами (tools) по запросу. Тулзы могут включать: поиск файлов, выполнение команд, анализ кода, работу с RAG и т.д.
+**Описание:** AI ведёт интерактивный диалог с пользователем, анализирует запросы и управляет тулзами (tools) по запросу.
+Тулзы могут включать: поиск файлов, выполнение команд, анализ кода, работу с RAG и т.д.
 
 ## Контекст
 
@@ -35,6 +36,7 @@
 ## SubActions
 
 ### Step 1: parse-intent
+
 **Title:** Парсинг намерения пользователя  
 **Input:** `user_message`  
 **Output:** `parsed_intent`
@@ -86,6 +88,7 @@ export default async function parseIntent(input: { message: string }) {
 ```
 
 ### Step 2: collect-context
+
 **Title:** Сбор контекста для диалога  
 **Input:** `parsed_intent`  
 **Output:** `dialog_context`
@@ -121,6 +124,7 @@ export default async function collectContext(input: { parsed_intent: { intent: s
 ```
 
 ### Step 3: llm-response
+
 **Title:** Генерация ответа через LLM  
 **Input:** `parsed_intent`, `dialog_context`, `conversation_history`  
 **Output:** `ai_response`
@@ -161,6 +165,7 @@ ${needsTools ? 'Пользователь запросил использован
 ```
 
 ### Step 4: execute-tools (conditional)
+
 **Title:** Выполнение запрошенных тулзов  
 **Input:** `ai_response`, `project_context`  
 **Output:** `tool_results`
@@ -202,6 +207,7 @@ export default async function executeTools(input: {
 ```
 
 ### Step 5: format-response
+
 **Title:** Форматирование финального ответа  
 **Input:** `ai_response`, `tool_results`  
 **Output:** `final_message`
@@ -238,12 +244,14 @@ export default async function formatResponse(input: {
 **Пользователь:** "Давай обсудим как работает аутентификация в этом проекте?"
 
 **Server → LLM:**
+
 ```
 Ты - AI ассистент. Ведёшь диалог. 
 Доступные тулзы: knowledge-graph, code-analysis.
 ```
 
 **AI Response:**
+
 ```
 Я проанализирую структуру аутентификации в проекте. 
 Для этого мне нужно изучить код и граф зависимостей.
@@ -252,6 +260,7 @@ export default async function formatResponse(input: {
 **Tool Execution:** graph-query (анализ связей auth модулей)
 
 **Final Response:**
+
 ```
 ## Аутентификация в проекте
 
@@ -271,13 +280,13 @@ export default async function formatResponse(input: {
 
 ## Зависимости
 
-| Компонент | Зависимость |
-|-----------|------------|
-| RAG | Для поиска релевантного кода |
-| Knowledge Graph | Для анализа зависимостей |
-| Neurons | Для code analysis |
-| Script Runner | Для выполнения команд |
-| LLM (Ollama/OpenAI) | Для генерации ответов |
+| Компонент           | Зависимость                  |
+|---------------------|------------------------------|
+| RAG                 | Для поиска релевантного кода |
+| Knowledge Graph     | Для анализа зависимостей     |
+| Neurons             | Для code analysis            |
+| Script Runner       | Для выполнения команд        |
+| LLM (Ollama/OpenAI) | Для генерации ответов        |
 
 ---
 

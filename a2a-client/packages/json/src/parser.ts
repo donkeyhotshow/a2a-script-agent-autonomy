@@ -3,34 +3,34 @@
  * Parses server JSON responses into typed UnifiedResponse objects
  */
 
-import type { 
-  UnifiedResponse, 
-  ResponseType, 
-  ParsedResponse,
-  ActionProposalResponse,
-  ActionExecutingResponse,
-  ActionProgressResponse,
-  ActionCompletedResponse,
-  ActionErrorResponse
+import type {
+    UnifiedResponse,
+    ResponseType,
+    ParsedResponse,
+    ActionProposalResponse,
+    ActionExecutingResponse,
+    ActionProgressResponse,
+    ActionCompletedResponse,
+    ActionErrorResponse
 } from './types.js';
-import { validateResponse, getResponseType } from './validator.js';
+import {validateResponse, getResponseType} from './validator.js';
 
 /**
  * Parse options
  */
 export interface ParseOptions {
-  /** If true, throws on validation error */
-  throwOnError?: boolean;
-  /** If true, returns partial result on error */
-  returnPartial?: boolean;
+    /** If true, throws on validation error */
+    throwOnError?: boolean;
+    /** If true, returns partial result on error */
+    returnPartial?: boolean;
 }
 
 /**
  * Default parse options
  */
 const defaultOptions: ParseOptions = {
-  throwOnError: false,
-  returnPartial: true,
+    throwOnError: false,
+    returnPartial: true,
 };
 
 /**
@@ -41,50 +41,50 @@ const defaultOptions: ParseOptions = {
  * @throws Error if throwOnError is true and validation fails
  */
 export function parseResponse(json: unknown, options: ParseOptions = {}): ParsedResponse {
-  const opts = { ...defaultOptions, ...options };
-  
-  // Handle null/undefined
-  if (json === null || json === undefined) {
-    const error: ParsedResponse = {
-      type: 'action_error' as ResponseType,
-      success: false,
-      timestamp: new Date().toISOString(),
-      data: createErrorResponse('PARSE_ERROR', 'Response is null or undefined'),
-      errors: ['Response is null or undefined'],
-    };
-    
-    if (opts.throwOnError) {
-      throw new Error('Response is null or undefined');
+    const opts = {...defaultOptions, ...options};
+
+    // Handle null/undefined
+    if (json === null || json === undefined) {
+        const error: ParsedResponse = {
+            type: 'action_error' as ResponseType,
+            success: false,
+            timestamp: new Date().toISOString(),
+            data: createErrorResponse('PARSE_ERROR', 'Response is null or undefined'),
+            errors: ['Response is null or undefined'],
+        };
+
+        if (opts.throwOnError) {
+            throw new Error('Response is null or undefined');
+        }
+        return error;
     }
-    return error;
-  }
 
-  // Validate the response
-  const validation = validateResponse(json);
+    // Validate the response
+    const validation = validateResponse(json);
 
-  if (!validation.valid) {
-    const error: ParsedResponse = {
-      type: 'action_error' as ResponseType,
-      success: false,
-      timestamp: new Date().toISOString(),
-      data: createErrorResponse('VALIDATION_ERROR', validation.errors?.join(', ') || 'Unknown validation error'),
-      errors: validation.errors,
-    };
-    
-    if (opts.throwOnError) {
-      throw new Error(`Validation failed: ${validation.errors?.join(', ')}`);
+    if (!validation.valid) {
+        const error: ParsedResponse = {
+            type: 'action_error' as ResponseType,
+            success: false,
+            timestamp: new Date().toISOString(),
+            data: createErrorResponse('VALIDATION_ERROR', validation.errors?.join(', ') || 'Unknown validation error'),
+            errors: validation.errors,
+        };
+
+        if (opts.throwOnError) {
+            throw new Error(`Validation failed: ${validation.errors?.join(', ')}`);
+        }
+        return error;
     }
-    return error;
-  }
 
-  const response = validation.data as UnifiedResponse;
+    const response = validation.data as UnifiedResponse;
 
-  return {
-    type: response.type,
-    success: response.success,
-    timestamp: response.timestamp,
-    data: response,
-  };
+    return {
+        type: response.type,
+        success: response.success,
+        timestamp: response.timestamp,
+        data: response,
+    };
 }
 
 /**
@@ -94,19 +94,19 @@ export function parseResponse(json: unknown, options: ParseOptions = {}): Parsed
  * @returns ParsedResponse
  */
 export function parseResponseString(jsonString: string, options?: ParseOptions): ParsedResponse {
-  try {
-    const json = JSON.parse(jsonString);
-    return parseResponse(json, options);
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Failed to parse JSON';
-    return {
-      type: 'action_error' as ResponseType,
-      success: false,
-      timestamp: new Date().toISOString(),
-      data: createErrorResponse('JSON_PARSE_ERROR', errorMessage),
-      errors: [errorMessage],
-    };
-  }
+    try {
+        const json = JSON.parse(jsonString);
+        return parseResponse(json, options);
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Failed to parse JSON';
+        return {
+            type: 'action_error' as ResponseType,
+            success: false,
+            timestamp: new Date().toISOString(),
+            data: createErrorResponse('JSON_PARSE_ERROR', errorMessage),
+            errors: [errorMessage],
+        };
+    }
 }
 
 /**
@@ -115,26 +115,26 @@ export function parseResponseString(jsonString: string, options?: ParseOptions):
  * @returns Detected response type or undefined
  */
 export function detectResponseType(json: unknown): ResponseType | undefined {
-  if (!json || typeof json !== 'object') {
-    return undefined;
-  }
+    if (!json || typeof json !== 'object') {
+        return undefined;
+    }
 
-  const obj = json as Record<string, unknown>;
-  const type = obj.type;
+    const obj = json as Record<string, unknown>;
+    const type = obj.type;
 
-  if (typeof type !== 'string') {
-    return undefined;
-  }
+    if (typeof type !== 'string') {
+        return undefined;
+    }
 
-  const validTypes: ResponseType[] = [
-    'action_proposal',
-    'action_executing',
-    'action_progress',
-    'action_completed',
-    'action_error',
-  ];
+    const validTypes: ResponseType[] = [
+        'action_proposal',
+        'action_executing',
+        'action_progress',
+        'action_completed',
+        'action_error',
+    ];
 
-  return validTypes.includes(type as ResponseType) ? type as ResponseType : undefined;
+    return validTypes.includes(type as ResponseType) ? type as ResponseType : undefined;
 }
 
 /**
@@ -144,30 +144,30 @@ export function detectResponseType(json: unknown): ResponseType | undefined {
  * @returns True if response matches type
  */
 export function isResponseType(response: UnifiedResponse, type: ResponseType): boolean {
-  return response.type === type;
+    return response.type === type;
 }
 
 /**
  * Type guards for each response type
  */
 export function isActionProposalResponse(response: UnifiedResponse): response is ActionProposalResponse {
-  return response.type === 'action_proposal';
+    return response.type === 'action_proposal';
 }
 
 export function isActionExecutingResponse(response: UnifiedResponse): response is ActionExecutingResponse {
-  return response.type === 'action_executing';
+    return response.type === 'action_executing';
 }
 
 export function isActionProgressResponse(response: UnifiedResponse): response is ActionProgressResponse {
-  return response.type === 'action_progress';
+    return response.type === 'action_progress';
 }
 
 export function isActionCompletedResponse(response: UnifiedResponse): response is ActionCompletedResponse {
-  return response.type === 'action_completed';
+    return response.type === 'action_completed';
 }
 
 export function isActionErrorResponse(response: UnifiedResponse): response is ActionErrorResponse {
-  return response.type === 'action_error';
+    return response.type === 'action_error';
 }
 
 /**
@@ -176,20 +176,20 @@ export function isActionErrorResponse(response: UnifiedResponse): response is Ac
  * @returns Action ID if present
  */
 export function extractActionId(response: UnifiedResponse): string | undefined {
-  switch (response.type) {
-    case 'action_proposal':
-      return response.result.proposedActions[0]?.id;
-    case 'action_executing':
-      return response.result.executingAction.id;
-    case 'action_progress':
-      return response.result.actionId;
-    case 'action_completed':
-      return response.result.actionId;
-    case 'action_error':
-      return response.result.actionId;
-    default:
-      return undefined;
-  }
+    switch (response.type) {
+        case 'action_proposal':
+            return response.result.proposedActions[0]?.id;
+        case 'action_executing':
+            return response.result.executingAction.id;
+        case 'action_progress':
+            return response.result.actionId;
+        case 'action_completed':
+            return response.result.actionId;
+        case 'action_error':
+            return response.result.actionId;
+        default:
+            return undefined;
+    }
 }
 
 /**
@@ -198,37 +198,37 @@ export function extractActionId(response: UnifiedResponse): string | undefined {
  * @returns Summary or message string
  */
 export function extractSummary(response: UnifiedResponse): string {
-  switch (response.type) {
-    case 'action_proposal':
-      return `${response.result.proposedActions.length} action(s) proposed`;
-    case 'action_executing':
-      return `Executing: ${response.result.executingAction.name}`;
-    case 'action_progress':
-      return response.result.message || `Step: ${response.result.currentStep.title}`;
-    case 'action_completed':
-      return response.result.summary;
-    case 'action_error':
-      return response.result.error.message;
-    default:
-      return 'Unknown response type';
-  }
+    switch (response.type) {
+        case 'action_proposal':
+            return `${response.result.proposedActions.length} action(s) proposed`;
+        case 'action_executing':
+            return `Executing: ${response.result.executingAction.name}`;
+        case 'action_progress':
+            return response.result.message || `Step: ${response.result.currentStep.title}`;
+        case 'action_completed':
+            return response.result.summary;
+        case 'action_error':
+            return response.result.error.message;
+        default:
+            return 'Unknown response type';
+    }
 }
 
 /**
  * Create error response helper
  */
 function createErrorResponse(code: string, message: string): ActionErrorResponse {
-  return {
-    success: false,
-    timestamp: new Date().toISOString(),
-    type: 'action_error',
-    result: {
-      actionId: 'system',
-      error: {
-        code,
-        message,
-      },
-      canRetry: false,
-    },
-  };
+    return {
+        success: false,
+        timestamp: new Date().toISOString(),
+        type: 'action_error',
+        result: {
+            actionId: 'system',
+            error: {
+                code,
+                message,
+            },
+            canRetry: false,
+        },
+    };
 }

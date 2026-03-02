@@ -44,7 +44,7 @@ script: |
   export default async function run(input: Input): Promise<Output> {
     const files: string[] = [];
     const exclude = input.exclude || DEFAULT_EXCLUDE;
-    
+  
     function shouldExclude(path: string): boolean {
       return exclude.some(ex => path.includes(ex));
     }
@@ -54,10 +54,10 @@ script: |
       if (shouldExclude(dir)) return;
 
       const entries = readdirSync(dir, { withFileTypes: true });
-      
+  
       for (const entry of entries) {
         const fullPath = join(dir, entry.name);
-        
+  
         if (entry.isDirectory()) {
           scan(fullPath);
         } else if (entry.isFile()) {
@@ -70,6 +70,6 @@ script: |
     }
 
     scan(input.rootDir);
-    
+  
     return { files };
   }

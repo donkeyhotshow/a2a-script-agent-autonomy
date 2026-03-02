@@ -3,22 +3,22 @@
  * Converts UnifiedResponse to VueFlow nodes and edges
  */
 
-import type { 
-  UnifiedResponse, 
-  VueFlowNode, 
-  VueFlowEdge,
-  ActionProposalResponse,
-  ActionExecutingResponse,
-  ActionProgressResponse,
-  ActionCompletedResponse,
-  ActionErrorResponse
+import type {
+    UnifiedResponse,
+    VueFlowNode,
+    VueFlowEdge,
+    ActionProposalResponse,
+    ActionExecutingResponse,
+    ActionProgressResponse,
+    ActionCompletedResponse,
+    ActionErrorResponse
 } from './types.js';
-import { 
-  isActionProposalResponse, 
-  isActionExecutingResponse, 
-  isActionProgressResponse, 
-  isActionCompletedResponse, 
-  isActionErrorResponse 
+import {
+    isActionProposalResponse,
+    isActionExecutingResponse,
+    isActionProgressResponse,
+    isActionCompletedResponse,
+    isActionErrorResponse
 } from './parser.js';
 
 /**
@@ -30,16 +30,16 @@ let nodeCounter = 0;
  * Reset node counter (useful for testing)
  */
 export function resetNodeCounter(): void {
-  nodeCounter = 0;
+    nodeCounter = 0;
 }
 
 /**
  * Calculate node position for auto-layout
  */
 function calculatePosition(index: number): { x: number; y: number } {
-  const x = 100;
-  const y = 100 + index * 120;
-  return { x, y };
+    const x = 100;
+    const y = 100 + index * 120;
+    return {x, y};
 }
 
 /**
@@ -48,163 +48,163 @@ function calculatePosition(index: number): { x: number; y: number } {
  * @returns Array of VueFlow nodes
  */
 export function convertToVueFlowNodes(response: UnifiedResponse): VueFlowNode[] {
-  const nodes: VueFlowNode[] = [];
-  let index = nodeCounter;
+    const nodes: VueFlowNode[] = [];
+    let index = nodeCounter;
 
-  if (isActionProposalResponse(response)) {
-    const result = response.result;
-    
-    // Context node
-    nodes.push({
-      id: `context_${result.context.session_id}`,
-      type: 'context',
-      position: calculatePosition(index++),
-      data: {
-        label: 'Context',
-        sessionId: result.context.session_id,
-        tasks: result.context.tasks?.length || 0,
-        status: 'loaded',
-      },
-    });
+    if (isActionProposalResponse(response)) {
+        const result = response.result;
 
-    // Proposed actions nodes
-    result.proposedActions.forEach((action, actionIndex) => {
-      nodes.push({
-        id: `action_${action.id}`,
-        type: 'action',
-        position: calculatePosition(index++),
-        data: {
-          label: action.name,
-          description: action.description,
-          priority: action.priority,
-          actionId: action.id,
-          status: 'proposed',
-          dsl: action.dsl,
-        },
-      });
+        // Context node
+        nodes.push({
+            id: `context_${result.context.session_id}`,
+            type: 'context',
+            position: calculatePosition(index++),
+            data: {
+                label: 'Context',
+                sessionId: result.context.session_id,
+                tasks: result.context.tasks?.length || 0,
+                status: 'loaded',
+            },
+        });
 
-      // Edge from context to action
-      // (edges are handled in convertToVueFlowEdges)
-    });
+        // Proposed actions nodes
+        result.proposedActions.forEach((action, actionIndex) => {
+            nodes.push({
+                id: `action_${action.id}`,
+                type: 'action',
+                position: calculatePosition(index++),
+                data: {
+                    label: action.name,
+                    description: action.description,
+                    priority: action.priority,
+                    actionId: action.id,
+                    status: 'proposed',
+                    dsl: action.dsl,
+                },
+            });
 
-    // Fallback actions
-    result.fallbackActions?.forEach((fallback) => {
-      nodes.push({
-        id: `fallback_${fallback.id}`,
-        type: 'fallback',
-        position: calculatePosition(index++),
-        data: {
-          label: fallback.name,
-          description: fallback.description,
-          reason: fallback.reason,
-          actionId: fallback.id,
-          status: 'fallback',
-        },
-      });
-    });
-  }
+            // Edge from context to action
+            // (edges are handled in convertToVueFlowEdges)
+        });
 
-  if (isActionExecutingResponse(response)) {
-    const result = response.result;
-    
-    // Current executing action
-    nodes.push({
-      id: `executing_${result.executingAction.id}`,
-      type: 'action',
-      position: calculatePosition(index++),
-      data: {
-        label: result.executingAction.name,
-        description: result.executingAction.description,
-        priority: result.executingAction.priority,
-        actionId: result.executingAction.id,
-        status: 'executing',
-        dsl: result.executingAction.dsl,
-      },
-    });
+        // Fallback actions
+        result.fallbackActions?.forEach((fallback) => {
+            nodes.push({
+                id: `fallback_${fallback.id}`,
+                type: 'fallback',
+                position: calculatePosition(index++),
+                data: {
+                    label: fallback.name,
+                    description: fallback.description,
+                    reason: fallback.reason,
+                    actionId: fallback.id,
+                    status: 'fallback',
+                },
+            });
+        });
+    }
 
-    // Next steps
-    result.nextSteps.forEach((step, stepIndex) => {
-      nodes.push({
-        id: `next_${step.id}`,
-        type: 'nextStep',
-        position: calculatePosition(index++),
-        data: {
-          label: step.name,
-          description: step.description,
-          priority: step.priority,
-          actionId: step.id,
-          status: 'pending',
-          stepIndex,
-        },
-      });
-    });
-  }
+    if (isActionExecutingResponse(response)) {
+        const result = response.result;
 
-  if (isActionProgressResponse(response)) {
-    const result = response.result;
-    
-    // Current step node
-    nodes.push({
-      id: `progress_${result.actionId}`,
-      type: 'progress',
-      position: calculatePosition(index++),
-      data: {
-        label: result.currentStep.title,
-        description: result.currentStep.code,
-        progress: result.currentStep.progress,
-        actionId: result.actionId,
-        status: 'in_progress',
-        message: result.message,
-        completedSteps: result.completedSteps.length,
-        remainingSteps: result.remainingSteps.length,
-      },
-    });
-  }
+        // Current executing action
+        nodes.push({
+            id: `executing_${result.executingAction.id}`,
+            type: 'action',
+            position: calculatePosition(index++),
+            data: {
+                label: result.executingAction.name,
+                description: result.executingAction.description,
+                priority: result.executingAction.priority,
+                actionId: result.executingAction.id,
+                status: 'executing',
+                dsl: result.executingAction.dsl,
+            },
+        });
 
-  if (isActionCompletedResponse(response)) {
-    const result = response.result;
-    
-    // Completed action node
-    nodes.push({
-      id: `completed_${result.actionId}`,
-      type: 'completed',
-      position: calculatePosition(index++),
-      data: {
-        label: 'Completed',
-        description: result.summary,
-        actionId: result.actionId,
-        status: 'completed',
-        output: result.output,
-        filesModified: result.filesModified,
-        executionTimeMs: result.executionTimeMs,
-      },
-    });
-  }
+        // Next steps
+        result.nextSteps.forEach((step, stepIndex) => {
+            nodes.push({
+                id: `next_${step.id}`,
+                type: 'nextStep',
+                position: calculatePosition(index++),
+                data: {
+                    label: step.name,
+                    description: step.description,
+                    priority: step.priority,
+                    actionId: step.id,
+                    status: 'pending',
+                    stepIndex,
+                },
+            });
+        });
+    }
 
-  if (isActionErrorResponse(response)) {
-    const result = response.result;
-    
-    // Error node
-    nodes.push({
-      id: `error_${result.actionId}`,
-      type: 'error',
-      position: calculatePosition(index++),
-      data: {
-        label: 'Error',
-        description: result.error.message,
-        actionId: result.actionId,
-        status: 'failed',
-        errorCode: result.error.code,
-        canRetry: result.canRetry,
-        failedStep: result.failedStep,
-      },
-    });
-  }
+    if (isActionProgressResponse(response)) {
+        const result = response.result;
 
-  // Update global counter
-  nodeCounter = index;
+        // Current step node
+        nodes.push({
+            id: `progress_${result.actionId}`,
+            type: 'progress',
+            position: calculatePosition(index++),
+            data: {
+                label: result.currentStep.title,
+                description: result.currentStep.code,
+                progress: result.currentStep.progress,
+                actionId: result.actionId,
+                status: 'in_progress',
+                message: result.message,
+                completedSteps: result.completedSteps.length,
+                remainingSteps: result.remainingSteps.length,
+            },
+        });
+    }
 
-  return nodes;
+    if (isActionCompletedResponse(response)) {
+        const result = response.result;
+
+        // Completed action node
+        nodes.push({
+            id: `completed_${result.actionId}`,
+            type: 'completed',
+            position: calculatePosition(index++),
+            data: {
+                label: 'Completed',
+                description: result.summary,
+                actionId: result.actionId,
+                status: 'completed',
+                output: result.output,
+                filesModified: result.filesModified,
+                executionTimeMs: result.executionTimeMs,
+            },
+        });
+    }
+
+    if (isActionErrorResponse(response)) {
+        const result = response.result;
+
+        // Error node
+        nodes.push({
+            id: `error_${result.actionId}`,
+            type: 'error',
+            position: calculatePosition(index++),
+            data: {
+                label: 'Error',
+                description: result.error.message,
+                actionId: result.actionId,
+                status: 'failed',
+                errorCode: result.error.code,
+                canRetry: result.canRetry,
+                failedStep: result.failedStep,
+            },
+        });
+    }
+
+    // Update global counter
+    nodeCounter = index;
+
+    return nodes;
 }
 
 /**
@@ -214,71 +214,71 @@ export function convertToVueFlowNodes(response: UnifiedResponse): VueFlowNode[] 
  * @returns Array of VueFlow edges
  */
 export function convertToVueFlowEdges(response: UnifiedResponse, nodes?: VueFlowNode[]): VueFlowEdge[] {
-  const edges: VueFlowEdge[] = [];
+    const edges: VueFlowEdge[] = [];
 
-  if (isActionProposalResponse(response)) {
-    const result = response.result;
-    const contextId = `context_${result.context.session_id}`;
-    
-    // Edges from context to each proposed action
-    result.proposedActions.forEach((action) => {
-      edges.push({
-        id: `edge_${contextId}_${action.id}`,
-        source: contextId,
-        target: `action_${action.id}`,
-        type: 'smoothstep',
-        animated: false,
-        label: 'proposes',
-      });
-    });
+    if (isActionProposalResponse(response)) {
+        const result = response.result;
+        const contextId = `context_${result.context.session_id}`;
 
-    // Edges from context to fallback actions
-    result.fallbackActions?.forEach((fallback) => {
-      edges.push({
-        id: `edge_${contextId}_fallback_${fallback.id}`,
-        source: contextId,
-        target: `fallback_${fallback.id}`,
-        type: 'smoothstep',
-        animated: false,
-        label: 'fallback',
-      });
-    });
-  }
+        // Edges from context to each proposed action
+        result.proposedActions.forEach((action) => {
+            edges.push({
+                id: `edge_${contextId}_${action.id}`,
+                source: contextId,
+                target: `action_${action.id}`,
+                type: 'smoothstep',
+                animated: false,
+                label: 'proposes',
+            });
+        });
 
-  if (isActionExecutingResponse(response)) {
-    const result = response.result;
-    
-    // Edge from executing action to next steps
-    result.nextSteps.forEach((step, index) => {
-      edges.push({
-        id: `edge_${result.executingAction.id}_${step.id}`,
-        source: `action_${result.executingAction.id}`,
-        target: `next_${step.id}`,
-        type: 'smoothstep',
-        animated: true,
-        label: `step ${index + 1}`,
-      });
-    });
-  }
-
-  if (isActionProgressResponse(response)) {
-    const result = response.result;
-    
-    // Edge from previous completed step to current
-    if (result.completedSteps.length > 0) {
-      const lastCompleted = result.completedSteps[result.completedSteps.length - 1];
-      edges.push({
-        id: `edge_progress_${lastCompleted}_${result.currentStep.id}`,
-        source: `progress_${lastCompleted}`,
-        target: `progress_${result.actionId}`,
-        type: 'smoothstep',
-        animated: true,
-        label: 'completed',
-      });
+        // Edges from context to fallback actions
+        result.fallbackActions?.forEach((fallback) => {
+            edges.push({
+                id: `edge_${contextId}_fallback_${fallback.id}`,
+                source: contextId,
+                target: `fallback_${fallback.id}`,
+                type: 'smoothstep',
+                animated: false,
+                label: 'fallback',
+            });
+        });
     }
-  }
 
-  return edges;
+    if (isActionExecutingResponse(response)) {
+        const result = response.result;
+
+        // Edge from executing action to next steps
+        result.nextSteps.forEach((step, index) => {
+            edges.push({
+                id: `edge_${result.executingAction.id}_${step.id}`,
+                source: `action_${result.executingAction.id}`,
+                target: `next_${step.id}`,
+                type: 'smoothstep',
+                animated: true,
+                label: `step ${index + 1}`,
+            });
+        });
+    }
+
+    if (isActionProgressResponse(response)) {
+        const result = response.result;
+
+        // Edge from previous completed step to current
+        if (result.completedSteps.length > 0) {
+            const lastCompleted = result.completedSteps[result.completedSteps.length - 1];
+            edges.push({
+                id: `edge_progress_${lastCompleted}_${result.currentStep.id}`,
+                source: `progress_${lastCompleted}`,
+                target: `progress_${result.actionId}`,
+                type: 'smoothstep',
+                animated: true,
+                label: 'completed',
+            });
+        }
+    }
+
+    return edges;
 }
 
 /**
@@ -287,13 +287,13 @@ export function convertToVueFlowEdges(response: UnifiedResponse, nodes?: VueFlow
  * @returns Object with nodes and edges arrays
  */
 export function convertToVueFlowGraph(response: UnifiedResponse): { nodes: VueFlowNode[]; edges: VueFlowEdge[] } {
-  // Reset counter for new graph
-  resetNodeCounter();
-  
-  const nodes = convertToVueFlowNodes(response);
-  const edges = convertToVueFlowEdges(response, nodes);
-  
-  return { nodes, edges };
+    // Reset counter for new graph
+    resetNodeCounter();
+
+    const nodes = convertToVueFlowNodes(response);
+    const edges = convertToVueFlowEdges(response, nodes);
+
+    return {nodes, edges};
 }
 
 /**
@@ -302,18 +302,18 @@ export function convertToVueFlowGraph(response: UnifiedResponse): { nodes: VueFl
  * @returns Color hex code
  */
 export function getStatusColor(status: string): string {
-  const colors: Record<string, string> = {
-    proposed: '#3B82F6',   // blue
-    pending: '#6B7280',    // gray
-    executing: '#F59E0B',  // amber
-    in_progress: '#F59E0B', // amber
-    completed: '#10B981',  // green
-    failed: '#EF4444',     // red
-    fallback: '#8B5CF6',   // purple
-    error: '#EF4444',      // red
-  };
-  
-  return colors[status] || '#6B7280';
+    const colors: Record<string, string> = {
+        proposed: '#3B82F6',   // blue
+        pending: '#6B7280',    // gray
+        executing: '#F59E0B',  // amber
+        in_progress: '#F59E0B', // amber
+        completed: '#10B981',  // green
+        failed: '#EF4444',     // red
+        fallback: '#8B5CF6',   // purple
+        error: '#EF4444',      // red
+    };
+
+    return colors[status] || '#6B7280';
 }
 
 /**
@@ -322,15 +322,15 @@ export function getStatusColor(status: string): string {
  * @returns Icon identifier
  */
 export function getNodeTypeIcon(nodeType: string): string {
-  const icons: Record<string, string> = {
-    context: '📋',
-    action: '⚡',
-    nextStep: '➡️',
-    progress: '⏳',
-    completed: '✅',
-    error: '❌',
-    fallback: '🔄',
-  };
-  
-  return icons[nodeType] || '📦';
+    const icons: Record<string, string> = {
+        context: '📋',
+        action: '⚡',
+        nextStep: '➡️',
+        progress: '⏳',
+        completed: '✅',
+        error: '❌',
+        fallback: '🔄',
+    };
+
+    return icons[nodeType] || '📦';
 }

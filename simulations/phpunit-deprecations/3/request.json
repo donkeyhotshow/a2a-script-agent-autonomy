@@ -9,8 +9,12 @@
   "result": {
     "scan-phpunit": {
       "files": [
-        { "path": "tests/Unit/UserTest.php" },
-        { "path": "tests/Feature/AuthTest.php" }
+        {
+          "path": "tests/Unit/UserTest.php"
+        },
+        {
+          "path": "tests/Feature/AuthTest.php"
+        }
       ],
       "total": 45
     }

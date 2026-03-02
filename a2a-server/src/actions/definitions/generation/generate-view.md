@@ -1,11 +1,15 @@
 # generate-view
 
-Генерация представления: Blade/Vue компонент. **План:** [actions-definitions-for-auto-ai](../../../../plans/actions-definitions-for-auto-ai.md). **Use-case:** [4-code-generation](../../../../docs/use-cases/auto-ai/4-code-generation.md).
+Генерация представления: Blade/Vue компонент. **План:
+** [actions-definitions-for-auto-ai](../../../../plans/actions-definitions-for-auto-ai.md). **Use-case:
+** [4-code-generation](../../../../docs/use-cases/auto-ai/4-code-generation.md).
 
 ## Priority
+
 75
 
 ## Triggers
+
 - generate view
 - create view
 - blade component
@@ -14,6 +18,7 @@
 ## Sub-actions
 
 ### 1. generate-view-spec
+
 Analyze task to determine view requirements.
 
 **Input:** task, stack?, rootDir?  
@@ -83,6 +88,7 @@ export default async function analyzeView(input: { task: string; stack?: string;
 ```
 
 ### 2. generate-view-blade
+
 Generate Blade template.
 
 **Input:** viewSpec, rootDir?  
@@ -216,6 +222,7 @@ export default async function generateBlade(input: { viewSpec: { name: string; t
 ```
 
 ### 3. generate-view-vue
+
 Generate Vue component.
 
 **Input:** viewSpec, rootDir?  
@@ -337,6 +344,7 @@ const submit = () => {
 ```
 
 ### 4. generate-view-validate
+
 Validate generated view code.
 
 **Input:** viewFile, type  
@@ -382,6 +390,7 @@ export default async function validateView(input: { viewFile: { code: string }; 
 ```
 
 ### 5. generate-view-routes
+
 Generate routes for view.
 
 **Input:** viewSpec, rootDir?  

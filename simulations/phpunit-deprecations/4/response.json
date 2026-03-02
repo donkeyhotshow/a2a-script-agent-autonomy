@@ -5,8 +5,20 @@
       "action": "phpunit-deprecations",
       "step": "generate-deprecations-report",
       "history": [
-        { "step": "scan-phpunit", "status": "completed", "result": { "total": 45 } },
-        { "step": "detect-deprecations", "status": "completed", "result": { "deprecations": 2 } }
+        {
+          "step": "scan-phpunit",
+          "status": "completed",
+          "result": {
+            "total": 45
+          }
+        },
+        {
+          "step": "detect-deprecations",
+          "status": "completed",
+          "result": {
+            "deprecations": 2
+          }
+        }
       ]
     }
   },
@@ -15,8 +27,18 @@
       "name": "generate-deprecations-report",
       "input": {
         "deprecations": [
-          { "method": "assertEquals", "file": "tests/Unit/UserTest.php", "line": 15, "suggestion": "assertEqualsWithDelta" },
-          { "method": "assertInternalType", "file": "tests/Feature/AuthTest.php", "line": 22, "suggestion": "assertIsArray" }
+          {
+            "method": "assertEquals",
+            "file": "tests/Unit/UserTest.php",
+            "line": 15,
+            "suggestion": "assertEqualsWithDelta"
+          },
+          {
+            "method": "assertInternalType",
+            "file": "tests/Feature/AuthTest.php",
+            "line": 22,
+            "suggestion": "assertIsArray"
+          }
         ],
         "format": "markdown"
       },

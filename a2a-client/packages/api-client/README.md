@@ -1,6 +1,7 @@
 # @a2a/api-client
 
-HTTP client for A2A server communication. Provides methods for creating task cards, managing card lifecycle, and communicating with the A2A server.
+HTTP client for A2A server communication. Provides methods for creating task cards, managing card lifecycle, and
+communicating with the A2A server.
 
 ## Installation
 
@@ -102,34 +103,34 @@ try {
 
 #### Constructor Options
 
-| Option | Type | Required | Default | Description |
-|--------|------|----------|---------|-------------|
-| serverUrl | string | No | http://localhost:3000/v1 | Server base URL |
-| token | string | No | - | Authentication token |
-| clientId | string | No | - | Client identifier |
-| timeout | number | No | 30000 | Request timeout (ms) |
+| Option    | Type   | Required | Default                  | Description          |
+|-----------|--------|----------|--------------------------|----------------------|
+| serverUrl | string | No       | http://localhost:3000/v1 | Server base URL      |
+| token     | string | No       | -                        | Authentication token |
+| clientId  | string | No       | -                        | Client identifier    |
+| timeout   | number | No       | 30000                    | Request timeout (ms) |
 
 #### Methods
 
-| Method | Parameters | Returns | Description |
-|--------|------------|---------|-------------|
-| createCard(card) | Object | Promise<Object> | Create new task card |
-| updateCard(cardId, updates) | string, Object | Promise<Object> | Update existing card |
+| Method                           | Parameters     | Returns         | Description             |
+|----------------------------------|----------------|-----------------|-------------------------|
+| createCard(card)                 | Object         | Promise<Object> | Create new task card    |
+| updateCard(cardId, updates)      | string, Object | Promise<Object> | Update existing card    |
 | answerQuestions(cardId, answers) | string, Object | Promise<Object> | Answer server questions |
-| reportCommands(cardId, results) | string, Array | Promise<Object> | Report command results |
-| getCard(cardId) | string | Promise<Object> | Get card status |
-| cancelCard(cardId) | string | Promise<Object> | Cancel task |
-| searchRAG(query, options) | string, Object | Promise<Object> | Search RAG index |
-| getStatus() | - | Promise<Object> | Get server status |
+| reportCommands(cardId, results)  | string, Array  | Promise<Object> | Report command results  |
+| getCard(cardId)                  | string         | Promise<Object> | Get card status         |
+| cancelCard(cardId)               | string         | Promise<Object> | Cancel task             |
+| searchRAG(query, options)        | string, Object | Promise<Object> | Search RAG index        |
+| getStatus()                      | -              | Promise<Object> | Get server status       |
 
 ### ApiError
 
 Error class with additional properties:
 
-| Property | Type | Description |
-|----------|------|-------------|
-| status | number | HTTP status code |
-| data | Object | Additional error data from server |
+| Property | Type   | Description                       |
+|----------|--------|-----------------------------------|
+| status   | number | HTTP status code                  |
+| data     | Object | Additional error data from server |
 
 ## Data Request Format
 

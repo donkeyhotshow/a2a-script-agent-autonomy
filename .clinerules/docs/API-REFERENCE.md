@@ -2,7 +2,8 @@
 
 ## Overview
 
-This document provides comprehensive API documentation for the Cline Documentation Review System, including all available classes, methods, and their usage.
+This document provides comprehensive API documentation for the Cline Documentation Review System, including all
+available classes, methods, and their usage.
 
 ## Core Classes
 
@@ -20,11 +21,13 @@ const workflow = new ReviewWorkflow();
 #### Methods
 
 ##### `loadReviewQueue()`
+
 Loads the current review queue from the JSON file.
 
 **Returns**: `Promise<Object|null>` - The review queue object or null if error
 
 **Example**:
+
 ```javascript
 const queue = await workflow.loadReviewQueue();
 if (queue) {
@@ -33,14 +36,17 @@ if (queue) {
 ```
 
 ##### `saveReviewQueue(queue)`
+
 Saves the review queue to the JSON file.
 
 **Parameters**:
+
 - `queue` (Object): The review queue object to save
 
 **Returns**: `Promise<boolean>` - True if successful, false otherwise
 
 **Example**:
+
 ```javascript
 const success = await workflow.saveReviewQueue(queue);
 if (success) {
@@ -49,9 +55,11 @@ if (success) {
 ```
 
 ##### `createReviewRequest(documentPath, reviewType, reviewer)`
+
 Creates a new review request.
 
 **Parameters**:
+
 - `documentPath` (string): Path to the document being reviewed
 - `reviewType` (string): Type of review (e.g., 'content', 'technical', 'style')
 - `reviewer` (string): Name or ID of the reviewer
@@ -59,6 +67,7 @@ Creates a new review request.
 **Returns**: `Promise<Object|false>` - The created review request or false if error
 
 **Example**:
+
 ```javascript
 const reviewRequest = await workflow.createReviewRequest(
   'docs/new-feature.md',
@@ -69,14 +78,17 @@ console.log('Review request created:', reviewRequest.id);
 ```
 
 ##### `startReview(reviewId)`
+
 Starts a review by changing its status to 'in_progress'.
 
 **Parameters**:
+
 - `reviewId` (number): The ID of the review to start
 
 **Returns**: `Promise<Object|false>` - The updated review object or false if error
 
 **Example**:
+
 ```javascript
 const review = await workflow.startReview(123456);
 if (review) {
@@ -85,15 +97,18 @@ if (review) {
 ```
 
 ##### `completeReview(reviewId, results)`
+
 Completes a review by changing its status to 'completed'.
 
 **Parameters**:
+
 - `reviewId` (number): The ID of the review to complete
 - `results` (Array): Array of strings describing the review results
 
 **Returns**: `Promise<Object|false>` - The completed review object or false if error
 
 **Example**:
+
 ```javascript
 const review = await workflow.completeReview(123456, [
   'Technical accuracy verified',
@@ -103,29 +118,35 @@ console.log('Review completed:', review.id);
 ```
 
 ##### `rejectReview(reviewId, reason)`
+
 Rejects a review by changing its status to 'rejected'.
 
 **Parameters**:
+
 - `reviewId` (number): The ID of the review to reject
 - `reason` (string): Reason for rejection
 
 **Returns**: `Promise<Object|false>` - The rejected review object or false if error
 
 **Example**:
+
 ```javascript
 const review = await workflow.rejectReview(123456, 'Major revisions required');
 console.log('Review rejected:', review.id);
 ```
 
 ##### `getReviewStatus(reviewId)`
+
 Gets the current status of a review.
 
 **Parameters**:
+
 - `reviewId` (number): The ID of the review to check
 
 **Returns**: `Promise<Object|null>` - The review object or null if not found
 
 **Example**:
+
 ```javascript
 const review = await workflow.getReviewStatus(123456);
 if (review) {
@@ -134,25 +155,30 @@ if (review) {
 ```
 
 ##### `getReviewsByStatus(status)`
+
 Gets all reviews with a specific status.
 
 **Parameters**:
+
 - `status` (string): The status to filter by ('pending', 'in_progress', 'completed', 'rejected')
 
 **Returns**: `Promise<Array>` - Array of review objects
 
 **Example**:
+
 ```javascript
 const pendingReviews = await workflow.getReviewsByStatus('pending');
 console.log('Pending reviews:', pendingReviews.length);
 ```
 
 ##### `generateReviewReport()`
+
 Generates a comprehensive review report.
 
 **Returns**: `Promise<Object|null>` - Report object or null if error
 
 **Example**:
+
 ```javascript
 const report = await workflow.generateReviewReport();
 if (report) {
@@ -174,9 +200,11 @@ const manager = new DocumentationManager();
 #### Methods
 
 ##### `handleDocumentationUpdate(documentPath, updateType, content)`
+
 Handles document updates (new or outdated).
 
 **Parameters**:
+
 - `documentPath` (string): Path to the document
 - `updateType` (string): Type of update ('new' or 'outdated')
 - `content` (string): Content for new documents (optional for outdated)
@@ -184,6 +212,7 @@ Handles document updates (new or outdated).
 **Returns**: `Promise<Object>` - Result object with success status and details
 
 **Example**:
+
 ```javascript
 const result = await manager.handleDocumentationUpdate(
   'docs/new-feature.md',
@@ -196,68 +225,82 @@ if (result.success) {
 ```
 
 ##### `getReviewStatus(reviewId)`
+
 Gets the status of a specific review.
 
 **Parameters**:
+
 - `reviewId` (number): The ID of the review
 
 **Returns**: `Promise<Object|null>` - Review object or null if not found
 
 **Example**:
+
 ```javascript
 const status = await manager.getReviewStatus(123456);
 console.log('Review status:', status);
 ```
 
 ##### `completeReview(reviewId, results)`
+
 Completes a review.
 
 **Parameters**:
+
 - `reviewId` (number): The ID of the review
 - `results` (Array): Array of review results
 
 **Returns**: `Promise<Object|false>` - Completed review or false if error
 
 **Example**:
+
 ```javascript
 const review = await manager.completeReview(123456, ['Review completed']);
 console.log('Review completed:', review);
 ```
 
 ##### `generateReviewReport()`
+
 Generates a review report.
 
 **Returns**: `Promise<Object|null>` - Report object or null if error
 
 **Example**:
+
 ```javascript
 const report = await manager.generateReviewReport();
 console.log('Report:', report);
 ```
 
 ##### `getReviewsByStatus(status)`
+
 Gets reviews by status.
 
 **Parameters**:
+
 - `status` (string): Status to filter by
 
 **Returns**: `Promise<Array>` - Array of review objects
 
 **Example**:
+
 ```javascript
 const reviews = await manager.getReviewsByStatus('completed');
 console.log('Completed reviews:', reviews.length);
 ```
 
 ##### `startReview(reviewId)`
+
 Starts a review.
 
 **Parameters**:
+
 - `reviewId` (number): The ID of the review
 
 **Returns**: `Promise<Object|false>` - Started review or false if error
 
 **Example**:
+
 ```javascript
 const review = await manager.startReview(123456);
 console.log('Review started:', review);
@@ -277,110 +320,139 @@ const cli = new DocumentationReviewCLI();
 #### Methods
 
 ##### `run()`
+
 Runs the CLI interface.
 
 **Example**:
+
 ```javascript
 cli.run();
 ```
 
 ##### `showHelp()`
+
 Displays help information.
 
 **Example**:
+
 ```javascript
 cli.showHelp();
 ```
 
 ##### `createDocumentation(args)`
+
 Creates new documentation via CLI.
 
 **Parameters**:
+
 - `args` (Array): Command arguments
 
 **Example**:
+
 ```javascript
 await cli.createDocumentation(['docs/new.md', 'Content here']);
 ```
 
 ##### `markOutdated(args)`
+
 Marks documentation as outdated via CLI.
 
 **Parameters**:
+
 - `args` (Array): Command arguments
 
 **Example**:
+
 ```javascript
 await cli.markOutdated(['docs/old.md']);
 ```
 
 ##### `startReview(args)`
+
 Starts a review via CLI.
 
 **Parameters**:
+
 - `args` (Array): Command arguments
 
 **Example**:
+
 ```javascript
 await cli.startReview(['123456']);
 ```
 
 ##### `completeReview(args)`
+
 Completes a review via CLI.
 
 **Parameters**:
+
 - `args` (Array): Command arguments
 
 **Example**:
+
 ```javascript
 await cli.completeReview(['123456', 'Review completed']);
 ```
 
 ##### `rejectReview(args)`
+
 Rejects a review via CLI.
 
 **Parameters**:
+
 - `args` (Array): Command arguments
 
 **Example**:
+
 ```javascript
 await cli.rejectReview(['123456', 'Major revisions needed']);
 ```
 
 ##### `getReviewStatus(args)`
+
 Gets review status via CLI.
 
 **Parameters**:
+
 - `args` (Array): Command arguments
 
 **Example**:
+
 ```javascript
 await cli.getReviewStatus(['123456']);
 ```
 
 ##### `generateReport()`
+
 Generates a review report via CLI.
 
 **Example**:
+
 ```javascript
 await cli.generateReport();
 ```
 
 ##### `listReviews(args)`
+
 Lists reviews by status via CLI.
 
 **Parameters**:
+
 - `args` (Array): Command arguments
 
 **Example**:
+
 ```javascript
 await cli.listReviews(['pending']);
 ```
 
 ##### `runTests()`
+
 Runs the test suite via CLI.
 
 **Example**:
+
 ```javascript
 await cli.runTests();
 ```

@@ -3,15 +3,17 @@
 ## Текущее состояние
 
 ### Что уже работает
+
 1. **Action System** - серверная часть готова:
-   - [`action-registry.ts`](a2a-server/src/actions/action-registry.ts) - загрузка MD файлов
-   - [`action-parser.ts`](a2a-server/src/actions/action-parser.ts) - парсинг MD с извлечением TypeScript кода
-   - [`action-service.ts`](a2a-server/src/actions/action-service.ts) - управление выполнением
-   - [`action-processor.ts`](a2a-server/src/actions/action-processor.ts) - интеграция с протоколом
-   - [`types.ts`](a2a-server/src/actions/types.ts) - типы SubAction с полем `code`
+    - [`action-registry.ts`](a2a-server/src/actions/action-registry.ts) - загрузка MD файлов
+    - [`action-parser.ts`](a2a-server/src/actions/action-parser.ts) - парсинг MD с извлечением TypeScript кода
+    - [`action-service.ts`](a2a-server/src/actions/action-service.ts) - управление выполнением
+    - [`action-processor.ts`](a2a-server/src/actions/action-processor.ts) - интеграция с протоколом
+    - [`types.ts`](a2a-server/src/actions/types.ts) - типы SubAction с полем `code`
 
 2. **Script Runner** - клиентская часть готова:
-   - [`a2a-client/packages/script-runner/src/index.js`](a2a-client/packages/script-runner/src/index.js) - VM2-based execution
+    - [`a2a-client/packages/script-runner/src/index.js`](a2a-client/packages/script-runner/src/index.js) - VM2-based
+      execution
 
 3. **Тесты проходят** - `npx tsx src/actions/test-actions.ts`
 
@@ -97,6 +99,7 @@ if (ctx['continue'] && ctx['step_result']) {
 ```
 
 ## Triggers
+
 - исправить импорты
 - vue import
 - сломанные импорты
@@ -104,6 +107,7 @@ if (ctx['continue'] && ctx['step_result']) {
 ## SubActions
 
 ### Step 1: vue-import-detect
+
 **Title:** Определить сломанные импорты
 **Input:** none
 **Output:** broken_imports[]
@@ -127,6 +131,7 @@ export default async function detect() {
 ```
 
 ### Step 2: vue-import-resolve
+
 **Title:** Разрешить правильные пути
 **Input:** broken_imports[]
 **Output:** patches[]
@@ -137,6 +142,7 @@ export default async function resolve({ broken_imports }) {
   return { patches: [...] };
 }
 ```
+
 ```
 
 ### 2.2 Парсер уже поддерживает
@@ -160,6 +166,7 @@ export default async function resolve({ broken_imports }) {
 ```
 
 **Сервер отвечает:**
+
 ```json
 {
   "context": {
@@ -192,6 +199,7 @@ export default async function resolve({ broken_imports }) {
 ### 3.2 Запрос continue с результатом
 
 **Клиент отправляет:**
+
 ```json
 {
   "context": {
@@ -208,6 +216,7 @@ export default async function resolve({ broken_imports }) {
 ```
 
 **Сервер отвечает:**
+
 ```json
 {
   "context": {
@@ -237,6 +246,7 @@ export default async function resolve({ broken_imports }) {
 ### 3.3 Завершение
 
 **Сервер отвечает:**
+
 ```json
 {
   "context": {
@@ -313,13 +323,13 @@ export async function execute(code, context = {}) {
 
 ## Файлы для изменения
 
-| Файл | Изменения |
-|------|-----------|
-| `a2a-server/src/services/request-processor.service.ts` | Добавить обработку new_task и continue |
-| [definitions/fix-vue-imports.md](a2a-server/src/actions/definitions/fix-vue-imports.md) | Обновить формат с TypeScript кодом |
-| [definitions/README.md](a2a-server/src/actions/definitions/README.md) | Ссылки на планы и код |
-| `a2a-client/packages/api-client/src/async-client.js` | Добавить обработку action |
-| `a2a-client/packages/script-runner/` | Добавить тесты |
+| Файл                                                                                    | Изменения                              |
+|-----------------------------------------------------------------------------------------|----------------------------------------|
+| `a2a-server/src/services/request-processor.service.ts`                                  | Добавить обработку new_task и continue |
+| [definitions/fix-vue-imports.md](a2a-server/src/actions/definitions/fix-vue-imports.md) | Обновить формат с TypeScript кодом     |
+| [definitions/README.md](a2a-server/src/actions/definitions/README.md)                   | Ссылки на планы и код                  |
+| `a2a-client/packages/api-client/src/async-client.js`                                    | Добавить обработку action              |
+| `a2a-client/packages/script-runner/`                                                    | Добавить тесты                         |
 
 ## Риски
 

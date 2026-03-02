@@ -53,6 +53,7 @@ const response = await fetch('/api/v1/projects');
 ```
 
 Это **НЕПРАВИЛЬНО** по следующим причинам:
+
 1. Web не должен знать о существовании сервера
 2. Web не может обрабатывать ответы сервера (actions, execute)
 3. Нарушается принцип разделения ответственности
@@ -142,11 +143,13 @@ External AI Hub - это прокси-сервис, который:
 ### Как работает promiseId
 
 ```
+
 1. Server отправляет запрос к External AI Hub с заголовком X-Promise: true
 2. Hub сразу возвращает promiseId (статус pending)
 3. Server продолжает работу, не дожидаясь ответа от LLM
 4. Server периодически опрашивает Hub: GET /promise/{id}
 5. Когда статус done → получает результат: GET /promise/{id}/response
+
 ```
 
 ### Endpoints External AI Hub
@@ -163,9 +166,11 @@ External AI Hub - это прокси-сервис, который:
 ### Переменные окружения
 
 ```
-PROXY_PORT=11434          # Порт прокси
+
+PROXY_PORT=11434 # Порт прокси
 OLLAMA_HOST=http://localhost:11435  # Хост Ollama
-SIMULATION_ENABLED=false  # Включить симуляцию
+SIMULATION_ENABLED=false # Включить симуляцию
+
 ```
 
 ## Потоки данных
@@ -173,25 +178,28 @@ SIMULATION_ENABLED=false  # Включить симуляцию
 ### 1. Создание новой задачи
 
 ```
+
 1. USER: вводит задачу в web UI
    │
 2. WEB: отправляет POST /api/sessions { projectId, task }
    │
-3. CLIENT API: 
-   - Создает сессию локально (в памяти/файле)
-   - Отправляет POST /api/v1/invoke на SERVER
-   - SERVER возвращает promiseId
-   - CLIENT API сохраняет сессию с actions
-   
+3. CLIENT API:
+    - Создает сессию локально (в памяти/файле)
+    - Отправляет POST /api/v1/invoke на SERVER
+    - SERVER возвращает promiseId
+    - CLIENT API сохраняет сессию с actions
+
    │
 4. CLIENT API: возвращает { sessionId, actions[] }
    │
 5. WEB: отображает панель сессии с actions[]
+
 ```
 
 ### 2. Выбор действия
 
 ```
+
 1. USER: выбирает действие из actions[]
    │
 2. WEB: отправляет POST /api/sessions/:id/action { action }
@@ -199,42 +207,46 @@ SIMULATION_ENABLED=false  # Включить симуляцию
 3. CLIENT API: обновляет состояние сессии
    │
 4. WEB: показывает steps[], кнопки "Далее" / "Авто"
+
 ```
 
 ### 3. Выполнение шагов
 
 ```
+
 1. USER: нажимает "Далее"
    │
 2. WEB: отправляет POST /api/sessions/:id/next
    │
-3. CLIENT API: 
-   - Отправляет POST /api/v1/invoke { context, result: { action } }
-   - SERVER возвращает execute с script
-   - CLIENT API выполняет script
-   - CLIENT API сохраняет результаты в сессии
-   │
+3. CLIENT API:
+    - Отправляет POST /api/v1/invoke { context, result: { action } }
+    - SERVER возвращает execute с script
+    - CLIENT API выполняет script
+    - CLIENT API сохраняет результаты в сессии
+      │
 4. CLIENT API: возвращает результат
    │
 5. WEB: отображает результат, кнопка "Далее" / "Стоп"
+
 ```
 
 ### 4. AI запрос через External AI Hub
 
 ```
+
 1. SERVER: решает отправить запрос к LLM
    │
 2. SERVER → EXTERNAL AI HUB: POST /api/chat { model, messages }
-   - Заголовок X-Promise: true
-   │
-3. EXTERNAL AI HUB: 
-   - Создает promise (pending)
-   - Возвращает promiseId сразу
-   │
-4. SERVER: 
-   - Сохраняет promiseId в контексте
-   - Продолжает workflow (отправляет execute клиенту)
-   │
+    - Заголовок X-Promise: true
+      │
+3. EXTERNAL AI HUB:
+    - Создает promise (pending)
+    - Возвращает promiseId сразу
+      │
+4. SERVER:
+    - Сохраняет promiseId в контексте
+    - Продолжает workflow (отправляет execute клиенту)
+      │
 5. SERVER: периодически опрашивает GET /promise/{id}
    │
 6. EXTERNAL AI HUB: возвращает { status: "pending" | "done" }
@@ -242,6 +254,7 @@ SIMULATION_ENABLED=false  # Включить симуляцию
 7. Когда done: SERVER → GET /promise/{id}/response
    │
 8. SERVER: использует результат для следующих действий
+
 ```
 
 ## Файловая структура
@@ -249,39 +262,43 @@ SIMULATION_ENABLED=false  # Включить симуляцию
 ### a2a-client/packages/
 
 ```
+
 a2a-client/packages/
-├── api-client/          # HTTP клиент для сервера
-│   ├── src/
-│   │   ├── index.ts     # основной API
-│   │   ├── async-client.ts
-│   │   ├── protocol.ts
-│   │   └── action-handler.ts
-│   └── tests/
+├── api-client/ # HTTP клиент для сервера
+│ ├── src/
+│ │ ├── index.ts # основной API
+│ │ ├── async-client.ts
+│ │ ├── protocol.ts
+│ │ └── action-handler.ts
+│ └── tests/
 │
-├── agent/               # Агент
-├── fs-utils/            # Файловые утилиты
-├── rag/                 # RAG
-├── script-runner/       # Запуск скриптов
-├── terminal/            # Терминал
-└── types/               # Общие типы
+├── agent/ # Агент
+├── fs-utils/ # Файловые утилиты
+├── rag/ # RAG
+├── script-runner/ # Запуск скриптов
+├── terminal/ # Терминал
+└── types/ # Общие типы
+
 ```
 
 ### a2a-client/web/
 
 ```
+
 a2a-client/web/
 ├── js/
-│   ├── app-boot.js          # Инициализация
-│   ├── app-init.js          # Настройка app
-│   ├── app-state.js        # Состояние приложения
-│   ├── sessions.js         # Управление сессиями (UI)
-│   ├── actions-manager.js  # Менеджер действий
-│   ├── sse-client.js        # SSE клиент
-│   ├── web-api-client.js   # API клиента (NEW!)
-│   └── ...
+│ ├── app-boot.js # Инициализация
+│ ├── app-init.js # Настройка app
+│ ├── app-state.js # Состояние приложения
+│ ├── sessions.js # Управление сессиями (UI)
+│ ├── actions-manager.js # Менеджер действий
+│ ├── sse-client.js # SSE клиент
+│ ├── web-api-client.js # API клиента (NEW!)
+│ └── ...
 ├── css/
-│   └── ...
+│ └── ...
 └── index.html
+
 ```
 
 ## Порты
@@ -306,11 +323,13 @@ External AI Hub - это прокси-сервис, который:
 ### Как работает promiseId
 
 ```
+
 1. Server отправляет запрос к External AI Hub с заголовком X-Promise: true
 2. Hub сразу возвращает promiseId (статус pending)
 3. Server продолжает работу, не дожидаясь ответа от LLM
 4. Server периодически опрашивает Hub: GET /promise/{id}
 5. Когда статус done → получает результат: GET /promise/{id}/response
+
 ```
 
 ### Endpoints External AI Hub
@@ -327,25 +346,31 @@ External AI Hub - это прокси-сервис, который:
 ### Переменные окружения
 
 ```
-PROXY_PORT=11434          # Порт прокси
+
+PROXY_PORT=11434 # Порт прокси
 OLLAMA_HOST=http://localhost:11435  # Хост Ollama
-SIMULATION_ENABLED=false  # Включить симуляцию
+SIMULATION_ENABLED=false # Включить симуляцию
+
 ```
 
 ## Переменные окружения
 
 ### Server (.env)
 ```
+
 PORT=3000
 DATABASE_URL=postgresql://...
 JWT_SECRET=...
 ENCRYPTION_KEY=32-characters-key-here
 SKIP_AUTH=1
+
 ```
 
 ### Client
 ```
+
 CLIENT_API_URL=http://localhost:3001
+
 ```
 
 ## Следующие шаги

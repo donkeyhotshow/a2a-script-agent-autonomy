@@ -3,13 +3,14 @@
  * RAG Searcher - Search in indexed files
  */
 var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
+    return (mod && mod.__esModule) ? mod : {"default": mod};
 };
-Object.defineProperty(exports, "__esModule", { value: true });
+Object.defineProperty(exports, "__esModule", {value: true});
 exports.RAGSearcher = void 0;
 const promises_1 = __importDefault(require("fs/promises"));
 const path_1 = __importDefault(require("path"));
 const tfidf_js_1 = require("./tfidf.js");
+
 class RAGSearcher {
     constructor(config = {}) {
         this.index = null;
@@ -19,6 +20,7 @@ class RAGSearcher {
         this.useTFIDF = config.useTFIDF !== false;
         this.tfidf = this.useTFIDF ? new tfidf_js_1.TFIDFService() : null;
     }
+
     async loadIndex() {
         if (this.index)
             return this.index;
@@ -27,20 +29,22 @@ class RAGSearcher {
             const content = await promises_1.default.readFile(indexPath, 'utf-8');
             this.index = JSON.parse(content);
             return this.index;
-        }
-        catch {
-            this.index = { version: '1.0', timestamp: '', projectPath: this.projectPath, files: [], chunks: [] };
+        } catch {
+            this.index = {version: '1.0', timestamp: '', projectPath: this.projectPath, files: [], chunks: []};
             return this.index;
         }
     }
+
     indexDocument(id, content) {
         this.tfidf?.addDocument(id, content);
     }
+
     indexDocuments(documents) {
         if (this.tfidf) {
-            this.tfidf.addDocuments(documents.map((doc) => ({ id: doc.id, text: doc.content })));
+            this.tfidf.addDocuments(documents.map((doc) => ({id: doc.id, text: doc.content})));
         }
     }
+
     async buildTFIDFIndex() {
         if (!this.tfidf)
             throw new Error('TF-IDF not enabled');
@@ -51,6 +55,7 @@ class RAGSearcher {
         }
         this.tfidfIndexed = true;
     }
+
     async searchTFIDF(query, topK = 10) {
         if (!this.tfidf)
             throw new Error('TF-IDF not enabled');
@@ -63,15 +68,16 @@ class RAGSearcher {
             const key = chunk.id ?? `${chunk.filePath}:${chunk.startLine}`;
             chunkMap.set(key, chunk);
         }
-        return results.map((r) => ({ ...r, chunk: chunkMap.get(r.id) }));
+        return results.map((r) => ({...r, chunk: chunkMap.get(r.id)}));
     }
+
     async searchHybrid(query, options = {}) {
         const limit = options.limit ?? 10;
         const keywordWeight = options.keywordWeight ?? 0.5;
         const tfidfWeight = options.tfidfWeight ?? 0.5;
         const k = options.k ?? 60;
         const [keywordResults, tfidfResults] = await Promise.all([
-            this.search(query, { limit: limit * 2 }),
+            this.search(query, {limit: limit * 2}),
             this.tfidf ? this.searchTFIDF(query, limit * 2) : Promise.resolve([]),
         ]);
         const rrfScores = new Map();
@@ -86,8 +92,7 @@ class RAGSearcher {
                 existing.keywordScore = result.score;
                 if (result.highlights?.length)
                     existing.highlights = [...new Set([...existing.highlights, ...result.highlights])];
-            }
-            else {
+            } else {
                 rrfScores.set(id, {
                     chunk: result.chunk,
                     score: rrfContribution,
@@ -107,8 +112,7 @@ class RAGSearcher {
                 existing.score += rrfContribution;
                 existing.tfidfRank = i + 1;
                 existing.tfidfScore = result.score;
-            }
-            else if (result.chunk) {
+            } else if (result.chunk) {
                 rrfScores.set(result.id, {
                     chunk: result.chunk,
                     score: rrfContribution,
@@ -122,23 +126,31 @@ class RAGSearcher {
         }
         return [...rrfScores.values()]
             .map((r) => ({
-            chunk: r.chunk,
-            score: r.score,
-            highlights: r.highlights.slice(0, 5),
-            details: { keywordRank: r.keywordRank, keywordScore: r.keywordScore, tfidfRank: r.tfidfRank, tfidfScore: r.tfidfScore },
-        }))
+                chunk: r.chunk,
+                score: r.score,
+                highlights: r.highlights.slice(0, 5),
+                details: {
+                    keywordRank: r.keywordRank,
+                    keywordScore: r.keywordScore,
+                    tfidfRank: r.tfidfRank,
+                    tfidfScore: r.tfidfScore
+                },
+            }))
             .sort((a, b) => b.score - a.score)
             .slice(0, limit);
     }
+
     getTFIDFStats() {
         return this.tfidf ? this.tfidf.getStats() : null;
     }
+
     clearTFIDFIndex() {
         if (this.tfidf) {
             this.tfidf.clear();
             this.tfidfIndexed = false;
         }
     }
+
     async search(query, options = {}) {
         const index = await this.loadIndex();
         const keywords = this.extractKeywords(query);
@@ -157,18 +169,22 @@ class RAGSearcher {
         const limit = options.limit ?? 10;
         return results.slice(0, limit);
     }
+
     async searchFiles(pattern) {
         const index = await this.loadIndex();
         return index.files.filter((file) => this.matchPattern(file.path, pattern));
     }
+
     async getFileContent(relativePath) {
         const fullPath = path_1.default.join(this.projectPath, relativePath);
         return promises_1.default.readFile(fullPath, 'utf-8');
     }
+
     async getFileChunks(relativePath) {
         const index = await this.loadIndex();
         return index.chunks.filter((c) => c.filePath === relativePath);
     }
+
     extractKeywords(query) {
         const stopWords = new Set([
             'the', 'a', 'an', 'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'do', 'does', 'did',
@@ -184,8 +200,9 @@ class RAGSearcher {
         const techTerms = query.match(/[A-Z][a-z]+[A-Z][a-z]+/g) ?? [];
         const classNames = query.match(/\b[A-Z][a-zA-Z]+\b/g) ?? [];
         const methodNames = (query.match(/\b[a-z][a-zA-Z]+\(\)/g) ?? []).map((m) => m.replace('()', ''));
-        return { words, techTerms: [...techTerms, ...classNames], methodNames };
+        return {words, techTerms: [...techTerms, ...classNames], methodNames};
     }
+
     scoreChunk(chunk, keywords, _originalQuery) {
         let score = 0;
         const content = chunk.content.toLowerCase();
@@ -208,6 +225,7 @@ class RAGSearcher {
             score += 20;
         return score;
     }
+
     findHighlights(content, keywords) {
         const allTerms = [...keywords.words, ...keywords.techTerms, ...keywords.methodNames];
         const highlights = [];
@@ -219,6 +237,7 @@ class RAGSearcher {
         }
         return [...new Set(highlights)].slice(0, 5);
     }
+
     matchPattern(filePath, pattern) {
         const regexPattern = pattern
             .replace(/\./g, '\\.')
@@ -227,9 +246,11 @@ class RAGSearcher {
             .replace(/{{GLOBSTAR}}/g, '.*');
         return new RegExp(regexPattern).test(filePath);
     }
+
     dispose() {
         this.index = null;
         this.clearTFIDFIndex();
     }
 }
+
 exports.RAGSearcher = RAGSearcher;

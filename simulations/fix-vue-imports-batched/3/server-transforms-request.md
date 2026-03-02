@@ -1,6 +1,7 @@
 # Server: request → response (step 3)
 
-**Input:** `request.json` = `{ "context": { "execution": { "step": "search-vite-file" } }, "result": { "vite_config_files": [...] } }`.
+**Input:** `request.json` =
+`{ "context": { "execution": { "step": "search-vite-file" } }, "result": { "vite_config_files": [...] } }`.
 
 1. Parse `context.execution.step` = "search-vite-file" and `result.vite_config_files`.
 2. Validate: we have results from previous step (search completed).

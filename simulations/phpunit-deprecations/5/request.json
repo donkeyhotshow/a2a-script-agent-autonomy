@@ -5,8 +5,20 @@
       "action": "phpunit-deprecations",
       "step": "generate-deprecations-report",
       "history": [
-        { "step": "scan-phpunit", "status": "completed", "result": { "total": 45 } },
-        { "step": "detect-deprecations", "status": "completed", "result": { "deprecations": 2 } }
+        {
+          "step": "scan-phpunit",
+          "status": "completed",
+          "result": {
+            "total": 45
+          }
+        },
+        {
+          "step": "detect-deprecations",
+          "status": "completed",
+          "result": {
+            "deprecations": 2
+          }
+        }
       ]
     }
   },

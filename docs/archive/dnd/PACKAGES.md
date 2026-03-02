@@ -5,14 +5,16 @@
 - **Description:** NPM packages, libraries, dependencies
 
 ## Properties
-| Property | Type | Description |
-|----------|------|-------------|
-| id | string | Unique identifier |
-| name | string | Package name |
-| path | string | Package path |
+
+| Property    | Type   | Description         |
+|-------------|--------|---------------------|
+| id          | string | Unique identifier   |
+| name        | string | Package name        |
+| path        | string | Package path        |
 | description | string | Package description |
 
 ## Example
+
 ```
 json
 {
@@ -25,6 +27,7 @@ json
 ```
 
 ## Related Types
+
 - Used by: ACTIONS, SERVICES, SYSTEMS
 - Contains: SCRIPTS, FEATURES
 - Referenced by: NODES

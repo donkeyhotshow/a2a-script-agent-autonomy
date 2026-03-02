@@ -1,6 +1,7 @@
 в # SSE Implementation - Complete
 
 ## Overview
+
 Server-Sent Events (SSE) для real-time коммуникации между клиентом и сервером.
 
 ## Architecture
@@ -19,28 +20,31 @@ Server-Sent Events (SSE) для real-time коммуникации между к
 ### Server
 
 **GET /api/v1/sse**
+
 - Глобальный поток событий
 - Требует аутентификации
 
 **GET /api/v1/sse/:sessionId**
+
 - Поток событий для конкретной сессии
 - Требует аутентификации
 - Параметры: `sessionId` - ID сессии
 
 ### Event Types
 
-| Event | Description | Data |
-|-------|-------------|------|
-| `connected` | Установлено соединение | `{ sessionId, timestamp }` |
-| `log` | Лог сообщение | `{ message, level, timestamp }` |
-| `progress` | Прогресс выполнения | `{ current, total, message, timestamp }` |
-| `status` | Изменение статуса | `{ status, details, timestamp }` |
-| `complete` | Завершено | `{ result, timestamp }` |
-| `error` | Ошибка | `{ error, timestamp }` |
+| Event       | Description            | Data                                     |
+|-------------|------------------------|------------------------------------------|
+| `connected` | Установлено соединение | `{ sessionId, timestamp }`               |
+| `log`       | Лог сообщение          | `{ message, level, timestamp }`          |
+| `progress`  | Прогресс выполнения    | `{ current, total, message, timestamp }` |
+| `status`    | Изменение статуса      | `{ status, details, timestamp }`         |
+| `complete`  | Завершено              | `{ result, timestamp }`                  |
+| `error`     | Ошибка                 | `{ error, timestamp }`                   |
 
 ## Client Usage
 
 ### Initialization
+
 ```
 javascript
 // Подключить скрипт в HTML
@@ -54,6 +58,7 @@ SSEClient.connect();
 ```
 
 ### Event Handlers
+
 ```
 javascript
 // Логи
@@ -83,6 +88,7 @@ SSEClient.on('error', (data) => {
 ```
 
 ### Methods
+
 ```
 javascript
 // Отключиться
@@ -98,6 +104,7 @@ SSEClient.off('log', myHandler);
 ## Integration with Sessions
 
 ### Before (Polling)
+
 ```
 javascript
 // Старый код с polling
@@ -108,6 +115,7 @@ setInterval(async () => {
 ```
 
 ### After (SSE)
+
 ```
 javascript
 // Новый код с SSE
@@ -129,6 +137,7 @@ SSEClient.on('complete', (data) => {
 ## Server Events API
 
 ### From Server Code
+
 ```
 javascript
 import { sseManager } from './routes/sse.routes.js';
@@ -156,9 +165,9 @@ sseManager.error(sessionId, 'Failed to process file');
 
 ## Benefits vs Polling
 
-| Polling | SSE |
-|---------|-----|
-| Запрос каждые 5 сек | Мгновенная доставка |
-| Лишний трафик | Одно постоянное соединение |
-| Задержка до 5 сек | Реальное время |
-| many HTTP requests | 1 connection |
+| Polling             | SSE                        |
+|---------------------|----------------------------|
+| Запрос каждые 5 сек | Мгновенная доставка        |
+| Лишний трафик       | Одно постоянное соединение |
+| Задержка до 5 сек   | Реальное время             |
+| many HTTP requests  | 1 connection               |

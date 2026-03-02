@@ -10,7 +10,9 @@
     "script": {
       "input": {
         "rootDir": ".",
-        "patterns": ["tests/**/*.php"]
+        "patterns": [
+          "tests/**/*.php"
+        ]
       },
       "output": "phpunit_files[]",
       "code": "scan-phpunit"

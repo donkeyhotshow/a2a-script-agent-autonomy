@@ -1,11 +1,15 @@
 # generate-migration
 
-Генерация миграции: изменения схемы БД. **План:** [actions-definitions-for-auto-ai](../../../../plans/actions-definitions-for-auto-ai.md). **Use-case:** [4-code-generation](../../../../docs/use-cases/auto-ai/4-code-generation.md).
+Генерация миграции: изменения схемы БД. **План:
+** [actions-definitions-for-auto-ai](../../../../plans/actions-definitions-for-auto-ai.md). **Use-case:
+** [4-code-generation](../../../../docs/use-cases/auto-ai/4-code-generation.md).
 
 ## Priority
+
 78
 
 ## Triggers
+
 - generate migration
 - create migration
 - migration schema
@@ -14,6 +18,7 @@
 ## Sub-actions
 
 ### 1. generate-migration-spec
+
 Parse schema change from task or diff.
 
 **Input:** task, existingMigrations?, rootDir?  
@@ -78,6 +83,7 @@ export default async function parseMigrationSpec(input: { task: string; existing
 ```
 
 ### 2. generate-migration-template
+
 Generate migration template code.
 
 **Input:** spec, rootDir?  
@@ -155,6 +161,7 @@ export default async function generateMigrationTemplate(input: { spec: { tableNa
 ```
 
 ### 3. generate-migration-validate
+
 Validate migration syntax.
 
 **Input:** migration  
@@ -196,6 +203,7 @@ export default async function validateMigration(input: { migration: { className:
 ```
 
 ### 4. generate-migration-rollback
+
 Generate rollback migration.
 
 **Input:** migration, rootDir?  
@@ -225,6 +233,7 @@ export default async function generateRollbackMigration(input: { migration: { ta
 ```
 
 ### 5. generate-migration-execute
+
 Execute migration (dry run or real).
 
 **Input:** migration, dryRun?, rootDir?  

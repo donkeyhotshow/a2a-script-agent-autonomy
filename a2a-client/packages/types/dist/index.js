@@ -3,7 +3,7 @@
  * @a2a/types - Shared TypeScript types for A2A packages
  * Shared between @a2a/client, @a2a/server, and other packages.
  */
-Object.defineProperty(exports, "__esModule", { value: true });
+Object.defineProperty(exports, "__esModule", {value: true});
 exports.createContextBlock = createContextBlock;
 exports.createTask = createTask;
 exports.createFileBlock = createFileBlock;
@@ -24,6 +24,7 @@ function createContextBlock(options) {
         errors: options.errors,
     };
 }
+
 function createTask(options) {
     return {
         id: options.id ?? `task_${Date.now()}`,
@@ -33,6 +34,7 @@ function createTask(options) {
         progress: options.progress ?? 0,
     };
 }
+
 function createFileBlock(options) {
     return {
         path: options.path,
@@ -41,6 +43,7 @@ function createFileBlock(options) {
         endLine: options.endLine,
     };
 }
+
 function createSearchQuery(options) {
     return {
         query: options.query,

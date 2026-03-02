@@ -8,16 +8,32 @@
     "build": "tsc",
     "test": "jest --bail"
   },
-  "keywords": ["a2a", "api", "client", "http", "agent"],
+  "keywords": [
+    "a2a",
+    "api",
+    "client",
+    "http",
+    "agent"
+  ],
   "author": "",
   "license": "MIT",
-  "dependencies": { "node-fetch": "^2.7.0" },
+  "dependencies": {
+    "node-fetch": "^2.7.0"
+  },
   "devDependencies": {
     "@types/node-fetch": "^2.6.11",
     "jest": "^29.7.0",
     "typescript": "^5.0.0"
   },
-  "engines": { "node": ">=18.0.0" },
-  "repository": { "type": "git", "url": "https://github.com/org-carrier/a2a-app.git", "directory": "packages/api-client" },
-  "publishConfig": { "access": "public" }
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/org-carrier/a2a-app.git",
+    "directory": "packages/api-client"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
 }

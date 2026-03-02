@@ -59,10 +59,10 @@ script: |
       for (let i = 0; i < lines.length; i++) {
         const line = lines[i];
         let match: RegExpExecArray | null;
-        
+  
         // Reset regex state for each line
         regex.lastIndex = 0;
-        
+  
         while ((match = regex.exec(line)) !== null) {
           matches.push({
             file,
@@ -71,7 +71,7 @@ script: |
             content: line.trim(),
             match: match[0],
           });
-          
+  
           // Prevent infinite loop for zero-width matches
           if (match.index === regex.lastIndex) {
             regex.lastIndex++;

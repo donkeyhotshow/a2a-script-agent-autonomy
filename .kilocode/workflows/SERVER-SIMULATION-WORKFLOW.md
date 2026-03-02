@@ -25,16 +25,17 @@ simulations/
 
 ## Типи файлів
 
-| File | Direction | Description |
-|------|-----------|-------------|
-| `request.json` | Client → Server | Запит клієнта. |
-| `server-transforms-request.md` | — | Обробка `request.json`, трансформація перед запитом у LLM. Опційно. |
-| `request.md` | Server → LLM | MARKDOWN: system prompt + поточний стан (JSON у блоці). |
-| `response.md` | LLM → Server | Очікуваний вивід LLM (наприклад `{ "message": "..." }`). |
-| `server-transforms-response.md` | — | Обробка `response.md`, трансформація перед поверненням клієнту. Опційно. |
-| `response.json` | Server → Client | Відповідь клієнту (context + execute). |
+| File                            | Direction       | Description                                                              |
+|---------------------------------|-----------------|--------------------------------------------------------------------------|
+| `request.json`                  | Client → Server | Запит клієнта.                                                           |
+| `server-transforms-request.md`  | —               | Обробка `request.json`, трансформація перед запитом у LLM. Опційно.      |
+| `request.md`                    | Server → LLM    | MARKDOWN: system prompt + поточний стан (JSON у блоці).                  |
+| `response.md`                   | LLM → Server    | Очікуваний вивід LLM (наприклад `{ "message": "..." }`).                 |
+| `server-transforms-response.md` | —               | Обробка `response.md`, трансформація перед поверненням клієнту. Опційно. |
+| `response.json`                 | Server → Client | Відповідь клієнту (context + execute).                                   |
 
-**Порядок:** request.json → server-transforms-request.md → request.md → response.md → server-transforms-response.md → response.json.
+**Порядок:** request.json → server-transforms-request.md → request.md → response.md → server-transforms-response.md →
+response.json.
 
 У кроках з LLM є .md; інші — лише .json; transform-файли опційні.
 
@@ -101,17 +102,21 @@ Client              Server (transforms)       LLM
 
 ## Обробка двох типів дій
 
-У першій відповіді: спочатку **actions** (первоочергово), потім **ai-actions** (другочергово). Для actions — кроки захардкоджені, сервер перемикає; для ai-actions — відображається список доступних кроків, наступний крок з відповіді LLM, можливий окремий запит на крок.
+У першій відповіді: спочатку **actions** (первоочергово), потім **ai-actions** (другочергово). Для actions — кроки
+захардкоджені, сервер перемикає; для ai-actions — відображається список доступних кроків, наступний крок з відповіді
+LLM, можливий окремий запит на крок.
 
 ### 1. Actions (первоочергові, захардкоджені кроки)
 
 **Логіка обробки:**
+
 1. Клієнт надсилає `result` з результатом виконання кроку
 2. Сервер читає `context.execution.action` та поточний `step`
 3. Сервер перемикає `step` на наступний згідно з definition
 4. Сервер повертає `execute` з наступним кроком
 
 **Приклад для fix-vue-imports:**
+
 ```json
 // Крок 2: Сервер повертає execute.script
 {
@@ -149,13 +154,16 @@ Client              Server (transforms)       LLM
 ```
 
 **Ключові особливості:**
+
 - `execution.step` змінюється сервером без участі LLM
 - Сервер має повну мапу кроків з definition
 - Результат попереднього кроку впливає на вибір наступного
 
 ### 2. AI-Actions (другочергові, діалог з LLM)
 
-**Логіка обробки:** Сервер показує список доступних кроків; наступний крок визначається з відповіді LLM (не захардкоджена послідовність); можливі окремі запити на кожен крок.
+**Логіка обробки:** Сервер показує список доступних кроків; наступний крок визначається з відповіді LLM (не
+захардкоджена послідовність); можливі окремі запити на кожен крок.
+
 1. Клієнт надсилає `result.message` (або результат execute)
 2. Сервер відправляє контекст до LLM
 3. LLM визначає наступну дію (read-file, write-file, rag-search, тощо)
@@ -164,6 +172,7 @@ Client              Server (transforms)       LLM
 **Формати відповідей для AI-Actions:**
 
 #### execute.form — очікування вводу від користувача
+
 ```json
 {
   "context": { "execution": { "action": "dialog", "step": "llm" } },
@@ -174,6 +183,7 @@ Client              Server (transforms)       LLM
 ```
 
 #### execute.llm — продовження діалогу з LLM
+
 ```json
 {
   "context": { "execution": { "action": "coder", "step": "llm" } },
@@ -187,6 +197,7 @@ Client              Server (transforms)       LLM
 ```
 
 #### execute.message — повідомлення від LLM
+
 ```json
 {
   "context": { "execution": { "action": "dialog", "step": "llm" } },
@@ -200,6 +211,7 @@ Client              Server (transforms)       LLM
 ```
 
 #### execute з конкретними діями
+
 ```json
 {
   "context": { "execution": { "action": "coder", "step": "llm" } },
@@ -210,6 +222,7 @@ Client              Server (transforms)       LLM
 ```
 
 **Ключові особливості:**
+
 - `execution.step` = "llm" (або визначається динамічно)
 - LLM вирішує наступну дію
 - Можливість продовження через `execute.llm`
@@ -217,13 +230,13 @@ Client              Server (transforms)       LLM
 
 ### Порівняння обробки
 
-| Аспект | Actions | AI-Actions |
-|--------|---------|------------|
-| Визначення кроків | Definition файли | LLM |
-| Перемикання кроків | Сервер (автоматично) | LLM |
-| Зміна execution.step | Сервер | Сервер (встановлює "llm") |
-| Результат від LLM | Ні | Так |
-| Приклади | fix-vue-imports | dialog, coder, coder-smart |
+| Аспект               | Actions              | AI-Actions                 |
+|----------------------|----------------------|----------------------------|
+| Визначення кроків    | Definition файли     | LLM                        |
+| Перемикання кроків   | Сервер (автоматично) | LLM                        |
+| Зміна execution.step | Сервер               | Сервер (встановлює "llm")  |
+| Результат від LLM    | Ні                   | Так                        |
+| Приклади             | fix-vue-imports      | dialog, coder, coder-smart |
 
 ## Правила
 

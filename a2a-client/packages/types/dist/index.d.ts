@@ -4,12 +4,14 @@
  */
 export type TaskType = 'analyze' | 'refactor' | 'test' | 'document' | 'fix' | 'create' | 'delete';
 export type TaskStatus = 'pending' | 'in_progress' | 'completed' | 'failed' | 'cancelled';
+
 export interface ProtocolError {
     code: string;
     message: string;
     file?: string;
     line?: number;
 }
+
 export interface Task {
     id: string;
     type: TaskType;
@@ -17,6 +19,7 @@ export interface Task {
     target?: string;
     progress?: number;
 }
+
 export interface ContextBlock {
     version: '1.0';
     session_id: string;
@@ -28,30 +31,36 @@ export interface ContextBlock {
     confirm?: boolean;
     errors?: ProtocolError[];
 }
+
 export interface FileBlock {
     path: string;
     content: string;
     startLine?: number;
     endLine?: number;
 }
+
 export interface FileBlockRequest {
     path: string;
     startLine?: number;
     endLine?: number;
 }
+
 export interface ClientMessage {
     context: ContextBlock;
     files?: FileBlock[];
 }
+
 export interface CurrentStep {
     id: string;
     title: string;
     code?: string;
 }
+
 export interface NextStep {
     id: string;
     title: string;
 }
+
 export interface ActionData {
     id?: string;
     title?: string;
@@ -59,29 +68,34 @@ export interface ActionData {
     currentStep?: CurrentStep;
     nextSteps?: NextStep[];
 }
+
 export interface ServerMessage {
     context: ContextBlock;
     files?: FileBlock[];
     message?: string;
     action?: ActionData;
 }
+
 export interface SearchFilters {
     file_types?: string[];
     directories?: string[];
     framework?: string;
     exclude?: string[];
 }
+
 export interface SearchOptions {
     limit?: number;
     min_score?: number;
     include_context?: boolean;
     highlight_matches?: boolean;
 }
+
 export interface SearchQuery {
     query: string;
     filters?: SearchFilters;
     options?: SearchOptions;
 }
+
 export interface MatchDetail {
     line_start: number;
     line_end: number;
@@ -89,23 +103,27 @@ export interface MatchDetail {
     highlight: string;
     context_score: number;
 }
+
 export interface FileMetadata {
     framework: string;
     type: string;
     last_modified: string;
 }
+
 export interface SearchMatch {
     file: string;
     score: number;
     matches: MatchDetail[];
     metadata: FileMetadata;
 }
+
 export interface SearchResult {
     results: SearchMatch[];
     total: number;
     query_time_ms: number;
     algorithm_used: string;
 }
+
 export interface RAGConfig {
     projectPath: string;
     includePatterns?: string[];
@@ -118,6 +136,7 @@ export interface RAGConfig {
     embeddingModel?: string;
     embeddingProvider?: string;
 }
+
 export interface Chunk {
     id: string;
     filePath: string;
@@ -129,35 +148,43 @@ export interface Chunk {
     visibility?: string;
     method?: string;
 }
+
 export interface IndexStats {
     filesIndexed: number;
     chunksIndexed: number;
     lastUpdated: number;
     indexedExtensions?: string[];
 }
+
 export interface ApiError {
     code: string;
     message: string;
     details?: Record<string, unknown>;
 }
+
 export interface ApiResponse<T = unknown> {
     success: boolean;
     data?: T;
     error?: ApiError;
 }
+
 export interface PaginatedResponse<T> {
     items: T[];
     total: number;
     page: number;
     per_page: number;
 }
+
 export type WsEventType = 'task:progress' | 'task:completed' | 'files:updated' | 'files:requested' | 'error';
+
 export interface WsEvent<T = unknown> {
     type: WsEventType;
     payload: T;
     timestamp: Date;
 }
+
 export type ArchitecturalFeatureCategory = 'directory_structure' | 'naming_convention' | 'custom_pattern' | 'framework';
+
 export interface ArchitecturalFeature {
     name: string;
     category: ArchitecturalFeatureCategory;
@@ -165,6 +192,7 @@ export interface ArchitecturalFeature {
     path?: string;
     metadata?: Record<string, unknown>;
 }
+
 export interface RequestContextBlock {
     tasks?: Task[];
     request_files?: string[];
@@ -173,6 +201,7 @@ export interface RequestContextBlock {
     frameworks?: Record<string, unknown>;
     new_task?: string[];
 }
+
 export interface RequestApiResult {
     outcome: 'completed' | 'graph_incomplete' | 'failed';
     message?: string;
@@ -184,6 +213,7 @@ export interface RequestApiResult {
     injected_content?: string[];
     error?: Record<string, unknown>;
 }
+
 export interface CreateContextBlockOptions {
     sessionId: string;
     newTask?: string[];
@@ -194,6 +224,7 @@ export interface CreateContextBlockOptions {
     confirm?: boolean;
     errors?: ProtocolError[];
 }
+
 export interface CreateTaskOptions {
     id?: string;
     type?: TaskType;
@@ -201,19 +232,26 @@ export interface CreateTaskOptions {
     target?: string;
     progress?: number;
 }
+
 export interface CreateFileBlockOptions {
     path: string;
     content: string;
     startLine?: number;
     endLine?: number;
 }
+
 export interface CreateSearchQueryOptions {
     query: string;
     filters?: SearchFilters;
     options?: SearchOptions;
 }
+
 export declare function createContextBlock(options: CreateContextBlockOptions): ContextBlock;
+
 export declare function createTask(options: CreateTaskOptions): Task;
+
 export declare function createFileBlock(options: CreateFileBlockOptions): FileBlock;
+
 export declare function createSearchQuery(options: CreateSearchQueryOptions): SearchQuery;
+
 //# sourceMappingURL=index.d.ts.map

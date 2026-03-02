@@ -2,7 +2,7 @@
 /**
  * A2A Protocol - context and file block handling
  */
-Object.defineProperty(exports, "__esModule", { value: true });
+Object.defineProperty(exports, "__esModule", {value: true});
 exports.VERSION = void 0;
 exports.buildNewTaskContext = buildNewTaskContext;
 exports.buildContinueContext = buildContinueContext;
@@ -14,25 +14,31 @@ exports.serializeMessage = serializeMessage;
 exports.parseMessage = parseMessage;
 const VERSION = '1.0';
 exports.VERSION = VERSION;
+
 function buildNewTaskContext(sessionId, newTask, architecturalFeatures) {
-    const ctx = { version: VERSION, session_id: sessionId, new_task: newTask };
+    const ctx = {version: VERSION, session_id: sessionId, new_task: newTask};
     if (architecturalFeatures?.length)
         ctx.architectural_features = architecturalFeatures;
     return ctx;
 }
+
 function buildContinueContext(sessionId) {
-    return { version: VERSION, session_id: sessionId, continue: true };
+    return {version: VERSION, session_id: sessionId, continue: true};
 }
+
 function buildConfirmContext(sessionId) {
-    return { version: VERSION, session_id: sessionId, confirm: true };
+    return {version: VERSION, session_id: sessionId, confirm: true};
 }
+
 function buildFileResponseContext(sessionId) {
-    return { version: VERSION, session_id: sessionId };
+    return {version: VERSION, session_id: sessionId};
 }
+
 function serializeFileBlock(path, content, startLine, endLine) {
     const sig = endLine != null ? `${path}:${startLine}-${endLine}` : path;
     return `\`\`\`file:${sig}\n${content}\n\`\`\``;
 }
+
 function parseFileBlock(text) {
     const m = text.match(/^```file:([^\n]+)\n([\s\S]*?)```$/m);
     if (!m)
@@ -47,8 +53,9 @@ function parseFileBlock(text) {
             endLine: +rangeMatch[3],
         };
     }
-    return { path: sig ?? '', content: content.trim() };
+    return {path: sig ?? '', content: content.trim()};
 }
+
 function serializeMessage(context, files = []) {
     const parts = [`\`\`\`context\n${JSON.stringify(context, null, 0)}\n\`\`\``];
     for (const f of files) {
@@ -56,6 +63,7 @@ function serializeMessage(context, files = []) {
     }
     return parts.join('\n\n');
 }
+
 function parseMessage(text) {
     const contextMatch = text.match(/```context\n([\s\S]*?)```/);
     if (!contextMatch)
@@ -63,8 +71,7 @@ function parseMessage(text) {
     let context;
     try {
         context = JSON.parse(contextMatch[1].trim());
-    }
-    catch {
+    } catch {
         return null;
     }
     const files = [];
@@ -81,10 +88,9 @@ function parseMessage(text) {
                 startLine: +rangeMatch[2],
                 endLine: +rangeMatch[3],
             });
-        }
-        else {
-            files.push({ path: sig, content });
+        } else {
+            files.push({path: sig, content});
         }
     }
-    return { context, files };
+    return {context, files};
 }

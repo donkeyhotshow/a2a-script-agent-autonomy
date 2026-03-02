@@ -2,13 +2,15 @@
 
 ## Overview
 
-This document provides practical examples of using the Cline Documentation Review System in various scenarios, from basic operations to advanced integrations.
+This document provides practical examples of using the Cline Documentation Review System in various scenarios, from
+basic operations to advanced integrations.
 
 ## Basic Workflows
 
 ### 1. Creating New Documentation
 
 #### CLI Example
+
 ```bash
 # Create new documentation with custom content
 node .clinerules/scripts/cli.js create docs/user-guide.md "## User Guide\n\nThis is the user guide content."
@@ -18,6 +20,7 @@ node .clinerules/scripts/cli.js create docs/api-reference.md
 ```
 
 #### Programmatic Example
+
 ```javascript
 const DocumentationManager = require('./.clinerules/scripts/documentation-manager.js');
 
@@ -56,12 +59,14 @@ createNewDocumentation();
 ### 2. Marking Documentation as Outdated
 
 #### CLI Example
+
 ```bash
 # Mark old documentation as outdated
 node .clinerules/scripts/cli.js outdated docs/legacy-api.md
 ```
 
 #### Programmatic Example
+
 ```javascript
 const DocumentationManager = require('./.clinerules/scripts/documentation-manager.js');
 
@@ -89,6 +94,7 @@ markAsOutdated();
 ### 3. Managing Review Lifecycle
 
 #### CLI Example
+
 ```bash
 # Start a review
 node .clinerules/scripts/cli.js start 123456
@@ -104,6 +110,7 @@ node .clinerules/scripts/cli.js report
 ```
 
 #### Programmatic Example
+
 ```javascript
 const ReviewWorkflow = require('./.clinerules/scripts/review-workflow.js');
 
@@ -570,6 +577,7 @@ jobs:
 ## Best Practices
 
 ### 1. Error Handling
+
 ```javascript
 async function safeReviewOperation() {
   try {
@@ -595,6 +603,7 @@ async function safeReviewOperation() {
 ```
 
 ### 2. Logging and Monitoring
+
 ```javascript
 const fs = require('fs');
 
@@ -621,6 +630,7 @@ class ReviewLogger {
 ```
 
 ### 3. Performance Optimization
+
 ```javascript
 class OptimizedReviewWorkflow extends ReviewWorkflow {
   constructor() {
@@ -646,4 +656,5 @@ class OptimizedReviewWorkflow extends ReviewWorkflow {
 }
 ```
 
-These examples demonstrate the flexibility and power of the Cline Documentation Review System, from simple CLI operations to complex integrations with development workflows.
+These examples demonstrate the flexibility and power of the Cline Documentation Review System, from simple CLI
+operations to complex integrations with development workflows.

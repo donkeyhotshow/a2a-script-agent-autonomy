@@ -20,7 +20,8 @@
    <!-- Нет вызова Sessions.init() после загрузки -->
    ```
 
-3. **Функция [`initFlow()`](a2a-client/web/js/flow/index.js:633) вызывается только в [`showFlow()`](a2a-client/web/js/sessions.js:856):**
+3. **Функция [`initFlow()`](a2a-client/web/js/flow/index.js:633) вызывается только
+   в [`showFlow()`](a2a-client/web/js/sessions.js:856):**
    ```js
    showFlow() {
      // ...
@@ -31,7 +32,8 @@
    }
    ```
 
-4. **Результат:** VueFlow контейнер отображается на странице, но сама библиотека VueFlow не инициализируется. Узлы не создаются.
+4. **Результат:** VueFlow контейнер отображается на странице, но сама библиотека VueFlow не инициализируется. Узлы не
+   создаются.
 
 ---
 
@@ -78,13 +80,15 @@ initVueFlow() {
 
 ### Шаг 3: ✅ Проверка загрузки контекста
 
-При открытии сессии в [`Sessions.open()`](a2a-client/web/js/sessions.js:140) вызывается [`updateFlowFromMessages()`](a2a-client/web/js/sessions.js:552).
+При открытии сессии в [`Sessions.open()`](a2a-client/web/js/sessions.js:140) вызывается [
+`updateFlowFromMessages()`](a2a-client/web/js/sessions.js:552).
 
 ---
 
 ## Ожидаемый результат
 
 После исправления:
+
 - ✅ При загрузке страницы автоматически инициализируется Sessions (event listeners)
 - ✅ VueFlow инициализируется и отображает пустую область
 - ✅ При получении данных от сервера узлы загружаются через `loadContext()`

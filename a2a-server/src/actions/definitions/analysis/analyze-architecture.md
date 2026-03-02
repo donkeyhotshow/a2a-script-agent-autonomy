@@ -1,11 +1,15 @@
 # analyze
 
-Analyze project architecture and layers. **План:** [actions-definitions-for-auto-ai](../../../../plans/actions-definitions-for-auto-ai.md). **Use-case:** [2-code-analysis](../../../../docs/use-cases/auto-ai/2-code-analysis.md).
+Analyze project architecture and layers. **План:
+** [actions-definitions-for-auto-ai](../../../../plans/actions-definitions-for-auto-ai.md). **Use-case:
+** [2-code-analysis](../../../../docs/use-cases/auto-ai/2-code-analysis.md).
 
 ## Priority
+
 80
 
 ## Triggers
+
 - architecture analysis
 - analyze architecture
 - project layers
@@ -13,6 +17,7 @@ Analyze project architecture and layers. **План:** [actions-definitions-for-
 ## Sub-actions
 
 ### 1. analyze-arch-scan
+
 Detect architectural boundaries and layers.
 
 **Input:** rootDir  
@@ -137,6 +142,7 @@ function shouldAllowDependency(from: string, to: string): boolean {
 ```
 
 ### 2. analyze-arch-detect-patterns
+
 Detect God objects, duplicated code, layer violations.
 
 **Input:** layers[], boundaries[], rootDir  

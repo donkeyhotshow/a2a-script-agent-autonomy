@@ -1,16 +1,20 @@
 # context-query
 
-Семантический поиск релевантных файлов по запросу. **План:** [actions-definitions-for-auto-ai](../../../../docs/actions-definitions-for-auto-ai.md).
+Семантический поиск релевантных файлов по запросу. **План:
+** [actions-definitions-for-auto-ai](../../../../docs/actions-definitions-for-auto-ai.md).
 
 ## Priority
+
 75
 
 ## Context
+
 ```json
 { "type": "search", "requires_embedding": true, "rag_enabled": true }
 ```
 
 ## Triggers
+
 - context query
 - query context
 - search context
@@ -21,6 +25,7 @@
 ## Sub-actions
 
 ### 1. query-parse
+
 Парсинг запроса, извлечение ключевых слов и намерения.
 
 **Input:** query  
@@ -107,6 +112,7 @@ export default async function parseQuery(input: {
 ```
 
 ### 2. query-search
+
 Поиск в индексе (RAG/семантический).
 
 **Input:** parsed_query, indexId?  
@@ -230,6 +236,7 @@ export default async function searchIndex(input: {
 ```
 
 ### 3. query-filter-results
+
 Фильтрация и пагинация результатов поиска.
 
 **Input:** search_results, topK?, minScore?, offset?  

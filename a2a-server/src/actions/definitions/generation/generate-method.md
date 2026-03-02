@@ -1,11 +1,15 @@
 # generate-method
 
-Генерация метода: добавление метода в класс. **План:** [actions-definitions-for-auto-ai](../../../../plans/actions-definitions-for-auto-ai.md). **Use-case:** [4-code-generation](../../../../docs/use-cases/auto-ai/4-code-generation.md).
+Генерация метода: добавление метода в класс. **План:
+** [actions-definitions-for-auto-ai](../../../../plans/actions-definitions-for-auto-ai.md). **Use-case:
+** [4-code-generation](../../../../docs/use-cases/auto-ai/4-code-generation.md).
 
 ## Priority
+
 75
 
 ## Triggers
+
 - generate method
 - add method
 - добавить метод
@@ -13,6 +17,7 @@
 ## Sub-actions
 
 ### 1. generate-method-analyze
+
 Parse target class and task to understand requirements.
 
 **Input:** targetFile, task, rootDir?  
@@ -87,6 +92,7 @@ export default async function analyzeMethod(input: { targetFile: string; task: s
 ```
 
 ### 2. generate-method-template
+
 Generate method code from template.
 
 **Input:** spec, targetFile, language?  
@@ -138,6 +144,7 @@ ${spec.body}
 ```
 
 ### 3. generate-method-apply
+
 Apply method to target class file.
 
 **Input:** methodCode, targetFile, rootDir?  
@@ -167,6 +174,7 @@ export default async function applyMethod(input: { methodCode: string; targetFil
 ```
 
 ### 4. generate-method-validate
+
 Validate generated method code.
 
 **Input:** methodCode, targetFile  
@@ -213,6 +221,7 @@ export default async function validateMethod(input: { methodCode: string; target
 ```
 
 ### 5. generate-method-test
+
 Generate unit test for the method.
 
 **Input:** spec, targetFile  

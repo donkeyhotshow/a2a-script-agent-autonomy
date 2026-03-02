@@ -13,18 +13,13 @@
 
 ### Настроить external-ai-hub на порту 11434
 
-
 ### Создать OllamaAdapter с promise-based интерфейсом
-
 
 ### Реализовать polling механизм
 
-
 ### Обновить LLM сервис для использования асинхронного режима
 
-
 ### Добавить конфигурацию таймаутов и интервалов
-
 
 ### Написать тесты
 
@@ -33,21 +28,26 @@
 ## Текущее состояние
 
 ### external-ai-hub (proxy.py)
+
 Уже имеет promise-based систему:
+
 - **Порт**: 11434 (где ожидается Ollama)
 - **Target**: 11435 (реальная Ollama)
 - **Promise режим**: `?promise=1` в запросе
 - **API для проверки статуса**:
-  - `GET /promise/<promise_id>` — статус промиса
-  - `GET /promise/<promise_id>/response` — получить ответ
+    - `GET /promise/<promise_id>` — статус промиса
+    - `GET /promise/<promise_id>/response` — получить ответ
 
 ### a2a-server (llm-adapter.ts)
+
 Текущая реализация:
+
 - Синхронный вызов OpenAI API
 - Блокирующий await fetch()
 - Нет интеграции с external-ai-hub
 
 ### Проблема
+
 - При запросе к Ollama сервер **зависает** на время генерации
 - Нет асинхронного режима
 - Нет polling механизма
@@ -57,6 +57,7 @@
 ## Цель
 
 Создать интеграцию, которая:
+
 1. Отправляет запросы в external-ai-hub с `?promise=1`
 2. Возвращает **promiseId** сразу (не блокируется)
 3. Периодически **ping-ует** external-ai-hub на статус
@@ -359,13 +360,13 @@ POLL_TIMEOUT_MS=120000
 
 ## Файлы для создания/изменения
 
-| Файл | Изменение |
-|------|-----------|
-| `src/services/ollama-adapter.ts` | **Создать** - основной адаптер |
-| `src/services/promise-pool.ts` | **Создать** - пул промисов |
-| `src/services/llm-adapter.ts` | **Изменить** - добавить Ollama |
-| `.env.example` | **Изменить** - добавить переменные |
-| `tests/ollama-adapter.test.ts` | **Создать** - тесты |
+| Файл                             | Изменение                          |
+|----------------------------------|------------------------------------|
+| `src/services/ollama-adapter.ts` | **Создать** - основной адаптер     |
+| `src/services/promise-pool.ts`   | **Создать** - пул промисов         |
+| `src/services/llm-adapter.ts`    | **Изменить** - добавить Ollama     |
+| `.env.example`                   | **Изменить** - добавить переменные |
+| `tests/ollama-adapter.test.ts`   | **Создать** - тесты                |
 
 ---
 
@@ -432,7 +433,9 @@ curl -X POST http://localhost:3000/api/v1/requests \
 ---
 
 ## Дата
+
 2026-02-24
 
 ## Статус
+
 Черновик для обсуждения

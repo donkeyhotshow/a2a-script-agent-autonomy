@@ -1,13 +1,16 @@
 # ai-generate
 
-Generic AI-based code generation. Priority: 15. **План:** [actions-definitions-for-auto-ai](../../../../docs/actions-definitions-for-auto-ai.md).
+Generic AI-based code generation. Priority: 15. **План:
+** [actions-definitions-for-auto-ai](../../../../docs/actions-definitions-for-auto-ai.md).
 
 ## Context
+
 ```json
 { "type": "generation", "llm_required": true }
 ```
 
 ## Triggers
+
 - generate with ai
 - ai generate
 - create with ai
@@ -17,6 +20,7 @@ Generic AI-based code generation. Priority: 15. **План:** [actions-definitio
 ## Sub-actions
 
 ### 1. ai-generate-prompt
+
 Построение промпта генерации из задачи и контекста.
 
 **Input:** task, context?, language?, framework?  
@@ -128,6 +132,7 @@ Provide the generated code with:
 ```
 
 ### 2. ai-generate-llm
+
 Вызов LLM для генерации кода.
 
 **Input:** prompt, options?  
@@ -389,6 +394,7 @@ function getExtension(language: string): string {
 ```
 
 ### 3. ai-generate-apply
+
 Опциональное применение сгенерированного кода (с подтверждением).
 
 **Input:** draft, files?, confirm?, dryRun?  

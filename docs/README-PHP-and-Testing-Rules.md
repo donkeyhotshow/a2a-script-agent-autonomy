@@ -2,16 +2,19 @@
 
 ## Обзор
 
-Этот набор правил расширяет возможности ESLint для проверки качества кода PHP файлов, тестов и конфигурационных файлов в проекте.
+Этот набор правил расширяет возможности ESLint для проверки качества кода PHP файлов, тестов и конфигурационных файлов в
+проекте.
 
 ## Категории правил
 
 ### PHP Rules
 
 #### `php-code-standards`
+
 Проверяет соблюдение стандартов PHP кода согласно PSR и Laravel conventions.
 
 **Проверки:**
+
 - Правильное именование классов, методов, констант (PSR-1)
 - Использование namespace
 - Архитектурные паттерны Laravel
@@ -20,9 +23,11 @@
 **ADR:** ADR 1001
 
 #### `php-security-standards`
+
 Правила безопасности для PHP кода (OWASP Top 10, Laravel Security).
 
 **Проверки:**
+
 - Защита от SQL инъекций
 - Валидация входных данных
 - Безопасное хеширование паролей
@@ -33,9 +38,11 @@
 **ADR:** ADR 403
 
 #### `php-testing-standards`
+
 Стандарты для PHP тестов (PHPUnit, Laravel Testing).
 
 **Проверки:**
+
 - Правильное именование классов и методов тестов
 - Использование data providers
 - Database transactions в feature тестах
@@ -45,9 +52,11 @@
 **ADR:** ADR 2004
 
 #### `database-layer-standards`
+
 Стандарты работы с базой данных.
 
 **Проверки:**
+
 - Структура миграций
 - Foreign key constraints
 - Индексы в БД
@@ -60,9 +69,11 @@
 ### Testing Rules
 
 #### `typescript-testing-standards`
+
 Стандарты для TypeScript тестов (Vitest, Playwright, E2E).
 
 **Проверки:**
+
 - Правильное именование файлов тестов
 - Использование describe/it блоков
 - Setup/teardown паттерны
@@ -74,9 +85,11 @@
 **ADR:** ADR 2004
 
 #### `javascript-testing-standards`
+
 Стандарты для JavaScript тестов (Jest, Performance, API).
 
 **Проверки:**
+
 - Структура тестов
 - Асинхронное тестирование
 - API contracts и schemas
@@ -89,9 +102,11 @@
 ### Configuration Rules
 
 #### `configuration-files-standards`
+
 Стандарты для конфигурационных файлов.
 
 **Проверки:**
+
 - Vite конфигурация оптимизации
 - Vitest изоляция тестов
 - Playwright setup

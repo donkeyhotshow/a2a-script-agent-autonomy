@@ -1,16 +1,20 @@
 # context-scan
 
-Scan workspace: структура, технологии, зависимости. **План:** [actions-definitions-for-auto-ai](../../../../docs/actions-definitions-for-auto-ai.md).
+Scan workspace: структура, технологии, зависимости. **План:
+** [actions-definitions-for-auto-ai](../../../../docs/actions-definitions-for-auto-ai.md).
 
 ## Priority
+
 80
 
 ## Context
+
 ```json
 { "type": "scan", "requires_file_system": true }
 ```
 
 ## Triggers
+
 - context scan
 - scan context
 - index files
@@ -20,6 +24,7 @@ Scan workspace: структура, технологии, зависимости
 ## Sub-actions
 
 ### 1. context-scan-files
+
 Обход проекта и сбор списка файлов с базовой метаинформацией.
 
 **Input:** rootDir, ignore[]  
@@ -94,6 +99,7 @@ export default async function scanFiles(input: {
 ```
 
 ### 2. context-scan-detect-tech
+
 Определение структуры, технологий и зависимостей из списка файлов.
 
 **Input:** files[]  
@@ -196,6 +202,7 @@ export default async function detectTech(input: {
 ```
 
 ### 3. context-scan-filter-relevant
+
 Фильтрация релевантных файлов для контекста (исключение нерелевантных).
 
 **Input:** files[], focus?  

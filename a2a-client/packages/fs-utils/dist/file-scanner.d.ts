@@ -13,6 +13,7 @@ export interface FileScannerConfig {
         stats: ScanStats;
     }) => void;
 }
+
 export interface ScanStats {
     totalFiles: number;
     totalDirs: number;
@@ -23,17 +24,20 @@ export interface ScanStats {
         error: string;
     }>;
 }
+
 export interface ScannedFile {
     path: string;
     relativePath: string;
     name: string;
     ext: string;
 }
+
 export interface ScanResult {
     files: ScannedFile[];
     stats: ScanStats;
     rootPath: string;
 }
+
 export declare class FileScanner {
     rootPath: string;
     includePatterns: string[];
@@ -43,12 +47,20 @@ export declare class FileScanner {
     onProgress: FileScannerConfig['onProgress'];
     private includeMatcher;
     private excludeMatcher;
+
     constructor(config?: FileScannerConfig);
+
     scan(dir?: string, options?: FileScannerConfig): Promise<ScanResult>;
+
     private walkDirectory;
+
     shouldIncludeFile(relativePath: string): boolean;
+
     shouldExcludeFile(relativePath: string): boolean;
+
     shouldExcludeDir(relativePath: string): boolean;
+
     static scan(dir: string, options?: FileScannerConfig): Promise<ScanResult>;
+
     scanByExtension(dir: string, extensions: string | string[]): Promise<ScanResult>;
 }

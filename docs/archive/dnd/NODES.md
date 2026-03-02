@@ -5,14 +5,16 @@
 - **Description:** Graph nodes, state machines, flow control points
 
 ## Properties
-| Property | Type | Description |
-|----------|------|-------------|
-| id | string | Unique identifier |
-| name | string | Node name |
-| path | string | File path |
-| description | string | Node description |
+
+| Property    | Type   | Description       |
+|-------------|--------|-------------------|
+| id          | string | Unique identifier |
+| name        | string | Node name         |
+| path        | string | File path         |
+| description | string | Node description  |
 
 ## Example
+
 ```
 json
 {
@@ -25,5 +27,6 @@ json
 ```
 
 ## Related Types
+
 - Connected to: AGENTS, ACTIONS, SERVICES
 - Can connect to: ACTIONS, NODES, TERMINATORS

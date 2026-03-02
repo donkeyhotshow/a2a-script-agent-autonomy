@@ -3,15 +3,18 @@
 ## ✅ Созданные файлы
 
 ### 1. **no-invalid-classes.cjs**
+
 Обнаруживает неактуальные классы в Vue файлах.
 
 **Что проверяет:**
+
 - Классы, которых нет в Tailwind теме
 - Классы, которых нет в подключенных CSS файлах (сканирует `features/`)
 - Поддерживает модификаторы: `sm:`, `md:`, `lg:`, `xl:`, `2xl:`, `hover:`, `focus:`, `active:`, `dark:`
 - Корректно обрабатывает CSS переменные: `rounded-[var(--radius-button)]`
 
 **Примеры:**
+
 ```vue
 <!-- ❌ Ошибка -->
 <div class="unknown-custom-class">
@@ -24,14 +27,17 @@
 ---
 
 ### 2. **require-responsive-classes.cjs**
+
 Проверяет полноту responsive и dark mode классов.
 
 **Что проверяет:**
+
 - Наличие responsive классов для breakpoints (sm, md, lg, xl, 2xl)
 - Наличие dark mode вариантов для цветовых классов
 - Достаточность стилизации (фон → padding, border → shadow)
 
 **Примеры:**
+
 ```vue
 <!-- ❌ Предупреждение: нет dark mode -->
 <div class="bg-white text-gray-900">
@@ -49,15 +55,18 @@
 ---
 
 ### 3. **suggest-styling-improvements.cjs** (ЭКСПЕРИМЕНТАЛЬНОЕ)
+
 Интеллектуально предлагает улучшения стилизации.
 
 **Что проверяет:**
+
 - Определяет тип элемента (card, button, input, container, heading, link)
 - Предлагает недостающие стили на основе UI паттернов
 - Проверяет контраст цветов
 - Анализирует интерактивность и доступность
 
 **Примеры:**
+
 ```vue
 <!-- ⚠️ Предупреждение: кнопка без hover -->
 <button class="bg-blue-500 text-white px-4 py-2">
@@ -77,7 +86,9 @@
 ## 📝 Обновленные файлы
 
 ### **index.cjs**
+
 Зарегистрированы новые правила:
+
 ```js
 'no-invalid-classes': noInvalidClasses,
 'require-responsive-classes': requireResponsiveClasses,
@@ -85,6 +96,7 @@
 ```
 
 ### **README-Styling-Rules.md**
+
 Полная документация с примерами использования и конфигурации.
 
 ---
@@ -92,11 +104,13 @@
 ## 🧪 Тестирование
 
 ### Протестировано на реальных файлах:
+
 - ✅ `features/shared/design-system/resources/js/components/BaseButton.vue`
 - ✅ `features/shared/design-system/resources/js/components/BaseCard.vue`
 - ✅ `features/business/auth/resources/js/components/LoginForm.vue`
 
 ### Команды для тестирования:
+
 ```bash
 # Проверка конкретного файла
 npx eslint features/shared/design-system/resources/js/components/BaseCard.vue
@@ -113,6 +127,7 @@ npx eslint "features/**/resources/**/*.vue" --quiet
 ## ⚙️ Конфигурация
 
 ### Рекомендуемая настройка в `.eslintrc.cjs`:
+
 ```js
 module.exports = {
   plugins: ['inertia'],
@@ -134,19 +149,19 @@ module.exports = {
 ## 🎯 Ключевые особенности
 
 1. **Минимальные ложные срабатывания**
-   - Правила настроены на умеренность
-   - Учитывают контекст элемента
-   - Не срабатывают на CSS переменные
+    - Правила настроены на умеренность
+    - Учитывают контекст элемента
+    - Не срабатывают на CSS переменные
 
 2. **Поддержка проекта**
-   - Работают с Tailwind CSS
-   - Поддерживают CSS переменные вида `[var(--*)]`
-   - Сканируют пользовательские CSS в `features/`
+    - Работают с Tailwind CSS
+    - Поддерживают CSS переменные вида `[var(--*)]`
+    - Сканируют пользовательские CSS в `features/`
 
 3. **Производительность**
-   - Эффективное кэширование
-   - Минимальное количество проверок
-   - Быстрая работа на больших проектах
+    - Эффективное кэширование
+    - Минимальное количество проверок
+    - Быстрая работа на больших проектах
 
 ---
 

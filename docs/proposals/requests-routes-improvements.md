@@ -4,21 +4,25 @@
 
 ### Что делает модуль
 
-**Requests Routes** ([`a2a-server/src/routes/requests.routes.ts`](a2a-server/src/routes/requests.routes.ts:1)) — API маршруты для асинхронной обработки запросов с использованием promiseId. Предоставляет RESTful интерфейс для создания запросов, отслеживания статуса, получения результатов и управления очередью запросов.
+**Requests Routes** ([`a2a-server/src/routes/requests.routes.ts`](a2a-server/src/routes/requests.routes.ts:1)) — API
+маршруты для асинхронной обработки запросов с использованием promiseId. Предоставляет RESTful интерфейс для создания
+запросов, отслеживания статуса, получения результатов и управления очередью запросов.
 
 #### Текущие эндпоинты:
 
 1. **Создание и получение:**
-   - [`POST /api/v1/requests`](a2a-server/src/routes/requests.routes.ts:17) — создать новый запрос и получить promiseId
-   - [`GET /api/v1/requests/:promiseId/status`](a2a-server/src/routes/requests.routes.ts:59) — получить статус запроса
-   - [`GET /api/v1/requests/:promiseId/result`](a2a-server/src/routes/requests.routes.ts:85) — получить полный результат запроса
+    - [`POST /api/v1/requests`](a2a-server/src/routes/requests.routes.ts:17) — создать новый запрос и получить promiseId
+    - [`GET /api/v1/requests/:promiseId/status`](a2a-server/src/routes/requests.routes.ts:59) — получить статус запроса
+    - [`GET /api/v1/requests/:promiseId/result`](a2a-server/src/routes/requests.routes.ts:85) — получить полный
+      результат запроса
 
 2. **Управление:**
-   - [`DELETE /api/v1/requests/:promiseId`](a2a-server/src/routes/requests.routes.ts:136) — отменить запрос
-   - [`DELETE /api/v1/requests/queue/pending`](a2a-server/src/routes/requests.routes.ts:119) — отменить все ожидающие запросы
+    - [`DELETE /api/v1/requests/:promiseId`](a2a-server/src/routes/requests.routes.ts:136) — отменить запрос
+    - [`DELETE /api/v1/requests/queue/pending`](a2a-server/src/routes/requests.routes.ts:119) — отменить все ожидающие
+      запросы
 
 3. **Мониторинг:**
-   - [`GET /api/v1/requests/queue/stats`](a2a-server/src/routes/requests.routes.ts:162) — получить статистику очереди
+    - [`GET /api/v1/requests/queue/stats`](a2a-server/src/routes/requests.routes.ts:162) — получить статистику очереди
 
 #### Архитектура:
 
@@ -35,6 +39,7 @@
 **Текущее:** Минимальная проверка `context` в теле запроса
 
 **Предложения:**
+
 - [x] Добавить Zod схемы для всех request body
 - [x] Валидация `promiseId` параметра (формат: `req_*`)
 - [x] Валидация структуры context
@@ -46,6 +51,7 @@
 **Текущее:** Только аутентификация, нет проверки ownership
 
 **Предложения:**
+
 - [x] Проверка что запрос принадлежит клиенту
 - [x] Проверка доступа к context проекта
 - [x] Role-based access control (RBAC)
@@ -55,6 +61,7 @@
 **Текущее:** Базовое получение stats и cancel all
 
 **Предложения:**
+
 - [x] Пагинация списка запросов
 - [x] Фильтрация по статусу, дате, clientId
 - [x] Batch операции (bulk cancel, bulk delete)
@@ -65,6 +72,7 @@
 **Текущее:** Базовый error handling через `next(error)`
 
 **Предложения:**
+
 - [x] Кастомные ошибки для каждого типа (NotFound, Validation, Timeout)
 - [x] Unified error response format
 - [x] Логирование с контекстом (correlation ID)
@@ -75,6 +83,7 @@
 **Текущее:** Не реализовано
 
 **Предложения:**
+
 - [x] Rate limit на уровне маршрутов
 - [x] Ограничение на создание запросов в минуту
 - [x] Квота на размер queue для клиента
@@ -84,6 +93,7 @@
 **Текущее:** Базовое логирование
 
 **Предложения:**
+
 - [x] Метрики времени обработки
 - [x] Метрики по статусам (completed/failed/pending)
 - [x] Логирование времени выполнения
@@ -95,19 +105,19 @@
 
 ### Управление запросами
 
-| Метод | Путь | Описание | Тело запроса |
-|-------|------|----------|--------------|
-| POST | `/api/v1/requests` | Создать запрос | `{ context, message?, codeBlocks?, priority? }` |
-| GET | `/api/v1/requests/:promiseId/status` | Получить статус | — |
-| GET | `/api/v1/requests/:promiseId/result` | Получить результат | — |
-| DELETE | `/api/v1/requests/:promiseId` | Отменить запрос | — |
+| Метод  | Путь                                 | Описание           | Тело запроса                                    |
+|--------|--------------------------------------|--------------------|-------------------------------------------------|
+| POST   | `/api/v1/requests`                   | Создать запрос     | `{ context, message?, codeBlocks?, priority? }` |
+| GET    | `/api/v1/requests/:promiseId/status` | Получить статус    | —                                               |
+| GET    | `/api/v1/requests/:promiseId/result` | Получить результат | —                                               |
+| DELETE | `/api/v1/requests/:promiseId`        | Отменить запрос    | —                                               |
 
 ### Управление очередью
 
-| Метод | Путь | Описание | Тело запроса |
-|-------|------|----------|--------------|
-| DELETE | `/api/v1/requests/queue/pending` | Отменить все pending | — |
-| GET | `/api/v1/requests/queue/stats` | Статистика очереди | — |
+| Метод  | Путь                             | Описание             | Тело запроса |
+|--------|----------------------------------|----------------------|--------------|
+| DELETE | `/api/v1/requests/queue/pending` | Отменить все pending | —            |
+| GET    | `/api/v1/requests/queue/stats`   | Статистика очереди   | —            |
 
 ### Примеры запросов
 
@@ -147,6 +157,7 @@ curl http://localhost:3000/api/v1/requests/queue/stats \
 ### Формат ответа
 
 Успешный ответ:
+
 ```
 json
 {
@@ -156,6 +167,7 @@ json
 ```
 
 Ошибка:
+
 ```
 json
 {
@@ -178,15 +190,16 @@ json
 
 ### Внутренние сервисы
 
-| Сервис | Путь | Назначение |
-|--------|------|------------|
-| requestService | [`services/request.service.ts`](a2a-server/src/services/request.service.ts) | CRUD операции для запросов |
-| authenticate | [`middleware/auth.middleware.ts`](a2a-server/src/middleware/auth.middleware.ts) | Аутентификация |
-| logger | [`utils/logger.ts`](a2a-server/src/utils/logger.ts) | Логирование |
+| Сервис         | Путь                                                                            | Назначение                 |
+|----------------|---------------------------------------------------------------------------------|----------------------------|
+| requestService | [`services/request.service.ts`](a2a-server/src/services/request.service.ts)     | CRUD операции для запросов |
+| authenticate   | [`middleware/auth.middleware.ts`](a2a-server/src/middleware/auth.middleware.ts) | Аутентификация             |
+| logger         | [`utils/logger.ts`](a2a-server/src/utils/logger.ts)                             | Логирование                |
 
 ### База данных (Prisma)
 
-- **Request** — модель запроса с полями: id, promiseId, clientId, status, priority, context, message, codeBlocks, result, error, createdAt, startedAt, completedAt
+- **Request** — модель запроса с полями: id, promiseId, clientId, status, priority, context, message, codeBlocks,
+  result, error, createdAt, startedAt, completedAt
 - **RequestStatus** — enum: pending, processing, completed, failed, cancelled
 
 ---
@@ -196,48 +209,48 @@ json
 ### Фаза 1: Улучшение стабильности
 
 1. **Валидация** (приоритет: высокий)
-   - [ ] Добавить Zod схемы для всех endpoints
-   - [ ] Middleware для валидации promiseId
-   - [ ] Centralized error handling
-   - [ ] Валидация codeBlocks
+    - [ ] Добавить Zod схемы для всех endpoints
+    - [ ] Middleware для валидации promiseId
+    - [ ] Centralized error handling
+    - [ ] Валидация codeBlocks
 
 2. **Проверка прав** (приоритет: высокий)
-   - [ ] Middleware для проверки ownership запроса
-   - [ ] Проверка что client имеет доступ к context
+    - [ ] Middleware для проверки ownership запроса
+    - [ ] Проверка что client имеет доступ к context
 
 ### Фаза 2: Расширение функциональности
 
 3. **Список запросов** (приоритет: средний)
-   - [ ] GET /api/v1/requests — список запросов клиента
-   - [ ] Пагинация (limit, offset)
-   - [ ] Фильтрация по статусу, дате
+    - [ ] GET /api/v1/requests — список запросов клиента
+    - [ ] Пагинация (limit, offset)
+    - [ ] Фильтрация по статусу, дате
 
 4. **Batch операции** (приоритет: средний)
-   - [ ] Bulk cancel по списку promiseIds
-   - [ ] Bulk delete завершённых запросов
+    - [ ] Bulk cancel по списку promiseIds
+    - [ ] Bulk delete завершённых запросов
 
 5. **Приоритизация** (приоритет: средний)
-   - [ ] PATCH /api/v1/requests/:promiseId/priority — изменить приоритет
+    - [ ] PATCH /api/v1/requests/:promiseId/priority — изменить приоритет
 
 ### Фаза 3: Надёжность
 
 6. **Retry и timeout** (приоритет: средний)
-   - [ ] Конфигурируемый timeout для запросов
-   - [ ] Retry policy в client SDK
+    - [ ] Конфигурируемый timeout для запросов
+    - [ ] Retry policy в client SDK
 
 7. **Мониторинг** (приоритет: низкий)
-   - [ ] Метрики времени обработки
-   - [ ] Alerting при высоком failure rate
+    - [ ] Метрики времени обработки
+    - [ ] Alerting при высоком failure rate
 
 ### Фаза 4: Оптимизация
 
 8. **Кэширование** (приоритет: средний)
-   - [ ] Кэш статусов для частых проверок
-   - [ ] Инвалидация кэша при обновлении
+    - [ ] Кэш статусов для частых проверок
+    - [ ] Инвалидация кэша при обновлении
 
 9. **Производительность** (приоритет: средний)
-   - [ ] Оптимизация запросов к БД
-   - [ ] Индексы для часто используемых полей (promiseId, status, clientId)
+    - [ ] Оптимизация запросов к БД
+    - [ ] Индексы для часто используемых полей (promiseId, status, clientId)
 
 ---
 
