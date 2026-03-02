@@ -2,7 +2,11 @@
 
 ## Задача
 
-**Использовать существующую систему управления документацией в `.clinerules/` для обновления документации проекта.**
+**Создание и управление задачами для обновления документации проекта. ЗАДАЧА - ЭТО СВЯТОЕ!**
+
+## Текущий фокус
+
+**Сейчас мы работаем ТОЛЬКО над созданием задач. Задачи - это основа всего процесса.**
 
 ## Контекст
 
@@ -14,52 +18,54 @@
 
 ## Приоритетные действия
 
-### 1. Анализ текущей документации
+### 1. Создание задач для документации
+
+**ЗАДАЧИ - ЭТО СВЯТОЕ! Сейчас мы создаем задачи, которые будут основой всего процесса.**
 
 ```bash
-# Запустить анализ существующей документации
+# Генерация всех задач для документации
+node .clinerules/scripts/task-generator.js generate-all
+
+# Создание конкретной задачи на обновление документа
+node .clinerules/scripts/task-generator.js generate-update docs/API-REFERENCE.md "Update API endpoints and examples"
+
+# Создание задачи на создание нового документа
+node .clinerules/scripts/task-generator.js generate-create docs/ARCHITECTURE.md "Create comprehensive system architecture documentation"
+
+# Просмотр всех созданных задач
+node .clinerules/scripts/task-generator.js list
+
+# Генерация отчета по задачам
+node .clinerules/scripts/task-generator.js report
+```
+
+### 2. Управление задачами
+
+```bash
+# Выполнение конкретной задачи
+node .clinerules/scripts/task-manager.js execute task-1
+
+# Выполнение всех задач
+node .clinerules/scripts/task-manager.js execute-all
+
+# Просмотр статуса задач
+node .clinerules/scripts/task-manager.js list
+
+# Получение статистики по задачам
+node .clinerules/scripts/task-manager.js stats
+```
+
+### 3. Интеграция с существующей системой
+
+```bash
+# Запуск workflow engine для управления процессом
 node .clinerules/scripts/workflow-engine.js --start --priority medium
 
-# Проверить статус
+# Проверка статуса workflow
 node .clinerules/scripts/workflow-engine.js --status
 
-# Получить отчет
+# Генерация отчета
 node .clinerules/scripts/workflow-engine.js --report --format json
-```
-
-### 2. Обновление устаревших документов
-
-```bash
-# Пометить документ как устаревший
-node .clinerules/scripts/cli.js outdated docs/old-document.md
-
-# Создать новую версию
-node .clinerules/scripts/cli.js create docs/new-document.md "Content"
-
-# Запустить ревью
-node .clinerules/scripts/cli.js start 123456
-
-# Завершить ревью
-node .clinerules/scripts/cli.js complete 123456 "Review completed"
-```
-
-### 3. Создание недостающей документации
-
-```bash
-# Создать новую документацию
-node .clinerules/scripts/cli.js create docs/api-guide.md "API Documentation"
-node .clinerules/scripts/cli.js create docs/user-guide.md "User Guide"
-node .clinerules/scripts/cli.js create docs/quick-start.md "Quick Start Guide"
-```
-
-### 4. Контроль качества
-
-```bash
-# Проверить качество документации
-node .clinerules/scripts/dashboard.js --render
-
-# Сгенерировать отчет о качестве
-node .clinerules/scripts/workflow-engine.js --report --format markdown
 ```
 
 ## Конкретные документы для обновления
@@ -80,20 +86,25 @@ node .clinerules/scripts/workflow-engine.js --report --format markdown
 
 ## Этапы выполнения
 
-### Этап 1: Диагностика (1 день)
-- Запустить анализ документации
-- Выявить устаревшие и недостающие документы
-- Определить приоритеты обновления
+### Этап 1: Создание задач (СЕЙЧАС)
+**ЗАДАЧИ - ЭТО СВЯТОЕ! Сейчас мы создаем все необходимые задачи.**
 
-### Этап 2: Обновление (3 дня)
-- Обновить устаревшие документы
-- Создать недостающую документацию
-- Запустить ревью процесс
+- Генерация задач для всех устаревших документов
+- Создание задач для недостающей документации
+- Классификация задач по приоритетам (high, medium, low)
+- Определение зависимостей между задачами
 
-### Этап 3: Контроль качества (1 день)
-- Проверить качество обновленной документации
-- Сгенерировать отчеты
-- Убедиться в полноте обновления
+### Этап 2: Выполнение задач (После создания)
+- Выполнение high-priority задач в первую очередь
+- Пошаговое выполнение medium-priority задач
+- Финальное выполнение low-priority задач
+- Контроль качества на каждом этапе
+
+### Этап 3: Интеграция и контроль (Финальный этап)
+- Интеграция с существующей системой
+- Проверка качества выполненных задач
+- Генерация финальных отчетов
+- Убеждение в полноте обновления
 
 ## Команды для использования системы
 
