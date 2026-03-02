@@ -154,12 +154,82 @@ export class QueryUnderstandingEngine {
 
     private _extractEntities(query: string, terms: string[]): IntentResult['entities'] {
         const entities: IntentResult['entities'] = {frameworks: [], fileTypes: [], symbols: [], namespaces: []};
+        const q = query.toLowerCase();
+
+        // Detect frameworks
         ['laravel', 'vue', 'react', 'symfony', 'django', 'rails'].forEach((fw) => {
-            if (query.toLowerCase().includes(fw)) entities.frameworks.push(fw);
+            if (q.includes(fw)) entities.frameworks.push(fw);
         });
-        ['php', 'js', 'ts', 'vue', 'py', 'rb', 'go', 'rs'].forEach((ext) => {
-            if (query.includes('.' + ext) || query.includes(ext + ' ')) entities.fileTypes.push(ext);
+
+        // Smart file type detection based on query context
+        const fileTypePatterns: Record<string, string[]> = {
+            // Frontend/UI
+            'component': ['vue', 'ts', 'js'],
+            'ui': ['vue', 'ts', 'css', 'scss'],
+            'style': ['css', 'scss', 'less', 'vue'],
+            'template': ['vue', 'html', 'blade.php'],
+            'frontend': ['vue', 'ts', 'js', 'css'],
+            // Backend/API
+            'api': ['php', 'ts', 'js'],
+            'controller': ['php', 'ts', 'js'],
+            'model': ['php', 'ts', 'js'],
+            'service': ['php', 'ts', 'js'],
+            'middleware': ['php', 'ts', 'js'],
+            'route': ['php', 'ts', 'js', 'json'],
+            'endpoint': ['php', 'ts', 'js', 'json'],
+            // Documentation
+            'docs': ['md', 'mdx'],
+            'documentation': ['md', 'mdx'],
+            'readme': ['md'],
+            'guide': ['md'],
+            // Tests
+            'test': ['ts', 'js', 'php'],
+            'spec': ['ts', 'js'],
+            'testing': ['ts', 'js', 'php'],
+            // Config
+            'config': ['json', 'yaml', 'yml', 'ts', 'js'],
+            'configuration': ['json', 'yaml', 'yml', 'ts', 'js'],
+            // Database
+            'migration': ['php', 'ts', 'sql'],
+            'migrations': ['php', 'ts', 'sql'],
+            'schema': ['prisma', 'sql', 'php'],
+            'database': ['php', 'sql', 'prisma'],
+            'db': ['php', 'sql', 'prisma'],
+            // Scripts
+            'script': ['js', 'ts', 'sh', 'ps1'],
+            'build': ['json', 'js', 'ts'],
+            'deploy': ['sh', 'yml', 'yaml'],
+            // Code patterns
+            'function': ['php', 'ts', 'js', 'py'],
+            'class': ['php', 'ts', 'js', 'py'],
+            'interface': ['ts', 'php'],
+            'type': ['ts', 'php'],
+            'enum': ['ts', 'php'],
+            'trait': ['php'],
+            // Docker/DevOps
+            'docker': ['dockerfile', 'yml', 'yaml'],
+            'ci': ['yml', 'yaml'],
+        };
+
+        for (const [keyword, types] of Object.entries(fileTypePatterns)) {
+            if (q.includes(keyword)) {
+                for (const type of types) {
+                    if (!entities.fileTypes.includes(type)) {
+                        entities.fileTypes.push(type);
+                    }
+                }
+            }
+        }
+
+        // Also check for explicit extensions in query
+        ['php', 'js', 'ts', 'vue', 'py', 'rb', 'go', 'rs', 'md', 'json', 'yml', 'yaml', 'sql'].forEach((ext) => {
+            if (q.includes('.' + ext) || q.includes(ext + ' file') || q.includes(ext + ' files')) {
+                if (!entities.fileTypes.includes(ext)) {
+                    entities.fileTypes.push(ext);
+                }
+            }
         });
+
         entities.symbols = terms.filter((t) => t.length > 3 && /^[A-Z]/.test(t.charAt(0).toUpperCase()));
         return entities;
     }

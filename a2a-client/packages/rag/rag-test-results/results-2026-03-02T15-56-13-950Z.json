@@ -1,0 +1,618 @@
+[
+  {
+    "query": "backend architecture API services",
+    "count": 10,
+    "results": [
+      {
+        "file": "docs/INDEX.md",
+        "score": 161.47427210922598,
+        "snippet": "### 🎯 **Разработка** (Developers)\n- [👨‍💻 Backend разработчик](guides/developer/)\n  - [Laravel гайд](guides/developer/coding-standards.md)\n  - [API разработка](api/README.md)\n  - [База данных](knowl"
+      },
+      {
+        "file": "docs/INDEX.md",
+        "score": 145.4140573812408,
+        "snippet": "#### ADR - Архитектурные решения (architecture/adr/)\n| № | Название | Статус | Дата |\n|---|----------|--------|------|\n| [001](architecture/adr/001-modular-architecture.md) | Модульная архитектура | ✅"
+      },
+      {
+        "file": "docs/knowledge/README.md",
+        "score": 139.66446529905542,
+        "snippet": "### По ролям разработчиков\n- **🎨 Дизайнеры**: [UI/UX Визуализации](../features/ui-kit/visualization.md), Дизайн-система, [Доступность](../features/multi-language/i18n-documentation-guide.md)\n- **👨‍\ud83d"
+      },
+      {
+        "file": "docs/operations/project-timeline-diagrams.md",
+        "score": 136.816921178335,
+        "snippet": "## 🎯 Фазы проекта (по методологии)\n\n```mermaid\njourney\n    title Фазы развития проекта e-commerce платформы\n    section Инициализация\n        Анализ требований: 5: Product Owner, Tech Lead\n        Ар"
+      },
+      {
+        "file": "docs/architecture/adr/1103-data-flow-domain-alignment-framework.md",
+        "score": 135.95392745407645,
+        "snippet": "## Автор\r\nSystem, Frontend Architecture Team, Backend Architecture Team"
+      },
+      {
+        "file": "docs/architecture/adr/2000-development-principles-overview.md",
+        "score": 132.92856447513088,
+        "snippet": "##### 15. **API-First Design** [ADR 404]\r\n**API как первооснова**\r\n- RESTful API с OpenAPI спецификациями\r\n- Versioning и rate limiting\r\n- Backend-for-frontend через Inertia.js\r\n- API contracts как do"
+      },
+      {
+        "file": "docs/architecture/diagrams/diagrams-overview.md",
+        "score": 127.4028868463797,
+        "snippet": "## 🎯 Общая архитектура системы\r\n\r\n```mermaid\r\ngraph TB\r\n    subgraph \"🌐 Frontend Layer\"\r\n        UI[Vue.js SPA]\r\n        PWA[Progressive Web App]\r\n        API[API Client Layer]\r\n    end\r\n\r\n    subgr"
+      },
+      {
+        "file": "docs/api/README.md",
+        "score": 125.34474083374741,
+        "snippet": "## Стандарты API Response\n\nВсе API эндпоинты возвращают унифицированные ответы согласно стандартам API (см. [реестр ADR](../../architecture/adr/README.md))."
+      },
+      {
+        "file": "docs/knowledge/technologies/javascript/fundamentals.md",
+        "score": 122.69618847378247,
+        "snippet": "### Layered Architecture\r\n\r\n```mermaid\r\ngraph TD\r\n    A[Views/Pages] --> B[Components]\r\n    B --> C[Composables]\r\n    C --> D[Stores]\r\n    C --> E[Services]\r\n    D --> F[API Layer]\r\n    E --> F\r\n    F"
+      },
+      {
+        "file": "docs/architecture/adr/500-ecommerce-domain-architecture.md",
+        "score": 121.68935111493366,
+        "snippet": "### Связанные ADR\r\n- **ADR 100**: [Laravel Structure](100-laravel-structure.md) - Backend architecture foundation\r\n- **ADR 550**: [Catalog Architecture](550-catalog-architecture.md) - Product domain d"
+      }
+    ]
+  },
+  {
+    "query": "authentication JWT login",
+    "count": 10,
+    "results": [
+      {
+        "file": "docs/testing/Level1-Authorization-Testing.md",
+        "score": 170.65045180853306,
+        "snippet": "### Backend Components\r\n- **User Model** - Role assignment, permission checking\r\n- **AppSwitcher Middleware** - Route-based app switching\r\n- **TemplateAuthorizationService** - Template access control\r"
+      },
+      {
+        "file": "docs/architecture/security-architecture.md",
+        "score": 168.0855782285208,
+        "snippet": "### Authentication\n- **Laravel Sanctum** - SPA authentication для API\n- **JWT tokens** - stateless authentication\n- **Refresh tokens** - продление сессий\n- **Multi-factor authentication** - дополнител"
+      },
+      {
+        "file": "features/business/auth/docs/TODO.md",
+        "score": 155.76026369641727,
+        "snippet": "### Безопасность\r\n- [ ] **Two-Factor Authentication** - Настройка 2FA\r\n- [ ] **JWT Tokens** - JWT токены\r\n- [ ] **Password Reset** - Сброс пароля\r\n- [ ] **Email Verification** - Верификация email\r\n- ["
+      },
+      {
+        "file": "docs/architecture/diagrams/data-flows.md",
+        "score": 141.85148586924552,
+        "snippet": "## 🔄 Процесс аутентификации пользователей\r\n\r\n```mermaid\r\nsequenceDiagram\r\n    participant U as User\r\n    participant F as Frontend\r\n    participant A as API Gateway\r\n    participant AS as Auth Servic"
+      },
+      {
+        "file": "features/business/auth/tests/Feature/RoleBasedAuthenticationTest.php",
+        "score": 141.61064600944349,
+        "snippet": "{\r\n\r\n    protected function setUp(): void\r\n    {\r\n        parent::setUp();\r\n\r\n        // Skip role setup as the entire test class is skipped\r\n        $this->markTestSkipped('Spatie Permission guard co"
+      },
+      {
+        "file": "docs/architecture/security-architecture.md",
+        "score": 134.66821033198258,
+        "snippet": "### API Gateway Layer\n```\n🚪 API Gateway Layer\n├── Authentication (JWT + MFA)\n├── Authorization (RBAC + ABAC)\n├── Input Validation (Sanitization)\n└── Request Filtering\n```"
+      },
+      {
+        "file": "features/business/auth/tests/Unit/Services/AppAuthServicesTest.php",
+        "score": 133.09387565579195,
+        "snippet": "{\r\n\r\n    private TwoFactorAuthenticationService $twoFactorService;\r\n    private ApiTokenService $apiTokenService;\r\n    private JwtService $jwtService;\r\n\r\n    protected function setUp(): void\r\n    {\r\n "
+      },
+      {
+        "file": "features/business/auth/tests/Unit/Services/AppAuthServicesTest.php",
+        "score": 132.83597047714832,
+        "snippet": "{\r\n        // Создаем тестового пользователя\r\n        $user = User::factory()->create([\r\n            'email' => 'jwt-test-' . time() . '@example.com'\r\n        ]);\r\n\r\n        // Генерируем JWT\r\n       "
+      },
+      {
+        "file": "features/business/auth/docs/TODO.md",
+        "score": 126.92871544760868,
+        "snippet": "### JWT Аутентификация\r\n```\r\nphp\r\nuse Features\\Auth\\Services\\Auth\\JwtService;\r\n\r\n$jwt = app(JwtService::class);\r\n$token = $jwt->generateToken($user);\r\n```"
+      },
+      {
+        "file": "features/business/auth/tests/Feature/RoleBasedAuthenticationTest.php",
+        "score": 126.01064600944349,
+        "snippet": "{\r\n        // Test registration\r\n        $userData = [\r\n            'name' => 'Test Guest User',\r\n            'email' => 'guest@example.com',\r\n            'password' => 'password123',\r\n            'pa"
+      }
+    ]
+  },
+  {
+    "query": "Vue components export",
+    "count": 10,
+    "results": [
+      {
+        "file": "docs/architecture/adr/1103-data-flow-domain-alignment-framework.md",
+        "score": 186.2205522183926,
+        "snippet": "#### Component Registry Pattern\r\n```typescript\r\n// Component registry for domain mapping\r\nexport const componentRegistry = {\r\n  // Business domain components\r\n  catalog: {\r\n    ProductCard: () => impo"
+      },
+      {
+        "file": "docs/architecture/vue-component-architecture.md",
+        "score": 144.12279496960878,
+        "snippet": "## Структура компонентов\n\nАктуальная структура (по результатам миграции 2026-01, ADR 903):\n\n```\nresources/js/\n├── components/\n│   ├── ui/                    # UI-компоненты (канонические, @/components"
+      },
+      {
+        "file": "docs/features/dynamic-content-localization.md",
+        "score": 137.45904757126527,
+        "snippet": "### В компонентах Vue.js\r\n\r\n```javascript\r\n// resources/js/components/ProductCard.vue\r\nexport default {\r\n  props: ['product'],\r\n  computed: {\r\n    translatedTitle() {\r\n      return this.product.transl"
+      },
+      {
+        "file": "docs/integrations/shipping-providers-integration.md",
+        "score": 135.62788299046912,
+        "snippet": "### Shipping Compound Components\nИнтеграция служб доставки с compound components architecture:\n\n```vue\n<!-- ShippingMethodSelector/index.ts - Compound Component -->\nexport { default as ShippingMethodS"
+      },
+      {
+        "file": "docs/architecture/components/component-files-mapping.md",
+        "score": 134.08871285426608,
+        "snippet": "### Frontend компоненты\n```\nresources/js/Admin/Catalog/Products/Index.vue\nresources/js/Admin/Catalog/Products/Create.vue\nresources/js/Admin/Catalog/Products/Edit.vue\nresources/js/Admin/Catalog/Product"
+      },
+      {
+        "file": "tsconfig.json",
+        "score": 130.64030824475196,
+        "snippet": "{\n  \"_comment\": \"todo(config): Review and optimize TypeScript configuration | todo(performance): Optimize type checking performance | todo(compatibility): Ensure compatibility with Vue 3 and ecosystem"
+      },
+      {
+        "file": "docs/architecture/components/component-files-mapping.md",
+        "score": 129.8887128542661,
+        "snippet": "### Frontend компоненты\n```\nresources/js/Components/Cart/CartIcon.vue\nresources/js/Components/Cart/CartDropdown.vue\nresources/js/Components/Cart/CartPage.vue\nresources/js/Components/Cart/CartItem.vue\n"
+      },
+      {
+        "file": "docs/architecture/components/component-files-mapping.md",
+        "score": 129.8887128542661,
+        "snippet": "### Frontend компоненты\n```\nresources/js/Pages/Catalog/Index.vue\nresources/js/Components/Catalog/ProductCard.vue\nresources/js/Components/Catalog/ProductGrid.vue\nresources/js/Components/Catalog/FilterP"
+      },
+      {
+        "file": "docs/architecture/components/component-files-mapping.md",
+        "score": 129.32059726483328,
+        "snippet": "### Shared компоненты\n```\nresources/js/Components/Shared/Modal.vue\nresources/js/Components/Shared/Button.vue\nresources/js/Components/Shared/Input.vue\nresources/js/Components/Shared/Select.vue\nresource"
+      },
+      {
+        "file": "docs/architecture/components/component-files-mapping.md",
+        "score": 127.08871285426608,
+        "snippet": "### Frontend компоненты\n```\nresources/js/Pages/Checkout/Index.vue\nresources/js/Components/Checkout/CheckoutForm.vue\nresources/js/Components/Checkout/PaymentForm.vue\nresources/js/Components/Checkout/Sh"
+      }
+    ]
+  },
+  {
+    "query": "database migrations",
+    "count": 10,
+    "results": [
+      {
+        "file": "scripts/detect/detect_invalid_namespaces.php",
+        "score": 194.85116410008004,
+        "snippet": "{\r\n    private string $basePath;\r\n    private string $outputPath;\r\n    private bool $fixMode = false;\r\n    private array $errors = [];\r\n    private array $fixed = [];\r\n    private int $filesScanned = "
+      },
+      {
+        "file": "docs/architecture/components/component-files-mapping.md",
+        "score": 148.50652011443913,
+        "snippet": "### Миграции\n```\ndatabase/migrations/2024_01_15_000000_create_products_table.php\ndatabase/migrations/2024_01_15_000001_create_categories_table.php\ndatabase/migrations/2024_01_15_000002_create_product_"
+      },
+      {
+        "file": "features/README.md",
+        "score": 146.879294664585,
+        "snippet": "### 🗄️ Database (`infrastructure/database/`)\n**Purpose:** Database management and migrations\n- **Scope:** Migrations, seeders, database utilities\n- **Key Components:** Migration files, Seeders, Datab"
+      },
+      {
+        "file": "features/infrastructure/cache/app/Providers/CacheServiceProvider.php",
+        "score": 131.2919169751676,
+        "snippet": "{\n        // Load routes\n        $this->loadRoutesFrom(__DIR__.'/../../routes/web.php');\n        $this->loadRoutesFrom(__DIR__.'/../../routes/api.php');\n\n        // Publish configuration\n        $this"
+      },
+      {
+        "file": ".kilocode/rules-architect/AGENTS.md",
+        "score": 126.62961379072934,
+        "snippet": "### Database Architecture\r\n- Eloquent ORM with custom base models in `features/shared/foundation/`\r\n- Feature-specific models within feature directories\r\n- Migrations in `database/migrations/` and fea"
+      },
+      {
+        "file": "docs/operations/overview.md",
+        "score": 125.67926378992924,
+        "snippet": "### 🚀 Развертывание\r\n| Документ | Описание | Сложность |\r\n|----------|----------|-----------|\r\n| [CI/CD пайплайн](ci-cd.md) | GitHub Actions, Jenkins | 🔴 Сложно |\r\n| [Blue-Green deployment](blue-gre"
+      },
+      {
+        "file": "features/infrastructure/database/docs/README.md",
+        "score": 123.72176420865782,
+        "snippet": "### Структура модуля```\r\ndatabase/migrations/# Миграции├── seeders/# Сидеры└── factories/# Фабрики```"
+      },
+      {
+        "file": "features/infrastructure/queue/app/Providers/QueueServiceProvider.php",
+        "score": 116.26989390459,
+        "snippet": "{\r\n        // Load routes\r\n        $this->loadRoutesFrom(__DIR__.'/../../routes/web.php');\r\n        $this->loadRoutesFrom(__DIR__.'/../../routes/api.php');\r\n\r\n        // Publish configuration\r\n       "
+      },
+      {
+        "file": "features/shared/foundation/app/Http/Providers/DomainServiceProvider.php",
+        "score": 115.29405259395507,
+        "snippet": "{\n        $migrationsPath = $this->domainPath . '/database/migrations';\n\n        if (is_dir($migrationsPath)) {\n            $this->loadMigrationsFrom($migrationsPath);\n        }\n    }"
+      },
+      {
+        "file": "features/shared/foundation/app/Providers/DomainServiceProvider.php",
+        "score": 115.29405259395507,
+        "snippet": "{\r\n        $migrationsPath = $this->domainPath . '/database/migrations';\r\n\r\n        if (is_dir($migrationsPath)) {\r\n            $this->loadMigrationsFrom($migrationsPath);\r\n        }\r\n    }"
+      }
+    ]
+  },
+  {
+    "query": "middleware authentication",
+    "count": 10,
+    "results": [
+      {
+        "file": "docs/architecture/adr/005-middleware-architecture.md",
+        "score": 129.83755729993592,
+        "snippet": "#### Middleware Groups Configuration\r\n```php\r\n// Kernel.php - middleware groups\r\nprotected $middlewareGroups = [\r\n    'web' => [\r\n        \\App\\Http\\Middleware\\EncryptCookies::class,\r\n        \\App\\Http"
+      },
+      {
+        "file": "docs/knowledge/technologies/php/fundamentals.md",
+        "score": 120.18807985018037,
+        "snippet": "### Middleware Registration\r\n\r\n```php\r\n<?php\r\n\r\nnamespace App\\Http;\r\n\r\nuse Illuminate\\Foundation\\Http\\Kernel as HttpKernel;\r\n\r\nclass Kernel extends HttpKernel\r\n{\r\n    /**\r\n     * The application's glo"
+      },
+      {
+        "file": "docs/architecture/laravel/architecture.md",
+        "score": 119.46674556184385,
+        "snippet": "### Authentication & Authorization\n- **Sanctum**: SPA authentication\n- **Policies**: Resource-based authorization\n- **Middleware**: Route protection\n- **Rate Limiting**: API throttling"
+      },
+      {
+        "file": "docs/knowledge/technologies/php/middleware.md",
+        "score": 116.27822400259329,
+        "snippet": "### Custom Priority Groups\r\n\r\n```php\r\n<?php\r\n\r\nnamespace App\\Http;\r\n\r\nuse Illuminate\\Foundation\\Http\\Kernel as HttpKernel;\r\n\r\nclass Kernel extends HttpKernel\r\n{\r\n    protected $middlewarePriority = [\r"
+      },
+      {
+        "file": "docs/testing/Level1-Authorization-Testing.md",
+        "score": 101.77177093625839,
+        "snippet": "### Backend Components\r\n- **User Model** - Role assignment, permission checking\r\n- **AppSwitcher Middleware** - Route-based app switching\r\n- **TemplateAuthorizationService** - Template access control\r"
+      },
+      {
+        "file": "docs/knowledge/technologies/php/middleware.md",
+        "score": 97.45253919115191,
+        "snippet": "### Kernel.php Middleware Groups\r\n\r\n```php\r\n<?php\r\n\r\nnamespace App\\Http;\r\n\r\nuse Illuminate\\Foundation\\Http\\Kernel as HttpKernel;\r\n\r\nclass Kernel extends HttpKernel\r\n{\r\n    /**\r\n     * Группы middlewar"
+      },
+      {
+        "file": "docs/architecture/adr/005-middleware-architecture.md",
+        "score": 95.82162848812271,
+        "snippet": "### Фаза 4: Route-specific и monitoring (2 недели)\r\n- [ ] **Задача 4.1**: Localization middleware - @system - 2026-03-04\r\n- [ ] **Задача 4.2**: Admin authentication - @system - 2026-03-08\r\n- [ ] **Зад"
+      },
+      {
+        "file": "docs/architecture/adr/103-middleware-stack.md",
+        "score": 95.82162848812271,
+        "snippet": "### Фаза 4: Route-specific и monitoring (2 недели)\r\n- [ ] **Задача 4.1**: Localization middleware - @system - 2026-03-04\r\n- [ ] **Задача 4.2**: Admin authentication - @system - 2026-03-08\r\n- [ ] **Зад"
+      },
+      {
+        "file": "docs/knowledge/technologies/php/middleware.md",
+        "score": 93.06212789800318,
+        "snippet": "## 📋 Содержание\r\n\r\n- [Middleware Overview](#-middleware-overview)\r\n- [Global Middleware](#-global-middleware)\r\n- [Route Middleware](#-route-middleware)\r\n- [Middleware Groups](#-middleware-groups)\r\n- "
+      },
+      {
+        "file": "docs/architecture/middleware/README.md",
+        "score": 91.80970903970041,
+        "snippet": "### 🔄 Регистрация в bootstrap/app.php\n\n```php\n$middleware->web(append: [\n    \\App\\Http\\Middleware\\HandleInertiaRequests::class,\n    \\App\\Http\\Middleware\\SetLocale::class,\n    \\App\\Http\\Middleware\\Ses"
+      }
+    ]
+  },
+  {
+    "query": "controller API endpoints",
+    "count": 10,
+    "results": [
+      {
+        "file": "docs/INDEX.md",
+        "score": 156.8822726707827,
+        "snippet": "### 6. 🔌 API документация (api/ и requirements/api/)\n\n| Документ | Описание | Статус |\n|----------|----------|--------|\n| [README.md](api/README.md) | API документация | ✅ |\n| [authentication.md](req"
+      },
+      {
+        "file": "docs/architecture/interfaces/README.md",
+        "score": 150.31972925744785,
+        "snippet": "### API Documentation\n- **[API Documentation](../../api/README.md)** - обзор и стандарты API\n- **[Endpoints](../../api/endpoints.md)** - REST API эндпоинты и контракты"
+      },
+      {
+        "file": "docs/knowledge/technologies/php/controllers.md",
+        "score": 136.34403700406114,
+        "snippet": "## 📋 Содержание\r\n\r\n- [Controller Architecture](#-controller-architecture)\r\n- [API Controllers](#-api-controllers)\r\n- [Web Controllers](#-web-controllers)\r\n- [Form Request Validation](#-form-request-v"
+      },
+      {
+        "file": "docs/integrations/api-contracts.md",
+        "score": 133.9128418046968,
+        "snippet": "## 📋 Спецификации\n\n- **[API Documentation](../api/README.md)** - обзор и стандарты API\n- **[Endpoints](../api/endpoints.md)** - эндпоинты и структура ответов\n- **[Error Handling](../api/errors.md)** "
+      },
+      {
+        "file": "docs/analytics/README.md",
+        "score": 132.73613944445594,
+        "snippet": "## 📋 API Endpoints"
+      },
+      {
+        "file": "docs/api/endpoints.md",
+        "score": 132.73613944445594,
+        "snippet": "# API Endpoints"
+      },
+      {
+        "file": "docs/api/README.md",
+        "score": 132.25384794827391,
+        "snippet": "# Lighthouse CI для API endpoints\nnpm run lighthouse:api"
+      },
+      {
+        "file": "docs/testing/contract-testing.md",
+        "score": 130.3652338581125,
+        "snippet": "# Проверьте API endpoints\r\ncurl -H \"Accept: application/vnd.api+json\" http://localhost:8000/api/v2/products"
+      },
+      {
+        "file": "docs/architecture/adr/555-modular-features-structure.md",
+        "score": 128.8361394444559,
+        "snippet": "### Готовые API endpoints"
+      },
+      {
+        "file": "docs/architecture/system/cache-architecture.md",
+        "score": 128.8361394444559,
+        "snippet": "## 📋 API Endpoints"
+      }
+    ]
+  },
+  {
+    "query": "React store usage",
+    "count": 10,
+    "results": [
+      {
+        "file": "docs/architecture/adr/002-technology-stack.md",
+        "score": 146.86864357589238,
+        "snippet": "### Альтернатива 3: Symfony + React (Enterprise стек)\n**Описание:** Symfony вместо Laravel, React вместо Vue\n\n**Плюсы:**\n- ✅ Более зрелая экосистема (Symfony)\n- ✅ Лучшая производительность (React)\n- ✅"
+      },
+      {
+        "file": "features/shared/design-system/resources/js/components/registry.ts",
+        "score": 122.12548124567643,
+        "snippet": "{\n  private static usage: Record<string, number> = {};\n\n  static track(componentName: string): void {\n    if (process.env.NODE_ENV === 'development') {\n      this.usage[componentName] = (this.usage[co"
+      },
+      {
+        "file": "docs/knowledge/technologies/javascript/state-management.md",
+        "score": 121.88023475357959,
+        "snippet": "### Persistence Plugin\r\n\r\n```javascript\r\n// plugins/storePersistence.js\r\nexport function createStorePersistence(options = {}) {\r\n  const {\r\n    storage = localStorage,\r\n    keyPrefix = 'store_',\r\n    "
+      },
+      {
+        "file": "docs/architecture/adr/152-state-management.md",
+        "score": 118.34103226747943,
+        "snippet": "#### Качество состояния\r\n- **Store test coverage**: > 90%\r\n- **Race condition detection**: 0 случаев\r\n- **Memory usage**: < 50MB на store\r\n- **State hydration time**: < 100ms\r\n\r\n---"
+      },
+      {
+        "file": "docs/knowledge/technologies/javascript/state-management.md",
+        "score": 117.59721955981772,
+        "snippet": "### Testing Store Plugins\r\n\r\n```javascript\r\n// tests/unit/plugins/storeLogger.test.js\r\nimport { describe, it, expect, beforeEach, vi } from 'vitest'\r\nimport { setActivePinia, createPinia } from 'pinia"
+      },
+      {
+        "file": "docs/architecture/decisions/002-technology-stack.md",
+        "score": 114.58101287152797,
+        "snippet": "### Вариант 3: Django + React + PostgreSQL\n**Преимущества:**\n- Python экосистема для быстрой разработки\n- Отличная поддержка для complex queries\n- \"Battery included\" философия\n\n**Недостатки:**\n- Менее"
+      },
+      {
+        "file": "docs/architecture/decisions/002-technology-stack.md",
+        "score": 113.29931955232249,
+        "snippet": "### Вариант 2: Node.js + React + PostgreSQL\n**Преимущества:**\n- Единый язык программирования (JavaScript/TypeScript)\n- Высокая производительность для real-time фич\n- Современная экосистема npm\n- Лучше"
+      },
+      {
+        "file": "features/business/settings/app/Services/SiteSettings/SiteSettingsCacheService.php",
+        "score": 109.98266689893586,
+        "snippet": "{\r\n        try {\r\n            $stats = [];\r\n\r\n            if (method_exists($store, 'getRedis') || $store instanceof \\Illuminate\\Cache\\RedisStore) {\r\n                // Redis statistics\r\n             "
+      },
+      {
+        "file": "docs/knowledge/technologies/javascript/state-management.md",
+        "score": 109.45618182192987,
+        "snippet": "### Validation Plugin\r\n\r\n```javascript\r\n// plugins/storeValidation.js\r\nexport function createStoreValidation(options = {}) {\r\n  const {\r\n    validators = {},\r\n    throwOnInvalid = false,\r\n    logInval"
+      },
+      {
+        "file": "docs/integrations/schema-org/general/schema-local-business.md",
+        "score": 106.99281281629986,
+        "snippet": "### Структура Store Schema\n\n```mermaid\ngraph TD\n    STORE[Store<br/>@type: Store]:::storeNode\n    STORE --> CONTEXT[@context]\n    STORE --> TYPE[@type<br/>Store]\n    STORE --> ID[@id<br/>store-url#sto"
+      }
+    ]
+  },
+  {
+    "query": "service layer business logic",
+    "count": 10,
+    "results": [
+      {
+        "file": "docs/architecture/adr/500-ecommerce-domain-architecture.md",
+        "score": 209.7326661146622,
+        "snippet": "#### Шаг 2: Валидация отката\r\n- [ ] Проверка service layer functionality\r\n- [ ] Проверка model relationships\r\n- [ ] Валидация business logic integrity\r\n- [ ] Проверка application stability"
+      },
+      {
+        "file": "docs/architecture/adr/500-ecommerce-domain-architecture.md",
+        "score": 206.78236744396702,
+        "snippet": "### Критерии успешного отката\r\n- [ ] Service layer operational\r\n- [ ] Business logic preserved\r\n- [ ] Application functional\r\n- [ ] No data loss\r\n\r\n---"
+      },
+      {
+        "file": "docs/architecture/adr/401-privacy-first-data-architecture.md",
+        "score": 194.15213740673914,
+        "snippet": "### Влияние на компоненты\r\n- **Database Schema**: Privacy metadata columns added\r\n- **API Layer**: Privacy headers и consent validation\r\n- **Frontend**: Privacy dashboard и consent UIs\r\n- **Business L"
+      },
+      {
+        "file": ".kilocode/rules-architect/AGENTS.md",
+        "score": 183.185509970281,
+        "snippet": "### Service Layer Pattern\r\n- Business logic in `app/Services/` within each feature\r\n- Use DTOs for data transfer between layers\r\n- Follow Single Responsibility Principle"
+      },
+      {
+        "file": "docs/knowledge/technologies/javascript/fundamentals.md",
+        "score": 182.66802992093426,
+        "snippet": "#### Business Logic Layer (Composables)\r\n- **Composables**: Reactive business logic\r\n- **Focus**: Application behavior and state management"
+      },
+      {
+        "file": "docs/knowledge/patterns/repository/patterns.md",
+        "score": 181.77750889310073,
+        "snippet": "### Purpose\r\nService layer pattern encapsulates business logic and orchestrates domain objects, providing a clear separation between presentation and domain layers."
+      },
+      {
+        "file": "docs/architecture/adr/102-service-layer.md",
+        "score": 180.59747954323907,
+        "snippet": "### Сравнение альтернатив\r\n\r\n| Критерий | Service Layer | Controllers Logic | Service Locator | CQRS |\r\n|----------|---------------|-------------------|-----------------|------|\r\n| Разделение | Высоко"
+      },
+      {
+        "file": "docs/architecture/adr/959-business-component-architecture-patterns.md",
+        "score": 180.28524205404068,
+        "snippet": "### Layered Architecture\r\n\r\n```\r\n┌─────────────────────────────────────────────────────────────┐\r\n│                    PRESENTATION LAYER                       │\r\n│  - Vue Components (UI only)        "
+      },
+      {
+        "file": "docs/knowledge/patterns/repository/patterns.md",
+        "score": 178.17750889310074,
+        "snippet": "### Purpose\r\nRepository pattern provides an abstraction layer between the domain and data mapping layers, acting as a collection-like interface for accessing domain objects."
+      },
+      {
+        "file": "docs/knowledge/patterns/repository/patterns.md",
+        "score": 176.97750889310072,
+        "snippet": "### Purpose\r\nEvent Sourcing stores the state of a business entity as a sequence of state-changing events, allowing reconstruction of past states and audit trails."
+      }
+    ]
+  },
+  {
+    "query": "Шукаю документи по архітектурі бекенду.",
+    "count": 10,
+    "results": [
+      {
+        "file": "docs/architecture/README.md",
+        "score": 22.400000000000002,
+        "snippet": "### Основные разделы архитектуры:\n- **[Архитектурные принципы](architecture-overview.md#архитектурные-принципы)** - Стабильность, предсказуемость, контроль\n- **[Архитектурные паттерны](architecture-ov"
+      },
+      {
+        "file": "docs/INDEX.md",
+        "score": 21.6,
+        "snippet": "#### ADR - Архитектурные решения (architecture/adr/)\n| № | Название | Статус | Дата |\n|---|----------|--------|------|\n| [001](architecture/adr/001-modular-architecture.md) | Модульная архитектура | ✅"
+      },
+      {
+        "file": "docs/architecture/architecture-overview.md",
+        "score": 19.200000000000003,
+        "snippet": "### Специализированные разделы\n- **[admin/](admin/)** - Архитектура административной панели\n  - [admin-architecture.md](admin/admin-architecture.md) - Компоненты админки\n  - [admin-workflows.md](admin"
+      },
+      {
+        "file": "docs/architecture/README.md",
+        "score": 16,
+        "snippet": "### Специализированные разделы:\n- **[ADR решения](adr/)** - Архитектурные решения\n- **[Интерфейсы компонентов](interfaces/)** - Контракты взаимодействия\n- **[Архитектурные диаграммы](diagrams/)** - Me"
+      },
+      {
+        "file": "docs/INDEX.md",
+        "score": 14.4,
+        "snippet": "#### Общие документы\n| Документ | Описание | Статус |\n|----------|----------|--------|\n| [README.md](architecture/README.md) | Обзор архитектуры | ✅ |\n| [architecture-overview.md](architecture/archite"
+      },
+      {
+        "file": "docs/navigation-guide.md",
+        "score": 14.4,
+        "snippet": "### 🏗️ Архитектура\n- **[architecture/architecture-overview.md](architecture/architecture-overview.md)** - Обзор архитектуры\n- **[architecture/adr/](architecture/adr/)** - ADR решения (27+)\n- **[archi"
+      },
+      {
+        "file": "docs/architecture/adr/IDEAL-ADR-INDEX.md",
+        "score": 14,
+        "snippet": "#### 001-019: **Архитектурные основы**\n- [001](001-modular-architecture.md) - Модульная архитектура проекта\n- [002](002-technology-stack.md) - Технологический стек\n- [003](003-data-architecture.md) - "
+      },
+      {
+        "file": "docs/architecture/architecture-overview.md",
+        "score": 12.8,
+        "snippet": "### Для глубокого понимания\n- **[ADR решения](adr/)** - Подробные архитектурные решения\n- **[Интерфейсы](interfaces/)** - Контракты взаимодействия\n- **[Диаграммы](diagrams/)** - Визуализация архитекту"
+      },
+      {
+        "file": "docs/architecture/principles.md",
+        "score": 12.8,
+        "snippet": "### Архитектура\r\n- **[Обзор архитектуры](architecture-overview.md)** - основные архитектурные решения\r\n- **[ADR решения](adr/)** - архитектурные решения\r\n- **[Технический стек](technical-stack.md)** -"
+      },
+      {
+        "file": "docs/architecture/system/routing.md",
+        "score": 11.2,
+        "snippet": "## 📚 Связанная документация\r\n\r\n- **[Обзор архитектуры](README.md)** - Общие архитектурные принципы\r\n- **[API документация](../../api/README.md)** - Спецификация API endpoints\r\n- **[ADR решения](../ad"
+      }
+    ]
+  },
+  {
+    "query": "система авторизації JWT токени login register",
+    "count": 10,
+    "results": [
+      {
+        "file": "docs/knowledge/technologies/javascript/npm-packages.md",
+        "score": 142.70515121383792,
+        "snippet": "#### Примеры использования\r\n\r\n```typescript\r\n// JWT generation\r\nimport jwt from 'jsonwebtoken'\r\n\r\nconst token = jwt.sign(\r\n  { userId: user.id, role: user.role },\r\n  process.env.JWT_SECRET,\r\n  { expir"
+      },
+      {
+        "file": "docs/knowledge/technologies/javascript/npm-packages.md",
+        "score": 133.1051512138379,
+        "snippet": "#### Примеры использования\r\n\r\n```vue\r\n<template>\r\n  <Form @submit=\"onSubmit\" class=\"space-y-4\">\r\n    <Field name=\"email\" rules=\"required|email\" v-slot=\"{ field, errorMessage }\">\r\n      <div>\r\n        "
+      },
+      {
+        "file": "docs/knowledge/technologies/javascript/npm-packages.md",
+        "score": 133.1051512138379,
+        "snippet": "#### Примеры использования\r\n\r\n```vue\r\n<template>\r\n  <div class=\"chart-container\">\r\n    <Line\r\n      :data=\"chartData\"\r\n      :options=\"chartOptions\"\r\n      :plugins=\"plugins\"\r\n    />\r\n  </div>\r\n</temp"
+      },
+      {
+        "file": "features/business/auth/tests/Unit/Services/AppAuthServicesTest.php",
+        "score": 132.83597047714832,
+        "snippet": "{\r\n        // Создаем тестового пользователя\r\n        $user = User::factory()->create([\r\n            'email' => 'jwt-test-' . time() . '@example.com'\r\n        ]);\r\n\r\n        // Генерируем JWT\r\n       "
+      },
+      {
+        "file": "docs/knowledge/technologies/javascript/npm-packages.md",
+        "score": 131.9051512138379,
+        "snippet": "#### Примеры использования\r\n\r\n```vue\r\n<template>\r\n  <!-- Dropdown меню -->\r\n  <Menu as=\"div\" class=\"relative\">\r\n    <MenuButton class=\"btn-primary flex items-center gap-2\">\r\n      Опции\r\n      <Chevro"
+      },
+      {
+        "file": "docs/knowledge/technologies/javascript/npm-packages.md",
+        "score": 131.9051512138379,
+        "snippet": "#### Примеры использования\r\n\r\n```typescript\r\n// i18n/index.ts\r\nimport { createI18n } from 'vue-i18n'\r\n\r\nexport const i18n = createI18n({\r\n  legacy: false,\r\n  locale: 'uk',\r\n  fallbackLocale: 'en',\r\n  "
+      },
+      {
+        "file": "docs/knowledge/technologies/javascript/npm-packages.md",
+        "score": 131.9051512138379,
+        "snippet": "#### Примеры использования\r\n\r\n```vue\r\n<template>\r\n  <div>\r\n    <!-- Fuse.js поиск -->\r\n    <input\r\n      v-model=\"searchQuery\"\r\n      placeholder=\"Поиск товаров...\"\r\n      @input=\"performSearch\"\r\n    "
+      },
+      {
+        "file": "docs/knowledge/technologies/javascript/npm-packages.md",
+        "score": 131.9051512138379,
+        "snippet": "#### Примеры использования\r\n\r\n```vue\r\n<template>\r\n  <div>\r\n    <button @click=\"showSuccess\">Показать успех</button>\r\n    <button @click=\"showError\">Показать ошибку</button>\r\n  </div>\r\n</template>\r\n\r\n<"
+      },
+      {
+        "file": "features/business/auth/tests/Feature/RoleBasedAuthenticationTest.php",
+        "score": 128.7004718851071,
+        "snippet": "{\r\n\r\n    protected function setUp(): void\r\n    {\r\n        parent::setUp();\r\n\r\n        // Skip role setup as the entire test class is skipped\r\n        $this->markTestSkipped('Spatie Permission guard co"
+      },
+      {
+        "file": "features/business/auth/docs/TODO.md",
+        "score": 126.92871544760868,
+        "snippet": "### JWT Аутентификация\r\n```\r\nphp\r\nuse Features\\Auth\\Services\\Auth\\JwtService;\r\n\r\n$jwt = app(JwtService::class);\r\n$token = $jwt->generateToken($user);\r\n```"
+      }
+    ]
+  },
+  {
+    "query": "логінування API автентифікація тести",
+    "count": 10,
+    "results": [
+      {
+        "file": "docs/architecture/diagrams/data-flows.md",
+        "score": 122.05514340551653,
+        "snippet": "## 🔌 API архитектура и интеграции\r\n\r\n```mermaid\r\ngraph TB\r\n    subgraph \"📱 Clients\"\r\n        WEB[Web Browser<br/>SPA/PWA]\r\n        MOBILE[Mobile App<br/>React Native]\r\n        ADMIN[Admin Panel<br/>"
+      },
+      {
+        "file": "features/infrastructure/console/app/Http/Middleware/ApiVersionMiddleware.php",
+        "score": 104.05681070772306,
+        "snippet": "{\r\n    /**\r\n     * Handle an incoming request.\r\n     *\r\n     * @param  \\Illuminate\\Http\\Request  $request\r\n     * @param  \\Closure  $next\r\n     * @return mixed\r\n     */\r\n    public function handle(Req"
+      },
+      {
+        "file": "docs/INDEX.md",
+        "score": 101.9940597840103,
+        "snippet": "### 6. 🔌 API документация (api/ и requirements/api/)\n\n| Документ | Описание | Статус |\n|----------|----------|--------|\n| [README.md](api/README.md) | API документация | ✅ |\n| [authentication.md](req"
+      },
+      {
+        "file": "docs/operations/deployment-configuration-architecture.md",
+        "score": 88.27182918317351,
+        "snippet": "## API endpoints\n```php\n// Получение конфигурации\nGET /admin/api/deploy/config\n\n// Сохранение глобальной конфигурации\nPUT /admin/api/deploy/config/general\n{\n  \"app_name\": \"EL-STUDIO\",\n  \"debug_mode\": "
+      },
+      {
+        "file": "scripts/laravel-route-health-checker/README.md",
+        "score": 87.10932149759992,
+        "snippet": "### API checker (api-route-health-checker/)\n\n```\napi-route-health-checker/\n├── main.mjs          # CLI для API тестирования\n├── config.mjs        # Конфигурация API роутов\n├── utils.mjs         # Утил"
+      },
+      {
+        "file": "docs/eslint/RULES-STRUCTURE.md",
+        "score": 86.4565621347617,
+        "snippet": "### 11. API Rules (8 новых)\n- api-versioning-required.cjs\n- api-response-consistency.cjs\n- api-error-handling-required.cjs\n- api-rate-limiting-required.cjs\n- external-api-error-handling.cjs\n- external"
+      },
+      {
+        "file": "docs/architecture/admin/admin-workflows.md",
+        "score": 85.94147776612974,
+        "snippet": "#### ✅ Customer Support Workflow\r\n```\r\nОбращение → Классификация → Обработка → Решение → Закрытие\r\n     ↓            ↓              ↓          ↓          ↓\r\n  Клиент      Оператор     Специалист  Пров"
+      },
+      {
+        "file": "docs/eslint/PROPOSED-RULES.md",
+        "score": 84.23026507086928,
+        "snippet": "### 10.1 API Design\n**Статус:** ⚠️ Требуется\n**Приоритет:** ВЫСОКИЙ\n\n**Правила:**\n- `api-versioning-required` - обязательная версионизация API\n- `api-response-consistency` - консистентность API ответо"
+      },
+      {
+        "file": "scripts/api-route-health-checker/README.md",
+        "score": 82.71856791682586,
+        "snippet": "### Типы API роутов\r\n\r\n- **Public API**: роуты без аутентификации (`/api/v1/public/*`)\r\n- **Authenticated API**: роуты требующие токена (`/api/v1/*`)"
+      },
+      {
+        "file": "docs/api/README.md",
+        "score": 80.74175083587056,
+        "snippet": "# API Documentation\n\n**Каноническое размещение:** `docs/api/` — основная документация REST API. Путь к документации в коде задаётся в `config('api.documentation.path')` (по умолчанию `docs/api`)."
+      }
+    ]
+  }
+]

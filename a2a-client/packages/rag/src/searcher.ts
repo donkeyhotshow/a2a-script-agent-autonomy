@@ -1,10 +1,14 @@
 /**
  * RAG Searcher - Search in indexed files
+ * Integrates: TFIDF, QueryUnderstanding, CodeSimilarity, BM25
  */
 
 import fs from 'fs/promises';
 import path from 'path';
 import {TFIDFService} from './tfidf.js';
+import {QueryUnderstandingEngine, INTENT_TYPES} from './query-understanding.js';
+import {CodeSimilarityEngine} from './code-similarity.js';
+import {BM25Scorer} from './bm25.js';
 import type {Chunk} from './chunk-manager.js';
 import type {RAGIndexData, IndexFileInfo} from './indexer.js';
 
@@ -15,6 +19,9 @@ export interface RAGSearcherConfig {
 
 export interface SearchOptions {
     limit?: number;
+    useQueryUnderstanding?: boolean;
+    useCodeSimilarity?: boolean;
+    useBM25?: boolean;
 }
 
 export interface HybridSearchOptions extends SearchOptions {
@@ -54,16 +61,107 @@ interface ExtractedKeywords {
 export class RAGSearcher {
     projectPath: string;
     private indexPath: string;
+    private cachePath: string;
     index: RAGIndexData | null = null;
     useTFIDF: boolean;
     tfidf: TFIDFService | null;
     private tfidfIndexed = false;
+    // Integrated engines
+    queryUnderstanding: QueryUnderstandingEngine;
+    codeSimilarity: CodeSimilarityEngine;
+    bm25: BM25Scorer | null;
+    private bm25Indexed = false;
+    private similarityIndexed = false;
 
     constructor(config: RAGSearcherConfig = {}) {
         this.projectPath = config.projectPath ?? process.cwd();
         this.indexPath = path.join(this.projectPath, '.a2a', 'index');
+        this.cachePath = path.join(this.projectPath, '.a2a', 'cache');
         this.useTFIDF = config.useTFIDF !== false;
         this.tfidf = this.useTFIDF ? new TFIDFService() : null;
+        // Initialize integrated engines
+        this.queryUnderstanding = new QueryUnderstandingEngine();
+        this.codeSimilarity = new CodeSimilarityEngine();
+        this.bm25 = new BM25Scorer();
+    }
+
+    /**
+     * Save search indexes to cache for fast loading
+     */
+    async saveIndexCache(): Promise<void> {
+        await fs.mkdir(this.cachePath, { recursive: true });
+        
+        // Save BM25 index
+        if (this.bm25 && this.bm25Indexed) {
+            const bm25Data = this.bm25.serialize();
+            await fs.writeFile(
+                path.join(this.cachePath, 'bm25-cache.json'),
+                JSON.stringify(bm25Data)
+            );
+            console.log('[RAG] BM25 cache saved');
+        }
+        
+        console.log('[RAG] Index cache saved');
+    }
+
+    /**
+     * Load search indexes from cache
+     */
+    async loadIndexCache(): Promise<boolean> {
+        try {
+            const cacheFile = path.join(this.cachePath, 'bm25-cache.json');
+            const content = await fs.readFile(cacheFile, 'utf-8');
+            const data = JSON.parse(content);
+            
+            if (this.bm25) {
+                this.bm25.deserialize(data);
+                this.bm25Indexed = true;
+                console.log('[RAG] BM25 cache loaded');
+            }
+            return true;
+        } catch {
+            return false;
+        }
+    }
+
+    /**
+     * Check if cache exists and is valid
+     */
+    async hasValidCache(): Promise<boolean> {
+        try {
+            const stats = await fs.stat(path.join(this.cachePath, 'bm25-cache.json'));
+            const indexStats = await fs.stat(path.join(this.indexPath, 'rag-files.json'));
+            // Cache is valid if it's newer than index
+            return stats.mtime >= indexStats.mtime;
+        } catch {
+            return false;
+        }
+    }
+
+    /**
+     * Pre-build all indexes for faster future searches
+     * Call this after indexing or at startup
+     */
+    async prebuildIndexes(): Promise<void> {
+        const index = await this.loadIndex();
+        
+        console.log('[RAG] Pre-building BM25 index...');
+        if (this.bm25) {
+            this.bm25.clear();
+            for (const chunk of index.chunks) {
+                const chunkId = chunk.id ?? `${chunk.filePath}:${chunk.startLine}`;
+                this.bm25.addDocument(chunkId, chunk.content);
+            }
+            this.bm25Indexed = true;
+        }
+        
+        console.log('[RAG] Pre-building similarity index...');
+        this.codeSimilarity.index(index.chunks);
+        this.similarityIndexed = true;
+        
+        // Save to cache
+        await this.saveIndexCache();
+        console.log('[RAG] All indexes pre-built and cached');
     }
 
     async loadIndex(): Promise<RAGIndexData> {
@@ -189,6 +287,20 @@ export class RAGSearcher {
         return this.tfidf ? this.tfidf.getStats() : null;
     }
 
+    /**
+     * Analyze query intent using QueryUnderstandingEngine
+     */
+    analyzeQuery(query: string): ReturnType<QueryUnderstandingEngine['analyze']> {
+        return this.queryUnderstanding.analyze(query);
+    }
+
+    /**
+     * Get query understanding results
+     */
+    getQueryIntent(query: string) {
+        return this.queryUnderstanding.analyze(query);
+    }
+
     clearTFIDFIndex(): void {
         if (this.tfidf) {
             this.tfidf.clear();
@@ -198,21 +310,198 @@ export class RAGSearcher {
 
     async search(query: string, options: SearchOptions = {}): Promise<SearchResult[]> {
         const index = await this.loadIndex();
+        
+        // Build all indexes once if not built yet
+        await this.ensureIndexesBuilt(index, options);
+        
+        // Analyze query with QueryUnderstandingEngine
+        const intent = this.queryUnderstanding.analyze(query);
         const keywords = this.extractKeywords(query);
+        
+        // Get BM25 results first (fast - uses inverted index)
+        let bm25Results: Map<string, number> = new Map();
+        if (options.useBM25 === true && this.bm25 && this.bm25Indexed) {
+            const bm25 = this.bm25.search(query, { limit: 500 });
+            for (const r of bm25) {
+                bm25Results.set(r.docId, r.score);
+            }
+            console.log('[DEBUG] BM25 candidates:', bm25Results.size);
+        }
+        
+        // Score chunks - use BM25 candidates as filter for expensive operations
         const results: SearchResult[] = [];
+        const candidateIds = bm25Results.size > 0 ? new Set(bm25Results.keys()) : null;
+        
+        console.log('[DEBUG] Scoring', index.chunks.length, 'chunks...');
         for (const chunk of index.chunks) {
-            const score = this.scoreChunk(chunk, keywords, query);
-            if (score > 0) {
+            const chunkId = chunk.id ?? `${chunk.filePath}:${chunk.startLine}`;
+            
+            // Skip if not in BM25 candidates (only if BM25 is enabled)
+            if (candidateIds && !candidateIds.has(chunkId)) {
+                continue;
+            }
+            
+            const score = this.scoreChunkWithEngines(chunk, keywords, query, intent, options, bm25Results);
+            if (score.totalScore > 0) {
                 results.push({
                     chunk,
-                    score,
+                    score: score.totalScore,
                     highlights: this.findHighlights(chunk.content, keywords),
                 });
             }
         }
-        results.sort((a, b) => b.score - a.score);
+
+        // Group results by file and keep only the best chunk per file
+        const fileGrouped = new Map<string, SearchResult>();
+        for (const result of results) {
+            const filePath = result.chunk.filePath;
+            const existing = fileGrouped.get(filePath);
+            if (!existing || result.score > existing.score) {
+                fileGrouped.set(filePath, result);
+            }
+        }
+
+        // Sort by score and take top N unique files
+        const sortedByFile = Array.from(fileGrouped.values()).sort((a, b) => b.score - a.score);
         const limit = options.limit ?? 10;
-        return results.slice(0, limit);
+        const uniqueFileResults = sortedByFile.slice(0, limit);
+
+        console.log(`[DEBUG] Found ${results.length} chunks, ${fileGrouped.size} unique files, returning top ${limit}`);
+        return uniqueFileResults;
+    }
+
+    /**
+     * Build all search indexes once, using cache if available
+     */
+    private async ensureIndexesBuilt(index: RAGIndexData, options: SearchOptions): Promise<void> {
+        console.log('[DEBUG] ensureIndexesBuilt called, useBM25=', options.useBM25, 'bm25Indexed=', this.bm25Indexed);
+        
+        // Only build if explicitly enabled - these are expensive operations
+        
+        // Try to load BM25 from cache first
+        if (options.useBM25 === true && !this.bm25Indexed && this.bm25) {
+            console.log('[DEBUG] Trying to load BM25 cache...');
+            const loaded = await this.loadIndexCache();
+            console.log('[DEBUG] Cache load result:', loaded);
+            if (!loaded) {
+                // Cache not available, build from scratch
+                console.log('[RAG] Building BM25 index (no cache)...');
+                for (const chunk of index.chunks) {
+                    const chunkId = chunk.id ?? `${chunk.filePath}:${chunk.startLine}`;
+                    this.bm25.addDocument(chunkId, chunk.content);
+                }
+                this.bm25Indexed = true;
+            }
+        }
+        
+        // Build similarity index (no cache available)
+        if (options.useCodeSimilarity === true && !this.similarityIndexed) {
+            console.log('[DEBUG] Building similarity index...');
+            this.codeSimilarity.index(index.chunks);
+            this.similarityIndexed = true;
+            console.log('  [Indexed similarity for', index.chunks.length, 'chunks]');
+        }
+        
+        console.log('[DEBUG] ensureIndexesBuilt done, bm25Indexed=', this.bm25Indexed);
+    }
+
+    /**
+     * Comprehensive scoring using all integrated engines with file type filtering
+     * OPTIMIZED: uses pre-computed bm25Results Map instead of re-running search
+     */
+    private scoreChunkWithEngines(
+        chunk: Chunk,
+        keywords: ExtractedKeywords,
+        originalQuery: string,
+        intent: ReturnType<QueryUnderstandingEngine['analyze']>,
+        options: SearchOptions,
+        bm25Results?: Map<string, number>  // Optional pre-computed BM25 results
+    ): { keywordScore: number; bm25Score: number; similarityScore: number; totalScore: number } {
+        let keywordScore = 0;
+        let bm25Score = 0;
+        let similarityScore = 0;
+        
+        // 1. Base keyword scoring (original algorithm) - FAST
+        keywordScore = this.scoreChunk(chunk, keywords, originalQuery);
+        
+        // 2. BM25 scoring - use pre-computed results (passed from search method)
+        // Note: BM25 search is already done ONCE in search() before this loop
+        if (options.useBM25 === true && bm25Results) {
+            const chunkId = chunk.id ?? `${chunk.filePath}:${chunk.startLine}`;
+            const bm25 = bm25Results.get(chunkId);
+            bm25Score = bm25 ? bm25 * 10 : 0;
+        }
+        
+        // 3. Code similarity scoring - skip if too many chunks (expensive)
+        // Only run if similarity explicitly enabled AND index is small enough
+        if (options.useCodeSimilarity === true && this.similarityIndexed) {
+            const similarResults = this.codeSimilarity.findSimilar(originalQuery, { limit: 50, method: 'jaccard' });
+            const chunkId = chunk.id ?? `${chunk.filePath}:${chunk.startLine}`;
+            const similarResult = similarResults.find(r => r.chunk.id === chunkId || `${r.chunk.filePath}:${r.chunk.startLine}` === chunkId);
+            similarityScore = similarResult ? similarResult.similarity * 20 : 0;
+        }
+        
+        // 4. Intent-based boosting
+        let intentBoost = 1.0;
+        if (intent.type === INTENT_TYPES.EXACT_NAME && intent.confidence > 0.7) {
+            if (chunk.name && intent.entities.symbols.some((s: string) => chunk.name!.toLowerCase().includes(s.toLowerCase()))) {
+                intentBoost = 2.0;
+            }
+        } else if (intent.type === INTENT_TYPES.SYMBOL) {
+            if (chunk.type === 'class' || chunk.type === 'method' || chunk.type === 'function') {
+                intentBoost = 1.5;
+            }
+        } else if (intent.type === INTENT_TYPES.DOCUMENTATION) {
+            if (chunk.type === 'comment' || chunk.content.includes('/**') || chunk.content.includes('///')) {
+                intentBoost = 1.5;
+            }
+        }
+
+        // 5. File type filtering based on query context
+        let fileTypeBoost = 1.0;
+        const preferredFileTypes = intent.entities.fileTypes;
+        if (preferredFileTypes && preferredFileTypes.length > 0) {
+            const ext = this.getFileExtension(chunk.filePath);
+            
+            // Check if this chunk's file type is preferred
+            if (ext && preferredFileTypes.includes(ext)) {
+                // Exact match - boost significantly
+                fileTypeBoost = 1.5;
+            } else if (ext && !preferredFileTypes.includes(ext)) {
+                // Not in preferred list - slight penalty
+                fileTypeBoost = 0.7;
+            } else {
+                // No extension detected - neutral
+                fileTypeBoost = 0.8;
+            }
+            
+            // For files without extension (e.g., Makefile, Dockerfile), check path
+            if (!ext) {
+                const fileName = path.basename(chunk.filePath).toLowerCase();
+                for (const type of preferredFileTypes) {
+                    if (fileName.includes(type) || fileName.startsWith(type)) {
+                        fileTypeBoost = 1.5;
+                        break;
+                    }
+                }
+            }
+        }
+        
+        const totalScore = (keywordScore * 1.0 + bm25Score * 0.8 + similarityScore * 0.5) * intentBoost * fileTypeBoost;
+        
+        return { keywordScore, bm25Score, similarityScore, totalScore };
+    }
+
+    /**
+     * Extract file extension from path
+     */
+    private getFileExtension(filePath: string): string | null {
+        const ext = path.extname(filePath).toLowerCase();
+        if (ext) {
+            // Remove leading dot and return
+            return ext.slice(1);
+        }
+        return null;
     }
 
     async searchFiles(pattern: string): Promise<IndexFileInfo[]> {
@@ -251,9 +540,29 @@ export class RAGSearcher {
     scoreChunk(chunk: Chunk, keywords: ExtractedKeywords, _originalQuery: string): number {
         let score = 0;
         const content = chunk.content.toLowerCase();
+        
+        // Very common programming words that should be heavily penalized
+        const commonWords = new Set([
+            'import', 'export', 'default', 'const', 'let', 'var',
+            'function', 'return', 'if', 'else', 'for', 'while',
+            'new', 'this', 'super', 'extends',
+            'public', 'private', 'protected', 'static',
+            'async', 'await', 'require', 'module',
+            'true', 'false', 'null', 'undefined',
+            'console', 'log', 'error', 'warn', 'info',
+            'style', 'css', 'html', 'div', 'span', 'button'
+        ]);
+        
         for (const word of keywords.words) {
             const matches = content.match(new RegExp(word, 'gi'));
-            if (matches) score += matches.length * 2;
+            if (matches) {
+                // Apply small penalty for very common words
+                let wordWeight = 1;
+                if (commonWords.has(word)) {
+                    wordWeight = 0.5;
+                }
+                score += matches.length * 2 * wordWeight;
+            }
         }
         for (const term of keywords.techTerms) {
             if (content.includes(term.toLowerCase())) score += 10;
@@ -261,8 +570,22 @@ export class RAGSearcher {
         for (const method of keywords.methodNames) {
             if (content.includes(method)) score += 15;
         }
-        if (chunk.type === 'class' || chunk.type === 'method') score *= 1.2;
-        if (chunk.name && keywords.techTerms.some((t) => chunk.name!.toLowerCase().includes(t.toLowerCase()))) score += 20;
+        if (chunk.type === 'class' || chunk.type === 'method') score *= 1.3;
+        if (chunk.type === 'function') score *= 1.2;
+        if (chunk.name && keywords.techTerms.some((t) => chunk.name!.toLowerCase().includes(t.toLowerCase()))) score += 25;
+        
+        // Light length normalization only for very long documents
+        const docLength = chunk.content.split(/\s+/).length;
+        if (docLength > 500) {
+            score = score * (500 / docLength);
+        }
+        
+        // Hierarchy boost: files closer to root are more important
+        // root = 1.0, /features/x = 0.9, /features/x/y = 0.8, etc.
+        const depth = (chunk.filePath.match(/\//g) || []).length;
+        const hierarchyBoost = Math.max(0.5, 1.0 - (depth * 0.1));
+        score *= hierarchyBoost;
+        
         return score;
     }
 

@@ -2,7 +2,7 @@
 /**
  * Meilisearch Client - BM25 search integration
  */
-Object.defineProperty(exports, "__esModule", {value: true});
+Object.defineProperty(exports, "__esModule", { value: true });
 exports.DEFAULT_SETTINGS = exports.MeilisearchClient = void 0;
 exports.createMeilisearchClient = createMeilisearchClient;
 const DEFAULT_SETTINGS = {
@@ -12,7 +12,6 @@ const DEFAULT_SETTINGS = {
     rankingRules: ['words', 'typo', 'proximity', 'attribute', 'sort', 'exactness'],
 };
 exports.DEFAULT_SETTINGS = DEFAULT_SETTINGS;
-
 class MeilisearchClient {
     constructor(config = {}) {
         this.index = null;
@@ -21,14 +20,12 @@ class MeilisearchClient {
         this.apiKey = config.apiKey ?? process.env.MEILISEARCH_API_KEY;
         this.indexName = config.indexName ?? 'code';
     }
-
     _getHeaders() {
-        const headers = {'Content-Type': 'application/json'};
+        const headers = { 'Content-Type': 'application/json' };
         if (this.apiKey)
             headers['Authorization'] = `Bearer ${this.apiKey}`;
         return headers;
     }
-
     async initialize() {
         const indexes = await this._getIndexes();
         const exists = indexes.some((idx) => idx.uid === this.indexName);
@@ -37,26 +34,23 @@ class MeilisearchClient {
         await this._configureIndex();
         this.initialized = true;
     }
-
     async _getIndexes() {
-        const response = await fetch(`${this.host}/indexes`, {method: 'GET', headers: this._getHeaders()});
+        const response = await fetch(`${this.host}/indexes`, { method: 'GET', headers: this._getHeaders() });
         if (!response.ok)
             throw new Error(`Failed to get indexes: ${response.status}`);
         const data = (await response.json());
         return data.results ?? [];
     }
-
     async _createIndex() {
         const response = await fetch(`${this.host}/indexes`, {
             method: 'POST',
             headers: this._getHeaders(),
-            body: JSON.stringify({uid: this.indexName, primaryKey: 'id'}),
+            body: JSON.stringify({ uid: this.indexName, primaryKey: 'id' }),
         });
         if (!response.ok)
             throw new Error(`Failed to create index: ${response.status}`);
         await this._waitForIndex();
     }
-
     async _waitForIndex() {
         for (let i = 0; i < 10; i++) {
             try {
@@ -69,14 +63,14 @@ class MeilisearchClient {
                     if (data.status === 'ready')
                         return;
                 }
-            } catch {
+            }
+            catch {
                 // continue
             }
             await new Promise((r) => setTimeout(r, 500));
         }
         throw new Error('Index did not become ready in time');
     }
-
     async _configureIndex() {
         const response = await fetch(`${this.host}/indexes/${this.indexName}/settings`, {
             method: 'PATCH',
@@ -86,7 +80,6 @@ class MeilisearchClient {
         if (!response.ok)
             throw new Error(`Failed to configure index: ${response.status}`);
     }
-
     async addDocuments(documents) {
         if (!this.initialized)
             await this.initialize();
@@ -100,7 +93,6 @@ class MeilisearchClient {
         const data = (await response.json());
         return data.taskUid;
     }
-
     async search(query, options = {}) {
         if (!this.initialized)
             await this.initialize();
@@ -124,7 +116,6 @@ class MeilisearchClient {
             throw new Error(`Search failed: ${response.status} ${await response.text()}`);
         return response.json();
     }
-
     async deleteDocument(id) {
         const response = await fetch(`${this.host}/indexes/${this.indexName}/documents/${id}`, {
             method: 'DELETE',
@@ -135,7 +126,6 @@ class MeilisearchClient {
         const data = (await response.json());
         return data.taskUid;
     }
-
     async deleteAllDocuments() {
         const response = await fetch(`${this.host}/indexes/${this.indexName}/documents`, {
             method: 'DELETE',
@@ -146,7 +136,6 @@ class MeilisearchClient {
         const data = (await response.json());
         return data.taskUid;
     }
-
     async getStats() {
         const response = await fetch(`${this.host}/indexes/${this.indexName}/stats`, {
             method: 'GET',
@@ -156,29 +145,26 @@ class MeilisearchClient {
             throw new Error(`Failed to get stats: ${response.status}`);
         return response.json();
     }
-
     async isAvailable() {
         try {
             const response = await fetch(`${this.host}/health`, {
                 method: 'GET',
-                headers: {'Content-Type': 'application/json'},
+                headers: { 'Content-Type': 'application/json' },
             });
             return response.ok;
-        } catch {
+        }
+        catch {
             return false;
         }
     }
-
     async getHealth() {
-        const response = await fetch(`${this.host}/health`, {method: 'GET', headers: this._getHeaders()});
+        const response = await fetch(`${this.host}/health`, { method: 'GET', headers: this._getHeaders() });
         if (!response.ok)
             throw new Error(`Health check failed: ${response.status}`);
         return response.json();
     }
 }
-
 exports.MeilisearchClient = MeilisearchClient;
-
 function createMeilisearchClient(config) {
     return new MeilisearchClient(config);
 }

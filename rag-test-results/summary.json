@@ -1,0 +1,19 @@
+{
+  "timestamp": "2026-03-02T15:49:16.812Z",
+  "totalQueries": 11,
+  "queriesWithResults": 11,
+  "queriesWithErrors": 0,
+  "queries": [
+    "backend architecture API services",
+    "authentication JWT login",
+    "Vue components export",
+    "database migrations",
+    "middleware authentication",
+    "controller API endpoints",
+    "React store usage",
+    "service layer business logic",
+    "Шукаю документи по архітектурі бекенду.",
+    "система авторизації JWT токени login register",
+    "логінування API автентифікація тести"
+  ]
+}

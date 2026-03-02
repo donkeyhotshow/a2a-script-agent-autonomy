@@ -11,11 +11,9 @@ export declare const INTENT_TYPES: {
     readonly DOCUMENTATION: "documentation";
     readonly MIXED: "mixed";
 };
-
 export interface QueryUnderstandingConfig {
     [key: string]: unknown;
 }
-
 export interface IntentResult {
     type: string;
     confidence: number;
@@ -35,15 +33,11 @@ export interface IntentResult {
     };
     originalQuery: string;
 }
-
 export declare class QueryUnderstandingEngine {
     private config;
     private patterns;
-
     constructor(config?: QueryUnderstandingConfig);
-
     analyze(query: string): IntentResult;
-
     private _tokenize;
     private _detectIntents;
     private _selectPrimaryIntent;
@@ -51,5 +45,4 @@ export declare class QueryUnderstandingEngine {
     private _extractEntities;
     private _extractModifiers;
 }
-
 export declare function createQueryUnderstandingEngine(config?: QueryUnderstandingConfig): QueryUnderstandingEngine;

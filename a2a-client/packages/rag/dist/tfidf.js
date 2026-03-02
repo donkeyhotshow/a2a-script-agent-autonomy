@@ -2,16 +2,14 @@
 /**
  * TF-IDF/BM25 Service for sparse retrieval
  */
-Object.defineProperty(exports, "__esModule", {value: true});
+Object.defineProperty(exports, "__esModule", { value: true });
 exports.TFIDFService = void 0;
-
 class TFIDFService {
     constructor() {
         this.documents = new Map();
         this.idf = new Map();
         this.documentCount = 0;
     }
-
     tokenize(text) {
         return text
             .toLowerCase()
@@ -19,23 +17,20 @@ class TFIDFService {
             .split(/\s+/)
             .filter((t) => t.length > 2);
     }
-
     addDocument(id, text) {
         const tokens = this.tokenize(text);
         this.documents.set(id, tokens);
         this.documentCount++;
         this.recalculateIDF();
     }
-
     addDocuments(docs) {
-        for (const {id, text} of docs) {
+        for (const { id, text } of docs) {
             const tokens = this.tokenize(text);
             this.documents.set(id, tokens);
             this.documentCount++;
         }
         this.recalculateIDF();
     }
-
     removeDocument(id) {
         if (this.documents.has(id)) {
             this.documents.delete(id);
@@ -43,13 +38,11 @@ class TFIDFService {
             this.recalculateIDF();
         }
     }
-
     clear() {
         this.documents.clear();
         this.idf.clear();
         this.documentCount = 0;
     }
-
     recalculateIDF() {
         const df = new Map();
         for (const tokens of this.documents.values()) {
@@ -62,7 +55,6 @@ class TFIDFService {
             this.idf.set(term, Math.log(this.documentCount / freq));
         }
     }
-
     bm25Score(queryTokens, docTokens, k1 = 1.5, b = 0.75) {
         const avgDocLen = this.getAverageDocLength();
         const docLen = docTokens.length;
@@ -80,18 +72,16 @@ class TFIDFService {
         }
         return score;
     }
-
     search(query, topK = 10) {
         const queryTokens = this.tokenize(query);
         const scores = [];
         for (const [id, docTokens] of this.documents) {
             const score = this.bm25Score(queryTokens, docTokens);
             if (score > 0)
-                scores.push({id, score});
+                scores.push({ id, score });
         }
         return scores.sort((a, b) => b.score - a.score).slice(0, topK);
     }
-
     getAverageDocLength() {
         if (this.documents.size === 0)
             return 0;
@@ -100,7 +90,6 @@ class TFIDFService {
             total += tokens.length;
         return total / this.documents.size;
     }
-
     getStats() {
         return {
             documentCount: this.documentCount,
@@ -108,14 +97,11 @@ class TFIDFService {
             avgDocLength: this.getAverageDocLength(),
         };
     }
-
     hasDocument(id) {
         return this.documents.has(id);
     }
-
     size() {
         return this.documents.size;
     }
 }
-
 exports.TFIDFService = TFIDFService;

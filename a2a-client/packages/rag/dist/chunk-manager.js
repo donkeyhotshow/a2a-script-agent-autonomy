@@ -3,21 +3,18 @@
  * Chunk Manager - Manages code chunking for RAG
  */
 var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : {"default": mod};
+    return (mod && mod.__esModule) ? mod : { "default": mod };
 };
-Object.defineProperty(exports, "__esModule", {value: true});
+Object.defineProperty(exports, "__esModule", { value: true });
 exports.ChunkManager = void 0;
 const crypto_1 = __importDefault(require("crypto"));
-
 class ChunkManager {
     constructor(config = {}) {
         this.config = config;
     }
-
     hashContent(content) {
         return crypto_1.default.createHash('md5').update(content).digest('hex').substring(0, 12);
     }
-
     chunkFile(filePath, content, ext) {
         switch (ext) {
             case '.php':
@@ -33,7 +30,6 @@ class ChunkManager {
                 return this.chunkLines(filePath, content);
         }
     }
-
     chunkVue(filePath, content) {
         const chunks = [];
         const scriptMatch = content.match(/<script[^>]*>([\s\S]*?)<\/script>/);
@@ -75,7 +71,6 @@ class ChunkManager {
         }
         return chunks;
     }
-
     chunkPHP(filePath, content) {
         const chunks = [];
         const classRegex = /class\s+(\w+)/g;
@@ -129,7 +124,6 @@ class ChunkManager {
         }
         return chunks;
     }
-
     chunkJS(filePath, content) {
         const chunks = [];
         const funcRegex = /(function\s+(\w+)|(?:const|let|var)\s+(\w+)\s*=\s*(?:async\s*)?\(|class\s+(\w+))/g;
@@ -177,7 +171,6 @@ class ChunkManager {
         }
         return chunks;
     }
-
     chunkMarkdown(filePath, content) {
         const chunks = [];
         const lines = content.split('\n');
@@ -200,7 +193,8 @@ class ChunkManager {
                 currentTitle = line.replace(/^#+\s*/, '');
                 currentSection = line + '\n';
                 startLine = lineNum;
-            } else {
+            }
+            else {
                 currentSection += line + '\n';
             }
             lineNum++;
@@ -217,7 +211,6 @@ class ChunkManager {
         }
         return chunks;
     }
-
     chunkLines(filePath, content, chunkSize = 50) {
         const chunks = [];
         const lines = content.split('\n');
@@ -234,7 +227,6 @@ class ChunkManager {
         }
         return chunks;
     }
-
     extractBlock(content, startIndex) {
         let braceCount = 0;
         let inBlock = false;
@@ -258,5 +250,4 @@ class ChunkManager {
         return block;
     }
 }
-
 exports.ChunkManager = ChunkManager;

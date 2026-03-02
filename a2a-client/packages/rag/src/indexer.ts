@@ -34,7 +34,7 @@ export interface RAGIndexData {
 const DEFAULT_EXCLUDE = [
     '.a2a/', '.a2a/index/**', '.a2a/index/rag-files.json', '.amazonq/**', '.cursor/**',
     '.idea/**', '.vscode/**', 'node_modules/**', 'node_modules/', 'vendor/**', 'storage/**',
-    '.git/**', 'dist/**', 'build/**', 'package-lock.json',
+    '.git/**', '.carrier/**', '.carior/**', 'dist/**', 'build/**', 'package-lock.json',
 ];
 
 export class RAGIndexer {
@@ -50,7 +50,7 @@ export class RAGIndexer {
     constructor(config: RAGIndexerConfig) {
         this.projectPath = config.projectPath;
         this.indexPath = path.join(this.projectPath, '.a2a', 'index');
-        this.includePatterns = config.includePatterns ?? ['**/*.php', '**/*.js', '**/*.vue', '**/*.ts', '**/*.json', '**/*.md'];
+        this.includePatterns = config.includePatterns ?? ['**/*.php', '**/*.js', '**/*.vue', '**/*.ts', '**/*.tsx', '**/*.json', '**/*.md', '**/*.sql'];
         this.excludePatterns = config.excludePatterns ?? DEFAULT_EXCLUDE;
         this.chunkManager = new ChunkManager(config as unknown as ChunkManagerConfig);
         this._initIgnoreDetectorPromise = this._initIgnoreDetector(config);
@@ -75,6 +75,28 @@ export class RAGIndexer {
     async indexProject(force = false): Promise<RAGIndexData> {
         await fs.mkdir(this.indexPath, {recursive: true});
         await this._ensureIgnoreDetector();
+        
+        // Try to load existing index for incremental indexing
+        let existingIndex: RAGIndexData | null = null;
+        if (!force) {
+            try {
+                const indexFilePath = path.join(this.indexPath, 'rag-files.json');
+                const existingIndexRaw = await fs.readFile(indexFilePath, 'utf-8');
+                existingIndex = JSON.parse(existingIndexRaw);
+                console.log('[RAG] Loaded existing index with', existingIndex!.files.length, 'files');
+            } catch {
+                console.log('[RAG] No existing index found, starting fresh');
+            }
+        }
+        
+        // Build hash map of existing index for fast lookup
+        const existingHashes = new Map<string, string>();
+        if (existingIndex) {
+            for (const file of existingIndex.files) {
+                existingHashes.set(file.path, file.hash);
+            }
+        }
+        
         const files = await this.walkDirectory(this.projectPath);
         const index: RAGIndexData = {
             version: '1.0',
@@ -84,17 +106,46 @@ export class RAGIndexer {
             chunks: [],
         };
 
+        let changedCount = 0;
+        let unchangedCount = 0;
+        let skippedCount = 0;
+        
         for (const filePath of files) {
             try {
+                const relativePath = path.relative(this.projectPath, filePath).replace(/\\/g, '/');
+                
+                // Compute hash for this file
+                const content = await fs.readFile(filePath, 'utf-8');
+                const newHash = this.chunkManager.hashContent(content);
+                
+                // Check if file changed
+                const existingHash = existingHashes.get(relativePath);
+                if (existingHash && existingHash === newHash && !force) {
+                    // File unchanged - use existing chunks
+                    const existingFile = existingIndex?.files.find(f => f.path === relativePath);
+                    const existingChunks = existingIndex?.chunks.filter(c => c.filePath === relativePath);
+                    
+                    if (existingFile && existingChunks && existingChunks.length > 0) {
+                        index.files.push(existingFile);
+                        index.chunks.push(...existingChunks);
+                        unchangedCount++;
+                        continue;
+                    }
+                }
+                
+                // File changed or not in existing index - reindex
                 const fileInfo = await this.indexFile(filePath);
                 if (fileInfo) {
                     index.files.push(fileInfo.file);
                     index.chunks.push(...fileInfo.chunks);
+                    changedCount++;
                 }
             } catch {
-                // skip failed files
+                skippedCount++;
             }
         }
+        
+        console.log(`[RAG] Indexing complete: ${changedCount} changed, ${unchangedCount} unchanged, ${skippedCount} skipped`);
 
         const indexFilePath = path.join(this.indexPath, 'rag-files.json');
         try {
@@ -105,6 +156,28 @@ export class RAGIndexer {
         await fs.writeFile(indexFilePath, JSON.stringify(index, null, 2));
         this.index = index;
         return index;
+    }
+
+    /**
+     * Get indexing status - returns info about current index state
+     */
+    async getIndexStatus(): Promise<{hasIndex: boolean; fileCount: number; timestamp: string | null}> {
+        try {
+            const indexFilePath = path.join(this.indexPath, 'rag-files.json');
+            const data = await fs.readFile(indexFilePath, 'utf-8');
+            const index = JSON.parse(data) as RAGIndexData;
+            return {
+                hasIndex: true,
+                fileCount: index.files.length,
+                timestamp: index.timestamp
+            };
+        } catch {
+            return {
+                hasIndex: false,
+                fileCount: 0,
+                timestamp: null
+            };
+        }
     }
 
     async indexFile(filePath: string): Promise<{ file: IndexFileInfo; chunks: Chunk[] } | null> {
