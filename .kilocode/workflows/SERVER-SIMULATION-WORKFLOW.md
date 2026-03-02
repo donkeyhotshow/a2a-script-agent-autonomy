@@ -17,7 +17,7 @@ simulations/
 │   ├── 2/ request.json, response.json
 │   ├── 3/ request.json, request.md, response.json, response.md
 │   ├── 4/ request.json, request.md, response.json, response.md
-├── coder-dialog/        # Діалог + RAG + файли
+├── coder/        # Діалог + RAG + файли
 ├── fix-vue-imports/
 ├── fix-vue-imports-batched/
 └── ...
@@ -98,6 +98,132 @@ Client              Server (transforms)       LLM
   }
 }
 ```
+
+## Обробка двох типів дій
+
+Сервер обробляє Actions та AI-Actions по-різному:
+
+### 1. Actions (заздалегідь визначені кроки)
+
+**Логіка обробки:**
+1. Клієнт надсилає `result` з результатом виконання кроку
+2. Сервер читає `context.execution.action` та поточний `step`
+3. Сервер перемикає `step` на наступний згідно з definition
+4. Сервер повертає `execute` з наступним кроком
+
+**Приклад для fix-vue-imports:**
+```json
+// Крок 2: Сервер повертає execute.script
+{
+  "context": {
+    "task": "виправити імпорти",
+    "execution": { "action": "fix-vue-imports", "step": "collect-files" }
+  },
+  "execute": {
+    "script": {
+      "input": "Знайти всі .vue файли в src/",
+      "output": "[\"src/components/Header.vue\", ...]"
+    }
+  }
+}
+
+// Крок 3: Клієнт повертає результат
+{
+  "context": { ... },
+  "result": { "script": { "output": "[\"src/components/Header.vue\", ...]" } }
+}
+
+// Крок 4: Сервер автоматично перемикає step
+{
+  "context": {
+    "task": "виправити імпорти",
+    "execution": { "action": "fix-vue-imports", "step": "process-files" }
+  },
+  "execute": {
+    "script": {
+      "input": "Знайти @/ імпорти в файлах",
+      "output": "..."
+    }
+  }
+}
+```
+
+**Ключові особливості:**
+- `execution.step` змінюється сервером без участі LLM
+- Сервер має повну мапу кроків з definition
+- Результат попереднього кроку впливає на вибір наступного
+
+### 2. AI-Actions (діалог з LLM)
+
+**Логіка обробки:**
+1. Клієнт надсилає `result.message` (повідомлення користувача)
+2. Сервер відправляє контекст до LLM
+3. LLM визначає наступну дію (read-file, write-file, rag-search, тощо)
+4. Сервер повертає `execute` з результатом LLM
+
+**Формати відповідей для AI-Actions:**
+
+#### execute.form — очікування вводу від користувача
+```json
+{
+  "context": { "execution": { "action": "dialog", "step": "llm" } },
+  "execute": {
+    "form": { "input": [{ "name": "message", "type": "text", "required": true }] }
+  }
+}
+```
+
+#### execute.llm — продовження діалогу з LLM
+```json
+{
+  "context": { "execution": { "action": "coder", "step": "llm" } },
+  "execute": {
+    "llm": {
+      "purpose": "Проаналізувати код і запропонувати виправлення",
+      "context": "..."
+    }
+  }
+}
+```
+
+#### execute.message — повідомлення від LLM
+```json
+{
+  "context": { "execution": { "action": "dialog", "step": "llm" } },
+  "execute": {
+    "message": "Я проаналізував ваш код. Ось що я знайшов: ..."
+  },
+  "execute": {
+    "form": { "input": [{ "name": "message", "type": "text" }] }
+  }
+}
+```
+
+#### execute з конкретними діями
+```json
+{
+  "context": { "execution": { "action": "coder", "step": "llm" } },
+  "execute": {
+    "rag-search": { "query": "функція авторизації JWT" }
+  }
+}
+```
+
+**Ключові особливості:**
+- `execution.step` = "llm" (або визначається динамічно)
+- LLM вирішує наступну дію
+- Можливість продовження через `execute.llm`
+- Сервер не має жорсткої мапи кроків
+
+### Порівняння обробки
+
+| Аспект | Actions | AI-Actions |
+|--------|---------|------------|
+| Визначення кроків | Definition файли | LLM |
+| Перемикання кроків | Сервер (автоматично) | LLM |
+| Зміна execution.step | Сервер | Сервер (встановлює "llm") |
+| Результат від LLM | Ні | Так |
+| Приклади | fix-vue-imports | dialog, coder, coder-smart |
 
 ## Правила
 

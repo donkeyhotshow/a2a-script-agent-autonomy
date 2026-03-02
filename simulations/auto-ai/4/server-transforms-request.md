@@ -1,13 +1,12 @@
-# Server Transform: request.json → request.md (step 4)
+# Server Transform: request.json → request.md
 
-**Input:** `request.json` with `result.rag-search` (RAG results), context, history.
+**Input:** `request.json` with `context`, `history`, `result["rag-search"]` (results, files).
 
-**Steps:**
+**Transformation steps:**
 
-1. Append system message to history: "RAG found: src/app.js, src/routes/index.js"
-2. Build request.md: system prompt (you are Auto-AI; choose next action: read-file, write-file, execute-command, or reply) + context + history + ragResults
-3. Send to LLM.
+1. Append to history: assistant (action rag-search), system ("RAG found: ..."), then build request.md with system prompt (choose next action given task and RAG results) + context + history + ragResults.
+2. Return `request.md` to LLM.
 
 ---
 
-**Output:** request.md for LLM to decide next action (e.g. read-file src/app.js).
+**Output:** `request.md` = system prompt + current state + ragResults

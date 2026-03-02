@@ -12,7 +12,10 @@ User task: *"Refactor the API: add a logging middleware, add a health check endp
 
 The flow uses **many steps and many actions**: form → rag-search → list-directory → read-file (twice) → write-file (health) → write-file (logging) → grep-search → read-file (test) → write-file (test update) → execute-command (lint) → execute-command (npm test) → write-file (report) → completed. So the sim exercises: **form**, **rag-search**, **list-directory**, **read-file**, **write-file** (4×), **grep-search**, **execute-command** (2×), **completed**.
 
-## File structure
+## File structure (per simulations/SCHEMA.md)
+
+- **Steps without LLM** (1, 2, 16): only `request.json`, `response.json`.
+- **Steps with LLM** (3–15): all 6 files in pipeline order — `request.json` → `server-transforms-request.md` → `request.md` → `response.md` → `server-transforms-response.md` → `response.json`.
 
 ```
 simulations/auto-ai/
@@ -20,7 +23,10 @@ simulations/auto-ai/
 ├── analysis.md
 ├── ACTIONS-MAP.md
 ├── WORKFLOW.md
-├── 1/  … 16/   (steps: 1 task→actions, 2 form, 3–15 LLM-driven chain, 16 optional thanks)
+├── 1/   request.json, response.json
+├── 2/   request.json, response.json
+├── 3/ … 15/   request.json, server-transforms-request.md, request.md, response.md, server-transforms-response.md, response.json
+└── 16/  request.json, response.json
 ```
 
 ## Rules

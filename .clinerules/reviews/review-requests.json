@@ -1,7 +1,7 @@
 {
   "tracking_version": "1.0.0",
   "last_updated": "2026-03-02T00:00:00Z",
-  "total_requests": 3,
+  "total_requests": 12,
   "pending_requests": [
     {
       "id": 1772406564145,
@@ -20,6 +20,15 @@
       "status": "pending",
       "created_at": "2026-03-01T23:10:56.167Z",
       "checklist": []
+    },
+    {
+      "id": 1772410290135,
+      "document_path": "docs\\NEW-TEST-cli-documentation.md",
+      "review_type": "content",
+      "reviewer": "auto-reviewer",
+      "status": "pending",
+      "created_at": "2026-03-02T00:11:30.135Z",
+      "checklist": []
     }
   ],
   "in_progress_requests": [],
@@ -36,6 +45,118 @@
       "completed_at": "2026-03-01T23:12:47.739Z",
       "results": [
         "Technical accuracy verified, Content clarity assessed, Format compliance checked"
+      ]
+    },
+    {
+      "id": 1772409882529,
+      "document_path": "NEW-README.md",
+      "review_type": "content",
+      "reviewer": "auto-reviewer",
+      "status": "completed",
+      "created_at": "2026-03-02T00:04:42.529Z",
+      "checklist": [],
+      "started_at": "2026-03-02T00:06:06.138Z",
+      "completed_at": "2026-03-02T00:06:17.897Z",
+      "results": [
+        "Review completed successfully"
+      ]
+    },
+    {
+      "id": 1772409893949,
+      "document_path": "NEW-AGENTS.md",
+      "review_type": "content",
+      "reviewer": "auto-reviewer",
+      "status": "completed",
+      "created_at": "2026-03-02T00:04:53.949Z",
+      "checklist": [],
+      "started_at": "2026-03-02T00:06:29.926Z",
+      "completed_at": "2026-03-02T00:06:41.884Z",
+      "results": [
+        "Review completed successfully"
+      ]
+    },
+    {
+      "id": 1772409906458,
+      "document_path": ".clinerules\\NEW-README.md",
+      "review_type": "content",
+      "reviewer": "auto-reviewer",
+      "status": "completed",
+      "created_at": "2026-03-02T00:05:06.458Z",
+      "checklist": [],
+      "started_at": "2026-03-02T00:06:54.051Z",
+      "completed_at": "2026-03-02T00:07:05.688Z",
+      "results": [
+        "Review completed successfully"
+      ]
+    },
+    {
+      "id": 1772409936930,
+      "document_path": "a2a-server\\NEW-README.md",
+      "review_type": "content",
+      "reviewer": "auto-reviewer",
+      "status": "completed",
+      "created_at": "2026-03-02T00:05:36.930Z",
+      "checklist": [],
+      "started_at": "2026-03-02T00:07:17.486Z",
+      "completed_at": "2026-03-02T00:07:29.722Z",
+      "results": [
+        "Review completed successfully"
+      ]
+    },
+    {
+      "id": 1772410078214,
+      "document_path": "a2a-server\\docs\\NEW-action-api.md",
+      "review_type": "content",
+      "reviewer": "auto-reviewer",
+      "status": "completed",
+      "created_at": "2026-03-02T00:07:58.214Z",
+      "checklist": [],
+      "started_at": "2026-03-02T00:08:31.779Z",
+      "completed_at": "2026-03-02T00:08:43.985Z",
+      "results": [
+        "Review completed successfully"
+      ]
+    },
+    {
+      "id": 1772410090617,
+      "document_path": "a2a-server\\docs\\NEW-entry-points.md",
+      "review_type": "content",
+      "reviewer": "auto-reviewer",
+      "status": "completed",
+      "created_at": "2026-03-02T00:08:10.617Z",
+      "checklist": [],
+      "started_at": "2026-03-02T00:08:57.897Z",
+      "completed_at": "2026-03-02T00:09:10.514Z",
+      "results": [
+        "Review completed successfully"
+      ]
+    },
+    {
+      "id": 1772410182456,
+      "document_path": "new-request-flow\\NEW-README.md",
+      "review_type": "content",
+      "reviewer": "auto-reviewer",
+      "status": "completed",
+      "created_at": "2026-03-02T00:09:42.456Z",
+      "checklist": [],
+      "started_at": "2026-03-02T00:10:22.938Z",
+      "completed_at": "2026-03-02T00:10:37.879Z",
+      "results": [
+        "Review completed successfully"
+      ]
+    },
+    {
+      "id": 1772410197175,
+      "document_path": "new-request-flow\\NEW-ARCHITECTURE.md",
+      "review_type": "content",
+      "reviewer": "auto-reviewer",
+      "status": "completed",
+      "created_at": "2026-03-02T00:09:57.175Z",
+      "checklist": [],
+      "started_at": "2026-03-02T00:10:52.126Z",
+      "completed_at": "2026-03-02T00:11:06.278Z",
+      "results": [
+        "Review completed successfully"
       ]
     }
   ],

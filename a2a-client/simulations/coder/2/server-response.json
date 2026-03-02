@@ -1,1 +1,1 @@
-{"context":{"task":"допоможи розібратись з кодом","execution":{"action":"coder-dialog","step":"coder-dialog"},"history":[]},"execute":{"form":{"input":[{"name":"message","type":"text","label":"Повідомлення","required":true}]}}}
+{"context":{"task":"допоможи розібратись з кодом","execution":{"action":"coder","step":"coder"},"history":[]},"execute":{"form":{"input":[{"name":"message","type":"text","label":"Повідомлення","required":true}]}}}

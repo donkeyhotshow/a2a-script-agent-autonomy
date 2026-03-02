@@ -9,7 +9,7 @@
 ```
 simulations/
 ├── dialog/                    # Диалог с LLM
-├── coder-dialog/              # Диалог с RAG + запись файлов
+├── coder/              # Диалог с RAG + запись файлов
 ├── fix-vue-imports/           # Исправление Vue импортов
 ├── analyze/
 └── ...
@@ -129,7 +129,7 @@ simulations/
 {
   "context": {
     "task": "dialog",
-    "execution": { "action": "dialog", "step": "llm-request" },
+    "execution": { "action": "dialog" },
     "history": [
       { "role": "user", "message": "hello" },
       { "role": "assistant", "message": "hi there!" }

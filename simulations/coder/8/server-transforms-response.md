@@ -9,7 +9,7 @@
 3. Build `response.json`:
    - `context`: preserve from request
    - `result`: LLM response (completion message)
-   - `finalResult`: action summary (coder-dialog fully completed)
+   - `finalResult`: action summary (coder fully completed)
 4. Return `response.json` to client.
 
 ---

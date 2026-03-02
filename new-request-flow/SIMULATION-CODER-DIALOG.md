@@ -1,4 +1,4 @@
-# Симуляція: coder-dialog
+# Симуляція: coder
 
 Повний протокол взаємодії Client → Server для екшена "Діалог з AI-кодером" з можливістю пошуку та запису файлів.
 
@@ -54,7 +54,7 @@
 Ця симуляція демонструє повний потік виконання екшена:
 
 1. Користувач надсилає задачу
-2. Server повертає екшен coder-dialog з llmPrompt
+2. Server повертає екшен coder з llmPrompt
 3. Клієнт обирає екшен → Server повертає форму
 4. Користувач надсилає повідомлення
 5. Server → LLM: system prompt + history + message
@@ -93,7 +93,7 @@
 
 ### Крок 2: Вибір екшена
 ```json
-{ "result": { "actionId": "coder-dialog" } }
+{ "result": { "actionId": "coder" } }
 ```
 Server повертає форму для введення повідомлення.
 
@@ -192,7 +192,7 @@ async function login(email, password) {
 ## Файли симуляції
 
 ```
-simulations/coder-dialog/
+simulations/coder/
 ├── description.md     # Короткий опис
 ├── analysis.md        # Детальний аналіз
 ├── 1/
@@ -214,4 +214,4 @@ simulations/coder-dialog/
 |-----------|-------|---------|-------|------------|
 | dialog | ❌ | ❌ | ❌ | ✅ |
 | fix-vue-imports-batched | glob | ✅ | ❌ | ❌ |
-| coder-dialog | RAG | ✅ | ✅ | ✅ |
+| coder | RAG | ✅ | ✅ | ✅ |

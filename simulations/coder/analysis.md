@@ -1,4 +1,4 @@
-# Simulation: coder-dialog
+# Simulation: coder
 
 ## Опис
 
@@ -19,9 +19,9 @@
 ```
 1. Client → Server: { task: "допоможи розібратись з кодом" }
            ↓
-2. Server → Client: { context, actions: [coder-dialog з llmPrompt + file actions] }
+2. Server → Client: { context, actions: [coder з llmPrompt + file actions] }
            ↓
-3. Client → Server: { context, result: { actionId: "coder-dialog" } }
+3. Client → Server: { context, result: { actionId: "coder" } }
            ↓
 4. Server → Client: { context, execute: { form } } - запитує повідомлення
            ↓
@@ -117,7 +117,7 @@ LLM отримує повідомлення + RAG результати і мож
 
 ## Очікувані результати
 
-1. Сервер пропонує екшен coder-dialog з llmPrompt + RAG actions
+1. Сервер пропонує екшен coder з llmPrompt + RAG actions
 2. LLM може вибирати між діалогом та RAG пошуком
 3. Контекст зберігає історію та результати операцій
 4. Діалог продовжується до завершення

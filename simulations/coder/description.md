@@ -1,5 +1,9 @@
 # Coder Dialog Simulation
 
+## Тип: AI-Actions
+
+Це симуляція типу **AI-Actions** - LLM динамічно вирішує наступний крок, кроки не захардкожені.
+
 ## Опис
 
 Симуляція показує діалог з AI-асистентом (кодером), який може:
@@ -28,7 +32,7 @@
 | Крок | Request | Response |
 |------|---------|----------|
 | 1 | task: "допомоги з кодом" | actions з llmPrompt + fileActions |
-| 2 | result.action: "coder-dialog" | execute.form запитує message |
+| 2 | result.action: "coder" | execute.form запитує message |
 | 3 | input.message | LLM request → аналізує → виконує RAG пошук |
 | 4 | result + execute | LLM request → читає файл |
 | 5 | input.message | LLM відповідає + form |
@@ -47,7 +51,7 @@
 ## Структура файлів
 
 ```
-simulations/coder-dialog/
+simulations/coder/
 ├── description.md
 ├── analysis.md
 ├── 1/

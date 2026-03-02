@@ -1,7 +1,7 @@
 {
   "context": {
     "task": "проаналізуй архітектуру проекту",
-    "execution": {"action": "analyze", "step": "llm-request"},
+    "execution": {"action": "analyze"},
     "history": [
       {"role": "user", "message": "опиши поточну архітектуру бекенду"},
       {"role": "assistant", "message": "Шукаю документи по архітектурі бекенду.", "action": "rag-search"},

@@ -17,7 +17,7 @@ a2a-client/simulations/
 ├── dialog/              # Діалог з LLM
 │   ├── 1/ server-response.json, client-request.json
 │   ├── 2/ server-response.json, client-request.json
-├── coder-dialog/        # Діалог + RAG + файли
+├── coder/        # Діалог + RAG + файли
 │   ├── 1/ server-response.json, client-request.json
 │   ├── ...
 ├── fix-vue-imports/
@@ -122,6 +122,109 @@ a2a-client/simulations/
 |-----------|------|
 | `fix-vue-imports` | form (choice) → script steps → finalResult |
 | `dialog` | actions → result.action; form (message) → result.message |
-| `coder-dialog` | form (message) → result.message; execute.rag-search → result.rag-search; execute.read-file → result.read-file |
+| `coder` | form (message) → result.message; execute.rag-search → result.rag-search; execute.read-file → result.read-file |
 | `auto-ai` | form, rag-search, read-file, write-file, execute-command → result.execute-command (command, exitCode, stdout, stderr) |
 | `analyze-dialog` | form з choices (continue_search / save_report) → result.choice |
+
+## Правила для двох типів дій
+
+Клієнт повинен обробляти відповіді сервера по-різному залежно від типу дії:
+
+### 1. Actions (заздалегідь визначені кроки)
+
+**Типові приклади:** `fix-vue-imports`, `fix-vue-imports-batched`
+
+**Поведінка клієнта:**
+1. Отримує `execute.script` з інструкцією
+2. Виконує script
+3. Повертає `result.script` з виводом
+4. Сервер автоматично перемикає `execution.step`
+
+**Що очікувати від сервера:**
+- `context.execution.step` — назва поточного кроку (з definition)
+- `execute` — конкретна дія для виконання
+- Наступний крок не потребує рішення від клієнта
+
+**Приклад:**
+```json
+// Сервер → Клієнт
+{
+  "context": {
+    "execution": { "action": "fix-vue-imports", "step": "collect-files" }
+  },
+  "execute": {
+    "script": { "input": "Знайти всі .vue файли", "output": "..." }
+  }
+}
+
+// Клієнт → Сервер
+{
+  "context": { ... },
+  "result": { "script": { "output": "[\"src/App.vue\", ...]" } }
+}
+```
+
+### 2. AI-Actions (діалог з LLM)
+
+**Типові приклади:** `dialog`, `coder`, `coder-smart`
+
+**Поведінка клієнта:**
+1. Отримує `execute.form` або `execute.message` або `execute.llm`
+2. Для form: показує форму користувачу
+3. Для message: показує повідомлення
+4. Для llm: чекає продовження
+5. Повертає відповідь (`result.message`, `result.choice`, тощо)
+6. Сервер відправляє контекст до LLM
+
+**Що очікувати від сервера:**
+- `context.execution.step` = "llm" (або динамічний)
+- `execute.form` — очікування вводу
+- `execute.message` — повідомлення для відображення
+- `execute.llm` — продовження діалогу з LLM
+- `execute.rag-search`, `execute.read-file`, `execute.write-file`, `execute.execute-command` — конкретні дії
+
+**Формати execute для AI-Actions:**
+
+| execute | Клієнт → result |
+|---------|------------------|
+| `execute.form.input` | `result.message` |
+| `execute.form.choices` | `result.choice` |
+| `execute.rag-search` | `result.rag-search` |
+| `execute.read-file` | `result.read-file` |
+| `execute.write-file` | `result.write-file` |
+| `execute.execute-command` | `result.execute-command` |
+
+**Приклад діалогу:**
+```json
+// Сервер → Клієнт
+{
+  "context": { "execution": { "action": "dialog", "step": "llm" } },
+  "execute": {
+    "form": { "input": [{ "name": "message", "type": "text" }] }
+  }
+}
+
+// Клієнт → Сервер (після вводу користувача)
+{
+  "context": { ... },
+  "result": { "message": "як працює авторизація?" }
+}
+
+// Сервер → Клієнт (після LLM)
+{
+  "context": { "execution": { "action": "dialog", "step": "llm" } },
+  "execute": {
+    "message": "Система авторизації використовує JWT токени...",
+    "form": { "input": [{ "name": "message", "type": "text" }] }
+  }
+}
+```
+
+### Різниця в обробці
+
+| Аспект | Actions | AI-Actions |
+|--------|---------|------------|
+| Перехід між кроками | Автоматичний (сервер) | Через LLM |
+| Очікування вводу | Ні (execute.script) | Так (execute.form) |
+| Повідомлення | Ні | Так (execute.message) |
+| result | script output | message / choice / action result |

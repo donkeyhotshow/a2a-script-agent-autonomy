@@ -24,7 +24,7 @@
 {
   "context": {
     "task": "аналіз",
-    "execution": { "action": "analyze", "step": "llm-request" },
+    "execution": { "action": "analyze" },
     "history": [
       { "role": "user", "message": "опиши поточну архітектуру бекенду" }
     ]

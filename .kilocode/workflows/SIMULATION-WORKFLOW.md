@@ -13,7 +13,7 @@ simulations/
 │   ├── 2/ request.json, response.json
 │   ├── 3/ request.json, request.md, response.json, response.md
 │   ├── 4/ request.json, request.md, response.json, response.md  (+ optional server-transforms-*.md)
-├── coder-dialog/        # Діалог + RAG + файли
+├── coder/        # Діалог + RAG + файли
 ├── fix-vue-imports/
 ├── fix-vue-imports-batched/
 └── ...
@@ -103,7 +103,7 @@ context + history + **execute** (canonical: key = action type, value = params). 
 {
   "context": {
     "task": "dialog",
-    "execution": { "action": "dialog", "step": "llm-request" },
+    "execution": { "action": "dialog" },
     "history": [
       { "role": "user", "message": "hello world" },
       { "role": "assistant", "message": "hello world" }
@@ -118,6 +118,93 @@ context + history + **execute** (canonical: key = action type, value = params). 
 ```
 
 Execute format: `execute.<action-type> = params`, e.g. `"read-file": { "path": "..." }`, `"write-file": { "path": "...", "content": "..." }`, `"rag-search": { "query": "..." }`, `"form": { "input": [...] }`, `"script": { "input", "output", "code" }`, `"execute-command": { "command": "npm test" }`. Client returns `result["execute-command"]` with `command`, `exitCode`, `stdout`, `stderr`.
+
+## Два типи дій
+
+Система підтримує два типи дій, які відрізняються за способом визначення кроків:
+
+### 1. Actions (заздалегідь визначені кроки)
+
+- **Характеристики:**
+  - Кроки визначені заздалегідь в action definition
+  - Сервер сам перемикає кроки на основі `result`
+  - Приклад: [`fix-vue-imports`](../a2a-client/simulations/fix-vue-imports/description.md)
+
+- **Структура `execution`:**
+  ```json
+  {
+    "action": "fix-vue-imports",
+    "step": "collect-files"
+  }
+  ```
+
+- **Поведінка:**
+  - У `response.json`: `execution.step` змінюється сервером автоматично
+  - `context.execution` містить `{ action, step }`
+  - Клієнт лише повертає результат виконання кроку (`result`)
+
+- **Приклад потоку:**
+  ```
+  Крок 1: request.json → { "result": { "choice": "fix-vue-imports" } }
+  Крок 2: response.json → { "execute": { "script": { "input": "..." } }, "context": { "execution": { "action": "fix-vue-imports", "step": "collect-files" } } }
+  Крок 3: request.json → { "result": { "script": { "output": "..." } } }
+  Крок 4: response.json → { "execute": { "script": { "input": "..." } }, "context": { "execution": { "action": "fix-vue-imports", "step": "process-files" } } }
+  ```
+
+### 2. AI-Actions (діалог з LLM)
+
+- **Характеристики:**
+  - Кроки визначаються LLM динамічно
+  - Сервер відображає список доступних кроків, але вибір робить LLM
+  - Кожен крок може бути окремим запитом до LLM
+  - Приклади: [`dialog`](../a2a-client/simulations/dialog/description.md), [`coder`](../a2a-client/simulations/coder/description.md), `coder-smart`
+
+- **Структура `execution`:**
+  ```json
+  {
+    "action": "coder",
+    "step": "llm"
+  }
+  ```
+
+- **Поведінка:**
+  - У `response.json`: може бути `execute.message` + `form` для продовження
+  - Або `execute.llm` з `purpose` для генерації наступного кроку
+  - LLM вирішує, який action виконати наступним
+
+- **Формати відповідей:**
+  - `execute.form` — очікує ввід від користувача
+  - `execute.message` — повідомлення від LLM
+  - `execute.llm` — інструкція для LLM продовжити роботу
+    ```json
+    {
+      "execute": {
+        "llm": {
+          "purpose": "Проаналізувати файл і запропонувати виправлення"
+        }
+      }
+    }
+    ```
+
+- **Приклад потоку:**
+  ```
+  Крок 1: request.json → { "task": "напиши код" }
+  Крок 2: response.json → { "actions": [{ "action": "coder", "title": "Coder" }], "context": { "execution": { "action": "coder", "step": "init" } } }
+  Крок 3: request.json → { "result": { "action": "coder" }, "context": { "execution": { "action": "coder", "step": "init" } } }
+  Крок 4: response.json → { "execute": { "form": { "input": [...] } }, "context": { "execution": { "action": "coder", "step": "llm" } } }
+  Крок 5: request.json → { "result": { "message": "напиши функцію авторизації" }, "context": { "execution": { "action": "coder", "step": "llm" } } }
+  Крок 6: response.json → { "execute": { "llm": { "purpose": "Згенерувати код" } }, "context": { "execution": { "action": "coder", "step": "llm" } } }
+  ```
+
+### Порівняння
+
+| Характеристика | Actions | AI-Actions |
+|----------------|---------|------------|
+| Визначення кроків | Заздалегідь в definition | Динамічно LLM |
+| Перемикання кроків | Сервер на основі result | LLM вирішує |
+| Приклади | fix-vue-imports | dialog, coder, coder-smart |
+| execution.step | Змінюється сервером | "llm" або визначається LLM |
+| response формат | execute з конкретним action | execute.message/form або execute.llm |
 
 ## Правила
 

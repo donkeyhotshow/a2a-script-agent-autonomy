@@ -1,13 +1,7 @@
-# Server Transform: request.json → request.md (step 7)
+# Server Transform: request.json to request.md
 
-**Input:** request.json with result.execute-command (command, exitCode, stdout, stderr).
+**Input:** request.json with result.read-file (path src/routes/index.js, content).
 
-**Steps:**
+**Steps:** Append system "Read routes". Build request.md: prompt (choose next action; create health route file) + context + history + file content.
 
-1. Append system message: "Command npm test finished (exit 0)"
-2. Build request.md: system prompt (summarize and complete or continue) + task + history + command result
-3. Send to LLM.
-
----
-
-**Output:** request.md for LLM to produce completed + summary.
+**Output:** request.md for LLM.

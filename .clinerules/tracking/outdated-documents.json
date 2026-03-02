@@ -1,8 +1,49 @@
 {
   "tracking_version": "1.0.0",
   "last_updated": "2026-03-02T00:00:00Z",
-  "total_documents": 1,
-  "outdated_documents": [],
+  "total_documents": 9,
+  "outdated_documents": [
+    {
+      "path": "README.md",
+      "marked_at": "2026-03-02T00:04:42.523Z",
+      "status": "pending_update"
+    },
+    {
+      "path": "AGENTS.md",
+      "marked_at": "2026-03-02T00:04:53.944Z",
+      "status": "pending_update"
+    },
+    {
+      "path": ".clinerules/README.md",
+      "marked_at": "2026-03-02T00:05:06.454Z",
+      "status": "pending_update"
+    },
+    {
+      "path": "a2a-server/README.md",
+      "marked_at": "2026-03-02T00:05:36.926Z",
+      "status": "pending_update"
+    },
+    {
+      "path": "a2a-server/docs/action-api.md",
+      "marked_at": "2026-03-02T00:07:58.209Z",
+      "status": "pending_update"
+    },
+    {
+      "path": "a2a-server/docs/entry-points.md",
+      "marked_at": "2026-03-02T00:08:10.613Z",
+      "status": "pending_update"
+    },
+    {
+      "path": "new-request-flow/README.md",
+      "marked_at": "2026-03-02T00:09:42.451Z",
+      "status": "pending_update"
+    },
+    {
+      "path": "new-request-flow/ARCHITECTURE.md",
+      "marked_at": "2026-03-02T00:09:57.170Z",
+      "status": "pending_update"
+    }
+  ],
   "needs_update_documents": [],
   "review_documents": [],
   "archived_documents": [

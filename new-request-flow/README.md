@@ -70,5 +70,5 @@ web должен командывать клиентом , через апи к�
 - **fix-vue-imports** — виправлення Vue імпортів (кроки без LLM).
 - **fix-vue-imports-batched** — те саме, batched.
 - **dialog** — діалог з LLM (request.md/response.md у кроках з LLM).
-- **coder-dialog** — діалог + RAG + read-file/write-file.
+- **coder** — діалог + RAG + read-file/write-file.
 - **coder-smart** — контекст-документ (capture-task → analyze-intent → llm-first-iteration → create-context-document).

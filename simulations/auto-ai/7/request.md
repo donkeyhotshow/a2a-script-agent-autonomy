@@ -1,14 +1,7 @@
 ## System Prompt
 
-You are Auto-AI. The user asked to add a health check endpoint and run tests. You have written src/routes/health.js and run `npm test`. The command succeeded (exit 0). Summarize what was done and mark the task completed. Reply with JSON: {"message": "...", "action": "completed"}.
+You are Auto-AI. You read src/routes/index.js. Task: add health endpoint, logging, tests, lint, test, report. Choose one action. Reply JSON: message, action write-file, params.path and params.content (full file content for new file). Create health route file src/routes/health.js.
 
-## Command result
+## Current state
 
-```json
-{
-  "command": "npm test",
-  "exitCode": 0,
-  "stdout": "PASS src/__tests__/health.test.js\n  GET /health\n    ✓ returns 200 and status ok\nTest Suites: 1 passed, 1 total",
-  "stderr": ""
-}
-```
+History and context. result.read-file has content of src/routes/index.js. Output write-file for src/routes/health.js with express router and GET / returning status ok.

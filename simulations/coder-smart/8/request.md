@@ -4,4 +4,4 @@
 
 ## Поточний стан
 
-context (task, execution.step: execute-item), history: [{ role: "user", message: "<повний контент task-1.md>" }], message: той самий контент. (Як у coder-dialog: перше повідомлення після обнулення history = контент доку.)
+context (task, execution.step: execute-item), history: [{ role: "user", message: "<повний контент task-1.md>" }], message: той самий контент. (Як у coder: перше повідомлення після обнулення history = контент доку.)

@@ -1,13 +1,12 @@
-# Server Transform: response.md → response.json (step 5)
+# Server Transform: response.md → response.json
 
-**Input:** LLM response with action "write-file", params.path and params.content.
+**Input:** `response.md` = LLM output with action read-file, params.path.
 
-**Steps:**
+**Transformation steps:**
 
-1. Parse path and content
-2. Build response.json: context, history updated, execute.write-file = { path, content }
-3. Return to client.
+1. Append assistant to history. Build response.json: context, history, execute.read-file = { path }.
+2. Return to client.
 
 ---
 
-**Output:** response.json with execute.write-file.
+**Output:** `response.json` = context + history + execute.read-file

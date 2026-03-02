@@ -1,3 +1,1 @@
-Done. Health check endpoint added at src/routes/health.js; npm test passed (1 test). If you need more changes, say what to do next.
-
-{"message": "Health check endpoint added at src/routes/health.js. Test suite passed (1 test). Ask if you need more.", "action": "completed"}
+{"message": "Creating health check route file.", "action": "write-file", "params": {"path": "src/routes/health.js", "content": "const express = require('express'); const router = express.Router(); router.get('/', (req, res) => res.json({ status: 'ok', timestamp: new Date().toISOString() })); module.exports = router;"}}

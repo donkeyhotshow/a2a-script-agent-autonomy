@@ -2,7 +2,7 @@
   "context": {
     "task": "допоможи розібратись з кодом",
     "execution": {
-      "action": "coder-dialog",
+      "action": "coder",
       "step": "llm-request"
     },
     "history": [

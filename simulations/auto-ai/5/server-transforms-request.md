@@ -1,13 +1,12 @@
-# Server Transform: request.json → request.md (step 5)
+# Server Transform: request.json → request.md
 
-**Input:** request.json with result.read-file (path + content of src/app.js).
+**Input:** `request.json` with `context`, `history`, `result["list-directory"]` (path, entries).
 
-**Steps:**
+**Transformation steps:**
 
-1. Add file content to context (e.g. fileContents['src/app.js'])
-2. Build request.md: system prompt (choose next action: add health route via write-file, or execute-command) + task + history + file content
-3. Send to LLM.
+1. Append system message ("Listed src/: ...") and build request.md: system prompt (choose next action; to read app entry use read-file with path src/app.js) + context + history + listResult.
+2. Return `request.md` to LLM.
 
 ---
 
-**Output:** request.md for LLM to produce write-file (e.g. new route file or patch).
+**Output:** `request.md` = system prompt + current state

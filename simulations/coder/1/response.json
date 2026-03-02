@@ -7,7 +7,7 @@
       "title": "Оберіть спосіб виконання",
       "choices": [
         {
-          "id": "coder-dialog",
+          "id": "coder",
           "label": "Діалог з AI-кодером"
         },
         {

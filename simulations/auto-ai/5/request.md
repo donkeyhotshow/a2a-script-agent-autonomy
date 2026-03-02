@@ -1,16 +1,16 @@
 ## System Prompt
 
-You are Auto-AI. You have read src/app.js. The user asked to add a health check endpoint and run tests. Decide next action: write-file (create health route or add to app) or execute-command. Reply with JSON: {"message": "...", "action": "write-file"|"execute-command", "params": {...}}. For write-file provide path and content.
+You are Auto-AI. User wants refactor: logging, health endpoint, tests, lint, test, report. You have listed src/ (app.js, routes/, middleware/). Choose one next action. Reply JSON: `{"message": "...", "action": "read-file", "params": {"path": "src/app.js"}}` or similar.
 
-## File content (src/app.js)
+## Current state
 
-```javascript
-const express = require('express');
-const apiRoutes = require('./routes');
-const app = express();
-app.use(express.json());
-app.use('/api', apiRoutes);
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Listening on ${PORT}`));
-module.exports = app;
+```json
+{
+  "context": { "task": "Refactor the API: add a logging middleware, add a health check endpoint, update the API tests, run lint and tests, and write a short report to .carrier/reports/." },
+  "history": [
+    { "role": "assistant", "message": "Listing src/ to see structure.", "action": "list-directory" },
+    { "role": "system", "message": "Listed src/: app.js, routes/, middleware/" }
+  ],
+  "listResult": { "path": "src/", "entries": [{ "name": "app.js", "type": "file" }, { "name": "routes", "type": "dir" }, { "name": "middleware", "type": "dir" }] }
+}
 ```

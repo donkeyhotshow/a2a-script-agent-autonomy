@@ -1,13 +1,7 @@
-# Server Transform: response.md → response.json (step 4)
+# Server Transform: response.md to response.json
 
-**Input:** LLM response with action "read-file" and params.path.
+**Input:** response.md = LLM JSON with action list-directory, params.path.
 
-**Steps:**
+**Steps:** Append assistant to history. Build response.json: context, history, execute.list-directory = { path }.
 
-1. Parse action and params from response
-2. Build response.json: context, history (append assistant + system "RAG results received"), execute.read-file with path from params
-3. Return to client.
-
----
-
-**Output:** response.json with execute.read-file = { path: "src/app.js" }
+**Output:** response.json with execute.list-directory.

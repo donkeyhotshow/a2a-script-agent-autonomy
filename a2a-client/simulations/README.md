@@ -20,5 +20,5 @@ Source of truth: `simulations/` in repo root. Client sims are derived for client
 
 - **fix-vue-imports** — form (choice) → script steps (result per step) → finalResult.
 - **dialog** — actions → result.action; then form (message) → result.message.
-- **coder-dialog** — form (message) → result.message; then execute.rag-search → result.rag-search; execute.read-file → result.read-file; execute.write-file → result.write-file; etc.
+- **coder** — form (message) → result.message; then execute.rag-search → result.rag-search; execute.read-file → result.read-file; execute.write-file → result.write-file; etc.
 - **analyze-dialog** — form with choices (continue_search / save_report) → result.choice + optional result.message / result.path.

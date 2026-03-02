@@ -163,7 +163,7 @@ external-ai-hub/
 ```
 simulations/
 ├── dialog/                    # Діалог з LLM
-├── coder-dialog/              # Діалог + RAG + read/write файлів
+├── coder/              # Діалог + RAG + read/write файлів
 ├── coder-smart/               # Контекст-документ (MD)
 ├── fix-vue-imports/           # Виправлення Vue імпортів
 ├── fix-vue-imports-batched/

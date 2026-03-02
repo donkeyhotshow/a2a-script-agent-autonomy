@@ -1,6 +1,6 @@
 # Coder Dialog - Client Simulation
 
-> Валідація відповідей клієнта для симуляції coder-dialog
+> Валідація відповідей клієнта для симуляції coder
 
 ## Опис
 
@@ -37,5 +37,5 @@
 
 - **fix-vue-imports** - form (choice) → script steps → finalResult
 - **dialog** - actions → result.action; form (message) → result.message
-- **coder-dialog** - form (message) → result.message; execute.rag-search → result.rag-search; execute.read-file → result.read-file; etc.
+- **coder** - form (message) → result.message; execute.rag-search → result.rag-search; execute.read-file → result.read-file; etc.
 - **analyze-dialog** - form з choices (continue_search / save_report) → result.choice

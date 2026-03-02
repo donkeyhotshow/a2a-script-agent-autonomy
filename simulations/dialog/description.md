@@ -1,4 +1,8 @@
-# Dialog Simulation - AI Analysis
+# Dialog Simulation - AI-Actions
+
+## Тип: AI-Actions
+
+Це симуляція типу **AI-Actions** - LLM динамічно вирішує наступний крок, кроки не захардкожені.
 
 ## Описание
 

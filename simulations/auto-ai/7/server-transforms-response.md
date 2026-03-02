@@ -1,13 +1,7 @@
-# Server Transform: response.md → response.json (step 7)
+# Server Transform: response.md to response.json
 
-**Input:** LLM response with action "completed".
+**Input:** LLM JSON with action write-file, params.path, params.content.
 
-**Steps:**
+**Steps:** Append assistant to history. response.json: context, history, execute.write-file = { path, content }.
 
-1. Build response.json: context, history with assistant reply, result.completed = true, result.message = summary
-2. Optionally execute.form to allow further messages
-3. Return to client.
-
----
-
-**Output:** response.json with completed: true and optional form.
+**Output:** response.json with execute.write-file.

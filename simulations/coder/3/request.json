@@ -2,8 +2,8 @@
   "context": {
     "task": "допоможи розібратись з кодом",
     "execution": {
-      "action": "coder-dialog",
-      "step": "coder-dialog"
+      "action": "coder",
+      "step": "coder"
     },
     "history": []
   },
