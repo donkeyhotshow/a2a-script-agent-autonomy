@@ -13,6 +13,7 @@
     "test:api": "npm run test --prefix ../a2a-server -- tests/integration",
     "test:web": "vitest run tests/integration",
     "test:e2e": "playwright test",
+    "test:e2e:simulation": "playwright test tests/e2e/simulation-driven.spec.ts",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:debug": "playwright test --debug",
     "test:e2e:report": "playwright show-report",

@@ -423,6 +423,7 @@ pass to LLM for summary or next step.
 
 - [simulations/SCHEMA.md](../../simulations/SCHEMA.md) — Каноничная схема симуляций
 - [DATA-FLOW.md](DATA-FLOW.md) — Полная диаграмма потока данных
+- [SERVER-ARCHITECTURE.md](SERVER-ARCHITECTURE.md) — Server-centric документация
 - [ARCHITECTURE.md](ARCHITECTURE.md) — Общая архитектура системы
 - [PROTOCOL.md](PROTOCOL.md) — Протокол взаимодействия
 - [WEB-UI.md](WEB-UI.md) — Web UI документация

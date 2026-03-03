@@ -1,0 +1,176 @@
+/* Error Handler Styles */
+.error-notifications {
+    position: fixed;
+    top: 60px;
+    right: 12px;
+    max-width: 400px;
+    z-index: 10000;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.error-notification {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px;
+    background: var(--bg2);
+    border: 1px solid var(--error, #f85149);
+    border-radius: var(--radius);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    animation: error-slide-in 0.3s ease;
+}
+
+.error-notification.hiding {
+    animation: error-slide-out 0.3s ease forwards;
+}
+
+@keyframes error-slide-in {
+    from {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes error-slide-out {
+    from {
+        opacity: 1;
+        transform: translateX(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+}
+
+.error-notification-icon {
+    font-size: 16px;
+    flex-shrink: 0;
+}
+
+.error-notification-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.error-notification-message {
+    font-size: 13px;
+    color: var(--fg);
+    word-break: break-word;
+}
+
+.error-notification-action {
+    font-size: 11px;
+    color: var(--fg2);
+    margin-top: 4px;
+}
+
+.error-notification-stack {
+    font-size: 10px;
+    color: var(--fg2);
+    background: var(--bg3);
+    padding: 8px;
+    margin-top: 8px;
+    border-radius: 4px;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    font-family: monospace;
+}
+
+.error-notification-close,
+.error-notification-retry {
+    flex-shrink: 0;
+    padding: 4px 8px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    color: var(--fg2);
+    transition: color 0.15s;
+}
+
+.error-notification-close:hover {
+    color: var(--fg);
+}
+
+.error-notification-retry {
+    color: var(--accent);
+    font-size: 12px;
+}
+
+.error-notification-retry:hover {
+    text-decoration: underline;
+}
+
+/* Connection status indicator */
+.connection-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.connection-status.connected {
+    background: rgba(34, 197, 94, 0.15);
+    color: var(--success, #22c55e);
+}
+
+.connection-status.connecting,
+.connection-status.reconnecting {
+    background: rgba(251, 191, 36, 0.15);
+    color: #fbbf24;
+}
+
+.connection-status.disconnected,
+.connection-status.error {
+    background: rgba(248, 81, 73, 0.15);
+    color: var(--error, #f85149);
+}
+
+.connection-status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+}
+
+.connection-status.connecting .connection-status-dot,
+.connection-status.reconnecting .connection-status-dot {
+    animation: pulse 1s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.4;
+    }
+}
+
+/* Status bar with connection indicator */
+.status-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 12px;
+    background: var(--bg2);
+    border-top: 1px solid var(--border);
+    font-size: 11px;
+    color: var(--fg2);
+}
+
+.status-bar-left,
+.status-bar-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}

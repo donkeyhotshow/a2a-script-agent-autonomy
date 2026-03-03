@@ -388,6 +388,7 @@ CLIENT_API_URL=http://localhost:3001
 
 ## Перекрёстные ссылки
 
+- [SERVER-ARCHITECTURE.md](SERVER-ARCHITECTURE.md) — Server-centric documentation
 - [DATA-FLOW.md](DATA-FLOW.md) — Полная диаграмма потока данных
 - [WEB-UI.md](WEB-UI.md) — Web UI документация
 - [API-SERVER.md](API-SERVER.md) — Client API Server документация

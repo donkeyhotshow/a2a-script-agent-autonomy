@@ -196,8 +196,7 @@ export {
     type FileBlockLike,
 } from './protocol';
 
-// Session Manager
-export {SessionManager} from './SessionManager.js';
+// Session management types (implemented in AsyncApiClient)
 export type {
     Session,
     SessionMetadata,
@@ -207,4 +206,17 @@ export type {
     SessionIndex,
     SessionIndexEntry,
     SessionManagerConfig,
+    SessionFilter,
+    SessionUpdate,
+    CreateSessionOptions,
+    ProgressInfo,
+    ProgressCallbacks,
+    SessionStatus,
 } from './types/session.js';
+
+// Retry and Transform exports
+export type {
+    RetryConfig,
+    RequestTransformer,
+    ProgressConfig,
+} from './async-client.js';

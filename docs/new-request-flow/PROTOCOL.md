@@ -667,3 +667,10 @@ interface Step {
 2. **Result outside context**: Результат выполнения клиента ВСЕГДА находится вне context.
 3. **Server stateless**: Сервер не хранит состояние между запросами.
 4. **Client executes scripts**: Сервер отправляет DSL скрипты, клиент их выполняет и возвращает результат.
+
+---
+
+## Дополнительная документация
+
+- [SERVER-ARCHITECTURE.md](SERVER-ARCHITECTURE.md) — Server-centric документация (компоненты, Actions, AI-Actions, интеграция с External AI Hub)
+- [simulations/SCHEMA.md](../../simulations/SCHEMA.md) — Каноничная схема симуляций

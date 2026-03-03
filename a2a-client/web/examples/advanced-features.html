@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A2A Advanced Features Demo</title>
+    <link rel="stylesheet" href="../css/app.css">
+    <link rel="stylesheet" href="../css/components/rag-search.css">
+    <link rel="stylesheet" href="../css/components/terminal-emulator.css">
+    <style>
+        body {
+            padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        .demo-section {
+            margin-bottom: 40px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .demo-section h2 {
+            margin-top: 0;
+            color: #333;
+        }
+        #rag-search-container {
+            max-width: 600px;
+            margin-bottom: 20px;
+        }
+        #terminal-container {
+            height: 400px;
+            max-width: 800px;
+        }
+    </style>
+</head>
+<body>
+    <h1>A2A Advanced Features Demo</h1>
+    
+    <!-- RAG Search Section -->
+    <div class="demo-section">
+        <h2>RAG Search</h2>
+        <p>Search through your codebase using semantic search, BM25, and code similarity.</p>
+        <div id="rag-search-container"></div>
+    </div>
+    
+    <!-- Terminal Section -->
+    <div class="demo-section">
+        <h2>Terminal Emulator</h2>
+        <p>Execute commands in the browser with WebSocket streaming.</p>
+        <div id="terminal-container"></div>
+    </div>
+
+    <script src="../js/template-loader.js"></script>
+    <script src="../js/api-integration.js"></script>
+    <script src="../js/session-manager.js"></script>
+    <script src="../js/websocket-client.js"></script>
+    <script src="../js/progress-indicators.js"></script>
+    <script src="../js/error-handler.js"></script>
+    <script src="../js/file-transfer.js"></script>
+    <script src="../js/rag-search-ui.js"></script>
+    <script src="../js/terminal-emulator.js"></script>
+    <script src="../js/web-api-client.js"></script>
+    
+    <script>
+        // Initialize the web API client
+        const client = new WebApiClient({
+            apiBase: '/api/v1',
+            autoConnect: false
+        });
+        
+        // Initialize RAG Search UI
+        client.initRAGSearch('#rag-search-container');
+        
+        // Initialize Terminal Emulator
+        client.initTerminal('#terminal-container');
+        
+        // Listen for terminal events
+        client.on('terminalConnected', (data) => {
+            console.log('Terminal connected:', data.sessionId);
+        });
+        
+        client.on('terminalDisconnected', (data) => {
+            console.log('Terminal disconnected:', data);
+        });
+        
+        client.on('terminalMessage', (data) => {
+            console.log('Terminal message:', data);
+        });
+        
+        // Listen for RAG events
+        client.on('ragViewFile', (data) => {
+            console.log('View file:', data.filePath);
+            // Implement file viewer here
+        });
+        
+        client.on('ragNotification', (data) => {
+            console.log('RAG notification:', data.message);
+        });
+        
+        // Example: Connect terminal to a session
+        // client.connectTerminal('your-session-id');
+        
+        console.log('A2A Advanced Features Demo initialized');
+    </script>
+</body>
+</html>

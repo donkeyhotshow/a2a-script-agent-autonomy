@@ -9,7 +9,7 @@ import express from 'express';
 import cors from 'cors';
 import multer from 'multer';
 import {scanFiles} from '@a2a/fs-utils';
-import {MeilisearchClient, MeilisearchDocument} from '@a2a/rag';
+import {MeilisearchClient} from '@a2a/rag';
 import path from 'path';
 import {fileURLToPath} from 'url';
 import fs from 'fs/promises';
@@ -17,6 +17,9 @@ import {exec} from 'child_process';
 import {promisify} from 'util';
 import {Readable} from 'stream';
 import {randomUUID} from 'crypto';
+import {WebSocketServer, WebSocket} from 'ws';
+
+type WebSocketClient = WebSocket & { sessionId?: string };
 
 const execAsync = promisify(exec);
 
@@ -26,9 +29,123 @@ const __dirname = path.dirname(__filename);
 // Configuration
 const PORT = Number(process.env.PORT || 3001);
 const HOST = process.env.HOST || 'localhost';
+const WS_PORT = Number(process.env.WS_PORT || 3002);
 
 // Create Express app
 const app = express();
+
+// Create WebSocket server for real-time updates
+const wss = new WebSocketServer({ port: WS_PORT });
+
+// Store active WebSocket connections by sessionId
+const wsConnections = new Map<string, Set<WebSocket>>();
+
+// WebSocket connection handler
+wss.on('connection', (ws, req) => {
+    const sessionId = new URL(req.url ?? '', `http://${req.headers.host}`).searchParams.get('sessionId');
+    
+    if (!sessionId) {
+        ws.close(1008, 'Session ID required');
+        return;
+    }
+    
+    // Add connection to session room
+    if (!wsConnections.has(sessionId)) {
+        wsConnections.set(sessionId, new Set());
+    }
+    wsConnections.get(sessionId)!.add(ws);
+    
+    console.log(`[WS] Client connected to session: ${sessionId}`);
+    
+    // Send initial connection confirmation
+    ws.send(JSON.stringify({
+        type: 'connected',
+        sessionId,
+        timestamp: new Date().toISOString()
+    }));
+    
+    // Handle incoming messages
+    ws.on('message', (data) => {
+        try {
+            const message = JSON.parse(data.toString());
+            handleWebSocketMessage(sessionId, ws, message);
+        } catch (err) {
+            console.error('[WS] Invalid message format:', err);
+        }
+    });
+    
+    // Handle disconnect
+    ws.on('close', () => {
+        const connections = wsConnections.get(sessionId);
+        if (connections) {
+            connections.delete(ws);
+            if (connections.size === 0) {
+                wsConnections.delete(sessionId);
+            }
+        }
+        console.log(`[WS] Client disconnected from session: ${sessionId}`);
+    });
+    
+    // Handle errors
+    ws.on('error', (err) => {
+        console.error('[WS] WebSocket error:', err);
+    });
+});
+
+// Handle WebSocket messages from clients
+function handleWebSocketMessage(sessionId: string, ws: WebSocket, message: Record<string, unknown>): void {
+    const type = message.type as string;
+    
+    switch (type) {
+        case 'ping':
+            ws.send(JSON.stringify({ type: 'pong', timestamp: new Date().toISOString() }));
+            break;
+        case 'subscribe':
+            // Already subscribed on connect
+            ws.send(JSON.stringify({ type: 'subscribed', sessionId }));
+            break;
+        case 'unsubscribe':
+            const connections = wsConnections.get(sessionId);
+            if (connections) {
+                connections.delete(ws);
+                if (connections.size === 0) {
+                    wsConnections.delete(sessionId);
+                }
+            }
+            ws.send(JSON.stringify({ type: 'unsubscribed', sessionId }));
+            break;
+        default:
+            console.log(`[WS] Unknown message type: ${type}`);
+    }
+}
+
+// Broadcast message to all clients subscribed to a session
+function broadcastToSession(sessionId: string, data: unknown): void {
+    const connections = wsConnections.get(sessionId);
+    if (!connections) return;
+    
+    const message = JSON.stringify(data);
+    for (const ws of connections) {
+        if (ws.readyState === WebSocket.OPEN) {
+            ws.send(message);
+        }
+    }
+}
+
+// Broadcast progress update to session
+function broadcastProgress(sessionId: string, progress: {
+    promiseId?: string;
+    status: string;
+    progress?: number;
+    message?: string;
+    result?: unknown;
+}): void {
+    broadcastToSession(sessionId, {
+        type: 'progress',
+        timestamp: new Date().toISOString(),
+        ...progress,
+    });
+}
 
 // Middleware
 app.use(cors());
@@ -1054,6 +1171,287 @@ app.delete('/api/rag/files/:fileId', async (req, res) => {
     }
 });
 
+// ==================== ENHANCED SESSION STORAGE ====================
+
+// GET /api/sessions/:sessionId/metadata - Get session metadata
+app.get(['/api/sessions/:sessionId/metadata', '/api/v1/sessions/:sessionId/metadata'], async (req, res) => {
+    const sessionId = String(req.params.sessionId || '');
+    const projectId = typeof req.query.projectId === 'string' ? req.query.projectId : '';
+
+    const projects = await loadProjects();
+    const project = projects.find((p) => p.id === projectId) ?? projects[0];
+    if (!project) {
+        jsonError(res, 404, 'Project not found');
+        return;
+    }
+    
+    const session = await loadSession(project, sessionId);
+    if (!session) {
+        jsonError(res, 404, 'Session not found');
+        return;
+    }
+    
+    res.json({
+        id: session.id,
+        projectId: session.projectId,
+        title: session.title,
+        status: session.status,
+        createdAt: session.createdAt,
+        updatedAt: session.updatedAt,
+        messageCount: session.messages?.length ?? 0,
+        lastPromiseId: session.lastPromiseId,
+    });
+});
+
+// PATCH /api/sessions/:sessionId - Update session
+app.patch(['/api/sessions/:sessionId', '/api/v1/sessions/:sessionId'], async (req, res) => {
+    const sessionId = String(req.params.sessionId || '');
+    const projectId = typeof req.query.projectId === 'string' ? req.query.projectId : '';
+    const updates = req.body || {};
+
+    const projects = await loadProjects();
+    const project = projects.find((p) => p.id === projectId) ?? projects[0];
+    if (!project) {
+        jsonError(res, 404, 'Project not found');
+        return;
+    }
+    
+    const session = await loadSession(project, sessionId);
+    if (!session) {
+        jsonError(res, 404, 'Session not found');
+        return;
+    }
+    
+    const updated: Session = {
+        ...session,
+        ...updates,
+        updatedAt: new Date().toISOString(),
+    };
+    
+    await saveSession(project, updated);
+    
+    // Broadcast update via WebSocket
+    broadcastProgress(sessionId, {
+        status: 'session_updated',
+        message: 'Session updated',
+        result: updated,
+    });
+    
+    res.json(updated);
+});
+
+// POST /api/sessions/:sessionId/messages - Add message to session
+app.post(['/api/sessions/:sessionId/messages', '/api/v1/sessions/:sessionId/messages'], async (req, res) => {
+    const sessionId = String(req.params.sessionId || '');
+    const projectId = typeof req.query.projectId === 'string' ? req.query.projectId : '';
+    const message = req.body || {};
+
+    const projects = await loadProjects();
+    const project = projects.find((p) => p.id === projectId) ?? projects[0];
+    if (!project) {
+        jsonError(res, 404, 'Project not found');
+        return;
+    }
+    
+    const session = await loadSession(project, sessionId);
+    if (!session) {
+        jsonError(res, 404, 'Session not found');
+        return;
+    }
+    
+    const messages = session.messages ?? [];
+    messages.push({
+        ...message,
+        id: `msg_${randomUUID()}`,
+        timestamp: new Date().toISOString(),
+    });
+    
+    const updated: Session = {
+        ...session,
+        messages,
+        updatedAt: new Date().toISOString(),
+    };
+    
+    await saveSession(project, updated);
+    
+    const lastMessage = messages[messages.length - 1] as { id?: string } | undefined;
+    res.status(201).json({ success: true, messageId: lastMessage?.id });
+});
+
+// DELETE /api/sessions - Delete multiple sessions
+app.delete(['/api/sessions', '/api/v1/sessions'], async (req, res) => {
+    const sessionIds = req.body?.sessionIds as string[] | undefined;
+    const projectId = typeof req.query.projectId === 'string' ? req.query.projectId : '';
+
+    if (!sessionIds || !Array.isArray(sessionIds)) {
+        jsonError(res, 400, 'sessionIds array is required');
+        return;
+    }
+
+    const projects = await loadProjects();
+    const project = projects.find((p) => p.id === projectId) ?? projects[0];
+    if (!project) {
+        jsonError(res, 404, 'Project not found');
+        return;
+    }
+    
+    const deleted: string[] = [];
+    const failed: string[] = [];
+    
+    for (const sessionId of sessionIds) {
+        try {
+            await deleteSession(project, sessionId);
+            deleted.push(sessionId);
+        } catch {
+            failed.push(sessionId);
+        }
+    }
+    
+    res.json({ deleted, failed });
+});
+
+// ==================== FILE UPLOAD/DOWNLOAD ====================
+
+// Configure multer for general file uploads
+const fileUpload = multer({
+    storage: multer.diskStorage({
+        destination: async (req, file, cb) => {
+            const uploadDir = process.env.UPLOAD_DIR || path.join(storageDir, 'uploads');
+            await fs.mkdir(uploadDir, { recursive: true });
+            cb(null, uploadDir);
+        },
+        filename: (req, file, cb) => {
+            const uniqueName = `${Date.now()}-${randomUUID()}-${file.originalname}`;
+            cb(null, uniqueName);
+        }
+    }),
+    limits: {
+        fileSize: 50 * 1024 * 1024, // 50MB
+        files: 10,
+    },
+});
+
+// POST /api/files/upload - Upload files
+app.post(['/api/files/upload', '/api/v1/files/upload'], fileUpload.array('files', 10), async (req, res) => {
+    try {
+        const files = req.files as Express.Multer.File[] | undefined;
+        
+        if (!files || files.length === 0) {
+            return res.status(400).json({ error: 'No files provided' });
+        }
+        
+        const uploaded = files.map(file => ({
+            id: randomUUID(),
+            originalName: file.originalname,
+            filename: file.filename,
+            path: file.path,
+            size: file.size,
+            mimetype: file.mimetype,
+            uploadedAt: new Date().toISOString(),
+        }));
+        
+        res.status(201).json({ uploaded });
+    } catch (error: any) {
+        console.error('File upload error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// GET /api/files/:fileId - Download file
+app.get(['/api/files/:fileId', '/api/v1/files/:fileId'], async (req, res) => {
+    try {
+        const fileId = String(req.params.fileId || '');
+        const uploadDir = process.env.UPLOAD_DIR || path.join(storageDir, 'uploads');
+        
+        // Find file by ID (stored in memory for this implementation)
+        const files = await fs.readdir(uploadDir);
+        let filePath: string | null = null;
+        
+        for (const file of files) {
+            if (file.includes(fileId)) {
+                filePath = path.join(uploadDir, file);
+                break;
+            }
+        }
+        
+        if (!filePath) {
+            return res.status(404).json({ error: 'File not found' });
+        }
+        
+        res.download(filePath);
+    } catch (error: any) {
+        console.error('File download error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// DELETE /api/files/:fileId - Delete uploaded file
+app.delete(['/api/files/:fileId', '/api/v1/files/:fileId'], async (req, res) => {
+    try {
+        const fileId = String(req.params.fileId || '');
+        const uploadDir = process.env.UPLOAD_DIR || path.join(storageDir, 'uploads');
+        
+        const files = await fs.readdir(uploadDir);
+        let deleted = false;
+        
+        for (const file of files) {
+            if (file.includes(fileId)) {
+                await fs.unlink(path.join(uploadDir, file));
+                deleted = true;
+                break;
+            }
+        }
+        
+        if (!deleted) {
+            return res.status(404).json({ error: 'File not found' });
+        }
+        
+        res.json({ success: true, message: 'File deleted' });
+    } catch (error: any) {
+        console.error('File delete error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// GET /api/files - List uploaded files
+app.get(['/api/files', '/api/v1/files'], async (req, res) => {
+    try {
+        const uploadDir = process.env.UPLOAD_DIR || path.join(storageDir, 'uploads');
+        await fs.mkdir(uploadDir, { recursive: true });
+        
+        const files = await fs.readdir(uploadDir);
+        const fileList = await Promise.all(
+            files
+                .filter(f => !f.startsWith('.'))
+                .map(async (file) => {
+                    const stats = await fs.stat(path.join(uploadDir, file));
+                    return {
+                        id: file.split('-')[1] || file, // Extract UUID part
+                        filename: file,
+                        size: stats.size,
+                        uploadedAt: stats.mtime.toISOString(),
+                    };
+                })
+        );
+        
+        res.json({ files: fileList });
+    } catch (error: any) {
+        console.error('File list error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// ==================== WEBSOCKET INFO ENDPOINT ====================
+
+// Get WebSocket connection info
+app.get(['/api/ws', '/api/v1/ws'], (req, res) => {
+    res.json({
+        wsUrl: `ws://${HOST}:${WS_PORT}`,
+        activeSessions: Array.from(wsConnections.keys()),
+        connectionCount: Array.from(wsConnections.values()).reduce((sum, set) => sum + set.size, 0),
+    });
+});
+
 // ==================== HEALTH CHECK ====================
 
 app.get('/health', (req, res) => {
@@ -1069,9 +1467,12 @@ app.get('/health', (req, res) => {
 if (process.env.NODE_ENV !== 'test') {
     app.listen(PORT, HOST, () => {
         console.log(`A2A Client API Server started on http://${HOST}:${PORT}`);
+        console.log(`WebSocket Server started on ws://${HOST}:${WS_PORT}`);
         console.log(`Health check: http://${HOST}:${PORT}/health`);
         console.log(`Terminal: http://${HOST}:${PORT}/api/terminal/execute`);
         console.log(`File System: http://${HOST}:${PORT}/api/fs/*`);
+        console.log(`Sessions: http://${HOST}:${PORT}/api/sessions/*`);
+        console.log(`File Upload: http://${HOST}:${PORT}/api/files/upload`);
     });
 }
 

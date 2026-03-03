@@ -15,5 +15,9 @@
 @import 'components/panel-dock.css';
 @import 'components/footer.css';
 @import 'components/mini-zones.css';
+@import 'components/session-manager.css';
+@import 'components/progress.css';
+@import 'components/errors.css';
+@import 'components/file-transfer.css';
 @import 'utils/transitions.css';
 @import 'utils/media.css';

@@ -136,6 +136,7 @@ npm run prisma:studio # Prisma Studio UI
 ## Документация
 
 - [План реализации](../docs/archive/a2a-server-implementation-plan.md)
+- [SERVER-ARCHITECTURE.md](../docs/new-request-flow/SERVER-ARCHITECTURE.md) — Server-centric документация
 
 ## Лицензия
 

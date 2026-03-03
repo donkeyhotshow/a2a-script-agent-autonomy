@@ -6,7 +6,9 @@
  */
 import express from 'express';
 import cors from 'cors';
+import multer from 'multer';
 import { scanFiles } from '@a2a/fs-utils';
+import { MeilisearchClient } from '@a2a/rag';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs/promises';
@@ -14,14 +16,110 @@ import { exec } from 'child_process';
 import { promisify } from 'util';
 import { Readable } from 'stream';
 import { randomUUID } from 'crypto';
+import { WebSocketServer, WebSocket } from 'ws';
 const execAsync = promisify(exec);
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 // Configuration
 const PORT = Number(process.env.PORT || 3001);
 const HOST = process.env.HOST || 'localhost';
+const WS_PORT = Number(process.env.WS_PORT || 3002);
 // Create Express app
 const app = express();
+// Create WebSocket server for real-time updates
+const wss = new WebSocketServer({ port: WS_PORT });
+// Store active WebSocket connections by sessionId
+const wsConnections = new Map();
+// WebSocket connection handler
+wss.on('connection', (ws, req) => {
+    const sessionId = new URL(req.url ?? '', `http://${req.headers.host}`).searchParams.get('sessionId');
+    if (!sessionId) {
+        ws.close(1008, 'Session ID required');
+        return;
+    }
+    // Add connection to session room
+    if (!wsConnections.has(sessionId)) {
+        wsConnections.set(sessionId, new Set());
+    }
+    wsConnections.get(sessionId).add(ws);
+    console.log(`[WS] Client connected to session: ${sessionId}`);
+    // Send initial connection confirmation
+    ws.send(JSON.stringify({
+        type: 'connected',
+        sessionId,
+        timestamp: new Date().toISOString()
+    }));
+    // Handle incoming messages
+    ws.on('message', (data) => {
+        try {
+            const message = JSON.parse(data.toString());
+            handleWebSocketMessage(sessionId, ws, message);
+        }
+        catch (err) {
+            console.error('[WS] Invalid message format:', err);
+        }
+    });
+    // Handle disconnect
+    ws.on('close', () => {
+        const connections = wsConnections.get(sessionId);
+        if (connections) {
+            connections.delete(ws);
+            if (connections.size === 0) {
+                wsConnections.delete(sessionId);
+            }
+        }
+        console.log(`[WS] Client disconnected from session: ${sessionId}`);
+    });
+    // Handle errors
+    ws.on('error', (err) => {
+        console.error('[WS] WebSocket error:', err);
+    });
+});
+// Handle WebSocket messages from clients
+function handleWebSocketMessage(sessionId, ws, message) {
+    const type = message.type;
+    switch (type) {
+        case 'ping':
+            ws.send(JSON.stringify({ type: 'pong', timestamp: new Date().toISOString() }));
+            break;
+        case 'subscribe':
+            // Already subscribed on connect
+            ws.send(JSON.stringify({ type: 'subscribed', sessionId }));
+            break;
+        case 'unsubscribe':
+            const connections = wsConnections.get(sessionId);
+            if (connections) {
+                connections.delete(ws);
+                if (connections.size === 0) {
+                    wsConnections.delete(sessionId);
+                }
+            }
+            ws.send(JSON.stringify({ type: 'unsubscribed', sessionId }));
+            break;
+        default:
+            console.log(`[WS] Unknown message type: ${type}`);
+    }
+}
+// Broadcast message to all clients subscribed to a session
+function broadcastToSession(sessionId, data) {
+    const connections = wsConnections.get(sessionId);
+    if (!connections)
+        return;
+    const message = JSON.stringify(data);
+    for (const ws of connections) {
+        if (ws.readyState === WebSocket.OPEN) {
+            ws.send(message);
+        }
+    }
+}
+// Broadcast progress update to session
+function broadcastProgress(sessionId, progress) {
+    broadcastToSession(sessionId, {
+        type: 'progress',
+        timestamp: new Date().toISOString(),
+        ...progress,
+    });
+}
 // Middleware
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
@@ -32,7 +130,7 @@ app.use((req, res, next) => {
 });
 const packageRoot = path.resolve(__dirname, '..');
 const a2aClientRoot = path.resolve(packageRoot, '../..');
-const storageDir = path.join(a2aClientRoot, 'storage');
+const storageDir = process.env.A2A_CLIENT_STORAGE_DIR || path.join(a2aClientRoot, 'storage');
 const PROJECTS_FILE = path.join(storageDir, 'projects.json');
 const CONFIG_FILE = path.join(storageDir, 'config.json');
 const DEFAULT_CONFIG = {
@@ -86,11 +184,13 @@ function safePath(base, subPath) {
         return null;
     return resolved;
 }
-function sessionDirForProject(projectPath) {
-    return path.join(projectPath, '.a2a', 'sessions');
+function getSessionDir(project) {
+    if (project.path)
+        return path.join(project.path, '.a2a', 'sessions');
+    return path.join(storageDir, 'sessions', project.id);
 }
-async function listSessions(projectPath) {
-    const dir = sessionDirForProject(projectPath);
+async function listSessions(project) {
+    const dir = getSessionDir(project);
     try {
         const entries = await fs.readdir(dir);
         const sessions = [];
@@ -115,8 +215,8 @@ async function listSessions(projectPath) {
         return [];
     }
 }
-async function loadSession(projectPath, sessionId) {
-    const file = path.join(sessionDirForProject(projectPath), `${sessionId}.json`);
+async function loadSession(project, sessionId) {
+    const file = path.join(getSessionDir(project), `${sessionId}.json`);
     try {
         const raw = await fs.readFile(file, 'utf-8');
         return JSON.parse(raw);
@@ -125,14 +225,14 @@ async function loadSession(projectPath, sessionId) {
         return null;
     }
 }
-async function saveSession(projectPath, session) {
-    const dir = sessionDirForProject(projectPath);
+async function saveSession(project, session) {
+    const dir = getSessionDir(project);
     await fs.mkdir(dir, { recursive: true });
     const file = path.join(dir, `${session.id}.json`);
     await writeJsonFile(file, session);
 }
-async function deleteSession(projectPath, sessionId) {
-    const file = path.join(sessionDirForProject(projectPath), `${sessionId}.json`);
+async function deleteSession(project, sessionId) {
+    const file = path.join(getSessionDir(project), `${sessionId}.json`);
     try {
         await fs.unlink(file);
     }
@@ -256,11 +356,11 @@ app.get(['/api/sessions', '/api/v1/sessions'], async (req, res) => {
     const projectId = typeof req.query.projectId === 'string' ? req.query.projectId : '';
     const projects = await loadProjects();
     const project = projects.find((p) => p.id === projectId) ?? projects[0];
-    if (!project?.path) {
+    if (!project) {
         res.json([]);
         return;
     }
-    const sessions = await listSessions(project.path);
+    const sessions = await listSessions(project);
     res.json(sessions);
 });
 app.post(['/api/sessions', '/api/v1/sessions'], async (req, res) => {
@@ -272,8 +372,8 @@ app.post(['/api/sessions', '/api/v1/sessions'], async (req, res) => {
     }
     const projects = await loadProjects();
     const project = projects.find((p) => p.id === projectId);
-    if (!project?.path) {
-        jsonError(res, 404, 'Project not found or missing path');
+    if (!project) {
+        jsonError(res, 404, 'Project not found');
         return;
     }
     const now = new Date().toISOString();
@@ -287,7 +387,7 @@ app.post(['/api/sessions', '/api/v1/sessions'], async (req, res) => {
         updatedAt: now,
         messages: [],
     };
-    await saveSession(project.path, session);
+    await saveSession(project, session);
     res.status(201).json(session);
 });
 app.get(['/api/sessions/:sessionId', '/api/v1/sessions/:sessionId'], async (req, res) => {
@@ -295,11 +395,11 @@ app.get(['/api/sessions/:sessionId', '/api/v1/sessions/:sessionId'], async (req,
     const projectId = typeof req.query.projectId === 'string' ? req.query.projectId : '';
     const projects = await loadProjects();
     const project = projects.find((p) => p.id === projectId) ?? projects[0];
-    if (!project?.path) {
+    if (!project) {
         jsonError(res, 404, 'Project not found');
         return;
     }
-    const session = await loadSession(project.path, sessionId);
+    const session = await loadSession(project, sessionId);
     if (!session) {
         jsonError(res, 404, 'Session not found');
         return;
@@ -311,11 +411,11 @@ app.delete(['/api/sessions/:sessionId', '/api/v1/sessions/:sessionId'], async (r
     const projectId = typeof req.query.projectId === 'string' ? req.query.projectId : '';
     const projects = await loadProjects();
     const project = projects.find((p) => p.id === projectId) ?? projects[0];
-    if (!project?.path) {
+    if (!project) {
         jsonError(res, 404, 'Project not found');
         return;
     }
-    await deleteSession(project.path, sessionId);
+    await deleteSession(project, sessionId);
     res.json({ success: true });
 });
 // Best-effort helpers for the new-request-flow endpoints (kept minimal for compatibility)
@@ -329,11 +429,11 @@ app.post(['/api/sessions/:sessionId/action', '/api/v1/sessions/:sessionId/action
     }
     const projects = await loadProjects();
     const project = projects.find((p) => p.id === projectId) ?? projects[0];
-    if (!project?.path) {
+    if (!project) {
         jsonError(res, 404, 'Project not found');
         return;
     }
-    const existing = await loadSession(project.path, sessionId);
+    const existing = await loadSession(project, sessionId);
     if (!existing) {
         jsonError(res, 404, 'Session not found');
         return;
@@ -344,7 +444,7 @@ app.post(['/api/sessions/:sessionId/action', '/api/v1/sessions/:sessionId/action
         status: 'READY',
         updatedAt: new Date().toISOString(),
     };
-    await saveSession(project.path, updated);
+    await saveSession(project, updated);
     res.json(updated);
 });
 app.post(['/api/sessions/:sessionId/next', '/api/v1/sessions/:sessionId/next'], async (req, res) => {
@@ -352,11 +452,11 @@ app.post(['/api/sessions/:sessionId/next', '/api/v1/sessions/:sessionId/next'], 
     const projectId = typeof req.query.projectId === 'string' ? req.query.projectId : String(req.body?.projectId || '');
     const projects = await loadProjects();
     const project = projects.find((p) => p.id === projectId) ?? projects[0];
-    if (!project?.path) {
+    if (!project) {
         jsonError(res, 404, 'Project not found');
         return;
     }
-    const session = await loadSession(project.path, sessionId);
+    const session = await loadSession(project, sessionId);
     if (!session) {
         jsonError(res, 404, 'Session not found');
         return;
@@ -377,7 +477,7 @@ app.post(['/api/sessions/:sessionId/next', '/api/v1/sessions/:sessionId/next'], 
             status: 'IN_PROGRESS',
             updatedAt: new Date().toISOString(),
         };
-        await saveSession(project.path, updated);
+        await saveSession(project, updated);
     }
     res.status(upstream.status).json(payload);
 });
@@ -386,24 +486,49 @@ app.post(['/api/sessions/:sessionId/cancel', '/api/v1/sessions/:sessionId/cancel
     const projectId = typeof req.query.projectId === 'string' ? req.query.projectId : String(req.body?.projectId || '');
     const projects = await loadProjects();
     const project = projects.find((p) => p.id === projectId) ?? projects[0];
-    if (!project?.path) {
+    if (!project) {
         jsonError(res, 404, 'Project not found');
         return;
     }
-    const session = await loadSession(project.path, sessionId);
+    const session = await loadSession(project, sessionId);
     if (!session) {
         jsonError(res, 404, 'Session not found');
         return;
     }
     const updated = { ...session, status: 'CANCELLED', updatedAt: new Date().toISOString() };
-    await saveSession(project.path, updated);
+    await saveSession(project, updated);
     res.json(updated);
 });
-// --- server proxy (web must not know server address)
+// --- server proxy (web must not know server address). Body: task, sessionId?, projectId?
 app.post('/api/v1/invoke', async (req, res) => {
+    const body = (req.body || {});
+    const serverBody = { task: body.task };
+    if (body.context)
+        serverBody.context = body.context;
     const serverBase = await getServerBaseUrl();
-    const upstream = await serverFetch('POST', serverBase, '/invoke', req.body ?? {});
+    const upstream = await serverFetch('POST', serverBase, '/invoke', serverBody);
     const payload = (await upstream.json().catch(() => ({})));
+    if (upstream.ok) {
+        const promiseId = payload?.data?.promiseId ?? payload?.promiseId;
+        const sessionId = body.sessionId;
+        const projectId = body.projectId;
+        if (promiseId && sessionId && projectId) {
+            const projects = await loadProjects();
+            const project = projects.find((p) => p.id === projectId);
+            if (project) {
+                const session = await loadSession(project, sessionId);
+                if (session) {
+                    const updated = {
+                        ...session,
+                        lastPromiseId: promiseId,
+                        status: 'IN_PROGRESS',
+                        updatedAt: new Date().toISOString(),
+                    };
+                    await saveSession(project, updated);
+                }
+            }
+        }
+    }
     res.status(upstream.status).json(payload);
 });
 app.all('/api/v1/requests*', async (req, res) => {
@@ -641,6 +766,474 @@ app.post('/api/fs/exists', async (req, res) => {
 app.get('/api/fs/cwd', (req, res) => {
     res.json({ cwd: process.cwd() });
 });
+// ==================== RAG API ====================
+// RAG configuration
+const RAG_STORAGE_PATH = process.env['RAG_STORAGE_PATH'] || './rag-storage';
+const ALLOWED_EXTENSIONS = ['.txt', '.md', '.json', '.js', '.ts', '.html', '.css'];
+const filesStore = new Map();
+// Ensure storage directory exists
+async function ensureStorageDir() {
+    try {
+        await fs.mkdir(RAG_STORAGE_PATH, { recursive: true });
+    }
+    catch {
+        // Directory may already exist
+    }
+}
+// Validate file extension
+function isAllowedExtension(filename) {
+    const ext = path.extname(filename).toLowerCase();
+    return ALLOWED_EXTENSIONS.includes(ext);
+}
+// POST /api/rag/search - Search through indexed documents
+app.post('/api/rag/search', async (req, res) => {
+    try {
+        const { query, limit = 10, filters } = req.body;
+        if (!query || typeof query !== 'string') {
+            return res.status(400).json({ error: 'Query is required and must be a string' });
+        }
+        const validLimit = typeof limit === 'number' ? Math.min(Math.max(1, limit), 100) : 10;
+        // Build filter string
+        let filter;
+        if (filters && Object.keys(filters).length > 0) {
+            filter = Object.entries(filters).map(([key, value]) => {
+                if (typeof value === 'string') {
+                    return `${key} = "${value}"`;
+                }
+                return `${key} = ${value}`;
+            });
+        }
+        const client = new MeilisearchClient({
+            host: process.env['MEILISEARCH_HOST'] || 'http://localhost:7700',
+            apiKey: process.env['MEILISEARCH_API_KEY'] ?? undefined,
+            indexName: process.env['MEILISEARCH_INDEX'] || 'code',
+        });
+        const isAvailable = await client.isAvailable();
+        if (!isAvailable) {
+            return res.status(503).json({ error: 'Search service is not available' });
+        }
+        const results = await client.search(query, {
+            limit: validLimit,
+            filter: filter,
+            attributesToRetrieve: ['id', 'path', 'content', 'name', 'extension', 'type'],
+        });
+        const formattedResults = results.hits.map((hit) => {
+            const hitRecord = hit;
+            return {
+                id: hitRecord['id'],
+                content: hitRecord['content'] || '',
+                score: hitRecord['_rankingScore'] || 0,
+                metadata: {
+                    path: hitRecord['path'],
+                    name: hitRecord['name'],
+                    extension: hitRecord['extension'],
+                    type: hitRecord['type'],
+                },
+            };
+        });
+        res.json({
+            results: formattedResults,
+            total: formattedResults.length,
+            query,
+        });
+    }
+    catch (error) {
+        console.error('RAG search error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+// POST /api/rag/upload - Upload files for indexing
+const upload = multer({
+    storage: multer.memoryStorage(),
+    fileFilter: (_req, file, cb) => {
+        const ext = file.originalname.substring(file.originalname.lastIndexOf('.')).toLowerCase();
+        if (ALLOWED_EXTENSIONS.includes(ext)) {
+            cb(null, true);
+        }
+        else {
+            cb(new Error(`File type not allowed. Allowed: ${ALLOWED_EXTENSIONS.join(', ')}`));
+        }
+    },
+    limits: {
+        fileSize: 10 * 1024 * 1024, // 10MB
+        files: 20,
+    },
+});
+app.post('/api/rag/upload', upload.array('files', 20), async (req, res) => {
+    try {
+        await ensureStorageDir();
+        const files = req.files;
+        if (!files || files.length === 0) {
+            return res.status(400).json({ error: 'No files provided for upload' });
+        }
+        const uploaded = [];
+        const failed = [];
+        const indexed = [];
+        const client = new MeilisearchClient({
+            host: process.env['MEILISEARCH_HOST'] || 'http://localhost:7700',
+            apiKey: process.env['MEILISEARCH_API_KEY'] ?? undefined,
+            indexName: process.env['MEILISEARCH_INDEX'] || 'code',
+        });
+        for (const file of files) {
+            try {
+                if (!isAllowedExtension(file.originalname)) {
+                    failed.push({
+                        filename: file.originalname,
+                        error: `File type not allowed. Allowed: ${ALLOWED_EXTENSIONS.join(', ')}`,
+                    });
+                    continue;
+                }
+                const { randomUUID } = await import('crypto');
+                const fileId = randomUUID();
+                const ext = path.extname(file.originalname);
+                const storedFilename = `${fileId}${ext}`;
+                const filePath = path.join(RAG_STORAGE_PATH, storedFilename);
+                await fs.writeFile(filePath, file.buffer);
+                const metadata = {
+                    id: fileId,
+                    filename: storedFilename,
+                    originalName: file.originalname,
+                    size: file.size,
+                    uploadedAt: new Date().toISOString(),
+                    indexed: false,
+                    path: filePath,
+                    extension: ext.slice(1),
+                };
+                filesStore.set(fileId, metadata);
+                uploaded.push({ id: fileId, filename: file.originalname, size: file.size });
+                // Index file content
+                try {
+                    const document = {
+                        id: fileId,
+                        path: filePath,
+                        name: file.originalname,
+                        content: file.buffer.toString('utf-8'),
+                        extension: ext.slice(1),
+                        type: 'file',
+                    };
+                    await client.addDocuments([document]);
+                    metadata.indexed = true;
+                    indexed.push({ id: fileId, filename: file.originalname });
+                }
+                catch (indexError) {
+                    console.error(`Failed to index file ${file.originalname}:`, indexError);
+                }
+            }
+            catch (fileError) {
+                failed.push({
+                    filename: file.originalname,
+                    error: fileError instanceof Error ? fileError.message : 'Unknown error',
+                });
+            }
+        }
+        res.json({ uploaded, failed, indexed });
+    }
+    catch (error) {
+        console.error('RAG upload error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+// GET /api/rag/files/:fileId - Get file metadata
+app.get('/api/rag/files/:fileId', async (req, res) => {
+    try {
+        const { fileId } = req.params;
+        if (!fileId) {
+            return res.status(400).json({ error: 'File ID is required' });
+        }
+        const metadata = filesStore.get(fileId);
+        if (!metadata) {
+            return res.status(404).json({ error: 'File not found' });
+        }
+        res.json({
+            id: metadata.id,
+            filename: metadata.originalName,
+            size: metadata.size,
+            uploadedAt: metadata.uploadedAt,
+            indexed: metadata.indexed,
+            extension: metadata.extension,
+        });
+    }
+    catch (error) {
+        console.error('RAG get file error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+// DELETE /api/rag/files/:fileId - Delete file
+app.delete('/api/rag/files/:fileId', async (req, res) => {
+    try {
+        const { fileId } = req.params;
+        if (!fileId) {
+            return res.status(400).json({ error: 'File ID is required' });
+        }
+        const metadata = filesStore.get(fileId);
+        if (!metadata) {
+            return res.status(404).json({ error: 'File not found' });
+        }
+        // Delete from storage
+        try {
+            await fs.unlink(metadata.path);
+        }
+        catch {
+            // File may not exist
+        }
+        // Delete from search index
+        try {
+            const client = new MeilisearchClient({
+                host: process.env['MEILISEARCH_HOST'] || 'http://localhost:7700',
+                apiKey: process.env['MEILISEARCH_API_KEY'] ?? undefined,
+                indexName: process.env['MEILISEARCH_INDEX'] || 'code',
+            });
+            await client.deleteDocument(fileId);
+        }
+        catch {
+            // Index may not have the document
+        }
+        filesStore.delete(fileId);
+        res.json({ success: true, message: 'File deleted successfully', id: fileId });
+    }
+    catch (error) {
+        console.error('RAG delete file error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+// ==================== ENHANCED SESSION STORAGE ====================
+// GET /api/sessions/:sessionId/metadata - Get session metadata
+app.get(['/api/sessions/:sessionId/metadata', '/api/v1/sessions/:sessionId/metadata'], async (req, res) => {
+    const sessionId = String(req.params.sessionId || '');
+    const projectId = typeof req.query.projectId === 'string' ? req.query.projectId : '';
+    const projects = await loadProjects();
+    const project = projects.find((p) => p.id === projectId) ?? projects[0];
+    if (!project) {
+        jsonError(res, 404, 'Project not found');
+        return;
+    }
+    const session = await loadSession(project, sessionId);
+    if (!session) {
+        jsonError(res, 404, 'Session not found');
+        return;
+    }
+    res.json({
+        id: session.id,
+        projectId: session.projectId,
+        title: session.title,
+        status: session.status,
+        createdAt: session.createdAt,
+        updatedAt: session.updatedAt,
+        messageCount: session.messages?.length ?? 0,
+        lastPromiseId: session.lastPromiseId,
+    });
+});
+// PATCH /api/sessions/:sessionId - Update session
+app.patch(['/api/sessions/:sessionId', '/api/v1/sessions/:sessionId'], async (req, res) => {
+    const sessionId = String(req.params.sessionId || '');
+    const projectId = typeof req.query.projectId === 'string' ? req.query.projectId : '';
+    const updates = req.body || {};
+    const projects = await loadProjects();
+    const project = projects.find((p) => p.id === projectId) ?? projects[0];
+    if (!project) {
+        jsonError(res, 404, 'Project not found');
+        return;
+    }
+    const session = await loadSession(project, sessionId);
+    if (!session) {
+        jsonError(res, 404, 'Session not found');
+        return;
+    }
+    const updated = {
+        ...session,
+        ...updates,
+        updatedAt: new Date().toISOString(),
+    };
+    await saveSession(project, updated);
+    // Broadcast update via WebSocket
+    broadcastProgress(sessionId, {
+        status: 'session_updated',
+        message: 'Session updated',
+        result: updated,
+    });
+    res.json(updated);
+});
+// POST /api/sessions/:sessionId/messages - Add message to session
+app.post(['/api/sessions/:sessionId/messages', '/api/v1/sessions/:sessionId/messages'], async (req, res) => {
+    const sessionId = String(req.params.sessionId || '');
+    const projectId = typeof req.query.projectId === 'string' ? req.query.projectId : '';
+    const message = req.body || {};
+    const projects = await loadProjects();
+    const project = projects.find((p) => p.id === projectId) ?? projects[0];
+    if (!project) {
+        jsonError(res, 404, 'Project not found');
+        return;
+    }
+    const session = await loadSession(project, sessionId);
+    if (!session) {
+        jsonError(res, 404, 'Session not found');
+        return;
+    }
+    const messages = session.messages ?? [];
+    messages.push({
+        ...message,
+        id: `msg_${randomUUID()}`,
+        timestamp: new Date().toISOString(),
+    });
+    const updated = {
+        ...session,
+        messages,
+        updatedAt: new Date().toISOString(),
+    };
+    await saveSession(project, updated);
+    const lastMessage = messages[messages.length - 1];
+    res.status(201).json({ success: true, messageId: lastMessage?.id });
+});
+// DELETE /api/sessions - Delete multiple sessions
+app.delete(['/api/sessions', '/api/v1/sessions'], async (req, res) => {
+    const sessionIds = req.body?.sessionIds;
+    const projectId = typeof req.query.projectId === 'string' ? req.query.projectId : '';
+    if (!sessionIds || !Array.isArray(sessionIds)) {
+        jsonError(res, 400, 'sessionIds array is required');
+        return;
+    }
+    const projects = await loadProjects();
+    const project = projects.find((p) => p.id === projectId) ?? projects[0];
+    if (!project) {
+        jsonError(res, 404, 'Project not found');
+        return;
+    }
+    const deleted = [];
+    const failed = [];
+    for (const sessionId of sessionIds) {
+        try {
+            await deleteSession(project, sessionId);
+            deleted.push(sessionId);
+        }
+        catch {
+            failed.push(sessionId);
+        }
+    }
+    res.json({ deleted, failed });
+});
+// ==================== FILE UPLOAD/DOWNLOAD ====================
+// Configure multer for general file uploads
+const fileUpload = multer({
+    storage: multer.diskStorage({
+        destination: async (req, file, cb) => {
+            const uploadDir = process.env.UPLOAD_DIR || path.join(storageDir, 'uploads');
+            await fs.mkdir(uploadDir, { recursive: true });
+            cb(null, uploadDir);
+        },
+        filename: (req, file, cb) => {
+            const uniqueName = `${Date.now()}-${randomUUID()}-${file.originalname}`;
+            cb(null, uniqueName);
+        }
+    }),
+    limits: {
+        fileSize: 50 * 1024 * 1024, // 50MB
+        files: 10,
+    },
+});
+// POST /api/files/upload - Upload files
+app.post(['/api/files/upload', '/api/v1/files/upload'], fileUpload.array('files', 10), async (req, res) => {
+    try {
+        const files = req.files;
+        if (!files || files.length === 0) {
+            return res.status(400).json({ error: 'No files provided' });
+        }
+        const uploaded = files.map(file => ({
+            id: randomUUID(),
+            originalName: file.originalname,
+            filename: file.filename,
+            path: file.path,
+            size: file.size,
+            mimetype: file.mimetype,
+            uploadedAt: new Date().toISOString(),
+        }));
+        res.status(201).json({ uploaded });
+    }
+    catch (error) {
+        console.error('File upload error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+// GET /api/files/:fileId - Download file
+app.get(['/api/files/:fileId', '/api/v1/files/:fileId'], async (req, res) => {
+    try {
+        const fileId = String(req.params.fileId || '');
+        const uploadDir = process.env.UPLOAD_DIR || path.join(storageDir, 'uploads');
+        // Find file by ID (stored in memory for this implementation)
+        const files = await fs.readdir(uploadDir);
+        let filePath = null;
+        for (const file of files) {
+            if (file.includes(fileId)) {
+                filePath = path.join(uploadDir, file);
+                break;
+            }
+        }
+        if (!filePath) {
+            return res.status(404).json({ error: 'File not found' });
+        }
+        res.download(filePath);
+    }
+    catch (error) {
+        console.error('File download error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+// DELETE /api/files/:fileId - Delete uploaded file
+app.delete(['/api/files/:fileId', '/api/v1/files/:fileId'], async (req, res) => {
+    try {
+        const fileId = String(req.params.fileId || '');
+        const uploadDir = process.env.UPLOAD_DIR || path.join(storageDir, 'uploads');
+        const files = await fs.readdir(uploadDir);
+        let deleted = false;
+        for (const file of files) {
+            if (file.includes(fileId)) {
+                await fs.unlink(path.join(uploadDir, file));
+                deleted = true;
+                break;
+            }
+        }
+        if (!deleted) {
+            return res.status(404).json({ error: 'File not found' });
+        }
+        res.json({ success: true, message: 'File deleted' });
+    }
+    catch (error) {
+        console.error('File delete error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+// GET /api/files - List uploaded files
+app.get(['/api/files', '/api/v1/files'], async (req, res) => {
+    try {
+        const uploadDir = process.env.UPLOAD_DIR || path.join(storageDir, 'uploads');
+        await fs.mkdir(uploadDir, { recursive: true });
+        const files = await fs.readdir(uploadDir);
+        const fileList = await Promise.all(files
+            .filter(f => !f.startsWith('.'))
+            .map(async (file) => {
+            const stats = await fs.stat(path.join(uploadDir, file));
+            return {
+                id: file.split('-')[1] || file, // Extract UUID part
+                filename: file,
+                size: stats.size,
+                uploadedAt: stats.mtime.toISOString(),
+            };
+        }));
+        res.json({ files: fileList });
+    }
+    catch (error) {
+        console.error('File list error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+// ==================== WEBSOCKET INFO ENDPOINT ====================
+// Get WebSocket connection info
+app.get(['/api/ws', '/api/v1/ws'], (req, res) => {
+    res.json({
+        wsUrl: `ws://${HOST}:${WS_PORT}`,
+        activeSessions: Array.from(wsConnections.keys()),
+        connectionCount: Array.from(wsConnections.values()).reduce((sum, set) => sum + set.size, 0),
+    });
+});
 // ==================== HEALTH CHECK ====================
 app.get('/health', (req, res) => {
     res.json({
@@ -650,11 +1243,16 @@ app.get('/health', (req, res) => {
     });
 });
 // ==================== START SERVER ====================
-app.listen(PORT, HOST, () => {
-    console.log(`A2A Client API Server started on http://${HOST}:${PORT}`);
-    console.log(`Health check: http://${HOST}:${PORT}/health`);
-    console.log(`Terminal: http://${HOST}:${PORT}/api/terminal/execute`);
-    console.log(`File System: http://${HOST}:${PORT}/api/fs/*`);
-});
+if (process.env.NODE_ENV !== 'test') {
+    app.listen(PORT, HOST, () => {
+        console.log(`A2A Client API Server started on http://${HOST}:${PORT}`);
+        console.log(`WebSocket Server started on ws://${HOST}:${WS_PORT}`);
+        console.log(`Health check: http://${HOST}:${PORT}/health`);
+        console.log(`Terminal: http://${HOST}:${PORT}/api/terminal/execute`);
+        console.log(`File System: http://${HOST}:${PORT}/api/fs/*`);
+        console.log(`Sessions: http://${HOST}:${PORT}/api/sessions/*`);
+        console.log(`File Upload: http://${HOST}:${PORT}/api/files/upload`);
+    });
+}
 export default app;
 //# sourceMappingURL=index.js.map

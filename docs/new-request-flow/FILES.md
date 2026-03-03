@@ -149,11 +149,8 @@ ai-integration/
 | [`PROTOCOL.md`](PROTOCOL.md)                           | Протокол взаємодії               |
 | [`SCHEMAS.md`](SCHEMAS.md)                             | Схеми даних                      |
 | [`SESSION-FLOW.md`](SESSION-FLOW.md)                   | Потік сесій                      |
-| [`COMPARISON.md`](COMPARISON.md)                       | Порівняння бачення з реалізацією |
-| [`CURRENT-ISSUES.md`](CURRENT-ISSUES.md)               | Поточні проблеми                 |
-| [`IMPLEMENTATION-STATUS.md`](IMPLEMENTATION-STATUS.md) | Статус реалізації                |
 | [`ACTION-MAP.md`](ACTION-MAP.md)                       | Карта коду - де який код         |
-| [`ROADMAP.md`](ROADMAP.md)                             | План розвитку                    |
+| [`SIMULATION-FORMAT.md`](SIMULATION-FORMAT.md)         | Формат симуляцій                 |
 | [`FILES.md`](FILES.md)                                 | Цей файл - карта проекту         |
 
 ### Симуляції
@@ -226,6 +223,6 @@ OLLAMA_IDLE_TIMEOUT=300
 
 ## Посилання
 
-- [ACTION-MAP.md](ACTION-MAP.md) - Де який код знаходиться
-- [ROADMAP.md](ROADMAP.md) - План розвитку
-- [IMPLEMENTATION-STATUS.md](IMPLEMENTATION-STATUS.md) - Статус реалізації
+- [ARCHITECTURE.md](ARCHITECTURE.md) - Архітектура системи
+- [PROTOCOL.md](PROTOCOL.md) - Протокол взаємодії
+- [simulations/SCHEMA.md](../../simulations/SCHEMA.md) - Канонічна схема симуляцій

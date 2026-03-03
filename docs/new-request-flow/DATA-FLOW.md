@@ -176,6 +176,7 @@
 
 - [ARCHITECTURE.md](ARCHITECTURE.md) — Общая архитектура системы
 - [PROTOCOL.md](PROTOCOL.md) — Протокол взаимодействия
+- [SERVER-ARCHITECTURE.md](SERVER-ARCHITECTURE.md) — Server-centric документация
 - [WEB-UI.md](WEB-UI.md) — Web UI документация
 - [API-SERVER.md](API-SERVER.md) — Client API Server документация
 - [API-CLIENT.md](API-CLIENT.md) — API Client документация

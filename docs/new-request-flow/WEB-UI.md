@@ -1,580 +1,628 @@
 # Web UI Documentation
 
-> **⚠️ Важно:** Это документация для обновлённой системы. Старые файлы Web UI больше не поддерживаются.
+> **⚠️ Важно:** Это документация для Web UI компонентов (a2a-client/web).
 > 
-> **См.:** [ARCHITECTURE.md](ARCHITECTURE.md), [PROTOCOL.md](PROTOCOL.md)
+> **См.:** [ARCHITECTURE.md](ARCHITECTURE.md), [PROTOCOL.md](PROTOCOL.md), [API-SERVER.md](API-SERVER.md)
 
 ## Обзор
 
-Web UI (`a2a-client/web`) — это пользовательский интерфейс для взаимодействия с системой A2A. Он работает в браузере и общается **только** с Client API (порт 3001), не обращаясь напрямую к серверу (порт 3000).
+Web UI — это клиентское веб-приложение, работающее в браузере и взаимодействующее с API Server (порт 3001). Оно обеспечивает пользовательский интерфейс для:
 
-## Архитектура Web UI
+- Управления задачами и сессиями
+- Выполнения терминальных команд
+- Поиска по документам (RAG)
+- Отображения прогресса выполнения
+- Обработки ошибок
+- Передачи файлов
+
+## Структура файлов
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                     WEB UI (a2a-client/web)                       │
-│  ┌─────────────────────────────────────────────────────────────┐│
-│  │  app-boot.js                                                ││
-│  │  - Главная точка входа (6 фаз инициализации)                 ││
-│  │  - Инициализация в правильном порядке                        ││
-│  └─────────────────────────────────────────────────────────────┘│
-│                              │                                    │
-│  ┌──────────────┬───────────┴────────────┬──────────────────┐  │
-│  │ app-init.js  │   sessions.js         │ actions-manager  │  │
-│  │ (инициализ.) │   (управление сессиями)│ (управление     │  │
-│  └──────────────┴────────────────────────┴──────────────────┘  │
-│                              │                                    │
-│  ┌─────────────────────────────────────────────────────────────┐│
-│  │  web-api-client.js / api-integration.js                    ││
-│  │  - HTTP клиент для Client API                                ││
-│  │  - Поддержка SSE для real-time обновлений                   ││
-│  └─────────────────────────────────────────────────────────────┘│
-│                              │                                    │
-│  ┌─────────────────────────────────────────────────────────────┐│
-│  │  flow/ - VueFlow визуализация                               ││
-│  │  - panels/* - панели UI                                     ││
-│  │  - protocol.js - маппинг протокола                          ││
-│  └─────────────────────────────────────────────────────────────┘│
-└─────────────────────────────────────────────────────────────────┘
+a2a-client/web/
+├── index.html                    # Главная HTML страница
+├── css/
+│   ├── app.css                   # Основные стили
+│   ├── plasticine-ui.css         # Стили пластилинового UI
+│   ├── base/
+│   │   ├── typography.css        # Типографика
+│   │   └── variables.css         # CSS переменные
+│   ├── components/               # Стили компонентов
+│   │   ├── errors.css            # Ошибки
+│   │   ├── file-transfer.css     # Передача файлов
+│   │   ├── floating-panel.css    # Плавающие панели
+│   │   ├── header.css            # Шапка
+│   │   ├── progress.css          # Прогресс
+│   │   ├── rag-search.css        # RAG поиск
+│   │   ├── session-manager.css   # Менеджер сессий
+│   │   ├── terminal-emulator.css # Терминал
+│   │   └── ...
+│   └── layouts/                  # Макеты
+├── js/
+│   ├── app-task.js               # Инициализация приложения
+│   ├── api-integration.js        # Интеграция с API
+│   ├── session-manager.js        # Управление сессиями
+│   ├── task-flow.js              # Поток задач
+│   ├── sse-client.js             # SSE клиент
+│   ├── error-handler.js          # Обработка ошибок
+│   ├── progress-indicators.js    # Индикаторы прогресса
+│   ├── terminal-emulator.js      # Эмулятор терминала
+│   ├── rag-search-ui.js          # UI для RAG поиска
+│   ├── file-transfer.js          # Передача файлов
+│   ├── plasticine-ui.js          # Пластилиновый UI
+│   ├── plasticine-workflow.js    # Workflow компонент
+│   ├── ui-components.js          # UI компоненты
+│   ├── web-api-client.js         # Web API клиент
+│   └── components/               # Дополнительные компоненты
+└── examples/
+    └── advanced-features.html     # Примеры
 ```
 
-## Точки входа (Entry Points)
+## JavaScript модули
 
-| Файл | Назначение |
-|------|------------|
-| [`app-boot.js`](../../a2a-client/web/js/app-boot.js) | Главная точка входа, 6 фаз инициализации |
-| [`app-init.js`](../../a2a-client/web/js/app-init.js) | Дополнительная инициализация |
-| [`app-state.js`](../../a2a-client/web/js/app-state.js) | Центральное управление состоянием |
-| [`task-flow.js`](../../a2a-client/web/js/task-flow.js) | Поле задачи + Send, панель (прелоадер → пластилин), сессия → invoke → первый ответ |
-| [`index.html`](../../a2a-client/web/index.html) | HTML-шаблон |
+### SessionManager
 
-### Фазы инициализации AppBoot
+Модуль управления сессиями. Обеспечивает создание, загрузку и удаление сессий.
 
-1. **Phase 1: Core** — `appState`, `actionsManager`, `uiManager`, `apiIntegration`
-2. **Phase 2: Flow** — инициализация VueFlow
-3. **Phase 3: UI Components** — UI компоненты
-4. **Phase 4: Enhancements** — улучшения
-5. **Phase 5: Event bindings** — привязка событий
-6. **Phase 6: Restore state** — восстановление состояния |
+**Файл:** [`session-manager.js`](../../a2a-client/web/js/session-manager.js)
 
-## Как Web общается с Client API
-
-Web UI использует [`web-api-client.js`](../../a2a-client/web/js/web-api-client.js) для всех HTTP-запросов к Client API.
-
-### Базовый URL и конфигурация
+#### Конфигурация
 
 ```javascript
-// По умолчанию используется относительный путь
-serverUrl: '/api/v1'
-
-// Конфигурация в app-boot.js
-AppBoot = {
-    config: {
-        serverUrl: '/api/v1',
-        useSSE: true,
-        autoSave: true,
-        showMinimap: true,
-        theme: 'dark'
-    }
-}
+SessionManager.init({
+    apiBase: '/api/v1',           // Базовый API URL
+    projectId: 'p_123456 // ID проекта
+});
 ```
 
-### WebAPIClient
-
-[`web-api-client.js`](../../a2a-client/web/js/web-api-client.js) предоставляет методы:
+####7890'    Методы
 
 | Метод | Описание |
 |-------|----------|
-| `configure(options)` | Настройка клиента |
-| `request(method, path, body)` | Низкоуровневый HTTP запрос |
-| `createRequest(requestData)` | Создание запроса (task/message) |
-| `createSession(projectId, title)` | Создание сессии |
+| `init(options)` | Инициализация менеджера |
+| `configure(options)` | Настройка конфигурации |
+| `loadSessions(projectId?)` | Загрузка списка сессий |
+| `createSession(projectId, title, task?)` | Создание сессии |
+| `getSession(sessionId)` | Получение сессии |
+| `deleteSession(sessionId)` | Удаление сессии |
+| `updateSession(sessionId, data)` | Обновление сессии |
 
-### Основные Endpoints
-
-#### Sessions (Управление сессиями)
-
-| Метод | Endpoint | Описание |
-|-------|----------|----------|
-| `GET` | `/api/sessions` | Получить список сессий проекта |
-| `POST` | `/api/sessions` | Создать новую сессию |
-| `GET` | `/api/sessions/:sessionId` | Получить сессию по ID |
-| `DELETE` | `/api/sessions/:sessionId` | Удалить сессию |
-| `POST` | `/api/sessions/:sessionId/action` | Выбрать действие (execute form choice) |
-| `POST` | `/api/sessions/:sessionId/next` | Продолжить выполнение (отправить result) |
-| `POST` | `/api/sessions/:sessionId/cancel` | Отменить выполнение |
-
-#### Projects (Управление проектами)
-
-| Метод | Endpoint | Описание |
-|-------|----------|----------|
-| `GET` | `/api/projects` | Получить список проектов |
-| `POST` | `/api/projects` | Создать проект |
-| `DELETE` | `/api/projects/:projectId` | Удалить проект |
-
-#### Config (Конфигурация)
-
-| Метод | Endpoint | Описание |
-|-------|----------|----------|
-| `GET` | `/api/config` | Получить текущую конфигурацию |
-| `POST` | `/api/config` | Сохранить конфигурацию |
-
-#### Invoke и первый ответ (прокси к серверу)
-
-| Метод | Endpoint | Описание |
-|-------|----------|----------|
-| `POST` | `/api/v1/invoke` | Прокси к серверу. Body: `{ task, sessionId?, projectId? }`. После фиксации сессии Web передаёт sessionId и projectId, чтобы Client API обновил сессию (lastPromiseId). На сервер уходит только `{ task }`. |
-| `GET` | `/api/v1/requests/:promiseId/status` | Опрос статуса до `completed`/`failed` |
-| `GET` | `/api/v1/requests/:promiseId/result` | Получить первый ответ (context + execute) |
-
-#### SSE (Server-Sent Events)
-
-| Метод | Endpoint | Описание |
-|-------|----------|----------|
-| `GET` | `/api/v1/sse/:sessionId` | Получить SSE поток для сессии |
-
-## Формат запросов и ответов
-
-### Поток задачи (Task Flow)
-
-Задача создаётся **от имени проекта**. В шапке: поле ввода задачи + кнопка **Send**.
-
-| Шаг | Действие | Результат |
-|-----|----------|----------|
-| 1 | Пользователь вводит текст задачи, выбирает проект, нажимает **Send** | Открывается панель с **прелоадером** («Creating session…») |
-| 2 | **POST /api/v1/sessions** с `{ projectId, task, title }` | Client API сохраняет сессию, возвращает `id` (sessionId) и `projectId` |
-| 3 | Клиент получает идентификаторы | **Фиксация**: панель переходит в режим **пластилина** — становится **незакрываемой** (critical), отображаются sessionId и projectId |
-| 4 | **POST /api/v1/invoke** с `{ task, sessionId, projectId }` | Client API проксирует на сервер `{ task }`, получает `promiseId`, при необходимости обновляет сессию; возвращает ответ клиенту |
-| 5 | Опрос **GET /api/v1/requests/:promiseId/status** до `completed`/`failed`, затем **GET .../result** | Получение первого ответа сервера |
-| 6 | Отрисовка в панели | В панели отображается **первый ответ** (context + execute) |
-
-- **До фиксации** панель можно закрыть; **после фиксации** (когда пришли sessionId и projectId) панель не закрывается (Plasticine UI `critical`).
-- Реализация: [`task-flow.js`](../../a2a-client/web/js/task-flow.js), форма в [`templates/header.html`](../../a2a-client/web/templates/header.html) (`#taskSendForm`, `#taskInputField`). Используется Plasticine UI для панели.
-- Соответствие симуляциям: первый запрос к серверу — это `{ task }`, как в `simulations/*/request.json`; см. [PROTOCOL.md](PROTOCOL.md), [simulations/SCHEMA.md](../../simulations/SCHEMA.md).
-
-### Создание сессии
+#### Пример использования
 
 ```javascript
-// POST /api/sessions
-{
-    projectId: "proj_123",
-    title: "Новая сессия",
-    task: "описание задачи"
-}
+// Инициализация
+SessionManager.init({ projectId: 'p_123' });
+
+// Загрузка сессий
+const sessions = await SessionManager.loadSessions();
+
+// Создание новой сессии
+const session = await SessionManager.createSession('p_123', 'New Task', 'Do something');
+
+// Удаление сессии
+await SessionManager.deleteSession('sess_123');
 ```
 
-Ответ:
-```json
-{
-    "id": "sess_abc123",
-    "projectId": "proj_123",
-    "title": "Новая сессия",
-    "status": "PENDING",
-    "createdAt": "2024-01-01T00:00:00.000Z",
-    "updatedAt": "2024-01-01T00:00:00.000Z"
-}
-```
+---
 
-### Выбор действия (action)
+### TaskFlow
+
+Модуль потока задач. Управляет созданием задач, отправкой на сервер и отображением результатов.
+
+**Файл:** [`task-flow.js`](../../a2a-client/web/js/task-flow.js)
+
+#### Конфигурация
 
 ```javascript
-// POST /api/sessions/:sessionId/action
-{
-    action: "fix-vue-imports"
-}
+TaskFlow.init({
+    apiBase: '/api/v1',
+    projectId: 'p_1234567890'
+});
 ```
 
-### Продолжение выполнения (next)
+#### Методы
+
+| Метод | Описание |
+|-------|----------|
+| `init(options)` | Инициализация потока задач |
+| `sendTask(taskText, projectId?)` | Отправка задачи |
+| `sendChoice(choiceId, containerElement)` | Отправка выбора формы |
+| `cancel()` | Отмена текущей задачи |
+| `pollStatus(promiseId)` | Опрос статуса задачи |
+
+#### Пример использования
 
 ```javascript
-// POST /api/sessions/:sessionId/next
-{
-    "result": {
-        "script": {
-            "output": "found 5 broken imports"
-        }
-    }
-}
+// Отправка задачи
+const result = await TaskFlow.sendTask('Create a new file');
+
+// Обработка формы (выбор действия)
+TaskFlow.sendChoice('confirm_action', containerElement);
 ```
 
-## Обработка execute.* типов
+---
 
-Web UI должен обрабатывать следующие типы `execute` ответов от сервера:
+### SSEClient
 
-### execute.form (Интерактивные формы)
+Клиент для Server-Sent Events. Обеспечивает real-time получение обновлений от сервера.
 
-Когда сервер возвращает `execute.form`, Web UI отображает форму с выбором:
+**Файл:** [`sse-client.js`](../../a2a-client/web/js/sse-client.js)
 
-```json
-{
-    "execute": {
-        "form": {
-            "title": "Выберите действие",
-            "input": [
-                {
-                    "name": "action",
-                    "type": "select",
-                    "choices": [
-                        {"id": "fix-vue-imports", "label": "Исправить Vue импорты"},
-                        {"id": "run-tests", "label": "Запустить тесты"}
-                    ]
-                }
-            ]
-        }
-    }
-}
-```
-
-### execute.message (Сообщения)
-
-Когда сервер возвращает `execute.message`, Web UI отображает информационное сообщение:
-
-```json
-{
-    "execute": {
-        "message": "Все файлы успешно обработаны"
-    }
-}
-```
-
-### execute.script (Выполнение кода)
-
-```json
-{
-    "execute": {
-        "script": {
-            "input": {},
-            "output": "",
-            "code": "// JavaScript код для выполнения"
-        }
-    }
-}
-```
-
-### execute.read-file (Чтение файла)
-
-```json
-{
-    "execute": {
-        "read-file": {
-            "path": "src/App.vue"
-        }
-    }
-}
-```
-
-### execute.write-file (Запись файла)
-
-```json
-{
-    "execute": {
-        "write-file": {
-            "path": "src/App.vue",
-            "content": "..."
-        }
-    }
-}
-```
-
-### execute.execute-command (Выполнение команды)
-
-```json
-{
-    "execute": {
-        "execute-command": {
-            "command": "npm run build"
-        }
-    }
-}
-```
-
-### execute.rag-search (RAG поиск)
-
-```json
-{
-    "execute": {
-        "rag-search": {
-            "query": "как работает компонент"
-        }
-    }
-}
-```
-
-## Состояния сессии в Web UI
-
-Web UI отображает следующие состояния сессии (см. также [SESSION-FLOW.md](SESSION-FLOW.md)):
-
-| Состояние | Описание |
-|-----------|----------|
-| `PENDING` | Сессия создана, ожидает выбора действия из `execute.form.choices` |
-| `READY` | Пользователь выбрал действие, готово к выполнению |
-| `IN_PROGRESS` | Выполняются шаги (steps) |
-| `WAITING_CONFIRMATION` | Ожидает подтверждения от пользователя |
-| `COMPLETED` | Все шаги выполнены успешно |
-| `ERROR` | Ошибка при выполнении |
-| `CANCELLED` | Отменена пользователем |
-
-### Управление сессиями в Web
-
-[`sessions.js`](../../a2a-client/web/js/sessions.js) управляет состоянием сессии:
+#### Конфигурация
 
 ```javascript
-Sessions = {
-    state: {
-        list: [],              // Список сессий
-        current: null,         // Текущая сессия
-        projectId: null,
-        messages: [],
-        action: {
-            definition: null,
-            executionState: null,
-            isRunning: false,
-            approved: false,
-            // Поля для execute.* протокола
-            choices: [],        // execute.form.choices
-            formTitle: '',
-            currentStepCode: null,
-            currentStepInput: {}
-        }
-    },
-    useSSE: true,  // SSE включен по умолчанию
-    pollInterval: 5000
-}
+SSEClient.configure({
+    apiBase: '/api/v1',
+    sessionId: 'sess_123',
+    promiseId: 'promise_456'
+});
 ```
 
-## SSE (Server-Sent Events)
+#### Методы
 
-Web UI поддерживает SSE ([`sse-client.js`](../../a2a-client/web/js/sse-client.js)) для real-time обновлений:
+| Метод | Описание |
+|-------|----------|
+| `connect(sessionId, promiseId)` | Подключение к SSE потоку |
+| `disconnect()` | Отключение от потока |
+| `on(event, handler)` | Подписка на событие |
+| `off(event, handler)` | Отписка от события |
+
+#### События
+
+| Событие | Описание |
+|---------|----------|
+| `connected` | Установлено соединение |
+| `message` | Получено сообщение |
+| `progress` | Обновление прогресса |
+| `complete` | Выполнение завершено |
+| `error` | Ошибка |
+
+#### Пример использования
 
 ```javascript
 // Подключение к SSE
-const eventSource = new EventSource('/api/v1/sse/sessionId');
+SSEClient.connect('sess_123', 'promise_456');
 
 // Обработка событий
-eventSource.addEventListener('message', (event) => {
-    const data = JSON.parse(event.data);
-    // Обновить UI
+SSEClient.on('progress', (data) => {
+    console.log('Progress:', data.progress, data.message);
 });
 
-eventSource.addEventListener('error', (event) => {
-    // Обработать ошибку
+SSEClient.on('complete', (result) => {
+    console.log('Result:', result);
 });
 ```
 
-### Обработчики SSE в Sessions
+---
 
-[`sessions.js`](../../a2a-client/web/js/sessions.js) обрабатывает SSE события:
+### ErrorHandler
+
+Централизованная обработка ошибок. Обеспечивает统一ный интерфейс для отображения и логирования ошибок.
+
+**Файл:** [`error-handler.js`](../../a2a-client/web/js/error-handler.js)
+
+#### Конфигурация
 
 ```javascript
-// Подключение обработчиков
-setupSSEHandlers() {
-    const client = window.SSEClient;
-    
-    // Connected - соединение установлено
-    client.on('connected', (data) => { 
-        this.state.sseConnected = true; 
+ErrorHandler.init({
+    showDismissButton: true,      // Показывать кнопку закрытия
+    autoHideDelay: 8000,          // Автоскрытие через 8 сек
+    showStackTrace: false,        // Показывать стектрейс
+    logToConsole: true,           // Логировать в консоль
+    retryableErrors: ['ECONNREFUSED', 'ETIMEDOUT', 'ENOTFOUND']
+});
+```
+
+#### Методы
+
+| Метод | Описание |
+|-------|----------|
+| `init(options)` | Инициализация обработчика |
+| `handle(error, context?)` | Обработка ошибки |
+| `handleApiError(response, context?)` | Обработка API ошибки |
+| `displayError(error)` | Отображение ошибки |
+| `on(event, handler)` | Подписка на событие ошибки |
+| `getErrors()` | Получение списка ошибок |
+| `clearErrors()` | Очистка списка ошибок |
+
+#### Пример использования
+
+```javascript
+// Обработка ошибки
+try {
+    await someAsyncOperation();
+} catch (error) {
+    ErrorHandler.handle(error, { context: 'operationName' });
+}
+
+// Обработка API ошибки
+ErrorHandler.handleApiError(response, { endpoint: '/api/sessions' });
+```
+
+---
+
+### ProgressIndicators
+
+Модуль визуального отображения прогресса длительных операций.
+
+**Файл:** [`progress-indicators.js`](../../a2a-client/web/js/progress-indicators.js)
+
+#### Конфигурация
+
+```javascript
+ProgressIndicators.defaults = {
+    animated: true,               // Анимация
+    showPercentage: true,         // Показывать процент
+    showMessage: true,            // Показывать сообщение
+    indeterminateSpeed: 300,      // Скорость неопределённого прогресса
+    autoRemove: true              // Автоудаление после завершения
+};
+```
+
+#### Методы
+
+| Метод | Описание |
+|-------|----------|
+| `create(id, options)` | Создание индикатора прогресса |
+| `get(id)` | Получение индикатора по ID |
+| `remove(id)` | Удаление индикатора |
+| `handleProgressEvent(eventData)` | Обработка события прогресса |
+| `on(event, handler)` | Подписка на событие |
+
+#### Пример использования
+
+```javascript
+// Создание индикатора
+const tracker = ProgressIndicators.create('my-task', {
+    showPercentage: true,
+    showMessage: true
+});
+
+// Обновление прогресса
+tracker.update(50, 'Processing...');
+
+// Завершение
+tracker.complete('Done!');
+
+// Удаление
+tracker.remove();
+```
+
+---
+
+### TerminalEmulator
+
+Эмулятор терминала в браузере. Обеспечивает выполнение команд и отображение вывода.
+
+**Файл:** [`terminal-emulator.js`](../../a2a-client/web/js/terminal-emulator.js)
+
+#### Конфигурация
+
+```javascript
+TerminalEmulator.configure({
+    wsUrl: 'ws://localhost:3002',      // WebSocket URL
+    apiBase: '/api/v1',               // API базовый URL
+    fontSize: 14,                     // Размер шрифта
+    fontFamily: 'Monaco, monospace',  // Шрифт
+    theme: 'dark'                     // Тема (dark/light)
+});
+```
+
+#### Методы
+
+| Метод | Описание |
+|-------|----------|
+| `init(containerSelector)` | Инициализация терминала |
+| `connect(sessionId)` | Подключение к сессии |
+| `disconnect()` | Отключение |
+| `execute(command)` | Выполнение команды |
+| `clear()` | Очистка вывода |
+| `getHistory()` | Получение истории команд |
+| `writeOutput(text)` | Запись в вывод |
+
+#### Пример использования
+
+```javascript
+// Инициализация
+TerminalEmulator.init('#terminal-container');
+
+// Подключение к сессии
+await TerminalEmulator.connect('sess_123');
+
+// Выполнение команды
+const result = await TerminalEmulator.execute('ls -la');
+
+// Очистка
+TerminalEmulator.clear();
+```
+
+---
+
+### RAGSearchUI
+
+Пользовательский интерфейс для RAG поиска.
+
+**Файл:** [`rag-search-ui.js`](../../a2a-client/web/js/rag-search-ui.js)
+
+#### Конфигурация
+
+```javascript
+RAGSearchUI.configure({
+    apiBase: '/api/v1',
+    searchEndpoint: '/rag/search',
+    indexEndpoint: '/rag/index'
+});
+```
+
+#### Методы
+
+| Метод | Описание |
+|-------|----------|
+| `init(containerSelector)` | Инициализация UI |
+| `search(query, options?)` | Поиск по запросу |
+| `clearResults()` | Очистка результатов |
+| `getHistory()` | Получение истории поиска |
+
+#### Пример использования
+
+```javascript
+// Инициализация
+RAGSearchUI.init('#rag-search-container');
+
+// Выполнение поиска
+const results = await RAGSearchUI.search('How to use API');
+console.log(results);
+```
+
+---
+
+### FileTransfer
+
+Модуль передачи файлов. Обеспечивает загрузку и скачивание файлов.
+
+**Файл:** [`file-transfer.js`](../../a2a-client/web/js/file-transfer.js)
+
+#### Конфигурация
+
+```javascript
+FileTransfer.configure({
+    apiBase: '/api/v1',
+    sessionId: 'sess_123',
+    chunkSize: 1024 * 1024,           // 1MB
+    maxFileSize: 100 * 1024 * 1024,    // 100MB
+    allowedTypes: ['.js', '.ts', '.md'], // Разрешённые типы
+    maxConcurrent: 3                    // Макс. параллельных загрузок
+});
+```
+
+#### Методы
+
+| Метод | Описание |
+|-------|----------|
+| `init()` | Инициализация |
+| `uploadFile(file, options?)` | Загрузка файла |
+| `uploadFiles(files, options?)` | Загрузка нескольких файлов |
+| `downloadFile(fileId, filename)` | Скачивание файла |
+| `getProgress(fileId)` | Получение прогресса загрузки |
+| `cancelUpload(fileId)` | Отмена загрузки |
+
+#### События
+
+| Событие | Описание |
+|---------|----------|
+| `upload-progress` | Прогресс загрузки |
+| `upload-complete` | Загрузка завершена |
+| `upload-error` | Ошибка загрузки |
+| `download-progress` | Прогресс скачивания |
+
+#### Пример использования
+
+```javascript
+// Загрузка файла
+const input = document.getElementById('fileInput');
+input.addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    await FileTransfer.uploadFile(file, {
+        onProgress: (progress) => {
+            console.log('Progress:', progress);
+        }
     });
+});
+
+// Обработка событий
+FileTransfer.on('upload-complete', (data) => {
+    console.log('File uploaded:', data.fileId);
+});
+```
+
+---
+
+### ApiIntegration
+
+Интеграция с API. Обеспечивает统一的 интерфейс для HTTP запросов.
+
+**Файл:** [`api-integration.js`](../../a2a-client/web/js/api-integration.js)
+
+#### Конфигурация
+
+```javascript
+window.apiIntegration = {
+    serverUrl: 'http://localhost:3001/api/v1',
+    token: 'jwt-token'
+};
+```
+
+#### Методы
+
+| Метод | Описание |
+|-------|----------|
+| `configure(options)` | Настройка конфигурации |
+| `request(method, path, body?)` | HTTP запрос |
+| `get(path)` | GET запрос |
+| `post(path, body)` | POST запрос |
+| `put(path, body)` | PUT запрос |
+| `delete(path)` | DELETE запрос |
+
+#### Пример использования
+
+```javascript
+// GET запрос
+const projects = await apiIntegration.get('/projects');
+
+// POST запрос
+const session = await apiIntegration.post('/sessions', {
+    projectId: 'p_123',
+    title: 'New Session'
+});
+```
+
+---
+
+## CSS компоненты
+
+### Основные классы
+
+| Класс | Описание |
+|-------|----------|
+| `.app-container` | Главный контейнер приложения |
+| `.header` | Шапка приложения |
+| `.panel` | Панель контента |
+| `.modal` | Модальное окно |
+| `.btn` | Кнопка |
+| `.input` | Поле ввода |
+| `.notification` | Уведомление |
+
+### Специфические компоненты
+
+| Класс | Описание |
+|-------|----------|
+| `.progress-bar` | Индикатор прогресса |
+| `.terminal-output` | Вывод терминала |
+| `.rag-results` | Результаты RAG поиска |
+| `.error-message` | Сообщение об ошибке |
+| `.session-card` | Карточка сессии |
+
+---
+
+## Интеграция
+
+### Инициализация приложения
+
+```html
+<!-- Подключение скриптов -->
+<script src="js/api-integration.js"></script>
+<script src="js/session-manager.js"></script>
+<script src="js/task-flow.js"></script>
+<script src="js/sse-client.js"></script>
+<script src="js/error-handler.js"></script>
+<script src="js/progress-indicators.js"></script>
+
+<!-- Инициализация -->
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // Настройка API
+    window.apiIntegration = {
+        serverUrl: localStorage.getItem('a2a_serverUrl') || '/api/v1'
+    };
     
-    // Progress - прогресс выполнения
-    client.on('progress', (data) => { 
-        // Обновить UI с прогрессом
-    });
+    // Инициализация менеджера сессий
+    SessionManager.init({ apiBase: '/api/v1' });
     
-    // Result - результат выполнения
-    client.on('result', (data) => { 
-        // Обработать результат
-    });
+    // Инициализация обработчика ошибок
+    ErrorHandler.init({ autoHideDelay: 5000 });
     
-    // Complete - завершение
-    client.on('complete', (data) => { 
-        // Показать завершение
+    // Инициализация TaskFlow
+    TaskFlow.init();
+});
+</script>
+```
+
+### Обработка событий
+
+```javascript
+// Обработка прогресса через SSE
+SSEClient.on('progress', (data) => {
+    ProgressIndicators.handleProgressEvent({
+        current: data.progress,
+        total: 100,
+        message: data.message,
+        progressId: data.promiseId
     });
-    
-    // Error - ошибка
-    client.on('error', (data) => { 
-        // Обработать ошибку
-    });
+});
+
+// Обработка завершения
+SSEClient.on('complete', (result) => {
+    ProgressIndicators.complete('Task completed');
+    TaskFlow.renderResult(result);
+});
+
+// Обработка ошибок
+ErrorHandler.on('error', (error) => {
+    console.error('Error occurred:', error);
+});
+```
+
+---
+
+## Примеры
+
+### Создание простой задачи
+
+```javascript
+async function createTask(taskText) {
+    try {
+        // Создаём индикатор прогресса
+        const progress = ProgressIndicators.create('task-progress');
+        progress.update(0, 'Creating session...');
+        
+        // Создаём сессию
+        const session = await SessionManager.createSession(
+            'p_123',
+            'Task: ' + taskText.substring(0, 30),
+            taskText
+        );
+        
+        progress.update(30, 'Sending task...');
+        
+        // Отправляем задачу
+        const result = await TaskFlow.sendTask(taskText);
+        
+        progress.update(100, 'Done!');
+        progress.remove();
+        
+        return result;
+    } catch (error) {
+        ErrorHandler.handle(error, { action: 'createTask' });
+    }
 }
 ```
 
-### Fallback: Polling
-
-При недоступности SSE используется polling (интервал 5 секунд):
+### Использование терминала
 
 ```javascript
-// Конфигурация polling в web-api-client.js
-polling: {
-    interval: 2000,
-    maxAttempts: 180 // 6 минут максимум
-}
+// Инициализация терминала
+TerminalEmulator.configure({
+    wsUrl: 'ws://localhost:3002',
+    theme: 'dark'
+});
+
+TerminalEmulator.init('#terminal');
+
+// Подключение к сессии
+TerminalEmulator.connect('sess_123').then(() => {
+    // Выполнение команды
+    TerminalEmulator.execute('ls -la');
+});
+
+// Прослушивание вывода
+TerminalEmulator.on('output', (text) => {
+    console.log('Terminal output:', text);
+});
 ```
 
-## Тестирование с симуляциями
+---
 
-См. [SIMULATION-FORMAT.md](SIMULATION-FORMAT.md) для понимания формата симуляций.
+## Требования
 
-### Пример тестирования
-
-1. Создайте симуляцию в [`simulations/`](../../simulations/)
-2. Запустите сервер с симуляцией: `npm run sim:run <simulation-name>`
-3. Откройте Web UI и создайте сессию
-4. Сравните результаты с expected response из симуляции
-
-## Flow UI (VueFlow)
-
-Модуль [`flow/index.js`](../../a2a-client/web/js/flow/index.js) обеспечивает визуализацию графа выполнения:
-
-| Компонент | Файл | Назначение |
-|-----------|------|------------|
-| A2AFlowManager | [`flow/index.js`](../../a2a-client/web/js/flow/index.js) | Основной контроллер VueFlow |
-| Protocol | [`flow/protocol.js`](../../a2a-client/web/js/flow/protocol.js) | Маппинг A2A протокола в узлы |
-| Nodes | [`flow/nodes.js`](../../a2a-client/web/js/flow/nodes.js) | Кастомные узлы VueFlow |
-| SessionsPanel | [`flow/panels/sessions-panel.js`](../../a2a-client/web/js/flow/panels/sessions-panel.js) | Панель сессий |
-| ActionsPanel | [`flow/panels/actions-panel.js`](../../a2a-client/web/js/flow/panels/actions-panel.js) | Панель действий |
-| ChatPanel | [`flow/panels/chat-panel.js`](../../a2a-client/web/js/flow/panels/chat-panel.js) | Чат панель |
-| GraphPanel | [`flow/panels/graph-panel.js`](../../a2a-client/web/js/flow/panels/graph-panel.js) | Граф панель |
-
-#### Кастомные узлы Flow
-
-- `TaskInputNode` — узел входных данных задачи
-- `ActionProposalNode` — узел предложения действия
-- `SubActionNode` — узел поддействия
-- `ResultNode` — узел результата
-- `ActionCompleteNode` — узел завершения
-
-#### Flow Protocol маппинг
-
-[`flow/protocol.js`](../../a2a-client/web/js/flow/protocol.js) преобразует ответы сервера в узлы:
-
-```javascript
-// Маппинг контекста в узлы
-mapContextToFlow(context)
-
-// Маппинг ответа симуляции
-mapSimulationResponseToFlow(response)
-
-// Создание узлов разных типов
-createTaskRequestNode(data)
-createTaskContextBlock(data)
-createProposalContextBlock(data)
-createResultContextBlock(data)
-createCompleteContextBlock(data)
-```
-
-## JSON Схемы
-
-Web UI использует схемы из [`json-schemas/`](json-schemas/):
-
-| Схема | Назначение |
-|-------|------------|
-| [`server-invoke-request.schema.json`](json-schemas/server-invoke-request.schema.json) | Формат запроса к серверу |
-| [`server-invoke-response-execute.schema.json`](json-schemas/server-invoke-response-execute.schema.json) | Формат execute ответа |
-| [`server-invoke-response-first-form.schema.json`](json-schemas/server-invoke-response-first-form.schema.json) | Первый ответ с form.choices |
-| [`server-invoke-response-pending.schema.json`](json-schemas/server-invoke-response-pending.schema.json) | Ожидающий ответ |
-| [`server-transform.schema.json`](json-schemas/server-transform.schema.json) | Трансформации сервера |
-
-## Web → Client API → Server → External AI Hub Data Flow
-
-```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                          WEB UI (a2a-client/web)                       │
-│                              localhost:5173                             │
-│                                                                          │
-│  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐                │
-│  │ Task bar    │    │ SessionsPanel│    │ ActionsPanel│                │
-│  │ (input+Send)│    │ (панель сессий)│   │ (панель действий)│           │
-│  │ task-flow.js│    │              │    │              │                │
-│  └──────┬──────┘    └──────┬──────┘    └──────┬──────┘                │
-│         │                  │                  │                         │
-│         ▼                  ▼                  ▼                         │
-│  ┌─────────────────────────────────────────────────────────────┐      │
-│  │              web-api-client.js / api-integration.js          │      │
-│  │         HTTP клиент для Client API (localhost:3001)          │      │
-│  └──────────────────────────────┬──────────────────────────────┘      │
-└─────────────────────────────────┼─────────────────────────────────────┘
-                                  │ HTTP
-                                  ▼
-┌─────────────────────────────────────────────────────────────────────────┐
-│                     CLIENT API SERVER (a2a-client)                     │
-│                              localhost:3001                             │
-│                                                                          │
-│  ┌─────────────────────────────────────────────────────────────┐      │
-│  │  Роутинг: /api/sessions/*, /api/projects/*, /api/v1/*       │      │
-│  └──────────────────────────────┬──────────────────────────────┘      │
-│                                 │                                        │
-│         ┌───────────────────────┼───────────────────────┐              │
-│         ▼                       ▼                       ▼              │
-│  ┌─────────────┐    ┌─────────────────┐    ┌─────────────────┐      │
-│  │ Хранение     │    │   ApiClient     │    │  Terminal API   │      │
-│  │ проектов     │    │ (прокси к серверу)│   │                 │      │
-│  │ и сессий     │    │ localhost:3000  │    │                 │      │
-│  └─────────────┘    └────────┬─────────┘    └─────────────────┘      │
-└──────────────────────────────┼─────────────────────────────────────────┘
-                               │ HTTP
-                               ▼
-┌─────────────────────────────────────────────────────────────────────────┐
-│                         A2A SERVER (a2a-server)                          │
-│                              localhost:3000                             │
-│                                                                          │
-│  ┌─────────────────────────────────────────────────────────────┐      │
-│  │  Endpoints: /api/v1/invoke, /api/v1/requests/*, /sse/*    │      │
-│  └──────────────────────────────┬──────────────────────────────┘      │
-│                                 │                                        │
-│         ┌───────────────────────┼───────────────────────┐              │
-│         ▼                       ▼                       ▼              │
-│  ┌─────────────┐    ┌─────────────────┐    ┌─────────────────┐      │
-│  │ Actions      │    │ Context Manager │    │  Message Service │      │
-│  │ Registry     │    │ (история, state)│    │                 │      │
-│  └─────────────┘    └────────┬─────────┘    └─────────────────┘      │
-└───────────────────────────────┼─────────────────────────────────────────┘
-                                │ HTTP
-                                ▼
-┌─────────────────────────────────────────────────────────────────────────┐
-│                      EXTERNAL AI HUB (ollama proxy)                     │
-│                              localhost:11434                            │
-│                                                                          │
-│  ┌─────────────────────────────────────────────────────────────┐      │
-│  │  - Promise-based async (X-Promise header)                    │      │
-│  │  - LLM inference (Ollama)                                    │      │
-│  │  - Simulation mode for testing                               │      │
-│  └─────────────────────────────────────────────────────────────┘      │
-└─────────────────────────────────────────────────────────────────────────┘
-```
-
-### Simulations в Data Flow
-
-Симуляции используются как **golden traces** для тестирования и верификации:
-
-```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                         SIMULATION FLOW                                  │
-│                                                                          │
-│  simulations/              Server Transforms           LLM Processing  │
-│  ┌──────────────┐      ┌──────────────────┐      ┌──────────────────┐ │
-│  │ request.json │─────▶│server-transforms│─────▶│   request.md     │ │
-│  │              │      │  -request.json   │      │ (system prompt)  │ │
-│  └──────────────┘      └──────────────────┘      └────────┬─────────┘ │
-│                                                           │            │
-│                                                           ▼            │
-│  response.json  ◀────────server-transforms        response.md      │
-│  (expected)         -response.json                 (LLM output)     │
-│                                                                          │
-│  ┌─────────────────────────────────────────────────────────────────┐  │
-│  │  Compare: response.json (actual) vs response.json (expected) │  │
-│  └─────────────────────────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────────────────────┘
-```
-
-**См.:** [simulations/SCHEMA.md](../../simulations/SCHEMA.md), [SIMULATION-FORMAT.md](SIMULATION-FORMAT.md)
-
-## Перекрёстные ссылки
-
-- [ARCHITECTURE.md](ARCHITECTURE.md) — Общая архитектура системы
-- [PROTOCOL.md](PROTOCOL.md) — Протокол взаимодействия
-- [SESSION-FLOW.md](SESSION-FLOW.md) — Поток сессий
-- [SCHEMAS.md](SCHEMAS.md) — JSON схемы
-- [api-server](API-SERVER.md) — Client API Server
-- [api-client](API-CLIENT.md) — HTTP клиент для сервера
-- [DATA-FLOW.md](DATA-FLOW.md) — Полная диаграмма потока данных
-- [simulations/SCHEMA.md](../../simulations/SCHEMA.md) — Схема симуляций
-- [SIMULATION-FORMAT.md](SIMULATION-FORMAT.md) — Формат симуляций
+- API Server должен быть запущен на порту 3001
+- Для WebSocket соединений требуется порт 3002
+- Для RAG поиска требуется Meilisearch на порту 7700

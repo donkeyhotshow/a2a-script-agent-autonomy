@@ -6,7 +6,9 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
-    "test": "jest --bail"
+    "test": "jest --bail",
+    "test:simulation": "jest --testPathPattern=simulation.test.ts",
+    "test:watch": "jest --watch"
   },
   "keywords": [
     "a2a",

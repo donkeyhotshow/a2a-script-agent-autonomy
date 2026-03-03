@@ -265,16 +265,18 @@ response.json.
 | [`ARCHITECTURE.md`](docs/new-request-flow/ARCHITECTURE.md)                   | Архітектура        |
 | [`PROTOCOL.md`](docs/new-request-flow/PROTOCOL.md)                           | Протокол взаємодії |
 | [`SCHEMAS.md`](docs/new-request-flow/SCHEMAS.md)                             | Схеми даних        |
-| [`SESSION-FLOW.md`](docs/new-request-flow/SESSION-FLOW.md)                   | Потік сесій        |
-| [`COMPARISON.md`](docs/new-request-flow/COMPARISON.md)                       | Порівняння         |
-| [`CURRENT-ISSUES.md`](docs/new-request-flow/CURRENT-ISSUES.md)               | Поточні проблеми   |
-| [`IMPLEMENTATION-STATUS.md`](docs/new-request-flow/IMPLEMENTATION-STATUS.md) | Статус реалізації  |
-| [`ACTION-MAP.md`](docs/new-request-flow/ACTION-MAP.md)                       | Цей документ       |
+| [`SESSION-FLOW.md`](SESSION-FLOW.md)                   | Потік сесій        |
+| [`SIMULATION-FORMAT.md`](SIMULATION-FORMAT.md)           | Формат симуляцій   |
+| [`SCHEMAS.md`](SCHEMAS.md)                             | Схеми даних        |
+| [`ACTION-MAP.md`](ACTION-MAP.md)                       | Цей документ       |
 
 ---
 
 ## Посилання
 
-- [IMPLEMENTATION-STATUS.md](IMPLEMENTATION-STATUS.md) - Статус реалізації
-- [CURRENT-ISSUES.md](CURRENT-ISSUES.md) - Поточні проблеми
-- [COMPARISON.md](COMPARISON.md) - Порівняння бачення з реалізацією
+- [ARCHITECTURE.md](ARCHITECTURE.md) - Архітектура системи
+- [PROTOCOL.md](PROTOCOL.md) - Протокол взаємодії
+- [SCHEMAS.md](SCHEMAS.md) - Схеми даних
+- [SIMULATION-FORMAT.md](SIMULATION-FORMAT.md) - Формат симуляцій
+- [simulations/SCHEMA.md](../../simulations/SCHEMA.md) - Канонічна схема
+- [simulations/REFERENCE.md](../../simulations/REFERENCE.md) - Actions vs AI-Actions бачення з реалізацією

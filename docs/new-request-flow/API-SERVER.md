@@ -1,305 +1,250 @@
-# Client API Server Documentation
+# API Server Documentation
 
-> **⚠️ Важно:** Это документация для обновлённой системы. 
+> **⚠️ Важно:** Это документация для Client API Server (порт 3001).
 > 
-> **См.:** [ARCHITECTURE.md](ARCHITECTURE.md), [PROTOCOL.md](PROTOCOL.md)
+> **См.:** [ARCHITECTURE.md](ARCHITECTURE.md), [PROTOCOL.md](PROTOCOL.md), [API-CLIENT.md](API-CLIENT.md)
 
 ## Обзор
 
-Client API Server (`a2a-client/packages/api-server`) — это HTTP-сервер, который работает на клиентской машине (порт 3001). Он выступает посредником между Web UI и A2A Server, а также предоставляет доступ к локальным ресурсам (файловая система, терминал).
+API Server (`a2a-client/packages/api-server`) — это REST API сервер, который работает на клиентской машине (порт 3001 по умолчанию). Он обеспечивает:
+
+- Управление проектами и сессиями
+- Проксирование запросов к A2A Server (порт 3000)
+- Выполнение терминальных команд
+- Файловые операции
+- RAG поиск
+- WebSocket для real-time обновлений
 
 ## Архитектура
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                     CLIENT API SERVER                            │
-│                     (localhost:3001)                            │
+│                     CLIENT MACHINE                                  │
 │  ┌─────────────────────────────────────────────────────────────┐│
-│  │  Роутинг (Express)                                          ││
-│  │  - /api/sessions/*                                          ││
-│  │  - /api/projects/*                                          ││
-│  │  - /api/config                                              ││
-│  │  - /api/terminal/*                                          ││
-│  │  - /api/v1/* (прокси)                                       ││
+│  │                   API SERVER (порт 3001)                     ││
+│  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────────┐  ││
+│  │  │  Projects    │  │  Sessions    │  │  Terminal       │  ││
+│  │  │  Management  │  │  Management  │  │  Execution      │  ││
+│  │  └──────────────┘  └──────────────┘  └──────────────────┘  ││
+│  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────────┐  ││
+│  │  │  File System │  │  RAG Search  │  │  WebSocket      │  ││
+│  │  │  Operations  │  │  (Meilisearch)│ │  Real-time      │  ││
+│  │  └──────────────┘  └──────────────┘  └──────────────────┘  ││
 │  └─────────────────────────────────────────────────────────────┘│
-│                              │                                    │
-│  ┌──────────────┬────────────┴─────────────┬─────────────────┐  │
-│  │ Хранение     │  Проксирование            │  Terminal API   │  │
-│  │ проектов     │  к a2a-server             │                 │  │
-│  │ и сессий     │  (localhost:3000)         │                 │  │
-│  └──────────────┴──────────────────────────┴─────────────────┘  │
+│                              │                                      │
+│                              ↓                                      │
+│  ┌─────────────────────────────────────────────────────────────┐│
+│  │                   A2A SERVER (порт 3000)                     ││
+│  │              (проксирование через /api/v1/*)                ││
+│  └─────────────────────────────────────────────────────────────┘│
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-## Точка входа
+## Конфигурация
 
-Основной файл: [`a2a-client/packages/api-server/src/index.ts`](../../a2a-client/packages/api-server/src/index.ts)
+### Переменные окружения
 
-## HTTP Routes
+| Переменная | По умолчанию | Описание |
+|------------|-------------|----------|
+| `PORT` | `3001` | HTTP порт сервера |
+| `HOST` | `localhost` | Хост сервера |
+| `WS_PORT` | `3002` | WebSocket порт |
+| `A2A_SERVER_URL` | `http://localhost:3000/api/v1` | URL A2A Server |
+| `A2A_SERVER_TOKEN` | - | JWT токен для A2A Server |
+| `A2A_CLIENT_STORAGE_DIR` | `./storage` | Директория для хранения данных |
+| `RAG_STORAGE_PATH` | `./rag-storage` | Директория для RAG |
+| `MEILISEARCH_HOST` | `http://localhost:7700` | Meilisearch хост |
+| `MEILISEARCH_API_KEY` | - | Meilisearch API ключ |
+| `MEILISEARCH_INDEX` | `code` | Meilisearch индекс |
 
-### Config API
+## Endpoints
 
-| Метод | Endpoint | Описание |
-|-------|----------|----------|
-| `GET` | `/api/config` | Получить конфигурацию |
-| `GET` | `/api/v1/config` | Получить конфигурацию (альтернативный путь) |
-| `POST` | `/api/config` | Сохранить конфигурацию |
-| `POST` | `/api/v1/config` | Сохранить конфигурацию (альтернативный путь) |
+### Конфигурация
 
-#### Конфигурация
+#### GET /api/config
 
-```typescript
-interface ClientConfig {
-    serverUrl: string;      // URL A2A Server (по умолчанию: http://localhost:3000/api/v1)
-    token?: string | null; // JWT токен для аутентификации
+Получение текущей конфигурации.
+
+**Ответ:**
+```json
+{
+  "serverUrl": "http://localhost:3000/api/v1",
+  "token": "..."
 }
 ```
 
-### Projects API
+#### POST /api/config
 
-| Метод | Endpoint | Описание |
-|-------|----------|----------|
-| `GET` | `/api/projects` | Получить все проекты |
-| `GET` | `/api/v1/projects` | Получить все проекты (альтернативный путь) |
-| `POST` | `/api/projects` | Создать проект |
-| `POST` | `/api/v1/projects` | Создать проект (альтернативный путь) |
-| `DELETE` | `/api/projects/:projectId` | Удалить проект |
-| `DELETE` | `/api/v1/projects/:projectId` | Удалить проект (альтернативный путь) |
+Сохранение конфигурации.
 
-#### Модель проекта
-
-```typescript
-interface Project {
-    id: string;           // Уникальный ID (напр., p_<timestamp>)
-    name: string;        // Название проекта
-    path?: string;       // Путь к проекту на файловой системе
-    description?: string;
+**Тело запроса:**
+```json
+{
+  "serverUrl": "http://localhost:3000/api/v1",
+  "token": "your-jwt-token"
 }
 ```
 
-### Sessions API
+### Проекты
 
-| Метод | Endpoint | Описание |
-|-------|----------|----------|
-| `GET` | `/api/sessions` | Получить список сессий |
-| `GET` | `/api/v1/sessions` | Получить список сессий (альтернативный путь) |
-| `POST` | `/api/sessions` | Создать сессию |
-| `POST` | `/api/v1/sessions` | Создать сессию (альтернативный путь) |
-| `GET` | `/api/sessions/:sessionId` | Получить сессию |
-| `GET` | `/api/v1/sessions/:sessionId` | Получить сессию (альтернативный путь) |
-| `DELETE` | `/api/sessions/:sessionId` | Удалить сессию |
-| `DELETE` | `/api/v1/sessions/:sessionId` | Удалить сессию (альтернативный путь) |
-| `POST` | `/api/sessions/:sessionId/action` | Выбрать действие |
-| `POST` | `/api/v1/sessions/:sessionId/action` | Выбрать действие (альтернативный путь) |
-| `POST` | `/api/sessions/:sessionId/next` | Продолжить выполнение |
-| `POST` | `/api/v1/sessions/:sessionId/next` | Продолжить выполнение (альтернативный путь) |
-| `POST` | `/api/sessions/:sessionId/cancel` | Отменить выполнение |
-| `POST` | `/api/v1/sessions/:sessionId/cancel` | Отменить выполнение (альтернативный путь) |
+#### GET /api/projects
 
-#### Создание сессии (задача от имени проекта)
+Получение списка проектов.
 
-Задача создаётся **от имени проекта**. Web отправляет текст задачи; Client API сохраняет сессию и возвращает идентификаторы.
+**Ответ:**
+```json
+[
+  {
+    "id": "p_1234567890",
+    "name": "My Project",
+    "path": "/path/to/project",
+    "description": "Project description"
+  }
+]
+```
 
-```typescript
-// POST /api/sessions или POST /api/v1/sessions
+#### POST /api/projects
+
+Создание нового проекта.
+
+**Тело запроса:**
+```json
 {
-    projectId: string;   // обязательно — задача привязана к проекту
-    title?: string;      // по умолчанию "New Session"
-    task?: string;       // текст задачи
-}
-
-// Ответ 201:
-{
-    id: string;          // sess_<uuid> — зафиксировать на клиенте
-    projectId: string;
-    title: string;
-    task?: string;
-    status: "PENDING";
-    createdAt: string;
-    updatedAt: string;
-    messages?: [];
+  "name": "New Project",
+  "description": "Project description",
+  "path": "/path/to/project"
 }
 ```
 
-#### Модель сессии
-
-```typescript
-interface Session {
-    id: string;                    // Уникальный ID (напр., sess_<uuid>)
-    projectId: string;             // ID проекта
-    title: string;                 // Название сессии
-    task?: string;                 // Описание задачи
-    status?: string;              // Статус (PENDING, READY, IN_PROGRESS и т.д.)
-    selectedAction?: string;       // Выбранное действие
-    context?: Record<string, unknown>;
-    lastPromiseId?: string;        // ID асинхронного запроса
-    createdAt: string;              // ISO timestamp
-    updatedAt: string;              // ISO timestamp
-    messages?: unknown[];
+**Ответ:**
+```json
+{
+  "id": "p_1234567890",
+  "name": "New Project",
+  "description": "Project description",
+  "path": "/path/to/project"
 }
 ```
 
-### Files API (для UI панелей)
+#### DELETE /api/projects/:projectId
 
-| Метод | Endpoint | Описание |
-|-------|----------|----------|
-| `GET` | `/api/projects/:projectId/files/*` | Прочитать файл |
-| `GET` | `/api/v1/projects/:projectId/files/*` | Прочитать файл (альтернативный путь) |
-| `PUT` | `/api/projects/:projectId/files/*` | Записать файл |
-| `PUT` | `/api/v1/projects/:projectId/files/*` | Записать файл (альтернативный путь) |
+Удаление проекта.
 
-### Server Proxy API
+### Сессии
 
-| Метод | Endpoint | Описание |
-|-------|----------|----------|
-| `POST` | `/api/v1/invoke` | Прокси к серверу. Body: `task` (обязательно), `sessionId?`, `projectId?`, `context?`. На сервер уходит только `{ task }` (и при наличии `context`). Если в ответе есть `promiseId` и переданы `sessionId` и `projectId`, сессия обновляется: `lastPromiseId`, статус `IN_PROGRESS`. |
-| `GET` | `/api/v1/requests/:promiseId/status` | Прокси: статус асинхронного запроса |
-| `GET` | `/api/v1/requests/:promiseId/result` | Прокси: результат запроса (первый ответ: context + execute) |
-| `*` | `/api/v1/requests*` | Проксировать любой запрос к серверу |
-| `GET` | `/api/v1/sse/:sessionId` | Проксировать SSE от сервера |
+#### GET /api/sessions?projectId=:projectId
 
-### Terminal API
+Получение списка сессий проекта.
 
-| Метод | Endpoint | Описание |
-|-------|----------|----------|
-| `POST` | `/api/terminal/execute` | Выполнить команду |
-| `POST` | `/api/terminal/action` | Выполнить терминальное действие |
+**Ответ:**
+```json
+[
+  {
+    "id": "sess_...",
+    "title": "Session Title",
+    "createdAt": "2024-01-01T00:00:00.000Z"
+  }
+]
+```
 
-### File System API
+#### POST /api/sessions
 
-| Метод | Endpoint | Описание |
-|-------|----------|----------|
-| `POST` | `/api/fs/scan` | Сканировать директорию |
-| `POST` | `/api/fs/read` | Прочитать файл |
-| `POST` | `/api/fs/write` | Записать файл |
-| `POST` | `/api/fs/list` | Список файлов в директории |
-| `POST` | `/api/fs/exists` | Проверить существование пути |
-| `GET` | `/api/fs/cwd` | Получить текущую директорию |
+Создание новой сессии.
 
-#### File System Scan
-
-```typescript
-// POST /api/fs/scan
+**Тело запроса:**
+```json
 {
-    dir: string;              // Директория для сканирования
-    options?: {
-        ignore?: string[];    // Паттерны для игнорирования
-        extensions?: string[]; // Фильтр по расширениям
-        maxDepth?: number;    // Максимальная глубина
-    }
+  "projectId": "p_1234567890",
+  "title": "New Session",
+  "task": "Initial task description"
 }
 ```
 
-#### File System Read
+#### GET /api/sessions/:sessionId?projectId=:projectId
 
-```typescript
-// POST /api/fs/read
+Получение сессии по ID.
+
+#### DELETE /api/sessions/:sessionId?projectId=:projectId
+
+Удаление сессии.
+
+#### POST /api/sessions/:sessionId/action?projectId=:projectId
+
+Выбор действия в сессии.
+
+**Тело запроса:**
+```json
 {
-    filePath: string;         // Путь к файлу
-    encoding?: string;        // Кодировка (по умолчанию: utf-8)
-}
-
-// Ответ:
-{
-    content: string;          // Содержимое файла
-}
-```
-
-#### File System Write
-
-```typescript
-// POST /api/fs/write
-{
-    filePath: string;        // Путь к файлу
-    content: string;         // Содержимое для записи
-}
-
-// Ответ:
-{
-    success: boolean;
-    path: string;
+  "action": "confirm_action"
 }
 ```
 
-#### File System List
+#### POST /api/sessions/:sessionId/next?projectId=:projectId
 
-```typescript
-// POST /api/fs/list
-{
-    dirPath: string;         // Путь к директории
-}
+Продолжение выполнения сессии (отправка на A2A Server).
 
-// Ответ:
+**Тело запроса:**
+```json
 {
-    entries: Array<{
-        name: string;
-        isDirectory: boolean;
-        isFile: boolean;
-        path: string;
-    }>;
+  "task": "task description",
+  "sessionId": "sess_...",
+  "projectId": "p_..."
 }
 ```
 
-#### File System Exists
+#### POST /api/sessions/:sessionId/cancel?projectId=:projectId
 
-```typescript
-// POST /api/fs/exists
+Отмена сессии.
+
+### Проксирование к A2A Server
+
+#### POST /api/v1/invoke
+
+Проксирование вызова к A2A Server `/invoke`.
+
+**Тело запроса:**
+```json
 {
-    path: string;            // Путь для проверки
-}
-
-// Ответ:
-{
-    exists: boolean;
-    isDirectory?: boolean;
-    isFile?: boolean;
-}
-```
-
-### Health Check
-
-| Метод | Endpoint | Описание |
-|-------|----------|----------|
-| `GET` | `/health` | Проверить состояние сервиса |
-
-```typescript
-// GET /health
-// Ответ:
-{
-    status: string;          // "ok"
-    service: string;        // "a2a-client-api"
-    timestamp: string;       // ISO timestamp
+  "task": "task description",
+  "sessionId": "sess_...",
+  "projectId": "p_...",
+  "context": {}
 }
 ```
 
-### Server-Sent Events (SSE)
+#### GET/POST/PUT/DELETE /api/v1/requests*
 
-| Метод | Endpoint | Описание |
-|-------|----------|----------|
-| `GET` | `/api/v1/sse/:sessionId` | SSE поток для сессии |
-| `GET` | `/api/v1/sse` | Общий SSE поток (heartbeat) |
+Проксирование любых запросов к A2A Server `/requests/*`.
 
-#### Terminal Execute
+#### GET /api/v1/sse/:sessionId
 
-```typescript
-// POST /api/terminal/execute
+Проксирование SSE (Server-Sent Events) от A2A Server.
+
+### Терминал
+
+#### POST /api/terminal/execute
+
+Выполнение терминальной команды.
+
+**Тело запроса:**
+```json
 {
-    command: string;      // Команда для выполнения
-    timeout?: number;     // Таймаут в секундах (по умолчанию: 120)
-    cwd?: string;         // Рабочая директория
+  "command": "ls -la",
+  "timeout": 120,
+  "cwd": "/path/to/directory"
 }
 ```
 
-Ответ:
-```typescript
+**Ответ:**
+```json
 {
-    output: string;       // Вывод команды
-    exitCode: number;    // Код завершения
-    duration: number;    // Время выполнения в мс
+  "output": "total 0\ndrwxr-xr-x  5 user  staff   160 Jan  1 00:00 .\n...",
+  "exitCode": 0,
+  "duration": 100
 }
 ```
 
-**Безопасность:** Выполняются только безопасные команды. Заблокированные паттерны:
+**Безопасность:** Блокируются опасные команды:
 - `rm -rf /`
 - `format`
 - `del /f /s /q`
@@ -307,171 +252,298 @@ interface Session {
 - `shutdown`
 - `taskkill /f`
 
-## Хранение данных
+#### POST /api/terminal/action
 
-### Файловая система
+Выполнение структурированных терминальных действий.
 
-Данные хранятся в JSON-файлах:
-
-```
-a2a-client/
-└── storage/
-    ├── config.json    # Конфигурация
-    ├── projects.json  # Список проектов
-    └── sessions/      # Сессии проектов без path (см. ниже)
-        └── <projectId>/
-            ├── <session-id-1>.json
-            └── ...
-```
-
-### Сессии
-
-Сессии привязаны к проекту. Директория сессий определяется функцией `getSessionDir(project)`:
-
-- Если у проекта задан **path**: сессии хранятся в `<project.path>/.a2a/sessions/`.
-- Если у проекта **нет path**: сессии хранятся в `storage/sessions/<projectId>/`.
-
-```
-# Проект с path
-<project-path>/.a2a/sessions/
-├── <session-id-1>.json
-└── ...
-
-# Проект без path
-storage/sessions/<projectId>/
-├── <session-id-1>.json
-└── ...
-```
-
-Таким образом, создание сессии возможно для любого проекта (в т.ч. без пути к файловой системе). См. также [WEB-UI.md](WEB-UI.md) — поток задачи (Task Flow).
-
-## Интеграция с a2a-server
-
-Client API Server использует прямые HTTP запросы (fetch) для связи с A2A Server:
-
-```typescript
-// Используется функция serverFetch для прямых запросов к a2a-server
-async function serverFetch(
-    method: string,
-    serverBaseUrl: string,
-    pathName: string,
-    body: unknown | null = null
-): Promise<Response> {
-    const cfg = await loadConfig();
-    const headers: Record<string, string> = {};
-    if (cfg.token) headers['Authorization'] = `Bearer ${cfg.token}`;
-    if (body != null) headers['Content-Type'] = 'application/json';
-
-    const url = `${serverBaseUrl.replace(/\/?$/, '')}${pathName}`;
-    return fetch(url, {
-        method,
-        headers,
-        body: body != null ? JSON.stringify(body) : undefined,
-    });
+**Тело запроса:**
+```json
+{
+  "action": "workspace",
+  "subAction": "get"
 }
 ```
 
-### Проксирование запросов
+**Действия:**
+- `workspace` - управление рабочей директорией
+  - `subAction: "get"` - получить текущую директорию
+  - `subAction: "set"`, `path: "/path"` - установить директорию
+- `pwd` - получить текущую директорию
+- `session` - управление сессией
+  - `subAction: "info"` - информация о сессии
+  - `subAction: "reset"` - сбросить состояние
 
-Client API Server выступает прокси для следующих операций:
+### Файловая система
 
-1. **Invoke** — `POST /api/v1/invoke` → `a2a-server /invoke`
-2. **Requests** — `/api/v1/requests*` → `a2a-server /api/v1/*`
-3. **SSE** — `/api/v1/sse/:sessionId` → `a2a-server /sse/:sessionId`
+#### POST /api/fs/scan
 
-Это позволяет Web UI не знать адрес a2a-server напрямую.
+Сканирование директории.
 
-## Data Flow Диаграмма
-
-```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                      CLIENT API SERVER (localhost:3001)                 │
-│                                                                          │
-│  ┌─────────────────────────────────────────────────────────────────┐   │
-│  │                         WEB UI (port 5173)                       │   │
-│  │  a2a-client/web ───────────────────────────────┐                │   │
-│  └───────────────────────────────────────────────│────────────────┘   │
-│                                                    │ HTTP               │
-│                                                    ▼                   │
-│  ┌─────────────────────────────────────────────────────────────────┐   │
-│  │                      Роутинг (Express)                          │   │
-│  │  ┌───────────────┐  ┌───────────────┐  ┌───────────────┐       │   │
-│  │  │ /api/sessions │  │ /api/projects  │  │   /api/v1/*   │       │   │
-│  │  └───────┬───────┘  └───────┬───────┘  └───────┬───────┘       │   │
-│  └──────────│──────────────────│──────────────────│─────────────────┘   │
-│             │                  │                  │                     │
-│  ┌──────────│──────────────────│──────────────────│─────────────────┐   │
-│  │          ▼                  ▼                  ▼                 │   │
-│  │  ┌───────────────┐  ┌───────────────┐  ┌───────────────┐         │   │
-│  │  │   Sessions    │  │   Projects    │  │    ApiClient  │         │   │
-│  │  │   Storage     │  │   Storage     │  │  (прокси)     │         │   │
-│  │  └───────────────┘  └───────────────┘  └───────┬───────┘         │   │
-│  │                                                │                   │   │
-│  │         ┌─────────────────────────────────────┴────────────┐     │   │
-│  │         │              Файловые утилиты                     │     │   │
-│  │         │  (/api/fs/*, /api/terminal/*)                   │     │   │
-│  │         └─────────────────────────────────────┬────────────┘     │   │
-│  └───────────────────────────────────────────────│─────────────────┘   │
-└───────────────────────────────────────────────────│─────────────────────┘
-                                                    │ HTTP
-                                                    ▼
-┌─────────────────────────────────────────────────────────────────────────┐
-│                         A2A SERVER (localhost:3000)                      │
-│                                                                          │
-│  ┌─────────────────────────────────────────────────────────────────┐   │
-│  │                         Endpoints                                │   │
-│  │  ┌───────────────┐  ┌───────────────┐  ┌───────────────┐         │   │
-│  │  │ POST /invoke  │  │ POST /requests│  │  GET /sse/*   │         │   │
-│  │  └───────┬───────┘  └───────┬───────┘  └───────┬───────┘         │   │
-│  └──────────│──────────────────│──────────────────│─────────────────┘   │
-│             │                  │                  │                     │
-│             ▼                  ▼                  ▼                     │
-│  ┌─────────────────────────────────────────────────────────────────┐   │
-│  │                    Action Service                                │   │
-│  │  ┌───────────────┐  ┌───────────────┐  ┌───────────────┐         │   │
-│  │  │ Action Parser │  │Action Executor│  │Action Registry│        │   │
-│  │  └───────────────┘  └───────────────┘  └───────────────┘         │   │
-│  └─────────────────────────────────────────────────────────────────┘   │
-│                               │                                          │
-│                               ▼                                          │
-│  ┌─────────────────────────────────────────────────────────────────┐   │
-│  │                   Context Manager                               │   │
-│  │  - history (execution records)                                   │   │
-│  │  - execution (current state: {action, step, progress})         │   │
-│  │  - docVirtual (virtual document state)                         │   │
-│  └─────────────────────────────────────────────────────────────────┘   │
-└───────────────────────────────────────────────────────────────────────┘
-                               │
-                               ▼
-┌─────────────────────────────────────────────────────────────────────────┐
-│                      Ai Integration (localhost:11434)                  │
-│                                                                          │
-│  ┌─────────────────────────────────────────────────────────────────┐   │
-│  │              Promise-based Async Flow                           │   │
-│  │                                                                  │   │
-│  │  1. Server → POST /api/chat (X-Promise: true)                  │   │
-│  │     └─▶ Hub returns {promiseId, status: "pending"}            │   │
-│  │                                                                  │   │
-│  │  2. Server → GET /promise/{id}/status (polling)                 │   │
-│  │     └─▶ Hub returns {status: "completed" | "pending"}        │   │
-│  │                                                                  │   │
-│  │  3. Server → GET /promise/{id}/response                         │   │
-│  │     └─▶ Hub returns {response: {...}}                          │   │
-│  └─────────────────────────────────────────────────────────────────┘   │
-│                                                                          │
-│  **См.:** [SIMULATION-LLM-PROXY.md](SIMULATION-LLM-PROXY.md)           │
-└─────────────────────────────────────────────────────────────────────────┘
+**Тело запроса:**
+```json
+{
+  "dir": "/path/to/dir",
+  "options": {
+    "ignore": [".git", "node_modules"],
+    "extensions": [".js", ".ts"]
+  }
+}
 ```
 
-## Перекрёстные ссылки
+#### POST /api/fs/read
 
-- [ARCHITECTURE.md](ARCHITECTURE.md) — Общая архитектура системы
-- [PROTOCOL.md](PROTOCOL.md) — Протокол взаимодействия
-- [SESSION-FLOW.md](SESSION-FLOW.md) — Поток сессий
-- [SCHEMAS.md](SCHEMAS.md) — JSON схемы
-- [WEB-UI.md](WEB-UI.md) — Web UI
-- [API-CLIENT.md](API-CLIENT.md) — HTTP клиент для сервера
-- [DATA-FLOW.md](DATA-FLOW.md) — Полная диаграмма потока данных
-- [json-schemas](../../docs/new-request-flow/json-schemas/) — JSON схемы запросов/ответов
-- [SIMULATION-LLM-PROXY.md](SIMULATION-LLM-PROXY.md) — Асинхронный поток с promiseId
-- [simulations/SCHEMA.md](../../simulations/SCHEMA.md) — Схема симуляций
+Чтение файла.
+
+**Тело запроса:**
+```json
+{
+  "filePath": "/path/to/file.txt",
+  "encoding": "utf-8"
+}
+```
+
+**Ответ:**
+```json
+{
+  "content": "file content"
+}
+```
+
+#### POST /api/fs/write
+
+Запись файла.
+
+**Тело запроса:**
+```json
+{
+  "filePath": "/path/to/file.txt",
+  "content": "file content"
+}
+```
+
+#### POST /api/fs/list
+
+Список файлов в директории.
+
+**Тело запроса:**
+```json
+{
+  "dirPath": "/path/to/dir"
+}
+```
+
+**Ответ:**
+```json
+{
+  "entries": [
+    {
+      "name": "file.txt",
+      "isDirectory": false,
+      "isFile": true,
+      "path": "/path/to/dir/file.txt"
+    }
+  ]
+}
+```
+
+#### POST /api/fs/exists
+
+Проверка существования пути.
+
+**Тело запроса:**
+```json
+{
+  "path": "/path/to/check"
+}
+```
+
+**Ответ:**
+```json
+{
+  "exists": true,
+  "isDirectory": false,
+  "isFile": true
+}
+```
+
+#### GET /api/fs/cwd
+
+Получение текущей рабочей директории.
+
+### RAG Поиск
+
+#### POST /api/rag/search
+
+Поиск по индексированным документам.
+
+**Тело запроса:**
+```json
+{
+  "query": "search query",
+  "limit": 10,
+  "filters": {
+    "extension": ".js"
+  }
+}
+```
+
+**Ответ:**
+```json
+{
+  "results": [
+    {
+      "id": "doc_1",
+      "content": "...",
+      "score": 0.95,
+      "metadata": {
+        "path": "/path/to/file.js",
+        "name": "file.js",
+        "extension": ".js",
+        "type": "file"
+      }
+    }
+  ],
+  "total": 1,
+  "query": "search query"
+}
+```
+
+### Файлы проекта
+
+#### GET /api/projects/:projectId/files/*
+
+Чтение файла проекта.
+
+#### PUT /api/projects/:projectId/files/*
+
+Запись файла в проект.
+
+### WebSocket
+
+#### WS /?sessionId=:sessionId
+
+WebSocket соединение для real-time обновлений сессии.
+
+**Порт:** 3002 (по умолчанию, настраивается через `WS_PORT`)
+
+**Сообщения от клиента:**
+```json
+// Ping
+{ "type": "ping" }
+
+// Subscribe (подписка на обновления - автоматически при подключении)
+{ "type": "subscribe" }
+
+// Unsubscribe
+{ "type": "unsubscribe" }
+```
+
+**Сообщения от сервера:**
+```json
+// Подтверждение подключения
+{
+  "type": "connected",
+  "sessionId": "sess_...",
+  "timestamp": "2024-01-01T00:00:00.000Z"
+}
+
+// Pong
+{ "type": "pong", "timestamp": "..." }
+
+// Прогресс выполнения
+{
+  "type": "progress",
+  "promiseId": "...",
+  "status": "in_progress",
+  "progress": 50,
+  "message": "Processing...",
+  "timestamp": "2024-01-01T00:00:00.000Z"
+}
+```
+
+## Примеры использования
+
+### JavaScript (браузер)
+
+```javascript
+// Конфигурация
+const API_BASE = 'http://localhost:3001/api';
+
+// Создание проекта
+async function createProject(name) {
+  const response = await fetch(`${API_BASE}/projects`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name })
+  });
+  return response.json();
+}
+
+// Выполнение команды терминала
+async function executeCommand(command) {
+  const response = await fetch(`${API_BASE}/terminal/execute`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ command, timeout: 60 })
+  });
+  return response.json();
+}
+
+// Чтение файла
+async function readFile(filePath) {
+  const response = await fetch(`${API_BASE}/fs/read`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ filePath })
+  });
+  return response.json();
+}
+```
+
+### WebSocket клиент
+
+```javascript
+const ws = new WebSocket('ws://localhost:3002?sessionId=sess_123');
+
+ws.onopen = () => {
+  console.log('Connected to WebSocket');
+};
+
+ws.onmessage = (event) => {
+  const data = JSON.parse(event.data);
+  console.log('Received:', data);
+  
+  if (data.type === 'progress') {
+    updateProgress(data.progress, data.message);
+  }
+};
+
+// Ping для проверки соединения
+setInterval(() => {
+  ws.send(JSON.stringify({ type: 'ping' }));
+}, 30000);
+```
+
+## Интеграция с Web UI
+
+API Server интегрирован с Web UI через следующие модули:
+
+- [`session-manager.js`](../../a2a-client/web/js/session-manager.js) - управление сессиями
+- [`api-integration.js`](../../a2a-client/web/js/api-integration.js) - API интеграция
+- [`terminal-emulator.js`](../../a2a-client/web/js/terminal-emulator.js) - эмулятор терминала
+- [`file-transfer.js`](../../a2a-client/web/js/file-transfer.js) - передача файлов
+- [`error-handler.js`](../../a2a-client/web/js/error-handler.js) - обработка ошибок
+
+## Запуск сервера
+
+```bash
+cd a2a-client/packages/api-server
+npm install
+npm start
+```
+
+Или с переменными окружения:
+
+```bash
+PORT=3001 A2A_SERVER_URL=http://localhost:3000/api/v1 npm start
+```

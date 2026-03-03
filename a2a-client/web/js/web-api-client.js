@@ -1,428 +1,455 @@
 /**
- * WebAPIClient - Browser-compatible API client for A2A Server
- * Uses fetch API and supports SSE for real-time updates
+ * Unified Web API Client
+ * Combines session management, real-time communication, and file transfer
+ * for the A2A web interface
  */
 
-const WebAPIClient = {
-    serverUrl: '/api/v1',
-    token: null,
-    clientId: null,
-    timeout: 30000,
-
-    // Polling configuration
-    polling: {
-        interval: 2000,
-        maxAttempts: 180 // 6 minutes max
-    },
-    activePollers: new Map(),
+(function (global) {
+    'use strict';
 
     /**
-     * Configure the client
+     * Main WebApiClient class that orchestrates all modules
      */
-    configure(options = {}) {
-        if (options.serverUrl) this.serverUrl = options.serverUrl.replace(/\/?$/, '');
-        if (options.token) this.token = options.token;
-        if (options.clientId) this.clientId = options.clientId;
-        if (options.timeout) this.timeout = options.timeout;
-        if (options.polling) this.polling = {...this.polling, ...options.polling};
-        return this;
-    },
-
-    /**
-     * Build request headers
-     */
-    _getHeaders() {
-        const headers = {'Content-Type': 'application/json'};
-        if (this.token) headers['Authorization'] = `Bearer ${this.token}`;
-        if (this.clientId) headers['X-Client-ID'] = this.clientId;
-        return headers;
-    },
-
-    /**
-     * Make HTTP request
-     */
-    async request(method, path, body = null) {
-        const url = `${this.serverUrl}${path}`;
-        const options = {
-            method,
-            headers: this._getHeaders(),
-            timeout: this.timeout
-        };
-        if (body) options.body = JSON.stringify(body);
-
-        try {
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), this.timeout);
-            options.signal = controller.signal;
-
-            const response = await fetch(url, options);
-            clearTimeout(timeoutId);
-
-            const data = await response.json().catch(() => ({}));
-
-            if (!response.ok) {
-                const error = data?.error || {message: 'Request failed'};
-                throw new ApiError(error.message, response.status, data);
-            }
-
-            return data;
-        } catch (err) {
-            if (err.name === 'AbortError') {
-                throw new ApiError('Request timeout', 408);
-            }
-            throw err;
-        }
-    },
-
-    /**
-     * Create a request (task/message) - uses /invoke endpoint
-     */
-    async createRequest(requestData) {
-        const data = await this.request('POST', '/invoke', requestData);
-        return data.data || data;
-    },
-
-    /**
-     * Create a new session (simulated - uses invoke endpoint)
-     */
-    async createSession(projectId, title = 'New Session') {
-        const requestData = {
-            context: {
-                project_id: projectId,
-                title: title,
-                version: '1.0'
-            },
-            message: 'Create session'
-        };
-        const data = await this.request('POST', '/invoke', requestData);
-        const result = data.data || data;
-        return {
-            session_id: result.promiseId,
-            id: result.promiseId,
-            projectId,
-            title,
-            status: 'active'
-        };
-    },
-
-    /**
-     * Alternative: create request via /requests
-     */
-    async createRequestViaRequests(requestData) {
-        const data = await this.request('POST', '/requests', requestData);
-        return data.data || data;
-    },
-
-    /**
-     * Get request status
-     */
-    async getRequestStatus(promiseId) {
-        const data = await this.request('GET', `/requests/${promiseId}/status`);
-        return data.data || data;
-    },
-
-    /**
-     * Get request result
-     */
-    async getRequestResult(promiseId) {
-        const data = await this.request('GET', `/requests/${promiseId}/result`);
-        return data.data || data;
-    },
-
-    /**
-     * Cancel a request
-     */
-    async cancelRequest(promiseId) {
-        const data = await this.request('DELETE', `/requests/${promiseId}`);
-        return data.data || data;
-    },
-
-    /**
-     * Poll for request completion
-     */
-    async waitForResult(promiseId, callbacks = {}) {
-        const {onStatus, onComplete, onError} = callbacks;
-        let attempts = 0;
-
-        return new Promise((resolve, reject) => {
-            const poll = async () => {
-                attempts++;
-
-                try {
-                    const status = await this.getRequestStatus(promiseId);
-                    onStatus?.(status);
-
-                    if (status.status === 'completed') {
-                        const result = await this.getRequestResult(promiseId);
-                        onComplete?.(result);
-                        resolve(result);
-                    } else if (status.status === 'failed') {
-                        const result = await this.getRequestResult(promiseId);
-                        const error = result?.error || {message: 'Request failed'};
-                        onError?.(error);
-                        reject(new ApiError(error.message, 500, result));
-                    } else if (status.status === 'cancelled') {
-                        onError?.({message: 'Request was cancelled'});
-                        reject(new ApiError('Request was cancelled', 0, status));
-                    } else if (attempts >= this.polling.maxAttempts) {
-                        onError?.({message: 'Polling timeout exceeded'});
-                        reject(new ApiError('Polling timeout exceeded', 408));
-                    } else {
-                        // Continue polling
-                        setTimeout(poll, this.polling.interval);
-                    }
-                } catch (err) {
-                    onError?.({message: err.message});
-                    reject(err);
-                }
+    class WebApiClient {
+        constructor(options = {}) {
+            this.options = {
+                apiBase: options.apiBase || '/api/v1',
+                autoConnect: options.autoConnect !== false,
+                ...options
             };
 
-            poll();
-        });
-    },
+            // Initialize sub-modules
+            this._initModules();
+            
+            // Setup event forwarding
+            this._setupEventForwarding();
+        }
 
-    /**
-     * Send a message (create task)
-     */
-    async sendMessage(sessionId, message, context = {}) {
-        const requestData = {
-            sessionId,
-            message,
-            context: {
-                version: '1.0',
-                session_id: sessionId,
-                ...context
+        /**
+         * Initialize all sub-modules
+         */
+        _initModules() {
+            // Session Manager
+            if (global.SessionManager) {
+                this.sessions = global.SessionManager;
+                this.sessions.configure({ apiBase: this.options.apiBase });
             }
-        };
 
-        const created = await this.createRequest(requestData);
-        return this.waitForResult(created.promiseId, {
-            onStatus: (status) => {
-                this._emit('status', {sessionId, promiseId: created.promiseId, status});
-            },
-            onComplete: (result) => {
-                this._emit('complete', {sessionId, promiseId: created.promiseId, result});
-            },
-            onError: (error) => {
-                this._emit('error', {sessionId, promiseId: created.promiseId, error});
+            // SSE Client (existing)
+            if (global.SSEClient) {
+                this.sse = global.SSEClient;
+                this.sse.configureApi(this.options.apiBase);
             }
-        });
-    },
 
-    /**
-     * Continue action (approve/continue workflow)
-     */
-    async continueAction(sessionId, stepId, stepResult) {
-        const requestData = {
-            sessionId,
-            context: {
-                version: '1.0',
-                session_id: sessionId,
-                continue: true,
-                step_id: stepId,
-                step_result: stepResult
+            // WebSocket Client
+            if (global.WebSocketClient) {
+                this.ws = global.WebSocketClient;
+                this.ws.configure({ apiBase: this.options.apiBase });
             }
-        };
 
-        const created = await this.createRequest(requestData);
-        return this.waitForResult(created.promiseId);
-    },
-
-    /**
-     * Confirm action (approve proposed actions)
-     */
-    async confirmAction(sessionId, approvedActions) {
-        const requestData = {
-            sessionId,
-            context: {
-                version: '1.0',
-                session_id: sessionId,
-                confirmed: true,
-                actions: approvedActions
+            // Progress Indicators
+            if (global.ProgressIndicators) {
+                this.progress = global.ProgressIndicators;
             }
-        };
 
-        const created = await this.createRequest(requestData);
-        return this.waitForResult(created.promiseId);
-    },
-
-    /**
-     * Start a new task (convenience method)
-     */
-    async startTask(projectId, task) {
-        const session = await this.createSession(projectId);
-        const sessionId = session.session_id || session.id;
-
-        if (!sessionId) {
-            throw new ApiError('No session_id in response', 500);
-        }
-
-        return this.sendMessage(sessionId, task);
-    },
-
-    /**
-     * Event handlers for SSE
-     */
-    _eventHandlers: {},
-
-    /**
-     * Register event handler
-     */
-    on(event, handler) {
-        if (!this._eventHandlers[event]) {
-            this._eventHandlers[event] = [];
-        }
-        this._eventHandlers[event].push(handler);
-    },
-
-    /**
-     * Unregister event handler
-     */
-    off(event, handler) {
-        if (!this._eventHandlers[event]) return;
-        const index = this._eventHandlers[event].indexOf(handler);
-        if (index > -1) {
-            this._eventHandlers[event].splice(index, 1);
-        }
-    },
-
-    /**
-     * Emit event to handlers
-     */
-    _emit(event, data) {
-        if (!this._eventHandlers[event]) return;
-        this._eventHandlers[event].forEach(handler => {
-            try {
-                handler(data);
-            } catch (e) {
-                console.error(`[WebAPI] Handler error for ${event}:`, e);
+            // Error Handler
+            if (global.ErrorHandler) {
+                this.errors = global.ErrorHandler;
+                this.errors.init();
             }
-        });
-    },
 
-    /**
-     * SSE connection
-     */
-    _sse: null,
+            // File Transfer
+            if (global.FileTransfer) {
+                this.files = global.FileTransfer;
+                this.files.configure({ apiBase: this.options.apiBase });
+            }
 
-    /**
-     * Connect to SSE for real-time updates
-     */
-    connectSSE(sessionId) {
-        if (this._sse) {
-            this.disconnectSSE();
+            // Terminal Emulator
+            if (global.TerminalEmulator) {
+                this.terminal = global.TerminalEmulator;
+                this.terminal.configure({ apiBase: this.options.apiBase });
+            }
+
+            // RAG Search UI
+            if (global.RAGSearchUI) {
+                this.rag = global.RAGSearchUI;
+                this.rag.configure({ apiBase: this.options.apiBase });
+            }
         }
 
-        const url = `${this.serverUrl}/sse/${sessionId}`;
-        console.log('[WebAPI] Connecting to SSE:', url);
+        /**
+         * Setup event forwarding between modules
+         */
+        _setupEventForwarding() {
+            // Forward SSE events to main client
+            if (this.sse) {
+                this.sse.on('progress', (data) => this._emit('progress', data));
+                this.sse.on('complete', (data) => this._emit('complete', data));
+                this.sse.on('error', (data) => this._emit('error', data));
+                this.sse.on('message', (data) => this._emit('message', data));
+                this.sse.on('session_update', (data) => this._emit('sessionUpdate', data));
+            }
 
-        try {
-            this._sse = new EventSource(url);
+            // Forward WebSocket events
+            if (this.ws) {
+                this.ws.on('connected', (data) => this._emit('wsConnected', data));
+                this.ws.on('disconnected', (data) => this._emit('wsDisconnected', data));
+                this.ws.on('message', (data) => this._emit('wsMessage', data));
+            }
 
-            this._sse.onopen = () => {
-                console.log('[WebAPI] SSE Connected');
-                this._emit('connected', {sessionId});
-            };
+            // Forward progress events
+            if (this.progress) {
+                this.progress.on('progress', (data) => this._emit('progress', data));
+                this.progress.on('complete', (data) => this._emit('complete', data));
+                this.progress.on('error', (data) => this._emit('progressError', data));
+            }
 
-            this._sse.onmessage = (event) => {
-                try {
-                    const data = JSON.parse(event.data);
-                    console.log('[WebAPI] SSE Message:', data);
-                    this._emit('message', data);
-                } catch (e) {
-                    console.error('[WebAPI] SSE parse error:', e);
-                }
-            };
+            // Forward error events
+            if (this.errors) {
+                this.errors.on('error', (data) => this._emit('error', data));
+                this.errors.on('retry', (data) => this._emit('retry', data));
+            }
 
-            this._sse.onerror = (error) => {
-                console.error('[WebAPI] SSE Error:', error);
-                this._emit('sseError', error);
-            };
+            // Forward Terminal events
+            if (this.terminal) {
+                this.terminal.on('connected', (data) => this._emit('terminalConnected', data));
+                this.terminal.on('disconnected', (data) => this._emit('terminalDisconnected', data));
+                this.terminal.on('message', (data) => this._emit('terminalMessage', data));
+                this.terminal.on('command', (data) => this._emit('terminalCommand', data));
+                this.terminal.on('cleared', (data) => this._emit('terminalCleared', data));
+            }
 
-            // Named event handlers
-            this._sse.addEventListener('log', (event) => {
-                try {
-                    const data = JSON.parse(event.data);
-                    this._emit('log', data);
-                } catch (e) {
-                }
-            });
-
-            this._sse.addEventListener('progress', (event) => {
-                try {
-                    const data = JSON.parse(event.data);
-                    this._emit('progress', data);
-                } catch (e) {
-                }
-            });
-
-            this._sse.addEventListener('status', (event) => {
-                try {
-                    const data = JSON.parse(event.data);
-                    this._emit('status', data);
-                } catch (e) {
-                }
-            });
-
-            this._sse.addEventListener('complete', (event) => {
-                try {
-                    const data = JSON.parse(event.data);
-                    this._emit('complete', data);
-                } catch (e) {
-                }
-            });
-
-            this._sse.addEventListener('error', (event) => {
-                try {
-                    const data = JSON.parse(event.data);
-                    this._emit('error', data);
-                } catch (e) {
-                }
-            });
-
-            this._sse.sessionId = sessionId;
-        } catch (e) {
-            console.error('[WebAPI] SSE connection failed:', e);
+            // Forward RAG Search events
+            if (this.rag) {
+                this.rag.on('viewFile', (data) => this._emit('ragViewFile', data));
+                this.rag.on('notification', (data) => this._emit('ragNotification', data));
+            }
         }
-    },
 
-    /**
-     * Disconnect from SSE
-     */
-    disconnectSSE() {
-        if (this._sse) {
-            this._sse.close();
-            this._sse = null;
-            console.log('[WebAPI] SSE Disconnected');
-            this._emit('disconnected', {});
+        /**
+         * Event system
+         */
+        _listeners = new Map();
+
+        on(event, callback) {
+            if (!this._listeners.has(event)) {
+                this._listeners.set(event, new Set());
+            }
+            this._listeners.get(event).add(callback);
+            return () => this.off(event, callback);
         }
-    },
 
-    /**
-     * Check if SSE is connected
-     */
-    isSSEConnected() {
-        return this._sse && this._sse.readyState === EventSource.OPEN;
+        off(event, callback) {
+            this._listeners.get(event)?.delete(callback);
+        }
+
+        _emit(event, data) {
+            this._listeners.get(event)?.forEach(cb => {
+                try { cb(data); } catch (e) { console.error('[WebApiClient] Event error:', e); }
+            });
+        }
+
+        // ========== Session Methods ==========
+
+        /**
+         * Load sessions for a project
+         */
+        async loadSessions(projectId) {
+            if (this.sessions) {
+                return await this.sessions.loadSessions(projectId);
+            }
+            return [];
+        }
+
+        /**
+         * Create a new session
+         */
+        async createSession(options = {}) {
+            if (this.sessions) {
+                const session = await this.sessions.createSession(options);
+                if (this.options.autoConnect) {
+                    this.connectSession(session.id || session.sessionId);
+                }
+                return session;
+            }
+            return null;
+        }
+
+        /**
+         * Delete a session
+         */
+        async deleteSession(sessionId) {
+            if (this.sessions) {
+                return await this.sessions.deleteSession(sessionId);
+            }
+            return false;
+        }
+
+        /**
+         * Get session details
+         */
+        async getSession(sessionId) {
+            if (this.sessions) {
+                return await this.sessions.getSession(sessionId);
+            }
+            return null;
+        }
+
+        /**
+         * Get conversation history
+         */
+        async getConversation(sessionId) {
+            if (this.sessions) {
+                return await this.sessions.getConversation(sessionId);
+            }
+            return [];
+        }
+
+        // ========== Connection Methods ==========
+
+        /**
+         * Connect to session via SSE
+         */
+        connectSession(sessionId) {
+            if (this.sse) {
+                this.sse.connect(sessionId, this.options.apiBase);
+            }
+            if (this.ws && this.options.autoConnect) {
+                this.ws.connect(sessionId);
+            }
+            if (this.sessions) {
+                this.sessions.setActiveSession(sessionId);
+            }
+        }
+
+        /**
+         * Disconnect from session
+         */
+        disconnectSession() {
+            if (this.sse) {
+                this.sse.disconnect();
+            }
+            if (this.ws) {
+                this.ws.disconnect();
+            }
+        }
+
+        // ========== Terminal Methods ==========
+
+        /**
+         * Initialize terminal emulator
+         */
+        initTerminal(containerSelector) {
+            if (this.terminal) {
+                return this.terminal.init(containerSelector);
+            }
+            return null;
+        }
+
+        /**
+         * Connect to terminal WebSocket
+         */
+        connectTerminal(sessionId) {
+            if (this.terminal) {
+                this.terminal.connect(sessionId);
+            }
+        }
+
+        /**
+         * Disconnect from terminal
+         */
+        disconnectTerminal() {
+            if (this.terminal) {
+                this.terminal.disconnect();
+            }
+        }
+
+        /**
+         * Send command to terminal
+         */
+        sendTerminalCommand(command) {
+            if (this.terminal) {
+                this.terminal.send({ type: 'command', content: command });
+            }
+        }
+
+        // ========== RAG Search Methods ==========
+
+        /**
+         * Initialize RAG search UI
+         */
+        initRAGSearch(containerSelector) {
+            if (this.rag) {
+                return this.rag.init(containerSelector);
+            }
+            return null;
+        }
+
+        /**
+         * Perform RAG search
+         */
+        async searchRAG(query, options = {}) {
+            if (this.rag) {
+                return await this.rag.performSearch(query);
+            }
+            return [];
+        }
+
+        /**
+         * Check connection status
+         */
+        isConnected() {
+            return this.sse?.isConnected() || this.ws?.isConnected() || false;
+        }
+
+        // ========== Task Methods ==========
+
+        /**
+         * Send a task
+         */
+        async sendTask(taskText, options = {}) {
+            const { projectId } = options;
+            
+            // Create session if not provided
+            let sessionId = options.sessionId;
+            if (!sessionId && projectId) {
+                const session = await this.createSession({ projectId, task: taskText });
+                sessionId = session?.id || session?.sessionId;
+            }
+
+            if (!sessionId) {
+                throw new Error('No session ID available');
+            }
+
+            // Connect to session
+            this.connectSession(sessionId);
+
+            // Send task via SSE
+            if (this.sse) {
+                return await this.sse.createRequest({
+                    sessionId,
+                    task: taskText,
+                    context: options.context || {}
+                });
+            }
+
+            throw new Error('SSE client not available');
+        }
+
+        /**
+         * Approve an action
+         */
+        async approveAction(sessionId, approved) {
+            if (this.sse) {
+                return await this.sse.approveAction(sessionId, approved);
+            }
+            throw new Error('SSE client not available');
+        }
+
+        /**
+         * Send step result
+         */
+        async sendStepResult(sessionId, stepResult) {
+            if (this.sse) {
+                return await this.sse.sendStepResult(sessionId, stepResult);
+            }
+            throw new Error('SSE client not available');
+        }
+
+        // ========== File Methods ==========
+
+        /**
+         * Upload a file
+         */
+        async uploadFile(file, options = {}) {
+            if (this.files) {
+                return await this.files.uploadFile(file, options);
+            }
+            throw new Error('File transfer not available');
+        }
+
+        /**
+         * Download a file
+         */
+        async downloadFile(fileId, options = {}) {
+            if (this.files) {
+                return await this.files.downloadFile(fileId, options);
+            }
+            throw new Error('File transfer not available');
+        }
+
+        // ========== Progress Methods ==========
+
+        /**
+         * Create a progress tracker
+         */
+        createProgressTracker(id, options = {}) {
+            if (this.progress) {
+                return this.progress.create(id, options);
+            }
+            return null;
+        }
+
+        /**
+         * Get progress tracker
+         */
+        getProgressTracker(id) {
+            if (this.progress) {
+                return this.progress.get(id);
+            }
+            return null;
+        }
+
+        // ========== Error Methods ==========
+
+        /**
+         * Handle error
+         */
+        handleError(error, context = {}) {
+            if (this.errors) {
+                return this.errors.handle(error, context);
+            }
+            console.error('[WebApiClient] Unhandled error:', error);
+        }
+
+        /**
+         * Clear errors
+         */
+        clearErrors() {
+            if (this.errors) {
+                this.errors.clearErrors();
+            }
+        }
+
+        // ========== Utility Methods ==========
+
+        /**
+         * Configure the client
+         */
+        configure(options = {}) {
+            if (options.apiBase) {
+                this.options.apiBase = options.apiBase;
+                if (this.sessions) this.sessions.configure({ apiBase: options.apiBase });
+                if (this.sse) this.sse.configureApi(options.apiBase);
+                if (this.ws) this.ws.configure({ apiBase: options.apiBase });
+                if (this.files) this.files.configure({ apiBase: options.apiBase });
+            }
+            return this;
+        }
+
+        /**
+         * Get module by name
+         */
+        getModule(name) {
+            return this[name] || null;
+        }
     }
-};
 
-/**
- * ApiError class
- */
-class ApiError extends Error {
-    constructor(message, status = 0, data = {}) {
-        super(message);
-        this.name = 'ApiError';
-        this.status = status;
-        this.data = data;
-    }
-}
+    // Create and export singleton instance
+    const webApiClient = new WebApiClient();
 
-// Make global
-window.WebAPIClient = WebAPIClient;
-window.ApiError = ApiError;
+    // Export
+    global.WebApiClient = WebApiClient;
+    global.webApiClient = webApiClient;
 
-// Also export for module usage
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = {WebAPIClient, ApiError};
-}
+})(typeof window !== 'undefined' ? window : globalThis);

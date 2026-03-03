@@ -3,6 +3,7 @@
 > Детальная документация компонента `a2a-server` - stateless HTTP сервера для обработки A2A запросов.
 >
 > **Связанная документация:**
+> - [SERVER-ARCHITECTURE.md](../../docs/new-request-flow/SERVER-ARCHITECTURE.md) - Server-centric документация
 > - [ARCHITECTURE.md](../../docs/new-request-flow/ARCHITECTURE.md) - общая архитектура системы
 > - [PROTOCOL.md](../../docs/new-request-flow/PROTOCOL.md) - протокол взаимодействия
 > - [entry-points.md](./entry-points.md) - точки входа
@@ -762,6 +763,7 @@ flowchart TD
 
 ## Ссылки
 
+- [SERVER-ARCHITECTURE.md](../../docs/new-request-flow/SERVER-ARCHITECTURE.md) - Server-centric документация
 - [ARCHITECTURE.md](../../docs/new-request-flow/ARCHITECTURE.md) - Общая архитектура A2A
 - [PROTOCOL.md](../../docs/new-request-flow/PROTOCOL.md) - Протокол взаимодействия
 - [entry-points.md](./entry-points.md) - Точки входа в систему

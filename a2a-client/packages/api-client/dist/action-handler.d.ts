@@ -7,14 +7,12 @@ export interface HandleActionOptions {
     projectPath?: string;
     previousOutput?: unknown;
 }
-
 export interface HandleActionResult {
     handled: boolean;
     stepResult?: unknown;
     nextResponse?: unknown;
     error?: string;
 }
-
 export declare function handleActionResponse(response: {
     action?: {
         currentStep?: {
@@ -22,11 +20,26 @@ export declare function handleActionResponse(response: {
             code?: string;
         };
     };
+    execute?: {
+        script?: {
+            code?: string;
+        };
+    };
     context?: {
         session_id?: string;
     };
 }, options?: HandleActionOptions): Promise<HandleActionResult>;
-
+/**
+ * Check if response contains execute.form.choices (new protocol format)
+ */
+export declare function hasFormChoices(response: unknown): boolean;
+/**
+ * Extract form choices from response (new protocol format)
+ */
+export declare function extractFormChoices(response: unknown): Array<{
+    id: string;
+    label: string;
+}>;
 export type ExecuteScriptFn = (code: string, input: Record<string, unknown>, context: {
     workingDir?: string;
     sessionId?: string;
@@ -36,7 +49,6 @@ export type ExecuteScriptFn = (code: string, input: Record<string, unknown>, con
     data?: unknown;
     error?: string;
 }>;
-
 /**
  * Create executeCode adapter for @a2a/script-runner executeScript.
  */
