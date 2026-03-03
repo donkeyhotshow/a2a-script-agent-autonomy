@@ -122,3 +122,15 @@ export {
     getCategoryForAction,
     type AutoAiCategory,
 } from './definitions/auto-ai-index.js';
+
+// Action Handler Registry
+export {
+    ActionHandlerRegistry,
+    actionHandlerRegistry,
+    type ActionType,
+    type ActionHandler,
+    type ActionHandlerContext,
+} from './action-handler-registry.js';
+
+// Action Handlers
+export * as handlers from './handlers/index.js';

@@ -1,18 +1,28 @@
 #!/usr/bin/env node
 /**
  * A2A Unified Service Orchestrator
- * Manages all project services with health gating and graceful shutdown
+ * Manages all project services with health gating, port management, and graceful shutdown
  */
 
 import { spawn } from 'child_process';
 import { createInterface } from 'readline';
 import { fileURLToPath } from 'url';
 import { dirname, resolve } from 'path';
-import { existsSync } from 'fs';
+import { existsSync, writeFileSync } from 'fs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const rootDir = resolve(__dirname, '..');
+
+// Import Port Manager
+const { 
+  allocatePort, 
+  detectPortConflicts, 
+  getPortSuggestions, 
+  releaseAllPorts,
+  isPortFree,
+  DEFAULT_PORTS 
+} = await import('./port-manager.js');
 
 // Color codes for logging
 const colors = {
@@ -28,132 +38,17 @@ const colors = {
   white: '\x1b[37m',
 };
 
-// Service definitions
-const services = {
-  postgres: {
-    name: 'PostgreSQL',
-    color: colors.blue,
-    port: parseInt(process.env.POSTGRES_PORT, 10) || 5432,
-    healthCheck: async () => {
-      try {
-        const { exec } = await import('child_process');
-        const { promisify } = await import('util');
-        const execAsync = promisify(exec);
-        await execAsync(`docker exec a2a-postgres pg_isready -U ${process.env.POSTGRES_USER || 'a2a'}`);
-        return true;
-      } catch {
-        return false;
-      }
-    },
-  },
-  redis: {
-    name: 'Redis',
-    color: colors.yellow,
-    port: parseInt(process.env.REDIS_PORT, 10) || 6379,
-    healthCheck: async () => {
-      try {
-        const { exec } = await import('child_process');
-        const { promisify } = await import('util');
-        const execAsync = promisify(exec);
-        await execAsync('docker exec a2a-redis redis-cli ping');
-        return true;
-      } catch {
-        return false;
-      }
-    },
-  },
-  ollama: {
-    name: 'Ollama',
-    color: colors.magenta,
-    port: parseInt(process.env.OLLAMA_PORT, 10) || 11435,
-    healthCheck: async () => {
-      try {
-        const response = await fetch(`http://localhost:${process.env.OLLAMA_PORT || 11435}/api/tags`);
-        return response.ok;
-      } catch {
-        return false;
-      }
-    },
-    optional: true,
-  },
-  server: {
-    name: 'A2A Server',
-    color: colors.green,
-    port: parseInt(process.env.SERVER_PORT, 10) || 3000,
-    cwd: resolve(rootDir, 'a2a-server'),
-    command: 'npm',
-    args: ['run', 'dev:no-auth'],
-    env: { ...process.env, PORT: process.env.SERVER_PORT || '3000' },
-    healthCheck: async () => {
-      try {
-        const response = await fetch(`http://localhost:${process.env.SERVER_PORT || 3000}/health`);
-        return response.ok;
-      } catch {
-        return false;
-      }
-    },
-    dependsOn: ['postgres', 'redis'],
-  },
-  clientApi: {
-    name: 'Client API',
-    color: colors.cyan,
-    port: parseInt(process.env.CLIENT_API_PORT, 10) || 3001,
-    cwd: resolve(rootDir, 'a2a-client/packages/api-server'),
-    command: 'npm',
-    args: ['run', 'dev'],
-    env: { ...process.env, PORT: process.env.CLIENT_API_PORT || '3001' },
-    healthCheck: async () => {
-      try {
-        const response = await fetch(`http://localhost:${process.env.CLIENT_API_PORT || 3001}/health`);
-        return response.ok;
-      } catch {
-        return false;
-      }
-    },
-    dependsOn: ['server'],
-  },
-  web: {
-    name: 'Web UI',
-    color: colors.white,
-    port: parseInt(process.env.WEB_PORT, 10) || 5173,
-    cwd: resolve(rootDir, 'a2a-client'),
-    command: 'npm',
-    args: ['run', 'dev'],
-    env: { ...process.env },
-    healthCheck: async () => {
-      try {
-        const response = await fetch(`http://localhost:${process.env.WEB_PORT || 5173}`, { method: 'HEAD' });
-        return response.status < 500;
-      } catch {
-        return false;
-      }
-    },
-    dependsOn: ['clientApi'],
-  },
-  proxy: {
-    name: 'AI Proxy',
-    color: colors.magenta,
-    port: parseInt(process.env.PROXY_PORT, 10) || 11434,
-    cwd: resolve(rootDir, 'ai-integration'),
-    command: 'python',
-    args: ['-m', 'proxy'],
-    env: {
-      ...process.env,
-      PROXY_PORT: process.env.PROXY_PORT || '11434',
-      OLLAMA_HOST: `http://localhost:${process.env.OLLAMA_PORT || 11435}`,
-    },
-    healthCheck: async () => {
-      try {
-        const response = await fetch(`http://localhost:${process.env.PROXY_PORT || 11434}/api/tags`);
-        return response.ok;
-      } catch {
-        return false;
-      }
-    },
-    dependsOn: ['ollama'],
-    optional: true,
-  },
+// Configuration
+const HEALTH_CHECK_CONFIG = {
+  maxAttempts: 30,
+  initialDelayMs: 500,
+  maxDelayMs: 10000,
+  backoffMultiplier: 1.5,
+  timeoutMs: 60000,
 };
+
+// Service definitions (ports will be dynamically allocated)
+let services = {};
 
 // State management
 const state = {
@@ -161,6 +56,7 @@ const state = {
   healthStatus: new Map(),
   shuttingDown: false,
   startTime: Date.now(),
+  portAllocations: new Map(),
 };
 
 // Logging utilities
@@ -198,56 +94,286 @@ function logOrchestrator(message, level = 'info') {
   console.log(`${prefix} ${levelStr}${message}`);
 }
 
-// Health checking
-async function checkHealth(serviceKey, maxAttempts = 30) {
+// Exponential backoff calculation
+function calculateBackoff(attempt, config = HEALTH_CHECK_CONFIG) {
+  const delay = Math.min(
+    config.initialDelayMs * Math.pow(config.backoffMultiplier, attempt - 1),
+    config.maxDelayMs
+  );
+  return Math.round(delay);
+}
+
+// Health checking with exponential backoff
+async function checkHealth(serviceKey, customConfig = {}) {
   const service = services[serviceKey];
   if (!service.healthCheck) return true;
 
+  const config = { ...HEALTH_CHECK_CONFIG, ...customConfig };
   logOrchestrator(`Checking health for ${service.name}...`);
   
-  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+  const startTime = Date.now();
+  
+  for (let attempt = 1; attempt <= config.maxAttempts; attempt++) {
     if (state.shuttingDown) return false;
     
-    const isHealthy = await service.healthCheck();
-    if (isHealthy) {
-      state.healthStatus.set(serviceKey, true);
-      log(serviceKey, '✓ Healthy', 'success');
-      return true;
+    // Check timeout
+    if (Date.now() - startTime > config.timeoutMs) {
+      log(serviceKey, `Health check timed out after ${config.timeoutMs}ms`, 'error');
+      return false;
     }
     
-    if (attempt === maxAttempts) {
+    try {
+      const isHealthy = await service.healthCheck();
+      if (isHealthy) {
+        state.healthStatus.set(serviceKey, true);
+        log(serviceKey, `✓ Healthy (attempt ${attempt})`, 'success');
+        return true;
+      }
+    } catch (err) {
+      // Health check failed, continue to retry
+    }
+    
+    if (attempt === config.maxAttempts) {
       if (service.optional) {
         log(serviceKey, '⚠ Health check failed, but service is optional', 'warn');
         return true;
       }
-      log(serviceKey, `✗ Health check failed after ${maxAttempts} attempts`, 'error');
+      log(serviceKey, `✗ Health check failed after ${config.maxAttempts} attempts`, 'error');
       return false;
     }
     
-    await new Promise(r => setTimeout(r, 1000));
+    const delay = calculateBackoff(attempt, config);
+    if (attempt < config.maxAttempts) {
+      log(serviceKey, `Retrying in ${delay}ms... (${attempt}/${config.maxAttempts})`, 'warn');
+      await new Promise(r => setTimeout(r, delay));
+    }
   }
   
   return false;
 }
 
-async function waitForDependencies(serviceKey) {
+// Health gating with automatic retries
+async function waitForDependencies(serviceKey, config = HEALTH_CHECK_CONFIG) {
   const service = services[serviceKey];
   if (!service.dependsOn || service.dependsOn.length === 0) return true;
 
-  logOrchestrator(`${service.name} waiting for dependencies: ${service.dependsOn.map(d => services[d].name).join(', ')}`);
+  const depNames = service.dependsOn.map(d => services[d]?.name || d).join(', ');
+  logOrchestrator(`${service.name} waiting for dependencies: ${depNames}`);
   
   for (const depKey of service.dependsOn) {
+    const depService = services[depKey];
+    if (!depService) {
+      log(serviceKey, `Unknown dependency: ${depKey}`, 'error');
+      return false;
+    }
+    
+    // Check if already healthy
     const isHealthy = state.healthStatus.get(depKey);
-    if (!isHealthy) {
-      const depHealthy = await checkHealth(depKey);
-      if (!depHealthy && !services[depKey].optional) {
-        log(serviceKey, `Dependency ${services[depKey].name} is not healthy`, 'error');
+    if (isHealthy) {
+      log(serviceKey, `Dependency ${depService.name} is healthy`, 'success');
+      continue;
+    }
+    
+    // If dependency has a process, wait for it to become healthy
+    if (state.processes.has(depKey) || depService.external) {
+      const depHealthy = await checkHealth(depKey, config);
+      if (!depHealthy && !depService.optional) {
+        log(serviceKey, `Dependency ${depService.name} is not healthy`, 'error');
         return false;
       }
+    } else {
+      log(serviceKey, `Dependency ${depService.name} is not running`, 'error');
+      return false;
     }
   }
   
   return true;
+}
+
+// Port allocation and conflict detection
+async function initializePorts() {
+  logOrchestrator('Initializing port allocation...');
+  
+  // Check for port conflicts
+  const { conflicts, warnings, available } = await detectPortConflicts();
+  
+  if (conflicts.length > 0) {
+    logOrchestrator(`⚠️  Detected ${conflicts.length} port conflict(s)`, 'warn');
+    const suggestions = await getPortSuggestions(conflicts);
+    
+    for (const conflict of conflicts) {
+      const suggestion = suggestions.find(s => s.service === conflict.service);
+      if (suggestion) {
+        logOrchestrator(`  ${conflict.service}: ${conflict.port} → ${suggestion.suggestedPort}`, 'warn');
+      }
+    }
+  }
+  
+  // Allocate ports for all services
+  const allocations = {};
+  
+  for (const [serviceKey, defaultConfig] of Object.entries(DEFAULT_PORTS)) {
+    try {
+      // Check if port is specified in environment
+      const envPort = process.env[defaultConfig.envVar || `${serviceKey.toUpperCase()}_PORT`];
+      const preferredPort = envPort ? parseInt(envPort, 10) : undefined;
+      
+      const allocation = await allocatePort(serviceKey, preferredPort);
+      allocations[serviceKey] = allocation;
+      
+      if (!allocation.isDefault) {
+        logOrchestrator(`${serviceKey}: allocated alternative port ${allocation.port}`, 'warn');
+      }
+      
+      state.portAllocations.set(serviceKey, allocation);
+    } catch (err) {
+      logOrchestrator(`Failed to allocate port for ${serviceKey}: ${err.message}`, 'error');
+      throw err;
+    }
+  }
+  
+  // Update environment variables with allocated ports
+  for (const [serviceKey, allocation] of Object.entries(allocations)) {
+    const envVar = DEFAULT_PORTS[serviceKey]?.envVar || `${serviceKey.toUpperCase()}_PORT`;
+    process.env[envVar] = String(allocation.port);
+  }
+  
+  return allocations;
+}
+
+// Create service definitions with allocated ports
+function createServiceDefinitions(allocations) {
+  return {
+    postgres: {
+      name: 'PostgreSQL',
+      color: colors.blue,
+      port: allocations.postgres?.port || 5432,
+      external: true,
+      healthCheck: async () => {
+        try {
+          const { exec } = await import('child_process');
+          const { promisify } = await import('util');
+          const execAsync = promisify(exec);
+          await execAsync(`docker exec a2a-postgres pg_isready -U ${process.env.POSTGRES_USER || 'a2a'}`);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+    },
+    redis: {
+      name: 'Redis',
+      color: colors.yellow,
+      port: allocations.redis?.port || 6379,
+      external: true,
+      healthCheck: async () => {
+        try {
+          const { exec } = await import('child_process');
+          const { promisify } = await import('util');
+          const execAsync = promisify(exec);
+          await execAsync('docker exec a2a-redis redis-cli ping');
+          return true;
+        } catch {
+          return false;
+        }
+      },
+    },
+    ollama: {
+      name: 'Ollama',
+      color: colors.magenta,
+      port: allocations.ollama?.port || 11435,
+      external: true,
+      healthCheck: async () => {
+        try {
+          const response = await fetch(`http://localhost:${allocations.ollama?.port || 11435}/api/tags`);
+          return response.ok;
+        } catch {
+          return false;
+        }
+      },
+      optional: true,
+    },
+    server: {
+      name: 'A2A Server',
+      color: colors.green,
+      port: allocations.server?.port || 3000,
+      cwd: resolve(rootDir, 'a2a-server'),
+      command: 'npm',
+      args: ['run', 'dev:no-auth'],
+      env: { ...process.env },
+      healthCheck: async () => {
+        try {
+          const port = allocations.server?.port || 3000;
+          const response = await fetch(`http://localhost:${port}/health`);
+          return response.ok;
+        } catch {
+          return false;
+        }
+      },
+      dependsOn: ['postgres', 'redis'],
+    },
+    clientApi: {
+      name: 'Client API',
+      color: colors.cyan,
+      port: allocations.clientApi?.port || 3001,
+      cwd: resolve(rootDir, 'a2a-client/packages/api-server'),
+      command: 'npm',
+      args: ['run', 'dev'],
+      env: { ...process.env },
+      healthCheck: async () => {
+        try {
+          const port = allocations.clientApi?.port || 3001;
+          const response = await fetch(`http://localhost:${port}/health`);
+          return response.ok;
+        } catch {
+          return false;
+        }
+      },
+      dependsOn: ['server'],
+    },
+    web: {
+      name: 'Web UI',
+      color: colors.white,
+      port: allocations.web?.port || 5173,
+      cwd: resolve(rootDir, 'a2a-client'),
+      command: 'npm',
+      args: ['run', 'dev'],
+      env: { ...process.env },
+      healthCheck: async () => {
+        try {
+          const port = allocations.web?.port || 5173;
+          const response = await fetch(`http://localhost:${port}`, { method: 'HEAD' });
+          return response.status < 500;
+        } catch {
+          return false;
+        }
+      },
+      dependsOn: ['clientApi'],
+    },
+    proxy: {
+      name: 'AI Proxy',
+      color: colors.magenta,
+      port: allocations.proxy?.port || 11434,
+      cwd: resolve(rootDir, 'ai-integration'),
+      command: 'python',
+      args: ['-m', 'proxy'],
+      env: {
+        ...process.env,
+        OLLAMA_HOST: `http://localhost:${allocations.ollama?.port || 11435}`,
+      },
+      healthCheck: async () => {
+        try {
+          const port = allocations.proxy?.port || 11434;
+          const response = await fetch(`http://localhost:${port}/api/tags`);
+          return response.ok;
+        } catch {
+          return false;
+        }
+      },
+      dependsOn: ['ollama'],
+      optional: true,
+    },
+  };
 }
 
 // Process management
@@ -312,7 +438,7 @@ function spawnService(serviceKey) {
 }
 
 // Service lifecycle
-async function startService(serviceKey) {
+async function startService(serviceKey, config = HEALTH_CHECK_CONFIG) {
   if (state.shuttingDown) return false;
   
   const service = services[serviceKey];
@@ -323,8 +449,8 @@ async function startService(serviceKey) {
     return true;
   }
 
-  // Wait for dependencies
-  const depsReady = await waitForDependencies(serviceKey);
+  // Wait for dependencies with health gating
+  const depsReady = await waitForDependencies(serviceKey, config);
   if (!depsReady) {
     log(serviceKey, 'Dependencies not ready', 'error');
     return false;
@@ -335,7 +461,7 @@ async function startService(serviceKey) {
     spawnService(serviceKey);
     
     // Wait for health check
-    const isHealthy = await checkHealth(serviceKey);
+    const isHealthy = await checkHealth(serviceKey, config);
     return isHealthy;
   }
   
@@ -415,32 +541,79 @@ async function stopDockerServices() {
   });
 }
 
+// Save port allocations to .env file
+function savePortAllocations() {
+  try {
+    const envPath = resolve(rootDir, '.env.local');
+    const lines = [
+      '# Auto-generated port allocations',
+      `# Generated at ${new Date().toISOString()}`,
+      '',
+    ];
+    
+    for (const [serviceKey, allocation] of state.portAllocations) {
+      const envVar = DEFAULT_PORTS[serviceKey]?.envVar || `${serviceKey.toUpperCase()}_PORT`;
+      lines.push(`${envVar}=${allocation.port}`);
+    }
+    
+    writeFileSync(envPath, lines.join('\n'), { flag: 'w' });
+    logOrchestrator(`Port allocations saved to .env.local`);
+  } catch (err) {
+    logOrchestrator(`Failed to save port allocations: ${err.message}`, 'warn');
+  }
+}
+
 // Main commands
 async function startAll(includeProxy = false) {
   logOrchestrator('🚀 Starting A2A Development Stack...', 'success');
   logOrchestrator(`Mode: ${includeProxy ? 'Full (with AI Proxy)' : 'Standard'}`);
   
   try {
+    // Initialize ports
+    const allocations = await initializePorts();
+    services = createServiceDefinitions(allocations);
+    
     // Start Docker infrastructure
     await startDockerServices(includeProxy ? 'full' : null);
     
-    // Wait for infrastructure
-    logOrchestrator('Waiting for infrastructure...');
-    await checkHealth('postgres');
-    await checkHealth('redis');
+    // Wait for infrastructure with health gating
+    logOrchestrator('Waiting for infrastructure with health gating...');
+    const infraConfig = { ...HEALTH_CHECK_CONFIG, maxAttempts: 60, timeoutMs: 120000 };
+    
+    const postgresHealthy = await checkHealth('postgres', infraConfig);
+    if (!postgresHealthy) throw new Error('PostgreSQL failed to start');
+    
+    const redisHealthy = await checkHealth('redis', infraConfig);
+    if (!redisHealthy) throw new Error('Redis failed to start');
     
     if (includeProxy) {
-      await checkHealth('ollama');
+      const ollamaHealthy = await checkHealth('ollama', infraConfig);
+      if (!ollamaHealthy && !services.ollama.optional) {
+        throw new Error('Ollama failed to start');
+      }
     }
     
-    // Start application services
-    await startService('server');
-    await startService('clientApi');
-    await startService('web');
+    // Start application services with health gating
+    logOrchestrator('Starting application services...');
+    
+    const serverStarted = await startService('server');
+    if (!serverStarted) throw new Error('Server failed to start');
+    
+    const clientApiStarted = await startService('clientApi');
+    if (!clientApiStarted) throw new Error('Client API failed to start');
+    
+    const webStarted = await startService('web');
+    if (!webStarted) throw new Error('Web UI failed to start');
     
     if (includeProxy) {
-      await startService('proxy');
+      const proxyStarted = await startService('proxy');
+      if (!proxyStarted && !services.proxy.optional) {
+        throw new Error('AI Proxy failed to start');
+      }
     }
+    
+    // Save port allocations
+    savePortAllocations();
     
     const duration = ((Date.now() - state.startTime) / 1000).toFixed(1);
     logOrchestrator(`✓ All services started in ${duration}s`, 'success');
@@ -457,10 +630,19 @@ async function startServerOnly() {
   logOrchestrator('🚀 Starting Server Only...', 'success');
   
   try {
+    const allocations = await initializePorts();
+    services = createServiceDefinitions(allocations);
+    
     await startDockerServices();
-    await checkHealth('postgres');
-    await checkHealth('redis');
-    await startService('server');
+    
+    const infraConfig = { ...HEALTH_CHECK_CONFIG, maxAttempts: 60, timeoutMs: 120000 };
+    await checkHealth('postgres', infraConfig);
+    await checkHealth('redis', infraConfig);
+    
+    const serverStarted = await startService('server');
+    if (!serverStarted) throw new Error('Server failed to start');
+    
+    savePortAllocations();
     
     logOrchestrator('✓ Server started', 'success');
     printStatus();
@@ -476,8 +658,16 @@ async function startClientOnly() {
   logOrchestrator('🚀 Starting Client Only...', 'success');
   
   try {
-    await startService('clientApi');
-    await startService('web');
+    const allocations = await initializePorts();
+    services = createServiceDefinitions(allocations);
+    
+    const clientApiStarted = await startService('clientApi');
+    if (!clientApiStarted) throw new Error('Client API failed to start');
+    
+    const webStarted = await startService('web');
+    if (!webStarted) throw new Error('Web UI failed to start');
+    
+    savePortAllocations();
     
     logOrchestrator('✓ Client started', 'success');
     printStatus();
@@ -493,9 +683,18 @@ async function startProxyOnly() {
   logOrchestrator('🚀 Starting AI Proxy Only...', 'success');
   
   try {
+    const allocations = await initializePorts();
+    services = createServiceDefinitions(allocations);
+    
     await startDockerServices('ai');
-    await checkHealth('ollama');
-    await startService('proxy');
+    
+    const infraConfig = { ...HEALTH_CHECK_CONFIG, maxAttempts: 60, timeoutMs: 120000 };
+    await checkHealth('ollama', infraConfig);
+    
+    const proxyStarted = await startService('proxy');
+    if (!proxyStarted) throw new Error('AI Proxy failed to start');
+    
+    savePortAllocations();
     
     logOrchestrator('✓ Proxy started', 'success');
     printStatus();
@@ -513,19 +712,28 @@ function printStatus() {
   console.log(colors.bright + '═'.repeat(60) + colors.reset);
   
   Object.entries(services).forEach(([key, service]) => {
-    const isRunning = state.processes.has(key) || (key === 'postgres' || key === 'redis' || key === 'ollama');
+    const isRunning = state.processes.has(key) || service.external;
     const isHealthy = state.healthStatus.get(key);
+    const allocation = state.portAllocations.get(key);
+    
     const status = isHealthy 
       ? `${colors.green}● Running${colors.reset}` 
       : isRunning 
         ? `${colors.yellow}○ Starting${colors.reset}` 
         : `${colors.red}○ Stopped${colors.reset}`;
     
-    console.log(`  ${service.color}${service.name.padEnd(15)}${colors.reset} ${status.padEnd(20)} http://localhost:${service.port}`);
+    const portIndicator = allocation && !allocation.isDefault 
+      ? `${colors.yellow}${service.port}*${colors.reset}` 
+      : service.port;
+    
+    console.log(`  ${service.color}${service.name.padEnd(15)}${colors.reset} ${status.padEnd(20)} http://localhost:${portIndicator}`);
   });
   
   console.log(colors.bright + '═'.repeat(60) + colors.reset);
   console.log(colors.dim + '  Press Ctrl+C to stop all services' + colors.reset);
+  if (Array.from(state.portAllocations.values()).some(a => !a.isDefault)) {
+    console.log(colors.dim + '  * Non-default port' + colors.reset);
+  }
   console.log('');
 }
 
@@ -546,6 +754,9 @@ async function shutdown() {
   
   // Stop Docker services
   await stopDockerServices();
+  
+  // Release all port reservations
+  releaseAllPorts();
   
   logOrchestrator('✓ All services stopped', 'success');
   process.exit(0);
@@ -598,19 +809,16 @@ Commands:
   all, dev          Start all services (default)
   server            Start server + infrastructure only
   client            Start client services only
-  proxy             Start AI proxy + Ollama only
-  full              Start everything including AI proxy
+  proxy             Start AI proxy only
+  full              Start all services with AI proxy
   status            Show service status
   stop              Stop all services
 
-Environment Variables:
-  SERVER_PORT       Server port (default: 3000)
-  CLIENT_API_PORT   Client API port (default: 3001)
-  WEB_PORT          Web UI port (default: 5173)
-  PROXY_PORT        AI Proxy port (default: 11434)
-  OLLAMA_PORT       Ollama port (default: 11435)
-  POSTGRES_PORT     PostgreSQL port (default: 5432)
-  REDIS_PORT        Redis port (default: 6379)
+Features:
+  • Dynamic port allocation if default ports are busy
+  • Health gating with exponential backoff
+  • Automatic port conflict detection
+  • Port reservation system with file locks
 `);
-    process.exit(0);
+    process.exit(1);
 }

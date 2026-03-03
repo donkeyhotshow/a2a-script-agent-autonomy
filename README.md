@@ -34,25 +34,52 @@ npm run dev
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
+│                     PORT MANAGEMENT                          │
+├─────────────────────────────────────────────────────────────┤
+│  Dynamic allocation with fallback ranges                    │
+│  Automatic conflict detection & resolution                  │
+│  Health gating with exponential backoff                     │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
 │                        PORTS                                 │
 ├─────────────────────────────────────────────────────────────┤
-│  3000  │ A2A Server API    │ Node.js + Express             │
-│  3001  │ Client API        │ Node.js + WebSocket           │
-│  5173  │ Web UI            │ Vite + Vue                    │
-│  5432  │ PostgreSQL        │ pgvector extension            │
-│  6379  │ Redis             │ Caching & queues              │
-│ 11434  │ AI Proxy          │ Python Flask                  │
-│ 11435  │ Ollama            │ LLM inference (Docker)        │
+│  3000* │ A2A Server API    │ Node.js + Express (3000-3010) │
+│  3001* │ Client API        │ Node.js + WebSocket (3001-3011)│
+│  5173* │ Web UI            │ Vite + Vue (5173-5183)        │
+│  5432* │ PostgreSQL        │ pgvector extension (5432-5442)│
+│  6379* │ Redis             │ Caching & queues (6379-6389)  │
+│ 11434* │ AI Proxy          │ Python Flask (11434-11444)    │
+│ 11435* │ Ollama            │ LLM inference (11435-11445)   │
 └─────────────────────────────────────────────────────────────┘
+* Actual ports may differ if defaults are busy. Check `.env.local` after start.
 ```
 
-### Health Gating
+### Health Gating with Exponential Backoff
 
-Services start in dependency order:
+Services start in dependency order with automatic retry:
 1. **Infrastructure**: PostgreSQL → Redis → (Ollama if proxy needed)
 2. **Backend**: Server (waits for PostgreSQL + Redis)
 3. **Client**: Client API → Web UI (waits for Server)
 4. **AI**: Proxy (waits for Ollama)
+
+Each service waits for healthy dependencies before starting, with exponential backoff retry (500ms → 750ms → 1.1s → ... up to 10s).
+
+### Port Management
+
+```bash
+# Check port conflicts before starting
+node scripts/port-manager.js conflicts
+
+# List reserved ports
+node scripts/port-manager.js list
+
+# Release a specific port
+node scripts/port-manager.js release 3000
+```
+
+See [Port Management Documentation](docs/PORT_MANAGEMENT.md) for details.
 
 ### Graceful Shutdown
 
@@ -66,7 +93,8 @@ Press `Ctrl+C` to stop all services gracefully. The orchestrator will:
 ## Project Status (2026-03-03)
 
 ### Recently Completed
-- ✅ **Unified Service Orchestrator** - Health gating, graceful shutdown
+- ✅ **Port Management System** - Dynamic allocation, conflict detection, health gating automation
+- ✅ **Unified Service Orchestrator** - Health gating with exponential backoff, graceful shutdown
 - ✅ **12 Major Tasks** - Web Integration, Simulation Framework, Server Refactoring
 - ✅ **3 Refactoring Tasks** - request-processor, message-builder, context-parser
 - ✅ **Server Analysis** - Inventory check aligned with simulations
@@ -95,6 +123,7 @@ We are analyzing the server codebase to align it with simulation scenarios. This
 
 | Document | Purpose |
 |----------|---------|
+| [Port Management](docs/PORT_MANAGEMENT.md) | Port allocation, conflict detection, health gating |
 | [Server Inventory Report](docs/server-inventory-report.md) | Full analysis of server systems |
 | [Server Cleanup Decisions](docs/server-cleanup-decisions.md) | Decision form for unused systems |
 | [Implementation Roadmap](plans/server/04-comprehensive-implementation-roadmap.md) | Overall project roadmap |
@@ -106,6 +135,7 @@ All documents in this repository must be adapted for **machine reading** (parsin
 
 - Prefer structured, unambiguous Markdown (stable headings, lists, tables, JSON/YAML blocks where applicable)
 - Avoid “marketing” prose; write for deterministic extraction and indexing
+- Details: `docs/DOCUMENTATION-MACHINE-READABLE.md`
 
 ### Legacy Quick Start
 

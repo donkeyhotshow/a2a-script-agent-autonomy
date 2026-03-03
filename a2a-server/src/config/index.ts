@@ -115,6 +115,10 @@ const configSchema = z.object({
     // ===========================================
     queueConcurrency: int(1, 100, 5),
     indexingConcurrency: int(1, 50, 2),
+    queueMaxRetries: int(1, 20, 5),
+    queueBackoffDelayMs: int(100, 60000, 1000),
+    queueBackoffMultiplier: int(1, 10, 2),
+    queueMaxDelayMs: int(1000, 300000, 60000),
 
     // ===========================================
     // ML / Embeddings
@@ -139,6 +143,32 @@ const configSchema = z.object({
     // Request Processor (Timer Loop)
     // ===========================================
     requestProcessorIntervalMs: int(100, 60000, 5000),
+
+    // ===========================================
+    // Polling Optimization
+    // ===========================================
+    useAdaptivePolling: boolean.default(true),
+    pollingMinIntervalMs: int(100, 60000, 1000),
+    pollingMaxIntervalMs: int(1000, 300000, 60000),
+    pollingBackoffFactor: z.coerce.number().min(1).max(5).default(1.5),
+    pollingAccelerationFactor: z.coerce.number().min(0.1).max(1).default(0.5),
+    pollingEmptyThreshold: int(1, 10, 3),
+    pollingCircuitBreakerThreshold: int(1, 20, 5),
+    pollingCircuitBreakerTimeoutMs: int(5000, 300000, 30000),
+
+    // ===========================================
+    // Webhook
+    // ===========================================
+    webhookEnabled: boolean.default(false),
+    webhookTimeoutMs: int(1000, 60000, 30000),
+    webhookMaxRetries: int(1, 10, 5),
+    webhookSecret: z.string().optional(),
+
+    // ===========================================
+    // Metrics
+    // ===========================================
+    metricsEnabled: boolean.default(true),
+    metricsExportIntervalMs: int(1000, 60000, 10000),
 });
 
 // ===========================================
@@ -188,6 +218,28 @@ function mapEnvironmentVariables() {
         wsPort: process.env.WS_PORT,
         wsHeartbeatIntervalMs: process.env.WS_HEARTBEAT_INTERVAL_MS,
         requestProcessorIntervalMs: process.env.REQUEST_PROCESSOR_INTERVAL_MS,
+        // Queue
+        queueMaxRetries: process.env.QUEUE_MAX_RETRIES,
+        queueBackoffDelayMs: process.env.QUEUE_BACKOFF_DELAY_MS,
+        queueBackoffMultiplier: process.env.QUEUE_BACKOFF_MULTIPLIER,
+        queueMaxDelayMs: process.env.QUEUE_MAX_DELAY_MS,
+        // Polling
+        useAdaptivePolling: process.env.USE_ADAPTIVE_POLLING,
+        pollingMinIntervalMs: process.env.POLLING_MIN_INTERVAL_MS,
+        pollingMaxIntervalMs: process.env.POLLING_MAX_INTERVAL_MS,
+        pollingBackoffFactor: process.env.POLLING_BACKOFF_FACTOR,
+        pollingAccelerationFactor: process.env.POLLING_ACCELERATION_FACTOR,
+        pollingEmptyThreshold: process.env.POLLING_EMPTY_THRESHOLD,
+        pollingCircuitBreakerThreshold: process.env.POLLING_CIRCUIT_BREAKER_THRESHOLD,
+        pollingCircuitBreakerTimeoutMs: process.env.POLLING_CIRCUIT_BREAKER_TIMEOUT_MS,
+        // Webhook
+        webhookEnabled: process.env.WEBHOOK_ENABLED,
+        webhookTimeoutMs: process.env.WEBHOOK_TIMEOUT_MS,
+        webhookMaxRetries: process.env.WEBHOOK_MAX_RETRIES,
+        webhookSecret: process.env.WEBHOOK_SECRET,
+        // Metrics
+        metricsEnabled: process.env.METRICS_ENABLED,
+        metricsExportIntervalMs: process.env.METRICS_EXPORT_INTERVAL_MS,
     };
 }
 

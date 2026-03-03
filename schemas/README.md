@@ -2,6 +2,10 @@
 
 JSON Schema definitions for A2A action types and validation.
 
+## Documentation Requirements (Machine-Readable)
+
+All documents in this repository are written for **machine reading** (parsing and/or RAG indexer ingestion). **Human reading is not required.**
+
 ## Files
 
 | File | Description |

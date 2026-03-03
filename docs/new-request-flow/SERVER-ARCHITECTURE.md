@@ -84,7 +84,8 @@ The A2A Server is a **stateless** HTTP service that processes requests and retur
 
 | Route File | Endpoints | Description |
 |------------|-----------|-------------|
-| `requests.routes.ts` | `POST /api/v1/invoke`, `POST /api/v1/requests`, `GET /:id/status`, `GET /:id/result` | Main request handling |
+| `index.ts` | `POST /api/v1/invoke`, `GET /metrics`, `GET /queue/metrics`, `GET /polling/metrics` | Main entrypoints and metrics |
+| `requests.routes.ts` | `POST /api/v1/requests`, `GET /:id/status`, `GET /:id/result` | Request handling |
 | `actions.routes.ts` | `GET /api/v1/actions/:id` | Action definitions |
 | `sse.routes.ts` | `GET /api/v1/sse/:sessionId` | Server-Sent Events |
 | `health.routes.ts` | `GET /health`, `GET /api/v1/health/live` | Health checks |

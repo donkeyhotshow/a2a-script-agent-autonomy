@@ -18,3 +18,4 @@ router.post('/refresh', authController.refreshToken);
 router.get('/me', authenticate, authController.getCurrentClient);
 
 export default router;
+

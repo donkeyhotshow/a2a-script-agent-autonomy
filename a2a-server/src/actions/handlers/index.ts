@@ -42,3 +42,33 @@ export {
     type WriteDocActionInput,
     type WriteDocActionOutput,
 } from './write-doc.js';
+
+// RAG Search handlers
+export {
+    executeRagSearch,
+    executeRagIndex,
+    executeRagClearCache,
+    executeRagGetCacheStats,
+    type RagSearchActionInput,
+    type RagSearchActionOutput,
+} from './rag-search.js';
+
+// File Operations handlers
+export {
+    executeReadFile,
+    executeWriteFile,
+    executeFileExists,
+    executeListDirectory,
+    type ReadFileActionInput,
+    type ReadFileActionOutput,
+    type WriteFileActionInput,
+    type WriteFileActionOutput,
+} from './file-operations.js';
+
+// Command Execution handlers
+export {
+    executeCommand,
+    validateCommand,
+    type ExecuteCommandInput,
+    type ExecuteCommandOutput,
+} from './command-execution.js';
