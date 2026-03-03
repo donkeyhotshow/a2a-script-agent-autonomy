@@ -1,6 +1,6 @@
 import {Router, Request, Response, NextFunction} from 'express';
 import {authenticate} from '../middleware/auth.middleware.js';
-import {invoke} from '../services/invoke.service.js';
+import {invoke} from '../services/utils/invoke.service.js';
 
 // Import routes
 import requestsRoutes from './requests.routes.js';
@@ -59,7 +59,7 @@ router.post('/invoke', authenticate, handleInvoke);
 // Metrics endpoint - no auth required for Prometheus
 router.get('/metrics', async (_req: Request, res: Response) => {
     try {
-        const { toPrometheusFormat, getSystemMetrics } = await import('../services/metrics.service.js');
+        const { toPrometheusFormat, getSystemMetrics } = await import('../services/utils/metrics.service.js');
         const accept = _req.headers.accept || '';
         
         if (accept.includes('application/json')) {
@@ -85,7 +85,7 @@ router.get('/metrics', async (_req: Request, res: Response) => {
 // Queue metrics endpoint
 router.get('/queue/metrics', async (_req: Request, res: Response) => {
     try {
-        const { getQueueMetrics, getQueueStats } = await import('../services/request-queue.service.js');
+        const { getQueueMetrics, getQueueStats } = await import('../services/core/state/request-queue.service.js');
         const [metrics, stats] = await Promise.all([getQueueMetrics(), getQueueStats()]);
         
         res.json({
@@ -110,7 +110,7 @@ router.get('/queue/metrics', async (_req: Request, res: Response) => {
 // Polling optimizer metrics
 router.get('/polling/metrics', async (_req: Request, res: Response) => {
     try {
-        const { getAllMetrics, getAllStatuses } = await import('../services/polling-optimizer.service.js');
+        const { getAllMetrics, getAllStatuses } = await import('../services/utils/polling-optimizer.service.js');
         const [metrics, statuses] = await Promise.all([getAllMetrics(), getAllStatuses()]);
         
         res.json({

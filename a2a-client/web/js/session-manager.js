@@ -1,6 +1,10 @@
 /**
  * Session Manager UI Module
  * Handles session list, creation, deletion, and real-time conversation display
+ *
+ * TODO(Task-06): single session view-model: context, execute, messages[] from Client API – tasks/client/06-web-session-panel-and-dialog.md
+ * TODO(Task-06): render dialog from messages[] only; handle execute.form (choices + input) and execute.message
+ * TODO(Task-06): manual/auto buttons → POST /api/sessions/:id/next { mode }; show step list from context.execution
  */
 
 (function (global) {

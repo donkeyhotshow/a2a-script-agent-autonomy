@@ -1,6 +1,8 @@
 /**
  * Plasticine UI – complete workflow. Predefined panel types, run pipeline to mount many panels at once.
  * Usage: PlasticineWorkflow.run(mountElement, { types: ['task','logs','chat','debug','sessions','settings'] });
+ *
+ * TODO(Task-06): session panel content bound to view-model (messages[], execute) – tasks/client/06-web-session-panel-and-dialog.md
  */
 
 (function (global) {

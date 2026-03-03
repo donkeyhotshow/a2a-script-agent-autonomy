@@ -1,6 +1,8 @@
 /**
  * @a2a/types - Shared TypeScript types for A2A packages
  * Shared between @a2a/client, @a2a/server, and other packages.
+ *
+ * TODO(Task-05): protocol types from schema/protocol.json; session DTO (SessionSummary, SessionDetail with messages[]) – tasks/client/05-history-and-types-packages-integration.md
  */
 
 // ============================================

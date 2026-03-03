@@ -220,3 +220,11 @@ export type {
     RequestTransformer,
     ProgressConfig,
 } from './async-client.js';
+
+// Simulation helpers (Task 01 stub)
+export {
+    invokeFirstTask,
+    sendFormChoice,
+    sendMessage,
+} from './simulation-helpers.js';
+export type { InvokeFirstTaskOptions, FirstTaskResult } from './simulation-helpers.js';

@@ -2,6 +2,8 @@
  * Unified Web API Client
  * Combines session management, real-time communication, and file transfer
  * for the A2A web interface
+ *
+ * TODO(Task-07): only Client API (apiBase); no direct server URLs – tasks/client/07-web-client-api-only-no-direct-server.md
  */
 
 (function (global) {

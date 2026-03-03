@@ -69,3 +69,7 @@ All prompt structure must live in markdown template files interpreted by the pip
 - `simulations/coder/*/request.md`
 - `simulations/auto-ai/*/request.md`
 
+## Status
+- ✅ Reviewed sequentially on March 4, 2026 (Task 27) and captured schema/template requirements.
+- 📌 Implementation work remains to be coded; this note supports future tracing.
+- 📝 Next steps: align template definitions with pipeline executor once development begins (see `tasks/EXECUTION-LOG.md`).

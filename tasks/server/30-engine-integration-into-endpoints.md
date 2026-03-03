@@ -80,3 +80,7 @@ Use the transform DSL executor and LLM adapter to implement the full AI-Actions 
 - `simulations/SCHEMA.md`
 - `simulations/dialog/*`
 
+## Status
+- ✅ Reviewed sequentially on March 4, 2026 (Task 30) and captured endpoint-integration requirements.
+- 📌 Implementation pending; use this note as reference once endpoints are wired to the new engine.
+- 📝 Next steps: translate these expectations into E2E tests and endpoint wiring after updating `tasks/EXECUTION-LOG.md`.

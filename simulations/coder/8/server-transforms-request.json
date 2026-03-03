@@ -17,7 +17,7 @@
     },
     {
       "op": "render-markdown",
-      "templateRef": "simulations/coder/8/request.md",
+      "templateRef": "a2a-server/prompts/coder-request.md",
       "data": "$out",
       "outputFile": "request.md"
     }

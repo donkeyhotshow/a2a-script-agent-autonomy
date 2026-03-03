@@ -3,6 +3,10 @@
  *
  * Exposes client-side tools (terminal, fs-utils, etc.) via REST API
  * This runs on the client machine to provide local file system and terminal access
+ *
+ * TODO(Task-02): session model with context, execute, status, exchangeLog[], messages[] – tasks/client/02-api-server-client-api-integration.md
+ * TODO(Task-02): promiseId flow – poll /api/v1/requests/:id/status, propagate to Web via /api/sessions/:id/next and SSE
+ * TODO(Task-02): session DTO for Web: task, status, context.execution, messages, current execute
  */
 
 import express from 'express';

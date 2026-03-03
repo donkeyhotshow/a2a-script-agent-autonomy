@@ -344,10 +344,15 @@ const result = await neuron.process(context);
 
 ## Acceptance Criteria
 
-- [ ] EntityQueryBuilder извлекает entities из запроса
-- [ ] EntityFileScorer ранжирует файлы по entity relevance
-- [ ] RAGService интегрирован с entity recognition
+- [x] EntityQueryBuilder извлекает entities из запроса
+- [x] EntityFileScorer ранжирует файлы по entity relevance
+- [x] RAGService интегрирован с entity recognition
 - [ ] Smart file selection работает для coder-smart симуляций
-- [ ] Все тесты проходят
+- [x] Все тесты проходят
 - [ ] Performance overhead <30% от базового RAG
 - [ ] Документация обновлена
+
+## Status
+- ✅ Entity scoring + context assembly implementations (`entity-file-scorer.ts`, `entity-context-assembler.ts`) now power `rag.service.ts` so enriched results and context are emitted whenever `useEntityRecognition` is requested.
+- ✅ Added `tests/services/rag-entity-integration.test.ts` to verify the scoring heuristics and context assembler (run via `ENCRYPTION_KEY=1234567890ABCDEF1234567890ABCDEF A2A_DEFAULT_EMAIL=test@example.com A2A_DEFAULT_PASSWORD=dev npm run test --prefix a2a-server -- tests/services/rag-entity-integration.test.ts`).
+- 🧪 Next steps: surface the enriched RAG results inside downstream neurons (e.g., coder-smart), monitor the smart selection outcome in simulations, and capture the performance story before claiming the feature is production ready.

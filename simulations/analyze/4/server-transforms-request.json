@@ -13,7 +13,7 @@
     },
     {
       "op": "render-markdown",
-      "templateRef": "simulations/analyze/4/request.md",
+      "templateRef": "a2a-server/prompts/analyze-request.md",
       "data": "$out",
       "outputFile": "request.md"
     }

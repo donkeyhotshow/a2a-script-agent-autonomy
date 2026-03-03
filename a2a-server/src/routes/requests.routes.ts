@@ -5,7 +5,7 @@
 
 import {Router, Request, Response, NextFunction} from 'express';
 import {authenticate} from '../middleware/auth.middleware.js';
-import {requestService} from '../services/request.service.js';
+import {requestService} from '../services/core/request/request.service.js';
 import {logger} from '../utils/logger.js';
 
 const router = Router();

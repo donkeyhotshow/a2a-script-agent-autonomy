@@ -16,7 +16,7 @@
     },
     {
       "op": "render-markdown",
-      "templateRef": "simulations/dialog/3/request.md",
+      "templateRef": "a2a-server/prompts/dialog-request.md",
       "data": "$out",
       "outputFile": "request.md"
     }

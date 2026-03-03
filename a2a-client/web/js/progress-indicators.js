@@ -1,6 +1,9 @@
 /**
  * Progress Indicators Module
  * Visual progress tracking for long-running operations
+ *
+ * TODO(Task-09): loading state for POST /api/sessions/:id/next; "Running…" / promiseId polling – tasks/client/09-web-errors-progress-and-ux.md
+ * TODO(Task-09): cancel/stop updates UI (e.g. back to "Далее")
  */
 
 (function (global) {

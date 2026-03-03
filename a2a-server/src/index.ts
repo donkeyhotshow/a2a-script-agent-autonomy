@@ -3,12 +3,12 @@ import app from './app.js';
 import {config} from './config/index.js';
 import {logger} from './utils/logger.js';
 import {setDatabaseLogger} from './config/database.js';
-import {startRequestProcessor, stopRequestProcessor} from './services/request-processor.service.js';
+import {startRequestProcessor, stopRequestProcessor} from './services/core/request-processor/request-processor.service.js';
 import { initializeQueue, closeQueue, setJobProcessor, addRequestToQueue, getQueueMetrics, onQueueEvent } from './services/request-queue.service.js';
 import { initializeMetrics, recordQueueDepth, recordProcessingTime, recordErrorRate, recordPollingInterval } from './services/metrics.service.js';
 import { initialize as initializePollingOptimizer, registerEndpoint, startAll as startAllPolling, shutdown as shutdownPolling, onPollingEvent } from './services/polling-optimizer.service.js';
 import { notifyRequestCompleted, notifyRequestFailed, onWebhookEvent } from './services/webhook.service.js';
-import { processOneRequest } from './services/request-processor.service.js';
+import { processOneRequest } from './services/core/request-processor/request-processor.service.js';
 import type { Job } from 'bullmq';
 import type { QueueJobData } from './services/request-queue.service.js';
 

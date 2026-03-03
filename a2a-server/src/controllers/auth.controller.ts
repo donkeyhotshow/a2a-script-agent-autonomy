@@ -1,6 +1,6 @@
 import {Request, Response, NextFunction} from 'express';
 import {AppError} from '../types/errors.js';
-import * as authService from '../services/auth.service.js';
+import * as authService from '../services/core/auth/auth.service.js';
 import {loginInputSchema, refreshTokenInputSchema} from '../utils/validation.js';
 
 /**

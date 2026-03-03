@@ -13,7 +13,7 @@
     },
     {
       "op": "render-markdown",
-      "templateRef": "simulations/auto-ai/4/request.md",
+      "templateRef": "a2a-server/prompts/auto-ai-request.md",
       "data": "$out",
       "outputFile": "request.md"
     }

@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulation Debug (dev) – Task 08</title>
+    <link rel="stylesheet" href="../css/app.css">
+    <style>
+        .debug-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; padding: 1rem; }
+        .panel { border: 1px solid #ccc; padding: 0.5rem; overflow: auto; max-height: 400px; }
+        .stub { color: #888; font-style: italic; }
+    </style>
+</head>
+<body>
+    <h1>Simulation Debug</h1>
+    <p class="stub">Stub – Task: <a href="../../tasks/client/08-web-simulation-debug-page.md">tasks/client/08-web-simulation-debug-page.md</a></p>
+    <div class="debug-layout">
+        <div class="panel">
+            <h3>Simulation + step selector</h3>
+            <p class="stub">TODO(08): list simulations and steps (static index or Client API)</p>
+        </div>
+        <div class="panel">
+            <h3>Pipeline files</h3>
+            <p class="stub">TODO(08): request.json, request.md, response.md, response.json tabs</p>
+        </div>
+        <div class="panel">
+            <h3>Live replay</h3>
+            <p class="stub">TODO(08): "Run this step" via Client API; show diff vs fixture</p>
+        </div>
+        <div class="panel">
+            <h3>LLM_REPLAY_DIR</h3>
+            <p class="stub">TODO(08): note for deterministic replay; optional current dir display</p>
+        </div>
+    </div>
+    <script src="simulation-debug.js"></script>
+</body>
+</html>

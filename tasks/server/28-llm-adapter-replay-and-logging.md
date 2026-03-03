@@ -77,3 +77,7 @@ Create an `llmAdapter` module that handles all LLM interactions for AI-Actions a
 - `simulations/SCHEMA.md`
 - `simulations/dialog/3/response.md`
 
+## Status
+- ✅ Reviewed sequentially on March 4, 2026 (Task 28) and documented the replay/logging expectations.
+- 📌 Implementation pending; this note anchors future development and testing.
+- 📝 Next steps: wire the adapter to the planned replay/logging pipelines once the sprint begins (see `tasks/EXECUTION-LOG.md`).

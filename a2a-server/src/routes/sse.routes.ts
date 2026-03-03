@@ -6,7 +6,7 @@
 import {Router, Request, Response} from 'express';
 import {authenticate} from '../middleware/auth.middleware.js';
 import {logger} from '../utils/logger.js';
-import {sseManager} from '../services/sse.service.js';
+import {sseManager} from '../services/core/communication/sse.service.js';
 
 const router = Router();
 

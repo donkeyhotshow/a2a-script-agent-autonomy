@@ -1,6 +1,9 @@
 /**
  * API Integration Module
  * Connects UI components with A2A Server API
+ *
+ * TODO(Task-07): use only Client API base URL (no direct a2a-server) – tasks/client/07-web-client-api-only-no-direct-server.md
+ * TODO(Task-07): single config for "API base" = Client API (e.g. localhost:3001); remove server URL
  */
 
 class APIIntegration {

@@ -276,8 +276,8 @@ JSONPath‑pipeline (див. `json-schemas/server-transform.schema.json`).
 `result: { "execute-command": { "command": "npm test", "exitCode": 0, "stdout": "...", "stderr": "" } }`. Server can
 pass to LLM for summary or next step.
 
-Каноничная схема: **simulations/SCHEMA.md**. Примеры .md промптов: **simulations/dialog/3/request.md**,
-**simulations/dialog/3/response.md**.
+Каноничная схема: **docs/new-request-flow/REQUEST-SCHEMA.md** (см. шаблоны в `a2a-server/prompts/`). Примеры .md промптов:
+**simulations/dialog/3/request.md**, **simulations/dialog/3/response.md**.
 
 ---
 

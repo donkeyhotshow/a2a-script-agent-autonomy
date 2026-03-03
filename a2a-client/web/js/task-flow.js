@@ -1,6 +1,8 @@
 /**
  * Task flow: input + Send → create session (api-server) → fixate IDs → invoke server → first response.
  * Panel: preloader → then non-closable plasticine with session id + first response.
+ *
+ * TODO(Task-06): drive from session view-model (messages[], execute); result.choice / result.message – tasks/client/06-web-session-panel-and-dialog.md
  */
 
 (function (global) {

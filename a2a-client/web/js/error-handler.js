@@ -1,6 +1,9 @@
 /**
  * Error Handler UI Module
  * Centralized error handling and display for the web interface
+ *
+ * TODO(Task-09): route all Client API errors through this handler – tasks/client/09-web-errors-progress-and-ux.md
+ * TODO(Task-09): map HTTP/body to user messages; show in session panel + global notification
  */
 
 (function (global) {

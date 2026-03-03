@@ -1,3 +1,6 @@
+/**
+ * TODO(Task-05): exchangeLog[] / messages[] storage; reconstruct messages from log – tasks/client/05-history-and-types-packages-integration.md
+ */
 export { default as SessionStorage } from './session-storage';
 export { default as HistoryManager } from './history-manager';
 export type {

@@ -1,5 +1,8 @@
 /**
  * Script Runner - execute TypeScript/JavaScript from MD action files
+ *
+ * TODO(Task-04): unified API for execute.script; result["script"] shape – tasks/client/04-script-runner-and-execute-script-alignment.md
+ * TODO(Task-04): integrate with api-client createExecuteCode; sandbox/config per Task 39
  */
 
 import {VM} from 'vm2';

@@ -307,15 +307,44 @@ async function applyRenderMarkdown(
  * Simple template rendering - replaces {{path}} placeholders with values
  */
 function renderTemplateSimple(template: string, data: Record<string, unknown>): string {
-  const dollar = String.fromCharCode(36);
-  const pattern = [dollar, '{', '([^}]+)', '}'].join('');
+  const pattern = '\\${([^}]+)}';
   const regex = new RegExp(pattern, 'g');
-  
+
   return template.replace(regex, (_, key) => {
     const trimmedKey = key.trim();
     const value = query(data, trimmedKey);
-    return value !== undefined ? String(value) : [dollar, '{', key, '}'].join('');
+    return stringifyForTemplate(value);
   });
+}
+
+function stringifyForTemplate(value: unknown): string {
+  if (value === undefined) {
+    return 'null';
+  }
+  if (value === null) {
+    return 'null';
+  }
+  if (typeof value === 'string') {
+    return value;
+  }
+  if (typeof value === 'number' || typeof value === 'boolean') {
+    return String(value);
+  }
+  return JSON.stringify(sortKeys(value), null, 2);
+}
+
+function sortKeys(value: unknown): unknown {
+  if (Array.isArray(value)) {
+    return value.map(sortKeys);
+  }
+  if (typeof value === 'object' && value !== null) {
+    const sorted: Record<string, unknown> = {};
+    for (const key of Object.keys(value).sort()) {
+      sorted[key] = sortKeys((value as Record<string, unknown>)[key]);
+    }
+    return sorted;
+  }
+  return value;
 }
 
 /**

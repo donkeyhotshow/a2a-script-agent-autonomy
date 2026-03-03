@@ -1,0 +1,685 @@
+/* AI Actions Session Panel Styles */
+
+/* Основной контейнер панели */
+.ai-actions-panel {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background: var(--pui-bg, #1f1f1f);
+    color: var(--pui-text, #e5e5e5);
+    font-family: var(--pui-font, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif);
+}
+
+/* Заголовок панели */
+.ai-actions-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--pui-border, #333);
+    background: var(--pui-header-bg, #2a2a2a);
+}
+
+.ai-actions-header h3 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--pui-header-text, #ffffff);
+}
+
+.ai-actions-controls {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-new-session, .btn-refresh {
+    padding: 6px 12px;
+    border: 1px solid var(--pui-border, #444);
+    background: var(--pui-btn-bg, #333);
+    color: var(--pui-btn-text, #e5e5e5);
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.2s ease;
+}
+
+.btn-new-session:hover, .btn-refresh:hover {
+    background: var(--pui-btn-hover-bg, #444);
+    border-color: var(--pui-border-hover, #555);
+}
+
+.btn-new-session:active, .btn-refresh:active {
+    transform: translateY(1px);
+}
+
+/* Основное тело панели */
+.ai-actions-body {
+    display: flex;
+    flex: 1;
+    height: calc(100% - 50px);
+}
+
+/* Контейнер списка сессий */
+.session-list-container {
+    width: 300px;
+    border-right: 1px solid var(--pui-border, #333);
+    display: flex;
+    flex-direction: column;
+    background: var(--pui-sidebar-bg, #252525);
+}
+
+.session-list-header {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--pui-border, #333);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--pui-sidebar-header-bg, #2a2a2a);
+}
+
+.session-list-header h4 {
+    margin: 0;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--pui-sidebar-text, #b0b0b0);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.session-count {
+    font-size: 12px;
+    color: var(--pui-text-muted, #888);
+    background: var(--pui-badge-bg, #333);
+    padding: 2px 8px;
+    border-radius: 12px;
+    border: 1px solid var(--pui-border, #444);
+}
+
+/* Список сессий */
+.session-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px;
+}
+
+.session-item {
+    padding: 10px;
+    margin-bottom: 6px;
+    border-radius: 6px;
+    border: 1px solid var(--pui-border, #333);
+    background: var(--pui-card-bg, #2a2a2a);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.session-item:hover {
+    background: var(--pui-card-hover-bg, #333);
+    border-color: var(--pui-border-hover, #444);
+}
+
+.session-item.active {
+    background: var(--pui-card-active-bg, #3a3a3a);
+    border-color: var(--pui-accent, #6366f1);
+    box-shadow: 0 0 0 1px var(--pui-accent, #6366f1) inset;
+}
+
+.session-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.session-item-id {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--pui-text, #e5e5e5);
+    word-break: break-all;
+}
+
+.session-item-status {
+    font-size: 11px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    border: 1px solid var(--pui-border, #444);
+    background: var(--pui-status-bg, #333);
+    color: var(--pui-status-text, #b0b0b0);
+    text-transform: uppercase;
+}
+
+.session-item-status.active {
+    background: var(--pui-status-active-bg, #1f8b4d);
+    color: white;
+    border-color: var(--pui-status-active-border, #2d9e5b);
+}
+
+.session-item-status.completed {
+    background: var(--pui-status-completed-bg, #1f6feb);
+    color: white;
+    border-color: var(--pui-status-completed-border, #2d86eb);
+}
+
+.session-item-status.failed {
+    background: var(--pui-status-failed-bg, #b02a2a);
+    color: white;
+    border-color: var(--pui-status-failed-border, #d63031);
+}
+
+.session-item-status.cancelled {
+    background: var(--pui-status-cancelled-bg, #6c757d);
+    color: white;
+    border-color: var(--pui-status-cancelled-border, #8e959a);
+}
+
+.session-item-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+    color: var(--pui-text-muted, #888);
+}
+
+.session-item-time {
+    font-family: monospace;
+    font-size: 10px;
+}
+
+.session-item-count {
+    background: var(--pui-badge-bg, #333);
+    padding: 1px 6px;
+    border-radius: 10px;
+    border: 1px solid var(--pui-border, #444);
+}
+
+/* Контейнер содержимого сессии */
+.session-content-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.session-content-header {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--pui-border, #333);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--pui-header-bg, #2a2a2a);
+    height: 50px;
+}
+
+.session-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.session-id {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--pui-text, #e5e5e5);
+    word-break: break-all;
+}
+
+.session-status {
+    font-size: 12px;
+    color: var(--pui-text-muted, #888);
+    text-transform: uppercase;
+}
+
+.session-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-clear-actions, .btn-export {
+    padding: 6px 12px;
+    border: 1px solid var(--pui-border, #444);
+    background: var(--pui-btn-bg, #333);
+    color: var(--pui-btn-text, #e5e5e5);
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.2s ease;
+}
+
+.btn-clear-actions:hover, .btn-export:hover {
+    background: var(--pui-btn-hover-bg, #444);
+    border-color: var(--pui-border-hover, #555);
+}
+
+.btn-clear-actions:active, .btn-export:active {
+    transform: translateY(1px);
+}
+
+/* Содержимое сессии */
+.session-content {
+    flex: 1;
+    overflow: auto;
+    padding: 16px;
+    background: var(--pui-bg, #1f1f1f);
+}
+
+/* Пустое состояние */
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: var(--pui-text-muted, #888);
+    text-align: center;
+    padding: 40px;
+}
+
+.empty-state p {
+    margin: 0 0 20px 0;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.btn-new-session-inline {
+    padding: 8px 16px;
+    border: 1px solid var(--pui-accent, #6366f1);
+    background: transparent;
+    color: var(--pui-accent, #6366f1);
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.btn-new-session-inline:hover {
+    background: var(--pui-accent, #6366f1);
+    color: white;
+}
+
+/* Список действий */
+.actions-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.action-item {
+    border: 1px solid var(--pui-border, #333);
+    border-radius: 8px;
+    background: var(--pui-card-bg, #2a2a2a);
+    padding: 12px;
+    transition: all 0.2s ease;
+}
+
+.action-item:hover {
+    border-color: var(--pui-border-hover, #444);
+    background: var(--pui-card-hover-bg, #333);
+}
+
+.action-item.completed {
+    border-left: 4px solid var(--pui-status-completed-bg, #1f6feb);
+}
+
+.action-item.failed {
+    border-left: 4px solid var(--pui-status-failed-bg, #b02a2a);
+}
+
+.action-item.running {
+    border-left: 4px solid var(--pui-status-active-bg, #1f8b4d);
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.7; }
+    100% { opacity: 1; }
+}
+
+/* Заголовок действия */
+.action-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--pui-border, #333);
+}
+
+.action-type {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--pui-accent, #6366f1);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    background: var(--pui-badge-bg, #333);
+    padding: 2px 8px;
+    border-radius: 4px;
+    border: 1px solid var(--pui-border, #444);
+}
+
+.action-timestamp {
+    font-size: 11px;
+    color: var(--pui-text-muted, #888);
+    font-family: monospace;
+    background: var(--pui-badge-bg, #333);
+    padding: 2px 6px;
+    border-radius: 4px;
+    border: 1px solid var(--pui-border, #444);
+}
+
+.action-status {
+    font-size: 11px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    border: 1px solid var(--pui-border, #444);
+    background: var(--pui-status-bg, #333);
+    color: var(--pui-status-text, #b0b0b0);
+    text-transform: uppercase;
+}
+
+.action-status.completed {
+    background: var(--pui-status-completed-bg, #1f6feb);
+    color: white;
+    border-color: var(--pui-status-completed-border, #2d86eb);
+}
+
+.action-status.failed {
+    background: var(--pui-status-failed-bg, #b02a2a);
+    color: white;
+    border-color: var(--pui-status-failed-border, #d63031);
+}
+
+.action-status.running {
+    background: var(--pui-status-active-bg, #1f8b4d);
+    color: white;
+    border-color: var(--pui-status-active-border, #2d9e5b);
+}
+
+/* Содержимое действия */
+.action-content {
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--pui-text, #e5e5e5);
+}
+
+/* Форма */
+.action-form .form-title {
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: var(--pui-text, #e5e5e5);
+}
+
+.form-choices {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 8px;
+}
+
+.choice-item {
+    font-size: 12px;
+    padding: 4px 8px;
+    border: 1px solid var(--pui-border, #444);
+    background: var(--pui-badge-bg, #333);
+    color: var(--pui-text, #e5e5e5);
+    border-radius: 4px;
+}
+
+.form-input {
+    font-family: monospace;
+    font-size: 12px;
+    background: var(--pui-code-bg, #252525);
+    padding: 8px;
+    border: 1px solid var(--pui-border, #444);
+    border-radius: 4px;
+    color: var(--pui-code-text, #e5e5e5);
+}
+
+/* Сообщение */
+.action-message .message-content {
+    background: var(--pui-message-bg, #2a2a2a);
+    padding: 12px;
+    border-radius: 6px;
+    border: 1px solid var(--pui-border, #444);
+    color: var(--pui-text, #e5e5e5);
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+/* Скрипт */
+.action-script .script-input,
+.action-script .script-output,
+.action-script .script-code {
+    font-family: monospace;
+    font-size: 12px;
+    background: var(--pui-code-bg, #252525);
+    padding: 8px;
+    border: 1px solid var(--pui-border, #444);
+    border-radius: 4px;
+    color: var(--pui-code-text, #e5e5e5);
+    margin-bottom: 8px;
+    white-space: pre-wrap;
+    overflow-x: auto;
+}
+
+.script-input::before,
+.script-output::before,
+.script-code::before {
+    content: attr(data-label);
+    display: block;
+    font-size: 10px;
+    color: var(--pui-text-muted, #888);
+    margin-bottom: 4px;
+    font-weight: 600;
+}
+
+/* RAG поиск */
+.action-rag .rag-query,
+.action-rag .rag-results {
+    font-family: monospace;
+    font-size: 12px;
+    background: var(--pui-code-bg, #252525);
+    padding: 8px;
+    border: 1px solid var(--pui-border, #444);
+    border-radius: 4px;
+    color: var(--pui-code-text, #e5e5e5);
+    margin-bottom: 8px;
+}
+
+/* Файл */
+.action-file .file-path,
+.action-file .file-content {
+    font-family: monospace;
+    font-size: 12px;
+    background: var(--pui-code-bg, #252525);
+    padding: 8px;
+    border: 1px solid var(--pui-border, #444);
+    border-radius: 4px;
+    color: var(--pui-code-text, #e5e5e5);
+    margin-bottom: 8px;
+    white-space: pre-wrap;
+    overflow-x: auto;
+}
+
+/* Команда */
+.action-command .command-text,
+.action-command .command-output,
+.action-command .command-error {
+    font-family: monospace;
+    font-size: 12px;
+    background: var(--pui-code-bg, #252525);
+    padding: 8px;
+    border: 1px solid var(--pui-border, #444);
+    border-radius: 4px;
+    color: var(--pui-code-text, #e5e5e5);
+    margin-bottom: 8px;
+    white-space: pre-wrap;
+    overflow-x: auto;
+}
+
+.command-output {
+    background: var(--pui-output-bg, #1a3d2e);
+    border-color: var(--pui-output-border, #2d9e5b);
+    color: var(--pui-output-text, #d1f2eb);
+}
+
+.command-error {
+    background: var(--pui-error-bg, #3d1a1a);
+    border-color: var(--pui-error-border, #d63031);
+    color: var(--pui-error-text, #ffcccc);
+}
+
+/* Неизвестное действие */
+.action-unknown .unknown-type {
+    font-weight: 600;
+    color: var(--pui-text-muted, #888);
+    margin-bottom: 8px;
+}
+
+.action-data {
+    font-family: monospace;
+    font-size: 12px;
+    background: var(--pui-code-bg, #252525);
+    padding: 8px;
+    border: 1px solid var(--pui-border, #444);
+    border-radius: 4px;
+    color: var(--pui-code-text, #e5e5e5);
+    white-space: pre-wrap;
+    overflow-x: auto;
+}
+
+/* Скроллбары */
+.session-list, .session-content {
+    scrollbar-width: thin;
+    scrollbar-color: var(--pui-scrollbar-thumb, #444) var(--pui-scrollbar-track, #2a2a2a);
+}
+
+.session-list::-webkit-scrollbar,
+.session-content::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.session-list::-webkit-scrollbar-track,
+.session-content::-webkit-scrollbar-track {
+    background: var(--pui-scrollbar-track, #2a2a2a);
+}
+
+.session-list::-webkit-scrollbar-thumb,
+.session-content::-webkit-scrollbar-thumb {
+    background: var(--pui-scrollbar-thumb, #444);
+    border-radius: 4px;
+}
+
+.session-list::-webkit-scrollbar-thumb:hover,
+.session-content::-webkit-scrollbar-thumb:hover {
+    background: var(--pui-scrollbar-thumb-hover, #555);
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    .ai-actions-body {
+        flex-direction: column;
+    }
+    
+    .session-list-container {
+        width: 100%;
+        height: 200px;
+        border-right: none;
+        border-bottom: 1px solid var(--pui-border, #333);
+    }
+    
+    .session-content-container {
+        height: calc(100% - 250px);
+    }
+}
+
+/* Темная тема по умолчанию */
+:root {
+    --pui-bg: #1f1f1f;
+    --pui-text: #e5e5e5;
+    --pui-text-muted: #888;
+    --pui-border: #333;
+    --pui-border-hover: #444;
+    --pui-header-bg: #2a2a2a;
+    --pui-header-text: #ffffff;
+    --pui-sidebar-bg: #252525;
+    --pui-sidebar-header-bg: #2a2a2a;
+    --pui-sidebar-text: #b0b0b0;
+    --pui-card-bg: #2a2a2a;
+    --pui-card-hover-bg: #333;
+    --pui-card-active-bg: #3a3a3a;
+    --pui-badge-bg: #333;
+    --pui-btn-bg: #333;
+    --pui-btn-hover-bg: #444;
+    --pui-btn-text: #e5e5e5;
+    --pui-accent: #6366f1;
+    --pui-status-bg: #333;
+    --pui-status-text: #b0b0b0;
+    --pui-status-active-bg: #1f8b4d;
+    --pui-status-active-border: #2d9e5b;
+    --pui-status-completed-bg: #1f6feb;
+    --pui-status-completed-border: #2d86eb;
+    --pui-status-failed-bg: #b02a2a;
+    --pui-status-failed-border: #d63031;
+    --pui-status-cancelled-bg: #6c757d;
+    --pui-status-cancelled-border: #8e959a;
+    --pui-code-bg: #252525;
+    --pui-code-text: #e5e5e5;
+    --pui-message-bg: #2a2a2a;
+    --pui-output-bg: #1a3d2e;
+    --pui-output-border: #2d9e5b;
+    --pui-output-text: #d1f2eb;
+    --pui-error-bg: #3d1a1a;
+    --pui-error-border: #d63031;
+    --pui-error-text: #ffcccc;
+    --pui-scrollbar-thumb: #444;
+    --pui-scrollbar-thumb-hover: #555;
+    --pui-scrollbar-track: #2a2a2a;
+}
+
+/* Светлая тема (опционально) */
+.pui-theme-light {
+    --pui-bg: #ffffff;
+    --pui-text: #1f1f1f;
+    --pui-text-muted: #666;
+    --pui-border: #e0e0e0;
+    --pui-border-hover: #d0d0d0;
+    --pui-header-bg: #f8f9fa;
+    --pui-header-text: #1f1f1f;
+    --pui-sidebar-bg: #f1f3f4;
+    --pui-sidebar-header-bg: #f8f9fa;
+    --pui-sidebar-text: #495057;
+    --pui-card-bg: #ffffff;
+    --pui-card-hover-bg: #f8f9fa;
+    --pui-card-active-bg: #e9ecef;
+    --pui-badge-bg: #e9ecef;
+    --pui-btn-bg: #f8f9fa;
+    --pui-btn-hover-bg: #e9ecef;
+    --pui-btn-text: #1f1f1f;
+    --pui-accent: #007bff;
+    --pui-status-bg: #e9ecef;
+    --pui-status-text: #495057;
+    --pui-status-active-bg: #28a745;
+    --pui-status-active-border: #20c997;
+    --pui-status-completed-bg: #007bff;
+    --pui-status-completed-border: #17a2b8;
+    --pui-status-failed-bg: #dc3545;
+    --pui-status-failed-border: #fd7e14;
+    --pui-status-cancelled-bg: #6c757d;
+    --pui-status-cancelled-border: #adb5bd;
+    --pui-code-bg: #f8f9fa;
+    --pui-code-text: #1f1f1f;
+    --pui-message-bg: #ffffff;
+    --pui-output-bg: #d4edda;
+    --pui-output-border: #c3e6cb;
+    --pui-output-text: #155724;
+    --pui-error-bg: #f8d7da;
+    --pui-error-border: #f5c6cb;
+    --pui-error-text: #721c24;
+    --pui-scrollbar-thumb: #c0c0c0;
+    --pui-scrollbar-thumb-hover: #a0a0a0;
+    --pui-scrollbar-track: #f1f3f4;
+}
