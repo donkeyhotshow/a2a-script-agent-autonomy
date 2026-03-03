@@ -1,5 +1,16 @@
 # API Server Documentation
 
+---
+doc:
+  id: new-request-flow/api-server
+  type: spec
+  machine_readable: true
+  tags: [client-api, http, websocket, fs, terminal, rag]
+  references:
+    - docs/DOCUMENTATION-MACHINE-READABLE.md
+    - docs/new-request-flow/PROTOCOL.md
+---
+
 > **⚠️ Важно:** Это документация для Client API Server (порт 3001).
 > 
 > **См.:** [ARCHITECTURE.md](ARCHITECTURE.md), [PROTOCOL.md](PROTOCOL.md), [API-CLIENT.md](API-CLIENT.md)

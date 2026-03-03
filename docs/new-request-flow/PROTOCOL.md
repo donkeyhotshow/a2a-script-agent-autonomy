@@ -1,5 +1,16 @@
 # Протокол взаимодействия
 
+---
+doc:
+  id: new-request-flow/protocol
+  type: spec
+  machine_readable: true
+  tags: [protocol, execute, result, action-key-shape]
+  references:
+    - docs/DOCUMENTATION-MACHINE-READABLE.md
+    - docs/new-request-flow/SCHEMAS.md
+---
+
 ## Обзор
 
 Протокол определяет формат запросов и ответов между компонентами системы:

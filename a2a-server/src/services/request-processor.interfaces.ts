@@ -6,7 +6,7 @@
  */
 
 import type { Graph } from './graph-store.service.js';
-import type { ExtractedFrameworks } from './framework-extractor.service.js';
+import type { FrameworkDetectionResult } from './framework-detector.service.js';
 import type { CodeBlock } from '../types/entity.types.js';
 import type { RequestContextBlock } from '../types/index.js';
 
@@ -28,7 +28,7 @@ export interface ProcessResult {
     relations?: { count: number } | undefined;
     questions?: string[] | undefined;
     missing?: string[] | undefined;
-    frameworks?: ExtractedFrameworks | undefined;
+    frameworks?: FrameworkDetectionResult | undefined;
     context?: RequestContextBlock | undefined;
     request_files?: string[] | undefined;
     activated_neuron_ids?: string[] | undefined;
@@ -78,7 +78,7 @@ export interface ActionContext {
     sessionId: string;
     taskText: string;
     codeBlocks: CodeBlock[];
-    frameworks: ExtractedFrameworks | undefined;
+    frameworks: FrameworkDetectionResult | undefined;
     graph: Graph;
 }
 
@@ -156,7 +156,7 @@ export interface RequestState {
 export interface ProcessingContext {
     taskText: string;
     codeBlocks: CodeBlock[];
-    frameworks: ExtractedFrameworks | undefined;
+    frameworks: FrameworkDetectionResult | undefined;
     graph: Graph;
     taskAnalysis: TaskAnalysis | null;
     activatedNeurons: string[];

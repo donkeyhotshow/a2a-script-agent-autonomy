@@ -1,5 +1,16 @@
 # Web UI Documentation
 
+---
+doc:
+  id: new-request-flow/web-ui
+  type: spec
+  machine_readable: true
+  tags: [web-ui, browser, panels, rag, terminal]
+  references:
+    - docs/DOCUMENTATION-MACHINE-READABLE.md
+    - docs/new-request-flow/PROTOCOL.md
+---
+
 > **⚠️ Важно:** Это документация для Web UI компонентов (a2a-client/web).
 > 
 > **См.:** [ARCHITECTURE.md](ARCHITECTURE.md), [PROTOCOL.md](PROTOCOL.md), [API-SERVER.md](API-SERVER.md)

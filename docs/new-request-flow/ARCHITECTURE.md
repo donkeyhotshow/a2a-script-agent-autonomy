@@ -1,5 +1,16 @@
 # Архитектура системы A2A
 
+---
+doc:
+  id: new-request-flow/architecture
+  type: spec
+  machine_readable: true
+  tags: [architecture, client, server, web, ports]
+  references:
+    - docs/DOCUMENTATION-MACHINE-READABLE.md
+    - docs/new-request-flow/PROTOCOL.md
+---
+
 ## Обзор
 
 Система состоит из трёх основных компонентов:
