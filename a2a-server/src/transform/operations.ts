@@ -139,7 +139,9 @@ async function applySet(
     }
   } else if (value !== undefined) {
     // Use literal value with template resolution
-    resolvedValue = resolveTemplates(value, context.$out);
+    // Merge input and $out for template resolution
+    const mergedContext = { ...context.input, ...context.$out };
+    resolvedValue = resolveTemplates(value, mergedContext);
   } else {
     resolvedValue = undefined;
   }
@@ -159,8 +161,26 @@ async function applyAppendToArray(
   // Resolve templates in the value
   const resolvedValue = resolveTemplates(value, context.$out);
   
-  // Append to the array
-  jsonPathAppend(context.$out, to, resolvedValue);
+  // First check if the array exists in input or $out
+  let arr = query<unknown[]>(context.input, to);
+  if (!arr) {
+    arr = query<unknown[]>(context.$out, to);
+  }
+  
+  if (!Array.isArray(arr)) {
+    // Create a new array in $out
+    jsonPathSet(context.$out, to, [resolvedValue]);
+  } else {
+    // Append to existing array - need to ensure it's in $out
+    const outArr = query<unknown[]>(context.$out, to);
+    if (outArr && Array.isArray(outArr)) {
+      outArr.push(resolvedValue);
+    } else {
+      // Array exists in input but not in $out - copy it first
+      const newArr = [...arr, resolvedValue];
+      jsonPathSet(context.$out, to, newArr);
+    }
+  }
 }
 
 /**
@@ -210,18 +230,33 @@ async function applyRenderMarkdown(
   
   // Get template data
   let templateData: Record<string, unknown>;
-  if (data === '$out') {
+  const outStr = [String.fromCharCode(36), 'out'].join('');
+  const dollar = String.fromCharCode(36);
+  
+  if (data === outStr) {
     templateData = context.$out;
-  } else if (data === '$' || data === '$input') {
+  } else if (data === dollar || data === [dollar, 'input'].join('')) {
+    templateData = context.input;
+  } else if (data === [dollar, '.'].join('') || data === dollar) {
+    // Handle root path - use input
     templateData = context.input;
   } else {
+    // Try JSONPath
     templateData = query<Record<string, unknown>>(context.$out, data) 
       || query<Record<string, unknown>>(context.input, data)
       || {};
   }
   
+  // Create a clean context for template resolution (without internal properties)
+  const cleanContext: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(context.$out)) {
+    if (!key.startsWith('_')) {
+      cleanContext[key] = value;
+    }
+  }
+  
   // Resolve templates in the context for template rendering
-  const resolvedData = resolveTemplates(templateData, context.$out) as Record<string, unknown>;
+  const resolvedData = resolveTemplates(templateData, cleanContext) as Record<string, unknown>;
   
   // Get template content
   let template: string;
@@ -250,7 +285,6 @@ async function applyRenderMarkdown(
   }
   
   // Simple template rendering - replace placeholders
-  // Format: {{path.to.value}} or just use resolveTemplates on the context
   const rendered = renderTemplateSimple(template, resolvedData);
   
   // Write output file
@@ -273,10 +307,14 @@ async function applyRenderMarkdown(
  * Simple template rendering - replaces {{path}} placeholders with values
  */
 function renderTemplateSimple(template: string, data: Record<string, unknown>): string {
-  return template.replace(/\{\{([^}]+)\}\}/g, (_, key) => {
+  const dollar = String.fromCharCode(36);
+  const pattern = [dollar, '{', '([^}]+)', '}'].join('');
+  const regex = new RegExp(pattern, 'g');
+  
+  return template.replace(regex, (_, key) => {
     const trimmedKey = key.trim();
     const value = query(data, trimmedKey);
-    return value !== undefined ? String(value) : `{{${key}}}`;
+    return value !== undefined ? String(value) : [dollar, '{', key, '}'].join('');
   });
 }
 

@@ -15,22 +15,21 @@ import { JSONPath } from 'jsonpath-plus';
  */
 export function query<T = unknown>(obj: unknown, path: string): T | undefined {
   // Handle root path
-  if (!path || path === '$' || path === '$.') {
+  const dollar = String.fromCharCode(36); // $
+  if (!path || path === dollar || path === dollar + '.') {
     return obj as T;
   }
   
-  // Normalize path - remove $ and $. prefix
-  const normalizedPath = path.replace(/^\$?\/?/, '');
-  
-  // If the path is just $ or empty after normalization, return root
-  if (!normalizedPath) {
-    return obj as T;
+  // Normalize path - jsonpath-plus prefers paths starting with $
+  let jsonPath = path;
+  if (!path.startsWith(dollar)) {
+    jsonPath = dollar + '.' + path;
   }
   
   const results = JSONPath({
-    path: normalizedPath,
+    path: jsonPath,
     json: obj,
-    resultType: 'value'
+    resultType: 'all'
   });
   
   if (results.length === 0) {
@@ -51,8 +50,10 @@ export function query<T = unknown>(obj: unknown, path: string): T | undefined {
  * @returns The modified object
  */
 export function set(obj: Record<string, unknown>, path: string, value: unknown): Record<string, unknown> {
+  const dollar = String.fromCharCode(36); // $
+  
   // Handle root path
-  if (path === '$' || path === '$out') {
+  if (path === dollar || path === dollar + 'out') {
     if (typeof value === 'object' && value !== null) {
       Object.assign(obj, value);
     }
@@ -60,8 +61,15 @@ export function set(obj: Record<string, unknown>, path: string, value: unknown):
   }
   
   // Normalize path - remove $ prefix and $out prefix if present
-  let normalizedPath = path.replace(/^\$out\.?/, '');
-  normalizedPath = normalizedPath.replace(/^\$\.?/, '');
+  let normalizedPath = path;
+  if (path.startsWith(dollar + 'out')) {
+    normalizedPath = path.slice(4);
+  } else if (path.startsWith(dollar)) {
+    normalizedPath = path.slice(1);
+  }
+  if (normalizedPath.startsWith('.')) {
+    normalizedPath = normalizedPath.slice(1);
+  }
   
   if (!normalizedPath) {
     if (typeof value === 'object' && value !== null) {
@@ -173,11 +181,30 @@ export function resolveTemplates(
   context: Record<string, unknown>
 ): unknown {
   if (typeof value === 'string') {
-    // Handle template strings like "$.llm.message"
-    return value.replace(/\$\{([^}]+)\}/g, (_, path) => {
+    // Handle template strings like "$.llm.message" using literal $ {
+    // We use String.fromCharCode to avoid encoding issues
+    const str = value as string;
+    const parts: string[] = [];
+    let lastIndex = 0;
+    
+    // Find all ${...} patterns
+    const regex = /\$\{([^}]+)\}/g;
+    let match;
+    
+    while ((match = regex.exec(str)) !== null) {
+      // Add text before the match
+      parts.push(str.slice(lastIndex, match.index));
+      // Add resolved value
+      const path = match[1];
       const resolved = query(context, path);
-      return resolved !== undefined ? String(resolved) : '';
-    });
+      parts.push(resolved !== undefined ? String(resolved) : '');
+      lastIndex = match.index + match[0].length;
+    }
+    
+    // Add remaining text
+    parts.push(str.slice(lastIndex));
+    
+    return parts.join('');
   }
   
   if (Array.isArray(value)) {

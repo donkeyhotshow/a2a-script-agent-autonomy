@@ -1,221 +1,92 @@
-# Transform Runtime
+# Server Transform Runtime
 
-Модуль runtime для выполнения JSON transform pipelines, определённых в [`server-transform.schema.json`](json-schemas/server-transform.schema.json).
+Runtime module that reads and applies JSON transform configurations following the Transform DSL specification.
 
-## Обзор
-
-Transform Runtime — это библиотека для декларативного преобразования JSON документов с использованием JSONPath. Она используется в A2A протоколе для трансформации данных между этапами симуляции.
-
-## Установка
-
-```bash
-cd a2a-server
-npm install jsonpath-plus
-```
-
-## Использование
-
-### Базовое использование
+## Usage
 
 ```typescript
-import { runTransformPipeline, loadTransformPipeline } from './src/transform/index.js';
+import { runTransformPipeline, loadTransformPipeline } from '@/transform/pipeline.js';
 
-// Загрузка pipeline из файла
-const pipeline = await loadTransformPipeline('simulations/coder/3/server-transforms-response.json');
+// Load pipeline from file
+const pipeline = await loadTransformPipeline('path/to/server-transforms.json');
 
-// Выполнение трансформации
-const input = { context: { task: 'test' } };
-const result = await runTransformPipeline(pipeline, input);
+// Run transform
+const result = await runTransformPipeline(pipeline, input, { 
+  baseDir: 'path/to/files' // used for file operations like parse-json-from-md
+});
 
-console.log(result.output); // transformed output
-console.log(result.success); // true/false
+if (result.success) {
+  console.log('Transformation successful:', result.output);
+} else {
+  console.error('Transformation failed:', result.error);
+}
 ```
 
-### Использование с файлами
+## Operations
 
-```typescript
-import { runTransformPipelineFromFile } from './src/transform/index.js';
-
-const result = await runTransformPipelineFromFile(
-  'simulations/coder/3/server-transforms-response.json',
-  { context: { task: 'test' } },
-  { baseDir: '/path/to/simulations/coder/3' }
-);
-
-console.log(result.files); // { 'request.md': '...', ... }
-```
-
-## API
-
-### runTransformPipeline
-
-Выполняет transform pipeline на входном документе.
-
-```typescript
-function runTransformPipeline(
-  pipeline: TransformPipeline,
-  input: Record<string, unknown>,
-  options?: TransformOptions
-): Promise<TransformResult>
-```
-
-**Параметры:**
-
-- `pipeline` - Определение pipeline (загруженное из JSON)
-- `input` - Входной JSON документ
-- `options` - Дополнительные опции:
-  - `baseDir` - Базовая директория для file I/O операций
-  - `fs` - Кастомная реализация файловой системы
-  - `renderTemplate` - Кастомный рендер шаблонов
-
-**Возвращает:**
-
-- `TransformResult` - Результат трансформации:
-  - `output` - Трансформированный JSON документ
-  - `files` - Записанные файлы (опционально)
-  - `success` - Успешность трансформации
-  - `error` - Сообщение об ошибке (если failed)
-
-### loadTransformPipeline
-
-Загружает pipeline из JSON файла.
-
-```typescript
-function loadTransformPipeline(filePath: string): Promise<TransformPipeline>
-```
-
-### runTransformPipelineFromFile
-
-Загружает и выполняет pipeline из файла.
-
-```typescript
-function runTransformPipelineFromFile(
-  pipelinePath: string,
-  input: Record<string, unknown>,
-  options?: TransformOptions
-): Promise<TransformResult>
-```
-
-### loadSimulationTransform
-
-Загружает transform для симуляции.
-
-```typescript
-async function loadSimulationTransform(
-  simulationDir: string,
-  type: 'request' | 'response'
-): Promise<TransformPipeline | null>
-```
-
-### runSimulationTransform
-
-Выполняет transform для шага симуляции.
-
-```typescript
-async function runSimulationTransform(
-  simulationDir: string,
-  input: Record<string, unknown>,
-  type: 'request' | 'response',
-  options?: TransformOptions
-): Promise<TransformResult>
-```
-
-### validatePipeline
-
-Валидирует pipeline и возвращает массив ошибок.
-
-```typescript
-function validatePipeline(pipeline: unknown): string[]
-```
-
-## Поддерживаемые операции
-
-### copy
-
-Копирует данные из одного JSONPath в другой.
+### 1. copy
+Copies value from one JSONPath to another.
 
 ```json
 {
   "op": "copy",
-  "from": "$.context",
-  "to": "$.context"
+  "from": "$.source.path",
+  "to": "$.destination.path"
 }
 ```
 
-### set
-
-Устанавливает значение по JSONPath.
+### 2. set
+Sets value at specified JSONPath. Value can be a template string with JSONPath placeholders.
 
 ```json
 {
   "op": "set",
-  "path": "$.result",
+  "path": "$.target.path",
   "value": {
-    "completed": true
+    "key": "$.source.value"
   }
 }
 ```
 
-С использованием `valueFrom`:
-
-```json
-{
-  "op": "set",
-  "path": "$.execute",
-  "valueFrom": "$.llm.params"
-}
-```
-
-### append-to-array
-
-Добавляет значение в массив.
+### 3. append-to-array
+Appends value to array at specified JSONPath.
 
 ```json
 {
   "op": "append-to-array",
-  "to": "$.context.history",
+  "to": "$.target.array",
   "value": {
-    "role": "assistant",
-    "message": "$.llm.message"
+    "key": "value"
   }
 }
 ```
 
-Поддерживает template placeholders: `$.path.to.value`
-
-### parse-json-from-md
-
-Читает markdown файл и извлекает JSON.
+### 4. parse-json-from-md
+Parses JSON from markdown file and places it at JSONPath.
 
 ```json
 {
   "op": "parse-json-from-md",
   "fromFile": "response.md",
   "jsonPath": "$",
-  "to": "$llm"
+  "to": "$.llm"
 }
 ```
 
-Извлекает JSON из markdown (ищет ` ```json ... ``` ` блоки).
-
-### render-markdown
-
-Рендерит markdown шаблон с данными.
+### 5. render-markdown
+Renders markdown from template file using data context.
 
 ```json
 {
   "op": "render-markdown",
   "templateRef": "simulations/coder/3/request.md",
-  "data": "$out",
+  "data": "$",
   "outputFile": "request.md"
 }
 ```
 
-Заменяет `{{path}}` плейсхолдеры значениями из контекста.
-
-### switch
-
-Условная трансформация на основе значения дискриминатора.
+### 6. switch
+Conditional execution based on discriminator value.
 
 ```json
 {
@@ -230,142 +101,45 @@ function validatePipeline(pipeline: unknown): string[]
           "query": "$.llm.params.query"
         }
       }
-    },
-    "read-file": {
-      "op": "set",
-      "path": "$.execute",
-      "value": {
-        "read-file": {
-          "path": "$.llm.params.file"
-        }
-      }
-    }
-  },
-  "default": {
-    "op": "set",
-    "path": "$.execute",
-    "value": {
-      "message": "Unknown action"
     }
   }
 }
 ```
 
-## Template Placeholders
+## Error Handling
 
-В значениях операций можно использовать плейсхолдеры:
+All operations include robust error handling with detailed messages. If any step fails:
 
-- `$.path.to.value` — ссылка на значение в контексте
-- `${path.to.value}` — альтернативный синтаксис в строках
-
-Пример:
-
-```json
+```typescript
 {
-  "op": "append-to-array",
-  "to": "$.context.history",
-  "value": {
-    "role": "assistant",
-    "message": "$.llm.message",
-    "action": "$.llm.action"
+  success: false,
+  error: {
+    message: "Transformation failed: ENOENT: no such file or directory, open 'c:\\workspace\\simulations\\coder\\3\\response.md'",
+    details: ... // additional context
   }
 }
 ```
 
-## JSONPath
+## Testing
 
-Используется библиотека [jsonpath-plus](https://www.npmjs.com/package/jsonpath-plus) с расширенным синтаксисом JSONPath.
-
-Основные примеры:
-
-| JSONPath | Описание |
-|----------|----------|
-| `$` | Корень документа |
-| `$.key` | Доступ к ключу |
-| `$.parent.child` | Вложенные ключи |
-| `$.array[0]` | Элемент массива |
-| `$.array[*]` | Все элементы массива |
-| `$..key` | Рекурсивный поиск |
-| `$out` | Выходной документ в контексте |
-
-## Обработка ошибок
-
-```typescript
-const result = await runTransformPipeline(pipeline, input);
-
-if (!result.success) {
-  console.error('Transform failed:', result.error);
-}
+```bash
+cd a2a-server && npx vitest run tests/transform-runtime.test.ts
 ```
 
-## Примеры использования
+Test file covers:
+- All 6 operations
+- Template resolution
+- File IO operations
+- Error handling
+- Integration with coder/3 simulation
 
-### Трансформация ответа LLM
-
-```typescript
-import { runSimulationTransform } from './src/transform/index.js';
-
-// Трансформируем response.json -> response.json (post-LLM)
-const responseInput = await loadJson('response.json');
-const responseResult = await runSimulationTransform(
-  'simulations/coder/3',
-  responseInput,
-  'response'
-);
-
-// Трансформируем request.json -> request.md (pre-LLM)
-const requestInput = await loadJson('request.json');
-const requestResult = await run 'simulations/cSimulationTransform(
- oder/3',
-  requestInput,
-  'request'
-);
-```
-
-### Кастомная файловая система
-
-```typescript
-import { runTransformPipeline } from './src/transform/index.js';
-
-const customFs = {
-  readFile: async (path) => { /* custom read */ },
-  writeFile: async (path, content) => { /* custom write */ },
-  exists: async (path) => { /* custom exists */ }
-};
-
-const result = await runTransformPipeline(
-  pipeline,
-  input,
-  { fs: customFs }
-);
-```
-
-## Файловая структура модуля
+## Architecture
 
 ```
-src/transform/
-├── index.ts        # Экспорты модуля
-├── types.ts        # TypeScript типы
-├── jsonpath.ts     # Утилиты JSONPath
-├── operations.ts   # Реализация операций
-└── pipeline.ts     # Основной runner
-```
-
-## Схема
-
-Полная схема pipeline определена в [`json-schemas/server-transform.schema.json`](json-schemas/server-transform.schema.json).
-
-Валидация:
-
-```typescript
-import Ajv from 'ajv';
-import schema from './json-schemas/server-transform.schema.json';
-
-const ajv = new Ajv();
-const validate = ajv.compile(schema);
-
-const isValid = validate(pipeline);
-if (!isValid) {
-  console.error('Validation errors:', validate.errors);
-}
-```
+├── a2a-server/src/transform/
+│   ├── types.ts          # TypeScript types and definitions
+│   ├── jsonpath.ts       # JSONPath utilities
+│   ├── operations.ts     # Operation implementations
+│   └── pipeline.ts       # Main pipeline orchestration
+└── a2a-server/tests/
+    └── transform-runtime.test.ts # Comprehensive tests
