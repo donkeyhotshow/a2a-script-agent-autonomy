@@ -27,9 +27,9 @@ Design and implement a small runtime that:
   - `docs/new-request-flow/json-schemas/server-invoke-response-first-form.schema.json`
   - `docs/new-request-flow/json-schemas/server-invoke-response-execute.schema.json`
   - `docs/new-request-flow/json-schemas/server-invoke-response-pending.schema.json`
-- Example transforms to study (current `.md` descriptions, to become JSON):
-  - `simulations/coder/3/server-transforms-request.md`
-  - `simulations/coder/3/server-transforms-response.md`
+- Example transforms to study (now in JSON format):
+  - `simulations/coder/3/server-transforms-request.json`
+  - `simulations/coder/3/server-transforms-response.json`
   - Similar files in `coder-smart/`, `auto-ai/`, `task-decomposition/`
 
 ## Design requirements

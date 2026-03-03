@@ -42,7 +42,7 @@ Create a CLI/Node script (and CI hook) that validates:
        - Validate against `server-transform.schema.json`.
 2. **Implement CLI**
    - Language: TypeScript/Node.
-   - Location: e.g. `tools/validate-simulations/` or under a dedicated package.
+   - Location: `a2a-server/scripts/sim-validate.ts`
    - Responsibilities:
      - Discover simulation steps (glob `simulations/**/request.json` / `response.json` / `server-transforms-*.json`).
      - Run JSON Schema validation using a library (e.g. AJV).
@@ -53,8 +53,8 @@ Create a CLI/Node script (and CI hook) that validates:
      - `--sim <name>` to restrict to a single simulation.
      - `--json` to output machine-readable results (for CI tooling).
 3. **CI integration**
-   - Add a script to `package.json` (root or specific package), e.g.:
-     - `"validate:simulations": "node tools/validate-simulations/index.js"`
+   - Add a script to `a2a-server/package.json`:
+     - `"validate:simulations": "tsx a2a-server/scripts/sim-validate.ts"`
    - Wire it into:
      - Local dev workflow (document in `README` / `AGENTS.md`).
      - CI pipeline (GitHub Actions, etc.) so that PRs touching `simulations/` or `docs/new-request-flow/json-schemas` must pass validation.

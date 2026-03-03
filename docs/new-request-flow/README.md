@@ -1,109 +1,61 @@
-# полный протокол взаимодействия систем.
+# Протокол взаимодействия (new-request-flow)
 
-цель - стандартизировать ответы сервера и стандартизировать то как клиент обрабатывает ответы . в конце надо будет
-написать единую схему .
-далее , web - веб интерфейс клиента . клиент - a2a-client . сервер - a2a-server .
+Цель: стандартизировать ответы сервера и обработку ответов клиентом; описать полный поток Web → Client API → Server. Термины: **web** — веб-интерфейс клиента (`a2a-client/web`), **клиент** — `a2a-client`, **Client API** — api-server (порт 3001), **сервер** — `a2a-server` (порт 3000).
 
-## до запросов на сервер
+## Текущая архитектура
 
-web должен иметь страничку конфигурации клиента , для указания provider , который будет отвечать на запросы , а также
-нужно иметь редактор списка проектов , для которых сервер будет выполнять работу .
+- **Web не знает адрес сервера.** Все запросы к серверу идут через Client API (api-server). Web настраивает только URL Client API (в настройках: «Client API URL», по умолчанию `/api/v1` или `http://localhost:3001/api/v1`).
+- **Конфигурация на Web:** страница настроек (Settings) для URL Client API; редактор проектов (Projects) — список проектов, от имени которых создаются задачи.
 
-## рассматриваем протокол на примере fix-vue-imports
+## Поток задачи (Task Flow): Web → Client API → Server
 
-у клиента есть web интерфейс . сейчас, веб интерфейс , напрямую отправляет запросы на сервер , минуя апи клиента . ето
-неправильный подход . в етом документе должен быть описан полный флоу всех систем .
-главное в новом протоколе , ето что web не знает адрес сервера , а только клиент .
+Реализованный поток. Задача создаётся **от имени выбранного проекта**.
 
-### инициализация
+1. **Web:** поле ввода задачи + кнопка Send → открывается панель с прелоадером («Creating session…»).
+2. **POST /api/v1/sessions** (Web → Client API): тело `{ projectId, task, title }` → Client API сохраняет сессию (в `project.path/.a2a/sessions/` или в `storage/sessions/<projectId>/` при отсутствии path у проекта), возвращает объект сессии с `id` и `projectId`.
+3. **Фиксация:** после получения идентификаторов панель переходит в режим пластилина (незакрываемая), отображаются sessionId и projectId.
+4. **POST /api/v1/invoke** (Web → Client API): тело `{ task, sessionId, projectId }` → Client API проксирует на сервер только `{ task }`, получает `promiseId`, при наличии sessionId/projectId обновляет сессию (lastPromiseId, статус IN_PROGRESS), возвращает ответ Web.
+5. **Опрос:** Web запрашивает **GET /api/v1/requests/:promiseId/status** до `completed`/`failed`, затем **GET /api/v1/requests/:promiseId/result** → в панели отображается первый ответ сервера (context + execute).
 
-на web , должно быть поле для ввода новой задачи , для новой сессии .
-значит запрос должен быть направлен на апи клиента . клиент , в папке проекта , для которого создается сессия ,
-добавляет новую сессию .
-мне требуется , чтоб при сохранении данных сессий , на web появлялось окно сессии . пока сессия еще не активирована .
-тоесть , все данные хранятся на клиенте . запрос и state окошка на вебе .
-окошко можно перемещать или переносить или менять состояние , сворачивать , разворачивать , дроп-зона .
-здесь мы уже должны иметь контроль надо окном . очень важно , что каждая сессия в отдельной панели , а панели могут быть
-в какомто состоянии отображения .
-в етом состоянии , панель нельзя закрыть , пока задача не будет отменена . в етом состоянии можно свернуть в дропзону ,
-а крестик превращает панель в квадрат .
-значит нам нужно кнопки отменить и применить .
-на применить , мы должны отправить запрос на апи клиента , там что надо сохранить и отправить запрос , на который сервер
-ответит либо обычным ответом либо с promiseId и ето надо добавить в данные сессии . сейчас ето сделано на web , но по
-новым правилам , веб не делает запросы на сервер.
+Подробно: [WEB-UI.md](WEB-UI.md) (раздел «Поток задачи»), [API-SERVER.md](API-SERVER.md). Формат первого запроса к серверу совпадает с симуляциями: только `{ task }` (см. [simulations/SCHEMA.md](../../simulations/SCHEMA.md)).
 
-## первый запрос
+## Первый запрос и первый ответ
 
-по сути , мы делаем поисковый запрос сервисов сервера .
-У симуляціях перший запит — лише `{ "task": "..." }` (див. simulations/SCHEMA.md). sessionId/projectId додає клієнт на
-рівні Client API.
+- **Первый запрос к серверу** — по сути поиск подходящих действий по задаче. В симуляциях первый запрос — только `{ "task": "..." }`. SessionId/projectId хранятся на клиенте (Client API и Web); сервер stateless.
+- **Первый ответ** — сервер возвращает, например, `execute.form` с `choices` (список действий). Пример: [simulations/fix-vue-imports/1/response.json](../../simulations/fix-vue-imports/1/response.json). Пользователь выбирает действие (например, fix-vue-imports); дальнейшие шаги — по протоколу (result → следующий request).
 
-## первый ответ
+## Пример потока по симуляции fix-vue-imports
 
-в C:\workspace\org-carrier\a2a-script-agent\simulations\fix-vue-imports\1\response.json
-отображено ответ . данные должны сохранится в сессии и потом прийти на web и отобразить список .
-здесь мы выбираем , из предложенного сервером , варианты алгоритмов , которые может выполнить сервер на кодовой базе . и
-есть еще резервные варианты , с участием запросов в LLM .
+- Шаг 1: [request.json](../../simulations/fix-vue-imports/1/request.json) (`task`) → [response.json](../../simulations/fix-vue-imports/1/response.json) (form с choices).
+- Шаги 2–5: после выбора действия — request/response по шагам, например [2/request.json](../../simulations/fix-vue-imports/2/request.json), [2/response.json](../../simulations/fix-vue-imports/2/response.json), и далее 3, 4, 5.
 
-## выбрали fix-vue-imports .
+## Симуляции
 
-сохранить выбор .
-убрали список .
+Список и схема: каталог **simulations/** и [simulations/SCHEMA.md](../../simulations/SCHEMA.md).
 
-нужны кнопочки далее (пропадает при авто) и авто (меняется на стоп) . тут все понятно .
-
-## нажали далее
-
-C:\workspace\org-carrier\a2a-script-agent\simulations\fix-vue-imports\2\request.json
-
-C:\workspace\org-carrier\a2a-script-agent\simulations\fix-vue-imports\2\response.json
-
-## нажали далее
-
-C:\workspace\org-carrier\a2a-script-agent\simulations\fix-vue-imports\3\request.json
-C:\workspace\org-carrier\a2a-script-agent\simulations\fix-vue-imports\3\response.json
-
-## нажали далее
-
-C:\workspace\org-carrier\a2a-script-agent\simulations\fix-vue-imports\4\request.json
-C:\workspace\org-carrier\a2a-script-agent\simulations\fix-vue-imports\4\response.json
-
-## нажали далее
-
-C:\workspace\org-carrier\a2a-script-agent\simulations\fix-vue-imports\5\request.json
-C:\workspace\org-carrier\a2a-script-agent\simulations\fix-vue-imports\5\response.json
-
-# что я понял .
-
-web должен командывать клиентом , через апи клиента . веб приложение само ничего не запускает , а только вносит данные и
-командует клиентом . у клиента свои обязаности . поетому надо отвязать web от сервера , потому что web не сможет
-обрабатывать ответы сервера напрямую .
+| Симуляция | Описание |
+|-----------|----------|
+| **fix-vue-imports** | Исправление Vue-импортов (шаги без LLM). |
+| **fix-vue-imports-batched** | То же, batched. |
+| **dialog** | Диалог с LLM (request.md/response.md в шагах с LLM). |
+| **coder** | Диалог + RAG + read-file/write-file. |
+| **coder-smart** | Контекст-документ (capture-task → analyze-intent → llm-first-iteration → create-context-document). |
 
 ## ADR
 
-- `docs/adr/ADR-0001-simulations-as-golden-standard.md` - симуляции являются "golden standard" для сравнения поведения слоев
-
-## Симуляції
-
-Список і схема: **simulations/** та **simulations/SCHEMA.md**.
-
-- **fix-vue-imports** — виправлення Vue імпортів (кроки без LLM).
-- **fix-vue-imports-batched** — те саме, batched.
-- **dialog** — діалог з LLM (request.md/response.md у кроках з LLM).
-- **coder** — діалог + RAG + read-file/write-file.
-- **coder-smart** — контекст-документ (capture-task → analyze-intent → llm-first-iteration → create-context-document).
+- [docs/adr/ADR-0001-simulations-as-golden-standard.md](../adr/ADR-0001-simulations-as-golden-standard.md) — симуляции как «golden standard» для сравнения поведения слоёв.
 
 ## Документация
 
 | Документ | Описание |
 |----------|----------|
-| [ARCHITECTURE.md](ARCHITECTURE.md) | Общая архитектура системы |
-| [DATA-FLOW.md](DATA-FLOW.md) | Полная диаграмма потока данных |
-| [PROTOCOL.md](PROTOCOL.md) | Протокол взаимодействия |
-| [WEB-UI.md](WEB-UI.md) | Web UI документация |
-| [API-SERVER.md](API-SERVER.md) | Client API Server документация |
-| [API-CLIENT.md](API-CLIENT.md) | API Client документация |
+| [ARCHITECTURE.md](ARCHITECTURE.md) | Архитектура системы |
+| [PROTOCOL.md](PROTOCOL.md) | Протокол взаимодействия, action-key shape, Actions vs AI-Actions |
+| [WEB-UI.md](WEB-UI.md) | Web UI: потоки, endpoints, панели, Plasticine |
+| [API-SERVER.md](API-SERVER.md) | Client API Server: роуты, сессии, хранение, прокси invoke/requests |
+| [API-CLIENT.md](API-CLIENT.md) | HTTP-клиент для сервера (api-client) |
 | [SESSION-FLOW.md](SESSION-FLOW.md) | Поток сессий |
-| [SCHEMAS.md](SCHEMAS.md) | JSON схемы |
+| [DATA-FLOW.md](DATA-FLOW.md) | Диаграмма потока данных |
+| [SCHEMAS.md](SCHEMAS.md) | JSON-схемы |
 | [SIMULATION-FORMAT.md](SIMULATION-FORMAT.md) | Формат симуляций |
-| [simulations/SCHEMA.md](../../simulations/SCHEMA.md) | Каноничная схема симуляций |
+| [simulations/SCHEMA.md](../../simulations/SCHEMA.md) | Каноническая схема симуляций |

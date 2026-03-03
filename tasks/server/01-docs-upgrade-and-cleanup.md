@@ -38,9 +38,7 @@ Bring all protocol/simulation documentation into sync with the new canonical sim
    - Replace all `server-transforms-request.md` / `server-transforms-response.md` in `simulations/**` with:
      - `server-transforms-request.json`
      - `server-transforms-response.json`
-   - Use JSONPath-based pipeline format defined in:
-     - `docs/new-request-flow/json-schemas/server-transform.schema.json`
-   - For each step, preserve existing behavior (read the old `.md` description and encode the same logic as `type: "pipeline"`, `steps: [...]` using `copy`, `set`, `append-to-array`, `parse-json-from-md`, `render-markdown`, `switch`).
+   - These JSON files already exist in simulations - verify they match the schema.
 3. **Canonicalization**
    - Ensure all references in docs use the new:
      - `execute.form.choices` first-response format (instead of legacy `actions[]`).

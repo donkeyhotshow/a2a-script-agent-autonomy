@@ -38,10 +38,52 @@
         return null;
     }
 
-    function setPanelContent(contentEl, state, data) {
+    function renderExecute(contentEl, execute, data, taskFlowRef) {
+        if (!contentEl || !execute) return;
+        const form = execute.form;
+        const message = execute.message;
+        if (form && Array.isArray(form.choices) && form.choices.length > 0) {
+            const title = form.title ? `<p class="task-flow-form-title">${escapeHtml(form.title)}</p>` : '';
+            const buttons = form.choices.map((c) =>
+                `<button type="button" class="task-flow-choice-btn" data-choice-id="${escapeHtml(c.id)}">${escapeHtml(c.label || c.id)}</button>`
+            ).join('');
+            contentEl.innerHTML = `
+        <div class="task-flow-response task-flow-form-wrap">
+          ${title}
+          <div class="task-flow-choices">${buttons}</div>
+        </div>`;
+            contentEl.querySelectorAll('.task-flow-choice-btn').forEach((btn) => {
+                btn.addEventListener('click', () => {
+                    const choiceId = btn.getAttribute('data-choice-id');
+                    if (choiceId && taskFlowRef && taskFlowRef.sendChoice) taskFlowRef.sendChoice(choiceId, contentEl);
+                });
+            });
+            return;
+        }
+        if (message != null && typeof message === 'string') {
+            contentEl.innerHTML = `
+        <div class="task-flow-response task-flow-message-wrap">
+          <p class="task-flow-message">${escapeHtml(message)}</p>
+        </div>`;
+            return;
+        }
+        const ctx = data?.context ? JSON.stringify(data.context, null, 2) : '';
+        const exec = data?.execute ? JSON.stringify(data.execute, null, 2) : '';
+        contentEl.innerHTML = `
+        <div class="task-flow-response">
+          <div class="task-flow-response-section"><strong>Context</strong><pre>${escapeHtml(ctx || '{}')}</pre></div>
+          <div class="task-flow-response-section"><strong>Execute</strong><pre>${escapeHtml(exec || '{}')}</pre></div>
+        </div>`;
+    }
+
+    function setPanelContent(contentEl, state, data, taskFlowRef) {
         if (!contentEl) return;
         if (state === 'loading') {
             contentEl.innerHTML = '<div class="task-flow-preloader"><div class="task-flow-spinner"></div><p>Creating session…</p></div>';
+            return;
+        }
+        if (state === 'sending') {
+            contentEl.innerHTML = '<div class="task-flow-preloader"><div class="task-flow-spinner"></div><p>Sending…</p></div>';
             return;
         }
         if (state === 'fixated') {
@@ -53,14 +95,8 @@
         </div>`;
             return;
         }
-        if (state === 'firstResponse') {
-            const ctx = data?.context ? JSON.stringify(data.context, null, 2) : '';
-            const exec = data?.execute ? JSON.stringify(data.execute, null, 2) : '';
-            contentEl.innerHTML = `
-        <div class="task-flow-response">
-          <div class="task-flow-response-section"><strong>Context</strong><pre>${escapeHtml(ctx || '{}')}</pre></div>
-          <div class="task-flow-response-section"><strong>Execute</strong><pre>${escapeHtml(exec || '{}')}</pre></div>
-        </div>`;
+        if (state === 'firstResponse' || state === 'response') {
+            renderExecute(contentEl, data?.execute, data, taskFlowRef || null);
         }
     }
 
@@ -96,6 +132,9 @@
         panel: null,
         pui: null,
         fixed: false,
+        _sessionId: null,
+        _projectId: null,
+        _lastContext: null,
 
         init() {
             const form = document.getElementById('taskSendForm');
@@ -192,7 +231,7 @@
                 }
 
                 updateStatus(contentEl, 'Calling server…');
-                const invokeRes = await request('POST', '/invoke', { task });
+                const invokeRes = await request('POST', '/invoke', { task, sessionId, projectId });
                 const promiseId = invokeRes?.promiseId ?? invokeRes?.data?.promiseId;
                 if (!promiseId) throw new Error('No promiseId');
 
@@ -209,11 +248,54 @@
 
                 const ctx = result?.context ?? result?.data?.context;
                 const exec = result?.execute ?? result?.data?.execute;
-                setPanelContent(contentEl, 'firstResponse', { context: ctx, execute: exec });
+                this._sessionId = sessionId;
+                this._projectId = projectId;
+                this._lastContext = ctx != null ? (typeof ctx === 'object' ? ctx : {}) : {};
+                setPanelContent(contentEl, 'firstResponse', { context: ctx, execute: exec, sessionId, projectId }, this);
             } catch (err) {
                 if (contentEl) {
                     contentEl.innerHTML = '<div class="task-flow-error">' + escapeHtml(String(err?.message || err)) + '</div>';
                 }
+                window.addNotification?.(String(err?.message || err), 'error');
+            }
+        },
+
+        async sendChoice(choiceId, contentEl) {
+            const sessionId = this._sessionId;
+            const projectId = this._projectId;
+            const prevContext = this._lastContext;
+            if (!sessionId || !projectId || !prevContext) {
+                window.addNotification?.('Session or context missing', 'error');
+                return;
+            }
+            const context = {
+                ...prevContext,
+                session_id: sessionId,
+                action: 'approve_action',
+                selectedAction: { actionId: choiceId },
+            };
+            setPanelContent(contentEl, 'sending', null);
+            try {
+                const invokeRes = await request('POST', '/invoke', { context, sessionId, projectId });
+                const promiseId = invokeRes?.promiseId ?? invokeRes?.data?.promiseId;
+                if (!promiseId) throw new Error('No promiseId');
+                const { status, result: res } = await pollResult(promiseId);
+                if (status === 'timeout') {
+                    setPanelContent(contentEl, 'response', { execute: {} }, this);
+                    contentEl.innerHTML = '<div class="task-flow-error">Timeout</div>';
+                    return;
+                }
+                if (status === 'failed') {
+                    setPanelContent(contentEl, 'response', { execute: {} }, this);
+                    contentEl.innerHTML = '<div class="task-flow-error">Request failed</div>';
+                    return;
+                }
+                const ctx = res?.context ?? res?.data?.context;
+                const exec = res?.execute ?? res?.data?.execute;
+                this._lastContext = ctx != null ? (typeof ctx === 'object' ? ctx : {}) : {};
+                setPanelContent(contentEl, 'response', { context: ctx, execute: exec, sessionId, projectId }, this);
+            } catch (err) {
+                contentEl.innerHTML = '<div class="task-flow-error">' + escapeHtml(String(err?.message || err)) + '</div>';
                 window.addNotification?.(String(err?.message || err), 'error');
             }
         },
@@ -229,7 +311,7 @@
                 const statusEl = contentEl?.querySelector('.task-flow-status');
                 if (statusEl) statusEl.textContent = 'Calling server…';
 
-                const invokeRes = await request('POST', '/invoke', { task });
+                const invokeRes = await request('POST', '/invoke', { task, sessionId, projectId });
                 const promiseId = invokeRes?.promiseId ?? invokeRes?.data?.promiseId;
                 if (!promiseId) throw new Error('No promiseId');
 
@@ -246,7 +328,10 @@
 
                 const ctx = result?.context ?? result?.data?.context;
                 const exec = result?.execute ?? result?.data?.execute;
-                setPanelContent(contentEl, 'firstResponse', { context: ctx, execute: exec });
+                this._sessionId = sessionId;
+                this._projectId = projectId;
+                this._lastContext = ctx != null ? (typeof ctx === 'object' ? ctx : {}) : {};
+                setPanelContent(contentEl, 'firstResponse', { context: ctx, execute: exec, sessionId, projectId }, this);
             } catch (err) {
                 if (contentEl) contentEl.innerHTML = '<div class="task-flow-error">' + escapeHtml(String(err?.message || err)) + '</div>';
                 window.addNotification?.(String(err?.message || err), 'error');

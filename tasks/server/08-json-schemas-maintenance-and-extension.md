@@ -35,7 +35,7 @@ This task covers:
 - Existing schemas:
   - `docs/new-request-flow/json-schemas/*`
 - Validation CLI task:
-  - `tasks/07-simulation-validator-and-ci.md`
+  - `tasks/server/07-simulation-validator-and-ci.md` (реализация в `a2a-server/scripts/sim-validate.ts`)
 
 ## Work to perform
 

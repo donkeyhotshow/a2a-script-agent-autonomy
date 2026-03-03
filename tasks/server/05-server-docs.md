@@ -8,7 +8,7 @@ Describe the `a2a-server` component in detail: architecture, protocols, actions,
 
 - Server source:
   - `a2a-server/src/index.ts`
-  - `a2a-server/src/server.ts`
+  - `a2a-server/src/app.ts`
   - `a2a-server/src/routes/*`
   - `a2a-server/src/services/*`
   - `a2a-server/src/actions/definitions/*`

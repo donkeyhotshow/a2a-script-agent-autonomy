@@ -30,7 +30,10 @@ Design and document how to use `simulations/` to verify correctness of `a2a-serv
 ## Work to perform
 
 1. **Define server simulation runner**
-   - Design a test runner (Node script / test helper) that:
+   - Use existing test runner scripts in `a2a-server/scripts/`:
+     - `a2a-server/scripts/sim-run.ts` - runs simulations against server
+     - `a2a-server/scripts/sim-validate.ts` - validates simulation responses
+   - Design additional test runner (Node script / test helper) that:
      - Iterates over `simulations/<sim>/**/request.json`.
      - For each step:
        - Sends `request.json` to `/api/v1/invoke` on a running `a2a-server` instance (or supertest in-process).

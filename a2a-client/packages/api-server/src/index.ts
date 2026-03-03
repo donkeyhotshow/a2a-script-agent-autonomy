@@ -130,12 +130,13 @@ function safePath(base: string, subPath: string): string | null {
     return resolved;
 }
 
-function sessionDirForProject(projectPath: string): string {
-    return path.join(projectPath, '.a2a', 'sessions');
+function getSessionDir(project: Project): string {
+    if (project.path) return path.join(project.path, '.a2a', 'sessions');
+    return path.join(storageDir, 'sessions', project.id);
 }
 
-async function listSessions(projectPath: string): Promise<Array<{id: string; title: string; createdAt?: string}>> {
-    const dir = sessionDirForProject(projectPath);
+async function listSessions(project: Project): Promise<Array<{id: string; title: string; createdAt?: string}>> {
+    const dir = getSessionDir(project);
     try {
         const entries = await fs.readdir(dir);
         const sessions: Array<{id: string; title: string; createdAt?: string}> = [];
@@ -157,8 +158,8 @@ async function listSessions(projectPath: string): Promise<Array<{id: string; tit
     }
 }
 
-async function loadSession(projectPath: string, sessionId: string): Promise<Session | null> {
-    const file = path.join(sessionDirForProject(projectPath), `${sessionId}.json`);
+async function loadSession(project: Project, sessionId: string): Promise<Session | null> {
+    const file = path.join(getSessionDir(project), `${sessionId}.json`);
     try {
         const raw = await fs.readFile(file, 'utf-8');
         return JSON.parse(raw) as Session;
@@ -167,15 +168,15 @@ async function loadSession(projectPath: string, sessionId: string): Promise<Sess
     }
 }
 
-async function saveSession(projectPath: string, session: Session): Promise<void> {
-    const dir = sessionDirForProject(projectPath);
+async function saveSession(project: Project, session: Session): Promise<void> {
+    const dir = getSessionDir(project);
     await fs.mkdir(dir, {recursive: true});
     const file = path.join(dir, `${session.id}.json`);
     await writeJsonFile(file, session);
 }
 
-async function deleteSession(projectPath: string, sessionId: string): Promise<void> {
-    const file = path.join(sessionDirForProject(projectPath), `${sessionId}.json`);
+async function deleteSession(project: Project, sessionId: string): Promise<void> {
+    const file = path.join(getSessionDir(project), `${sessionId}.json`);
     try {
         await fs.unlink(file);
     } catch {
@@ -319,11 +320,11 @@ app.get(['/api/sessions', '/api/v1/sessions'], async (req, res) => {
     const projectId = typeof req.query.projectId === 'string' ? req.query.projectId : '';
     const projects = await loadProjects();
     const project = projects.find((p) => p.id === projectId) ?? projects[0];
-    if (!project?.path) {
+    if (!project) {
         res.json([]);
         return;
     }
-    const sessions = await listSessions(project.path);
+    const sessions = await listSessions(project);
     res.json(sessions);
 });
 
@@ -336,8 +337,8 @@ app.post(['/api/sessions', '/api/v1/sessions'], async (req, res) => {
     }
     const projects = await loadProjects();
     const project = projects.find((p) => p.id === projectId);
-    if (!project?.path) {
-        jsonError(res, 404, 'Project not found or missing path');
+    if (!project) {
+        jsonError(res, 404, 'Project not found');
         return;
     }
 
@@ -352,7 +353,7 @@ app.post(['/api/sessions', '/api/v1/sessions'], async (req, res) => {
         updatedAt: now,
         messages: [],
     };
-    await saveSession(project.path, session);
+    await saveSession(project, session);
     res.status(201).json(session);
 });
 
@@ -362,11 +363,11 @@ app.get(['/api/sessions/:sessionId', '/api/v1/sessions/:sessionId'], async (req,
 
     const projects = await loadProjects();
     const project = projects.find((p) => p.id === projectId) ?? projects[0];
-    if (!project?.path) {
+    if (!project) {
         jsonError(res, 404, 'Project not found');
         return;
     }
-    const session = await loadSession(project.path, sessionId);
+    const session = await loadSession(project, sessionId);
     if (!session) {
         jsonError(res, 404, 'Session not found');
         return;
@@ -380,11 +381,11 @@ app.delete(['/api/sessions/:sessionId', '/api/v1/sessions/:sessionId'], async (r
 
     const projects = await loadProjects();
     const project = projects.find((p) => p.id === projectId) ?? projects[0];
-    if (!project?.path) {
+    if (!project) {
         jsonError(res, 404, 'Project not found');
         return;
     }
-    await deleteSession(project.path, sessionId);
+    await deleteSession(project, sessionId);
     res.json({success: true});
 });
 
@@ -401,12 +402,12 @@ app.post(['/api/sessions/:sessionId/action', '/api/v1/sessions/:sessionId/action
 
     const projects = await loadProjects();
     const project = projects.find((p) => p.id === projectId) ?? projects[0];
-    if (!project?.path) {
+    if (!project) {
         jsonError(res, 404, 'Project not found');
         return;
     }
 
-    const existing = await loadSession(project.path, sessionId);
+    const existing = await loadSession(project, sessionId);
     if (!existing) {
         jsonError(res, 404, 'Session not found');
         return;
@@ -418,7 +419,7 @@ app.post(['/api/sessions/:sessionId/action', '/api/v1/sessions/:sessionId/action
         status: 'READY',
         updatedAt: new Date().toISOString(),
     };
-    await saveSession(project.path, updated);
+    await saveSession(project, updated);
     res.json(updated);
 });
 
@@ -428,11 +429,11 @@ app.post(['/api/sessions/:sessionId/next', '/api/v1/sessions/:sessionId/next'], 
 
     const projects = await loadProjects();
     const project = projects.find((p) => p.id === projectId) ?? projects[0];
-    if (!project?.path) {
+    if (!project) {
         jsonError(res, 404, 'Project not found');
         return;
     }
-    const session = await loadSession(project.path, sessionId);
+    const session = await loadSession(project, sessionId);
     if (!session) {
         jsonError(res, 404, 'Session not found');
         return;
@@ -455,7 +456,7 @@ app.post(['/api/sessions/:sessionId/next', '/api/v1/sessions/:sessionId/next'], 
             status: 'IN_PROGRESS',
             updatedAt: new Date().toISOString(),
         };
-        await saveSession(project.path, updated);
+        await saveSession(project, updated);
     }
 
     res.status(upstream.status).json(payload);
@@ -467,25 +468,50 @@ app.post(['/api/sessions/:sessionId/cancel', '/api/v1/sessions/:sessionId/cancel
 
     const projects = await loadProjects();
     const project = projects.find((p) => p.id === projectId) ?? projects[0];
-    if (!project?.path) {
+    if (!project) {
         jsonError(res, 404, 'Project not found');
         return;
     }
-    const session = await loadSession(project.path, sessionId);
+    const session = await loadSession(project, sessionId);
     if (!session) {
         jsonError(res, 404, 'Session not found');
         return;
     }
     const updated: Session = {...session, status: 'CANCELLED', updatedAt: new Date().toISOString()};
-    await saveSession(project.path, updated);
+    await saveSession(project, updated);
     res.json(updated);
 });
 
-// --- server proxy (web must not know server address)
+// --- server proxy (web must not know server address). Body: task, sessionId?, projectId?
 app.post('/api/v1/invoke', async (req, res) => {
+    const body = (req.body || {}) as { task?: string; sessionId?: string; projectId?: string; context?: unknown };
+    const serverBody: Record<string, unknown> = { task: body.task };
+    if (body.context) serverBody.context = body.context;
+
     const serverBase = await getServerBaseUrl();
-    const upstream = await serverFetch('POST', serverBase, '/invoke', req.body ?? {});
-    const payload = (await upstream.json().catch(() => ({}))) as any;
+    const upstream = await serverFetch('POST', serverBase, '/invoke', serverBody);
+    const payload = (await upstream.json().catch(() => ({}))) as { data?: { promiseId?: string }; promiseId?: string };
+    if (upstream.ok) {
+        const promiseId = payload?.data?.promiseId ?? payload?.promiseId;
+        const sessionId = body.sessionId;
+        const projectId = body.projectId;
+        if (promiseId && sessionId && projectId) {
+            const projects = await loadProjects();
+            const project = projects.find((p) => p.id === projectId);
+            if (project) {
+                const session = await loadSession(project, sessionId);
+                if (session) {
+                    const updated: Session = {
+                        ...session,
+                        lastPromiseId: promiseId,
+                        status: 'IN_PROGRESS',
+                        updatedAt: new Date().toISOString(),
+                    };
+                    await saveSession(project, updated);
+                }
+            }
+        }
+    }
     res.status(upstream.status).json(payload);
 });
 

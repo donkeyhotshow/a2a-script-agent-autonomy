@@ -123,7 +123,7 @@ AppBoot = {
 
 | Метод | Endpoint | Описание |
 |-------|----------|----------|
-| `POST` | `/api/v1/invoke` | Проксировать запрос к серверу (первый запрос: body `{ task }`) |
+| `POST` | `/api/v1/invoke` | Прокси к серверу. Body: `{ task, sessionId?, projectId? }`. После фиксации сессии Web передаёт sessionId и projectId, чтобы Client API обновил сессию (lastPromiseId). На сервер уходит только `{ task }`. |
 | `GET` | `/api/v1/requests/:promiseId/status` | Опрос статуса до `completed`/`failed` |
 | `GET` | `/api/v1/requests/:promiseId/result` | Получить первый ответ (context + execute) |
 
@@ -139,14 +139,18 @@ AppBoot = {
 
 Задача создаётся **от имени проекта**. В шапке: поле ввода задачи + кнопка **Send**.
 
-1. **Send** → открывается панель с прелоадером.
-2. **POST /api/v1/sessions** с `{ projectId, task, title }` → Client API сохраняет сессию и возвращает `id` (и `projectId`).
-3. **Фиксация** — клиент сохраняет идентификаторы; панель становится **незакрываемой** и **пластилиновой** (Plasticine UI).
-4. **POST /api/v1/invoke** с `{ task }` (через Client API на сервер) → сервер возвращает `promiseId`.
-5. Опрос **GET /api/v1/requests/:promiseId/status** до `completed`/`failed`, затем **GET .../result**.
-6. В панели отображается **первый ответ** сервера (context + execute).
+| Шаг | Действие | Результат |
+|-----|----------|----------|
+| 1 | Пользователь вводит текст задачи, выбирает проект, нажимает **Send** | Открывается панель с **прелоадером** («Creating session…») |
+| 2 | **POST /api/v1/sessions** с `{ projectId, task, title }` | Client API сохраняет сессию, возвращает `id` (sessionId) и `projectId` |
+| 3 | Клиент получает идентификаторы | **Фиксация**: панель переходит в режим **пластилина** — становится **незакрываемой** (critical), отображаются sessionId и projectId |
+| 4 | **POST /api/v1/invoke** с `{ task, sessionId, projectId }` | Client API проксирует на сервер `{ task }`, получает `promiseId`, при необходимости обновляет сессию; возвращает ответ клиенту |
+| 5 | Опрос **GET /api/v1/requests/:promiseId/status** до `completed`/`failed`, затем **GET .../result** | Получение первого ответа сервера |
+| 6 | Отрисовка в панели | В панели отображается **первый ответ** (context + execute) |
 
-Реализация: [`task-flow.js`](../../a2a-client/web/js/task-flow.js), форма в [`templates/header.html`](../../a2a-client/web/templates/header.html) (`#taskSendForm`, `#taskInputField`). Используется Plasticine UI для панели.
+- **До фиксации** панель можно закрыть; **после фиксации** (когда пришли sessionId и projectId) панель не закрывается (Plasticine UI `critical`).
+- Реализация: [`task-flow.js`](../../a2a-client/web/js/task-flow.js), форма в [`templates/header.html`](../../a2a-client/web/templates/header.html) (`#taskSendForm`, `#taskInputField`). Используется Plasticine UI для панели.
+- Соответствие симуляциям: первый запрос к серверу — это `{ task }`, как в `simulations/*/request.json`; см. [PROTOCOL.md](PROTOCOL.md), [simulations/SCHEMA.md](../../simulations/SCHEMA.md).
 
 ### Создание сессии
 

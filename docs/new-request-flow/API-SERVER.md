@@ -152,7 +152,7 @@ interface Session {
 
 | Метод | Endpoint | Описание |
 |-------|----------|----------|
-| `POST` | `/api/v1/invoke` | Проксировать вызов к серверу (body: `{ task }` для первого запроса, см. PROTOCOL.md) |
+| `POST` | `/api/v1/invoke` | Прокси к серверу. Body: `task` (обязательно), `sessionId?`, `projectId?`, `context?`. На сервер уходит только `{ task }` (и при наличии `context`). Если в ответе есть `promiseId` и переданы `sessionId` и `projectId`, сессия обновляется: `lastPromiseId`, статус `IN_PROGRESS`. |
 | `GET` | `/api/v1/requests/:promiseId/status` | Прокси: статус асинхронного запроса |
 | `GET` | `/api/v1/requests/:promiseId/result` | Прокси: результат запроса (первый ответ: context + execute) |
 | `*` | `/api/v1/requests*` | Проксировать любой запрос к серверу |
@@ -317,19 +317,33 @@ interface Session {
 a2a-client/
 └── storage/
     ├── config.json    # Конфигурация
-    └── projects.json # Список проектов
+    ├── projects.json  # Список проектов
+    └── sessions/      # Сессии проектов без path (см. ниже)
+        └── <projectId>/
+            ├── <session-id-1>.json
+            └── ...
 ```
 
 ### Сессии
 
-Сессии хранятся в директории проекта:
+Сессии привязаны к проекту. Директория сессий определяется функцией `getSessionDir(project)`:
+
+- Если у проекта задан **path**: сессии хранятся в `<project.path>/.a2a/sessions/`.
+- Если у проекта **нет path**: сессии хранятся в `storage/sessions/<projectId>/`.
 
 ```
+# Проект с path
 <project-path>/.a2a/sessions/
 ├── <session-id-1>.json
-├── <session-id-2>.json
+└── ...
+
+# Проект без path
+storage/sessions/<projectId>/
+├── <session-id-1>.json
 └── ...
 ```
+
+Таким образом, создание сессии возможно для любого проекта (в т.ч. без пути к файловой системе). См. также [WEB-UI.md](WEB-UI.md) — поток задачи (Task Flow).
 
 ## Интеграция с a2a-server
 

@@ -71,3 +71,43 @@
 .header-task-form .header-input {
     width: 200px;
 }
+
+/* execute.form: choices */
+.task-flow-form-wrap {
+    padding: 12px;
+}
+.task-flow-form-title {
+    margin: 0 0 10px 0;
+    font-weight: 600;
+    font-size: 13px;
+}
+.task-flow-choices {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.task-flow-choice-btn {
+    padding: 10px 14px;
+    text-align: left;
+    font-size: 13px;
+    border: 1px solid var(--border, #ccc);
+    border-radius: 6px;
+    background: var(--bg2, #f5f5f5);
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+}
+.task-flow-choice-btn:hover {
+    background: var(--bg3, #eee);
+    border-color: var(--accent, #0066cc);
+}
+
+/* execute.message */
+.task-flow-message-wrap {
+    padding: 12px;
+}
+.task-flow-message {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+}
