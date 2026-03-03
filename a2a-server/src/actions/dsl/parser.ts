@@ -44,9 +44,21 @@ export interface DSLStep {
 export interface DSLMixin {
     mixin: string;
     description?: string;
+    version?: string;
     input?: Record<string, DSLField>;
     output?: Record<string, DSLField>;
     script?: string;
+    mixins?: string[];  // Support mixin composition
+}
+
+export interface DSLBase {
+    base: string;
+    version?: string;
+    description?: string;
+    abstract?: boolean;
+    mixins?: string[];
+    steps: DSLStep[];
+    context?: Record<string, unknown>;
 }
 
 export interface DSLField {
@@ -56,7 +68,7 @@ export interface DSLField {
 
 export interface DSLAST {
     type: 'action' | 'mixin' | 'base';
-    data: DSLAction | DSLMixin;
+    data: DSLAction | DSLMixin | DSLBase;
     raw: string;
     path: string;
 }
@@ -97,6 +109,21 @@ export class DSLParser {
         return {
             type: 'mixin',
             data: mixin,
+            raw: JSON.stringify(yaml),
+            path: filePath,
+        };
+    }
+
+    /**
+     * Parse a base template definition
+     */
+    async parseBase(filePath: string): Promise<DSLAST> {
+        const yaml = await this.loadYaml(filePath);
+        const base = this.validateBase(yaml);
+
+        return {
+            type: 'base',
+            data: base,
             raw: JSON.stringify(yaml),
             path: filePath,
         };
@@ -208,19 +235,113 @@ export class DSLParser {
     }
 
     /**
+     * Validate base template structure
+     */
+    private validateBase(data: Record<string, unknown>): DSLBase {
+        const base = data['base'];
+        const steps = data['steps'];
+
+        if (!base) {
+            throw new Error('Base template must have a base name');
+        }
+
+        if (!steps) {
+            throw new Error('Base template must have steps');
+        }
+
+        if (!Array.isArray(steps)) {
+            throw new Error('steps must be an array');
+        }
+
+        const result: DSLBase = {
+            base: String(base),
+            steps: steps as DSLStep[],
+        };
+
+        if (data['version']) {
+            result.version = String(data['version']);
+        }
+        if (data['description']) {
+            result.description = String(data['description']);
+        }
+        if (data['abstract']) {
+            result.abstract = Boolean(data['abstract']);
+        }
+        if (data['mixins']) {
+            result.mixins = this.asStringArray(data['mixins']);
+        }
+        if (data['context']) {
+            result.context = data['context'] as Record<string, unknown>;
+        }
+
+        return result;
+    }
+
+    /**
+     * Get actions directory path
+     */
+    getActionsDir(): string {
+        return this.actionsDir;
+    }
+
+    /**
+     * Get mixins directory path
+     */
+    getMixinsDir(): string {
+        return this.mixinsDir;
+    }
+
+    /**
+     * Get base templates directory path
+     */
+    getBasesDir(): string {
+        return this.basesDir;
+    }
+
+    /**
      * List all action files
      */
-    listActionFiles(): string[] {
-        // In production, use fs.readdirSync with recursive option
-        // For now, return empty array - will be implemented
-        return [];
+    async listActionFiles(): Promise<string[]> {
+        return this.listYamlFiles(this.actionsDir);
     }
 
     /**
      * List all mixin files
      */
-    listMixinFiles(): string[] {
-        return [];
+    async listMixinFiles(): Promise<string[]> {
+        return this.listYamlFiles(this.mixinsDir);
+    }
+
+    /**
+     * List all base template files
+     */
+    async listBaseFiles(): Promise<string[]> {
+        return this.listYamlFiles(this.basesDir);
+    }
+
+    /**
+     * Recursively list all YAML files in directory
+     */
+    private async listYamlFiles(dir: string): Promise<string[]> {
+        const files: string[] = [];
+        const {readdir} = await import('node:fs/promises');
+        const {join} = await import('node:path');
+
+        try {
+            const entries = await readdir(dir, {withFileTypes: true});
+            for (const entry of entries) {
+                const fullPath = join(dir, entry.name);
+                if (entry.isDirectory()) {
+                    files.push(...await this.listYamlFiles(fullPath));
+                } else if (entry.isFile() && (entry.name.endsWith('.yaml') || entry.name.endsWith('.yml'))) {
+                    files.push(fullPath);
+                }
+            }
+        } catch {
+            // Directory doesn't exist or can't be read
+        }
+
+        return files;
     }
 }
 

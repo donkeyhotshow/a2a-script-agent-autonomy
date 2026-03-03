@@ -1,0 +1,79 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://a2a-script-agent/new-request-flow/json-schemas/web-client-api-request.schema.json",
+  "title": "Web → Client API Request",
+  "description": "Request body from Web UI to Client API (port 3001). See PROTOCOL.md section 'Web → Client API'.",
+  "type": "object",
+  "additionalProperties": false,
+  "oneOf": [
+    {
+      "title": "First Request (Task Initiation)",
+      "description": "Initial request to start a new task session.",
+      "required": ["task", "projectId"],
+      "properties": {
+        "task": {
+          "type": "string",
+          "description": "User task description."
+        },
+        "projectId": {
+          "type": "string",
+          "description": "Project identifier (proj_xxx)."
+        },
+        "provider": {
+          "type": "string",
+          "description": "Optional AI provider to use."
+        }
+      }
+    },
+    {
+      "title": "Action Selection Request",
+      "description": "User selected an action from the presented choices.",
+      "required": ["action", "sessionId", "projectId", "selectedAction"],
+      "properties": {
+        "action": {
+          "const": "action_selection",
+          "description": "Must be 'action_selection'."
+        },
+        "sessionId": {
+          "type": "string",
+          "description": "Session identifier (sess_xxx)."
+        },
+        "projectId": {
+          "type": "string",
+          "description": "Project identifier (proj_xxx)."
+        },
+        "selectedAction": {
+          "type": "string",
+          "description": "ID of the selected action (from execute.form.choices or legacy actions[])."
+        }
+      }
+    },
+    {
+      "title": "Continue Request (with context + result)",
+      "description": "Subsequent requests after action selection, containing context from previous response and client result.",
+      "required": ["context", "result"],
+      "properties": {
+        "context": {
+          "type": "object",
+          "description": "Execution context echoed from previous server response. System-managed, free-form.",
+          "additionalProperties": true
+        },
+        "result": {
+          "type": "object",
+          "description": "Client result for the previous execute step (action-key shape or form result).",
+          "additionalProperties": true,
+          "properties": {
+            "choice": {
+              "type": "string",
+              "description": "ID selected from execute.form.choices."
+            },
+            "message": {
+              "type": "string",
+              "description": "Free text message from user."
+            }
+          }
+        }
+      }
+    }
+  ]
+}

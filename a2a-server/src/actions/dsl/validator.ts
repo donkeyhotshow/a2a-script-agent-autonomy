@@ -4,7 +4,7 @@
  * Реализация на основе плана: plans/pivots/pivot-3-dsl-composability.md
  */
 
-import type {DSLAction, DSLMixin, DSLStep, DSLAST} from './parser.js';
+import type {DSLAction, DSLMixin, DSLStep, DSLAST, DSLBase} from './parser.js';
 
 export interface ValidationError {
     path: string;
@@ -30,6 +30,8 @@ export class DSLValidator {
             this.validateAction(ast.data as DSLAction);
         } else if (ast.type === 'mixin') {
             this.validateMixin(ast.data as DSLMixin);
+        } else if (ast.type === 'base') {
+            this.doValidateBase(ast.data as DSLBase);
         }
 
         return {
@@ -197,6 +199,73 @@ export class DSLValidator {
                         `mixin.output.${key}`,
                         `Field "${key}" should have a type`
                     );
+                }
+            }
+        }
+
+        // Validate mixin version
+        if (!mixin.version) {
+            this.addWarning('mixin.version', 'Mixin should specify a version');
+        }
+    }
+
+    /**
+     * Validate base template structure
+     */
+    validateBase(base: DSLBase): ValidationResult {
+        this.errors = [];
+        this.doValidateBase(base);
+        return {
+            valid: this.errors.filter(e => e.severity === 'error').length === 0,
+            errors: this.errors,
+        };
+    }
+
+    /**
+     * Internal base template validation
+     */
+    private doValidateBase(base: DSLBase): void {
+        // Base name validation
+        if (!base.base || base.base.trim() === '') {
+            this.addError('base.base', 'Base template must have a name');
+        }
+
+        if (!/^[a-z][a-z0-9-]*$/.test(base.base)) {
+            this.addWarning(
+                'base.base',
+                'Base name should use kebab-case (e.g., base-fix)'
+            );
+        }
+
+        // Steps validation
+        if (!base.steps || base.steps.length === 0) {
+            this.addError('base.steps', 'Base template must have at least one step');
+        }
+
+        // Validate each step
+        const stepIds = new Set<string>();
+        const outputs = new Set<string>();
+
+        for (let i = 0; i < (base.steps?.length || 0); i++) {
+            const step = base.steps[i];
+            this.validateStep(step, i, stepIds, outputs);
+        }
+
+        // Abstract flag validation
+        if (base.abstract === undefined) {
+            this.addWarning('base.abstract', 'Consider specifying abstract flag for base templates');
+        }
+
+        // Version validation
+        if (!base.version) {
+            this.addWarning('base.version', 'Base template should specify a version');
+        }
+
+        // Validate extends (if base extends another base)
+        if (base.mixins) {
+            for (const mixin of base.mixins) {
+                if (!/^[a-z][a-z0-9-]*$/.test(mixin)) {
+                    this.addWarning('base.mixins', `Mixin "${mixin}" should use kebab-case`);
                 }
             }
         }

@@ -27,11 +27,15 @@
     "sim:run": "tsx scripts/sim-run.ts",
     "sim:run-all": "tsx scripts/sim-run.ts --all",
     "sim:validate": "tsx scripts/sim-validate.ts",
+    "sim:validate:all": "tsx scripts/sim-validate.ts --all",
     "sim:compare": "tsx scripts/sim-compare.ts",
     "sim:report": "tsx scripts/sim-report.ts",
     "test:sim": "tsx scripts/sim-run.ts",
     "test:sim:all": "tsx scripts/sim-run.ts --all",
-    "test:sim:validate": "tsx scripts/sim-validate.ts"
+    "test:sim:validate": "tsx scripts/sim-validate.ts",
+    "test:sim:validate:all": "tsx scripts/sim-validate.ts --all",
+    "ci:validate": "npm run sim:validate:all",
+    "ci:sim": "npm run sim:run-all"
   },
   "keywords": [
     "a2a",
@@ -78,6 +82,8 @@
     "@types/ws": "^8.18.1",
     "@typescript-eslint/eslint-plugin": "^6.19.0",
     "@typescript-eslint/parser": "^6.19.0",
+    "ajv": "^8.12.0",
+    "ajv-formats": "^3.0.1",
     "cross-env": "^10.1.0",
     "eslint": "^8.56.0",
     "prettier": "^3.2.4",

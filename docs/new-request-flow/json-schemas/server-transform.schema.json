@@ -1,5 +1,5 @@
 {
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://a2a-script-agent/new-request-flow/json-schemas/server-transform.schema.json",
   "title": "Server Transform Pipeline",
   "description": "Declarative JSONPath-based transform for one simulation step (replaces server-transforms-request.md / server-transforms-response.md). Each step describes how to transform current JSON state into the next file in the pipeline (request.md or response.json, etc.).",
@@ -46,7 +46,7 @@
               },
               "value": {
                 "description": "Literal value to set.",
-                "nullable": true
+                "type": ["object", "null"]
               },
               "valueFrom": {
                 "type": "string",

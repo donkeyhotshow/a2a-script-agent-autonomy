@@ -15,9 +15,11 @@ export type {
     DSLAction,
     DSLStep,
     DSLMixin,
+    DSLBase,
     DSLAST,
     DSLInput,
-    DSLVariant
+    DSLVariant,
+    DSLField
 } from './parser.js';
 
 export {DSLValidator} from './validator.js';

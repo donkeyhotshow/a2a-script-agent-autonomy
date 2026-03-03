@@ -251,6 +251,113 @@ interface NextStepResponse {
 
 ---
 
+## 9. JSON Schema Files
+
+В директории [`json-schemas/`](json-schemas/) находятся JSON Schema (draft-07) для валидации запросов и ответов. Все схемы совместимы с AJV.
+
+### 9.1 Server Invoke Schemas
+
+| Schema File | Description | Used For |
+|-------------|-------------|----------|
+| [`server-invoke-request.schema.json`](json-schemas/server-invoke-request.schema.json) | Запрос к Server API (`POST /api/v1/invoke`) | Client API → Server |
+| [`server-invoke-response-first-form.schema.json`](json-schemas/server-invoke-response-first-form.schema.json) | Первый ответ с `execute.form.choices` | Server → Client API |
+| [`server-invoke-response-execute.schema.json`](json-schemas/server-invoke-response-execute.schema.json) | Ответ с `execute` (script, read-file, write-file, rag-search, execute-command, list-directory, grep-search, form, message) | Server → Client API |
+| [`server-invoke-response-pending.schema.json`](json-schemas/server-invoke-response-pending.schema.json) | Асинхронный ответ с `promiseId` | Server → Client API |
+
+#### Supported Execute Types (server-invoke-response-execute.schema.json)
+
+| Type | Properties | Description |
+|------|------------|-------------|
+| `form` | `title`, `choices[]`, `input[]` | Форма с выбором действий или полями ввода |
+| `message` | `string` или `object` | Сообщение для отображения в UI |
+| `script` | `input`, `output`, `code` | DSL скрипт для выполнения на клиенте |
+| `read-file` | `path` | Запрос на чтение файла |
+| `write-file` | `path`, `content` | Запрос на запись файла |
+| `rag-search` | `query` | RAG поиск по кодовой базе |
+| `execute-command` | `command` | Выполнение shell команды |
+| `list-directory` | `path` | Список содержимого директории |
+| `grep-search` | `pattern`, `path?`, `glob?` | Поиск по шаблону в файлах |
+
+### 9.2 Server Transform Schema
+
+| Schema File | Description | Used For |
+|-------------|-------------|----------|
+| [`server-transform.schema.json`](json-schemas/server-transform.schema.json) | Pipeline операций для трансформации данных | Server preprocessing/postprocessing |
+
+Поддерживаемые операции: `copy`, `set`, `append-to-array`, `parse-json-from-md`, `render-markdown`, `switch`.
+
+### 9.3 Client Result Schema
+
+| Schema File | Description | Used For |
+|-------------|-------------|----------|
+| [`client-result.schema.json`](json-schemas/client-result.schema.json) | Action-key shaped результаты от клиента | Client → Server |
+
+#### Supported Result Types
+
+| Type | Properties | Description |
+|------|------------|-------------|
+| `script` |任意 | Результат выполнения DSL скрипта |
+| `read-file` | `path`, `content`, `error?` | Результат чтения файла |
+| `write-file` | `path`, `success?`, `bytesWritten?`, `error?` | Результат записи файла |
+| `rag-search` | `query?`, `results[]`, `files[]` | Результат RAG поиска |
+| `execute-command` | `command`, `exitCode`, `stdout?`, `stderr?` | Результат выполнения команды |
+| `list-directory` | `path`, `entries[]`, `error?` | Результат листинга директории |
+| `grep-search` | `pattern`, `matches[]`, `files[]` | Результат grep поиска |
+| `choice` | `string` | ID выбранного действия |
+| `message` | `string` | Сообщение от пользователя |
+
+### 9.4 Web ↔ Client API Schemas
+
+| Schema File | Description | Used For |
+|-------------|-------------|----------|
+| [`web-client-api-request.schema.json`](json-schemas/web-client-api-request.schema.json) | Запрос от Web UI к Client API | Web → Client API (port 3001) |
+| [`web-client-api-response.schema.json`](json-schemas/web-client-api-response.schema.json) | Ответ от Client API к Web UI | Client API → Web (port 3001) |
+
+#### Request Types (web-client-api-request.schema.json)
+
+| Type | Required Fields | Description |
+|------|-----------------|-------------|
+| First Request | `task`, `projectId` | Начало новой сессии |
+| Action Selection | `action`, `sessionId`, `projectId`, `selectedAction` | Выбор действия |
+| Continue Request | `context`, `result` | Продолжение с результатом |
+
+### 9.5 Using Schemas for Validation
+
+```typescript
+import Ajv from 'ajv';
+import serverInvokeRequestSchema from './json-schemas/server-invoke-request.schema.json';
+
+const ajv = new Ajv({ strict: false });
+const validate = ajv.compile(serverInvokeRequestSchema);
+
+const isValid = validate(requestData);
+if (!isValid) {
+  console.error(validate.errors);
+}
+```
+
+### 9.6 Schema Versioning
+
+- **Version**: draft-07 (compatible with AJV)
+- **$id**: All schemas use `https://a2a-script-agent/new-request-flow/json-schemas/` prefix
+- **Compatibility**: Schemas are forward-compatible with protocol extensions via `additionalProperties: true` where appropriate
+
+### 9.7 File Locations
+
+```
+docs/new-request-flow/json-schemas/
+├── server-invoke-request.schema.json         # POST /api/v1/invoke request
+├── server-invoke-response-first-form.schema.json  # First response with form choices
+├── server-invoke-response-execute.schema.json     # Execute response (all action types)
+├── server-invoke-response-pending.schema.json     # Async pending response
+├── server-transform.schema.json                   # Transform pipeline
+├── client-result.schema.json                      # Client result objects
+├── web-client-api-request.schema.json             # Web → Client API request
+└── web-client-api-response.schema.json            # Client API → Web response
+```
+
+---
+
 ## Примеры
 
 ### Пример: execute.form.choices (новый формат)
