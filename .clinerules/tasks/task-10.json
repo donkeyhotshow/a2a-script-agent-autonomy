@@ -1,0 +1,23 @@
+{
+  "id": "task-10",
+  "type": "document_remove",
+  "status": "pending",
+  "priority": "medium",
+  "created_at": "2026-03-03T20:43:35.000Z",
+  "document_path": "a2a-server/src/services/graph-store.service.ts",
+  "reason": "User decided to REMOVE this system - delete",
+  "instructions": [
+    "Analyze graph-store.service.ts (~7k lines) to identify dependencies",
+    "Remove the service file",
+    "Update any imports or references to this service",
+    "Remove related configuration or initialization",
+    "Update documentation if needed",
+    "Add tests to verify removal doesn't break functionality"
+  ],
+  "dependencies": [],
+  "estimated_time": "1-2 hours",
+  "links": [
+    "a2a-server/src/services/",
+    "docs/ADR/graph-store-removal.md"
+  ]
+}

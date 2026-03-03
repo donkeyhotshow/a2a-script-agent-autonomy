@@ -1,30 +1,25 @@
 {
   "id": "task-1",
-  "type": "document_update",
-  "status": "completed",
+  "type": "document_refactor",
+  "status": "pending",
   "priority": "high",
-  "created_at": "2026-03-02T08:40:02.491Z",
-  "document_path": "docs/API-REFERENCE.md",
-  "reason": "API endpoints and examples need updating",
+  "created_at": "2026-03-03T20:41:35.000Z",
+  "document_path": "a2a-server/src/services/entity-recognizer.service.ts",
+  "reason": "User decided to REFACTOR this system - extract useful parts, remove rest",
   "instructions": [
-    "Review current API endpoints and their documentation",
-    "Update endpoint descriptions with latest changes",
-    "Add examples for new endpoints",
-    "Verify all parameters are documented",
-    "Check authentication requirements",
-    "Update response format examples"
+    "Analyze entity-recognizer.service.ts (~21k lines) to identify useful functionality",
+    "Extract code entity recognition capabilities that can be integrated with RAG",
+    "Remove unused or redundant code",
+    "Create modular structure for smart file selection",
+    "Update any dependencies or imports",
+    "Add comprehensive tests for extracted functionality",
+    "Document the refactored service and its integration points"
   ],
   "dependencies": [],
-  "estimated_time": "2-4 hours",
+  "estimated_time": "4-6 hours",
   "links": [
-    "docs/WORKFLOW-TYPES.md",
-    "docs/INTEGRATION-GUIDE.md",
-    "a2a-server/docs/action-api.md"
-  ],
-  "started_at": "2026-03-02T08:40:48.736Z",
-  "completed_at": "2026-03-02T08:40:48.744Z",
-  "results": [
-    "New version: docs\\NEW-API-REFERENCE.md",
-    "Review request: 1772440848743"
+    "docs/ADR/entity-recognizer-refactoring.md",
+    "a2a-server/src/services/rag-integration.ts",
+    "a2a-server/src/services/file-selection.ts"
   ]
 }

@@ -1,0 +1,106 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://a2a-protocol.org/schemas/request.schema.json",
+  "title": "A2A Request",
+  "description": "Request object for A2A protocol communication",
+  "type": "object",
+  "oneOf": [
+    {
+      "title": "Initial Request",
+      "description": "First request with task description only",
+      "required": ["task"],
+      "properties": {
+        "task": {
+          "type": "string",
+          "description": "Task description or user message"
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "title": "Follow-up Request",
+      "description": "Subsequent requests with context and result",
+      "required": ["context"],
+      "properties": {
+        "context": {
+          "$ref": "context.schema.json"
+        },
+        "result": {
+          "type": "object",
+          "description": "Result of previous action execution (action-key shape)",
+          "oneOf": [
+            {
+              "$ref": "action.schema.json#/definitions/FormResult"
+            },
+            {
+              "$ref": "action.schema.json#/definitions/ScriptResult"
+            },
+            {
+              "$ref": "action.schema.json#/definitions/ReadFileResult"
+            },
+            {
+              "$ref": "action.schema.json#/definitions/WriteFileResult"
+            },
+            {
+              "$ref": "action.schema.json#/definitions/RagSearchResult"
+            },
+            {
+              "$ref": "action.schema.json#/definitions/ExecuteCommandResult"
+            },
+            {
+              "type": "object",
+              "description": "Generic result with action key",
+              "patternProperties": {
+                "^[a-z-]+$": {
+                  "type": "object"
+                }
+              }
+            }
+          ]
+        },
+        "input": {
+          "type": "object",
+          "description": "Direct input data (alternative to result)"
+        }
+      },
+      "additionalProperties": false
+    }
+  ],
+  "examples": [
+    {
+      "task": "виправити імпорти у vue компонентах"
+    },
+    {
+      "context": {
+        "task": "виправити імпорти у vue компонентах",
+        "execution": {
+          "action": "fix-vue-imports",
+          "step": "vue-import-detect"
+        }
+      },
+      "result": {
+        "script": {
+          "broken_imports": [
+            {
+              "file": "resources/js/Pages/Auth/Login.vue",
+              "line": 3,
+              "import": "import Header from '../components/Header'"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "context": {
+        "task": "виправити імпорти у vue компонентах",
+        "execution": {
+          "action": "fix-vue-imports",
+          "step": "vue-import-resolve"
+        }
+      },
+      "result": {
+        "choice": "fix-vue-imports"
+      }
+    }
+  ]
+}

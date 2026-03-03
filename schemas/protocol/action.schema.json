@@ -1,0 +1,407 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://a2a-protocol.org/schemas/action.schema.json",
+  "title": "A2A Actions",
+  "description": "Action execute and result schemas for A2A protocol (action-key shape)",
+  "definitions": {
+    "FormChoice": {
+      "type": "object",
+      "required": ["id", "label"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the choice"
+        },
+        "label": {
+          "type": "string",
+          "description": "Display label for the choice"
+        },
+        "description": {
+          "type": "string",
+          "description": "Optional detailed description"
+        },
+        "value": {
+          "type": "string",
+          "description": "Value to return when selected"
+        }
+      },
+      "additionalProperties": false
+    },
+    "FormInput": {
+      "type": "object",
+      "required": ["id", "type"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Field identifier"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["text", "textarea", "select", "checkbox", "radio", "number", "file"],
+          "description": "Input field type"
+        },
+        "label": {
+          "type": "string",
+          "description": "Display label"
+        },
+        "placeholder": {
+          "type": "string"
+        },
+        "required": {
+          "type": "boolean",
+          "default": false
+        },
+        "options": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "value": {
+                "type": "string"
+              },
+              "label": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "FormExecute": {
+      "type": "object",
+      "required": ["form"],
+      "properties": {
+        "form": {
+          "type": "object",
+          "required": [],
+          "properties": {
+            "title": {
+              "type": "string",
+              "description": "Form title"
+            },
+            "description": {
+              "type": "string",
+              "description": "Form description"
+            },
+            "choices": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/FormChoice"
+              },
+              "description": "List of selectable choices"
+            },
+            "input": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/FormInput"
+              },
+              "description": "List of input fields"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "FormResult": {
+      "type": "object",
+      "properties": {
+        "choice": {
+          "type": "string",
+          "description": "Selected choice ID"
+        },
+        "message": {
+          "type": "string",
+          "description": "Response message"
+        },
+        "input": {
+          "type": "object",
+          "description": "Submitted input values",
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "ScriptExecute": {
+      "type": "object",
+      "required": ["script"],
+      "properties": {
+        "script": {
+          "type": "object",
+          "required": ["code"],
+          "properties": {
+            "input": {
+              "type": "object",
+              "description": "Script input parameters"
+            },
+            "output": {
+              "type": "string",
+              "description": "Expected output type/shape"
+            },
+            "code": {
+              "type": "string",
+              "description": "Script code to execute"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "ScriptResult": {
+      "type": "object",
+      "required": ["script"],
+      "properties": {
+        "script": {
+          "type": "object",
+          "properties": {
+            "output": {
+              "type": ["string", "object", "array"],
+              "description": "Script execution output"
+            },
+            "error": {
+              "type": "string",
+              "description": "Error message if execution failed"
+            }
+          },
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "ReadFileExecute": {
+      "type": "object",
+      "required": ["read-file"],
+      "properties": {
+        "read-file": {
+          "type": "object",
+          "required": ["path"],
+          "properties": {
+            "path": {
+              "type": "string",
+              "description": "File path to read"
+            },
+            "encoding": {
+              "type": "string",
+              "default": "utf-8"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "ReadFileResult": {
+      "type": "object",
+      "required": ["read-file"],
+      "properties": {
+        "read-file": {
+          "type": "object",
+          "required": ["path"],
+          "properties": {
+            "path": {
+              "type": "string"
+            },
+            "content": {
+              "type": "string",
+              "description": "File content"
+            },
+            "error": {
+              "type": "string",
+              "description": "Error message if read failed"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "WriteFileExecute": {
+      "type": "object",
+      "required": ["write-file"],
+      "properties": {
+        "write-file": {
+          "type": "object",
+          "required": ["path", "content"],
+          "properties": {
+            "path": {
+              "type": "string",
+              "description": "File path to write"
+            },
+            "content": {
+              "type": "string",
+              "description": "Content to write"
+            },
+            "encoding": {
+              "type": "string",
+              "default": "utf-8"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "WriteFileResult": {
+      "type": "object",
+      "required": ["write-file"],
+      "properties": {
+        "write-file": {
+          "type": "object",
+          "required": ["path"],
+          "properties": {
+            "path": {
+              "type": "string"
+            },
+            "success": {
+              "type": "boolean"
+            },
+            "error": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "RagSearchExecute": {
+      "type": "object",
+      "required": ["rag-search"],
+      "properties": {
+        "rag-search": {
+          "type": "object",
+          "required": ["query"],
+          "properties": {
+            "query": {
+              "type": "string",
+              "description": "Search query"
+            },
+            "top_k": {
+              "type": "number",
+              "default": 5,
+              "description": "Number of results to return"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "RagSearchResult": {
+      "type": "object",
+      "required": ["rag-search"],
+      "properties": {
+        "rag-search": {
+          "type": "object",
+          "properties": {
+            "results": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string"
+                  },
+                  "score": {
+                    "type": "number"
+                  },
+                  "snippet": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "files": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "List of matched file paths"
+            },
+            "query": {
+              "type": "string",
+              "description": "Original query for traceability"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "ExecuteCommandExecute": {
+      "type": "object",
+      "required": ["execute-command"],
+      "properties": {
+        "execute-command": {
+          "type": "object",
+          "required": ["command"],
+          "properties": {
+            "command": {
+              "type": "string",
+              "description": "Command to execute"
+            },
+            "cwd": {
+              "type": "string",
+              "description": "Working directory"
+            },
+            "timeout": {
+              "type": "number",
+              "description": "Timeout in milliseconds"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "ExecuteCommandResult": {
+      "type": "object",
+      "required": ["execute-command"],
+      "properties": {
+        "execute-command": {
+          "type": "object",
+          "required": ["command"],
+          "properties": {
+            "command": {
+              "type": "string"
+            },
+            "exitCode": {
+              "type": "number"
+            },
+            "stdout": {
+              "type": "string"
+            },
+            "stderr": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "MessageExecute": {
+      "type": "object",
+      "required": ["message"],
+      "properties": {
+        "message": {
+          "type": "string",
+          "description": "Message to display to user (UI only)"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "type": "object",
+  "oneOf": [
+    { "$ref": "#/definitions/FormExecute" },
+    { "$ref": "#/definitions/ScriptExecute" },
+    { "$ref": "#/definitions/ReadFileExecute" },
+    { "$ref": "#/definitions/WriteFileExecute" },
+    { "$ref": "#/definitions/RagSearchExecute" },
+    { "$ref": "#/definitions/ExecuteCommandExecute" },
+    { "$ref": "#/definitions/MessageExecute" }
+  ]
+}

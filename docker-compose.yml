@@ -1,0 +1,115 @@
+version: '3.8'
+
+services:
+  # PostgreSQL with pgvector extension
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: a2a-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-a2a}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-a2a_secret}
+      POSTGRES_DB: ${POSTGRES_DB:-a2a_server}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-a2a} -d ${POSTGRES_DB:-a2a_server}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+    networks:
+      - a2a-network
+
+  # Redis for caching and queues
+  redis:
+    image: redis:7-alpine
+    container_name: a2a-redis
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+    networks:
+      - a2a-network
+
+  # AI Proxy Service
+  ai-proxy:
+    build:
+      context: ./ai-integration
+      dockerfile: Dockerfile
+    container_name: a2a-ai-proxy
+    ports:
+      - "${PROXY_PORT:-11434}:11434"
+    environment:
+      - PROXY_PORT=11434
+      - PROXY_HOST=0.0.0.0
+      - OLLAMA_HOST=http://ollama:11434
+      - OLLAMA_MODEL=${OLLAMA_MODEL:-llama3}
+      - OLLAMA_TIMEOUT=60
+      - OLLAMA_AUTO_START=false
+      - STORAGE_DIR=/app/proxy_logs
+      - LOG_LEVEL=INFO
+      - LOG_FORMAT=json
+      - HEALTH_CHECK_INTERVAL=5
+    volumes:
+      - ai_proxy_logs:/app/proxy_logs
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/health/ready"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    depends_on:
+      ollama:
+        condition: service_healthy
+    networks:
+      - a2a-network
+    profiles:
+      - ai
+      - full
+
+  # Ollama for AI inference
+  ollama:
+    image: ollama/ollama:latest
+    container_name: a2a-ollama
+    ports:
+      - "${OLLAMA_PORT:-11435}:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - a2a-network
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    profiles:
+      - ai
+      - full
+
+volumes:
+  postgres_data:
+  redis_data:
+  ollama_data:
+  ai_proxy_logs:
+
+networks:
+  a2a-network:
+    driver: bridge
+    name: a2a-network

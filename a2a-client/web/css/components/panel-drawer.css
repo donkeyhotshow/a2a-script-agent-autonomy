@@ -1,0 +1,137 @@
+/* Plasticine UI - Drawer Panels (Collapsible drop areas for stashed panels) */
+
+:root {
+    --pui-drawer-w: 220px;
+    --pui-drawer-handle-w: 22px;
+    --pui-drawer-item-w: 100px;
+    --pui-drawer-item-h: 28px;
+}
+
+.pui-drawer {
+    position: fixed;
+    top: 60px;
+    bottom: 16px;
+    width: var(--pui-drawer-w);
+    background: rgba(26, 26, 46, 0.92);
+    border: 1px solid var(--pui-border);
+    backdrop-filter: blur(8px);
+    z-index: 995;
+    transition: transform 0.18s ease;
+    pointer-events: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.pui-drawer.left {
+    left: 0;
+    border-left: none;
+    border-radius: 0 12px 12px 0;
+    transform: translateX(calc(-1 * (var(--pui-drawer-w) - var(--pui-drawer-handle-w))));
+}
+
+.pui-drawer.right {
+    right: 0;
+    border-right: none;
+    border-radius: 12px 0 0 12px;
+    transform: translateX(calc(var(--pui-drawer-w) - var(--pui-drawer-handle-w)));
+}
+
+.pui-drawer.open.left,
+.pui-drawer.open.right {
+    transform: translateX(0);
+}
+
+.pui-drawer-handle {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: var(--pui-drawer-handle-w);
+    height: 84px;
+    border: 1px solid var(--pui-border);
+    background: rgba(33, 38, 45, 0.95);
+    color: var(--pui-text);
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+}
+
+.pui-drawer.left .pui-drawer-handle {
+    right: 4px;
+}
+
+.pui-drawer.right .pui-drawer-handle {
+    left: 4px;
+}
+
+.pui-drawer-inner {
+    height: 100%;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.pui-drawer.left .pui-drawer-inner {
+    padding-right: calc(var(--pui-drawer-handle-w) + 10px);
+}
+
+.pui-drawer.right .pui-drawer-inner {
+    padding-left: calc(var(--pui-drawer-handle-w) + 10px);
+}
+
+.pui-drawer-title {
+    font-size: 11px;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    color: var(--pui-muted);
+    user-select: none;
+}
+
+.pui-drawer-drop-list {
+    flex: 1;
+    overflow: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 8px 4px;
+    border: 1px dashed rgba(99, 102, 241, 0.25);
+    border-radius: 10px;
+    background: rgba(0, 0, 0, 0.18);
+    transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.pui-drawer-drop-list.drag-over {
+    border-color: rgba(34, 197, 94, 0.8);
+    background: rgba(34, 197, 94, 0.12);
+}
+
+.pui-drawer-item {
+    width: var(--pui-drawer-item-w);
+    height: var(--pui-drawer-item-h);
+    border-radius: 8px;
+    border: 1px solid rgba(99, 102, 241, 0.35);
+    background: rgba(99, 102, 241, 0.14);
+    color: var(--pui-text);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 0 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.25);
+}
+
+.pui-drawer-item:hover {
+    border-color: rgba(99, 102, 241, 0.75);
+    background: rgba(99, 102, 241, 0.22);
+}
+
+.pui-drawer-item-title {
+    font-size: 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}

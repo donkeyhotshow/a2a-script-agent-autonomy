@@ -362,3 +362,154 @@ enum JobStatus {
   COMPLETED
   FAILED
 }
+
+// ============================================
+// Task Capture System Models
+// ============================================
+
+model CapturedTask {
+  id          String     @id @default(cuid())
+  rawInput    String     @map("raw_input")
+  sessionId   String     @map("session_id")
+  status      String     @default("pending")
+  priority    String     @default("medium")
+  metadata    String?    // JSON string
+  createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @updatedAt @map("updated_at")
+  
+  // Relations
+  structuredTask StructuredTask?
+  history     TaskHistory[]
+
+  @@index([sessionId])
+  @@index([status])
+  @@map("captured_tasks")
+}
+
+model StructuredTask {
+  id                  String   @id @default(cuid())
+  title               String
+  description         String
+  requirements        String   // JSON string
+  constraints         String?  // JSON string
+  acceptanceCriteria  String?  @map("acceptance_criteria") // JSON string
+  capturedTaskId      String   @unique @map("captured_task_id")
+  status              String   @default("pending")
+  priority            String   @default("medium")
+  sessionId           String   @map("session_id")
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+  
+  // Relations
+  capturedTask        CapturedTask @relation(fields: [capturedTaskId], references: [id], onDelete: Cascade)
+  subtasks            Subtask[]
+
+  @@index([capturedTaskId])
+  @@index([sessionId])
+  @@index([status])
+  @@map("structured_tasks")
+}
+
+model TaskHistory {
+  id              String    @id @default(cuid())
+  taskId          String    @map("task_id")
+  action          String
+  previousStatus  String?   @map("previous_status")
+  newStatus       String?   @map("new_status")
+  details         String?   // JSON string
+  createdAt       DateTime  @default(now()) @map("created_at")
+  
+  // Relations
+  capturedTask    CapturedTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@index([taskId])
+  @@index([createdAt])
+  @@map("task_history")
+}
+
+// ============================================
+// Task Decomposition Models
+// ============================================
+
+model Subtask {
+  id                String   @id @default(cuid())
+  title             String
+  description       String
+  structuredTaskId  String   @map("structured_task_id")
+  status            String   @default("pending")
+  order             Int      @default(0)
+  estimatedDuration Int?     @map("estimated_duration")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+  
+  // Relations
+  structuredTask    StructuredTask @relation(fields: [structuredTaskId], references: [id], onDelete: Cascade)
+  steps             Step[]
+  dependencies      SubtaskDependency[] @relation("SubtaskDependencies")
+  dependedOnBy      SubtaskDependency[] @relation("SubtaskDependsOn")
+
+  @@index([structuredTaskId])
+  @@index([status])
+  @@index([order])
+  @@map("subtasks")
+}
+
+model SubtaskDependency {
+  id                  String   @id @default(cuid())
+  subtaskId           String   @map("subtask_id")
+  dependsOnSubtaskId  String   @map("depends_on_subtask_id")
+  type                String   @default("requires")
+  createdAt           DateTime @default(now()) @map("created_at")
+  
+  // Relations
+  subtask             Subtask  @relation("SubtaskDependencies", fields: [subtaskId], references: [id], onDelete: Cascade)
+  dependsOnSubtask    Subtask  @relation("SubtaskDependsOn", fields: [dependsOnSubtaskId], references: [id], onDelete: Cascade)
+
+  @@unique([subtaskId, dependsOnSubtaskId, type])
+  @@index([subtaskId])
+  @@index([dependsOnSubtaskId])
+  @@map("subtask_dependencies")
+}
+
+model Step {
+  id                String   @id @default(cuid())
+  title             String
+  description       String
+  subtaskId         String   @map("subtask_id")
+  status            String   @default("pending")
+  order             Int      @default(0)
+  estimatedDuration Int?     @map("estimated_duration")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+  
+  // Relations
+  subtask           Subtask  @relation(fields: [subtaskId], references: [id], onDelete: Cascade)
+  actions           Action[]
+
+  @@index([subtaskId])
+  @@index([status])
+  @@index([order])
+  @@map("steps")
+}
+
+model Action {
+  id          String   @id @default(cuid())
+  type        String
+  description String
+  stepId      String   @map("step_id")
+  status      String   @default("pending")
+  order       Int      @default(0)
+  input       String?  // JSON string
+  output      String?  // JSON string
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  
+  // Relations
+  step        Step     @relation(fields: [stepId], references: [id], onDelete: Cascade)
+
+  @@index([stepId])
+  @@index([status])
+  @@index([type])
+  @@index([order])
+  @@map("actions")
+}

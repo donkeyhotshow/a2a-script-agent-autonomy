@@ -1,30 +1,23 @@
 {
   "id": "task-4",
-  "type": "document_create",
-  "status": "completed",
+  "type": "document_remove",
+  "status": "pending",
   "priority": "medium",
-  "created_at": "2026-03-02T08:40:02.497Z",
-  "document_path": "docs/ARCHITECTURE.md",
-  "description": "Create comprehensive system architecture documentation",
+  "created_at": "2026-03-03T20:43:35.000Z",
+  "document_path": "a2a-server/src/services/graph-store.service.ts",
+  "reason": "User decided to REMOVE this system - delete",
   "instructions": [
-    "Research and gather information for the document",
-    "Follow existing documentation patterns and style",
-    "Create comprehensive content based on description",
-    "Include examples and use cases where applicable",
-    "Ensure technical accuracy",
-    "Review and validate content"
+    "Analyze graph-store.service.ts (~7k lines) to identify dependencies",
+    "Remove the service file",
+    "Update any imports or references to this service",
+    "Remove related configuration or initialization",
+    "Update documentation if needed",
+    "Add tests to verify removal doesn't break functionality"
   ],
   "dependencies": [],
-  "estimated_time": "3-6 hours",
+  "estimated_time": "1-2 hours",
   "links": [
-    "docs/WORKFLOW-TYPES.md",
-    "new-request-flow/ARCHITECTURE.md",
-    "docs/DESIGN-DECISIONS.md"
-  ],
-  "started_at": "2026-03-02T08:41:37.657Z",
-  "completed_at": "2026-03-02T08:41:37.665Z",
-  "results": [
-    "Created: docs\\NEW-ARCHITECTURE.md",
-    "Review request: 1772440897663"
+    "a2a-server/src/services/",
+    "docs/ADR/graph-store-removal.md"
   ]
 }

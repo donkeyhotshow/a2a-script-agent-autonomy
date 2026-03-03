@@ -674,3 +674,124 @@ interface Step {
 
 - [SERVER-ARCHITECTURE.md](SERVER-ARCHITECTURE.md) — Server-centric документация (компоненты, Actions, AI-Actions, интеграция с External AI Hub)
 - [simulations/SCHEMA.md](../../simulations/SCHEMA.md) — Каноничная схема симуляций
+
+---
+
+## JSON Schema
+
+Протокол формализован через JSON Schema для обеспечения:
+- Автоматической валидации request/response
+- Генерации TypeScript клиентов
+- Документации и автодополнения
+
+### Схемы
+
+| Файл | Описание |
+|------|----------|
+| `schemas/protocol/message.schema.json` | Базовый объект сообщения (user/assistant) |
+| `schemas/protocol/context.schema.json` | Контекст выполнения (execution, history) |
+| `schemas/protocol/action.schema.json` | Execute и Result объекты (action-key shape) |
+| `schemas/protocol/request.schema.json` | A2A Request (initial/follow-up) |
+| `schemas/protocol/response.schema.json` | A2A Response |
+| `schemas/protocol/index.json` | Объединяющая схема |
+
+### Использование
+
+**Валидация запроса:**
+```typescript
+import { validateRequest, validateResponse } from './protocol/validator.js';
+
+const result = validateRequest(requestData);
+if (!result.valid) {
+  console.error('Validation errors:', result.errors);
+}
+```
+
+**Валидация ответа:**
+```typescript
+const result = validateResponse(responseData);
+if (!result.valid) {
+  console.error('Validation errors:', result.errors);
+}
+```
+
+**Валидация action-key shape:**
+```typescript
+import { validateExecute, validateResult } from './protocol/validator.js';
+
+// Проверка execute
+const executeValid = validateExecute({ "script": { ... } });
+
+// Проверка result
+const resultValid = validateResult({ "choice": "fix-vue-imports" });
+```
+
+### Генерация TypeScript клиентов
+
+Для генерации TypeScript типов из схем:
+
+```bash
+node scripts/generate-protocol-clients.js
+```
+
+Это создаст:
+- `a2a-client/packages/types/src/protocol.ts` — типы для клиента
+- `a2a-server/src/protocol/client-sdk.ts` — SDK для сервера
+
+### OpenAPI спецификация
+
+Полная OpenAPI 3.0 спецификация доступна в `openapi/a2a-api.yaml`.
+
+```bash
+# Валидация OpenAPI спецификации
+npx swagger-cli validate openapi/a2a-api.yaml
+
+# Генерация документации
+npx @redocly/cli build-docs openapi/a2a-api.yaml
+```
+
+### Примеры валидации
+
+**Корректный execute (action-key shape):**
+```json
+{ "execute": { "script": { "code": "...", "input": {}, "output": "string" } } }
+{ "execute": { "read-file": { "path": "src/app.ts" } } }
+{ "execute": { "form": { "title": "Выберите действие", "choices": [...] } } }
+```
+
+**Некорректный execute (плоская структура):**
+```json
+{ "execute": { "action": "script", "code": "..." } }  // ❌ Неправильно
+```
+
+**Корректный result:**
+```json
+{ "result": { "choice": "fix-vue-imports" } }
+{ "result": { "script": { "output": "..." } } }
+{ "result": { "read-file": { "path": "src/app.ts", "content": "..." } } }
+```
+
+## Runtime валидация
+
+Валидатор интегрирован в middleware сервера:
+
+```typescript
+import { requestValidator, responseValidator } from './protocol/validator.js';
+
+// Middleware для Express
+app.post('/requests', requestValidator, handler);
+```
+
+Для отключения валидации в разработке:
+```bash
+SKIP_VALIDATION=1
+```
+
+## Критерии завершения
+
+- [x] JSON Schema для всех объектов протокола
+- [x] Генератор TypeScript клиентов
+- [x] OpenAPI спецификация
+- [x] Runtime валидация протокола
+- [x] Обновленная документация
+- [ ] Примеры валидации (добавлены в документацию)

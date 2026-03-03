@@ -1,0 +1,24 @@
+{
+  "id": "task-8",
+  "type": "document_create",
+  "status": "pending",
+  "priority": "medium",
+  "created_at": "2026-03-03T20:43:35.000Z",
+  "document_path": "docs/ARCHITECTURE.md",
+  "description": "Create comprehensive system architecture documentation",
+  "instructions": [
+    "Research and gather information for the document",
+    "Follow existing documentation patterns and style",
+    "Create comprehensive content based on description",
+    "Include examples and use cases where applicable",
+    "Ensure technical accuracy",
+    "Review and validate content"
+  ],
+  "dependencies": [],
+  "estimated_time": "3-6 hours",
+  "links": [
+    "docs/WORKFLOW-TYPES.md",
+    "new-request-flow/ARCHITECTURE.md",
+    "docs/DESIGN-DECISIONS.md"
+  ]
+}

@@ -11,7 +11,7 @@
         bottom: 'pui-slot-bottom',
         header: 'pui-slot-header'
     };
-    const DOCK_STATES = ['minimized', 'docked-left', 'docked-right', 'docked-bottom'];
+    const DOCK_STATES = ['minimized', 'docked-left', 'docked-right', 'docked-bottom', 'drawer-left', 'drawer-right'];
 
     class PlasticinePanel {
         constructor(container, options = {}) {
@@ -25,6 +25,7 @@
             });
             this.cubeEl = null;
             this.zonesContainer = options.zonesContainer || null;
+            this.ui = options.ui || null;
             this.state = 'expanded';
             this._slotClass = SLOTS[this.slot] || SLOTS.floating;
             this._drag = {on: false, startX: 0, startY: 0, startLeft: 0, startTop: 0};
@@ -73,6 +74,8 @@
                     this.container.style.top = (this._drag.startTop + dy) + 'px';
                     this.container.style.right = this.container.style.bottom = 'auto';
                     this._highlightZone(e);
+                    this.ui?._drawers?.handleDragMove(e);
+                    this.ui?._drawers?.updateDragOver(e.clientX, e.clientY);
                 }
                 if (this._resize.on) {
                     const dx = e.clientX - this._resize.startX, dy = e.clientY - this._resize.startY;
@@ -82,9 +85,16 @@
             };
             const up = (e) => {
                 if (this._drag.on) {
-                    const zone = this._getZoneAt(e.clientX, e.clientY);
-                    if (zone) this.setState(zone);
-                    else this._clampPosition();
+                    const drawerSide = this.ui?._drawers?.getDropSideAt(e.clientX, e.clientY);
+                    if (drawerSide) {
+                        this.ui?._drawers?.dockPanel(this, drawerSide);
+                    } else {
+                        const zone = this._getZoneAt(e.clientX, e.clientY);
+                        if (zone === 'docked-left') this.ui?._drawers?.dockPanel(this, 'left');
+                        else if (zone === 'docked-right') this.ui?._drawers?.dockPanel(this, 'right');
+                        else if (zone) this.setState(zone);
+                        else this._clampPosition();
+                    }
                     this.container.classList.remove('dragging');
                     this._hideZones();
                     this._drag.on = false;
@@ -107,6 +117,7 @@
 
         _showZones() {
             if (this.zonesContainer) this.zonesContainer.classList.add('active');
+            this.ui?._drawers?.setDragging(true);
         }
 
         _hideZones() {
@@ -114,6 +125,7 @@
                 this.zonesContainer.classList.remove('active');
                 this.zonesContainer.querySelectorAll('.pui-zone').forEach(z => z.classList.remove('drag-over'));
             }
+            this.ui?._drawers?.setDragging(false);
         }
 
         _highlightZone(e) {
@@ -156,6 +168,10 @@
                 styles.bottom = '';
                 this.container.classList.add(this._slotClass);
                 this.container.style.display = '';
+                if (this.cubeEl) {
+                    this.cubeEl.classList.remove('visible');
+                    this.cubeEl.style.display = '';
+                }
             } else if (newState === 'minimized') {
                 this.container.style.display = 'none';
                 if (this.cubeEl) {
@@ -188,6 +204,12 @@
                 if (this.cubeEl) {
                     this.cubeEl.classList.add('visible');
                     this._bindCubeEvents();
+                }
+            } else if (newState === 'drawer-left' || newState === 'drawer-right') {
+                this.container.style.display = 'none';
+                if (this.cubeEl) {
+                    this.cubeEl.classList.remove('visible');
+                    this.cubeEl.style.display = 'none';
                 }
             }
             this.onStateChange(this.state);
@@ -378,6 +400,212 @@
         return el.innerHTML;
     }
 
+    class PanelDrawers {
+        constructor(options = {}) {
+            this.mount = options.mount || document.body;
+            this.ui = options.ui || null;
+            this._drawers = new Map(); // side -> { el, listEl, manual, autoOpened }
+            this._items = new Map(); // panelId -> { side, itemEl }
+            this._dragging = false;
+            this._autoCloseTimer = null;
+            this._autoOpenThresholdPx = 28;
+
+            this._ensureDOM();
+        }
+
+        _ensureDOM() {
+            this._ensureDrawer('left');
+            this._ensureDrawer('right');
+        }
+
+        _ensureDrawer(side) {
+            const id = `puiDrawer-${side}`;
+            let el = this.mount.querySelector(`#${id}`);
+            if (!el) {
+                el = document.createElement('div');
+                el.id = id;
+                el.className = `pui-drawer ${side}`;
+                el.dataset.side = side;
+                el.innerHTML = `
+          <button type="button" class="pui-drawer-handle" aria-label="${side} drawer"></button>
+          <div class="pui-drawer-inner">
+            <div class="pui-drawer-title">${side === 'left' ? 'Left' : 'Right'} drawer</div>
+            <div class="pui-drawer-drop-list" data-side="${side}" aria-label="Drop panels here"></div>
+          </div>`;
+                this.mount.appendChild(el);
+            }
+
+            const handle = el.querySelector('.pui-drawer-handle');
+            const listEl = el.querySelector('.pui-drawer-drop-list');
+
+            const updateHandleIcon = () => {
+                const isOpen = el.classList.contains('open');
+                if (side === 'left') handle.textContent = isOpen ? '❮' : '❯';
+                else handle.textContent = isOpen ? '❯' : '❮';
+            };
+            updateHandleIcon();
+
+            handle?.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const d = this._drawers.get(side);
+                const willOpen = !el.classList.contains('open');
+                if (willOpen) {
+                    d.manual = true;
+                    d.autoOpened = false;
+                    this.open(side);
+                } else {
+                    d.manual = false;
+                    d.autoOpened = false;
+                    this.close(side, { force: true });
+                }
+                updateHandleIcon();
+            });
+
+            el.addEventListener('transitionend', () => updateHandleIcon());
+
+            this._drawers.set(side, { el, listEl, manual: false, autoOpened: false });
+        }
+
+        setDragging(on) {
+            this._dragging = !!on;
+            if (this._dragging) {
+                this._cancelAutoClose();
+            } else {
+                this._clearDragOver();
+                this._scheduleAutoClose();
+            }
+        }
+
+        _scheduleAutoClose() {
+            this._cancelAutoClose();
+            this._autoCloseTimer = setTimeout(() => {
+                for (const [side, d] of this._drawers.entries()) {
+                    if (d.autoOpened && !d.manual) this.close(side);
+                    d.autoOpened = false;
+                }
+            }, 450);
+        }
+
+        _cancelAutoClose() {
+            if (this._autoCloseTimer) {
+                clearTimeout(this._autoCloseTimer);
+                this._autoCloseTimer = null;
+            }
+        }
+
+        open(side) {
+            const d = this._drawers.get(side);
+            if (!d) return;
+            d.el.classList.add('open');
+        }
+
+        close(side, opts = {}) {
+            const d = this._drawers.get(side);
+            if (!d) return;
+            if (!opts.force && d.manual) return;
+            d.el.classList.remove('open');
+        }
+
+        handleDragMove(e) {
+            if (!this._dragging) return;
+            const x = e.clientX;
+            const w = window.innerWidth || document.documentElement.clientWidth || 0;
+            if (x <= this._autoOpenThresholdPx) this._autoOpen('left');
+            if (x >= (w - this._autoOpenThresholdPx)) this._autoOpen('right');
+        }
+
+        _autoOpen(side) {
+            const d = this._drawers.get(side);
+            if (!d) return;
+            if (!d.el.classList.contains('open')) {
+                d.el.classList.add('open');
+                if (!d.manual) d.autoOpened = true;
+            }
+            this._cancelAutoClose();
+        }
+
+        updateDragOver(x, y) {
+            if (!this._dragging) return;
+            const side = this.getDropSideAt(x, y);
+            for (const [s, d] of this._drawers.entries()) {
+                d.listEl?.classList.toggle('drag-over', side === s);
+            }
+        }
+
+        _clearDragOver() {
+            for (const [, d] of this._drawers.entries()) {
+                d.listEl?.classList.remove('drag-over');
+            }
+        }
+
+        getDropSideAt(x, y) {
+            for (const [side, d] of this._drawers.entries()) {
+                if (!d.el.classList.contains('open')) continue;
+                const r = d.listEl?.getBoundingClientRect?.();
+                if (!r) continue;
+                if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) return side;
+            }
+            return null;
+        }
+
+        dockPanel(panel, side) {
+            if (!panel || !panel.id) return;
+            const d = this._drawers.get(side);
+            if (!d) return;
+
+            // Remove any existing item for this panel (moving between drawers)
+            this.removePanel(panel.id);
+
+            const title = panel.container?.querySelector?.('.pui-panel-title')?.textContent || panel.id;
+            const item = document.createElement('button');
+            item.type = 'button';
+            item.className = 'pui-drawer-item';
+            item.dataset.panelId = panel.id;
+            item.innerHTML = `<span class="pui-drawer-item-title">${escapeHtml(String(title))}</span>`;
+
+            item.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.restorePanel(panel.id);
+            });
+
+            d.listEl?.appendChild(item);
+            this._items.set(panel.id, { side, itemEl: item });
+
+            panel.setState(side === 'left' ? 'drawer-left' : 'drawer-right');
+
+            if (d.autoOpened && !d.manual) {
+                setTimeout(() => this.close(side), 200);
+            }
+        }
+
+        restorePanel(panelId) {
+            const entry = this._items.get(panelId);
+            const panel = this.ui?.getPanel?.(panelId) || null;
+            if (entry) {
+                entry.itemEl?.remove?.();
+                this._items.delete(panelId);
+            }
+            if (!panel) return;
+
+            if (panel.cubeEl) {
+                panel.cubeEl.classList.remove('visible');
+                panel.cubeEl.style.display = '';
+            }
+            panel.expand?.();
+            this.ui?.bringToFront?.(panelId);
+        }
+
+        removePanel(panelId) {
+            const entry = this._items.get(panelId);
+            if (entry) {
+                entry.itemEl?.remove?.();
+                this._items.delete(panelId);
+            }
+        }
+    }
+
     class PlasticineUI {
         constructor(options = {}) {
             this.mount = options.mount || document.body;
@@ -386,7 +614,9 @@
             this.cubes = new Map();
             this._maxZIndex = 1000;
             this._activePanelId = null;
+            this._drawers = null;
             this._ensureZones();
+            this._ensureDrawers();
         }
 
         /**
@@ -477,6 +707,10 @@
             this.zonesContainer = zones;
         }
 
+        _ensureDrawers() {
+            if (!this._drawers) this._drawers = new PanelDrawers({ mount: this.mount, ui: this });
+        }
+
         addPanel(opts) {
             const id = opts.id || 'panel-' + Math.random().toString(36).slice(2, 9);
             const el = opts.element || createPanelDOM({...opts, id});
@@ -501,6 +735,7 @@
                 slot: opts.slot,
                 critical: opts.critical,
                 zonesContainer: this.zonesContainer,
+                ui: this,
                 onClose: () => {
                     this.removePanel(id);
                     opts.onClose?.();
@@ -533,6 +768,7 @@
         removePanel(id) {
             const panel = this.panels.get(id);
             if (panel) {
+                this._drawers?.removePanel?.(id);
                 panel.destroy();
                 this.panels.delete(id);
                 this.cubes.delete(id);

@@ -1,11 +1,20 @@
 {
   "name": "a2a-coding-orchestrator",
   "private": true,
+  "type": "module",
   "scripts": {
     "sim:run": "node simulations/run-simulation.js",
     "sim:run-all": "node simulations/run-all-simulations.js",
     "questions": "node scripts/questions-cli.js",
-    "dev": "node scripts/dev-launch.js",
+    "generate:types": "node scripts/generate-action-types.js",
+    "dev": "node scripts/orchestrator.js all",
+    "dev:client": "node scripts/orchestrator.js client",
+    "dev:server": "node scripts/orchestrator.js server",
+    "dev:proxy": "node scripts/orchestrator.js proxy",
+    "dev:full": "node scripts/orchestrator.js full",
+    "dev:status": "node scripts/orchestrator.js status",
+    "dev:stop": "node scripts/orchestrator.js stop",
+    "dev:legacy": "node scripts/dev-launch.js",
     "dev:stack": "concurrently \"npm run dev:web\" \"npm run dev:client-api\" \"npm run dev:server-api\"",
     "dev:stack:ai": "concurrently \"npm run dev:web\" \"npm run dev:client-api\" \"npm run dev:server-api\" \"npm run dev:ai\"",
     "dev:kill-ports": "npx --yes kill-port 5173 5174 3000 3001 11434 || exit 0",
@@ -13,13 +22,24 @@
     "dev:client-api": "npm run dev --prefix a2a-client/packages/api-server",
     "dev:server-api": "npm run dev --prefix a2a-server",
     "dev:ai": "cd ai-integration && python -m proxy",
-    "test": "npm run test --prefix a2a-client"
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down",
+    "docker:logs": "docker compose logs -f",
+    "test": "npm run test --prefix a2a-client",
+    "validate:config": "tsx config/validate.ts",
+    "validate:config:safe": "tsx config/validate.ts --safe"
   },
   "devDependencies": {
+    "@types/node": "^20.11.0",
     "concurrently": "^9.1.0",
+    "js-yaml": "^4.1.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.3.3",
     "vitest": "^4.0.18"
   },
   "dependencies": {
-    "playwright": "^1.58.2"
+    "dotenv": "^16.3.1",
+    "playwright": "^1.58.2",
+    "zod": "^3.22.4"
   }
 }

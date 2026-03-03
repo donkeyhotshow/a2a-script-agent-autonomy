@@ -1,0 +1,381 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://a2a.dev/schemas/action-types.schema.json",
+  "title": "A2A Action Types Schema",
+  "description": "Schema for execute action types (form, script, rag-search, read-file, write-file, execute-command, message)",
+  "type": "object",
+  "definitions": {
+    "FormAction": {
+      "type": "object",
+      "description": "Interactive form with choices and/or input fields",
+      "required": [],
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "Form title"
+        },
+        "description": {
+          "type": "string",
+          "description": "Form description"
+        },
+        "input": {
+          "type": "array",
+          "description": "Input fields",
+          "items": {
+            "$ref": "#/definitions/FormInput"
+          }
+        },
+        "choices": {
+          "type": "array",
+          "description": "Available choices",
+          "items": {
+            "$ref": "#/definitions/FormChoice"
+          }
+        }
+      }
+    },
+    "FormInput": {
+      "type": "object",
+      "required": ["name", "type"],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["text", "textarea", "select", "checkbox", "number"]
+        },
+        "label": {
+          "type": "string"
+        },
+        "required": {
+          "type": "boolean",
+          "default": false
+        },
+        "default": {},
+        "options": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "value": {},
+              "label": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "FormChoice": {
+      "type": "object",
+      "required": ["id", "label"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Choice identifier (snake_case)"
+        },
+        "label": {
+          "type": "string"
+        },
+        "value": {
+          "description": "Choice value"
+        },
+        "description": {
+          "type": "string"
+        }
+      }
+    },
+    "ScriptAction": {
+      "type": "object",
+      "description": "Execute JavaScript code in sandbox",
+      "required": ["code"],
+      "properties": {
+        "input": {
+          "type": "object",
+          "description": "Script input parameters"
+        },
+        "output": {
+          "type": "string",
+          "description": "Expected output variable name"
+        },
+        "code": {
+          "type": "string",
+          "description": "JavaScript/TypeScript code to execute"
+        },
+        "timeout": {
+          "type": "number",
+          "description": "Execution timeout in milliseconds",
+          "default": 30000
+        }
+      }
+    },
+    "RagSearchAction": {
+      "type": "object",
+      "description": "Perform RAG (Retrieval-Augmented Generation) search",
+      "required": ["query"],
+      "properties": {
+        "query": {
+          "type": "string",
+          "description": "Search query"
+        },
+        "filters": {
+          "$ref": "#/definitions/SearchFilters"
+        },
+        "options": {
+          "$ref": "#/definitions/SearchOptions"
+        }
+      }
+    },
+    "SearchFilters": {
+      "type": "object",
+      "properties": {
+        "file_types": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "directories": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "framework": {
+          "type": "string"
+        },
+        "exclude": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "SearchOptions": {
+      "type": "object",
+      "properties": {
+        "limit": {
+          "type": "number",
+          "default": 10
+        },
+        "min_score": {
+          "type": "number",
+          "default": 0.5
+        },
+        "include_context": {
+          "type": "boolean",
+          "default": true
+        },
+        "highlight_matches": {
+          "type": "boolean",
+          "default": true
+        }
+      }
+    },
+    "ReadFileAction": {
+      "type": "object",
+      "description": "Read file contents",
+      "required": ["path"],
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "File path to read"
+        },
+        "startLine": {
+          "type": "number",
+          "description": "Start line (1-based, inclusive)"
+        },
+        "endLine": {
+          "type": "number",
+          "description": "End line (1-based, inclusive)"
+        }
+      }
+    },
+    "WriteFileAction": {
+      "type": "object",
+      "description": "Write data to file",
+      "required": ["path", "content"],
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "File path to write"
+        },
+        "content": {
+          "type": "string",
+          "description": "Content to write"
+        },
+        "createDirs": {
+          "type": "boolean",
+          "description": "Create parent directories if they don't exist",
+          "default": true
+        }
+      }
+    },
+    "ExecuteCommandAction": {
+      "type": "object",
+      "description": "Execute shell command",
+      "required": ["command"],
+      "properties": {
+        "command": {
+          "type": "string",
+          "description": "Shell command to execute"
+        },
+        "cwd": {
+          "type": "string",
+          "description": "Working directory"
+        },
+        "env": {
+          "type": "object",
+          "description": "Environment variables",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "timeout": {
+          "type": "number",
+          "description": "Command timeout in milliseconds",
+          "default": 60000
+        }
+      }
+    },
+    "MessageAction": {
+      "type": "object",
+      "description": "Display-only message to the user (UI only)",
+      "required": ["content"],
+      "properties": {
+        "content": {
+          "type": "string",
+          "description": "Message content"
+        },
+        "role": {
+          "type": "string",
+          "enum": ["system", "user", "assistant"],
+          "default": "assistant"
+        }
+      }
+    },
+    "ExecutePayload": {
+      "type": "object",
+      "description": "Execute payload with action-key shape",
+      "properties": {
+        "form": {
+          "$ref": "#/definitions/FormAction"
+        },
+        "script": {
+          "$ref": "#/definitions/ScriptAction"
+        },
+        "rag-search": {
+          "$ref": "#/definitions/RagSearchAction"
+        },
+        "read-file": {
+          "$ref": "#/definitions/ReadFileAction"
+        },
+        "write-file": {
+          "$ref": "#/definitions/WriteFileAction"
+        },
+        "execute-command": {
+          "$ref": "#/definitions/ExecuteCommandAction"
+        },
+        "message": {
+          "$ref": "#/definitions/MessageAction"
+        }
+      },
+      "additionalProperties": false
+    },
+    "ActionResult": {
+      "type": "object",
+      "description": "Result payload with action-key shape",
+      "properties": {
+        "script": {
+          "type": "object",
+          "properties": {
+            "output": {},
+            "error": {
+              "type": "string"
+            }
+          }
+        },
+        "rag-search": {
+          "type": "object",
+          "properties": {
+            "results": {
+              "type": "array"
+            },
+            "files": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "query": {
+              "type": "string"
+            }
+          }
+        },
+        "read-file": {
+          "type": "object",
+          "properties": {
+            "path": {
+              "type": "string"
+            },
+            "content": {
+              "type": "string"
+            },
+            "error": {
+              "type": "string"
+            }
+          }
+        },
+        "write-file": {
+          "type": "object",
+          "properties": {
+            "path": {
+              "type": "string"
+            },
+            "success": {
+              "type": "boolean"
+            },
+            "error": {
+              "type": "string"
+            }
+          }
+        },
+        "execute-command": {
+          "type": "object",
+          "properties": {
+            "command": {
+              "type": "string"
+            },
+            "exitCode": {
+              "type": "number"
+            },
+            "stdout": {
+              "type": "string"
+            },
+            "stderr": {
+              "type": "string"
+            }
+          }
+        },
+        "form": {
+          "type": "object",
+          "properties": {
+            "choice": {
+              "type": "string"
+            },
+            "input": {
+              "type": "object"
+            }
+          }
+        },
+        "choice": {
+          "type": "string",
+          "description": "Selected choice ID from form"
+        }
+      },
+      "additionalProperties": true
+    }
+  }
+}

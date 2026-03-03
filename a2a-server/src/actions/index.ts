@@ -9,7 +9,7 @@
  * ```
  */
 
-// Types from types.ts
+ // Types from types.ts
 export type {
     DSLDefinition,
     ActionContext,
@@ -22,6 +22,55 @@ export type {
     ActionOutcome,
     ActionResponse,
 } from './types.js';
+
+// Generated types (from YAML definitions)
+export type {
+    // Execute action types
+    FormInput,
+    FormChoice,
+    FormAction,
+    ScriptAction,
+    RagSearchFilters,
+    RagSearchOptions,
+    RagSearchAction,
+    RagSearchResult,
+    ReadFileAction,
+    WriteFileAction,
+    ExecuteCommandAction,
+    ExecuteCommandResult,
+    MessageAction,
+    ExecutePayload,
+    ExecuteActionType,
+    ActionResult,
+    FormResult,
+    ScriptResult,
+    RagSearchResultPayload,
+    ReadFileResult,
+    WriteFileResult,
+} from './generated-types.js';
+
+// Validation functions
+export {
+    validateExecutePayload,
+    validateActionResult,
+    validateActionDefinition,
+    validateFormAction,
+    validateScriptAction,
+    validateRagSearchAction,
+    validateReadFileAction,
+    validateWriteFileAction,
+    validateExecuteCommandAction,
+    validateMessageAction,
+    validateExecutePayloadDetailed,
+    validateActionKeyShape,
+    validateActionResponse,
+    createActionValidator,
+    validateRagSearchResult,
+    validateReadFileResult,
+    validateWriteFileResult,
+    validateExecuteCommandResult,
+    type ValidationResult,
+} from './action-validator.js';
 
 // Parser functions from action-parser.ts
 export {

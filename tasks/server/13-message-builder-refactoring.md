@@ -123,7 +123,7 @@
 - Requires template system updates
 
 ## Success Criteria
-- Main service reduced to under 200 lines
+- Main service reduced to under 400 lines
 - All existing functionality preserved
 - All tests pass
 - Performance maintained or improved
