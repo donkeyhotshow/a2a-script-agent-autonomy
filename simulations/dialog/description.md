@@ -10,21 +10,18 @@
 
 ## Поток
 
-| Шаг | Request                 | Response                            |
-|-----|-------------------------|-------------------------------------|
-| 1   | task: "dialog"          | actions с llmPrompt                 |
-| 2   | result.action: "dialog" | execute.form запрашивает messages   |
-| 3   | input.messages          | LLM request → history +1            |
-| 4   | result.message          | LLM request → history +1, completed |
-| 5   | input.messages          | LLM request → history +1            |
-| 6   | result.message          | LLM request → history +1, completed |
+| Шаг | Request                                      | Response                                                                 |
+|-----|----------------------------------------------|--------------------------------------------------------------------------|
+| 1   | result.message: "диалог"                     | execute.form.choices (router: dialog / auto-ai / task-decomposition)    |
+| 2   | result.choice: "dialog"                      | execute.form.input[message], execution.action = "dialog", step = "request" |
+| 3   | result.message: "hello world"                | LLM → history +1, execution.step = "llm-request", execute.message + form.input |
+| 4   | result.message: "Дякую!"                     | LLM → history +1, execution.step = "completed", execute.message + form.input  |
 
 ## История диалога
 
 - 3: user: "hello world" → assistant: "hello world"
 - 4: user: "Дякую!" → assistant: "Будь ласка! Звертайся ще."
-- 5: user: "пока" → assistant: "До побачення!"
-- 6: completed
+- 5: completed
 
 ## Структура файлов
 

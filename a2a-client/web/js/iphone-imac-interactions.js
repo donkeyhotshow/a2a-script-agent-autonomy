@@ -39,6 +39,7 @@ class iPhoneImacInteractions {
                 </div>
             </div>
             <div class="status-tray" data-role="status-tray">
+                <div class="status-tray-drop-target" data-role="status-tray-drop" aria-hidden="true"></div>
                 <div class="status-tray-icons" data-role="status-tray-icons" aria-label="Panel tray"></div>
                 <span class="status-tray-label">Taskbar</span>
             </div>

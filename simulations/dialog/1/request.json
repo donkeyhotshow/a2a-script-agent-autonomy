@@ -1,12 +1,11 @@
 {
   "context": {
-    "task": "диалог",
     "execution": {
-      "action": "dialog",
-      "step": "llm-request"
+      "action": "task",
+      "step": "new"
     }
   },
   "result": {
-    "message": "hello world"
+    "message": "диалог"
   }
 }

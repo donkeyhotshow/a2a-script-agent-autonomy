@@ -1,0 +1,37 @@
+{
+  "name": "@a2a/sdk",
+  "version": "1.0.0",
+  "description": "A2A SDK - объединенный пакет для клиента и сервера",
+  "type": "module",
+  "main": "src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./client": "./src/client/index.js",
+    "./server": "./src/server/index.js"
+  },
+  "scripts": {
+    "dev": "tsx watch src/server/index.ts",
+    "build": "tsc",
+    "start": "node dist/server/index.js",
+    "test": "vitest run"
+  },
+  "keywords": [
+    "a2a",
+    "sdk",
+    "client",
+    "server"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@a2a/api-client": "file:../api-client",
+    "@a2a/api-server": "file:../api-server"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3",
+    "tsx": "^4.19.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

@@ -27,10 +27,15 @@ logic even when no LLM is involved.
 
 ## Request
 
-- **First request**: `{ "task": "..." }` only.
-- **Client chose action**: when server sent `actions[]` use `result.action`; when server sent `execute.form` use
-  `result.choice` (id of selected option). Example: `{ "context": {...}, "result": { "choice": "fix-vue-imports" } }`.
-- **Later steps**: `context` + `result` or `input` as per flow.
+- **First request (server‑level симуляция)**: роутер‑шаг `task/new`:
+  `{"context":{"execution":{"action":"task","step":"new"}},"result":{"message":"<user task>"}}`
+  (как в `simulations/dialog/1/request.json`). На верхнем уровне системы этот шаг соответствует
+  пользовательскому `{ "task": "..." }`.
+- **Router / client choice (новый стандарт)**: сервер присылает `execute.form.choices`; клиент отвечает
+  `result.choice` (ID выбранной опции). Пример: `{ "context": {...}, "result": { "choice": "fix-vue-imports" } }`.
+- **Legacy actions[]**: только для старых симуляций: когда сервер прислал `actions[]`, можно использовать `result.action`
+  (будет удаляться; новые симуляции должны опираться на `execute.form.choices` + `result.choice`).
+- **Later steps**: `context` + `result` или `input` по схеме конкретного потока.
 - **result for read-file**: use action-key shape so server has path + content. Good:
   `result: { "read-file": { "path": "src/auth.js", "content": "..." } }`. Bad: `result: { "content": "..." }` (path
   unknown).

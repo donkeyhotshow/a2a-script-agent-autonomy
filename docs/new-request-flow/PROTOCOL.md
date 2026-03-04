@@ -128,12 +128,13 @@ request.json → request.md (LLM prompt) → response.md (LLM output)
 
 ## Схемы запросов/ответов
 
-### 1. Первый запрос: Поиск сервисов
+### 1. Первый запрос: Поиск сервисов (router через form.choices)
 
-Пользователь вводит задачу, система предлагает доступные варианты виконання. **Канон (по симуляциям/SCHEMA.md):**
-перший ответ йде через `execute.form.choices` (список опцій), де `choices[].id` — ID дії (`fix-vue-imports`,
-`auto-ai`, `task-decomposition` тощо). Формат с `actions[]` и `fallbackActions[]` в ответе считается **legacy** и
-используется только для совместимости.
+Пользователь вводит задачу, система через **router** предлагает доступные варианты виконання. **Канон
+(по `simulations/SCHEMA.md`)**: первый ответ идёт через `execute.form.choices` (список опций), где `choices[].id` — ID
+действия (`fix-vue-imports`, `auto-ai`, `task-decomposition`, `dialog`, `coder` и т.п.).
+Формат с `actions[]` и `fallbackActions[]` в ответе считается **legacy** и используется только для совместимости; новые
+симуляции и сервер должны опираться на `execute.form.choices` + `result.choice`.
 
 #### Запрос (Web → Client API)
 

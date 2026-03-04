@@ -2,8 +2,8 @@
   "context": {
     "task": "диалог",
     "execution": {
-      "action": "dialog",
-      "step": "action-selection"
+      "action": "task",
+      "step": "router"
     }
   },
   "result": {

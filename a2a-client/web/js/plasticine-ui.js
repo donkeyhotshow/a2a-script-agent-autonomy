@@ -435,7 +435,8 @@
         div.innerHTML = `
       <div class="pui-zone left" data-zone="docked-left" title="Dock left">◀</div>
       <div class="pui-zone right" data-zone="docked-right" title="Dock right">▶</div>
-      <div class="pui-zone bottom" data-zone="docked-bottom" title="Dock bottom">▼</div>`;
+      <div class="pui-zone bottom" data-zone="docked-bottom" title="Dock bottom">▼</div>
+      <div class="pui-zone status-tray" data-zone="status-tray" title="Send to taskbar">▢</div>`;
         return div;
     }
 

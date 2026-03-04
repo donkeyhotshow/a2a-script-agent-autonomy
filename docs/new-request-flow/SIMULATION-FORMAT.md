@@ -186,31 +186,54 @@ JSONPath‑pipeline (див. `json-schemas/server-transform.schema.json`).
 
 ## Пример: Dialog Simulation
 
-### Шаг 1: request.json (Client → Server)
+### Шаг 1: request.json (router: task/new)
 ```json
 {
   "context": {
-    "task": "диалог",
     "execution": {
-      "action": "dialog",
-      "step": "llm-request"
+      "action": "task",
+      "step": "new"
     }
   },
   "result": {
-    "message": "hello world"
+    "message": "диалог"
   }
 }
 ```
 
-### Шаг 2: request.json (выбор действия)
+### Шаг 1: response.json (router form.choices)
 
 ```json
 {
   "context": {
     "task": "диалог",
     "execution": {
-      "action": "dialog",
-      "step": "action-selection"
+      "action": "task",
+      "step": "router"
+    }
+  },
+  "execute": {
+    "form": {
+      "title": "Оберіть спосіб виконання",
+      "choices": [
+        { "id": "dialog", "label": "AI діалог з користувачем" },
+        { "id": "auto-ai", "label": "AI Action Generator" },
+        { "id": "task-decomposition", "label": "Декомпозиція задачі" }
+      ]
+    }
+  }
+}
+```
+
+### Шаг 2: request.json (выбор екшена dialog)
+
+```json
+{
+  "context": {
+    "task": "диалог",
+    "execution": {
+      "action": "task",
+      "step": "router"
     }
   },
   "result": {
@@ -219,11 +242,43 @@ JSONPath‑pipeline (див. `json-schemas/server-transform.schema.json`).
 }
 ```
 
+### Шаг 2: response.json (форма для message)
+
+```json
+{
+  "context": {
+    "task": "диалог",
+    "execution": {
+      "action": "dialog",
+      "step": "request"
+    }
+  },
+  "execute": {
+    "form": {
+      "input": [
+        {
+          "name": "message",
+          "type": "text",
+          "label": "Повідомлення",
+          "required": true
+        }
+      ]
+    }
+  }
+}
+```
+
 ### Шаг 3: request.json (сообщение пользователя)
 
 ```json
 {
-  "context": { "task": "диалог", "execution": { "action": "dialog", "step": "request" } },
+  "context": {
+    "task": "диалог",
+    "execution": {
+      "action": "dialog",
+      "step": "request"
+    }
+  },
   "result": { "message": "hello world" }
 }
 ```

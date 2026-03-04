@@ -127,7 +127,7 @@ a2a-client/simulations/
 | Симуляція         | Опис                                                                                                                  |
 |-------------------|-----------------------------------------------------------------------------------------------------------------------|
 | `fix-vue-imports` | form (choice) → script steps → finalResult                                                                            |
-| `dialog`          | actions → result.action; form (message) → result.message                                                              |
+| `dialog`          | form (choices) → result.choice; form (message) → result.message                                                       |
 | `coder`           | form (message) → result.message; execute.rag-search → result.rag-search; execute.read-file → result.read-file         |
 | `auto-ai`         | form, rag-search, read-file, write-file, execute-command → result.execute-command (command, exitCode, stdout, stderr) |
 | `analyze-dialog`  | form з choices (continue_search / save_report) → result.choice                                                        |

@@ -1,6 +1,10 @@
 {
   "context": {
-    "task": "диалог"
+    "task": "диалог",
+    "execution": {
+      "action": "task",
+      "step": "router"
+    }
   },
   "execute": {
     "form": {

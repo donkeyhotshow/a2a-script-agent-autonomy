@@ -203,10 +203,10 @@ SIMULATION_ENABLED=false # Включить симуляцию
     - Создает сессию локально (в памяти/файле)
     - Отправляет POST /api/v1/invoke на SERVER
     - SERVER возвращает promiseId
-    - CLIENT API сохраняет сессию с actions
+    - CLIENT API сохраняет сессию с **execute.form.choices** (router; формат `actions[]` считается legacy)
 
    │
-4. CLIENT API: возвращает { sessionId, **execute.form.choices** } (ранее `actions[]`)
+4. CLIENT API: возвращает { sessionId, **execute.form.choices** } (router вместо `actions[]`)
    │
 5. WEB: отображает панель сессии с **execute.form.choices** (ранее `actions[]`)
 
@@ -216,7 +216,7 @@ SIMULATION_ENABLED=false # Включить симуляцию
 
 ```
 
-1. USER: выбирает действие из **execute.form.choices** (ранее `actions[]`)
+1. USER: выбирает действие из **execute.form.choices** (router; `actions[]` — только для старых реализаций)
    │
 2. WEB: отправляет POST /api/sessions/:id/action { action }
    │
@@ -235,7 +235,7 @@ SIMULATION_ENABLED=false # Включить симуляцию
 2. WEB: отправляет POST /api/sessions/:id/next
    │
 3. CLIENT API:
-    - Отправляет POST /api/v1/invoke { context, result: { action } } **[OUTDATED/LEGACY: для выбора действия в новом протоколе используйте `result.choice`, см. `server-invoke-request.schema.json`]**
+    - Отправляет POST /api/v1/invoke { context, result: { choice } } — выбирает опцию из `execute.form.choices`
     - SERVER возвращает execute с script
     - CLIENT API выполняет script
     - CLIENT API сохраняет результаты в сессии
