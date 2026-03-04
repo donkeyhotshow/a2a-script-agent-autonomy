@@ -5,9 +5,9 @@
  * Supports request signing for security.
  */
 
-import { logger } from '../utils/logger.js';
-import { retryWithBackoff, calculateDelay, DEFAULT_BACKOFF_OPTIONS } from '../utils/backoff.js';
-import { config } from '../config/index.js';
+import { logger } from '../../utils/logger.js';
+import { retryWithBackoff, calculateDelay, DEFAULT_BACKOFF_OPTIONS } from '../../utils/backoff.js';
+import { config } from '../../config/index.js';
 import crypto from 'crypto';
 
 // ===========================================

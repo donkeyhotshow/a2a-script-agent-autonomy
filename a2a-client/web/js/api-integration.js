@@ -8,7 +8,7 @@
 
 class APIIntegration {
     constructor() {
-        this.serverUrl = '/api/v1';
+        this.apiBase = '/api';
         this.token = null;
         this.connected = false;
         this.sseConnected = false;
@@ -19,14 +19,27 @@ class APIIntegration {
         this.maxReconnectAttempts = 5;
     }
 
+    get serverUrl() {
+        return this.apiBase;
+    }
+
+    set serverUrl(value) {
+        if (value) {
+            this.configure({ apiBase: value });
+        }
+    }
+
     /**
      * Configure API client
      */
     configure(options = {}) {
-        if (options.serverUrl) this.serverUrl = options.serverUrl.replace(/\/?$/, '');
+        const base = options.apiBase || options.clientApiUrl || options.serverUrl;
+        if (base) {
+            this.apiBase = String(base).replace(/\/?$/, '');
+        }
         if (options.token) this.token = options.token;
 
-        console.log('[API] Configured:', this.serverUrl);
+        console.log('[API] Configured:', this.apiBase);
         return this;
     }
 
@@ -43,7 +56,8 @@ class APIIntegration {
      * Make HTTP request
      */
     async request(method, path, body = null) {
-        const url = `${this.serverUrl}${path}`;
+        const base = this.apiBase.replace(/\/?$/, '');
+        const url = path.startsWith('/') ? `${base}${path}` : `${base}/${path}`;
         const options = {
             method,
             headers: this._getHeaders()

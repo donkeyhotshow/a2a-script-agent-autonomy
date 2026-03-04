@@ -15,7 +15,7 @@
     class WebApiClient {
         constructor(options = {}) {
             this.options = {
-                apiBase: options.apiBase || '/api/v1',
+                apiBase: options.apiBase || '/api',
                 autoConnect: options.autoConnect !== false,
                 ...options
             };

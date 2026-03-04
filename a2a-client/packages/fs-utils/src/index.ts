@@ -10,11 +10,11 @@ import type {FileScannerConfig} from './file-scanner';
 
 export {IgnoreDetector, GlobMatcher, FileScanner};
 export {filterByIgnore, scanWithIgnore} from './file-scanner.ignore';
-export {readFileForResult, writeFileForResult, listDirectoryForResult} from './protocol-result.stub';
+export {readFileForResult, writeFileForResult, listDirectoryForResult} from './protocol-result';
 export type {ScanResult, ScannedFile, ScanStats, FileScannerConfig} from './file-scanner';
 export type {IgnoreDetectorConfig, ScanEntry} from './ignore-detector';
 export type {ScanWithIgnoreConfig} from './file-scanner.ignore';
-export type {ReadFileResult, WriteFileResult, ListDirectoryEntry, ListDirectoryResult} from './protocol-result.stub';
+export type {ReadFileResult, WriteFileResult, ListDirectoryEntry, ListDirectoryResult} from './protocol-result';
 
 export function createIgnoreDetector(config?: IgnoreDetectorConfig): IgnoreDetector {
     return new IgnoreDetector(config);

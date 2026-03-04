@@ -682,6 +682,267 @@
         }
 
         /**
+         * Интегрировать с SessionManager
+         * @param {Object} sessionManager - экземпляр SessionManager
+         * @returns {AIActionsSessionPanel} this для чейнинга
+         */
+        integrateWithSessionManager(sessionManager) {
+            if (!sessionManager) {
+                console.warn('[AIActionsSessionPanel] SessionManager not provided');
+                return this;
+            }
+
+            this.sessionManager = sessionManager;
+            
+            // Подписываемся на события SessionManager
+            this._setupSessionManagerListeners();
+            
+            // Синхронизируем существующие сессии
+            this.syncWithSessionManager();
+            
+            console.log('[AIActionsSessionPanel] Integrated with SessionManager');
+            return this;
+        }
+
+        /**
+         * Настроить слушателей событий SessionManager
+         * @private
+         */
+        _setupSessionManagerListeners() {
+            if (!this.sessionManager) return;
+
+            // Слушаем создание сессий
+            this.sessionManager.on('sessionCreated', (session) => {
+                const sessionId = session.id || session.sessionId;
+                if (sessionId && !this.sessions.has(sessionId)) {
+                    this.createSession(sessionId, {
+                        title: session.title || session.name,
+                        status: session.status || 'active',
+                        metadata: {
+                            ...session,
+                            source: 'session-manager'
+                        }
+                    });
+                }
+            });
+
+            // Слушаем загрузку сессий
+            this.sessionManager.on('sessionsLoaded', (sessions) => {
+                sessions.forEach(session => {
+                    const sessionId = session.id || session.sessionId;
+                    if (sessionId && !this.sessions.has(sessionId)) {
+                        this.createSession(sessionId, {
+                            title: session.title || session.name,
+                            status: session.status || 'active',
+                            metadata: {
+                                ...session,
+                                source: 'session-manager'
+                            }
+                        });
+                    }
+                });
+            });
+
+            // Слушаем удаление сессий
+            this.sessionManager.on('sessionDeleted', (sessionId) => {
+                if (this.sessions.has(sessionId)) {
+                    this.removeSession(sessionId);
+                }
+            });
+
+            // Слушаем изменение активной сессии
+            this.sessionManager.on('sessionChanged', (sessionId) => {
+                if (this.sessions.has(sessionId)) {
+                    this.switchToSession(sessionId);
+                }
+            });
+
+            // Слушаем загрузку сообщений/действий
+            this.sessionManager.on('conversationLoaded', ({ sessionId, messages }) => {
+                const session = this.sessions.get(sessionId);
+                if (session && messages) {
+                    messages.forEach(msg => {
+                        this.addActionToSession(sessionId, {
+                            type: msg.type || 'message',
+                            content: msg.content || msg.text || msg.message,
+                            role: msg.role || msg.direction,
+                            timestamp: msg.timestamp || msg.createdAt,
+                            status: 'completed'
+                        });
+                    });
+                }
+            });
+        }
+
+        /**
+         * Синхронизировать сессии с SessionManager
+         */
+        syncWithSessionManager() {
+            if (!this.sessionManager) return;
+
+            // Загружаем сессии из SessionManager
+            const sessions = this.sessionManager.sessions || [];
+            sessions.forEach(session => {
+                const sessionId = session.id || session.sessionId;
+                if (sessionId && !this.sessions.has(sessionId)) {
+                    this.createSession(sessionId, {
+                        title: session.title || session.name,
+                        status: session.status || 'active',
+                        metadata: {
+                            ...session,
+                            source: 'session-manager'
+                        }
+                    });
+                }
+            });
+
+            // Синхронизируем текущую сессию
+            if (this.sessionManager.currentSessionId) {
+                this.switchToSession(this.sessionManager.currentSessionId);
+            }
+        }
+
+        /**
+         * Получить действия из сессии
+         * @param {string} sessionId
+         * @returns {Array}
+         */
+        getActionsFromSession(sessionId) {
+            const session = this.sessions.get(sessionId);
+            return session ? session.actions : [];
+        }
+
+        /**
+         * Обновить статус действия
+         * @param {string} sessionId
+         * @param {string} actionId
+         * @param {string} status
+         */
+        updateActionStatus(sessionId, actionId, status) {
+            const session = this.sessions.get(sessionId);
+            if (!session) return;
+
+            const action = session.actions.find(a => a.id === actionId);
+            if (action) {
+                action.status = status;
+                action.updatedAt = new Date().toISOString();
+                if (this.currentSessionId === sessionId) {
+                    this._renderSessionContent(sessionId);
+                }
+            }
+        }
+
+        /**
+         * Удалить действие из сессии
+         * @param {string} sessionId
+         * @param {string} actionId
+         */
+        removeActionFromSession(sessionId, actionId) {
+            const session = this.sessions.get(sessionId);
+            if (!session) return;
+
+            session.actions = session.actions.filter(a => a.id !== actionId);
+            session.updatedAt = new Date().toISOString();
+            
+            if (this.currentSessionId === sessionId) {
+                this._renderSessionContent(sessionId);
+            }
+        }
+
+        /**
+         * Очистить все действия сессии (алиас для clearSessionActions)
+         * @param {string} sessionId
+         */
+        clearActionsFromSession(sessionId) {
+            this.clearSessionActions(sessionId);
+        }
+
+        /**
+         * Импортировать сессию
+         * @param {Object} data
+         * @returns {string|null} ID импортированной сессии
+         */
+        importSession(data) {
+            if (!data || !data.id) {
+                console.warn('[AIActionsSessionPanel] Invalid session data for import');
+                return null;
+            }
+
+            const sessionId = data.id;
+            this.sessions.set(sessionId, {
+                ...data,
+                importedAt: new Date().toISOString()
+            });
+
+            this._renderSessionList();
+            this._updateSessionCount();
+            
+            return sessionId;
+        }
+
+        /**
+         * Экспортировать все сессии
+         * @returns {Array}
+         */
+        exportAllSessions() {
+            return Array.from(this.sessions.values());
+        }
+
+        /**
+         * Сохранить в localStorage
+         */
+        saveToStorage() {
+            try {
+                const data = this.exportAllSessions();
+                localStorage.setItem('ai-actions-sessions', JSON.stringify(data));
+                localStorage.setItem('ai-actions-current-session', this.currentSessionId || '');
+            } catch (e) {
+                console.error('[AIActionsSessionPanel] Failed to save to storage:', e);
+            }
+        }
+
+        /**
+         * Загрузить из localStorage
+         * @returns {Array} загруженные сессии
+         */
+        loadFromStorage() {
+            try {
+                const data = localStorage.getItem('ai-actions-sessions');
+                if (data) {
+                    const sessions = JSON.parse(data);
+                    sessions.forEach(session => {
+                        this.sessions.set(session.id, session);
+                    });
+                    this._renderSessionList();
+                    this._updateSessionCount();
+                    
+                    // Восстанавливаем текущую сессию
+                    const currentId = localStorage.getItem('ai-actions-current-session');
+                    if (currentId && this.sessions.has(currentId)) {
+                        this.switchToSession(currentId);
+                    }
+                    
+                    return sessions;
+                }
+            } catch (e) {
+                console.error('[AIActionsSessionPanel] Failed to load from storage:', e);
+            }
+            return [];
+        }
+
+        /**
+         * Очистить localStorage
+         */
+        clearStorage() {
+            try {
+                localStorage.removeItem('ai-actions-sessions');
+                localStorage.removeItem('ai-actions-current-session');
+            } catch (e) {
+                console.error('[AIActionsSessionPanel] Failed to clear storage:', e);
+            }
+        }
+
+        /**
          * Уничтожить панель
          */
         destroy() {
@@ -689,6 +950,7 @@
                 this.floatingPanel.destroy();
             }
             this.sessions.clear();
+            this.sessionManager = null;
         }
     }
 

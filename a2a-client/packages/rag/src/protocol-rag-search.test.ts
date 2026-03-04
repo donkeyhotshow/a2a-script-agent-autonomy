@@ -2,7 +2,7 @@
  * Tests for toRagSearchResult function
  */
 
-import { toRagSearchResult, RagSearchProtocolResult } from './protocol-rag-search.stub';
+import { toRagSearchResult, RagSearchProtocolResult } from './protocol-rag-search';
 
 describe('toRagSearchResult', () => {
     const mockResults = [

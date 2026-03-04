@@ -12,7 +12,7 @@
 
     const SessionManager = {
         // Configuration
-        apiBase: '/api/v1',
+        apiBase: '/api',
         currentSessionId: null,
         currentProjectId: null,
         sessions: [],

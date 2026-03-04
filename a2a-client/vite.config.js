@@ -1,10 +1,12 @@
 import vitePluginA2a from './vite-plugin-a2a.js';
 
+const devPort = Number(process.env.PORT) || 5173;
+
 /** @type {import('vite').UserConfig} */
 export default {
     root: 'web',
     server: {
-        port: 5173,
+        port: devPort,
         proxy: {
             '/api': {
                 // a2a-client API (Client API; proxies to a2a-server internally)

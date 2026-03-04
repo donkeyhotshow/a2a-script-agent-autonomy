@@ -10,6 +10,7 @@ import {QueryUnderstandingEngine, INTENT_TYPES} from './query-understanding.js';
 import {CodeSimilarityEngine} from './code-similarity.js';
 import {BM25Scorer} from './bm25.js';
 import {scoreFileRelevance} from './file-relevance.js';
+import {toRagSearchResult} from './protocol-rag-search.js';
 import type {Chunk} from './chunk-manager.js';
 import type {RAGIndexData, IndexFileInfo} from './indexer.js';
 import type {FileRelevanceModel} from './file-relevance';
@@ -653,5 +654,41 @@ export class RAGSearcher {
     dispose(): void {
         this.index = null;
         this.clearTFIDFIndex();
+    }
+
+    /**
+     * Search with protocol result transformation
+     * Integrates policy limits and transforms results to protocol format
+     */
+    async searchWithProtocol(
+        query: string, 
+        options: SearchOptions & {
+            maxFiles?: number;
+            allowedDirs?: string[];
+            allowedExtensions?: string[];
+            maxResults?: number;
+        } = {}
+    ): Promise<import('./protocol-rag-search.js').RagSearchProtocolResult> {
+        const searchResults = await this.search(query, options);
+        
+        // Transform raw search results to protocol format
+        const rawResults = searchResults.map(result => ({
+            chunk: {
+                filePath: result.chunk.filePath,
+                content: result.chunk.content,
+                startLine: result.chunk.startLine,
+                endLine: result.chunk.endLine
+            },
+            score: result.score,
+            highlights: result.highlights
+        }));
+
+        return toRagSearchResult(rawResults, {
+            query,
+            maxFiles: options.maxFiles,
+            allowedDirs: options.allowedDirs,
+            allowedExtensions: options.allowedExtensions,
+            maxResults: options.maxResults
+        });
     }
 }

@@ -4,9 +4,10 @@
  * Exposes client-side tools (terminal, fs-utils, etc.) via REST API
  * This runs on the client machine to provide local file system and terminal access
  *
- * TODO(Task-02): session model with context, execute, status, exchangeLog[], messages[] – tasks/client/02-api-server-client-api-integration.md
- * TODO(Task-02): promiseId flow – poll /api/v1/requests/:id/status, propagate to Web via /api/sessions/:id/next and SSE
- * TODO(Task-02): session DTO for Web: task, status, context.execution, messages, current execute
+ * ✅ IMPLEMENTED: session model with context, execute, status, exchangeLog[], messages[]
+ * ✅ IMPLEMENTED: promiseId flow – poll /api/v1/requests/:id/status, propagate to Web via /api/sessions/:id/next and SSE
+ * ✅ IMPLEMENTED: session DTO for Web: task, status, context.execution, messages, current execute
+ * ✅ IMPLEMENTED: new protocol support - execute.form.choices, action-key shape for results
  */
 
 import express from 'express';
@@ -22,6 +23,8 @@ import {promisify} from 'util';
 import {Readable} from 'stream';
 import {randomUUID} from 'crypto';
 import {WebSocketServer, WebSocket} from 'ws';
+import {toSessionSummary, toSessionDetail, SessionDetail, SessionSummary} from './session-dto.js';
+import {detectResponseType} from '@a2a/api-client/src/action-handler.js';
 
 type WebSocketClient = WebSocket & { sessionId?: string };
 
@@ -118,8 +121,203 @@ function handleWebSocketMessage(sessionId: string, ws: WebSocket, message: Recor
             }
             ws.send(JSON.stringify({ type: 'unsubscribed', sessionId }));
             break;
+        case 'choice':
+            // Handle form choice selection (new protocol)
+            // Client sends: { type: 'choice', choiceId: 'fix-vue-imports', input?: {...} }
+            handleChoiceSelection(sessionId, ws, message);
+            break;
+        case 'action_result':
+            // Handle action result (new protocol)
+            // Client sends: { type: 'action_result', actionType: 'script', result: {...} }
+            handleActionResult(sessionId, ws, message);
+            break;
+        case 'ui_ready':
+            // Client signals UI is ready for next step
+            ws.send(JSON.stringify({ 
+                type: 'ui_ready_ack', 
+                sessionId, 
+                timestamp: new Date().toISOString() 
+            }));
+            break;
         default:
             console.log(`[WS] Unknown message type: ${type}`);
+    }
+}
+
+/**
+ * Handle choice selection from client (new protocol)
+ */
+async function handleChoiceSelection(
+    sessionId: string, 
+    ws: WebSocket, 
+    message: Record<string, unknown>
+): Promise<void> {
+    const choiceId = message.choiceId as string;
+    const input = message.input as Record<string, unknown> | undefined;
+    
+    if (!choiceId) {
+        ws.send(JSON.stringify({ 
+            type: 'error', 
+            error: 'choiceId is required',
+            sessionId 
+        }));
+        return;
+    }
+    
+    try {
+        const projects = await loadProjects();
+        const project = projects[0];
+        if (!project) {
+            ws.send(JSON.stringify({ 
+                type: 'error', 
+                error: 'Project not found',
+                sessionId 
+            }));
+            return;
+        }
+        
+        const session = await loadSession(project, sessionId);
+        if (!session) {
+            ws.send(JSON.stringify({ 
+                type: 'error', 
+                error: 'Session not found',
+                sessionId 
+            }));
+            return;
+        }
+        
+        // Build result in action-key shape
+        const result = input 
+            ? { choice: choiceId, input }
+            : { choice: choiceId };
+        
+        // Send to server
+        const serverBase = await getServerBaseUrl();
+        const requestBody = {
+            context: {
+                version: session.version || '2.0',
+                session_id: sessionId,
+                task: session.task,
+                execution: session.execution,
+            },
+            result,
+        };
+        
+        const upstream = await serverFetch('POST', serverBase, '/invoke', requestBody);
+        const payload = (await upstream.json().catch(() => ({}))) as any;
+        
+        // Update session
+        const updatedSession = await updateSessionWithServerResponse(project, session, payload);
+        await saveSession(project, updatedSession);
+        
+        // Send response back to client
+        ws.send(JSON.stringify({
+            type: 'choice_response',
+            sessionId,
+            serverResponse: payload,
+            timestamp: new Date().toISOString(),
+        }));
+        
+        // Also broadcast to all session clients
+        broadcastProgress(sessionId, {
+            status: 'choice_processed',
+            message: 'Choice processed by server',
+            result: payload,
+        });
+        
+    } catch (error) {
+        ws.send(JSON.stringify({ 
+            type: 'error', 
+            error: error instanceof Error ? error.message : String(error),
+            sessionId 
+        }));
+    }
+}
+
+/**
+ * Handle action result from client (new protocol)
+ */
+async function handleActionResult(
+    sessionId: string, 
+    ws: WebSocket, 
+    message: Record<string, unknown>
+): Promise<void> {
+    const actionType = message.actionType as string;
+    const result = message.result as Record<string, unknown>;
+    
+    if (!actionType || !result) {
+        ws.send(JSON.stringify({ 
+            type: 'error', 
+            error: 'actionType and result are required',
+            sessionId 
+        }));
+        return;
+    }
+    
+    try {
+        const projects = await loadProjects();
+        const project = projects[0];
+        if (!project) {
+            ws.send(JSON.stringify({ 
+                type: 'error', 
+                error: 'Project not found',
+                sessionId 
+            }));
+            return;
+        }
+        
+        const session = await loadSession(project, sessionId);
+        if (!session) {
+            ws.send(JSON.stringify({ 
+                type: 'error', 
+                error: 'Session not found',
+                sessionId 
+            }));
+            return;
+        }
+        
+        // Send to server in action-key shape
+        const serverBase = await getServerBaseUrl();
+        const requestBody = {
+            context: {
+                version: session.version || '2.0',
+                session_id: sessionId,
+                task: session.task,
+                execution: session.execution,
+            },
+            result: {
+                [actionType]: result,
+            },
+        };
+        
+        const upstream = await serverFetch('POST', serverBase, '/invoke', requestBody);
+        const payload = (await upstream.json().catch(() => ({}))) as any;
+        
+        // Update session
+        const updatedSession = await updateSessionWithServerResponse(project, session, payload);
+        await saveSession(project, updatedSession);
+        
+        // Send response back to client
+        ws.send(JSON.stringify({
+            type: 'action_result_response',
+            sessionId,
+            serverResponse: payload,
+            timestamp: new Date().toISOString(),
+        }));
+        
+        // Also broadcast to all session clients
+        broadcastProgress(sessionId, {
+            status: 'action_result_processed',
+            message: 'Action result processed by server',
+            result: payload,
+        });
+        
+    } catch (error) {
+        ws.send(JSON.stringify({ 
+            type: 'error', 
+            error: error instanceof Error ? error.message : String(error),
+            sessionId 
+        }));
     }
 }
 
@@ -149,6 +347,64 @@ function broadcastProgress(sessionId: string, progress: {
         timestamp: new Date().toISOString(),
         ...progress,
     });
+}
+
+// ==================== NEW PROTOCOL HELPERS ====================
+
+/**
+ * Detect the type of response from server.
+ * Determines whether the response requires UI interaction (form/message) or client execution.
+ * 
+ * @returns 'form' - UI needs to show a form with choices/input
+ * @returns 'message' - UI needs to display a message
+ * @returns 'action' - Client should execute an action (script, read-file, etc.)
+ * @returns 'unknown' - Unknown or unsupported response type
+ */
+function detectServerResponseType(response: {
+    execute?: Record<string, unknown>;
+}): 'form' | 'message' | 'action' | 'unknown' {
+    if (!response?.execute) {
+        return 'unknown';
+    }
+    
+    const executeKeys = Object.keys(response.execute);
+    if (executeKeys.length === 0) {
+        return 'unknown';
+    }
+    
+    const firstKey = executeKeys[0];
+    
+    // UI-only types
+    if (firstKey === 'form' || firstKey === 'message') {
+        return firstKey;
+    }
+    
+    // Client execution types
+    const clientActionTypes = ['script', 'read-file', 'write-file', 'rag-search', 'execute-command'];
+    if (clientActionTypes.includes(firstKey)) {
+        return 'action';
+    }
+    
+    return 'unknown';
+}
+
+/**
+ * Check if response contains form choices (new protocol)
+ */
+function hasFormChoices(response: { execute?: Record<string, unknown> }): boolean {
+    return !!(response?.execute && 'form' in response.execute);
+}
+
+/**
+ * Extract form choices from response (new protocol)
+ */
+function extractFormChoices(response: { execute?: Record<string, unknown> }): { 
+    title?: string; 
+    choices?: Array<{ id: string; label: string }>;
+    input?: unknown[];
+} | null {
+    if (!response?.execute?.form) return null;
+    return response.execute.form as { title?: string; choices?: Array<{ id: string; label: string }>; input?: unknown[] };
 }
 
 // Middleware
@@ -187,6 +443,14 @@ type Session = {
     createdAt: string;
     updatedAt: string;
     messages?: unknown[];
+    // New protocol fields
+    version?: string;
+    execution?: {
+        action?: string;
+        step?: string;
+        progress?: number;
+        status?: string;
+    };
 };
 
 const packageRoot = path.resolve(__dirname, '..');
@@ -470,10 +734,84 @@ app.post(['/api/sessions', '/api/v1/sessions'], async (req, res) => {
         title: String(body.title || 'New Session'),
         task: body.task ? String(body.task) : undefined,
         status: 'PENDING',
+        version: '2.0', // New protocol version
         createdAt: now,
         updatedAt: now,
         messages: [],
     };
+    
+    // If task is provided, send request to server with new protocol format
+    if (body.task) {
+        try {
+            const serverBase = await getServerBaseUrl();
+            
+            // Build new protocol request
+            const requestBody = {
+                context: {
+                    version: '2.0',
+                    session_id: session.id,
+                    task: body.task,
+                },
+            };
+            
+            const upstream = await serverFetch('POST', serverBase, '/invoke', requestBody);
+            const payload = (await upstream.json().catch(() => ({}))) as any;
+            
+            if (upstream.ok) {
+                // Update session with server response
+                const updatedSession = await updateSessionWithServerResponse(project, session, payload);
+                
+                // Check for promiseId (async response)
+                const promiseId = payload?.data?.promiseId || payload?.promiseId;
+                if (promiseId) {
+                    updatedSession.lastPromiseId = promiseId;
+                    updatedSession.status = 'IN_PROGRESS';
+                } else {
+                    // Check if response has form choices (synchronous first response)
+                    if (hasFormChoices(payload)) {
+                        updatedSession.status = 'READY';
+                    }
+                }
+                
+                await saveSession(project, updatedSession);
+                
+                // Broadcast to WebSocket clients
+                broadcastProgress(session.id, {
+                    status: 'session_created',
+                    message: 'Session created and server response received',
+                    result: {
+                        session: toSessionDetail(updatedSession),
+                        serverResponse: payload,
+                    },
+                });
+                
+                // Return both session and server response
+                res.status(201).json({
+                    session: toSessionDetail(updatedSession),
+                    serverResponse: payload,
+                });
+                return;
+            } else {
+                // Server error but session created
+                await saveSession(project, session);
+                res.status(201).json({
+                    session: toSessionDetail(session),
+                    serverError: payload,
+                });
+                return;
+            }
+        } catch (error) {
+            console.error('Error sending task to server:', error);
+            // Save session anyway even if server communication fails
+            await saveSession(project, session);
+            res.status(201).json({
+                session: toSessionDetail(session),
+                serverError: error instanceof Error ? error.message : String(error),
+            });
+            return;
+        }
+    }
+    
     await saveSession(project, session);
     res.status(201).json(session);
 });
@@ -493,7 +831,10 @@ app.get(['/api/sessions/:sessionId', '/api/v1/sessions/:sessionId'], async (req,
         jsonError(res, 404, 'Session not found');
         return;
     }
-    res.json(session);
+    
+    // Convert to SessionDetail DTO
+    const sessionDetail = toSessionDetail(session);
+    res.json(sessionDetail);
 });
 
 app.delete(['/api/sessions/:sessionId', '/api/v1/sessions/:sessionId'], async (req, res) => {
@@ -561,8 +902,23 @@ app.post(['/api/sessions/:sessionId/next', '/api/v1/sessions/:sessionId/next'], 
     }
 
     const serverBase = await getServerBaseUrl();
-    // Forward to server /invoke, and store promiseId if returned
-    const upstream = await serverFetch('POST', serverBase, '/invoke', req.body ?? {});
+    
+    // Build request body for new protocol
+    const requestBody: Record<string, unknown> = {
+        context: {
+            version: session.version || '2.0',
+            session_id: sessionId,
+            task: session.task,
+        },
+    };
+    
+    // If result is provided in request body (new protocol), include it
+    if (req.body?.result) {
+        requestBody.result = req.body.result;
+    }
+    
+    // Forward to server /invoke
+    const upstream = await serverFetch('POST', serverBase, '/invoke', requestBody);
     const payload = (await upstream.json().catch(() => ({}))) as any;
     if (!upstream.ok) {
         res.status(upstream.status).json(payload);
@@ -578,10 +934,151 @@ app.post(['/api/sessions/:sessionId/next', '/api/v1/sessions/:sessionId/next'], 
             updatedAt: new Date().toISOString(),
         };
         await saveSession(project, updated);
+        
+        // Broadcast promiseId to Web UI via WebSocket
+        broadcastProgress(sessionId, {
+            promiseId,
+            status: 'promise_id_assigned',
+            message: `New promiseId assigned: ${promiseId}`,
+            result: { promiseId, sessionId },
+        });
     }
+
+    // Update session with server response data
+    const updatedSession = await updateSessionWithServerResponse(project, session, payload);
+    await saveSession(project, updatedSession);
+
+    // Broadcast server response to Web UI
+    broadcastProgress(sessionId, {
+        promiseId,
+        status: 'server_response_received',
+        message: 'Server response received and session updated',
+        result: payload,
+    });
 
     res.status(upstream.status).json(payload);
 });
+
+/**
+ * Updates session with data from server response
+ */
+async function updateSessionWithServerResponse(
+    project: Project,
+    session: Session,
+    serverResponse: any
+): Promise<Session> {
+    const updatedSession: Session = { ...session };
+    
+    // Update version if provided
+    if (serverResponse?.context?.version) {
+        updatedSession.version = serverResponse.context.version;
+    }
+    
+    // Update context from server response
+    if (serverResponse?.context) {
+        updatedSession.context = { ...session.context, ...serverResponse.context };
+        
+        // Extract execution info from context
+        if (serverResponse.context.execution) {
+            updatedSession.execution = serverResponse.context.execution as Session['execution'];
+        }
+    }
+    
+    // Update execute information from server response (new protocol)
+    if (serverResponse?.execute) {
+        // Store execute information in context for now
+        updatedSession.context = updatedSession.context || {};
+        updatedSession.context.execute = serverResponse.execute;
+        
+        // Check for form choices and extract them
+        if (serverResponse.execute.form) {
+            updatedSession.context.formChoices = serverResponse.execute.form;
+        }
+    }
+    
+    // Handle completed status
+    if (serverResponse?.execute?.completed === true || serverResponse?.finalResult) {
+        updatedSession.status = 'COMPLETED';
+        if (serverResponse.finalResult) {
+            updatedSession.context = updatedSession.context || {};
+            updatedSession.context.finalResult = serverResponse.finalResult;
+        }
+    }
+    
+    // Update messages from server response
+    if (serverResponse?.messages && Array.isArray(serverResponse.messages)) {
+        updatedSession.messages = [...(session.messages || []), ...serverResponse.messages];
+    }
+    
+    // Update exchange log from server response
+    if (serverResponse?.exchangeLog && Array.isArray(serverResponse.exchangeLog)) {
+        // Store exchange log in context
+        updatedSession.context = updatedSession.context || {};
+        updatedSession.context.exchangeLog = [
+            ...(session.context?.exchangeLog || []),
+            ...serverResponse.exchangeLog
+        ];
+    }
+    
+    // Update history (new protocol)
+    if (serverResponse?.context?.history && Array.isArray(serverResponse.context.history)) {
+        updatedSession.context = updatedSession.context || {};
+        updatedSession.context.history = serverResponse.context.history;
+    }
+    
+    // Update docVirtual (new protocol)
+    if (serverResponse?.context?.docVirtual) {
+        updatedSession.context = updatedSession.context || {};
+        updatedSession.context.docVirtual = serverResponse.context.docVirtual;
+    }
+    
+    updatedSession.updatedAt = new Date().toISOString();
+    return updatedSession;
+}
+
+/**
+ * Updates session with data from server status response
+ */
+async function updateSessionWithStatusResponse(
+    project: Project,
+    session: Session,
+    statusResponse: any
+): Promise<Session> {
+    const updatedSession: Session = { ...session };
+    
+    // Update context from status response
+    if (statusResponse?.context) {
+        updatedSession.context = { ...session.context, ...statusResponse.context };
+    }
+    
+    // Update execute information from status response
+    if (statusResponse?.execute) {
+        updatedSession.context = updatedSession.context || {};
+        updatedSession.context.execute = statusResponse.execute;
+    }
+    
+    // Update messages from status response
+    if (statusResponse?.messages && Array.isArray(statusResponse.messages)) {
+        updatedSession.messages = [...(session.messages || []), ...statusResponse.messages];
+    }
+    
+    // Update exchange log from status response
+    if (statusResponse?.exchangeLog && Array.isArray(statusResponse.exchangeLog)) {
+        updatedSession.context = updatedSession.context || {};
+        updatedSession.context.exchangeLog = [
+            ...(session.context?.exchangeLog || []),
+            ...statusResponse.exchangeLog
+        ];
+    }
+    
+    // Update status if provided
+    if (statusResponse?.status) {
+        updatedSession.status = statusResponse.status;
+    }
+    
+    updatedSession.updatedAt = new Date().toISOString();
+    return updatedSession;
+}
 
 app.post(['/api/sessions/:sessionId/cancel', '/api/v1/sessions/:sessionId/cancel'], async (req, res) => {
     const sessionId = String(req.params.sessionId || '');
@@ -642,8 +1139,49 @@ app.all('/api/v1/requests*', async (req, res) => {
     const body = req.method === 'GET' || req.method === 'HEAD' ? null : (req.body ?? {});
     const upstream = await serverFetch(req.method, serverBase, pathName, body);
     const payload = (await upstream.json().catch(() => ({}))) as any;
+    
+    // If this is a status request and we have a session, update session with response
+    if (pathName.includes('/status') && payload) {
+        try {
+            const sessionId = extractSessionIdFromPath(pathName);
+            if (sessionId) {
+                const projects = await loadProjects();
+                const project = projects[0]; // Use first project for now
+                if (project) {
+                    const session = await loadSession(project, sessionId);
+                    if (session) {
+                        const updatedSession = await updateSessionWithStatusResponse(project, session, payload);
+                        await saveSession(project, updatedSession);
+                        
+                        // Check for promiseId in status response and broadcast
+                        const promiseId: string | undefined = payload?.data?.promiseId || payload?.promiseId;
+                        
+                        // Broadcast update via WebSocket
+                        broadcastProgress(sessionId, {
+                            promiseId,
+                            status: 'status_updated',
+                            message: 'Session status updated from server',
+                            result: updatedSession,
+                        });
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('Error updating session from status response:', error);
+        }
+    }
+    
     res.status(upstream.status).json(payload);
 });
+
+/**
+ * Extracts session ID from request path
+ */
+function extractSessionIdFromPath(pathName: string): string | null {
+    // Path format: /requests/:id/status
+    const match = pathName.match(/\/requests\/([^\/]+)\/status/);
+    return match ? match[1] : null;
+}
 
 app.get('/api/v1/sse/:sessionId', async (req, res) => {
     const sessionId = String(req.params.sessionId || '');
@@ -667,15 +1205,62 @@ app.get('/api/v1/sse/:sessionId', async (req, res) => {
     });
 
     const nodeStream = Readable.fromWeb(upstream.body as any);
-    nodeStream.pipe(res);
+    
+    // Transform SSE events for new protocol
+    let buffer = '';
+    
+    nodeStream.on('data', (chunk: Buffer) => {
+        buffer += chunk.toString();
+        
+        // Process complete SSE events
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || ''; // Keep incomplete line in buffer
+        
+        for (const line of lines) {
+            if (line.startsWith('data: ')) {
+                try {
+                    const data = JSON.parse(line.slice(6));
+                    
+                    // Transform for new protocol: check for execute.form.choices
+                    const responseType = detectServerResponseType(data);
+                    const transformed = {
+                        ...data,
+                        _responseType: responseType,
+                        _timestamp: new Date().toISOString(),
+                    };
+                    
+                    // If it's a form, also extract choices
+                    if (responseType === 'form') {
+                        transformed._formChoices = extractFormChoices(data);
+                    }
+                    
+                    res.write(`data: ${JSON.stringify(transformed)}\n\n`);
+                } catch {
+                    // Not JSON, send as-is
+                    res.write(`${line}\n\n`);
+                }
+            } else {
+                // Pass through other SSE lines (event, etc.)
+                res.write(`${line}\n\n`);
+            }
+        }
+    });
 
-    const cleanup = () => {
-        nodeStream.unpipe(res);
-        nodeStream.destroy();
+    nodeStream.on('end', () => {
+        if (buffer) {
+            res.write(`data: ${buffer}\n\n`);
+        }
         res.end();
-    };
+    });
 
-    req.on('close', cleanup);
+    nodeStream.on('error', (err) => {
+        console.error('SSE stream error:', err);
+        res.end();
+    });
+
+    req.on('close', () => {
+        nodeStream.destroy();
+    });
 });
 
 app.get('/api/v1/sse', async (_req, res) => {

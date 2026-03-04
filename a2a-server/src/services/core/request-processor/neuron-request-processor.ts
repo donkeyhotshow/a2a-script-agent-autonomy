@@ -8,9 +8,9 @@
  * - Phase machine orchestration
  */
 
-import {logger} from '../../utils/logger.js';
-import {activateNeurons} from '../neuron-activator.service.js';
-import {recognizeEntitiesBatch} from '../entity-recognition/index.js';
+import {logger} from '../../../utils/logger.js';
+import {activateNeurons} from '../../utils/neuron-activator.service.js';
+import {recognizeEntitiesBatch} from '../../entity-recognition/index.js';
 import {
     parseGraphFromContext,
     mergeRecognizedIntoGraph,
@@ -24,13 +24,13 @@ import {
     hasInitialProjectFiles,
     getFrameworkTriggers,
     type FrameworkDetectionResult
-} from '../framework-detector.service.js';
-import {PhaseMachine, getPhaseMachine, resetPhaseMachine} from '../context-manager.service.js';
-import {ContextManager, getContextManager, resetContextManager} from '../context-manager.service.js';
-import {buildRequestContextBlock} from '../../protocol/message-builder.js';
-import {analyzeTaskDetail, getNeuronsByLevel, type TaskDetailLevel} from '../../utils/task-detail-analyzer.js';
-import type {CodeBlock} from '../../types/entity.types.js';
-import type {RequestContextBlock} from '../../types/index.js';
+} from '../../framework/framework-detector.service.js';
+import {PhaseMachine, getPhaseMachine, resetPhaseMachine} from '../context/context-manager.service.js';
+import {ContextManager, getContextManager, resetContextManager} from '../context/context-manager.service.js';
+import {buildRequestContextBlock} from '../../../protocol/message-builder.js';
+import {analyzeTaskDetail, getNeuronsByLevel, type TaskDetailLevel} from '../../../utils/task-detail-analyzer.js';
+import type {CodeBlock} from '../../../types/entity.types.js';
+import type {RequestContextBlock} from '../../../types/index.js';
 import type {
     RequestContext,
     ProcessResult,

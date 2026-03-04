@@ -7,7 +7,7 @@
  * - Response replay from simulations
  */
 
-import {logger} from '../../utils/logger.js';
+import {logger} from '../../../utils/logger.js';
 import {readFile} from 'fs/promises';
 import {existsSync} from 'fs';
 import path from 'path';

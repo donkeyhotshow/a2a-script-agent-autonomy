@@ -8,6 +8,7 @@ import actionsRoutes from './actions.routes.js';
 import sseRoutes from './sse.routes.js';
 import authRoutes from './auth.routes.js';
 import healthRoutes from './health.routes.js';
+import versionsRoutes from './versions.routes.js';
 
 /**
  * a2a-server: async protocol with requests.
@@ -29,6 +30,9 @@ router.use('/auth', authRoutes);
 
 // Mount health routes
 router.use('/health', healthRoutes);
+
+// Mount versions routes
+router.use('/versions', versionsRoutes);
 
 
 async function handleInvoke(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -127,6 +131,31 @@ router.get('/polling/metrics', async (_req: Request, res: Response) => {
             error: {
                 code: 'POLLING_METRICS_ERROR',
                 message: error instanceof Error ? error.message : 'Failed to get polling metrics'
+            }
+        });
+    }
+});
+
+// Pipeline observability metrics
+router.get('/pipeline/metrics', async (_req: Request, res: Response) => {
+    try {
+        const { getPipelineMetrics, getPipelineStatus } = await import('../services/utils/pipeline-observability.service.js');
+        const [metrics, status] = await Promise.all([getPipelineMetrics(), getPipelineStatus()]);
+        
+        res.json({
+            success: true,
+            data: {
+                metrics,
+                activeRequests: status.activeRequests,
+                timestamp: Date.now()
+            }
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: {
+                code: 'PIPELINE_METRICS_ERROR',
+                message: error instanceof Error ? error.message : 'Failed to get pipeline metrics'
             }
         });
     }

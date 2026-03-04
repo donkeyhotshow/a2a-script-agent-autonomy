@@ -67,9 +67,9 @@ npm run dev
 
 ### Конфигурация
 
-Настройка API URL в localStorage:
+Настройка Client API URL в localStorage:
 ```javascript
-localStorage.setItem('a2a_serverUrl', 'http://localhost:3001/api/v1');
+localStorage.setItem('a2a_clientApiUrl', 'http://localhost:3001/api');
 ```
 
 ### Основные модули
@@ -77,7 +77,7 @@ localStorage.setItem('a2a_serverUrl', 'http://localhost:3001/api/v1');
 #### SessionManager
 Управление сессиями проекта.
 ```javascript
-SessionManager.init({ apiBase: '/api/v1' });
+SessionManager.init({ apiBase: '/api' });
 const sessions = await SessionManager.loadSessions();
 ```
 
@@ -115,18 +115,18 @@ const results = await RAGSearchUI.search('query');
 
 | Эндпоинт | Описание |
 |----------|----------|
-| `/api/projects` | Управление проектами |
-| `/api/sessions` | Управление сессиями |
-| `/api/v1/invoke` | Вызов A2A Server |
-| `/api/terminal/execute` | Выполнение команд |
-| `/api/fs/*` | Файловые операции |
+| `/api/projects` | Управление проектами через Client API |
+| `/api/sessions` | Управление сессиями через Client API |
+| `/api/terminal/execute` | Выполнение команд (через Client API) |
+| `/api/files/*` | Файловые операции |
 | `/api/rag/search` | RAG поиск |
+
+Все запросы веб-интерфейса идут в `/api/*` на Client API (порт 3001); прямых вызовов `/api/v1/*` из браузера нет.
 
 ## Требования
 
 - Node.js 18+
-- API Server на порту 3001
-- A2A Server на порту 3000 (для проксирования)
+- Client API Server (порт 3001, проксирует запросы A2A Server на 3000)
 - Meilisearch на порту 7700 (для RAG)
 
 ## Документация

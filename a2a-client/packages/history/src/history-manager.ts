@@ -183,6 +183,58 @@ export class HistoryManager {
     return this.sessionStorage.updateContext(this.currentSessionId, updates);
   }
 
+  // Exchange Log Management
+  async addExchangeLog(type: 'request' | 'response' | 'error', content: Record<string, any>, metadata?: Record<string, any>): Promise<boolean> {
+    if (!this.currentSessionId) {
+      throw new Error('No active session. Create or switch to a session first.');
+    }
+
+    return this.sessionStorage.addExchangeLog(this.currentSessionId, type, content, metadata);
+  }
+
+  async getExchangeLog(): Promise<any[]> {
+    if (!this.currentSessionId) {
+      throw new Error('No active session. Create or switch to a session first.');
+    }
+
+    return this.sessionStorage.getExchangeLog(this.currentSessionId);
+  }
+
+  // Message Management
+  async addMessage(content: string, role: 'user' | 'assistant' | 'system' = 'assistant', metadata?: Record<string, any>): Promise<boolean> {
+    if (!this.currentSessionId) {
+      throw new Error('No active session. Create or switch to a session first.');
+    }
+
+    return this.sessionStorage.addMessage(this.currentSessionId, content, role, metadata);
+  }
+
+  async getMessages(): Promise<any[]> {
+    if (!this.currentSessionId) {
+      throw new Error('No active session. Create or switch to a session first.');
+    }
+
+    return this.sessionStorage.getMessages(this.currentSessionId);
+  }
+
+  // Message Reconstruction
+  async reconstructMessagesFromLog(): Promise<any[]> {
+    if (!this.currentSessionId) {
+      throw new Error('No active session. Create or switch to a session first.');
+    }
+
+    return this.sessionStorage.reconstructMessagesFromLog(this.currentSessionId);
+  }
+
+  // Session Summary
+  async getSessionSummary(): Promise<any> {
+    if (!this.currentSessionId) {
+      throw new Error('No active session. Create or switch to a session first.');
+    }
+
+    return this.sessionStorage.getSessionSummary(this.currentSessionId);
+  }
+
   // Utility Methods
   async getTaskStats(): Promise<{
     total: number;

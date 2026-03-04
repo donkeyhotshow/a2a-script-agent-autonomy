@@ -2,19 +2,20 @@
  * Minimal app init for task form only: header, task input + Send, Settings, Projects, notifications.
  */
 (function () {
-    const DEFAULT_SERVER_URL = '/api/v1';
+    const DEFAULT_CLIENT_API_URL = '/api';
+    const CLIENT_API_STORAGE_KEY = 'a2a_clientApiUrl';
 
-    function getStoredServerUrl() {
+    function getStoredClientApiUrl() {
         try {
-            return localStorage.getItem('a2a_serverUrl') || DEFAULT_SERVER_URL;
+            return localStorage.getItem(CLIENT_API_STORAGE_KEY) || DEFAULT_CLIENT_API_URL;
         } catch {
-            return DEFAULT_SERVER_URL;
+            return DEFAULT_CLIENT_API_URL;
         }
     }
 
-    function setStoredServerUrl(url) {
+    function setStoredClientApiUrl(url) {
         try {
-            localStorage.setItem('a2a_serverUrl', url || DEFAULT_SERVER_URL);
+            localStorage.setItem(CLIENT_API_STORAGE_KEY, url || DEFAULT_CLIENT_API_URL);
         } catch (_) {}
     }
 
@@ -23,21 +24,21 @@
         if (!container) return;
 
         await window.TemplateLoader.render('header', 'header-container');
-        const url = getStoredServerUrl();
+        const url = getStoredClientApiUrl();
         if (window.apiIntegration) {
-            window.apiIntegration.configure({ serverUrl: url });
+            window.apiIntegration.configure({ apiBase: url });
         }
         if (window.TaskFlow && window.TaskFlow.init) {
             window.TaskFlow.init();
         }
 
         const settingsModal = document.getElementById('settingsModal');
-        const settingsServerUrl = document.getElementById('settingsServerUrl');
+        const settingsApiUrl = document.getElementById('settingsApiUrl');
         const projectsModal = document.getElementById('projectsModal');
         const projectsGrid = document.getElementById('projectsGrid');
 
         document.getElementById('settingsBtn')?.addEventListener('click', () => {
-            if (settingsServerUrl) settingsServerUrl.value = window.apiIntegration?.serverUrl || DEFAULT_SERVER_URL;
+            if (settingsApiUrl) settingsApiUrl.value = window.apiIntegration?.apiBase || DEFAULT_CLIENT_API_URL;
             if (settingsModal) settingsModal.style.display = 'flex';
         });
         document.getElementById('closeSettingsModal')?.addEventListener('click', () => {
@@ -47,9 +48,9 @@
             if (settingsModal) settingsModal.style.display = 'none';
         });
         document.getElementById('saveSettings')?.addEventListener('click', () => {
-            const v = settingsServerUrl?.value?.trim() || DEFAULT_SERVER_URL;
-            if (window.apiIntegration) window.apiIntegration.configure({ serverUrl: v });
-            setStoredServerUrl(v);
+            const v = settingsApiUrl?.value?.trim() || DEFAULT_CLIENT_API_URL;
+            if (window.apiIntegration) window.apiIntegration.configure({ apiBase: v });
+            setStoredClientApiUrl(v);
             if (settingsModal) settingsModal.style.display = 'none';
         });
 
@@ -77,7 +78,7 @@
             if (!projectsGrid) return;
             projectsGrid.innerHTML = '<div class="loading-indicator">Loading...</div>';
             try {
-                const base = window.apiIntegration?.serverUrl || DEFAULT_SERVER_URL;
+                const base = window.apiIntegration?.apiBase || DEFAULT_CLIENT_API_URL;
                 const res = await fetch(base.replace(/\/?$/, '') + '/projects', { headers: { 'Content-Type': 'application/json' } });
                 const list = await res.json().catch(() => []);
                 const arr = Array.isArray(list) ? list : (list?.projects || []);
@@ -93,7 +94,7 @@
 
         async function createProject(name) {
             try {
-                const base = window.apiIntegration?.serverUrl || DEFAULT_SERVER_URL;
+                const base = window.apiIntegration?.apiBase || DEFAULT_CLIENT_API_URL;
                 const res = await fetch(base.replace(/\/?$/, '') + '/projects', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },

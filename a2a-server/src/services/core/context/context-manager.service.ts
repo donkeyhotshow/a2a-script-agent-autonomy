@@ -19,7 +19,7 @@
  * - history — история изменений (session)
  */
 
-import {logger} from '../utils/logger.js';
+import {logger} from '../../../utils/logger.js';
 
 // Типы контекста
 export type ContextType =

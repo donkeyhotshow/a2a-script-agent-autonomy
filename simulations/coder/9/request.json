@@ -1,0 +1,26 @@
+{
+  "context": {
+    "task": "прочитай вміст файлів з директорії src",
+    "execution": {
+      "action": "coder",
+      "step": "llm-request"
+    },
+    "history": [
+      {
+        "role": "user",
+        "message": "покажи мені код з файлу src/auth.js"
+      },
+      {
+        "role": "assistant",
+        "message": "Читаю файл src/auth.js...",
+        "action": "read-file"
+      }
+    ]
+  },
+  "result": {
+    "read-file": {
+      "path": "src/auth.js",
+      "content": "module.exports = { auth: function(tok"
+    }
+  }
+}

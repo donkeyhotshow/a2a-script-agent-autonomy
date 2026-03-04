@@ -1,0 +1,31 @@
+{
+  "context": {
+    "task": "прочитай вміст файлів з директорії src",
+    "execution": {
+      "action": "coder",
+      "step": "llm-request"
+    },
+    "history": [
+      {
+        "role": "user",
+        "message": "покажи мені код з файлу src/auth.js"
+      },
+      {
+        "role": "assistant",
+        "message": "Читаю файл src/auth.js...",
+        "action": "read-file"
+      },
+      {
+        "role": "assistant",
+        "message": "Отримано неповний JSON у полі content. Дані обрізані: 'module.exports = { auth: function(tok'. Потрібно повторити запит.",
+        "action": "error-recovery"
+      }
+    ]
+  },
+  "execute": {
+    "error-recovery": {
+      "issue": "json-parse-error",
+      "suggestion": "retry"
+    }
+  }
+}

@@ -5,10 +5,10 @@
  */
 
 import jwt from 'jsonwebtoken';
-import {AppError} from '../types/errors.js';
-import * as clientRepo from '../repositories/client.repository.js';
-import {hashPassword, generateApiKey, verifyPassword} from '../utils/crypto.js';
-import {config} from '../config/index.js';
+import {AppError} from '../../../types/errors.js';
+import * as clientRepo from '../../../repositories/client.repository.js';
+import {hashPassword, generateApiKey, verifyPassword} from '../../../utils/crypto.js';
+import {config} from '../../../config/index.js';
 
 type JwtPayload = { sub: string; email: string; type: 'access' | 'refresh' };
 

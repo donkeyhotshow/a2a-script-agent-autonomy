@@ -7,9 +7,9 @@
 
 import { Queue, Worker, Job, QueueEvents, FlowProducer } from 'bullmq';
 import { Redis } from 'ioredis';
-import { logger } from '../utils/logger.js';
-import { config } from '../config/index.js';
-import type { RequestContext, ProcessResult } from './request-processor.interfaces.js';
+import { logger } from '../../../utils/logger.js';
+import { config } from '../../../config/index.js';
+import type { RequestContext, ProcessResult } from '../request-processor/request-processor.interfaces.js';
 
 // ===========================================
 // Types

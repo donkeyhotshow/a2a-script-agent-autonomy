@@ -9,7 +9,7 @@
 
     const RAGSearchUI = {
         // Configuration
-        apiBase: '/api/v1',
+        apiBase: '/api',
         searchEndpoint: '/rag/search',
         indexEndpoint: '/rag/index',
         

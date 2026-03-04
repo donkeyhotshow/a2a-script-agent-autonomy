@@ -8,7 +8,7 @@
 
     const FileTransfer = {
         // Configuration
-        apiBase: '/api/v1',
+        apiBase: '/api',
         sessionId: null,
         _listeners: new Map(),
         _uploadProgress: new Map(),

@@ -3,35 +3,525 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simulation Debug (dev) – Task 08</title>
+    <title>Simulation Replay & Debug UI – Task 36</title>
     <link rel="stylesheet" href="../css/app.css">
     <style>
-        .debug-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; padding: 1rem; }
-        .panel { border: 1px solid #ccc; padding: 0.5rem; overflow: auto; max-height: 400px; }
-        .stub { color: #888; font-style: italic; }
+        :root {
+            --panel-bg: #1e1e1e;
+            --panel-border: #3e3e3e;
+            --text-primary: #d4d4d4;
+            --text-secondary: #808080;
+            --accent: #007acc;
+            --accent-hover: #005a9e;
+            --success: #4ec9b0;
+            --warning: #dcdcaa;
+            --error: #f44747;
+            --diff-added: #4ec9b033;
+            --diff-removed: #f4474733;
+            --diff-modified: #dcdcaa33;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #121212;
+            color: var(--text-primary);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+
+        /* Header */
+        .header {
+            background: var(--panel-bg);
+            border-bottom: 1px solid var(--panel-border);
+            padding: 1rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 1.25rem;
+            font-weight: 500;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        /* Layout */
+        .container {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 1rem;
+            padding: 1rem;
+            height: calc(100vh - 70px);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 4px;
+            padding: 1rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .sidebar-section {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .sidebar-section h3 {
+            margin: 0;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        select {
+            background: #2d2d2d;
+            border: 1px solid var(--panel-border);
+            color: var(--text-primary);
+            padding: 0.5rem;
+            border-radius: 4px;
+            font-size: 0.875rem;
+            cursor: pointer;
+        }
+
+        select:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        button {
+            background: var(--accent);
+            border: none;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            transition: background 0.2s;
+        }
+
+        button:hover:not(:disabled) {
+            background: var(--accent-hover);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        button.secondary {
+            background: #3e3e3e;
+        }
+
+        button.secondary:hover:not(:disabled) {
+            background: #4e4e4e;
+        }
+
+        .info-panel {
+            background: #2d2d2d;
+            border: 1px solid var(--panel-border);
+            border-radius: 4px;
+            padding: 0.75rem;
+            font-size: 0.875rem;
+        }
+
+        .info-panel h4 {
+            margin: 0 0 0.5rem 0;
+            font-weight: 500;
+        }
+
+        .info-panel p {
+            margin: 0;
+            color: var(--text-secondary);
+        }
+
+        .info-panel small {
+            color: var(--text-secondary);
+            display: block;
+            margin-top: 0.5rem;
+        }
+
+        /* Main Content */
+        .main-content {
+            display: grid;
+            grid-template-rows: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        /* Panel */
+        .panel {
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 4px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .panel-header {
+            background: #2d2d2d;
+            border-bottom: 1px solid var(--panel-border);
+            padding: 0.75rem 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .panel-header h3 {
+            margin: 0;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .panel-tabs {
+            display: flex;
+            gap: 0.25rem;
+        }
+
+        .pipeline-tab {
+            background: transparent;
+            border: 1px solid transparent;
+            color: var(--text-secondary);
+            padding: 0.25rem 0.75rem;
+            font-size: 0.75rem;
+            cursor: pointer;
+            border-radius: 3px;
+        }
+
+        .pipeline-tab:hover {
+            color: var(--text-primary);
+            background: #3e3e3e;
+        }
+
+        .pipeline-tab.active {
+            background: var(--accent);
+            color: white;
+        }
+
+        .panel-content {
+            flex: 1;
+            overflow: auto;
+            padding: 0;
+        }
+
+        .code-block {
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.8125rem;
+            line-height: 1.5;
+            padding: 1rem;
+            white-space: pre-wrap;
+            word-break: break-all;
+            color: var(--text-primary);
+            background: #1e1e1e;
+            min-height: 100%;
+        }
+
+        .code-block.language-json {
+            color: #9cdcfe;
+        }
+
+        .code-block.language-markdown {
+            color: #d4d4d4;
+        }
+
+        /* Bottom panels */
+        .bottom-panels {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            height: 100%;
+        }
+
+        .response-panel {
+            display: flex;
+            flex-direction: column;
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .response-panel .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .response-content {
+            flex: 1;
+            overflow: auto;
+            background: #1e1e1e;
+        }
+
+        /* Diff View */
+        .diff-view {
+            grid-column: 1 / -1;
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .diff-view.hidden {
+            display: none;
+        }
+
+        .diff-content {
+            padding: 1rem;
+            max-height: 300px;
+            overflow: auto;
+        }
+
+        .diff-item {
+            border: 1px solid var(--panel-border);
+            border-radius: 4px;
+            margin-bottom: 0.75rem;
+            overflow: hidden;
+        }
+
+        .diff-path {
+            background: #2d2d2d;
+            padding: 0.5rem 0.75rem;
+            font-family: monospace;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            border-bottom: 1px solid var(--panel-border);
+        }
+
+        .diff-values {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1px;
+            background: var(--panel-border);
+        }
+
+        .diff-values > div {
+            padding: 0.75rem;
+            background: var(--panel-bg);
+        }
+
+        .diff-values label {
+            display: block;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.25rem;
+        }
+
+        .diff-values code {
+            font-family: monospace;
+            font-size: 0.8125rem;
+            color: var(--text-primary);
+            word-break: break-all;
+        }
+
+        .diff-added .diff-fixture {
+            background: var(--diff-added);
+        }
+
+        .diff-removed .diff-live {
+            background: var(--diff-removed);
+        }
+
+        .diff-modified .diff-fixture,
+        .diff-modified .diff-live {
+            background: var(--diff-modified);
+        }
+
+        .diff-match {
+            padding: 2rem;
+            text-align: center;
+            color: var(--success);
+            font-size: 1rem;
+        }
+
+        /* Status Bar */
+        .status-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--panel-bg);
+            border-top: 1px solid var(--panel-border);
+            padding: 0.5rem 1.5rem;
+            font-size: 0.8125rem;
+            color: var(--text-secondary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* Loading State */
+        body.loading::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+
+        .loading-indicator {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1001;
+        }
+
+        body.loading .loading-indicator {
+            display: block;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--panel-border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .container {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto 1fr;
+            }
+
+            .sidebar {
+                max-height: 200px;
+            }
+
+            .bottom-panels {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 </head>
 <body>
-    <h1>Simulation Debug</h1>
-    <p class="stub">Stub – Task: <a href="../../tasks/client/08-web-simulation-debug-page.md">tasks/client/08-web-simulation-debug-page.md</a></p>
-    <div class="debug-layout">
-        <div class="panel">
-            <h3>Simulation + step selector</h3>
-            <p class="stub">TODO(08): list simulations and steps (static index or Client API)</p>
+    <header class="header">
+        <h1>🔧 Simulation Replay & Debug UI</h1>
+        <div class="header-actions">
+            <button id="refresh-simulations" class="secondary" title="Refresh simulations list">🔄 Refresh</button>
+            <a href="../index.html" class="button secondary" style="text-decoration: none;">← Back to App</a>
         </div>
-        <div class="panel">
-            <h3>Pipeline files</h3>
-            <p class="stub">TODO(08): request.json, request.md, response.md, response.json tabs</p>
-        </div>
-        <div class="panel">
-            <h3>Live replay</h3>
-            <p class="stub">TODO(08): "Run this step" via Client API; show diff vs fixture</p>
-        </div>
-        <div class="panel">
-            <h3>LLM_REPLAY_DIR</h3>
-            <p class="stub">TODO(08): note for deterministic replay; optional current dir display</p>
-        </div>
+    </header>
+
+    <div class="container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-section">
+                <h3>Simulation</h3>
+                <select id="simulation-select">
+                    <option value="">-- Select Simulation --</option>
+                </select>
+                <div id="simulation-info" class="info-panel" style="display: none;">
+                    <p>Select a simulation to view details</p>
+                </div>
+            </div>
+
+            <div class="sidebar-section">
+                <h3>Step</h3>
+                <select id="step-select" disabled>
+                    <option value="">-- Select Step --</option>
+                </select>
+                <div id="step-info" class="info-panel" style="display: none;">
+                    <p>Select a step to view pipeline files</p>
+                </div>
+            </div>
+
+            <div class="sidebar-section" style="margin-top: auto;">
+                <h3>Actions</h3>
+                <button id="run-step-btn" disabled>▶ Run Step Live</button>
+                <button id="compare-btn" class="secondary" disabled>⚖ Compare with Fixture</button>
+                <button id="clear-diff-btn" class="secondary">Clear Diff</button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Pipeline Files Panel -->
+            <div class="panel">
+                <div class="panel-header">
+                    <h3>📄 Pipeline Files</h3>
+                    <div class="panel-tabs">
+                        <button class="pipeline-tab active" data-tab="request.json">request.json</button>
+                        <button class="pipeline-tab" data-tab="request.md">request.md</button>
+                        <button class="pipeline-tab" data-tab="response.md">response.md</button>
+                        <button class="pipeline-tab" data-tab="response.json">response.json</button>
+                    </div>
+                </div>
+                <div class="panel-content">
+                    <pre id="pipeline-content" class="code-block">// Select a simulation and step to view pipeline files</pre>
+                </div>
+            </div>
+
+            <!-- Bottom Panels -->
+            <div class="bottom-panels">
+                <div class="response-panel">
+                    <div class="panel-header">
+                        <h3>📡 Live Response</h3>
+                    </div>
+                    <div class="response-content">
+                        <pre id="live-response" class="code-block">// Run step to see live response</pre>
+                    </div>
+                </div>
+
+                <div class="response-panel">
+                    <div class="panel-header">
+                        <h3>📋 Fixture Response</h3>
+                    </div>
+                    <div class="response-content">
+                        <pre id="fixture-response" class="code-block">// Select step to view fixture</pre>
+                    </div>
+                </div>
+
+                <!-- Diff View -->
+                <div id="diff-view" class="diff-view hidden">
+                    <div class="panel-header">
+                        <h3>🔍 Diff: Fixture vs Live</h3>
+                        <small>Ignores volatile fields (timestamps, IDs)</small>
+                    </div>
+                    <div id="diff-content" class="diff-content"></div>
+                </div>
+            </div>
+        </main>
     </div>
+
+    <!-- Loading Indicator -->
+    <div class="loading-indicator">
+        <div class="spinner"></div>
+    </div>
+
+    <!-- Status Bar -->
+    <div class="status-bar">
+        <span id="status-bar">Ready</span>
+        <span>Task 36: Client Web Simulation Replay & Debug UI</span>
+    </div>
+
     <script src="simulation-debug.js"></script>
 </body>
 </html>

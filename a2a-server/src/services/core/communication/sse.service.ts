@@ -1,5 +1,5 @@
 import type {Response} from 'express';
-import {logger} from '../utils/logger.js';
+import {logger} from '../../../utils/logger.js';
 
 class SSEManager {
     private clients: Map<string, Set<Response>> = new Map();
@@ -58,4 +58,3 @@ class SSEManager {
 }
 
 export const sseManager = new SSEManager();
-

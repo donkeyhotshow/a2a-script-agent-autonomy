@@ -13,11 +13,41 @@ export interface SessionMetadata {
   projectPath: string;
 }
 
+export interface ExchangeLogEntry {
+  id: string;
+  type: 'request' | 'response' | 'error';
+  content: Record<string, any>;
+  timestamp: string;
+  metadata?: Record<string, any>;
+}
+
+export interface MessageEntry {
+  id: string;
+  content: string;
+  role: 'user' | 'assistant' | 'system';
+  timestamp: string;
+  metadata?: Record<string, any>;
+}
+
+export interface SessionContext {
+  execute?: {
+    action: string;
+    input: Record<string, any>;
+    output?: Record<string, any>;
+    status: string;
+    progress?: number;
+    timestamp: string;
+  };
+  exchangeLog: ExchangeLogEntry[];
+  messages: MessageEntry[];
+  [key: string]: any;
+}
+
 export interface SessionData {
   metadata: SessionMetadata;
   plans: PlanEntry[];
   tasks: TaskEntry[];
-  context: Record<string, any>;
+  context: SessionContext;
 }
 
 export interface PlanEntry {
@@ -274,6 +304,205 @@ export class SessionStorage {
     } catch {
       return false;
     }
+  }
+
+  /**
+   * Add exchange log entry for client-server interactions
+   */
+  async addExchangeLog(sessionId: string, type: 'request' | 'response' | 'error', content: Record<string, any>, metadata?: Record<string, any>): Promise<boolean> {
+    try {
+      const sessionData = await this.loadSessionData(sessionId);
+      
+      // Initialize exchangeLog if it doesn't exist
+      if (!sessionData.context.exchangeLog) {
+        sessionData.context.exchangeLog = [];
+      }
+
+      const logEntry: ExchangeLogEntry = {
+        id: uuidv4(),
+        type,
+        content,
+        timestamp: new Date().toISOString(),
+        metadata
+      };
+
+      sessionData.context.exchangeLog.push(logEntry);
+      await this.saveSessionData(sessionId, sessionData);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * Add message entry for user/assistant interactions
+   */
+  async addMessage(sessionId: string, content: string, role: 'user' | 'assistant' | 'system' = 'assistant', metadata?: Record<string, any>): Promise<boolean> {
+    try {
+      const sessionData = await this.loadSessionData(sessionId);
+      
+      // Initialize messages if it doesn't exist
+      if (!sessionData.context.messages) {
+        sessionData.context.messages = [];
+      }
+
+      const messageEntry: MessageEntry = {
+        id: uuidv4(),
+        content,
+        role,
+        timestamp: new Date().toISOString(),
+        metadata
+      };
+
+      sessionData.context.messages.push(messageEntry);
+      await this.saveSessionData(sessionId, sessionData);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * Get all exchange log entries for a session
+   */
+  async getExchangeLog(sessionId: string): Promise<ExchangeLogEntry[]> {
+    try {
+      const sessionData = await this.loadSessionData(sessionId);
+      return sessionData.context.exchangeLog || [];
+    } catch {
+      return [];
+    }
+  }
+
+  /**
+   * Get all message entries for a session
+   */
+  async getMessages(sessionId: string): Promise<MessageEntry[]> {
+    try {
+      const sessionData = await this.loadSessionData(sessionId);
+      return sessionData.context.messages || [];
+    } catch {
+      return [];
+    }
+  }
+
+  /**
+   * Reconstruct messages from exchange log entries
+   * This is useful for backward compatibility or when messages are not directly stored
+   */
+  async reconstructMessagesFromLog(sessionId: string): Promise<MessageEntry[]> {
+    try {
+      const exchangeLog = await this.getExchangeLog(sessionId);
+      const messages: MessageEntry[] = [];
+
+      for (const logEntry of exchangeLog) {
+        if (logEntry.type === 'request' && logEntry.content?.result) {
+          // Extract user message from request
+          const userMessage = this.extractUserMessageFromRequest(logEntry.content.result);
+          if (userMessage) {
+            messages.push({
+              id: `msg_${logEntry.id}_user`,
+              content: userMessage,
+              role: 'user',
+              timestamp: logEntry.timestamp,
+              metadata: { source: 'exchange_log', logId: logEntry.id }
+            });
+          }
+        } else if (logEntry.type === 'response' && logEntry.content?.execute) {
+          // Extract assistant message from response
+          const assistantMessage = this.extractAssistantMessageFromResponse(logEntry.content);
+          if (assistantMessage) {
+            messages.push({
+              id: `msg_${logEntry.id}_assistant`,
+              content: assistantMessage,
+              role: 'assistant',
+              timestamp: logEntry.timestamp,
+              metadata: { source: 'exchange_log', logId: logEntry.id }
+            });
+          }
+        } else if (logEntry.type === 'error') {
+          // Add error as system message
+          messages.push({
+            id: `msg_${logEntry.id}_system`,
+            content: `Error: ${logEntry.content?.message || 'Unknown error'}`,
+            role: 'system',
+            timestamp: logEntry.timestamp,
+            metadata: { source: 'exchange_log', logId: logEntry.id, error: true }
+          });
+        }
+      }
+
+      return messages.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+    } catch {
+      return [];
+    }
+  }
+
+  /**
+   * Get session summary with message count and recent activity
+   */
+  async getSessionSummary(sessionId: string): Promise<{
+    session: SessionData | null;
+    messageCount: number;
+    exchangeLogCount: number;
+    recentMessages: MessageEntry[];
+    recentExchangeLog: ExchangeLogEntry[];
+  }> {
+    try {
+      const sessionData = await this.loadSessionData(sessionId);
+      const messages = sessionData.context.messages || [];
+      const exchangeLog = sessionData.context.exchangeLog || [];
+
+      return {
+        session: sessionData,
+        messageCount: messages.length,
+        exchangeLogCount: exchangeLog.length,
+        recentMessages: messages.slice(-10).sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()),
+        recentExchangeLog: exchangeLog.slice(-10).sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+      };
+    } catch {
+      return {
+        session: null,
+        messageCount: 0,
+        exchangeLogCount: 0,
+        recentMessages: [],
+        recentExchangeLog: []
+      };
+    }
+  }
+
+  /**
+   * Helper method to extract user message from request content
+   */
+  private extractUserMessageFromRequest(result: any): string | null {
+    // Try to extract from different possible structures
+    if (result?.form?.choice) {
+      return `User selected: ${result.form.choice}`;
+    }
+    if (result?.content) {
+      return result.content;
+    }
+    if (result?.message) {
+      return result.message;
+    }
+    return null;
+  }
+
+  /**
+   * Helper method to extract assistant message from response content
+   */
+  private extractAssistantMessageFromResponse(response: any): string | null {
+    // Try to extract from different possible structures
+    if (response?.execute?.form?.title) {
+      return `Assistant: ${response.execute.form.title}`;
+    }
+    if (response?.execute?.message) {
+      return `Assistant: ${response.execute.message}`;
+    }
+    if (response?.message) {
+      return response.message;
+    }
+    return null;
   }
 
   async getActiveSession(): Promise<SessionData | null> {

@@ -10,7 +10,7 @@
     const TerminalEmulator = {
         // Configuration
         wsUrl: null,
-        apiBase: '/api/v1',
+        apiBase: '/api',
         terminalEndpoint: '/terminal',
         
         // State

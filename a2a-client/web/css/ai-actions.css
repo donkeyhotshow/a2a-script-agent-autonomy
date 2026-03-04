@@ -683,3 +683,176 @@
     --pui-scrollbar-thumb-hover: #a0a0a0;
     --pui-scrollbar-track: #f1f3f4;
 }
+
+/* ===== Интеграция с SessionManager ===== */
+
+/* Индикатор синхронизации с SessionManager */
+.ai-actions-panel.synced-with-manager .ai-actions-header::before {
+    content: '';
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--pui-status-active-bg, #1f8b4d);
+    margin-right: 8px;
+    animation: pulse-sync 2s infinite;
+}
+
+@keyframes pulse-sync {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+/* Сессии из SessionManager имеют специальную метку */
+.session-item.from-session-manager {
+    border-left: 3px solid var(--pui-accent, #6366f1);
+}
+
+.session-item.from-session-manager::before {
+    content: 'SM';
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    font-size: 9px;
+    padding: 1px 4px;
+    background: var(--pui-accent, #6366f1);
+    color: white;
+    border-radius: 3px;
+    opacity: 0.8;
+}
+
+/* Кнопка синхронизации */
+.btn-sync-manager {
+    padding: 6px 12px;
+    border: 1px solid var(--pui-border, #444);
+    background: var(--pui-btn-bg, #333);
+    color: var(--pui-btn-text, #e5e5e5);
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.btn-sync-manager:hover {
+    background: var(--pui-btn-hover-bg, #444);
+    border-color: var(--pui-border-hover, #555);
+}
+
+.btn-sync-manager.syncing {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* Индикаторы статуса действий */
+.action-item.pending {
+    border-left: 4px solid var(--pui-status-pending-bg, #f0ad4e);
+    opacity: 0.8;
+}
+
+.action-status.pending {
+    background: var(--pui-status-pending-bg, #f0ad4e);
+    color: white;
+    border-color: var(--pui-status-pending-border, #ec971f);
+}
+
+/* Адаптивные стили для мобильных устройств */
+@media (max-width: 480px) {
+    .ai-actions-header {
+        padding: 8px 12px;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    
+    .ai-actions-header h3 {
+        font-size: 13px;
+    }
+    
+    .ai-actions-controls {
+        gap: 4px;
+    }
+    
+    .btn-new-session, .btn-refresh, .btn-sync-manager {
+        padding: 4px 8px;
+        font-size: 11px;
+    }
+    
+    .session-list-container {
+        width: 100%;
+        height: 150px;
+    }
+    
+    .session-content-container {
+        height: calc(100% - 200px);
+    }
+    
+    .session-item {
+        padding: 8px;
+    }
+    
+    .session-item-id {
+        font-size: 11px;
+    }
+    
+    .action-header {
+        flex-wrap: wrap;
+        gap: 4px;
+    }
+    
+    .action-type {
+        font-size: 10px;
+    }
+}
+
+/* Фокус для accessibility */
+.session-item:focus,
+.btn-new-session:focus,
+.btn-refresh:focus,
+.btn-clear-actions:focus,
+.btn-export:focus {
+    outline: 2px solid var(--pui-accent, #6366f1);
+    outline-offset: 2px;
+}
+
+/* Tooltip для действий */
+.action-item[title] {
+    position: relative;
+}
+
+/* Загрузка/скелетон для пустого состояния */
+.session-list.loading .session-item {
+    background: linear-gradient(
+        90deg,
+        var(--pui-card-bg, #2a2a2a) 25%,
+        var(--pui-card-hover-bg, #333) 50%,
+        var(--pui-card-bg, #2a2a2a) 75%
+    );
+    background-size: 200% 100%;
+    animation: skeleton-loading 1.5s infinite;
+}
+
+@keyframes skeleton-loading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* Утилиты для отображения */
+.text-truncate {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.hidden {
+    display: none !important;
+}
+
+.visible {
+    display: block !important;
+}

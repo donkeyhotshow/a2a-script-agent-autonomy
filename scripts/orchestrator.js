@@ -40,7 +40,7 @@ const colors = {
 
 // Configuration
 const HEALTH_CHECK_CONFIG = {
-  maxAttempts: 30,
+  maxAttempts: 10,
   initialDelayMs: 500,
   maxDelayMs: 10000,
   backoffMultiplier: 1.5,
@@ -243,6 +243,15 @@ async function initializePorts() {
 
 // Create service definitions with allocated ports
 function createServiceDefinitions(allocations) {
+  const buildEnv = (serviceKey, overrides = {}) => {
+    const env = {...process.env, ...overrides};
+    const allocation = allocations[serviceKey];
+    if (allocation?.port) {
+      env.PORT = String(allocation.port);
+    }
+    return env;
+  };
+
   return {
     postgres: {
       name: 'PostgreSQL',
@@ -300,7 +309,7 @@ function createServiceDefinitions(allocations) {
       cwd: resolve(rootDir, 'a2a-server'),
       command: 'npm',
       args: ['run', 'dev:no-auth'],
-      env: { ...process.env },
+      env: buildEnv('server'),
       healthCheck: async () => {
         try {
           const port = allocations.server?.port || 3000;
@@ -319,7 +328,7 @@ function createServiceDefinitions(allocations) {
       cwd: resolve(rootDir, 'a2a-client/packages/api-server'),
       command: 'npm',
       args: ['run', 'dev'],
-      env: { ...process.env },
+      env: buildEnv('clientApi'),
       healthCheck: async () => {
         try {
           const port = allocations.clientApi?.port || 3001;
@@ -338,7 +347,7 @@ function createServiceDefinitions(allocations) {
       cwd: resolve(rootDir, 'a2a-client'),
       command: 'npm',
       args: ['run', 'dev'],
-      env: { ...process.env },
+      env: buildEnv('web'),
       healthCheck: async () => {
         try {
           const port = allocations.web?.port || 5173;

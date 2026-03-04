@@ -188,6 +188,23 @@ enum MessageStatus {
 }
 
 // ============================================
+// SessionLog - логи сессии
+// ============================================
+
+model SessionLog {
+  id        String   @id
+  sessionId String   @map("session_id")
+  level     String   // debug, info, warn, error
+  message   String
+  context   Json?    // дополнительный контекст
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([sessionId])
+  @@index([level])
+  @@map("session_logs")
+}
+
+// ============================================
 // Request - запрос на обработку (Promise)
 // ============================================
 

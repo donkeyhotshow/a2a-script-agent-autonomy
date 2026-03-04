@@ -1,0 +1,25 @@
+{
+  "type": "pipeline",
+  "steps": [
+    {
+      "op": "parse-llm-response",
+      "from": "response.md",
+      "to": "$parsed"
+    },
+    {
+      "op": "validate-action-key",
+      "from": "$parsed",
+      "validate": ["message", "execute"]
+    },
+    {
+      "op": "copy",
+      "from": "$.context",
+      "to": "$.result.context"
+    },
+    {
+      "op": "copy",
+      "from": "$parsed",
+      "to": "$.result"
+    }
+  ]
+}

@@ -7,8 +7,8 @@
  * - approve_action - starting action execution after approval
  */
 
-import {logger} from '../../utils/logger.js';
-import {actionProcessor} from '../../actions/action-processor.js';
+import {logger} from '../../../utils/logger.js';
+import {actionProcessor} from '../../../actions/action-processor.js';
 import type {
     RequestContext,
     ProcessResult,
@@ -32,7 +32,6 @@ export interface ActionProcessorConfig {
 export class ActionRequestProcessor extends BaseRequestProcessor {
     constructor(config: Partial<ActionProcessorConfig> = {}) {
         super('ActionRequestProcessor', config);
-        super('ActionRequestProcessor');
         this.config = {
             maxRetries: 3,
             enableStepTracking: true,

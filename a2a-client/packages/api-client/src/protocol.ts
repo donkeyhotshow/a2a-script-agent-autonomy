@@ -1,8 +1,11 @@
 /**
  * A2A Protocol - context and file block handling
+ * Supports both legacy (1.0) and new (2.0) protocol
+ * @see docs/new-request-flow/PROTOCOL.md
  */
 
 const VERSION = '1.0';
+const NEW_VERSION = '2.0';
 
 export interface FileBlockLike {
     path: string;
@@ -31,6 +34,129 @@ export function buildConfirmContext(sessionId: string): Record<string, unknown> 
 
 export function buildFileResponseContext(sessionId: string): Record<string, unknown> {
     return {version: VERSION, session_id: sessionId};
+}
+
+// ============================================
+// New Protocol (v2.0) Functions
+// @see docs/new-request-flow/PROTOCOL.md
+// ============================================
+
+/**
+ * Build context block for new protocol (v2.0)
+ * @see docs/new-request-flow/PROTOCOL.md#context
+ */
+export function buildProtocolContext(
+    sessionId: string,
+    options?: {
+        execution?: { action: string; step: string; status?: string; progress?: number };
+        history?: Array<{ action: string; step: string; result?: unknown; timestamp: string }>;
+        docVirtual?: string;
+        newTask?: string[];
+        architecturalFeatures?: string[];
+        continue?: boolean;
+        confirm?: boolean;
+        tasks?: unknown[];
+        requestFiles?: string[];
+        errors?: unknown[];
+    }
+): Record<string, unknown> {
+    const NEW_VERSION = '2.0';
+    const ctx: Record<string, unknown> = {
+        version: NEW_VERSION,
+        session_id: sessionId,
+    };
+    
+    if (options?.execution) ctx.execution = options.execution;
+    if (options?.history) ctx.history = options.history;
+    if (options?.docVirtual) ctx.docVirtual = options.docVirtual;
+    if (options?.newTask) ctx.new_task = options.newTask;
+    if (options?.architecturalFeatures) ctx.architectural_features = options.architecturalFeatures;
+    if (options?.continue) ctx.continue = options.continue;
+    if (options?.confirm) ctx.confirm = options.confirm;
+    if (options?.tasks) ctx.tasks = options.tasks;
+    if (options?.requestFiles) ctx.request_files = options.requestFiles;
+    if (options?.errors) ctx.errors = options.errors;
+    
+    return ctx;
+}
+
+/**
+ * Build form choice request (new protocol)
+ * @see docs/new-request-flow/PROTOCOL.md#form-choice-request
+ */
+export function buildFormChoiceRequest(
+    context: Record<string, unknown>,
+    choiceId: string,
+    input?: Record<string, unknown>
+): { context: Record<string, unknown>; result: { form: { choice: string; input?: Record<string, unknown> } } } {
+    return {
+        context,
+        result: {
+            form: {
+                choice: choiceId,
+                ...(input && { input }),
+            },
+        },
+    };
+}
+
+/**
+ * Build action result request (new protocol)
+ * @see docs/new-request-flow/PROTOCOL.md#action-result-request
+ */
+export function buildActionResultRequest(
+    context: Record<string, unknown>,
+    result: Record<string, unknown>
+): { context: Record<string, unknown>; result: Record<string, unknown> } {
+    return { context, result };
+}
+
+/**
+ * Check if response is form choices response (new protocol)
+ * @see docs/new-request-flow/PROTOCOL.md#form-choices-response
+ */
+export function isFormChoicesResponse(response: { execute?: Record<string, unknown> }): boolean {
+    return !!(
+        response?.execute &&
+        typeof response.execute === 'object' &&
+        'form' in response.execute &&
+        response.execute.form &&
+        typeof response.execute.form === 'object' &&
+        'choices' in response.execute.form
+    );
+}
+
+/**
+ * Check if response is completed response (new protocol)
+ * @see docs/new-request-flow/PROTOCOL.md#completed-response
+ */
+export function isCompletedResponse(response: { execute?: Record<string, unknown> }): boolean {
+    return !!(
+        response?.execute &&
+        typeof response.execute === 'object' &&
+        'completed' in response.execute &&
+        response.execute.completed === true
+    );
+}
+
+/**
+ * Check if response is error response (new protocol)
+ * @see docs/new-request-flow/PROTOCOL.md#error-response
+ */
+export function isErrorResponse(response: { error?: Record<string, unknown> }): boolean {
+    return !!(
+        response?.error &&
+        typeof response.error === 'object' &&
+        'code' in response.error &&
+        'message' in response.error
+    );
+}
+
+/**
+ * Check if context is new protocol (v2.0)
+ */
+export function isNewProtocol(context: Record<string, unknown>): boolean {
+    return context?.version === '2.0';
 }
 
 export function serializeFileBlock(

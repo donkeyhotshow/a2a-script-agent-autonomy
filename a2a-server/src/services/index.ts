@@ -6,6 +6,7 @@ export * from './core/auth/index.js';
 export * from './core/messaging/index.js';
 export * from './core/request/index.js';
 export * from './core/communication/index.js';
+export * from './core/session/index.js';
 
 // AI exports
 export * from './ai/index.js';

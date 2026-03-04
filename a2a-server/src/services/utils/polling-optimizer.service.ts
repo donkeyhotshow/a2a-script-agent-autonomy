@@ -5,7 +5,7 @@
  * and batch processing for optimal resource utilization.
  */
 
-import { logger } from '../utils/logger.js';
+import { logger } from '../../utils/logger.js';
 import { 
     AdaptivePolling, 
     CircuitBreaker, 
@@ -14,7 +14,7 @@ import {
     type BackoffOptions,
     type CircuitBreakerOptions,
     type AdaptivePollingOptions
-} from '../utils/backoff.js';
+} from '../../utils/backoff.js';
 
 // ===========================================
 // Types

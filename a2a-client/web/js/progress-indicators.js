@@ -2,8 +2,11 @@
  * Progress Indicators Module
  * Visual progress tracking for long-running operations
  *
- * TODO(Task-09): loading state for POST /api/sessions/:id/next; "Running…" / promiseId polling – tasks/client/09-web-errors-progress-and-ux.md
- * TODO(Task-09): cancel/stop updates UI (e.g. back to "Далее")
+ * Features:
+ * - Loading state for POST /api/sessions/:id/next
+ * - "Running…" status with promiseId polling
+ * - Cancel/stop updates UI
+ * - Integration with SSE events
  */
 
 (function (global) {
@@ -289,6 +292,273 @@
         global.SSEClient.on('error', (data) => {
             ProgressIndicators.emit('error', data);
         });
+    }
+
+    /**
+     * Session Progress Manager
+     * Manages progress for session operations with promiseId polling
+     */
+    const SessionProgressManager = {
+        _activeSessions: new Map(),
+        _pollingIntervals: new Map(),
+        _apiBase: '/api',
+
+        /**
+         * Start progress tracking for session operation
+         */
+        async startSessionProgress(sessionId, operation = 'next', options = {}) {
+            const progressId = `session-${sessionId}-${operation}`;
+            
+            // Create progress tracker
+            const tracker = ProgressIndicators.create(progressId, {
+                showLabel: true,
+                showMessage: true,
+                autoRemove: false,
+                ...options
+            });
+
+            // Create UI container if not exists
+            let container = document.getElementById('session-progress-container');
+            if (!container) {
+                container = document.createElement('div');
+                container.id = 'session-progress-container';
+                container.className = 'session-progress-wrapper';
+                
+                // Insert after session panel
+                const sessionPanel = document.querySelector('.session-panel');
+                if (sessionPanel) {
+                    sessionPanel.parentNode.insertBefore(container, sessionPanel.nextSibling);
+                } else {
+                    document.body.appendChild(container);
+                }
+            }
+
+            // Render progress bar
+            tracker.renderTo(container.id, {
+                id: progressId,
+                showPercentage: true,
+                showMessage: true
+            });
+
+            // Add cancel button
+            this._addCancelButton(container, progressId, sessionId);
+
+            // Set initial "Running..." state
+            tracker.setIndeterminate('Running...');
+
+            // Store session info
+            this._activeSessions.set(progressId, {
+                sessionId,
+                operation,
+                tracker,
+                startTime: Date.now()
+            });
+
+            return tracker;
+        },
+
+        /**
+         * Handle promiseId polling for session operations
+         */
+        async pollPromiseId(sessionId, promiseId, progressId) {
+            const sessionInfo = this._activeSessions.get(progressId);
+            if (!sessionInfo) return;
+
+            const { tracker } = sessionInfo;
+            let attempts = 0;
+            const maxAttempts = 100; // 5 minutes with 3s intervals
+            const pollInterval = 3000;
+
+            // Clear existing polling
+            if (this._pollingIntervals.has(progressId)) {
+                clearInterval(this._pollingIntervals.get(progressId));
+            }
+
+            const intervalId = setInterval(async () => {
+                attempts++;
+                
+                try {
+                    const response = await fetch(`${this._apiBase}/sessions/${sessionId}/promise/${promiseId}`);
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        if (data.status === 'completed') {
+                            clearInterval(intervalId);
+                            this._pollingIntervals.delete(progressId);
+                            
+                            tracker.setProgress(100, 'Operation completed');
+                            setTimeout(() => {
+                                ProgressIndicators.remove(progressId);
+                                this._activeSessions.delete(progressId);
+                            }, 2000);
+                            
+                        } else if (data.status === 'failed') {
+                            clearInterval(intervalId);
+                            this._pollingIntervals.delete(progressId);
+                            
+                            tracker.error(data.error || 'Operation failed');
+                            
+                        } else if (data.progress) {
+                            // Update progress
+                            const { current, total, message } = data.progress;
+                            if (total > 0) {
+                                const percent = Math.round((current / total) * 100);
+                                tracker.setProgress(percent, message || `Processing... (${current}/${total})`);
+                            } else {
+                                tracker.setIndeterminate(message || 'Processing...');
+                            }
+                        } else {
+                            // Still running, show elapsed time
+                            const elapsed = Math.floor((Date.now() - sessionInfo.startTime) / 1000);
+                            tracker.setIndeterminate(`Running... (${elapsed}s elapsed)`);
+                        }
+                    } else {
+                        throw new Error(data.error || 'Polling failed');
+                    }
+
+                    if (attempts >= maxAttempts) {
+                        clearInterval(intervalId);
+                        this._pollingIntervals.delete(progressId);
+                        tracker.error('Operation timed out');
+                    }
+
+                } catch (error) {
+                    clearInterval(intervalId);
+                    this._pollingIntervals.delete(progressId);
+                    tracker.error(`Polling error: ${error.message}`);
+                }
+            }, pollInterval);
+
+            this._pollingIntervals.set(progressId, intervalId);
+        },
+
+        /**
+         * Handle POST /api/sessions/:id/next response
+         */
+        async handleSessionNextResponse(sessionId, response) {
+            const { promiseId, message } = response;
+
+            if (promiseId) {
+                // Start progress tracking with promiseId
+                const tracker = await this.startSessionProgress(sessionId, 'next');
+                const progressId = tracker.id;
+                
+                if (message) {
+                    tracker.setMessage(message);
+                }
+
+                // Start polling for promiseId
+                this.pollPromiseId(sessionId, promiseId, progressId);
+                
+                return progressId;
+            } else {
+                // Immediate response, no progress needed
+                return null;
+            }
+        },
+
+        /**
+         * Cancel session operation
+         */
+        async cancelSessionOperation(sessionId, operation = 'next') {
+            const progressId = `session-${sessionId}-${operation}`;
+            const sessionInfo = this._activeSessions.get(progressId);
+
+            if (!sessionInfo) return false;
+
+            try {
+                const response = await fetch(`${this._apiBase}/sessions/${sessionId}/cancel`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ operation })
+                });
+
+                if (response.ok) {
+                    const tracker = sessionInfo.tracker;
+                    tracker.setMessage('Operation cancelled');
+                    tracker.error('Cancelled by user');
+
+                    // Clean up
+                    setTimeout(() => {
+                        ProgressIndicators.remove(progressId);
+                        this._activeSessions.delete(progressId);
+                    }, 3000);
+
+                    return true;
+                } else {
+                    throw new Error('Cancel request failed');
+                }
+
+            } catch (error) {
+                console.error('Failed to cancel session operation:', error);
+                return false;
+            }
+        },
+
+        /**
+         * Add cancel button to progress container
+         */
+        _addCancelButton(container, progressId, sessionId) {
+            // Remove existing cancel button
+            const existingCancel = container.querySelector('.progress-cancel-btn');
+            if (existingCancel) {
+                existingCancel.remove();
+            }
+
+            const cancelButton = document.createElement('button');
+            cancelButton.className = 'progress-cancel-btn';
+            cancelButton.textContent = 'Stop';
+            cancelButton.title = 'Stop current operation';
+            cancelButton.onclick = () => {
+                this.cancelSessionOperation(sessionId, 'next');
+            };
+
+            container.appendChild(cancelButton);
+        },
+
+        /**
+         * Clean up all session progress
+         */
+        cleanup() {
+            // Clear all polling intervals
+            this._pollingIntervals.forEach(intervalId => clearInterval(intervalId));
+            this._pollingIntervals.clear();
+
+            // Remove all trackers
+            this._activeSessions.forEach((sessionInfo, progressId) => {
+                ProgressIndicators.remove(progressId);
+            });
+            this._activeSessions.clear();
+
+            // Remove container
+            const container = document.getElementById('session-progress-container');
+            if (container) {
+                container.remove();
+            }
+        }
+    };
+
+    // Export session progress manager
+    global.SessionProgressManager = SessionProgressManager;
+
+    // Integrate with existing session manager if available
+    if (global.SessionManager) {
+        // Override or extend session next method to include progress tracking
+        const originalNext = global.SessionManager.next;
+        if (originalNext) {
+            global.SessionManager.next = async function(sessionId, data) {
+                const result = await originalNext.call(this, sessionId, data);
+                
+                // Handle progress tracking
+                if (result && result.promiseId) {
+                    await SessionProgressManager.handleSessionNextResponse(sessionId, result);
+                }
+                
+                return result;
+            };
+        }
     }
 
 })(typeof window !== 'undefined' ? window : globalThis);

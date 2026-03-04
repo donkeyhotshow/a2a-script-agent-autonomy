@@ -121,7 +121,7 @@ describe('protocol-result.stub', () => {
         });
 
         it('should throw error for invalid path', async () => {
-            const invalidPath = 'C:\\invalid\\path\\file.txt';
+            const invalidPath = 'C:\\invalid\\path\\file<>:"/\\|?.txt';
             const testContent = 'Test content';
 
             await expect(writeFileForResult(invalidPath, testContent))

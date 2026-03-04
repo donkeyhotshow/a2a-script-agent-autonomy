@@ -9,17 +9,18 @@
  * ContextManager is reset per request (resetContextManager) — no cache of context/code between iterations.
  */
 
-import {requestService} from './request.service.js';
-import {logger} from '../utils/logger.js';
+import {requestService} from '../request/request.service.js';
+import {logger} from '../../../utils/logger.js';
 import type {RequestContext, ProcessResult, ProcessOutcome, Task, TaskAnalysis} from './request-processor.interfaces.js';
 import {
     actionRequestProcessor,
     simulationRequestProcessor,
     formRequestProcessor,
     neuronRequestProcessor,
-    processorRegistry,
-    type RequestType
-} from './request-processors/index.js';
+    processorRegistry
+} from './index.js';
+import type {RequestType} from './request-processor.interfaces.js';
+import {trackRequestComplete, trackRequestError} from '../../utils/pipeline-observability.service.js';
 
 const DEFAULT_INTERVAL_MS = 5000;
 let timerId: ReturnType<typeof setInterval> | null = null;
@@ -107,6 +108,9 @@ export async function processOneRequest(): Promise<ProcessResult | null> {
             result.outcome === 'failed' ? 'failed' : 'completed',
             result
         );
+        
+        // Track request completion for observability
+        trackRequestComplete(promiseId, result.outcome !== 'failed');
 
         return result;
 
@@ -116,6 +120,8 @@ export async function processOneRequest(): Promise<ProcessResult | null> {
             code: 'PROCESS_ERROR',
             message: String(err),
         });
+        // Track request error for observability
+        trackRequestError(promiseId, 'PROCESS_ERROR');
         return {outcome: 'failed' as ProcessOutcome};
     }
 }

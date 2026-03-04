@@ -9,7 +9,7 @@
     const WebSocketClient = {
         // Configuration
         wsUrl: null,
-        apiBase: '/api/v1',
+        apiBase: '/api',
         socket: null,
         sessionId: null,
         reconnectAttempts: 0,

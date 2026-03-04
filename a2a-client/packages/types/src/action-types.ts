@@ -5,6 +5,8 @@
  * Generated at: 2026-03-03T18:14:06.357Z
  * 
  * This file contains action types for client-side usage.
+ *
+ * Protocol types for new-request-flow: https://github.com/org-carrier/a2a-script-agent/tree/main/docs/new-request-flow
  */
 
 
@@ -158,9 +160,57 @@ export interface MessageAction {
   role?: 'system' | 'user' | 'assistant';
 }
 
+// ============================================
+// Execute Types (with Execute prefix - new naming convention)
+// @see docs/new-request-flow/PROTOCOL.md#action-key-shape
+// ============================================
+
+/**
+ * Execute script action type
+ * @see docs/new-request-flow/PROTOCOL.md#script
+ */
+export type ExecuteScript = ScriptAction;
+
+/**
+ * Execute read-file action type
+ * @see docs/new-request-flow/PROTOCOL.md#read-file
+ */
+export type ExecuteReadFile = ReadFileAction;
+
+/**
+ * Execute write-file action type
+ * @see docs/new-request-flow/PROTOCOL.md#write-file
+ */
+export type ExecuteWriteFile = WriteFileAction;
+
+/**
+ * Execute RAG search action type
+ * @see docs/new-request-flow/PROTOCOL.md#rag-search
+ */
+export type ExecuteRagSearch = RagSearchAction;
+
+/**
+ * Execute command action type
+ * @see docs/new-request-flow/PROTOCOL.md#execute-command
+ */
+export type ExecuteCommand = ExecuteCommandAction;
+
+/**
+ * Execute form action type
+ * @see docs/new-request-flow/PROTOCOL.md#form
+ */
+export type ExecuteForm = FormAction;
+
+/**
+ * Execute message action type
+ * @see docs/new-request-flow/PROTOCOL.md#message
+ */
+export type ExecuteMessage = MessageAction;
+
 /**
  * Execute payload with action-key shape
  * All execute objects MUST use this format
+ * @see docs/new-request-flow/PROTOCOL.md#action-key-shape-обязательно
  */
 export interface ExecutePayload {
   form?: FormAction;
@@ -211,6 +261,7 @@ export interface FormResult {
 
 /**
  * Result payload with action-key shape
+ * @see docs/new-request-flow/PROTOCOL.md#action-key-shape
  */
 export interface ActionResult {
   script?: ScriptResult;
@@ -223,3 +274,44 @@ export interface ActionResult {
   completed?: boolean;
   [key: string]: unknown;
 }
+
+// ============================================
+// Result Types (with Result suffix - new naming convention)
+// @see docs/new-request-flow/PROTOCOL.md#action-key-shape
+// ============================================
+
+/**
+ * Script result type
+ * @see docs/new-request-flow/PROTOCOL.md#script
+ */
+export type ScriptActionResult = ScriptResult;
+
+/**
+ * Read file result type
+ * @see docs/new-request-flow/PROTOCOL.md#read-file
+ */
+export type ReadFileActionResult = ReadFileResult;
+
+/**
+ * Write file result type
+ * @see docs/new-request-flow/PROTOCOL.md#write-file
+ */
+export type WriteFileActionResult = WriteFileResult;
+
+/**
+ * RAG search result type
+ * @see docs/new-request-flow/PROTOCOL.md#rag-search
+ */
+export type RagSearchActionResult = RagSearchResultPayload;
+
+/**
+ * Execute command result type
+ * @see docs/new-request-flow/PROTOCOL.md#execute-command
+ */
+export type CommandActionResult = ExecuteCommandResult;
+
+/**
+ * Form result type
+ * @see docs/new-request-flow/PROTOCOL.md#form
+ */
+export type FormActionResult = FormResult;

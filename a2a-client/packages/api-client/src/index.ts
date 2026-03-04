@@ -11,7 +11,7 @@ import {
     type FileBlockLike,
 } from './protocol';
 import {AsyncApiClient, PromisePoller} from './async-client';
-import {handleActionResponse, createExecuteCode} from './action-handler';
+import {handleActionResponse, handleExecuteAction, createExecuteScript} from './action-handler';
 
 export interface ApiClientConfig {
     serverUrl?: string;
@@ -183,13 +183,22 @@ export class ApiClient {
     }
 }
 
-export {AsyncApiClient, PromisePoller, handleActionResponse, createExecuteCode};
-export type {ExecuteScriptFn} from './action-handler';
+export {AsyncApiClient, PromisePoller, handleActionResponse, handleExecuteAction, createExecuteScript};
+export type {ExecuteScriptFn, HandleActionOptions, HandleActionResult} from './action-handler';
 export {
     buildNewTaskContext,
     buildContinueContext,
     buildConfirmContext,
     buildFileResponseContext,
+    // New protocol functions
+    buildProtocolContext,
+    buildFormChoiceRequest,
+    buildActionResultRequest,
+    isFormChoicesResponse,
+    isCompletedResponse,
+    isErrorResponse,
+    isNewProtocol,
+    // Serialization
     serializeFileBlock,
     parseFileBlock,
     parseMessage,
@@ -221,10 +230,30 @@ export type {
     ProgressConfig,
 } from './async-client.js';
 
-// Simulation helpers (Task 01 stub)
+// Simulation helpers (Task 01)
 export {
     invokeFirstTask,
     sendFormChoice,
     sendMessage,
+    sendClientActionResult,
+    hasFormChoices,
+    getFormChoices,
+    hasExecuteAction,
+    getExecuteActionType,
+    isCompleted,
+    getFinalResult,
 } from './simulation-helpers.js';
-export type { InvokeFirstTaskOptions, FirstTaskResult } from './simulation-helpers.js';
+export type { 
+    InvokeFirstTaskOptions, 
+    FirstTaskResult, 
+    ExecutePayload,
+    ActionResultPayload,
+    FormChoice,
+    FormAction,
+    ScriptAction,
+    RagSearchAction,
+    ReadFileAction,
+    WriteFileAction,
+    ExecuteCommandAction,
+    MessageAction,
+} from './simulation-helpers.js';

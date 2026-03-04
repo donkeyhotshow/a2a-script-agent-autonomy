@@ -3,8 +3,8 @@
  * Activates neurons based on content pool (taskText, codeBlocks, architectural_features)
  */
 
-import type {Neuron, NeuronAction} from '../types/knowledge.types.js';
-import {neurons} from '../neurons/index.js';
+import type {Neuron, NeuronAction} from '../../types/knowledge.types.js';
+import {neurons} from '../../neurons/index.js';
 
 export interface ActivationContext {
     taskText: string;

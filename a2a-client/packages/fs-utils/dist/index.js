@@ -38,6 +38,27 @@ Object.defineProperty(exports, "scanWithIgnore", {
         return file_scanner_ignore_1.scanWithIgnore;
     }
 });
+const protocol_result_1 = require("./protocol-result");
+Object.defineProperty(exports, "ProtocolResult", {
+    enumerable: true, get: function () {
+        return protocol_result_1.ProtocolResult;
+    }
+});
+Object.defineProperty(exports, "readFileForResult", {
+    enumerable: true, get: function () {
+        return protocol_result_1.readFileForResult;
+    }
+});
+Object.defineProperty(exports, "writeFileForResult", {
+    enumerable: true, get: function () {
+        return protocol_result_1.writeFileForResult;
+    }
+});
+Object.defineProperty(exports, "listDirectoryForResult", {
+    enumerable: true, get: function () {
+        return protocol_result_1.listDirectoryForResult;
+    }
+});
 
 function createIgnoreDetector(config) {
     return new ignore_detector_1.IgnoreDetector(config);

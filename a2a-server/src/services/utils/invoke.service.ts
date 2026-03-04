@@ -3,9 +3,10 @@
  * Parses context and creates requests. Routes → services; protocol used here.
  */
 
-import {parseContextBlock} from '../protocol/context-parser.js';
-import type {ContextBlock, FileBlock} from '../types/index.js';
-import {requestService} from './request.service.js';
+import {parseContextBlock} from '../../protocol/context-parser.js';
+import type {ContextBlock, FileBlock} from '../../types/index.js';
+import {requestService} from '../core/request/request.service.js';
+import {trackRequestStart} from './pipeline-observability.service.js';
 
 export interface InvokeInput {
     context?: unknown;
@@ -58,6 +59,9 @@ export async function invoke(clientId: string, input: InvokeInput): Promise<Invo
         message: input.message ?? input.task ?? null,
         codeBlocks: input.code_blocks ?? undefined,
     });
+    
+    // Track request start for observability
+    trackRequestStart(promiseId);
 
     return {promiseId};
 }

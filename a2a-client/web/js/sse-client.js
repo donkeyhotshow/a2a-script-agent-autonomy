@@ -15,7 +15,7 @@ const SSEClient = {
     lastEventId: null,
     _errorNotification: null,
 
-    apiBase: '/api/v1',
+    apiBase: '/api',
     apiClient: null,
 
     configureApi(apiBase, token = null) {
@@ -97,7 +97,7 @@ const SSEClient = {
         };
     },
 
-    connect(sessionId, apiBase = '/api/v1') {
+    connect(sessionId, apiBase = '/api') {
         this.sessionId = sessionId;
 
         if (!this.apiClient || this.apiBase !== apiBase) {
@@ -471,7 +471,7 @@ window.SSEClient = SSEClient;
 document.addEventListener('DOMContentLoaded', () => {
     const urlParams = new URLSearchParams(window.location.search);
     const sessionId = urlParams.get('session');
-    const apiBase = urlParams.get('api') || '/api/v1';
+    const apiBase = urlParams.get('api') || '/api';
 
     if (sessionId) {
         console.log('[SSE] Auto-connecting to session:', sessionId);

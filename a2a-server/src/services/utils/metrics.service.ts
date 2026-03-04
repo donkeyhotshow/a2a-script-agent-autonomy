@@ -5,7 +5,7 @@
  * and other performance indicators.
  */
 
-import { logger } from '../utils/logger.js';
+import { logger } from '../../utils/logger.js';
 
 // ===========================================
 // Types
@@ -51,7 +51,21 @@ export interface SystemMetrics {
     errors: ErrorMetrics;
     polling: PollingMetrics;
     webhook: WebhookMetrics;
+    pipeline: PipelineMetrics;
     timestamp: number;
+}
+
+export interface PipelineMetrics {
+    activeRequests: number;
+    totalRequests: number;
+    completedRequests: number;
+    failedRequests: number;
+    avgLatencyMs: number;
+    minLatencyMs: number;
+    maxLatencyMs: number;
+    throughputRps: number;
+    errorCount: number;
+    errorRate: number;
 }
 
 export interface QueueMetrics {
@@ -348,6 +362,63 @@ export function initializeMetrics(): void {
         unit: 'percent'
     });
 
+    // Pipeline metrics - observability
+    store.define({
+        name: 'pipeline_active_requests',
+        type: 'gauge',
+        description: 'Number of currently active pipeline requests',
+        unit: 'requests'
+    });
+
+    store.define({
+        name: 'pipeline_requests_total',
+        type: 'counter',
+        description: 'Total number of pipeline requests',
+        unit: 'requests'
+    });
+
+    store.define({
+        name: 'pipeline_completed_total',
+        type: 'counter',
+        description: 'Total number of completed pipeline requests',
+        unit: 'requests'
+    });
+
+    store.define({
+        name: 'pipeline_failed_total',
+        type: 'counter',
+        description: 'Total number of failed pipeline requests',
+        unit: 'requests'
+    });
+
+    store.define({
+        name: 'pipeline_latency_ms',
+        type: 'histogram',
+        description: 'Pipeline request latency in milliseconds',
+        unit: 'ms'
+    });
+
+    store.define({
+        name: 'pipeline_throughput_rps',
+        type: 'gauge',
+        description: 'Pipeline throughput (requests per second)',
+        unit: 'rps'
+    });
+
+    store.define({
+        name: 'pipeline_errors_total',
+        type: 'counter',
+        description: 'Total number of pipeline errors',
+        unit: 'errors'
+    });
+
+    store.define({
+        name: 'pipeline_error_rate',
+        type: 'gauge',
+        description: 'Pipeline error rate as percentage',
+        unit: 'percent'
+    });
+
     logger.info('[Metrics] Metrics initialized');
 }
 
@@ -412,6 +483,42 @@ export function recordWebhookSuccessRate(rate: number): void {
 }
 
 // ===========================================
+// Pipeline Recording Functions (Observability)
+// ===========================================
+
+export function recordPipelineActiveRequests(count: number): void {
+    store.gauge('pipeline_active_requests', count);
+}
+
+export function recordPipelineRequest(): void {
+    store.increment('pipeline_requests_total');
+}
+
+export function recordPipelineCompleted(): void {
+    store.increment('pipeline_completed_total');
+}
+
+export function recordPipelineFailed(): void {
+    store.increment('pipeline_failed_total');
+}
+
+export function recordPipelineLatency(latencyMs: number): void {
+    store.histogram('pipeline_latency_ms', latencyMs);
+}
+
+export function recordPipelineThroughput(rps: number): void {
+    store.gauge('pipeline_throughput_rps', rps);
+}
+
+export function recordPipelineError(errorType?: string): void {
+    store.increment('pipeline_errors_total', errorType ? { type: errorType } : undefined);
+}
+
+export function recordPipelineErrorRate(rate: number): void {
+    store.gauge('pipeline_error_rate', rate * 100);
+}
+
+// ===========================================
 // Snapshot Functions
 // ===========================================
 
@@ -429,6 +536,13 @@ export function getSystemMetrics(): SystemMetrics {
     const processingSnapshot = store.getSnapshot('processing_time_ms');
     const errorCount = store.getCurrent('error_count_total');
     const totalProcessed = queueCompleted + queueFailed;
+    
+    // Pipeline metrics
+    const pipelineLatencySnapshot = store.getSnapshot('pipeline_latency_ms');
+    const pipelineCompleted = store.getCurrent('pipeline_completed_total');
+    const pipelineFailed = store.getCurrent('pipeline_failed_total');
+    const pipelineTotal = pipelineCompleted + pipelineFailed;
+    const pipelineErrorRate = pipelineTotal > 0 ? pipelineFailed / pipelineTotal : 0;
 
     return {
         queue: {
@@ -466,7 +580,44 @@ export function getSystemMetrics(): SystemMetrics {
             failedDeliveries: 0,
             avgResponseTime: 0
         },
+        pipeline: {
+            activeRequests: store.getCurrent('pipeline_active_requests'),
+            totalRequests: store.getCurrent('pipeline_requests_total'),
+            completedRequests: pipelineCompleted,
+            failedRequests: pipelineFailed,
+            avgLatencyMs: pipelineLatencySnapshot?.avg || 0,
+            minLatencyMs: pipelineLatencySnapshot?.min || 0,
+            maxLatencyMs: pipelineLatencySnapshot?.max || 0,
+            throughputRps: store.getCurrent('pipeline_throughput_rps'),
+            errorCount: store.getCurrent('pipeline_errors_total'),
+            errorRate: pipelineErrorRate
+        },
         timestamp: Date.now()
+    };
+}
+
+// ===========================================
+// Pipeline Metrics (Observability)
+// ===========================================
+
+export function getPipelineMetrics(): PipelineMetrics {
+    const pipelineLatencySnapshot = store.getSnapshot('pipeline_latency_ms');
+    const pipelineCompleted = store.getCurrent('pipeline_completed_total');
+    const pipelineFailed = store.getCurrent('pipeline_failed_total');
+    const pipelineTotal = pipelineCompleted + pipelineFailed;
+    const pipelineErrorRate = pipelineTotal > 0 ? pipelineFailed / pipelineTotal : 0;
+
+    return {
+        activeRequests: store.getCurrent('pipeline_active_requests'),
+        totalRequests: store.getCurrent('pipeline_requests_total'),
+        completedRequests: pipelineCompleted,
+        failedRequests: pipelineFailed,
+        avgLatencyMs: pipelineLatencySnapshot?.avg || 0,
+        minLatencyMs: pipelineLatencySnapshot?.min || 0,
+        maxLatencyMs: pipelineLatencySnapshot?.max || 0,
+        throughputRps: store.getCurrent('pipeline_throughput_rps'),
+        errorCount: store.getCurrent('pipeline_errors_total'),
+        errorRate: pipelineErrorRate
     };
 }
 

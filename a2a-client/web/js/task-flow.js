@@ -7,7 +7,10 @@
 
 (function (global) {
     function getApiBase() {
-        const base = (global.apiIntegration && global.apiIntegration.serverUrl) || (global.AppBoot && global.AppBoot.config && global.AppBoot.config.serverUrl) || '/api/v1';
+        const base = global.apiIntegration?.apiBase
+            || global.apiIntegration?.serverUrl
+            || (global.AppBoot?.config?.serverUrl)
+            || '/api';
         return String(base).replace(/\/?$/, '');
     }
     const POLL_INTERVAL_MS = 800;
@@ -233,7 +236,7 @@
                 }
 
                 updateStatus(contentEl, 'Calling server…');
-                const invokeRes = await request('POST', '/invoke', { task, sessionId, projectId });
+                const invokeRes = await request('POST', `/sessions/${encodeURIComponent(sessionId)}/next`, { task, sessionId, projectId });
                 const promiseId = invokeRes?.promiseId ?? invokeRes?.data?.promiseId;
                 if (!promiseId) throw new Error('No promiseId');
 
@@ -266,36 +269,51 @@
             const sessionId = this._sessionId;
             const projectId = this._projectId;
             const prevContext = this._lastContext;
-            if (!sessionId || !projectId || !prevContext) {
-                window.addNotification?.('Session or context missing', 'error');
+            if (!sessionId || !projectId) {
+                window.addNotification?.('Session or project missing', 'error');
                 return;
             }
-            const context = {
-                ...prevContext,
-                session_id: sessionId,
-                action: 'approve_action',
-                selectedAction: { actionId: choiceId },
+            
+            // New protocol: send result with action-key shape
+            const requestBody = {
+                projectId,
+                result: { choice: choiceId },
             };
+            
+            // Include context if available
+            if (prevContext) {
+                requestBody.context = prevContext;
+            }
+            
             setPanelContent(contentEl, 'sending', null);
             try {
-                const invokeRes = await request('POST', '/invoke', { context, sessionId, projectId });
+                const invokeRes = await request('POST', `/sessions/${encodeURIComponent(sessionId)}/next`, requestBody);
                 const promiseId = invokeRes?.promiseId ?? invokeRes?.data?.promiseId;
-                if (!promiseId) throw new Error('No promiseId');
-                const { status, result: res } = await pollResult(promiseId);
-                if (status === 'timeout') {
-                    setPanelContent(contentEl, 'response', { execute: {} }, this);
-                    contentEl.innerHTML = '<div class="task-flow-error">Timeout</div>';
-                    return;
+                
+                if (promiseId) {
+                    // Async response - poll for result
+                    const { status, result: res } = await pollResult(promiseId);
+                    if (status === 'timeout') {
+                        setPanelContent(contentEl, 'response', { execute: {} }, this);
+                        contentEl.innerHTML = '<div class="task-flow-error">Timeout</div>';
+                        return;
+                    }
+                    if (status === 'failed') {
+                        setPanelContent(contentEl, 'response', { execute: {} }, this);
+                        contentEl.innerHTML = '<div class="task-flow-error">Request failed</div>';
+                        return;
+                    }
+                    const ctx = res?.context ?? res?.data?.context;
+                    const exec = res?.execute ?? res?.data?.execute;
+                    this._lastContext = ctx != null ? (typeof ctx === 'object' ? ctx : {}) : {};
+                    setPanelContent(contentEl, 'response', { context: ctx, execute: exec, sessionId, projectId }, this);
+                } else {
+                    // Synchronous response - use directly
+                    const ctx = invokeRes?.context;
+                    const exec = invokeRes?.execute;
+                    this._lastContext = ctx != null ? (typeof ctx === 'object' ? ctx : {}) : {};
+                    setPanelContent(contentEl, 'response', { context: ctx, execute: exec, sessionId, projectId }, this);
                 }
-                if (status === 'failed') {
-                    setPanelContent(contentEl, 'response', { execute: {} }, this);
-                    contentEl.innerHTML = '<div class="task-flow-error">Request failed</div>';
-                    return;
-                }
-                const ctx = res?.context ?? res?.data?.context;
-                const exec = res?.execute ?? res?.data?.execute;
-                this._lastContext = ctx != null ? (typeof ctx === 'object' ? ctx : {}) : {};
-                setPanelContent(contentEl, 'response', { context: ctx, execute: exec, sessionId, projectId }, this);
             } catch (err) {
                 contentEl.innerHTML = '<div class="task-flow-error">' + escapeHtml(String(err?.message || err)) + '</div>';
                 window.addNotification?.(String(err?.message || err), 'error');
@@ -313,7 +331,7 @@
                 const statusEl = contentEl?.querySelector('.task-flow-status');
                 if (statusEl) statusEl.textContent = 'Calling server…';
 
-                const invokeRes = await request('POST', '/invoke', { task, sessionId, projectId });
+                const invokeRes = await request('POST', `/sessions/${encodeURIComponent(sessionId)}/next`, { task, sessionId, projectId });
                 const promiseId = invokeRes?.promiseId ?? invokeRes?.data?.promiseId;
                 if (!promiseId) throw new Error('No promiseId');
 

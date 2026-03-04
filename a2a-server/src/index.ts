@@ -4,13 +4,14 @@ import {config} from './config/index.js';
 import {logger} from './utils/logger.js';
 import {setDatabaseLogger} from './config/database.js';
 import {startRequestProcessor, stopRequestProcessor} from './services/core/request-processor/request-processor.service.js';
-import { initializeQueue, closeQueue, setJobProcessor, addRequestToQueue, getQueueMetrics, onQueueEvent } from './services/request-queue.service.js';
-import { initializeMetrics, recordQueueDepth, recordProcessingTime, recordErrorRate, recordPollingInterval } from './services/metrics.service.js';
-import { initialize as initializePollingOptimizer, registerEndpoint, startAll as startAllPolling, shutdown as shutdownPolling, onPollingEvent } from './services/polling-optimizer.service.js';
-import { notifyRequestCompleted, notifyRequestFailed, onWebhookEvent } from './services/webhook.service.js';
+import { initializeQueue, closeQueue, setJobProcessor, addRequestToQueue, getQueueMetrics, onQueueEvent } from './services/core/state/request-queue.service.js';
+import { initializeMetrics, recordQueueDepth, recordProcessingTime, recordErrorRate, recordPollingInterval } from './services/utils/metrics.service.js';
+import { initialize as initializePollingOptimizer, registerEndpoint, startAll as startAllPolling, shutdown as shutdownPolling, onPollingEvent } from './services/utils/polling-optimizer.service.js';
+import { notifyRequestCompleted, notifyRequestFailed, onWebhookEvent } from './services/utils/webhook.service.js';
 import { processOneRequest } from './services/core/request-processor/request-processor.service.js';
+import { initializePipelineObservability } from './services/utils/pipeline-observability.service.js';
 import type { Job } from 'bullmq';
-import type { QueueJobData } from './services/request-queue.service.js';
+import type { QueueJobData } from './services/core/state/request-queue.service.js';
 
 // Create HTTP server
 const server = http.createServer(app);
@@ -21,6 +22,7 @@ setDatabaseLogger(logger);
 // Initialize metrics
 if (config.metricsEnabled) {
     initializeMetrics();
+    initializePipelineObservability();
     logger.info('[Metrics] Metrics initialized');
 }
 
