@@ -7,11 +7,9 @@
       "status": "completed"
     }
   },
-  "execute": {
+  "result": {
     "script": {
-      "input": {},
-      "output": "cleanup_count",
-      "code": "// vue-import-cleanup.dsl\n// Очищення тимчасових файлів\n\nconst result = await script.execute('vue-import-cleanup', {});"
+      "cleanup_count": 3
     }
   }
 }

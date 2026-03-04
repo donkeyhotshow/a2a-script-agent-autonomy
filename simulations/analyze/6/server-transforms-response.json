@@ -13,27 +13,28 @@
       "to": "$.context"
     },
     {
-      "op": "switch",
-      "discriminator": "$.llm.action",
-      "cases": {
-        "write-file": {
-          "op": "set",
-          "path": "$.execute",
-          "value": {
-            "write-file": {
-              "path": "$.llm.path",
-              "content": "$.llm.content"
-            }
-          }
-        },
-        "continue": {
-          "op": "set",
-          "path": "$.execute",
-          "value": {
-            "message": "$.llm.message"
-          }
-        }
+      "op": "set",
+      "path": "$.context.execution.step",
+      "value": "$.llm.step"
+    },
+    {
+      "op": "append-to-array",
+      "to": "$.context.history",
+      "value": {
+        "role": "assistant",
+        "step": "$.llm.step",
+        "message": "$.llm.message"
       }
+    },
+    {
+      "op": "set",
+      "path": "$.execute",
+      "value": "$.llm.execute"
+    },
+    {
+      "op": "set",
+      "path": "$.result.completed",
+      "value": "$.llm.completed"
     }
   ]
 }

@@ -133,6 +133,11 @@ request.json → request.md (LLM prompt) → response.md (LLM output)
 Пользователь вводит задачу, система через **router** предлагает доступные варианты виконання. **Канон
 (по `simulations/SCHEMA.md`)**: первый ответ идёт через `execute.form.choices` (список опций), где `choices[].id` — ID
 действия (`fix-vue-imports`, `auto-ai`, `task-decomposition`, `dialog`, `coder` и т.п.).
+
+> **💡 Best Practice:** Deterministic Actions (например `fix-vue-imports`, `phpunit-deprecations`) должны быть первыми
+> в списке `form.choices`, а AI-actions (`auto-ai`, `coder`, `dialog`) — после них. Это обеспечивает высокую
+> производительность для простых задач и использует LLM как fallback.
+
 Формат с `actions[]` и `fallbackActions[]` в ответе считается **legacy** и используется только для совместимости; новые
 симуляции и сервер должны опираться на `execute.form.choices` + `result.choice`.
 

@@ -13,46 +13,28 @@
       "to": "$.context"
     },
     {
+      "op": "set",
+      "path": "$.context.execution.step",
+      "value": "$.llm.step"
+    },
+    {
       "op": "append-to-array",
       "to": "$.context.history",
       "value": {
         "role": "assistant",
-        "message": "$.llm.message",
-        "action": "$.llm.action"
+        "step": "$.llm.step",
+        "message": "$.llm.message"
       }
     },
     {
-      "op": "switch",
-      "discriminator": "$.llm.action",
-      "cases": {
-        "rag-search": {
-          "op": "set",
-          "path": "$.execute",
-          "value": {
-            "message": "$.llm.message",
-            "rag-search": {
-              "query": "$.llm.query"
-            }
-          }
-        },
-        "read-file": {
-          "op": "set",
-          "path": "$.execute",
-          "value": {
-            "message": "$.llm.message",
-            "read-file": {
-              "path": "$.llm.file"
-            }
-          }
-        },
-        "continue": {
-          "op": "set",
-          "path": "$.execute",
-          "value": {
-            "message": "$.llm.message"
-          }
-        }
-      }
+      "op": "set",
+      "path": "$.execute",
+      "value": "$.llm.execute"
+    },
+    {
+      "op": "set",
+      "path": "$.result.completed",
+      "value": "$.llm.completed"
     }
   ]
 }

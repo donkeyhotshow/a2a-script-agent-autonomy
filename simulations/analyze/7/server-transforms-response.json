@@ -14,11 +14,27 @@
     },
     {
       "op": "set",
-      "path": "$.result",
+      "path": "$.context.execution.step",
+      "value": "$.llm.step"
+    },
+    {
+      "op": "append-to-array",
+      "to": "$.context.history",
       "value": {
-        "completed": true,
-        "action": "analyze"
+        "role": "assistant",
+        "step": "$.llm.step",
+        "message": "$.llm.message"
       }
+    },
+    {
+      "op": "set",
+      "path": "$.execute",
+      "value": "$.llm.execute"
+    },
+    {
+      "op": "set",
+      "path": "$.result.completed",
+      "value": "$.llm.completed"
     }
   ]
 }

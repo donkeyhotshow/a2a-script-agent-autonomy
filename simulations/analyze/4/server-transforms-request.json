@@ -7,6 +7,14 @@
       "to": "$out"
     },
     {
+      "op": "append-to-array",
+      "to": "$.context.history",
+      "value": {
+        "role": "user",
+        "message": "$.result.message"
+      }
+    },
+    {
       "op": "set",
       "path": "$.context.ragResults",
       "value": "$.result.rag-search.results"

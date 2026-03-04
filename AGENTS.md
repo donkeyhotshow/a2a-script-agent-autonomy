@@ -54,7 +54,7 @@ Reusable templates are in [`templates/ai-action-transforms/`](templates/ai-actio
 |------------|--------|--------|
 | `auto-ai` | `a2a-server/prompts/auto-ai-request.md` | ✅ Canonical |
 | `coder-smart` | `a2a-server/prompts/coder-request.md` | ✅ Updated to canonical |
-| `analyze` | `a2a-server/prompts/analyze-request.md` | ⚠️ Needs update |
+| `analyze` | `a2a-server/prompts/analyze-request.md` | ✅ Updated to canonical |
 
 See [`plans/ai-action-transform-template.md`](plans/ai-action-transform-template.md) for detailed migration guide.
 
