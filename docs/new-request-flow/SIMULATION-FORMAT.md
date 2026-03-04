@@ -188,7 +188,18 @@ JSONPath‑pipeline (див. `json-schemas/server-transform.schema.json`).
 
 ### Шаг 1: request.json (Client → Server)
 ```json
-{ "task": "диалог" }
+{
+  "context": {
+    "task": "диалог",
+    "execution": {
+      "action": "dialog",
+      "step": "llm-request"
+    }
+  },
+  "result": {
+    "message": "hello world"
+  }
+}
 ```
 
 ### Шаг 2: request.json (выбор действия)
