@@ -52,9 +52,9 @@ const SIMULATIONS = [
     'fix-vue-imports',
     'coder',
     'coder-smart',
-   ',
     'task-decomposition',
-] 'auto-ai;
+    'auto-ai',
+];
 
 /**
  * Тест: Протокольная валидация action-key shape

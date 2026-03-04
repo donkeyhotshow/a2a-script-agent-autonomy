@@ -187,84 +187,34 @@ export class FormMessageBuilder extends BaseMessageBuilder<ServerMessage> {
     }
 
     /**
-     * Построить server message с формой
+     * Построить server message с формой (новый протокол - execute.form)
      */
     build(): ServerMessage {
-        // Формируем архитектурные признаки для формы
-        if (this.formId) {
-            this.context.architectural_features = [
-                'form',
-                `form:${this.formId}`,
-                ...(this.choices.length > 0 ? ['form:choices'] : []),
-                ...(this.input.length > 0 ? ['form:input'] : []),
-            ];
-        }
-
+        // Формируем контекст
         const result: ServerMessage = {
             context: this.context,
         };
 
-        // Формируем сообщение с формой
-        let content = '';
-
-        if (this.title) {
-            content += `## ${this.title}\n\n`;
-        }
-
-        if (this.description) {
-            content += `${this.description}\n\n`;
-        }
-
-        // Добавляем choices
-        if (this.choices.length > 0) {
-            content += this.allowMultiple
-                ? 'Select one or more options:\n'
-                : 'Select an option:\n';
-            content += this.choices
-                .map((c, i) => `${i + 1}. ${c.label}${c.description ? ` - ${c.description}` : ''}`)
-                .join('\n');
-            content += '\n\n';
-        }
-
-        // Добавляем input fields
-        if (this.input.length > 0) {
-            content += 'Please provide the following information:\n\n';
-            this.input.forEach((field, i) => {
-                content += `${i + 1}. **${field.label}** (${field.type})`;
-                if (field.required) content += ' *required*';
-                if (field.placeholder) content += `\n   _Hint: ${field.placeholder}_`;
-                content += '\n';
-            });
-            content += '\n';
-        }
-
-        if (this.submitLabel || this.cancelLabel) {
-            if (this.submitLabel) {
-                content += `[${this.submitLabel}] `;
-            }
-            if (this.cancelLabel) {
-                content += `[${this.cancelLabel}]`;
-            }
-            content += '\n';
-        }
-
-        if (content) {
-            result.message = content.trim();
-        }
-
-        // Добавляем action для интерпретации формы
+        // Новый формат: execute.form с choices/input
         if (this.choices.length > 0 || this.input.length > 0) {
-            result.action = {
-                id: this.formId || 'form',
-                title: this.title || 'Form',
-                nextSteps: [
-                    {
-                        id: 'submit',
-                        title: this.submitLabel || 'Submit',
-                    },
-                    ...(this.cancelLabel ? [{id: 'cancel', title: this.cancelLabel}] : []),
-                ],
+            result.execute = {
+                form: {
+                    title: this.title,
+                    description: this.description,
+                    choices: this.choices.map(c => ({ id: c.id, label: c.label })),
+                    input: this.input.length > 0 ? this.input.map(f => ({
+                        id: f.id,
+                        label: f.label,
+                        type: f.type,
+                        required: f.required,
+                        placeholder: f.placeholder,
+                        options: f.options
+                    })) : undefined
+                }
             };
+        } else if (this.message) {
+            // Fallback: простое сообщение
+            result.message = this.message;
         }
 
         return result;

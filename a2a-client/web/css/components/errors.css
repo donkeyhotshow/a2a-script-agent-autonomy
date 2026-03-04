@@ -103,8 +103,133 @@
     font-size: 12px;
 }
 
+.error-notification-details {
+    flex-shrink: 0;
+    padding: 2px 8px;
+    margin-left: 4px;
+    border-radius: 4px;
+    border: 1px solid transparent;
+    background: rgba(15, 23, 42, 0.1);
+    font-size: 12px;
+    color: var(--fg2);
+    cursor: pointer;
+}
+
+.error-notification-details:hover {
+    border-color: var(--border);
+}
+
 .error-notification-retry:hover {
     text-decoration: underline;
+}
+
+.error-detail-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(3, 7, 18, 0.75);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    z-index: 20000;
+}
+
+.error-detail-modal {
+    width: min(640px, 100%);
+    max-height: 90vh;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: 0 24px 48px rgba(2, 6, 23, 0.55);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.error-detail-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px 20px 0;
+}
+
+.error-detail-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--fg);
+}
+
+.error-detail-meta {
+    font-size: 12px;
+    color: var(--fg2);
+    margin-top: 4px;
+}
+
+.error-detail-body {
+    padding: 0 20px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1;
+    overflow-y: auto;
+}
+
+.error-detail-section-title {
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--fg2);
+}
+
+.error-detail-stack,
+.error-detail-context {
+    margin: 0;
+    font-size: 12px;
+    line-height: 1.4;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px;
+    white-space: pre-wrap;
+    word-break: break-word;
+    font-family: var(--mono-font, ui-monospace, monospace);
+}
+
+.error-detail-footer {
+    padding: 0 20px 16px;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.error-detail-copy {
+    border: none;
+    background: var(--accent);
+    color: #fff;
+    border-radius: 6px;
+    padding: 8px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.2s;
+}
+
+.error-detail-copy:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
+
+.error-detail-close {
+    border: none;
+    background: transparent;
+    color: var(--fg2);
+    font-size: 22px;
+    cursor: pointer;
+    padding: 0;
+}
+
+.error-detail-close:hover {
+    color: var(--fg);
 }
 
 /* Connection status indicator */

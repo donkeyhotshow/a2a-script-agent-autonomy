@@ -144,12 +144,27 @@ export class ActionMessageBuilder extends BaseMessageBuilder<ServerMessage> {
     }
 
     /**
-     * Построить server message с action данными
+     * Построить server message с action данными (новый протокол - execute.script)
      */
     build(): ServerMessage {
         const result: ServerMessage = {
             context: this.context,
         };
+
+        // Если есть скрипт - возвращаем execute.script (action-key shape)
+        const scriptInput = (this as any)._scriptInput;
+        const scriptOutput = (this as any)._scriptOutput;
+        const scriptCode = (this as any)._scriptCode;
+        
+        if (scriptInput !== undefined || scriptCode) {
+            result.execute = {
+                script: {
+                    input: scriptInput || {},
+                    output: scriptOutput || '',
+                    code: scriptCode || ''
+                }
+            };
+        }
 
         if (this.files && this.files.length > 0) {
             result.files = this.files;
@@ -160,6 +175,26 @@ export class ActionMessageBuilder extends BaseMessageBuilder<ServerMessage> {
         }
 
         return result;
+    }
+
+    /**
+     * Создать execute.script ответ для шага
+     */
+    withScriptStep(input: Record<string, unknown>, output: string, code: string): this {
+        this.context.architectural_features = ['execute:script'];
+        this.currentStep = { id: 'script', title: 'Execute Script', code };
+        (this as any)._scriptInput = input;
+        (this as any)._scriptOutput = output;
+        (this as any)._scriptCode = code;
+        return this;
+    }
+
+    /**
+     * Установить finalResult для завершения action
+     */
+    withFinalResult(action: string, summary: Record<string, unknown>): this {
+        (this as any)._finalResult = { action, summary };
+        return this;
     }
 
     /**

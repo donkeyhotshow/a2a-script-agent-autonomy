@@ -11,8 +11,6 @@
  * ✅ IMPLEMENTED: New protocol support - execute.form.choices, action-key shape
  */
 
-import type { Project } from './index.js';
-
 /**
  * Form choice item (new protocol)
  */

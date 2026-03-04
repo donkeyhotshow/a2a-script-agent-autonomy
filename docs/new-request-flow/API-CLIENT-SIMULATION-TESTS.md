@@ -247,6 +247,33 @@ npm run sim:compare fix-vue-imports
 { result: { content: "..." } }
 ```
 
+#### Пример: Результат (action-key shape)
+
+Результат выполнения скрипта:
+
+```json
+{
+  "context": { "execution": { "action": "fix-vue-imports", "step": "vue-import-detect" } },
+  "result": {
+    "script": { "output": { "broken_imports": [...] } }
+  }
+}
+```
+
+#### Пример: Результат с ошибкой
+
+```json
+{
+  "context": { "execution": { "action": "read-file", "step": "file-read" } },
+  "result": {
+    "error": {
+      "code": "FILE_NOT_FOUND",
+      "message": "Файл не найден: /path/to/file.vue"
+    }
+  }
+}
+```
+
 ### 2. Типы Execute
 
 | Тип | Описание | Проверяется |
@@ -258,6 +285,41 @@ npm run sim:compare fix-vue-imports
 | `read-file` | Чтение файлов | ✓ |
 | `write-file` | Запись файлов | ✓ |
 | `execute-command` | Выполнение команд | ✓ |
+
+#### Пример: Первый ответ - форма выбора
+
+Когда сервер предлагает выбрать действие:
+
+```json
+{
+  "context": {
+    "task": "виправити імпорти у vue компонентах"
+  },
+  "execute": {
+    "form": {
+      "title": "Оберіть спосіб виконання",
+      "choices": [
+        { "id": "fix-vue-imports", "label": "Виправити зламані імпорти у Vue файлах" },
+        { "id": "auto-ai", "label": "AI Action Generator" }
+      ]
+    }
+  }
+}
+```
+
+#### Пример: Сообщение пользователю
+
+```json
+{
+  "context": { "execution": { "step": "analysis" } },
+  "execute": {
+    "message": {
+      "type": "info",
+      "content": "Проанализировано 15 файлов. Найдено 3 проблемных импорта."
+    }
+  }
+}
+```
 
 ### 3. Контекстные поля
 

@@ -36,6 +36,11 @@ export interface ProcessResult {
     taskAnalysis?: TaskAnalysis | undefined;
     action?: ActionResult | null | undefined;
     execute?: ExecuteCommand | undefined;
+    /** Final result when action is completed (new protocol) */
+    finalResult?: {
+        action: string;
+        summary: Record<string, unknown>;
+    } | undefined;
 }
 
 export type ProcessOutcome = 'completed' | 'failed' | 'graph_incomplete' | 'action_proposal';

@@ -1,5 +1,7 @@
 # PromiseId Flow Implementation
 
+> **См.:** [new-request-flow/PROTOCOL.md](../../../docs/new-request-flow/PROTOCOL.md)
+
 ## Overview
 
 This document describes the implementation of the promiseId flow in the A2A Client API Server. The promiseId flow enables asynchronous request handling where the client can poll for status updates and receive real-time notifications via WebSocket.
@@ -43,6 +45,39 @@ The session is updated with data from both invoke and status responses:
 - **Status**: Updated if provided in response
 
 ## Implementation Details
+
+### Execute Form Choices
+
+When the server returns a form with selectable choices (first response), the client receives an `execute.form.choices` object. This is the new protocol format for interactive first responses.
+
+#### Пример: Первый ответ с формой выбора
+
+Когда сервер возвращает форму выбора действий:
+
+```json
+{
+  "context": {
+    "task": "виправити імпорти у vue компонентах"
+  },
+  "execute": {
+    "form": {
+      "title": "Оберіть спосіб виконання",
+      "choices": [
+        { "id": "fix-vue-imports", "label": "Виправити зламані імпорти" },
+        { "id": "auto-ai", "label": "AI Action Generator" }
+      ]
+    }
+  }
+}
+```
+
+#### Client Processing
+
+The client should:
+1. Extract the `execute.form` object from the response
+2. Display the form title and available choices
+3. Wait for user selection
+4. Send the selected choice ID as the next request
 
 ### Session Storage
 

@@ -158,6 +158,162 @@ const dataRequest = {
 };
 ```
 
+## New Protocol - Action Key Shape
+
+The new A2A protocol uses action-type keys instead of generic `content` or `action` fields.
+
+### Execute Types
+
+```javascript
+// Script execution
+await client.createRequest({
+  execute: {
+    script: {
+      code: 'console.log("Hello World")',
+      input: {}
+    }
+  }
+});
+
+// File read
+await client.createRequest({
+  execute: {
+    "read-file": {
+      path: '/src/index.js'
+    }
+  }
+});
+
+// File write
+await client.createRequest({
+  execute: {
+    "write-file": {
+      path: '/src/output.js',
+      content: 'console.log("test")'
+    }
+  }
+});
+
+// Command execution
+await client.createRequest({
+  execute: {
+    "execute-command": {
+      command: 'npm install',
+      cwd: '/project'
+    }
+  }
+});
+```
+
+### Form with Choices
+
+```javascript
+// Server sends form with choices
+const response = await client.getRequestStatus(promiseId);
+// Response:
+// {
+//   execute: {
+//     form: {
+//       title: 'Choose action',
+//       choices: [
+//         { id: 'fix', label: 'Fix imports' },
+//         { id: 'skip', label: 'Skip' }
+//       ]
+//     }
+//   }
+// }
+
+// Client sends choice selection
+await client.sendStepResult(sessionId, {
+  result: {
+    form: {
+      selectedChoice: 'fix',
+      data: {}
+    }
+  }
+});
+```
+
+### Form with Input
+
+```javascript
+// Server sends form with input fields
+// {
+//   execute: {
+//     form: {
+//       title: 'Enter file path',
+//       input: [
+//         { name: 'path', type: 'text', label: 'File path' },
+//         { name: 'content', type: 'textarea', label: 'Content' }
+//       ]
+//     }
+//   }
+// }
+
+// Client sends form data
+await client.sendStepResult(sessionId, {
+  result: {
+    form: {
+      data: {
+        path: '/src/test.js',
+        content: 'console.log("test")'
+      }
+    }
+  }
+});
+```
+
+### Message Type
+
+```javascript
+// Server sends message to display
+// {
+//   execute: {
+//     message: {
+//       content: 'Operation completed successfully',
+//       type: 'success'
+//     }
+//   }
+// }
+```
+
+### Result Format
+
+```javascript
+// Client sends result with action-key
+await client.sendStepResult(sessionId, {
+  result: {
+    script: {
+      output: 'Hello World',
+      error: null,
+      success: true
+    }
+  }
+});
+
+// File read result
+await client.sendStepResult(sessionId, {
+  result: {
+    "read-file": {
+      path: '/src/index.js',
+      content: 'console.log("test")',
+      success: true
+    }
+  }
+});
+
+// File write result
+await client.sendStepResult(sessionId, {
+  result: {
+    "write-file": {
+      path: '/src/output.js',
+      success: true,
+      bytesWritten: 256
+    }
+  }
+});
+```
+
 ## License
 
 MIT

@@ -35,6 +35,11 @@ import type {
   TestConfig,
 } from './types.js';
 
+// Import modular components
+import { ResultAggregator } from './reporter/result-aggregator.js';
+import { ReportFormatter } from './reporter/report-formatter.js';
+import { MetricsCollector } from './reporter/metrics-collector.js';
+
 /**
  * Options for Markdown report generation
  */
@@ -101,123 +106,10 @@ interface CategorySummary {
   avgDuration: number;
 }
 
-/**
- * Format duration in human-readable format
- */
-function formatDuration(ms: number): string {
-  if (ms < 1000) return `${ms.toFixed(0)}ms`;
-  if (ms < 60000) return `${(ms / 1000).toFixed(2)}s`;
-  const minutes = Math.floor(ms / 60000);
-  const seconds = ((ms % 60000) / 1000).toFixed(1);
-  return `${minutes}m ${seconds}s`;
-}
-
-/**
- * Format percentage with color indicator
- */
-function formatPercentage(value: number, threshold = 0.8): string {
-  const percentage = (value * 100).toFixed(1);
-  return `${percentage}%`;
-}
-
-/**
- * Get pass/fail status icon
- */
-function getStatusIcon(passed: boolean): string {
-  return passed ? '✅' : '❌';
-}
-
-/**
- * Calculate category summaries from test results
- */
-function calculateCategorySummaries(results: TestResult[]): CategorySummary[] {
-  const categories = new Map<string, TestResult[]>();
-  
-  for (const result of results) {
-    const existing = categories.get(result.category) ?? [];
-    existing.push(result);
-    categories.set(result.category, existing);
-  }
-  
-  return Array.from(categories.entries())
-    .map(([name, categoryResults]) => {
-      const passed = categoryResults.filter(r => r.passed).length;
-      const totalDuration = categoryResults.reduce((sum, r) => sum + r.durationMs, 0);
-      
-      return {
-        name,
-        total: categoryResults.length,
-        passed,
-        failed: categoryResults.length - passed,
-        passRate: categoryResults.length > 0 ? passed / categoryResults.length : 0,
-        avgDuration: totalDuration / categoryResults.length,
-      };
-    })
-    .sort((a, b) => b.failed - a.failed);
-}
-
-/**
- * Generate recommendations based on test results
- */
-function generateRecommendations(report: TestReport): string[] {
-  const recommendations: string[] = [];
-  const { summary, performance, accuracy, config } = report;
-  
-  // Pass rate recommendations
-  if (summary.passRate < 0.5) {
-    recommendations.push('🚨 **Critical**: Pass rate is below 50%. Immediate investigation required.');
-  } else if (summary.passRate < 0.8) {
-    recommendations.push('⚠️ **Warning**: Pass rate is below 80%. Review failed tests and consider adjusting thresholds.');
-  }
-  
-  // Performance recommendations
-  if (performance.avgSearchTimeMs > config.thresholds.searchTimeMs) {
-    recommendations.push(`⚠️ **Performance**: Average search time (${performance.avgSearchTimeMs.toFixed(2)}ms) exceeds threshold (${config.thresholds.searchTimeMs}ms). Consider:
-    - Optimizing index structure
-    - Reducing chunk size
-    - Implementing caching`);
-  }
-  
-  if (performance.p95SearchTimeMs > config.thresholds.searchTimeMs * 2) {
-    recommendations.push(`⚠️ **Performance**: P95 search time (${performance.p95SearchTimeMs.toFixed(2)}ms) is significantly high. Review slow queries.`);
-  }
-  
-  if (performance.memoryUsageMb > config.thresholds.memoryUsageMb) {
-    recommendations.push(`⚠️ **Memory**: Memory usage (${performance.memoryUsageMb.toFixed(2)}MB) exceeds threshold (${config.thresholds.memoryUsageMb}MB). Consider:
-    - Optimizing chunk storage
-    - Implementing memory limits
-    - Using streaming for large files`);
-  }
-  
-  // Accuracy recommendations
-  if (accuracy.precision < config.thresholds.accuracyThreshold) {
-    recommendations.push(`⚠️ **Accuracy**: Precision (${accuracy.precision.toFixed(3)}) is below threshold (${config.thresholds.accuracyThreshold}). Consider:
-    - Adjusting ranking weights
-    - Improving query understanding
-    - Adding relevance feedback`);
-  }
-  
-  if (accuracy.recall < config.thresholds.accuracyThreshold) {
-    recommendations.push(`⚠️ **Accuracy**: Recall (${accuracy.recall.toFixed(3)}) is below threshold (${config.thresholds.accuracyThreshold}). Consider:
-    - Expanding index coverage
-    - Adjusting similarity thresholds
-    - Using hybrid search`);
-  }
-  
-  if (accuracy.zeroResultQueries > report.summary.total * 0.1) {
-    recommendations.push(`⚠️ **Coverage**: ${accuracy.zeroResultQueries} queries returned no results (>10%). Consider:
-    - Expanding test data coverage
-    - Implementing query expansion
-    - Adding fallback search strategies`);
-  }
-  
-  // General recommendations
-  if (recommendations.length === 0) {
-    recommendations.push('✅ All metrics are within acceptable thresholds. No immediate action required.');
-  }
-  
-  return recommendations;
-}
+// Initialize modular components
+const resultAggregator = new ResultAggregator();
+const reportFormatter = new ReportFormatter();
+const metricsCollector = new MetricsCollector();
 
 /**
  * Generate Markdown report
@@ -1086,122 +978,39 @@ export function generateHTMLReport(
 }
 
 /**
- * Console reporter with colored output
- * 
- * @param report - Test report data
- * @param options - Reporter options
- * 
- * @example
- * ```typescript
- * consoleReporter(report, { verbose: true, colors: true });
- * ```
+ * Format duration in human-readable format
  */
-export function consoleReporter(
-  report: TestReport,
-  options: ConsoleReporterOptions = {}
-): void {
-  const {
-    colors = true,
-    verbose = false,
-    maxFailedDisplay = 10,
-  } = options;
-  
-  const { summary, performance, accuracy, results, durationMs } = report;
-  
-  // ANSI color codes
-  const reset = colors ? '\x1b[0m' : '';
-  const bold = colors ? '\x1b[1m' : '';
-  const red = colors ? '\x1b[31m' : '';
-  const green = colors ? '\x1b[32m' : '';
-  const yellow = colors ? '\x1b[33m' : '';
-  const blue = colors ? '\x1b[34m' : '';
-  const cyan = colors ? '\x1b[36m' : '';
-  
-  // Header
-  console.log('\n' + '='.repeat(60));
-  console.log(`${bold}${blue}📊 RAG TEST REPORT${reset}`);
-  console.log('='.repeat(60));
-  console.log(`${cyan}Generated:${reset} ${new Date(report.timestamp).toLocaleString()}`);
-  console.log(`${cyan}Duration:${reset} ${formatDuration(durationMs)}`);
-  console.log('');
-  
-  // Summary
-  console.log(`${bold}📈 SUMMARY${reset}`);
-  console.log('-'.repeat(40));
-  const passRateColor = summary.passRate >= report.config.thresholds.accuracyThreshold ? green : red;
-  console.log(`  Total Tests:    ${bold}${summary.total}${reset}`);
-  console.log(`  ${green}✅ Passed:${reset}       ${bold}${green}${summary.passed}${reset}`);
-  console.log(`  ${red}❌ Failed:${reset}       ${bold}${red}${summary.failed}${reset}`);
-  console.log(`  📈 Pass Rate:    ${bold}${passRateColor}${(summary.passRate * 100).toFixed(1)}%${reset}`);
-  console.log('');
-  
-  // Performance
-  console.log(`${bold}🚀 PERFORMANCE METRICS${reset}`);
-  console.log('-'.repeat(40));
-  
-  const avgTimeOk = performance.avgSearchTimeMs <= report.config.thresholds.searchTimeMs;
-  const avgTimeColor = avgTimeOk ? green : red;
-  console.log(`  Avg Search Time:  ${avgTimeColor}${performance.avgSearchTimeMs.toFixed(2)}ms${reset} (threshold: ${report.config.thresholds.searchTimeMs}ms)`);
-  
-  console.log(`  Min Search Time:  ${cyan}${performance.minSearchTimeMs.toFixed(2)}ms${reset}`);
-  console.log(`  Max Search Time:  ${yellow}${performance.maxSearchTimeMs.toFixed(2)}ms${reset}`);
-  console.log(`  P95 Search Time:  ${cyan}${performance.p95SearchTimeMs.toFixed(2)}ms${reset}`);
-  
-  const memoryOk = performance.memoryUsageMb <= report.config.thresholds.memoryUsageMb;
-  const memoryColor = memoryOk ? green : red;
-  console.log(`  Memory Usage:     ${memoryColor}${performance.memoryUsageMb.toFixed(2)} MB${reset} (threshold: ${report.config.thresholds.memoryUsageMb} MB)`);
-  console.log(`  Peak Memory:      ${cyan}${performance.peakMemoryMb.toFixed(2)} MB${reset}`);
-  
-  if (performance.indexBuildTimeMs) {
-    console.log(`  Index Build:      ${cyan}${formatDuration(performance.indexBuildTimeMs)}${reset}`);
-  }
-  if (performance.documentsIndexed) {
-    console.log(`  Documents:        ${cyan}${performance.documentsIndexed}${reset}`);
-  }
-  console.log('');
-  
-  // Accuracy
-  console.log(`${bold}🎯 ACCURACY METRICS${reset}`);
-  console.log('-'.repeat(40));
-  
-  const precisionOk = accuracy.precision >= report.config.thresholds.accuracyThreshold;
-  const recallOk = accuracy.recall >= report.config.thresholds.accuracyThreshold;
-  
-  console.log(`  Precision:  ${precisionOk ? green : yellow}${(accuracy.precision * 100).toFixed(2)}%${reset} (threshold: ${(report.config.thresholds.accuracyThreshold * 100).toFixed(0)}%)`);
-  console.log(`  Recall:     ${recallOk ? green : yellow}${(accuracy.recall * 100).toFixed(2)}%${reset} (threshold: ${(report.config.thresholds.accuracyThreshold * 100).toFixed(0)}%)`);
-  console.log(`  F1 Score:   ${cyan}${(accuracy.f1Score * 100).toFixed(2)}%${reset}`);
-  console.log(`  MAP@K:      ${cyan}${(accuracy.mapAtK * 100).toFixed(2)}%${reset}`);
-  console.log(`  NDCG:       ${cyan}${(accuracy.ndcg * 100).toFixed(2)}%${reset}`);
-  console.log(`  MRR:        ${cyan}${(accuracy.mrr * 100).toFixed(2)}%${reset}`);
-  console.log(`  Zero Results: ${accuracy.zeroResultQueries > 0 ? yellow : green}${accuracy.zeroResultQueries}${reset}`);
-  console.log('');
-  
-  // Categories
-  const categories = calculateCategorySummaries(results);
-  console.log(`${bold}📁 CATEGORIES${reset}`);
-  console.log('-'.repeat(40));
-  
-  for (const cat of categories) {
-    const catColor = cat.passRate >= report.config.thresholds.accuracyThreshold ? green : yellow;
-    console.log(`  ${cat.name.padEnd(15)} ${green}${cat.passed.toString().padStart(3)}${reset}/${cat.total.toString().padStart(3)} ${catColor}(${(cat.passRate * 100).toFixed(1)}%)${reset}`);
-  }
-  console.log('');
-  
-  // Failed tests
-  const failedTests = results.filter(r => !r.passed);
-  if (failedTests.length > 0) {
-    console.log(`${bold}${red}❌ FAILED TESTS${reset} (${Math.min(failedTests.length, maxFailedDisplay)} of ${failedTests.length} shown)`);
-    console.log('-'.repeat(40));
-    
-    for (let i = 0; i < Math.min(failedTests.length, maxFailedDisplay); i++) {
-      const test = failedTests[i];
-      console.log(`  ${red}✗${reset} ${test.name}`);
-      console.log(`    Category: ${test.category}`);
-      console.log(`    Duration: ${formatDuration(test.durationMs)}`);
-      
-      if (test.error) {
-        console.log(`    Error: ${red}${test.error}${reset}`);
-      }
+function formatDuration(ms: number): string {
+  return reportFormatter.formatDuration(ms);
+}
+
+/**
+ * Format percentage with color indicator
+ */
+function formatPercentage(value: number, threshold = 0.8): string {
+  return reportFormatter.formatPercentage(value, threshold);
+}
+
+/**
+ * Get pass/fail status icon
+ */
+function getStatusIcon(passed: boolean): string {
+  return reportFormatter.getStatusIcon(passed);
+}
+
+/**
+ * Calculate category summaries from test results
+ */
+function calculateCategorySummaries(results: TestResult[]): CategorySummary[] {
+  return resultAggregator.calculateCategorySummaries(results);
+}
+
+/**
+ * Generate recommendations based on test results
+ */
+function generateRecommendations(report: TestReport): string[] {
+  return metricsCollector.generateRecommendations(report);
+}
       
       if (test.precision !== undefined) {
         console.log(`    Precision: ${test.precision.toFixed(3)}, Recall: ${(test.recall ?? 0).toFixed(3)}`);

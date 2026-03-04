@@ -7,8 +7,9 @@
 
 import {ContextBlock, ClientMessage, ServerMessage, FileBlock} from '../../types/index.js';
 import {validateContextBlock} from '../context-parser.js';
+import {CURRENT_PROTOCOL_VERSION} from '../versioning/protocol-versions.js';
 
-export const PROTOCOL_VERSION = '1.0';
+export const PROTOCOL_VERSION = CURRENT_PROTOCOL_VERSION;
 
 /**
  * Результат валидации сообщения
@@ -36,9 +37,9 @@ export abstract class BaseMessageBuilder<T extends ClientMessage | ServerMessage
     protected files?: FileBlock[];
     protected message?: string;
 
-    constructor(sessionId: string, version: string = PROTOCOL_VERSION) {
+    constructor(sessionId: string, version: ContextBlock['version'] = PROTOCOL_VERSION) {
         this.context = {
-            version: version as '1.0',
+            version,
             session_id: sessionId,
         };
     }

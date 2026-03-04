@@ -5,8 +5,9 @@
 import {ContextBlock, FileBlock, ClientMessage, ServerMessage, TaskStatus, RequestContextBlock, RequestApiResult, Task} from '../types/index.js';
 import {createInitialContext, createNewTaskContext, createFileRequestContext} from './context-parser.js';
 import {createActionMessageBuilder, createSimulationMessageBuilder, createFormMessageBuilder, createErrorMessageBuilder, quickError} from './message-builders/index.js';
+import {CURRENT_PROTOCOL_VERSION} from './versioning/protocol-versions.js';
 
-const PROTOCOL_VERSION = '1.0';
+const PROTOCOL_VERSION = CURRENT_PROTOCOL_VERSION;
 
 export type BuilderType = 'action' | 'simulation' | 'form' | 'error';
 

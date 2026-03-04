@@ -16,12 +16,17 @@ import {
 } from './base-parser.js';
 
 /**
- * Action execution state
+ * Action execution state (new protocol format)
  */
 export interface ActionExecutionState {
-    actionId: string;
-    currentActionId: string;
-    history: unknown[];
+    /** Action ID (e.g., 'fix-vue-imports', 'coder') */
+    action: string;
+    /** Current step ID (e.g., 'vue-import-detect', 'llm-request') */
+    step: string;
+    /** Optional status for completion */
+    status?: 'completed';
+    /** History of executed steps */
+    history?: Array<{ step: string; result?: unknown }>;
 }
 
 /**

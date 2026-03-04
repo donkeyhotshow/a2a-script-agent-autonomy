@@ -17,7 +17,8 @@ import {
     TaskStatus,
     ProtocolError,
 } from '../types/index.js';
-import { PROTOCOL_VERSION, VALID_TASK_TYPES, VALID_TASK_STATUSES } from './context-parsers/base-parser.js';
+import { VALID_TASK_TYPES, VALID_TASK_STATUSES } from './context-parsers/base-parser.js';
+import { PROTOCOL_VERSIONS, isSupportedVersion, type ProtocolVersion } from './versioning/protocol-versions.js';
 
 // Re-export all specialized parsers
 export * from './context-parsers/index.js';
@@ -117,8 +118,8 @@ export function validateContextBlock(context: unknown): { valid: boolean; errors
 
     if (!isString(ctx['version'])) {
         errors.push('version is required and must be a string');
-    } else if (ctx['version'] !== PROTOCOL_VERSION) {
-        errors.push(`version must be "${PROTOCOL_VERSION}"`);
+    } else if (!isSupportedVersion(ctx['version'])) {
+        errors.push(`version must be one of: ${PROTOCOL_VERSIONS.join(', ')}`);
     }
 
     if (!isString(ctx['session_id']) || ctx['session_id'].length === 0) {
@@ -166,7 +167,7 @@ export function parseContextBlock(data: unknown): ContextBlock {
     const ctx = data as Record<string, unknown>;
 
     const result: ContextBlock = {
-        version: ctx['version'] as '1.0',
+        version: ctx['version'] as ProtocolVersion,
         session_id: ctx['session_id'] as string,
     };
 

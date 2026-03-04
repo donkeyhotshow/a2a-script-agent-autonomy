@@ -1,6 +1,9 @@
 import vitePluginA2a from './vite-plugin-a2a.js';
 
 const devPort = Number(process.env.PORT) || 5173;
+const clientApiPort = Number(process.env.CLIENT_API_PORT) || 3001;
+const clientApiTarget = (process.env.CLIENT_API_URL || `http://localhost:${clientApiPort}`).replace(/\/$/, '');
+const apiProxyContext = '^(?!/api/a2a)/api';
 
 /** @type {import('vite').UserConfig} */
 export default {
@@ -8,15 +11,10 @@ export default {
     server: {
         port: devPort,
         proxy: {
-            '/api': {
-                // a2a-client API (Client API; proxies to a2a-server internally)
-                target: 'http://localhost:3001',
+            [apiProxyContext]: {
+                target: clientApiTarget,
                 changeOrigin: true,
-            },
-            '/client-api': {
-                // Backward-compatible alias for client-side functions
-                target: 'http://localhost:3001',
-                changeOrigin: true,
+                ws: true,
             },
         },
     },

@@ -7,6 +7,11 @@
  * - Интеграция с FloatingPanel для управления состоянием
  * - Возможность переключения между сессиями
  * - Отображение истории действий в каждой сессии
+ * 
+ * Поддержка нового протокола (v2.0):
+ * - execute.form.choices - выбор действия из списка
+ * - execute.message - UI-only сообщения
+ * - result: { choice: "..." } - отправка выбора
  */
 
 (function (global) {
@@ -451,22 +456,51 @@
         _renderActionContent(action) {
             switch (action.type) {
                 case 'form':
+                    // Support both direct form and nested execute.form structure
+                    const formData = action.form || action;
+                    const choices = formData.choices || action.choices || [];
+                    const title = formData.title || action.title || 'Form';
+                    const inputFields = formData.input || action.input || [];
+                    
                     return `
                         <div class="action-form">
-                            <div class="form-title">${action.title || 'Form'}</div>
-                            <div class="form-choices">
-                                ${action.choices ? action.choices.map(choice => `
-                                    <span class="choice-item">${choice.label || choice.id}</span>
-                                `).join('') : ''}
-                            </div>
-                            ${action.input ? `<div class="form-input">Input: ${action.input}</div>` : ''}
+                            <div class="form-title">${escapeHtml(title)}</div>
+                            ${choices.length > 0 ? `
+                                <div class="form-choices">
+                                    ${choices.map((choice, idx) => `
+                                        <button class="choice-button" 
+                                                data-choice-id="${escapeHtml(String(choice.id))}"
+                                                data-choice-index="${idx}"
+                                                onclick="window.aiActionsPanel?.selectChoice('${this.currentSessionId}', '${escapeHtml(String(choice.id))}', this)">
+                                            ${escapeHtml(String(choice.label || choice.id))}
+                                        </button>
+                                    `).join('')}
+                                </div>
+                            ` : ''}
+                            ${inputFields.length > 0 ? `
+                                <div class="form-inputs">
+                                    ${inputFields.map(field => `
+                                        <div class="input-field">
+                                            <label>${escapeHtml(String(field.label || field.name || ''))}</label>
+                                            <input type="${field.type || 'text'}" 
+                                                   name="${escapeHtml(String(field.name || ''))}" 
+                                                   placeholder="${escapeHtml(String(field.placeholder || ''))}" />
+                                        </div>
+                                    `).join('')}
+                                    <button class="submit-form-btn" onclick="window.aiActionsPanel?.submitFormInput('${this.currentSessionId}', this)">Submit</button>
+                                </div>
+                            ` : ''}
                         </div>
                     `;
 
                 case 'message':
+                    // Support both direct message and nested execute.message structure
+                    const msgData = action.message || action;
+                    const msgContent = msgData.content || msgData.text || msgData.message || action.content || action.text || 'No content';
                     return `
                         <div class="action-message">
-                            <div class="message-content">${action.content || action.text || 'No content'}</div>
+                            <div class="message-content">${escapeHtml(String(msgContent))}</div>
+                            ${msgData.type ? `<div class="message-type">${escapeHtml(String(msgData.type))}</div>` : ''}
                         </div>
                     `;
 
@@ -529,7 +563,21 @@
          * @private
          */
         _getActionType(action) {
+            // Check direct type first
             if (action.type) return action.type;
+            
+            // Check execute object structure (new protocol v2.0)
+            if (action.execute) {
+                if (action.execute.form) return 'form';
+                if (action.execute.message) return 'message';
+                if (action.execute.script) return 'script';
+                if (action.execute['rag-search']) return 'rag-search';
+                if (action.execute['read-file']) return 'read-file';
+                if (action.execute['write-file']) return 'write-file';
+                if (action.execute['execute-command']) return 'execute-command';
+            }
+            
+            // Legacy format check
             if (action.form) return 'form';
             if (action.message) return 'message';
             if (action.script) return 'script';
@@ -538,6 +586,196 @@
             if (action['write-file']) return 'write-file';
             if (action['execute-command']) return 'execute-command';
             return 'unknown';
+        }
+
+        /**
+         * Выбрать вариант из формы выбора (execute.form.choices)
+         * @param {string} sessionId - ID сессии
+         * @param {string} choiceId - ID выбранного варианта
+         * @param {HTMLElement} buttonElement - Кнопка (опционально)
+         */
+        selectChoice(sessionId, choiceId, buttonElement = null) {
+            const session = this.sessions.get(sessionId);
+            if (!session) {
+                console.warn(`[AIActionsSessionPanel] Session ${sessionId} not found`);
+                return;
+            }
+
+            // Mark button as selected if provided
+            if (buttonElement) {
+                const allButtons = this.container.querySelectorAll('.choice-button');
+                allButtons.forEach(btn => btn.classList.remove('selected'));
+                buttonElement.classList.add('selected');
+            }
+
+            // Create result in new protocol format: result: { choice: "..." }
+            const result = { choice: choiceId };
+
+            // Add action to session
+            this.addActionToSession(sessionId, {
+                type: 'choice-selection',
+                choiceId: choiceId,
+                result: result,
+                status: 'completed',
+                timestamp: new Date().toISOString()
+            });
+
+            // Emit event for external handlers (e.g., SessionManager)
+            this.emit('choiceSelected', {
+                sessionId,
+                choiceId,
+                result,
+                action: session.metadata?.selectedAction
+            });
+
+            console.log(`[AIActionsSessionPanel] Choice selected: ${choiceId}`);
+        }
+
+        /**
+         * Отправить данные формы (execute.form.input)
+         * @param {string} sessionId - ID сессии
+         * @param {HTMLElement} buttonElement - Кнопка Submit
+         */
+        submitFormInput(sessionId, buttonElement = null) {
+            const session = this.sessions.get(sessionId);
+            if (!session) {
+                console.warn(`[AIActionsSessionPanel] Session ${sessionId} not found`);
+                return;
+            }
+
+            // Collect form data
+            const formInputs = this.container.querySelectorAll('.form-inputs input');
+            const inputData = {};
+            formInputs.forEach(input => {
+                inputData[input.name] = input.value;
+            });
+
+            // Create result in new protocol format: result: { input: {...} }
+            const result = { input: inputData };
+
+            // Add action to session
+            this.addActionToSession(sessionId, {
+                type: 'form-submission',
+                input: inputData,
+                result: result,
+                status: 'completed',
+                timestamp: new Date().toISOString()
+            });
+
+            // Emit event for external handlers
+            this.emit('formSubmitted', {
+                sessionId,
+                input: inputData,
+                result
+            });
+
+            console.log(`[AIActionsSessionPanel] Form submitted:`, inputData);
+        }
+
+        /**
+         * Обработать execute объект от сервера (новый протокол v2.0)
+         * @param {Object} execute - execute объект от сервера
+         * @param {Object} context - context объект (опционально)
+         */
+        processExecute(execute, context = null) {
+            if (!this.currentSessionId) {
+                console.warn('[AIActionsSessionPanel] No active session');
+                return;
+            }
+
+            // Handle execute.form
+            if (execute?.form) {
+                const form = execute.form;
+                this.addActionToSession(this.currentSessionId, {
+                    type: 'form',
+                    form: form,
+                    title: form.title,
+                    choices: form.choices,
+                    input: form.input,
+                    context: context,
+                    status: 'pending',
+                    timestamp: new Date().toISOString()
+                });
+                return;
+            }
+
+            // Handle execute.message
+            if (execute?.message) {
+                const message = typeof execute.message === 'string'
+                    ? { content: execute.message }
+                    : execute.message;
+                this.addActionToSession(this.currentSessionId, {
+                    type: 'message',
+                    message: message,
+                    context: context,
+                    status: 'completed',
+                    timestamp: new Date().toISOString()
+                });
+                return;
+            }
+
+            // Handle execute.script
+            if (execute?.script) {
+                this.addActionToSession(this.currentSessionId, {
+                    type: 'script',
+                    script: execute.script,
+                    context: context,
+                    status: 'pending',
+                    timestamp: new Date().toISOString()
+                });
+                return;
+            }
+
+            // Handle execute['rag-search']
+            if (execute?.['rag-search']) {
+                this.addActionToSession(this.currentSessionId, {
+                    type: 'rag-search',
+                    'rag-search': execute['rag-search'],
+                    context: context,
+                    status: 'pending',
+                    timestamp: new Date().toISOString()
+                });
+                return;
+            }
+
+            // Handle execute['read-file']
+            if (execute?.['read-file']) {
+                this.addActionToSession(this.currentSessionId, {
+                    type: 'read-file',
+                    'read-file': execute['read-file'],
+                    context: context,
+                    status: 'pending',
+                    timestamp: new Date().toISOString()
+                });
+                return;
+            }
+
+            // Handle execute['write-file']
+            if (execute?.['write-file']) {
+                this.addActionToSession(this.currentSessionId, {
+                    type: 'write-file',
+                    'write-file': execute['write-file'],
+                    context: context,
+                    status: 'pending',
+                    timestamp: new Date().toISOString()
+                });
+                return;
+            }
+
+            // Handle execute['execute-command']
+            if (execute?.['execute-command']) {
+                this.addActionToSession(this.currentSessionId, {
+                    type: 'execute-command',
+                    'execute-command': execute['execute-command'],
+                    context: context,
+                    status: 'pending',
+                    timestamp: new Date().toISOString()
+                });
+                return;
+            }
+
+            // Unknown execute type
+            console.warn('[AIActionsSessionPanel] Unknown execute type:', execute);
         }
 
         /**

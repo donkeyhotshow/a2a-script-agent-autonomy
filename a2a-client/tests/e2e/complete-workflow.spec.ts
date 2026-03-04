@@ -203,6 +203,76 @@ test.describe('Complete Workflow', () => {
         const questions = incompleteCard.locator('.result-questions');
         await expect(questions).toBeVisible();
     });
+
+    // New Protocol Tests
+    test('should handle execute.form with choices', async ({page}) => {
+        await page.route('**/api/v1/requests', async (route) => {
+            if (route.request().method() === 'POST') {
+                return route.fulfill({
+                    status: 200,
+                    contentType: 'application/json',
+                    body: JSON.stringify(fixtures.executeForm)
+                });
+            }
+        });
+
+        await page.goto('/');
+        await page.waitForLoadState('networkidle');
+
+        await page.fill('#messageInput', 'исправить импорты');
+        await page.click('#sendMessage');
+        await page.waitForTimeout(1000);
+
+        // Should show form choices
+        const serverMessage = page.locator('#sessionMessages .msg.server').first();
+        await expect(serverMessage).toBeVisible();
+        const content = await serverMessage.locator('.msg-content').textContent();
+        expect(content).toContain('Выберите действие');
+    });
+
+    test('should handle execute.message', async ({page}) => {
+        await page.route('**/api/v1/requests', async (route) => {
+            if (route.request().method() === 'POST') {
+                return route.fulfill({
+                    status: 200,
+                    contentType: 'application/json',
+                    body: JSON.stringify(fixtures.executeMessage)
+                });
+            }
+        });
+
+        await page.goto('/');
+        await page.waitForLoadState('networkidle');
+
+        await page.fill('#messageInput', 'завершить');
+        await page.click('#sendMessage');
+        await page.waitForTimeout(1000);
+
+        const serverMessage = page.locator('#sessionMessages .msg.server').first();
+        await expect(serverMessage).toBeVisible();
+    });
+
+    test('should handle new result format with action-key', async ({page}) => {
+        await page.route('**/api/v1/requests', async (route) => {
+            if (route.request().method() === 'POST') {
+                return route.fulfill({
+                    status: 200,
+                    contentType: 'application/json',
+                    body: JSON.stringify(fixtures.resultScript)
+                });
+            }
+        });
+
+        await page.goto('/');
+        await page.waitForLoadState('networkidle');
+
+        await page.fill('#messageInput', 'выполнить');
+        await page.click('#sendMessage');
+        await page.waitForTimeout(1000);
+
+        const serverMessage = page.locator('#sessionMessages .msg.server').first();
+        await expect(serverMessage).toBeVisible();
+    });
 });
 
 /**

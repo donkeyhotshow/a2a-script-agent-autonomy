@@ -45,6 +45,59 @@
 
     function renderExecute(contentEl, execute, data, taskFlowRef) {
         if (!contentEl || !execute) return;
+        
+        const context = data?.context;
+        const execution = context?.execution;
+        
+        // Task 3.1: Build execution step display
+        let executionStepHtml = '';
+        if (execution?.step) {
+            const isLlmRequest = execution.step === 'llm-request' || execution.action?.startsWith('ai-');
+            const stepLabel = isLlmRequest ? 'llm-request' : execution.step;
+            executionStepHtml = `
+                <div class="task-flow-execution-step">
+                    <span class="execution-step-label">Step:</span>
+                    <span class="execution-step-name">${escapeHtml(stepLabel)}</span>
+                </div>`;
+        }
+
+        // Task 3.2: Build progress bar display
+        let progressBarHtml = '';
+        if (execution?.progress !== undefined) {
+            const progress = Math.max(0, Math.min(100, execution.progress));
+            progressBarHtml = `
+                <div class="task-flow-progress">
+                    <div class="task-flow-progress-bar">
+                        <div class="task-flow-progress-fill" style="width: ${progress}%"></div>
+                    </div>
+                    <span class="task-flow-progress-text">${progress}%</span>
+                </div>`;
+        }
+
+        // Task 3.3: Build finalResult display (for completed status)
+        let finalResultHtml = '';
+        if (execution?.status === 'completed' || execute.finalResult) {
+            const finalResult = execute.finalResult || {};
+            const summary = finalResult.summary || {};
+            const actionName = finalResult.action || execution?.action || 'unknown';
+            
+            // Format summary as key-value pairs
+            let summaryHtml = '';
+            if (typeof summary === 'object' && summary !== null) {
+                summaryHtml = Object.entries(summary)
+                    .map(([key, value]) => `<div class="final-result-item"><span class="result-key">${escapeHtml(key)}:</span> <span class="result-value">${escapeHtml(String(value))}</span></div>`)
+                    .join('');
+            } else {
+                summaryHtml = `<div class="final-result-item">${escapeHtml(String(summary))}</div>`;
+            }
+            
+            finalResultHtml = `
+                <div class="task-flow-final-result">
+                    <div class="final-result-header">✅ Completed: ${escapeHtml(actionName)}</div>
+                    <div class="final-result-summary">${summaryHtml}</div>
+                </div>`;
+        }
+        
         const form = execute.form;
         const message = execute.message;
         if (form && Array.isArray(form.choices) && form.choices.length > 0) {
@@ -54,8 +107,11 @@
             ).join('');
             contentEl.innerHTML = `
         <div class="task-flow-response task-flow-form-wrap">
+          ${executionStepHtml}
+          ${progressBarHtml}
           ${title}
           <div class="task-flow-choices">${buttons}</div>
+          ${finalResultHtml}
         </div>`;
             contentEl.querySelectorAll('.task-flow-choice-btn').forEach((btn) => {
                 btn.addEventListener('click', () => {
@@ -68,7 +124,10 @@
         if (message != null && typeof message === 'string') {
             contentEl.innerHTML = `
         <div class="task-flow-response task-flow-message-wrap">
+          ${executionStepHtml}
+          ${progressBarHtml}
           <p class="task-flow-message">${escapeHtml(message)}</p>
+          ${finalResultHtml}
         </div>`;
             return;
         }
@@ -76,8 +135,11 @@
         const exec = data?.execute ? JSON.stringify(data.execute, null, 2) : '';
         contentEl.innerHTML = `
         <div class="task-flow-response">
+          ${executionStepHtml}
+          ${progressBarHtml}
           <div class="task-flow-response-section"><strong>Context</strong><pre>${escapeHtml(ctx || '{}')}</pre></div>
           <div class="task-flow-response-section"><strong>Execute</strong><pre>${escapeHtml(exec || '{}')}</pre></div>
+          ${finalResultHtml}
         </div>`;
     }
 
@@ -140,6 +202,7 @@
         _sessionId: null,
         _projectId: null,
         _lastContext: null,
+        _lastResponse: null, // Task 3.1-3.3: Store last response for re-rendering
 
         init() {
             const form = document.getElementById('taskSendForm');
@@ -223,11 +286,20 @@
 
         async _doRun(task, projectId, contentEl) {
             try {
+                // New protocol: send task directly in session creation
                 const sessionRes = await request('POST', '/sessions', { projectId, task, title: task.slice(0, 50) });
-                const sessionId = sessionRes?.id ?? sessionRes?.sessionId;
+                
+                // Extract session ID - handle both { session: {...}, serverResponse: {...} } and { id: ... }
+                const sessionData = sessionRes?.session || sessionRes;
+                const sessionId = sessionData?.id;
+                const serverResponse = sessionRes?.serverResponse;
+                
                 if (!sessionId) throw new Error('No session id returned');
 
                 this.fixed = true;
+                this._sessionId = sessionId;
+                this._projectId = projectId;
+                
                 setPanelContent(contentEl, 'fixated', { sessionId, projectId });
                 if (this.panel) {
                     this.panel.setCritical?.(true);
@@ -235,6 +307,19 @@
                     if (closeBtn) closeBtn.style.display = 'none';
                 }
 
+                // Check if we got a synchronous response from server
+                if (serverResponse) {
+                    // New protocol: server responded directly with choices or execute
+                    const ctx = serverResponse?.context;
+                    const exec = serverResponse?.execute;
+                    this._lastContext = ctx != null ? (typeof ctx === 'object' ? ctx : {}) : {};
+                    const responseData = { context: ctx, execute: exec, sessionId, projectId };
+                    this._lastResponse = responseData; // Store for re-rendering
+                    setPanelContent(contentEl, 'firstResponse', responseData, this);
+                    return;
+                }
+
+                // Legacy: need to call /next to send task to server
                 updateStatus(contentEl, 'Calling server…');
                 const invokeRes = await request('POST', `/sessions/${encodeURIComponent(sessionId)}/next`, { task, sessionId, projectId });
                 const promiseId = invokeRes?.promiseId ?? invokeRes?.data?.promiseId;
@@ -253,10 +338,10 @@
 
                 const ctx = result?.context ?? result?.data?.context;
                 const exec = result?.execute ?? result?.data?.execute;
-                this._sessionId = sessionId;
-                this._projectId = projectId;
                 this._lastContext = ctx != null ? (typeof ctx === 'object' ? ctx : {}) : {};
-                setPanelContent(contentEl, 'firstResponse', { context: ctx, execute: exec, sessionId, projectId }, this);
+                const responseData = { context: ctx, execute: exec, sessionId, projectId };
+                this._lastResponse = responseData; // Store for re-rendering
+                setPanelContent(contentEl, 'firstResponse', responseData, this);
             } catch (err) {
                 if (contentEl) {
                     contentEl.innerHTML = '<div class="task-flow-error">' + escapeHtml(String(err?.message || err)) + '</div>';
@@ -306,13 +391,17 @@
                     const ctx = res?.context ?? res?.data?.context;
                     const exec = res?.execute ?? res?.data?.execute;
                     this._lastContext = ctx != null ? (typeof ctx === 'object' ? ctx : {}) : {};
-                    setPanelContent(contentEl, 'response', { context: ctx, execute: exec, sessionId, projectId }, this);
+                    const responseData = { context: ctx, execute: exec, sessionId, projectId };
+                    this._lastResponse = responseData; // Store for re-rendering
+                    setPanelContent(contentEl, 'response', responseData, this);
                 } else {
                     // Synchronous response - use directly
                     const ctx = invokeRes?.context;
                     const exec = invokeRes?.execute;
                     this._lastContext = ctx != null ? (typeof ctx === 'object' ? ctx : {}) : {};
-                    setPanelContent(contentEl, 'response', { context: ctx, execute: exec, sessionId, projectId }, this);
+                    const responseData = { context: ctx, execute: exec, sessionId, projectId };
+                    this._lastResponse = responseData; // Store for re-rendering
+                    setPanelContent(contentEl, 'response', responseData, this);
                 }
             } catch (err) {
                 contentEl.innerHTML = '<div class="task-flow-error">' + escapeHtml(String(err?.message || err)) + '</div>';
@@ -351,7 +440,9 @@
                 this._sessionId = sessionId;
                 this._projectId = projectId;
                 this._lastContext = ctx != null ? (typeof ctx === 'object' ? ctx : {}) : {};
-                setPanelContent(contentEl, 'firstResponse', { context: ctx, execute: exec, sessionId, projectId }, this);
+                const responseData = { context: ctx, execute: exec, sessionId, projectId };
+                this._lastResponse = responseData; // Store for re-rendering
+                setPanelContent(contentEl, 'firstResponse', responseData, this);
             } catch (err) {
                 if (contentEl) contentEl.innerHTML = '<div class="task-flow-error">' + escapeHtml(String(err?.message || err)) + '</div>';
                 window.addNotification?.(String(err?.message || err), 'error');
@@ -361,5 +452,57 @@
 
     if (typeof window !== 'undefined') {
         window.TaskFlow = TaskFlow;
+        
+        // Task 3.1-3.3: Integrate with SessionManager events
+        const sessionMgr = global.SessionManager;
+        if (sessionMgr && typeof sessionMgr.on === 'function') {
+            // Listen for execution step updates
+            sessionMgr.on('executionStep', (data) => {
+                console.log('[TaskFlow] Execution step:', data);
+                // Re-render panel if active to show step
+                if (TaskFlow.panelId && TaskFlow.pui) {
+                    const content = TaskFlow.pui.getContentEl(TaskFlow.panelId);
+                    if (content && TaskFlow._lastResponse) {
+                        renderExecute(content, TaskFlow._lastResponse.execute, TaskFlow._lastResponse, TaskFlow);
+                    }
+                }
+            });
+            
+            // Listen for execution progress updates
+            sessionMgr.on('executionProgress', (data) => {
+                console.log('[TaskFlow] Execution progress:', data);
+                // Update progress bar
+                if (global.ProgressIndicators) {
+                    global.ProgressIndicators.handleExecutionProgress(data);
+                }
+                // Re-render panel to show progress
+                if (TaskFlow.panelId && TaskFlow.pui) {
+                    const content = TaskFlow.pui.getContentEl(TaskFlow.panelId);
+                    if (content && TaskFlow._lastResponse) {
+                        renderExecute(content, TaskFlow._lastResponse.execute, TaskFlow._lastResponse, TaskFlow);
+                    }
+                }
+            });
+            
+            // Listen for final result
+            sessionMgr.on('finalResultReceived', (data) => {
+                console.log('[TaskFlow] Final result:', data);
+                // Re-render panel to show completion
+                if (TaskFlow.panelId && TaskFlow.pui) {
+                    const content = TaskFlow.pui.getContentEl(TaskFlow.panelId);
+                    if (content && TaskFlow._lastResponse) {
+                        // Add finalResult to the response
+                        const responseWithFinal = {
+                            ...TaskFlow._lastResponse,
+                            execute: {
+                                ...TaskFlow._lastResponse.execute,
+                                finalResult: data
+                            }
+                        };
+                        renderExecute(content, responseWithFinal.execute, responseWithFinal, TaskFlow);
+                    }
+                }
+            });
+        }
     }
 })(typeof window !== 'undefined' ? window : globalThis);

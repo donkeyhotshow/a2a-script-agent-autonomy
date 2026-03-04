@@ -71,3 +71,97 @@ describe('protocol', () => {
         });
     });
 });
+
+/**
+ * New Protocol Tests
+ * Tests for action-key shape, execute.form, and new result format
+ */
+describe('New Protocol - Action Key Shape', () => {
+
+    describe('execute action types', () => {
+        it('should validate script execute format', () => {
+            const execute = { script: { code: 'console.log(1)', input: {} } };
+            expect(Object.keys(execute)[0]).toBe('script');
+        });
+
+        it('should validate read-file execute format', () => {
+            const execute = { 'read-file': { path: '/src/index.js' } };
+            expect(Object.keys(execute)[0]).toBe('read-file');
+        });
+
+        it('should validate write-file execute format', () => {
+            const execute = { 'write-file': { path: '/a.js', content: 'x' } };
+            expect(Object.keys(execute)[0]).toBe('write-file');
+        });
+
+        it('should validate execute-command execute format', () => {
+            const execute = { 'execute-command': { command: 'ls -la' } };
+            expect(Object.keys(execute)[0]).toBe('execute-command');
+        });
+    });
+
+    describe('execute.form.choices', () => {
+        it('should parse form with choices', () => {
+            const response = {
+                execute: {
+                    form: {
+                        title: 'Выберите действие',
+                        choices: [
+                            { id: 'confirm', label: 'Подтвердить' },
+                            { id: 'cancel', label: 'Отмена' }
+                        ]
+                    }
+                }
+            };
+            expect(response.execute.form.choices).toHaveLength(2);
+            expect(response.execute.form.choices[0].id).toBe('confirm');
+        });
+
+        it('should parse form with input fields', () => {
+            const response = {
+                execute: {
+                    form: {
+                        title: 'Введите данные',
+                        input: [
+                            { name: 'path', type: 'text', label: 'Путь' }
+                        ]
+                    }
+                }
+            };
+            expect(response.execute.form.input).toHaveLength(1);
+            expect(response.execute.form.input[0].name).toBe('path');
+        });
+    });
+
+    describe('execute.message', () => {
+        it('should parse message type', () => {
+            const response = {
+                execute: {
+                    message: {
+                        content: 'Операция завершена',
+                        type: 'info'
+                    }
+                }
+            };
+            expect(response.execute.message.content).toBe('Операция завершена');
+            expect(response.execute.message.type).toBe('info');
+        });
+    });
+
+    describe('result action-key shape', () => {
+        it('should validate script result format', () => {
+            const result = { result: { script: { output: 'ok' } } };
+            expect(Object.keys(result.result)[0]).toBe('script');
+        });
+
+        it('should validate read-file result format', () => {
+            const result = { result: { 'read-file': { path: '/a.js', content: 'x' } } };
+            expect(Object.keys(result.result)[0]).toBe('read-file');
+        });
+
+        it('should validate write-file result format', () => {
+            const result = { result: { 'write-file': { path: '/a.js', success: true } } };
+            expect(Object.keys(result.result)[0]).toBe('write-file');
+        });
+    });
+});

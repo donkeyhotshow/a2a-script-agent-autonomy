@@ -199,10 +199,10 @@ export async function invokeFirstTask(
         throw new Error('Failed to create session: no session_id returned');
     }
     
-    // Send the task message using canonical protocol
+    // Send the task message using canonical protocol (v2.0)
     const messageResponse = await client.request('POST', `/sessions/${sessionId}/message`, {
         context: {
-            version: '1.0',
+            version: '2.0',
             session_id: sessionId,
             new_task: [task]
         },
@@ -211,8 +211,28 @@ export async function invokeFirstTask(
     
     const responseData = (messageResponse as { data?: unknown }).data ?? messageResponse;
     
-    // Extract context and execute information
-    const context = responseData as Record<string, unknown>;
+    // Handle different response structures:
+    // 1. { success: true, data: { context: {...} } } - API wrapper with nested data
+    // 2. { context: {...} } - direct context response
+    // 3. { data: { context: {...} } } - double nested
+    let context: Record<string, unknown>;
+    
+    if (responseData && typeof responseData === 'object') {
+        const respObj = responseData as Record<string, unknown>;
+        if ('context' in respObj) {
+            // Format: { context: {...} }
+            context = respObj.context as Record<string, unknown>;
+        } else if ('data' in respObj) {
+            // Format: { data: { context: {...} } }
+            const innerData = respObj.data as Record<string, unknown>;
+            context = (innerData.context as Record<string, unknown>) ?? respObj;
+        } else {
+            // Format: direct context object
+            context = respObj;
+        }
+    } else {
+        context = responseData as Record<string, unknown>;
+    }
     const execute = (context.execute as ExecutePayload) ?? undefined;
     
     // Check for promiseId (indicates pending response)
@@ -368,14 +388,131 @@ export function getExecuteActionType(response: { execute?: ExecutePayload }): ke
 /**
  * Check if response indicates completion
  */
-export function isCompleted(response: { result?: ActionResultPayload }): boolean {
-    return !!(response?.result?.completed || 
-              (response?.result && Object.keys(response.result).length === 0));
+export function isCompleted(response: { result?: ActionResultPayload; context?: { execution?: { status?: string } } }): boolean {
+    // Check explicit completed flag
+    if (response?.result?.completed) return true;
+    // Check execution.status = 'completed'
+    if (response?.context?.execution?.status === 'completed') return true;
+    // Check empty result object (legacy)
+    return !!(response?.result && Object.keys(response.result).length === 0);
+}
+
+/**
+ * Final result structure from server response
+ * @see docs/new-request-flow/PROTOCOL.md#завершение-финальный-результат
+ */
+export interface FinalResult {
+    action: string;
+    summary: Record<string, unknown>;
 }
 
 /**
  * Extract final result from response
  */
-export function getFinalResult(response: { finalResult?: unknown }): unknown {
-    return response?.finalResult;
+export function getFinalResult(response: { finalResult?: unknown }): FinalResult | null {
+    if (!response?.finalResult) return null;
+    return response.finalResult as FinalResult;
+}
+
+/**
+ * Extract execution info from context
+ */
+export function getExecution(
+    response: { context?: Record<string, unknown> }
+): { action: string; step: string; status?: string; progress?: number } | null {
+    const execution = response?.context?.execution as Record<string, unknown> | undefined;
+    if (!execution) return null;
+    return {
+        action: String(execution.action ?? ''),
+        step: String(execution.step ?? ''),
+        status: execution.status as string | undefined,
+        progress: execution.progress as number | undefined,
+    };
+}
+
+// ============================================
+// History management functions
+// @see docs/new-request-flow/PROTOCOL.md#context-fields-system-managed
+// ============================================
+
+export interface HistoryEntry {
+    action: string;
+    step: string;
+    result?: unknown;
+    timestamp: string;
+}
+
+/**
+ * Add an entry to the execution history in context
+ */
+export function addToHistory(
+    context: Record<string, unknown>,
+    action: string,
+    step: string,
+    result?: unknown
+): Record<string, unknown> {
+    const history = (context.history as HistoryEntry[]) ?? [];
+    const newEntry: HistoryEntry = {
+        action,
+        step,
+        result,
+        timestamp: new Date().toISOString(),
+    };
+    return {
+        ...context,
+        history: [...history, newEntry],
+    };
+}
+
+/**
+ * Get execution history from context
+ */
+export function getHistory(context: Record<string, unknown>): HistoryEntry[] {
+    return (context.history as HistoryEntry[]) ?? [];
+}
+
+// ============================================
+// Actions vs AI-Actions helpers
+// @see docs/new-request-flow/PROTOCOL.md#два-типа-действий-actions-vs-ai-actions
+// ============================================
+
+/**
+ * Determine if the response is for an AI-Action (LLM-controlled)
+ * AI-Actions typically have step = 'llm-request' or include availableSteps
+ */
+export function isAiAction(response: { context?: Record<string, unknown> }): boolean {
+    const execution = response?.context?.execution as Record<string, unknown> | undefined;
+    if (!execution) return false;
+    
+    const step = String(execution.step ?? '');
+    // AI-Actions typically use 'llm-request' as the step
+    if (step === 'llm-request') return true;
+    
+    // Check for availableSteps (present in AI-Actions)
+    const availableSteps = execution.availableSteps as string[] | undefined;
+    if (availableSteps && availableSteps.length > 0) return true;
+    
+    return false;
+}
+
+/**
+ * Get action type: 'action' (server-controlled) or 'ai-action' (LLM-controlled)
+ */
+export function getActionType(response: { context?: Record<string, unknown> }): 'action' | 'ai-action' | null {
+    const execution = response?.context?.execution as Record<string, unknown> | undefined;
+    if (!execution) return null;
+    
+    if (isAiAction(response)) {
+        return 'ai-action';
+    }
+    return 'action';
+}
+
+/**
+ * Get available steps for AI-Actions
+ */
+export function getAvailableSteps(response: { context?: Record<string, unknown> }): string[] {
+    const execution = response?.context?.execution as Record<string, unknown> | undefined;
+    if (!execution) return [];
+    return (execution.availableSteps as string[]) ?? [];
 }

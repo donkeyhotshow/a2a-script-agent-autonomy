@@ -129,6 +129,93 @@ const results = await RAGSearchUI.search('query');
 - Client API Server (порт 3001, проксирует запросы A2A Server на 3000)
 - Meilisearch на порту 7700 (для RAG)
 
+## Новый Протокол A2A
+
+### Action-Key Shape
+
+Новый протокол использует формат с ключом типа действия вместо generic `content` или `action` полей.
+
+**Правильный формат:**
+```javascript
+// Execute с типом действия
+{ execute: { "script": { code: "...", input: {} } } }
+{ execute: { "read-file": { path: "..." } } }
+{ execute: { "write-file": { path: "...", content: "..." } } }
+
+// Result с типом действия
+{ result: { "script": { output: "...", success: true } } }
+{ result: { "read-file": { path: "...", content: "..." } } }
+```
+
+**Устаревший формат (не рекомендуется):**
+```javascript
+// Неправильно: плоская структура
+{ result: { content: "..." } }
+
+// Неправильно: generic поле action
+{ execute: { action: "read-file", file: "..." } }
+```
+
+### execute.form.choices
+
+Интерактивные формы с вариантами выбора:
+```javascript
+{
+    execute: {
+        form: {
+            title: "Выберите действие",
+            choices: [
+                { id: "fix_imports", label: "Исправить импорты" },
+                { id: "skip", label: "Пропустить" }
+            ]
+        }
+    }
+}
+```
+
+### execute.form.input
+
+Формы с полями ввода:
+```javascript
+{
+    execute: {
+        form: {
+            title: "Введите данные",
+            input: [
+                { name: "filename", type: "text", label: "Имя файла" },
+                { name: "content", type: "textarea", label: "Содержимое" }
+            ]
+        }
+    }
+}
+```
+
+### execute.message
+
+Отображаемые сообщения пользователю:
+```javascript
+{
+    execute: {
+        message: {
+            content: "Операция завершена успешно",
+            type: "success"
+        }
+    }
+}
+```
+
+### Типы Execute действий
+
+| Тип | Описание | Пример |
+|-----|----------|--------|
+| `script` | Выполнение JavaScript | `{ script: { code: "...", input: {} } }` |
+| `read-file` | Чтение файла | `{ "read-file": { path: "/src/index.js" } }` |
+| `write-file` | Запись файла | `{ "write-file": { path: "...", content: "..." } }` |
+| `execute-command` | Выполнение команд | `{ "execute-command": { command: "npm install" } }` |
+| `rag-search` | RAG поиск | `{ "rag-search": { query: "...", topK: 5 } }` |
+| `form` | Интерактивная форма | `{ form: { title: "...", choices: [...] } }` |
+| `message` | Сообщение | `{ message: { content: "...", type: "info" } }` |
+
 ## Документация
 
 Подробная документация:

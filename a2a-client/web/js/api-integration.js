@@ -126,32 +126,6 @@ class APIIntegration {
     }
 
     /**
-     * Approve action
-     */
-    async approveAction(approved = true) {
-        if (!this.currentSession) {
-            throw new Error('No active session');
-        }
-
-        const requestData = {
-            context: {
-                session_id: this.currentSession,
-                confirmed: approved,
-                actions: window.appState ? window.appState.get('proposedActions') || [] : []
-            }
-        };
-
-        try {
-            const result = await this.request('POST', '/invoke', requestData);
-            this.emit('actionApproved', {approved, result});
-            return result;
-        } catch (error) {
-            this.emit('actionApproveError', error);
-            throw error;
-        }
-    }
-
-    /**
      * Send step result
      */
     async sendStepResult(stepResult) {

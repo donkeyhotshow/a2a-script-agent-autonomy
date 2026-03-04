@@ -1,10 +1,16 @@
 /**
  * Invoke Service
  * Parses context and creates requests. Routes → services; protocol used here.
+ * 
+ * Supports new protocol format:
+ * - execute.form.choices (first response)
+ * - execute.script (step execution)
+ * - result with action-key shape
  */
 
 import {parseContextBlock} from '../../protocol/context-parser.js';
-import type {ContextBlock, FileBlock} from '../../types/index.js';
+import type {ContextBlock, FileBlock, ResultCommand} from '../../types/index.js';
+import {CURRENT_PROTOCOL_VERSION} from '../../protocol/versioning/protocol-versions.js';
 import {requestService} from '../core/request/request.service.js';
 import {trackRequestStart} from './pipeline-observability.service.js';
 
@@ -12,10 +18,10 @@ export interface InvokeInput {
     context?: unknown;
     task?: string;  // Top-level task field for action_proposal
     message?: string;
-    action?: string;  // action type: task_request, approve_action, step_result
-    selectedAction?: { actionId: string };  // for approve_action
+    action?: string;  // action type: task_request, approve_action, step_result, action_selection
+    selectedAction?: { actionId: string };  // for approve_action / action_selection
     stepId?: string;  // for step_result
-    stepResult?: unknown;  // for step_result
+    stepResult?: unknown;  // result with action-key shape: { "script": {...}, "read-file": {...} }
     code_blocks?: FileBlock[];
 }
 
@@ -29,34 +35,39 @@ export async function invoke(clientId: string, input: InvokeInput): Promise<Invo
         context = parseContextBlock(input.context);
     } else {
         context = {
-            version: '1.0',
+            version: CURRENT_PROTOCOL_VERSION,
             session_id: 'stateless',
         };
     }
 
+    // Используем промежуточный объект для избежания ошибок типизации
+    const ctx: Record<string, unknown> = context as unknown as Record<string, unknown>;
+
     // Add task to context if provided (top-level field for action_proposal)
     if (input.task) {
-        (context as Record<string, unknown>)['task'] = input.task;
+        ctx['task'] = input.task;
     }
 
     // Add action fields to context
     if (input.action) {
-        (context as Record<string, unknown>)['action'] = input.action;
+        ctx['action'] = input.action;
     }
     if (input.selectedAction) {
-        (context as Record<string, unknown>)['selectedAction'] = input.selectedAction;
+        ctx['selectedAction'] = input.selectedAction;
     }
     if (input.stepId) {
-        (context as Record<string, unknown>)['stepId'] = input.stepId;
+        ctx['stepId'] = input.stepId;
     }
     if (input.stepResult !== undefined) {
-        (context as Record<string, unknown>)['stepResult'] = input.stepResult;
+        ctx['stepResult'] = input.stepResult;
     }
+
+    const message = input.message ?? input.task;
 
     const {promiseId} = await requestService.create({
         clientId,
-        context: context as Record<string, unknown>,
-        message: input.message ?? input.task ?? null,
+        context: ctx,
+        message: message ?? null,
         codeBlocks: input.code_blocks ?? undefined,
     });
     

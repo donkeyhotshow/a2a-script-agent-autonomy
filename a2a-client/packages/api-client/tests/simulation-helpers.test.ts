@@ -20,17 +20,20 @@ const createMockClient = (sessionResponse: any, messageResponse: any) => ({
 describe('invokeFirstTask', () => {
     it('should create session and send task message', async () => {
         const mockClient = createMockClient(
-            { session_id: 'test-session-123' },
+            { success: true, data: { session_id: 'test-session-123' } },
             {
-                context: {
-                    version: '1.0',
-                    session_id: 'test-session-123',
-                    execute: {
-                        form: {
-                            choices: [
-                                { id: 'choice1', label: 'Choice 1' },
-                                { id: 'choice2', label: 'Choice 2' }
-                            ]
+                success: true,
+                data: {
+                    context: {
+                        version: '1.0',
+                        session_id: 'test-session-123',
+                        execute: {
+                            form: {
+                                choices: [
+                                    { id: 'choice1', label: 'Choice 1' },
+                                    { id: 'choice2', label: 'Choice 2' }
+                                ]
+                            }
                         }
                     }
                 }
@@ -49,8 +52,8 @@ describe('invokeFirstTask', () => {
 
     it('should use default projectId when not provided', async () => {
         const mockClient = createMockClient(
-            { session_id: 'test-session-456' },
-            { context: { version: '1.0', session_id: 'test-session-456' } }
+            { success: true, data: { session_id: 'test-session-456' } },
+            { success: true, data: { context: { version: '1.0', session_id: 'test-session-456' } } }
         );
 
         const result = await invokeFirstTask(mockClient, 'Test task');
@@ -60,13 +63,16 @@ describe('invokeFirstTask', () => {
 
     it('should handle response without form choices', async () => {
         const mockClient = createMockClient(
-            { session_id: 'test-session-789' },
+            { success: true, data: { session_id: 'test-session-789' } },
             {
-                context: {
-                    version: '1.0',
-                    session_id: 'test-session-789',
-                    promiseId: 'promise-123',
-                    status: 'pending'
+                success: true,
+                data: {
+                    context: {
+                        version: '1.0',
+                        session_id: 'test-session-789',
+                        promiseId: 'promise-123',
+                        status: 'pending'
+                    }
                 }
             }
         );
@@ -92,16 +98,19 @@ describe('invokeFirstTask', () => {
 
     it('should handle missing data property in responses', async () => {
         const mockClient = createMockClient(
-            { session_id: 'test-session-111' },
+            { success: true, data: { session_id: 'test-session-111' } },
             {
-                context: {
-                    version: '1.0',
-                    session_id: 'test-session-111',
-                    execute: {
-                        form: {
-                            choices: [
-                                { id: 'test-choice', label: 'Test Choice' }
-                            ]
+                success: true,
+                data: {
+                    context: {
+                        version: '1.0',
+                        session_id: 'test-session-111',
+                        execute: {
+                            form: {
+                                choices: [
+                                    { id: 'test-choice', label: 'Test Choice' }
+                                ]
+                            }
                         }
                     }
                 }

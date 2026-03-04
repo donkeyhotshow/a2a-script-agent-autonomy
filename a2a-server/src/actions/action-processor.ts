@@ -16,8 +16,9 @@
 import {ActionService, ActionResponseSimulation} from './action-service.js';
 import {ActionDefinition, SubAction} from './types.js';
 import type {ContextBlock, ServerMessage} from '../types/index.js';
+import {CURRENT_PROTOCOL_VERSION} from '../protocol/versioning/protocol-versions.js';
 
-const PROTOCOL_VERSION = '1.0';
+const PROTOCOL_VERSION = CURRENT_PROTOCOL_VERSION;
 
 /**
  * Результат обработки action

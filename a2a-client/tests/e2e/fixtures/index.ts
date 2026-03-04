@@ -4,7 +4,137 @@
  */
 
 export const fixtures = {
-    // Task request - initial user message
+    // New protocol: execute.form with choices (first response)
+    executeForm: {
+        success: true,
+        data: {
+            id: 'req_form_001',
+            promiseId: 'promise_form_001',
+            status: 'completed',
+            result: {
+                execute: {
+                    form: {
+                        title: 'Выберите действие для исправления импортов',
+                        choices: [
+                            { id: 'fix_imports', label: 'Исправить импорты', description: 'Автоматически исправить все сломанные импорты' },
+                            { id: 'skip', label: 'Пропустить', description: 'Продолжить без исправлений' }
+                        ]
+                    }
+                }
+            }
+        }
+    },
+
+    // New protocol: execute.message
+    executeMessage: {
+        success: true,
+        data: {
+            id: 'req_msg_001',
+            promiseId: 'promise_msg_001',
+            status: 'completed',
+            result: {
+                execute: {
+                    message: {
+                        content: 'Импорты были успешно исправлены в 5 файлах',
+                        type: 'success'
+                    }
+                }
+            }
+        }
+    },
+
+    // New protocol: result with action-key shape
+    resultScript: {
+        success: true,
+        data: {
+            id: 'req_result_001',
+            promiseId: 'promise_result_001',
+            status: 'completed',
+            result: {
+                result: {
+                    script: {
+                        output: 'Hello World\nTest completed',
+                        error: null,
+                        success: true
+                    }
+                }
+            }
+        }
+    },
+
+    resultReadFile: {
+        success: true,
+        data: {
+            id: 'req_result_002',
+            promiseId: 'promise_result_002',
+            status: 'completed',
+            result: {
+                result: {
+                    'read-file': {
+                        path: '/src/index.js',
+                        content: 'console.log("hello");',
+                        success: true
+                    }
+                }
+            }
+        }
+    },
+
+    resultWriteFile: {
+        success: true,
+        data: {
+            id: 'req_result_003',
+            promiseId: 'promise_result_003',
+            status: 'completed',
+            result: {
+                result: {
+                    'write-file': {
+                        path: '/src/output.js',
+                        success: true,
+                        bytesWritten: 256
+                    }
+                }
+            }
+        }
+    },
+
+    // New protocol: execute with script
+    executeScript: {
+        success: true,
+        data: {
+            id: 'req_exec_001',
+            promiseId: 'promise_exec_001',
+            status: 'completed',
+            result: {
+                execute: {
+                    script: {
+                        code: 'console.log("test")',
+                        input: {}
+                    }
+                }
+            }
+        }
+    },
+
+    // New protocol: form choice selected result
+    formChoiceResult: {
+        success: true,
+        data: {
+            id: 'req_form_choice_001',
+            promiseId: 'promise_form_choice_001',
+            status: 'completed',
+            result: {
+                result: {
+                    form: {
+                        selectedChoice: 'fix_imports',
+                        data: {}
+                    }
+                }
+            }
+        }
+    },
+
+    // Legacy: Task request - initial user message
     taskRequest: {
         success: true,
         data: {

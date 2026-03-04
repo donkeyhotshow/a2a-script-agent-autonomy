@@ -12,8 +12,9 @@ import {
     TaskStatus,
     ProtocolError,
 } from '../../types/index.js';
+import {CURRENT_PROTOCOL_VERSION} from '../versioning/protocol-versions.js';
 
-export const PROTOCOL_VERSION = '1.0';
+export const PROTOCOL_VERSION = CURRENT_PROTOCOL_VERSION;
 
 export const VALID_TASK_TYPES: TaskType[] = [
     'analyze',

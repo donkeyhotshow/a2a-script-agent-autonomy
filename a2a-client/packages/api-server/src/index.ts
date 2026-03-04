@@ -24,7 +24,6 @@ import {Readable} from 'stream';
 import {randomUUID} from 'crypto';
 import {WebSocketServer, WebSocket} from 'ws';
 import {toSessionSummary, toSessionDetail, SessionDetail, SessionSummary} from './session-dto.js';
-import {detectResponseType} from '@a2a/api-client/src/action-handler.js';
 
 type WebSocketClient = WebSocket & { sessionId?: string };
 
@@ -1014,8 +1013,9 @@ async function updateSessionWithServerResponse(
     if (serverResponse?.exchangeLog && Array.isArray(serverResponse.exchangeLog)) {
         // Store exchange log in context
         updatedSession.context = updatedSession.context || {};
+        const existingLog = Array.isArray(session.context?.exchangeLog) ? session.context.exchangeLog : [];
         updatedSession.context.exchangeLog = [
-            ...(session.context?.exchangeLog || []),
+            ...existingLog,
             ...serverResponse.exchangeLog
         ];
     }
@@ -1065,8 +1065,9 @@ async function updateSessionWithStatusResponse(
     // Update exchange log from status response
     if (statusResponse?.exchangeLog && Array.isArray(statusResponse.exchangeLog)) {
         updatedSession.context = updatedSession.context || {};
+        const existingLog = Array.isArray(session.context?.exchangeLog) ? session.context.exchangeLog : [];
         updatedSession.context.exchangeLog = [
-            ...(session.context?.exchangeLog || []),
+            ...existingLog,
             ...statusResponse.exchangeLog
         ];
     }

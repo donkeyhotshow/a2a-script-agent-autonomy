@@ -473,6 +473,240 @@ describe('Protocol Mapping', () => {
             expect(lastProposalNode.id).toBe('node3');
         });
     });
+    });
+});
+
+/**
+ * New Protocol Tests - Action-Key Shape
+ * Tests for the new protocol format using action-type keys
+ */
+describe('New Protocol - Action-Key Shape', () => {
+
+    describe('execute action types', () => {
+        it('should use action-key shape for script execute', () => {
+            const execute = { script: { code: 'console.log("test")', input: {} } };
+            expect(Object.keys(execute)[0]).toBe('script');
+            expect(execute.script.code).toBe('console.log("test")');
+        });
+
+        it('should use action-key shape for read-file execute', () => {
+            const execute = { 'read-file': { path: '/src/index.js' } };
+            expect(Object.keys(execute)[0]).toBe('read-file');
+            expect(execute['read-file'].path).toBe('/src/index.js');
+        });
+
+        it('should use action-key shape for write-file execute', () => {
+            const execute = { 'write-file': { path: '/src/index.js', content: 'console.log("test")' } };
+            expect(Object.keys(execute)[0]).toBe('write-file');
+            expect(execute['write-file'].content).toBe('console.log("test")');
+        });
+
+        it('should use action-key shape for execute-command execute', () => {
+            const execute = { 'execute-command': { command: 'npm install', cwd: '/project' } };
+            expect(Object.keys(execute)[0]).toBe('execute-command');
+            expect(execute['execute-command'].command).toBe('npm install');
+        });
+
+        it('should use action-key shape for rag-search execute', () => {
+            const execute = { 'rag-search': { query: 'how to use api', topK: 5 } };
+            expect(Object.keys(execute)[0]).toBe('rag-search');
+            expect(execute['rag-search'].query).toBe('how to use api');
+        });
+    });
+
+    describe('execute.form.choices', () => {
+        it('should parse form choices from response', () => {
+            const response = {
+                execute: {
+                    form: {
+                        title: 'Выберите действие',
+                        choices: [
+                            { id: 'fix', label: 'Исправить' },
+                            { id: 'skip', label: 'Пропустить' }
+                        ]
+                    }
+                }
+            };
+            expect(response.execute.form.choices).toHaveLength(2);
+            expect(response.execute.form.choices[0].id).toBe('fix');
+        });
+
+        it('should parse form with input fields', () => {
+            const response = {
+                execute: {
+                    form: {
+                        title: 'Введите данные',
+                        input: [
+                            { name: 'filename', type: 'text', label: 'Имя файла' },
+                            { name: 'content', type: 'textarea', label: 'Содержимое' }
+                        ]
+                    }
+                }
+            };
+            expect(response.execute.form.input).toHaveLength(2);
+            expect(response.execute.form.input[0].name).toBe('filename');
+        });
+
+        it('should handle form without choices (input only)', () => {
+            const response = {
+                execute: {
+                    form: {
+                        title: 'Введите путь к файлу',
+                        input: [{ name: 'path', type: 'text' }]
+                    }
+                }
+            };
+            expect(response.execute.form.choices).toBeUndefined();
+            expect(response.execute.form.input).toHaveLength(1);
+        });
+    });
+
+    describe('execute.message', () => {
+        it('should parse message from response', () => {
+            const response = {
+                execute: {
+                    message: {
+                        content: 'Действие выполнено успешно',
+                        type: 'success'
+                    }
+                }
+            };
+            expect(response.execute.message.content).toBe('Действие выполнено успешно');
+            expect(response.execute.message.type).toBe('success');
+        });
+    });
+
+    describe('result action-key shape', () => {
+        it('should use action-key shape for script result', () => {
+            const result = {
+                result: {
+                    script: {
+                        output: 'Hello World',
+                        error: null,
+                        success: true
+                    }
+                }
+            };
+            expect(Object.keys(result.result)[0]).toBe('script');
+            expect(result.result.script.output).toBe('Hello World');
+        });
+
+        it('should use action-key shape for read-file result', () => {
+            const result = {
+                result: {
+                    'read-file': {
+                        path: '/src/index.js',
+                        content: 'console.log("test")',
+                        success: true
+                    }
+                }
+            };
+            expect(Object.keys(result.result)[0]).toBe('read-file');
+            expect(result.result['read-file'].content).toBe('console.log("test")');
+        });
+
+        it('should use action-key shape for write-file result', () => {
+            const result = {
+                result: {
+                    'write-file': {
+                        path: '/src/index.js',
+                        success: true,
+                        bytesWritten: 256
+                    }
+                }
+            };
+            expect(Object.keys(result.result)[0]).toBe('write-file');
+            expect(result.result['write-file'].success).toBe(true);
+        });
+
+        it('should use action-key shape for execute-command result', () => {
+            const result = {
+                result: {
+                    'execute-command': {
+                        command: 'npm test',
+                        exitCode: 0,
+                        stdout: 'Tests passed',
+                        stderr: ''
+                    }
+                }
+            };
+            expect(Object.keys(result.result)[0]).toBe('execute-command');
+            expect(result.result['execute-command'].exitCode).toBe(0);
+        });
+
+        it('should use action-key shape for rag-search result', () => {
+            const result = {
+                result: {
+                    'rag-search': {
+                        query: 'how to use api',
+                        results: [
+                            { text: 'API usage example 1', score: 0.95 },
+                            { text: 'API usage example 2', score: 0.87 }
+                        ]
+                    }
+                }
+            };
+            expect(Object.keys(result.result)[0]).toBe('rag-search');
+            expect(result.result['rag-search'].results).toHaveLength(2);
+        });
+    });
+
+    describe('execute.form with choice selection', () => {
+        it('should handle choice selection in result', () => {
+            const result = {
+                result: {
+                    form: {
+                        selectedChoice: 'fix',
+                        data: {}
+                    }
+                }
+            };
+            expect(result.result.form.selectedChoice).toBe('fix');
+        });
+
+        it('should handle form input data in result', () => {
+            const result = {
+                result: {
+                    form: {
+                        data: {
+                            filename: 'test.js',
+                            content: 'console.log("test")'
+                        }
+                    }
+                }
+            };
+            expect(result.result.form.data.filename).toBe('test.js');
+        });
+    });
+
+    describe('legacy format compatibility', () => {
+        it('should still handle legacy proposedActions format', () => {
+            const response = {
+                outcome: 'action_proposal',
+                proposedActions: [
+                    {
+                        actionId: 'fix-imports',
+                        title: 'Fix imports',
+                        subActions: [{ actionId: 'step1', title: 'Step 1' }]
+                    }
+                ]
+            };
+            expect(response.proposedActions).toBeDefined();
+            expect(response.proposedActions[0].subActions).toHaveLength(1);
+        });
+
+        it('should still handle legacy executingAction format', () => {
+            const response = {
+                outcome: 'action_executing',
+                executingAction: {
+                    actionId: 'step1',
+                    title: 'Step 1'
+                }
+            };
+            expect(response.executingAction).toBeDefined();
+            expect(response.executingAction.actionId).toBe('step1');
+        });
+    });
 });
 
 describe('A2AClient', () => {

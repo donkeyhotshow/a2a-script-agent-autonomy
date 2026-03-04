@@ -242,6 +242,12 @@ export {
     getExecuteActionType,
     isCompleted,
     getFinalResult,
+    getExecution,
+    addToHistory,
+    getHistory,
+    isAiAction,
+    getActionType,
+    getAvailableSteps,
 } from './simulation-helpers.js';
 export type { 
     InvokeFirstTaskOptions, 
@@ -256,4 +262,6 @@ export type {
     WriteFileAction,
     ExecuteCommandAction,
     MessageAction,
+    FinalResult,
+    HistoryEntry,
 } from './simulation-helpers.js';

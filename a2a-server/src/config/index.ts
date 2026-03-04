@@ -11,8 +11,10 @@ import dotenv from 'dotenv';
 import path from 'path';
 import {z} from 'zod';
 
-// Load environment variables from root .env
-dotenv.config({path: path.resolve(__dirname, '../../../.env')});
+// Load a2a-server .env first (same DB as Prisma migrations), then repo root .env
+const serverRoot = path.resolve(__dirname, '../..');
+dotenv.config({path: path.join(serverRoot, '.env')});
+dotenv.config({path: path.resolve(serverRoot, '../../.env')});
 
 // ===========================================
 // Helper Schemas

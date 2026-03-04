@@ -44,6 +44,8 @@ export function errorHandler(
     res: Response,
     _next: NextFunction
 ): void {
+    const includeStack = process.env.NODE_ENV !== 'production';
+
     if (err instanceof AppError) {
         // Known application error
         logger.error('Application error', {
@@ -59,7 +61,9 @@ export function errorHandler(
             error: {
                 code: err.code,
                 message: err.message,
-                details: err.details,
+                details: includeStack
+                    ? {...err.details, stack: err.stack}
+                    : err.details,
             },
         };
 
@@ -78,6 +82,7 @@ export function errorHandler(
         error: {
             code: 'INTERNAL_ERROR',
             message: 'An unexpected error occurred',
+            details: includeStack ? {stack: err.stack} : undefined,
         },
     };
 

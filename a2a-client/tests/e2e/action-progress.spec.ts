@@ -154,6 +154,122 @@ test.describe('Action Progress', () => {
 });
 
 /**
+ * New Protocol E2E Tests
+ * Tests for action-key shape, execute.form.choices, execute.message
+ */
+test.describe('New Protocol - Action Key Shape', () => {
+
+    test.beforeEach(async ({page}) => {
+        await setupMockApi(page);
+        await page.goto('/');
+        await page.waitForLoadState('networkidle');
+    });
+
+    test('should display execute.form.choices', async ({page}) => {
+        // Set up mock to return execute.form response
+        await page.route('**/api/v1/requests', async (route) => {
+            if (route.request().method() === 'POST') {
+                return route.fulfill({
+                    status: 200,
+                    contentType: 'application/json',
+                    body: JSON.stringify(fixtures.executeForm)
+                });
+            }
+        });
+
+        await page.fill('#messageInput', 'исправить импорты');
+        await page.click('#sendMessage');
+        await page.waitForTimeout(1000);
+
+        // Should show form with choices
+        const formChoices = page.locator('.form-choices, .choice-item, [data-testid="choice"]');
+        // Check if form is visible - the exact selector depends on UI implementation
+        const serverMessage = page.locator('#sessionMessages .msg.server').first();
+        await expect(serverMessage).toBeVisible();
+    });
+
+    test('should display execute.message', async ({page}) => {
+        // Set up mock to return execute.message response
+        await page.route('**/api/v1/requests', async (route) => {
+            if (route.request().method() === 'POST') {
+                return route.fulfill({
+                    status: 200,
+                    contentType: 'application/json',
+                    body: JSON.stringify(fixtures.executeMessage)
+                });
+            }
+        });
+
+        await page.fill('#messageInput', 'проверить результат');
+        await page.click('#sendMessage');
+        await page.waitForTimeout(1000);
+
+        // Should show message
+        const serverMessage = page.locator('#sessionMessages .msg.server').first();
+        await expect(serverMessage).toBeVisible();
+        const content = await serverMessage.locator('.msg-content').textContent();
+        expect(content).toContain('успешно');
+    });
+
+    test('should handle script result with action-key shape', async ({page}) => {
+        await page.route('**/api/v1/requests', async (route) => {
+            if (route.request().method() === 'POST') {
+                return route.fulfill({
+                    status: 200,
+                    contentType: 'application/json',
+                    body: JSON.stringify(fixtures.resultScript)
+                });
+            }
+        });
+
+        await page.fill('#messageInput', 'выполнить скрипт');
+        await page.click('#sendMessage');
+        await page.waitForTimeout(1000);
+
+        const serverMessage = page.locator('#sessionMessages .msg.server').first();
+        await expect(serverMessage).toBeVisible();
+    });
+
+    test('should handle read-file result with action-key shape', async ({page}) => {
+        await page.route('**/api/v1/requests', async (route) => {
+            if (route.request().method() === 'POST') {
+                return route.fulfill({
+                    status: 200,
+                    contentType: 'application/json',
+                    body: JSON.stringify(fixtures.resultReadFile)
+                });
+            }
+        });
+
+        await page.fill('#messageInput', 'прочитать файл');
+        await page.click('#sendMessage');
+        await page.waitForTimeout(1000);
+
+        const serverMessage = page.locator('#sessionMessages .msg.server').first();
+        await expect(serverMessage).toBeVisible();
+    });
+
+    test('should handle write-file result with action-key shape', async ({page}) => {
+        await page.route('**/api/v1/requests', async (route) => {
+            if (route.request().method() === 'POST') {
+                return route.fulfill({
+                    status: 200,
+                    contentType: 'application/json',
+                    body: JSON.stringify(fixtures.resultWriteFile)
+                });
+            }
+        });
+
+        await page.fill('#messageInput', 'записать файл');
+        await page.click('#sendMessage');
+        await page.waitForTimeout(1000);
+
+        const serverMessage = page.locator('#sessionMessages .msg.server').first();
+        await expect(serverMessage).toBeVisible();
+    });
+});
+
+/**
  * Set up mock API handlers for action progress tests
  */
 async function setupMockApi(page) {

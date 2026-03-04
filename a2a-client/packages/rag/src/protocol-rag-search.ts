@@ -2,15 +2,31 @@
  * result["rag-search"] shape for protocol – implementation.
  * Task: tasks/client/03-rag-package-simulation-and-policy-alignment.md
  *
- * ✅ IMPLEMENTED: transform search results to { results: [{ file, path, score, snippet }], files?: string[], query? }
+ * ✅ IMPLEMENTED: transform search results to { results: [{ file, path, score, matches, metadata }], files?: string[], query? }
  * ✅ IMPLEMENTED: policy: max results, allowed dirs/extensions (Task 39)
+ * @see docs/new-request-flow/PROTOCOL.md#action-key-shape-обязательно
  */
 
+export interface RagSearchMatch {
+    line_start: number;
+    line_end: number;
+    content: string;
+    highlight: string;
+    context_score: number;
+}
+
+export interface RagSearchResultMetadata {
+    framework: string;
+    type: string;
+    last_modified: string;
+}
+
 export interface RagSearchResultEntry {
-    file?: string;
-    path?: string;
+    file: string;
+    path: string;
     score: number;
-    snippet?: string;
+    matches: RagSearchMatch[];
+    metadata?: RagSearchResultMetadata;
 }
 
 export interface RagSearchProtocolResult {
@@ -89,13 +105,29 @@ export function toRagSearchResult(
     // Apply file limit (should be same as result limit after grouping)
     const finalResults = limitedResults.slice(0, maxFiles);
 
-    // Transform to protocol format
-    const results: RagSearchResultEntry[] = finalResults.map(result => ({
-        file: result.chunk.filePath,
-        path: result.chunk.filePath,
-        score: result.score,
-        snippet: result.highlights.length > 0 ? result.highlights[0] : undefined
-    }));
+    // Transform to protocol format with matches
+    const results: RagSearchResultEntry[] = finalResults.map(result => {
+        // Build matches array from highlights
+        const matches: RagSearchMatch[] = result.highlights.map((highlight, idx) => ({
+            line_start: result.chunk.startLine ?? (idx * 10 + 1),
+            line_end: result.chunk.endLine ?? (idx * 10 + 10),
+            content: result.chunk.content,
+            highlight: highlight,
+            context_score: result.score,
+        }));
+        
+        return {
+            file: result.chunk.filePath,
+            path: result.chunk.filePath,
+            score: result.score,
+            matches: matches,
+            metadata: {
+                framework: '',
+                type: filePathToExtension(result.chunk.filePath),
+                last_modified: '',
+            },
+        };
+    });
 
     // Extract unique file paths (limited to final results)
     const files = finalResults.map(result => result.chunk.filePath);

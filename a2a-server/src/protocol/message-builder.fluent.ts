@@ -1,3 +1,5 @@
+import {CURRENT_PROTOCOL_VERSION} from './versioning/protocol-versions.js';
+
 /** Fluent message builder stub. */
 
 export interface FluentMessageBuilder {
@@ -21,7 +23,7 @@ export function createFluentMessageBuilder(): FluentMessageBuilder {
             return this;
         },
         build() {
-            return {version: '1.0', session_id: sessionId, context};
+            return {version: CURRENT_PROTOCOL_VERSION, session_id: sessionId, context};
         },
     };
 }

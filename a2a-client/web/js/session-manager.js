@@ -1,10 +1,12 @@
 /**
  * Session Manager UI Module
  * Handles session list, creation, deletion, and real-time conversation display
- *
- * TODO(Task-06): single session view-model: context, execute, messages[] from Client API – tasks/client/06-web-session-panel-and-dialog.md
- * TODO(Task-06): render dialog from messages[] only; handle execute.form (choices + input) and execute.message
- * TODO(Task-06): manual/auto buttons → POST /api/sessions/:id/next { mode }; show step list from context.execution
+ * 
+ * Supports new protocol format (v2.0):
+ * - execute.form.choices for action selection
+ * - execute.message for UI-only messages
+ * - result: { choice: "..." } for submitting selections
+ * - context.version: "2.0" for new format
  */
 
 (function (global) {
@@ -19,6 +21,10 @@
         _listeners: new Map(),
         _updateInterval: null,
         _lastUpdate: null,
+        
+        // New protocol v2.0 state
+        _currentContext: null,
+        _pendingForm: null,
 
         /**
          * Initialize session manager
@@ -369,6 +375,367 @@
 
             messagesEl.appendChild(msgEl);
             container.scrollTop = container.scrollHeight;
+        },
+
+        /**
+         * Process execute from server response (new protocol v2.0)
+         * Handles form.choices, message, and other execute types
+         * @param {Object} execute - execute object from server response
+         * @param {Object} context - context object from server response
+         */
+        processExecute(execute, context = null) {
+            // Store context for later use
+            if (context) {
+                this._currentContext = context;
+                this.emit('contextUpdated', context);
+
+                // Task 3.1: Emit execution.step for UI visualization
+                const execution = context?.execution;
+                if (execution?.step) {
+                    const stepName = execution.step;
+                    // Determine if it's an AI-Action (llm request) or regular Action
+                    const isLlmRequest = stepName === 'llm-request' || execution.action?.startsWith('ai-');
+                    this.emit('executionStep', {
+                        step: stepName,
+                        action: execution.action,
+                        isLlmRequest,
+                        displayName: isLlmRequest ? 'llm-request' : stepName
+                    });
+                }
+
+                // Task 3.2: Emit execution.progress for progress bar
+                if (execution?.progress !== undefined) {
+                    this.emit('executionProgress', {
+                        progress: execution.progress,
+                        action: execution.action,
+                        step: execution.step
+                    });
+                }
+            }
+
+            // Task 3.3: Handle finalResult for completion display
+            const finalResult = execute?.finalResult;
+            if (finalResult) {
+                this.emit('finalResultReceived', finalResult);
+                return { type: 'finalResult', data: finalResult };
+            }
+
+            // Handle execute.form (choices)
+            if (execute?.form) {
+                this._pendingForm = execute.form;
+                this.emit('formReceived', execute.form);
+                return { type: 'form', data: execute.form };
+            }
+
+            // Handle execute.message (UI-only)
+            if (execute?.message) {
+                const message = typeof execute.message === 'string' 
+                    ? { content: execute.message } 
+                    : execute.message;
+                this.emit('messageReceived', message);
+                return { type: 'message', data: message };
+            }
+
+            // Handle execute.script
+            if (execute?.script) {
+                this.emit('scriptReceived', execute.script);
+                return { type: 'script', data: execute.script };
+            }
+
+            // Handle execute['rag-search']
+            if (execute?.['rag-search']) {
+                this.emit('ragSearchReceived', execute['rag-search']);
+                return { type: 'rag-search', data: execute['rag-search'] };
+            }
+
+            // Handle execute['read-file']
+            if (execute?.['read-file']) {
+                this.emit('readFileReceived', execute['read-file']);
+                return { type: 'read-file', data: execute['read-file'] };
+            }
+
+            // Handle execute['write-file']
+            if (execute?.['write-file']) {
+                this.emit('writeFileReceived', execute['write-file']);
+                return { type: 'write-file', data: execute['write-file'] };
+            }
+
+            // Handle execute['execute-command']
+            if (execute?.['execute-command']) {
+                this.emit('executeCommandReceived', execute['execute-command']);
+                return { type: 'execute-command', data: execute['execute-command'] };
+            }
+
+            this.emit('executeReceived', execute);
+            return { type: 'unknown', data: execute };
+        },
+
+        /**
+         * Submit choice selection (new protocol v2.0)
+         * @param {string} choiceId - ID of the selected choice
+         * @returns {Promise<Object>} Result to send to server
+         */
+        submitChoice(choiceId) {
+            if (!this.currentSessionId) {
+                throw new Error('No active session');
+            }
+
+            const result = { choice: choiceId };
+            
+            // Emit event for listeners
+            this.emit('choiceSubmitted', { choiceId, result });
+            
+            // Clear pending form
+            this._pendingForm = null;
+            
+            return result;
+        },
+
+        /**
+         * Submit input to form (new protocol v2.0)
+         * @param {Object} inputData - Input data from form
+         * @returns {Promise<Object>} Result to send to server
+         */
+        submitFormInput(inputData) {
+            if (!this.currentSessionId) {
+                throw new Error('No active session');
+            }
+
+            const result = { input: inputData };
+            
+            // Emit event for listeners
+            this.emit('formInputSubmitted', { input: inputData, result });
+            
+            // Clear pending form
+            this._pendingForm = null;
+            
+            return result;
+        },
+
+        /**
+         * Submit script result to server (new protocol v2.0)
+         * @param {Object} scriptResult - Result from script execution
+         * @returns {Promise<Object>} Formatted result for server
+         */
+        submitScriptResult(scriptResult) {
+            if (!this.currentSessionId) {
+                throw new Error('No active session');
+            }
+
+            // Use action-key shape: result: { script: { ... } }
+            const result = { script: scriptResult };
+            
+            this.emit('scriptResultSubmitted', { result });
+            return result;
+        },
+
+        /**
+         * Submit rag-search result to server (new protocol v2.0)
+         * @param {Object} searchResult - Result from RAG search
+         * @returns {Promise<Object>} Formatted result for server
+         */
+        submitRagSearchResult(searchResult) {
+            if (!this.currentSessionId) {
+                throw new Error('No active session');
+            }
+
+            // Use action-key shape: result: { 'rag-search': { ... } }
+            const result = { 'rag-search': searchResult };
+            
+            this.emit('ragSearchResultSubmitted', { result });
+            return result;
+        },
+
+        /**
+         * Submit read-file result to server (new protocol v2.0)
+         * @param {Object} fileResult - Result from file read
+         * @returns {Promise<Object>} Formatted result for server
+         */
+        submitReadFileResult(fileResult) {
+            if (!this.currentSessionId) {
+                throw new Error('No active session');
+            }
+
+            // Use action-key shape: result: { 'read-file': { ... } }
+            const result = { 'read-file': fileResult };
+            
+            this.emit('readFileResultSubmitted', { result });
+            return result;
+        },
+
+        /**
+         * Submit write-file result to server (new protocol v2.0)
+         * @param {Object} fileResult - Result from file write
+         * @returns {Promise<Object>} Formatted result for server
+         */
+        submitWriteFileResult(fileResult) {
+            if (!this.currentSessionId) {
+                throw new Error('No active session');
+            }
+
+            // Use action-key shape: result: { 'write-file': { ... } }
+            const result = { 'write-file': fileResult };
+            
+            this.emit('writeFileResultSubmitted', { result });
+            return result;
+        },
+
+        /**
+         * Submit execute-command result to server (new protocol v2.0)
+         * @param {Object} commandResult - Result from command execution
+         * @returns {Promise<Object>} Formatted result for server
+         */
+        submitExecuteCommandResult(commandResult) {
+            if (!this.currentSessionId) {
+                throw new Error('No active session');
+            }
+
+            // Use action-key shape: result: { 'execute-command': { ... } }
+            const result = { 'execute-command': commandResult };
+            
+            this.emit('executeCommandResultSubmitted', { result });
+            return result;
+        },
+
+        /**
+         * Get current pending form (if any)
+         * @returns {Object|null}
+         */
+        getPendingForm() {
+            return this._pendingForm;
+        },
+
+        /**
+         * Check if context is using new protocol v2.0
+         * @returns {boolean}
+         */
+        isProtocolV2() {
+            return this._currentContext?.version === '2.0';
+        },
+
+        /**
+         * Get current execution state from context
+         * @returns {Object|null}
+         */
+        getExecutionState() {
+            return this._currentContext?.execution || null;
+        },
+
+        /**
+         * Send result to server via POST /api/sessions/:id/result
+         * @param {Object} result - Result object in action-key shape
+         * @returns {Promise<Object>} Server response
+         */
+        async sendResult(result) {
+            if (!this.currentSessionId) {
+                throw new Error('No active session');
+            }
+
+            try {
+                const response = await this._request('POST', `/sessions/${this.currentSessionId}/result`, result);
+                
+                // Process execute from response if present
+                if (response?.execute) {
+                    this.processExecute(response.execute, response.context);
+                }
+                
+                return response;
+            } catch (error) {
+                console.error('[SessionManager] Failed to send result:', error);
+                this.emit('error', error);
+                throw error;
+            }
+        },
+
+        /**
+         * Select action and start execution (new protocol v2.0)
+         * @param {string} actionId - ID of action to select
+         * @returns {Promise<Object>} Server response
+         */
+        async selectAction(actionId) {
+            if (!this.currentSessionId) {
+                throw new Error('No active session');
+            }
+
+            try {
+                const response = await this._request('POST', `/sessions/${this.currentSessionId}/action`, {
+                    selectedAction: actionId
+                });
+                
+                // Process execute from response if present
+                if (response?.execute) {
+                    this.processExecute(response.execute, response.context);
+                }
+                
+                return response;
+            } catch (error) {
+                console.error('[SessionManager] Failed to select action:', error);
+                this.emit('error', error);
+                throw error;
+            }
+        },
+
+        /**
+         * Execute next step (manual or auto mode)
+         * @param {string} mode - 'manual' or 'auto'
+         * @returns {Promise<Object>} Server response
+         */
+        async executeNext(mode = 'manual') {
+            if (!this.currentSessionId) {
+                throw new Error('No active session');
+            }
+
+            try {
+                const response = await this._request('POST', `/sessions/${this.currentSessionId}/next`, { mode });
+                
+                // Process execute from response if present
+                if (response?.execute) {
+                    this.processExecute(response.execute, response.context);
+                }
+                
+                return response;
+            } catch (error) {
+                console.error('[SessionManager] Failed to execute next:', error);
+                this.emit('error', error);
+                throw error;
+            }
+        },
+
+        /**
+         * Handle SSE message (new protocol v2.0)
+         * @param {Object} data - Message data from SSE
+         */
+        handleSSEMessage(data) {
+            // Handle new protocol format with execute object
+            if (data?.execute) {
+                this.processExecute(data.execute, data.context);
+                return;
+            }
+
+            // Handle legacy format with content/messages
+            if (data?.content) {
+                this.appendMessage({
+                    role: 'assistant',
+                    content: data.content,
+                    timestamp: data.timestamp || new Date().toISOString()
+                });
+            }
+
+            // Handle messages array
+            if (data?.messages?.length) {
+                data.messages.forEach(msg => this.appendMessage(msg));
+            }
+
+            // Handle status updates
+            if (data?.status) {
+                this.emit('statusChanged', data.status);
+            }
+
+            // Handle context updates
+            if (data?.context) {
+                this._currentContext = data.context;
+                this.emit('contextUpdated', data.context);
+            }
         }
     };
 

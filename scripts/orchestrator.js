@@ -40,10 +40,10 @@ const colors = {
 
 // Configuration
 const HEALTH_CHECK_CONFIG = {
-  maxAttempts: 10,
-  initialDelayMs: 500,
+  maxAttempts: 20,
+  initialDelayMs: 1000,
   maxDelayMs: 10000,
-  backoffMultiplier: 1.5,
+  backoffMultiplier: 2,
   timeoutMs: 60000,
 };
 

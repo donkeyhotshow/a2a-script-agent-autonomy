@@ -80,6 +80,29 @@
         },
 
         /**
+         * Task 3.2: Handle progress from context.execution.progress
+         * @param {Object} progressData - { progress, action, step }
+         */
+        handleExecutionProgress(progressData) {
+            const { progress, action, step } = progressData;
+            const id = `execution-${action || 'default'}`;
+            
+            let tracker = this._trackers.get(id);
+            if (!tracker) {
+                tracker = this.create(id, {
+                    showLabel: true,
+                    showMessage: true,
+                    autoRemove: false
+                });
+            }
+
+            const message = step ? `Step: ${step}` : `Action: ${action || 'Processing...'}`;
+            tracker.setProgress(progress, message);
+            
+            return tracker;
+        },
+
+        /**
          * Subscribe to events
          */
         on(event, callback) {

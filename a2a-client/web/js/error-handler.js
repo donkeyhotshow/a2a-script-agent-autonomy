@@ -19,6 +19,7 @@
             showDismissButton: true,
             autoHideDelay: 8000,
             showStackTrace: false,
+            showDetailsButton: true,
             logToConsole: true,
             retryableErrors: ['ECONNREFUSED', 'ETIMEDOUT', 'ENOTFOUND', 'network_error']
         },
@@ -180,6 +181,10 @@
                 html += `<pre class="error-notification-stack">${escapeHtml(error.stack)}</pre>`;
             }
 
+            if (this.config.showDetailsButton) {
+                html += `<button class="error-notification-details" title="Показать детали">Details</button>`;
+            }
+
             html += '</div>';
 
             if (this.config.showDismissButton) {
@@ -205,7 +210,127 @@
                 el.remove();
             });
 
+            const detailsBtn = el.querySelector('.error-notification-details');
+            detailsBtn?.addEventListener('click', () => this.showErrorDetails(error));
+
             return el;
+        },
+
+        showErrorDetails(error) {
+            if (typeof document === 'undefined') return;
+
+            const stackText = error.stack || 'Stack trace unavailable';
+            const contextText = JSON.stringify(error.context ?? {}, null, 2) || 'No context data';
+            const metaPieces = [];
+            if (error.code) metaPieces.push(error.code);
+            if (error.context?.status) metaPieces.push(`status ${error.context.status}`);
+            const metaText = metaPieces.join(' · ') || 'Details';
+            const payload = [
+                `Message: ${error.message}`,
+                `Code: ${error.code || 'UNSPECIFIED'}`,
+                'Stack trace:',
+                stackText,
+                'Context:',
+                contextText
+            ].join('\n\n');
+
+            const existingOverlay = document.querySelector('.error-detail-backdrop');
+            if (existingOverlay) existingOverlay.remove();
+
+            const backdrop = document.createElement('div');
+            backdrop.className = 'error-detail-backdrop';
+            backdrop.addEventListener('click', (evt) => {
+                if (evt.target === backdrop) backdrop.remove();
+            });
+
+            const modal = document.createElement('div');
+            modal.className = 'error-detail-modal';
+
+            const header = document.createElement('div');
+            header.className = 'error-detail-header';
+
+            const titleWrapper = document.createElement('div');
+            const title = document.createElement('div');
+            title.className = 'error-detail-title';
+            title.textContent = error.message || 'Error details';
+
+            const meta = document.createElement('div');
+            meta.className = 'error-detail-meta';
+            meta.textContent = metaText;
+
+            titleWrapper.appendChild(title);
+            titleWrapper.appendChild(meta);
+
+            const closeBtn = document.createElement('button');
+            closeBtn.type = 'button';
+            closeBtn.className = 'error-detail-close';
+            closeBtn.textContent = '×';
+            closeBtn.addEventListener('click', () => backdrop.remove());
+
+            header.appendChild(titleWrapper);
+            header.appendChild(closeBtn);
+
+            const body = document.createElement('div');
+            body.className = 'error-detail-body';
+
+            const stackLabel = document.createElement('div');
+            stackLabel.className = 'error-detail-section-title';
+            stackLabel.textContent = 'Stack trace';
+
+            const stackPre = document.createElement('pre');
+            stackPre.className = 'error-detail-stack';
+            stackPre.textContent = stackText;
+
+            const contextLabel = document.createElement('div');
+            contextLabel.className = 'error-detail-section-title';
+            contextLabel.textContent = 'Context';
+
+            const contextPre = document.createElement('pre');
+            contextPre.className = 'error-detail-context';
+            contextPre.textContent = contextText;
+
+            body.appendChild(stackLabel);
+            body.appendChild(stackPre);
+            body.appendChild(contextLabel);
+            body.appendChild(contextPre);
+
+            const footer = document.createElement('div');
+            footer.className = 'error-detail-footer';
+
+            const copyBtn = document.createElement('button');
+            copyBtn.type = 'button';
+            copyBtn.className = 'error-detail-copy';
+            copyBtn.textContent = 'Copy';
+            copyBtn.addEventListener('click', async () => {
+                try {
+                    if (navigator.clipboard?.writeText) {
+                        await navigator.clipboard.writeText(payload);
+                    } else {
+                        throw new Error('clipboard not available');
+                    }
+                    copyBtn.textContent = 'Copied';
+                } catch (err) {
+                    const tmp = document.createElement('textarea');
+                    tmp.value = payload;
+                    document.body.appendChild(tmp);
+                    tmp.select();
+                    document.execCommand('copy');
+                    tmp.remove();
+                    copyBtn.textContent = 'Copied';
+                } finally {
+                    setTimeout(() => {
+                        copyBtn.textContent = 'Copy';
+                    }, 1500);
+                }
+            });
+
+            footer.appendChild(copyBtn);
+
+            modal.appendChild(header);
+            modal.appendChild(body);
+            modal.appendChild(footer);
+            backdrop.appendChild(modal);
+            document.body.appendChild(backdrop);
         },
 
         /**

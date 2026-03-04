@@ -2,6 +2,8 @@
 
 // Protocol types based on a2a-codebase-agen-v1.md
 
+import type {ProtocolVersion} from '../protocol/versioning/protocol-versions.js';
+
 // Re-export Unified JSON types
 export * from './unified.js';
 
@@ -10,7 +12,7 @@ export * from './unified.js';
 // ============================================
 
 export interface ContextBlock {
-    version: '1.0';
+    version: ProtocolVersion;
     session_id: string;
     new_task?: string[];
     architectural_features?: string[];
@@ -21,11 +23,16 @@ export interface ContextBlock {
     errors?: ProtocolError[];
     /** Task from client (for action processing) */
     task?: string;
-    /** Execution state for actions */
+    /** Execution state for actions (new protocol format) */
     execution?: {
-        actionId: string;
-        currentActionId: string;
-        history: unknown[];
+        /** Action ID (e.g., 'fix-vue-imports', 'coder') */
+        action: string;
+        /** Current step ID (e.g., 'vue-import-detect', 'llm-request') */
+        step: string;
+        /** Optional status for completion */
+        status?: 'completed';
+        /** History of executed steps */
+        history?: Array<{ step: string; result?: unknown }>;
     };
 }
 
@@ -72,13 +79,17 @@ export interface FileBlockRequest {
 export interface ClientMessage {
     context: ContextBlock;
     files?: FileBlock[];
+    /** Result from client (new protocol format - action-key shape) */
+    result?: ResultCommand;
 }
 
 export interface ServerMessage {
     context: ContextBlock;
     files?: FileBlock[];
     message?: string;
-    /** Action data for iterative execution */
+    /** Execute commands for client (new protocol format - action-key shape) */
+    execute?: ExecuteCommand;
+    /** Legacy: Action data for iterative execution */
     action?: {
         id?: string;
         title?: string;
@@ -93,7 +104,7 @@ export interface ServerMessage {
             title: string;
         }>;
     };
-    /** Executing action for action_executing response (top-level) */
+    /** Legacy: Executing action for action_executing response (top-level) */
     executingAction?: {
         actionId: string;
         title: string;
@@ -102,12 +113,107 @@ export interface ServerMessage {
         dsl?: Record<string, unknown>;
         dslScript?: string;
     };
-    /** Next steps for action_executing response */
+    /** Legacy: Next steps for action_executing response */
     nextSteps?: Array<{
         actionId: string;
         title: string;
     }>;
+    /** Final result when action is completed */
+    finalResult?: {
+        action: string;
+        summary: Record<string, unknown>;
+    };
 }
+
+// ============================================
+// Execute/Result Command Types (New Protocol)
+// ============================================
+
+/**
+ * Execute command from server to client
+ * Uses action-key shape: { execute: { "action-type": { ...params } } }
+ */
+export type ExecuteCommand =
+    | { form: ExecuteForm }
+    | { script: ExecuteScript }
+    | { message: string }
+    | { 'read-file': ExecuteReadFile }
+    | { 'write-file': ExecuteWriteFile }
+    | { 'rag-search': ExecuteRagSearch }
+    | { 'execute-command': ExecuteCommandParams };
+
+/**
+ * Form execute command - interactive form with choices/input
+ */
+export interface ExecuteForm {
+    title?: string;
+    description?: string;
+    choices?: Array<{ id: string; label: string }>;
+    input?: Array<{
+        id: string;
+        label: string;
+        type: 'text' | 'textarea' | 'number' | 'select' | 'checkbox' | 'radio';
+        required?: boolean;
+        placeholder?: string;
+        options?: Array<{ label: string; value: string }>;
+    }>;
+}
+
+/**
+ * Script execute command - execute DSL code on client
+ */
+export interface ExecuteScript {
+    input: Record<string, unknown>;
+    output: string;
+    code: string;
+}
+
+/**
+ * Read-file execute command
+ */
+export interface ExecuteReadFile {
+    path: string;
+    startLine?: number;
+    endLine?: number;
+}
+
+/**
+ * Write-file execute command
+ */
+export interface ExecuteWriteFile {
+    path: string;
+    content: string;
+}
+
+/**
+ * RAG search execute command
+ */
+export interface ExecuteRagSearch {
+    query: string;
+    limit?: number;
+}
+
+/**
+ * Execute-command execute command
+ */
+export interface ExecuteCommandParams {
+    command: string;
+    cwd?: string;
+    timeout?: number;
+}
+
+/**
+ * Result command from client to server
+ * Uses action-key shape: { result: { "action-type": { ...result } } }
+ */
+export type ResultCommand =
+    | { script: Record<string, unknown> }
+    | { 'read-file': { path: string; content: string } }
+    | { 'write-file': { path: string; success: boolean } }
+    | { 'rag-search': { results: unknown[]; files: string[] } }
+    | { 'execute-command': { command: string; exitCode: number; stdout: string; stderr: string } }
+    | { form: { choice?: string; values?: Record<string, unknown> } }
+    | { message: string };
 
 // ============================================
 // Search Types

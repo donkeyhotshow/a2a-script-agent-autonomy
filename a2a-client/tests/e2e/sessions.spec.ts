@@ -110,6 +110,74 @@ test.describe('Sessions', () => {
         // Should have active class
         await expect(sessionItem).toHaveClass(/active/);
     });
+
+    // New Protocol Session Tests
+    test('should handle session with execute.form response', async ({page}) => {
+        // Mock session with execute.form
+        await page.route(/\/api\/v1\/sessions\/[^/]+$/, async (route) => {
+            return route.fulfill({
+                status: 200,
+                contentType: 'application/json',
+                body: JSON.stringify({
+                    success: true,
+                    data: {
+                        ...fixtures.session.data,
+                        messages: [
+                            {
+                                role: 'user',
+                                content: 'исправить импорты'
+                            },
+                            {
+                                role: 'assistant',
+                                content: JSON.stringify(fixtures.executeForm.data.result)
+                            }
+                        ]
+                    }
+                })
+            });
+        });
+
+        const sessionItem = page.locator('#sessionsList .session-item').first();
+        await sessionItem.click();
+        await page.waitForTimeout(500);
+
+        // Session messages should show form content
+        const sessionMessages = page.locator('#sessionMessages');
+        await expect(sessionMessages).toBeVisible();
+    });
+
+    test('should handle session with result action-key', async ({page}) => {
+        // Mock session with result action-key
+        await page.route(/\/api\/v1\/sessions\/[^/]+$/, async (route) => {
+            return route.fulfill({
+                status: 200,
+                contentType: 'application/json',
+                body: JSON.stringify({
+                    success: true,
+                    data: {
+                        ...fixtures.session.data,
+                        messages: [
+                            {
+                                role: 'user',
+                                content: 'выполнить скрипт'
+                            },
+                            {
+                                role: 'assistant',
+                                content: JSON.stringify(fixtures.resultScript.data.result)
+                            }
+                        ]
+                    }
+                })
+            });
+        });
+
+        const sessionItem = page.locator('#sessionsList .session-item').first();
+        await sessionItem.click();
+        await page.waitForTimeout(500);
+
+        const sessionMessages = page.locator('#sessionMessages');
+        await expect(sessionMessages).toBeVisible();
+    });
 });
 
 /**

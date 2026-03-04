@@ -1,0 +1,386 @@
+/**
+ * Session management utilities for API Client
+ */
+
+import type {
+    Session,
+    SessionMetadata,
+    SessionFilter,
+    SessionUpdate,
+    CreateSessionOptions,
+    ProgressInfo,
+    ProgressCallbacks
+} from './types/session.js';
+
+export interface SessionManagerConfig {
+    serverUrl?: string;
+    token?: string;
+    clientId?: string;
+    timeout?: number;
+    polling?: PollingOptions;
+    retry?: RetryConfig;
+    transformer?: RequestTransformer;
+}
+
+export interface PollingOptions {
+    interval?: number;
+    maxAttempts?: number;
+}
+
+export interface RetryConfig {
+    maxRetries?: number;
+    initialDelay?: number;
+    maxDelay?: number;
+    backoffMultiplier?: number;
+    retryOn?: (error: ApiError) => boolean;
+}
+
+export interface RequestTransformer {
+    transformRequest?: (data: Record<string, unknown>) => Record<string, unknown>;
+    transformResponse?: (data: Record<string, unknown>) => Record<string, unknown>;
+}
+
+export class ApiError extends Error {
+    status: number;
+    data: Record<string, unknown>;
+
+    constructor(message: string, status: number, data: Record<string, unknown> = {}) {
+        super(message);
+        this.name = 'ApiError';
+        this.status = status;
+        this.data = data;
+    }
+}
+
+/**
+ * Session management client with enhanced features
+ */
+export class SessionManager {
+    private serverUrl: string;
+    private token?: string;
+    private clientId?: string;
+    private timeout: number;
+    private retryConfig: Required<RetryConfig>;
+
+    constructor(config: SessionManagerConfig = {}) {
+        this.serverUrl = (config.serverUrl ?? 'http://localhost:3000/api/v1').replace(/\/?$/, '');
+        this.token = config.token;
+        this.clientId = config.clientId;
+        this.timeout = config.timeout ?? 30000;
+        
+        // Initialize retry config with defaults
+        this.retryConfig = {
+            maxRetries: config.retry?.maxRetries ?? 3,
+            initialDelay: config.retry?.initialDelay ?? 1000,
+            maxDelay: config.retry?.maxDelay ?? 10000,
+            backoffMultiplier: config.retry?.backoffMultiplier ?? 2,
+            retryOn: config.retry?.retryOn ?? ((error: ApiError) => {
+                // Retry on network errors or 5xx status codes
+                return error.status >= 500 || error.status === 0;
+            }),
+        };
+    }
+
+    /**
+     * Calculate delay for exponential backoff
+     */
+    private calculateDelay(attempt: number): number {
+        const delay = this.retryConfig.initialDelay * Math.pow(this.retryConfig.backoffMultiplier, attempt);
+        return Math.min(delay, this.retryConfig.maxDelay);
+    }
+
+    /**
+     * Check if error is retryable
+     */
+    private isRetryable(error: ApiError): boolean {
+        return this.retryConfig.retryOn(error);
+    }
+
+    /**
+     * Make HTTP request with retry logic
+     */
+    private async request(
+        method: string,
+        path: string,
+        body: Record<string, unknown> | null = null
+    ): Promise<Record<string, unknown>> {
+        const url = `${this.serverUrl}${path}`;
+        const headers: Record<string, string> = {'Content-Type': 'application/json'};
+        if (this.token) headers['Authorization'] = `Bearer ${this.token}`;
+        if (this.clientId) headers['X-Client-ID'] = this.clientId;
+        const options: RequestInit & { timeout?: number } = {method, headers, timeout: this.timeout};
+        if (body) options.body = JSON.stringify(body);
+        
+        let lastError: ApiError | null = null;
+        
+        // Retry loop
+        for (let attempt = 0; attempt <= this.retryConfig.maxRetries; attempt++) {
+            try {
+                const response = await fetch(url, options as RequestInit);
+                const data = (await response.json().catch(() => ({}))) as Record<string, unknown>;
+                
+                if (!response.ok) {
+                    const err = data?.error as { message?: string } | undefined;
+                    const apiError = new ApiError(err?.message ?? 'Request failed', response.status, data);
+                    
+                    // Check if we should retry
+                    if (attempt < this.retryConfig.maxRetries && this.isRetryable(apiError)) {
+                        const delay = this.calculateDelay(attempt);
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                        lastError = apiError;
+                        continue;
+                    }
+                    
+                    throw apiError;
+                }
+                
+                return data;
+            } catch (err) {
+                if ((err as Error).name === 'AbortError') {
+                    throw new ApiError('Request timeout', 408);
+                }
+                
+                // Check if we should retry on fetch errors
+                if (err instanceof ApiError) {
+                    if (attempt < this.retryConfig.maxRetries && this.isRetryable(err)) {
+                        const delay = this.calculateDelay(attempt);
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                        lastError = err;
+                        continue;
+                    }
+                    throw err;
+                }
+                
+                // Network errors
+                if (attempt < this.retryConfig.maxRetries) {
+                    const delay = this.calculateDelay(attempt);
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                    lastError = new ApiError((err as Error).message, 0);
+                    continue;
+                }
+                
+                throw err;
+            }
+        }
+        
+        // If we get here, all retries failed
+        throw lastError ?? new ApiError('Request failed after retries', 0);
+    }
+
+    // ==================== Session Management ====================
+
+    /**
+     * Create a new session with options
+     */
+    async createSessionWithOptions(options: CreateSessionOptions): Promise<Session> {
+        const res = await this.request('POST', '/sessions', {
+            projectId: options.projectId,
+            title: options.title ?? 'New Session',
+            task: options.task,
+        });
+        return (res as { data?: Session }).data as Session;
+    }
+
+    /**
+     * Get session with full details
+     */
+    async getSessionDetails(sessionId: string): Promise<Session> {
+        const res = await this.request('GET', `/sessions/${sessionId}`);
+        return (res as { data?: Session }).data as Session;
+    }
+
+    /**
+     * List sessions with filter options
+     */
+    async listSessionsWithFilter(filter: SessionFilter): Promise<SessionMetadata[]> {
+        const params = new URLSearchParams();
+        if (filter.projectId) params.append('projectId', filter.projectId);
+        if (filter.status) params.append('status', filter.status);
+        if (filter.limit != null) params.append('limit', String(filter.limit));
+        if (filter.offset != null) params.append('offset', String(filter.offset));
+        
+        const res = await this.request('GET', `/sessions?${params}`);
+        return (res as { data?: SessionMetadata[] }).data ?? [];
+    }
+
+    /**
+     * Update session with specific fields
+     */
+    async updateSessionWithOptions(sessionId: string, update: SessionUpdate): Promise<Session> {
+        const res = await this.request('PATCH', `/sessions/${sessionId}`, update as Record<string, unknown>);
+        return (res as { data?: Session }).data as Session;
+    }
+
+    /**
+     * Delete multiple sessions
+     */
+    async deleteMultipleSessions(sessionIds: string[]): Promise<{ deleted: string[]; failed: string[] }> {
+        const deleted: string[] = [];
+        const failed: string[] = [];
+        
+        for (const sessionId of sessionIds) {
+            try {
+                await this.request('DELETE', `/sessions/${sessionId}`);
+                deleted.push(sessionId);
+            } catch {
+                failed.push(sessionId);
+            }
+        }
+        
+        return { deleted, failed };
+    }
+
+    /**
+     * Create a new session
+     */
+    async createSession(projectId: string, title?: string): Promise<unknown> {
+        const res = await this.request('POST', '/sessions', {projectId, title});
+        return (res as { data?: unknown }).data;
+    }
+
+    /**
+     * Get session details
+     */
+    async getSession(sessionId: string): Promise<unknown> {
+        const res = await this.request('GET', `/sessions/${sessionId}`);
+        return (res as { data?: unknown }).data;
+    }
+
+    /**
+     * List sessions
+     */
+    async listSessions(
+        projectId: string,
+        options: { status?: string; limit?: number; offset?: number } = {}
+    ): Promise<unknown> {
+        const params = new URLSearchParams({projectId});
+        if (options.status) params.append('status', options.status);
+        if (options.limit != null) params.append('limit', String(options.limit));
+        if (options.offset != null) params.append('offset', String(options.offset));
+        const res = await this.request('GET', `/sessions?${params}`);
+        return (res as { data?: unknown }).data;
+    }
+
+    /**
+     * Update session
+     */
+    async updateSession(sessionId: string, data: Record<string, unknown>): Promise<unknown> {
+        const res = await this.request('PATCH', `/sessions/${sessionId}`, data);
+        return (res as { data?: unknown }).data;
+    }
+
+    /**
+     * Delete session
+     */
+    async deleteSession(sessionId: string): Promise<unknown> {
+        const res = await this.request('DELETE', `/sessions/${sessionId}`);
+        return (res as { data?: unknown }).data;
+    }
+
+    // ==================== Message Management ====================
+
+    /**
+     * Get messages from session
+     */
+    async getMessages(
+        sessionId: string,
+        options: { limit?: number; offset?: number } = {}
+    ): Promise<unknown> {
+        const params = new URLSearchParams();
+        if (options.limit != null) params.append('limit', String(options.limit));
+        if (options.offset != null) params.append('offset', String(options.offset));
+        const query = params.toString() ? `?${params}` : '';
+        const res = await this.request('GET', `/sessions/${sessionId}/messages${query}`);
+        return (res as { data?: unknown }).data;
+    }
+
+    /**
+     * Add message to session
+     */
+    async addMessage(sessionId: string, message: Record<string, unknown>): Promise<unknown> {
+        const res = await this.request('POST', `/sessions/${sessionId}/messages`, message);
+        return (res as { data?: unknown }).data;
+    }
+
+    // ==================== Request Management ====================
+
+    /**
+     * Create request
+     */
+    async createRequest(data: Record<string, unknown>): Promise<{
+        promiseId: string;
+        requestId?: string;
+        status?: string
+    }> {
+        const res = await this.request('POST', '/requests', data);
+        return (res as { data?: { promiseId: string; requestId?: string; status?: string } }).data ?? (res as {
+            promiseId: string;
+            requestId?: string;
+            status?: string
+        });
+    }
+
+    /**
+     * Get request status
+     */
+    async getRequestStatus(promiseId: string): Promise<unknown> {
+        const res = await this.request('GET', `/requests/${promiseId}/status`);
+        return (res as { data?: unknown }).data ?? res;
+    }
+
+    /**
+     * Get request result
+     */
+    async getRequestResult(promiseId: string): Promise<unknown> {
+        const res = await this.request('GET', `/requests/${promiseId}/result`);
+        return (res as { data?: unknown }).data ?? res;
+    }
+
+    /**
+     * Cancel request
+     */
+    async cancelRequest(promiseId: string): Promise<unknown> {
+        const res = await this.request('DELETE', `/requests/${promiseId}`);
+        return (res as { data?: unknown }).data ?? res;
+    }
+
+    /**
+     * Get queue stats
+     */
+    async getQueueStats(): Promise<unknown> {
+        const res = await this.request('GET', '/requests/queue/stats');
+        return (res as { data?: unknown }).data ?? res;
+    }
+
+    // ==================== Progress Tracking ====================
+
+    /**
+     * Get current progress of a request
+     */
+    async getRequestProgress(promiseId: string): Promise<ProgressInfo> {
+        const status = await this.getRequestStatus(promiseId);
+        const st = status as { status?: string; progress?: number; message?: string };
+        
+        return {
+            promiseId,
+            status: st.status ?? 'unknown',
+            progress: st.progress ?? 0,
+            message: st.message ?? 'Unknown status',
+        };
+    }
+
+    /**
+     * Wait for result with progress tracking
+     */
+    async waitForResultWithProgress(
+        promiseId: string,
+        callbacks: ProgressCallbacks
+    ): Promise<unknown> {
+        // This would need to be implemented with a polling mechanism
+        // For now, return a simple promise
+        return new Promise((resolve, reject) => {
+            // Implementation would go here
+            resolve(null);
+        });
+    }
+}

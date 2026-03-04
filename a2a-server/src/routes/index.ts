@@ -37,13 +37,29 @@ router.use('/versions', versionsRoutes);
 
 async function handleInvoke(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-        const body = req.body as { task?: string; context?: unknown; message?: string; code_blocks?: unknown };
+        const body = req.body as { 
+            task?: string; 
+            context?: unknown; 
+            message?: string; 
+            code_blocks?: unknown;
+            result?: unknown;  // result с action-key shape
+            action?: string;   // action_selection, step_result
+            selectedAction?: { actionId: string };
+            stepId?: string;
+            stepResult?: unknown;
+        };
         const clientId = (req as any).client?.id || 'anonymous';
+        
         const {promiseId} = await invoke(clientId, {
             task: body.task,
             context: body.context,
             message: body.message,
             code_blocks: body.code_blocks as { path: string; content?: string }[] | undefined,
+            // Новые поля для поддержки нового протокола
+            action: body.action,
+            selectedAction: body.selectedAction,
+            stepId: body.stepId,
+            stepResult: body.stepResult,
         });
         res.status(201).json({
             success: true,
