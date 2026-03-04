@@ -5,6 +5,7 @@
   "scripts": {
     "sim:run": "node simulations/run-simulation.js",
     "sim:run-all": "node simulations/run-all-simulations.js",
+    "sse:demo": "node scripts/run-sse-demo.js",
     "questions": "node scripts/questions-cli.js",
     "generate:types": "node scripts/generate-action-types.js",
     "dev": "node scripts/orchestrator.js all",
@@ -33,7 +34,9 @@
     "@types/node": "^20.11.0",
     "concurrently": "^9.1.0",
     "dotenv": "^17.3.1",
+    "eventsource": "^2.0.0",
     "js-yaml": "^4.1.0",
+    "node-fetch": "^3.3.2",
     "tsx": "^4.19.0",
     "typescript": "^5.3.3",
     "vitest": "^4.0.18"

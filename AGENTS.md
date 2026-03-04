@@ -63,6 +63,55 @@ See [`plans/ai-action-transform-template.md`](plans/ai-action-transform-template
 - **ENCRYPTION_KEY** - Must be exactly 32 characters in tests ([`tests/setup.ts`](a2a-server/tests/setup.ts:16))
 - **Test database** - Uses `a2a_test`, not `a2a_server` ([`tests/setup.ts`](a2a-server/tests/setup.ts:13))
 
+### Testing
+
+> For detailed documentation, see [`a2a-server/docs/TESTING-MOCKING-GUIDE.md`](a2a-server/docs/TESTING-MOCKING-GUIDE.md).
+
+#### Test Types
+
+| Type | Location | Speed | Description |
+|------|----------|-------|-------------|
+| **Unit** | [`tests/unit/`](a2a-server/tests/unit/) | ⚡ Fast | Testing individual functions and services |
+| **Integration** | [`tests/integration/`](a2a-server/tests/integration/) | 🟡 Medium | Testing component interactions |
+| **E2E** | [`tests/e2e/`](a2a-server/tests/e2e/) | 🔴 Slow | Full end-to-end scenarios |
+| **Simulation** | [`tests/simulation/`](a2a-server/tests/simulation/) | ⚡ Fast | Golden standard testing via simulations |
+
+#### Mock Utilities
+
+The project provides comprehensive mocking utilities:
+
+- **LLM Mocks** ([`tests/mocks/llm/`](a2a-server/tests/mocks/llm/)) - Mock LLM responses with preset or replay mode
+- **HTTP Mocks** ([`tests/mocks/http/`](a2a-server/tests/mocks/http/)) - Mock fetch with wildcard URL support
+- **Filesystem Mocks** ([`tests/mocks/filesystem/`](a2a-server/tests/mocks/filesystem/)) - In-memory filesystem for testing
+- **Mock Server** ([`tests/helpers/mock-server.ts`](a2a-server/tests/helpers/mock-server.ts)) - Express server for API testing
+- **Mock Client** ([`tests/helpers/mock-client.ts`](a2a-server/tests/helpers/mock-client.ts)) - A2A client SDK mock
+
+#### Environment Variables for Tests
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `SKIP_AUTH=1` | Skip authentication | `SKIP_AUTH=1 npm test` |
+| `TEST_LLM_PROVIDER=mock` | Use mock LLM | `TEST_LLM_PROVIDER=mock npm test` |
+| `RECORD_HTTP=1` | Record HTTP responses | `RECORD_HTTP=1 npm run test:integration` |
+| `LLM_REPLAY_DIR` | Replay directory | `LLM_REPLAY_DIR=./tests/fixtures/llm` |
+
+#### Running Tests
+
+```bash
+# Unit tests with mocks (default)
+npm run test
+
+# Integration tests (requires DB)
+SKIP_AUTH=1 npm run test:integration
+
+# Simulation tests
+npm run test:sim
+npm run test:sim:all
+
+# Update snapshots
+npm test -- --update
+```
+
 ### Architecture
 
 - **Ports**: HTTP server on 3000, client API on 3001, web UI on 5173

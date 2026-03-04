@@ -43,15 +43,4 @@ export interface CreateTaskOptions {
     progress?: number;
 }
 
-/**
- * Create a task with default values
- */
-export function createTask(options: CreateTaskOptions = {}): Task {
-    return {
-        id: options.id ?? `task_${Date.now()}`,
-        type: options.type ?? 'analyze',
-        status: options.status ?? 'pending',
-        target: options.target,
-        progress: options.progress ?? 0,
-    };
-}
+export { createTask } from '../factory/index.js';

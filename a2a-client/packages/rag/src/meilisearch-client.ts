@@ -2,12 +2,7 @@
  * Meilisearch Client - BM25 search integration
  */
 
-const DEFAULT_SETTINGS = {
-    searchableAttributes: ['content', 'name', 'path', 'type'],
-    filterableAttributes: ['type', 'extension', 'framework'],
-    sortableAttributes: ['score', 'lastModified', 'path'],
-    rankingRules: ['words', 'typo', 'proximity', 'attribute', 'sort', 'exactness'],
-};
+import { DEFAULT_SETTINGS } from './meilisearch-defaults.js';
 
 export interface MeilisearchConfig {
     host?: string;

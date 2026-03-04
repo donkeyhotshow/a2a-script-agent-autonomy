@@ -1,10 +1,10 @@
 {
-  "success": true,
+  "success": false,
   "data": {
-    "id": "req_1772636681242_6qqqts2hw",
-    "promiseId": "cmmc6410b0002269cd3i0m0xi",
+    "id": "req_1772652123696_9k1m9qahp",
+    "promiseId": "cmmcfb0hd0002a0ha0s6ho6cc",
     "clientId": "simulation-client",
-    "status": "completed",
+    "status": "pending",
     "priority": 0,
     "context": {
       "version": "1.0",
@@ -12,34 +12,10 @@
     },
     "message": null,
     "codeBlocks": null,
-    "result": {
-      "graph": {
-        "entities": [],
-        "relations": []
-      },
-      "context": {
-        "graph": {
-          "entities": [],
-          "relations": []
-        },
-        "request_files": [
-          "No entities recognized"
-        ]
-      },
-      "missing": [
-        "No entities recognized"
-      ],
-      "outcome": "graph_incomplete",
-      "questions": [
-        "Please provide the relevant code files (controller, model, service, or Vue components)."
-      ],
-      "request_files": [
-        "No entities recognized"
-      ]
-    },
+    "result": null,
     "error": null,
-    "createdAt": "2026-03-04T15:04:41.243Z",
-    "startedAt": "2026-03-04T15:04:48.518Z",
-    "completedAt": "2026-03-04T15:04:48.523Z"
+    "createdAt": "2026-03-04T19:22:03.697Z",
+    "startedAt": null,
+    "completedAt": null
   }
 }

@@ -5,12 +5,7 @@
  * can reuse the same search/indexing flow as the RAG package.
  */
 
-const DEFAULT_SETTINGS = {
-    searchableAttributes: ['content', 'name', 'path', 'type'],
-    filterableAttributes: ['type', 'extension', 'framework'],
-    sortableAttributes: ['score', 'lastModified', 'path'],
-    rankingRules: ['words', 'typo', 'proximity', 'attribute', 'sort', 'exactness'],
-};
+import { DEFAULT_SETTINGS } from '../../../../rag/src/meilisearch-defaults.js';
 
 export interface MeilisearchConfig {
     host?: string;

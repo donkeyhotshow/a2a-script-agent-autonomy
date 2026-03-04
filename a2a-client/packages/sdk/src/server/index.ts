@@ -63,6 +63,12 @@ function sendSseEvent(sessionId: string, event: string, data: unknown): void {
     }
 }
 
+function emitServerSse(sessionId: string, serverResponse: unknown, event: 'task_response' | 'status' | 'session_update' = 'task_response'): void {
+    if (!serverResponse) return;
+    const payload = (serverResponse as any)?.data ?? serverResponse;
+    sendSseEvent(sessionId, event, payload);
+}
+
 const execAsyncPromisified = promisify(execAsync);
 
 const __filename = fileURLToPath(import.meta.url);
@@ -204,6 +210,7 @@ async function handleChoiceSelection(
             message: 'Choice processed by server',
             result: payload,
         });
+        emitServerSse(sessionId, payload, 'task_response');
         
     } catch (error) {
         ws.send(JSON.stringify({ 
@@ -291,6 +298,7 @@ async function handleActionResult(
             message: 'Action result processed by server',
             result: payload,
         });
+        emitServerSse(sessionId, payload, 'task_response');
         
     } catch (error) {
         ws.send(JSON.stringify({ 
@@ -767,6 +775,8 @@ expressApp.post(['/api/sessions', '/api/v1/sessions'], async (req, res) => {
                     },
                 });
                 
+                emitServerSse(session.id, payload, 'task_response');
+                
                 // Return both session and server response
                 res.status(201).json({
                     session: toSessionDetail(updatedSession),
@@ -948,6 +958,7 @@ expressApp.post(['/api/sessions/:sessionId/next', '/api/v1/sessions/:sessionId/n
             message: `New promiseId assigned: ${promiseId}`,
             result: { promiseId, sessionId },
         });
+        emitServerSse(sessionId, { promiseId, sessionId }, 'status');
     }
 
     // Update session with server response data
@@ -961,6 +972,7 @@ expressApp.post(['/api/sessions/:sessionId/next', '/api/v1/sessions/:sessionId/n
         message: 'Server response received and session updated',
         result: payload,
     });
+    emitServerSse(sessionId, payload, 'task_response');
 
     res.status(upstream.status).json(payload);
 });
@@ -1026,32 +1038,34 @@ expressApp.post(['/api/sessions/:sessionId/result', '/api/v1/sessions/:sessionId
     }
 
     const promiseId: string | undefined = payload?.data?.promiseId || payload?.promiseId;
-    if (promiseId) {
-        const updated: Session = {
-            ...session,
-            lastPromiseId: promiseId,
-            status: 'IN_PROGRESS',
-            updatedAt: new Date().toISOString(),
-        };
-        await saveSession(project, updated);
-        
+        if (promiseId) {
+            const updated: Session = {
+                ...session,
+                lastPromiseId: promiseId,
+                status: 'IN_PROGRESS',
+                updatedAt: new Date().toISOString(),
+            };
+            await saveSession(project, updated);
+            
+            broadcastProgress(sessionId, {
+                promiseId,
+                status: 'promise_id_assigned',
+                message: `New promiseId assigned: ${promiseId}`,
+                result: { promiseId, sessionId },
+            });
+            emitServerSse(sessionId, { promiseId, sessionId }, 'status');
+        }
+
+        const updatedSession = await updateSessionWithServerResponse(project, session, payload);
+        await saveSession(project, updatedSession);
+
         broadcastProgress(sessionId, {
             promiseId,
-            status: 'promise_id_assigned',
-            message: `New promiseId assigned: ${promiseId}`,
-            result: { promiseId, sessionId },
+            status: 'server_response_received',
+            message: 'Result processed and session updated',
+            result: payload,
         });
-    }
-
-    const updatedSession = await updateSessionWithServerResponse(project, session, payload);
-    await saveSession(project, updatedSession);
-
-    broadcastProgress(sessionId, {
-        promiseId,
-        status: 'server_response_received',
-        message: 'Result processed and session updated',
-        result: payload,
-    });
+        emitServerSse(sessionId, payload, 'task_response');
 
     res.status(upstream.status).json(payload);
 });
@@ -1262,6 +1276,7 @@ expressApp.all(['/api/requests*', '/api/v1/requests*'], async (req, res) => {
                             message: 'Session status updated from server',
                             result: updatedSession,
                         });
+                        emitServerSse(sessionId, payload, 'status');
                     }
                 }
             }
@@ -1938,6 +1953,7 @@ expressApp.patch(['/api/sessions/:sessionId', '/api/v1/sessions/:sessionId'], as
         message: 'Session updated',
         result: updated,
     });
+    emitServerSse(sessionId, updated, 'session_update');
     
     res.json(updated);
 });
