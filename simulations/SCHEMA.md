@@ -28,6 +28,14 @@ Not every step has all 8 files: steps without LLM обычно имеют `clien
 `server-transforms-response.json`, `response.json`, `received.json`; steps with LLM add the `.md` files; transform docs
 описывают серверную логику даже когда LLM не используется.
 
+## Примеры Web ↔ Client API
+
+| Файл | Направление | Что показывает |
+| `simulations/dialog/1/client.json` | Web → Client API | UI отправляет начальный `task` с `projectId`, чтобы создать сессию и показывать прогресс. |
+| `simulations/dialog/1/received.json` | Client API → Web | Клиент получает `execute.form` с выбором режимов (dialog, auto-ai, task-decomposition); это то, что рендерит интерфейс. |
+| `simulations/dialog/2/client.json` | Web → Client API | После выбора опции web отправляет `result.choice` вместе с идентификаторами сессии/проекта. |
+| `simulations/dialog/2/received.json` | Client API → Web | Клиент API отвечает формой с полем `message` для следующего шага диалога. |
+
 ## Request
 
 - **First request (server‑level симуляция)**: роутер‑шаг `task/new`:

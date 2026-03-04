@@ -1,7 +1,7 @@
 /**
  * @a2a/sdk/client - Client exports
  * 
- * Re-exports from @a2a/api-client
+ * Re-exports from api-client source
  */
 
-export * from '@a2a/api-client';
+export * from '../index.js';

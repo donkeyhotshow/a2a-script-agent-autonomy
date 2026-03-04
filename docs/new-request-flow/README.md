@@ -29,5 +29,8 @@
 4. **Server** возвращает `execute.form.choices` (первый ответ) или `execute.*` (последующие)
 5. **Опрос:** Client API опрашивает promiseId до completed, возвращает Web
 
+Дополнительные сценарии:
+- [Remote web viewer + local client workflow](REMOTE-CLIENT-WEB.md) — когда ты сидишь на телефоне и весь лог/история остаются на локальном клиенте.
+
 Подробно: [WEB-UI.md](WEB-UI.md), [API-SERVER.md](API-SERVER.md). 
 Формат первого запроса к серверу: только `{ task }` (см. [simulations/SCHEMA.md](../../simulations/SCHEMA.md)).

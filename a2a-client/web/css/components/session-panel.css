@@ -179,3 +179,99 @@
     color: var(--fg2);
     font-size: 12px;
 }
+
+.session-card {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 12px 16px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--fg1, #ffffff);
+    font-size: 0.9rem;
+}
+
+.session-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+    font-weight: 600;
+}
+
+.session-card-status {
+    font-size: 0.75rem;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.session-card-step {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.7);
+    margin-left: 6px;
+}
+
+.session-card-body {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.session-card-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.8rem;
+}
+
+.session-card-label {
+    color: rgba(255, 255, 255, 0.55);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-size: 0.65rem;
+}
+
+.session-card-id {
+    font-family: Menlo, Monaco, Consolas, 'Courier New', monospace;
+    font-size: 0.75rem;
+    background: rgba(0, 0, 0, 0.2);
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.session-card-progress {
+    position: relative;
+    flex: 1;
+    margin: 0 8px;
+    height: 6px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    overflow: hidden;
+}
+
+.session-card-progress span {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, #22c55e, #0ea5e9);
+    border-radius: 6px;
+}
+
+.session-card-footer {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.session-card-btn {
+    border: none;
+    background: rgba(255, 255, 255, 0.08);
+    color: inherit;
+    padding: 4px 10px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.session-card-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+}

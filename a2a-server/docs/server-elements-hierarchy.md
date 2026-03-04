@@ -833,7 +833,7 @@ pipelines:
 
 ```json
 {
-  "task": "dialog",
+  "task": "диалог",
   "context": {
     "execution": {
       "action": "dialog",

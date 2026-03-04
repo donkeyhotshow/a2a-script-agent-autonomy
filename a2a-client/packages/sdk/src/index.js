@@ -12,9 +12,9 @@
  * import expressApp from '@a2a/sdk/server';
  */
 
-// Re-export client
-export * from '@a2a/api-client';
+// Re-export client exports
+export * from './index.js';
 
-// Re-export server
-// Note: Users can also import directly from '@a2a/api-server'
-// The server export is available as the default export from api-server
+// Re-export server exports
+// Users can also import directly from '@a2a/sdk/server'
+export { default as createApp } from './server/index.js';

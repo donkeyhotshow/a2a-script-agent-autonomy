@@ -1,22 +1,42 @@
 /**
  * @a2a/execution - Unified execution package
  * 
- * Объединяет fs-utils, terminal и script-runner
- * 
- * @example
- * // Использование fs-utils
- * import { FileScanner, scanFiles } from '@a2a/execution/fs-utils';
- * 
- * @example
- * // Использование terminal
- * import { TerminalHandler } from '@a2a/execution/terminal';
- * 
- * @example
- * // Использование script-runner
- * import { ScriptRunner } from '@a2a/execution/script-runner';
+ * Объединяет:
+ * - fs-utils: файловые утилиты (file-scanner, glob-matcher, ignore-detector, protocol-result)
+ * - terminal: терминальные функции  
+ * - script-runner: выполнение скриптов
  */
 
-// Re-exports - пользователи могут также импортировать напрямую из субпакетов
-// import { FileScanner } from '@a2a/fs-utils';
-// import { TerminalHandler } from '@a2a/terminal';
-// import { ScriptRunner } from '@a2a/script-runner';
+// Re-export fs-utils
+const fsUtils = require('./index.ts');
+
+// Re-export terminal
+const terminal = require('./terminal/terminal-handler.cjs');
+const { CommandExecutor } = require('./terminal/command-executor-wrapper.cjs');
+const { CommandConverter, commandConverter } = require('./terminal/command-converter.cjs');
+
+// Re-export script-runner
+const scriptRunner = require('./script-runner/index.ts');
+
+module.exports = {
+  // fs-utils
+  ...fsUtils,
+  
+  // terminal
+  TerminalHandler: terminal.TerminalHandler,
+  CommandExecutor,
+  CommandConverter,
+  commandConverter,
+  
+  // script-runner
+  ...scriptRunner,
+  
+  // Alias for convenience
+  terminal: {
+    TerminalHandler: terminal.TerminalHandler,
+    CommandExecutor,
+    CommandConverter,
+    commandConverter
+  },
+  scriptRunner
+};

@@ -9,6 +9,7 @@ import {readFile} from 'node:fs/promises';
 import {resolve as resolvePath} from 'node:path';
 
 import {logger} from '../utils/logger.js';
+import {proxyCacheConfig} from '../../config/proxy.config.js';
 import {createOllamaPromise, waitForPromise} from './ollama-adapter.js';
 import {AIService} from './ai-service.js';
 
@@ -41,6 +42,7 @@ function getProxyService(): AIService | null {
         cachedProxyService = new AIService({
             proxy: {
                 baseUrl: AI_PROXY_URL,
+                cache: proxyCacheConfig,
             },
         });
         logger.info('[LLM/Proxy] AIService initialized', {baseUrl: AI_PROXY_URL});

@@ -23,10 +23,7 @@
   ],
   "author": "",
   "license": "MIT",
-  "dependencies": {
-    "@a2a/api-client": "file:../api-client",
-    "@a2a/api-server": "file:../api-server"
-  },
+  "dependencies": {},
   "devDependencies": {
     "typescript": "^5.3.3",
     "tsx": "^4.19.0"
