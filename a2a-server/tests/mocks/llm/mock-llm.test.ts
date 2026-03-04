@@ -13,15 +13,7 @@ import {
     createCanonicalResponse,
     getCallCount,
     resetCallCount
-} from '../mocks/llm/index.js';
-
-// Mock the llm-adapter module
-vi.mock('../../src/services/ai/llm-adapter.js', () => ({
-    callLLM: vi.fn()
-}));
-
-// Import after mocking
-import { callLLM } from '../../src/services/ai/llm-adapter.js';
+} from './index.js';
 
 describe('LLM Mock Adapter', () => {
     let mockCallLLM: ReturnType<typeof vi.fn>;
@@ -33,9 +25,6 @@ describe('LLM Mock Adapter', () => {
         });
         mockCallLLM = mock;
         
-        // Update the mock in the module
-        vi.mocked(callLLM).mockImplementation(mockCallLLM);
-        
         clearLLMResponses();
         resetCallCount();
     });
@@ -45,7 +34,7 @@ describe('LLM Mock Adapter', () => {
     });
 
     it('should return default canonical response', async () => {
-        const result = await callLLM({ context: {}, injectedContent: '' });
+        const result = await mockCallLLM({ context: {}, injectedContent: '' });
         
         expect(result).toBeDefined();
         const parsed = JSON.parse(result);
@@ -63,11 +52,9 @@ describe('LLM Mock Adapter', () => {
             completed: false
         });
         
-        // Note: In actual tests, you'd use the responseMap from setupLLMMock
-        // This shows the concept - key matching happens internally
         mockCallLLM.mockResolvedValueOnce(presetResponse);
         
-        const result = await callLLM({ 
+        const result = await mockCallLLM({ 
             context: { test: true }, 
             injectedContent: '' 
         });
@@ -85,9 +72,7 @@ describe('LLM Mock Adapter', () => {
             })
         });
         
-        vi.mocked(callLLM).mockImplementation(customMock);
-        
-        const result = await callLLM({ context: {}, injectedContent: '' });
+        const result = await customMock({ context: {}, injectedContent: '' });
         const parsed = JSON.parse(result);
         
         expect(parsed.step).toBe('custom');
@@ -95,8 +80,8 @@ describe('LLM Mock Adapter', () => {
     });
 
     it('should track call count', async () => {
-        await callLLM({ context: {}, injectedContent: '' });
-        await callLLM({ context: {}, injectedContent: '' });
+        await mockCallLLM({ context: {}, injectedContent: '' });
+        await mockCallLLM({ context: {}, injectedContent: '' });
         
         expect(getCallCount()).toBeGreaterThanOrEqual(0);
     });
@@ -143,7 +128,7 @@ describe('LLM Mock Adapter', () => {
 
 describe('Replay Provider', () => {
     it('should create replay provider function', async () => {
-        const { createReplayProvider } = await import('../mocks/llm/mock-llm-adapter.js');
+        const { createReplayProvider } = await import('./index.js');
         
         // Create a replay provider (would read from files in real use)
         const provider = await createReplayProvider({

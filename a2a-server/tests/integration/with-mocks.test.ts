@@ -8,7 +8,6 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { vi.mock } from 'vitest';
 import express from 'express';
 
 // Import mocks
@@ -16,7 +15,7 @@ import {
     setupLLMMock, 
     clearLLMResponses,
     createCanonicalResponse 
-} from '../mocks/llm/index.js';
+} from '../mocks/llm/mock-llm-adapter.js';
 
 import { 
     MockFetch, 
@@ -105,10 +104,10 @@ describe('Integration Tests with Mocks', () => {
             expect(mockFetch.getCallCount()).toBe(1);
         });
 
-        it('should throw when no mock found', () => {
+        it('should throw when no mock found', async () => {
             const fetchFn = mockFetch.getMock();
             
-            expect(() => fetchFn('https://unknown.url')).toThrow();
+            await expect(fetchFn('https://unknown.url')).rejects.toThrow();
         });
     });
 

@@ -90,7 +90,7 @@ export class MockA2AServer {
         // POST /api/v1/invoke - Invoke a request
         this.app.post('/api/v1/invoke', (req: Request, res: Response) => {
             const key = this.generateKey('invoke', req.body);
-            const mockResponse = this.responses.get(key);
+            const mockResponse = this.findMockResponse(key);
             
             if (mockResponse?.handler) {
                 return mockResponse.handler(req, res);
@@ -177,7 +177,40 @@ export class MockA2AServer {
         });
     }
 
+    private findMockResponse(key: string): MockResponse | undefined {
+        // First try exact match
+        if (this.responses.has(key)) {
+            return this.responses.get(key);
+        }
+        
+        // Try wildcard match for invoke endpoint
+        if (key.startsWith('invoke:')) {
+            const wildcardKey = 'invoke:*';
+            if (this.responses.has(wildcardKey)) {
+                return this.responses.get(wildcardKey);
+            }
+            // Also try empty body key
+            if (this.responses.has('invoke:{}')) {
+                return this.responses.get('invoke:{}');
+            }
+        }
+        
+        // Try wildcard match for status endpoint
+        if (key.startsWith('status:')) {
+            const wildcardKey = 'status:*';
+            if (this.responses.has(wildcardKey)) {
+                return this.responses.get(wildcardKey);
+            }
+        }
+        
+        return undefined;
+    }
+
     private generateKey(operation: string, data: any): string {
+        // For invoke, use wildcard if body exists
+        if (operation === 'invoke' && data && Object.keys(data).length > 0) {
+            return 'invoke:*';
+        }
         return `${operation}:${JSON.stringify(data)}`;
     }
 

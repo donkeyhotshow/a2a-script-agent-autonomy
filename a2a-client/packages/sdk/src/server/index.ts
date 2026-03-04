@@ -28,7 +28,6 @@ import { WebSocket, WebSocketServer } from 'ws';
 import express from 'express';
 import cors from 'cors';
 import multer from 'multer';
-import { Readable } from 'stream';
 import fetch from 'node-fetch';
 import { randomUUID } from 'crypto';
 
@@ -37,6 +36,32 @@ import { MeilisearchClient } from './services/meilisearch-client.js';
 
 // Import WebSocket connections map
 const wsConnections = new Map<string, Set<WebSocket>>();
+const sseClients = new Map<string, Set<express.Response>>();
+
+function subscribeSseClient(sessionId: string, res: express.Response): void {
+    if (!sseClients.has(sessionId)) {
+        sseClients.set(sessionId, new Set());
+    }
+    sseClients.get(sessionId)!.add(res);
+}
+
+function unsubscribeSseClient(sessionId: string, res: express.Response): void {
+    const clients = sseClients.get(sessionId);
+    if (!clients) return;
+    clients.delete(res);
+    if (clients.size === 0) {
+        sseClients.delete(sessionId);
+    }
+}
+
+function sendSseEvent(sessionId: string, event: string, data: unknown): void {
+    const clients = sseClients.get(sessionId);
+    if (!clients) return;
+    const payload = `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
+    for (const res of clients) {
+        res.write(payload);
+    }
+}
 
 const execAsyncPromisified = promisify(execAsync);
 
@@ -299,6 +324,10 @@ function broadcastProgress(sessionId: string, progress: {
 }): void {
     broadcastToSession(sessionId, {
         type: 'progress',
+        timestamp: new Date().toISOString(),
+        ...progress,
+    });
+    sendSseEvent(sessionId, 'progress', {
         timestamp: new Date().toISOString(),
         ...progress,
     });
@@ -1253,28 +1282,8 @@ function extractSessionIdFromPath(pathName: string): string | null {
     return match ? match[1] : null;
 }
 
-expressApp.get(['/api/v1/sse/:sessionId', '/api/sse/:sessionId'], async (req, res) => {
-    const sessionId = String(req.params.sessionId || '');
-    const serverBase = await getServerBaseUrl();
-    const cfg = await loadConfig();
-    const headers: Record<string, string> = {};
-    if (cfg.token) headers['Authorization'] = `Bearer ${cfg.token}`;
-
-    let upstream: Response;
-    try {
-        upstream = await fetch(`${serverBase}/sse/${encodeURIComponent(sessionId)}`, {headers});
-    } catch (error) {
-        console.error('Error connecting to upstream SSE server:', error);
-        res.writeHead(502, {'Content-Type': 'text/plain'});
-        res.end('Unable to connect to upstream SSE service');
-        return;
-    }
-
-    if (!upstream.ok || !upstream.body) {
-        const text = await upstream.text().catch(() => '');
-        res.status(upstream.status).send(text || upstream.statusText);
-        return;
-    }
+expressApp.get(['/api/v1/sse/:sessionId', '/api/sse/:sessionId'], (req, res) => {
+    const sessionId = String(req.params.sessionId || 'default');
 
     res.writeHead(200, {
         'Content-Type': 'text/event-stream',
@@ -1283,69 +1292,28 @@ expressApp.get(['/api/v1/sse/:sessionId', '/api/sse/:sessionId'], async (req, re
         'X-Accel-Buffering': 'no',
     });
 
-    const nodeStream = Readable.fromWeb(upstream.body as any);
-    
-    // Transform SSE events for new protocol
-    let buffer = '';
-    
-    nodeStream.on('data', (chunk: Buffer) => {
-        buffer += chunk.toString();
-        
-        // Process complete SSE events
-        const lines = buffer.split('\n');
-        buffer = lines.pop() || ''; // Keep incomplete line in buffer
-        
-        for (const line of lines) {
-            if (line.startsWith('data: ')) {
-                try {
-                    const data = JSON.parse(line.slice(6));
-                    
-                    // Transform for new protocol: check for execute.form.choices
-                    const responseType = detectServerResponseType(data);
-                    const transformed = {
-                        ...data,
-                        _responseType: responseType,
-                        _timestamp: new Date().toISOString(),
-                    };
-                    
-                    // If it's a form, also extract choices
-                    if (responseType === 'form') {
-                        transformed._formChoices = extractFormChoices(data);
-                    }
-                    
-                    res.write(`data: ${JSON.stringify(transformed)}\n\n`);
-                } catch {
-                    // Not JSON, send as-is
-                    res.write(`${line}\n\n`);
-                }
-            } else {
-                // Pass through other SSE lines (event, etc.)
-                res.write(`${line}\n\n`);
-            }
-        }
-    });
-
-    nodeStream.on('end', () => {
-        if (buffer) {
-            res.write(`data: ${buffer}\n\n`);
-        }
-        res.end();
-    });
-
-    nodeStream.on('error', (err) => {
-        console.error('SSE stream error:', err);
-        res.end();
-    });
+    res.write(`event: connected\ndata: ${JSON.stringify({sessionId, timestamp: new Date().toISOString()})}\n\n`);
+    subscribeSseClient(sessionId, res);
 
     req.on('close', () => {
-        nodeStream.destroy();
+        unsubscribeSseClient(sessionId, res);
     });
 });
 
-expressApp.get(['/api/v1/sse', '/api/sse'], async (_req, res) => {
-    // Keep it simple: web should subscribe to a session SSE stream.
-    res.writeHead(200, {'Content-Type': 'text/event-stream'});
-    res.write(`event: connected\ndata: ${JSON.stringify({timestamp: new Date().toISOString()})}\n\n`);
+expressApp.get(['/api/v1/sse', '/api/sse'], (_req, res) => {
+    res.writeHead(200, {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+    });
+
+    const timestamp = new Date().toISOString();
+    res.write(`event: connected\ndata: ${JSON.stringify({timestamp})}\n\n`);
+    subscribeSseClient('global', res);
+
+    _req.on('close', () => {
+        unsubscribeSseClient('global', res);
+    });
 });
 
 // ==================== TERMINAL API ====================
