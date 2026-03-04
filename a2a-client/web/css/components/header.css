@@ -25,36 +25,11 @@
     gap: 8px;
 }
 
-/* Mac-style window controls */
+/* Mac-style window controls – layout only (visual style from macos-theme.css) */
 .window-controls {
     display: flex;
     gap: 8px;
     margin-right: 12px;
-}
-
-.window-control {
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    border: none;
-    cursor: pointer;
-    transition: transform 0.2s ease;
-}
-
-.window-control.close {
-    background: #ff5f57;
-}
-
-.window-control.minimize {
-    background: #ffbd2e;
-}
-
-.window-control.maximize {
-    background: #28c841;
-}
-
-.window-control:hover {
-    transform: scale(1.1);
 }
 
 .header-controls {

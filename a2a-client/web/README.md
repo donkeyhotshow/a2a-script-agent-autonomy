@@ -12,8 +12,7 @@
 web/
 ├── index.html              # Главная страница
 ├── css/                    # Стили
-│   ├── app.css            # Основные стили
-│   ├── plasticine-ui.css  # Стили пластилинового UI
+│   ├── app.css            # Основные стили (macOS UI, включает Plasticine-панели)
 │   ├── base/              # Базовые стили
 │   │   ├── typography.css
 │   │   ├── variables.css
