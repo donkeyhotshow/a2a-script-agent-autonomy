@@ -265,6 +265,11 @@ const SSEClient = {
 
         this.eventSource.addEventListener('error', (event) => {
             try {
+                if (!event.data) {
+                    console.warn('[SSE] Error event without data', event);
+                    this.emit('error', {message: 'SSE connection error', detail: event});
+                    return;
+                }
                 const data = JSON.parse(event.data);
                 console.log('[SSE] Error event:', data);
                 this.emit('error', data);

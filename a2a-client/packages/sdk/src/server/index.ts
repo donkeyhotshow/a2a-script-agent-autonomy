@@ -1253,14 +1253,23 @@ function extractSessionIdFromPath(pathName: string): string | null {
     return match ? match[1] : null;
 }
 
-expressApp.get('/api/v1/sse/:sessionId', async (req, res) => {
+expressApp.get(['/api/v1/sse/:sessionId', '/api/sse/:sessionId'], async (req, res) => {
     const sessionId = String(req.params.sessionId || '');
     const serverBase = await getServerBaseUrl();
     const cfg = await loadConfig();
     const headers: Record<string, string> = {};
     if (cfg.token) headers['Authorization'] = `Bearer ${cfg.token}`;
 
-    const upstream = await fetch(`${serverBase}/sse/${encodeURIComponent(sessionId)}`, {headers});
+    let upstream: Response;
+    try {
+        upstream = await fetch(`${serverBase}/sse/${encodeURIComponent(sessionId)}`, {headers});
+    } catch (error) {
+        console.error('Error connecting to upstream SSE server:', error);
+        res.writeHead(502, {'Content-Type': 'text/plain'});
+        res.end('Unable to connect to upstream SSE service');
+        return;
+    }
+
     if (!upstream.ok || !upstream.body) {
         const text = await upstream.text().catch(() => '');
         res.status(upstream.status).send(text || upstream.statusText);
@@ -1333,7 +1342,7 @@ expressApp.get('/api/v1/sse/:sessionId', async (req, res) => {
     });
 });
 
-expressApp.get('/api/v1/sse', async (_req, res) => {
+expressApp.get(['/api/v1/sse', '/api/sse'], async (_req, res) => {
     // Keep it simple: web should subscribe to a session SSE stream.
     res.writeHead(200, {'Content-Type': 'text/event-stream'});
     res.write(`event: connected\ndata: ${JSON.stringify({timestamp: new Date().toISOString()})}\n\n`);
