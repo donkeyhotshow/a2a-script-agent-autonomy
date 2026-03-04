@@ -6,6 +6,7 @@
  */
 
 import {logger} from '../../../utils/logger.js';
+import {getSchemaValidator} from '../validation/schema-validator.service.js';
 import type {
     RequestContext,
     ProcessResult,
@@ -82,6 +83,20 @@ export abstract class BaseRequestProcessor {
 
             // Process the request
             const result = await this.doProcess(request);
+
+            // Validate response against JSON schema (if validation is enabled)
+            const schemaValidator = getSchemaValidator();
+            if (schemaValidator.isEnabled() && result.response) {
+                const validationResult = schemaValidator.validateResponse(result.response);
+                if (!validationResult.valid) {
+                    logger.warn(`[${this.processorName}] Response validation failed`, {
+                        promiseId,
+                        errors: validationResult.errors
+                    });
+                    // Note: We don't fail the request, just log the validation error
+                    // This ensures backward compatibility
+                }
+            }
 
             const duration = Date.now() - startTime;
             logger.info(`[${this.processorName}] Processing completed`, {

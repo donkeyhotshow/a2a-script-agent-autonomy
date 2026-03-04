@@ -2,6 +2,8 @@
  * Transform Pipeline Runtime Types
  * 
  * Types for the transform DSL defined in server-transform.schema.json
+ * 
+ * Pipeline order: request.json → server-transforms-request.json → request.md → LLM → response.md → server-transforms-response.json → response.json
  */
 
 import type { JSONValue } from 'jsonify';

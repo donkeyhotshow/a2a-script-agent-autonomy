@@ -2,7 +2,7 @@
  * Action Context Parser
  *
  * Specialized parser for action-related context
- * Handles proposedActions, executingAction, and action execution state
+ * @deprecated Используйте новый формат с execute.form.choices
  */
 
 import {
@@ -31,6 +31,7 @@ export interface ActionExecutionState {
 
 /**
  * Proposed action structure
+ * @deprecated Используйте `execute.form.choices`
  */
 export interface ProposedAction {
     id: string;
@@ -41,10 +42,13 @@ export interface ProposedAction {
 
 /**
  * Action context data
+ * @deprecated Используйте контекст с execute и result (action-key shape)
  */
 export interface ActionContext {
     sessionId: string;
+    /** @deprecated Используйте `execute.form.choices` */
     proposedActions?: ProposedAction[];
+    /** @deprecated Используйте `context.execution` (новый формат) */
     executingAction?: ActionExecutionState;
     task?: string;
 }

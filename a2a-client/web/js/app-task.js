@@ -19,6 +19,13 @@
         } catch (_) {}
     }
 
+    function ensureSessionPanel() {
+        const workflow = window.PlasticineWorkflow;
+        if (!workflow?.run) return;
+        if (workflow.sessionBinder) return;
+        workflow.run(document.body, { types: ['sessions'] });
+    }
+
     async function init() {
         const container = document.getElementById('header-container');
         if (!container) return;
@@ -31,6 +38,7 @@
         if (window.TaskFlow && window.TaskFlow.init) {
             window.TaskFlow.init();
         }
+        ensureSessionPanel();
 
         const settingsModal = document.getElementById('settingsModal');
         const settingsApiUrl = document.getElementById('settingsApiUrl');

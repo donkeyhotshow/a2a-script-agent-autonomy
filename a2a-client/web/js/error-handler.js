@@ -74,36 +74,43 @@
          * Handle API errors specifically
          */
         handleApiError(response, context = {}) {
-            let message = 'API request failed';
-            let code = 'API_ERROR';
-            
-            if (response?.data?.error) {
-                message = response.data.error.message || message;
-                code = response.data.error.code || code;
-            } else if (response?.error?.message) {
-                message = response.error.message;
-                code = response.error.code || code;
-            } else if (response?.message) {
-                message = response.message;
-            }
+            const userMessage = this._formatApiMessage(response) || 'API request failed';
+            const code = response?.data?.error?.code
+                || response?.error?.code
+                || response?.code
+                || 'API_ERROR';
 
-            return this.handle(new Error(message), {
+            const normalized = this.handle(new Error(userMessage), {
                 ...context,
                 code,
                 status: response?.status,
                 response
             });
+
+            this._pushSessionMessage(userMessage, {
+                code,
+                status: response?.status,
+                context: normalized.context
+            });
+
+            return normalized;
         },
 
         /**
          * Handle network errors
          */
         handleNetworkError(error, context = {}) {
-            return this.handle(error, {
+            const normalized = this.handle(error, {
                 ...context,
                 type: 'network',
                 code: 'NETWORK_ERROR'
             });
+            this._pushSessionMessage(error?.message || 'Network error', {
+                code: 'NETWORK_ERROR',
+                status: context?.status,
+                type: 'network'
+            });
+            return normalized;
         },
 
         /**
@@ -364,6 +371,39 @@
             return this.config.retryableErrors.some(err => 
                 code.includes(err) || message.includes(err)
             );
+        },
+
+        _formatApiMessage(response) {
+            if (!response) return '';
+            const segments = [];
+            const apiError = response?.data?.error || response?.error;
+            if (apiError?.message) segments.push(apiError.message);
+            if (apiError?.details) {
+                const details = typeof apiError.details === 'string'
+                    ? apiError.details
+                    : JSON.stringify(apiError.details);
+                segments.push(details);
+            }
+            if (response?.data?.message && !segments.includes(response.data.message)) {
+                segments.push(response.data.message);
+            }
+            if (response?.message && !segments.includes(response.message)) {
+                segments.push(response.message);
+            }
+            if (response?.status) {
+                segments.push(`status ${response.status}`);
+            }
+            return segments.filter(Boolean).join(' · ');
+        },
+
+        _pushSessionMessage(message, meta = {}) {
+            if (!message) return;
+            const vm = global.SessionViewModel;
+            if (!vm) return;
+            vm.pushMessage({
+                content: message,
+                metadata: {...meta, severity: meta.code === 'API_ERROR' ? 'error' : 'warning'}
+            }, 'system');
         },
 
         /**

@@ -1,6 +1,7 @@
 import {Router, Request, Response, NextFunction} from 'express';
 import {authenticate} from '../middleware/auth.middleware.js';
 import {invoke} from '../services/utils/invoke.service.js';
+import { getSchemaValidator } from '../services/core/validation/schema-validator.service.js';
 
 // Import routes
 import requestsRoutes from './requests.routes.js';
@@ -48,6 +49,23 @@ async function handleInvoke(req: Request, res: Response, next: NextFunction): Pr
             stepId?: string;
             stepResult?: unknown;
         };
+        
+        // Validate request against JSON schema (if validation is enabled)
+        const schemaValidator = getSchemaValidator();
+        const validationResult = schemaValidator.validateRequest(body);
+        
+        if (!validationResult.valid) {
+            res.status(400).json({
+                success: false,
+                error: {
+                    code: 'VALIDATION_ERROR',
+                    message: 'Request validation failed',
+                    details: validationResult.errors
+                }
+            });
+            return;
+        }
+        
         const clientId = (req as any).client?.id || 'anonymous';
         
         const {promiseId} = await invoke(clientId, {

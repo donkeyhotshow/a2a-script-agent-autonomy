@@ -1,6 +1,12 @@
 // Auto-generated from JSON Schema - DO NOT EDIT MANUALLY
 // Generated: 2026-03-03T20:10:27.767Z
 
+/**
+ * Action-key shape for execute/result.
+ * Uses action-type keys like: { script: {...} }, { "read-file": {...} }, etc.
+ */
+export type ActionKeyShape = Record<string, any>;
+
 export interface ExecutionContext {
   action: string;
   step?: string;
@@ -53,19 +59,19 @@ export interface ExecuteScript {
 }
 
 export interface ExecuteReadFile {
-  read-file: Record<string, any>;
+  "read-file": Record<string, any>;
 }
 
 export interface ExecuteWriteFile {
-  write-file: Record<string, any>;
+  "write-file": Record<string, any>;
 }
 
 export interface ExecuteRagSearch {
-  rag-search: Record<string, any>;
+  "rag-search": Record<string, any>;
 }
 
 export interface ExecuteCommand {
-  execute-command: Record<string, any>;
+  "execute-command": Record<string, any>;
 }
 
 export interface ExecuteForm {
@@ -81,19 +87,19 @@ export interface ResultScript {
 }
 
 export interface ResultReadFile {
-  read-file: Record<string, any>;
+  "read-file": Record<string, any>;
 }
 
 export interface ResultWriteFile {
-  write-file: Record<string, any>;
+  "write-file": Record<string, any>;
 }
 
 export interface ResultRagSearch {
-  rag-search: Record<string, any>;
+  "rag-search": Record<string, any>;
 }
 
 export interface ResultExecuteCommand {
-  execute-command: Record<string, any>;
+  "execute-command": Record<string, any>;
 }
 
 export interface ResultChoice {

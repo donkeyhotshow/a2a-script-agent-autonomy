@@ -30,9 +30,15 @@ export interface ActionResponseSimulation {
         execution?: ExecutionState;
         [key: string]: unknown;
     };
-    /** Текущее выполняемое действие */
+    /**
+     * Текущее выполняемое действие
+     * @deprecated Используйте `execute` с action-type ключами
+     */
     executingAction?: SubAction;
-    /** Следующие шаги */
+    /**
+     * Следующие шаги
+     * @deprecated Используйте `execute.form.choices`
+     */
     nextSteps?: SubAction[];
     /** Результат поиска (для action_proposal) */
     action?: ActionMatch;
@@ -313,7 +319,9 @@ export function createActionResponse(params: {
     action?: ActionMatch;
     actionDefinition?: ActionDefinition;
     executionState?: ExecutionState;
+    /** @deprecated Используйте `execute` с action-type ключами */
     executingAction?: SubAction;
+    /** @deprecated Используйте `execute.form.choices` */
     nextSteps?: SubAction[];
     context?: Record<string, unknown>;
     error?: string;

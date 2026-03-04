@@ -73,11 +73,17 @@
                 const response = await fetch(url, options);
                 const data = await response.json().catch(() => ({}));
                 if (!response.ok) {
+                    global.ErrorHandler?.handleApiError({
+                        status: response.status,
+                        data,
+                        error: data?.error
+                    }, { module: 'SessionManager', path: url, method });
                     throw new Error(data?.error?.message || `Request failed: ${response.status}`);
                 }
                 return data.data || data;
             } catch (error) {
                 console.error('[SessionManager] Request error:', error);
+                global.ErrorHandler?.handleNetworkError(error, { module: 'SessionManager', path: url, method });
                 throw error;
             }
         },

@@ -29,16 +29,27 @@ const LEGACY_FIELD_MAPPINGS: Record<string, string> = {
 
 /**
  * Legacy format patterns
+ * @deprecated Эти интерфейсы используются только для обратной совместимости
+ * @see docs/new-request-flow/PROTOCOL.md
  */
 interface LegacyRequest {
+  /** @deprecated */
   actions?: unknown[];
+  /** @deprecated */
   proposedActions?: unknown[];
+  /** @deprecated */
   subActions?: unknown[];
+  /** @deprecated */
   executingAction?: string;
+  /** @deprecated */
   dslScript?: string;
   [key: string]: unknown;
 }
 
+/**
+ * Legacy response format
+ * @deprecated Используйте новый формат с execute и result
+ */
 interface LegacyResponse {
   content?: string;
   action?: string;
@@ -48,6 +59,7 @@ interface LegacyResponse {
 
 /**
  * Check if data is in legacy format
+ * @deprecated Используется только для обратной совместимости
  */
 export function isLegacyFormat(data: unknown): boolean {
   if (!data || typeof data !== 'object') {

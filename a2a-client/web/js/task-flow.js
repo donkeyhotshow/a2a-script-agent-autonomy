@@ -7,10 +7,7 @@
 
 (function (global) {
     function getApiBase() {
-        const base = global.apiIntegration?.apiBase
-            || global.apiIntegration?.serverUrl
-            || (global.AppBoot?.config?.serverUrl)
-            || '/api';
+        const base = global.apiIntegration?.apiBase || '/api';
         return String(base).replace(/\/?$/, '');
     }
     const POLL_INTERVAL_MS = 800;
@@ -24,12 +21,39 @@
     }
 
     async function request(method, path, body = null) {
+        if (global.apiIntegration?.request) {
+            return global.apiIntegration.request(method, path, body, {
+                module: 'TaskFlow',
+                context: { path, method }
+            });
+        }
+
         const base = getApiBase();
-        const url = path.startsWith('http') ? path : (path.startsWith('/') ? base + path : base + '/' + path);
-        const res = await fetch(url, { method, headers: getHeaders(), body: body ? JSON.stringify(body) : undefined });
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(data?.error?.message || data?.error || 'Request failed');
-        return data?.data ?? data;
+        const url = path.startsWith('http')
+            ? path
+            : (path.startsWith('/') ? `${base}${path}` : `${base}/${path}`);
+        const options = {
+            method,
+            headers: getHeaders()
+        };
+        if (body) options.body = JSON.stringify(body);
+
+        try {
+            const res = await fetch(url, options);
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) {
+                global.ErrorHandler?.handleApiError({
+                    status: res.status,
+                    data,
+                    error: data?.error
+                }, { module: 'TaskFlow', path: url, method });
+                throw new Error(data?.error?.message || data?.error || 'Request failed');
+            }
+            return data?.data ?? data;
+        } catch (error) {
+            global.ErrorHandler?.handleNetworkError(error, { module: 'TaskFlow', path: url, method });
+            throw error;
+        }
     }
 
     function getProjectId() {
@@ -121,14 +145,29 @@
             });
             return;
         }
-        if (message != null && typeof message === 'string') {
+        if (message != null) {
+            const messageContent = typeof message === 'string'
+                ? message
+                : (message.content || message.text || '');
+            const encodedMessage = encodeURIComponent(messageContent || '');
             contentEl.innerHTML = `
         <div class="task-flow-response task-flow-message-wrap">
           ${executionStepHtml}
           ${progressBarHtml}
-          <p class="task-flow-message">${escapeHtml(message)}</p>
+          <p class="task-flow-message">${escapeHtml(messageContent || String(message))}</p>
+          <div class="task-flow-message-actions">
+            <button type="button" class="task-flow-message-btn" data-message="${encodedMessage}">Continue</button>
+          </div>
           ${finalResultHtml}
         </div>`;
+            const messageBtn = contentEl.querySelector('.task-flow-message-btn');
+            messageBtn?.addEventListener('click', () => {
+                const payload = messageBtn.dataset.message;
+                const decoded = payload ? decodeURIComponent(payload) : '';
+                if (taskFlowRef?.sendMessageResult) {
+                    taskFlowRef.sendMessageResult(decoded, contentEl);
+                }
+            });
             return;
         }
         const ctx = data?.context ? JSON.stringify(data.context, null, 2) : '';
@@ -240,6 +279,12 @@
         },
 
         run(task, projectId) {
+            const sessionViewModel = global.SessionViewModel;
+            sessionViewModel?.reset();
+            sessionViewModel?.setProject(projectId);
+            if (task) {
+                sessionViewModel?.pushMessage({ content: task }, 'user');
+            }
             if (this.panelId && this.pui?.getPanel(this.panelId)) {
                 this.pui.bringToFront(this.panelId);
                 const content = this.pui.getContentEl(this.panelId);
@@ -309,13 +354,7 @@
 
                 // Check if we got a synchronous response from server
                 if (serverResponse) {
-                    // New protocol: server responded directly with choices or execute
-                    const ctx = serverResponse?.context;
-                    const exec = serverResponse?.execute;
-                    this._lastContext = ctx != null ? (typeof ctx === 'object' ? ctx : {}) : {};
-                    const responseData = { context: ctx, execute: exec, sessionId, projectId };
-                    this._lastResponse = responseData; // Store for re-rendering
-                    setPanelContent(contentEl, 'firstResponse', responseData, this);
+                    applyExecuteResponse(serverResponse, contentEl, 'firstResponse');
                     return;
                 }
 
@@ -336,12 +375,7 @@
                     return;
                 }
 
-                const ctx = result?.context ?? result?.data?.context;
-                const exec = result?.execute ?? result?.data?.execute;
-                this._lastContext = ctx != null ? (typeof ctx === 'object' ? ctx : {}) : {};
-                const responseData = { context: ctx, execute: exec, sessionId, projectId };
-                this._lastResponse = responseData; // Store for re-rendering
-                setPanelContent(contentEl, 'firstResponse', responseData, this);
+                applyExecuteResponse(result ?? {}, contentEl, 'firstResponse');
             } catch (err) {
                 if (contentEl) {
                     contentEl.innerHTML = '<div class="task-flow-error">' + escapeHtml(String(err?.message || err)) + '</div>';
@@ -358,6 +392,10 @@
                 window.addNotification?.('Session or project missing', 'error');
                 return;
             }
+            const choiceText = getChoiceLabel(choiceId);
+            if (choiceText) {
+                global.SessionViewModel?.pushMessage({ content: choiceText }, 'user');
+            }
             
             // New protocol: send result with action-key shape
             const requestBody = {
@@ -373,36 +411,33 @@
             setPanelContent(contentEl, 'sending', null);
             try {
                 const invokeRes = await request('POST', `/sessions/${encodeURIComponent(sessionId)}/next`, requestBody);
-                const promiseId = invokeRes?.promiseId ?? invokeRes?.data?.promiseId;
-                
-                if (promiseId) {
-                    // Async response - poll for result
-                    const { status, result: res } = await pollResult(promiseId);
-                    if (status === 'timeout') {
-                        setPanelContent(contentEl, 'response', { execute: {} }, this);
-                        contentEl.innerHTML = '<div class="task-flow-error">Timeout</div>';
-                        return;
-                    }
-                    if (status === 'failed') {
-                        setPanelContent(contentEl, 'response', { execute: {} }, this);
-                        contentEl.innerHTML = '<div class="task-flow-error">Request failed</div>';
-                        return;
-                    }
-                    const ctx = res?.context ?? res?.data?.context;
-                    const exec = res?.execute ?? res?.data?.execute;
-                    this._lastContext = ctx != null ? (typeof ctx === 'object' ? ctx : {}) : {};
-                    const responseData = { context: ctx, execute: exec, sessionId, projectId };
-                    this._lastResponse = responseData; // Store for re-rendering
-                    setPanelContent(contentEl, 'response', responseData, this);
-                } else {
-                    // Synchronous response - use directly
-                    const ctx = invokeRes?.context;
-                    const exec = invokeRes?.execute;
-                    this._lastContext = ctx != null ? (typeof ctx === 'object' ? ctx : {}) : {};
-                    const responseData = { context: ctx, execute: exec, sessionId, projectId };
-                    this._lastResponse = responseData; // Store for re-rendering
-                    setPanelContent(contentEl, 'response', responseData, this);
-                }
+                const outcome = await processNextResponse(contentEl, invokeRes);
+                if (outcome !== 'ok') return;
+            } catch (err) {
+                contentEl.innerHTML = '<div class="task-flow-error">' + escapeHtml(String(err?.message || err)) + '</div>';
+                window.addNotification?.(String(err?.message || err), 'error');
+            }
+        },
+
+        async sendMessageResult(messageText, contentEl) {
+            const sessionId = this._sessionId;
+            const projectId = this._projectId;
+            if (!sessionId || !projectId) {
+                window.addNotification?.('Session or project missing', 'error');
+                return;
+            }
+
+            const payload = (messageText || '').trim() || 'continue';
+            global.SessionViewModel?.pushMessage({ content: payload }, 'user');
+
+            setPanelContent(contentEl, 'sending', null);
+            try {
+                const invokeRes = await request('POST', `/sessions/${encodeURIComponent(sessionId)}/next`, {
+                    projectId,
+                    result: { message: payload }
+                });
+                const outcome = await processNextResponse(contentEl, invokeRes);
+                if (outcome !== 'ok') return;
             } catch (err) {
                 contentEl.innerHTML = '<div class="task-flow-error">' + escapeHtml(String(err?.message || err)) + '</div>';
                 window.addNotification?.(String(err?.message || err), 'error');
@@ -435,20 +470,70 @@
                     return;
                 }
 
-                const ctx = result?.context ?? result?.data?.context;
-                const exec = result?.execute ?? result?.data?.execute;
                 this._sessionId = sessionId;
                 this._projectId = projectId;
-                this._lastContext = ctx != null ? (typeof ctx === 'object' ? ctx : {}) : {};
-                const responseData = { context: ctx, execute: exec, sessionId, projectId };
-                this._lastResponse = responseData; // Store for re-rendering
-                setPanelContent(contentEl, 'firstResponse', responseData, this);
+                applyExecuteResponse(result ?? {}, contentEl, 'firstResponse');
             } catch (err) {
                 if (contentEl) contentEl.innerHTML = '<div class="task-flow-error">' + escapeHtml(String(err?.message || err)) + '</div>';
                 window.addNotification?.(String(err?.message || err), 'error');
             }
         }
     };
+
+    async function processNextResponse(contentEl, response) {
+        const promiseId = response?.promiseId ?? response?.data?.promiseId;
+        if (promiseId) {
+            const { status, result } = await pollResult(promiseId);
+            if (status === 'timeout') {
+                if (contentEl) contentEl.innerHTML = '<div class="task-flow-error">Timeout</div>';
+                return 'timeout';
+            }
+            if (status === 'failed') {
+                if (contentEl) contentEl.innerHTML = '<div class="task-flow-error">Request failed</div>';
+                return 'failed';
+            }
+            applyExecuteResponse(result ?? {}, contentEl, 'response');
+            return 'ok';
+        }
+        applyExecuteResponse(response ?? {}, contentEl, 'response');
+        return 'ok';
+    }
+
+    function applyExecuteResponse(resultData, contentEl, stateName = 'response') {
+        const sessionId = TaskFlow._sessionId;
+        const projectId = TaskFlow._projectId;
+        const ctx = resultData?.context ?? resultData?.data?.context;
+        const exec = resultData?.execute ?? resultData?.data?.execute;
+        TaskFlow._lastContext = ctx != null ? (typeof ctx === 'object' ? ctx : {}) : {};
+        const responseData = { context: ctx, execute: exec, sessionId, projectId };
+        TaskFlow._lastResponse = responseData;
+        setPanelContent(contentEl, stateName, responseData, TaskFlow);
+        updateSessionViewModel(sessionId, projectId, ctx, exec);
+    }
+
+    function updateSessionViewModel(sessionId, projectId, context, execute) {
+        const vm = global.SessionViewModel;
+        if (!vm) return;
+        if (sessionId) vm.setSession(sessionId);
+        if (projectId) vm.setProject(projectId);
+        if (Array.isArray(context?.messages)) {
+            vm.setMessages(context?.messages);
+        }
+        if (execute) {
+            vm.setExecute(execute);
+            if (execute.message) {
+                vm.pushMessage(execute.message, 'assistant');
+            }
+        }
+    }
+
+    function getChoiceLabel(choiceId) {
+        if (!choiceId) return '';
+        const execute = TaskFlow._lastResponse?.execute;
+        const choices = execute?.form?.choices || [];
+        const match = choices.find(choice => choice.id === choiceId || choice.value === choiceId);
+        return String(match?.label || match?.value || match?.id || choiceId);
+    }
 
     if (typeof window !== 'undefined') {
         window.TaskFlow = TaskFlow;

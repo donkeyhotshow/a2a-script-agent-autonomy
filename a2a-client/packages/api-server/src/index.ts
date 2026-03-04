@@ -10,24 +10,35 @@
  * ✅ IMPLEMENTED: new protocol support - execute.form.choices, action-key shape for results
  */
 
+import { config } from './config/index.js';
+import { toSessionSummary, toSessionDetail, SessionDetail, SessionSummary } from './session-dto.js';
+
+// Import modular components
+import { WebSocketServerManager } from './server/websocket-server.js';
+import { sessionService } from './services/session-service.js';
+
+// Import required Node.js modules
+import { exec as execAsync } from 'child_process';
+import { promisify } from 'util';
+import { fileURLToPath } from 'url';
+import path from 'path';
+import { readFileSync, writeFileSync, mkdirSync, readdirSync, statSync, unlinkSync, existsSync } from 'fs';
+import { readFile, writeFile, mkdir, readdir, stat, unlink, rm } from 'fs/promises';
+import { WebSocket, WebSocketServer } from 'ws';
 import express from 'express';
 import cors from 'cors';
 import multer from 'multer';
-import {scanFiles} from '@a2a/fs-utils';
-import {MeilisearchClient} from '@a2a/rag';
-import path from 'path';
-import {fileURLToPath} from 'url';
-import fs from 'fs/promises';
-import {exec} from 'child_process';
-import {promisify} from 'util';
-import {Readable} from 'stream';
-import {randomUUID} from 'crypto';
-import {WebSocketServer, WebSocket} from 'ws';
-import {toSessionSummary, toSessionDetail, SessionDetail, SessionSummary} from './session-dto.js';
+import { Readable } from 'stream';
+import fetch from 'node-fetch';
+import { randomUUID } from 'crypto';
 
-type WebSocketClient = WebSocket & { sessionId?: string };
+// Import Meilisearch client
+import { MeilisearchClient } from './services/meilisearch-client.js';
 
-const execAsync = promisify(exec);
+// Import WebSocket connections map
+const wsConnections = new Map<string, Set<WebSocket>>();
+
+const execAsyncPromisified = promisify(execAsync);
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -37,66 +48,11 @@ const PORT = Number(process.env.PORT || 3001);
 const HOST = process.env.HOST || 'localhost';
 const WS_PORT = Number(process.env.WS_PORT || 3002);
 
-// Create Express app
-const app = express();
+// Initialize modular components
+const websocketServer = new WebSocketServerManager();
+const expressApp = express();
 
-// Create WebSocket server for real-time updates
-const wss = new WebSocketServer({ port: WS_PORT });
-
-// Store active WebSocket connections by sessionId
-const wsConnections = new Map<string, Set<WebSocket>>();
-
-// WebSocket connection handler
-wss.on('connection', (ws, req) => {
-    const sessionId = new URL(req.url ?? '', `http://${req.headers.host}`).searchParams.get('sessionId');
-    
-    if (!sessionId) {
-        ws.close(1008, 'Session ID required');
-        return;
-    }
-    
-    // Add connection to session room
-    if (!wsConnections.has(sessionId)) {
-        wsConnections.set(sessionId, new Set());
-    }
-    wsConnections.get(sessionId)!.add(ws);
-    
-    console.log(`[WS] Client connected to session: ${sessionId}`);
-    
-    // Send initial connection confirmation
-    ws.send(JSON.stringify({
-        type: 'connected',
-        sessionId,
-        timestamp: new Date().toISOString()
-    }));
-    
-    // Handle incoming messages
-    ws.on('message', (data) => {
-        try {
-            const message = JSON.parse(data.toString());
-            handleWebSocketMessage(sessionId, ws, message);
-        } catch (err) {
-            console.error('[WS] Invalid message format:', err);
-        }
-    });
-    
-    // Handle disconnect
-    ws.on('close', () => {
-        const connections = wsConnections.get(sessionId);
-        if (connections) {
-            connections.delete(ws);
-            if (connections.size === 0) {
-                wsConnections.delete(sessionId);
-            }
-        }
-        console.log(`[WS] Client disconnected from session: ${sessionId}`);
-    });
-    
-    // Handle errors
-    ws.on('error', (err) => {
-        console.error('[WS] WebSocket error:', err);
-    });
-});
+// The session service is a simple singleton and requires no explicit initialization.
 
 // Handle WebSocket messages from clients
 function handleWebSocketMessage(sessionId: string, ws: WebSocket, message: Record<string, unknown>): void {
@@ -407,11 +363,11 @@ function extractFormChoices(response: { execute?: Record<string, unknown> }): {
 }
 
 // Middleware
-app.use(cors());
-app.use(express.json({limit: '50mb'}));
+expressApp.use(cors());
+expressApp.use(express.json({limit: '50mb'}));
 
 // Logging middleware
-app.use((req, res, next) => {
+expressApp.use((req, res, next) => {
     console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
     next();
 });
@@ -599,12 +555,12 @@ function jsonError(res: express.Response, status: number, message: string, detai
 // ==================== CLIENT API (NEW-REQUEST-FLOW) ====================
 
 // --- config
-app.get(['/api/config', '/api/v1/config'], async (_req, res) => {
+expressApp.get(['/api/config', '/api/v1/config'], async (_req, res) => {
     const cfg = await loadConfig();
     res.json(cfg);
 });
 
-app.post(['/api/config', '/api/v1/config'], async (req, res) => {
+expressApp.post(['/api/config', '/api/v1/config'], async (req, res) => {
     const body = (req.body || {}) as Partial<ClientConfig>;
     if (!body.serverUrl && body.serverUrl !== '') {
         jsonError(res, 400, 'serverUrl is required');
@@ -618,13 +574,13 @@ app.post(['/api/config', '/api/v1/config'], async (req, res) => {
 });
 
 // --- projects
-app.get(['/api/projects', '/api/v1/projects'], async (_req, res) => {
+expressApp.get(['/api/projects', '/api/v1/projects'], async (_req, res) => {
     const projects = await loadProjects();
     // Web UI expects a bare array
     res.json(projects);
 });
 
-app.post(['/api/projects', '/api/v1/projects'], async (req, res) => {
+expressApp.post(['/api/projects', '/api/v1/projects'], async (req, res) => {
     const body = (req.body || {}) as Partial<Project>;
     const name = String(body.name || '').trim();
     if (!name) {
@@ -643,7 +599,7 @@ app.post(['/api/projects', '/api/v1/projects'], async (req, res) => {
     res.status(201).json(project);
 });
 
-app.delete(['/api/projects/:projectId', '/api/v1/projects/:projectId'], async (req, res) => {
+expressApp.delete(['/api/projects/:projectId', '/api/v1/projects/:projectId'], async (req, res) => {
     const projectId = String(req.params.projectId || '');
     const projects = await loadProjects();
     const next = projects.filter((p) => p.id !== projectId);
@@ -652,7 +608,7 @@ app.delete(['/api/projects/:projectId', '/api/v1/projects/:projectId'], async (r
 });
 
 // --- project files (used by PanelManager and other UI features)
-app.get(['/api/projects/:projectId/files/*', '/api/v1/projects/:projectId/files/*'], async (req, res) => {
+expressApp.get(['/api/projects/:projectId/files/*', '/api/v1/projects/:projectId/files/*'], async (req, res) => {
     const projectId = String(req.params.projectId || '');
     const fileRel = decodeURIComponent(String((req.params as any)[0] || '')).replace(/^\/+/, '');
 
@@ -677,7 +633,7 @@ app.get(['/api/projects/:projectId/files/*', '/api/v1/projects/:projectId/files/
     }
 });
 
-app.put(['/api/projects/:projectId/files/*', '/api/v1/projects/:projectId/files/*'], async (req, res) => {
+expressApp.put(['/api/projects/:projectId/files/*', '/api/v1/projects/:projectId/files/*'], async (req, res) => {
     const projectId = String(req.params.projectId || '');
     const fileRel = decodeURIComponent(String((req.params as any)[0] || '')).replace(/^\/+/, '');
 
@@ -700,7 +656,7 @@ app.put(['/api/projects/:projectId/files/*', '/api/v1/projects/:projectId/files/
 });
 
 // --- sessions (stored per-project in <projectPath>/.a2a/sessions)
-app.get(['/api/sessions', '/api/v1/sessions'], async (req, res) => {
+expressApp.get(['/api/sessions', '/api/v1/sessions'], async (req, res) => {
     const projectId = typeof req.query.projectId === 'string' ? req.query.projectId : '';
     const projects = await loadProjects();
     const project = projects.find((p) => p.id === projectId) ?? projects[0];
@@ -712,7 +668,7 @@ app.get(['/api/sessions', '/api/v1/sessions'], async (req, res) => {
     res.json(sessions);
 });
 
-app.post(['/api/sessions', '/api/v1/sessions'], async (req, res) => {
+expressApp.post(['/api/sessions', '/api/v1/sessions'], async (req, res) => {
     const body = (req.body || {}) as {projectId?: string; title?: string; task?: string};
     const projectId = String(body.projectId || '').trim();
     if (!projectId) {
@@ -815,7 +771,7 @@ app.post(['/api/sessions', '/api/v1/sessions'], async (req, res) => {
     res.status(201).json(session);
 });
 
-app.get(['/api/sessions/:sessionId', '/api/v1/sessions/:sessionId'], async (req, res) => {
+expressApp.get(['/api/sessions/:sessionId', '/api/v1/sessions/:sessionId'], async (req, res) => {
     const sessionId = String(req.params.sessionId || '');
     const projectId = typeof req.query.projectId === 'string' ? req.query.projectId : '';
 
@@ -836,7 +792,7 @@ app.get(['/api/sessions/:sessionId', '/api/v1/sessions/:sessionId'], async (req,
     res.json(sessionDetail);
 });
 
-app.delete(['/api/sessions/:sessionId', '/api/v1/sessions/:sessionId'], async (req, res) => {
+expressApp.delete(['/api/sessions/:sessionId', '/api/v1/sessions/:sessionId'], async (req, res) => {
     const sessionId = String(req.params.sessionId || '');
     const projectId = typeof req.query.projectId === 'string' ? req.query.projectId : '';
 
@@ -851,7 +807,7 @@ app.delete(['/api/sessions/:sessionId', '/api/v1/sessions/:sessionId'], async (r
 });
 
 // Best-effort helpers for the new-request-flow endpoints (kept minimal for compatibility)
-app.post(['/api/sessions/:sessionId/action', '/api/v1/sessions/:sessionId/action'], async (req, res) => {
+expressApp.post(['/api/sessions/:sessionId/action', '/api/v1/sessions/:sessionId/action'], async (req, res) => {
     const sessionId = String(req.params.sessionId || '');
     const projectId = typeof req.query.projectId === 'string' ? req.query.projectId : String(req.body?.projectId || '');
     const action = String(req.body?.action || req.body?.actionId || '').trim();
@@ -884,7 +840,7 @@ app.post(['/api/sessions/:sessionId/action', '/api/v1/sessions/:sessionId/action
     res.json(updated);
 });
 
-app.post(['/api/sessions/:sessionId/next', '/api/v1/sessions/:sessionId/next'], async (req, res) => {
+expressApp.post(['/api/sessions/:sessionId/next', '/api/v1/sessions/:sessionId/next'], async (req, res) => {
     const sessionId = String(req.params.sessionId || '');
     const projectId = typeof req.query.projectId === 'string' ? req.query.projectId : String(req.body?.projectId || '');
 
@@ -1081,7 +1037,7 @@ async function updateSessionWithStatusResponse(
     return updatedSession;
 }
 
-app.post(['/api/sessions/:sessionId/cancel', '/api/v1/sessions/:sessionId/cancel'], async (req, res) => {
+expressApp.post(['/api/sessions/:sessionId/cancel', '/api/v1/sessions/:sessionId/cancel'], async (req, res) => {
     const sessionId = String(req.params.sessionId || '');
     const projectId = typeof req.query.projectId === 'string' ? req.query.projectId : String(req.body?.projectId || '');
 
@@ -1102,7 +1058,7 @@ app.post(['/api/sessions/:sessionId/cancel', '/api/v1/sessions/:sessionId/cancel
 });
 
 // --- server proxy (web must not know server address). Body: task, sessionId?, projectId?
-app.post('/api/v1/invoke', async (req, res) => {
+expressApp.post('/api/v1/invoke', async (req, res) => {
     const body = (req.body || {}) as { task?: string; sessionId?: string; projectId?: string; context?: unknown };
     const serverBody: Record<string, unknown> = { task: body.task };
     if (body.context) serverBody.context = body.context;
@@ -1134,7 +1090,7 @@ app.post('/api/v1/invoke', async (req, res) => {
     res.status(upstream.status).json(payload);
 });
 
-app.all('/api/v1/requests*', async (req, res) => {
+expressApp.all('/api/v1/requests*', async (req, res) => {
     const serverBase = await getServerBaseUrl();
     const pathName = req.originalUrl.replace(/^\/api\/v1/, '');
     const body = req.method === 'GET' || req.method === 'HEAD' ? null : (req.body ?? {});
@@ -1184,7 +1140,7 @@ function extractSessionIdFromPath(pathName: string): string | null {
     return match ? match[1] : null;
 }
 
-app.get('/api/v1/sse/:sessionId', async (req, res) => {
+expressApp.get('/api/v1/sse/:sessionId', async (req, res) => {
     const sessionId = String(req.params.sessionId || '');
     const serverBase = await getServerBaseUrl();
     const cfg = await loadConfig();
@@ -1264,7 +1220,7 @@ app.get('/api/v1/sse/:sessionId', async (req, res) => {
     });
 });
 
-app.get('/api/v1/sse', async (_req, res) => {
+expressApp.get('/api/v1/sse', async (_req, res) => {
     // Keep it simple: web should subscribe to a session SSE stream.
     res.writeHead(200, {'Content-Type': 'text/event-stream'});
     res.write(`event: connected\ndata: ${JSON.stringify({timestamp: new Date().toISOString()})}\n\n`);
@@ -1273,7 +1229,7 @@ app.get('/api/v1/sse', async (_req, res) => {
 // ==================== TERMINAL API ====================
 
 // Execute terminal command
-app.post('/api/terminal/execute', async (req, res) => {
+expressApp.post('/api/terminal/execute', async (req, res) => {
     try {
         const {command, timeout = 120, cwd} = req.body;
 
@@ -1329,7 +1285,7 @@ app.post('/api/terminal/execute', async (req, res) => {
 });
 
 // Terminal structured actions (workspace, history, session)
-app.post('/api/terminal/action', async (req, res) => {
+expressApp.post('/api/terminal/action', async (req, res) => {
     try {
         const {action, subAction, path: actionPath} = req.body;
 
@@ -1380,7 +1336,69 @@ app.post('/api/terminal/action', async (req, res) => {
 // ==================== FILE SYSTEM API ====================
 
 // Scan directory for files
-app.post('/api/fs/scan', async (req, res) => {
+async function scanFiles(dir: string, options: {recursive?: boolean; maxDepth?: number; includeHidden?: boolean} = {}): Promise<{
+    directory: string;
+    files: Array<{name: string; path: string; size: number; modified: string}>;
+    directories: Array<{name: string; path: string; modified: string}>;
+    totalFiles: number;
+    totalSize: number;
+}> {
+    const recursive = options.recursive ?? true;
+    const maxDepth = options.maxDepth ?? 10;
+    const includeHidden = options.includeHidden ?? false;
+    
+    const result = {
+        directory: dir,
+        files: [] as Array<{name: string; path: string; size: number; modified: string}>,
+        directories: [] as Array<{name: string; path: string; modified: string}>,
+        totalFiles: 0,
+        totalSize: 0
+    };
+
+    async function scanDir(currentDir: string, depth: number = 0): Promise<void> {
+        if (depth > maxDepth) return;
+
+        try {
+            const entries = await fs.readdir(currentDir, {withFileTypes: true});
+            
+            for (const entry of entries) {
+                // Skip hidden files/directories if not included
+                if (!includeHidden && entry.name.startsWith('.')) continue;
+                
+                const fullPath = path.join(currentDir, entry.name);
+                
+                if (entry.isDirectory()) {
+                    result.directories.push({
+                        name: entry.name,
+                        path: fullPath,
+                        modified: (await fs.stat(fullPath)).mtime.toISOString()
+                    });
+                    
+                    if (recursive) {
+                        await scanDir(fullPath, depth + 1);
+                    }
+                } else if (entry.isFile()) {
+                    const stats = await fs.stat(fullPath);
+                    result.files.push({
+                        name: entry.name,
+                        path: fullPath,
+                        size: stats.size,
+                        modified: stats.mtime.toISOString()
+                    });
+                    result.totalFiles++;
+                    result.totalSize += stats.size;
+                }
+            }
+        } catch (error) {
+            console.error(`Error scanning directory ${currentDir}:`, error);
+        }
+    }
+
+    await scanDir(dir);
+    return result;
+}
+
+expressApp.post('/api/fs/scan', async (req, res) => {
     try {
         const {dir, options = {}} = req.body;
 
@@ -1397,7 +1415,7 @@ app.post('/api/fs/scan', async (req, res) => {
 });
 
 // Read file
-app.post('/api/fs/read', async (req, res) => {
+expressApp.post('/api/fs/read', async (req, res) => {
     try {
         const {filePath, encoding = 'utf-8'} = req.body;
 
@@ -1414,7 +1432,7 @@ app.post('/api/fs/read', async (req, res) => {
 });
 
 // Write file
-app.post('/api/fs/write', async (req, res) => {
+expressApp.post('/api/fs/write', async (req, res) => {
     try {
         const {filePath, content} = req.body;
 
@@ -1435,7 +1453,7 @@ app.post('/api/fs/write', async (req, res) => {
 });
 
 // List directory
-app.post('/api/fs/list', async (req, res) => {
+expressApp.post('/api/fs/list', async (req, res) => {
     try {
         const {dirPath} = req.body;
 
@@ -1459,7 +1477,7 @@ app.post('/api/fs/list', async (req, res) => {
 });
 
 // Check if path exists
-app.post('/api/fs/exists', async (req, res) => {
+expressApp.post('/api/fs/exists', async (req, res) => {
     try {
         const {path: checkPath} = req.body;
 
@@ -1480,7 +1498,7 @@ app.post('/api/fs/exists', async (req, res) => {
 });
 
 // Get current working directory
-app.get('/api/fs/cwd', (req, res) => {
+expressApp.get('/api/fs/cwd', (req, res) => {
     res.json({cwd: process.cwd()});
 });
 
@@ -1520,7 +1538,7 @@ function isAllowedExtension(filename: string): boolean {
 }
 
 // POST /api/rag/search - Search through indexed documents
-app.post('/api/rag/search', async (req, res) => {
+expressApp.post('/api/rag/search', async (req, res) => {
     try {
         const {query, limit = 10, filters} = req.body as {
             query?: string;
@@ -1605,7 +1623,7 @@ const upload = multer({
     },
 });
 
-app.post('/api/rag/upload', upload.array('files', 20), async (req, res) => {
+expressApp.post('/api/rag/upload', upload.array('files', 20), async (req, res) => {
     try {
         await ensureStorageDir();
 
@@ -1690,7 +1708,7 @@ app.post('/api/rag/upload', upload.array('files', 20), async (req, res) => {
 });
 
 // GET /api/rag/files/:fileId - Get file metadata
-app.get('/api/rag/files/:fileId', async (req, res) => {
+expressApp.get('/api/rag/files/:fileId', async (req, res) => {
     try {
         const {fileId} = req.params;
 
@@ -1719,7 +1737,7 @@ app.get('/api/rag/files/:fileId', async (req, res) => {
 });
 
 // DELETE /api/rag/files/:fileId - Delete file
-app.delete('/api/rag/files/:fileId', async (req, res) => {
+expressApp.delete('/api/rag/files/:fileId', async (req, res) => {
     try {
         const {fileId} = req.params;
 
@@ -1764,7 +1782,7 @@ app.delete('/api/rag/files/:fileId', async (req, res) => {
 // ==================== ENHANCED SESSION STORAGE ====================
 
 // GET /api/sessions/:sessionId/metadata - Get session metadata
-app.get(['/api/sessions/:sessionId/metadata', '/api/v1/sessions/:sessionId/metadata'], async (req, res) => {
+expressApp.get(['/api/sessions/:sessionId/metadata', '/api/v1/sessions/:sessionId/metadata'], async (req, res) => {
     const sessionId = String(req.params.sessionId || '');
     const projectId = typeof req.query.projectId === 'string' ? req.query.projectId : '';
 
@@ -1794,7 +1812,7 @@ app.get(['/api/sessions/:sessionId/metadata', '/api/v1/sessions/:sessionId/metad
 });
 
 // PATCH /api/sessions/:sessionId - Update session
-app.patch(['/api/sessions/:sessionId', '/api/v1/sessions/:sessionId'], async (req, res) => {
+expressApp.patch(['/api/sessions/:sessionId', '/api/v1/sessions/:sessionId'], async (req, res) => {
     const sessionId = String(req.params.sessionId || '');
     const projectId = typeof req.query.projectId === 'string' ? req.query.projectId : '';
     const updates = req.body || {};
@@ -1831,7 +1849,7 @@ app.patch(['/api/sessions/:sessionId', '/api/v1/sessions/:sessionId'], async (re
 });
 
 // POST /api/sessions/:sessionId/messages - Add message to session
-app.post(['/api/sessions/:sessionId/messages', '/api/v1/sessions/:sessionId/messages'], async (req, res) => {
+expressApp.post(['/api/sessions/:sessionId/messages', '/api/v1/sessions/:sessionId/messages'], async (req, res) => {
     const sessionId = String(req.params.sessionId || '');
     const projectId = typeof req.query.projectId === 'string' ? req.query.projectId : '';
     const message = req.body || {};
@@ -1869,7 +1887,7 @@ app.post(['/api/sessions/:sessionId/messages', '/api/v1/sessions/:sessionId/mess
 });
 
 // DELETE /api/sessions - Delete multiple sessions
-app.delete(['/api/sessions', '/api/v1/sessions'], async (req, res) => {
+expressApp.delete(['/api/sessions', '/api/v1/sessions'], async (req, res) => {
     const sessionIds = req.body?.sessionIds as string[] | undefined;
     const projectId = typeof req.query.projectId === 'string' ? req.query.projectId : '';
 
@@ -1922,7 +1940,7 @@ const fileUpload = multer({
 });
 
 // POST /api/files/upload - Upload files
-app.post(['/api/files/upload', '/api/v1/files/upload'], fileUpload.array('files', 10), async (req, res) => {
+expressApp.post(['/api/files/upload', '/api/v1/files/upload'], fileUpload.array('files', 10), async (req, res) => {
     try {
         const files = req.files as Express.Multer.File[] | undefined;
         
@@ -1948,7 +1966,7 @@ app.post(['/api/files/upload', '/api/v1/files/upload'], fileUpload.array('files'
 });
 
 // GET /api/files/:fileId - Download file
-app.get(['/api/files/:fileId', '/api/v1/files/:fileId'], async (req, res) => {
+expressApp.get(['/api/files/:fileId', '/api/v1/files/:fileId'], async (req, res) => {
     try {
         const fileId = String(req.params.fileId || '');
         const uploadDir = process.env.UPLOAD_DIR || path.join(storageDir, 'uploads');
@@ -1976,7 +1994,7 @@ app.get(['/api/files/:fileId', '/api/v1/files/:fileId'], async (req, res) => {
 });
 
 // DELETE /api/files/:fileId - Delete uploaded file
-app.delete(['/api/files/:fileId', '/api/v1/files/:fileId'], async (req, res) => {
+expressApp.delete(['/api/files/:fileId', '/api/v1/files/:fileId'], async (req, res) => {
     try {
         const fileId = String(req.params.fileId || '');
         const uploadDir = process.env.UPLOAD_DIR || path.join(storageDir, 'uploads');
@@ -2004,7 +2022,7 @@ app.delete(['/api/files/:fileId', '/api/v1/files/:fileId'], async (req, res) => 
 });
 
 // GET /api/files - List uploaded files
-app.get(['/api/files', '/api/v1/files'], async (req, res) => {
+expressApp.get(['/api/files', '/api/v1/files'], async (req, res) => {
     try {
         const uploadDir = process.env.UPLOAD_DIR || path.join(storageDir, 'uploads');
         await fs.mkdir(uploadDir, { recursive: true });
@@ -2034,7 +2052,7 @@ app.get(['/api/files', '/api/v1/files'], async (req, res) => {
 // ==================== WEBSOCKET INFO ENDPOINT ====================
 
 // Get WebSocket connection info
-app.get(['/api/ws', '/api/v1/ws'], (req, res) => {
+expressApp.get(['/api/ws', '/api/v1/ws'], (req, res) => {
     res.json({
         wsUrl: `ws://${HOST}:${WS_PORT}`,
         activeSessions: Array.from(wsConnections.keys()),
@@ -2044,7 +2062,7 @@ app.get(['/api/ws', '/api/v1/ws'], (req, res) => {
 
 // ==================== HEALTH CHECK ====================
 
-app.get('/health', (req, res) => {
+expressApp.get('/health', (req, res) => {
     res.json({
         status: 'ok',
         service: 'a2a-client-api',
@@ -2055,7 +2073,7 @@ app.get('/health', (req, res) => {
 // ==================== START SERVER ====================
 
 if (process.env.NODE_ENV !== 'test') {
-    app.listen(PORT, HOST, () => {
+    expressApp.listen(PORT, HOST, () => {
         console.log(`A2A Client API Server started on http://${HOST}:${PORT}`);
         console.log(`WebSocket Server started on ws://${HOST}:${WS_PORT}`);
         console.log(`Health check: http://${HOST}:${PORT}/health`);
@@ -2066,4 +2084,4 @@ if (process.env.NODE_ENV !== 'test') {
     });
 }
 
-export default app;
+export default expressApp;

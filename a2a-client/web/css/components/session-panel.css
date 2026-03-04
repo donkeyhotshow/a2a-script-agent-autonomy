@@ -1,0 +1,181 @@
+.session-panel {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 12px;
+    gap: 10px;
+    background: var(--bg1);
+}
+
+.session-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 6px;
+}
+
+.session-panel-title {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.session-panel-status {
+    font-size: 12px;
+    color: var(--fg2);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.session-panel-status.session-panel-active {
+    color: var(--accent);
+}
+
+.session-panel-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding-right: 6px;
+}
+
+.session-panel-message {
+    margin-bottom: 10px;
+    padding: 10px;
+    border-radius: var(--radius);
+    background: var(--bg2);
+}
+
+.session-panel-message.message-user {
+    background: rgba(79, 70, 229, 0.08);
+    border: 1px solid rgba(79, 70, 229, 0.2);
+}
+
+.session-panel-message.message-assistant {
+    background: var(--bg3);
+}
+
+.session-panel-message-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 6px;
+}
+
+.session-panel-message-body {
+    font-size: 13px;
+    line-height: 1.4;
+    white-space: pre-wrap;
+}
+
+.session-panel-execute {
+    border-top: 1px solid var(--border);
+    padding-top: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.session-panel-execute-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.session-panel-execute-progress {
+    font-size: 11px;
+    color: var(--fg2);
+}
+
+.session-panel-execute-message {
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+.session-panel-choice-grid {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-top: 6px;
+}
+
+.session-panel-choice-btn {
+    padding: 6px 12px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    background: var(--bg2);
+    cursor: pointer;
+    font-size: 12px;
+    transition: background 0.2s, border-color 0.2s;
+}
+
+.session-panel-choice-btn:hover {
+    background: var(--bg3);
+    border-color: var(--accent);
+}
+
+.session-panel-user-input {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    margin-top: 8px;
+}
+
+.session-panel-user-input-field {
+    flex: 1;
+    padding: 6px 8px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    background: var(--bg2);
+    color: var(--fg1);
+}
+
+.session-panel-user-send {
+    padding: 6px 12px;
+    border-radius: var(--radius);
+    border: none;
+    background: var(--accent);
+    color: #fff;
+    font-size: 12px;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.session-panel-user-send:hover {
+    opacity: 0.85;
+}
+
+.session-panel-execute-section {
+    font-size: 12px;
+    color: var(--fg2);
+}
+
+.session-panel-execute-choices {
+    list-style: none;
+    padding-left: 0;
+    margin: 6px 0 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.session-panel-execute-choices li {
+    padding: 4px 8px;
+    border-radius: var(--radius);
+    background: var(--bg2);
+    font-size: 11px;
+}
+
+.session-panel-execute-final {
+    font-size: 12px;
+    color: var(--fg2);
+}
+
+.session-panel-empty {
+    padding: 12px 0;
+    text-align: center;
+    color: var(--fg2);
+    font-size: 12px;
+}

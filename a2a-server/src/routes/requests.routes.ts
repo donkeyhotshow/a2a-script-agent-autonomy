@@ -6,6 +6,7 @@
 import {Router, Request, Response, NextFunction} from 'express';
 import {authenticate} from '../middleware/auth.middleware.js';
 import {requestService} from '../services/core/request/request.service.js';
+import {getSchemaValidator} from '../services/core/validation/schema-validator.service.js';
 import {logger} from '../utils/logger.js';
 
 const router = Router();
@@ -16,7 +17,7 @@ const router = Router();
  */
 router.post('/', authenticate, async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const {context, message, codeBlocks, priority} = req.body;
+        const {context, message, codeBlocks, priority, result} = req.body;
         const clientId = req.client?.id || 'anonymous';
 
         // Validate required fields
@@ -25,6 +26,23 @@ router.post('/', authenticate, async (req: Request, res: Response, next: NextFun
                 success: false,
                 error: {code: 'INVALID_REQUEST', message: 'context is required'},
             });
+        }
+
+        // Validate result against JSON schema (if validation is enabled)
+        const schemaValidator = getSchemaValidator();
+        if (result) {
+            const validationResult = schemaValidator.validateResult(result);
+            if (!validationResult.valid) {
+                logger.warn('Result validation failed', {errors: validationResult.errors});
+                return res.status(400).json({
+                    success: false,
+                    error: {
+                        code: 'VALIDATION_ERROR',
+                        message: 'Result validation failed',
+                        details: validationResult.errors
+                    }
+                });
+            }
         }
 
         // Create request
@@ -101,6 +119,17 @@ router.get('/:promiseId/result', authenticate, async (req: Request, res: Respons
                 error: {code: 'NOT_READY', message: `Request is still ${result.status}`},
                 data: {status: result.status},
             });
+        }
+
+        // Validate response against JSON schema (if validation is enabled)
+        const schemaValidator = getSchemaValidator();
+        if (result.result) {
+            const validationResult = schemaValidator.validateResponse(result.result);
+            if (!validationResult.valid) {
+                logger.warn('Response validation failed', {promiseId, errors: validationResult.errors});
+                // Note: We don't fail the request, just log the validation error
+                // This ensures backward compatibility
+            }
         }
 
         res.json({

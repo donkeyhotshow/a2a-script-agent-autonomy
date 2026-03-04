@@ -25,7 +25,7 @@ import {
     getFrameworkTriggers,
     type FrameworkDetectionResult
 } from '../../framework/framework-detector.service.js';
-import {PhaseMachine, getPhaseMachine, resetPhaseMachine} from '../context/context-manager.service.js';
+import {PhaseMachine, getPhaseMachine, resetPhaseMachine, ExecutionMode, AIStep} from '../context/context-manager.service.js';
 import {ContextManager, getContextManager, resetContextManager} from '../context/context-manager.service.js';
 import {buildRequestContextBlock} from '../../../protocol/message-builder.js';
 import {analyzeTaskDetail, getNeuronsByLevel, type TaskDetailLevel} from '../../../utils/task-detail-analyzer.js';
@@ -116,6 +116,37 @@ export class NeuronRequestProcessor extends BaseRequestProcessor {
     }
 
     /**
+     * Determine execution mode (actions vs ai-actions)
+     */
+    private getExecutionMode(ctx: Record<string, unknown>): ExecutionMode {
+        // AI-Actions mode if:
+        // - ctx has 'ai_action' flag
+        // - ctx has 'action' with AI-action type (dialog, coder, etc.)
+        // - simulation with AI-action type
+        if (ctx['ai_action'] === true) {
+            return 'ai-actions';
+        }
+
+        const action = ctx['action'] as string | undefined;
+        if (action) {
+            const aiActionTypes = ['dialog', 'coder', 'coder-smart', 'auto-ai', 'chat'];
+            if (aiActionTypes.includes(action)) {
+                return 'ai-actions';
+            }
+        }
+
+        const simulationName = ctx['simulation_name'] as string | undefined;
+        if (simulationName) {
+            const aiSimulationTypes = ['dialog', 'coder', 'coder-smart', 'auto-ai'];
+            if (aiSimulationTypes.some(type => simulationName.toLowerCase().includes(type))) {
+                return 'ai-actions';
+            }
+        }
+
+        return 'actions';
+    }
+
+    /**
      * Get the request type this processor handles
      */
     getRequestType(): RequestType {
@@ -144,19 +175,52 @@ export class NeuronRequestProcessor extends BaseRequestProcessor {
         const taskAnalysis = taskText ? analyzeTaskDetail(taskText) : null;
         const taskDetailLevel = taskAnalysis?.level || 'short';
 
+        // Determine execution mode
+        const executionMode = this.getExecutionMode(ctx);
+
         logger.info('[NeuronRequestProcessor] Task analysis', {
             taskText: taskText?.substring(0, 50),
             detailLevel: taskDetailLevel,
+            executionMode,
             wordCount: taskAnalysis?.wordCount,
             hasTechnicalTerms: taskAnalysis?.hasTechnicalTerms,
             hasFilePaths: taskAnalysis?.hasFilePaths,
         });
 
-        // Initialize PhaseMachine
-        const phaseMachine = resetPhaseMachine(ctx);
+        // Initialize PhaseMachine with correct mode
+        const phaseMachine = resetPhaseMachine(ctx, executionMode);
+
+        // Setup AI-Actions if applicable
+        if (executionMode === 'ai-actions') {
+            const action = ctx['action'] as string | undefined;
+            const availableActions = this.getAvailableAIActions(ctx);
+
+            phaseMachine.setMode('ai-actions');
+            phaseMachine.setAvailableActions(availableActions);
+
+            if (action) {
+                phaseMachine.setCurrentAction(action, 'llm-request');
+            }
+
+            logger.info('[NeuronRequestProcessor] AI-Actions mode enabled', {
+                action,
+                availableActions,
+                promiseId,
+            });
+
+            // For AI-Actions, we skip the normal phase flow and prepare for LLM processing
+            return this.handleAIActions(
+                promiseId,
+                phaseMachine,
+                contextManager,
+                taskText,
+                ctx
+            );
+        }
 
         logger.info('[NeuronRequestProcessor] Processing request', {
             promiseId,
+            executionMode,
             hasCodeBlocks: codeBlocks?.length ?? 0 > 0,
             hasInitialFiles: hasInitialProjectFiles(this.parseCodeBlocks(codeBlocks)),
             initialPhase: phaseMachine.getCurrentPhase(),
@@ -423,6 +487,96 @@ export class NeuronRequestProcessor extends BaseRequestProcessor {
         }
 
         return tasks;
+    }
+
+    /**
+     * Get available AI-Actions based on context
+     */
+    private getAvailableAIActions(ctx: Record<string, unknown>): string[] {
+        const actions: string[] = [];
+
+        // Base AI-Actions available in this system
+        const baseActions = [
+            'dialog',      // Dialog with user
+            'coder',       // Code modification
+            'coder-smart', // Smart code modification
+            'read-file',  // Read files
+            'write-file',  // Write files
+            'rag-search',  // RAG search
+            'execute-command', // Execute commands
+        ];
+
+        // Add action from context if present
+        const contextAction = ctx['action'] as string | undefined;
+        if (contextAction && !baseActions.includes(contextAction)) {
+            actions.push(contextAction);
+        }
+
+        // Add simulation-specific actions
+        const simulationName = ctx['simulation_name'] as string | undefined;
+        if (simulationName) {
+            if (simulationName.includes('dialog')) {
+                actions.push('dialog');
+            } else if (simulationName.includes('coder')) {
+                actions.push('coder');
+            }
+        }
+
+        // Always include base actions
+        return [...new Set([...actions, ...baseActions])];
+    }
+
+    /**
+     * Handle AI-Actions mode - prepare for LLM-driven processing
+     */
+    private async handleAIActions(
+        promiseId: string,
+        phaseMachine: PhaseMachine,
+        contextManager: ContextManager,
+        taskText: string | null,
+        ctx: Record<string, unknown>
+    ): Promise<ProcessResult> {
+        const action = ctx['action'] as string | undefined;
+        const availableActions = phaseMachine.getAvailableActions();
+
+        logger.info('[NeuronRequestProcessor] Handling AI-Actions', {
+            promiseId,
+            action,
+            availableActions,
+            phase: phaseMachine.getCurrentPhase(),
+        });
+
+        // Transition to action phase for AI-Actions
+        phaseMachine.transition('action', 'AI-Actions mode');
+
+        // Build context for LLM
+        const contextBlock = buildRequestContextBlock({
+            newTask: taskText ? [taskText] : [],
+            context: contextManager.getAll(),
+        });
+
+        // For AI-Actions, we return a special outcome that signals
+        // the server should send available actions to LLM
+        return {
+            outcome: 'ai_action_ready',
+            context: contextBlock,
+            tasks: [
+                {
+                    id: `task-ai-action-${Date.now()}`,
+                    type: 'ai_action',
+                    status: 'pending',
+                    description: action || 'AI-driven action',
+                    source: 'ai-action',
+                },
+            ],
+            // Include AI-Actions metadata
+            aiActions: {
+                action,
+                availableActions,
+                mode: 'llm-driven',
+                step: 'llm-request',
+            },
+        };
     }
 }
 

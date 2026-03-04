@@ -375,6 +375,12 @@ export function resetContextManager(): ContextManager {
 // Типы фаз
 export type Phase = 'idle' | 'discovery' | 'recognition' | 'analysis' | 'action' | 'validation' | 'completed';
 
+// Режим выполнения
+export type ExecutionMode = 'actions' | 'ai-actions';
+
+// Тип шага для AI-Actions
+export type AIStep = 'llm-request' | string;
+
 // Конфигурация фаз
 interface PhaseConfig {
     name: Phase;
@@ -449,6 +455,17 @@ interface PhaseState {
         reason?: string;
     }>;
     context: Record<string, unknown>;
+    // AI-Actions state
+    mode: ExecutionMode;
+    currentAction: string | null;
+    currentStep: AIStep | null;
+    availableActions: string[];
+    llmHistory: Array<{
+        action: string;
+        step: AIStep;
+        timestamp: Date;
+        result?: unknown;
+    }>;
 }
 
 // Результат перехода
@@ -468,7 +485,7 @@ interface TransitionResult {
 export class PhaseMachine {
     private state: PhaseState;
 
-    constructor(initialContext: Record<string, unknown> = {}) {
+    constructor(initialContext: Record<string, unknown> = {}, mode: ExecutionMode = 'actions') {
         this.state = {
             currentPhase: 'idle',
             previousPhase: null,
@@ -486,6 +503,11 @@ export class PhaseMachine {
             phaseStartedAt: new Date(),
             history: [],
             context: initialContext,
+            mode,
+            currentAction: null,
+            currentStep: null,
+            availableActions: [],
+            llmHistory: [],
         };
     }
 
@@ -494,6 +516,94 @@ export class PhaseMachine {
      */
     getCurrentPhase(): Phase {
         return this.state.currentPhase;
+    }
+
+    /**
+     * Получить режим выполнения
+     */
+    getMode(): ExecutionMode {
+        return this.state.mode;
+    }
+
+    /**
+     * Установить режим выполнения
+     */
+    setMode(mode: ExecutionMode): void {
+        logger.info('[PhaseMachine] Mode changed', { oldMode: this.state.mode, newMode: mode });
+        this.state.mode = mode;
+    }
+
+    /**
+     * Проверить, работает ли в режиме AI-Actions
+     */
+    isAIActions(): boolean {
+        return this.state.mode === 'ai-actions';
+    }
+
+    /**
+     * Установить доступные действия для AI-Actions
+     */
+    setAvailableActions(actions: string[]): void {
+        this.state.availableActions = actions;
+        logger.debug('[PhaseMachine] Available actions set', { actions });
+    }
+
+    /**
+     * Получить доступные действия
+     */
+    getAvailableActions(): string[] {
+        return this.state.availableActions;
+    }
+
+    /**
+     * Установить текущее действие для AI-Actions
+     */
+    setCurrentAction(action: string, step: AIStep = 'llm-request'): void {
+        const previousAction = this.state.currentAction;
+        const previousStep = this.state.currentStep;
+
+        this.state.currentAction = action;
+        this.state.currentStep = step;
+
+        // Log transition
+        logger.info('[PhaseMachine] AI-Action step', {
+            previousAction,
+            previousStep,
+            action,
+            step,
+            mode: this.state.mode,
+        });
+    }
+
+    /**
+     * Получить текущее действие
+     */
+    getCurrentAction(): { action: string | null; step: AIStep | null } {
+        return {
+            action: this.state.currentAction,
+            step: this.state.currentStep,
+        };
+    }
+
+    /**
+     * Записать результат LLM-запроса в историю
+     */
+    recordLLMResult(action: string, step: AIStep, result: unknown): void {
+        this.state.llmHistory.push({
+            action,
+            step,
+            timestamp: new Date(),
+            result,
+        });
+
+        logger.debug('[PhaseMachine] LLM result recorded', { action, step, historyLength: this.state.llmHistory.length });
+    }
+
+    /**
+     * Получить историю LLM-запросов
+     */
+    getLLMHistory(): Array<{ action: string; step: AIStep; timestamp: Date; result?: unknown }> {
+        return [...this.state.llmHistory];
     }
 
     /**
@@ -712,7 +822,8 @@ export class PhaseMachine {
     /**
      * Сбросить машину в начальное состояние
      */
-    reset(newContext: Record<string, unknown> = {}): void {
+    reset(newContext: Record<string, unknown> = {}, mode?: ExecutionMode): void {
+        const executionMode = mode ?? this.state.mode;
         this.state = {
             currentPhase: 'idle',
             previousPhase: null,
@@ -730,9 +841,14 @@ export class PhaseMachine {
             phaseStartedAt: new Date(),
             history: [],
             context: newContext,
+            mode: executionMode,
+            currentAction: null,
+            currentStep: null,
+            availableActions: [],
+            llmHistory: [],
         };
 
-        logger.info('[PhaseMachine] Reset');
+        logger.info('[PhaseMachine] Reset', { mode: executionMode });
     }
 
     /**
@@ -747,6 +863,12 @@ export class PhaseMachine {
         historyLength: number;
         isExhausted: boolean;
         isTimedOut: boolean;
+        // AI-Actions stats
+        mode: ExecutionMode;
+        currentAction: string | null;
+        currentStep: AIStep | null;
+        availableActions: string[];
+        llmHistoryLength: number;
     } {
         return {
             currentPhase: this.state.currentPhase,
@@ -757,6 +879,11 @@ export class PhaseMachine {
             historyLength: this.state.history.length,
             isExhausted: this.isExhausted(),
             isTimedOut: this.isTimedOut(),
+            mode: this.state.mode,
+            currentAction: this.state.currentAction,
+            currentStep: this.state.currentStep,
+            availableActions: this.state.availableActions,
+            llmHistoryLength: this.state.llmHistory.length,
         };
     }
 
@@ -776,6 +903,14 @@ export class PhaseMachine {
                 timestamp: h.timestamp.toISOString(),
             })),
             context: this.state.context,
+            mode: this.state.mode,
+            currentAction: this.state.currentAction,
+            currentStep: this.state.currentStep,
+            availableActions: this.state.availableActions,
+            llmHistory: this.state.llmHistory.map(h => ({
+                ...h,
+                timestamp: h.timestamp.toISOString(),
+            })),
         });
     }
 
@@ -784,7 +919,7 @@ export class PhaseMachine {
      */
     static deserialize(data: string): PhaseMachine {
         const parsed = JSON.parse(data);
-        const machine = new PhaseMachine(parsed.context);
+        const machine = new PhaseMachine(parsed.context, parsed.mode || 'actions');
 
         machine.state.currentPhase = parsed.currentPhase;
         machine.state.previousPhase = parsed.previousPhase;
@@ -802,6 +937,21 @@ export class PhaseMachine {
             timestamp: new Date(h.timestamp),
         }));
 
+        // AI-Actions fields (with defaults for backward compatibility)
+        machine.state.mode = parsed.mode || 'actions';
+        machine.state.currentAction = parsed.currentAction || null;
+        machine.state.currentStep = parsed.currentStep || null;
+        machine.state.availableActions = parsed.availableActions || [];
+        machine.state.llmHistory = (parsed.llmHistory || []).map((h: {
+            action: string;
+            step: string;
+            timestamp: string;
+            result?: unknown
+        }) => ({
+            ...h,
+            timestamp: new Date(h.timestamp),
+        }));
+
         return machine;
     }
 }
@@ -809,14 +959,14 @@ export class PhaseMachine {
 // Singleton для использования в request-processor
 let currentPhaseMachine: PhaseMachine | null = null;
 
-export function getPhaseMachine(context: Record<string, unknown> = {}): PhaseMachine {
+export function getPhaseMachine(context: Record<string, unknown> = {}, mode: ExecutionMode = 'actions'): PhaseMachine {
     if (!currentPhaseMachine) {
-        currentPhaseMachine = new PhaseMachine(context);
+        currentPhaseMachine = new PhaseMachine(context, mode);
     }
     return currentPhaseMachine;
 }
 
-export function resetPhaseMachine(newContext: Record<string, unknown> = {}): PhaseMachine {
-    currentPhaseMachine = new PhaseMachine(newContext);
+export function resetPhaseMachine(newContext: Record<string, unknown> = {}, mode: ExecutionMode = 'actions'): PhaseMachine {
+    currentPhaseMachine = new PhaseMachine(newContext, mode);
     return currentPhaseMachine;
 }

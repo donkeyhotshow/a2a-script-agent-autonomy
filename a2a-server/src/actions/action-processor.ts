@@ -178,11 +178,16 @@ export class ActionProcessor {
     /**
      * Построить сообщение для action_executing ответа (approve_action)
      */
+    /**
+     * @deprecated Используйте новый формат с execute.form и execute.script
+     */
     private buildActionExecutingMessage(
         sessionId: string,
         actionId: string,
         response: ActionResponseSimulation,
+        /** @deprecated Используйте `execute.script` */
         executingAction: SubAction | undefined,
+        /** @deprecated Используйте `execute.form.choices` */
         nextSteps: Array<{ actionId: string; title: string }>
     ): ServerMessage {
         const context: ContextBlock = {
@@ -195,6 +200,7 @@ export class ActionProcessor {
             },
         };
 
+        /** @deprecated Используйте `execute.form.choices` */
         const result: ServerMessage = {
             context,
             message: response.message,
@@ -203,6 +209,7 @@ export class ActionProcessor {
 
         // Add executingAction if available
         if (executingAction) {
+            /** @deprecated Используйте `execute` с action-type ключами */
             result.executingAction = {
                 actionId: executingAction.id,
                 title: executingAction.title,

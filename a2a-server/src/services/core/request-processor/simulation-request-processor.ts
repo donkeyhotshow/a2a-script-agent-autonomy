@@ -5,12 +5,19 @@
  * - Replay mechanisms for recorded interactions
  * - Simulation directory management
  * - Response replay from simulations
+ * - Server transform pipeline integration (server-transforms-request.json, server-transforms-response.json)
  */
 
 import {logger} from '../../../utils/logger.js';
 import {readFile} from 'fs/promises';
 import {existsSync} from 'fs';
 import path from 'path';
+import {
+    runTransformPipeline,
+    runSimulationTransform,
+    loadSimulationTransform,
+    type TransformPipeline
+} from '../../../transform/index.js';
 import type {
     RequestContext,
     ProcessResult
@@ -129,6 +136,8 @@ export class SimulationRequestProcessor extends BaseRequestProcessor {
 
     /**
      * Handle replay mode - load recorded response
+     * 
+     * Pipeline: request.json → server-transforms-request.json → request.md → LLM → response.md → server-transforms-response.json → response.json
      */
     private async handleReplay(
         simContext: SimulationContext,
@@ -140,6 +149,31 @@ export class SimulationRequestProcessor extends BaseRequestProcessor {
         });
 
         try {
+            // Load request.json
+            const requestContent = await this.loadSimulationRequest(
+                simContext.simulationName,
+                simContext.stepNumber
+            );
+
+            // Apply server-transforms-request.json if exists
+            let requestData = requestContent ? JSON.parse(requestContent) : ctx;
+            const simulationDir = path.join(this.config.simulationsBasePath, simContext.simulationName, String(simContext.stepNumber));
+            
+            const requestTransformResult = await runSimulationTransform(
+                simulationDir,
+                requestData,
+                'request'
+            );
+            
+            if (requestTransformResult.success) {
+                logger.info('[SimulationRequestProcessor] Applied request transforms', {
+                    simulation: simContext.simulationName,
+                    step: simContext.stepNumber
+                });
+                requestData = requestTransformResult.output;
+            }
+
+            // Load response.md (LLM output)
             const responseContent = await this.loadSimulationResponse(
                 simContext.simulationName,
                 simContext.stepNumber
@@ -152,6 +186,22 @@ export class SimulationRequestProcessor extends BaseRequestProcessor {
                 } as ProcessResult;
             }
 
+            // Apply server-transforms-response.json if exists
+            let responseData = { llm: { response: responseContent } };
+            const responseTransformResult = await runSimulationTransform(
+                simulationDir,
+                responseData,
+                'response'
+            );
+            
+            if (responseTransformResult.success) {
+                logger.info('[SimulationRequestProcessor] Applied response transforms', {
+                    simulation: simContext.simulationName,
+                    step: simContext.stepNumber
+                });
+                responseData = responseTransformResult.output;
+            }
+
             return {
                 outcome: 'completed',
                 message: 'Simulation replay completed',
@@ -160,7 +210,7 @@ export class SimulationRequestProcessor extends BaseRequestProcessor {
                     step: simContext.stepNumber,
                     mode: 'replay'
                 },
-                content: responseContent,
+                content: responseData,
                 execute: {
                     message: `Replayed simulation: ${simContext.simulationName}, step ${simContext.stepNumber}`
                 }
@@ -214,6 +264,35 @@ export class SimulationRequestProcessor extends BaseRequestProcessor {
     }
 
     /**
+     * Load simulation request.json from file
+     */
+    private async loadSimulationRequest(simulationName: string, step: number): Promise<string | null> {
+        const simulationDir = path.join(this.config.simulationsBasePath, simulationName, String(step));
+        const requestPath = path.join(simulationDir, 'request.json');
+
+        if (!existsSync(requestPath)) {
+            logger.warn('[SimulationRequestProcessor] Request file not found', {requestPath});
+            return null;
+        }
+
+        try {
+            const content = await readFile(requestPath, 'utf8');
+            logger.info('[SimulationRequestProcessor] Loaded request', {
+                simulation: simulationName,
+                step,
+                contentLength: content.length
+            });
+            return content.trim();
+        } catch (error) {
+            logger.error('[SimulationRequestProcessor] Failed to read request', {
+                requestPath,
+                error: error instanceof Error ? error.message : String(error)
+            });
+            return null;
+        }
+    }
+
+    /**
      * Load simulation response from file
      */
     private async loadSimulationResponse(simulationName: string, step: number): Promise<string | null> {
@@ -244,6 +323,8 @@ export class SimulationRequestProcessor extends BaseRequestProcessor {
 
     /**
      * Load server transforms for a simulation step
+     * 
+     * Uses the transform pipeline module to load and optionally execute transforms
      */
     async loadSimulationTransforms(
         simulationName: string,
@@ -251,22 +332,45 @@ export class SimulationRequestProcessor extends BaseRequestProcessor {
         type: 'request' | 'response'
     ): Promise<Record<string, unknown> | null> {
         const simulationDir = path.join(this.config.simulationsBasePath, simulationName, String(step));
-        const transformPath = path.join(simulationDir, `server-transforms-${type}.json`);
-
-        if (!existsSync(transformPath)) {
+        
+        // Use the transform module's loadSimulationTransform function
+        const pipeline = await loadSimulationTransform(simulationDir, type);
+        
+        if (!pipeline) {
             return null;
         }
+        
+        // Return the pipeline structure for reference
+        return pipeline as unknown as Record<string, unknown>;
+    }
 
-        try {
-            const content = await readFile(transformPath, 'utf8');
-            return JSON.parse(content) as Record<string, unknown>;
-        } catch (error) {
-            logger.error('[SimulationRequestProcessor] Failed to load transforms', {
-                transformPath,
-                error: error instanceof Error ? error.message : String(error)
+    /**
+     * Run server transforms for a simulation step
+     * 
+     * Applies the transform pipeline to the input data
+     */
+    async runSimulationTransforms(
+        simulationName: string,
+        step: number,
+        type: 'request' | 'response',
+        input: Record<string, unknown>
+    ): Promise<Record<string, unknown>> {
+        const simulationDir = path.join(this.config.simulationsBasePath, simulationName, String(step));
+        
+        const result = await runSimulationTransform(simulationDir, input, type);
+        
+        if (!result.success) {
+            logger.warn('[SimulationRequestProcessor] Transform failed', {
+                simulation: simulationName,
+                step,
+                type,
+                error: result.error
             });
-            return null;
+            // Return input on failure
+            return input;
         }
+        
+        return result.output;
     }
 
     /**

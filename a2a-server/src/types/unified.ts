@@ -43,6 +43,7 @@ export interface Action {
     description?: string;
     priority?: number;
     dsl?: Record<string, unknown>;
+    /** @deprecated Use `execute` with action-type keys */
     dslScript?: string;
 }
 
@@ -79,6 +80,8 @@ export interface ActionProposalResponse extends BaseResponse {
 
 /**
  * Executing action with current state
+ * @deprecated Use `execute` with action-type keys
+ * @see docs/new-request-flow/PROTOCOL.md#action-key-shape-обязательно
  */
 export interface ExecutingAction {
     actionId: string;
@@ -86,6 +89,7 @@ export interface ExecutingAction {
     description?: string;
     priority?: number;
     dsl?: Record<string, unknown>;
+    /** @deprecated Use `execute` with action-type keys */
     dslScript?: string;
 }
 
@@ -99,6 +103,8 @@ export interface NextStep {
 
 /**
  * Result block for action_executing response
+ * @deprecated Use `execute.form` for choices and `execute.script` for execution
+ * @see docs/new-request-flow/PROTOCOL.md
  */
 export interface ActionExecutingResult {
     executingAction: Action;

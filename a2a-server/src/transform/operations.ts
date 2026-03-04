@@ -8,6 +8,10 @@
  * - parse-json-from-md: Parse JSON from markdown file
  * - render-markdown: Render a markdown template
  * - switch: Conditional transform based on discriminator value
+ * 
+ * Pipeline usage:
+ * - server-transforms-request.json: Transforms request.json to build request.md (LLM input)
+ * - server-transforms-response.json: Transforms response.md to build response.json (client output)
  */
 
 import * as path from 'path';

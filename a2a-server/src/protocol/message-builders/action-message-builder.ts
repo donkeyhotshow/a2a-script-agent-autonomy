@@ -25,6 +25,7 @@ export interface ProposedAction {
     description?: string;
     priority?: number;
     dsl?: Record<string, unknown>;
+    /** @deprecated Use `execute` with action-type keys */
     dslScript?: string;
 }
 
@@ -32,24 +33,35 @@ export interface ActionMessageOptions extends MessageBuilderOptions {
     actionId?: string;
     actionTitle?: string;
     currentStep?: ActionStep | null;
+    /** @deprecated Use `execute.form.choices` instead */
     nextSteps?: Array<{id: string; title: string}>;
+    /** @deprecated Use `execute` with action-type keys */
     executingActionId?: string;
+    /** @deprecated Use `execute` with action-type keys */
     executingActionTitle?: string;
+    /** @deprecated Use `execute` with action-type keys */
     executingActionDescription?: string;
+    /** @deprecated Use `execute.form.choices` instead */
     proposedActions?: ProposedAction[];
 }
 
 /**
  * Билдер для создания action-сообщений сервера
+ * @deprecated Используйте новые message builders с execute.form
  */
 export class ActionMessageBuilder extends BaseMessageBuilder<ServerMessage> {
     private actionId?: string;
     private actionTitle?: string;
     private currentStep?: ActionStep | null;
+    /** @deprecated Use `execute.form.choices` instead */
     private nextSteps?: Array<{id: string; title: string}>;
+    /** @deprecated Use `execute` with action-type keys */
     private executingActionId?: string;
+    /** @deprecated Use `execute` with action-type keys */
     private executingActionTitle?: string;
+    /** @deprecated Use `execute` with action-type keys */
     private executingActionDescription?: string;
+    /** @deprecated Use `execute.form.choices` instead */
     private proposedActions?: ProposedAction[];
 
     constructor(sessionId: string) {

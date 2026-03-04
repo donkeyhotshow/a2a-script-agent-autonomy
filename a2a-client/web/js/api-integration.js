@@ -55,7 +55,7 @@ class APIIntegration {
     /**
      * Make HTTP request
      */
-    async request(method, path, body = null) {
+    async request(method, path, body = null, meta = {}) {
         const base = this.apiBase.replace(/\/?$/, '');
         const url = path.startsWith('/') ? `${base}${path}` : `${base}/${path}`;
         const options = {
@@ -65,17 +65,30 @@ class APIIntegration {
 
         if (body) options.body = JSON.stringify(body);
 
+        const errorContext = {
+            module: meta.module || 'APIIntegration',
+            path: url,
+            method,
+            ...(meta.context || {})
+        };
+
         try {
             const response = await fetch(url, options);
             const data = await response.json().catch(() => ({}));
 
             if (!response.ok) {
+                global.ErrorHandler?.handleApiError({
+                    status: response.status,
+                    data,
+                    error: data?.error
+                }, errorContext);
                 throw new Error(data?.error?.message || `Request failed: ${response.status}`);
             }
 
             return data.data || data;
         } catch (error) {
             console.error('[API] Request error:', error);
+            global.ErrorHandler?.handleNetworkError(error, errorContext);
             throw error;
         }
     }

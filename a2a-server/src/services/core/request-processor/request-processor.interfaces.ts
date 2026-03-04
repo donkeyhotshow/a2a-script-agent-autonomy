@@ -23,6 +23,8 @@ export interface RequestContext {
 
 export interface ProcessResult {
     outcome: ProcessOutcome;
+    /** Response object for JSON Schema validation (new protocol) */
+    response?: Record<string, unknown> | undefined;
     graph?: Graph | undefined;
     entities?: { count: number; types: Record<string, number> } | undefined;
     relations?: { count: number } | undefined;
@@ -98,21 +100,25 @@ export interface ActionProposal {
     title: string;
     matchScore: number;
     currentStep: ActionStep | null;
+    /** @deprecated Use `execute.form.choices` instead */
     nextSteps: ActionStep[];
 }
 
 export interface ActionExecution {
     actionId: string;
     currentStep: ActionStep | null;
+    /** @deprecated Use `execute.form.choices` instead */
     nextSteps: ActionStep[];
     continue: boolean;
     message: {
         context: Record<string, unknown>;
         action?: ActionProposal;
+        /** @deprecated Use `execute` with action-type keys */
         executingAction?: {
             actionId: string;
             title: string;
         };
+        /** @deprecated Use `execute.form.choices` instead */
         nextSteps?: ActionStep[];
         message?: string;
     };
@@ -123,6 +129,7 @@ export interface ActionResult {
     title?: string;
     matchScore?: number;
     currentStep?: ActionStep;
+    /** @deprecated Use `execute.form.choices` instead */
     nextSteps?: ActionStep[];
 }
 

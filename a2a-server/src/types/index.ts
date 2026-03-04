@@ -89,7 +89,11 @@ export interface ServerMessage {
     message?: string;
     /** Execute commands for client (new protocol format - action-key shape) */
     execute?: ExecuteCommand;
-    /** Legacy: Action data for iterative execution */
+    /**
+     * Legacy: Action data for iterative execution
+     * @deprecated Use `execute.form` for first response instead
+     * @see docs/new-request-flow/PROTOCOL.md
+     */
     action?: {
         id?: string;
         title?: string;
@@ -104,16 +108,25 @@ export interface ServerMessage {
             title: string;
         }>;
     };
-    /** Legacy: Executing action for action_executing response (top-level) */
+    /**
+     * Legacy: Executing action for action_executing response (top-level)
+     * @deprecated Use `execute` with action-type keys instead (e.g., `execute: { script: {...} }`)
+     * @see docs/new-request-flow/PROTOCOL.md#action-key-shape-обязательно
+     */
     executingAction?: {
         actionId: string;
         title: string;
         description?: string;
         priority?: number;
         dsl?: Record<string, unknown>;
+        /** @deprecated Use `execute` with action-type keys */
         dslScript?: string;
     };
-    /** Legacy: Next steps for action_executing response */
+    /**
+     * Legacy: Next steps for action_executing response
+     * @deprecated Use `execute.form.choices` to let user select next action
+     * @see docs/new-request-flow/PROTOCOL.md
+     */
     nextSteps?: Array<{
         actionId: string;
         title: string;
@@ -140,7 +153,9 @@ export type ExecuteCommand =
     | { 'read-file': ExecuteReadFile }
     | { 'write-file': ExecuteWriteFile }
     | { 'rag-search': ExecuteRagSearch }
-    | { 'execute-command': ExecuteCommandParams };
+    | { 'execute-command': ExecuteCommandParams }
+    | { 'list-directory': ExecuteListDirectory }
+    | { 'grep-search': ExecuteGrepSearch };
 
 /**
  * Form execute command - interactive form with choices/input
@@ -203,6 +218,22 @@ export interface ExecuteCommandParams {
 }
 
 /**
+ * List-directory execute command - list contents of a directory
+ */
+export interface ExecuteListDirectory {
+    path: string;
+}
+
+/**
+ * Grep-search execute command - search for pattern in files
+ */
+export interface ExecuteGrepSearch {
+    pattern: string;
+    path?: string;
+    glob?: string;
+}
+
+/**
  * Result command from client to server
  * Uses action-key shape: { result: { "action-type": { ...result } } }
  */
@@ -212,6 +243,8 @@ export type ResultCommand =
     | { 'write-file': { path: string; success: boolean } }
     | { 'rag-search': { results: unknown[]; files: string[] } }
     | { 'execute-command': { command: string; exitCode: number; stdout: string; stderr: string } }
+    | { 'list-directory': { path: string; entries: Array<{ name: string; isDirectory: boolean }> } }
+    | { 'grep-search': { matches: Array<{ file: string; line: number; content: string }> } }
     | { form: { choice?: string; values?: Record<string, unknown> } }
     | { message: string };
 

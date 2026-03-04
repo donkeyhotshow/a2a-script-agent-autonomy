@@ -3,3 +3,4 @@ export * from './context-pipeline.js';
 export * from './llm-requirements-generator.js';
 export * from './types.js';
 export * from './validators/pipeline-validator.js';
+export * from '../transform/index.js';
