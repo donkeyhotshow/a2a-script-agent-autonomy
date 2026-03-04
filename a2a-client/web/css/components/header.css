@@ -234,6 +234,82 @@
     transform: scale(0.95);
 }
 
+/* Color-coded control buttons - macOS style */
+.pui-panel-control-btn.pui-btn-close:hover,
+.panel-control-btn.pui-btn-close:hover {
+    background: rgba(255, 59, 48, 0.2);
+    border-color: #FF3B30;
+    color: #FF3B30;
+}
+
+.pui-panel-control-btn.pui-btn-minimize:hover,
+.panel-control-btn.pui-btn-minimize:hover {
+    background: rgba(255, 204, 0, 0.2);
+    border-color: #FFCC00;
+    color: #FFCC00;
+}
+
+.pui-panel-control-btn.pui-btn-expand:hover,
+.panel-control-btn.pui-btn-expand:hover {
+    background: rgba(52, 199, 89, 0.2);
+    border-color: #34C759;
+    color: #34C759;
+}
+
+/* Drag handle indicator */
+.panel-drag-handle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    color: var(--pui-text-3, #666);
+    cursor: grab;
+    opacity: 0.6;
+    transition: opacity 0.2s ease;
+    flex-shrink: 0;
+}
+
+.panel-drag-handle:hover {
+    opacity: 1;
+    color: var(--pui-accent, #007AFF);
+}
+
+.panel-drag-handle:active {
+    cursor: grabbing;
+}
+
+/* Drop target highlight for cube drag */
+.pui-panel.drop-target {
+    box-shadow: 0 0 0 3px var(--pui-accent, #007AFF), 0 8px 32px rgba(0, 0, 0, 0.3) !important;
+    transform: scale(1.02);
+    transition: all 0.15s ease;
+}
+
+/* Ensure panel header has flex layout for drag handle */
+.panel-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Tooltip styles */
+.pui-panel-control-btn[title]:hover::after {
+    content: attr(title);
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 4px 8px;
+    background: var(--pui-bg, #1e1e1e);
+    border: 1px solid var(--pui-panel-border);
+    border-radius: 4px;
+    font-size: 11px;
+    white-space: nowrap;
+    margin-top: 4px;
+    z-index: 1000;
+}
+
 /* Header action buttons (Save/Load/Clear panels) */
 .header-actions {
     display: flex;

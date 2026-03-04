@@ -18,8 +18,12 @@
     --mac-border: #d2d2d7;
     --mac-border-2: #c6c6c8;
     --mac-border-3: #a1a1a6;
-    --mac-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-    --mac-shadow-2: 0 4px 12px rgba(0, 0, 0, 0.15);
+    --mac-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+    --mac-shadow-2: 0 6px 16px rgba(0, 0, 0, 0.35);
+    --steampunk-metal: #3c2e25;
+    --steampunk-brass: #b28743;
+    --steampunk-patina: #3d2d21;
+    --steampunk-gear: radial-gradient(circle at 30% 20%, rgba(178, 135, 67, 0.35), transparent 45%), radial-gradient(circle at 70% 70%, rgba(60, 45, 35, 0.25), transparent 55%);
     --mac-glass-bg: rgba(255, 255, 255, 0.8);
     --mac-glass-border: rgba(0, 0, 0, 0.08);
     --mac-glass-border-2: rgba(0, 0, 0, 0.12);
@@ -42,12 +46,12 @@
     --mac-spacing-3xl: 32px;
     
     /* macOS Rounded Corners */
-    --mac-radius-sm: 6px;
-    --mac-radius-md: 8px;
-    --mac-radius-lg: 10px;
-    --mac-radius-xl: 12px;
-    --mac-radius-2xl: 16px;
-    --mac-radius-3xl: 20px;
+    --mac-radius-sm: 3px;
+    --mac-radius-md: 5px;
+    --mac-radius-lg: 6px;
+    --mac-radius-xl: 8px;
+    --mac-radius-2xl: 10px;
+    --mac-radius-3xl: 12px;
     
     /* macOS Panel Dimensions */
     --mac-panel-w: 350px;
@@ -111,11 +115,27 @@
 
 /* macOS Window Frame */
 .mac-window-frame {
-    background: var(--mac-bg);
-    border: 1px solid var(--mac-border);
-    border-radius: var(--mac-radius-3xl);
-    box-shadow: var(--mac-shadow);
+    background: linear-gradient(135deg, rgba(60, 45, 35, 0.55), rgba(62, 45, 33, 0.85)), var(--steampunk-patina);
+    border: 1px solid var(--steampunk-brass);
+    border-radius: var(--mac-radius-xl);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08), var(--mac-shadow);
     overflow: hidden;
+}
+
+body {
+    position: relative;
+    min-height: 100vh;
+    background: var(--mac-bg);
+}
+
+body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: linear-gradient(140deg, rgba(60, 45, 35, 0.65), rgba(25, 18, 12, 0.9)), var(--steampunk-gear);
+    opacity: 0.25;
+    pointer-events: none;
+    z-index: -1;
 }
 
 /* macOS Header Bar */
@@ -146,7 +166,6 @@
     border-radius: 50%;
     border: none;
     cursor: pointer;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
 }
 
@@ -175,14 +194,6 @@
     background: #28c841;
 }
 
-.mac-window-control:hover {
-    transform: scale(1.1);
-}
-
-.mac-window-control:active {
-    transform: scale(0.95);
-}
-
 /* macOS Content Area */
 .mac-content-area {
     flex: 1;
@@ -193,9 +204,9 @@
 
 /* macOS Panel */
 .mac-panel {
-    background: var(--mac-glass-bg);
-    border: 1px solid var(--mac-glass-border);
-    border-radius: var(--mac-radius-2xl);
+    background: linear-gradient(180deg, rgba(61, 41, 31, 0.45), rgba(30, 20, 12, 0.85)), var(--mac-glass-bg);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: var(--mac-radius-lg);
     box-shadow: var(--mac-shadow-2);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
@@ -248,7 +259,6 @@
     color: var(--mac-fg-2);
     cursor: pointer;
     font-size: 14px;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     backdrop-filter: blur(5px);
     -webkit-backdrop-filter: blur(5px);
 }
@@ -260,7 +270,6 @@
 }
 
 .mac-panel-control-btn:active {
-    transform: scale(0.95);
     background: var(--mac-accent);
     color: white;
     border-color: var(--mac-accent);
@@ -277,7 +286,6 @@
     font-weight: var(--mac-font-weight-medium);
     font-size: 13px;
     cursor: pointer;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     letter-spacing: 0.02em;
     box-shadow: 0 1px 0 rgba(255, 255, 255, 0.6) inset;
     position: relative;
@@ -297,14 +305,10 @@
 .mac-btn:hover {
     background: linear-gradient(180deg, #f5f5f7, #e5e5e7);
     border-color: var(--mac-accent);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 122, 255, 0.15);
 }
 
 .mac-btn:active {
-    transform: translateY(0);
     background: linear-gradient(180deg, #e5e5e7, #d1d1d6);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) inset;
 }
 
 .mac-btn.primary {
@@ -317,13 +321,10 @@
 .mac-btn.primary:hover {
     background: linear-gradient(180deg, #0071eb, #004bb5);
     border-color: #0062d1;
-    box-shadow: 0 6px 16px rgba(0, 122, 255, 0.4);
 }
 
 .mac-btn.primary:active {
     background: linear-gradient(180deg, #0062d1, #00409e);
-    transform: translateY(0);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2) inset;
 }
 
 .mac-btn.secondary {
@@ -347,7 +348,6 @@
     background: #ffffff;
     color: var(--mac-fg);
     font-size: 14px;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow: 0 1px 0 rgba(255, 255, 255, 0.6) inset;
 }
 
@@ -372,7 +372,6 @@
     color: var(--mac-fg);
     font-size: 14px;
     cursor: pointer;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow: 0 1px 0 rgba(255, 255, 255, 0.6) inset;
     appearance: none;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23636366' d='M2 4l4 4 4-4'/%3E%3C/svg%3E");
@@ -432,15 +431,15 @@
 
 /* macOS Transitions */
 .mac-transition {
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: none;
 }
 
 .mac-transition-fast {
-    transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: none;
 }
 
 .mac-transition-slow {
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: none;
 }
 
 /* macOS Animations */

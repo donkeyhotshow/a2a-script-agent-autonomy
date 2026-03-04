@@ -3,6 +3,8 @@
  * Real-time event streaming from server with A2A API integration
  */
 
+const globalScope = typeof window !== 'undefined' ? window : globalThis;
+
 const SSEClient = {
     eventSource: null,
     sessionId: null,
@@ -108,9 +110,11 @@ const SSEClient = {
             this.disconnect();
         }
 
+        const token = globalScope.apiIntegration?.token;
+        const tokenQuery = token ? `?token=${encodeURIComponent(token)}` : '';
         const url = sessionId
-            ? `${apiBase}/sse/${sessionId}`
-            : `${apiBase}/sse`;
+            ? `${apiBase}/sse/${sessionId}${tokenQuery}`
+            : `${apiBase}/sse${tokenQuery}`;
 
         console.log('[SSE] Connecting to:', url);
         this.isConnecting = true;

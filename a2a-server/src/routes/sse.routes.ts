@@ -4,7 +4,7 @@
  */
 
 import {Router, Request, Response} from 'express';
-import {authenticate} from '../middleware/auth.middleware.js';
+import {authenticate, optionalAuth} from '../middleware/auth.middleware.js';
 import {logger} from '../utils/logger.js';
 import {sseManager} from '../services/core/communication/sse.service.js';
 
@@ -14,7 +14,7 @@ const router = Router();
  * GET /api/v1/sse/:sessionId
  * Stream events for a specific session
  */
-router.get('/:sessionId', authenticate, (req: Request, res: Response) => {
+router.get('/:sessionId', optionalAuth, (req: Request, res: Response) => {
     const sessionId = (req.params['sessionId'] as string) ?? 'default';
 
     // Set SSE headers
@@ -45,7 +45,7 @@ router.get('/:sessionId', authenticate, (req: Request, res: Response) => {
  * GET /api/v1/sse
  * Stream global events (no session)
  */
-router.get('/', authenticate, (req: Request, res: Response) => {
+router.get('/', optionalAuth, (req: Request, res: Response) => {
     // Set SSE headers
     res.writeHead(200, {
         'Content-Type': 'text/event-stream',

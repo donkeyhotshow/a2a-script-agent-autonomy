@@ -1,8 +1,8 @@
 /* Plasticine UI - Media Queries */
 
-/* iPhone/iMac Responsive Design */
+/* Responsive Design Breakpoints */
 
-/* Mobile Responsive Styles (iPhone) */
+/* Mobile Responsive Styles */
 @media (max-width: 768px) {
     /* Header adjustments for mobile */
     .app-header {
@@ -92,7 +92,7 @@
     }
 }
 
-/* Tablet Responsive Styles (iPad) */
+/* Tablet Responsive Styles */
 @media (min-width: 769px) and (max-width: 1024px) {
     .app-header {
         padding: 12px 20px;
@@ -108,7 +108,7 @@
     }
 }
 
-/* Desktop Responsive Styles (Mac) */
+/* Desktop Responsive Styles */
 @media (min-width: 1025px) {
     .app-header {
         padding: 12px 24px;
@@ -124,7 +124,7 @@
     }
 }
 
-/* Large Desktop Responsive Styles (iMac) */
+/* Large Desktop Responsive Styles */
 @media (min-width: 1440px) {
     .app-header {
         padding: 12px 32px;

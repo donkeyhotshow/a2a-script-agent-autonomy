@@ -85,12 +85,13 @@ request.json (result.script) → response.json (execute.script, step: "vue-impor
 
 **Важно:** Клиент не выбирает следующий шаг — сервер определяет его из `context.execution.step` и `result` предыдущего шага.
 
-### 2. AI-Actions (второстепенные, LLM-управляемые)
+### 2. AI-Actions (второстепенные, LLM-ассистируемые)
 
 **Характеристики:**
 - Кроки не в фиксированной последовательности
 - Сервер показывает список *доступных* шагов
-- Следующий шаг определяется из ответа LLM
+- LLM **предлагает** следующий шаг и действие в своём ответе
+- Сервер интерпретирует/нормализует это предложение и выбирает фактический `execution.step` и `execute`
 - Возможны отдельные запросы на каждый шаг
 - **Примеры:** [`dialog`](simulations/dialog/description.md), [`coder`](simulations/coder/description.md), [`coder-smart`](simulations/coder-smart/description.md)
 
@@ -113,14 +114,14 @@ request.json → request.md (LLM prompt) → response.md (LLM output)
               (execute.message, execute.form, или execute.read-file/rag-search/...)
 ```
 
-**Важно:** LLM решает, какое действие выполнить следующим. Сервер транслирует ответ LLM в `execute` для клиента.
+**Важно:** LLM предлагает, какое действие и фазу (`step`) выполнить следующим. Сервер интерпретирует и **может нормализовать или переопределить** это предложение, формируя итоговые `context.execution.step` и `execute` для клиента.
 
 ### Сравнительная таблица
 
 | Аспект | Actions | AI-Actions |
 |--------|---------|------------|
-| Определение шагов | Hardcoded в definition | Динамические, LLM-выбранные |
-| Переключение шагов | Сервер автоматически | LLM определяет из ответа |
+| Определение шагов | Hardcoded в definition | Динамические, LLM-предложенные |
+| Переключение шагов | Сервер автоматически | LLM предлагает, **сервер утверждает/нормализует** |
 | Нужен LLM | Нет (только для первого matching) | Да, на каждый шаг |
 | `execution.step` | Конкретное имя шага | Часто просто `"llm-request"` |
 | Примеры | fix-vue-imports, phpunit-deprecations | dialog, coder, auto-ai |

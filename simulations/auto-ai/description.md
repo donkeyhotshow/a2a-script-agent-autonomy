@@ -43,4 +43,7 @@ simulations/auto-ai/
 - **Context**: server controls context; client does not add to it.
 - **Result**: action-key shape: `result["rag-search"]`, `result["read-file"]`, `result["list-directory"]`,
   `result["grep-search"]`, etc.
-- **LLM-controlled flow**: LLM chooses next action from ACTIONS-MAP.
+- **AI-step semantics**: LLM proposes `step` и `execute` в ответе на prompt, но сервер нормализует/ограничивает эти
+  предложения и записывает финальные значения в `context.execution.step` и `execute`.
+- **LLM-guided flow**: LLM uses ACTIONS-MAP as the catalogue of possible tools; сервер остаётся источником истины для
+  фактического шага и выполняемых действий.

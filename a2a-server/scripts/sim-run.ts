@@ -119,8 +119,8 @@ async function runSingleSimulation(simDir: string, baseDir: string): Promise<boo
 
     // Вызываем сервер
     try {
-        const {invoke} = await import('../src/services/invoke.service.js');
-        const {requestService} = await import('../src/services/request.service.js');
+        const {invoke} = await import('../src/services/utils/invoke.service.js');
+        const {requestService} = await import('../src/services/core/request/request.service.js');
 
         console.log('\n⏳ Invoking server...');
 

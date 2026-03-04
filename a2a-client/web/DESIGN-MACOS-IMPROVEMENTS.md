@@ -169,7 +169,7 @@ Full dark mode implementation with:
 
 ### New Files
 - `css/base/macos-theme.css` - Complete macOS design system
-- `index-macos.html` - Enhanced HTML with macOS classes
+- `index.html` - Enhanced HTML with macOS classes
 - `DESIGN-MACOS-IMPROVEMENTS.md` - This documentation
 
 ### Modified Files

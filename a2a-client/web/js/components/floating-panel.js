@@ -21,6 +21,7 @@
          * @param {boolean} options.critical - критическая панель
          * @param {Function} options.onClose - колбэк при закрытии
          * @param {Function} options.onStateChange - колбэк при изменении состояния
+         * @param {Function} options.onDragEnd - колбэк при окончании drag
          * @param {HTMLElement} options.zonesContainer - контейнер зон для dock
          */
         constructor(container, options = {}) {
@@ -32,6 +33,8 @@
             this.onClose = options.onClose || (() => {
             });
             this.onStateChange = options.onStateChange || (() => {
+            });
+            this.onDragEnd = options.onDragEnd || (() => {
             });
             this.zonesContainer = options.zonesContainer || null;
             this.cubeEl = null;
@@ -80,7 +83,6 @@
 
             const header = this.container.querySelector('.pui-panel-header');
             const resizeHandle = this.container.querySelector('.pui-panel-resize');
-            const minimizeBtn = this.container.querySelector('[data-action="minimize"]');
             const closeBtn = this.container.querySelector('[data-action="close"]');
 
             // Drag handlers
@@ -142,10 +144,14 @@
                     this.container.classList.remove('dragging');
                     this._hideZones();
                     this._drag.on = false;
+                    // Вызываем onDragEnd при окончании перетаскивания
+                    this.onDragEnd?.(this);
                 }
                 if (this._resize.on) {
                     this.container.classList.remove('resizing');
                     this._resize.on = false;
+                    // Вызываем onDragEnd при окончании resize
+                    this.onDragEnd?.(this);
                 }
             };
 
@@ -156,13 +162,13 @@
                 document.removeEventListener('mouseup', up);
             };
 
-            // Minimize/Close buttons
-            minimizeBtn?.addEventListener('click', (e) => {
-                e.stopPropagation();
-                this.minimizeToFooter();
-            });
+            // Close button - minimize to cube
             closeBtn?.addEventListener('click', (e) => {
                 e.stopPropagation();
+                
+                // Сохранить позицию перед закрытием (ghost position)
+                this.onDragEnd?.(this);
+                
                 // Создать куб под курсором мыши
                 const cube = createCubeAtPosition(e.clientX, e.clientY, this.id, this.critical);
                 this.cubeEl = cube;

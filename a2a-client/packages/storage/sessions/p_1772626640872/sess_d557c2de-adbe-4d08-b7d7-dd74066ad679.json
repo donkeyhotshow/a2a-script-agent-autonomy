@@ -6,7 +6,19 @@
   "status": "IN_PROGRESS",
   "version": "2.0",
   "createdAt": "2026-03-04T14:03:38.380Z",
-  "updatedAt": "2026-03-04T14:03:38.389Z",
+  "updatedAt": "2026-03-04T17:08:58.692Z",
   "messages": [],
-  "lastPromiseId": "cmmc3xiq9000113780rt31neu"
+  "lastPromiseId": "cmmc3xiq9000113780rt31neu",
+  "context": {
+    "panelLayout": {
+      "id": "session-panel-sess_d557c2de-adbe-4d08-b7d7-dd74066ad679",
+      "state": "status-tray",
+      "slot": "floating",
+      "title": "sfd",
+      "left": "1046px",
+      "top": "0px",
+      "width": "0px",
+      "height": "0px"
+    }
+  }
 }

@@ -693,6 +693,7 @@ expressApp.post(['/api/sessions', '/api/v1/sessions'], async (req, res) => {
         createdAt: now,
         updatedAt: now,
         messages: [],
+        context: {}, // Initialize empty context for panelLayout storage
     };
     
     // If task is provided, send request to server with new protocol format
@@ -769,24 +770,34 @@ expressApp.post(['/api/sessions', '/api/v1/sessions'], async (req, res) => {
 });
 
 expressApp.get(['/api/sessions/:sessionId', '/api/v1/sessions/:sessionId'], async (req, res) => {
-    const sessionId = String(req.params.sessionId || '');
-    const projectId = typeof req.query.projectId === 'string' ? req.query.projectId : '';
+    try {
+        const sessionId = String(req.params.sessionId || '');
+        const projectId = typeof req.query.projectId === 'string' ? req.query.projectId : '';
 
-    const projects = await loadProjects();
-    const project = projects.find((p) => p.id === projectId) ?? projects[0];
-    if (!project) {
-        jsonError(res, 404, 'Project not found');
-        return;
+        const projects = await loadProjects();
+        const project = projects.find((p) => p.id === projectId) ?? projects[0];
+        if (!project) {
+            jsonError(res, 404, 'Project not found');
+            return;
+        }
+        const session = await loadSession(project, sessionId);
+        if (!session) {
+            jsonError(res, 404, 'Session not found');
+            return;
+        }
+        
+        // Convert to SessionDetail DTO
+        const sessionDetail = toSessionDetail(session);
+        res.json(sessionDetail);
+    } catch (error) {
+        console.error('[Sessions API] GET /api/sessions/:sessionId failed', error);
+        res.status(500).json({
+            success: false,
+            error: {
+                message: error instanceof Error ? error.message : 'Unexpected error'
+            }
+        });
     }
-    const session = await loadSession(project, sessionId);
-    if (!session) {
-        jsonError(res, 404, 'Session not found');
-        return;
-    }
-    
-    // Convert to SessionDetail DTO
-    const sessionDetail = toSessionDetail(session);
-    res.json(sessionDetail);
 });
 
 expressApp.delete(['/api/sessions/:sessionId', '/api/v1/sessions/:sessionId'], async (req, res) => {
@@ -1935,6 +1946,10 @@ expressApp.patch(['/api/sessions/:sessionId', '/api/v1/sessions/:sessionId'], as
     const updated: Session = {
         ...session,
         ...updates,
+        // Merge context instead of replacing
+        context: updates.context 
+            ? { ...session.context, ...updates.context }
+            : session.context,
         updatedAt: new Date().toISOString(),
     };
     

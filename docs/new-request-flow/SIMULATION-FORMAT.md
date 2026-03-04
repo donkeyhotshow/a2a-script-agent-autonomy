@@ -412,8 +412,12 @@ pass to LLM for summary or next step.
 |------|-----|----------|
 | `context.task` | string | Исходная задача пользователя |
 | `context.execution.action` | string | ID текущего действия |
-| `context.execution.step` | string | ID текущего шага |
+| `context.execution.step` | string | ID текущего шага (каноническое значение всегда выбирает сервер) |
 | `context.execution.status` | string | `"completed"` для финального шага |
+
+**Для разных типов действий:**
+- **Actions (скриптовые экшены)**: шаги (`execution.step`) жёстко определены в definition действия, сервер обновляет их алгоритмически на основе `result`.
+- **AI-Actions**: LLM предлагает `step` и `execute` в своём ответе, но сервер остаётся источником истины: он может нормализовать, ограничить или переопределить предложенный шаг и набор действий перед записью в `context.execution` и `execute`.
 
 ### System-managed поля
 

@@ -85,7 +85,7 @@ test.describe('Session panel quick integration smoke test', () => {
         await page.fill('#taskInputField', 'Check session panel sync');
         await page.click('#taskSendBtn');
 
-        const assistantMessage = page.locator('.session-panel-message-body');
+        const assistantMessage = page.locator('.session-panel-message-body').first();
         await expect(assistantMessage).toContainText('Server-side execute message');
 
         // Simulate SSE live events

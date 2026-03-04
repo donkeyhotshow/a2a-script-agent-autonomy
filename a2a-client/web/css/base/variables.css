@@ -1,7 +1,7 @@
 /* Plasticine UI - CSS Variables */
 
 :root {
-    /* iPhone/iMac Color Palette */
+    /* macOS Color Palette */
     --pui-bg: #ffffff;
     --pui-bg-2: #f5f5f7;
     --pui-bg-3: #e5e5e7;
@@ -22,7 +22,7 @@
     --pui-glass-bg: rgba(255, 255, 255, 0.6);
     --pui-glass-border: rgba(255, 255, 255, 0.3);
 
-    /* iOS/macOS Typography */
+    /* macOS Typography */
     --pui-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     --pui-font-size: 14px;
     --pui-line-height: 1.4;

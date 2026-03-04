@@ -1,11 +1,19 @@
 <!-- Floating Panel Template -->
 <div class="floating-panel" data-panel-id="{{panelId}}" data-panel-type="{{panelType}}" data-panel-slot="{{slot}}">
-    <div class="panel-header">
+    <div class="panel-header" data-panel-drag-handle>
+        <!-- Drag handle indicator -->
+        <span class="panel-drag-handle" title="Drag to move">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+                <circle cx="3" cy="3" r="1"/><circle cx="9" cy="3" r="1"/>
+                <circle cx="3" cy="6" r="1"/><circle cx="9" cy="6" r="1"/>
+                <circle cx="3" cy="9" r="1"/><circle cx="9" cy="9" r="1"/>
+            </svg>
+        </span>
         <span class="panel-title">{{ title }}</span>
         <div class="panel-controls">
-            <button class="panel-control-btn" data-action="minimize" aria-label="Minimize panel">−</button>
-            <button class="panel-control-btn" data-action="expand" aria-label="Expand panel">□</button>
-            <button class="panel-control-btn" data-action="close" aria-label="Close panel">×</button>
+            <button class="panel-control-btn pui-btn-close" data-action="close" aria-label="Close panel" title="Minimize to cube">
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M3 3l6 6M9 3l-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            </button>
         </div>
     </div>
     <div class="panel-content">

@@ -1,0 +1,49 @@
+{
+  "success": true,
+  "data": {
+    "id": "req_1772636736460_s5gtd8tlm",
+    "promiseId": "cmmc657m5001a269ca6e1mdpc",
+    "clientId": "simulation-client",
+    "status": "completed",
+    "priority": 0,
+    "context": {
+      "task": "виправити імпорти у vue компонентах",
+      "version": "1.0",
+      "session_id": "stateless"
+    },
+    "message": "виправити імпорти у vue компонентах",
+    "codeBlocks": null,
+    "result": {
+      "graph": {
+        "entities": [],
+        "relations": []
+      },
+      "context": {
+        "graph": {
+          "entities": [],
+          "relations": []
+        },
+        "new_task": [
+          "виправити імпорти у vue компонентах"
+        ],
+        "request_files": [
+          "No entities recognized"
+        ]
+      },
+      "missing": [
+        "No entities recognized"
+      ],
+      "outcome": "graph_incomplete",
+      "questions": [
+        "Please provide the relevant code files (controller, model, service, or Vue components)."
+      ],
+      "request_files": [
+        "No entities recognized"
+      ]
+    },
+    "error": null,
+    "createdAt": "2026-03-04T15:05:36.461Z",
+    "startedAt": "2026-03-04T15:05:37.160Z",
+    "completedAt": "2026-03-04T15:05:37.163Z"
+  }
+}

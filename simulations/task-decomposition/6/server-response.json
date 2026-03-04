@@ -1,0 +1,45 @@
+{
+  "success": true,
+  "data": {
+    "id": "req_1772636759835_559yacq34",
+    "promiseId": "cmmc65png001x269c6jc1mncl",
+    "clientId": "simulation-client",
+    "status": "completed",
+    "priority": 0,
+    "context": {
+      "version": "1.0",
+      "session_id": "stateless"
+    },
+    "message": null,
+    "codeBlocks": null,
+    "result": {
+      "graph": {
+        "entities": [],
+        "relations": []
+      },
+      "context": {
+        "graph": {
+          "entities": [],
+          "relations": []
+        },
+        "request_files": [
+          "No entities recognized"
+        ]
+      },
+      "missing": [
+        "No entities recognized"
+      ],
+      "outcome": "graph_incomplete",
+      "questions": [
+        "Please provide the relevant code files (controller, model, service, or Vue components)."
+      ],
+      "request_files": [
+        "No entities recognized"
+      ]
+    },
+    "error": null,
+    "createdAt": "2026-03-04T15:05:59.836Z",
+    "startedAt": "2026-03-04T15:06:00.506Z",
+    "completedAt": "2026-03-04T15:06:00.509Z"
+  }
+}

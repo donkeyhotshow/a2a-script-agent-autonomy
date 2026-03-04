@@ -77,16 +77,44 @@
 
             let entry = this.panels.get(panelId);
             if (!entry) {
-                this._ensurePui();
-                const title = detail.title || detail.task || detail.context?.task || `Session ${sessionId.slice(-6)}`;
+                await this._ensurePui();
+                if (!this.pui) return;
+                
+                // Получаем layout из context
+                const panelLayout = detail.context?.panelLayout || {};
+                const title = detail.title || panelLayout.title || detail.task || detail.context?.task || `Session ${sessionId.slice(-6)}`;
                 const panel = this.pui.addPanel({
                     id: panelId,
                     title,
-                    slot: detail.context?.panelSlot || 'floating',
+                    slot: panelLayout.slot || detail.context?.panelSlot || 'floating',
                     critical: detail.status === 'active',
                     contentHTML: '<div class="session-card"></div>',
                     onClose: () => this._removePanel(sessionId),
-                    onStateChange: () => {},
+                    onStateChange: (state) => {
+                        // Сохраняем panelLayout при изменении состояния
+                        this._savePanelLayout(sessionId, panel, state);
+                    },
+                    onDragEnd: (panel) => {
+                        // Сохраняем позицию после перетаскивания
+                        this._savePanelLayout(sessionId, panel, panel.state);
+                    },
+                    onCubeDrop: (sourcePanelId, targetPanelId) => {
+                        // Cube перетащили на панель - сохраняем target
+                        console.log('[SessionPanelManager] Cube dropped:', sourcePanelId, '->', targetPanelId);
+                        
+                        // Получаем target sessionId из targetPanelId
+                        const targetSessionId = targetPanelId.replace('session-panel-', '');
+                        
+                        // Сохраняем связь в panelLayout
+                        this._savePanelLayout(sessionId, panel, panel.state);
+                        
+                        // Также обновляем target панель если она существует
+                        const targetEntry = this.panels.get(targetPanelId);
+                        if (targetEntry) {
+                            // Можно сохранить информацию о том, откуда пришёл cube
+                            console.log('[SessionPanelManager] Target panel found:', targetPanelId);
+                        }
+                    },
                 });
                 entry = { panel, sessionId };
                 this.panels.set(panelId, entry);
@@ -161,13 +189,27 @@
 
         _applyLayout(panel, layout) {
             if (!layout || typeof layout !== 'object') return;
+            
+            console.log('[SessionPanelManager] Applying layout:', layout);
+            
+            // Восстанавливаем title если есть
+            if (layout.title) {
+                const titleEl = panel.container?.querySelector?.('.pui-panel-title');
+                if (titleEl) titleEl.textContent = layout.title;
+            }
+            
+            // Применяем state
             if (layout.state) {
                 panel.setState(layout.state);
             }
+            
+            // Применяем slot
             if (layout.slot) {
                 panel.container.classList.remove(...Object.values(global.PlasticineSLOTS || {}));
                 panel.container.classList.add(global.PlasticineSLOTS?.[layout.slot] || global.PlasticineSLOTS?.floating || '');
             }
+            
+            // Применяем position
             const styles = panel.container.style;
             if (layout.left) styles.left = layout.left;
             if (layout.top) styles.top = layout.top;
@@ -192,6 +234,52 @@
             this.panels.delete(panelId);
         }
 
+        /**
+         * Сохранить layout панели на сервере
+         * @param {string} sessionId
+         * @param {Object} panel
+         * @param {string} state
+         * @private
+         */
+        _savePanelLayout(sessionId, panel, state) {
+            if (!sessionId || !this.sessionManager) return;
+            
+            // Определяем slot на основе позиции панели
+            let slot = 'floating';
+            if (panel.container.classList.contains('pui-slot-left')) slot = 'left';
+            else if (panel.container.classList.contains('pui-slot-right')) slot = 'right';
+            else if (panel.container.classList.contains('pui-slot-bottom')) slot = 'bottom';
+            
+            // Получаем position из стилей
+            const styles = panel.container.style;
+            const left = styles.left || panel.container.offsetLeft + 'px';
+            const top = styles.top || panel.container.offsetTop + 'px';
+            const width = styles.width || panel.container.offsetWidth + 'px';
+            const height = styles.height || panel.container.offsetHeight + 'px';
+            
+            // Получаем title из заголовка панели
+            const title = panel.container.querySelector('.pui-panel-title')?.textContent || panel.id || '';
+            
+            const panelLayout = {
+                id: panel.id,
+                type: panel.type,
+                state: state,
+                slot: slot,
+                title: title,
+                left: left,
+                top: top,
+                width: width,
+                height: height
+            };
+            
+            console.log('[SessionPanelManager] Saving panelLayout:', panelLayout);
+            
+            // Отправляем на сервер
+            this.sessionManager.updateSession(sessionId, { context: { panelLayout } }).catch(err => {
+                console.warn('[SessionPanelManager] Failed to save panelLayout:', err);
+            });
+        }
+
         _clearPanels() {
             if (!this.pui) return;
             for (const panelId of Array.from(this.panels.keys())) {
@@ -200,11 +288,14 @@
             this.panels.clear();
         }
 
-        _ensurePui() {
-            if (this.pui) return;
+        async _ensurePui() {
+            if (this.pui) return this.pui;
             if (global.PlasticineUI) {
                 this.pui = new global.PlasticineUI({ mount: document.body });
+                return this.pui;
             }
+            await new Promise((resolve) => setTimeout(resolve, 200));
+            return this._ensurePui();
         }
 
         _escapeHtml(value) {

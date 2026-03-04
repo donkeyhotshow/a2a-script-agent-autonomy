@@ -188,6 +188,27 @@
         },
 
         /**
+         * Update session data on server
+         * @param {string} sessionId - ID of session to update
+         * @param {Object} updates - Data to update
+         * @returns {Promise<Object>} Updated session
+         */
+        async updateSession(sessionId, updates) {
+            const sid = sessionId || this.currentSessionId;
+            if (!sid) {
+                throw new Error('No session ID');
+            }
+
+            try {
+                const result = await this._request('PATCH', `/sessions/${sid}`, updates);
+                return result;
+            } catch (error) {
+                console.error('[SessionManager] Failed to update session:', error);
+                throw error;
+            }
+        },
+
+        /**
          * Get conversation history for session
          */
         async getConversation(sessionId) {

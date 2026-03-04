@@ -29,8 +29,13 @@ export async function authenticate(
         }
 
         const authHeader = req.headers.authorization;
+        const tokenParam = typeof req.query?.token === 'string' ? req.query.token : undefined;
 
         if (!authHeader) {
+            if (tokenParam === SERVER_PASSWORD) {
+                req.client = {id: 'client', email: 'client@a2a.local'};
+                return next();
+            }
             throw unauthorized('AUTH_001', 'Authorization header required');
         }
 
@@ -73,8 +78,12 @@ export async function optionalAuth(
         }
 
         const authHeader = req.headers.authorization;
+        const tokenParam = typeof req.query?.token === 'string' ? req.query.token : undefined;
 
         if (!authHeader) {
+            if (tokenParam === SERVER_PASSWORD) {
+                req.client = {id: 'client', email: 'client@a2a.local'};
+            }
             return next();
         }
 

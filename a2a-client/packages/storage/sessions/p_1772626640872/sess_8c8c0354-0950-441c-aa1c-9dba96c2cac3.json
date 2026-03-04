@@ -6,6 +6,18 @@
   "status": "PENDING",
   "version": "2.0",
   "createdAt": "2026-03-04T12:17:27.989Z",
-  "updatedAt": "2026-03-04T12:17:27.989Z",
-  "messages": []
+  "updatedAt": "2026-03-04T17:08:27.085Z",
+  "messages": [],
+  "context": {
+    "panelLayout": {
+      "id": "session-panel-sess_8c8c0354-0950-441c-aa1c-9dba96c2cac3",
+      "state": "status-tray",
+      "slot": "floating",
+      "title": "dssdf",
+      "left": "0px",
+      "top": "0px",
+      "width": "0px",
+      "height": "0px"
+    }
+  }
 }

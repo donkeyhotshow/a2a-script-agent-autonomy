@@ -1,0 +1,24 @@
+{
+  "id": "sess_b5557193-b1b0-4716-8c3b-45ed2c852ae2",
+  "projectId": "p_1772626640872",
+  "title": "asd",
+  "task": "asd",
+  "status": "IN_PROGRESS",
+  "version": "2.0",
+  "createdAt": "2026-03-04T17:02:19.468Z",
+  "updatedAt": "2026-03-04T17:08:19.370Z",
+  "messages": [],
+  "lastPromiseId": "cmmcabb69000f137823o4aep4",
+  "context": {
+    "panelLayout": {
+      "id": "session-panel-sess_b5557193-b1b0-4716-8c3b-45ed2c852ae2",
+      "state": "status-tray",
+      "slot": "floating",
+      "title": "asd",
+      "left": "0px",
+      "top": "0px",
+      "width": "0px",
+      "height": "0px"
+    }
+  }
+}
