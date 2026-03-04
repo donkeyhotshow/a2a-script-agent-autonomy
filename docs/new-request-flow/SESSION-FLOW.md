@@ -232,7 +232,7 @@
 │       context: {                                                    │
 │         task: "виправити імпорти...",                               │
 │         execution: { action: "fix-vue-imports", step: "vue-import-detect" }\n│       },                                                              │
-│       result: { action: "fix-vue-imports" }  // Выбранное действие\n│     }                                                              │
+│       result: { action: "fix-vue-imports" }  // Выбранное действие **[OUTDATED/LEGACY: в новом протоколе для выбора используйте `result.choice`, см. `server-invoke-request.schema.json`]**\n│     }                                                              │
 └─────────────────────────────────────────────────────────────────────┘
                                 │
                                 ▼
@@ -545,4 +545,4 @@
 | `executingAction`    | `execute`          |
 | `subActionResult`    | `result`           |
 | `currentSubAction`   | `currentStepIndex` |
-| `promiseId`          | (не используется)  |
+| `promiseId`          | (не используется) **[OUTDATED: `promiseId` используется для async AI-запросов, см. `PROTOCOL.md`]** |

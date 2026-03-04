@@ -240,6 +240,7 @@
         fixed: false,
         _sessionId: null,
         _projectId: null,
+        _currentTask: null,
         _lastContext: null,
         _lastResponse: null, // Task 3.1-3.3: Store last response for re-rendering
 
@@ -257,6 +258,7 @@
                     window.addNotification?.('Select a project first', 'error');
                     return;
                 }
+                this._currentTask = task;
                 this.run(task, projectId);
             });
 
@@ -279,6 +281,7 @@
         },
 
         run(task, projectId) {
+            if (task) this._currentTask = task;
             const sessionViewModel = global.SessionViewModel;
             sessionViewModel?.reset();
             sessionViewModel?.setProject(projectId);
@@ -348,8 +351,7 @@
                 setPanelContent(contentEl, 'fixated', { sessionId, projectId });
                 if (this.panel) {
                     this.panel.setCritical?.(true);
-                    const closeBtn = this.panel.container?.querySelector('[data-action="close"]');
-                    if (closeBtn) closeBtn.style.display = 'none';
+                    this.panel.setNonClosable?.(true);
                 }
 
                 // Check if we got a synchronous response from server
@@ -387,7 +389,6 @@
         async sendChoice(choiceId, contentEl) {
             const sessionId = this._sessionId;
             const projectId = this._projectId;
-            const prevContext = this._lastContext;
             if (!sessionId || !projectId) {
                 window.addNotification?.('Session or project missing', 'error');
                 return;
@@ -398,15 +399,17 @@
             }
             
             // New protocol: send result with action-key shape
+            const context = TaskFlow._buildContext({
+                execution: {
+                    action: choiceId,
+                    step: 'action-selection'
+                }
+            });
             const requestBody = {
                 projectId,
-                result: { choice: choiceId },
+                context,
+                result: { choice: choiceId }
             };
-            
-            // Include context if available
-            if (prevContext) {
-                requestBody.context = prevContext;
-            }
             
             setPanelContent(contentEl, 'sending', null);
             try {
@@ -430,18 +433,46 @@
             const payload = (messageText || '').trim() || 'continue';
             global.SessionViewModel?.pushMessage({ content: payload }, 'user');
 
+            const context = TaskFlow._buildContext();
+
             setPanelContent(contentEl, 'sending', null);
             try {
-                const invokeRes = await request('POST', `/sessions/${encodeURIComponent(sessionId)}/next`, {
+                const requestBody = {
                     projectId,
+                    context,
                     result: { message: payload }
-                });
+                };
+                const invokeRes = await request('POST', `/sessions/${encodeURIComponent(sessionId)}/next`, requestBody);
                 const outcome = await processNextResponse(contentEl, invokeRes);
                 if (outcome !== 'ok') return;
             } catch (err) {
                 contentEl.innerHTML = '<div class="task-flow-error">' + escapeHtml(String(err?.message || err)) + '</div>';
                 window.addNotification?.(String(err?.message || err), 'error');
             }
+        },
+
+        _buildContext(overrides = {}) {
+            const base = TaskFlow._lastContext && typeof TaskFlow._lastContext === 'object'
+                ? { ...TaskFlow._lastContext }
+                : {};
+            const context = { ...base };
+            if (!context.task && TaskFlow._currentTask) {
+                context.task = TaskFlow._currentTask;
+            }
+            const executionBase = context.execution && typeof context.execution === 'object'
+                ? { ...context.execution }
+                : {};
+            const executionOverrides = overrides.execution || {};
+            const execution = { ...executionBase, ...executionOverrides };
+            if (overrides.action) execution.action = overrides.action;
+            if (overrides.step) execution.step = overrides.step;
+            if (Object.keys(execution).length) {
+                context.execution = execution;
+            }
+            if (overrides.task) {
+                context.task = overrides.task;
+            }
+            return context;
         },
 
         async _doRunFallback(task, projectId, contentEl, panelEl) {

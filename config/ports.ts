@@ -3,6 +3,8 @@
  * Centralized port management for all A2A services
  */
 
+import type { PortMetadata } from './types.js';
+
 /** Service identifier type */
 export type ServiceKey = 
   | 'server'
@@ -13,27 +15,8 @@ export type ServiceKey =
   | 'postgres'
   | 'redis';
 
-/** Port configuration for a service */
-export interface PortConfig {
-  /** Default port number */
-  port: number;
-  /** Port range for dynamic allocation [min, max] */
-  range: [number, number];
-  /** Service priority (lower = higher priority) */
-  priority: number;
-  /** Service display name */
-  name: string;
-  /** Whether the service is optional */
-  optional?: boolean;
-  /** Service description */
-  description?: string;
-  /** Environment variable name */
-  envVar: string;
-  /** Health check endpoint path (if applicable) */
-  healthPath?: string;
-  /** Service category */
-  category: 'core' | 'infrastructure' | 'ai' | 'client';
-}
+/** Port configuration for a service (alias for PortMetadata) */
+export type PortConfig = PortMetadata;
 
 /** Port allocation result */
 export interface PortAllocation {

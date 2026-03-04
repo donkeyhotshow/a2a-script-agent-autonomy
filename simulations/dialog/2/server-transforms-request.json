@@ -11,7 +11,7 @@
       "path": "$.context.execution",
       "value": {
         "action": "dialog",
-        "step": "dialog"
+        "step": "action-selection"
       }
     },
     {

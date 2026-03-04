@@ -23,7 +23,7 @@ import { promisify } from 'util';
 import { fileURLToPath } from 'url';
 import path from 'path';
 import { readFileSync, writeFileSync, mkdirSync, readdirSync, statSync, unlinkSync, existsSync } from 'fs';
-import { readFile, writeFile, mkdir, readdir, stat, unlink, rm } from 'fs/promises';
+import * as fs from 'fs/promises';
 import { WebSocket, WebSocketServer } from 'ws';
 import express from 'express';
 import cors from 'cors';

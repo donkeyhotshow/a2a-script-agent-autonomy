@@ -1,8 +1,9 @@
-/* App entry – task-only UI. Order matters. */
+/* App entry â task-only UI. Order matters. */
 @import 'base/variables.css';
 @import 'base/reset.css';
 @import 'base/typography.css';
 @import 'base/theme.css';
+@import 'base/macos-theme.css';
 @import 'layouts/main.css';
 @import 'layouts/app.css';
 @import 'components/header.css';
@@ -23,3 +24,4 @@
 @import 'components/file-transfer.css';
 @import 'utils/transitions.css';
 @import 'utils/media.css';
+@import 'animations.css';

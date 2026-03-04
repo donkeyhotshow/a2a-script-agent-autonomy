@@ -71,6 +71,19 @@ export * from './file/index.js';
 export * from './message/index.js';
 export * from './factory/index.js';
 
+// Re-export Session types from types.js
+export {
+  Session,
+  SESSION_STATUS,
+  LEGACY_SESSION_STATUS,
+  SESSION_ACTIONS,
+  MESSAGE_ROLES,
+  EXCHANGE_LOG_TYPES,
+  createSession,
+  validateSessionData,
+  sanitizeSessionForClient,
+} from './types.js';
+
 // Re-export factory functions for convenience
 export {
   createContextBlock,

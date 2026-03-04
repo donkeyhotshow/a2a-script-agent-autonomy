@@ -4,16 +4,51 @@
   "title": "Server Invoke Request",
   "description": "Request body for POST /api/v1/invoke (canonical, per simulations/SCHEMA.md).",
   "type": "object",
+  "definitions": {
+    "execution": {
+      "type": "object",
+      "required": ["action", "step"],
+      "properties": {
+        "action": {
+          "type": "string",
+          "description": "ID of the current action."
+        },
+        "step": {
+          "type": "string",
+          "description": "ID of the current step inside the action."
+        },
+        "progress": {
+          "type": "number",
+          "description": "Optional progress percentage (0–100)."
+        }
+      },
+      "additionalProperties": true
+    },
+    "taskString": {
+      "type": "string",
+      "description": "User task description."
+    }
+  },
   "additionalProperties": false,
   "properties": {
     "task": {
-      "type": "string",
-      "description": "User task description. Present only in the very first request."
+      "$ref": "#/definitions/taskString"
     },
     "context": {
       "type": "object",
       "description": "Execution context echoed from previous server response. System-managed, free-form.",
-      "additionalProperties": true
+      "additionalProperties": true,
+      "properties": {
+        "task": { "$ref": "#/definitions/taskString" },
+        "execution": { "$ref": "#/definitions/execution" }
+      }
+    },
+    "execution": {
+      "$ref": "#/definitions/execution"
+    },
+    "action": {
+      "type": "string",
+      "description": "Optional action ID the client records for the current step."
     },
     "result": {
       "type": "object",
@@ -45,9 +80,13 @@
       }
     },
     {
-      "description": "Subsequent requests: context + result.",
-      "required": ["context", "result"]
+      "description": "Subsequent requests: context (plus optional result) with execution state.",
+      "required": ["context"],
+      "properties": {
+        "context": {
+          "required": ["task", "execution"]
+        }
+      }
     }
   ]
 }
-

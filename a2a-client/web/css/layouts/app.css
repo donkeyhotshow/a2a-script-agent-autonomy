@@ -1,17 +1,70 @@
-/* App layout */
+/* App layout - Enhanced macOS Design */
 .app-container {
     display: flex;
     flex-direction: column;
     height: 100vh;
+    background: var(--mac-bg);
+    color: var(--mac-fg);
+    font-family: var(--mac-font-family);
 }
 
 .app-main {
-    padding: 16px;
+    padding: var(--mac-spacing-lg);
     flex: 1;
     min-height: 0;
+    background: var(--mac-bg-2);
+    overflow: auto;
 }
 
 .app-main-hint {
-    color: var(--fg2);
+    color: var(--mac-fg-2);
     font-size: 12px;
+    font-weight: var(--mac-font-weight-medium);
+}
+
+/* Enhanced macOS window frame for the entire app */
+.app-window-frame {
+    background: var(--mac-bg);
+    border: 1px solid var(--mac-border);
+    border-radius: var(--mac-radius-3xl);
+    box-shadow: var(--mac-shadow-lg);
+    overflow: hidden;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* macOS-style content area with proper spacing */
+.app-content-area {
+    flex: 1;
+    padding: var(--mac-spacing-lg);
+    background: var(--mac-bg-2);
+    min-height: 0;
+    overflow: auto;
+}
+
+/* macOS scrollbar for main content */
+.app-content-area.mac-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: var(--mac-scrollbar-thumb) var(--mac-scrollbar-track);
+}
+
+.app-content-area.mac-scrollbar::-webkit-scrollbar {
+    width: var(--mac-scrollbar-width);
+    height: var(--mac-scrollbar-width);
+}
+
+.app-content-area.mac-scrollbar::-webkit-scrollbar-track {
+    background: var(--mac-scrollbar-track);
+    border-radius: var(--mac-radius-lg);
+}
+
+.app-content-area.mac-scrollbar::-webkit-scrollbar-thumb {
+    background: var(--mac-scrollbar-thumb);
+    border-radius: var(--mac-radius-lg);
+    border: 2px solid var(--mac-scrollbar-track);
+}
+
+.app-content-area.mac-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: var(--mac-fg-2);
 }

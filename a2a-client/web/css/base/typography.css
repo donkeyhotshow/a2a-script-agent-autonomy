@@ -1,35 +1,99 @@
 /* Plasticine UI - Typography */
 
+/* System Font Stack for iOS/macOS */
+body {
+    font-family: var(--pui-font-family);
+    font-size: var(--pui-font-size);
+    line-height: var(--pui-line-height);
+    color: var(--pui-text);
+}
+
+/* Panel Typography */
 .pui-panel-title {
     font-weight: 600;
-    font-size: 13px;
+    font-size: 14px;
     color: var(--pui-text);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    letter-spacing: -0.01em;
 }
 
 .pui-panel.docked-bottom .pui-panel-title {
-    font-size: 11px;
+    font-size: 12px;
+    font-weight: 500;
 }
 
+.pui-panel-header {
+    font-weight: 600;
+    font-size: 14px;
+    letter-spacing: -0.01em;
+}
+
+/* Placeholder and Content Typography */
 .pui-placeholder {
     padding: 8px;
-    font-size: 12px;
-    color: var(--pui-muted);
+    font-size: 13px;
+    color: var(--pui-text-2);
     min-height: 60px;
+    line-height: 1.5;
 }
 
 .pui-placeholder pre,
 .pui-log-output,
 .pui-debug-output {
     margin: 0;
-    font-size: 11px;
+    font-size: 12px;
     max-height: 200px;
     overflow: auto;
     white-space: pre-wrap;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    line-height: 1.4;
 }
 
-.pui-panel-header {
+/* Document Content */
+.pui-doc-panel .pui-doc-body {
+    font-size: 14px;
+    line-height: 1.6;
+    letter-spacing: 0.01em;
+    color: var(--pui-text);
+}
+
+/* Chat Messages */
+.pui-chat-messages {
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.pui-chat-input {
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+/* Status and Labels */
+.pui-cube-status {
+    font-size: 10px;
     font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.pui-dock-label {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+/* Button Text */
+.pui-panel-control-btn {
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.header-actions button {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
 }

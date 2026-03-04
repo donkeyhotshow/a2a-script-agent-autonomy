@@ -11,27 +11,29 @@
         bottom: 'pui-slot-bottom',
         header: 'pui-slot-header'
     };
-    const DOCK_STATES = ['minimized', 'docked-left', 'docked-right', 'docked-bottom', 'drawer-left', 'drawer-right'];
+    const DOCK_STATES = ['minimized', 'docked-left', 'docked-right', 'docked-bottom', 'status-tray', 'drawer-left', 'drawer-right'];
 
     class PlasticinePanel {
         constructor(container, options = {}) {
-            this.container = container;
-            this.id = options.id || container.dataset.panelId || 'panel-' + Math.random().toString(36).slice(2, 9);
-            this.slot = options.slot || 'floating';
-            this.critical = !!options.critical;
-            this.onClose = options.onClose || (() => {
-            });
-            this.onStateChange = options.onStateChange || (() => {
-            });
-            this.cubeEl = null;
-            this.zonesContainer = options.zonesContainer || null;
-            this.ui = options.ui || null;
-            this.state = 'expanded';
-            this._slotClass = SLOTS[this.slot] || SLOTS.floating;
-            this._drag = {on: false, startX: 0, startY: 0, startLeft: 0, startTop: 0};
-            this._resize = {on: false, startX: 0, startY: 0, startW: 0, startH: 0};
-            this._cubeEventsBound = false;
-            this._bind();
+        this.container = container;
+        this.id = options.id || container.dataset.panelId || 'panel-' + Math.random().toString(36).slice(2, 9);
+        this.slot = options.slot || 'floating';
+        this.critical = !!options.critical;
+        this.nonClosable = !!options.nonClosable;
+        this.onClose = options.onClose || (() => {
+        });
+        this.onStateChange = options.onStateChange || (() => {
+        });
+        this.cubeEl = null;
+        this.zonesContainer = options.zonesContainer || null;
+        this.ui = options.ui || null;
+        this.state = 'expanded';
+        this._slotClass = SLOTS[this.slot] || SLOTS.floating;
+        this._drag = {on: false, startX: 0, startY: 0, startLeft: 0, startTop: 0};
+        this._resize = {on: false, startX: 0, startY: 0, startW: 0, startH: 0};
+        this._cubeEventsBound = false;
+        this._closeBtn = null;
+        this._bind();
         }
 
         _bind() {
@@ -42,6 +44,8 @@
             const resizeHandle = this.container.querySelector('.pui-panel-resize');
             const minimizeBtn = this.container.querySelector('[data-action="minimize"]');
             const closeBtn = this.container.querySelector('[data-action="close"]');
+            this._closeBtn = closeBtn;
+            this._applyCloseVisibility();
 
             header?.addEventListener('mousedown', (e) => {
                 if (e.target.closest('.pui-panel-control-btn')) return;
@@ -112,7 +116,14 @@
             };
 
             minimizeBtn?.addEventListener('click', () => this.minimizeToFooter());
-            closeBtn?.addEventListener('click', (e) => this.closeToCube(e));
+            closeBtn?.addEventListener('click', (e) => {
+                if (this.nonClosable) {
+                    e.preventDefault();
+                    this.minimizeToStatusTray();
+                    return;
+                }
+                this.closeToCube(e);
+            });
         }
 
         _showZones() {
@@ -126,13 +137,19 @@
                 this.zonesContainer.querySelectorAll('.pui-zone').forEach(z => z.classList.remove('drag-over'));
             }
             this.ui?._drawers?.setDragging(false);
+            this.ui?.setStatusTrayDragOver?.(false);
         }
 
         _highlightZone(e) {
+            let trayHover = false;
             this.zonesContainer?.querySelectorAll('.pui-zone').forEach(z => {
                 const r = z.getBoundingClientRect();
-                z.classList.toggle('drag-over', e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom);
+                const isInside = e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom;
+                z.classList.toggle('drag-over', isInside);
+                if (isInside && z.dataset.zone === 'status-tray') trayHover = true;
             });
+            const overTray = trayHover || this.ui?.isPointOverStatusTray?.(e.clientX, e.clientY);
+            this.ui?.setStatusTrayDragOver?.(overTray);
         }
 
         _getZoneAt(x, y) {
@@ -141,6 +158,7 @@
                 const r = z.getBoundingClientRect();
                 if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) zone = z.dataset.zone;
             });
+            if (!zone && this.ui?.isPointOverStatusTray?.(x, y)) zone = 'status-tray';
             return zone;
         }
 
@@ -154,6 +172,10 @@
         }
 
         setState(newState) {
+            const wasTray = this.state === 'status-tray';
+            if (wasTray && newState !== 'status-tray') {
+                this.ui?.detachCubeFromStatusTray?.(this.id);
+            }
             this.container.classList.remove('expanded', ...DOCK_STATES);
             this.container.classList.add(newState);
             this.state = newState;
@@ -205,6 +227,13 @@
                     this.cubeEl.classList.add('visible');
                     this._bindCubeEvents();
                 }
+            } else if (newState === 'status-tray') {
+                this.container.style.display = 'none';
+                if (this.cubeEl) {
+                    this.cubeEl.classList.add('visible');
+                    this._bindCubeEvents();
+                    this.ui?.attachCubeToStatusTray?.(this.id, this.cubeEl);
+                }
             } else if (newState === 'drawer-left' || newState === 'drawer-right') {
                 this.container.style.display = 'none';
                 if (this.cubeEl) {
@@ -239,13 +268,16 @@
             if (this.cubeEl) this.cubeEl.classList.remove('visible');
         }
 
+        /** Minimize into the status tray taskbar */
+        minimizeToStatusTray() {
+            this.setState('status-tray');
+        }
+
         /** Close to cube - hide panel, show cube at cursor position. No-op when critical. */
         closeToCube(e) {
             if (this.critical) return;
+            this.ui?.detachCubeFromStatusTray?.(this.id);
             e = e || window.event;
-            // Hide the panel
-            this.container.style.display = 'none';
-            // Show cube at cursor position
             if (this.cubeEl) {
                 const x = e.clientX || e.pageX || window.innerWidth / 2;
                 const y = e.clientY || e.pageY || window.innerHeight / 2;
@@ -253,11 +285,8 @@
                 this.cubeEl.style.top = (y - 25) + 'px';
                 this.cubeEl.style.right = 'auto';
                 this.cubeEl.style.bottom = 'auto';
-                this.cubeEl.classList.add('visible');
-                this._bindCubeEvents();
             }
-            this.state = 'closed-via-cube';
-            this.onStateChange(this.state);
+            this.setState('closed-via-cube');
         }
 
         /** Bind drag and right-click events to cube */
@@ -310,6 +339,11 @@
             // Right click - change color
             cube.addEventListener('contextmenu', (e) => {
                 e.preventDefault();
+                if (this.state === 'status-tray') {
+                    this.expand();
+                    this.ui?.bringToFront?.(this.id);
+                    return;
+                }
                 colorIndex = (colorIndex + 1) % colors.length;
                 cube.style.borderColor = colors[colorIndex];
                 const statusEl = cube.querySelector('.pui-cube-status');
@@ -336,6 +370,17 @@
             this.critical = !!c;
             this.container.classList.toggle('pui-critical', this.critical);
             if (this.cubeEl) this.cubeEl.classList.toggle('pui-critical', this.critical);
+        }
+
+        setNonClosable(value) {
+            this.nonClosable = !!value;
+            this._applyCloseVisibility();
+        }
+
+        _applyCloseVisibility() {
+            if (this._closeBtn) {
+                this._closeBtn.style.display = this.nonClosable ? 'none' : '';
+            }
         }
 
         setCubeStatus(status) {
@@ -614,9 +659,73 @@
             this.cubes = new Map();
             this._maxZIndex = 1000;
             this._activePanelId = null;
+            this.statusTrayEl = null;
+            this.statusTrayIcons = null;
+            this.statusTrayDrop = null;
+            this._statusTrayRegistry = new Map();
             this._drawers = null;
+            this._ensureStatusTray(true);
             this._ensureZones();
             this._ensureDrawers();
+        }
+
+        _ensureStatusTray(force = false) {
+            if (this.statusTrayEl && !force) return;
+            const tray = document.querySelector('[data-role="status-tray"]');
+            this.statusTrayEl = tray;
+            this.statusTrayIcons = tray?.querySelector('[data-role="status-tray-icons"]') || null;
+            this.statusTrayDrop = tray?.querySelector('[data-role="status-tray-drop"]') || tray;
+        }
+
+        isPointOverStatusTray(x, y) {
+            this._ensureStatusTray();
+            if (!this.statusTrayDrop) return false;
+            const rect = this.statusTrayDrop.getBoundingClientRect();
+            return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
+        }
+
+        setStatusTrayDragOver(active) {
+            this._ensureStatusTray();
+            if (this.statusTrayEl) {
+                this.statusTrayEl.classList.toggle('drag-over', !!active);
+            }
+        }
+
+        attachCubeToStatusTray(panelId, cubeEl) {
+            this._ensureStatusTray();
+            if (!this.statusTrayIcons || !cubeEl) return;
+            if (this._statusTrayRegistry.has(panelId)) return;
+            cubeEl.classList.add('in-tray');
+            cubeEl.style.position = 'relative';
+            cubeEl.style.left = '';
+            cubeEl.style.top = '';
+            cubeEl.style.right = '';
+            cubeEl.style.bottom = '';
+            cubeEl.style.width = '';
+            cubeEl.style.height = '';
+            this.statusTrayIcons.appendChild(cubeEl);
+            this._statusTrayRegistry.set(panelId, cubeEl);
+        }
+
+        detachCubeFromStatusTray(panelId) {
+            this._ensureStatusTray();
+            const cubeEl = this._statusTrayRegistry.get(panelId);
+            if (!cubeEl) return;
+            cubeEl.classList.remove('in-tray');
+            this._statusTrayRegistry.delete(panelId);
+            cubeEl.style.position = 'fixed';
+            cubeEl.style.width = '';
+            cubeEl.style.height = '';
+            cubeEl.style.left = '';
+            cubeEl.style.top = '';
+            cubeEl.style.right = '';
+            cubeEl.style.bottom = '';
+            this.mount.appendChild(cubeEl);
+            const pos = this._findNonOverlappingCubePosition();
+            cubeEl.style.left = pos.x + 'px';
+            cubeEl.style.top = pos.y + 'px';
+            cubeEl.style.right = 'auto';
+            cubeEl.style.bottom = 'auto';
         }
 
         /**

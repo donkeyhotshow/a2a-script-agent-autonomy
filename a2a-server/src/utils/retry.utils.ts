@@ -2,6 +2,8 @@
  * Retry/backoff utilities per plans/utils-improvements.md.
  */
 
+import { sleep } from './backoff.js';
+
 export interface RetryOptions {
     /** Max attempts (default 3) */
     maxAttempts?: number;
@@ -11,13 +13,6 @@ export interface RetryOptions {
     backoff?: number;
     /** Custom predicate: retry only when (error) => true (default: retry on any error) */
     shouldRetry?: (error: unknown) => boolean;
-}
-
-/**
- * Sleep for given milliseconds.
- */
-export function sleep(ms: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 /**

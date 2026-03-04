@@ -1,6 +1,10 @@
 {
   "context": {
-    "task": "диалог"
+    "task": "диалог",
+    "execution": {
+      "action": "dialog",
+      "step": "action-selection"
+    }
   },
   "result": {
     "choice": "dialog"

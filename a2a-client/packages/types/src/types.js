@@ -1,12 +1,15 @@
 /**
- * Types for Types
+ * Types for A2A Client Session
  * 
- * Defines the session model structure used in the Types package
+ * Defines the session model structure used across all A2A packages
  * Matches the server-side session model with context, execute, status, exchangeLog[], messages[]
+ * Supports both legacy and new protocol
+ * @see docs/new-request-flow/PROTOCOL.md
  */
 
 /**
- * Session model for Types
+ * Session model for A2A Client
+ * Supports both legacy and new protocol
  */
 export class Session {
     constructor(data) {
@@ -23,6 +26,11 @@ export class Session {
         this.messages = Array.isArray(data.messages) ? data.messages : [];
         this.exchangeLog = Array.isArray(data.context?.exchangeLog) ? data.context.exchangeLog : [];
         this.messageCount = Array.isArray(data.messages) ? data.messages.length : 0;
+        
+        // New protocol fields
+        this.execution = data.context?.execution || null;
+        this.history = data.context?.history || [];
+        this.docVirtual = data.context?.docVirtual || '';
     }
 
     /**
@@ -82,6 +90,56 @@ export class Session {
     }
 
     /**
+     * Update execution context (new protocol)
+     * @param {string} action - Action ID
+     * @param {string} step - Step ID
+     * @param {string} status - Status ('completed' or undefined)
+     * @param {number} progress - Progress 0-100
+     * @see docs/new-request-flow/PROTOCOL.md#execution
+     */
+    updateExecution(action, step, status, progress) {
+        this.execution = {
+            action,
+            step,
+            status,
+            progress,
+        };
+        this.context.execution = this.execution;
+        this.updatedAt = new Date().toISOString();
+    }
+
+    /**
+     * Add history entry (new protocol)
+     * @param {string} action - Action ID
+     * @param {string} step - Step ID
+     * @param {object} result - Action result
+     * @see docs/new-request-flow/PROTOCOL.md#history
+     */
+    addHistoryEntry(action, step, result) {
+        const entry = {
+            action,
+            step,
+            result,
+            timestamp: new Date().toISOString(),
+        };
+        this.history.push(entry);
+        this.context.history = this.history;
+        this.updatedAt = new Date().toISOString();
+        return entry;
+    }
+
+    /**
+     * Update docVirtual (new protocol)
+     * @param {string} content - Virtual document content
+     * @see docs/new-request-flow/PROTOCOL.md#docvirtual
+     */
+    updateDocVirtual(content) {
+        this.docVirtual = content;
+        this.context.docVirtual = content;
+        this.updatedAt = new Date().toISOString();
+    }
+
+    /**
      * Update status
      */
     updateStatus(status) {
@@ -136,15 +194,30 @@ export class Session {
 }
 
 /**
- * Session status types
+ * Session status types - supports both legacy and new protocol
+ * @see docs/new-request-flow/PROTOCOL.md#sessionstatus
  */
 export const SESSION_STATUS = {
+    PENDING: 'PENDING',          // Ожидает выбора действия (new protocol: 'pending')
+    READY: 'READY',              // Действие выбрано (new protocol: 'ready')
+    IN_PROGRESS: 'IN_PROGRESS',  // Выполняется (new protocol: 'in_progress')
+    WAITING_CONFIRMATION: 'WAITING_CONFIRMATION', // Ожидает подтверждения (new protocol: 'waiting_confirmation')
+    COMPLETED: 'COMPLETED',      // Завершено (new protocol: 'completed')
+    ERROR: 'ERROR',              // Ошибка (new protocol: 'error')
+    CANCELLED: 'CANCELLED',       // Отменено (new protocol: 'cancelled')
+};
+
+/**
+ * Legacy session status (for backwards compatibility)
+ * @deprecated Use SESSION_STATUS instead
+ */
+export const LEGACY_SESSION_STATUS = {
     PENDING: 'PENDING',
     READY: 'READY',
     IN_PROGRESS: 'IN_PROGRESS',
     COMPLETED: 'COMPLETED',
+    FAILED: 'FAILED',
     CANCELLED: 'CANCELLED',
-    ERROR: 'ERROR',
 };
 
 /**
@@ -212,9 +285,9 @@ export function validateSessionData(session) {
 }
 
 /**
- * Sanitize session data for Types
+ * Sanitize session data for A2A Client
  */
-export function sanitizeSessionForTypes(session) {
+export function sanitizeSessionForClient(session) {
     if (!validateSessionData(session)) {
         throw new Error('Invalid session data');
     }

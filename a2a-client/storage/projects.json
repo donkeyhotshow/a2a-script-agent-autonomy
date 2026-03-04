@@ -1,6 +1,10 @@
 {
   "projects": [
     {
+      "id": "p_1772611112209",
+      "name": "asd"
+    },
+    {
       "id": "p_1771576028988",
       "name": "websitestore",
       "path": "C:\\workspace\\domain-platform\\websitestore.com.ua"

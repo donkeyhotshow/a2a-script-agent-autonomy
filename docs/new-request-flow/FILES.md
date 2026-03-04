@@ -165,11 +165,6 @@ simulations/
 ├── fix-vue-imports/           # Виправлення Vue імпортів
 ├── fix-vue-imports-batched/
 ├── analyze/
-├── analyze-performance/
-├── analyze-security/
-├── analyze-typescript/
-├── analyze-vue/
-├── analyze-laravel/
 ├── phpunit-deprecations/
 └── ...
 ```

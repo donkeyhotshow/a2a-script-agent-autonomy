@@ -235,7 +235,7 @@ SIMULATION_ENABLED=false # Включить симуляцию
 2. WEB: отправляет POST /api/sessions/:id/next
    │
 3. CLIENT API:
-    - Отправляет POST /api/v1/invoke { context, result: { action } }
+    - Отправляет POST /api/v1/invoke { context, result: { action } } **[OUTDATED/LEGACY: для выбора действия в новом протоколе используйте `result.choice`, см. `server-invoke-request.schema.json`]**
     - SERVER возвращает execute с script
     - CLIENT API выполняет script
     - CLIENT API сохраняет результаты в сессии

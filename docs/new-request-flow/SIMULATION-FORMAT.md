@@ -195,8 +195,16 @@ JSONPath‑pipeline (див. `json-schemas/server-transform.schema.json`).
 
 ```json
 {
-  "context": { "task": "диалог" },
-  "result": { "action": "dialog" }
+  "context": {
+    "task": "диалог",
+    "execution": {
+      "action": "dialog",
+      "step": "action-selection"
+    }
+  },
+  "result": {
+    "choice": "dialog"
+  }
 }
 ```
 

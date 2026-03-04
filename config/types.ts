@@ -25,6 +25,28 @@ export interface PortConfig {
     redisPort: number;
 }
 
+/** Port metadata configuration (used in ports.ts) */
+export interface PortMetadata {
+    /** Default port number */
+    port: number;
+    /** Port range for dynamic allocation [min, max] */
+    range: [number, number];
+    /** Service priority (lower = higher priority) */
+    priority: number;
+    /** Service display name */
+    name: string;
+    /** Whether the service is optional */
+    optional?: boolean;
+    /** Service description */
+    description?: string;
+    /** Environment variable name */
+    envVar: string;
+    /** Health check endpoint path (if applicable) */
+    healthPath?: string;
+    /** Service category */
+    category: 'core' | 'infrastructure' | 'ai' | 'client';
+}
+
 // ===========================================
 // Database Configuration
 // ===========================================
@@ -253,7 +275,7 @@ export interface AppConfig {
 }
 
 // Export individual config types for service-specific usage
-export type { PortConfig, DatabaseConfig, AIConfig, SecurityConfig };
+export type { PortConfig, PortMetadata, DatabaseConfig, AIConfig, SecurityConfig };
 export type { ServerConfig, ProxyConfig, StorageConfig, LoggingConfig };
 export type { RateLimitConfig, QueueConfig, MLConfig, SessionConfig };
 export type { PlexeConfig, WebSocketConfig, RequestProcessorConfig };

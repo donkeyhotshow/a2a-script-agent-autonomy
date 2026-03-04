@@ -173,6 +173,8 @@ simulations/
 
 ---
 
+**Важно:** после выбора действия клиент сам формирует `context` (с `task` и `execution` — action + step) и добавляет дополнительные поля `execution`/`action`/`task` рядом при необходимости. Именно такой контекст с `result` отправляется в следующий `request.json`, а сервер валидирует, что `context` содержит `task` и `execution` (см. [`server-invoke-request.schema.json`](json-schemas/server-invoke-request.schema.json)).
+
 ## Шаг 3: Выполнение с LLM
 
 ### request.json

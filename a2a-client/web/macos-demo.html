@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>macOS Design Demo - A2A Script Agent</title>
+    <link rel="stylesheet" href="css/app.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 40px;
+            background: var(--mac-bg);
+            font-family: var(--mac-font-family);
+            color: var(--mac-fg);
+        }
+        
+        .demo-container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        
+        .demo-section {
+            margin-bottom: var(--mac-spacing-3xl);
+        }
+        
+        .demo-title {
+            font-size: 24px;
+            font-weight: var(--mac-font-weight-semibold);
+            margin-bottom: var(--mac-spacing-lg);
+            color: var(--mac-fg);
+        }
+        
+        .demo-subtitle {
+            font-size: 16px;
+            color: var(--mac-fg-2);
+            margin-bottom: var(--mac-spacing-lg);
+        }
+        
+        .demo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: var(--mac-spacing-lg);
+        }
+        
+        .demo-card {
+            background: var(--mac-glass-bg);
+            border: 1px solid var(--mac-glass-border);
+            border-radius: var(--mac-radius-2xl);
+            padding: var(--mac-spacing-lg);
+            box-shadow: var(--mac-shadow-2);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+        
+        .demo-controls {
+            display: flex;
+            gap: var(--mac-spacing-md);
+            align-items: center;
+            margin-bottom: var(--mac-spacing-lg);
+        }
+        
+        .demo-preview {
+            background: var(--mac-bg);
+            border: 1px solid var(--mac-border);
+            border-radius: var(--mac-radius-lg);
+            padding: var(--mac-spacing-lg);
+            min-height: 200px;
+        }
+        
+        .feature-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .feature-list li {
+            padding: var(--mac-spacing-sm) 0;
+            border-bottom: 1px solid var(--mac-border);
+            display: flex;
+            align-items: center;
+            gap: var(--mac-spacing-sm);
+        }
+        
+        .feature-list li:last-child {
+            border-bottom: none;
+        }
+        
+        .feature-icon {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        
+        .feature-icon.blue { background: var(--mac-accent); }
+        .feature-icon.green { background: var(--mac-success); }
+        .feature-icon.orange { background: var(--mac-warning); }
+        .feature-icon.red { background: var(--mac-danger); }
+        
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--mac-spacing-lg);
+            margin-top: var(--mac-spacing-lg);
+        }
+        
+        .comparison-panel {
+            background: var(--mac-glass-bg);
+            border: 1px solid var(--mac-glass-border);
+            border-radius: var(--mac-radius-2xl);
+            padding: var(--mac-spacing-lg);
+            box-shadow: var(--mac-shadow-2);
+        }
+        
+        .comparison-title {
+            font-weight: var(--mac-font-weight-semibold);
+            margin-bottom: var(--mac-spacing-md);
+            color: var(--mac-fg);
+        }
+        
+        .old-design {
+            opacity: 0.7;
+            filter: grayscale(1);
+        }
+        
+        .new-design {
+            border: 2px solid var(--mac-accent);
+            box-shadow: 0 8px 24px rgba(0, 122, 255, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-container">
+        <div class="demo-section">
+            <h1 class="demo-title">🎨 macOS Design Improvements</h1>
+            <p class="demo-subtitle">A comprehensive showcase of the enhanced macOS-inspired design system for A2A Script Agent</p>
+        </div>
+        
+        <div class="demo-section">
+            <h2 class="demo-title">✨ Key Features</h2>
+            <div class="demo-grid">
+                <div class="demo-card">
+                    <h3 class="demo-subtitle">Authentic macOS Aesthetics</h3>
+                    <ul class="feature-list">
+                        <li><span class="feature-icon blue"></span> System blue accent colors</li>
+                        <li><span class="feature-icon green"></span> Frosted glass effects</li>
+                        <li><span class="feature-icon orange"></span> Rounded corners and smooth edges</li>
+                        <li><span class="feature-icon red"></span> Proper shadow and depth</li>
+                    </ul>
+                </div>
+                
+                <div class="demo-card">
+                    <h3 class="demo-subtitle">Window Controls</h3>
+                    <div class="demo-controls">
+                        <div style="display: flex; gap: 8px; align-items: center;">
+                            <button class="mac-window-control close" style="width: 12px; height: 12px; border-radius: 50%; background: #ff5f57; border: none;"></button>
+                            <button class="mac-window-control minimize" style="width: 12px; height: 12px; border-radius: 50%; background: #ffbd2e; border: none;"></button>
+                            <button class="mac-window-control maximize" style="width: 12px; height: 12px; border-radius: 50%; background: #28c841; border: none;"></button>
+                        </div>
+                        <span style="color: var(--mac-fg-2); font-size: 12px;">Authentic macOS window controls</span>
+                    </div>
+                    <p style="color: var(--mac-fg-2); font-size: 13px; line-height: 1.5;">
+                        Red, yellow, and green buttons with proper hover effects and click animations
+                    </p>
+                </div>
+                
+                <div class="demo-card">
+                    <h3 class="demo-subtitle">Enhanced Typography</h3>
+                    <div style="margin-bottom: var(--mac-spacing-md);">
+                        <p style="font-size: 14px; line-height: 1.4; letter-spacing: -0.01em; margin-bottom: 8px;">System font with proper spacing</p>
+                        <p style="font-size: 13px; color: var(--mac-fg-2);">Clean, readable text with macOS typography standards</p>
+                    </div>
+                    <div class="demo-controls">
+                        <button class="mac-btn">Regular Button</button>
+                        <button class="mac-btn primary">Primary Action</button>
+                    </div>
+                </div>
+                
+                <div class="demo-card">
+                    <h3 class="demo-subtitle">Dark Mode Support</h3>
+                    <div style="display: flex; gap: var(--mac-spacing-md); align-items: center;">
+                        <div style="width: 40px; height: 40px; background: #000000; border: 1px solid #3a3a3c; border-radius: 8px;"></div>
+                        <div style="width: 40px; height: 40px; background: #ffffff; border: 1px solid #d2d2d7; border-radius: 8px;"></div>
+                        <span style="color: var(--mac-fg-2); font-size: 12px;">Automatic theme switching</span>
+                    </div>
+                    <p style="color: var(--mac-fg-2); font-size: 13px; line-height: 1.5; margin-top: var(--mac-spacing-sm);">
+                        Seamless light/dark mode transitions with proper contrast ratios
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="demo-section">
+            <h2 class="demo-title">🎨 Design Comparison</h2>
+            <div class="comparison-grid">
+                <div class="comparison-panel old-design">
+                    <div class="comparison-title">Before (Original Design)</div>
+                    <div style="color: var(--mac-fg-2); font-size: 13px; line-height: 1.5;">
+                        <ul style="padding-left: 20px;">
+                            <li>Basic CSS styling</li>
+                            <li>Simple color scheme</li>
+                            <li>Standard borders and shadows</li>
+                            <li>Generic button styles</li>
+                            <li>Basic typography</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="comparison-panel new-design">
+                    <div class="comparison-title">After (macOS Design)</div>
+                    <div style="color: var(--mac-fg-2); font-size: 13px; line-height: 1.5;">
+                        <ul style="padding-left: 20px;">
+                            <li>Authentic macOS color palette</li>
+                            <li>Frosted glass effects</li>
+                            <li>System-appropriate shadows</li>
+                            <li>Gradient buttons with hover effects</li>
+                            <li>System fonts and typography</li>
+                            <li>Custom scrollbars</li>
+                            <li>Window controls</li>
+                            <li>Dark mode support</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="demo-section">
+            <h2 class="demo-title">🔧 Implementation Details</h2>
+            <div class="demo-grid">
+                <div class="demo-card">
+                    <h3 class="demo-subtitle">CSS Architecture</h3>
+                    <div class="feature-list">
+                        <li><span class="feature-icon blue"></span> CSS variables for theming</li>
+                        <li><span class="feature-icon green"></span> Modular component system</li>
+                        <li><span class="feature-icon orange"></span> Responsive design</li>
+                        <li><span class="feature-icon red"></span> Accessibility features</li>
+                    </div>
+                </div>
+                
+                <div class="demo-card">
+                    <h3 class="demo-subtitle">Files Modified</h3>
+                    <div class="feature-list">
+                        <li><span class="feature-icon blue"></span> css/base/macos-theme.css (NEW)</li>
+                        <li><span class="feature-icon green"></span> css/app.css (UPDATED)</li>
+                        <li><span class="feature-icon orange"></span> css/components/header.css (UPDATED)</li>
+                        <li><span class="feature-icon red"></span> css/layouts/app.css (UPDATED)</li>
+                    </div>
+                </div>
+                
+                <div class="demo-card">
+                    <h3 class="demo-subtitle">Browser Support</h3>
+                    <div class="feature-list">
+                        <li><span class="feature-icon blue"></span> Chrome 80+</li>
+                        <li><span class="feature-icon green"></span> Firefox 75+</li>
+                        <li><span class="feature-icon orange"></span> Safari 13+</li>
+                        <li><span class="feature-icon red"></span> Edge 80+</li>
+                    </div>
+                </div>
+                
+                <div class="demo-card">
+                    <h3 class="demo-subtitle">Performance</h3>
+                    <div class="feature-list">
+                        <li><span class="feature-icon blue"></span> CSS-only implementation</li>
+                        <li><span class="feature-icon green"></span> Hardware acceleration</li>
+                        <li><span class="feature-icon orange"></span> Minimal JavaScript</li>
+                        <li><span class="feature-icon red"></span> Optimized animations</li>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="demo-section">
+            <h2 class="demo-title">🚀 Next Steps</h2>
+            <div class="demo-card">
+                <p style="color: var(--mac-fg-2); line-height: 1.6; margin-bottom: var(--mac-spacing-lg);">
+                    The macOS design improvements are now ready for use. To implement these changes in your project:
+                </p>
+                <div class="demo-controls">
+                    <button class="mac-btn primary" onclick="window.location.href='index-macos.html'">View Enhanced Interface</button>
+                    <button class="mac-btn" onclick="window.location.href='index.html'">View Original Interface</button>
+                </div>
+                <div style="margin-top: var(--mac-spacing-lg); color: var(--mac-fg-2); font-size: 13px;">
+                    <p><strong>Documentation:</strong> See DESIGN-MACOS-IMPROVEMENTS.md for detailed implementation guide</p>
+                    <p><strong>Customization:</strong> Modify CSS variables in css/base/macos-theme.css to match your brand</p>
+                    <p><strong>Testing:</strong> Test across different browsers and screen sizes</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Simple demo interaction
+        document.addEventListener('DOMContentLoaded', function() {
+            const controls = document.querySelectorAll('.mac-window-control');
+            controls.forEach(control => {
+                control.addEventListener('click', function() {
+                    this.style.transform = 'scale(0.9)';
+                    setTimeout(() => {
+                        this.style.transform = 'scale(1)';
+                    }, 100);
+                });
+            });
+        });
+    </script>
+</body>
+</html>

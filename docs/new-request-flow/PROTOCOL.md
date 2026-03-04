@@ -202,6 +202,10 @@ interface FirstResponseFormChoices {
 }
 ```
 
+### Новый контекст для последующих запросов
+После выбора действия клиент собирает `context` (включая `task` и `execution`) и, при необходимости, дополнительные поля `execution`, `action`, `task` рядом. Следующий `request.json` отправляется с этим контекстом и, если есть, `result` — именно клиент записывает `execution` (action + step), а не сервер.
+Сервер ожидает, что `context` содержит `task` и `execution`; эти поля обязательны при валидации [`server-invoke-request.schema.json`](json-schemas/server-invoke-request.schema.json), тогда как `result` необязательно и добавляется лишь при новых данных (выбор, сообщение, результат скрипта и т.п.). `projectId`/`sessionId` остаются внутри UI и не передаются дальше.
+
 #### Legacy-формат ответа (actions[])
 
 Для старых симуляций/реализаций допускается формат с `actions[]` и `fallbackActions[]` (см. также `SCHEMAS.md`), но

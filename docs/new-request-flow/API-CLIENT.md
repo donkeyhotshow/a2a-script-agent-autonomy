@@ -557,6 +557,8 @@ await client.invoke({
 });
 ```
 
+Обратите внимание: в последующих запросах `context` уже содержит `task` и `execution` (action + step), потому что именно клиент первым сохраняет текущий контекст перед отправкой. Сервер валидирует, что `context` включает эти поля — `result` добавляется только если есть новый выбор/ответ/данные (см. [`server-invoke-request.schema.json`](json-schemas/server-invoke-request.schema.json)). Поля `projectId`/`sessionId` остаются в клиентской памяти и не попадают в тело запроса.
+
 ### Server Invoke Response
 
 Ответы сервера могут быть трёх типов:

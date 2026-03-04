@@ -1,0 +1,305 @@
+/* iPhone/iMac Style Animations */
+
+/* Global Transitions */
+* {
+    transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* Button Animations */
+button, .btn, .pui-panel-control-btn, .header-actions button {
+    transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+button:hover, .btn:hover, .pui-panel-control-btn:hover, .header-actions button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+button:active, .btn:active, .pui-panel-control-btn:active, .header-actions button:active {
+    transform: translateY(0) scale(0.98);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Input Focus Animations */
+.form-input, .header-input, .pui-chat-input {
+    transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.form-input:focus, .header-input:focus, .pui-chat-input:focus {
+    transform: translateY(-1px);
+    box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+}
+
+/* Panel Animations */
+.pui-panel {
+    transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.pui-panel:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
+}
+
+.pui-panel.dragging {
+    transition: none;
+}
+
+/* Header Animations */
+.app-header {
+    transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.app-header:hover {
+    transform: translateY(-1px);
+}
+
+/* Window Control Animations */
+.window-control {
+    transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.window-control:hover {
+    transform: scale(1.1);
+}
+
+.window-control:active {
+    transform: scale(0.95);
+}
+
+/* Toggle Switch Animation */
+.toggle-switch {
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.toggle-switch::after {
+    transition: transform 0.2s ease;
+}
+
+/* Segmented Control Animation */
+.segmented-option {
+    transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.segmented-option:hover {
+    transform: translateY(-1px);
+}
+
+.segmented-option.active {
+    animation: popIn 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* Form Element Animations */
+.form-group {
+    transition: all 0.2s ease;
+}
+
+.form-group:focus-within {
+    transform: translateY(-1px);
+}
+
+/* Loading Animations */
+.loading-spinner {
+    animation: spin 1s linear infinite;
+}
+
+.loading-pulse {
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+/* Success/Error State Animations */
+.success-flash {
+    animation: flash 0.3s ease-in-out;
+}
+
+.error-shake {
+    animation: shake 0.5s ease-in-out;
+}
+
+/* Modal/Overlay Animations */
+.modal-overlay {
+    animation: fadeIn 0.3s ease-out;
+}
+
+.modal-content {
+    animation: slideUp 0.3s ease-out;
+}
+
+/* Toast/Notification Animations */
+.toast {
+    animation: slideInRight 0.3s ease-out;
+}
+
+.toast.toast-removing {
+    animation: slideOutRight 0.3s ease-out;
+}
+
+/* Keyframe Animations */
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+
+@keyframes flash {
+    0% { background-color: transparent; }
+    50% { background-color: rgba(52, 199, 89, 0.2); }
+    100% { background-color: transparent; }
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes slideOutRight {
+    from {
+        opacity: 1;
+        transform: translateX(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+}
+
+@keyframes popIn {
+    0% {
+        transform: scale(0.8);
+        opacity: 0;
+    }
+    50% {
+        transform: scale(1.05);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* iOS-style bounce animation for buttons */
+.bounce-enter {
+    animation: bounceIn 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+@keyframes bounceIn {
+    0% {
+        transform: scale(0.3);
+        opacity: 0;
+    }
+    50% {
+        transform: scale(1.05);
+    }
+    70% {
+        transform: scale(0.9);
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* Smooth resize animation for panels */
+.pui-panel {
+    will-change: transform, width, height;
+}
+
+.pui-panel.resizing {
+    transition: none;
+    will-change: auto;
+}
+
+/* Hover effects with iOS-style micro-interactions */
+.micro-interaction {
+    transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+.micro-interaction:hover {
+    transform: scale(1.02);
+    opacity: 0.95;
+}
+
+/* Focus ring animation */
+.focus-ring:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+    animation: focusPulse 0.3s ease-out;
+}
+
+@keyframes focusPulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(0, 122, 255, 0.4);
+    }
+    100% {
+        box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+    }
+}
+
+/* Smooth scroll animation */
+html {
+    scroll-behavior: smooth;
+}
+
+/* iOS-style page transition */
+.page-enter {
+    animation: pageSlideIn 0.3s ease-out;
+}
+
+.page-exit {
+    animation: pageSlideOut 0.3s ease-out;
+}
+
+@keyframes pageSlideIn {
+    from {
+        opacity: 0;
+        transform: translateX(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes pageSlideOut {
+    from {
+        opacity: 1;
+        transform: translateX(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+}
