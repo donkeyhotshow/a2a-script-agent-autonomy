@@ -191,3 +191,45 @@ export class FrameworkDetectorService {
     }
   }
 }
+
+const frameworkDetectorService = new FrameworkDetectorService();
+
+export async function extractFrameworks(codeBlocks: Array<{ path: string; content: string }>) {
+  return frameworkDetectorService.extractFrameworks(codeBlocks);
+}
+
+export function hasInitialProjectFiles(codeBlocks: Array<{ path: string; content: string }>): boolean {
+  return codeBlocks.some(block => {
+    const fileName = block.path.split('/').pop()?.toLowerCase() || '';
+    return fileName === 'package.json' || fileName === 'composer.json';
+  });
+}
+
+type ExtractedFrameworks = {
+  frontend: string[];
+  backend: string[];
+  testing: string[];
+};
+
+export function getFrameworkTriggers(frameworks: ExtractedFrameworks): string[] {
+  const triggers: string[] = [];
+  if (frameworks.frontend.some(f => f.includes('vue'))) {
+    triggers.push('vue', 'vue3', 'vue-component');
+  }
+  if (frameworks.frontend.some(f => f.includes('inertia'))) {
+    triggers.push('inertia', 'inertia-vue', 'inertia-props');
+  }
+  if (frameworks.backend.some(f => f.includes('laravel'))) {
+    triggers.push('laravel', 'eloquent', 'blade');
+  }
+  if (frameworks.frontend.some(f => f.includes('tailwind'))) {
+    triggers.push('tailwind', 'tailwind-classes');
+  }
+  if (frameworks.testing.some(t => t.includes('vitest'))) {
+    triggers.push('vitest', 'unit-test');
+  }
+  if (frameworks.testing.some(t => t.includes('playwright'))) {
+    triggers.push('playwright', 'e2e-test');
+  }
+  return triggers;
+}

@@ -56,7 +56,7 @@ web/
 
 ```bash
 # Убедитесь что API Server запущен
-cd a2a-client/packages/api-server
+cd a2a-client/packages/sdk
 npm start
 
 # Затем откройте web/index.html в браузере

@@ -13,29 +13,23 @@
       "to": "$.context"
     },
     {
+      "op": "set",
+      "path": "$.context.execution.step",
+      "value": "$.llm.step"
+    },
+    {
       "op": "append-to-array",
       "to": "$.context.history",
       "value": {
         "role": "assistant",
-        "message": "$.llm.message",
-        "action": "$.llm.action",
-        "params": "$.llm.params"
+        "step": "$.llm.step",
+        "message": "$.llm.message"
       }
     },
     {
-      "op": "switch",
-      "discriminator": "$.llm.action",
-      "cases": {
-        "rag-search": {
-          "op": "set",
-          "path": "$.execute",
-          "value": {
-            "rag-search": {
-              "query": "$.llm.params.query"
-            }
-          }
-        }
-      }
+      "op": "set",
+      "path": "$.execute",
+      "value": "$.llm.execute"
     }
   ]
 }

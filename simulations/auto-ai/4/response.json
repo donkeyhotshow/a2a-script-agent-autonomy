@@ -3,7 +3,7 @@
     "task": "Refactor the API: add a logging middleware, add a health check endpoint, update the API tests, run lint and tests, and write a short report to .carrier/reports/.",
     "execution": {
       "action": "auto-ai",
-      "step": "llm-request"
+      "step": "inspect_structure"
     },
     "history": [
       {
@@ -21,11 +21,8 @@
       },
       {
         "role": "assistant",
-        "message": "Listing src/ to see structure before reading files.",
-        "action": "list-directory",
-        "params": {
-          "path": "src/"
-        }
+        "step": "inspect_structure",
+        "message": "Listing src/ to see structure before reading files."
       }
     ]
   },

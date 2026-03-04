@@ -16,6 +16,48 @@ import x from '@/services/x.js'
 
 ([`tsconfig.json`](a2a-server/tsconfig.json:4-5))
 
+### AI-Action Transform Pattern (Canonical)
+
+> **Important:** For all AI-actions (LLM-driven flows), use the canonical pattern from `auto-ai`.
+
+**Core principle:** The LLM controls `context.execution.step` and the server just persists it via transforms.
+
+#### Prompt Format
+
+All AI-action prompts must require the LLM to respond with:
+
+```json
+{
+  "step": "step_name",
+  "message": "user-visible explanation",
+  "execute": {
+    "<one_action>": { ...params }
+  },
+  "completed": false
+}
+```
+
+- `step` — semantic phase name (e.g., `plan`, `clarify`, `research`, `execute`, `completed`)
+- `execute` — **action-key shape** with exactly ONE key
+- `completed` — `true` only when task is fully done
+
+#### Transform Templates
+
+Reusable templates are in [`templates/ai-action-transforms/`](templates/ai-action-transforms/):
+
+- `server-transforms-request.json` — copy, append-to-history, render-markdown
+- `server-transforms-response.json` — parse JSON, update step, append history, set execute
+
+#### Examples
+
+| Simulation | Prompt | Status |
+|------------|--------|--------|
+| `auto-ai` | `a2a-server/prompts/auto-ai-request.md` | ✅ Canonical |
+| `coder-smart` | `a2a-server/prompts/coder-request.md` | ✅ Updated to canonical |
+| `analyze` | `a2a-server/prompts/analyze-request.md` | ⚠️ Needs update |
+
+See [`plans/ai-action-transform-template.md`](plans/ai-action-transform-template.md) for detailed migration guide.
+
 ### Testing Requirements
 
 - **ENCRYPTION_KEY** - Must be exactly 32 characters in tests ([`tests/setup.ts`](a2a-server/tests/setup.ts:16))

@@ -13,26 +13,29 @@
       "to": "$.context"
     },
     {
-      "op": "switch",
-      "discriminator": "$.llm.action",
-      "cases": {
-        "continue": {
-          "op": "set",
-          "path": "$.execute",
-          "value": {
-            "form": {
-              "title": "Продовжити",
-              "input": []
-            }
-          }
-        },
-        "completed": {
-          "op": "set",
-          "path": "$.result",
-          "value": {
-            "completed": true
-          }
-        }
+      "op": "set",
+      "path": "$.context.execution.step",
+      "value": "$.llm.step"
+    },
+    {
+      "op": "append-to-array",
+      "to": "$.context.history",
+      "value": {
+        "role": "assistant",
+        "step": "$.llm.step",
+        "message": "$.llm.message"
+      }
+    },
+    {
+      "op": "set",
+      "path": "$.execute",
+      "value": "$.llm.execute"
+    },
+    {
+      "op": "set",
+      "path": "$.result",
+      "value": {
+        "completed": "$.llm.completed"
       }
     }
   ]

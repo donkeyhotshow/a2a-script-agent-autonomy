@@ -48,7 +48,47 @@
             // FloatingPanel instance
             this.floatingPanel = null;
             
+            // Event listeners
+            this._listeners = new Map();
+            
             this._init();
+        }
+
+        /**
+         * Подписаться на событие
+         * @param {string} event - Название события
+         * @param {Function} callback - Обработчик
+         */
+        on(event, callback) {
+            if (!this._listeners.has(event)) {
+                this._listeners.set(event, new Set());
+            }
+            this._listeners.get(event).add(callback);
+            return () => this.off(event, callback);
+        }
+
+        /**
+         * Отписаться от события
+         * @param {string} event - Название события
+         * @param {Function} callback - Обработчик
+         */
+        off(event, callback) {
+            this._listeners.get(event)?.delete(callback);
+        }
+
+        /**
+         * Emit событие
+         * @param {string} event - Название события
+         * @param {Object} data - Данные
+         */
+        emit(event, data) {
+            this._listeners.get(event)?.forEach(cb => {
+                try {
+                    cb(data);
+                } catch (e) {
+                    console.error('[AIActionsSessionPanel] Event handler error:', e);
+                }
+            });
         }
 
         /**
@@ -77,6 +117,81 @@
             
             // Добавляем обработчики событий
             this._bindEvents();
+            
+            // Подписываемся на события выбора choice из Web API
+            this._setupWebAPIIntegration();
+        }
+
+        /**
+         * Интеграция с Web API для отправки результатов
+         * @private
+         */
+        _setupWebAPIIntegration() {
+            // Подписка на глобальные события от WebApiClient
+            if (global.webApiClient) {
+                // Слушаем события выбора choice
+                global.webApiClient.on('choiceSelected', async (data) => {
+                    if (data?.sessionId && data?.result) {
+                        await this._sendResultToServer(data.sessionId, data.result);
+                    }
+                });
+            }
+
+            // Также слушаем глобальные события от aiActionsPanel
+            if (global.aiActionsPanel) {
+                global.aiActionsPanel.on('choiceSelected', async (data) => {
+                    if (data?.sessionId && data?.result) {
+                        await this._sendResultToServer(data.sessionId, data.result);
+                    }
+                });
+            }
+        }
+
+        /**
+         * Отправить результат на сервер
+         * @private
+         * @param {string} sessionId - ID сессии
+         * @param {Object} result - Результат для отправки
+         */
+        async _sendResultToServer(sessionId, result) {
+            try {
+                // Используем формат для /result endpoint
+                const response = await this._request('POST', `/sessions/${sessionId}/result`, result);
+                
+                // Обрабатываем ответ сервера
+                if (response?.execute) {
+                    this.processExecute(response.execute, response.context);
+                }
+                
+                this.emit('resultSent', { sessionId, response });
+                console.log('[AIActionsSessionPanel] Result sent to server:', result);
+            } catch (error) {
+                console.error('[AIActionsSessionPanel] Failed to send result to server:', error);
+                this.emit('error', error);
+            }
+        }
+
+        /**
+         * Выполнить HTTP запрос
+         * @private
+         */
+        async _request(method, path, body = null) {
+            const apiBase = global.apiIntegration?.apiBase || '/api';
+            const url = `${apiBase}${path}`;
+            const options = { method, headers: { 'Content-Type': 'application/json' } };
+            if (body) options.body = JSON.stringify(body);
+
+            try {
+                const response = await fetch(url, options);
+                const data = await response.json().catch(() => ({}));
+                if (!response.ok) {
+                    throw new Error(data?.error?.message || `Request failed: ${response.status}`);
+                }
+                return data.data || data;
+            } catch (error) {
+                console.error('[AIActionsSessionPanel] Request error:', error);
+                throw error;
+            }
         }
 
         /**
@@ -608,8 +723,9 @@
                 buttonElement.classList.add('selected');
             }
 
-            // Create result in new protocol format: result: { choice: "..." }
-            const result = { choice: choiceId };
+            // Создаем result в формате action-key shape: { form: { choice: "..." } }
+            // Это соответствует протоколу new-request-flow
+            const result = { form: { choice: choiceId } };
 
             // Add action to session
             this.addActionToSession(sessionId, {
@@ -627,6 +743,9 @@
                 result,
                 action: session.metadata?.selectedAction
             });
+
+            // Отправляем результат на сервер
+            this._sendResultToServer(sessionId, result);
 
             console.log(`[AIActionsSessionPanel] Choice selected: ${choiceId}`);
         }
@@ -650,8 +769,8 @@
                 inputData[input.name] = input.value;
             });
 
-            // Create result in new protocol format: result: { input: {...} }
-            const result = { input: inputData };
+            // Создаем result в формате action-key shape: { form: { input: {...} } }
+            const result = { form: { input: inputData } };
 
             // Add action to session
             this.addActionToSession(sessionId, {
@@ -668,6 +787,9 @@
                 input: inputData,
                 result
             });
+
+            // Отправляем результат на сервер
+            this._sendResultToServer(sessionId, result);
 
             console.log(`[AIActionsSessionPanel] Form submitted:`, inputData);
         }

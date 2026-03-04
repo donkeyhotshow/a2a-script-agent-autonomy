@@ -20,8 +20,8 @@ const {
   detectPortConflicts, 
   getPortSuggestions, 
   releaseAllPorts,
-  isPortFree,
-  DEFAULT_PORTS 
+  DEFAULT_PORTS,
+  killAllBatches,
 } = await import('./port-manager.js');
 
 // Color codes for logging
@@ -194,6 +194,11 @@ async function waitForDependencies(serviceKey, config = HEALTH_CHECK_CONFIG) {
 async function initializePorts() {
   logOrchestrator('Initializing port allocation...');
   
+  const killed = killAllBatches();
+  if (killed.length > 0) {
+    logOrchestrator(`Cleaned up ${killed.length} cached PID${killed.length === 1 ? '' : 's'} before port allocation`, 'warn');
+  }
+  
   // Check for port conflicts
   const { conflicts, warnings, available } = await detectPortConflicts();
   
@@ -325,7 +330,7 @@ function createServiceDefinitions(allocations) {
       name: 'Client API',
       color: colors.cyan,
       port: allocations.clientApi?.port || 3001,
-      cwd: resolve(rootDir, 'a2a-client/packages/api-server'),
+      cwd: resolve(rootDir, 'a2a-client/packages/sdk'),
       command: 'npm',
       args: ['run', 'dev'],
       env: buildEnv('clientApi'),

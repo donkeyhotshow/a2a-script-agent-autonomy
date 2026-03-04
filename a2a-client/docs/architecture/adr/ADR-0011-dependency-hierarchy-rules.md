@@ -18,23 +18,27 @@ Define and enforce a strict dependency hierarchy for `@a2a/*` packages:
 
 - **Level 0 — Core Infrastructure**
   - `@a2a/types`
-  - `@a2a/api-client`
   - `@a2a/json`
+  - `@a2a/sdk` ( объединяет api-client + api-server)
 
 - **Level 1 — Action Execution**
-  - `@a2a/script-runner`
-  - `@a2a/fs-utils`
-  - `@a2a/terminal`
+  - `@a2a/execution` ( объединяет fs-utils + terminal + script-runner)
   - `@a2a/rag`
   - `@a2a/embedding`
 
 - **Level 2 — State / Data**
-  - `@a2a/history` (planned)
+  - `@a2a/history`
   - `@a2a/storage` (planned)
 
 - **Level 3 — Application**
-  - `@a2a/web` (planned app wrapper around `web/`)
-  - `@a2a/api-server`
+  - `@a2a/web`
+
+> **Note**: The following packages are **deprecated** and merged into unified packages:
+> - ~~`@a2a/api-client`~~ → merged into `@a2a/sdk`
+> - ~~`@a2a/api-server`~~ → merged into `@a2a/sdk`
+> - ~~`@a2a/script-runner`~~ → merged into `@a2a/execution`
+> - ~~`@a2a/fs-utils`~~ → merged into `@a2a/execution`
+> - ~~`@a2a/terminal`~~ → merged into `@a2a/execution`
 
 #### 1.2 Non-package Elements in This Repo
 
@@ -60,7 +64,7 @@ Define and enforce a strict dependency hierarchy for `@a2a/*` packages:
 ### 2. Allowed Dependencies
 
 - **General rule (packages)**: `@a2a/*` packages may depend only on **same level or lower** levels.
-- **Forbidden (packages)**: any dependency from a lower level to a higher level (e.g. `@a2a/fs-utils` → `@a2a/web`).
+- **Forbidden (packages)**: any dependency from a lower level to a higher level (e.g. `@a2a/execution` → `@a2a/web`).
 - **Web UI (`web/`)**:
   - May depend on any `@a2a/*` package (Levels 0–2 and `@a2a/api-server`).
   - Must not be imported from any `@a2a/*` package.

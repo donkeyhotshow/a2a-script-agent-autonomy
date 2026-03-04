@@ -69,7 +69,7 @@ export function backoffDelay(attempt: number, delayMs: number, backoff: number):
 #### 2.4 DEFAULT_SETTINGS (RAG)
 **Дубликат**: Идентичные конфигурации в двух файлах:
 - [`a2a-client/packages/rag/src/meilisearch-client.ts:5`](a2a-client/packages/rag/src/meilisearch-client.ts:5)
-- [`a2a-client/packages/api-server/src/services/meilisearch-client.ts:8`](a2a-client/packages/api-server/src/services/meilisearch-client.ts:8)
+- [`a2a-client/packages/sdk/src/server/services/meilisearch-client.ts:8`](a2a-client/packages/sdk/src/server/services/meilisearch-client.ts:8)
 
 **Рекомендация**: Вынести в общий пакет `@a2a/rag` или создать `@a2a/shared`
 

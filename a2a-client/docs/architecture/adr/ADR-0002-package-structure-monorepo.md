@@ -24,13 +24,21 @@ Adopt a monorepo structure with npm workspaces and organize packages by function
 
 #### Core Infrastructure Packages
 - **`@a2a/types`**: Shared TypeScript definitions and interfaces
-- **`@a2a/api-client`**: HTTP client for server communication
 - **`@a2a/json`**: JSON utilities and serialization helpers
 
-#### Action Execution Packages
-- **`@a2a/script-runner`**: Client-side script execution and sandboxing
-- **`@a2a/fs-utils`**: File system operations and utilities
-- **`@a2a/terminal`**: Terminal/command execution capabilities
+#### Unified SDK Packages
+- **`@a2a/sdk`**: Unified package combining `@a2a/api-client` and `@a2a/api-server`
+  - Client exports: `import { ApiClient } from '@a2a/sdk/client'`
+  - Server exports: `import expressApp from '@a2a/sdk/server'`
+- **`@a2a/execution`**: Unified package combining `fs-utils`, `terminal`, and `script-runner`
+  - File system: `import { FileScanner } from '@a2a/execution/fs-utils'`
+  - Terminal: `import { TerminalHandler } from '@a2a/execution/terminal'`
+  - Script: `import { ScriptRunner } from '@a2a/execution/script-runner'`
+
+#### Action Execution Packages (DEPRECATED - use `@a2a/execution`)
+- ~~**`@a2a/script-runner`**: Client-side script execution and sandboxing~~
+- ~~**`@a2a/fs-utils`**: File system operations and utilities~~
+- ~~**`@a2a/terminal`**: Terminal/command execution capabilities~~
 - **`@a2a/rag`**: Retrieval-Augmented Generation functionality
 - **`@a2a/embedding`**: Vector embedding and similarity search
 
@@ -40,7 +48,10 @@ Adopt a monorepo structure with npm workspaces and organize packages by function
 
 #### Application Packages
 - **`@a2a/web`**: Web UI application using Vue.js
-- **`@a2a/api-server`**: Client-side API server for local operations
+
+#### DEPRECATED Packages
+- ~~**`@a2a/api-client`~~ - merged into `@a2a/sdk`
+- ~~**`@a2a/api-server`~~ - merged into `@a2a/sdk`
 
 ### 2. Dependency Management
 

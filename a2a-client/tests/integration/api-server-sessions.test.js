@@ -29,7 +29,7 @@ beforeAll(async () => {
     );
     process.env.A2A_CLIENT_STORAGE_DIR = path.join(testStorageDir, 'storage');
 
-    const mod = await import('../../packages/api-server/src/index.ts');
+    const mod = await import('../../packages/sdk/src/server/index.ts');
     app = mod.default;
 });
 

@@ -1,1 +1,10 @@
-{"message": "Listing src/ to see structure.", "action": "list-directory", "params": {"path": "src/"}}
+{
+  "step": "inspect_structure",
+  "message": "Listing src/ to see structure.",
+  "execute": {
+    "list-directory": {
+      "path": "src/"
+    }
+  },
+  "completed": false
+}

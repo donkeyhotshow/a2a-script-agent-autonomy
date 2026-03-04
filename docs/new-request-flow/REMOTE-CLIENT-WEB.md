@@ -4,7 +4,7 @@ This describes the “you-on-phone → web UI → local client → remote server
 
 1. **Web UI stays minimal** – it never stores history or logs locally. It just renders whatever `execute`/`message`/`form` the local client returns and forwards your choices/results from the phone to the client (e.g. `POST /sessions`, `POST /sessions/:id/result`, etc.).
 2. **The local client keeps everything** – history, exchange log, virtual document, execution state and UI state. It is the single source of truth for `context.history`, `context.exchangeLog`, `context.execution`, `messages`, panel layout and progress indicators, etc., and it persists that data via `@a2a/history`/`SessionStorage`/`HistoryManager` before sending the processed `request` to the faraway server. The web simply renders the snapshot that the client exports on every request, so the entire layout can be restored after a reload without storing anything in the browser itself.
-3. **Remote server stays stateless** – it only sees the `request` payload the client builds from its local context/history and replies with `execute` + optional `context` updates; the client immediately stores those updates (see `a2a-client/packages/api-server/src/index.ts` for how `context`, `execute`, `messages`, and `exchangeLog` are merged back into the session record) and streams the new `execute` back to the web UI.
+3. **Remote server stays stateless** – it only sees the `request` payload the client builds from its local context/history and replies with `execute` + optional `context` updates; the client immediately stores those updates (see `a2a-client/packages/sdk/src/server/index.ts` for how `context`, `execute`, `messages`, and `exchangeLog` are merged back into the session record) and streams the new `execute` back to the web UI.
 
 ## What you need to remember
 
@@ -17,7 +17,7 @@ This describes the “you-on-phone → web UI → local client → remote server
 
 - Web: `a2a-client/web/js/session-manager.js` — all remote requests happen here.
 - Local storage: `a2a-client/packages/history/src/history-manager.ts` + `session-storage/…` — keeps exchange log/history/docs before every server request.
-- SDK entry point: `a2a-client/packages/sdk/src/index.js` exports `@a2a/api-client`/`@a2a/api-server`; you can add `HistoryManager` exports when you need to expose CLI helpers.
+- SDK entry point: `a2a-client/packages/sdk/src/index.js` exports `@a2a/sdk` (which includes client and server); you can add `HistoryManager` exports when you need to expose CLI helpers.
 - Protocol: `docs/new-request-flow/PROTOCOL.md` and any simulation folder under `simulations/` describe how `context.history` is packed into `request.json`/`request.md` and how `execute` flows back to the UI.
 
 ## API flow examples

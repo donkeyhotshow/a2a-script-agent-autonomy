@@ -79,6 +79,8 @@ node scripts/port-manager.js list
 node scripts/port-manager.js release 3000
 ```
 
+Use `node scripts/port-manager.js kill-batch <port>` to terminate the cached PID bundle for a specific port or `node scripts/port-manager.js kill-all` to clear every stored batch before retrying the stack. The orchestrator also runs the `kill-all` cleanup automatically every time it initializes ports, so leftover PID packs from previous sessions are removed before allocation.
+
 See [Port Management Documentation](docs/PORT_MANAGEMENT.md) for details.
 
 ### Graceful Shutdown

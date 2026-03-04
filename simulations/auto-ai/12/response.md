@@ -1,1 +1,10 @@
-{"message": "Running lint.", "action": "execute-command", "params": {"command": "npm run lint"}}
+{
+  "step": "run_lint",
+  "message": "Running lint.",
+  "execute": {
+    "execute-command": {
+      "command": "npm run lint"
+    }
+  },
+  "completed": false
+}

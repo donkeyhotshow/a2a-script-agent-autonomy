@@ -17,7 +17,7 @@ doc:
 
 ## Обзор
 
-API Server (`a2a-client/packages/api-server`) — это REST API сервер, который работает на клиентской машине (порт 3001 по умолчанию). Он обеспечивает:
+API Server (`a2a-client/packages/sdk`) — это REST API сервер, который работает на клиентской машине (порт 3001 по умолчанию). Он обеспечивает:
 
 - Управление проектами и сессиями
 - Проксирование запросов к A2A Server (порт 3000)
@@ -548,7 +548,7 @@ API Server интегрирован с Web UI через следующие мо
 ## Запуск сервера
 
 ```bash
-cd a2a-client/packages/api-server
+cd a2a-client/packages/sdk
 npm install
 npm start
 ```

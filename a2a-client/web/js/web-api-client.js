@@ -358,6 +358,26 @@
             throw new Error('SSE client not available');
         }
 
+        /**
+         * Send form choice result (new protocol v2.0)
+         * @param {string} sessionId - Session ID
+         * @param {Object} result - Result object in action-key shape: { form: { choice: "..." } }
+         */
+        async sendChoice(sessionId, result) {
+            if (this.sessions) {
+                try {
+                    const response = await this.sessions._request('POST', `/sessions/${sessionId}/result`, result);
+                    // Эмитим событие для компонентов
+                    this._emit('choiceResult', { sessionId, result, response });
+                    return response;
+                } catch (error) {
+                    this._emit('choiceError', { sessionId, result, error });
+                    throw error;
+                }
+            }
+            throw new Error('Session manager not available');
+        }
+
         // ========== File Methods ==========
 
         /**

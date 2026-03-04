@@ -45,7 +45,7 @@ NPM пакети всередині monorepo:
 | Пакет           | Шлях                      | Опис                                     |
 |-----------------|---------------------------|------------------------------------------|
 | `api-client`    | `packages/api-client/`    | HTTP клієнт для Server API               |
-| `api-server`    | `packages/api-server/`    | HTTP сервер для Web (ПОТРІБНО ДОПОВНИТИ) |
+| `sdk`           | `packages/sdk/`           | HTTP сервер для Web (client API, sessions, fs, etc.) |
 | `fs-utils`      | `packages/fs-utils/`      | Файлові утиліти                          |
 | `rag`           | `packages/rag/`           | RAG функціональність                     |
 | `script-runner` | `packages/script-runner/` | Запуск скриптів                          |

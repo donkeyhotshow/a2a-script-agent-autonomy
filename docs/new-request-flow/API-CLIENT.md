@@ -3,17 +3,22 @@
 > **⚠️ Важно:** Это документация для обновлённой системы.
 >
 > **См.:** [ARCHITECTURE.md](ARCHITECTURE.md), [PROTOCOL.md](PROTOCOL.md)
+>
+> **Note:** `@a2a/api-client` объединён в `@a2a/sdk`. Используйте:
+> ```typescript
+> import { ApiClient } from '@a2a/sdk/client';
+> ```
 
 ## Обзор
 
-API Client (`a2a-client/packages/api-client`) — это HTTP-клиент для взаимодействия с A2A Server (порт 3000). Он используется Client API Server для отправки запросов к основному серверу.
+API Client (`a2a-client/packages/sdk`) — это HTTP-клиент для взаимодействия с A2A Server (порт 3000). Он используется Client API Server для отправки запросов к основному серверу.
 
 ## Архитектура
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                      API CLIENT                                   │
-│                 (@a2a/api-client)                                │
+│                 (@a2a/sdk)                                │
 │  ┌─────────────────────────────────────────────────────────────┐│
 │  │  ApiClient                                                 ││
 │  │  - request()          - низкоуровневые HTTP запросы       ││
@@ -57,8 +62,8 @@ API Client (`a2a-client/packages/api-client`) — это HTTP-клиент дл�
 |------|------------|
 | [`src/index.ts`](../../a2a-client/packages/api-client/src/index.ts) | Главный экспорт, класс ApiClient |
 | [`src/async-client.ts`](../../a2a-client/packages/api-client/src/async-client.ts) | Асинхронный клиент с PromisePoller |
-| [`src/protocol.ts`](../../a2a-client/packages/api-client/src/protocol.ts) | Утилиты протокола для контекста |
-| [`src/action-handler.ts`](../../a2a-client/packages/api-client/src/action-handler.ts) | Обработчики действий |
+| [`src/protocol.ts`](../../a2a-client/packages/sdk/src/protocol.ts) | Утилиты протокола для контекста |
+| [`src/action-handler.ts`](../../a2a-client/packages/sdk/src/action-handler.ts) | Обработчики действий |
 
 ## ApiClient
 
@@ -218,7 +223,7 @@ const card = await client.createCardByProject(
 ### Конструктор
 
 ```typescript
-import {AsyncApiClient} from '@a2a/api-client';
+import {AsyncApiClient} from '@a2a/sdk/client';
 
 const asyncClient = new AsyncApiClient({
     serverUrl?: string;
@@ -386,7 +391,7 @@ import {
     parseFileBlock,
     parseMessage,
     type FileBlockLike,
-} from '@a2a/api-client';
+} from '@a2a/sdk/client';
 ```
 
 ### buildNewTaskContext()
@@ -466,7 +471,7 @@ import {
     createExecuteCode,
     hasFormChoices,
     extractFormChoices,
-} from '@a2a/api-client';
+} from '@a2a/sdk/client';
 ```
 
 ### handleActionResponse()
@@ -496,7 +501,7 @@ const result = await handleActionResponse(
 
 ### createExecuteCode()
 
-Создаёт адаптер для функции выполнения скриптов. Используется для интеграции с `@a2a/script-runner`.
+Создаёт адаптер для функции выполнения скриптов. Используется для интеграции с `@a2a/execution`.
 
 ```typescript
 const executeCode = createExecuteCode(
@@ -634,7 +639,7 @@ const result = await asyncClient.executeAction(
 ## Обработка ошибок
 
 ```typescript
-import {ApiClient, ApiError} from '@a2a/api-client';
+import {ApiClient, ApiError} from '@a2a/sdk/client';
 
 try {
     const result = await client.invoke({markdown: 'some task'});
@@ -679,5 +684,5 @@ try {
 API Client использует:
 
 - `node-fetch` — для HTTP запросов
-- `@a2a/script-runner` (опционально) — для выполнения кода в sandbox
+- `@a2a/execution` (опционально) — для выполнения кода в sandbox
 - `@a2a/rag` (опционально) — для RAG-поиска

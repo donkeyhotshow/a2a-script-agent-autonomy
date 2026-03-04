@@ -13,19 +13,23 @@
       "to": "$.context"
     },
     {
-      "op": "switch",
-      "discriminator": "$.llm.action",
-      "cases": {
-        "execute-command": {
-          "op": "set",
-          "path": "$.execute",
-          "value": {
-            "execute-command": {
-              "command": "$.llm.params.command"
-            }
-          }
-        }
+      "op": "set",
+      "path": "$.context.execution.step",
+      "value": "$.llm.step"
+    },
+    {
+      "op": "append-to-array",
+      "to": "$.context.history",
+      "value": {
+        "role": "assistant",
+        "step": "$.llm.step",
+        "message": "$.llm.message"
       }
+    },
+    {
+      "op": "set",
+      "path": "$.execute",
+      "value": "$.llm.execute"
     }
   ]
 }

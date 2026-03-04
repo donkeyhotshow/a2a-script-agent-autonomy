@@ -240,7 +240,7 @@ ARCHITECTURE.md
 cd a2a-server && npm run dev
 
 # 2. Client API Server (порт 3001)
-cd a2a-client/packages/api-server && npm run dev
+cd a2a-client/packages/sdk && npm run dev
 
 # 3. Web UI (порт 5173)
 cd a2a-client && npm run dev
@@ -269,7 +269,7 @@ npm run sim:report <simulation-name>
 | Компонент | Путь |
 |-----------|------|
 | Web UI | [`a2a-client/web/`](../../a2a-client/web/) |
-| Client API Server | [`a2a-client/packages/api-server/`](../../a2a-client/packages/api-server/) |
+| Client API Server | [`a2a-client/packages/sdk/`](../../a2a-client/packages/sdk/) |
 | API Client | [`a2a-client/packages/api-client/`](../../a2a-client/packages/api-client/) |
 | A2A Server | [`a2a-server/src/`](../../a2a-server/src/) |
 | Симуляции | [`simulations/`](../../simulations/) |

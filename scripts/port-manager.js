@@ -46,6 +46,123 @@ function getMetadataFilePath(port) {
   return resolve(LOCK_DIR, `port-${port}.json`);
 }
 
+function readMetadata(port) {
+  const metadataFile = getMetadataFilePath(port);
+  if (!existsSync(metadataFile)) {
+    return null;
+  }
+
+  try {
+    const raw = readFileSync(metadataFile, 'utf8');
+    const data = JSON.parse(raw);
+    if (!Array.isArray(data.pids)) {
+      data.pids = [];
+    }
+    return data;
+  } catch {
+    return null;
+  }
+}
+
+function writeMetadata(port, metadata) {
+  ensureLockDir();
+  writeFileSync(getMetadataFilePath(port), JSON.stringify(metadata, null, 2), 'utf8');
+}
+
+function deleteMetadata(port) {
+  const metadataFile = getMetadataFilePath(port);
+  if (existsSync(metadataFile)) {
+    unlinkSync(metadataFile);
+  }
+}
+
+function addPidToMetadata(port, serviceName, pid) {
+  const metadata = readMetadata(port) || { port, serviceName, pids: [] };
+  metadata.serviceName = serviceName;
+  metadata.pids = metadata.pids.filter((entry) => entry.pid !== pid);
+  metadata.pids.push({
+    pid,
+    reservedAt: new Date().toISOString(),
+  });
+  writeMetadata(port, metadata);
+}
+
+function removePidFromMetadata(port, pid) {
+  const metadata = readMetadata(port);
+  if (!metadata) return;
+
+  metadata.pids = metadata.pids.filter((entry) => entry.pid !== pid);
+  if (metadata.pids.length === 0) {
+    deleteLockAndMetadata(port);
+  } else {
+    writeMetadata(port, metadata);
+  }
+}
+
+function cleanupDeadPids(port) {
+  const metadata = readMetadata(port);
+  if (!metadata) return null;
+
+  metadata.pids = metadata.pids.filter((entry) => {
+    try {
+      process.kill(entry.pid, 0);
+      return true;
+    } catch {
+      return false;
+    }
+  });
+
+  if (metadata.pids.length === 0) {
+    deleteMetadata(port);
+    return null;
+  }
+
+  writeMetadata(port, metadata);
+  return metadata;
+}
+
+function deleteLockAndMetadata(port) {
+  const lockFile = getLockFilePath(port);
+  deleteMetadata(port);
+  if (existsSync(lockFile)) {
+    try {
+      unlinkSync(lockFile);
+    } catch {}
+  }
+}
+
+export function killPidBatch(port) {
+  const metadata = readMetadata(port);
+  if (!metadata) return [];
+
+  const killed = [];
+  for (const entry of metadata.pids) {
+    if (entry.pid === process.pid) continue;
+    try {
+      process.kill(entry.pid);
+      killed.push(entry.pid);
+    } catch {}
+  }
+
+  deleteLockAndMetadata(port);
+  return killed;
+}
+
+export function killAllBatches() {
+  ensureLockDir();
+  const files = readdirSync(LOCK_DIR);
+  const killed = [];
+
+  for (const file of files) {
+    if (!file.endsWith('.json')) continue;
+    const port = parseInt(file.match(/port-(\d+)\.json/)?.[1]);
+    if (!port) continue;
+    killed.push(...killPidBatch(port));
+  }
+
+  return killed;
+}
+
 /**
  * Check if a port is free (not in use by the system)
  * @param {number} port - Port to check
@@ -77,29 +194,8 @@ export async function isPortFree(port, host = '127.0.0.1') {
  * @returns {boolean} - True if port is reserved
  */
 export function isPortReserved(port) {
-  const lockFile = getLockFilePath(port);
-  const metadataFile = getMetadataFilePath(port);
-  
-  if (!existsSync(lockFile) || !existsSync(metadataFile)) {
-    return false;
-  }
-  
-  try {
-    const metadata = JSON.parse(readFileSync(metadataFile, 'utf8'));
-    const pid = metadata.pid;
-    
-    // Check if the process still exists (platform-specific)
-    try {
-      process.kill(pid, 0);
-      return true; // Process exists
-    } catch {
-      // Process doesn't exist, clean up stale lock
-      releasePort(port);
-      return false;
-    }
-  } catch {
-    return false;
-  }
+  const metadata = cleanupDeadPids(port);
+  return metadata !== null;
 }
 
 /**
@@ -141,14 +237,8 @@ export function reservePort(port, serviceName) {
     // Create lock file
     writeFileSync(lockFile, String(process.pid), { flag: 'wx' });
     
-    // Create metadata file
-    const metadata = {
-      port,
-      serviceName,
-      pid: process.pid,
-      reservedAt: new Date().toISOString(),
-    };
-    writeFileSync(metadataFile, JSON.stringify(metadata, null, 2));
+    // Append PID to metadata
+    addPidToMetadata(port, serviceName, process.pid);
     
     return true;
   } catch (err) {
@@ -169,14 +259,11 @@ export function reservePort(port, serviceName) {
  */
 export function releasePort(port) {
   const lockFile = getLockFilePath(port);
-  const metadataFile = getMetadataFilePath(port);
-  
+  removePidFromMetadata(port, process.pid);
+
   try {
     if (existsSync(lockFile)) {
       unlinkSync(lockFile);
-    }
-    if (existsSync(metadataFile)) {
-      unlinkSync(metadataFile);
     }
     return true;
   } catch {
@@ -226,7 +313,8 @@ export async function detectPortConflicts() {
   
   for (const [serviceKey, config] of Object.entries(DEFAULT_PORTS)) {
     const isFree = await isPortFree(config.port);
-    const isReserved = isPortReserved(config.port);
+    const metadata = cleanupDeadPids(config.port);
+    const isReserved = metadata !== null;
     
     if (!isFree) {
       conflicts.push({
@@ -288,25 +376,19 @@ export function releaseAllPorts() {
   try {
     const files = readdirSync(LOCK_DIR);
     let released = 0;
-    
+
     for (const file of files) {
-      if (file.endsWith('.lock')) {
-        const port = parseInt(file.match(/port-(\d+)\.lock/)?.[1]);
-        if (port) {
-          const metadataFile = getMetadataFilePath(port);
-          if (existsSync(metadataFile)) {
-            try {
-              const metadata = JSON.parse(readFileSync(metadataFile, 'utf8'));
-              if (metadata.pid === process.pid) {
-                releasePort(port);
-                released++;
-              }
-            } catch {}
-          }
-        }
+      if (!file.endsWith('.json')) continue;
+      const port = parseInt(file.match(/port-(\d+)\.json/)?.[1]);
+      if (!port) continue;
+
+      const metadata = readMetadata(port);
+      if (metadata && metadata.pids.some((entry) => entry.pid === process.pid)) {
+        removePidFromMetadata(port, process.pid);
+        released++;
       }
     }
-    
+
     return released;
   } catch {
     return 0;
@@ -324,17 +406,23 @@ export function getReservedPorts() {
   
   try {
     const files = readdirSync(LOCK_DIR);
-    
+
     for (const file of files) {
-      if (file.endsWith('.json')) {
-        const port = parseInt(file.match(/port-(\d+)\.json/)?.[1]);
-        if (port && isPortReserved(port)) {
-          try {
-            const metadata = JSON.parse(readFileSync(getMetadataFilePath(port), 'utf8'));
-            reserved.push(metadata);
-          } catch {}
-        }
-      }
+      if (!file.endsWith('.json')) continue;
+      const port = parseInt(file.match(/port-(\d+)\.json/)?.[1]);
+      if (!port) continue;
+
+      const metadata = readMetadata(port);
+      if (!metadata) continue;
+
+      metadata.pids.forEach((entry) => {
+        reserved.push({
+          port,
+          serviceName: metadata.serviceName,
+          pid: entry.pid,
+          reservedAt: entry.reservedAt,
+        });
+      });
     }
   } catch {}
   
@@ -385,6 +473,33 @@ if (import.meta.url === `file://${process.argv[1]}`) {
       const success = releasePort(port);
       console.log(success ? `Port ${port} released` : `Failed to release port ${port}`);
       process.exit(success ? 0 : 1);
+      break;
+    }
+    
+    case 'kill-batch': {
+      const port = parseInt(process.argv[3]);
+      if (!port) {
+        console.error('Usage: port-manager kill-batch <port>');
+        process.exit(1);
+      }
+      const killed = killPidBatch(port);
+      if (killed.length === 0) {
+        console.log(`No cached PIDs found for port ${port}`);
+      } else {
+        console.log(`Killed ${killed.length} cached PID${killed.length === 1 ? '' : 's'} for port ${port}`);
+      }
+      process.exit(0);
+      break;
+    }
+
+    case 'kill-all': {
+      const killed = killAllBatches();
+      if (killed.length === 0) {
+        console.log('No cached PID packs to kill');
+      } else {
+        console.log(`Killed ${killed.length} cached PIDs across all ports`);
+      }
+      process.exit(0);
       break;
     }
     
@@ -439,8 +554,10 @@ if (import.meta.url === `file://${process.argv[1]}`) {
       console.log('  port-manager check <port>        - Check if port is free');
       console.log('  port-manager allocate <service>  - Allocate port for service');
       console.log('  port-manager release <port>      - Release a reserved port');
+      console.log('  port-manager kill-batch <port>   - Kill cached PIDs for a port');
+      console.log('  port-manager kill-all            - Kill cached PIDs across all ports');
       console.log('  port-manager conflicts           - Detect port conflicts');
       console.log('  port-manager list                - List reserved ports');
       process.exit(1);
-  }
+    }
 }

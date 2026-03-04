@@ -47,7 +47,10 @@
                     data,
                     error: data?.error
                 }, { module: 'TaskFlow', path: url, method });
-                throw new Error(data?.error?.message || data?.error || 'Request failed');
+                const err = new Error(data?.error?.message || data?.error || 'Request failed');
+                err.status = res.status;
+                err.response = data;
+                throw err;
             }
             return data?.data ?? data;
         } catch (error) {
@@ -219,7 +222,16 @@
 
     async function pollResult(promiseId) {
         for (let i = 0; i < POLL_MAX_ATTEMPTS; i++) {
-            const statusRes = await request('GET', `/requests/${encodeURIComponent(promiseId)}/status`);
+            let statusRes;
+            try {
+                statusRes = await request('GET', `/requests/${encodeURIComponent(promiseId)}/status`);
+            } catch (err) {
+                if (err?.status === 404) {
+                    await new Promise(r => setTimeout(r, POLL_INTERVAL_MS));
+                    continue;
+                }
+                throw err;
+            }
             const data = statusRes?.data ?? statusRes;
             const st = (typeof data === 'object' && data !== null) ? data.status : statusRes?.status ?? statusRes;
             if (st === 'completed' || st === 'failed') {
@@ -354,20 +366,37 @@
                     this.panel.setNonClosable?.(true);
                 }
 
-                // Check if we got a synchronous response from server
-                if (serverResponse) {
-                    applyExecuteResponse(serverResponse, contentEl, 'firstResponse');
+                const normalizedResponse = serverResponse?.data ?? serverResponse;
+                const promiseId = normalizedResponse?.promiseId ?? normalizedResponse?.data?.promiseId;
+
+                if (promiseId) {
+                    updateStatus(contentEl, 'Waiting for first response…');
+                    const { status, result } = await pollResult(promiseId);
+                    if (status === 'timeout') {
+                        updateStatus(contentEl, 'Timeout waiting for response');
+                        return;
+                    }
+                    if (status === 'failed') {
+                        updateStatus(contentEl, 'Request failed');
+                        return;
+                    }
+                    applyExecuteResponse(result ?? {}, contentEl, 'firstResponse');
+                    return;
+                }
+
+                if (normalizedResponse) {
+                    applyExecuteResponse(normalizedResponse, contentEl, 'firstResponse');
                     return;
                 }
 
                 // Legacy: need to call /next to send task to server
                 updateStatus(contentEl, 'Calling server…');
                 const invokeRes = await request('POST', `/sessions/${encodeURIComponent(sessionId)}/next`, { task, sessionId, projectId });
-                const promiseId = invokeRes?.promiseId ?? invokeRes?.data?.promiseId;
-                if (!promiseId) throw new Error('No promiseId');
+                const fallbackPromiseId = invokeRes?.promiseId ?? invokeRes?.data?.promiseId;
+                if (!fallbackPromiseId) throw new Error('No promiseId');
 
                 updateStatus(contentEl, 'Waiting for first response…');
-                const { status, result } = await pollResult(promiseId);
+                const { status, result } = await pollResult(fallbackPromiseId);
                 if (status === 'timeout') {
                     updateStatus(contentEl, 'Timeout waiting for response');
                     return;
@@ -376,7 +405,6 @@
                     updateStatus(contentEl, 'Request failed');
                     return;
                 }
-
                 applyExecuteResponse(result ?? {}, contentEl, 'firstResponse');
             } catch (err) {
                 if (contentEl) {

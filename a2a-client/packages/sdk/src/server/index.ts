@@ -701,14 +701,11 @@ expressApp.post(['/api/sessions', '/api/v1/sessions'], async (req, res) => {
             const serverBase = await getServerBaseUrl();
             
             // Build new protocol request
-            const requestBody = {
-                context: {
-                    version: '2.0',
-                    session_id: session.id,
-                    task: body.task,
-                },
-            };
-            
+            const requestBody: Record<string, unknown> = {};
+            if (session.task) {
+                requestBody.task = session.task;
+            }
+
             const upstream = await serverFetch('POST', serverBase, '/invoke', requestBody);
             const payload = (await upstream.json().catch(() => ({}))) as any;
             
@@ -857,17 +854,31 @@ expressApp.post(['/api/sessions/:sessionId/next', '/api/v1/sessions/:sessionId/n
     }
 
     const serverBase = await getServerBaseUrl();
-    
-    // Build request body for new protocol
-    const requestBody: Record<string, unknown> = {
-        context: {
-            version: session.version || '2.0',
-            session_id: sessionId,
-            task: session.task,
-        },
-    };
-    
-    // If result is provided in request body (new protocol), include it
+
+    const sessionContext = session.context ? {...session.context} : {};
+    const contextTask = typeof sessionContext.task === 'string' ? sessionContext.task : undefined;
+    const executionFromSession = session.execution ?? (sessionContext.execution as Session['execution'] | undefined);
+    const hasExecution = Boolean(executionFromSession?.action && executionFromSession?.step);
+    const effectiveTask = session.task ?? contextTask;
+
+    if (!effectiveTask && !hasExecution) {
+        jsonError(res, 400, 'task is required to continue the session');
+        return;
+    }
+
+    const requestBody: Record<string, unknown> = {};
+
+    if (hasExecution) {
+        const context: Record<string, unknown> = {...sessionContext};
+        context.execution = executionFromSession!;
+        context.task = effectiveTask;
+        context.version = session.version ?? context.version;
+        context.session_id = sessionId;
+        requestBody.context = context;
+    } else if (effectiveTask) {
+        requestBody.task = effectiveTask;
+    }
+
     if (req.body?.result) {
         requestBody.result = req.body.result;
     }
@@ -908,6 +919,97 @@ expressApp.post(['/api/sessions/:sessionId/next', '/api/v1/sessions/:sessionId/n
         promiseId,
         status: 'server_response_received',
         message: 'Server response received and session updated',
+        result: payload,
+    });
+
+    res.status(upstream.status).json(payload);
+});
+
+// POST /api/sessions/:sessionId/result - Отправка результата form choice (для Web совместимости)
+expressApp.post(['/api/sessions/:sessionId/result', '/api/v1/sessions/:sessionId/result'], async (req, res) => {
+    const sessionId = String(req.params.sessionId || '');
+    const projectId = typeof req.query.projectId === 'string' ? req.query.projectId : String(req.body?.projectId || '');
+    
+    // Поддержка плоского формата { choice: "..." } и вложенного { result: { form: { choice: "..." } } }
+    const rawResult = req.body?.result ?? req.body;
+    let result: Record<string, unknown>;
+    
+    if (rawResult?.form?.choice) {
+        // Вложенный формат: { result: { form: { choice: "..." } } }
+        result = rawResult.form;
+    } else if (rawResult?.choice) {
+        // Плоский формат: { choice: "..." }
+        result = rawResult;
+    } else if (typeof rawResult === 'object' && rawResult !== null) {
+        // Другие форматы результатов
+        result = rawResult;
+    } else {
+        jsonError(res, 400, 'result is required (expected { choice: "..." } or { form: { choice: "..." } })');
+        return;
+    }
+
+    const projects = await loadProjects();
+    const project = projects.find((p) => p.id === projectId) ?? projects[0];
+    if (!project) {
+        jsonError(res, 404, 'Project not found');
+        return;
+    }
+    
+    const session = await loadSession(project, sessionId);
+    if (!session) {
+        jsonError(res, 404, 'Session not found');
+        return;
+    }
+
+    const serverBase = await getServerBaseUrl();
+    
+    // Build request body for new protocol - используем action-key shape
+    const requestBody: Record<string, unknown> = {
+        context: {
+            version: session.version || '2.0',
+            session_id: sessionId,
+            task: session.task,
+            execution: session.execution,
+            history: session.context?.history || [],
+        },
+        result: {
+            form: result,
+        },
+    };
+    
+    // Forward to server /invoke
+    const upstream = await serverFetch('POST', serverBase, '/invoke', requestBody);
+    const payload = (await upstream.json().catch(() => ({}))) as any;
+    if (!upstream.ok) {
+        res.status(upstream.status).json(payload);
+        return;
+    }
+
+    const promiseId: string | undefined = payload?.data?.promiseId || payload?.promiseId;
+    if (promiseId) {
+        const updated: Session = {
+            ...session,
+            lastPromiseId: promiseId,
+            status: 'IN_PROGRESS',
+            updatedAt: new Date().toISOString(),
+        };
+        await saveSession(project, updated);
+        
+        broadcastProgress(sessionId, {
+            promiseId,
+            status: 'promise_id_assigned',
+            message: `New promiseId assigned: ${promiseId}`,
+            result: { promiseId, sessionId },
+        });
+    }
+
+    const updatedSession = await updateSessionWithServerResponse(project, session, payload);
+    await saveSession(project, updatedSession);
+
+    broadcastProgress(sessionId, {
+        promiseId,
+        status: 'server_response_received',
+        message: 'Result processed and session updated',
         result: payload,
     });
 
@@ -1090,9 +1192,9 @@ expressApp.post('/api/v1/invoke', async (req, res) => {
     res.status(upstream.status).json(payload);
 });
 
-expressApp.all('/api/v1/requests*', async (req, res) => {
+expressApp.all(['/api/requests*', '/api/v1/requests*'], async (req, res) => {
     const serverBase = await getServerBaseUrl();
-    const pathName = req.originalUrl.replace(/^\/api\/v1/, '');
+    const pathName = req.originalUrl.replace(/^\/api(?:\/v1)?/, '');
     const body = req.method === 'GET' || req.method === 'HEAD' ? null : (req.body ?? {});
     const upstream = await serverFetch(req.method, serverBase, pathName, body);
     const payload = (await upstream.json().catch(() => ({}))) as any;

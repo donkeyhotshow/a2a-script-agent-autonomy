@@ -61,7 +61,7 @@ a2a-script-agent/
 
 | Файл                                                          | Призначення    |
 |---------------------------------------------------------------|----------------|
-| [`src/index.ts`](a2a-client/packages/api-server/src/index.ts) | Express сервер |
+| [`src/server/index.ts`](a2a-client/packages/sdk/src/server/index.ts) | Express сервер |
 
 **Поточні endpoints:**
 

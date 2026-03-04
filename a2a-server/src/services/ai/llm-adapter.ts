@@ -5,7 +5,7 @@
  * ai-integration and then poll it until completion.
  */
 
-import {readFile} from 'node:fs/promises';
+import {appendFile, mkdir, readFile} from 'node:fs/promises';
 import {resolve as resolvePath} from 'node:path';
 
 import {logger} from '../utils/logger.js';
@@ -16,6 +16,8 @@ import {AIService} from './ai-service.js';
 const PLACEHOLDER = 'Request processed (placeholder for ChatGPT)';
 const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions';
 const AI_PROXY_URL = (process.env.AI_HUB_URL ?? 'http://localhost:11434').trim();
+const LLM_ARCHIVE_DIR =
+    (process.env.LLM_ARCHIVE_DIR ?? '').trim() || resolvePath(process.cwd(), 'storage', 'llm-archive');
 
 type LlmProvider = 'openai' | 'ollama' | 'proxy' | 'placeholder';
 
@@ -96,9 +98,24 @@ export async function callLLM(input: LLMInput): Promise<string> {
             const result = await svc.generateText(prompt, {
                 model: process.env.OPENAI_MODEL ?? undefined,
             });
-            return result.text?.trim() || PLACEHOLDER;
+            const text = result.text?.trim() || PLACEHOLDER;
+            await archiveLlmInteraction({
+                provider: 'proxy',
+                prompt,
+                response: text,
+                context: input.context,
+                requestFiles: input.requestFiles,
+            });
+            return text;
         } catch (err) {
             logger.warn('[LLM/Proxy] Request failed', {error: String(err)});
+            await archiveLlmInteraction({
+                provider: 'proxy',
+                prompt,
+                error: String(err),
+                context: input.context,
+                requestFiles: input.requestFiles,
+            });
             return PLACEHOLDER;
         }
     }
@@ -115,17 +132,51 @@ export async function callLLM(input: LLMInput): Promise<string> {
             const text = await waitForPromise(promiseId, (status) => {
                 logger.debug('[LLM/Ollama] Promise status', {promiseId, status: status.status});
             });
-            return text?.trim() || PLACEHOLDER;
+            const finalText = text?.trim() || PLACEHOLDER;
+            await archiveLlmInteraction({
+                provider: 'ollama',
+                prompt,
+                response: finalText,
+                context: input.context,
+                requestFiles: input.requestFiles,
+                promiseId,
+            });
+            return finalText;
         } catch (err) {
             logger.warn('[LLM/Ollama] Request failed', {error: String(err)});
+            await archiveLlmInteraction({
+                provider: 'ollama',
+                prompt,
+                error: String(err),
+                context: input.context,
+                requestFiles: input.requestFiles,
+            });
             return PLACEHOLDER;
         }
     }
 
-    if (provider !== 'openai') return PLACEHOLDER;
+    if (provider !== 'openai') {
+        await archiveLlmInteraction({
+            provider,
+            prompt,
+            response: PLACEHOLDER,
+            context: input.context,
+            requestFiles: input.requestFiles,
+        });
+        return PLACEHOLDER;
+    }
 
     const apiKey = process.env.OPENAI_API_KEY;
-    if (!apiKey?.trim()) return PLACEHOLDER;
+    if (!apiKey?.trim()) {
+        await archiveLlmInteraction({
+            provider: 'openai',
+            prompt,
+            error: 'OPENAI_API_KEY is not set',
+            context: input.context,
+            requestFiles: input.requestFiles,
+        });
+        return PLACEHOLDER;
+    }
 
     try {
         const res = await fetch(OPENAI_API_URL, {
@@ -143,14 +194,36 @@ export async function callLLM(input: LLMInput): Promise<string> {
 
         if (!res.ok) {
             logger.warn('[LLM] API error', {status: res.status});
+            await archiveLlmInteraction({
+                provider: 'openai',
+                prompt,
+                error: `HTTP ${res.status}`,
+                context: input.context,
+                requestFiles: input.requestFiles,
+            });
             return PLACEHOLDER;
         }
 
         const data = (await res.json()) as { choices?: Array<{ message?: { content?: string } }> };
         const content = data.choices?.[0]?.message?.content?.trim();
-        return content ?? PLACEHOLDER;
+        const finalText = content ?? PLACEHOLDER;
+        await archiveLlmInteraction({
+            provider: 'openai',
+            prompt,
+            response: finalText,
+            context: input.context,
+            requestFiles: input.requestFiles,
+        });
+        return finalText;
     } catch (err) {
         logger.warn('[LLM] Request failed', {error: String(err)});
+        await archiveLlmInteraction({
+            provider: 'openai',
+            prompt,
+            error: String(err),
+            context: input.context,
+            requestFiles: input.requestFiles,
+        });
         return PLACEHOLDER;
     }
 }
@@ -170,4 +243,37 @@ function buildPrompt(input: LLMInput): string {
     }
     parts.push('', 'Provide a brief analysis or next steps.');
     return parts.join('\n');
+}
+
+async function archiveLlmInteraction(args: {
+    provider: LlmProvider;
+    prompt: string;
+    response?: string;
+    error?: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    context?: Record<string, any>;
+    requestFiles?: string[];
+    promiseId?: string;
+}): Promise<void> {
+    try {
+        await mkdir(LLM_ARCHIVE_DIR, {recursive: true});
+        const now = new Date();
+        const day = now.toISOString().slice(0, 10);
+        const filePath = resolvePath(LLM_ARCHIVE_DIR, `${day}.jsonl`);
+
+        const record = {
+            timestamp: now.toISOString(),
+            provider: args.provider,
+            prompt: args.prompt,
+            response: args.response,
+            error: args.error,
+            context: args.context,
+            requestFiles: args.requestFiles,
+            promiseId: args.promiseId,
+        };
+
+        await appendFile(filePath, `${JSON.stringify(record)}\n`, 'utf8');
+    } catch (err) {
+        logger.warn('[LLM/Archive] Failed to write archive record', {error: String(err)});
+    }
 }

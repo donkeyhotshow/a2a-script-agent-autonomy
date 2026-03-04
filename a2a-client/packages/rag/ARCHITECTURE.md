@@ -162,7 +162,7 @@ index.ts (точка входа)
 │
 ├── Экспорты:
 │   ├── RAGIntegrator
-│   │   ├── FileScanner (@a2a/fs-utils)
+│   │   ├── FileScanner (@a2a/execution)
 │   │   ├── RAGIndexer
 │   │   └── ChunkManager
 │   │
