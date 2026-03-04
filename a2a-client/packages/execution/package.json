@@ -1,0 +1,37 @@
+{
+  "name": "@a2a/execution",
+  "version": "1.0.0",
+  "description": "A2A Execution - объединенный пакет для fs-utils, terminal и script-runner",
+  "type": "module",
+  "main": "src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./fs-utils": "./src/fs-utils/index.js",
+    "./terminal": "./src/terminal/index.js",
+    "./script-runner": "./src/script-runner/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "echo 'Tests to be implemented'"
+  },
+  "keywords": [
+    "a2a",
+    "execution",
+    "filesystem",
+    "terminal",
+    "script"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@a2a/fs-utils": "file:../fs-utils",
+    "@a2a/terminal": "file:../terminal",
+    "@a2a/script-runner": "file:../script-runner"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

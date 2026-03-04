@@ -17,35 +17,40 @@ simulations/
 
 ## Типы файлов
 
-| Файл                               | Направление     | Описание                                                                                          |
-|------------------------------------|-----------------|---------------------------------------------------------------------------------------------------|
-| `request.json`                     | Client → Server | Запрос от клиента.                                                                                |
-| `server-transforms-request.json`   | —               | **JSON‑описание** трансформации `request.json` → `request.md` (JSONPath‑pipeline, per‑step). Опц. |
-| `request.md`                       | Server → LLM    | **MARKDOWN** с system prompt и состоянием.                                                        |
-| `response.md`                      | LLM → Server    | Ответ от LLM.                                                                                     |
-| `server-transforms-response.json`  | —               | **JSON‑описание** трансформации `response.md` → `response.json` (JSONPath‑pipeline, per‑step). Опц.|
-| `response.json`                    | Server → Client | Ответ клиенту.                                                                                    |
+| Файл                               | Направление         | Описание                                                                                          |
+|------------------------------------|---------------------|---------------------------------------------------------------------------------------------------|
+| `client.json`                      | Web → Client API    | Что отправляет Web UI на Client API (`{ task, projectId }`, `{ sessionId, result }`, и т.п.).     |
+| `request.json`                     | Client API → Server | Запрос от Client API к серверу (context + result, без projectId/sessionId).                       |
+| `server-transforms-request.json`   | —                   | **JSON‑описание** трансформации `request.json` → `request.md` (JSONPath‑pipeline, per‑step). Опц. |
+| `request.md`                       | Server → LLM        | **MARKDOWN** с system prompt и состоянием.                                                        |
+| `response.md`                      | LLM → Server        | Ответ от LLM.                                                                                     |
+| `server-transforms-response.json`  | —                   | **JSON‑описание** трансформации `response.md` → `response.json` (JSONPath‑pipeline, per‑step). Опц.|
+| `response.json`                    | Server → Client API | Ответ сервера Client API (context + execute).                                                     |
+| `received.json`                    | Client API → Web    | Что Client API отдает назад в Web (`{ projectId, sessionId, execute }`, и т.п.).                  |
 
 **Порядок (pipeline):**
 
 ```
-request.json → server-transforms-request.json → request.md → response.md → server-transforms-response.json → response.json
+client.json → request.json → server-transforms-request.json → request.md → response.md → server-transforms-response.json → response.json → received.json
 ```
 
 **Визуально:**
 
 ```
-Client              Server (transforms)       LLM
-  │                   │                         │
-  │ request.json      │                         │
-  │──────────────────>│                         │
-  │                   │ server-transforms-request.json → request.md
-  │                   │─────────────────────────>│
-  │                   │         response.md     │
-  │                   │<─────────────────────────│
-  │                   │ server-transforms-response.json → response.json
-  │ response.json     │                         │
-  │<──────────────────│                         │
+Web / Client API      Server (transforms)       LLM
+  │                        │                     │
+  │ client.json            │                     │
+  │ (Web → Client API)     │                     │
+  │───────────────────────>│                     │
+  │                        │ request.json        │
+  │                        │────────────────────>│
+  │                        │ server-transforms-request.json → request.md
+  │                        │────────────────────>│
+  │                        │         response.md │
+  │                        │<────────────────────│
+  │                        │ server-transforms-response.json → response.json
+  │ received.json          │                     │
+  │ (Client API → Web)     │<────────────────────│
 ```
 
 **Когда какие файлы нужны:**
