@@ -5,7 +5,8 @@
 - kill-all.bat по-прежнему завершает ollama, 
 ode, 
 pm, python и CMD-обёртки вроде 	sx watch src/server/index.ts, затем удаляет .pids.txt.
-- Демон очереди обещаний (запуск python ai-integration/scripts/promise_queue_daemon.py --interval 3 --log-level DEBUG --proxy-url http://localhost:11435) пишет в promise-daemon.log, но /promises/pending постоянно возвращает []: ai-интеграция запускает _PROMISE_EXECUTOR сразу после создания promise, поэтому статус быстро переходит в done и демон не ловит pending-записи.
+- Демон очереди обещаний (python ai-integration/scripts/promise_queue_daemon.py --interval 3 --timeout 120 --log-level DEBUG --proxy-url http://localhost:11435 --dry-run) запущен снова, логирует запросы к /promises/pending, но даже на новом интервале (2026-03-05 22:38:41) цикл 1 возвращает [] и сообщение "No pending tickets".
+- Демон оставлен в фоне, чтобы сразу поймать первый долгий promise — продолжаю держать его запущенным, слежу за `promise-daemon.log` и готов сразу записать `pending`-запись, как только появится.
 - curl POST http://localhost:3001/api/v1/invoke -d '{"task":"daemon test invoke"}' вернул promiseId cmmdvxzii0000n6zxzkdhcwmm, но 2a-server зафиксировал graph_incomplete и llmHistoryLength:0 — до физического вызова LLM дело не дошло.
 - Прямой запрос к прокси POST http://localhost:11435/api/generate?promise=1 с {"model":"qwen3:8b","prompt":"daemon queue test","stream":false} дал promiseId 65b67d219ccb45108a91c440867de805, но /promise/.../response вернул {"error":"model 'qwen3:8b' not found"}; ollama pull qwen3:8b дважды завершался по таймауту, потому что модель не скачивается за 5+ минут, поэтому пока ни Ollama, ни ai-интеграция не могут выдать настоящий qwen-ответ.
 - Клиент API сообщал SyntaxError, если тело запроса не содержит 	ask/context; корректный JSON снова прошёл и создал promise.
@@ -19,6 +20,7 @@ pm run dev).
 4. При необходимости прогнать kill-all.bat / start-all.bat и зафиксировать, что .pids.txt очищается, логи пишутся в новые файлы, а promise-daemon перезапускается с актуальным promise-daemon.log.
 5. Обновить TODO.md секциями start-all, promise-daemon, manual-invoke-tests (со свежими датами, командами, статусами и ссылками на логи).
 6. Получить рабочую модель (например, повторно скачать qwen3:8b или взять другую доступную), повторить curl http://localhost:11435/api/generate?promise=1, убедиться, что promise появляется в /promises/pending достаточно долго и демон может зафиксировать qwen3:8b output, затем документировать результат.
+7. Как только в `promise-daemon.log` появится `pending` + promiseId, быстро заснимай статус/логи/нейронный ответ, запиши эти заметки в `DEV_STATE.md` (здесь) и в соответствующий раздел `TODO.md`, чтобы ручное тестирование могло продолжиться.
 
 ## Memories
 - .pids.txt сейчас содержит: OLLAMA_PID=3872, AI_INTEGRATION_PID=8344, A2A_SERVER_PID=5636, CLIENT_API_PID=12256.
