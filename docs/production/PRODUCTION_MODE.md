@@ -19,7 +19,7 @@
 2. **Start Ollama**
    ```bash
    ollama serve
-   ollama pull llama3
+   ollama pull qwen3:8b
    ```
 
 3. **Start a2a-server**

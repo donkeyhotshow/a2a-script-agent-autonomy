@@ -76,7 +76,7 @@ const configSchema = z.object({
     llmProvider: z.enum(['ollama', 'openai', '']).default(''),
     useOllama: boolean.default(false),
     aiHubUrl: z.string().url().default('http://localhost:11434'),
-    ollamaModel: z.string().default('llama3'),
+    ollamaModel: z.string().default('qwen3:8b'),
     pollIntervalMs: int(100, 60000, 2000),
     pollTimeoutMs: int(1000, 600000, 120000),
     openaiApiKey: z.string().optional(),

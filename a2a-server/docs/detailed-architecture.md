@@ -407,7 +407,7 @@ sequenceDiagram
 // Ollama Adapter
 {
   provider: 'ollama',
-  model: 'llama3',
+  model: 'qwen3:8b',
   url: 'http://localhost:11434',
   pollIntervalMs: 2000,
   pollTimeoutMs: 120000
@@ -549,7 +549,7 @@ simulations/
 |------------|----------|
 | `LLM_PROVIDER` | `ollama` / `openai` / auto |
 | `AI_HUB_URL` | URL ai-integration proxy |
-| `OLLAMA_MODEL` | `llama3` |
+| `OLLAMA_MODEL` | `qwen3:8b` |
 | `OPENAI_API_KEY` | OpenAI API ключ |
 | `POLL_INTERVAL_MS` | `2000` - интервал polling |
 | `POLL_TIMEOUT_MS` | `120000` - таймаут polling |

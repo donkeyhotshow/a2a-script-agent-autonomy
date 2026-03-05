@@ -329,7 +329,7 @@ For non-blocking LLM calls:
 // Ollama
 {
   provider: 'ollama',
-  model: 'llama3',
+  model: 'qwen3:8b',
   url: 'http://localhost:11434',
   pollIntervalMs: 2000,
   pollTimeoutMs: 120000

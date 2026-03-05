@@ -430,7 +430,7 @@ interface LLMInput {
 - `LLM_PROVIDER` - выбор провайдера (`openai`, `ollama`)
 - `OPENAI_API_KEY` - ключ OpenAI
 - `OPENAI_MODEL` - модель (default: `gpt-4o-mini`)
-- `OLLAMA_MODEL` - модель Ollama (default: `llama3`)
+- `OLLAMA_MODEL` - модель Ollama (default: `qwen3:8b`)
 
 **Взаимодействие:**
 - [`ollama-adapter.ts`](a2a-server/src/services/ollama-adapter.ts) - promise-based Ollama

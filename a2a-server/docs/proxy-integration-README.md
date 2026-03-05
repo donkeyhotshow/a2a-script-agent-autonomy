@@ -33,7 +33,7 @@ const client = new ProxyClient(getProxyClientConfig());
 
 // Отправка запроса
 const response = await client.sendJson('/api/v1/generate', {
-    model: 'llama3',
+    model: 'qwen3:8b',
     prompt: 'Hello, world!',
 });
 

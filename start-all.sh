@@ -3,6 +3,7 @@
 # Kills Ollama before starting, then starts all services
 
 set -e
+export OLLAMA_MODELS='C:\Users\dev\Desktop\.ollama'
 
 echo "=== Unified Starter for a2a-script-agent ==="
 
@@ -37,6 +38,7 @@ echo -e "${YELLOW}[2/4]${NC} Starting Ollama..."
 
 if command -v ollama &> /dev/null; then
     export OLLAMA_HOST=0.0.0.0:11434
+    export OLLAMA_MODELS='C:\Users\dev\Desktop\.ollama'
     ollama serve &
     OLLAMA_PID=$!
     echo "Ollama started (PID: $OLLAMA_PID)"
@@ -61,7 +63,8 @@ fi
 echo -e "${YELLOW}[3/4]${NC} Starting ai-integration..."
 
 cd ai-integration
-python -m uvicorn proxy.routes:app --host 0.0.0.0 --port 11434 &
+export OLLAMA_MODELS='C:\Users\dev\Desktop\.ollama'
+python -m uvicorn proxy.asgi:application --host 0.0.0.0 --port 11434 &
 AI_INTEGRATION_PID=$!
 cd ..
 

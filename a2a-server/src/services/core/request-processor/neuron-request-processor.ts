@@ -11,6 +11,7 @@
 import {logger} from '../../../utils/logger.js';
 import {activateNeurons} from '../../utils/neuron-activator.service.js';
 import {recognizeEntitiesBatch} from '../../entity-recognition/index.js';
+import {getAIActionTransformService, type AIActionContext} from '../../ai-action-transform.service.js';
 import {
     parseGraphFromContext,
     mergeRecognizedIntoGraph,
@@ -28,6 +29,8 @@ import {
 import {PhaseMachine, getPhaseMachine, resetPhaseMachine, ExecutionMode, AIStep} from '../context/context-manager.service.js';
 import {ContextManager, getContextManager, resetContextManager} from '../context/context-manager.service.js';
 import {buildRequestContextBlock} from '../../../protocol/message-builder.js';
+import {isAIActionFormat, FormatType} from '../../../protocol/versioning/backwards-compat.js';
+import {convertToCanonicalFormat} from '../../../protocol/converters/legacy-to-canonical.converter.js';
 import {analyzeTaskDetail, getNeuronsByLevel, type TaskDetailLevel} from '../../../utils/task-detail-analyzer.js';
 import type {CodeBlock} from '../../../types/entity.types.js';
 import type {RequestContextBlock} from '../../../types/index.js';
@@ -122,6 +125,17 @@ export class NeuronRequestProcessor extends BaseRequestProcessor {
     protected async doProcess(request: RequestContext): Promise<ProcessResult> {
         const {promiseId, context, codeBlocks, message} = request;
         const ctx = context;
+
+        // Check for legacy format and convert if needed
+        const formatType = isAIActionFormat(ctx);
+        if (formatType === FormatType.LEGACY) {
+            logger.info('[NeuronRequestProcessor] Legacy format detected, converting to canonical', {promiseId});
+            const converted = convertToCanonicalFormat(ctx);
+            if (converted && typeof converted === 'object') {
+                // Update context with converted data
+                Object.assign(ctx, converted);
+            }
+        }
 
         // Add message to context if provided
         if (message) {
@@ -512,32 +526,113 @@ export class NeuronRequestProcessor extends BaseRequestProcessor {
         // Transition to action phase for AI-Actions
         phaseMachine.transition('action', 'AI-Actions mode');
 
-        // Build context for LLM
+        // Get the transform service singleton
+        const transformService = getAIActionTransformService();
+
+        // Determine prompt name based on action type
+        const promptNameMap: Record<string, string> = {
+            'auto-ai': 'auto-ai-request.md',
+            'coder': 'coder-request.md',
+            'coder-smart': 'coder-request.md',
+            'analyze': 'analyze-request.md',
+            'dialog': 'dialog-request.md',
+        };
+        const promptName = action ? promptNameMap[action] || 'auto-ai-request.md' : 'auto-ai-request.md';
+
+        // Build context for AI-Action transform
+        const aiActionContext: AIActionContext = {
+            context: {
+                history: [],
+                execution: {
+                    action: action || 'auto-ai',
+                    step: 'start',
+                    progress: 0,
+                },
+                ...contextManager.getAll(),
+            },
+            result: {
+                message: taskText || '',
+            },
+            promiseId,
+        };
+
+        logger.info('[NeuronRequestProcessor] Running AI-Action transform', {
+            promiseId,
+            promptName,
+            action,
+        });
+
+        // Run the AI-Action with transforms
+        let transformResult;
+        try {
+            transformResult = await transformService.runAIAction(aiActionContext, {
+                promptName,
+                temperature: 0.7,
+            });
+        } catch (error) {
+            logger.error('[NeuronRequestProcessor] AI-Action transform error', {
+                error: String(error),
+                promiseId,
+            });
+
+            // Return error result
+            return {
+                outcome: 'error',
+                error: `AI-Action failed: ${String(error)}`,
+                tasks: [
+                    {
+                        id: `task-ai-action-${Date.now()}`,
+                        type: 'ai_action',
+                        status: 'failed',
+                        description: action || 'AI-driven action',
+                        source: 'ai-action',
+                    },
+                ],
+            };
+        }
+
+        logger.info('[NeuronRequestProcessor] AI-Action transform complete', {
+            promiseId,
+            step: transformResult.step,
+            completed: transformResult.completed,
+            executeKeys: Object.keys(transformResult.execute),
+        });
+
+        // Update context manager with new execution state
+        if (transformResult.context.context) {
+            contextManager.set('execution', transformResult.context.context.execution);
+            contextManager.set('history', transformResult.context.context.history);
+        }
+
+        // Build context block for response
         const contextBlock = buildRequestContextBlock({
             newTask: taskText ? [taskText] : [],
             context: contextManager.getAll(),
+            ...(transformResult.context.$llm && { llmData: transformResult.context.$llm }),
         });
 
-        // For AI-Actions, we return a special outcome that signals
-        // the server should send available actions to LLM
+        // Return the transformed result
         return {
-            outcome: 'ai_action_ready',
+            outcome: transformResult.completed ? 'completed' : 'ai_action_ready',
             context: contextBlock,
             tasks: [
                 {
                     id: `task-ai-action-${Date.now()}`,
                     type: 'ai_action',
-                    status: 'pending',
+                    status: transformResult.completed ? 'completed' : 'pending',
                     description: action || 'AI-driven action',
                     source: 'ai-action',
                 },
             ],
-            // Include AI-Actions metadata
+            // Include AI-Actions metadata from transform
             aiActions: {
                 action,
                 availableActions,
                 mode: 'llm-driven',
-                step: 'llm-request',
+                step: transformResult.step,
+                message: transformResult.message,
+                execute: transformResult.execute,
+                completed: transformResult.completed,
             },
         };
     }

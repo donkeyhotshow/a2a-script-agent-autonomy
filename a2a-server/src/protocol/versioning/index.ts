@@ -45,5 +45,9 @@ export {
   isDeprecatedVersion,
   getDeprecationWarning,
   adaptActionKey,
+  isAIActionFormat,
+  isCanonicalFormat,
+  isLegacyAIActionFormat,
+  FormatType,
   type CompatibilityOptions
 } from './backwards-compat.js';

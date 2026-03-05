@@ -85,7 +85,7 @@ pip install -r requirements.txt
 
 # Запуск
 set OLLAMA_HOST=http://localhost:11434
-python -m uvicorn proxy.routes:app --host 0.0.0.0 --port 8000
+python -m uvicorn proxy.asgi:application --host 0.0.0.0 --port 8000
 ```
 
 ### 3. a2a-server

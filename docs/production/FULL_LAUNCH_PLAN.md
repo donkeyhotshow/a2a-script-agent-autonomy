@@ -47,7 +47,7 @@ docker ps
 docker run -d -v ollama_data:/root/.ollama -p 11434:11434 --name ollama ollama/ollama:latest
 
 # Установка модели (обязательно)
-docker exec ollama ollama pull llama3.2
+docker exec ollama ollama pull qwen3:8b
 
 # Проверка
 curl http://localhost:11434/api/tags
@@ -58,7 +58,7 @@ curl http://localhost:11434/api/tags
 {
   "models": [
     {
-      "name": "llama3.2:latest",
+      "name": "qwen3:8b",
       "size": ...,
       "modified_at": "..."
     }
@@ -76,7 +76,7 @@ export DATABASE_URL="postgresql://postgres:postgres@localhost:5432/a2a_server"
 export REDIS_URL="redis://localhost:6379"
 export RABBITMQ_URL="amqp://guest:guest@localhost:5672"
 export OLLAMA_URL="http://localhost:11434"
-export OLLAMA_MODEL="llama3.2"
+export OLLAMA_MODEL="qwen3:8b"
 export SKIP_AUTH="1"  # Только для dev!
 export ENCRYPTION_KEY="12345678901234567890123456789012"  # 32 символа
 ```
@@ -224,7 +224,7 @@ docker exec redis redis-cli INFO
 
 # Тест Ollama
 curl http://localhost:11434/api/generate -d '{
-  "model": "llama3.2",
+  "model": "qwen3:8b",
   "prompt": "Hello",
   "stream": false
 }'
@@ -252,7 +252,7 @@ docker volume rm a2a-script-agent_ollama_data
 - [ ] PostgreSQL запущена и таблицы созданы
 - [ ] Redis работает
 - [ ] RabbitMQ работает  
-- [ ] Ollama запущена с моделью llama3.2
+- [ ] Ollama запущена с моделью qwen3:8b
 - [ ] a2a-server запущен на порту 3000
 - [ ] ai-integration прокси работает
 - [ ] a2a-client запущен на порту 5173

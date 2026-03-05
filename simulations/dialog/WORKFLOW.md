@@ -298,8 +298,8 @@ async function callLLM(messages: Message[]): Promise<LLMResponse> {
   const response = await fetch('http://localhost:11434/api/chat', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model: 'llama3',
+      body: JSON.stringify({
+        model: 'qwen3:8b',
       messages,
       stream: false
     })
@@ -341,7 +341,7 @@ function buildResponse(llmResponse: LLMResponse, context: Context): ServerRespon
 ## 📝 Important Notes
 
 1. **No optimization in prompts** - Use full complex format
-2. **Model**: Uses "llama3" or similar
+2. **Model**: Uses "qwen3:8b" or similar
 3. **System prompt**: "продовжи діалог" for continuing dialog
 4. **History building**: Server adds roles when building messages
 5. **request.md format**: MARKDOWN with system prompt, NOT JSON with model/messages

@@ -4,6 +4,10 @@
   "description": "RAG Indexing and Search Module for A2A - Local indexing and search capabilities for code projects",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./meilisearch-defaults": "./src/meilisearch-defaults.ts"
+  },
   "scripts": {
     "build": "tsc",
     "test": "jest --bail"

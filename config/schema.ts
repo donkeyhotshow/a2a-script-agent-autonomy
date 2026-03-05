@@ -66,7 +66,7 @@ export const databaseConfigSchema = z.object({
 // ===========================================
 export const aiConfigSchema = z.object({
     ollamaHost: urlSchema('http://localhost:11435'),
-    ollamaModel: z.string().default('llama3'),
+    ollamaModel: z.string().default('qwen3:8b'),
     ollamaTimeout: intSchema(1, 3600, 60),
     ollamaModels: z.string().default('~/.ollama'),
     ollamaKeepAlive: z.string().default('5m'),

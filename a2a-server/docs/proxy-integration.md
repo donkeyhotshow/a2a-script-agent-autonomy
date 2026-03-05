@@ -52,7 +52,7 @@ const client = new ProxyClient(getProxyClientConfig());
 
 // Send request
 const response = await client.sendJson('/api/v1/generate', {
-    model: 'llama3',
+    model: 'qwen3:8b',
     prompt: 'Hello, world!',
 });
 
@@ -189,7 +189,7 @@ const client = new ProxyClient(getProxyClientConfig());
 
 try {
     const response = await client.sendJson('/api/v1/generate', {
-        model: 'llama3:8b',
+        model: 'qwen3:8b',
         prompt: 'Explain quantum computing',
     });
 
@@ -212,7 +212,7 @@ try {
 ```typescript
 const response = await client.sendJson(
     '/api/v1/generate',
-    {model: 'llama3', prompt: 'Hello'},
+    {model: 'qwen3:8b', prompt: 'Hello'},
     {
         // Skip cache for this request
         skipCache: false,
@@ -230,7 +230,7 @@ const response = await client.sendJson(
 ```typescript
 const response = await client.sendJson(
     '/api/v1/generate',
-    {model: 'llama3', prompt: 'Urgent request'},
+    {model: 'qwen3:8b', prompt: 'Urgent request'},
     {
         priority: 'high',
         serviceName: 'llm-primary',
@@ -377,7 +377,7 @@ export class AIService {
 
     async generateText(prompt: string): Promise<string> {
         const response = await this.proxyClient.sendJson('/api/v1/generate', {
-            model: 'llama3',
+            model: 'qwen3:8b',
             prompt,
         });
         return response.data.text;

@@ -365,3 +365,183 @@ export function adaptActionKey(data: unknown): unknown {
   
   return data;
 }
+
+/**
+ * Format type enum
+ */
+export enum FormatType {
+  /** Legacy format with flat structure */
+  LEGACY = 'legacy',
+  /** Canonical format with action-key shape */
+  CANONICAL = 'canonical',
+  /** Unknown format */
+  UNKNOWN = 'unknown'
+}
+
+/**
+ * Legacy field indicators (for detection)
+ */
+const LEGACY_REQUEST_INDICATORS = [
+  'actions',
+  'proposedActions', 
+  'subActions',
+  'executingAction',
+  'dslScript'
+];
+
+const LEGACY_RESPONSE_INDICATORS = [
+  'content',
+  'action',
+  'result'
+];
+
+/**
+ * Canonical format indicators
+ */
+const CANONICAL_EXECUTE_KEYS = [
+  'form',
+  'script',
+  'message',
+  'read-file',
+  'write-file',
+  'rag-search',
+  'execute-command',
+  'choice'
+];
+
+const CANONICAL_RESULT_KEYS = [
+  'message',
+  'form',
+  'script',
+  'read-file',
+  'write-file',
+  'rag-search',
+  'execute-command',
+  'choice',
+  'step_result'
+];
+
+const CANONICAL_CONTEXT_KEYS = [
+  'execution',
+  'history'
+];
+
+/**
+ * Determine if the data uses the new AI-Action format (canonical)
+ * 
+ * Canonical format uses:
+ * - execute.form.choices
+ * - execute.message  
+ * - execute.script
+ * - execute."action-type"
+ * - result."action-type"
+ * - context.execution.step
+ * - context.history[]
+ * 
+ * Legacy format uses:
+ * - actions[]
+ * - proposedActions
+ * - subActions
+ * - executingAction
+ * - dslScript
+ * - result.content (flat)
+ * - execute.action (generic)
+ * 
+ * @param data - The request/response data to analyze
+ * @returns FormatType - Whether it's LEGACY, CANONICAL, or UNKNOWN
+ */
+export function isAIActionFormat(data: unknown): FormatType {
+  if (!data || typeof data !== 'object') {
+    return FormatType.UNKNOWN;
+  }
+  
+  const ctx = data as Record<string, unknown>;
+  
+  // Check for legacy request indicators first
+  const hasLegacyRequestIndicators = LEGACY_REQUEST_INDICATORS.some(
+    indicator => ctx[indicator] !== undefined
+  );
+  
+  if (hasLegacyRequestIndicators) {
+    return FormatType.LEGACY;
+  }
+  
+  // Check for legacy response indicators (flat content structure)
+  const hasContent = ctx.content !== undefined;
+  const hasAction = ctx.action !== undefined;
+  const hasResult = ctx.result !== undefined;
+  
+  // Legacy response: content with flat structure, no action-key in result
+  if (hasContent && hasResult && !hasAction) {
+    const result = ctx.result as Record<string, unknown>;
+    if (result && typeof result === 'object') {
+      const resultKeys = Object.keys(result);
+      // If result has generic keys like 'content', 'data' but not action-type keys
+      const hasCanonicalResultKey = CANONICAL_RESULT_KEYS.some(key => resultKeys.includes(key));
+      if (!hasCanonicalResultKey) {
+        return FormatType.LEGACY;
+      }
+    }
+  }
+  
+  // Check for canonical execute keys
+  const hasCanonicalExecute = CANONICAL_EXECUTE_KEYS.some(
+    key => ctx[key] !== undefined
+  );
+  
+  // Check for canonical result keys
+  const hasCanonicalResult = hasResult && CANONICAL_RESULT_KEYS.some(
+    key => (ctx.result as Record<string, unknown>)?.[key] !== undefined
+  );
+  
+  // Check for canonical context
+  let hasCanonicalContext = false;
+  if (ctx.context && typeof ctx.context === 'object') {
+    const context = ctx.context as Record<string, unknown>;
+    hasCanonicalContext = CANONICAL_CONTEXT_KEYS.some(
+      key => context[key] !== undefined
+    );
+  }
+  
+  // Determine format based on presence of canonical indicators
+  if (hasCanonicalExecute || hasCanonicalResult || hasCanonicalContext) {
+    return FormatType.CANONICAL;
+  }
+  
+  // If we have result with action field (generic), it's legacy
+  if (hasResult && hasAction) {
+    const result = ctx.result as Record<string, unknown>;
+    // Legacy: result has generic 'content' or 'data', not action-type key
+    if (result && typeof result === 'object') {
+      const resultKeys = Object.keys(result);
+      if (resultKeys.includes('content') || resultKeys.includes('data')) {
+        return FormatType.LEGACY;
+      }
+    }
+  }
+  
+  // Check for legacy execute.action pattern
+  if (ctx.execute && typeof ctx.execute === 'object') {
+    const execute = ctx.execute as Record<string, unknown>;
+    if (execute.action !== undefined) {
+      return FormatType.LEGACY;
+    }
+  }
+  
+  return FormatType.UNKNOWN;
+}
+
+/**
+ * Check if data is in legacy format (alias for backwards compatibility)
+ * @deprecated Use isAIActionFormat() for more precise detection
+ */
+export function isLegacyAIActionFormat(data: unknown): boolean {
+  return isAIActionFormat(data) === FormatType.LEGACY;
+}
+
+/**
+ * Check if data is in canonical AI-Action format
+ */
+export function isCanonicalFormat(data: unknown): boolean {
+  return isAIActionFormat(data) === FormatType.CANONICAL;
+}

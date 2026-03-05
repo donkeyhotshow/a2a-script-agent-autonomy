@@ -379,7 +379,7 @@ logs/llm/
   "step": "llm-request",
   "timestamp": 1706812800000,
   "mode": "live",
-  "model": "llama3",
+  "model": "qwen3:8b",
   "promiseId": "abc123",
   "durationMs": 1500
 }
@@ -820,7 +820,7 @@ pipelines:
 |----------|----------|--------|
 | `LLM_REPLAY_DIR` | Директория для replay-режима | `simulations/dialog/3` |
 | `LLM_PROVIDER` | Провайдер LLM | `ollama`, `openai`, `proxy` |
-| `OLLAMA_MODEL` | Модель Ollama | `llama3` |
+| `OLLAMA_MODEL` | Модель Ollama | `qwen3:8b` |
 | `OPENAI_MODEL` | Модель OpenAI | `gpt-4o-mini` |
 | `AI_PROXY_URL` | URL AI Hub | `http://localhost:11434` |
 | `LOG_LLM_DIR` | Директория для логов LLM | `logs/llm` |

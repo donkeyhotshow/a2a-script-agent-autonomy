@@ -1,0 +1,24 @@
+{
+  "type": "pipeline",
+  "steps": [
+    {
+      "op": "copy",
+      "from": "$",
+      "to": "$out"
+    },
+    {
+      "op": "append-to-array",
+      "to": "$.context.history",
+      "value": {
+        "role": "user",
+        "message": "$.result.message"
+      }
+    },
+    {
+      "op": "render-markdown",
+      "templateRef": "a2a-server/prompts/{{TEMPLATE_NAME}}",
+      "data": "$out",
+      "outputFile": "request.md"
+    }
+  ]
+}
