@@ -23,6 +23,8 @@ wmic process where "Name='cmd.exe' and CommandLine like '%%cross-env NODE_ENV=de
 wmic process where "Name='cmd.exe' and CommandLine like '%%tsx watch src/index.ts%%'" call terminate >nul 2>&1
 wmic process where "Name='cmd.exe' and CommandLine like '%%tsx%%watch%%src/index.ts%%'" call terminate >nul 2>&1
 wmic process where "Name='cmd.exe' and CommandLine like '%%tsx%%watch%%'" call terminate >nul 2>&1
+wmic process where "Name='cmd.exe' and CommandLine like '%%tsx watch src/server/index.ts%%'" call terminate >nul 2>&1
 
 echo.
 echo === All processes killed ===
+if exist .pids.txt del .pids.txt

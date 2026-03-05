@@ -25,4 +25,3 @@ Terminal: http://localhost:3001/api/terminal/execute
 File System: http://localhost:3001/api/fs/*
 Sessions: http://localhost:3001/api/sessions/*
 File Upload: http://localhost:3001/api/files/upload
-^C^C
