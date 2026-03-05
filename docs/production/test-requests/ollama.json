@@ -1,0 +1,9 @@
+[
+  {
+    "name": "ollama-hello",
+    "payload": {
+      "model": "llama3",
+      "prompt": "Return one sentence that contains the phrase OLLAMA OK."
+    }
+  }
+]

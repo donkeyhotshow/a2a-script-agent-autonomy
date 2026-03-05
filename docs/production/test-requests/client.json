@@ -1,0 +1,26 @@
+[
+  {
+    "name": "client-hello",
+    "context": {
+      "task": "Summarize the README in three bullet points.",
+      "execution": {
+        "action": "auto-ai",
+        "step": "llm-request"
+      },
+      "history": []
+    },
+    "message": "Production client path check"
+  },
+  {
+    "name": "client-status",
+    "context": {
+      "task": "Describe the current stack ports and health requirements for production mode.",
+      "execution": {
+        "action": "auto-ai",
+        "step": "llm-request"
+      },
+      "history": []
+    },
+    "message": "Second client sanity check"
+  }
+]

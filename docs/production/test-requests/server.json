@@ -1,0 +1,26 @@
+[
+  {
+    "name": "server-processor",
+    "context": {
+      "task": "Explain how the timer-based request processor polls the queue and dispatches jobs.",
+      "execution": {
+        "action": "auto-ai",
+        "step": "llm-request"
+      },
+      "history": []
+    },
+    "message": "Server mode check"
+  },
+  {
+    "name": "server-context",
+    "context": {
+      "task": "List the key fields stored under request.context.history for production logging.",
+      "execution": {
+        "action": "auto-ai",
+        "step": "llm-request"
+      },
+      "history": []
+    },
+    "message": "Context metadata check"
+  }
+]
