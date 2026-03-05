@@ -46,7 +46,7 @@ export class RequestService {
                 status: 'pending',
                 priority: data.priority ?? 0,
                 context: data.context as object,
-                message: data.message ?? null,
+                message: data.message ? (typeof data.message === 'string' ? data.message : JSON.stringify(data.message)) : null,
                 codeBlocks: data.codeBlocks ? (data.codeBlocks as object) : null,
             },
         });

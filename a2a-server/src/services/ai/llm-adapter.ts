@@ -57,7 +57,7 @@ function getProxyService(): AIService | null {
 }
 
 function getOllamaModel(): string {
-    return (process.env.OLLAMA_MODEL ?? '').trim() || 'llama3';
+    return (process.env.OLLAMA_MODEL ?? '').trim() || 'qwen3:8b';
 }
 
 export interface LLMInput {
@@ -155,77 +155,83 @@ export async function callLLM(input: LLMInput): Promise<string> {
         }
     }
 
-    if (provider !== 'openai') {
-        await archiveLlmInteraction({
-            provider,
-            prompt,
-            response: PLACEHOLDER,
-            context: input.context,
-            requestFiles: input.requestFiles,
-        });
-        return PLACEHOLDER;
-    }
-
-    const apiKey = process.env.OPENAI_API_KEY;
-    if (!apiKey?.trim()) {
-        await archiveLlmInteraction({
-            provider: 'openai',
-            prompt,
-            error: 'OPENAI_API_KEY is not set',
-            context: input.context,
-            requestFiles: input.requestFiles,
-        });
-        return PLACEHOLDER;
-    }
-
-    try {
-        const res = await fetch(OPENAI_API_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${apiKey}`,
-            },
-            body: JSON.stringify({
-                model: process.env.OPENAI_MODEL ?? 'gpt-4o-mini',
-                messages: [{role: 'user', content: prompt}],
-                max_tokens: 1024,
-            }),
-        });
-
-        if (!res.ok) {
-            logger.warn('[LLM] API error', {status: res.status});
+    if (provider === 'openai') {
+        const apiKey = process.env.OPENAI_API_KEY;
+        if (!apiKey?.trim()) {
             await archiveLlmInteraction({
                 provider: 'openai',
                 prompt,
-                error: `HTTP ${res.status}`,
+                error: 'OPENAI_API_KEY is not set',
                 context: input.context,
                 requestFiles: input.requestFiles,
             });
             return PLACEHOLDER;
         }
 
-        const data = (await res.json()) as { choices?: Array<{ message?: { content?: string } }> };
-        const content = data.choices?.[0]?.message?.content?.trim();
-        const finalText = content ?? PLACEHOLDER;
-        await archiveLlmInteraction({
-            provider: 'openai',
-            prompt,
-            response: finalText,
-            context: input.context,
-            requestFiles: input.requestFiles,
-        });
-        return finalText;
-    } catch (err) {
-        logger.warn('[LLM] Request failed', {error: String(err)});
-        await archiveLlmInteraction({
-            provider: 'openai',
-            prompt,
-            error: String(err),
-            context: input.context,
-            requestFiles: input.requestFiles,
-        });
-        return PLACEHOLDER;
+        try {
+            const res = await fetch(OPENAI_API_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${apiKey}`,
+                },
+                body: JSON.stringify({
+                    model: process.env.OPENAI_MODEL ?? 'gpt-4o-mini',
+                    messages: [{role: 'user', content: prompt}],
+                    max_tokens: 1024,
+                }),
+            });
+
+            if (!res.ok) {
+                logger.warn('[LLM] OpenAI API error', {status: res.status});
+                await archiveLlmInteraction({
+                    provider: 'openai',
+                    prompt,
+                    error: `HTTP ${res.status}`,
+                    context: input.context,
+                    requestFiles: input.requestFiles,
+                });
+                return PLACEHOLDER;
+            }
+
+            const data = (await res.json()) as { choices?: Array<{ message?: { content?: string } }> };
+            const content = data.choices?.[0]?.message?.content?.trim();
+            const finalText = content ?? PLACEHOLDER;
+            await archiveLlmInteraction({
+                provider: 'openai',
+                prompt,
+                response: finalText,
+                context: input.context,
+                requestFiles: input.requestFiles,
+            });
+            return finalText;
+        } catch (err) {
+            logger.warn('[LLM/OpenAI] Request failed', {error: String(err)});
+            await archiveLlmInteraction({
+                provider: 'openai',
+                prompt,
+                error: String(err),
+                context: input.context,
+                requestFiles: input.requestFiles,
+            });
+            return PLACEHOLDER;
+        }
     }
+
+    // placeholder (default when no API key configured)
+    logger.warn('[LLM] Using placeholder provider - no LLM configured', {
+        provider,
+        hasApiKey: !!(process.env.OPENAI_API_KEY ?? '').trim(),
+        hasAiHubUrl: !!(process.env.AI_HUB_URL ?? '').trim(),
+    });
+    await archiveLlmInteraction({
+        provider,
+        prompt,
+        response: PLACEHOLDER,
+        context: input.context,
+        requestFiles: input.requestFiles,
+    });
+    return PLACEHOLDER;
 }
 
 function buildPrompt(input: LLMInput): string {

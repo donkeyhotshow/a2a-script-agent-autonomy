@@ -1,4 +1,41 @@
-cd a2a-server
- = Start-Process npm -ArgumentList 'run','dev:no-auth' -RedirectStandardOutput '..\server-dev.log' -RedirectStandardError '..\server-dev.log' -PassThru
-Start-Sleep -Seconds 8
-if (-not .HasExited) { .Kill() }
+# Quick dev server starter for a2a-server
+# Usage: .\start-dev.ps1
+
+Write-Host "Starting a2a-server in dev mode..." -ForegroundColor Cyan
+
+# Kill existing node processes on port 3000
+$existing = Get-NetTCPConnection -LocalPort 3000 -ErrorAction SilentlyContinue
+if ($existing) {
+    $proc = Get-Process -Id $existing.OwningProcess -ErrorAction SilentlyContinue
+    if ($proc) {
+        Write-Host "Killing existing process on port 3000 (PID: $($proc.Id))" -ForegroundColor Yellow
+        Stop-Process -Id $proc.Id -Force
+        Start-Sleep -Seconds 2
+    }
+}
+
+# Start a2a-server
+$serverJob = Start-Job -ScriptBlock {
+    param($cwd)
+    Set-Location $cwd
+    npm run dev
+} -ArgumentList (Resolve-Path "a2a-server").Path
+
+Write-Host "a2a-server started (Job ID: $($serverJob.Id))" -ForegroundColor Green
+Write-Host "Log: Check terminal output" -ForegroundColor Gray
+
+# Wait for server to start
+Start-Sleep -Seconds 5
+
+# Check if server is running
+try {
+    $response = Invoke-WebRequest -Uri "http://localhost:3000/health" -TimeoutSec 5 -ErrorAction SilentlyContinue
+    if ($response.StatusCode -eq 200) {
+        Write-Host "a2a-server is UP!" -ForegroundColor Green
+    }
+} catch {
+    Write-Host "Server started but health check failed - check logs" -ForegroundColor Yellow
+}
+
+Write-Host ""
+Write-Host "To stop: Get-Job | Stop-Job" -ForegroundColor Gray

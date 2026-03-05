@@ -410,7 +410,6 @@
       <div class="pui-panel-header">
         <span class="pui-panel-title">${escapeHtml(String(title))}</span>
         <div class="pui-panel-controls">
-          <button type="button" class="pui-panel-control-btn" data-action="minimize" title="Minimize">−</button>
           <button type="button" class="pui-panel-control-btn" title="Maximize">□</button>
           <button type="button" class="pui-panel-control-btn" data-action="close" title="Close">×</button>
         </div>
