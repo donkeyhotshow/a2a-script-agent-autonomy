@@ -1,200 +1,6 @@
 /* Panel Manager Styles */
 
-/* PUI Prefixed Classes - for ai-actions.js */
-.pui-panel {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  background: var(--color-bg-secondary);
-  border-radius: var(--radius-lg);
-  overflow: hidden;
-}
-
-.pui-panel.pui-critical {
-  border: 1px solid var(--color-warning);
-}
-
-.pui-slot-floating {
-  position: fixed;
-  min-width: 300px;
-  min-height: 200px;
-  box-shadow: var(--shadow-lg);
-  z-index: 100;
-}
-
-.pui-slot-left {
-  position: fixed;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 320px;
-  z-index: 50;
-}
-
-.pui-slot-right {
-  position: fixed;
-  right: 0;
-  top: 0;
-  bottom: 0;
-  width: 320px;
-  z-index: 50;
-}
-
-.pui-slot-bottom {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 240px;
-  z-index: 50;
-}
-
-.pui-panel-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 14px;
-  background: var(--color-bg-tertiary);
-  border-bottom: 1px solid var(--color-border);
-  user-select: none;
-}
-
-.pui-panel-title {
-  flex: 1;
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--color-text-primary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.pui-panel-controls {
-  display: flex;
-  gap: 4px;
-}
-
-.pui-panel-control-btn {
-  background: none;
-  border: none;
-  color: var(--color-text-secondary);
-  padding: 4px 8px;
-  cursor: pointer;
-  border-radius: var(--radius-sm);
-  font-size: 14px;
-  line-height: 1;
-  transition: all var(--transition-fast);
-}
-
-.pui-panel-control-btn:hover {
-  background: var(--color-bg-hover);
-  color: var(--color-text-primary);
-}
-
-.pui-panel-content {
-  flex: 1;
-  overflow: auto;
-  padding: 14px;
-}
-
-.pui-panel-resize {
-  position: absolute;
-  bottom: 0;
-  right: 0;
-  width: 16px;
-  height: 16px;
-  cursor: se-resize;
-  background: linear-gradient(135deg, transparent 50%, var(--color-text-muted) 50%);
-  opacity: 0.3;
-  transition: opacity var(--transition-fast);
-}
-
-.pui-panel-resize:hover {
-  opacity: 0.6;
-}
-
-.pui-cube {
-  position: fixed;
-  bottom: 60px;
-  right: 20px;
-  width: 48px;
-  height: 48px;
-  background: var(--color-bg-secondary);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-md);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  z-index: 80;
-  transition: all var(--transition-fast);
-}
-
-.pui-cube:hover {
-  transform: scale(1.05);
-  border-color: var(--color-accent);
-}
-
-.pui-cube-status {
-  position: absolute;
-  top: 6px;
-  left: 6px;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--color-text-muted);
-}
-
-.pui-cube-status.active {
-  background: var(--color-success);
-}
-
-.pui-cube-status.pending {
-  background: var(--color-warning);
-}
-
-.pui-cube-status.error {
-  background: var(--color-error);
-}
-
-.pui-cube-status.idle {
-  background: var(--color-text-muted);
-}
-
-.pui-zones {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 90;
-  display: none;
-}
-
-.pui-zones.active {
-  display: block;
-}
-
-.pui-zone {
-  position: absolute;
-  background: var(--color-accent);
-  opacity: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  pointer-events: auto;
-  transition: opacity var(--transition-fast);
-}
-
-.pui-zones.active .pui-zone {
-  opacity: 0.15;
-}
-
-.pui-zone.drag-over,
-.pui-zone:hover {
-  opacity: 0.3 !important;
-}
-
-/* Floating Panel (non-prefixed) */
+/* Floating Panel */
 .floating-panel {
   position: fixed;
   background: var(--color-bg-secondary);
@@ -270,6 +76,26 @@
 
 .pui-btn-close:hover {
   background: var(--color-error);
+  color: #fff;
+}
+
+.pui-btn-minimize {
+  background: none;
+  border: none;
+  color: var(--color-text-secondary);
+  padding: 4px 8px;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-fast);
+  font-size: 14px;
+  line-height: 1;
+}
+
+.pui-btn-minimize:hover {
+  background: var(--color-warning);
   color: #fff;
 }
 
@@ -376,6 +202,90 @@
   flex: 1;
   overflow: auto;
   padding: 14px;
+}
+
+/* Dock Zones */
+.pui-dock-zones {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 100;
+  display: none;
+}
+
+.pui-dock-zones.active {
+  display: block;
+}
+
+.pui-dock-zone {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  pointer-events: auto;
+  background: var(--color-bg-secondary);
+  border: 2px dashed var(--color-border);
+  border-radius: var(--radius-lg);
+  opacity: 0.6;
+  transition: all var(--transition-fast);
+  cursor: pointer;
+}
+
+.pui-dock-zone:hover,
+.pui-dock-zone.active {
+  opacity: 1;
+  border-color: var(--color-accent);
+  background: rgba(88, 166, 255, 0.1);
+}
+
+.pui-dock-zone.drag-over {
+  background: rgba(88, 166, 255, 0.2);
+  border-style: solid;
+  border-color: var(--color-accent);
+}
+
+.pui-dock-zone.left {
+  left: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 80px;
+  height: 120px;
+}
+
+.pui-dock-zone.right {
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 80px;
+  height: 120px;
+}
+
+.pui-dock-zone.bottom {
+  left: 50%;
+  bottom: 80px;
+  transform: translateX(-50%);
+  width: 120px;
+  height: 80px;
+}
+
+.pui-dock-icon {
+  font-size: 24px;
+  line-height: 1;
+}
+
+.pui-dock-label {
+  font-size: 11px;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Active dock container */
+.pui-dock-container.active {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 1px var(--color-accent), var(--shadow-lg);
 }
 
 /* Minimized Cube */
@@ -507,4 +417,260 @@
   width: auto !important;
   height: auto !important;
   z-index: 200;
+}
+
+/* Panel Manager - PM-* Classes */
+
+/* Panel Types */
+.pm-panel {
+  position: fixed;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  flex-direction: column;
+  z-index: 100;
+  overflow: hidden;
+}
+
+.pm-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.pm-modal .pm-panel {
+  max-width: 90vw;
+  max-height: 90vh;
+  width: 560px;
+}
+
+.pm-taskbar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 48px;
+  background: var(--color-bg-secondary);
+  border-top: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  gap: 8px;
+  z-index: 50;
+}
+
+.pm-floating {
+  position: fixed;
+  min-width: 300px;
+  min-height: 200px;
+}
+
+.pm-critical {
+  border-color: var(--color-error);
+  box-shadow: 0 0 0 1px var(--color-error), var(--shadow-lg);
+}
+
+/* Slot Positions */
+.pm-slot-floating {
+  /* Default floating positioning */
+}
+
+.pm-slot-left {
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 320px;
+  border-right: 1px solid var(--color-border);
+  border-radius: 0;
+}
+
+.pm-slot-right {
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 320px;
+  border-left: 1px solid var(--color-border);
+  border-radius: 0;
+}
+
+.pm-slot-bottom {
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 240px;
+  border-top: 1px solid var(--color-border);
+  border-radius: 0;
+}
+
+/* Panel Header */
+.pm-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: var(--color-bg-tertiary);
+  border-bottom: 1px solid var(--color-border);
+  cursor: grab;
+  user-select: none;
+}
+
+.pm-header:active {
+  cursor: grabbing;
+}
+
+/* Panel Title */
+.pm-title {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Panel Controls */
+.pm-controls {
+  display: flex;
+  gap: 4px;
+}
+
+/* Panel Buttons */
+.pm-btn {
+  background: none;
+  border: none;
+  color: var(--color-text-secondary);
+  padding: 4px 8px;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-fast);
+  font-size: 14px;
+  line-height: 1;
+}
+
+.pm-btn:hover {
+  background: var(--color-bg-hover);
+  color: var(--color-text-primary);
+}
+
+.pm-btn-maximize {
+  font-size: 12px;
+}
+
+.pm-btn-maximize:hover {
+  background: var(--color-accent);
+  color: #fff;
+}
+
+.pm-btn-minimize {
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.pm-btn-minimize:hover {
+  background: var(--color-warning);
+  color: #fff;
+}
+
+.pm-btn-close:hover {
+  background: var(--color-error);
+  color: #fff;
+}
+
+/* Panel Indicator (Minimized State) */
+.pm-indicator {
+  position: fixed;
+  bottom: 60px;
+  right: 20px;
+  width: 48px;
+  height: 48px;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 80;
+  transition: all var(--transition-fast);
+}
+
+.pm-indicator:hover {
+  transform: scale(1.05);
+  border-color: var(--color-accent);
+}
+
+.pm-indicator-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.pm-indicator-status {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-top: 2px;
+}
+
+.pm-indicator-status.active {
+  background: var(--color-success);
+}
+
+.pm-indicator-status.pending {
+  background: var(--color-warning);
+}
+
+.pm-indicator-status.error {
+  background: var(--color-error);
+}
+
+/* Panel Dragging State */
+.pm-dragging {
+  opacity: 0.8;
+  cursor: grabbing !important;
+}
+
+.pm-dragging * {
+  cursor: grabbing !important;
+}
+
+/* Panel Maximized State */
+.pm-maximized {
+  position: fixed !important;
+  inset: 20px !important;
+  width: auto !important;
+  height: auto !important;
+  z-index: 200 !important;
+}
+
+/* Panel Content */
+.pm-content {
+  flex: 1;
+  overflow: auto;
+  padding: 14px;
+}
+
+/* Panel Backdrop (for modals) */
+.pm-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 999;
+}
+
+.pm-modal-backdrop {
+  cursor: pointer;
 }

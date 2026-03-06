@@ -10,7 +10,12 @@
     const DEFAULT_API_BASE = '/api';
 
     function getStorageBase() {
-        const base = (typeof localStorage !== 'undefined' && localStorage.getItem(CLIENT_API_STORAGE_KEY)) || DEFAULT_API_BASE;
+        let base = (typeof localStorage !== 'undefined' && localStorage.getItem(CLIENT_API_STORAGE_KEY)) || DEFAULT_API_BASE;
+        // Fix corrupted object string if present
+        if (base === '[object Object]' || typeof base !== 'string' || !base.startsWith('/')) {
+            base = DEFAULT_API_BASE;
+            localStorage.setItem(CLIENT_API_STORAGE_KEY, base);
+        }
         return (base || DEFAULT_API_BASE).replace(/\/$/, '') + '/storage';
     }
 

@@ -139,7 +139,9 @@
         },
 
         configure(options = {}) {
-            if (options.apiBase) this.apiBase = options.apiBase.replace(/\/?$/, '');
+            if (options.apiBase && typeof options.apiBase === 'string' && options.apiBase !== '[object Object]') {
+                this.apiBase = options.apiBase.replace(/\/?$/, '');
+            }
             if (options.projectId) {
                 this.currentProjectId = options.projectId;
                 store.setProject(options.projectId);

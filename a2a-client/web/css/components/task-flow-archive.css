@@ -1,0 +1,277 @@
+/* Archive Task Flow Styles - DEPRECATED
+   These styles support the archived task-flow.js in js/archive/
+   Most classes extend or override the main task-flow.css styles.
+   This file is kept for backwards compatibility if the archive is ever used.
+*/
+
+/* Execution Step (Archive Variant) */
+.execution-step-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--color-text-muted);
+  margin-right: 4px;
+}
+
+.execution-step-name {
+  font-size: 12px;
+  color: var(--color-accent);
+  font-weight: 500;
+}
+
+/* Progress Bar Fill (Additional inner bar) */
+.task-flow-progress-fill {
+  height: 100%;
+  background: var(--color-accent);
+  transition: width var(--transition-base);
+  border-radius: var(--radius-sm);
+}
+
+/* Final Result (Archive Variants) */
+.final-result-item {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 6px;
+  font-size: 12px;
+}
+
+.result-key {
+  color: var(--color-text-muted);
+  font-weight: 500;
+  min-width: 80px;
+}
+
+.result-value {
+  color: var(--color-text-primary);
+  word-break: break-word;
+}
+
+.final-result-header {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-success);
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.final-result-summary {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+/* TF Message (Archive Variant) */
+.tf-message-history {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 16px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.tf-msg {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  max-width: 90%;
+}
+
+.tf-msg-user {
+  background: var(--color-accent);
+  color: #fff;
+  align-self: flex-end;
+  border-bottom-right-radius: 4px;
+}
+
+.tf-msg-system {
+  background: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+  align-self: center;
+  font-size: 12px;
+  font-style: italic;
+}
+
+.tf-msg-assistant {
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-primary);
+  align-self: flex-start;
+  border-bottom-left-radius: 4px;
+}
+
+.tf-msg-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  opacity: 0.8;
+}
+
+.tf-msg-time {
+  font-size: 10px;
+  color: var(--color-text-muted);
+}
+
+.tf-msg-role {
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.tf-msg-content {
+  font-size: 13px;
+  line-height: 1.5;
+  word-wrap: break-word;
+}
+
+/* Response Containers */
+.task-flow-response {
+  padding: 14px;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  margin: 12px 0;
+}
+
+.task-flow-form-wrap {
+  border-left: 3px solid var(--color-accent);
+}
+
+.task-flow-message-wrap {
+  border-left: 3px solid var(--color-success);
+}
+
+/* Form Input (Archive Variant) */
+.task-flow-form-input {
+  width: 100%;
+  padding: 8px 12px;
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text-primary);
+  font-family: inherit;
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+
+.task-flow-form-input:focus {
+  outline: none;
+  border-color: var(--color-accent);
+}
+
+.task-flow-form-inputs {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+/* Message Actions */
+.task-flow-message-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--color-border);
+}
+
+.task-flow-message-btn {
+  padding: 6px 14px;
+  background: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text-primary);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.task-flow-message-btn:hover {
+  background: var(--color-bg-hover);
+  border-color: var(--color-accent);
+}
+
+/* Client Action (Archive Variant) */
+.client-action-header {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--color-accent);
+  margin-bottom: 10px;
+  padding: 4px 8px;
+  background: rgba(88, 166, 255, 0.15);
+  border-radius: var(--radius-sm);
+  display: inline-block;
+}
+
+.client-action-data {
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 10px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--color-text-secondary);
+  overflow-x: auto;
+  margin-bottom: 10px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.client-action-status {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
+/* Response Section */
+.task-flow-response-section {
+  margin-bottom: 12px;
+}
+
+.task-flow-response-section:last-child {
+  margin-bottom: 0;
+}
+
+.task-flow-response-section strong {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--color-text-secondary);
+  margin-bottom: 6px;
+}
+
+.task-flow-response-section pre {
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 10px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--color-text-secondary);
+  overflow-x: auto;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+/* User Message */
+.task-flow-user-message {
+  padding: 10px 14px;
+  background: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  margin-bottom: 12px;
+}
+
+.task-flow-user-message strong {
+  color: var(--color-accent);
+  font-weight: 500;
+}

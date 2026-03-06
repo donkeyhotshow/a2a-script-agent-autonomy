@@ -66,8 +66,11 @@ class APIIntegration {
      */
     configure(options = {}) {
         const base = options.apiBase || options.clientApiUrl || options.serverUrl;
-        if (base) {
-            this.apiBase = String(base).replace(/\/?$/, '');
+        if (base && typeof base === 'string' && base !== '[object Object]') {
+            this.apiBase = base.replace(/\/?$/, '');
+        } else if (base && typeof base === 'object') {
+            // Handle case where object was passed - extract url property or use default
+            this.apiBase = base.url || base.apiBase || '/api';
         }
         if (options.token) this.token = options.token;
 

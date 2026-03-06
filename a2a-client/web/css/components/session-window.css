@@ -1,0 +1,146 @@
+/* Session Window Styles */
+
+/* Session Content Container */
+.session-content {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--color-bg-primary);
+}
+
+/* Session Header */
+.session-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: var(--color-bg-tertiary);
+  border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
+}
+
+.session-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.session-id {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--color-text-muted);
+}
+
+.session-status {
+  font-size: 11px;
+  padding: 2px 8px;
+  background: var(--color-bg-hover);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-secondary);
+}
+
+.session-status.active {
+  background: rgba(63, 185, 80, 0.15);
+  color: var(--color-success);
+}
+
+/* Session Messages Area */
+.session-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Individual Message */
+.message {
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  max-width: 85%;
+  word-wrap: break-word;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.message.user {
+  background: var(--color-accent);
+  color: #fff;
+  align-self: flex-end;
+  border-bottom-right-radius: 4px;
+}
+
+.message.system {
+  background: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+  align-self: center;
+  font-size: 12px;
+  font-style: italic;
+}
+
+.message.assistant {
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-primary);
+  align-self: flex-start;
+  border-bottom-left-radius: 4px;
+}
+
+/* Session Input Area */
+.session-input {
+  display: flex;
+  gap: 8px;
+  padding: 12px 14px;
+  background: var(--color-bg-tertiary);
+  border-top: 1px solid var(--color-border);
+  flex-shrink: 0;
+}
+
+.session-input textarea {
+  flex: 1;
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 8px 12px;
+  color: var(--color-text-primary);
+  font-family: inherit;
+  font-size: 13px;
+  resize: none;
+  min-height: 60px;
+  max-height: 120px;
+}
+
+.session-input textarea:focus {
+  outline: none;
+  border-color: var(--color-accent);
+}
+
+.session-input textarea::placeholder {
+  color: var(--color-text-muted);
+}
+
+/* Send Button */
+.send-btn {
+  padding: 8px 16px;
+  background: var(--color-accent);
+  border: none;
+  border-radius: var(--radius-md);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  align-self: flex-end;
+  height: fit-content;
+}
+
+.send-btn:hover {
+  background: var(--color-accent-hover);
+}
+
+.send-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

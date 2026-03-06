@@ -30,7 +30,7 @@
          * Set stored client API URL
          */
         async setStoredClientApiUrl(url) {
-            const value = url || DEFAULT_CLIENT_API_URL;
+            const value = (typeof url === 'string' && url.trim()) ? url.trim() : DEFAULT_CLIENT_API_URL;
             if (typeof localStorage !== 'undefined') localStorage.setItem(CLIENT_API_STORAGE_KEY, value);
             try {
                 await StorageAPI.config.setItem(CLIENT_API_STORAGE_KEY, value);

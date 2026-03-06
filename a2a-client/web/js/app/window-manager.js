@@ -183,10 +183,26 @@
             try {
                 const key = `window_state_${sessionId}`;
                 const saved = await StorageAPI.ui.getItem(key);
-                return saved ? JSON.parse(saved) : null;
+                
+                if (saved) {
+                    return JSON.parse(saved);
+                }
+                
+                // Return default window state if not found
+                const defaultPosition = this.getDefaultWindowPosition(sessionId);
+                return {
+                    position: defaultPosition,
+                    size: { width: 800, height: 600 },
+                    timestamp: Date.now()
+                };
             } catch (e) {
                 console.warn('[WindowManager] Failed to load window state:', e);
-                return null;
+                const defaultPosition = this.getDefaultWindowPosition(sessionId);
+                return {
+                    position: defaultPosition,
+                    size: { width: 800, height: 600 },
+                    timestamp: Date.now()
+                };
             }
         },
 
