@@ -40,8 +40,8 @@ param(
 
 # Script configuration
 $ErrorActionPreference = 'Stop'
-$scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$rootDir = Split-Path -Parent $scriptDir
+$scriptDir = $PSScriptRoot
+$rootDir = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
 
 # Log collection configuration
 $logDir = Join-Path $rootDir "proxy_logs"

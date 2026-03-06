@@ -11,7 +11,7 @@ function Write-Error { param($Message) Write-Host "✗ $Message" -ForegroundColo
 function Write-Info { param($Message) Write-Host "ℹ $Message" -ForegroundColor Cyan }
 function Write-Warning { param($Message) Write-Host "⚠ $Message" -ForegroundColor Yellow }
 
-$rootDir = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
+$rootDir = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
 $processes = @()
 
 Write-Info "Basic Services Test"

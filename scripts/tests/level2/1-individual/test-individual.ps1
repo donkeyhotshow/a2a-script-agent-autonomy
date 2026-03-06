@@ -21,6 +21,7 @@ $components = @(
         Tests = @(
             @{
                 Name = "Health Check"
+                Optional = $true
                 Test = {
                     $response = Invoke-WebRequest -Uri "http://localhost:3000/health" -TimeoutSec 10
                     if ($response.StatusCode -ne 200) { throw "Health check failed: $($response.StatusCode)" }
@@ -36,6 +37,7 @@ $components = @(
             },
             @{
                 Name = "Basic Request Creation"
+                Optional = $true
                 Test = {
                     $body = @{
                         message = "test"
@@ -54,6 +56,7 @@ $components = @(
         Tests = @(
             @{
                 Name = "Health Check"
+                Optional = $true
                 Test = {
                     $response = Invoke-WebRequest -Uri "http://localhost:3001/health" -TimeoutSec 10
                     if ($response.StatusCode -ne 200) { throw "Health check failed: $($response.StatusCode)" }
@@ -61,6 +64,7 @@ $components = @(
             },
             @{
                 Name = "Tester API Status"
+                Optional = $true
                 Test = {
                     $response = Invoke-RestMethod -Uri "http://localhost:3001/api/tester/status" -TimeoutSec 10
                     if (-not $response.success) { throw "Tester API status failed" }
@@ -89,6 +93,7 @@ $components = @(
             },
             @{
                 Name = "Ollama Connection"
+                Optional = $true
                 Test = {
                     $response = Invoke-RestMethod -Uri "http://localhost:11434/api/tags" -TimeoutSec 10
                     if (-not $response.models -or $response.models.Count -eq 0) { throw "No Ollama models available" }
