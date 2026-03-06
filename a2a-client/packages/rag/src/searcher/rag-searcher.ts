@@ -8,6 +8,7 @@ import path from 'path';
 import {TFIDFService} from '../tfidf.js';
 import {QueryUnderstandingEngine, INTENT_TYPES} from '../query-understanding.js';
 import {CodeSimilarityEngine} from '../code-similarity.js';
+import {SearchSuggestionsEngine, SuggestionItem} from '../suggestions.js';
 import {BM25Scorer} from '../bm25.js';
 import {scoreFileRelevance} from '../file-relevance.js';
 import {toRagSearchResult} from '../protocol-rag-search.js';
@@ -40,8 +41,12 @@ export class RAGSearcher {
     bm25: BM25Scorer | null;
     private bm25Indexed = false;
     private similarityIndexed = false;
+    suggestions: SearchSuggestionsEngine;
+    private suggestionsIndexed = false;
     private fileRelevanceModel?: FileRelevanceModel;
     private fileRelevanceCache: Map<string, number>;
+    private queryCache: Map<string, { data: SearchResult[]; timestamp: number; ttl: number }>;
+    private defaultCacheTTL: number;
 
     constructor(config: RAGSearcherConfig = {}) {
         this.projectPath = config.projectPath ?? process.cwd();
@@ -55,6 +60,8 @@ export class RAGSearcher {
         this.bm25 = new BM25Scorer();
         this.fileRelevanceModel = config.fileRelevanceModel;
         this.fileRelevanceCache = new Map();
+        this.queryCache = new Map();
+        this.defaultCacheTTL = config.queryCacheTTL ?? 5 * 60 * 1000; // 5 minutes default
     }
 
     /**
@@ -357,6 +364,60 @@ export class RAGSearcher {
 
         console.log(`[DEBUG] Found ${results.length} chunks, ${fileGrouped.size} unique files, returning top ${limit}`);
         return uniqueFileResults;
+    }
+
+    /**
+     * Search with result caching (TTL in milliseconds)
+     * Cache key includes query and options to ensure cache validity
+     */
+    async searchWithCache(
+        query: string,
+        options: SearchOptions = {},
+        ttl?: number
+    ): Promise<SearchResult[]> {
+        const cacheTTL = ttl ?? this.defaultCacheTTL;
+        const cacheKey = this.createCacheKey(query, options);
+        
+        // Check cache
+        const cached = this.queryCache.get(cacheKey);
+        if (cached && Date.now() - cached.timestamp < cached.ttl) {
+            console.log('[RAG] Cache hit for query:', query.substring(0, 50));
+            return cached.data;
+        }
+        
+        // Perform search
+        const results = await this.search(query, options);
+        
+        // Cache results
+        this.queryCache.set(cacheKey, {
+            data: results,
+            timestamp: Date.now(),
+            ttl: cacheTTL,
+        });
+        
+        return results;
+    }
+
+    /**
+     * Clear query cache
+     */
+    clearQueryCache(): void {
+        this.queryCache.clear();
+    }
+
+    /**
+     * Get query cache statistics
+     */
+    getQueryCacheStats(): { size: number; maxTTL: number } {
+        return {
+            size: this.queryCache.size,
+            maxTTL: this.defaultCacheTTL,
+        };
+    }
+
+    private createCacheKey(query: string, options: SearchOptions): string {
+        const keyData = { query, options };
+        return JSON.stringify(keyData);
     }
 
     /**

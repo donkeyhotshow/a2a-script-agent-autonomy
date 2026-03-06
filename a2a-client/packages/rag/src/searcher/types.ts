@@ -14,6 +14,11 @@ export interface RAGSearcherConfig {
      * If not provided, only heuristics are used.
      */
     fileRelevanceModel?: FileRelevanceModel;
+    /**
+     * Default TTL for query cache in milliseconds
+     * @default undefined (caching disabled)
+     */
+    queryCacheTTL?: number;
 }
 
 export interface SearchOptions {
@@ -21,6 +26,39 @@ export interface SearchOptions {
     useQueryUnderstanding?: boolean;
     useCodeSimilarity?: boolean;
     useBM25?: boolean;
+    /**
+     * Enable semantic search (requires embedding provider)
+     */
+    useSemantic?: boolean;
+    /**
+     * Weight for semantic results in hybrid search (0-1)
+     * @default 0.4
+     */
+    semanticWeight?: number;
+    /**
+     * Faceted search filters
+     */
+    filters?: SearchFilters;
+}
+
+/**
+ * Faceted search filters
+ */
+export interface SearchFilters {
+    /** File extensions to include (e.g., ['.ts', '.js']) */
+    extensions?: string[];
+    /** Folder paths to include (e.g., ['src/', 'lib/']) */
+    folders?: string[];
+    /** Only include files modified after this date (ISO string) */
+    modifiedAfter?: string;
+    /** Only include files modified before this date (ISO string) */
+    modifiedBefore?: string;
+    /** Chunk types to include (e.g., ['function', 'class', 'method']) */
+    type?: string[];
+    /** Minimum file size in bytes */
+    minSize?: number;
+    /** Maximum file size in bytes */
+    maxSize?: number;
 }
 
 export interface HybridSearchOptions extends SearchOptions {
