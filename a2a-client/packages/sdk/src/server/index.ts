@@ -750,7 +750,43 @@ expressApp.post(['/api/sessions', '/api/v1/sessions'], async (req, res) => {
             if (upstream.ok) {
                 // Update session with server response
                 const updatedSession = await updateSessionWithServerResponse(project, session, payload);
-                
+
+                // Check for synchronous response (immediate execute)
+                const syncExecute = payload?.data?.execute;
+                const isSync = payload?.data?.sync === true;
+
+                if (isSync && syncExecute) {
+                    // Synchronous response - session is ready with execute
+                    updatedSession.status = 'READY';
+                    updatedSession.currentExecute = syncExecute;
+                    await saveSession(project, updatedSession);
+
+                    // Broadcast sync response to Web UI
+                    const syncResponse = {
+                        session: toSessionDetail(updatedSession),
+                        serverResponse: payload,
+                        execute: syncExecute,
+                    };
+
+                    broadcastProgress(session.id, {
+                        status: 'sync_response',
+                        message: 'Synchronous response received with execute',
+                        result: syncResponse,
+                    });
+
+                    // Emit to SSE with proper format for Web UI
+                    emitServerSse(session.id, {
+                        sessionId: session.id,
+                        projectId,
+                        execute: syncExecute,
+                        context: payload?.data?.context,
+                        status: 'completed',
+                    }, 'task_response');
+
+                    res.status(201).json(syncResponse);
+                    return;
+                }
+
                 // Check for promiseId (async response)
                 const promiseId = payload?.data?.promiseId || payload?.promiseId;
                 if (promiseId) {
@@ -762,9 +798,9 @@ expressApp.post(['/api/sessions', '/api/v1/sessions'], async (req, res) => {
                         updatedSession.status = 'READY';
                     }
                 }
-                
+
                 await saveSession(project, updatedSession);
-                
+
                 // Broadcast to WebSocket clients
                 broadcastProgress(session.id, {
                     status: 'session_created',
@@ -774,9 +810,9 @@ expressApp.post(['/api/sessions', '/api/v1/sessions'], async (req, res) => {
                         serverResponse: payload,
                     },
                 });
-                
+
                 emitServerSse(session.id, payload, 'task_response');
-                
+
                 // Return both session and server response
                 res.status(201).json({
                     session: toSessionDetail(updatedSession),
@@ -941,6 +977,40 @@ expressApp.post(['/api/sessions/:sessionId/next', '/api/v1/sessions/:sessionId/n
         return;
     }
 
+    // Handle synchronous response (immediate execute)
+    const syncExecute = payload?.data?.execute;
+    const isSync = payload?.data?.sync === true;
+
+    if (isSync && syncExecute) {
+        // Sync response - immediately broadcast execute to Web UI
+        const syncResponse = {
+            sessionId,
+            projectId: project,
+            execute: syncExecute,
+            context: payload?.data?.context,
+            status: 'completed',
+        };
+
+        // Update session
+        const updatedSession = await updateSessionWithServerResponse(project, session, payload);
+        await saveSession(project, updatedSession);
+
+        // Broadcast to Web UI via SSE
+        broadcastProgress(sessionId, {
+            status: 'sync_response_received',
+            message: 'Synchronous response received',
+            result: syncResponse,
+        });
+        emitServerSse(sessionId, syncResponse, 'task_response');
+
+        res.status(200).json({
+            success: true,
+            data: syncResponse,
+        });
+        return;
+    }
+
+    // Handle async response (promiseId)
     const promiseId: string | undefined = payload?.data?.promiseId || payload?.promiseId;
     if (promiseId) {
         const updated: Session = {
@@ -950,7 +1020,7 @@ expressApp.post(['/api/sessions/:sessionId/next', '/api/v1/sessions/:sessionId/n
             updatedAt: new Date().toISOString(),
         };
         await saveSession(project, updated);
-        
+
         // Broadcast promiseId to Web UI via WebSocket
         broadcastProgress(sessionId, {
             promiseId,
@@ -1014,8 +1084,9 @@ expressApp.post(['/api/sessions/:sessionId/result', '/api/v1/sessions/:sessionId
     }
 
     const serverBase = await getServerBaseUrl();
-    
+
     // Build request body for new protocol - используем action-key shape
+    // result уже содержит action-key: { choice: "..." } или { message: "..." }
     const requestBody: Record<string, unknown> = {
         context: {
             version: session.version || '2.0',
@@ -1023,10 +1094,9 @@ expressApp.post(['/api/sessions/:sessionId/result', '/api/v1/sessions/:sessionId
             task: session.task,
             execution: session.execution,
             history: session.context?.history || [],
+            result: result,  // Добавляем result в контекст для обработки
         },
-        result: {
-            form: result,
-        },
+        result: result,  // action-key shape напрямую
     };
     
     // Forward to server /invoke

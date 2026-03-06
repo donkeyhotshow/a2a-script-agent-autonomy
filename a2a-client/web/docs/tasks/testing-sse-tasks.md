@@ -1,6 +1,6 @@
 # Testing and SSE task dossier
 
-Captures testing gaps highlighted in `a2a-client/web/DEV_STATE.md` (levels, SSE, Playwright, VueFlow).
+Captures testing gaps highlighted in `a2a-client/DEV_STATE.md` (levels, SSE, Playwright, VueFlow).
 
 ## Related Workflows
 

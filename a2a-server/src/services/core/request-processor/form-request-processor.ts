@@ -125,14 +125,20 @@ export class FormRequestProcessor extends BaseRequestProcessor {
 
         logger.info('[FormRequestProcessor] Processing form request', {promiseId});
 
+        // Check if this is a choice selection first (action-key shape result.choice)
+        // Support: ctx.choice_id, ctx.selected_choice, or result.choice
+        const resultChoice = (ctx['result'] as Record<string, unknown>)?.choice;
+        if (ctx['selected_choice'] || ctx['choice_id'] || resultChoice) {
+            // Normalize choice_id from various sources
+            if (resultChoice && !ctx['choice_id']) {
+                ctx['choice_id'] = resultChoice;
+            }
+            return this.handleChoiceSelection(ctx);
+        }
+
         // Check if this is a form submission
         if (ctx['form_submission'] || ctx['form_data']) {
             return this.handleFormSubmission(ctx);
-        }
-
-        // Check if this is a choice selection
-        if (ctx['selected_choice'] || ctx['choice_id']) {
-            return this.handleChoiceSelection(ctx);
         }
 
         // Check if this is a form request
@@ -205,7 +211,9 @@ export class FormRequestProcessor extends BaseRequestProcessor {
      * Handle choice selection
      */
     private async handleChoiceSelection(ctx: Record<string, unknown>): Promise<ProcessResult> {
-        const choiceId = (ctx['selected_choice'] || ctx['choice_id']) as string;
+        // Support multiple ways to pass choice
+        const resultChoice = (ctx['result'] as Record<string, unknown>)?.choice;
+        const choiceId = (ctx['selected_choice'] || ctx['choice_id'] || resultChoice) as string;
         const formId = ctx['form_id'] as string || 'default';
 
         logger.info('[FormRequestProcessor] Handling choice selection', {choiceId, formId});
@@ -217,19 +225,66 @@ export class FormRequestProcessor extends BaseRequestProcessor {
             } as ProcessResult;
         }
 
-        // Process the choice
-        return {
-            outcome: 'completed',
-            message: 'Choice selected',
-            selection: {
-                choiceId,
-                formId,
-                timestamp: new Date().toISOString()
-            },
-            execute: {
-                message: `Selected: ${choiceId}`
-            }
-        } as ProcessResult;
+        // Process the choice based on selection
+        switch (choiceId) {
+            case 'auto':
+                return {
+                    outcome: 'completed',
+                    message: 'Auto mode selected',
+                    selection: { choiceId, formId, timestamp: new Date().toISOString() },
+                    execute: {
+                        message: 'Автоматичний режим вибрано. Очікуйте виконання...',
+                        finalResult: {
+                            action: 'auto_execute',
+                            summary: { mode: 'automatic', status: 'processing' }
+                        }
+                    }
+                } as ProcessResult;
+
+            case 'manual':
+                return {
+                    outcome: 'completed',
+                    message: 'Manual mode selected',
+                    selection: { choiceId, formId, timestamp: new Date().toISOString() },
+                    execute: {
+                        message: 'Ручний режим вибрано. Кроки будуть показані для підтвердження.',
+                        form: {
+                            title: 'Підтвердьте дію',
+                            choices: [
+                                { id: 'confirm', label: 'Підтвердити' },
+                                { id: 'cancel', label: 'Скасувати' }
+                            ]
+                        }
+                    }
+                } as ProcessResult;
+
+            case 'ai':
+                return {
+                    outcome: 'completed',
+                    message: 'AI mode selected',
+                    selection: { choiceId, formId, timestamp: new Date().toISOString() },
+                    execute: {
+                        message: 'AI режим вибрано. Генерація дій через LLM...',
+                        form: {
+                            title: 'AI генерація дій',
+                            choices: [
+                                { id: 'generate', label: 'Згенерувати дії' },
+                                { id: 'refine', label: 'Уточнити задачу' }
+                            ]
+                        }
+                    }
+                } as ProcessResult;
+
+            default:
+                return {
+                    outcome: 'completed',
+                    message: 'Choice selected',
+                    selection: { choiceId, formId, timestamp: new Date().toISOString() },
+                    execute: {
+                        message: `Вибрано: ${choiceId}`
+                    }
+                } as ProcessResult;
+        }
     }
 
     /**

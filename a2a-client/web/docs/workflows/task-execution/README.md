@@ -8,7 +8,7 @@ This directory documents all task execution workflows and execute types in the A
 - **[Context Synchronization Guide](../context-synchronization-guide.md)** - Execute processing and context updates
 - **[Dialog Architecture Tasks](../tasks/dialog-architecture-tasks.md)** - Execute handling catalog and processing flows
 - **[UNIFIED_ARCHITECTURE_COMPLETE](../UNIFIED_ARCHITECTURE_COMPLETE.md)** - Action standardization and action-key shape
-- **[Web UI DEV_STATE](../DEV_STATE.md)** - Protocol overview and submission formats
+- **[Web UI DEV_STATE](../../DEV_STATE.md)** - Protocol overview and submission formats
 
 ## Task Submission Flow
 

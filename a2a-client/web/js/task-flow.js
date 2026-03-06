@@ -57,6 +57,8 @@
         }
     }
 
+    const SELECTED_PROJECT_KEY = 'a2a_selected_project';
+
     function getProjectId() {
         const sel = document.getElementById('projectSelect');
         if (sel?.value) return sel.value;
@@ -66,6 +68,13 @@
         if (pm?.currentProject?.id) return pm.currentProject.id;
         if (sel?.options?.length > 1) return sel.options[1].value;
         return null;
+    }
+
+    function saveSelectedProject(projectId) {
+        if (!projectId) return;
+        try {
+            localStorage.setItem(SELECTED_PROJECT_KEY, projectId);
+        } catch (e) {}
     }
 
     function renderExecute(contentEl, execute, data, taskFlowRef) {
@@ -395,6 +404,7 @@
         init() {
             const form = document.getElementById('taskSendForm');
             const input = document.getElementById('taskInputField');
+            const sel = document.getElementById('projectSelect');
             if (!form || !input) return;
 
             form.addEventListener('submit', (e) => {
@@ -410,7 +420,18 @@
                 this.run(task, projectId);
             });
 
+            // Save project selection when manually changed
+            if (sel) {
+                sel.addEventListener('change', () => {
+                    if (sel.value) {
+                        saveSelectedProject(sel.value);
+                    }
+                });
+            }
+
             this._ensureProjectSelect();
+            // Also try to restore selection immediately in case projects are already loaded
+            this._restoreProjectSelection();
         },
 
         async _ensureProjectSelect() {
@@ -425,12 +446,43 @@
                     opt.textContent = p.name || p.id;
                     sel.appendChild(opt);
                 });
-            } catch (_) {}
+
+                // Restore saved project selection after projects are loaded
+                this._restoreProjectSelection();
+            } catch (e) {
+                console.warn('[TaskFlow] Failed to load projects:', e);
+            }
+        },
+
+        _restoreProjectSelection() {
+            const sel = document.getElementById('projectSelect');
+            if (!sel) return;
+
+            const savedProjectId = localStorage.getItem(SELECTED_PROJECT_KEY);
+            if (savedProjectId) {
+                const option = Array.from(sel.options).find(opt => opt.value === savedProjectId);
+                if (option) {
+                    sel.value = savedProjectId;
+                    console.log('[TaskFlow] Restored selected project:', savedProjectId);
+                } else {
+                    console.log('[TaskFlow] Saved project not found in options:', savedProjectId);
+                }
+            }
         },
 
         run(task, projectId) {
             if (task) this._currentTask = task;
-            
+
+            // Save selected project
+            if (projectId) {
+                saveSelectedProject(projectId);
+                // Also update the select if it exists
+                const sel = document.getElementById('projectSelect');
+                if (sel && sel.value !== projectId) {
+                    sel.value = projectId;
+                }
+            }
+
             // Use SessionStore instead of legacy SessionViewModel
             const store = global.SessionStore;
             store?.reset();
@@ -522,15 +574,22 @@
                     global.SSEClient.connect(sessionId, getApiBase());
                 }
 
+                // Handle sync response: serverResponse.data.execute
                 const normalizedResponse = serverResponse?.data ?? serverResponse;
-                
-                // DEBUG: Log what server returned
-                console.log('[TaskFlow] Session created:', { sessionId, serverResponse, normalizedResponse });
+                const syncExecute = normalizedResponse?.execute;
 
-                // If server returns immediate execute, use it
-                if (normalizedResponse?.execute) {
-                    console.log('[TaskFlow] Immediate execute received:', normalizedResponse.execute);
-                    applyExecuteResponse(normalizedResponse, contentEl, 'firstResponse');
+                // DEBUG: Log what server returned
+                console.log('[TaskFlow] Session created:', { sessionId, serverResponse, normalizedResponse, syncExecute });
+
+                // If server returns immediate execute (sync response), use it
+                if (syncExecute) {
+                    console.log('[TaskFlow] Immediate execute received (sync):', syncExecute);
+                    applyExecuteResponse({
+                        execute: syncExecute,
+                        context: normalizedResponse?.context,
+                        sessionId,
+                        projectId
+                    }, contentEl, 'firstResponse');
                     return;
                 }
 
@@ -580,26 +639,47 @@
                 window.addNotification?.('Session or project missing', 'error');
                 return;
             }
-            
-            setPanelContent(contentEl, 'sending', null, this);
+
+            // Show sending state with choice label
+            const choiceLabel = getChoiceLabel(choiceId);
+            contentEl.innerHTML = `
+                <div class="task-flow-response">
+                    <div class="task-flow-user-message">
+                        <strong>Вы выбрали:</strong> ${escapeHtml(choiceLabel)}
+                    </div>
+                    <div class="task-flow-preloader" style="margin-top: 16px;">
+                        <div class="task-flow-spinner"></div>
+                        <p>Отправка...</p>
+                    </div>
+                </div>`;
 
             try {
                 const handler = global.ActionHandler;
+                let result;
+
                 if (handler) {
-                    await handler.sendChoice(sessionId, projectId, choiceId);
+                    result = await handler.sendChoice(sessionId, projectId, choiceId);
                 } else {
-                    // Fallback: manual submission (align with canonical schema)
+                    // Fallback: manual submission
                     const context = this._buildContext();
-                    await request('POST', `/sessions/${encodeURIComponent(sessionId)}/result`, {
+                    result = await request('POST', `/sessions/${encodeURIComponent(sessionId)}/result`, {
                         projectId,
                         context,
                         result: { choice: choiceId }
                     });
                 }
-                
+
+                // Check for immediate execute in response (sync)
+                if (result?.execute) {
+                    applyExecuteResponse(result, contentEl, 'response');
+                    return;
+                }
+
                 // Wait for response via SSE
-                const outcome = await waitForFirstResponse();
-                if (outcome.status !== 'ok' && outcome.status !== 'completed') {
+                const outcome = await waitForFirstResponse(60000);
+                if (outcome.execute) {
+                    applyExecuteResponse(outcome, contentEl, 'response');
+                } else if (outcome.status === 'timeout') {
                     contentEl.innerHTML = '<div class="task-flow-error">Timeout waiting for response</div>';
                 }
             } catch (err) {
@@ -616,26 +696,47 @@
                 return;
             }
 
-            setPanelContent(contentEl, 'sending', null, this);
+            const displayText = (messageText || '').trim() || 'continue';
+
+            // Show sending state with user message
+            contentEl.innerHTML = `
+                <div class="task-flow-response">
+                    <div class="task-flow-user-message">
+                        <strong>Вы:</strong> ${escapeHtml(displayText)}
+                    </div>
+                    <div class="task-flow-preloader" style="margin-top: 16px;">
+                        <div class="task-flow-spinner"></div>
+                        <p>Отправка...</p>
+                    </div>
+                </div>`;
 
             try {
                 const handler = global.ActionHandler;
+                let result;
+
                 if (handler) {
-                    await handler.sendMessage(sessionId, projectId, messageText);
+                    result = await handler.sendMessage(sessionId, projectId, displayText);
                 } else {
-                    // Fallback: manual submission (align with canonical schema)
-                    const payload = (messageText || '').trim() || 'continue';
+                    // Fallback: manual submission
                     const context = this._buildContext();
-                    await request('POST', `/sessions/${encodeURIComponent(sessionId)}/result`, {
+                    result = await request('POST', `/sessions/${encodeURIComponent(sessionId)}/result`, {
                         projectId,
                         context,
-                        result: { message: payload }
+                        result: { message: displayText }
                     });
                 }
-                
+
+                // Check for immediate execute in response (sync)
+                if (result?.execute) {
+                    applyExecuteResponse(result, contentEl, 'response');
+                    return;
+                }
+
                 // Wait for response via SSE
-                const outcome = await waitForFirstResponse();
-                if (outcome.status !== 'ok' && outcome.status !== 'completed') {
+                const outcome = await waitForFirstResponse(60000);
+                if (outcome.execute) {
+                    applyExecuteResponse(outcome, contentEl, 'response');
+                } else if (outcome.status === 'timeout') {
                     contentEl.innerHTML = '<div class="task-flow-error">Timeout waiting for response</div>';
                 }
             } catch (err) {
@@ -833,6 +934,108 @@
                         step: execute.execution.step,
                         action: execute.execution.action
                     });
+                }
+            });
+        }
+        /**
+         * Restore panel UI from saved session state
+         */
+        restorePanel(state) {
+            if (!state?.sessionId || !state?.execute) return false;
+
+            const pm = global.PanelManager;
+            if (!pm) return false;
+
+            // Check if panel already exists
+            let panel = pm.get('task-flow-panel');
+            if (!panel) {
+                panel = pm.open('task', {
+                    id: 'task-flow-panel',
+                    title: 'Task',
+                    critical: true,
+                    onClose: () => {
+                        if (this.fixed) return;
+                        pm?.close('task-flow-panel');
+                        this.panelId = null;
+                        this.panel = null;
+                    }
+                });
+            } else {
+                panel.restore();
+                pm.bringToFront('task-flow-panel');
+            }
+
+            if (!panel) return false;
+
+            this.panelId = 'task-flow-panel';
+            this.panel = panel;
+            this.fixed = true;
+            this._sessionId = state.sessionId;
+            this._projectId = state.projectId;
+            this._lastResponse = {
+                sessionId: state.sessionId,
+                projectId: state.projectId,
+                execute: state.execute,
+                context: state.context
+            };
+            this._lastContext = state.context;
+
+            // Render the execute state
+            const contentEl = panel.getContentEl();
+            if (contentEl) {
+                renderExecute(contentEl, state.execute, this._lastResponse, this);
+            }
+
+            return true;
+        }
+    };
+
+    // Expose renderExecute globally for session restore
+    global.renderTaskExecute = renderExecute;
+
+    // Initialize on page load
+    if (typeof window !== 'undefined') {
+        window.TaskFlow = TaskFlow;
+
+        // Integrate with SessionStore events (replaces SessionManager events)
+        const store = global.SessionStore;
+        if (store && typeof store.on === 'function') {
+            // Listen for execute updates (includes step, progress, finalResult)
+            store.on('execute', (execute) => {
+                console.log('[TaskFlow] Execute updated:', execute);
+
+                // Re-render panel if active
+                if (TaskFlow.panelId) {
+                    const pm = global.PanelManager;
+                    const panel = pm?.get(TaskFlow.panelId);
+                    if (panel && TaskFlow._lastResponse) {
+                        const content = panel.getContentEl();
+                        if (content) {
+                            // Merge any finalResult from execute
+                            const response = {
+                                ...TaskFlow._lastResponse,
+                                execute: execute
+                            };
+                            renderExecute(content, execute, response, TaskFlow);
+                        }
+                    }
+                }
+
+                // Update progress indicators
+                if (global.ProgressIndicators && execute?.execution?.progress !== undefined) {
+                    global.ProgressIndicators.handleExecutionProgress({
+                        progress: execute.execution.progress,
+                        step: execute.execution.step,
+                        action: execute.execution.action
+                    });
+                }
+            });
+
+            // Handle session restore event
+            store.on('restore', (state) => {
+                console.log('[TaskFlow] Restoring session:', state);
+                if (state?.execute) {
+                    TaskFlow.restorePanel(state);
                 }
             });
         }

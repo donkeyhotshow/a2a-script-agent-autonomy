@@ -193,3 +193,18 @@
 .result-value {
     color: #333;
 }
+
+/* User message display during sending */
+.task-flow-user-message {
+    padding: 10px 14px;
+    background: var(--bg2, #f0f0f0);
+    border-radius: 8px;
+    border-left: 3px solid var(--accent, #0066cc);
+    margin-bottom: 12px;
+    font-size: 13px;
+    line-height: 1.4;
+}
+.task-flow-user-message strong {
+    color: var(--accent, #0066cc);
+    font-weight: 600;
+}

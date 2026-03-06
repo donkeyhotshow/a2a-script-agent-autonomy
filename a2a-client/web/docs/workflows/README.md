@@ -25,7 +25,7 @@ This directory contains comprehensive documentation of all user workflows and sy
 - **[Context Synchronization Guide](../context-synchronization-guide.md)** - How components handle state synchronization
 
 ### Development State
-- **[Web UI DEV_STATE](../DEV_STATE.md)** - Current development status and component overview
+- **[Web UI DEV_STATE](../../DEV_STATE.md)** - Current development status and component overview
 - **[Dialog Architecture Tasks](../tasks/dialog-architecture-tasks.md)** - Task breakdown for dialog stability
 - **[Testing SSE Tasks](../tasks/testing-sse-tasks.md)** - SSE reliability and testing task breakdown
 

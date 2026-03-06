@@ -198,4 +198,51 @@ curl -s -i -N -H "Connection: Upgrade" -H "Upgrade: websocket" http://localhost:
 
 **Status**: Active development with unified architecture (SessionStore, TransportManager, PanelManager).
 
-**Documentation**: See [`a2a-client/web/DEV_STATE.md`](web/DEV_STATE.md) for detailed Web UI component status, architecture, and implementation notes.
+**Documentation**: Web UI component status, architecture, and implementation notes are covered in the web/docs/README.md section.
+
+---
+
+## Sync/Async Response Handling (2026-03-06)
+
+### Проблема
+Сервер (порт 3000) **всегда** возвращал `promiseId` для асинхронной обработки, даже для простых задач без LLM. Web UI ждал `execute` в ответе, но получал только `promiseId` и падал в ожидание SSE.
+
+### Решение
+Сервер теперь поддерживает **синхронные ответы** для простых задач:
+
+| Тип задачи | Обработка | Ответ |
+|------------|-----------|-------|
+| Начальный `task` | Sync | `{ sync: true, execute: { form: {...} } }` |
+| `choice` selection | Sync | `{ sync: true, execute: { message: ... } }` |
+| LLM требуется | Async | `{ promiseId, status: 'pending' }` |
+
+### Изменения
+
+**Server (порт 3000)**
+- `invoke.service.ts` - `isSynchronousTask()` определяет sync/async
+- `form-request-processor.ts` - обрабатывает `result.choice` (action-key shape)
+- `index.ts` - возвращает `{ sync, execute }` или `{ promiseId }`
+
+**Client API (порт 3001)**
+- `server/index.ts` - POST `/sessions` и `/result` обрабатывают sync-ответы
+- Broadcast в Web UI через SSE с `execute`
+
+**Web UI (порт 5173)**
+- `task-flow.js` - `sendChoice()` и `sendMessage()` ждут sync-ответ или SSE
+- Показывает выбор пользователя перед отправкой
+
+### Flow
+
+```
+Пользователь отправляет task
+  ↓
+POST /sessions → Client API → Server /invoke
+  ↓
+Сервер: isSynchronousTask(task)?
+  ├─ ДА → processSync() → { sync: true, execute: { form: {...} } }
+  └─ НЕТ → create promiseId → async queue
+  ↓
+Client API: если sync → broadcast SSE
+  ↓
+Web UI: renderExecute(execute) - форма появляется сразу
+```

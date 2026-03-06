@@ -11,12 +11,8 @@
 @import 'components/forms.css';
 @import 'components/notifications.css';
 @import 'components/modals-core.css';
-@import 'components/floating-panel.css';
-@import 'components/panel-cube.css';
-@import 'components/panel-dock.css';
-@import 'components/panel-drawer.css';
+/* Old panel system imports removed - using unified panel-manager.css instead */
 @import 'components/footer.css';
-@import 'components/mini-zones.css';
 @import 'components/session-manager.css';
 @import 'components/session-panel.css';
 @import 'components/message-input.css';

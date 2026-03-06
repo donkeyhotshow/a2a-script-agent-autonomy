@@ -383,3 +383,75 @@
     background: rgba(239, 68, 68, 0.2);
     color: #ef4444;
 }
+
+/* ===== Session Window Styles ===== */
+.pm-type-task.pm-floating {
+    min-width: 300px;
+    min-height: 200px;
+}
+
+.pm-type-task.pm-floating.pm-dragging {
+    z-index: 10000 !important;
+}
+
+/* ===== Session Window Content ===== */
+.session-window-content {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    gap: 12px;
+    padding: 12px;
+    overflow: auto;
+}
+
+.session-info {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    font-size: 12px;
+    padding: 8px 12px;
+    background: var(--bg2);
+    border-radius: 6px;
+}
+
+.session-info code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    background: var(--bg3);
+    padding: 2px 6px;
+    border-radius: 3px;
+}
+
+.session-messages {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.session-msg {
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    line-height: 1.4;
+    background: var(--bg2);
+}
+
+.session-msg.user {
+    background: rgba(79, 70, 229, 0.1);
+    border-left: 3px solid #6366f1;
+}
+
+.session-msg.assistant {
+    background: var(--bg3);
+    border-left: 3px solid #22c55e;
+}
+
+.session-msg strong {
+    text-transform: uppercase;
+    font-size: 10px;
+    letter-spacing: 0.05em;
+    margin-right: 8px;
+    color: var(--fg2);
+}

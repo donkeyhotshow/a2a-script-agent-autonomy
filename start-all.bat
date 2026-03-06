@@ -10,29 +10,31 @@ set OLLAMA_PORT=11434
 set PROXY_PORT=11435
 set SERVER_PORT=3000
 set CLIENT_API_PORT=3001
+set WEB_UI_PORT=5173
 set SERVER_LOG=a2a-server-%RANDOM%.log
 set CLIENT_API_LOG=client-api-%RANDOM%.log
+set WEB_UI_LOG=web-ui-%RANDOM%.log
 set AI_LOG=ai-integration-%RANDOM%.log
 set OLLAMA_MODELS=C:\Users\dev\Desktop\.ollama
 
 REM ==========================================
 REM Step 1: Kill existing processes first
 REM ==========================================
-echo [1/6] Killing existing processes...
+echo [1/7] Killing existing processes...
 call kill-all.bat
 powershell -Command "Start-Sleep -Seconds 2"
 
 REM ==========================================
 REM Step 2: Clear PID file
 REM ==========================================
-echo [2/6] Clearing PID file...
+echo [2/7] Clearing PID file...
 if exist %PID_FILE% del %PID_FILE%
 echo. > %PID_FILE%
 
 REM ==========================================
 REM Step 3: Start Ollama in background
 REM ==========================================
-echo [3/6] Starting Ollama...
+echo [3/7] Starting Ollama...
 for /f "tokens=5" %%p in ('netstat -ano ^| findstr ":%OLLAMA_PORT%" ^| findstr "LISTENING"') do (
     echo [Port cleanup] Killing PID %%p listening on %OLLAMA_PORT%...
     taskkill /F /PID %%p >nul 2>&1
@@ -53,7 +55,7 @@ for /f "tokens=5" %%a in ('netstat -ano ^| findstr ":%OLLAMA_PORT%" ^| findstr "
 REM ==========================================
 REM Step 4: Start ai-integration in background
 REM ==========================================
-echo [4/6] Starting ai-integration...
+echo [4/7] Starting ai-integration...
 for /f "tokens=5" %%p in ('netstat -ano ^| findstr ":%PROXY_PORT%" ^| findstr "LISTENING"') do (
     echo [Port cleanup] Killing PID %%p listening on %PROXY_PORT%...
     taskkill /F /PID %%p >nul 2>&1
@@ -74,7 +76,7 @@ for /f "tokens=5" %%a in ('netstat -ano ^| findstr ":%PROXY_PORT%" ^| findstr "L
 REM ==========================================
 REM Step 5: Start a2a-server in background
 REM ==========================================
-echo [5/6] Starting a2a-server...
+echo [5/7] Starting a2a-server...
 for /f "tokens=5" %%p in ('netstat -ano ^| findstr ":3000" ^| findstr "LISTENING"') do (
     echo [Port cleanup] Killing PID %%p listening on 3000...
     taskkill /F /PID %%p >nul 2>&1
@@ -96,7 +98,7 @@ for /f "tokens=5" %%a in ('netstat -ano ^| findstr ":3000" ^| findstr "LISTENING
 REM ==========================================
 REM Step 6: Start client-api in background
 REM ==========================================
-echo [6/6] Starting client-api...
+echo [6/7] Starting client-api...
 for /f "tokens=5" %%p in ('netstat -ano ^| findstr ":%CLIENT_API_PORT%" ^| findstr "LISTENING"') do (
     echo [Port cleanup] Killing PID %%p listening on %CLIENT_API_PORT%...
     taskkill /F /PID %%p >nul 2>&1
@@ -114,6 +116,23 @@ for /f "tokens=5" %%a in ('netstat -ano ^| findstr ":%CLIENT_API_PORT%" ^| finds
 )
 :client_api_done
 
+REM ==========================================
+REM Step 7: Start web-ui in background
+REM ==========================================
+echo [7/7] Starting web-ui...
+for /f "tokens=5" %%p in ('netstat -ano ^| findstr ":%WEB_UI_PORT%" ^| findstr "LISTENING"') do (
+    echo [Port cleanup] Killing PID %%p listening on %WEB_UI_PORT%...
+    taskkill /F /PID %%p >nul 2>&1
+)
+powershell -Command "Start-Sleep -Seconds 1"
+call :wait_port_free %WEB_UI_PORT% || goto :startup_failed
+start /b /d "a2a-client" npm run dev
+powershell -Command "Start-Sleep -Seconds 5"
+echo web-ui log: %WEB_UI_LOG%
+
+REM Web UI PID will be managed by port killing in kill-all.bat
+:web_ui_done
+
 echo.
 echo === All services started successfully! ===
 echo.
@@ -126,6 +145,7 @@ echo   - Ollama (port %OLLAMA_PORT%)
 echo   - ai-integration (port %PROXY_PORT%)
 echo   - a2a-server (port %SERVER_PORT%)
 echo   - client-api (port %CLIENT_API_PORT%)
+echo   - web-ui (port %WEB_UI_PORT%)
 echo.
 
 REM Read and display PIDs

@@ -7,7 +7,7 @@ This directory documents all testing workflows, validation scenarios, and qualit
 - **[Testing SSE Tasks](../tasks/testing-sse-tasks.md)** - Detailed SSE testing tasks and automation scripts
 - **[Dialog Architecture Tasks](../tasks/dialog-architecture-tasks.md)** - QA scenarios and testing matrix for panels
 - **[UNIFIED_ARCHITECTURE_COMPLETE](../UNIFIED_ARCHITECTURE_COMPLETE.md)** - Testing checklist for unified architecture
-- **[Web UI DEV_STATE](../DEV_STATE.md)** - Development status and testing focus areas
+- **[Web UI DEV_STATE](../../DEV_STATE.md)** - Development status and testing focus areas
 - **[Actions & Events Decomposition](../actions-events-decomposition.md)** - Testing scenarios for UI interactions
 
 ## Testing Pyramid Structure

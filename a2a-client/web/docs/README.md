@@ -23,7 +23,7 @@ This directory contains comprehensive documentation for the A2A Script Agent web
 - **[Testing SSE Tasks](./tasks/testing-sse-tasks.md)** - SSE reliability testing and automation
 
 ### 📊 Development State
-- **[Web UI DEV_STATE](./DEV_STATE.md)** - Current development status and component overview
+- **[Web UI DEV_STATE](../DEV_STATE.md)** - Current development status and component overview
 - **[Upgrade Tasks](./UPGRADE_TASKS.md)** - Planned enhancements and improvement roadmap
 
 ### 📁 Archive

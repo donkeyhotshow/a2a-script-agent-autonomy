@@ -8,7 +8,7 @@ This directory documents all real-time communication workflows, transport mechan
 - **[Testing SSE Tasks](../tasks/testing-sse-tasks.md)** - SSE reliability testing and heartbeat monitoring
 - **[Dialog Architecture Tasks](../tasks/dialog-architecture-tasks.md)** - SSE vs WebSocket decision log and transport policy
 - **[UNIFIED_ARCHITECTURE_COMPLETE](../UNIFIED_ARCHITECTURE_COMPLETE.md)** - Transport strategy implementation (SSE primary, WebSocket fallback)
-- **[Web UI DEV_STATE](../DEV_STATE.md)** - Transport endpoints and connection details
+- **[Web UI DEV_STATE](../../DEV_STATE.md)** - Transport endpoints and connection details
 
 ## Transport Hierarchy
 

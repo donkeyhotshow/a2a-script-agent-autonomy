@@ -28,10 +28,10 @@ External AI (Ollama/OpenAI/etc)
 
 - **[ai-integration/DEV_STATE.md](ai-integration/DEV_STATE.md)** - LLM proxy, promise queue daemon, simulation testing
 - **[a2a-server/DEV_STATE.md](a2a-server/DEV_STATE.md)** - Server architecture, neuron processing, API endpoints
-- **[a2a-client/DEV_STATE.md](a2a-client/DEV_STATE.md)** - Client API proxy, SDK, testing framework
-- **[a2a-client/web/DEV_STATE.md](a2a-client/web/DEV_STATE.md)** - Web UI component, session management, transport layer
+- **[a2a-client/DEV_STATE.md](a2a-client/DEV_STATE.md)** - Client API proxy, SDK, testing framework, web UI component, session management, transport layer
 - **[a2a-client/web/docs/README.md](a2a-client/web/docs/README.md)** - Complete documentation index with workflows and scenarios
 - **[a2a-client/web/docs/workflows/](a2a-client/web/docs/workflows/)** - Detailed workflow documentation for all user scenarios
+- **[a2a-client/tester/](a2a-client/tester/)** - CLI testing and automation framework for web client control
 
 ## Key Features
 

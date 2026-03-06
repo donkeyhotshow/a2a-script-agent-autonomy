@@ -116,8 +116,7 @@ npm test -- --update
 
 - **Ports**: HTTP server on 3000, client API on 3001, web UI on 5173
 - **Request processor**: Timer-based polling every 5 seconds (configurable via REQUEST_PROCESSOR_INTERVAL_MS)
-- **Client workspaces**: Separate npm packages under `a2a-client/packages/`: agent, api-client, fs-utils, rag,
-  script-runner, terminal, types
+- **Client workspaces**: Separate npm packages under `a2a-client/packages/`: embedding, execution, history, json, rag, sdk, storage, types
 - **Actions**: Support batch processing via context-based state machine
 
 ### Environment Variables

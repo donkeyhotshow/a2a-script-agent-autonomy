@@ -10,6 +10,7 @@ import sseRoutes from './sse.routes.js';
 import authRoutes from './auth.routes.js';
 import healthRoutes from './health.routes.js';
 import versionsRoutes from './versions.routes.js';
+import testerRoutes from './tester.routes.js';
 
 /**
  * a2a-server: async protocol with requests.
@@ -34,6 +35,9 @@ router.use('/health', healthRoutes);
 
 // Mount versions routes
 router.use('/versions', versionsRoutes);
+
+// Mount tester routes
+router.use('/tester', testerRoutes);
 
 
 async function handleInvoke(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -68,7 +72,7 @@ async function handleInvoke(req: Request, res: Response, next: NextFunction): Pr
         
         const clientId = (req as any).client?.id || 'anonymous';
         
-        const {promiseId} = await invoke(clientId, {
+        const invokeResult = await invoke(clientId, {
             task: body.task,
             context: body.context,
             message: body.message,
@@ -78,11 +82,27 @@ async function handleInvoke(req: Request, res: Response, next: NextFunction): Pr
             selectedAction: body.selectedAction,
             stepId: body.stepId,
             stepResult: body.stepResult,
+            result: body.result,
         });
+
+        // Synchronous response - return execute immediately
+        if (invokeResult.sync) {
+            return res.status(200).json({
+                success: true,
+                data: {
+                    execute: invokeResult.execute,
+                    context: invokeResult.context,
+                    status: 'completed',
+                    sync: true,
+                },
+            });
+        }
+
+        // Async response - return promiseId
         res.status(201).json({
             success: true,
             data: {
-                promiseId,
+                promiseId: invokeResult.promiseId,
                 status: 'pending',
                 message: 'Request queued for processing. Poll /api/v1/requests/:promiseId/status for status.',
             },

@@ -55,6 +55,74 @@ class SSEManager {
     error(sessionId: string, errorMsg: string): void {
         this.emit(sessionId, 'error', {error: errorMsg, timestamp: new Date().toISOString()});
     }
+
+    /**
+     * Broadcast event to specific session
+     * Returns true if clients were found and message sent
+     */
+    broadcast(sessionId: string, event: string, data: unknown): boolean {
+        const sessionClients = this.clients.get(sessionId);
+        if (!sessionClients || sessionClients.size === 0) {
+            return false;
+        }
+
+        this.emit(sessionId, event, data);
+        return true;
+    }
+
+    /**
+     * Broadcast event to all sessions except optionally excluded one
+     * Returns number of sessions that received the message
+     */
+    broadcastAll(event: string, data: unknown, excludeSessionId?: string): number {
+        let sentCount = 0;
+
+        for (const [sessionId, clients] of this.clients.entries()) {
+            if (excludeSessionId && sessionId === excludeSessionId) {
+                continue;
+            }
+
+            if (clients.size > 0) {
+                this.emit(sessionId, event, data);
+                sentCount++;
+            }
+        }
+
+        return sentCount;
+    }
+
+    /**
+     * Get number of active connections across all sessions
+     */
+    getActiveConnections(): number {
+        let total = 0;
+        for (const clients of this.clients.values()) {
+            total += clients.size;
+        }
+        return total;
+    }
+
+    /**
+     * Get number of active sessions
+     */
+    getSessionCount(): number {
+        return this.clients.size;
+    }
+
+    /**
+     * Get list of active session IDs
+     */
+    getActiveSessions(): string[] {
+        return Array.from(this.clients.keys());
+    }
+
+    /**
+     * Check if session has active connections
+     */
+    hasSession(sessionId: string): boolean {
+        const clients = this.clients.get(sessionId);
+        return clients ? clients.size > 0 : false;
+    }
 }
 
 export const sseManager = new SSEManager();

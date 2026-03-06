@@ -1,6 +1,6 @@
 # Dialog architecture task breakdown (condensed)
 
-This doc captures the intent and outcomes of the dialog architecture audit that was originally captured in `a2a-client/web/DEV_STATE.md`. It keeps the essential flows, decisions, and QA checkpoints for the session/SSE stack without the verbatim code dumps.
+This doc captures the intent and outcomes of the dialog architecture audit that was originally captured in `a2a-client/DEV_STATE.md`. It keeps the essential flows, decisions, and QA checkpoints for the session/SSE stack without the verbatim code dumps.
 
 ## Related Workflows
 
@@ -66,4 +66,4 @@ For implementation of the dialog architecture patterns:
 ## 7. Summary
 
 - All nine dialog architecture tasks are covered via flow documentation, execute mapping, transport decision logic, contract tests, and QA scenarios.
-- This condensed doc keeps the context without the full verbatim sequences; refer back to `a2a-client/web/DEV_STATE.md` or the JS sources (`session-manager.js`, `session-sync.js`, `plasticine-ui.js`) for the detailed traces when needed.
+- This condensed doc keeps the context without the full verbatim sequences; refer back to `a2a-client/DEV_STATE.md` or the JS sources (`session-manager.js`, `session-sync.js`, `plasticine-ui.js`) for the detailed traces when needed.

@@ -25,6 +25,8 @@
         };
     }
 
+    const STORAGE_KEY = 'a2a_session_store';
+
     const SessionStore = {
         // Core state (single source of truth)
         _state: {
@@ -40,13 +42,101 @@
 
         _listeners: new Map(),
         _apiBase: '/api',
+        _persistTimer: null,
 
         // === Initialization ===
 
         init(options = {}) {
             this._apiBase = options.apiBase || this._apiBase;
-            console.log('[SessionStore] Initialized');
+
+            // Restore from localStorage if available
+            this._restoreFromStorage();
+
+            // Setup auto-persist
+            this._setupAutoPersist();
+
+            console.log('[SessionStore] Initialized', this._state.sessionId ? `(restored session ${this._state.sessionId})` : '(no saved session)');
             return this;
+        },
+
+        // === Persistence ===
+
+        _setupAutoPersist() {
+            // Persist state changes to localStorage (debounced)
+            this.on('reset', () => this._persist());
+            this.on('session', () => this._persist());
+            this.on('execute', () => this._persist());
+            this.on('messages', () => this._persist());
+            this.on('context', () => this._persist());
+            this.on('status', () => this._persist());
+        },
+
+        _persist() {
+            // Debounce persistence
+            if (this._persistTimer) clearTimeout(this._persistTimer);
+            this._persistTimer = setTimeout(() => {
+                try {
+                    const data = {
+                        sessionId: this._state.sessionId,
+                        projectId: this._state.projectId,
+                        execute: this._state.execute,
+                        context: this._state.context,
+                        status: this._state.status,
+                        pendingForm: this._state.pendingForm,
+                        messages: this._state.messages.slice(-20), // Keep last 20 messages only
+                        timestamp: new Date().toISOString()
+                    };
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+                } catch (err) {
+                    console.warn('[SessionStore] Failed to persist:', err);
+                }
+            }, 100);
+        },
+
+        _restoreFromStorage() {
+            try {
+                const saved = localStorage.getItem(STORAGE_KEY);
+                if (!saved) return false;
+
+                const data = JSON.parse(saved);
+
+                // Check if session is not too old (24 hours)
+                const savedTime = new Date(data.timestamp || 0);
+                const ageHours = (Date.now() - savedTime.getTime()) / (1000 * 60 * 60);
+                if (ageHours > 24) {
+                    console.log('[SessionStore] Saved session too old, clearing');
+                    localStorage.removeItem(STORAGE_KEY);
+                    return false;
+                }
+
+                // Restore state
+                if (data.sessionId) this._state.sessionId = data.sessionId;
+                if (data.projectId) this._state.projectId = data.projectId;
+                if (data.execute) this._state.execute = data.execute;
+                if (data.context) this._state.context = data.context;
+                if (data.status) this._state.status = data.status;
+                if (data.pendingForm) this._state.pendingForm = data.pendingForm;
+                if (data.messages?.length) this._state.messages = data.messages;
+
+                console.log('[SessionStore] Restored from storage:', {
+                    sessionId: data.sessionId,
+                    projectId: data.projectId,
+                    status: data.status
+                });
+                return true;
+            } catch (err) {
+                console.warn('[SessionStore] Failed to restore:', err);
+                return false;
+            }
+        },
+
+        clearStorage() {
+            try {
+                localStorage.removeItem(STORAGE_KEY);
+                console.log('[SessionStore] Storage cleared');
+            } catch (err) {
+                console.warn('[SessionStore] Failed to clear storage:', err);
+            }
         },
 
         // === State Accessors ===
@@ -105,6 +195,12 @@
                 pendingForm: null,
                 lastError: null
             };
+
+            // Clear storage if explicit reset (no sessionId)
+            if (!sessionId) {
+                this.clearStorage();
+            }
+
             this._emit('reset', this.getState());
             return this;
         },
@@ -244,6 +340,56 @@
                     console.error('[SessionStore] Handler failed for', event, err);
                 }
             });
+        },
+
+        // === Restore and Reconnect ===
+
+        /**
+         * Restore session from storage and reconnect to transport
+         * Call this on page load if you want to resume last session
+         */
+        async restoreAndReconnect() {
+            const restored = this._restoreFromStorage();
+            if (!restored || !this._state.sessionId) {
+                return false;
+            }
+
+            console.log('[SessionStore] Restoring session:', this._state.sessionId);
+
+            // Reconnect to transport (SSE/WebSocket)
+            const transport = global.TransportManager;
+            if (transport && typeof transport.connect === 'function') {
+                try {
+                    await transport.connect(this._state.sessionId);
+                    this._state.status = 'active';
+                    console.log('[SessionStore] Transport reconnected');
+                } catch (err) {
+                    console.warn('[SessionStore] Failed to reconnect transport:', err);
+                    // Continue anyway - can try to reconnect later
+                }
+            }
+
+            // Emit restore event so UI can re-render
+            this._emit('restore', this.getState());
+
+            return true;
+        },
+
+        /**
+         * Check if there's a saved session to restore
+         */
+        hasSavedSession() {
+            try {
+                const saved = localStorage.getItem(STORAGE_KEY);
+                if (!saved) return false;
+                const data = JSON.parse(saved);
+                // Check age (24 hours)
+                const savedTime = new Date(data.timestamp || 0);
+                const ageHours = (Date.now() - savedTime.getTime()) / (1000 * 60 * 60);
+                return ageHours <= 24 && data.sessionId;
+            } catch {
+                return false;
+            }
         },
 
         // === Result Submission Helpers ===

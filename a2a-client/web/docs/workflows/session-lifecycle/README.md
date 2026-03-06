@@ -8,7 +8,7 @@ This directory documents all session lifecycle workflows from creation to comple
 - **[Context Synchronization Guide](../context-synchronization-guide.md)** - How session state is synchronized across components
 - **[Dialog Architecture Tasks](../tasks/dialog-architecture-tasks.md)** - Session lifecycle audit and QA scenarios
 - **[UNIFIED_ARCHITECTURE_COMPLETE](../UNIFIED_ARCHITECTURE_COMPLETE.md)** - Unified state management implementation
-- **[Web UI DEV_STATE](../DEV_STATE.md)** - Session persistence and state management overview
+- **[Web UI DEV_STATE](../../DEV_STATE.md)** - Session persistence and state management overview
 
 ## Session Creation Flow
 
