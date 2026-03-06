@@ -209,7 +209,7 @@ type a2a-server\a2a-server.log
 # If proxy is not responding, test direct Ollama
 curl -s -X POST http://localhost:11434/api/generate \
   -H "Content-Type: application/json" \
-  -d '{"model":"llama2","prompt":"hello","stream":false}'
+  -d '{"model":"qwen3:8b","prompt":"hello","stream":false}'
 ```
 
 ## Environment Variables

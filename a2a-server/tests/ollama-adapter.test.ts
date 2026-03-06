@@ -44,7 +44,7 @@ describe('ollama-adapter', () => {
 
     describe('createOllamaPromise', () => {
         it('returns promiseId from AI Hub', async () => {
-            const req: OllamaRequest = {model: 'llama2', prompt: 'hello'};
+            const req: OllamaRequest = {model: 'qwen3:8b', prompt: 'hello'};
             const out = await createOllamaPromise(req);
             expect(out.promiseId).toBe('test-promise-123');
         });

@@ -72,12 +72,12 @@ describe('Record/Replay Integration Tests', () => {
             url: '/api/generate',
             method: 'POST',
             request: {
-                model: 'llama2',
+                model: 'qwen3:8b',
                 prompt: 'Hello, world!',
                 stream: false
             },
             response: {
-                model: 'llama2',
+                model: 'qwen3:8b',
                 created_at: '2024-01-01T00:00:00.000Z',
                 response: 'Hello! How can I help you today?',
                 done: true
@@ -137,7 +137,7 @@ describe('Record/Replay Integration Tests', () => {
             // We don't actually intercept to avoid breaking other tests
 
             const mockResponse = {
-                model: 'llama2',
+                model: 'qwen3:8b',
                 response: 'Mocked response from nock',
                 done: true
             };
