@@ -68,3 +68,51 @@ File Upload: http://localhost:3001/api/files/upload
 [2026-03-06T19:30:17.697Z] GET /api/projects
 [2026-03-06T19:30:41.989Z] GET /api/projects
 [2026-03-06T19:32:36.743Z] POST /api/tester/command
+[2026-03-06T19:34:25.270Z] GET /api/projects
+[2026-03-06T19:34:25.753Z] POST /api/tester/command
+[2026-03-06T19:34:52.459Z] GET /health
+21:36:26 [tsx] change in ./src\server\index.ts Restarting...
+cC:\workspace\org-carrier\a2a-script-agent\a2a-client\packages\sdk\src\server\server\routes\tester.routes.ts:9
+import {optionalAuth} from '../middleware/auth.js';
+        ^
+SyntaxError: The requested module '../middleware/auth.js' does not provide an export named 'optionalAuth'
+    at #_instantiate (node:internal/modules/esm/module_job:254:21)
+    at async ModuleJob.run (node:internal/modules/esm/module_job:369:5)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:671:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5)
+
+Node.js v25.1.0
+21:36:32 [tsx] change in ./src\server\server\routes\tester.routes.ts Rerunning...
+c
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+Error [TransformError]: Transform failed with 5 errors:
+C:\workspace\org-carrier\a2a-script-agent\a2a-client\packages\sdk\src\server\server\routes\tester.routes.ts:269:9: ERROR: The symbol "sendSseEvent" has already been declared
+C:\workspace\org-carrier\a2a-script-agent\a2a-client\packages\sdk\src\server\server\routes\tester.routes.ts:275:9: ERROR: The symbol "getActiveConnections" has already been declared
+C:\workspace\org-carrier\a2a-script-agent\a2a-client\packages\sdk\src\server\server\routes\tester.routes.ts:279:9: ERROR: The symbol "getSessionCount" has already been declared
+C:\workspace\org-carrier\a2a-script-agent\a2a-client\packages\sdk\src\server\server\routes\tester.routes.ts:283:9: ERROR: The symbol "getActiveSessions" has already been declared
+C:\workspace\org-carrier\a2a-script-agent\a2a-client\packages\sdk\src\server\server\routes\tester.routes.ts:287:9: ERROR: The symbol "broadcastAll" has already been declared
+    at failureErrorWithLog (C:\workspace\org-carrier\a2a-script-agent\a2a-client\node_modules\tsx\node_modules\esbuild\lib\main.js:1467:15)
+    at C:\workspace\org-carrier\a2a-script-agent\a2a-client\node_modules\tsx\node_modules\esbuild\lib\main.js:736:50
+    at responseCallbacks.<computed> (C:\workspace\org-carrier\a2a-script-agent\a2a-client\node_modules\tsx\node_modules\esbuild\lib\main.js:603:9)
+    at handleIncomingPacket (C:\workspace\org-carrier\a2a-script-agent\a2a-client\node_modules\tsx\node_modules\esbuild\lib\main.js:658:12)
+    at Socket.readFromStdout (C:\workspace\org-carrier\a2a-script-agent\a2a-client\node_modules\tsx\node_modules\esbuild\lib\main.js:581:7)
+    at Socket.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:510:3)
+    at Readable.push (node:internal/streams/readable:390:5)
+    at Pipe.onStreamRead (node:internal/stream_base_commons:189:23)
+
+Node.js v25.1.0
+21:36:36 [tsx] change in ./src\server\server\routes\tester.routes.ts Rerunning...
+cC:\workspace\org-carrier\a2a-script-agent\a2a-client\packages\sdk\src\server\server\routes\tester.routes.ts:9
+import {optionalAuth} from '../middleware/auth.js';
+        ^
+SyntaxError: The requested module '../middleware/auth.js' does not provide an export named 'optionalAuth'
+    at #_instantiate (node:internal/modules/esm/module_job:254:21)
+    at async ModuleJob.run (node:internal/modules/esm/module_job:369:5)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:671:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5)
+
+Node.js v25.1.0

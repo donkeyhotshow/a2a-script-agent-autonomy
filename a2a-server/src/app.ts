@@ -2,8 +2,10 @@ import express, {Express, Request, Response, NextFunction} from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import compression from 'compression';
-import {logger} from './utils/logger.js';
+import {logger, requestLogger} from './utils/logger.js';
 import {errorHandler} from './middleware/error.middleware.js';
+import {createRateLimitMiddleware} from './middleware/rate-limit.middleware.js';
+import {config} from './config/index.js';
 import routes from './routes/index.js';
 
 const app: Express = express();
@@ -14,18 +16,13 @@ app.use(compression());
 app.use(express.json({limit: '10mb'}));
 app.use(express.urlencoded({extended: true, limit: '10mb'}));
 
-app.use((req: Request, res: Response, next: NextFunction) => {
-    const start = Date.now();
-    res.on('finish', () => {
-        logger.info('HTTP', {
-            method: req.method,
-            path: req.path,
-            status: res.statusCode,
-            duration: `${Date.now() - start}ms`
-        });
-    });
-    next();
-});
+// Apply rate limiting
+app.use(createRateLimitMiddleware({
+    maxRequests: config.rateLimitMaxRequests,
+    windowMs: config.rateLimitWindowMs,
+}));
+
+app.use(requestLogger);
 
 app.get('/health', (_req: Request, res: Response) => {
     res.json({status: 'ok', timestamp: new Date().toISOString(), version: process.env.npm_package_version || '1.0.0'});

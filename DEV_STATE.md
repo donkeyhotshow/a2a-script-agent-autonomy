@@ -40,6 +40,8 @@ External AI (Ollama/OpenAI/etc)
 - **SSE/WebSocket Transport**: Real-time communication between components
 - **Unified Action Protocol**: Standardized request/response format across all components
 - **Multi-level Testing**: AI Integration → Server → Client → Web UI testing pipeline
+- **CLI Testing Framework**: Remote web client control and automated testing via CLI
+- **Automated Health Checks**: CLI-based system verification and monitoring
 
 ## Recent Updates
 
@@ -47,5 +49,7 @@ External AI (Ollama/OpenAI/etc)
 - Unified transport layer with SSE primary + WebSocket fallback
 - Enhanced testing framework with multi-level smoke tests
 - Session state management with single source of truth
+- CLI testing framework for remote web client control and automation
+- Automated health checks and system verification through CLI
 
 See individual component DEV_STATE files for detailed status and implementation notes.

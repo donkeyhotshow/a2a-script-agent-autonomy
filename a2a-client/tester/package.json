@@ -10,7 +10,13 @@
   "scripts": {
     "start": "node cli.js",
     "dev": "node cli.js --dev",
-    "test": "echo \"No tests yet\""
+    "test": "node health-check.js",
+    "test:panels": "node cli.js test --suite panels",
+    "test:sessions": "node cli.js test --suite sessions",
+    "test:commands": "node cli.js test --suite commands",
+    "test:performance": "node cli.js test --suite performance",
+    "test:all": "node cli.js test --suite all",
+    "health": "node health-check.js"
   },
   "dependencies": {
     "commander": "^12.0.0",

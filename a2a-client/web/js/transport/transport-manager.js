@@ -7,6 +7,38 @@
 (function (global) {
     'use strict';
 
+    // Fetch with timeout and retry logic
+    const DEFAULT_TIMEOUT = 10000;
+    const MAX_RETRIES = 3;
+    const BASE_DELAY = 1000;
+
+    async function fetchWithRetry(url, options = {}, retryCount = 0) {
+        const controller = new AbortController();
+        const timeout = options.timeout || DEFAULT_TIMEOUT;
+        const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+        try {
+            const response = await fetch(url, {
+                ...options,
+                signal: controller.signal
+            });
+            clearTimeout(timeoutId);
+            return response;
+        } catch (error) {
+            clearTimeout(timeoutId);
+
+            if (error.name === 'AbortError' || retryCount >= MAX_RETRIES) {
+                throw error;
+            }
+
+            const delay = BASE_DELAY * Math.pow(2, retryCount);
+            console.warn(`[TransportManager] Retry ${retryCount + 1}/${MAX_RETRIES} after ${delay}ms: ${url}`);
+            await new Promise(resolve => setTimeout(resolve, delay));
+
+            return fetchWithRetry(url, options, retryCount + 1);
+        }
+    }
+
     const TransportManager = {
         // Configuration
         apiBase: '/api',
@@ -217,7 +249,7 @@
          */
         async _sendViaHttp(type, payload) {
             try {
-                const response = await fetch(`${this.apiBase}/sessions/${this.sessionId}/message`, {
+                const response = await fetchWithRetry(`${this.apiBase}/sessions/${this.sessionId}/message`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

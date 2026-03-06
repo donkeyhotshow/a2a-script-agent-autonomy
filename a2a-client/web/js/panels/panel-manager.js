@@ -144,18 +144,30 @@
                 timestamp: Date.now()
             };
             try {
-                localStorage.setItem(this.STORAGE_KEY, JSON.stringify(state));
+                // Try async storage first, fallback to sync
+                StorageAPI.ui.setItem(this.STORAGE_KEY, JSON.stringify(state)).catch(asyncError => {
+                    console.warn('[PanelManager] Async storage failed, using sync fallback:', asyncError);
+                    StorageAPI.ui.setItemSync(this.STORAGE_KEY, JSON.stringify(state));
+                });
             } catch (e) {
                 console.warn('[PanelManager] Failed to save state:', e);
             }
             return this;
         },
 
-        loadState() {
+        async loadState() {
             try {
-                const saved = localStorage.getItem(this.STORAGE_KEY);
+                // Try async storage first, fallback to sync
+                let saved;
+                try {
+                    saved = await StorageAPI.ui.getItem(this.STORAGE_KEY);
+                } catch (asyncError) {
+                    console.warn('[PanelManager] Async storage failed, using sync fallback:', asyncError);
+                    saved = StorageAPI.ui.getItemSync(this.STORAGE_KEY);
+                }
+
                 if (!saved) return this;
-                const state = JSON.parse(saved);
+                const state = typeof saved === 'string' ? JSON.parse(saved) : saved;
                 if (!state?.panels?.length) return this;
 
                 // Restore panels
@@ -207,14 +219,20 @@
             return this;
         },
 
-        clearState() {
-            localStorage.removeItem(this.STORAGE_KEY);
+        async clearState() {
+            try {
+                // Try async storage first, fallback to sync
+                await StorageAPI.ui.removeItem(this.STORAGE_KEY);
+            } catch (asyncError) {
+                console.warn('[PanelManager] Async storage failed, using sync fallback:', asyncError);
+                StorageAPI.ui.removeItemSync(this.STORAGE_KEY);
+            }
             return this;
         },
 
         // === State Integration with SessionStore ===
 
-        syncWithSessionStore() {
+        async syncWithSessionStore() {
             const store = global.SessionStore;
             if (!store) {
                 console.warn('[PanelManager] SessionStore not available');
@@ -241,7 +259,7 @@
             });
 
             // Load saved state after init
-            this.loadState();
+            await this.loadState();
 
             return this;
         },

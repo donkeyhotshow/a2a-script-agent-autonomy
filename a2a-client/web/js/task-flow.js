@@ -18,6 +18,38 @@
         return h;
     }
 
+    // Fetch with timeout and retry logic
+    const DEFAULT_TIMEOUT = 15000; // 15 seconds for API calls
+    const MAX_RETRIES = 3;
+    const BASE_DELAY = 1000;
+
+    async function fetchWithRetry(url, options = {}, retryCount = 0) {
+        const controller = new AbortController();
+        const timeout = options.timeout || DEFAULT_TIMEOUT;
+        const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+        try {
+            const response = await fetch(url, {
+                ...options,
+                signal: controller.signal
+            });
+            clearTimeout(timeoutId);
+            return response;
+        } catch (error) {
+            clearTimeout(timeoutId);
+
+            if (error.name === 'AbortError' || retryCount >= MAX_RETRIES) {
+                throw error;
+            }
+
+            const delay = BASE_DELAY * Math.pow(2, retryCount);
+            console.warn(`[TaskFlow] Retry ${retryCount + 1}/${MAX_RETRIES} after ${delay}ms: ${url}`);
+            await new Promise(resolve => setTimeout(resolve, delay));
+
+            return fetchWithRetry(url, options, retryCount + 1);
+        }
+    }
+
     async function request(method, path, body = null) {
         if (global.apiIntegration?.request) {
             return global.apiIntegration.request(method, path, body, {
@@ -37,7 +69,7 @@
         if (body) options.body = JSON.stringify(body);
 
         try {
-            const res = await fetch(url, options);
+            const res = await fetchWithRetry(url, options);
             const data = await res.json().catch(() => ({}));
             if (!res.ok) {
                 global.ErrorHandler?.handleApiError({
@@ -70,11 +102,15 @@
         return null;
     }
 
-    function saveSelectedProject(projectId) {
+    async function saveSelectedProject(projectId) {
         if (!projectId) return;
         try {
-            localStorage.setItem(SELECTED_PROJECT_KEY, projectId);
-        } catch (e) {}
+            // Try async storage first, fallback to sync
+            await StorageAPI.config.setItem(SELECTED_PROJECT_KEY, projectId);
+        } catch (asyncError) {
+            console.warn('[TaskFlow] Async storage failed, using sync fallback:', asyncError);
+            StorageAPI.config.setItemSync(SELECTED_PROJECT_KEY, projectId);
+        }
     }
 
     function renderExecute(contentEl, execute, data, taskFlowRef) {
@@ -159,6 +195,37 @@
         }
     }
 
+    function renderMessageHistory(contentEl) {
+        const store = global.SessionStore;
+        const messages = store?.messages || [];
+
+        if (!messages.length) return '';
+
+        const historyHtml = messages.map((msg) => {
+            const role = msg.role || 'assistant';
+            const content = msg.content || msg.message || msg.text || '';
+            const timestamp = msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString() : '';
+
+            if (role === 'user') {
+                return `<div class="tf-msg tf-msg-user">
+                    <div class="tf-msg-header">${timestamp ? `<span class="tf-msg-time">${timestamp}</span>` : ''}<span class="tf-msg-role">Вы</span></div>
+                    <div class="tf-msg-content">${escapeHtml(String(content))}</div>
+                </div>`;
+            } else if (role === 'system') {
+                return `<div class="tf-msg tf-msg-system">
+                    <div class="tf-msg-content">${escapeHtml(String(content))}</div>
+                </div>`;
+            } else {
+                return `<div class="tf-msg tf-msg-assistant">
+                    <div class="tf-msg-header"><span class="tf-msg-role">AI</span>${timestamp ? `<span class="tf-msg-time">${timestamp}</span>` : ''}</div>
+                    <div class="tf-msg-content">${escapeHtml(String(content))}</div>
+                </div>`;
+            }
+        }).join('');
+
+        return `<div class="tf-message-history">${historyHtml}</div>`;
+    }
+
     function renderForm(contentEl, form, executionStepHtml, progressBarHtml, finalResultHtml, taskFlowRef) {
         const hasChoices = form?.choices?.length > 0;
         const hasInput = form?.input?.length > 0;
@@ -192,7 +259,10 @@
             inputAreaHtml = getInputAreaHtml();
         }
 
+        const historyHtml = renderMessageHistory(contentEl);
+
         contentEl.innerHTML = `
+        ${historyHtml}
         <div class="task-flow-response task-flow-form-wrap">
           ${executionStepHtml}
           ${progressBarHtml}
@@ -223,7 +293,10 @@
         const messageContent = typeof message === 'string' ? message : (message.content || message.text || '');
         const encodedMessage = encodeURIComponent(messageContent || '');
 
+        const historyHtml = renderMessageHistory(contentEl);
+
         contentEl.innerHTML = `
+        ${historyHtml}
         <div class="task-flow-response task-flow-message-wrap">
           ${executionStepHtml}
           ${progressBarHtml}
@@ -232,7 +305,8 @@
             <button type="button" class="task-flow-message-btn" data-message="${encodedMessage}">Continue</button>
           </div>
           ${finalResultHtml}
-        </div>`;
+        </div>
+        ${getInputAreaHtml()}`;
 
         const messageBtn = contentEl.querySelector('.task-flow-message-btn');
         messageBtn?.addEventListener('click', () => {
@@ -242,6 +316,8 @@
                 taskFlowRef.sendMessageResult(decoded || 'continue', contentEl);
             }
         });
+
+        bindInputHandlers(contentEl, taskFlowRef);
     }
 
     function renderClientAction(contentEl, actionType, data, executionStepHtml, progressBarHtml, finalResultHtml, taskFlowRef) {
@@ -254,7 +330,10 @@
             'execute-command': 'Command Execution'
         };
 
+        const historyHtml = renderMessageHistory(contentEl);
+
         contentEl.innerHTML = `
+        ${historyHtml}
         <div class="task-flow-response task-flow-client-action">
           ${executionStepHtml}
           ${progressBarHtml}
@@ -262,21 +341,30 @@
           <pre class="client-action-data">${escapeHtml(JSON.stringify(data, null, 2))}</pre>
           <div class="client-action-status">Waiting for client execution...</div>
           ${finalResultHtml}
-        </div>`;
+        </div>
+        ${getInputAreaHtml()}`;
+
+        bindInputHandlers(contentEl, taskFlowRef);
     }
 
     function renderDebug(contentEl, data, executionStepHtml, progressBarHtml, finalResultHtml, taskFlowRef) {
         const ctx = data?.context ? JSON.stringify(data.context, null, 2) : '';
         const exec = data?.execute ? JSON.stringify(data.execute, null, 2) : '';
 
+        const historyHtml = renderMessageHistory(contentEl);
+
         contentEl.innerHTML = `
+        ${historyHtml}
         <div class="task-flow-response">
           ${executionStepHtml}
           ${progressBarHtml}
           <div class="task-flow-response-section"><strong>Context</strong><pre>${escapeHtml(ctx || '{}')}</pre></div>
           <div class="task-flow-response-section"><strong>Execute</strong><pre>${escapeHtml(exec || '{}')}</pre></div>
           ${finalResultHtml}
-        </div>`;
+        </div>
+        ${getInputAreaHtml()}`;
+
+        bindInputHandlers(contentEl, taskFlowRef);
     }
 
     function bindInputHandlers(contentEl, taskFlowRef) {
@@ -417,14 +505,14 @@
                     return;
                 }
                 this._currentTask = task;
-                this.run(task, projectId);
+                await this.run(task, projectId);
             });
 
             // Save project selection when manually changed
             if (sel) {
-                sel.addEventListener('change', () => {
+                sel.addEventListener('change', async () => {
                     if (sel.value) {
-                        saveSelectedProject(sel.value);
+                        await saveSelectedProject(sel.value);
                     }
                 });
             }
@@ -458,7 +546,15 @@
             const sel = document.getElementById('projectSelect');
             if (!sel) return;
 
-            const savedProjectId = localStorage.getItem(SELECTED_PROJECT_KEY);
+            // Load saved project selection
+            let savedProjectId;
+            try {
+                savedProjectId = await StorageAPI.config.getItem(SELECTED_PROJECT_KEY);
+            } catch (asyncError) {
+                console.warn('[TaskFlow] Async storage failed, using sync fallback:', asyncError);
+                savedProjectId = StorageAPI.config.getItemSync(SELECTED_PROJECT_KEY);
+            }
+
             if (savedProjectId) {
                 const option = Array.from(sel.options).find(opt => opt.value === savedProjectId);
                 if (option) {
@@ -470,12 +566,12 @@
             }
         },
 
-        run(task, projectId) {
+        async run(task, projectId) {
             if (task) this._currentTask = task;
 
             // Save selected project
             if (projectId) {
-                saveSelectedProject(projectId);
+                await saveSelectedProject(projectId);
                 // Also update the select if it exists
                 const sel = document.getElementById('projectSelect');
                 if (sel && sel.value !== projectId) {
@@ -900,100 +996,58 @@
         return String(match?.label || match?.value || match?.id || choiceId);
     }
 
-    if (typeof window !== 'undefined') {
-        window.TaskFlow = TaskFlow;
-        
-        // Integrate with SessionStore events (replaces SessionManager events)
-        const store = global.SessionStore;
-        if (store && typeof store.on === 'function') {
-            // Listen for execute updates (includes step, progress, finalResult)
-            store.on('execute', (execute) => {
-                console.log('[TaskFlow] Execute updated:', execute);
-                
-                // Re-render panel if active
-                if (TaskFlow.panelId) {
-                    const pm = global.PanelManager;
-                    const panel = pm?.get(TaskFlow.panelId);
-                    if (panel && TaskFlow._lastResponse) {
-                        const content = panel.getContentEl();
-                        if (content) {
-                            // Merge any finalResult from execute
-                            const response = {
-                                ...TaskFlow._lastResponse,
-                                execute: execute
-                            };
-                            renderExecute(content, execute, response, TaskFlow);
-                        }
-                    }
-                }
-                
-                // Update progress indicators
-                if (global.ProgressIndicators && execute?.execution?.progress !== undefined) {
-                    global.ProgressIndicators.handleExecutionProgress({
-                        progress: execute.execution.progress,
-                        step: execute.execution.step,
-                        action: execute.execution.action
-                    });
+    /**
+     * Restore panel UI from saved session state
+     */
+    TaskFlow.restorePanel = function(state) {
+        if (!state?.sessionId || !state?.execute) return false;
+
+        const pm = global.PanelManager;
+        if (!pm) return false;
+
+        // Check if panel already exists
+        let panel = pm.get('task-flow-panel');
+        if (!panel) {
+            panel = pm.open('task', {
+                id: 'task-flow-panel',
+                title: 'Task',
+                critical: true,
+                onClose: () => {
+                    if (TaskFlow.fixed) return;
+                    pm?.close('task-flow-panel');
+                    TaskFlow.panelId = null;
+                    TaskFlow.panel = null;
                 }
             });
+        } else {
+            panel.restore();
+            pm.bringToFront('task-flow-panel');
         }
-        /**
-         * Restore panel UI from saved session state
-         */
-        restorePanel(state) {
-            if (!state?.sessionId || !state?.execute) return false;
 
-            const pm = global.PanelManager;
-            if (!pm) return false;
+        if (!panel) return false;
 
-            // Check if panel already exists
-            let panel = pm.get('task-flow-panel');
-            if (!panel) {
-                panel = pm.open('task', {
-                    id: 'task-flow-panel',
-                    title: 'Task',
-                    critical: true,
-                    onClose: () => {
-                        if (this.fixed) return;
-                        pm?.close('task-flow-panel');
-                        this.panelId = null;
-                        this.panel = null;
-                    }
-                });
-            } else {
-                panel.restore();
-                pm.bringToFront('task-flow-panel');
-            }
+        TaskFlow.panelId = 'task-flow-panel';
+        TaskFlow.panel = panel;
+        TaskFlow.fixed = true;
+        TaskFlow._sessionId = state.sessionId;
+        TaskFlow._projectId = state.projectId;
+        TaskFlow._lastResponse = {
+            sessionId: state.sessionId,
+            projectId: state.projectId,
+            execute: state.execute,
+            context: state.context
+        };
+        TaskFlow._lastContext = state.context;
 
-            if (!panel) return false;
-
-            this.panelId = 'task-flow-panel';
-            this.panel = panel;
-            this.fixed = true;
-            this._sessionId = state.sessionId;
-            this._projectId = state.projectId;
-            this._lastResponse = {
-                sessionId: state.sessionId,
-                projectId: state.projectId,
-                execute: state.execute,
-                context: state.context
-            };
-            this._lastContext = state.context;
-
-            // Render the execute state
-            const contentEl = panel.getContentEl();
-            if (contentEl) {
-                renderExecute(contentEl, state.execute, this._lastResponse, this);
-            }
-
-            return true;
+        // Render the execute state
+        const contentEl = panel.getContentEl();
+        if (contentEl) {
+            renderExecute(contentEl, state.execute, TaskFlow._lastResponse, TaskFlow);
         }
+
+        return true;
     };
 
-    // Expose renderExecute globally for session restore
-    global.renderTaskExecute = renderExecute;
-
-    // Initialize on page load
     if (typeof window !== 'undefined') {
         window.TaskFlow = TaskFlow;
 
@@ -1040,4 +1094,7 @@
             });
         }
     }
+
+    // Expose renderExecute globally for session restore
+    global.renderTaskExecute = renderExecute;
 })(typeof window !== 'undefined' ? window : globalThis);

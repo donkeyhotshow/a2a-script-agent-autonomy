@@ -25,6 +25,8 @@
 - [Protocol Documentation](new-request-flow/PROTOCOL.md)
 - [API Server](new-request-flow/API-SERVER.md)
 - [API Client](new-request-flow/API-CLIENT.md)
+- [CLI Tester API](../a2a-client/tester/docs/API.md)
+- [Web Client Integration](../a2a-client/tester/docs/INTEGRATION.md)
 
 #### Продакшн
 - [Full Launch Plan](production/FULL_LAUNCH_PLAN.md)

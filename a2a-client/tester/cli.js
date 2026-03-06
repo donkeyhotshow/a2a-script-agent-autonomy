@@ -283,9 +283,30 @@ program
   .command('status')
   .description('Get web client status')
   .action(async () => {
-    const { apiUrl: url, session: sessId } = program.opts();
+    const { apiUrl: url } = program.opts();
 
-    await sendCommand('get_status', {}, { apiUrl: url, session: sessId });
+    try {
+      const response = await fetch(`${url}/api/tester/status`);
+
+      if (!response.ok) {
+        throw new Error(`Status request failed: ${response.status} ${response.statusText}`);
+      }
+
+      const result = await response.json();
+
+      if (program.opts().json) {
+        console.log(JSON.stringify(result, null, 2));
+      } else {
+        console.log(chalk.green('✓ Tester API Status:'));
+        console.log(chalk.blue('  Service:'), result.data?.service || 'unknown');
+        console.log(chalk.blue('  Active Connections:'), result.data?.sseManager?.activeConnections || 0);
+        console.log(chalk.blue('  Sessions:'), result.data?.sseManager?.sessionCount || 0);
+      }
+
+    } catch (error) {
+      console.error(chalk.red('✗ Status request failed:'), error.message);
+      process.exit(1);
+    }
   });
 
 /**

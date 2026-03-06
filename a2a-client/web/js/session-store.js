@@ -71,10 +71,10 @@
             this.on('status', () => this._persist());
         },
 
-        _persist() {
+        async _persist() {
             // Debounce persistence
             if (this._persistTimer) clearTimeout(this._persistTimer);
-            this._persistTimer = setTimeout(() => {
+            this._persistTimer = setTimeout(async () => {
                 try {
                     const data = {
                         sessionId: this._state.sessionId,
@@ -86,30 +86,36 @@
                         messages: this._state.messages.slice(-20), // Keep last 20 messages only
                         timestamp: new Date().toISOString()
                     };
-                    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+
+                    // Try async storage first, fallback to sync
+                    try {
+                        await StorageAPI.sessions.setItem(STORAGE_KEY, JSON.stringify(data));
+                    } catch (asyncError) {
+                        console.warn('[SessionStore] Async storage failed, using sync fallback:', asyncError);
+                        StorageAPI.sessions.setItemSync(STORAGE_KEY, JSON.stringify(data));
+                    }
                 } catch (err) {
                     console.warn('[SessionStore] Failed to persist:', err);
                 }
             }, 100);
         },
 
-        _restoreFromStorage() {
+        async _restoreFromStorage() {
             try {
-                const saved = localStorage.getItem(STORAGE_KEY);
-                if (!saved) return false;
-
-                const data = JSON.parse(saved);
-
-                // Check if session is not too old (24 hours)
-                const savedTime = new Date(data.timestamp || 0);
-                const ageHours = (Date.now() - savedTime.getTime()) / (1000 * 60 * 60);
-                if (ageHours > 24) {
-                    console.log('[SessionStore] Saved session too old, clearing');
-                    localStorage.removeItem(STORAGE_KEY);
-                    return false;
+                // Try async storage first, fallback to sync
+                let saved;
+                try {
+                    saved = await StorageAPI.sessions.getItem(STORAGE_KEY);
+                } catch (asyncError) {
+                    console.warn('[SessionStore] Async storage failed, using sync fallback:', asyncError);
+                    saved = StorageAPI.sessions.getItemSync(STORAGE_KEY);
                 }
 
-                // Restore state
+                if (!saved) return false;
+
+                const data = typeof saved === 'string' ? JSON.parse(saved) : saved;
+
+                // Restore state (no TTL - persists until explicitly cleared)
                 if (data.sessionId) this._state.sessionId = data.sessionId;
                 if (data.projectId) this._state.projectId = data.projectId;
                 if (data.execute) this._state.execute = data.execute;
@@ -130,9 +136,15 @@
             }
         },
 
-        clearStorage() {
+        async clearStorage() {
             try {
-                localStorage.removeItem(STORAGE_KEY);
+                // Try async storage first, fallback to sync
+                try {
+                    await StorageAPI.sessions.removeItem(STORAGE_KEY);
+                } catch (asyncError) {
+                    console.warn('[SessionStore] Async storage failed, using sync fallback:', asyncError);
+                    StorageAPI.sessions.removeItemSync(STORAGE_KEY);
+                }
                 console.log('[SessionStore] Storage cleared');
             } catch (err) {
                 console.warn('[SessionStore] Failed to clear storage:', err);
@@ -349,7 +361,7 @@
          * Call this on page load if you want to resume last session
          */
         async restoreAndReconnect() {
-            const restored = this._restoreFromStorage();
+            const restored = await this._restoreFromStorage();
             if (!restored || !this._state.sessionId) {
                 return false;
             }
@@ -378,15 +390,21 @@
         /**
          * Check if there's a saved session to restore
          */
-        hasSavedSession() {
+        async hasSavedSession() {
             try {
-                const saved = localStorage.getItem(STORAGE_KEY);
+                // Try async storage first, fallback to sync
+                let saved;
+                try {
+                    saved = await StorageAPI.sessions.getItem(STORAGE_KEY);
+                } catch (asyncError) {
+                    saved = StorageAPI.sessions.getItemSync(STORAGE_KEY);
+                }
+
                 if (!saved) return false;
-                const data = JSON.parse(saved);
-                // Check age (24 hours)
-                const savedTime = new Date(data.timestamp || 0);
-                const ageHours = (Date.now() - savedTime.getTime()) / (1000 * 60 * 60);
-                return ageHours <= 24 && data.sessionId;
+                const data = typeof saved === 'string' ? JSON.parse(saved) : saved;
+
+                // Return true if sessionId exists (no TTL limit)
+                return !!data.sessionId;
             } catch {
                 return false;
             }

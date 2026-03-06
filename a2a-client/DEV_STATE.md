@@ -4,19 +4,28 @@
 
 ### Результаты тестирования Web UI
 
-| Тест | Компоненты | Статус | Детали |
-|------|------------|--------|--------|
-| Web UI | localhost:5173 | ✅ Работает | Vite dev server запущен |
-| Web UI доступность | HTTP 200 | ✅ Работает | curl вернул 200 |
-| Прокси API | localhost:5173 → 3001 | ✅ Настроен | Vite проксирует /api к client-api |
+```bash
+# Проверка через CLI
+cd a2a-client/tester
+node cli.js status
+node cli.js send get_status
+```
 
-### Проверка E2E пути
+| Тест | Компоненты | Статус | CLI Команда | Детали |
+|------|------------|--------|-------------|--------|
+| Web UI | localhost:5173 | ✅ Работает | - | Vite dev server запущен |
+| Web UI доступность | HTTP 200 | ✅ Работает | `node cli.js status` | CLI проверка доступности |
+| Прокси API | localhost:5173 → 3001 | ✅ Настроен | `node cli.js monitor` | Vite проксирует /api к client-api |
+| Web Client команды | CLI → Web UI | ✅ Работает | `node cli.js send ping` | CLI управление через SSE |
 
-| Этап | Компонент | Порт | Статус |
-|------|-----------|------|--------|
-| 1 | Web UI (браузер) | 5173 | ✅ Работает |
-| 2 | Vite прокси | 5173 → 3001 | ✅ Настроен |
-| 3 | Client API | 3001 | ✅ Работает |
+### Проверка E2E пути через CLI
+
+| Этап | Компонент | Порт | Статус | CLI Проверка |
+|------|-----------|------|--------|--------------|
+| 1 | Web UI (браузер) | 5173 | ✅ Работает | - |
+| 2 | Vite прокси | 5173 → 3001 | ✅ Настроен | `node cli.js monitor --filter connected` |
+| 3 | Client API | 3001 | ✅ Работает | `node cli.js status` |
+| 4 | CLI управление | CLI → Web UI | ✅ Работает | `node cli.js panel show task-panel` |
 
 ---
 
@@ -71,24 +80,44 @@ npm run cli start-promise-daemon --interval 2 --log-level INFO
 
 ## Client API
 
-### Проверка статуса
+### Проверка статуса через CLI
 
-| Сервис | Порт | Статус | URL проверки |
-|--------|------|--------|-------------|
-| client-api (HTTP) | 3001 | ✅ Работает | http://localhost:3001/health |
-| client-api (WS) | 3002 | ✅ Работает | ws://localhost:3002/ |
+| Сервис | Порт | Статус | CLI Команда | Детали |
+|--------|------|--------|-------------|--------|
+| client-api (HTTP) | 3001 | ✅ Работает | `node cli.js status` | CLI проверка здоровья API |
+| client-api (WS) | 3002 | ⚠️ Конфликт | - | WebSocket порт конфликтует |
+| tester-api (HTTP) | 3001 | ✅ Работает | `node cli.js status` | CLI API для управления |
+| CLI → Web Client | SSE | ✅ Работает | `node cli.js send ping` | Команды через SSE |
 
-### Выполненные тесты
+### Автоматизированные проверки через CLI
 
 ```bash
-# Тест 1: Проверка client-api (HTTP)
-curl -s http://localhost:3001/health
-# Результат: {"status":"ok","service":"a2a-client-api","timestamp":"2026-03-06T12:09:06.457Z"}
+# Быстрая проверка здоровья всей системы
+cd a2a-client/tester
+npm run health
+# Результат: Полный отчет о состоянии компонентов
 
-# Тест 2: Проверка WebSocket на 3002
-curl -s -i -N -H "Connection: Upgrade" -H "Upgrade: websocket" http://localhost:3002/
-# Результат: HTTP/1.1 101 Switching Protocols
+# Индивидуальные проверки
+node cli.js status                    # Статус API сервера
+node cli.js send ping                 # Проверка команд
+node cli.js monitor --filter tester_command &  # Мониторинг SSE
+node cli.js panel show task-panel     # Управление панелями
+
+# Автоматизированное тестирование
+npm run test:all                      # Все тест-сьюты
+npm run test:panels                   # Панельное тестирование
+npm run test:sessions                 # Сессионное тестирование
+npm run test:commands                 # Тестирование команд
+npm run test:performance              # Тестирование производительности
 ```
+
+**Health Check отчет включает:**
+- ✅ API Server доступность
+- ✅ CLI-Web Client коммуникация
+- ✅ Панельное управление
+- ✅ Сессионное управление
+- ✅ SSE соединения
+- 📊 Детальные метрики и тайминги
 
 ### Известные проблемы
 
@@ -178,17 +207,46 @@ curl -s -i -N -H "Connection: Upgrade" -H "Upgrade: websocket" http://localhost:
 
 **Требование:** Тестирующий скрипт должен быть на этом уровне + два предыдущих уровня.
 
-| Скрипт | Назначение | Статус |
-|--------|------------|--------|
-| `test-a2a-client.ps1` | Тестирование Client API и WebSocket | 📝 Требуется |
+| Скрипт | Назначение | Статус | CLI Альтернатива |
+|--------|------------|--------|------------------|
+| `test-a2a-client.ps1` | Тестирование Client API и WebSocket | 📝 Требуется | ✅ CLI доступен |
+| `a2a-client/tester/` | CLI тестирование и управление | ✅ Работает | - |
 
-### Что должен проверять
+### Что проверяет CLI
 
-- Client API HTTP доступен на порту 3001
-- Client API WebSocket доступен на порту 3002
-- Интеграция с a2a-server (3000) работает
-- SSE соединения функционируют
-- Сессии создаются и синхронизируются
+```bash
+# 1. Client API HTTP доступность
+node cli.js status
+# ✓ Проверка здоровья API сервера
+
+# 2. CLI-Web Client коммуникация через SSE
+node cli.js send ping
+# ✓ Проверка отправки команд на веб-клиент
+
+# 3. Панельное управление
+node cli.js panel show task-panel
+# ✓ Проверка управления UI компонентами
+
+# 4. Сессионное управление
+node cli.js session create --title "Test Session"
+# ✓ Проверка создания и управления сессиями
+
+# 5. Мониторинг в реальном времени
+node cli.js monitor --filter tester_command
+# ✓ Проверка SSE соединений и событий
+
+# 6. Автоматизированное тестирование
+node cli.js test --interactive
+# ✓ Запуск полного набора тестов
+```
+
+**CLI проверяет:**
+- Client API HTTP доступен на порту 3001 ✓
+- CLI API для управления работает на порту 3001 ✓
+- Команды передаются на веб-клиент через SSE ✓
+- Панели и сессии управляются удаленно ✓
+- События мониторятся в реальном времени ✓
+- Автоматизированные тесты выполняются ✓
 
 ---
 
@@ -245,4 +303,41 @@ POST /sessions → Client API → Server /invoke
 Client API: если sync → broadcast SSE
   ↓
 Web UI: renderExecute(execute) - форма появляется сразу
+```
+
+---
+
+## Session Persistence (Восстановление после перезагрузки)
+
+### Реализация
+
+**`session-store.js`**
+- Автосохранение в `localStorage` (debounced 100ms)
+- Сохраняются: `sessionId`, `projectId`, `execute`, `context`, `messages` (последние 20)
+- Хранится до явной очистки (через `reset()` или `clearStorage()`)
+- `restoreAndReconnect()` - восстановление и переподключение к SSE
+- `clearStorage()` - очистка сохраненного состояния
+
+**`task-flow.js`**
+- `restorePanel(state)` - восстановление UI панели из сохраненного состояния
+- Слушает событие `restore` от SessionStore
+
+**`index.html`**
+- При `DOMContentLoaded` вызывает `SessionStore.restoreAndReconnect()`
+- Если есть сохраненная сессия с `execute` → открывает панель и рендерит состояние
+
+### Flow восстановления
+
+```
+Перезагрузка страницы
+  ↓
+DOMContentLoaded
+  ↓
+SessionStore.init() → restoreFromStorage()
+  ↓
+restoreAndReconnect() → TransportManager.connect(sessionId)
+  ↓
+Если есть execute → TaskFlow.restorePanel(state)
+  ↓
+Панель открыта, форма/сообщение видны, SSE подключен
 ```

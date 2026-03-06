@@ -11,6 +11,7 @@ import authRoutes from './auth.routes.js';
 import healthRoutes from './health.routes.js';
 import versionsRoutes from './versions.routes.js';
 import testerRoutes from './tester.routes.js';
+import storageRoutes from './storage.routes.js';
 
 /**
  * a2a-server: async protocol with requests.
@@ -38,6 +39,9 @@ router.use('/versions', versionsRoutes);
 
 // Mount tester routes
 router.use('/tester', testerRoutes);
+
+// Mount storage routes
+router.use('/', storageRoutes);
 
 
 async function handleInvoke(req: Request, res: Response, next: NextFunction): Promise<void> {

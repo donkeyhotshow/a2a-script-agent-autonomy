@@ -119,29 +119,71 @@ function findSimulationDirs(baseDir: string): string[] {
 }
 
 /**
- * Read simulation request
+ * Read simulation request - supports both legacy and step formats
  */
 function readSimulationRequest(simDir: string): any {
-    const requestPath = join(simDir, 'request.json');
-    if (!existsSync(requestPath)) {
-        return null;
+    // First try legacy format (direct request.json)
+    const legacyPath = join(simDir, 'request.json');
+    if (existsSync(legacyPath)) {
+        const content = readFileSync(legacyPath, 'utf-8');
+        return JSON.parse(content);
     }
-    
-    const content = readFileSync(requestPath, 'utf-8');
-    return JSON.parse(content);
+
+    // Try step format (find first step with request.json)
+    try {
+        const entries = readdirSync(simDir);
+        for (const entry of entries) {
+            if (!entry.match(/^\d+$/)) continue; // Only numbered directories
+
+            const stepDir = join(simDir, entry);
+            const stat = statSync(stepDir);
+            if (!stat.isDirectory()) continue;
+
+            const requestPath = join(stepDir, 'request.json');
+            if (existsSync(requestPath)) {
+                const content = readFileSync(requestPath, 'utf-8');
+                return JSON.parse(content);
+            }
+        }
+    } catch {
+        // Ignore errors when reading step directories
+    }
+
+    return null;
 }
 
 /**
- * Read simulation response
+ * Read simulation response - supports both legacy and step formats
  */
 function readSimulationResponse(simDir: string): any {
-    const responsePath = join(simDir, 'server-response.json');
-    if (!existsSync(responsePath)) {
-        return null;
+    // First try legacy format (direct server-response.json)
+    const legacyPath = join(simDir, 'server-response.json');
+    if (existsSync(legacyPath)) {
+        const content = readFileSync(legacyPath, 'utf-8');
+        return JSON.parse(content);
     }
-    
-    const content = readFileSync(responsePath, 'utf-8');
-    return JSON.parse(content);
+
+    // Try step format (find first step with server-response.json)
+    try {
+        const entries = readdirSync(simDir);
+        for (const entry of entries) {
+            if (!entry.match(/^\d+$/)) continue; // Only numbered directories
+
+            const stepDir = join(simDir, entry);
+            const stat = statSync(stepDir);
+            if (!stat.isDirectory()) continue;
+
+            const responsePath = join(stepDir, 'server-response.json');
+            if (existsSync(responsePath)) {
+                const content = readFileSync(responsePath, 'utf-8');
+                return JSON.parse(content);
+            }
+        }
+    } catch {
+        // Ignore errors when reading step directories
+    }
+
+    return null;
 }
 
 /**

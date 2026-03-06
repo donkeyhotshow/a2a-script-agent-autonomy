@@ -77,6 +77,9 @@
 
 <!-- ===== New Unified Architecture ===== -->
 
+<!-- 0. Storage API -->
+<script src="js/storage.js"></script>
+
 <!-- 1. Core State (Single Source of Truth) -->
 <script src="js/session-store.js"></script>
 
@@ -127,49 +130,25 @@
         // Initialize core systems
         SessionStore.init();
         TransportManager.init();
-        PanelManager.init().syncWithSessionStore();
-        if (window.CommandHandler) CommandHandler.init();
+        await PanelManager.init().syncWithSessionStore();
 
         // Restore previous session if available
-        const restored = await SessionStore.restoreAndReconnect();
-        if (restored) {
-            console.log('[A2A] Session restored from storage');
+        try {
+            const hasSaved = await SessionStore.hasSavedSession();
+            if (hasSaved) {
+                const restored = await SessionStore.restoreAndReconnect();
+                if (restored) {
+                    console.log('[A2A] Session restored from storage');
 
-            // Re-open task panel if there was an active session
-            const state = SessionStore.getState();
-            if (state.sessionId && state.execute) {
-                // Re-open panel and restore UI
-                const pm = window.PanelManager;
-                if (pm && !pm.get('task-flow-panel')) {
-                    const panel = pm.open('task', {
-                        id: 'task-flow-panel',
-                        title: 'Task',
-                        critical: true
-                    });
-
-                    if (panel) {
-                        // Re-render current execute state
-                        const content = panel.getContentEl();
-                        if (content && window.TaskFlow) {
-                            // Set internal state
-                            window.TaskFlow._sessionId = state.sessionId;
-                            window.TaskFlow._projectId = state.projectId;
-                            window.TaskFlow._lastResponse = {
-                                sessionId: state.sessionId,
-                                projectId: state.projectId,
-                                execute: state.execute,
-                                context: state.context
-                            };
-
-                            // Re-render
-                            content.innerHTML = '';
-                            if (typeof window.renderExecute === 'function') {
-                                window.renderExecute(content, state.execute, window.TaskFlow._lastResponse, window.TaskFlow);
-                            }
-                        }
+                    // Re-open task panel if there was an active session
+                    const state = SessionStore.getState();
+                    if (state.sessionId && state.execute && window.TaskFlow) {
+                        window.TaskFlow.restorePanel(state);
                     }
                 }
             }
+        } catch (error) {
+            console.warn('[A2A] Failed to check/restore session:', error);
         }
 
         console.log('[A2A] Unified architecture initialized');

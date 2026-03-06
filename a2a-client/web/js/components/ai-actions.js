@@ -1249,39 +1249,60 @@
         }
 
         /**
-         * Сохранить в localStorage
+         * Сохранить в custom storage
          */
-        saveToStorage() {
+        async saveToStorage() {
             try {
                 const data = this.exportAllSessions();
-                localStorage.setItem('ai-actions-sessions', JSON.stringify(data));
-                localStorage.setItem('ai-actions-current-session', this.currentSessionId || '');
+                // Try async storage first, fallback to sync
+                try {
+                    await StorageAPI.aiActions.setItem('sessions', JSON.stringify(data));
+                    await StorageAPI.aiActions.setItem('current-session', this.currentSessionId || '');
+                } catch (asyncError) {
+                    console.warn('[AIActionsSessionPanel] Async storage failed, using sync fallback:', asyncError);
+                    StorageAPI.aiActions.setItemSync('sessions', JSON.stringify(data));
+                    StorageAPI.aiActions.setItemSync('current-session', this.currentSessionId || '');
+                }
             } catch (e) {
                 console.error('[AIActionsSessionPanel] Failed to save to storage:', e);
             }
         }
 
         /**
-         * Загрузить из localStorage
+         * Загрузить из custom storage
          * @returns {Array} загруженные сессии
          */
-        loadFromStorage() {
+        async loadFromStorage() {
             try {
-                const data = localStorage.getItem('ai-actions-sessions');
+                // Try async storage first, fallback to sync
+                let data;
+                try {
+                    data = await StorageAPI.aiActions.getItem('sessions');
+                } catch (asyncError) {
+                    console.warn('[AIActionsSessionPanel] Async storage failed, using sync fallback:', asyncError);
+                    data = StorageAPI.aiActions.getItemSync('sessions');
+                }
+
                 if (data) {
-                    const sessions = JSON.parse(data);
+                    const sessions = typeof data === 'string' ? JSON.parse(data) : data;
                     sessions.forEach(session => {
                         this.sessions.set(session.id, session);
                     });
                     this._renderSessionList();
                     this._updateSessionCount();
-                    
+
                     // Восстанавливаем текущую сессию
-                    const currentId = localStorage.getItem('ai-actions-current-session');
+                    let currentId;
+                    try {
+                        currentId = await StorageAPI.aiActions.getItem('current-session');
+                    } catch (asyncError) {
+                        currentId = StorageAPI.aiActions.getItemSync('current-session');
+                    }
+
                     if (currentId && this.sessions.has(currentId)) {
                         this.switchToSession(currentId);
                     }
-                    
+
                     return sessions;
                 }
             } catch (e) {
@@ -1291,12 +1312,19 @@
         }
 
         /**
-         * Очистить localStorage
+         * Очистить custom storage
          */
-        clearStorage() {
+        async clearStorage() {
             try {
-                localStorage.removeItem('ai-actions-sessions');
-                localStorage.removeItem('ai-actions-current-session');
+                // Try async storage first, fallback to sync
+                try {
+                    await StorageAPI.aiActions.removeItem('sessions');
+                    await StorageAPI.aiActions.removeItem('current-session');
+                } catch (asyncError) {
+                    console.warn('[AIActionsSessionPanel] Async storage failed, using sync fallback:', asyncError);
+                    StorageAPI.aiActions.removeItemSync('sessions');
+                    StorageAPI.aiActions.removeItemSync('current-session');
+                }
             } catch (e) {
                 console.error('[AIActionsSessionPanel] Failed to clear storage:', e);
             }

@@ -463,10 +463,10 @@
         }
 
         /**
-         * Сохранить состояние панелей в localStorage
+         * Сохранить состояние панелей в custom storage
          * @param {Object} panels - объект с панелями
          */
-        static savePanels(panels) {
+        static async savePanels(panels) {
             const data = Object.values(panels).map(panel => ({
                 id: panel.id,
                 title: panel.container.querySelector('.pui-panel-title')?.textContent || 'Panel',
@@ -478,23 +478,49 @@
                 } : null,
                 slot: panel.slot
             }));
-            localStorage.setItem('plasticine-panels', JSON.stringify(data));
+
+            try {
+                // Try async storage first, fallback to sync
+                await StorageAPI.ui.setItem('floating-panels', JSON.stringify(data));
+            } catch (asyncError) {
+                console.warn('[FloatingPanel] Async storage failed, using sync fallback:', asyncError);
+                StorageAPI.ui.setItemSync('floating-panels', JSON.stringify(data));
+            }
         }
 
         /**
-         * Загрузить состояние панелей из localStorage
+         * Загрузить состояние панелей из custom storage
          * @returns {Array} массив сохраненных данных панелей
          */
-        static loadPanels() {
-            const data = localStorage.getItem('plasticine-panels');
-            return data ? JSON.parse(data) : [];
+        static async loadPanels() {
+            try {
+                // Try async storage first, fallback to sync
+                let data;
+                try {
+                    data = await StorageAPI.ui.getItem('floating-panels');
+                } catch (asyncError) {
+                    console.warn('[FloatingPanel] Async storage failed, using sync fallback:', asyncError);
+                    data = StorageAPI.ui.getItemSync('floating-panels');
+                }
+
+                return data ? (typeof data === 'string' ? JSON.parse(data) : data) : [];
+            } catch (e) {
+                console.warn('[FloatingPanel] Failed to load panels:', e);
+                return [];
+            }
         }
 
         /**
-         * Очистить сохраненные панели из localStorage
+         * Очистить сохраненные панели из custom storage
          */
-        static clearSavedPanels() {
-            localStorage.removeItem('plasticine-panels');
+        static async clearSavedPanels() {
+            try {
+                // Try async storage first, fallback to sync
+                await StorageAPI.ui.removeItem('floating-panels');
+            } catch (asyncError) {
+                console.warn('[FloatingPanel] Async storage failed, using sync fallback:', asyncError);
+                StorageAPI.ui.removeItemSync('floating-panels');
+            }
         }
     }
 

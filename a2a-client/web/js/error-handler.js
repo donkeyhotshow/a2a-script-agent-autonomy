@@ -475,21 +475,31 @@
     if (typeof window !== 'undefined') {
         const originalFetch = window.fetch;
         window.fetch = async function(...args) {
+            const url = String(args[0] || '');
+            const isStorageApi = url.includes('/api/storage/');
+
             try {
                 const response = await originalFetch.apply(this, args);
-                
-                // Check for error status
+
+                // Check for error status (skip storage API 404s - they are expected when key doesn't exist)
                 if (!response.ok) {
-                    const data = await response.json().catch(() => ({}));
-                    ErrorHandler.handleApiError({
-                        status: response.status,
-                        data
-                    }, { url: args[0] });
+                    const isExpected404 = isStorageApi && response.status === 404;
+
+                    if (!isExpected404) {
+                        const data = await response.json().catch(() => ({}));
+                        ErrorHandler.handleApiError({
+                            status: response.status,
+                            data
+                        }, { url: args[0] });
+                    }
                 }
-                
+
                 return response;
             } catch (error) {
-                ErrorHandler.handleNetworkError(error, { url: args[0] });
+                // Don't handle storage API errors - let the caller handle them
+                if (!isStorageApi) {
+                    ErrorHandler.handleNetworkError(error, { url: args[0] });
+                }
                 throw error;
             }
         };

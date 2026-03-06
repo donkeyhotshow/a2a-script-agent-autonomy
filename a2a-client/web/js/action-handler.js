@@ -7,6 +7,38 @@
 (function (global) {
     'use strict';
 
+    // Fetch with timeout and retry logic
+    const DEFAULT_TIMEOUT = 15000;
+    const MAX_RETRIES = 3;
+    const BASE_DELAY = 1000;
+
+    async function fetchWithRetry(url, options = {}, retryCount = 0) {
+        const controller = new AbortController();
+        const timeout = options.timeout || DEFAULT_TIMEOUT;
+        const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+        try {
+            const response = await fetch(url, {
+                ...options,
+                signal: controller.signal
+            });
+            clearTimeout(timeoutId);
+            return response;
+        } catch (error) {
+            clearTimeout(timeoutId);
+
+            if (error.name === 'AbortError' || retryCount >= MAX_RETRIES) {
+                throw error;
+            }
+
+            const delay = BASE_DELAY * Math.pow(2, retryCount);
+            console.warn(`[ActionHandler] Retry ${retryCount + 1}/${MAX_RETRIES} after ${delay}ms: ${url}`);
+            await new Promise(resolve => setTimeout(resolve, delay));
+
+            return fetchWithRetry(url, options, retryCount + 1);
+        }
+    }
+
     const ActionHandler = {
         apiBase: '/api',
 
@@ -28,9 +60,9 @@
             const options = { method, headers: this._getHeaders() };
             if (body) options.body = JSON.stringify(body);
 
-            const response = await fetch(url, options);
+            const response = await fetchWithRetry(url, options);
             const data = await response.json().catch(() => ({}));
-            
+
             if (!response.ok) {
                 throw new Error(data?.error?.message || `Request failed: ${response.status}`);
             }

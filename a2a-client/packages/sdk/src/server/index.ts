@@ -409,6 +409,14 @@ expressApp.use((req, res, next) => {
     next();
 });
 
+// ==================== TESTER API ====================
+
+// Import tester routes
+import testerRoutes from './server/routes/tester.routes.js';
+
+// Mount tester routes
+expressApp.use('/api/tester', testerRoutes);
+
 // ==================== STORAGE / CONFIG ====================
 
 type ClientConfig = {
@@ -2238,6 +2246,96 @@ expressApp.get(['/api/ws', '/api/v1/ws'], (req, res) => {
         activeSessions: Array.from(wsConnections.keys()),
         connectionCount: Array.from(wsConnections.values()).reduce((sum, set) => sum + set.size, 0),
     });
+});
+
+// ==================== STORAGE API ====================
+
+const STORAGE_DIR = path.join(storageDir, 'kv');
+
+async function ensureKVStorageDir(): Promise<void> {
+    await fs.mkdir(STORAGE_DIR, { recursive: true });
+}
+
+// GET /api/storage/:namespace/:key - Get stored value
+expressApp.get(['/api/storage/:namespace/:key', '/api/v1/storage/:namespace/:key'], async (req, res) => {
+    try {
+        const { namespace, key } = req.params;
+        const filePath = path.join(STORAGE_DIR, namespace, `${key}.json`);
+
+        // Check if file exists
+        try {
+            await fs.access(filePath);
+        } catch {
+            return res.status(404).json({ error: 'Key not found' });
+        }
+
+        const data = await fs.readFile(filePath, 'utf-8');
+        const value = JSON.parse(data);
+
+        res.json({ key, namespace, value });
+    } catch (error: any) {
+        console.error('Storage get error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// POST /api/storage/:namespace/:key - Store value
+expressApp.post(['/api/storage/:namespace/:key', '/api/v1/storage/:namespace/:key'], async (req, res) => {
+    try {
+        await ensureKVStorageDir();
+        const { namespace, key } = req.params;
+        const { value } = req.body || {};
+
+        const namespaceDir = path.join(STORAGE_DIR, namespace);
+        await fs.mkdir(namespaceDir, { recursive: true });
+
+        const filePath = path.join(namespaceDir, `${key}.json`);
+        await fs.writeFile(filePath, JSON.stringify(value), 'utf-8');
+
+        res.json({ success: true, key, namespace });
+    } catch (error: any) {
+        console.error('Storage set error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// PUT /api/storage/:namespace/:key - Update value (alias for POST)
+expressApp.put(['/api/storage/:namespace/:key', '/api/v1/storage/:namespace/:key'], async (req, res) => {
+    try {
+        await ensureKVStorageDir();
+        const { namespace, key } = req.params;
+        const { value } = req.body || {};
+
+        const namespaceDir = path.join(STORAGE_DIR, namespace);
+        await fs.mkdir(namespaceDir, { recursive: true });
+
+        const filePath = path.join(namespaceDir, `${key}.json`);
+        await fs.writeFile(filePath, JSON.stringify(value), 'utf-8');
+
+        res.json({ success: true, key, namespace });
+    } catch (error: any) {
+        console.error('Storage set error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// DELETE /api/storage/:namespace/:key - Delete value
+expressApp.delete(['/api/storage/:namespace/:key', '/api/v1/storage/:namespace/:key'], async (req, res) => {
+    try {
+        const { namespace, key } = req.params;
+        const filePath = path.join(STORAGE_DIR, namespace, `${key}.json`);
+
+        try {
+            await fs.unlink(filePath);
+        } catch {
+            // File doesn't exist, that's ok
+        }
+
+        res.json({ success: true, key, namespace });
+    } catch (error: any) {
+        console.error('Storage delete error:', error);
+        res.status(500).json({ error: error.message });
+    }
 });
 
 // ==================== HEALTH CHECK ====================
