@@ -2,7 +2,7 @@
  * Task flow: input + Send → create session (api-server) → fixate IDs → invoke server → first response.
  * Panel: preloader → then non-closable plasticine with session id + first response.
  *
- * TODO(Task-06): drive from session view-model (messages[], execute); result.choice / result.message – tasks/client/06-web-session-panel-and-dialog.md
+ * Updated: Removed HTTP polling. Uses SSE/Store events for async responses.
  */
 
 (function (global) {
@@ -10,8 +10,6 @@
         const base = global.apiIntegration?.apiBase || '/api';
         return String(base).replace(/\/?$/, '');
     }
-    const POLL_INTERVAL_MS = 800;
-    const POLL_MAX_ATTEMPTS = 120;
 
     function getHeaders() {
         const h = { 'Content-Type': 'application/json' };
@@ -220,29 +218,49 @@
         if (status) status.textContent = text;
     }
 
-    async function pollResult(promiseId) {
-        for (let i = 0; i < POLL_MAX_ATTEMPTS; i++) {
-            let statusRes;
-            try {
-                statusRes = await request('GET', `/requests/${encodeURIComponent(promiseId)}/status`);
-            } catch (err) {
-                if (err?.status === 404) {
-                    await new Promise(r => setTimeout(r, POLL_INTERVAL_MS));
-                    continue;
+    /**
+     * Wait for first response via SessionStore
+     * No HTTP polling - uses SSE events through store
+     */
+    function waitForFirstResponse(timeoutMs = 120000) {
+        return new Promise((resolve, reject) => {
+            const store = global.SessionStore;
+            if (!store) {
+                reject(new Error('SessionStore not available'));
+                return;
+            }
+
+            let resolved = false;
+            
+            // Handler for execute received
+            const unsubscribe = store.on('execute', (execute) => {
+                if (resolved) return;
+                if (execute && (execute.form || execute.message || execute.finalResult)) {
+                    resolved = true;
+                    unsubscribe();
+                    resolve({ status: 'completed', execute, context: store.context });
                 }
-                throw err;
-            }
-            const data = statusRes?.data ?? statusRes;
-            const st = (typeof data === 'object' && data !== null) ? data.status : statusRes?.status ?? statusRes;
-            if (st === 'completed' || st === 'failed') {
-                const resultRes = await request('GET', `/requests/${encodeURIComponent(promiseId)}/result`);
-                const resData = resultRes?.data ?? resultRes;
-                const d = resData?.result ?? resData;
-                return { status: st, result: d };
-            }
-            await new Promise(r => setTimeout(r, POLL_INTERVAL_MS));
-        }
-        return { status: 'timeout', result: null };
+            });
+
+            // Also listen for error
+            const errorUnsub = store.on('error', (error) => {
+                if (resolved) return;
+                resolved = true;
+                unsubscribe();
+                errorUnsub();
+                reject(error);
+            });
+
+            // Timeout fallback
+            setTimeout(() => {
+                if (!resolved) {
+                    resolved = true;
+                    unsubscribe();
+                    errorUnsub();
+                    resolve({ status: 'timeout', result: null });
+                }
+            }, timeoutMs);
+        });
     }
 
     const TaskFlow = {
@@ -364,52 +382,66 @@
                 this._sessionId = sessionId;
                 this._projectId = projectId;
                 
+                // Initialize SessionStore for this session
+                const store = global.SessionStore;
+                if (store) {
+                    store.reset(sessionId, projectId);
+                    store.pushMessage({ content: task }, 'user');
+                }
+                
                 setPanelContent(contentEl, 'fixated', { sessionId, projectId });
                 if (this.panel) {
                     this.panel.setCritical?.(true);
                     this.panel.setNonClosable?.(true);
                 }
 
-                const normalizedResponse = serverResponse?.data ?? serverResponse;
-                const promiseId = normalizedResponse?.promiseId ?? normalizedResponse?.data?.promiseId;
-
-                if (promiseId) {
-                    updateStatus(contentEl, 'Waiting for first response…');
-                    const { status, result } = await pollResult(promiseId);
-                    if (status === 'timeout') {
-                        updateStatus(contentEl, 'Timeout waiting for response');
-                        return;
-                    }
-                    if (status === 'failed') {
-                        updateStatus(contentEl, 'Request failed');
-                        return;
-                    }
-                    applyExecuteResponse(result ?? {}, contentEl, 'firstResponse');
-                    return;
+                // Connect transport (SSE primary, WebSocket fallback)
+                const transport = global.TransportManager;
+                if (transport) {
+                    updateStatus(contentEl, 'Connecting to real-time stream…');
+                    await transport.connect(sessionId);
+                } else if (global.SSEClient) {
+                    global.SSEClient.connect(sessionId, getApiBase());
                 }
 
-                if (normalizedResponse) {
+                const normalizedResponse = serverResponse?.data ?? serverResponse;
+
+                // If server returns immediate execute, use it
+                if (normalizedResponse?.execute) {
                     applyExecuteResponse(normalizedResponse, contentEl, 'firstResponse');
                     return;
                 }
 
-                // Legacy: need to call /next to send task to server
-                updateStatus(contentEl, 'Calling server…');
-                const invokeRes = await request('POST', `/sessions/${encodeURIComponent(sessionId)}/next`, { task, sessionId, projectId });
-                const fallbackPromiseId = invokeRes?.promiseId ?? invokeRes?.data?.promiseId;
-                if (!fallbackPromiseId) throw new Error('No promiseId');
-
-                updateStatus(contentEl, 'Waiting for first response…');
-                const { status, result } = await pollResult(fallbackPromiseId);
+                // Otherwise wait for first response via SSE (no HTTP polling)
+                updateStatus(contentEl, 'Waiting for first response via SSE…');
+                const { status, result, execute, context } = await waitForFirstResponse();
+                
                 if (status === 'timeout') {
                     updateStatus(contentEl, 'Timeout waiting for response');
                     return;
                 }
-                if (status === 'failed') {
-                    updateStatus(contentEl, 'Request failed');
+                
+                if (execute) {
+                    applyExecuteResponse({ execute, context, sessionId, projectId }, contentEl, 'firstResponse');
                     return;
                 }
-                applyExecuteResponse(result ?? {}, contentEl, 'firstResponse');
+
+                // Fallback: if server requires explicit /next call
+                updateStatus(contentEl, 'Initializing session…');
+                const invokeRes = await request('POST', `/sessions/${encodeURIComponent(sessionId)}/next`, { task, sessionId, projectId });
+                
+                if (invokeRes?.execute) {
+                    applyExecuteResponse(invokeRes, contentEl, 'firstResponse');
+                } else {
+                    // Wait for SSE response
+                    updateStatus(contentEl, 'Waiting for first response…');
+                    const { status: ws, execute: wexec, context: wctx } = await waitForFirstResponse();
+                    if (ws === 'timeout') {
+                        updateStatus(contentEl, 'Timeout waiting for response');
+                        return;
+                    }
+                    applyExecuteResponse({ execute: wexec, context: wctx, sessionId, projectId }, contentEl, 'firstResponse');
+                }
             } catch (err) {
                 if (contentEl) {
                     contentEl.innerHTML = '<div class="task-flow-error">' + escapeHtml(String(err?.message || err)) + '</div>';
@@ -514,28 +546,43 @@
                 if (!sessionId) throw new Error('No session id returned');
 
                 this.fixed = true;
-                setPanelContent(contentEl, 'fixated', { sessionId, projectId });
-                const statusEl = contentEl?.querySelector('.task-flow-status');
-                if (statusEl) statusEl.textContent = 'Calling server…';
-
-                const invokeRes = await request('POST', `/sessions/${encodeURIComponent(sessionId)}/next`, { task, sessionId, projectId });
-                const promiseId = invokeRes?.promiseId ?? invokeRes?.data?.promiseId;
-                if (!promiseId) throw new Error('No promiseId');
-
-                if (statusEl) statusEl.textContent = 'Waiting for first response…';
-                const { status, result } = await pollResult(promiseId);
-                if (status === 'timeout') {
-                    if (statusEl) statusEl.textContent = 'Timeout';
-                    return;
-                }
-                if (status === 'failed') {
-                    if (statusEl) statusEl.textContent = 'Failed';
-                    return;
-                }
-
                 this._sessionId = sessionId;
                 this._projectId = projectId;
-                applyExecuteResponse(result ?? {}, contentEl, 'firstResponse');
+                
+                // Initialize store
+                const store = global.SessionStore;
+                if (store) {
+                    store.reset(sessionId, projectId);
+                    store.pushMessage({ content: task }, 'user');
+                }
+                
+                setPanelContent(contentEl, 'fixated', { sessionId, projectId });
+                const statusEl = contentEl?.querySelector('.task-flow-status');
+                if (statusEl) statusEl.textContent = 'Connecting…';
+
+                // Connect transport
+                const transport = global.TransportManager;
+                if (transport) {
+                    await transport.connect(sessionId);
+                } else if (global.SSEClient) {
+                    global.SSEClient.connect(sessionId, getApiBase());
+                }
+
+                if (statusEl) statusEl.textContent = 'Waiting for first response via SSE…';
+                
+                // Wait for response via SSE (no polling)
+                const invokeRes = await request('POST', `/sessions/${encodeURIComponent(sessionId)}/next`, { task, sessionId, projectId });
+                
+                if (invokeRes?.execute) {
+                    applyExecuteResponse(invokeRes, contentEl, 'firstResponse');
+                } else {
+                    const { status, execute, context } = await waitForFirstResponse();
+                    if (status === 'timeout') {
+                        if (statusEl) statusEl.textContent = 'Timeout';
+                        return;
+                    }
+                    applyExecuteResponse({ execute, context, sessionId, projectId }, contentEl, 'firstResponse');
+                }
             } catch (err) {
                 if (contentEl) contentEl.innerHTML = '<div class="task-flow-error">' + escapeHtml(String(err?.message || err)) + '</div>';
                 window.addNotification?.(String(err?.message || err), 'error');
@@ -543,21 +590,32 @@
         }
     };
 
+    /**
+     * Process response without polling
+     * Uses immediate response or waits for SSE via store
+     */
     async function processNextResponse(contentEl, response) {
-        const promiseId = response?.promiseId ?? response?.data?.promiseId;
-        if (promiseId) {
-            const { status, result } = await pollResult(promiseId);
-            if (status === 'timeout') {
-                if (contentEl) contentEl.innerHTML = '<div class="task-flow-error">Timeout</div>';
-                return 'timeout';
-            }
-            if (status === 'failed') {
-                if (contentEl) contentEl.innerHTML = '<div class="task-flow-error">Request failed</div>';
-                return 'failed';
-            }
-            applyExecuteResponse(result ?? {}, contentEl, 'response');
+        // If response has execute immediately, use it
+        if (response?.execute) {
+            applyExecuteResponse(response, contentEl, 'response');
             return 'ok';
         }
+        
+        // Otherwise wait for SSE event
+        updateStatus(contentEl, 'Waiting for response…');
+        const { status, execute, context } = await waitForFirstResponse();
+        
+        if (status === 'timeout') {
+            if (contentEl) contentEl.innerHTML = '<div class="task-flow-error">Timeout</div>';
+            return 'timeout';
+        }
+        
+        if (execute) {
+            applyExecuteResponse({ execute, context, sessionId: TaskFlow._sessionId, projectId: TaskFlow._projectId }, contentEl, 'response');
+            return 'ok';
+        }
+        
+        // Fallback: empty response
         applyExecuteResponse(response ?? {}, contentEl, 'response');
         return 'ok';
     }

@@ -83,6 +83,55 @@ Use `node scripts/port-manager.js kill-batch <port>` to terminate the cached PID
 
 See [Port Management Documentation](docs/PORT_MANAGEMENT.md) for details.
 
+### Testing
+
+#### Web UI Smoke Test
+
+For comprehensive Web UI testing including browser interaction and SSE connectivity:
+
+```powershell
+# Full smoke test with browser launch (requires Docker + browser)
+.\scripts\test-web-ui.ps1
+
+# Headless mode (no browser, for CI)
+.\scripts\test-web-ui.ps1 -SkipBrowser
+
+# Firefox instead of Chromium
+.\scripts\test-web-ui.ps1 -Browser firefox
+```
+
+**Requirements:**
+- Docker (for PostgreSQL + Redis)
+- Node.js/npm environment
+- Browser (Chromium/Chrome, Firefox, or Edge)
+- PowerShell (Windows) or PowerShell Core (cross-platform)
+
+**Who runs it:**
+- **Developers**: Manual verification during development
+- **CI/CD**: Automated headless runs for regression testing
+- **QA**: Full browser testing with manual verification steps
+
+**What it tests:**
+- Infrastructure services (Docker PostgreSQL + Redis)
+- A2A Server health check (/health)
+- Client API health check
+- Vite dev server startup
+- Browser page load and session panel display
+- SSE connectivity and real-time updates
+
+#### Other Test Commands
+
+```bash
+# Unit tests
+npm test
+
+# Integration tests (requires DB)
+SKIP_AUTH=1 npm run test:integration
+
+# Simulation tests (golden standard)
+npm run test:sim
+```
+
 ### Graceful Shutdown
 
 Press `Ctrl+C` to stop all services gracefully. The orchestrator will:

@@ -1,1102 +1,408 @@
 # a2a-client/web DEV_STATE
 
-> Web component documentation (Порт 5173)
-> Последнее обновление: 2026-03-06
+> Web UI (port 5173) overview — distilled reference for the Web component. Last update: 2026-03-06.
 
-## Статус
+## Status
 
-- **Статус**: В разработке
-- **Фокус**: Отладка диалога, SSE интеграция, оптимизация загрузки
+- **State**: Active development (dialog stability + SSE/WS delivery).
+- **Focus**: Session/dialog flow, SSE/WebSocket reliability, and front-end performance/security hardening.
 
----
+## Architecture highlights
 
-## Архитектура механизма диалога
+- **Ports**: Web UI (5173), Client HTTP API (3001), SSE endpoint `/api/sse/:sessionId`, WebSocket fallback `/api/ws/:sessionId`.
+- **Core moving parts**: 
+  - `SessionStore` - Single source of truth for session state
+  - `TransportManager` - SSE primary with WebSocket auto-fallback
+  - `PanelManager` - Unified panel/modal system
+  - Legacy files archived to `js/archive/` and `css/archive/`
+- **Protocol**: Uses action-key shaped executes (forms, messages, scripts, rag-search, read/write, execute-command, finalResult) and relies on `context.execution` bookkeeping.
+- **Persistence**: Session state persists via SessionStore (max ~200 messages + execute metadata). Panel layouts managed by PanelManager.
+- **Monitoring**: Performance metrics via SessionStore state and TransportManager connection health.
 
-Система диалога состоит из 6 ключевых компонентов, работающих together:
+## Current File Structure
 
 ```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                           WEB UI (порт 5173)                                 │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                              │
-│  ┌──────────────────┐    ┌─────────────────────┐    ┌───────────────────┐  │
-│  │ SessionManager   │    │ SessionPanelManager│    │ SessionViewModel  │  │
-│  │                  │    │                    │    │                   │  │
-│  │ - loadSessions() │    │ - addPanel()       │    │ - messages[]      │  │
-│  │ - createSession()│    │ - removePanel()    │    │ - execute         │  │
-│  │ - deleteSession()│    │ - saveLayout()     │    │ - on/off/emit     │  │
-│  │ - getConversation│    │ - _applyLayout()   │    │                   │  │
-│  └────────┬─────────┘    └──────────┬──────────┘    └─────────┬─────────┘  │
-│           │                         │                       │             │
-│           └─────────────────────────┼───────────────────────┘             │
-│                                     │                                         │
-│                                     ▼                                         │
-│  ┌──────────────────┐    ┌─────────────────────┐    ┌───────────────────┐  │
-│  │ SSEClient        │◄──►│ SessionSync         │◄──►│ WebSocketClient   │  │
-│  │                  │    │                     │    │                   │  │
-│  │ - connect()      │    │ - applyContext()    │    │ - connect()       │  │
-│  │ - disconnect()   │    │ - applyExecute()    │    │ - send()          │  │
-│  │ - on/off/emit    │    │ - pushMessage()     │    │ - heartbeat       │  │
-│  │ - reconnect      │    │                     │    │ - reconnect       │  │
-│  └────────┬─────────┘    └──────────┬──────────┘    └─────────┬─────────┘  │
-│           │                          │                         │             │
-└───────────┼──────────────────────────┼─────────────────────────┼─────────────┘
-            │                          │                         │
-            ▼                          ▼                         ▼
-      Server-Sent Events         HTTP API              WebSocket (альтернатива)
-            │                                                 
-            ▼                                                 
-     /api/sse/:sessionId                              
+a2a-client/web/
+├── js/
+│   ├── session-store.js           # Core state (NEW)
+│   ├── transport-manager.js       # Unified transport (NEW)
+│   ├── session-sync-v2.js         # SSE bridge (NEW)
+│   ├── session-store-adapters.js  # Legacy compatibility (NEW)
+│   ├── panel-manager.js           # Simplified panels (NEW)
+│   ├── task-flow.js               # Updated (no polling)
+│   ├── app-task.js                # Application logic
+│   ├── api-integration.js         # API layer
+│   ├── web-api-client.js          # HTTP client
+│   ├── progress-indicators.js     # UI components
+│   ├── error-handler.js           # Error handling
+│   ├── template-loader.js         # Templates
+│   └── archive/                   # Legacy files (archived)
+│       ├── session-manager.js
+│       ├── session-view-model.js
+│       ├── session-sync.js
+│       ├── sse-client.js
+│       ├── websocket-client.js
+│       ├── plasticine-ui.js
+│       └── ...
+├── css/
+│   ├── components/
+│   │   └── panel-manager.css      # New panel styles (NEW)
+│   └── archive/                   # Legacy CSS
+│       ├── panel-cube.css
+│       ├── panel-dock.css
+│       └── ...
+└── index.html                     # Updated script loading
 ```
 
----
+## Session State Architecture
 
-## Компоненты механизма диалога
+### Unified SessionStore (New)
 
-### 1. SessionManager ([`session-manager.js`](js/session-manager.js))
+**Location**: `a2a-client/web/js/session-store.js`
 
-**Назначение**: Управление сессиями - создание, загрузка, удаление, переключение.
-
-**Ключевые методы**:
-
-| Метод | Описание |
-|-------|----------|
-| [`init(options)`](js/session-manager.js:32) | Инициализация менеджера |
-| [`loadSessions(projectId)`](js/session-manager.js:94) | Загрузка списка сессий проекта |
-| [`createSession(options)`](js/session-manager.js:115) | Создание новой сессии |
-| [`getSession(sessionId)`](js/session-manager.js:141) | Получение сессии по ID |
-| [`deleteSession(sessionId)`](js/session-manager.js:160) | Удаление сессии |
-| [`setActiveSession(sessionId)`](js/session-manager.js:180) | Установка активной сессии + подключение SSE |
-| [`getConversation(sessionId)`](js/session-manager.js:214) | Получение истории сообщений |
-| [`processExecute(execute, context)`](js/session-manager.js:413) | Обработка execute из протокола v2.0 |
-
-**События** (Event-driven):
+The SessionStore provides a **single source of truth** for all session-related state, consolidating previously fragmented state across SessionManager, SessionViewModel, and SessionSync:
 
 ```javascript
-SessionManager.on('sessionsLoaded', (sessions) => {...});
-SessionManager.on('sessionCreated', (session) => {...});
-SessionManager.on('sessionDeleted', (sessionId) => {...});
-SessionManager.on('sessionChanged', (sessionId) => {...});
-SessionManager.on('conversationLoaded', ({sessionId, messages}) => {...});
-SessionManager.on('formReceived', (form) => {...});        // execute.form.choices
-SessionManager.on('messageReceived', (message) => {...}); // execute.message
-SessionManager.on('executionStep', (data) => {...});        // context.execution.step
-SessionManager.on('executionProgress', (data) => {...});   // context.execution.progress
-```
-
-**Протокол v2.0** - Поддерживаемые execute типы:
-
-| Тип | Обработчик | Описание |
-|-----|------------|----------|
-| `execute.form` | [`formReceived`](js/session-manager.js:451) | Выбор из вариантов (choices) |
-| `execute.message` | [`messageReceived`](js/session-manager.js:458) | UI-only сообщение |
-| `execute.script` | [`scriptReceived`](js/session-manager.js:467) | Выполнение JS |
-| `execute['rag-search']` | [`ragSearchReceived`](js/session-manager.js:473) | RAG поиск |
-| `execute['read-file']` | [`readFileReceived`](js/session-manager.js:479) | Чтение файла |
-| `execute['write-file']` | [`writeFileReceived`](js/session-manager.js:485) | Запись файла |
-| `execute['execute-command']` | [`executeCommandReceived`](js/session-manager.js:491) | Выполнение команды |
-| `execute.finalResult` | [`finalResultReceived`](js/session-manager.js:444) | Финальный результат |
-
----
-
-### 2. SessionPanelManager ([`session-panel-manager.js`](js/session-panel-manager.js))
-
-**Назначение**: Управление floating panels для каждой сессии в UI.
-
-**Ключевые методы**:
-
-| Метод | Описание |
-|-------|----------|
-| [`setProject(projectId)`](js/session-panel-manager.js:53) | Установка проекта, загрузка сессий |
-| [`_addOrUpdatePanel(session)`](js/session-panel-manager.js:71) | Добавление/обновление панели |
-| [`_renderPanel(panel, session)`](js/session-panel-manager.js:139) | Рендер контента панели |
-| [`_savePanelLayout(sessionId, panel, state)`](js/session-panel-manager.js:244) | Сохранение layout на сервер |
-| [`_applyLayout(panel, layout)`](js/session-panel-manager.js:190) | Применение сохранённого layout |
-| [`_focusPanel(sessionId)`](js/session-panel-manager.js:220) | Активация панели (bring to front) |
-| [`_removePanel(sessionId)`](js/session-panel-manager.js:229) | Удаление панели |
-
-**Panel Layout структура** (сохраняется в `session.context.panelLayout`):
-
-```javascript
-{
-    id: "session-panel-xxx",      // ID панели
-    type: "session",               // Тип панели
-    state: "expanded" | "collapsed", // Состояние
-    slot: "floating" | "left" | "right" | "bottom", // Слот позиционирования
-    title: "Session Title",        // Заголовок
-    left: "100px",                 // Координаты
-    top: "200px",
-    width: "400px",
-    height: "300px"
+// Unified state structure
+_state: {
+    sessionId,    // string | null
+    projectId,    // string | null
+    messages[],   // conversation history (max 200)
+    execute,      // current execute object (form/message/script)
+    context,      // full server context (execution, docVirtual)
+    status,       // 'idle' | 'created' | 'active' | 'waiting' | 'completed' | 'error'
+    pendingForm,  // form awaiting user input
+    lastError     // last error object
 }
 ```
 
-**Интеграция с PlasticineUI**:
+**Benefits**:
+- One event emitter chain instead of `SessionManager → TaskFlow → SSE → UI`
+- Direct UI subscriptions to store changes
+- Computed properties: `isWaitingForInput()`, `getProgress()`, `getCurrentStep()`
+- Batch updates via `applyServerResponse()`
 
-- [`_ensurePui()`](js/session-panel-manager.js:291) - инициализация PlasticineUI
-- [`pui.addPanel(options)`](js/session-panel-manager.js:86) - создание панели
-- [`pui.removePanel(panelId)`](js/session-panel-manager.js:233) - удаление панели
-- [`pui.bringToFront(panelId)`](js/session-panel-manager.js:223) - перенос на передний план
+**Migration Files**:
+- `session-store.js` - Core store implementation
+- `session-sync-v2.js` - Direct SSE-to-Store bridge
+- `session-store-adapters.js` - Backward-compatible wrappers for legacy code
 
----
+**Usage**:
+```javascript
+// Subscribe to changes
+SessionStore.on('execute', (execute) => renderForm(execute));
+SessionStore.on('messages', (msgs) => updateChat(msgs));
 
-### 3. SessionViewModel ([`session-view-model.js`](js/session-view-model.js))
+// Query state
+if (SessionStore.isWaitingForInput()) showInputPanel();
+const progress = SessionStore.getProgress();
+```
 
-**Назначение**: Простое реактивное хранилище состояния сессии.
+For the deep technical narrative (component responsibilities, execute/event anatomy, SSE design, risk mitigation, TODOs, and performance/security plans) see the task documents in `a2a-client/web/docs/`.
 
-**Состояние**:
+## Task documents
+
+- `docs/dialog-architecture-tasks.md` — session lifecycle, execute mapping, SSE/WebSocket failover, Plasticine UI scenarios, message normalization, and context reconciliation decisions.
+- `docs/testing-sse-tasks.md` — Web UI smoke script, Playwright cross-browser matrix, VueFlow coverage, SSE heartbeat/load/order tests, WebSocket fallback automation, API error handling, and SSE load testing implementation.
+
+## Testing status
+
+Testing is layered through the integration stack; the Web UI layer depends on the previous levels.
+
+| Level | Script | Purpose | Status |
+|-------|--------|---------|--------|
+| 1. AI Integration | `test-ai-integration.ps1` | Proxy + Ollama | ✅ Enabled |
+| 2. AI Server | `test-a2a-server.ps1` | API/LLM integrity | ✅ Enabled |
+| 3. A2A Client | `test-a2a-client.ps1` | Client API/WebSocket | ✅ Enabled |
+| 4. Web UI | `test-web-ui.ps1` + `web-ui-smoke-api.spec.ts` | Full-stack smoke test | ✅ Enabled (manual: `../../scripts/test-web-ui.ps1`, automated: `tests/e2e/web-ui-smoke-api.spec.ts`) |
+| 5. Load Testing | `sse-load-test.spec.ts` | Concurrent SSE connections | ✅ Enabled (Playwright: `tests/e2e/sse-load-test.spec.ts`) |
+| 6. Performance | `performance-monitoring.spec.ts` | Heap usage, connection health | ✅ Enabled (Playwright: `tests/e2e/performance-monitoring.spec.ts`) |
+| 7. Parallel Testing | `parallel-browser-test.spec.ts` | Cross-browser matrix testing | ✅ Enabled (Playwright: `tests/e2e/parallel-browser-test.spec.ts`) |
+| 8. Visual Regression | `visual-regression.spec.ts` | Screenshot comparison testing | ✅ Enabled (Playwright: `tests/e2e/visual-regression.spec.ts`) |
+
+### Level 4: Web UI Smoke Testing
+
+**Purpose**: End-to-end verification of the complete Web UI stack including infrastructure, services, browser compatibility, and SSE connectivity.
+
+**Required Services**:
+- Docker (PostgreSQL + Redis)
+- A2A Server (port 3000)
+- Client API proxy (port 3001)
+- Vite dev server (port 5173)
+
+**Manual Execution** (`scripts/test-web-ui.ps1`):
+```powershell
+# Basic smoke test with browser
+.\scripts\test-web-ui.ps1
+
+# Cross-browser testing
+.\scripts\test-web-ui.ps1 -Browser firefox
+.\scripts\test-web-ui.ps1 -Browser edge
+
+# Headless mode for CI automation
+.\scripts\test-web-ui.ps1 -SkipBrowser
+```
+
+**Manual Validation Steps**:
+1. Verify page loads without console errors
+2. Confirm session panel appears in UI
+3. Check SSE connection establishes (Network tab: `/api/sse/:sessionId`)
+4. Validate no WebSocket fallback unless SSE blocked
+
+**Automated CI Counterpart** (`tests/e2e/web-ui-smoke-api.spec.ts`):
+- Health endpoint validation (`/health` on all services)
+- SSE connectivity testing (`/api/sse/:sessionId`)
+- Session creation via API without browser
+- CORS header validation for browser SSE
+
+**Artifacts**:
+- Service logs collected to `proxy_logs/web-ui-smoke-{timestamp}/`
+- Test results in `test-results/web-ui-smoke-{timestamp}.json`
+- Browser screenshots/videos on failure
+
+**When to Run**: Before releases, after infrastructure changes, when SSE/WebSocket issues reported.
+
+See `docs/tasks/testing-sse-tasks.md` for detailed procedures, log examples, and troubleshooting.
+
+## SSE/WebSocket Fallback Documentation
+
+### Transport Hierarchy (Updated)
+
+```
+SSE (Primary) → WebSocket (Fallback)
+    ↓                    ↓
+/api/sse/:sessionId   /api/ws/:sessionId
+```
+
+**HTTP polling removed** from async request flow. All async responses now come through SSE/WebSocket via SessionStore events.
+
+**Old flow (with polling):**
+```
+POST /sessions/:id/next → promiseId → GET /requests/:id/status (poll) → GET /requests/:id/result
+```
+
+**New flow (SSE only):**
+```
+POST /sessions/:id/next → await SSE 'execute' event via SessionStore → render
+```
+
+### SSE Fallback Triggers
+
+| Trigger | Condition | Implementation | Action |
+|---------|-----------|----------------|--------|
+| `EventSource.onerror` | Connection failed, CORS blocked, network error | `sse-client.js:121` | Switch to WebSocket |
+| Network timeout | >30s without heartbeat | `sse-client.js:heartbeat` | WebSocket fallback |
+| CORS restrictions | SSE blocked by browser policy | Browser-level restriction | Auto WebSocket |
+| Corporate proxy | SSE EventSource filtered | Network-level blocking | WebSocket attempt |
+| Mixed content | HTTP→HTTPS upgrade issues | Protocol mismatch | WebSocket secure |
+| Firewall rules | Port restrictions | Network filtering | WebSocket alternative |
+
+### WebSocketClient States & Behavior
+
+#### Connection States
+```javascript
+// From websocket-client.js
+_connectionState: 'disconnected' | 'connecting' | 'connected' | 'error'
+```
+
+#### Connection Flow
+```javascript
+SessionManager.setActiveSession(sessionId)
+    ↓
+SSEClient.connect(sessionId) [PRIMARY]
+    ├── EventSource('/api/sse/:sessionId')
+    ├── onopen → success
+    └── onerror → WebSocketClient.connect(sessionId) [FALLBACK]
+        ├── new WebSocket('/api/ws/:sessionId')
+        ├── onopen → success
+        └── onerror → retry with backoff
+```
+
+#### Reconnection Logic
+```javascript
+// Exponential backoff: delay = baseDelay * 2^(attempts-1)
+maxReconnectAttempts: 5
+reconnectDelay: 3000ms (base)
+heartbeatInterval: 30000ms
+```
+
+### Endpoint Specifications
+
+#### SSE Endpoint (Primary)
+- **URL**: `/api/sse/:sessionId`
+- **Auth**: Token in query params `?token=...`
+- **Protocol**: HTTP/1.1 with `text/event-stream`
+- **Heartbeat**: 30-second intervals
+- **Events**: `connected`, `log`, `progress`, `status`, `task_response`, `action_proposal`, `action_executing`, `step_result`, `complete`, `error`, `session_update`, `node_added`, `node_updated`, `edge_added`
+
+#### WebSocket Endpoint (Fallback)
+- **URL**: `ws://localhost:3000/api/ws/:sessionId` or `wss://...`
+- **Auth**: Token in connection headers
+- **Protocol**: WebSocket with JSON messages
+- **Heartbeat**: 30-second ping/pong
+- **Message Queue**: Failed messages queued (max 100)
+
+### Network Failure Scenarios
+
+#### Scenario 1: Corporate Firewall Blocks SSE
+```
+SSE Connection Attempt
+    ↓ [CORS/Network Error]
+EventSource.onerror triggered
+    ↓
+WebSocket Fallback Activated
+    ├── WebSocket.connect('/api/ws/:sessionId')
+    └── [SUCCESS] WebSocket active
+```
+
+#### Scenario 2: WebSocket Port Blocked
+```
+SSE → WebSocket Fallback Attempt
+    ↓ [Port 80/443 filtered]
+WebSocket.onerror triggered
+    ↓
+Future: HTTP Polling Fallback
+    └── [SUCCESS] Polling active
+```
+
+#### Scenario 3: Temporary Network Glitch
+```
+Active SSE/WebSocket Connection
+    ↓ [Network interruption]
+Connection.onclose (code != 1000)
+    ↓
+Exponential backoff reconnection
+    ├── Attempt 1: 3s delay
+    ├── Attempt 2: 6s delay
+    ├── Attempt 3: 12s delay
+    └── [SUCCESS] Reconnected
+```
+
+### Resource Management & Limits
+
+#### Connection Limits
+| Transport | Max Reconnect | Base Delay | Heartbeat | Message Buffer |
+|-----------|---------------|------------|-----------|----------------|
+| SSE | 5 attempts | 3s | 30s | Unlimited |
+| WebSocket | 5 attempts | 3s | 30s | 100 messages |
+
+#### Cleanup on Session Switch
+```javascript
+SessionManager.setActiveSession(newSessionId)
+    ├── SSEClient.disconnect() [close EventSource]
+    ├── WebSocketClient.disconnect() [close WebSocket]
+    └── Clear message queues
+```
+
+### Testing Coverage
+
+#### Automated Tests
+- **Fallback Detection**: `tests/e2e/websocket-fallback.spec.ts` - Simulates SSE blocking and verifies WebSocket activation
+- **Message Continuity**: Tests ensure messages flow correctly during transport switches
+- **Session Persistence**: Layouts and execution context preserved across reconnections
+- **Network Interruption**: Graceful handling of temporary connectivity loss
+- **Performance**: Memory usage and DOM node limits during fallback stress testing
+
+#### Manual Verification Steps
+1. ✅ SSE connection establishes (Network tab: `/api/sse/:sessionId`)
+2. ✅ No WebSocket fallback unless SSE blocked
+3. ✅ Transport switch maintains message order
+4. ✅ Session state persists across reconnections
+
+### Implementation References
+
+#### Core Components
+- **TransportManager**: `a2a-client/web/js/transport-manager.js` - Unified SSE/WebSocket with auto-fallback
+- **SessionStore**: `a2a-client/web/js/session-store.js` - Unified state management
+- **SessionSyncV2**: `a2a-client/web/js/session-sync-v2.js` - SSE-to-Store bridge
+- **PanelManager**: `a2a-client/web/js/panel-manager.js` - Simplified panel system
+- **Legacy Archive**: `a2a-client/web/js/archive/` - Old files (session-manager.js, sse-client.js, plasticine-ui.js, etc.)
+
+### TransportManager
+
+**Location**: `a2a-client/web/js/transport-manager.js`
+
+Unified transport layer with automatic fallback:
 
 ```javascript
-{
-    sessionId: "sess_xxx",      // ID текущей сессии
-    projectId: "p_xxx",         // ID проекта
-    messages: [...],            // Массив сообщений (max 200)
-    execute: {...}              // Текущий execute объект
-}
+// Connect with auto-fallback
+TransportManager.connect(sessionId);
+// → Tries SSE first
+// → Falls back to WebSocket if SSE fails
+
+// Subscribe to events (unified across transports)
+TransportManager.on('execute', (data) => render(data));
+TransportManager.on('connected', ({ transport }) => console.log(`Using ${transport}`));
+
+// Check state
+TransportManager.isConnected(); // true/false
+TransportManager.getState(); // { connectionState, activeTransport, sessionId }
 ```
 
-**Ключевые методы**:
+**Events emitted**: `connecting`, `connected`, `disconnected`, `message`, `execute`, `form`, `progress`, `error`, `transportError`, `reconnecting`
 
-| Метод | Описание |
-|-------|----------|
-| [`reset(sessionId, projectId)`](js/session-view-model.js:29) | Сброс состояния |
-| [`setSession(sessionId)`](js/session-view-model.js:40) | Установка sessionId |
-| [`setProject(projectId)`](js/session-view-model.js:47) | Установка projectId |
-| [`setMessages(messages)`](js/session-view-model.js:54) | Установка массива сообщений |
-| [`pushMessage(message, role)`](js/session-view-model.js:64) | Добавление сообщения |
-| [`setExecute(execute)`](js/session-view-model.js:74) | Установка execute |
-| [`getState()`](js/session-view-model.js:80) | Получение полного состояния |
+**No polling**: Removed `pollResult` and status/result polling from `task-flow.js`
 
-**События**:
+#### Configuration
+- Heartbeat intervals: 30 seconds (both transports)
+- Reconnection attempts: 5 max (configurable)
+- Backoff multiplier: 2x per attempt
+- Message queue limit: 100 (WebSocket only)
+
+## Panel System Architecture
+
+### PanelManager (New - Simplified)
+
+**Location**: `a2a-client/web/js/panel-manager.js`
+
+Unified panel system consolidating PlasticineUI panels + cubes + modals:
 
 ```javascript
-SessionViewModel.on('reset', ({sessionId, projectId}) => {...});
-SessionViewModel.on('session', (sessionId) => {...});
-SessionViewModel.on('project', (projectId) => {...});
-SessionViewModel.on('messages', (messages) => {...});     // весь массив
-SessionViewModel.on('message', (message) => {...});       // одно сообщение
-SessionViewModel.on('execute', (execute) => {...});
-```
-
-**Нормализация сообщений** - [`normalizeMessage(value, role)`](js/session-view-model.js:6):
-
-```javascript
-{
-    id: "msg_xxx",              // Уникальный ID
-    role: "user|assistant|system",
-    content: "Текст сообщения",
-    timestamp: "ISO8601",
-    metadata: {...}
-}
-```
-
----
-
-### 4. SSEClient ([`sse-client.js`](js/sse-client.js))
-
-**Назначение**: Server-Sent Events для real-time обновлений от сервера.
-
-**Подключение**:
-
-```javascript
-// URL формат: /api/sse/:sessionId?token=xxx
-SSEClient.connect(sessionId, '/api');
-```
-
-**Конфигурация**:
-
-| Параметр | По умолчанию | Описание |
-|----------|--------------|----------|
-| `maxReconnectAttempts` | 5 | Максимум попыток переподключения |
-| `reconnectDelay` | 3000ms | Задержка между попытками |
-| `apiBase` | `/api` | Базовый API URL |
-
-**Поддерживаемые события** (Server-Sent Events):
-
-| Событие | Обработчик | Описание |
-|---------|------------|----------|
-| `connected` | [`on('connected')`](js/sse-client.js:173) | Установлено соединение |
-| `log` | [`on('log')`](js/sse-client.js:185) | Лог сообщение |
-| `progress` | [`on('progress')`](js/sse-client.js:195) | Прогресс выполнения |
-| `status` | [`on('status')`](js/sse-client.js:205) | Изменение статуса |
-| `task_response` | [`on('task_response')`](js/sse-client.js:216) | Ответ на задачу |
-| `action_proposal` | [`on('action_proposal')`](js/sse-client.js:226) | Предложение действия |
-| `action_executing` | [`on('action_executing')`](js/sse-client.js:236) | Выполнение действия |
-| `step_result` | [`on('step_result')`](js/sse-client.js:246) | Результат шага |
-| `complete` | [`on('complete')`](js/sse-client.js:256) | Задача завершена |
-| `error` | [`on('error')`](js/sse-client.js:266) | Ошибка |
-| `session_update` | [`on('session_update')`](js/sse-client.js:281) | Обновление сессии |
-| `node_added` | [`on('node_added')`](js/sse-client.js:291) | Добавлен нод |
-| `node_updated` | [`on('node_updated')`](js/sse-client.js:301) | Обновлён нод |
-| `edge_added` | [`on('edge_added')`](js/sse-client.js:311) | Добавлено ребро |
-
-**Методы**:
-
-| Метод | Описание |
-|-------|----------|
-| [`connect(sessionId, apiBase)`](js/sse-client.js:102) | Подключение к SSE |
-| [`disconnect()`](js/sse-client.js:348) | Отключение |
-| [`isConnected()`](js/sse-client.js:358) | Проверка статуса |
-| [`on(event, handler)`](js/sse-client.js:322) | Подписка на событие |
-| [`off(event, handler)`](js/sse-client.js:329) | Отписка от события |
-| [`emit(event, data)`](js/sse-client.js:337) | Emit (внутренний) |
-
-**API Client** (встроенный):
-
-```javascript
-SSEClient.apiClient.createSession(projectId, title);
-SSEClient.apiClient.getSession(sessionId);
-SSEClient.apiClient.listSessions(projectId);
-SSEClient.apiClient.createRequest(data);
-SSEClient.apiClient.approveAction(sessionId, approved);
-SSEClient.apiClient.sendStepResult(sessionId, stepResult);
-```
-
-**Автоподключение** - при наличии `?session=xxx` в URL:
-
-```javascript
-// index.html?session=sess_xxx&api=/api
-SSEClient.configureApi(apiBase);
-SSEClient.connect(sessionId);
-```
-
----
-
-### 5. SessionSync ([`session-sync.js`](js/session-sync.js))
-
-**Назначение**: Синхронизация SSE событий с SessionViewModel.
-
-**Обработчики событий**:
-
-| SSE Событие | Обработчик | Действие |
-|-------------|------------|----------|
-| `message` | [`pushMessage()`](js/session-sync.js:62) | Добавить сообщение |
-| `task_response` | [`applyContext()`](js/session-sync.js:65) | Применить context + execute |
-| `session_update` | [`applyContext()`](js/session-sync.js:73) | Обновить сессию |
-| `progress` | [`updateProgress()`](js/session-sync.js:78) | Обновить прогресс |
-| `status` | [`applyContext()`](js/session-sync.js:82) | Применить статус |
-| `complete` | [`applyContext()`](js/session-sync.js:87) | Завершение + результат |
-| `error` | [`pushMessage()`](js/session-sync.js:95) | Показать ошибку |
-| `action_proposal` | [`applyExecute()`](js/session-sync.js:99) | Предложение действия |
-| `action_executing` | [`applyExecute()`](js/session-sync.js:103) | Выполнение действия |
-| `node_added` | [`applyContext()`](js/session-sync.js:107) | Добавлен нод |
-| `node_updated` | [`applyContext()`](js/session-sync.js:108) | Обновлён нод |
-| `edge_added` | [`applyContext()`](js/session-sync.js:109) | Добавлено ребро |
-
-**Ключевые функции**:
-
-| Функция | Описание |
-|---------|----------|
-| [`pushMessage(payload, role)`](js/session-sync.js:12) | Нормализация и добавление сообщения |
-| [`applyExecute(execute)`](js/session-sync.js:19) | Применение execute к VM |
-| [`applyContext(context)`](js/session-sync.js:27) | Применение context к VM |
-| [`updateProgress(progressData)`](js/session-sync.js:41) | Обновление прогресса |
-
----
-
-### 6. WebSocketClient ([`websocket-client.js`](js/websocket-client.js))
-
-**Назначение**: Альтернативный протокол real-time коммуникации (bidirectional).
-
-**Отличие от SSE**:
-
-| SSE | WebSocket |
-|-----|-----------|
-| Односторонняя (сервер → клиент) | Двусторонняя |
-| Автоматическое переподключение | Ручное управление |
-| Легковесный | Полный дуплекс |
-| EventSource API | WebSocket API |
-
-**Подключение**:
-
-```javascript
-// URL формат: ws://host/api/ws/:sessionId
-WebSocketClient.connect(sessionId, { apiBase: '/api' });
-```
-
-**Методы**:
-
-| Метод | Описание |
-|-------|----------|
-| [`connect(sessionId, options)`](js/websocket-client.js:36) | Подключение |
-| [`disconnect()`](js/websocket-client.js:121) | Отключение |
-| [`send(type, payload)`](js/websocket-client.js:137) | Отправка сообщения |
-| [`sendTask(task, options)`](js/websocket-client.js:157) | Отправка задачи |
-| [`sendActionApproval(actionId, approved)`](js/websocket-client.js:168) | Подтверждение действия |
-| [`sendStepResult(stepId, result)`](js/websocket-client.js:179) | Результат шага |
-| [`isConnected()`](js/websocket-client.js:217) | Проверка статуса |
-
-**Состояния соединения**:
-
-```javascript
-'disconnected' → 'connecting' → 'connected'
-                        ↓
-                   'error' (с автопереподключением)
-```
-
-**Heartbeat** - [`_startHeartbeat()`](js/websocket-client.js:251):
-
-- Интервал: 30000ms (30 сек)
-- Сообщение: `{ type: 'ping', timestamp: ... }`
-
-**Message Queue** - [`_messageQueue`](js/websocket-client.js:21):
-
-- При отключённом сокете сообщения ставятся в очередь
-- [`_flushMessageQueue()`](js/session-sync.js:242) - отправка при переподключении
-
----
-
-## Пожелания пользователя
-
-### ✅ Заставить работать диалог
-
-**Проблемы и решения**:
-
-| Проблема | Решение |
-|----------|---------|
-| Сессии не загружаются | Проверить `loadSessions()` → `/api/sessions?projectId=xxx` |
-| Сообщения не отображаются | Проверить `getConversation()` → `session.messages` |
-| SSE не подключается | Проверить `/api/sse/:sessionId` endpoint |
-| execute не обрабатывается | Использовать `processExecute()` для v2.0 протокола |
-
-**Отладка**:
-
-```javascript
-// В консоли браузера
-SessionManager.loadSessions('p_xxx').then(console.log);
-SessionManager.getConversation('sess_xxx').then(console.log);
-
-// Проверка SSE
-SSEClient.connect('sess_xxx', '/api');
-SSEClient.on('message', console.log);
-```
-
----
-
-### ✅ Тестировать вручную playwright
-
-**Тесты в [`tests/e2e/`](tests/e2e/)**:
-
-| Файл | Описание |
-|------|----------|
-| [`session-panel-smoke.spec.ts`](tests/e2e/session-panel-smoke.spec.ts) | Smoke тест панелей |
-| [`sessions.spec.ts`](tests/e2e/sessions.spec.ts) | Управление сессиями |
-| [`action-progress.spec.ts`](tests/e2e/action-progress.spec.ts) | Прогресс действий |
-| [`messaging.spec.ts`](tests/e2e/messaging.spec.ts) | Обмен сообщениями |
-
-**Запуск**:
-
-```bash
-cd a2a-client
-npx playwright test
-# или с отладкой
-npx playwright test --headed
-```
-
----
-
-### ✅ Очистить сессии
-
-**Расположение сессий**:
-
-| Директория | Описание |
-|------------|----------|
-| `a2a-client/storage/sessions/` | JSON файлы сессий клиента |
-| `a2a-server/storage/sessions/` | JSON файлы сессий сервера |
-
-**Очистка**:
-
-```bash
-# Удалить все сессии
-rm -f a2a-client/storage/sessions/p_*/sess_*.json
-rm -f a2a-server/storage/sessions/p_*/sess_*.json
-
-# Или через API (требуется запущенный сервер)
-curl -X DELETE http://localhost:3001/api/sessions/all
-```
-
-**Сессии в проекте** (текущие):
-
-```
-a2a-client/storage/sessions/p_1772611112209/
-├── sess_3efb3d46-fadd-400d-8b7d-dad1a59bc24a.json
-├── sess_8c877dca-1bbb-4dc6-8156-d0576e873279.json
-├── sess_9a033723-8f36-41c6-8e8b-0f7d36982c4a.json
-├── sess_11fd6b4f-c5ba-4554-a5b8-be8647bf4ef3.json
-├── sess_468c989d-0526-4e8e-8c2c-616bf48a1a90.json
-├── sess_616f6d9e-d3e9-4475-b1f5-95ddb021ad6e.json
-├── sess_550418aa-a889-4a5a-808f-99c2b0e9dc07.json
-├── sess_3000774f-2384-414a-ba54-316ec5bbda81.json
-├── sess_b3a5d40a-8793-4e9a-95c4-6f4adc79c335.json
-├── sess_d2b5b669-90fb-4557-8edb-c7c875a15356.json
-├── sess_dc6c5e2d-689d-4605-8942-1706dad3e3b2.json
-├── sess_ebb2b90f-02b3-405f-b638-a23cba210642.json
-└── sess_f9d37fb3-161d-4798-8650-31ec95f8751b.json
-```
-
----
-
-### ✅ Оптимизация: свёрнутые окна не грузят данные, открытое окно подгружает контент
-
-**Проблема**: При сворачивании tab браузер выгружает данные.
-
-**Решение - Smart Loading**:
-
-| Состояние | Поведение |
-|-----------|-----------|
-| Tab активен | SSE подключён, загружаются обновления |
-| Tab неактивен | SSE отключается, данные кэшируются |
-| Tab становится активным | Переподключение SSE, дозагрузка изменений |
-
-**Реализация**:
-
-```javascript
-// visibilitychange обработчик
-document.addEventListener('visibilitychange', () => {
-    if (document.hidden) {
-        // Tab скрыт - отключаем SSE
-        SSEClient.disconnect();
-        console.log('[UI] SSE disconnected (tab hidden)');
-    } else {
-        // Tab стал активным - переподключаем
-        if (SessionManager.currentSessionId) {
-            SSEClient.connect(SessionManager.currentSessionId);
-            console.log('[UI] SSE reconnected (tab visible)');
-        }
-    }
-});
-```
-
-**Планы оптимизации**:
-
-| Фаза | Описание | Статус |
-|------|----------|--------|
-| Фаза 1 | Базовая SSE инфраструктура | ✅ Готово |
-| Фаза 2 | Visibility API интеграция | 📋 Планируется |
-| Фаза 3 | Lazy loading для больших диалогов | 📋 Планируется |
-| Фаза 4 | Graceful degradation | 📋 Планируется |
-
----
-
-### ✅ SSE тестирование вместо playwright
-
-**Прямое SSE тестирование**:
-
-```bash
-# Подключение к SSE
-curl -N http://localhost:3001/api/sse/test-session
-
-# С токеном
-curl -N "http://localhost:3001/api/sse/test-session?token=YOUR_TOKEN"
-```
-
-**Ожидаемые события**:
-
-```javascript
-// connected
-event: connected
-data: {"sessionId":"sess_xxx","promiseId":"promise_xxx"}
-
-// progress
-event: progress
-data: {"progress":50,"step":"execute"}
-
-// message
-event: task_response
-data: {"context":{...},"execute":{...},"messages":[...]}
-
-// complete
-event: complete
-data: {"context":{...},"execute":{...},"result":{"message":"Done"}}
-```
-
-**JavaScript тест**:
-
-```javascript
-// Простой SSE тест
-const es = new EventSource('/api/sse/test-session');
-es.onmessage = (e) => console.log('Message:', JSON.parse(e.data));
-es.onerror = (e) => console.error('Error:', e);
-```
-
-**Интеграция с jest**:
-
-```javascript
-// tests/unit/sse-client.test.js
-describe('SSEClient', () => {
-    it('should connect and receive events', async () => {
-        const events = [];
-        SSEClient.on('message', (data) => events.push(data));
-        SSEClient.connect('test-session');
-        
-        // Wait for events...
-        await delay(1000);
-        
-        expect(events.length).toBeGreaterThan(0);
-    });
-});
-```
-
----
-
-## Протокол v2.0 (A2A)
-
-### Action-Key Shape (обязательно)
-
-**Правильный формат**:
-
-```typescript
-// Result
-{ result: { "read-file": { path: "...", content: "..." } } }
-
-// Execute  
-{ execute: { "script": { input: {}, output: "...", code: "..." } } }
-```
-
-**Неправильный формат**:
-
-```typescript
-// ❌ Плоский content
-{ result: { content: "..." } }
-
-// ❌ generic action
-{ execute: { action: "read-file", file: "..." } }
-```
-
-### Execute типы
-
-| Тип | Направление | Описание |
-|-----|-------------|----------|
-| `form` | Server → Client | Интерактивная форма с choices |
-| `message` | Server → Client | UI-only сообщение |
-| `script` | Server → Client | Выполнение JavaScript |
-| `rag-search` | Server → Client | RAG поиск |
-| `read-file` | Server → Client | Чтение файла |
-| `write-file` | Server → Client | Запись файла |
-| `execute-command` | Server → Client | Shell команда |
-
----
-
-## Отладка и диагностика
-
-### Частые проблемы
-
-| Проблема | Причина | Решение |
-|----------|---------|---------|
-| `EventSource is not defined` | SSE не поддерживается | Использовать полифил |
-| CORS ошибка | Неправильный origin | Настроить CORS на сервере |
-| 401 Unauthorized | Токен истёк | Обновить токен |
-| `maxReconnectAttempts` | Сервер недоступен | Проверить сервер |
-| Сообщения не добавляются | Неправильный формат | Проверить normalizeMessage |
-
-### Логирование
-
-```javascript
-// Включить логирование
-localStorage.setItem('debug', 'true');
-
-// Или в консоли
-SSEClient.on('message', (data) => console.log('[DEBUG]', data));
-SessionViewModel.on('messages', (msgs) => console.log('[VM] messages:', msgs));
-```
-
----
-
-## Ссылки
-
-| Файл | Описание |
-|------|----------|
-| [`../a2a-client/DEV_STATE.md`](../a2a-client/DEV_STATE.md) | Основная документация a2a-client |
-| [`../ai-integration/DEV_STATE.md`](../ai-integration/DEV_STATE.md) | AI интеграция (proxy, Ollama) |
-| [`js/session-manager.js`](js/session-manager.js) | Управление сессиями |
-| [`js/session-panel-manager.js`](js/session-panel-manager.js) | UI панели |
-| [`js/session-view-model.js`](js/session-view-model.js) | Состояние |
-| [`js/sse-client.js`](js/sse-client.js) | SSE клиент |
-| [`js/session-sync.js`](js/session-sync.js) | Синхронизация |
-| [`js/websocket-client.js`](js/websocket-client.js) | WebSocket |
-| [`tests/e2e/sessions.spec.ts`](../tests/e2e/sessions.spec.ts) | E2E тесты |
-
----
-
-## Текущие задачи
-
-### ✅ Заставить работать диалог
-
-**Потенциальные проблемы и решения**:
-
-| Проблема | Вероятность | Решение |
-|----------|-------------|---------|
-| **SSE соединение не устанавливается** | Высокая | Проверить `/api/sse/:sessionId` endpoint, токен аутентификации |
-| **API endpoints возвращают 404/500** | Высокая | Проверить запущен ли сервер на порту 3001 |
-| **Сессии не загружаются** | Средняя | Проверить `loadSessions()` → CORS, токен, projectId |
-| **Сообщения не отображаются** | Средняя | Проверить `normalizeMessage()` формат, VM состояние |
-| **Execute не обрабатывается** | Средняя | Проверить action-key shape, протокол v2.0 |
-| **PlasticineUI не инициализируется** | Низкая | Проверить загрузку CSS/JS зависимостей |
-| **WebSocket fallback не работает** | Низкая | Проверить ws:// URL, heartbeat логику |
-
-**Отладочные команды**:
-```javascript
-// Быстрая диагностика в консоли браузера
-SessionManager.init({apiBase: '/api'});
-SessionManager.loadSessions('p_1772611112209').catch(console.error);
-
-// Проверка SSE
-SSEClient.connect('sess_xxx', '/api');
-SSEClient.on('error', (err) => console.error('[SSE ERROR]', err));
-SSEClient.on('connected', () => console.log('[SSE] Connected'));
-
-// Проверка VM состояния
-SessionViewModel.on('messages', (msgs) => console.log('[VM] Messages:', msgs.length));
-```
-
----
-
-### ✅ Тестировать вручную с playwright
-
-**Потенциальные проблемы и решения**:
-
-| Проблема | Вероятность | Решение |
-|----------|-------------|---------|
-| **Браузер не запускается** | Высокая | Проверить playwright config, системные зависимости |
-| **Тесты падают на таймаутах** | Высокая | Увеличить timeout, проверить сеть |
-| **Элементы не находятся** | Средняя | Проверить селекторы, DOM структура |
-| **CORS/Network ошибки** | Средняя | Проверить dev server, прокси настройки |
-| **Аутентификация не работает** | Средняя | Проверить токены, localStorage |
-| **Флейки тесты** | Низкая | Добавить retry логику, ожидания |
-| **Память/CPU исчерпана** | Низкая | Ограничить параллельность тестов |
-
-**Запуск с отладкой**:
-```bash
-cd a2a-client
-# С подробным выводом
-npx playwright test --reporter=line --timeout=10000
-
-# С браузером
-npx playwright test sessions.spec.ts --headed --slowMo=1000
-
-# Только smoke тесты
-npx playwright test session-panel-smoke.spec.ts
-```
-
----
-
-### ✅ Очистить все сессии в проекте
-
-**Потенциальные проблемы и решения**:
-
-| Проблема | Вероятность | Решение |
-|----------|-------------|---------|
-| **Файлы заблокированы процессом** | Высокая | Остановить все серверы перед очисткой |
-| **Разные форматы хранения** | Средняя | Проверить client/server storage пути |
-| **API требует аутентификации** | Средняя | Использовать правильный токен |
-| **Конкурентный доступ** | Низкая | Синхронизировать с другими тестами |
-| **Потеря важных данных** | Низкая | Создать бэкап перед очисткой |
-| **Частичные данные остаются** | Низкая | Проверить все storage директории |
-
-**Безопасная очистка**:
-```bash
-# 1. Остановить серверы
-./kill-all.bat
-
-# 2. Создать бэкап (опционально)
-cp -r a2a-client/storage/sessions backup-client-$(date +%s)
-cp -r a2a-server/storage/sessions backup-server-$(date +%s)
-
-# 3. Очистить
-rm -rf a2a-client/storage/sessions/p_*/sess_*.json
-rm -rf a2a-server/storage/sessions/p_*/sess_*.json
-
-# 4. Проверить
-find . -name "sess_*.json" | wc -l  # должно быть 0
-```
-
----
-
-### ✅ Запланировать оптимизацию получения данных с сервера
-
-**Потенциальные проблемы и решения**:
-
-| Проблема | Вероятность | Решение |
-|----------|-------------|---------|
-| **Большие payloads (1000+ сообщений)** | Высокая | Реализовать pagination/lazy loading |
-| **Частые SSE обновления** | Высокая | Добавить throttling/debouncing |
-| **Memory leaks в браузере** | Средняя | Ограничить размер VM.messages (max 200) |
-| **Сеть медленная** | Средняя | Добавить compression, caching |
-| **Concurrent SSE connections** | Низкая | Ограничить на 1 соединение per session |
-| **Tab visibility не обрабатывается** | Низкая | Реализовать visibility API |
-| **Браузер выгружает данные** | Низкая | Использовать IndexedDB для persistence |
-
-**Метрики для мониторинга**:
-```javascript
-// В консоли браузера
-performance.memory.usedJSHeapSize / 1024 / 1024 + ' MB'
-SessionViewModel.getState().messages.length
-SSEClient.isConnected()
-```
-
-**План оптимизации** (фазы):
-1. **Фаза 1**: Ограничить messages до 200, добавить cleanup
-2. **Фаза 2**: SSE throttling (max 1 event/sec)
-3. **Фаза 3**: Visibility API интеграция
-4. **Фаза 4**: IndexedDB persistence
-
----
-
-### ✅ Запланировать SSE
-
-**Потенциальные проблемы и решения**:
-
-| Проблема | Вероятность | Решение |
-|----------|-------------|---------|
-| **Сервер не поддерживает SSE** | Высокая | Проверить EventSource API на сервере |
-| **Соединение разрывается** | Высокая | Реализовать exponential backoff |
-| **Слишком много соединений** | Средняя | Ограничить 1 SSE per session |
-| **Events приходят не по порядку** | Средняя | Добавить sequence numbers |
-| **Browser compatibility** | Низкая | Polyfill for IE/Safari |
-| **Server resources exhausted** | Низкая | Connection pooling, cleanup |
-| **Network proxies блокируют** | Низкая | Fallback to polling/websocket |
-
-**SSE Architecture план**:
-```javascript
-// Server-side (a2a-server)
-app.get('/api/sse/:sessionId', (req, res) => {
-  res.writeHead(200, {
-    'Content-Type': 'text/event-stream',
-    'Cache-Control': 'no-cache',
-    'Connection': 'keep-alive',
-    'Access-Control-Allow-Origin': '*'
-  });
-
-  // Heartbeat каждые 30 сек
-  const heartbeat = setInterval(() => {
-    res.write('event: heartbeat\ndata: ping\n\n');
-  }, 30000);
-
-  // Cleanup on disconnect
-  req.on('close', () => clearInterval(heartbeat));
+// Open/create panel
+PanelManager.open('task', { 
+    id: 'task-flow-panel', 
+    title: 'Task',
+    critical: true  // Can't close, only minimize
 });
 
-// Client-side
-SSEClient.connect = (sessionId) => {
-  const es = new EventSource(`/api/sse/${sessionId}`);
-  es.onmessage = (e) => this.emit('message', JSON.parse(e.data));
-  es.onerror = (e) => {
-    if (this.reconnectAttempts < 5) {
-      setTimeout(() => this.connect(sessionId), 3000 * Math.pow(2, this.reconnectAttempts));
-    }
-  };
-};
+// Update content
+const panel = PanelManager.get('task-flow-panel');
+panel.setContent('<div>Loading...</div>');
+
+// State transitions
+panel.minimize();   // → indicator visible
+panel.restore();    // → visible
+panel.close();      // → hidden (non-critical only)
 ```
 
-**Тестирование SSE**:
-```bash
-# Простой тест
-curl -N http://localhost:3001/api/sse/test-session
+**Panel Types**: `task`, `chat`, `logs`, `sessions`, `settings`, `projects`, `debug`
 
-# С токеном
-curl -N "http://localhost:3001/api/sse/test-session?token=xxx"
+**States**: `created` → `visible` ↔ `minimized` → `closed`
 
-# В браузере
-const es = new EventSource('/api/sse/test-session');
-es.onmessage = (e) => console.log('SSE:', e.data);
+**Key simplifications**:
+- Replaced "cubes" with simplified indicators
+- Unified panels + modals in one system
+- Direct SessionStore integration (no event chains)
+- Removed 3-level hierarchy (panels → cubes → modals)
+
+### Legacy Compatibility
+
+```javascript
+// PlasticineUI.addPanel() is adapted to PanelManager
+PlasticineUI.addPanel({ id: 'task-flow-panel', ... })
+// → calls PanelManager.addPanel() internally
 ```
 
----
-
-### Дополнительные найденные проблемы
-
-**Promise система (из TODO.md)**:
-
-| Проблема | Вероятность | Решение |
-|----------|-------------|---------|
-| **Race condition в promise статусе** | Высокая | Синхронизация записи/чтения статуса |
-| **Таймауты Ollama (60 сек)** | Высокая | Увеличить timeout, добавить retry |
-| **Модель qwen3:8b не скачивается** | Средняя | Проверить доступность модели, fallback на другие |
-| **Promise daemon polling неэффективен** | Средняя | Заменить на event-driven (Redis/RabbitMQ) |
-| **409 promise_not_pending** | Средняя | Retry логика в daemon |
-
-**Playwright конфигурация**:
-
-| Проблема | Вероятность | Решение |
-|----------|-------------|---------|
-| **webServer.command использует serve** | Высокая | Заменить на dev server (vite) для HMR |
-| **Только Chromium тестируется** | Средняя | Добавить Firefox/Safari для кросс-браузерности |
-| **maxFailures: 1 останавливает весь run** | Средняя | Увеличить для CI resilience |
-| **reuseExistingServer: !process.env.CI** | Низкая | Проверить корректность в CI среде |
-
-**VueFlow интеграция (TODO-vueflow-tests.md)**:
-
-| Проблема | Вероятность | Решение |
-|----------|-------------|---------|
-| **Отсутствуют unit тесты для nodes** | Высокая | Реализовать TaskInputNode, ActionProposalNode тесты |
-| **Protocol mapping не тестируется** | Высокая | Тесты mapSimulationResponseToFlow |
-| **Flow manager не покрыт тестами** | Средняя | Тесты для addTask, loadContext, clear |
-| **Интеграция с sessions.js** | Средняя | E2E тесты для VueFlow + sessions |
-
-**API интеграция (js файлы)**:
-
-| Проблема | Вероятность | Решение |
-|----------|-------------|---------|
-| **TODO(Task-06): session view-model binding** | Высокая | Связать task-flow.js с SessionViewModel |
-| **TODO(Task-07): только Client API** | Высокая | Убрать прямые вызовы a2a-server |
-| **TODO(Task-09): error handling** | Средняя | Централизованный error handler для всех API |
-| **Прямые server URLs в коде** | Средняя | Заменить на client-api прокси |
-
-**Системные проблемы**:
-
-| Проблема | Вероятность | Решение |
-|----------|-------------|---------|
-| **PID файлы не очищаются** | Высокая | Улучшить kill-all.bat логику |
-| **CMD обёртки не завершаются** | Средняя | Использовать taskkill /t /f |
-| **Параллельные процессы конфликтуют** | Средняя | Mutex/semaphore для shared resources |
-| **Логи перезаписываются** | Низкая | Timestamp в именах лог файлов |
-
-**Архитектурные проблемы**:
-
-| Проблема | Вероятность | Решение |
-|----------|-------------|---------|
-| **Polling вместо SSE в некоторых местах** | Высокая | Миграция на SSE для всех real-time обновлений |
-| **Отсутствие connection pooling** | Средняя | Connection pool для SSE соединений |
-| **Memory leaks в браузере** | Средняя | Профилирование, cleanup listeners |
-| **Browser compatibility issues** | Низкая | Polyfills для SSE, WebSocket fallbacks |
-
----
-
-## План решения найденных проблем
-
-### 🔥 Критические (решить до тестирования)
-
-1. **Promise система race conditions**
-   - Добавить синхронизацию в set_pending_promise/get_promise_status
-   - Увеличить Ollama timeout до 120 сек
-   - Retry логика для 409 ошибок
-
-2. **Playwright dev server**
-   - Заменить `serve` на `vite preview` или `vite dev`
-   - Проверить baseURL: `http://localhost:5173`
-
-3. **API integration cleanup**
-   - Убрать прямые a2a-server вызовы из web кода
-   - Все запросы через client-api (port 3001)
-
-### ⚠️ Высокий приоритет (во время тестирования)
-
-4. **SSE connection stability**
-   - Exponential backoff для reconnect
-   - Connection pooling (max 1 per session)
-   - Visibility API integration
-
-5. **Session cleanup automation**
-   - Улучшить kill-all.bat (taskkill /t /f)
-   - PID файл cleanup validation
-   - Backup strategy перед очисткой
-
-6. **Error handling centralization**
-   - Все API ошибки через error-handler.js
-   - User-friendly сообщения в UI
-   - Global notification system
-
-### 📋 Средний приоритет (после базового тестирования)
-
-7. **VueFlow test coverage**
-   - Unit тесты для всех node компонентов
-   - Protocol mapping тесты
-   - Integration с sessions.js
-
-8. **Browser compatibility**
-   - Firefox/Safari playwright тесты
-   - SSE polyfills для IE/legacy browsers
-   - WebSocket fallback testing
-
-9. **Performance optimization**
-   - Lazy loading для больших диалогов
-   - Message limit enforcement (max 200)
-   - Memory leak detection
-
-### 🔄 Низкий приоритет (оптимизации)
-
-10. **Event-driven promise processing**
-    - Redis/RabbitMQ для queue management
-    - Убрать polling из daemon
-    - Real-time metrics
-
-11. **Advanced error recovery**
-    - Graceful degradation modes
-    - Offline queue processing
-    - Smart retry strategies
-
----
-
-## Риски и mitigation
-
-| Риск | Вероятность | Mitigation |
-|------|-------------|------------|
-| **SSE connections overwhelm server** | Средняя | Connection limits, monitoring |
-| **Browser memory leaks** | Высокая | Message cleanup, profiling |
-| **Promise system deadlocks** | Средняя | Timeout handling, circuit breaker |
-| **Test flakiness** | Высокая | Retry logic, stable selectors |
-| **API breaking changes** | Низкая | Version pinning, compatibility layer |
-
----
-
-## Дополнительные найденные проблемы
-
-### 🔥 Security & Dependencies
-
-**Уязвимости в зависимостях**:
-
-| Проблема | Вероятность | Решение |
-|----------|-------------|---------|
-| **esbuild vulnerability (GHSA-67mh-4wv8-2f99)** | Высокая | Обновить vite до 7.3.1+ (breaking change) |
-| **Dev server позволяет external requests** | Высокая | Настроить host binding в dev mode |
-| **Hardcoded secrets в .env.example** | Средняя | Использовать placeholder values |
-| **CORS headers отсутствуют** | Средняя | Добавить CORS middleware |
-
-**Безопасность кода**:
-
-| Проблема | Вероятность | Решение |
-|----------|-------------|---------|
-| **60+ console.log/error в production** | Высокая | Убрать все console из web кода |
-| **No input sanitization** | Средняя | Добавить HTML sanitization |
-| **Missing CSP headers** | Средняя | Настроить Content Security Policy |
-| **WebSocket без origin validation** | Низкая | Добавить origin checks |
-
-### ⚠️ Performance & Memory
-
-**Memory leaks**:
-
-| Проблема | Вероятность | Решение |
-|----------|-------------|---------|
-| **30+ setTimeout/setInterval без cleanup** | Высокая | Добавить proper cleanup в destroy |
-| **Event listeners not removed** | Высокая | Implement proper teardown |
-| **SSE connections not closed** | Средняя | Visibility API + cleanup |
-| **DOM nodes not removed** | Средняя | Memory profiling, garbage collection |
-
-**Performance bottlenecks**:
-
-| Проблема | Вероятность | Решение |
-|----------|-------------|---------|
-| **No lazy loading for messages** | Высокая | Virtual scrolling для больших диалогов |
-| **Blocking DOM operations** | Средняя | Web Workers для heavy computations |
-| **No caching for API responses** | Средняя | Service Worker caching |
-| **Large bundle size** | Низкая | Code splitting, tree shaking |
-
-### 📋 Code Quality & Architecture
-
-**TypeScript & Configuration**:
-
-| Проблема | Вероятность | Решение |
-|----------|-------------|---------|
-| **exactOptionalPropertyTypes: false** | Средняя | Включить strict optional properties |
-| **noUncheckedIndexedAccess: true** | Низкая | Добавить proper bounds checking |
-| **Docker version '3.8' deprecated** | Низкая | Обновить до 3.9+ |
-| **Missing health checks** | Средняя | Добавить comprehensive health endpoints |
-
-**Architecture issues**:
-
-| Проблема | Вероятность | Решение |
-|----------|-------------|---------|
-| **Mixed sync/async patterns** | Средняя | Стандартизировать на async/await |
-| **Global state mutations** | Высокая | Redux/Vuex для state management |
-| **Tight coupling between components** | Средняя | Dependency injection |
-| **No error boundaries** | Средняя | React error boundaries equivalent |
-
-### 🔄 DevOps & CI/CD
-
-**Docker & Deployment**:
-
-| Проблема | Вероятность | Решение |
-|----------|-------------|---------|
-| **No resource limits in docker-compose** | Средняя | Добавить memory/cpu limits |
-| **Volumes not cleaned up** | Низкая | Proper volume management |
-| **No health checks in docker-compose** | Средняя | Добавить health checks для всех services |
-| **Missing restart policies** | Низкая | Добавить restart: unless-stopped |
-
-**Monitoring & Observability**:
-
-| Проблема | Вероятность | Решение |
-|----------|-------------|---------|
-| **No client-side error tracking** | Высокая | Sentry/Bugsnag integration |
-| **Missing performance metrics** | Средняя | Web Vitals tracking |
-| **No user analytics** | Низкая | Basic usage tracking |
-| **Log aggregation missing** | Средняя | Centralized logging |
-
----
-
-## Итоговый план решения (расширенный)
-
-### 🚨 КРИТИЧЕСКИЕ (решить ДО тестирования)
-
-1. **Security vulnerabilities**
-   - Обновить esbuild/vite до secure versions
-   - Убрать все console.log из production кода
-   - Настроить CORS и CSP headers
-
-2. **Memory leaks & performance**
-   - Очистить все setTimeout/setInterval в destroy
-   - Добавить proper event listener cleanup
-   - Implement message limits (max 200)
-
-3. **Architecture fixes**
-   - Исправить promise race conditions
-   - Убрать прямые server API calls из web
-   - Реализовать session view-model binding
-
-### ⚡ ВЫСОКИЙ ПРИОРИТЕТ (во время тестирования)
-
-4. **Playwright & testing**
-   - Исправить dev server configuration
-   - Добавить Firefox/Safari тесты
-   - Убрать flaky timeouts
-
-5. **SSE & real-time**
-   - Connection pooling (max 1 per session)
-   - Exponential backoff для reconnect
-   - Visibility API integration
-
-6. **Error handling**
-   - Централизованный error handler
-   - User-friendly error messages
-   - Global notification system
-
-### 📈 СРЕДНИЙ ПРИОРИТЕТ (после базового тестирования)
-
-7. **Code quality**
-   - TypeScript strict mode improvements
-   - Input sanitization
-   - Error boundaries implementation
-
-8. **Performance optimization**
-   - Lazy loading для messages
-   - Virtual scrolling
-   - Bundle size optimization
-
-9. **DevOps improvements**
-   - Docker resource limits
-   - Health checks для всех services
-   - Centralized logging
-
-### 🎯 НИЗКИЙ ПРИОРИТЕТ (оптимизации)
-
-10. **Monitoring & analytics**
-    - Error tracking (Sentry)
-    - Performance metrics (Web Vitals)
-    - Usage analytics
-
-11. **Advanced features**
-    - Offline queue processing
-    - Smart retry strategies
-    - Progressive Web App features
-
----
-
-## Метрики успеха
-
-| Метрика | Цель | Текущее значение | Target |
-|---------|------|------------------|--------|
-| **Security vulnerabilities** | 0 high/critical | 2 moderate | 0 |
-| **Memory leaks** | None detectable | Unknown | 0 |
-| **Test flakiness** | <5% failure rate | Unknown | <2% |
-| **Bundle size** | <2MB gzipped | Unknown | <1.5MB |
-| **Lighthouse score** | >90 | Unknown | >95 |
-| **Time to interactive** | <3 seconds | Unknown | <2 seconds |
+## Current priorities
+
+1. **Security & dependencies**: upgrade esbuild/vite, remove console leaks, add CSP/CORS, sanitize inputs (see `dialog-architecture`/`testing-sse` docs for current handling).
+2. **Promise & API integration**: ensure promise status locking + client API exclusivity across `api-integration.js`, `web-api-client.js`, WebSocket helpers.
+3. **SSE reliability & observability**: exponential backoff, single connection per session, sequence numbering, visibility API cleanup, instrumentation for SSE/WebSocket (see `testing-sse` doc).
+4. **Performance monitoring**: heap usage tracking, connection health metrics, memory leak detection, performance regression testing (implemented via `performance-monitoring.spec.ts`).
+
+## References
+
+- `a2a-client/web/README.md` — user-facing entrypoint + README-level architecture.
+- `a2a-client/web/docs/dialog-architecture-tasks.md`
+- `a2a-client/web/docs/testing-sse-tasks.md`
+- Old reference material moved to `a2a-client/web/docs/archive/` – keep there for historical context.

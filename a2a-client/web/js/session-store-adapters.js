@@ -1,0 +1,420 @@
+/**
+ * Session Store Adapters - Backward compatibility layer
+ * Wraps SessionStore to provide legacy SessionManager/SessionViewModel APIs
+ * Allows gradual migration without breaking existing code
+ */
+
+(function (global) {
+    'use strict';
+
+    const store = global.SessionStore;
+    if (!store) {
+        console.error('[SessionStore Adapters] SessionStore not found');
+        return;
+    }
+
+    // === SessionViewModel Adapter ===
+    // Proxies to SessionStore with identical API
+
+    const SessionViewModelAdapter = {
+        sessionId: null,
+        projectId: null,
+        messages: [],
+        execute: null,
+        _listeners: new Map(),
+
+        init() {
+            // Sync from store
+            this.sessionId = store.sessionId;
+            this.projectId = store.projectId;
+            this.messages = store.messages;
+            this.execute = store.execute;
+
+            // Subscribe to store changes
+            store.on('reset', () => this._forward('reset', store.getState()));
+            store.on('session', (id) => { this.sessionId = id; this._forward('session', id); });
+            store.on('project', (id) => { this.projectId = id; this._forward('project', id); });
+            store.on('messages', (msgs) => { this.messages = msgs; this._forward('messages', msgs); });
+            store.on('message', (msg) => this._forward('message', msg));
+            store.on('execute', (exec) => { this.execute = exec; this._forward('execute', exec); });
+
+            return this;
+        },
+
+        reset(sessionId = null, projectId = null) {
+            store.reset(sessionId, projectId);
+            return this;
+        },
+
+        setSession(sessionId) {
+            store.setSession(sessionId);
+            return this;
+        },
+
+        setProject(projectId) {
+            store.setProject(projectId);
+            return this;
+        },
+
+        setMessages(messages) {
+            store.setMessages(messages);
+            return this;
+        },
+
+        pushMessage(message, role = 'assistant') {
+            store.pushMessage(message, role);
+            return this;
+        },
+
+        setExecute(execute) {
+            store.setExecute(execute);
+            return this;
+        },
+
+        getState() {
+            return store.getState();
+        },
+
+        on(event, callback) {
+            if (typeof callback !== 'function') return () => {};
+            if (!this._listeners.has(event)) {
+                this._listeners.set(event, new Set());
+            }
+            this._listeners.get(event).add(callback);
+            return () => this.off(event, callback);
+        },
+
+        off(event, callback) {
+            this._listeners.get(event)?.delete(callback);
+        },
+
+        _forward(event, payload) {
+            const handlers = this._listeners.get(event);
+            if (!handlers) return;
+            handlers.forEach(handler => {
+                try {
+                    handler(payload);
+                } catch (err) {
+                    console.error('[SessionViewModelAdapter] Handler failed:', err);
+                }
+            });
+        }
+    };
+
+    // === SessionManager Adapter ===
+    // Combines store state with API operations
+
+    const SessionManagerAdapter = {
+        apiBase: '/api',
+        currentSessionId: null,
+        currentProjectId: null,
+        sessions: [],
+        _listeners: new Map(),
+
+        init(options = {}) {
+            this.apiBase = options.apiBase || this.apiBase;
+            this.currentProjectId = options.projectId || null;
+
+            // Sync from store
+            this.currentSessionId = store.sessionId;
+            this.currentProjectId = store.projectId || this.currentProjectId;
+
+            // Subscribe to store
+            store.on('session', (id) => { this.currentSessionId = id; this._emit('sessionChanged', id); });
+            store.on('execute', (exec) => {
+                if (exec?.form) this._emit('formReceived', exec.form);
+                if (exec?.message) this._emit('messageReceived', exec.message);
+                this._emit('executeReceived', exec);
+            });
+            store.on('execution', (exec) => {
+                if (exec?.step) this._emit('executionStep', { step: exec.step, action: exec.action, progress: exec.progress });
+                if (exec?.progress !== undefined) this._emit('executionProgress', { progress: exec.progress, step: exec.step });
+            });
+            store.on('context', (ctx) => this._emit('contextUpdated', ctx));
+            store.on('status', (status) => this._emit('statusChanged', status));
+            store.on('error', (err) => this._emit('error', err));
+
+            console.log('[SessionManagerAdapter] Initialized');
+            return this;
+        },
+
+        configure(options = {}) {
+            if (options.apiBase) this.apiBase = options.apiBase.replace(/\/?$/, '');
+            if (options.projectId) {
+                this.currentProjectId = options.projectId;
+                store.setProject(options.projectId);
+            }
+            return this;
+        },
+
+        _getHeaders() {
+            const headers = { 'Content-Type': 'application/json' };
+            const token = global.apiIntegration?.token;
+            if (token) headers['Authorization'] = `Bearer ${token}`;
+            return headers;
+        },
+
+        async _request(method, path, body = null) {
+            const url = `${this.apiBase}${path}`;
+            const options = { method, headers: this._getHeaders() };
+            if (body) options.body = JSON.stringify(body);
+
+            try {
+                const response = await fetch(url, options);
+                const data = await response.json().catch(() => ({}));
+                if (!response.ok) {
+                    global.ErrorHandler?.handleApiError({
+                        status: response.status,
+                        data,
+                        error: data?.error
+                    }, { module: 'SessionManagerAdapter', path: url, method });
+                    throw new Error(data?.error?.message || `Request failed: ${response.status}`);
+                }
+                return data.data || data;
+            } catch (error) {
+                console.error('[SessionManagerAdapter] Request error:', error);
+                global.ErrorHandler?.handleNetworkError(error, { module: 'SessionManagerAdapter', path: url, method });
+                throw error;
+            }
+        },
+
+        async loadSessions(projectId = null) {
+            const pid = projectId || this.currentProjectId;
+            if (!pid) {
+                console.warn('[SessionManagerAdapter] No project ID');
+                return [];
+            }
+            try {
+                this.sessions = await this._request('GET', `/sessions?projectId=${pid}`);
+                this._emit('sessionsLoaded', this.sessions);
+                return this.sessions;
+            } catch (error) {
+                this._emit('error', error);
+                return [];
+            }
+        },
+
+        async createSession(options = {}) {
+            const { projectId = this.currentProjectId, title = '', task = '' } = options;
+            if (!projectId) throw new Error('Project ID required');
+
+            const session = await this._request('POST', '/sessions', {
+                projectId,
+                title: title || `Session ${new Date().toLocaleString()}`,
+                task
+            });
+
+            this.sessions.unshift(session);
+            this._emit('sessionCreated', session);
+            return session;
+        },
+
+        async getSession(sessionId) {
+            const session = await this._request('GET', `/sessions/${sessionId}`);
+            this._emit('sessionLoaded', session);
+            return session;
+        },
+
+        async deleteSession(sessionId) {
+            await this._request('DELETE', `/sessions/${sessionId}`);
+            this.sessions = this.sessions.filter(s => s.id !== sessionId && s.sessionId !== sessionId);
+            this._emit('sessionDeleted', sessionId);
+            return true;
+        },
+
+        setActiveSession(sessionId) {
+            this.currentSessionId = sessionId;
+            store.setSession(sessionId);
+            this._emit('sessionChanged', sessionId);
+
+            if (global.SSEClient) {
+                global.SSEClient.connect(sessionId, this.apiBase);
+            }
+        },
+
+        async getConversation(sessionId) {
+            const sid = sessionId || this.currentSessionId;
+            const session = await this._request('GET', `/sessions/${sid}`);
+            const messages = session?.messages || session?.dialog || [];
+            store.setMessages(messages);
+            this._emit('conversationLoaded', { sessionId: sid, messages });
+            return messages;
+        },
+
+        // === Legacy execute processing (now delegates to store) ===
+
+        processExecute(execute, context = null) {
+            if (context) store.setContext(context);
+            if (execute) store.setExecute(execute);
+            return this._classifyExecute(execute);
+        },
+
+        _classifyExecute(execute) {
+            if (execute?.finalResult) {
+                this._emit('finalResultReceived', execute.finalResult);
+                return { type: 'finalResult', data: execute.finalResult };
+            }
+            if (execute?.form) return { type: 'form', data: execute.form };
+            if (execute?.message) return { type: 'message', data: execute.message };
+            if (execute?.script) return { type: 'script', data: execute.script };
+            if (execute?.['rag-search']) return { type: 'rag-search', data: execute['rag-search'] };
+            if (execute?.['read-file']) return { type: 'read-file', data: execute['read-file'] };
+            if (execute?.['write-file']) return { type: 'write-file', data: execute['write-file'] };
+            if (execute?.['execute-command']) return { type: 'execute-command', data: execute['execute-command'] };
+            return { type: 'unknown', data: execute };
+        },
+
+        // === Result submission (delegates to store helpers) ===
+
+        submitChoice(choiceId) {
+            const result = store.buildChoiceResult(choiceId);
+            this._emit('choiceSubmitted', { choiceId, result });
+            return result;
+        },
+
+        submitFormInput(inputData) {
+            store.clearPendingForm();
+            store.pushMessage({ content: JSON.stringify(inputData) }, 'user');
+            const result = { input: inputData };
+            this._emit('formInputSubmitted', { input: inputData, result });
+            return result;
+        },
+
+        submitScriptResult(scriptResult) {
+            const result = store.buildActionResult('script', scriptResult);
+            this._emit('scriptResultSubmitted', { result });
+            return result;
+        },
+
+        submitRagSearchResult(searchResult) {
+            const result = store.buildActionResult('rag-search', searchResult);
+            this._emit('ragSearchResultSubmitted', { result });
+            return result;
+        },
+
+        submitReadFileResult(fileResult) {
+            const result = store.buildActionResult('read-file', fileResult);
+            this._emit('readFileResultSubmitted', { result });
+            return result;
+        },
+
+        submitWriteFileResult(fileResult) {
+            const result = store.buildActionResult('write-file', fileResult);
+            this._emit('writeFileResultSubmitted', { result });
+            return result;
+        },
+
+        submitExecuteCommandResult(commandResult) {
+            const result = store.buildActionResult('execute-command', commandResult);
+            this._emit('executeCommandResultSubmitted', { result });
+            return result;
+        },
+
+        // === API calls with result ===
+
+        async sendResult(result) {
+            if (!this.currentSessionId) throw new Error('No active session');
+            const response = await this._request('POST', `/sessions/${this.currentSessionId}/result`, result);
+            if (response?.execute) this.processExecute(response.execute, response.context);
+            return response;
+        },
+
+        async executeNext(mode = 'manual') {
+            if (!this.currentSessionId) throw new Error('No active session');
+            const response = await this._request('POST', `/sessions/${this.currentSessionId}/next`, { mode });
+            if (response?.execute) this.processExecute(response.execute, response.context);
+            return response;
+        },
+
+        async selectAction(actionId) {
+            if (!this.currentSessionId) throw new Error('No active session');
+            const response = await this._request('POST', `/sessions/${this.currentSessionId}/action`, {
+                selectedAction: actionId
+            });
+            if (response?.execute) this.processExecute(response.execute, response.context);
+            return response;
+        },
+
+        // === Legacy SSE handling (now handled by SessionSyncV2) ===
+
+        handleSSEMessage(data) {
+            // Forward to store directly
+            store.applyServerResponse(data);
+        },
+
+        // === Legacy render methods (minimal implementation) ===
+
+        appendMessage(message) {
+            store.pushMessage(message, message?.role || 'assistant');
+        },
+
+        getPendingForm() {
+            return store._state?.pendingForm;
+        },
+
+        isProtocolV2() {
+            return store.context?.version === '2.0';
+        },
+
+        getExecutionState() {
+            return store.getExecution();
+        },
+
+        // === Event system ===
+
+        on(event, callback) {
+            if (!this._listeners.has(event)) {
+                this._listeners.set(event, new Set());
+            }
+            this._listeners.get(event).add(callback);
+            return () => this.off(event, callback);
+        },
+
+        off(event, callback) {
+            this._listeners.get(event)?.delete(callback);
+        },
+
+        _emit(event, data) {
+            this._listeners.get(event)?.forEach(cb => {
+                try { cb(data); } catch (e) { console.error('[SessionManagerAdapter] Event error:', e); }
+            });
+        },
+
+        // === Legacy render methods (stubs) ===
+
+        renderSessionsList(containerId, options = {}) {
+            console.warn('[SessionManagerAdapter] renderSessionsList: migrate to direct DOM manipulation');
+        },
+
+        renderConversation(containerId, messages = []) {
+            console.warn('[SessionManagerAdapter] renderConversation: UI should subscribe to SessionStore');
+        }
+    };
+
+    // === Install Adapters ===
+
+    // Only install if legacy objects don't exist or if force flag set
+    if (!global.SessionViewModel || global.FORCE_SESSION_STORE) {
+        SessionViewModelAdapter.init();
+        global.SessionViewModel = SessionViewModelAdapter;
+        console.log('[SessionStore Adapters] SessionViewModel installed');
+    }
+
+    if (!global.SessionManager || global.FORCE_SESSION_STORE) {
+        SessionManagerAdapter.init();
+        global.SessionManager = SessionManagerAdapter;
+        console.log('[SessionStore Adapters] SessionManager installed');
+    }
+
+    global.SessionStoreAdapters = {
+        SessionViewModelAdapter,
+        SessionManagerAdapter,
+        install: () => {
+            SessionViewModelAdapter.init();
+            global.SessionViewModel = SessionViewModelAdapter;
+            SessionManagerAdapter.init();
+            global.SessionManager = SessionManagerAdapter;
+        }
+    };
+
+})(typeof window !== 'undefined' ? window : globalThis);

@@ -74,20 +74,56 @@
     <div class="notifications-list" id="notificationsList"></div>
 </div>
 
-<script src="js/template-loader.js"></script>
-<script src="js/api-integration.js"></script>
+<!-- ===== New Unified Architecture ===== -->
+
+<!-- 1. Core State (Single Source of Truth) -->
+<script src="js/session-store.js"></script>
+
+<!-- 2. Transport (SSE Primary + WebSocket Fallback) -->
+<script src="js/transport-manager.js"></script>
+<script src="js/session-sync-v2.js"></script>
+
+<!-- 3. Adapters (Backward Compatibility Layer) -->
+<script src="js/session-store-adapters.js"></script>
+
+<!-- 4. Simplified Panel System -->
+<script src="js/panel-manager.js"></script>
+<link rel="stylesheet" href="css/components/panel-manager.css">
+
+<!-- ===== Legacy Files (Remove After Migration) ===== -->
+<!--
 <script src="js/session-manager.js"></script>
 <script src="js/websocket-client.js"></script>
 <script src="js/session-view-model.js"></script>
 <script src="js/sse-client.js"></script>
 <script src="js/session-sync.js"></script>
+<script src="js/plasticine-ui.js"></script>
+<script src="js/plasticine-workflow.js"></script>
+<script src="js/session-panel-manager.js"></script>
+-->
+
+<!-- ===== Application Modules ===== -->
+<script src="js/template-loader.js"></script>
+<script src="js/api-integration.js"></script>
 <script src="js/progress-indicators.js"></script>
 <script src="js/error-handler.js"></script>
 <script src="js/web-api-client.js"></script>
-<script src="js/plasticine-ui.js"></script>
-<script src="js/plasticine-workflow.js"></script>
 <script src="js/task-flow.js"></script>
-<script src="js/session-panel-manager.js"></script>
 <script src="js/app-task.js"></script>
+
+<script>
+    // Initialize new architecture on page load
+    document.addEventListener('DOMContentLoaded', () => {
+        // Force adapter installation (replaces legacy globals)
+        window.FORCE_SESSION_STORE = true;
+        
+        // Initialize core systems
+        SessionStore.init();
+        TransportManager.init();
+        PanelManager.init().syncWithSessionStore();
+        
+        console.log('[A2A] Unified architecture initialized');
+    });
+</script>
 </body>
 </html>
