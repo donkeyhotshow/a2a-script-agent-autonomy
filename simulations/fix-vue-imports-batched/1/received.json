@@ -1,0 +1,23 @@
+{
+    "projectId": "123",
+    "sessionId": "456",
+    "execute": {
+      "form": {
+        "title": "Оберіть спосіб виконання",
+        "choices": [
+          {
+            "id": "fix-vue-imports-batched",
+            "label": "Виправити зламані імпорти у Vue файлах (пакетна обробка)"
+          },
+          {
+            "id": "auto-ai",
+            "label": "AI Action Generator — згенерувати екшен за допомогою LLM"
+          },
+          {
+            "id": "task-decomposition",
+            "label": "Декомпозиція задачі вручну"
+          }
+        ]
+      }
+    }
+  }

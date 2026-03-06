@@ -1,0 +1,21 @@
+{
+  "timestamp": "2026-03-06T18:01:18.920Z",
+  "status": "FAIL",
+  "summary": {
+    "passed": 1,
+    "warnings": 1,
+    "errors": 2
+  },
+  "details": {
+    "passed": [
+      "Docker services check"
+    ],
+    "warnings": [
+      "Configuration validation failed (non-critical)"
+    ],
+    "errors": [
+      "Configuration validation: Command failed: npm run validate:config",
+      "Web UI smoke test: Command failed: npm run smoke-test"
+    ]
+  }
+}

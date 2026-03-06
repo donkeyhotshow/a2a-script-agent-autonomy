@@ -13,16 +13,16 @@
 
 ## Потік
 
-| Крок | Request                                          | Response                                                                    |
-|------|--------------------------------------------------|-----------------------------------------------------------------------------|
-| 1    | task: "проаналізуй архітектуру проекту"          | actions [analyze]                                                           |
-| 2    | result.action: "analyze"                         | execute.form (message)                                                      |
-| 3    | result.message: "опиши архітектуру бекенду"      | LLM → rag-search (арх. документи)                                           |
-| 4    | result + ragResults                              | LLM → підтверджені факти + розбіжності, form (продовжити пошук \| зберегти) |
-| 5    | result.choice: "continue_search", result.message | execute.rag-search (другий пошук)                                           |
-| 6    | result["rag-search"] (другі результати)          | LLM → оновлені факти + розбіжності, form знову                              |
-| 7    | result.choice: "save_report", result.path        | LLM → write-file в .carrier/reports/                                        |
-| 8    | result["write-file"] success                     | completed + form                                                            |
+| Крок | Client (Web→Client)                              | Server Response (Server→Client)                                             | Received (Client→Web) |
+|------|--------------------------------------------------|-----------------------------------------------------------------------------|-----------------------|
+| 1    | task: "проаналізуй архітектуру проекту"          | execute.form з вибором дій                                                  | execute.form          |
+| 2    | result.choice: "analyze"                         | execute.form (message)                                                      | execute.form          |
+| 3    | result.message: "опиши архітектуру бекенду"      | LLM → rag-search (арх. документи)                                           | execute.rag-search    |
+| 4    | result["rag-search"]                             | LLM → підтверджені факти + розбіжності, form (продовжити пошук \| зберегти) | execute.form + message|
+| 5    | result.choice: "continue_search"                 | execute.rag-search (другий пошук)                                           | execute.rag-search    |
+| 6    | result["rag-search"] (другі результати)          | LLM → оновлені факти + розбіжності, form знову                              | execute.form + message|
+| 7    | result.choice: "save_report"                     | LLM → write-file в .carrier/reports/                                        | execute.write-file    |
+| 8    | result["write-file"] success                     | completed + form                                                            | result.completed      |
 
 ## Дії
 
@@ -35,14 +35,63 @@
 ## Структура файлів
 
 ```
-simulations/analyze-dialog/
+simulations/analyze/
 ├── description.md
-├── 1/ request.json, response.json
-├── 2/ request.json, response.json
-├── 3/ request.json, server-transforms-request.json, request.md, response.md, server-transforms-response.json, response.json
-├── 4/ request.json, server-transforms-request.json, request.md, response.md, server-transforms-response.json, response.json
-├── 5/ request.json, response.json
-├── 6/ request.json, server-transforms-request.json, request.md, response.md, server-transforms-response.json, response.json
-├── 7/ request.json, server-transforms-request.json, request.md, response.md, server-transforms-response.json, response.json
-└── 8/ request.json, response.json
+├── analysis.md
+├── 1/
+│   ├── client.json
+│   ├── request.json
+│   ├── response.json
+│   └── received.json
+├── 2/
+│   ├── client.json
+│   ├── request.json
+│   ├── response.json
+│   └── received.json
+├── 3/
+│   ├── client.json
+│   ├── request.json
+│   ├── server-transforms-request.json
+│   ├── request.md
+│   ├── response.md
+│   ├── server-transforms-response.json
+│   ├── response.json
+│   └── received.json
+├── 4/
+│   ├── client.json
+│   ├── request.json
+│   ├── server-transforms-request.json
+│   ├── request.md
+│   ├── response.md
+│   ├── server-transforms-response.json
+│   ├── response.json
+│   └── received.json
+├── 5/
+│   ├── client.json
+│   ├── request.json
+│   ├── response.json
+│   └── received.json
+├── 6/
+│   ├── client.json
+│   ├── request.json
+│   ├── server-transforms-request.json
+│   ├── request.md
+│   ├── response.md
+│   ├── server-transforms-response.json
+│   ├── response.json
+│   └── received.json
+├── 7/
+│   ├── client.json
+│   ├── request.json
+│   ├── server-transforms-request.json
+│   ├── request.md
+│   ├── response.md
+│   ├── server-transforms-response.json
+│   ├── response.json
+│   └── received.json
+└── 8/
+    ├── client.json
+    ├── request.json
+    ├── response.json
+    └── received.json
 

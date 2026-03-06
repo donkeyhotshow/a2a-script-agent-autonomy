@@ -1,0 +1,10 @@
+{
+  "projectId": "123",
+  "sessionId": "456",
+  "execute": {
+    "write-file": {
+      "path": ".carrier/tasks/task-1.md",
+      "content": "# 1. Task\n\nadd auth and refactor API\n\n# 2. Subtasks\n\n1. Add JWT auth middleware and login endpoint\n2. Protect existing API routes with auth\n3. Refactor API module structure and error handling\n4. Add integration tests for auth and protected routes\n\n# 3. Steps\n\n## Subtask 1\n- Create JWT sign/verify helpers\n- Add POST /login route and handler\n- Wire auth middleware into app\n## Subtask 2\n- Apply auth middleware to protected routes\n- Return 401 when token missing or invalid\n## Subtask 3\n- Split API into modules (auth, users, core)\n- Add centralized error handler and status codes\n## Subtask 4\n- Add tests for POST /login and token flow\n- Add tests for protected routes (401/200)\n\n# 4. Actions\n\n## Step 1.1\n- Create src/auth/jwt.js with sign(tokenPayload) and verify(token)\n## Step 1.2\n- Add POST /login in routes; validate body; call jwt.sign; return token\n## Step 1.3\n- Add authMiddleware that reads Authorization, jwt.verify; next() or 401\n## Step 2.1\n- Apply authMiddleware to /api/* routes in router\n## Step 2.2\n- In middleware: on invalid/missing token set status 401 and end response\n## Step 3.1\n- Move routes into api/auth.js, api/users.js, api/core.js; require in app\n## Step 3.2\n- Add errorHandler middleware; map errors to status codes and JSON\n## Step 4.1\n- Add test: POST /login returns 200 and token; invalid creds 401\n## Step 4.2\n- Add test: GET protected without token → 401; with valid token → 200"
+    }
+  }
+}

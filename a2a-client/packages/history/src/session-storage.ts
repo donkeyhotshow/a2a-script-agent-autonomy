@@ -12,5 +12,4 @@
 
 // Re-export from modular structure for backward compatibility
 export * from './session-storage/index.js';
-export { SessionStorage } from './session-storage/index.js';
-export default from './session-storage/index.js';
+export { SessionStorage, default } from './session-storage/index.js';

@@ -31,10 +31,15 @@ Not every step has all 8 files: steps without LLM обычно имеют `clien
 ## Примеры Web ↔ Client API
 
 | Файл | Направление | Что показывает |
+|------|-------------|---------------|
 | `simulations/dialog/1/client.json` | Web → Client API | UI отправляет начальный `task` с `projectId`, чтобы создать сессию и показывать прогресс. |
 | `simulations/dialog/1/received.json` | Client API → Web | Клиент получает `execute.form` с выбором режимов (dialog, auto-ai, task-decomposition); это то, что рендерит интерфейс. |
 | `simulations/dialog/2/client.json` | Web → Client API | После выбора опции web отправляет `result.choice` вместе с идентификаторами сессии/проекта. |
 | `simulations/dialog/2/received.json` | Client API → Web | Клиент API отвечает формой с полем `message` для следующего шага диалога. |
+| `simulations/coder/1/client.json` | Web → Client API | Начальный запрос на помощь с кодом. |
+| `simulations/coder/1/received.json` | Client API → Web | Выбор типа действия (coder, auto-ai, task-decomposition). |
+| `simulations/analyze/3/client.json` | Web → Client API | Результат RAG-поиска для анализа архитектуры. |
+| `simulations/analyze/3/received.json` | Client API → Web | Форма с результатами анализа и вариантами продолжения. |
 
 ## Request
 
@@ -194,13 +199,13 @@ default: `.carrier/reports/` (e.g. `architecture-report.md`).
 
 ## Reference sims
 
-- fix-vue-imports: first response = execute.form with choices (no-LLM first, fallback merged); then script steps.
-  fix-vue-imports-batched: batched variant.
-- dialog: repeatSteps + fallbackActions + matchScore (aligned with coder).
-- coder: single step + fallbackActions.
-- coder-smart: steps user-request → rag-clarify → rag-research-plan → checklist → write-doc → execute-item; virtual
-  doc (1→1+2→1+2+3→full), write to .carrier/tasks/; then loop (history = [doc], LLM do item, update doc).
-- analyze: dialog like coder; AI searches arch docs (RAG), confirms facts or lists discrepancies; optional write-file
-  report.
-- auto-ai: full capabilities — form, rag-search, read-file, write-file, execute-command (command, exitCode, stdout,
-  stderr); true end-to-end flow.
+- **dialog**: базовый диалог с выбором типа действия; демонстрирует execute.form.choices
+- **coder**: AI-асистент для работы с кодом; полный цикл от выбора действия до выполнения через LLM
+- **coder-smart**: продвинутый кодер с документированием; создает task-документ, затем выполняет пункты
+- **analyze**: анализ архитектуры проекта; AI ищет документацию и выявляет несоответствия
+- **task-decomposition**: декомпозиция задач; прогрессивное разбиение задачи на подзадачи/шаги/действия
+- **fix-vue-imports**: actions-based симуляция; исправление импортов в Vue файлах (алгоритмический подход)
+- **fix-vue-imports-batched**: пакетная обработка; исправление импортов в нескольких файлах
+- **phpunit-deprecations**: поиск устаревших PHPUnit методов
+- **test-action-flow**: тест полного потока выбора действий
+- **auto-ai**: полные возможности системы; все типы execute команд в одном сценарии

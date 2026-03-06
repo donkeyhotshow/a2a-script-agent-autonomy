@@ -1,0 +1,11 @@
+{
+  "projectId": "123",
+  "sessionId": "456",
+  "execute": {
+    "rag-search": {
+      "query": "export { helper }",
+      "description": "Пошук файлу, який експортує 'helper' з помилки",
+      "output": "exporter_file"
+    }
+  }
+}

@@ -15,47 +15,50 @@
 | 1   | result.message: "диалог"                     | execute.form.choices (router: dialog / auto-ai / task-decomposition)    |
 | 2   | result.choice: "dialog"                      | execute.form.input[message], execution.action = "dialog", step = "request" |
 | 3   | result.message: "hello world"                | LLM → history +1, execution.step = "llm-request", execute.message + form.input |
-| 4   | result.message: "Дякую!"                     | LLM → history +1, execution.step = "completed", execute.message + form.input  |
+| 4   | result.message: "Дякую!"                     | execution.step = "completed", execute.message + form.input  |
 
 ## История диалога
 
-- 3: user: "hello world" → assistant: "hello world"
-- 4: user: "Дякую!" → assistant: "Будь ласка! Звертайся ще."
-- 5: completed
+- Шаг 3: user: "hello world" → assistant: "hello world"
+- Шаг 4: user: "Дякую!" → (завершення діалогу)
 
 ## Структура файлов
 
 ```
 simulations/dialog/
 ├── description.md
+├── WORKFLOW.md
+├── analysis.md
 ├── 1/
 │   ├── request.json
-│   └── response.json
+│   ├── response.json
+│   ├── client.json
+│   ├── received.json
+│   ├── server-response.json
+│   └── server-transforms-request.json (опціонально)
 ├── 2/
 │   ├── request.json
-│   └── response.json
+│   ├── response.json
+│   ├── client.json
+│   ├── received.json
+│   ├── server-response.json
+│   └── server-transforms-response.json (опціонально)
 ├── 3/
 │   ├── request.json
 │   ├── response.json
 │   ├── request.md
-│   └── response.md
+│   ├── response.md
+│   ├── server-response.json
+│   ├── server-transforms-request.json
+│   └── server-transforms-response.json
 ├── 4/
 │   ├── request.json
 │   ├── response.json
 │   ├── request.md
-│   └── response.md
-├── 5/
-│   ├── request.json
-│   ├── response.json
-│   ├── request.md
-│   └── response.md
-├── 6/
-│   ├── request.json
-│   ├── response.json
-│   ├── request.md
-│   └── response.md
-└── steps/
-    └── ai-analyze-prompt.md
+│   ├── response.md
+│   ├── server-response.json
+│   ├── server-transforms-request.json
+│   └── server-transforms-response.json
 ```
 
 > **Примітка:** Файли `server-transforms-request.json` та `server-transforms-response.json` є опціональними і показують

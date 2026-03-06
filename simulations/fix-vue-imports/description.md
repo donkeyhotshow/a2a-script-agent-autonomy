@@ -31,11 +31,31 @@
 simulations/fix-vue-imports/
 ├── description.md
 ├── analysis.md
-├── 1/ request.json, response.json
-├── 2/ request.json, response.json
-├── 3/ request.json, response.json
-├── 4/ request.json, response.json
-└── 5/ request.json, response.json   # завершення
+├── 1/
+│   ├── client.json
+│   ├── request.json
+│   ├── response.json
+│   └── received.json
+├── 2/
+│   ├── client.json
+│   ├── request.json
+│   ├── response.json
+│   └── received.json
+├── 3/
+│   ├── client.json
+│   ├── request.json
+│   ├── response.json
+│   └── received.json
+├── 4/
+│   ├── client.json
+│   ├── request.json
+│   ├── response.json
+│   └── received.json
+└── 5/
+    ├── client.json
+    ├── request.json
+    ├── response.json
+    └── received.json
 ```
 
 > **Примітка:** Файли `server-transforms-request.json` та `server-transforms-response.json` є опціональними і показують

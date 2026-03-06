@@ -1,0 +1,17 @@
+{
+  "projectId": "123",
+  "sessionId": "456",
+  "result": {
+    "scan-phpunit": {
+      "files": [
+        {
+          "path": "tests/Unit/UserTest.php"
+        },
+        {
+          "path": "tests/Feature/AuthTest.php"
+        }
+      ],
+      "total": 45
+    }
+  }
+}

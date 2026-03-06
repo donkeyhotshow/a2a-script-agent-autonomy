@@ -1,0 +1,14 @@
+{
+    "projectId": "123",
+    "sessionId": "456",
+    "execute": {
+      "script": {
+        "input": {
+          "rootDir": ".",
+          "filePattern": "**/*.vue"
+        },
+        "output": "broken_imports_count",
+        "code": "// request-files-to-fix.dsl\n// Отримання списку файлів з битими імпортами\n\nconst result = await script.execute('request-files-to-fix', { rootDir, filePattern });"
+      }
+    }
+  }

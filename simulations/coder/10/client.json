@@ -1,0 +1,14 @@
+{
+  "projectId": "123",
+  "sessionId": "456",
+  "result": {
+    "rag-search": {
+      "query": "authorization login JWT token auth",
+      "results": {
+        "src/auth.js": "const jwt = require('jsonwebtoken');\n\nfunction authenticate(req, res, next) {\n  const token = req.headers.authorization;\n  ...",
+        "src/middleware/auth.js": "module.exports = { authMiddleware: function(req, res, next) {\n  const token = req.headers['x-auth-token'];\n  ...",
+        "src/utils/jwt.js": "export function verifyToken(token) {\n  return jwt.verify(token, process.env.JWT_SECRET);\n}"
+      }
+    }
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "projectId": "123",
+  "sessionId": "456",
+  "result": {
+    "read-file": {
+      "path": "src/auth.js",
+      "content": "module.exports = { auth: function(tok"
+    }
+  }
+}

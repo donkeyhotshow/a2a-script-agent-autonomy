@@ -71,10 +71,14 @@
     function renderExecute(contentEl, execute, data, taskFlowRef) {
         if (!contentEl || !execute) return;
         
+        // Use ActionHandler for uniform processing
+        const handler = global.ActionHandler;
+        const processed = handler?.processExecute?.(execute) || { type: 'unknown', data: execute };
+        
         const context = data?.context;
         const execution = context?.execution;
         
-        // Task 3.1: Build execution step display
+        // Build execution step display
         let executionStepHtml = '';
         if (execution?.step) {
             const isLlmRequest = execution.step === 'llm-request' || execution.action?.startsWith('ai-');
@@ -86,7 +90,7 @@
                 </div>`;
         }
 
-        // Task 3.2: Build progress bar display
+        // Build progress bar display
         let progressBarHtml = '';
         if (execution?.progress !== undefined) {
             const progress = Math.max(0, Math.min(100, execution.progress));
@@ -99,14 +103,13 @@
                 </div>`;
         }
 
-        // Task 3.3: Build finalResult display (for completed status)
+        // Build finalResult display
         let finalResultHtml = '';
         if (execution?.status === 'completed' || execute.finalResult) {
             const finalResult = execute.finalResult || {};
             const summary = finalResult.summary || {};
             const actionName = finalResult.action || execution?.action || 'unknown';
             
-            // Format summary as key-value pairs
             let summaryHtml = '';
             if (typeof summary === 'object' && summary !== null) {
                 summaryHtml = Object.entries(summary)
@@ -123,35 +126,95 @@
                 </div>`;
         }
         
-        const form = execute.form;
-        const message = execute.message;
-        if (form && Array.isArray(form.choices) && form.choices.length > 0) {
+        // Uniform rendering based on action type
+        switch (processed.type) {
+            case 'form':
+                renderForm(contentEl, processed.data, executionStepHtml, progressBarHtml, finalResultHtml, taskFlowRef);
+                return;
+                
+            case 'message':
+                renderMessage(contentEl, processed.data, executionStepHtml, progressBarHtml, finalResultHtml, taskFlowRef);
+                return;
+                
+            case 'script':
+            case 'rag-search':
+            case 'read-file':
+            case 'write-file':
+            case 'execute-command':
+                renderClientAction(contentEl, processed.type, processed.data, executionStepHtml, progressBarHtml, finalResultHtml, taskFlowRef);
+                return;
+                
+            default:
+                // Debug view for unknown types
+                renderDebug(contentEl, data, executionStepHtml, progressBarHtml, finalResultHtml, taskFlowRef);
+        }
+    }
+
+    function renderForm(contentEl, form, executionStepHtml, progressBarHtml, finalResultHtml, taskFlowRef) {
+        const hasChoices = form?.choices?.length > 0;
+        const hasInput = form?.input?.length > 0;
+
+        if (!hasChoices && !hasInput) {
+            renderDebug(contentEl, { execute: { form } }, executionStepHtml, progressBarHtml, finalResultHtml, taskFlowRef);
+            return;
+        }
+
+        let formContent = '';
+
+        // Render choices (buttons)
+        if (hasChoices) {
             const title = form.title ? `<p class="task-flow-form-title">${escapeHtml(form.title)}</p>` : '';
             const buttons = form.choices.map((c) =>
                 `<button type="button" class="task-flow-choice-btn" data-choice-id="${escapeHtml(c.id)}">${escapeHtml(c.label || c.id)}</button>`
             ).join('');
-            contentEl.innerHTML = `
+            formContent += `${title}<div class="task-flow-choices">${buttons}</div>`;
+        }
+
+        // Render input fields (only when server explicitly sends form.input)
+        let inputAreaHtml = '';
+        if (hasInput) {
+            const inputs = form.input.map((field) => {
+                if (field.type === 'text' || field.type === 'string') {
+                    return `<input type="text" name="${escapeHtml(field.name)}" class="task-flow-form-input" placeholder="${escapeHtml(field.label || field.name)}" ${field.required ? 'required' : ''}>`;
+                }
+                return '';
+            }).join('');
+            formContent += `<div class="task-flow-form-inputs">${inputs}</div>`;
+            inputAreaHtml = getInputAreaHtml();
+        }
+
+        contentEl.innerHTML = `
         <div class="task-flow-response task-flow-form-wrap">
           ${executionStepHtml}
           ${progressBarHtml}
-          ${title}
-          <div class="task-flow-choices">${buttons}</div>
+          ${formContent}
           ${finalResultHtml}
-        </div>`;
+        </div>
+        ${inputAreaHtml}`;
+
+        // Bind choice buttons
+        if (hasChoices) {
             contentEl.querySelectorAll('.task-flow-choice-btn').forEach((btn) => {
                 btn.addEventListener('click', () => {
                     const choiceId = btn.getAttribute('data-choice-id');
-                    if (choiceId && taskFlowRef && taskFlowRef.sendChoice) taskFlowRef.sendChoice(choiceId, contentEl);
+                    if (choiceId && taskFlowRef?.sendChoice) {
+                        taskFlowRef.sendChoice(choiceId, contentEl);
+                    }
                 });
             });
-            return;
         }
-        if (message != null) {
-            const messageContent = typeof message === 'string'
-                ? message
-                : (message.content || message.text || '');
-            const encodedMessage = encodeURIComponent(messageContent || '');
-            contentEl.innerHTML = `
+
+        // Bind input handlers only if input area exists
+        if (hasInput) {
+            bindInputHandlers(contentEl, taskFlowRef);
+        }
+    }
+
+    function renderMessage(contentEl, message, executionStepHtml, progressBarHtml, finalResultHtml, taskFlowRef) {
+        const messageContent = typeof message === 'string' ? message : (message.content || message.text || '');
+        const encodedMessage = encodeURIComponent(messageContent || '');
+
+        contentEl.innerHTML = `
         <div class="task-flow-response task-flow-message-wrap">
           ${executionStepHtml}
           ${progressBarHtml}
@@ -161,18 +224,42 @@
           </div>
           ${finalResultHtml}
         </div>`;
-            const messageBtn = contentEl.querySelector('.task-flow-message-btn');
-            messageBtn?.addEventListener('click', () => {
-                const payload = messageBtn.dataset.message;
-                const decoded = payload ? decodeURIComponent(payload) : '';
-                if (taskFlowRef?.sendMessageResult) {
-                    taskFlowRef.sendMessageResult(decoded, contentEl);
-                }
-            });
-            return;
-        }
+
+        const messageBtn = contentEl.querySelector('.task-flow-message-btn');
+        messageBtn?.addEventListener('click', () => {
+            const payload = messageBtn.dataset.message;
+            const decoded = payload ? decodeURIComponent(payload) : '';
+            if (taskFlowRef?.sendMessageResult) {
+                taskFlowRef.sendMessageResult(decoded || 'continue', contentEl);
+            }
+        });
+    }
+
+    function renderClientAction(contentEl, actionType, data, executionStepHtml, progressBarHtml, finalResultHtml, taskFlowRef) {
+        // Client-side actions (script, rag-search, file ops, commands)
+        const typeLabels = {
+            'script': 'Script Execution',
+            'rag-search': 'RAG Search',
+            'read-file': 'File Read',
+            'write-file': 'File Write',
+            'execute-command': 'Command Execution'
+        };
+
+        contentEl.innerHTML = `
+        <div class="task-flow-response task-flow-client-action">
+          ${executionStepHtml}
+          ${progressBarHtml}
+          <div class="client-action-header">${typeLabels[actionType] || actionType}</div>
+          <pre class="client-action-data">${escapeHtml(JSON.stringify(data, null, 2))}</pre>
+          <div class="client-action-status">Waiting for client execution...</div>
+          ${finalResultHtml}
+        </div>`;
+    }
+
+    function renderDebug(contentEl, data, executionStepHtml, progressBarHtml, finalResultHtml, taskFlowRef) {
         const ctx = data?.context ? JSON.stringify(data.context, null, 2) : '';
         const exec = data?.execute ? JSON.stringify(data.execute, null, 2) : '';
+
         contentEl.innerHTML = `
         <div class="task-flow-response">
           ${executionStepHtml}
@@ -183,14 +270,45 @@
         </div>`;
     }
 
+    function bindInputHandlers(contentEl, taskFlowRef) {
+        const input = contentEl.querySelector('#taskMessageInput');
+        const sendBtn = contentEl.querySelector('#taskSendMessage');
+
+        if (!input || !sendBtn || !taskFlowRef) return;
+
+        const sendHandler = () => {
+            const text = input.value.trim();
+            if (!text) return;
+            input.value = '';
+            if (taskFlowRef.sendMessageResult) {
+                taskFlowRef.sendMessageResult(text, contentEl);
+            }
+        };
+
+        sendBtn.addEventListener('click', sendHandler);
+        input.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendHandler();
+        });
+    }
+
+    function getInputAreaHtml() {
+        return `
+        <div class="task-flow-input-area">
+            <div class="message-input-container">
+                <input type="text" id="taskMessageInput" class="message-input-field" placeholder="Type your message…" autocomplete="off">
+                <button type="button" id="taskSendMessage" class="message-send-btn">Send</button>
+            </div>
+        </div>`;
+    }
+
     function setPanelContent(contentEl, state, data, taskFlowRef) {
         if (!contentEl) return;
         if (state === 'loading') {
-            contentEl.innerHTML = '<div class="task-flow-preloader"><div class="task-flow-spinner"></div><p>Creating session…</p></div>';
+            contentEl.innerHTML = `<div class="task-flow-preloader"><div class="task-flow-spinner"></div><p>Creating session…</p></div>`;
             return;
         }
         if (state === 'sending') {
-            contentEl.innerHTML = '<div class="task-flow-preloader"><div class="task-flow-spinner"></div><p>Sending…</p></div>';
+            contentEl.innerHTML = `<div class="task-flow-preloader"><div class="task-flow-spinner"></div><p>Sending…</p></div>`;
             return;
         }
         if (state === 'fixated') {
@@ -312,58 +430,61 @@
 
         run(task, projectId) {
             if (task) this._currentTask = task;
-            const sessionViewModel = global.SessionViewModel;
-            sessionViewModel?.reset();
-            sessionViewModel?.setProject(projectId);
+            
+            // Use SessionStore instead of legacy SessionViewModel
+            const store = global.SessionStore;
+            store?.reset();
+            store?.setProject(projectId);
             if (task) {
-                sessionViewModel?.pushMessage({ content: task }, 'user');
+                store?.pushMessage({ content: task }, 'user');
             }
-            if (this.panelId && this.pui?.getPanel(this.panelId)) {
-                this.pui.bringToFront(this.panelId);
-                const content = this.pui.getContentEl(this.panelId);
-                if (content) setPanelContent(content, 'loading');
-                this._doRun(task, projectId, content);
+            
+            // Check if task panel already exists
+            const pm = global.PanelManager;
+            if (this.panelId && pm?.get(this.panelId)) {
+                pm.bringToFront(this.panelId);
+                const panel = pm.get(this.panelId);
+                if (panel) {
+                    setPanelContent(panel.getContentEl(), 'loading', null, this);
+                    this._doRun(task, projectId, panel.getContentEl());
+                }
                 return;
             }
 
-            const PUI = global.PlasticineUI;
-            if (!PUI) {
-                const el = document.createElement('div');
-                el.className = 'pui-panel pui-slot-floating';
-                el.style.cssText = 'position:fixed;width:420px;height:320px;left:50px;top:80px;z-index:9999;';
-                el.innerHTML = `
-          <div class="pui-panel-header"><span class="pui-panel-title">Task</span></div>
-          <div class="pui-panel-content"></div>`;
-                document.body.appendChild(el);
-                const content = el.querySelector('.pui-panel-content');
-                setPanelContent(content, 'loading');
-                this._doRunFallback(task, projectId, content, el);
-                return;
-            }
-
-            if (!this.pui) this.pui = new PUI({ mount: document.body });
+            // Create task panel using PanelManager
             const contentHTML = '<div class="task-flow-preloader"><div class="task-flow-spinner"></div><p>Creating session…</p></div>';
-            this.panel = this.pui.addPanel({
+            this.panel = pm?.open('task', {
                 id: 'task-flow-panel',
                 title: 'Task',
-                slot: 'floating',
-                critical: false,
-                contentHTML,
+                critical: true,  // Critical so it minimizes instead of closes
                 onClose: () => {
                     if (this.fixed) return;
-                    this.pui.removePanel('task-flow-panel');
+                    pm?.close('task-flow-panel');
                     this.panelId = null;
                     this.panel = null;
-                    // Hide message input when task panel is closed
-                    if (window.hideMessageInput) window.hideMessageInput();
+                    // Panel closed callback
                 }
             });
-            this.panelId = 'task-flow-panel';
-            this.fixed = false;
-            const content = this.pui.getContentEl(this.panelId);
-            this._doRun(task, projectId, content);
-            // Show message input when task panel is created
-            if (window.showMessageInput) window.showMessageInput();
+            
+            if (this.panel) {
+                this.panel.setContent(contentHTML);
+                this.panelId = 'task-flow-panel';
+                this.fixed = false;
+                const content = this.panel.getContentEl();
+                this._doRun(task, projectId, content);
+            } else {
+                // Fallback: manual DOM creation if PanelManager not available
+                const el = document.createElement('div');
+                el.className = 'task-flow-panel-fallback';
+                el.style.cssText = 'position:fixed;width:420px;height:320px;left:50px;top:80px;z-index:9999;background:#1e1e2e;border:1px solid #313244;border-radius:8px;';
+                el.innerHTML = `
+          <div style="padding:8px 12px;background:#252536;border-bottom:1px solid #313244;"><span style="font-weight:500;">Task</span></div>
+          <div class="task-flow-content"></div>`;
+                document.body.appendChild(el);
+                const content = el.querySelector('.task-flow-content');
+                setPanelContent(content, 'loading', null, this);
+                this._doRunFallback(task, projectId, content, el);
+            }
         },
 
         async _doRun(task, projectId, contentEl) {
@@ -389,11 +510,8 @@
                     store.pushMessage({ content: task }, 'user');
                 }
                 
-                setPanelContent(contentEl, 'fixated', { sessionId, projectId });
-                if (this.panel) {
-                    this.panel.setCritical?.(true);
-                    this.panel.setNonClosable?.(true);
-                }
+                setPanelContent(contentEl, 'fixated', { sessionId, projectId }, TaskFlow);
+                // Panel is already created as critical, no need to update
 
                 // Connect transport (SSE primary, WebSocket fallback)
                 const transport = global.TransportManager;
@@ -457,29 +575,28 @@
                 window.addNotification?.('Session or project missing', 'error');
                 return;
             }
-            const choiceText = getChoiceLabel(choiceId);
-            if (choiceText) {
-                global.SessionViewModel?.pushMessage({ content: choiceText }, 'user');
-            }
             
-            // New protocol: send result with action-key shape
-            const context = TaskFlow._buildContext({
-                execution: {
-                    action: choiceId,
-                    step: 'action-selection'
-                }
-            });
-            const requestBody = {
-                projectId,
-                context,
-                result: { choice: choiceId }
-            };
-            
-            setPanelContent(contentEl, 'sending', null);
+            setPanelContent(contentEl, 'sending', null, this);
+
             try {
-                const invokeRes = await request('POST', `/sessions/${encodeURIComponent(sessionId)}/next`, requestBody);
-                const outcome = await processNextResponse(contentEl, invokeRes);
-                if (outcome !== 'ok') return;
+                const handler = global.ActionHandler;
+                if (handler) {
+                    await handler.sendChoice(sessionId, projectId, choiceId);
+                } else {
+                    // Fallback: manual submission (align with canonical schema)
+                    const context = this._buildContext();
+                    await request('POST', `/sessions/${encodeURIComponent(sessionId)}/result`, {
+                        projectId,
+                        context,
+                        result: { choice: choiceId }
+                    });
+                }
+                
+                // Wait for response via SSE
+                const outcome = await waitForFirstResponse();
+                if (outcome.status !== 'ok' && outcome.status !== 'completed') {
+                    contentEl.innerHTML = '<div class="task-flow-error">Timeout waiting for response</div>';
+                }
             } catch (err) {
                 contentEl.innerHTML = '<div class="task-flow-error">' + escapeHtml(String(err?.message || err)) + '</div>';
                 window.addNotification?.(String(err?.message || err), 'error');
@@ -494,21 +611,28 @@
                 return;
             }
 
-            const payload = (messageText || '').trim() || 'continue';
-            global.SessionViewModel?.pushMessage({ content: payload }, 'user');
+            setPanelContent(contentEl, 'sending', null, this);
 
-            const context = TaskFlow._buildContext();
-
-            setPanelContent(contentEl, 'sending', null);
             try {
-                const requestBody = {
-                    projectId,
-                    context,
-                    result: { message: payload }
-                };
-                const invokeRes = await request('POST', `/sessions/${encodeURIComponent(sessionId)}/next`, requestBody);
-                const outcome = await processNextResponse(contentEl, invokeRes);
-                if (outcome !== 'ok') return;
+                const handler = global.ActionHandler;
+                if (handler) {
+                    await handler.sendMessage(sessionId, projectId, messageText);
+                } else {
+                    // Fallback: manual submission (align with canonical schema)
+                    const payload = (messageText || '').trim() || 'continue';
+                    const context = this._buildContext();
+                    await request('POST', `/sessions/${encodeURIComponent(sessionId)}/result`, {
+                        projectId,
+                        context,
+                        result: { message: payload }
+                    });
+                }
+                
+                // Wait for response via SSE
+                const outcome = await waitForFirstResponse();
+                if (outcome.status !== 'ok' && outcome.status !== 'completed') {
+                    contentEl.innerHTML = '<div class="task-flow-error">Timeout waiting for response</div>';
+                }
             } catch (err) {
                 contentEl.innerHTML = '<div class="task-flow-error">' + escapeHtml(String(err?.message || err)) + '</div>';
                 window.addNotification?.(String(err?.message || err), 'error');
@@ -520,21 +644,35 @@
                 ? { ...TaskFlow._lastContext }
                 : {};
             const context = { ...base };
-            if (!context.task && TaskFlow._currentTask) {
+            if (overrides.task) {
+                context.task = overrides.task;
+            } else if (!context.task && TaskFlow._currentTask) {
                 context.task = TaskFlow._currentTask;
             }
             const executionBase = context.execution && typeof context.execution === 'object'
                 ? { ...context.execution }
                 : {};
-            const executionOverrides = overrides.execution || {};
-            const execution = { ...executionBase, ...executionOverrides };
-            if (overrides.action) execution.action = overrides.action;
-            if (overrides.step) execution.step = overrides.step;
+            const executionOverrides = { ...(overrides.execution || {}) };
+            if (overrides.action) executionOverrides.action = overrides.action;
+            if (overrides.step) executionOverrides.step = overrides.step;
+            const storeExecution = (() => {
+                const store = global.SessionStore;
+                return store?.getExecution ? store.getExecution() : null;
+            })();
+            const execution = {
+                ...executionBase,
+                ...executionOverrides
+            };
+            if (!execution.action && storeExecution?.action) {
+                execution.action = storeExecution.action;
+            }
+            if (!execution.step && storeExecution?.step) {
+                execution.step = storeExecution.step;
+            }
             if (Object.keys(execution).length) {
                 context.execution = execution;
-            }
-            if (overrides.task) {
-                context.task = overrides.task;
+            } else if (storeExecution) {
+                context.execution = storeExecution;
             }
             return context;
         },
@@ -556,7 +694,7 @@
                     store.pushMessage({ content: task }, 'user');
                 }
                 
-                setPanelContent(contentEl, 'fixated', { sessionId, projectId });
+                setPanelContent(contentEl, 'fixated', { sessionId, projectId }, TaskFlow);
                 const statusEl = contentEl?.querySelector('.task-flow-status');
                 if (statusEl) statusEl.textContent = 'Connecting…';
 
@@ -659,54 +797,37 @@
     if (typeof window !== 'undefined') {
         window.TaskFlow = TaskFlow;
         
-        // Task 3.1-3.3: Integrate with SessionManager events
-        const sessionMgr = global.SessionManager;
-        if (sessionMgr && typeof sessionMgr.on === 'function') {
-            // Listen for execution step updates
-            sessionMgr.on('executionStep', (data) => {
-                console.log('[TaskFlow] Execution step:', data);
-                // Re-render panel if active to show step
-                if (TaskFlow.panelId && TaskFlow.pui) {
-                    const content = TaskFlow.pui.getContentEl(TaskFlow.panelId);
-                    if (content && TaskFlow._lastResponse) {
-                        renderExecute(content, TaskFlow._lastResponse.execute, TaskFlow._lastResponse, TaskFlow);
+        // Integrate with SessionStore events (replaces SessionManager events)
+        const store = global.SessionStore;
+        if (store && typeof store.on === 'function') {
+            // Listen for execute updates (includes step, progress, finalResult)
+            store.on('execute', (execute) => {
+                console.log('[TaskFlow] Execute updated:', execute);
+                
+                // Re-render panel if active
+                if (TaskFlow.panelId) {
+                    const pm = global.PanelManager;
+                    const panel = pm?.get(TaskFlow.panelId);
+                    if (panel && TaskFlow._lastResponse) {
+                        const content = panel.getContentEl();
+                        if (content) {
+                            // Merge any finalResult from execute
+                            const response = {
+                                ...TaskFlow._lastResponse,
+                                execute: execute
+                            };
+                            renderExecute(content, execute, response, TaskFlow);
+                        }
                     }
                 }
-            });
-            
-            // Listen for execution progress updates
-            sessionMgr.on('executionProgress', (data) => {
-                console.log('[TaskFlow] Execution progress:', data);
-                // Update progress bar
-                if (global.ProgressIndicators) {
-                    global.ProgressIndicators.handleExecutionProgress(data);
-                }
-                // Re-render panel to show progress
-                if (TaskFlow.panelId && TaskFlow.pui) {
-                    const content = TaskFlow.pui.getContentEl(TaskFlow.panelId);
-                    if (content && TaskFlow._lastResponse) {
-                        renderExecute(content, TaskFlow._lastResponse.execute, TaskFlow._lastResponse, TaskFlow);
-                    }
-                }
-            });
-            
-            // Listen for final result
-            sessionMgr.on('finalResultReceived', (data) => {
-                console.log('[TaskFlow] Final result:', data);
-                // Re-render panel to show completion
-                if (TaskFlow.panelId && TaskFlow.pui) {
-                    const content = TaskFlow.pui.getContentEl(TaskFlow.panelId);
-                    if (content && TaskFlow._lastResponse) {
-                        // Add finalResult to the response
-                        const responseWithFinal = {
-                            ...TaskFlow._lastResponse,
-                            execute: {
-                                ...TaskFlow._lastResponse.execute,
-                                finalResult: data
-                            }
-                        };
-                        renderExecute(content, responseWithFinal.execute, responseWithFinal, TaskFlow);
-                    }
+                
+                // Update progress indicators
+                if (global.ProgressIndicators && execute?.execution?.progress !== undefined) {
+                    global.ProgressIndicators.handleExecutionProgress({
+                        progress: execute.execution.progress,
+                        step: execute.execution.step,
+                        action: execute.execution.action
+                    });
                 }
             });
         }

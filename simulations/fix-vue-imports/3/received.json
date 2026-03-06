@@ -1,0 +1,33 @@
+{
+  "projectId": "123",
+  "sessionId": "456",
+  "execute": {
+    "script": {
+      "input": {
+        "broken_imports": [
+          {
+            "file": "resources/js/Pages/Auth/Login.vue",
+            "line": 3,
+            "specifier": "import Header from '../components/Header'"
+          },
+          {
+            "file": "resources/js/Pages/Auth/Register.vue",
+            "line": 5,
+            "specifier": "import { helper } from '../../utils/helpers'"
+          },
+          {
+            "file": "resources/js/components/UserCard.vue",
+            "line": 2,
+            "specifier": "import { userStore } from '@/stores/user'"
+          }
+        ],
+        "aliases": {
+          "@": "resources/js",
+          "~": "resources"
+        }
+      },
+      "output": "patches[]",
+      "code": "// vue-import-resolve.dsl\n// Вирішення правильних шляхів для зламаних імпортів\n\nconst result = await script.execute('vue-import-resolve', { broken_imports, aliases });"
+    }
+  }
+}

@@ -2,22 +2,90 @@
 
 ## File Types
 
-Each dialog step can contain up to 6 files, in pipeline order:
+Each dialog step can contain up to 8 files, covering the complete Web ↔ Client API ↔ Server ↔ LLM pipeline:
 
-| File                            | Direction       | Description                                                                     |
-|---------------------------------|-----------------|---------------------------------------------------------------------------------|
-| `request.json`                  | Client → Server | What client sends to server                                                     |
-| `server-transforms-request.json`  | —               | How the server processes `request.json` and builds the LLM input. Optional.     |
-| `request.md`                    | Server → LLM    | What server sends to External AI Hub (LLM)                                      |
-| `response.md`                   | LLM → Server    | What LLM returns to server                                                      |
-| `server-transforms-response.json` | —               | How the server processes `response.md` and builds the client payload. Optional. |
-| `response.json`                 | Server → Client | What server sends back to client                                                |
+| File                            | Direction            | Description                                                                                                               |
+|---------------------------------|----------------------|---------------------------------------------------------------------------------------------------------------------------|
+| `client.json`                   | Web → Client API     | What Web sends to Client API (e.g. `{ task, projectId }`, `{ sessionId, result }`)                                         |
+| `request.json`                  | Client API → Server  | Payload from Client API to Server (context + result), already without `projectId`/`sessionId`                             |
+| `server-transforms-request.json`  | Server               | How the server processes `request.json` and builds the LLM input (transformation before calling LLM). Optional.           |
+| `request.md`                    | Server → LLM         | Markdown sent to LLM (system prompt + current state)                                                                      |
+| `response.md`                   | LLM → Server         | Expected LLM output (e.g. JSON with `message`, `action`)                                                                  |
+| `server-transforms-response.json` | Server               | How the server processes `response.md` and builds the client payload (transformation before sending to client). Optional. |
+| `response.json`                 | Server → Client API  | Payload sent to Client API (context + execute, etc.)                                                                      |
+| `received.json`                 | Client API → Web     | What Client API returns to Web (e.g. `{ projectId, sessionId, execute }`)                                                 |
 
-**Order:** request.json → server-transforms-request.json → request.md → response.md → server-transforms-response.json →
-response.json.
+**Order (полный pipeline):**
 
-Not every step has all 6 files: steps without LLM typically have only `request.json` and `response.json`; transform docs
-are optional and describe server logic.
+`client.json → request.json → server-transforms-request.json → request.md → response.md → server-transforms-response.json → response.json → received.json`
+
+Not every step has all 8 files: steps without LLM typically have `client.json`, `request.json`, `server-transforms-request.json`, `server-transforms-response.json`, `response.json`, `received.json`; steps with LLM add the `.md` files; transform docs describe server logic even when LLM is not used.
+
+## Server Transform Pipeline Operations
+
+The `server-transforms-*.json` files define pipeline operations for processing data:
+
+### Request Transform Operations (server-transforms-request.json)
+
+```json
+{
+  "type": "pipeline",
+  "steps": [
+    {
+      "op": "copy",
+      "from": "$",
+      "to": "$out"
+    },
+    {
+      "op": "append-to-array",
+      "to": "$.context.history",
+      "value": {
+        "role": "user",
+        "message": "$.result.message"
+      }
+    },
+    {
+      "op": "render-markdown",
+      "templateRef": "a2a-server/prompts/dialog-request.md",
+      "data": "$out",
+      "outputFile": "request.md"
+    }
+  ]
+}
+```
+
+### Response Transform Operations (server-transforms-response.json)
+
+```json
+{
+  "type": "pipeline",
+  "steps": [
+    {
+      "op": "parse-json-from-md",
+      "fromFile": "response.md",
+      "jsonPath": "$",
+      "to": "$llm"
+    },
+    {
+      "op": "append-to-array",
+      "to": "$.context.history",
+      "value": {
+        "role": "assistant",
+        "message": "$.llm.message"
+      }
+    },
+    {
+      "op": "set",
+      "path": "$.execute",
+      "value": {
+        "form": {
+          "input": [...]
+        }
+      }
+    }
+  ]
+}
+```
 
 ## ВАЖНО: request.md - это MARKDOWN!
 
@@ -60,21 +128,21 @@ are optional and describe server logic.
 ## Flow Diagram
 
 ```
-
-Client Server LLM
-│ │ │
-│ request.json │ │
-│──────────────────>│ │
-│ │ │
-│ │ request.md (MARKDOWN!) │
-│ │──────────────────>│
-│ │ │
-│ │ response.md │
-│ │<──────────────────│
-│ │ │
-│ response.json │ │
-│<──────────────────│ │
-
+Web    Client API    Server    LLM
+│         │          │        │
+│ client.json        │        │
+│─────────>│         │        │
+│         │ request.json      │
+│         │─────────>│        │
+│         │         │ request.md
+│         │         │─────────>│
+│         │         │         │
+│         │         │ response.md
+│         │         │<─────────│
+│         │ response.json      │
+│         │<─────────│         │
+│ received.json       │        │
+│<────────│          │        │
 ```
 
 ## File Formats

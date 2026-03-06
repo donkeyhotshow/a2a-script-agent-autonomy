@@ -1,0 +1,18 @@
+{
+  "projectId": "123",
+  "sessionId": "456",
+  "result": {
+    "rag-search": {
+      "results": [
+        {
+          "file": "resources/js/stores/userStore.js",
+          "score": 0.88,
+          "snippet": "export const userStore = defineStore"
+        }
+      ],
+      "files": [
+        "resources/js/stores/userStore.js"
+      ]
+    }
+  }
+}

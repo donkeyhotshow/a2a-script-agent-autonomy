@@ -20,10 +20,20 @@
     }
 
     function ensureSessionPanel() {
-        const workflow = window.PlasticineWorkflow;
-        if (!workflow?.run) return;
-        if (workflow.sessionBinder) return;
-        workflow.run(document.body, { types: ['sessions'] });
+        // Use new PanelManager instead of archived PlasticineWorkflow
+        const pm = window.PanelManager;
+        if (!pm) return;
+        
+        // Check if sessions panel already exists
+        const existing = pm.getByType('sessions')[0];
+        if (existing) return;
+        
+        // Create sessions panel
+        pm.open('sessions', {
+            id: 'sessions-panel',
+            title: 'Sessions',
+            onClose: () => console.log('[App] Sessions panel closed')
+        });
     }
 
     async function init() {
@@ -104,11 +114,15 @@
 
                 // Send message using TaskFlow if available
                 if (window.TaskFlow?.sendMessageResult) {
-                    // Find the active task panel content
-                    const taskPanel = document.querySelector('.pui-panel[data-panel-id*="task-flow"] .pui-panel-content');
+                    // Find the active task panel content using PanelManager
+                    const pm = window.PanelManager;
+                    const taskPanel = pm?.get('task-flow-panel');
                     if (taskPanel) {
-                        window.TaskFlow.sendMessageResult(message, taskPanel);
-                        messageInput.value = '';
+                        const content = taskPanel.getContentEl();
+                        if (content) {
+                            window.TaskFlow.sendMessageResult(message, content);
+                            messageInput.value = '';
+                        }
                     } else {
                         window.addNotification?.('No active task panel', 'error');
                     }

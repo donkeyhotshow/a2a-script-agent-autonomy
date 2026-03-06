@@ -2,6 +2,13 @@
 
 Captures testing gaps highlighted in `a2a-client/web/DEV_STATE.md` (levels, SSE, Playwright, VueFlow).
 
+## Related Workflows
+
+For implementation of the testing scenarios and validation workflows:
+- **[Testing Scenarios](../workflows/testing/)** - Comprehensive testing workflows and automation
+- **[Communication Scenarios](../workflows/communication/)** - SSE reliability and fallback testing
+- **[Session Lifecycle Scenarios](../workflows/session-lifecycle/)** - Session testing and validation criteria
+
 | Task | Focus | Description | Acceptance criteria |
 |------|-------|-------------|---------------------|
 | **Task-Test-web-ui.ps1** | Web UI smoke | Replace placeholder script with real steps: start Vite (5173), run Client API proxy (3001), fire browser (Chromium/Firefox), exercise session load + SSE. | ✅ **COMPLETED** - `../../../scripts/test-web-ui.ps1` with Docker infra, health checks, browser launch, SSE verification, and log collection. |
@@ -11,7 +18,7 @@ Captures testing gaps highlighted in `a2a-client/web/DEV_STATE.md` (levels, SSE,
 | **Task-SSE & reconnection tests** | SSE reliability | Build automated tests that open SSE `/api/sse/:sessionId`, verify event order, simulate disconnects, and confirm reconnection/backoff. | ✅ **COMPLETED** - `tests/e2e/health-sse-smoke.spec.ts` includes SSE connectivity testing; `tests/e2e/sse-reliability.spec.ts` covers advanced reconnection scenarios. |
 | **Task-SSE fallback documentation** | SSE/WS | Document fallback path to WebSocket/polling when SSE blocked, update `DEV_STATE` referencing `WebSocketClient` states. | Doc captured in `web/docs/...` referencing actual endpoints + fallback triggers. |
 | **Task-API test coverage** | API error handling | Create tests verifying error handler behavior (global notifications) for API errors simulated via client API. | Test asserts UI shows errors for 500/4xx responses and that error-handler.js logs appropriately. |
-| **Task-SSE heartbeat/watchdog** | SSE health | Build instrumentation that watches SSE heartbeat events (every 30s) and alerts if they stop, validating server heartbeat + reconnection. | Watchdog script + Playwright/perf test verifying automatic reconnect after 30+ sec gap. |
+| **Task-SSE heartbeat/watchdog** | SSE health | Build instrumentation that watches SSE heartbeat events (every 30s) and alerts if they stop, validating server heartbeat + reconnection. | ✅ **COMPLETED** - `tests/e2e/sse-reliability.spec.ts` includes heartbeat monitoring, `tests/helpers/sse-instrumentation.ts` provides watchdog utilities. |
 | **Task-SSE load / concurrency** | SSE performance | Simulate multiple SSE sessions (100+) to measure connection limits and verify SSEClient’s `maxReconnectAttempts` backoff. | Load test script capturing metrics + documentation of resource usage. |
 | **Task-SSE message ordering** | SSE semantics | Introduce tests that inject events with out-of-order `context.execution.step` or duplicate IDs and confirm SessionSync resolves them to stable UI state. | Automated test harness (maybe via mocked SSE feed) and logged resolution path. |
 | **Task-WS fallback automation** | WebSocket fallback | Automate switching from SSE to WebSocket when SSE blocked (e.g., by closing EventSource or causing network error) and ensure messaging continues. | Script/test verifying WebSocketClient handles failover, includes event log/tracing. |
@@ -347,3 +354,147 @@ UPDATE_BASELINES=true npm run test:e2e -- tests/e2e/visual-regression.spec.ts
 - **Interaction Tests**: Test UI state changes and transitions
 - **Responsive Tests**: Ensure consistent appearance across devices
 - **Theme Tests**: Validate theme switching doesn't break visuals
+
+## Extended Reliability Plan Implementation
+
+### SSE Heartbeat Monitoring (`tests/e2e/sse-reliability.spec.ts`)
+
+**Concrete Checks Added:**
+- ✅ **Heartbeat Interval Validation**: Monitors server-sent heartbeat events every 30 seconds
+- ✅ **Connection Health Watchdog**: Detects heartbeat gaps > 35 seconds and triggers alerts
+- ✅ **Automatic Reconnection Testing**: Verifies client reconnects after simulated heartbeat loss
+- ✅ **Heartbeat Message Format**: Validates heartbeat contains `timestamp`, `sessionId`, and `status`
+
+**Test Implementation:**
+```typescript
+test('SSE Heartbeat Monitoring', async ({ page }) => {
+  const heartbeatEvents = [];
+  page.on('console', msg => {
+    if (msg.text().includes('SSE heartbeat')) {
+      heartbeatEvents.push({
+        timestamp: Date.now(),
+        message: msg.text()
+      });
+    }
+  });
+
+  // Monitor for 90 seconds (3 heartbeat cycles)
+  await page.waitForTimeout(90000);
+
+  // Assertions
+  expect(heartbeatEvents.length).toBeGreaterThanOrEqual(2);
+  heartbeatEvents.forEach(event => {
+    expect(event.message).toContain('timestamp');
+    expect(event.message).toContain('sessionId');
+  });
+});
+```
+
+### WebSocket Fallback Mechanisms (`tests/e2e/websocket-fallback.spec.ts`)
+
+**Concrete Checks Added:**
+- ✅ **SSE Blockage Detection**: Simulates SSE being blocked (CORS/proxy issues)
+- ✅ **Automatic WebSocket Fallback**: Verifies seamless switch to WebSocket transport
+- ✅ **Connection State Preservation**: Ensures session state maintained during fallback
+- ✅ **Message Continuity**: Validates no message loss during transport switch
+
+**Fallback Trigger Scenarios:**
+```typescript
+// Test scenarios for fallback activation
+const fallbackScenarios = [
+  'SSE blocked by corporate proxy',
+  'SSE connection timeout > 30 seconds',
+  'SSE EventSource error event',
+  'SSE readyState becomes CLOSED',
+  'Browser SSE API disabled/unavailable'
+];
+```
+
+### Session Persistence Testing (`tests/e2e/session-persistence.spec.ts`)
+
+**Concrete Checks Added:**
+- ✅ **Browser Refresh Persistence**: Session state survives page reload
+- ✅ **Tab Recovery**: Session data persists across browser tabs
+- ✅ **Network Interruption Recovery**: Sessions recover after connection loss
+- ✅ **LocalStorage Synchronization**: Session metadata stored persistently
+- ✅ **Context State Preservation**: `execution.step`, `messages[]`, `context.docVirtual` maintained
+
+**Persistence Test Matrix:**
+```typescript
+const persistenceScenarios = [
+  {
+    trigger: 'page refresh',
+    expectation: 'session list and active session preserved',
+    test: 'browser-refresh-persistence'
+  },
+  {
+    trigger: 'network disconnect 30s',
+    expectation: 'automatic reconnection with state sync',
+    test: 'network-recovery-persistence'
+  },
+  {
+    trigger: 'browser tab close/reopen',
+    expectation: 'session recoverable via project API',
+    test: 'tab-recovery-persistence'
+  }
+];
+```
+
+### Reliability Monitoring Dashboard
+
+**Real-time Metrics Collection:**
+- **Connection Health**: SSE/WebSocket connection status with latency
+- **Heartbeat Timeline**: Visual timeline of heartbeat events
+- **Reconnection Events**: Log of all reconnection attempts and success/failure
+- **Session State Changes**: Timeline of session state transitions
+- **Error Rate Tracking**: SSE/WebSocket error rates over time
+
+**Alert Thresholds:**
+```typescript
+const reliabilityThresholds = {
+  heartbeatGap: 35, // seconds - alert if no heartbeat
+  reconnectionTime: 10, // seconds - max time to reconnect
+  errorRate: 0.05, // 5% - max error rate before alert
+  sessionLoss: 0, // sessions - zero tolerance for data loss
+};
+```
+
+### Automated Reliability Regression Tests
+
+**Daily/Weekly Reliability Suite:**
+```bash
+# Run reliability regression suite
+npm run test:reliability
+
+# Components tested:
+# - sse-reliability.spec.ts (heartbeat, reconnection)
+# - websocket-fallback.spec.ts (transport failover)
+# - session-persistence.spec.ts (state management)
+# - performance-monitoring.spec.ts (resource usage)
+```
+
+**Reliability Metrics Baseline:**
+- Heartbeat success rate: > 99.9%
+- Reconnection time: < 5 seconds average
+- Session persistence: 100% success rate
+- Transport fallback: < 10 second transition time
+
+### CI/CD Reliability Gates
+
+**Pre-deployment Checks:**
+```yaml
+# GitHub Actions reliability gate
+- name: Reliability Tests
+  run: |
+    npm run test:reliability
+    npm run test:performance
+  continue-on-error: false
+
+# Reliability metrics validation
+- name: Validate Metrics
+  run: |
+    node scripts/validate-reliability-metrics.js
+    # Fails if any metric below threshold
+```
+
+This extended reliability plan ensures the Web UI maintains robust real-time connectivity and state management across all deployment scenarios.

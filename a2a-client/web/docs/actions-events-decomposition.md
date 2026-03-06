@@ -351,6 +351,14 @@ This document decomposes all actions/events in the A2A Script Agent web client t
 4. **Standardize Actions**: Use action-key shape consistently
 5. **Reduce Event Complexity**: Direct UI updates instead of chained events
 
+## Related Workflows
+
+This decomposition provides the foundation for the workflow scenarios documented in:
+- **[Workflows Overview](../workflows/README.md)** - Complete workflow documentation index
+- **[Task Execution Scenarios](../workflows/task-execution/)** - Execute types and action processing flows
+- **[UI Interaction Scenarios](../workflows/ui-interactions/)** - Detailed UI buttons, controls, and panel interactions
+- **[Testing Scenarios](../workflows/testing/)** - Testing workflows based on this decomposition
+
 ---
 
 *This decomposition reveals significant architectural complexity that could benefit from refactoring to reduce redundancy and improve maintainability.*

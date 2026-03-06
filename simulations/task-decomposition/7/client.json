@@ -1,0 +1,9 @@
+{
+  "projectId": "123",
+  "sessionId": "456",
+  "result": {
+    "script": {
+      "path": ".carrier/tasks/task-1.md"
+    }
+  }
+}

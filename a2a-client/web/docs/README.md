@@ -1,0 +1,73 @@
+# A2A Web Client Documentation
+
+This directory contains comprehensive documentation for the A2A Script Agent web client (port 5173).
+
+## Documentation Structure
+
+### 📋 Workflows & Scenarios
+- **[Workflows](./workflows/)** - Complete workflow documentation with scenarios, state machines, and validation criteria
+  - [Session Lifecycle](./workflows/session-lifecycle/) - Session creation, management, switching, and deletion
+  - [Task Execution](./workflows/task-execution/) - Execute types, action processing, and result submission
+  - [Communication](./workflows/communication/) - SSE/WebSocket transport and fallback mechanisms
+  - [UI Interactions](./workflows/ui-interactions/) - Panel management and user interface workflows
+  - [Testing](./workflows/testing/) - Test scenarios, validation workflows, and QA processes
+
+### 🏗️ Architecture & Implementation
+- **[Unified Architecture Complete](./UNIFIED_ARCHITECTURE_COMPLETE.md)** - Implementation status of major refactoring steps
+- **[Session Architecture Migration](./session-architecture-migration.md)** - Migration guide for unified session architecture
+- **[Context Synchronization Guide](./context-synchronization-guide.md)** - State synchronization across components
+
+### 🔍 Analysis & Decomposition
+- **[Actions & Events Decomposition](./actions-events-decomposition.md)** - Complete catalog of UI actions and events
+- **[Dialog Architecture Tasks](./tasks/dialog-architecture-tasks.md)** - Session/SSE stack flows and QA checkpoints
+- **[Testing SSE Tasks](./tasks/testing-sse-tasks.md)** - SSE reliability testing and automation
+
+### 📊 Development State
+- **[Web UI DEV_STATE](./DEV_STATE.md)** - Current development status and component overview
+- **[Upgrade Tasks](./UPGRADE_TASKS.md)** - Planned enhancements and improvement roadmap
+
+### 📁 Archive
+- **[AI Actions Integration Guide](./archive/ai-actions-integration-guide.md)** - Legacy AI actions implementation
+- **[Progress Indicators Guide](./archive/progress-indicators-guide.md)** - Legacy progress UI guide
+- **[AI Actions Session Panel](./archive/ai-actions-session-panel.md)** - Legacy session panel documentation
+
+## Quick Navigation
+
+| Need | Go To |
+|------|-------|
+| **Understand workflows** | [Workflows Overview](./workflows/) |
+| **Implement session management** | [Session Lifecycle](./workflows/session-lifecycle/) + [Session Architecture Migration](./session-architecture-migration.md) |
+| **Handle task execution** | [Task Execution](./workflows/task-execution/) + [Actions & Events](./actions-events-decomposition.md) |
+| **Manage real-time communication** | [Communication](./workflows/communication/) + [Testing SSE Tasks](./tasks/testing-sse-tasks.md) |
+| **Build UI components** | [UI Interactions](./workflows/ui-interactions/) + [Context Synchronization](./context-synchronization-guide.md) |
+| **Test the system** | [Testing](./workflows/testing/) + [Dialog Architecture Tasks](./tasks/dialog-architecture-tasks.md) |
+| **Check implementation status** | [Unified Architecture Complete](./UNIFIED_ARCHITECTURE_COMPLETE.md) |
+
+## Key Components Overview
+
+### Core Architecture (Unified)
+- **SessionStore** - Single source of truth for session state
+- **TransportManager** - SSE primary → WebSocket auto-fallback
+- **PanelManager** - Unified panel system (panels/cubes/modals)
+- **ActionHandler** - Standardized action-key shape submissions
+
+### Communication
+- **SSE**: Primary transport (`/api/sse/:sessionId`) with 30s heartbeat
+- **WebSocket**: Fallback transport (`/api/ws/:sessionId`) for SSE failures
+- **HTTP Polling**: Last resort for complete transport failure
+
+### UI Patterns
+- **Execute Types**: `form`, `message`, `script`, `rag-search`, `read-file`, `write-file`, `execute-command`
+- **Panel States**: visible ↔ minimized (cube) ↔ closed
+- **Action Shape**: `{ [actionType]: data }` for all submissions
+
+## Development Workflow
+
+1. **Planning**: Check [Workflows](./workflows/) for user scenarios
+2. **Implementation**: Reference [Unified Architecture](./UNIFIED_ARCHITECTURE_COMPLETE.md) for patterns
+3. **Testing**: Use [Testing Scenarios](./workflows/testing/) for validation
+4. **Documentation**: Update relevant workflow docs for new features
+
+---
+
+*This documentation provides comprehensive coverage of the A2A web client architecture, workflows, and implementation patterns.*

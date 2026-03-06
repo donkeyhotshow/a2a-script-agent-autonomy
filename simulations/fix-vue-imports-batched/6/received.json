@@ -1,0 +1,11 @@
+{
+  "projectId": "123",
+  "sessionId": "456",
+  "execute": {
+    "script": {
+      "input": {},
+      "output": "cleanup_count",
+      "code": "// vue-import-cleanup.dsl\n// Очищення тимчасових файлів та генерація звіту\n\nconst result = await script.execute('vue-import-cleanup', {});"
+    }
+  }
+}

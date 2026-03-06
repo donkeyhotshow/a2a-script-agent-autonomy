@@ -1,0 +1,16 @@
+{
+    "projectId": "123",
+    "sessionId": "456",
+    "execute": {
+      "script": {
+        "input": {
+          "rootDir": ".",
+          "patterns": [
+            "tests/**/*.php"
+          ]
+        },
+        "output": "phpunit_files[]",
+        "code": "scan-phpunit"
+      }
+    }
+  }

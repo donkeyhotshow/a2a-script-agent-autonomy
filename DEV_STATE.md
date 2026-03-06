@@ -1,36 +1,51 @@
 # DEV_STATE (2026-03-06)
 
-> **Примечание:** Содержимое разделено по компонентам. Подробности см. в соответствующих файлах.
+## Project Overview
 
-## Оглавление
+This project implements an AI agent system with the following architecture:
 
-### Основные компоненты
+```
+User Interface (Web/SSE/WebSocket)
+    ↓
+a2a-client (API proxy + client SDK)
+    ↓
+a2a-server (AI processing + neurons)
+    ↓
+ai-integration (LLM proxy + promise queue daemon)
+    ↓
+External AI (Ollama/OpenAI/etc)
+```
 
-| Раздел | Файл | Описание |
-|--------|------|----------|
-| Клиентская часть | [a2a-client/DEV_STATE.md](a2a-client/DEV_STATE.md) | Web UI (5173), CLI, Client API (3001/3002) |
-| Серверная часть | [a2a-server/DEV_STATE.md](a2a-server/DEV_STATE.md) | A2A Server (3000), нейроны |
-| AI интеграция | [ai-integration/DEV_STATE.md](ai-integration/DEV_STATE.md) | Proxy (11435), встроенный демон, Ollama (11434) |
+## Component Status
 
-### Подкомпоненты a2a-client
+| Component | Status | Description |
+|-----------|--------|-------------|
+| **ai-integration** | ✅ Active | LLM proxy with promise queue daemon and simulation support |
+| **a2a-server** | ✅ Active | AI processing server with neuron system |
+| **a2a-client** | ✅ Active | Client API with Web UI and testing framework |
 
-| Компонент | Файл | Описание |
-|-----------|------|----------|
-| Web UI | [a2a-client/web/DEV_STATE.md](a2a-client/web/DEV_STATE.md) | **Unified Architecture**: SessionStore + TransportManager + PanelManager (legacy archived) |
-| Embedding | [a2a-client/packages/embedding/DEV_STATE.md](a2a-client/packages/embedding/DEV_STATE.md) | Обработка эмбеддингов |
-| Execution | [a2a-client/packages/execution/DEV_STATE.md](a2a-client/packages/execution/DEV_STATE.md) | Исполнение задач |
-| History | [a2a-client/packages/history/DEV_STATE.md](a2a-client/packages/history/DEV_STATE.md) | Управление историей |
-| JSON | [a2a-client/packages/json/DEV_STATE.md](a2a-client/packages/json/DEV_STATE.md) | JSON утилиты |
-| RAG | [a2a-client/packages/rag/DEV_STATE.md](a2a-client/packages/rag/DEV_STATE.md) | Retrieval-Augmented Generation |
-| SDK | [a2a-client/packages/sdk/DEV_STATE.md](a2a-client/packages/sdk/DEV_STATE.md) | Software Development Kit |
-| Storage | [a2a-client/packages/storage/DEV_STATE.md](a2a-client/packages/storage/DEV_STATE.md) | Хранение данных |
-| Types | [a2a-client/packages/types/DEV_STATE.md](a2a-client/packages/types/DEV_STATE.md) | TypeScript типы |
+## Component Documentation
 
-### Дополнительные компоненты
+- **[ai-integration/DEV_STATE.md](ai-integration/DEV_STATE.md)** - LLM proxy, promise queue daemon, simulation testing
+- **[a2a-server/DEV_STATE.md](a2a-server/DEV_STATE.md)** - Server architecture, neuron processing, API endpoints
+- **[a2a-client/DEV_STATE.md](a2a-client/DEV_STATE.md)** - Client API proxy, SDK, testing framework
+- **[a2a-client/web/DEV_STATE.md](a2a-client/web/DEV_STATE.md)** - Web UI component, session management, transport layer
+- **[a2a-client/web/docs/README.md](a2a-client/web/docs/README.md)** - Complete documentation index with workflows and scenarios
+- **[a2a-client/web/docs/workflows/](a2a-client/web/docs/workflows/)** - Detailed workflow documentation for all user scenarios
 
-| Раздел | Файл | Описание |
-|--------|------|----------|
-| Документация | [docs/DEV_STATE.md](docs/DEV_STATE.md) | Архитектура, протоколы, руководства |
-| Тесты | [tests/DEV_STATE.md](tests/DEV_STATE.md) | Unit, Integration, E2E тесты |
-| Скрипты | [scripts/DEV_STATE.md](scripts/DEV_STATE.md) | Dev tools, генераторы кода, Web UI smoke test |
-| Симуляции | [simulations/DEV_STATE.md](simulations/DEV_STATE.md) | Golden standard тестирования |
+## Key Features
+
+- **Promise Queue System**: Asynchronous task processing with daemon workers
+- **Simulation Mode**: Test workflows without actual LLM calls
+- **SSE/WebSocket Transport**: Real-time communication between components
+- **Unified Action Protocol**: Standardized request/response format across all components
+- **Multi-level Testing**: AI Integration → Server → Client → Web UI testing pipeline
+
+## Recent Updates
+
+- Promise simulation support with configurable daemon skipping
+- Unified transport layer with SSE primary + WebSocket fallback
+- Enhanced testing framework with multi-level smoke tests
+- Session state management with single source of truth
+
+See individual component DEV_STATE files for detailed status and implementation notes.

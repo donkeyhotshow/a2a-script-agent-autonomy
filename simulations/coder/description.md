@@ -32,16 +32,18 @@
 
 ## Потік
 
-| Крок | Request                  | Response                                   |
-|------|--------------------------|--------------------------------------------|
-| 1    | task: "допомоги з кодом" | actions з llmPrompt + fileActions          |
-| 2    | result.action: "coder"   | execute.form запитує message               |
-| 3    | input.message            | LLM request → аналізує → виконує RAG пошук |
-| 4    | result + execute         | LLM request → читає файл                   |
-| 5    | input.message            | LLM відповідає + form                      |
-| 6    | input.message            | "дякую!" → completed + form                |
-| 7    | input.message            | "запиши звіт" → write-file                 |
-| 8    | result                   | Файл записано → completed                  |
+| Крок | Client (Web→Client)      | Server Response (Server→Client)            | Received (Client→Web) |
+|------|---------------------------|--------------------------------------------|-----------------------|
+| 1    | task: "допомоги з кодом"  | execute.form з вибором дій                 | execute.form          |
+| 2    | result.choice: "coder"    | execute.form запитує message               | execute.form          |
+| 3    | result.message            | LLM request → аналізує → виконує RAG пошук | execute + message     |
+| 4    | result["rag-search"]      | LLM request → читає файл                   | execute.read-file     |
+| 5    | result["read-file"]       | LLM відповідає + form                      | execute.form + message|
+| 6    | result.message            | "дякую!" → completed + form                | execute.form          |
+| 7    | result.message            | "запиши звіт" → write-file                 | execute.write-file    |
+| 8    | result["write-file"]      | Файл записано → completed                  | result.completed      |
+| 9    | result.message (новий)    | LLM відповідає                              | execute.form          |
+| 10   | result.message            | Кінець діалогу                             | result.completed      |
 
 ## Можливі дії
 
@@ -58,45 +60,75 @@ simulations/coder/
 ├── description.md
 ├── analysis.md
 ├── 1/
-│   ├── request.json
-│   └── response.json
-├── 2/
-│   ├── request.json
-│   └── response.json
-├── 3/
+│   ├── client.json
 │   ├── request.json
 │   ├── response.json
+│   └── received.json
+├── 2/
+│   ├── client.json
+│   ├── request.json
+│   ├── response.json
+│   └── received.json
+├── 3/
+│   ├── client.json
+│   ├── request.json
+│   ├── response.json
+│   ├── received.json
 │   ├── request.md
 │   └── response.md
 ├── 4/
+│   ├── client.json
 │   ├── request.json
 │   ├── server-transforms-request.json
 │   ├── request.md
 │   ├── response.md
 │   ├── server-transforms-response.json
-│   └── response.json
+│   ├── response.json
+│   └── received.json
 ├── 5/
+│   ├── client.json
 │   ├── request.json
 │   ├── server-transforms-request.json
 │   ├── request.md
 │   ├── response.md
 │   ├── server-transforms-response.json
-│   └── response.json
+│   ├── response.json
+│   └── received.json
 ├── 6/
+│   ├── client.json
 │   ├── request.json
 │   ├── response.json
+│   ├── received.json
 │   ├── request.md
 │   └── response.md
 ├── 7/
+│   ├── client.json
 │   ├── request.json
 │   ├── server-transforms-request.json
 │   ├── request.md
 │   ├── response.md
 │   ├── server-transforms-response.json
-│   └── response.json
-└── 8/
+│   ├── response.json
+│   └── received.json
+├── 8/
+│   ├── client.json
+│   ├── request.json
+│   ├── response.json
+│   ├── received.json
+│   ├── request.md
+│   └── response.md
+├── 9/
+│   ├── client.json
+│   ├── request.json
+│   ├── response.json
+│   ├── received.json
+│   ├── request.md
+│   └── response.md
+└── 10/
+    ├── client.json
     ├── request.json
     ├── response.json
+    ├── received.json
     ├── request.md
     └── response.md
 ```

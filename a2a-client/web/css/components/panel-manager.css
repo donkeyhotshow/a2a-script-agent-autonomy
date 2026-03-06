@@ -77,6 +77,8 @@
     flex: 1;
     overflow: auto;
     padding: 12px;
+    position: relative;
+    padding-bottom: 70px;
 }
 
 /* ===== Slot Variants ===== */

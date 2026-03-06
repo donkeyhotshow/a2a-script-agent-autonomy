@@ -1,0 +1,26 @@
+{
+  "projectId": "123",
+  "sessionId": "456",
+  "execute": {
+    "script": {
+      "input": {
+        "files": [
+          {
+            "path": "tests/Unit/UserTest.php"
+          },
+          {
+            "path": "tests/Feature/AuthTest.php"
+          }
+        ],
+        "deprecatedMethods": [
+          "assertEquals",
+          "assertInternalType",
+          "assertArrayHasKey",
+          "assertInstanceOf"
+        ]
+      },
+      "output": "deprecations[]",
+      "code": "detect-deprecations"
+    }
+  }
+}

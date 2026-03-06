@@ -189,3 +189,13 @@ curl -s -i -N -H "Connection: Upgrade" -H "Upgrade: websocket" http://localhost:
 - Интеграция с a2a-server (3000) работает
 - SSE соединения функционируют
 - Сессии создаются и синхронизируются
+
+---
+
+## Web UI Component
+
+**Port**: 5173
+
+**Status**: Active development with unified architecture (SessionStore, TransportManager, PanelManager).
+
+**Documentation**: See [`a2a-client/web/DEV_STATE.md`](web/DEV_STATE.md) for detailed Web UI component status, architecture, and implementation notes.

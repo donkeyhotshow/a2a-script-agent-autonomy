@@ -1,0 +1,10 @@
+{
+  "projectId": "123",
+  "sessionId": "456",
+  "execute": {
+    "error-recovery": {
+      "issue": "json-parse-error",
+      "suggestion": "retry"
+    }
+  }
+}

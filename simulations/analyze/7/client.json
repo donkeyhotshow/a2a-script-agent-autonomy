@@ -1,0 +1,8 @@
+{
+  "projectId": "123",
+  "sessionId": "456",
+  "result": {
+    "choice": "save_report",
+    "path": ".carrier/reports/architecture-report.md"
+  }
+}

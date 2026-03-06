@@ -52,3 +52,20 @@
     background: var(--disabled-color, #cccccc);
     cursor: not-allowed;
 }
+
+/* Task Flow Input Area (inside panel) */
+.task-flow-input-area {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 12px 16px;
+    background: var(--surface, #1e1e2e);
+    border-top: 1px solid var(--border, #313244);
+    z-index: 10;
+}
+
+/* Make sure input container fits within panel */
+.task-flow-input-area .message-input-container {
+    max-width: 100%;
+}

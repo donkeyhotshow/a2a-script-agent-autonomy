@@ -1,0 +1,18 @@
+{
+  "projectId": "123",
+  "sessionId": "456",
+  "result": {
+    "rag-search": {
+      "results": [
+        {
+          "file": "resources/js/components/Header.vue",
+          "score": 0.95,
+          "snippet": "export class Header extends Component"
+        }
+      ],
+      "files": [
+        "resources/js/components/Header.vue"
+      ]
+    }
+  }
+}

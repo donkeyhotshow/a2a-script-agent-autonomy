@@ -1,0 +1,13 @@
+{
+    "projectId": "123",
+    "sessionId": "456",
+    "execute": {
+      "script": {
+        "input": {
+          "rootDir": "."
+        },
+        "output": "broken_imports[]",
+        "code": "// vue-import-detect.dsl\n// Сканування Vue файлів і пошук битих імпортів\n\nconst result = await script.execute('vue-import-detect', { rootDir, filePattern });"
+      }
+    }
+  }

@@ -4,6 +4,14 @@
 
 This document describes the unified session architecture that consolidates state management, transport, and UI components.
 
+## Related Workflows
+
+For practical implementation of this architecture in user workflows:
+- **[Session Lifecycle Scenarios](../workflows/session-lifecycle/)** - Session creation, switching, and management flows
+- **[Communication Scenarios](../workflows/communication/)** - Transport layer implementation and fallback mechanisms
+- **[UI Interaction Scenarios](../workflows/ui-interactions/)** - Unified panel system and UI components
+- **[Testing Scenarios](../workflows/testing/)** - Validation of unified architecture components
+
 ## Changes Summary
 
 ### Step 1: Transport Layer ✅

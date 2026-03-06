@@ -2,6 +2,14 @@
 
 This document describes how SessionManager, SessionSync, and SessionViewModel handle context synchronization in the A2A Web UI, including execute.forms/messages processing, context.execution.step updates, and PlasticineUI panel behavior.
 
+## Related Workflows
+
+For implementation of these synchronization patterns in workflows:
+- **[Session Lifecycle Scenarios](../workflows/session-lifecycle/)** - Session state management and transitions
+- **[Task Execution Scenarios](../workflows/task-execution/)** - Execute processing and context updates
+- **[Communication Scenarios](../workflows/communication/)** - Real-time context synchronization via SSE/WebSocket
+- **[UI Interaction Scenarios](../workflows/ui-interactions/)** - Panel behavior and state synchronization
+
 ## Table of Contents
 
 1. [SessionManager Architecture](#sessionmanager-architecture)
