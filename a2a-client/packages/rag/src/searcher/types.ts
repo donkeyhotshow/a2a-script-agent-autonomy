@@ -19,6 +19,11 @@ export interface RAGSearcherConfig {
      * @default undefined (caching disabled)
      */
     queryCacheTTL?: number;
+    /**
+     * Enable relevance feedback learning from clicks
+     * @default true
+     */
+    relevanceFeedback?: boolean;
 }
 
 export interface SearchOptions {

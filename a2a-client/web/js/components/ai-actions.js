@@ -50,8 +50,45 @@
             
             // Event listeners
             this._listeners = new Map();
-            
+            this._deferredInit = false;
+
             this._init();
+
+            // If deferred, set up retry when FloatingPanel becomes available
+            if (this._deferredInit) {
+                this._retryInit();
+            }
+        }
+
+        /**
+         * Retry initialization when FloatingPanel becomes available
+         * @private
+         */
+        _retryInit() {
+            const checkAndInit = () => {
+                if (typeof FloatingPanel !== 'undefined' && this._deferredInit) {
+                    console.log('[AIActionsSessionPanel] FloatingPanel now available, completing initialization');
+                    this._init();
+                    if (!this._deferredInit) {
+                        // Successfully initialized
+                        if (this.onStateChange) {
+                            this.onStateChange(this.state);
+                        }
+                    }
+                }
+            };
+
+            // Check immediately and periodically
+            checkAndInit();
+            const interval = setInterval(() => {
+                checkAndInit();
+                if (!this._deferredInit) {
+                    clearInterval(interval);
+                }
+            }, 500);
+
+            // Stop trying after 10 seconds
+            setTimeout(() => clearInterval(interval), 10000);
         }
 
         /**
@@ -96,6 +133,14 @@
          * @private
          */
         _init() {
+            // Check if FloatingPanel is available
+            if (typeof FloatingPanel === 'undefined') {
+                console.warn('[AIActionsSessionPanel] FloatingPanel not available, deferring initialization');
+                this._deferredInit = true;
+                return;
+            }
+            this._deferredInit = false;
+
             // Создаем FloatingPanel для управления состоянием
             this.floatingPanel = new FloatingPanel(this.container, {
                 id: this.id,
@@ -209,15 +254,17 @@
          * @private
          */
         _render() {
-            const contentEl = this.container.querySelector('.pui-panel-content');
-            if (!contentEl) return;
+            // If container doesn't have pui-panel-content, render directly into container
+            let contentEl = this.container.querySelector('.pui-panel-content');
+            if (!contentEl) {
+                contentEl = this.container;
+            }
 
             contentEl.innerHTML = `
                 <div class="ai-actions-panel">
                     <div class="ai-actions-header">
                         <h3>AI Actions Sessions</h3>
                         <div class="ai-actions-controls">
-                            <button class="btn-new-session" title="New Session">+ New</button>
                             <button class="btn-refresh" title="Refresh">⟳</button>
                         </div>
                     </div>
@@ -258,25 +305,24 @@
          * @private
          */
         _bindEvents() {
-            const contentEl = this.container.querySelector('.pui-panel-content');
-            
-            // Новая сессия
-            contentEl.querySelector('.btn-new-session')?.addEventListener('click', () => {
-                this.createSession();
-            });
-            
+            // If container doesn't have pui-panel-content, bind directly to container
+            let contentEl = this.container.querySelector('.pui-panel-content');
+            if (!contentEl) {
+                contentEl = this.container;
+            }
+
             // Обновление
             contentEl.querySelector('.btn-refresh')?.addEventListener('click', () => {
                 this.refreshSessions();
             });
-            
+
             // Очистка действий
             contentEl.querySelector('.btn-clear-actions')?.addEventListener('click', () => {
                 if (this.currentSessionId) {
                     this.clearSessionActions(this.currentSessionId);
                 }
             });
-            
+
             // Экспорт
             contentEl.querySelector('.btn-export')?.addEventListener('click', () => {
                 if (this.currentSessionId) {
@@ -506,7 +552,7 @@
                 contentEl.innerHTML = `
                     <div class="empty-state">
                         <p>No actions in this session yet</p>
-                        <button class="btn-add-action" onclick="window.aiActionsPanel?.showAddActionForm('${sessionId}')">Add Action</button>
+                        <p class="empty-hint">Waiting for AI actions...</p>
                     </div>
                 `;
                 return;
@@ -541,7 +587,7 @@
                 contentEl.innerHTML = `
                     <div class="empty-state">
                         <p>Select a session to view its actions</p>
-                        <button class="btn-new-session-inline" onclick="window.aiActionsPanel?.createSession()">Create New Session</button>
+                        <p class="empty-hint">Use the + button in the taskbar to create a new task</p>
                     </div>
                 `;
             }

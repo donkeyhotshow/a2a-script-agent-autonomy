@@ -13,6 +13,7 @@ const path_1 = __importDefault(require("path"));
 const tfidf_js_1 = require("../tfidf.js");
 const query_understanding_js_1 = require("../query-understanding.js");
 const code_similarity_js_1 = require("../code-similarity.js");
+const suggestions_js_1 = require("../suggestions.js");
 const bm25_js_1 = require("../bm25.js");
 const file_relevance_js_1 = require("../file-relevance.js");
 const protocol_rag_search_js_1 = require("../protocol-rag-search.js");
@@ -22,6 +23,7 @@ class RAGSearcher {
         this.tfidfIndexed = false;
         this.bm25Indexed = false;
         this.similarityIndexed = false;
+        this.suggestionsIndexed = false;
         this.projectPath = config.projectPath ?? process.cwd();
         this.indexPath = path_1.default.join(this.projectPath, '.a2a', 'index');
         this.cachePath = path_1.default.join(this.projectPath, '.a2a', 'cache');
@@ -33,6 +35,9 @@ class RAGSearcher {
         this.bm25 = new bm25_js_1.BM25Scorer();
         this.fileRelevanceModel = config.fileRelevanceModel;
         this.fileRelevanceCache = new Map();
+        this.queryCache = new Map();
+        this.defaultCacheTTL = config.queryCacheTTL ?? 5 * 60 * 1000; // 5 minutes default
+        this.suggestions = new suggestions_js_1.SearchSuggestionsEngine({ maxSuggestions: 10 });
     }
     /**
      * Save search indexes to cache for fast loading
@@ -278,6 +283,10 @@ class RAGSearcher {
             if (candidateIds && !candidateIds.has(chunkId)) {
                 continue;
             }
+            // Apply faceted filters
+            if (options.filters && !this.matchesFilters(chunk, index, options.filters)) {
+                continue;
+            }
             const score = this.scoreChunkWithEngines(chunk, keywords, query, intent, options, bm25Results);
             if (score.totalScore > 0) {
                 results.push({
@@ -302,6 +311,48 @@ class RAGSearcher {
         const uniqueFileResults = sortedByFile.slice(0, limit);
         console.log(`[DEBUG] Found ${results.length} chunks, ${fileGrouped.size} unique files, returning top ${limit}`);
         return uniqueFileResults;
+    }
+    /**
+     * Search with result caching (TTL in milliseconds)
+     * Cache key includes query and options to ensure cache validity
+     */
+    async searchWithCache(query, options = {}, ttl) {
+        const cacheTTL = ttl ?? this.defaultCacheTTL;
+        const cacheKey = this.createCacheKey(query, options);
+        // Check cache
+        const cached = this.queryCache.get(cacheKey);
+        if (cached && Date.now() - cached.timestamp < cached.ttl) {
+            console.log('[RAG] Cache hit for query:', query.substring(0, 50));
+            return cached.data;
+        }
+        // Perform search
+        const results = await this.search(query, options);
+        // Cache results
+        this.queryCache.set(cacheKey, {
+            data: results,
+            timestamp: Date.now(),
+            ttl: cacheTTL,
+        });
+        return results;
+    }
+    /**
+     * Clear query cache
+     */
+    clearQueryCache() {
+        this.queryCache.clear();
+    }
+    /**
+     * Get query cache statistics
+     */
+    getQueryCacheStats() {
+        return {
+            size: this.queryCache.size,
+            maxTTL: this.defaultCacheTTL,
+        };
+    }
+    createCacheKey(query, options) {
+        const keyData = { query, options };
+        return JSON.stringify(keyData);
     }
     /**
      * Build all search indexes once, using cache if available
@@ -330,6 +381,11 @@ class RAGSearcher {
             this.codeSimilarity.index(index.chunks);
             this.similarityIndexed = true;
             console.log('  [Indexed similarity for', index.chunks.length, 'chunks]');
+        }
+        // Build suggestions index
+        if (!this.suggestionsIndexed) {
+            this.suggestions.indexSymbols(index.chunks);
+            this.suggestionsIndexed = true;
         }
         console.log('[DEBUG] ensureIndexesBuilt done, bm25Indexed=', this.bm25Indexed);
     }
@@ -521,6 +577,53 @@ class RAGSearcher {
         }
         return [...new Set(highlights)].slice(0, 5);
     }
+    /**
+     * Check if a chunk matches the faceted search filters
+     */
+    matchesFilters(chunk, index, filters) {
+        // Get file info for this chunk
+        const fileInfo = index.files.find(f => f.path === chunk.filePath);
+        if (!fileInfo)
+            return true; // If file not found, allow through
+        // Extension filter
+        if (filters.extensions && filters.extensions.length > 0) {
+            const ext = fileInfo.ext.toLowerCase();
+            const normalizedExts = filters.extensions.map(e => e.toLowerCase());
+            if (!normalizedExts.includes(ext) && !normalizedExts.includes(ext.replace('.', ''))) {
+                return false;
+            }
+        }
+        // Folder filter
+        if (filters.folders && filters.folders.length > 0) {
+            const inFolder = filters.folders.some(folder => chunk.filePath.startsWith(folder.replace(/^\//, '')));
+            if (!inFolder)
+                return false;
+        }
+        // Date filters
+        if (filters.modifiedAfter) {
+            const afterDate = new Date(filters.modifiedAfter).getTime();
+            const fileDate = new Date(fileInfo.modified).getTime();
+            if (fileDate < afterDate)
+                return false;
+        }
+        if (filters.modifiedBefore) {
+            const beforeDate = new Date(filters.modifiedBefore).getTime();
+            const fileDate = new Date(fileInfo.modified).getTime();
+            if (fileDate > beforeDate)
+                return false;
+        }
+        // Type filter
+        if (filters.type && filters.type.length > 0) {
+            if (!filters.type.includes(chunk.type))
+                return false;
+        }
+        // Size filters
+        if (filters.minSize !== undefined && fileInfo.size < filters.minSize)
+            return false;
+        if (filters.maxSize !== undefined && fileInfo.size > filters.maxSize)
+            return false;
+        return true;
+    }
     matchPattern(filePath, pattern) {
         const regexPattern = pattern
             .replace(/\./g, '\\.')
@@ -529,9 +632,24 @@ class RAGSearcher {
             .replace(/{{GLOBSTAR}}/g, '.*');
         return new RegExp(regexPattern).test(filePath);
     }
+    /**
+     * Get search suggestions for autocomplete
+     */
+    getSuggestions(query, options = {}) {
+        return this.suggestions.getSuggestions(query, options);
+    }
+    /**
+     * Get suggestions by type (function, class, method, etc.)
+     */
+    getSuggestionsByType(type, limit = 10) {
+        return this.suggestions.getByType(type, limit);
+    }
     dispose() {
         this.index = null;
         this.clearTFIDFIndex();
+        this.clearQueryCache();
+        this.suggestions.clear();
+        this.suggestionsIndexed = false;
     }
     /**
      * Search with protocol result transformation

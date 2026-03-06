@@ -13,36 +13,39 @@ describe('TerminalHandler', () => {
 
     describe('constructor', () => {
 
-        it('should create instance with default config', () => {
+        it('should create instance without server', () => {
             const handler = new TerminalHandler();
             assert.ok(handler);
-            assert.ok(handler.config);
+            assert.ok(handler.server === undefined);
         });
 
-        it('should accept custom config', () => {
-            const customConfig = {timeout: 60};
-            const handler = new TerminalHandler(customConfig);
-            assert.strictEqual(handler.config.timeout, 60);
+        it('should accept server object', () => {
+            const mockServer = { logger: console, errorHandler: null };
+            const handler = new TerminalHandler(mockServer);
+            assert.strictEqual(handler.server, mockServer);
+        });
+
+        it('should initialize session data', () => {
+            const handler = new TerminalHandler();
+            assert.ok(handler._sessionData);
+            assert.ok(handler.SESSION_CWD_KEY);
+            assert.ok(handler.SESSION_DIR_STACK_KEY);
         });
     });
 
-    describe('getPrompt', () => {
+    describe('session management', () => {
 
-        it('should return default prompt', () => {
+        it('should get and set session cwd', () => {
             const handler = new TerminalHandler();
-            const prompt = handler.getPrompt();
-            assert.ok(typeof prompt === 'string');
+            handler._setSessionCwd('/test/path');
+            assert.strictEqual(handler._getSessionCwd(), '/test/path');
         });
-    });
 
-    describe('terminalHelp', () => {
-
-        it('should return help string', () => {
+        it('should manage directory stack', () => {
             const handler = new TerminalHandler();
-            const help = handler.terminalHelp();
-            assert.ok(typeof help === 'string');
-            assert.ok(help.length > 0);
-            assert.ok(help.includes('terminal'));
+            const stack = ['/dir1', '/dir2'];
+            handler._setDirStack(stack);
+            assert.deepStrictEqual(handler._getDirStack(), stack);
         });
     });
 });

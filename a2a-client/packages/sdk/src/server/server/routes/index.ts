@@ -8,6 +8,7 @@
 import {Router} from 'express';
 import {AuthenticatedRequest, authMiddleware, sessionMiddleware} from '../middleware/auth.js';
 import {configRoutes} from './config.js';
+import sessionsRoutes from './sessions.js';
 
 export interface RouteOptions {
     prefix?: string;
@@ -33,6 +34,9 @@ export function setupRoutes(options: RouteOptions = {}): Router {
 
     // Mount stable modules
     router.use(`${prefix}/config`, configRoutes);
+    router.use(`${prefix}/sessions`, sessionsRoutes);
+    // Also mount at /api/sessions for direct access (matches API info)
+    router.use('/api/sessions', sessionsRoutes);
 
     // Health check endpoint (bypasses auth)
     router.get('/health', (req, res) => {
@@ -79,5 +83,6 @@ export function setupRoutes(options: RouteOptions = {}): Router {
 
 // Export individual route modules for testing
 export {
-    configRoutes
+    configRoutes,
+    sessionsRoutes
 };

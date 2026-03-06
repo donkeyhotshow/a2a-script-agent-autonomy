@@ -3,7 +3,7 @@
  * @a2a/rag - RAG Indexing and Search Module
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.createSimilarityEngine = exports.CodeSimilarityEngine = exports.createQueryExpander = exports.QueryExpander = exports.createSuggestionsEngine = exports.SearchSuggestionsEngine = exports.INTENT_TYPES = exports.createQueryUnderstandingEngine = exports.QueryUnderstandingEngine = exports.createASTChunker = exports.ASTChunker = exports.createMeilisearchClient = exports.MeilisearchClient = exports.createHybridSearcher = exports.HybridSearcher = exports.createReranker = exports.RerankerClient = exports.createBM25Scorer = exports.BM25Scorer = exports.SemanticSearcher = exports.RAGIntegrator = exports.TFIDFService = exports.ChunkManager = exports.RAGSearcher = exports.RAGIndexer = void 0;
+exports.createWatchManager = exports.RAGWatchManager = exports.createSimilarityEngine = exports.CodeSimilarityEngine = exports.createQueryExpander = exports.QueryExpander = exports.createSuggestionsEngine = exports.SearchSuggestionsEngine = exports.INTENT_TYPES = exports.createQueryUnderstandingEngine = exports.QueryUnderstandingEngine = exports.createASTChunker = exports.ASTChunker = exports.createMeilisearchClient = exports.MeilisearchClient = exports.createHybridSearcher = exports.HybridSearcher = exports.createReranker = exports.RerankerClient = exports.createBM25Scorer = exports.BM25Scorer = exports.SemanticSearcher = exports.RAGIntegrator = exports.TFIDFService = exports.ChunkManager = exports.RAGSearcher = exports.RAGIndexer = void 0;
 exports.createRAG = createRAG;
 const indexer_1 = require("./indexer");
 Object.defineProperty(exports, "RAGIndexer", { enumerable: true, get: function () { return indexer_1.RAGIndexer; } });
@@ -53,3 +53,6 @@ function createRAG(config = {}) {
     const tfidf = new tfidf_1.TFIDFService();
     return { indexer, searcher, chunks, tfidf };
 }
+var watch_manager_js_1 = require("./watch-manager.js");
+Object.defineProperty(exports, "RAGWatchManager", { enumerable: true, get: function () { return watch_manager_js_1.RAGWatchManager; } });
+Object.defineProperty(exports, "createWatchManager", { enumerable: true, get: function () { return watch_manager_js_1.createWatchManager; } });

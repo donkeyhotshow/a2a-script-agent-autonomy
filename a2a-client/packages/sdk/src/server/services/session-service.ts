@@ -337,6 +337,18 @@ export class SessionService {
     }
 
     /**
+     * Delete session
+     */
+    public deleteSession(sessionId: string): boolean {
+        const existed = this.sessions.has(sessionId);
+        if (existed) {
+            this.sessions.delete(sessionId);
+            console.log(`[SESSION] Deleted session: ${sessionId}`);
+        }
+        return existed;
+    }
+
+    /**
      * Get all sessions map (for testing)
      */
     public getSessions(): Map<string, SessionDetail> {

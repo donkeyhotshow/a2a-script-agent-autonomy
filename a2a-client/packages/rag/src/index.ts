@@ -34,6 +34,26 @@ export interface RAGConfig {
      * If not provided, only heuristics are used.
      */
     fileRelevanceModel?: FileRelevanceModel;
+    /**
+     * Enable AST-based chunking for supported languages
+     * @default true
+     */
+    useAST?: boolean;
+    /**
+     * Fallback to regex chunking if AST parsing fails
+     * @default true
+     */
+    fallbackToRegex?: boolean;
+    /**
+     * Default TTL for query cache in milliseconds
+     * @default undefined (caching disabled)
+     */
+    queryCacheTTL?: number;
+    /**
+     * Enable relevance feedback learning from clicks
+     * @default true
+     */
+    relevanceFeedback?: boolean;
 }
 
 export interface RAGInstance {
@@ -47,13 +67,23 @@ export function createRAG(config: RAGConfig = {}): RAGInstance {
     const projectPath = config.projectPath ?? process.cwd();
     const indexerConfig = {...config, projectPath};
     const indexer = new RAGIndexer(indexerConfig as import('./indexer').RAGIndexerConfig);
-    const searcher = new RAGSearcher({...config, projectPath});
-    const chunks = new ChunkManager(config as import('./chunk-manager').ChunkManagerConfig);
+    const searcher = new RAGSearcher({
+        projectPath,
+        fileRelevanceModel: config.fileRelevanceModel,
+        queryCacheTTL: config.queryCacheTTL,
+        relevanceFeedback: config.relevanceFeedback,
+    });
+    const chunks = new ChunkManager({
+        useAST: config.useAST,
+        fallbackToRegex: config.fallbackToRegex,
+    });
     const tfidf = new TFIDFService();
     return {indexer, searcher, chunks, tfidf};
 }
 
 export type {RAGIndexerConfig} from './indexer';
+export type {SearchFilters} from './searcher/types.js';
+export type {SuggestionItem} from './suggestions.js';
 export {
     RAGIndexer,
     RAGSearcher,
@@ -81,3 +111,13 @@ export {
     CodeSimilarityEngine,
     createSimilarityEngine,
 };
+export {RAGWatchManager, createWatchManager} from './watch-manager.js';
+export {
+    RAGClientService,
+    createRAGClientService,
+    type ProtocolRAGConfig,
+    type ProtocolSearchInput,
+    type ProtocolSearchOutput,
+    type ProtocolIndexOutput,
+    type ProtocolHealthOutput,
+} from './protocol-integration.js';

@@ -34,17 +34,18 @@ web/
 │   ├── app-task.js          # Инициализация приложения
 │   ├── error-handler.js     # Обработка ошибок
 │   ├── file-transfer.js     # Передача файлов
-│   ├── plasticine-ui.js     # Пластилиновый UI
 │   ├── progress-indicators.js # Индикаторы прогресса
 │   ├── rag-search-ui.js     # RAG поиск UI
-│   ├── session-manager.js   # Управление сессиями
-│   ├── sse-client.js       # SSE клиент
-│   ├── task-flow.js        # Поток задач
 │   ├── terminal-emulator.js # Терминал
 │   ├── ui-components.js    # UI компоненты
 │   ├── web-api-client.js   # Web API клиент
-│   ├── websocket-client.js # WebSocket клиент
-│   └── components/         # Дополнительные компоненты
+│   ├── components/         # Дополнительные компоненты
+│   ├── task-flow/          # Модульный TaskFlow
+│   │   ├── api.js          # HTTP запросы
+│   │   ├── render.js       # Рендеринг UI
+│   │   ├── core.js         # Основной объект TaskFlow
+│   │   └── index.js        # Точка входа
+│   └── archive/            # Архив устаревших файлов
 ├── templates/              # HTML шаблоны
 └── examples/              # Примеры
 ```
@@ -73,25 +74,34 @@ await StorageAPI.config.setItem('clientApiUrl', 'http://localhost:3001/api');
 
 ### Основные модули
 
-#### SessionManager
-Управление сессиями проекта.
+#### SessionStore
+Управление сессиями проекта (заменяет session-manager.js).
 ```javascript
-SessionManager.init({ apiBase: '/api' });
-const sessions = await SessionManager.loadSessions();
+SessionStore.init();
+const state = SessionStore.getState();
+await SessionStore.restoreAndReconnect();
+```
+
+#### TransportManager
+Унифицированный транспорт SSE/WebSocket (заменяет sse-client.js и websocket-client.js).
+```javascript
+TransportManager.init();
+TransportManager.connect(sessionId, promiseId);
+TransportManager.on('message', (data) => { /* handle */ });
+```
+
+#### PanelManager
+Управление панелями UI (заменяет plasticine-ui.js и session-panel-manager.js).
+```javascript
+await PanelManager.init().syncWithSessionStore();
+PanelManager.open(config);
 ```
 
 #### TaskFlow
-Поток задач от создания до выполнения.
+Модульный поток задач от создания до выполнения.
 ```javascript
-const result = await TaskFlow.sendTask('Create a file');
+const result = await TaskFlow.run('Create a file');
 TaskFlow.sendChoice('confirm_action', containerElement);
-```
-
-#### SSEClient
-Real-time обновления через Server-Sent Events.
-```javascript
-SSEClient.connect(sessionId, promiseId);
-SSEClient.on('progress', (data) => { /* handle */ });
 ```
 
 #### TerminalEmulator

@@ -1,0 +1,217 @@
+/**
+ * Sessions Routes
+ * 
+ * API endpoints for session management.
+ * POST /api/sessions - Create new session
+ * GET /api/sessions - List all sessions
+ * GET /api/sessions/:id - Get session by ID
+ * PATCH /api/sessions/:id - Update session
+ * DELETE /api/sessions/:id - Delete session
+ */
+
+import {Router, Request, Response} from 'express';
+import {sessionService} from '../services/session-service.js';
+import crypto from 'crypto';
+
+const router = Router();
+
+/**
+ * POST /api/sessions
+ * Create a new session
+ */
+router.post('/', (req: Request, res: Response) => {
+    try {
+        const body = req.body as {
+            title?: string;
+            task?: string;
+            projectId?: string;
+            context?: string;
+            suggestedAction?: string;
+            actionParams?: Record<string, unknown>;
+        };
+
+        // Generate unique session ID
+        const sessionId = crypto.randomUUID();
+
+        // Create session via service
+        const session = sessionService.createSession(sessionId, {
+            metadata: {
+                title: body.title || 'New Session',
+                task: body.task,
+                projectId: body.projectId,
+                context: body.context,
+                suggestedAction: body.suggestedAction,
+                actionParams: body.actionParams,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            }
+        });
+
+        res.status(201).json({
+            success: true,
+            data: session
+        });
+    } catch (error) {
+        console.error('[SESSIONS API] Error creating session:', error);
+        res.status(500).json({
+            success: false,
+            error: {
+                code: 'SESSION_CREATE_ERROR',
+                message: error instanceof Error ? error.message : 'Failed to create session'
+            }
+        });
+    }
+});
+
+/**
+ * GET /api/sessions
+ * List all sessions (returns summaries)
+ */
+router.get('/', (req: Request, res: Response) => {
+    try {
+        const {status, projectId} = req.query;
+        let sessions = sessionService.getSessionSummaries();
+
+        // Filter by status if provided
+        if (status) {
+            sessions = sessions.filter(s => s.status === status);
+        }
+
+        // Filter by projectId if provided
+        if (projectId) {
+            sessions = sessions.filter(s => s.metadata?.projectId === projectId);
+        }
+
+        res.json({
+            success: true,
+            data: sessions,
+            count: sessions.length
+        });
+    } catch (error) {
+        console.error('[SESSIONS API] Error listing sessions:', error);
+        res.status(500).json({
+            success: false,
+            error: {
+                code: 'SESSION_LIST_ERROR',
+                message: error instanceof Error ? error.message : 'Failed to list sessions'
+            }
+        });
+    }
+});
+
+/**
+ * GET /api/sessions/:id
+ * Get session by ID
+ */
+router.get('/:id', (req: Request, res: Response) => {
+    try {
+        const {id} = req.params;
+        const session = sessionService.getSession(id);
+
+        if (!session) {
+            res.status(404).json({
+                success: false,
+                error: {
+                    code: 'SESSION_NOT_FOUND',
+                    message: `Session ${id} not found`
+                }
+            });
+            return;
+        }
+
+        res.json({
+            success: true,
+            data: session
+        });
+    } catch (error) {
+        console.error('[SESSIONS API] Error getting session:', error);
+        res.status(500).json({
+            success: false,
+            error: {
+                code: 'SESSION_GET_ERROR',
+                message: error instanceof Error ? error.message : 'Failed to get session'
+            }
+        });
+    }
+});
+
+/**
+ * PATCH /api/sessions/:id
+ * Update session
+ */
+router.patch('/:id', (req: Request, res: Response) => {
+    try {
+        const {id} = req.params;
+        const updates = req.body;
+
+        const session = sessionService.updateSession(id, updates);
+
+        if (!session) {
+            res.status(404).json({
+                success: false,
+                error: {
+                    code: 'SESSION_NOT_FOUND',
+                    message: `Session ${id} not found`
+                }
+            });
+            return;
+        }
+
+        res.json({
+            success: true,
+            data: session
+        });
+    } catch (error) {
+        console.error('[SESSIONS API] Error updating session:', error);
+        res.status(500).json({
+            success: false,
+            error: {
+                code: 'SESSION_UPDATE_ERROR',
+                message: error instanceof Error ? error.message : 'Failed to update session'
+            }
+        });
+    }
+});
+
+/**
+ * DELETE /api/sessions/:id
+ * Delete session
+ */
+router.delete('/:id', (req: Request, res: Response) => {
+    try {
+        const {id} = req.params;
+
+        // Get session first to return it
+        const session = sessionService.getSession(id);
+
+        if (!session) {
+            res.status(404).json({
+                success: false,
+                error: {
+                    code: 'SESSION_NOT_FOUND',
+                    message: `Session ${id} not found`
+                }
+            });
+            return;
+        }
+
+        // Delete from service
+        sessionService.deleteSession(id);
+
+        res.json({
+            success: true,
+            data: {id, deleted: true}
+        });
+    } catch (error) {
+        console.error('[SESSIONS API] Error deleting session:', error);
+        res.status(500).json({
+            success: false,
+            error: {
+                code: 'SESSION_DELETE_ERROR',
+                message: error instanceof Error ? error.message : 'Failed to delete session'
+            }
+        });
+    }
+});
+
+export default router;

@@ -9,12 +9,45 @@ const {
     shouldPersistHistoryCore,
     checkHistoryLimitCore
 } = require('./terminal-handler-core.cjs');
-const {CommandExecutor} = require('../lib/command-executor-wrapper.cjs');
-const {commandConverter, CommandConverter} = require('../mcp/command-converter.cjs');
-const {
-    persistHistoryRecord,
-    getCurrentSessionId
-} = require('../lib/history-adapter.cjs');
+
+// Импорт command-executor-wrapper (local), с fallback если файл удалён
+let CommandExecutor;
+try {
+    ({CommandExecutor} = require('./command-executor-wrapper.cjs'));
+} catch (e) {
+    // Fallback stub если файл удалён
+    CommandExecutor = class StubCommandExecutor {
+        constructor() {}
+        async runCommand() {
+            return { stdout: '', stderr: 'Command executor not available', return_code: 1 };
+        }
+    };
+}
+
+// Импорт command-converter (local), с fallback если файл удалён
+let commandConverter, CommandConverter;
+try {
+    ({commandConverter, CommandConverter} = require('./command-converter.cjs'));
+} catch (e) {
+    // Fallback stub если файл удалён
+    CommandConverter = {
+        isEmulatedCommand: () => false,
+        listEmulatedCommands: () => []
+    };
+    commandConverter = {
+        convertToMCPTool: () => null
+    };
+}
+
+// History adapter - с fallback
+let persistHistoryRecord, getCurrentSessionId;
+try {
+    ({persistHistoryRecord, getCurrentSessionId} = require('../lib/history-adapter.cjs'));
+} catch (e) {
+    // Fallback stub если модуль недоступен
+    persistHistoryRecord = async () => {};
+    getCurrentSessionId = () => null;
+}
 
 // Fallback функции для зависимостей, которые могут отсутствовать
 function getCurrentDirSync() {
@@ -82,13 +115,6 @@ function validateExecRunParams(args) {
     }
 
     return {isValid: errors.length === 0, errors};
-}
-
-// Метрики (заглушки)
-function recordCommandMetric() {
-}
-
-function recordSecurityMetric() {
 }
 
 class TerminalHandler {
@@ -332,10 +358,6 @@ class TerminalHandler {
                 cwd: effectiveCwd
             });
 
-            // Метрики
-            recordCommandMetric(true, duration, false);
-            recordSecurityMetric('allow', {command, duration});
-
             // Формируем ответ
             let response = `OK (dur=${duration}, code=${exitCode})`;
             if (result.stdout) {
@@ -360,9 +382,6 @@ class TerminalHandler {
                 duration: duration.toString(),
                 cwd: effectiveCwd
             });
-
-            recordCommandMetric(false, duration, true);
-            recordSecurityMetric('error', {command, error: runErr.message});
 
             return this._textResponse(id, `ERROR (dur=${duration}, code=${runErr.exitCode || 1}): ${runErr.message}`);
         }
@@ -394,16 +413,10 @@ class TerminalHandler {
                 return this._textResponse(id, 'Error: Command is required');
             }
 
-            if (Number.isNaN(timeout) || timeout < 1 || timeout > 1200) {
-                return this._textResponse(id, 'Error: Timeout must be between 1 and 1200 seconds');
-            }
-
-            // Валидация параметров
-            if (validateExecRunParams) {
-                const validation = validateExecRunParams(args);
-                if (!validation.isValid) {
-                    return this._textResponse(id, 'Parameter validation failed:\n' + validation.errors.join('\n'));
-                }
+            // Валидация параметров (включая timeout)
+            const validation = validateExecRunParams(args);
+            if (!validation.isValid) {
+                return this._textResponse(id, 'Parameter validation failed:\n' + validation.errors.join('\n'));
             }
 
             // Проверка на эмулированные команды
@@ -418,7 +431,6 @@ class TerminalHandler {
             // Security analysis (предобработка)
             const securityAnalysis = analyzeCommand(command);
             if (securityAnalysis && securityAnalysis.blocked) {
-                recordSecurityMetric('block', {command, reason: securityAnalysis.reason});
                 return this._textResponse(id, `Security block: ${securityAnalysis.reason}`);
             }
 

@@ -5,6 +5,7 @@
 import { TFIDFService } from '../tfidf.js';
 import { QueryUnderstandingEngine } from '../query-understanding.js';
 import { CodeSimilarityEngine } from '../code-similarity.js';
+import { SearchSuggestionsEngine, SuggestionItem } from '../suggestions.js';
 import { BM25Scorer } from '../bm25.js';
 import type { Chunk } from '../chunk-manager.js';
 import type { RAGIndexData, IndexFileInfo } from '../indexer.js';
@@ -23,8 +24,12 @@ export declare class RAGSearcher {
     bm25: BM25Scorer | null;
     private bm25Indexed;
     private similarityIndexed;
+    suggestions: SearchSuggestionsEngine;
+    private suggestionsIndexed;
     private fileRelevanceModel?;
     private fileRelevanceCache;
+    private queryCache;
+    private defaultCacheTTL;
     constructor(config?: RAGSearcherConfig);
     /**
      * Save search indexes to cache for fast loading
@@ -66,6 +71,23 @@ export declare class RAGSearcher {
     clearTFIDFIndex(): void;
     search(query: string, options?: SearchOptions): Promise<SearchResult[]>;
     /**
+     * Search with result caching (TTL in milliseconds)
+     * Cache key includes query and options to ensure cache validity
+     */
+    searchWithCache(query: string, options?: SearchOptions, ttl?: number): Promise<SearchResult[]>;
+    /**
+     * Clear query cache
+     */
+    clearQueryCache(): void;
+    /**
+     * Get query cache statistics
+     */
+    getQueryCacheStats(): {
+        size: number;
+        maxTTL: number;
+    };
+    private createCacheKey;
+    /**
      * Build all search indexes once, using cache if available
      */
     private ensureIndexesBuilt;
@@ -84,7 +106,21 @@ export declare class RAGSearcher {
     extractKeywords(query: string): ExtractedKeywords;
     scoreChunk(chunk: Chunk, keywords: ExtractedKeywords, _originalQuery: string): number;
     findHighlights(content: string, keywords: ExtractedKeywords): string[];
+    /**
+     * Check if a chunk matches the faceted search filters
+     */
+    private matchesFilters;
     matchPattern(filePath: string, pattern: string): boolean;
+    /**
+     * Get search suggestions for autocomplete
+     */
+    getSuggestions(query: string, options?: {
+        limit?: number;
+    }): SuggestionItem[];
+    /**
+     * Get suggestions by type (function, class, method, etc.)
+     */
+    getSuggestionsByType(type: string, limit?: number): SuggestionItem[];
     dispose(): void;
     /**
      * Search with protocol result transformation

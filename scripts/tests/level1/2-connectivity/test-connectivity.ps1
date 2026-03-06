@@ -1,4 +1,4 @@
-# Level 1.2: Network Connectivity Test
+﻿# Level 1.2: Network Connectivity Test
 # Проверка сетевых подключений и DNS
 
 param(
@@ -6,8 +6,8 @@ param(
 )
 
 # Color output functions
-function Write-Success { param($Message) Write-Host "✓ $Message" -ForegroundColor Green }
-function Write-Error { param($Message) Write-Host "✗ $Message" -ForegroundColor Red }
+function Write-Success { param($Message) Write-Host "PASS $Message" -ForegroundColor Green }
+function Write-Error { param($Message) Write-Host "FAIL $Message" -ForegroundColor Red }
 function Write-Info { param($Message) Write-Host "ℹ $Message" -ForegroundColor Cyan }
 
 Write-Info "Level 1.2: Network Connectivity Test"
@@ -110,14 +110,14 @@ foreach ($servicePort in $servicePorts) {
 Write-Host ""
 Write-Info "Connectivity Test Summary:"
 foreach ($result in $results.GetEnumerator()) {
-    $status = if ($result.Value) { "✓ PASS" } else { "✗ FAIL" }
+    $status = if ($result.Value) { "PASS PASS" } else { "FAIL FAIL" }
     Write-Host ("{0,-25} : {1}" -f $result.Key, $status)
 }
 
 Write-Host ""
 Write-Info "Port Status:"
 foreach ($portResult in $portResults.GetEnumerator()) {
-    $status = if ($portResult.Value.Open) { "✓ Open" } else { "○ Closed" }
+    $status = if ($portResult.Value.Open) { "PASS Open" } else { "○ Closed" }
     Write-Host ("{0,-15} (port {1,-5}) : {2}" -f $portResult.Key, $portResult.Value.Port, $status)
 }
 

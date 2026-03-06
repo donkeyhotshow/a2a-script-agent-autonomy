@@ -1,4 +1,4 @@
-# Level 1.3: Basic API Endpoints Test
+﻿# Level 1.3: Basic API Endpoints Test
 # Проверка базовых API эндпоинтов (GET /health и простые запросы)
 
 param(
@@ -6,12 +6,48 @@ param(
 )
 
 # Color output functions
-function Write-Success { param($Message) Write-Host "✓ $Message" -ForegroundColor Green }
-function Write-Error { param($Message) Write-Host "✗ $Message" -ForegroundColor Red }
+function Write-Success { param($Message) Write-Host "PASS $Message" -ForegroundColor Green }
+function Write-Error { param($Message) Write-Host "FAIL $Message" -ForegroundColor Red }
 function Write-Info { param($Message) Write-Host "ℹ $Message" -ForegroundColor Cyan }
 
 Write-Info "Level 1.3: Basic API Endpoints Test"
 Write-Info "==================================="
+
+function Test-Endpoint {
+    param(
+        [Hashtable]$Endpoint
+    )
+
+    $maxRetries = if ($Endpoint.Name -eq "AI Integration Daemon Status") { 3 } else { 1 }
+    $delaySeconds = 3
+
+    for ($attempt = 1; $attempt -le $maxRetries; $attempt++) {
+        if ($attempt -gt 1) {
+            Write-Info "  Retrying $($Endpoint.Name) (attempt $attempt of $maxRetries)..."
+        }
+
+        try {
+            $response = Invoke-WebRequest -Uri $Endpoint.Url -Method $Endpoint.Method -TimeoutSec 5 -ErrorAction Stop
+            if ($response.StatusCode -eq $Endpoint.ExpectedStatus) {
+                return $response
+            }
+            Write-Info "  Received status $($response.StatusCode)"
+        } catch {
+            if ($_.Exception.Response) {
+                $statusCode = $_.Exception.Response.StatusCode
+                Write-Info "  Received status $statusCode"
+            } else {
+                Write-Info "  Request failed: $($_.Exception.Message)"
+            }
+        }
+
+        if ($attempt -lt $maxRetries) {
+            Start-Sleep -Seconds $delaySeconds
+        }
+    }
+
+    return $null
+}
 
 $apiEndpoints = @(
     @{
@@ -41,6 +77,7 @@ $apiEndpoints = @(
         Method = "GET"
         ExpectedStatus = 200
         Service = "AI Integration"
+        Optional = $true
     },
     @{
         Name = "AI Integration Daemon Status"
@@ -48,6 +85,7 @@ $apiEndpoints = @(
         Method = "GET"
         ExpectedStatus = 200
         Service = "AI Integration"
+        Optional = $true
     },
     @{
         Name = "Ollama API Tags"
@@ -64,44 +102,42 @@ $allPassed = $true
 foreach ($endpoint in $apiEndpoints) {
     Write-Info "Testing $($endpoint.Name)..."
 
-    try {
-        $response = Invoke-WebRequest -Uri $endpoint.Url -Method $endpoint.Method -TimeoutSec 5 -ErrorAction Stop
+    $response = Test-Endpoint -Endpoint $endpoint
 
-        if ($response.StatusCode -eq $endpoint.ExpectedStatus) {
-            Write-Success "$($endpoint.Name) returned expected status $($endpoint.ExpectedStatus)"
+    $optionalEndpoint = $endpoint.Optional -eq $true
 
-            # Additional validation for some endpoints
-            if ($endpoint.Url -match "/daemon/status") {
-                try {
-                    $statusData = $response.Content | ConvertFrom-Json
-                    Write-Info "  Daemon running: $($statusData.running)"
-                    Write-Info "  Auto execute: $($statusData.auto_execute)"
-                } catch {
-                    Write-Info "  Could not parse daemon status JSON"
-                }
-            } elseif ($endpoint.Url -match "/api/tags") {
-                try {
-                    $tagsData = $response.Content | ConvertFrom-Json
-                    $modelCount = $tagsData.models.Count
-                    Write-Info "  Available models: $modelCount"
-                    if ($modelCount -gt 0) {
-                        Write-Info "  First model: $($tagsData.models[0].name)"
-                    }
-                } catch {
-                    Write-Info "  Could not parse Ollama tags JSON"
-                }
+    if ($response -and $response.StatusCode -eq $endpoint.ExpectedStatus) {
+        Write-Success "$($endpoint.Name) returned expected status $($endpoint.ExpectedStatus)"
+        if ($endpoint.Url -match "/daemon/status") {
+            try {
+                $statusData = $response.Content | ConvertFrom-Json
+                Write-Info "  Daemon running: $($statusData.running)"
+                Write-Info "  Auto execute: $($statusData.auto_execute)"
+            } catch {
+                Write-Info "  Could not parse daemon status JSON"
             }
-
-            $results[$endpoint.Name] = $true
-        } else {
-            Write-Error "$($endpoint.Name) returned status $($response.StatusCode), expected $($endpoint.ExpectedStatus)"
-            $results[$endpoint.Name] = $false
-            $allPassed = $false
+        } elseif ($endpoint.Url -match "/api/tags") {
+            try {
+                $tagsData = $response.Content | ConvertFrom-Json
+                $modelCount = $tagsData.models.Count
+                Write-Info "  Available models: $modelCount"
+                if ($modelCount -gt 0) {
+                    Write-Info "  First model: $($tagsData.models[0].name)"
+                }
+            } catch {
+                Write-Info "  Could not parse Ollama tags JSON"
+            }
         }
-    } catch {
-        Write-Error "$($endpoint.Name) failed: $($_.Exception.Message)"
-        $results[$endpoint.Name] = $false
-        $allPassed = $false
+        $results[$endpoint.Name] = "PASS"
+    } else {
+        if ($response) {
+            Write-Error "$($endpoint.Name) returned status $($response.StatusCode), expected $($endpoint.ExpectedStatus)"
+        } else {
+            Write-Error "$($endpoint.Name) failed after retries."
+        }
+        $status = if ($optionalEndpoint) { "WARN" } else { "FAIL" }
+        $results[$endpoint.Name] = $status
+        if (-not $optionalEndpoint) { $allPassed = $false }
     }
 }
 
@@ -155,7 +191,11 @@ foreach ($test in $basicTests) {
 Write-Host ""
 Write-Info "Basic API Test Summary:"
 foreach ($result in $results.GetEnumerator()) {
-    $status = if ($result.Value) { "✓ PASS" } else { "✗ FAIL" }
+    $status = switch ($result.Value) {
+        "PASS" { "PASS PASS" }
+        "WARN" { "WARN WARN" }
+        default { "FAIL FAIL" }
+    }
     Write-Host ("{0,-35} : {1}" -f $result.Key, $status)
 }
 

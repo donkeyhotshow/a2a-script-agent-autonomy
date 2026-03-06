@@ -14,15 +14,20 @@ if ($existing) {
     }
 }
 
-# Start a2a-server
+# Ensure logs directory exists
+$logDir = Join-Path (Resolve-Path "a2a-server").Path "logs"
+if (-not (Test-Path $logDir)) { New-Item -ItemType Directory -Path $logDir -Force | Out-Null }
+$logFile = Join-Path $logDir "server.log"
+
+# Start a2a-server with log redirection
 $serverJob = Start-Job -ScriptBlock {
-    param($cwd)
+    param($cwd, $log)
     Set-Location $cwd
-    npm run dev
-} -ArgumentList (Resolve-Path "a2a-server").Path
+    npm run dev *> $log 2>&1
+} -ArgumentList (Resolve-Path "a2a-server").Path, $logFile
 
 Write-Host "a2a-server started (Job ID: $($serverJob.Id))" -ForegroundColor Green
-Write-Host "Log: Check terminal output" -ForegroundColor Gray
+Write-Host "Log: $logFile" -ForegroundColor Gray
 
 # Wait for server to start
 Start-Sleep -Seconds 5

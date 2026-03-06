@@ -8,7 +8,7 @@ import path from 'path';
 import {TFIDFService} from '../tfidf.js';
 import {QueryUnderstandingEngine, INTENT_TYPES} from '../query-understanding.js';
 import {CodeSimilarityEngine} from '../code-similarity.js';
-import {SearchSuggestionsEngine, SuggestionItem} from '../suggestions.js';
+import {SearchSuggestionsEngine, SuggestionItem, QueryExpander} from '../suggestions.js';
 import {BM25Scorer} from '../bm25.js';
 import {scoreFileRelevance} from '../file-relevance.js';
 import {toRagSearchResult} from '../protocol-rag-search.js';
@@ -43,6 +43,8 @@ export class RAGSearcher {
     private similarityIndexed = false;
     suggestions: SearchSuggestionsEngine;
     private suggestionsIndexed = false;
+    queryExpander: QueryExpander;
+    private relevanceFeedbackEnabled: boolean;
     private fileRelevanceModel?: FileRelevanceModel;
     private fileRelevanceCache: Map<string, number>;
     private queryCache: Map<string, { data: SearchResult[]; timestamp: number; ttl: number }>;
@@ -62,6 +64,9 @@ export class RAGSearcher {
         this.fileRelevanceCache = new Map();
         this.queryCache = new Map();
         this.defaultCacheTTL = config.queryCacheTTL ?? 5 * 60 * 1000; // 5 minutes default
+        this.suggestions = new SearchSuggestionsEngine({ maxSuggestions: 10 });
+        this.queryExpander = new QueryExpander();
+        this.relevanceFeedbackEnabled = config.relevanceFeedback !== false;
     }
 
     /**
@@ -337,6 +342,11 @@ export class RAGSearcher {
                 continue;
             }
             
+            // Apply faceted filters
+            if (options.filters && !this.matchesFilters(chunk, index, options.filters)) {
+                continue;
+            }
+            
             const score = this.scoreChunkWithEngines(chunk, keywords, query, intent, options, bm25Results);
             if (score.totalScore > 0) {
                 results.push({
@@ -450,6 +460,12 @@ export class RAGSearcher {
             this.codeSimilarity.index(index.chunks);
             this.similarityIndexed = true;
             console.log('  [Indexed similarity for', index.chunks.length, 'chunks]');
+        }
+        
+        // Build suggestions index
+        if (!this.suggestionsIndexed) {
+            this.suggestions.indexSymbols(index.chunks);
+            this.suggestionsIndexed = true;
         }
         
         console.log('[DEBUG] ensureIndexesBuilt done, bm25Indexed=', this.bm25Indexed);
@@ -663,6 +679,59 @@ export class RAGSearcher {
         return [...new Set(highlights)].slice(0, 5);
     }
 
+    /**
+     * Check if a chunk matches the faceted search filters
+     */
+    private matchesFilters(
+        chunk: Chunk,
+        index: RAGIndexData,
+        filters: import('./types.js').SearchFilters
+    ): boolean {
+        // Get file info for this chunk
+        const fileInfo = index.files.find(f => f.path === chunk.filePath);
+        if (!fileInfo) return true; // If file not found, allow through
+        
+        // Extension filter
+        if (filters.extensions && filters.extensions.length > 0) {
+            const ext = fileInfo.ext.toLowerCase();
+            const normalizedExts = filters.extensions.map(e => e.toLowerCase());
+            if (!normalizedExts.includes(ext) && !normalizedExts.includes(ext.replace('.', ''))) {
+                return false;
+            }
+        }
+        
+        // Folder filter
+        if (filters.folders && filters.folders.length > 0) {
+            const inFolder = filters.folders.some(folder => 
+                chunk.filePath.startsWith(folder.replace(/^\//, ''))
+            );
+            if (!inFolder) return false;
+        }
+        
+        // Date filters
+        if (filters.modifiedAfter) {
+            const afterDate = new Date(filters.modifiedAfter).getTime();
+            const fileDate = new Date(fileInfo.modified).getTime();
+            if (fileDate < afterDate) return false;
+        }
+        if (filters.modifiedBefore) {
+            const beforeDate = new Date(filters.modifiedBefore).getTime();
+            const fileDate = new Date(fileInfo.modified).getTime();
+            if (fileDate > beforeDate) return false;
+        }
+        
+        // Type filter
+        if (filters.type && filters.type.length > 0) {
+            if (!filters.type.includes(chunk.type)) return false;
+        }
+        
+        // Size filters
+        if (filters.minSize !== undefined && fileInfo.size < filters.minSize) return false;
+        if (filters.maxSize !== undefined && fileInfo.size > filters.maxSize) return false;
+        
+        return true;
+    }
+
     matchPattern(filePath: string, pattern: string): boolean {
         const regexPattern = pattern
             .replace(/\./g, '\\.')
@@ -672,9 +741,55 @@ export class RAGSearcher {
         return new RegExp(regexPattern).test(filePath);
     }
 
+    /**
+     * Get search suggestions for autocomplete
+     */
+    getSuggestions(query: string, options: { limit?: number } = {}): SuggestionItem[] {
+        return this.suggestions.getSuggestions(query, options);
+    }
+
+    /**
+     * Report click feedback to improve future ranking
+     * Call this when user clicks/selects a search result
+     * @param query The original search query
+     * @param resultId The ID of the clicked result (file path or chunk ID)
+     */
+    reportClick(query: string, resultId: string): void {
+        if (!this.relevanceFeedbackEnabled) return;
+        
+        // Learn from this interaction - strengthens relationship between query terms and result
+        this.queryExpander.learn(query, resultId);
+        
+        console.log(`[RAG] Feedback recorded: "${query.substring(0, 50)}" -> ${resultId}`);
+    }
+
+    /**
+     * Get expanded query terms based on learned relevance
+     */
+    expandQuery(query: string): string[] {
+        return this.queryExpander.expand(query);
+    }
+
+    /**
+     * Enable/disable relevance feedback learning
+     */
+    setRelevanceFeedback(enabled: boolean): void {
+        this.relevanceFeedbackEnabled = enabled;
+    }
+
+    /**
+     * Get suggestions by type (function, class, method, etc.)
+     */
+    getSuggestionsByType(type: string, limit = 10): SuggestionItem[] {
+        return this.suggestions.getByType(type, limit);
+    }
+
     dispose(): void {
         this.index = null;
         this.clearTFIDFIndex();
+        this.clearQueryCache();
+        this.suggestions.clear();
+        this.suggestionsIndexed = false;
     }
 
     /**

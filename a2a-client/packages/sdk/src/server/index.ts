@@ -2237,7 +2237,28 @@ expressApp.get(['/api/files', '/api/v1/files'], async (req, res) => {
     }
 });
 
-// ==================== WEBSOCKET INFO ENDPOINT ====================
+// ==================== API INFO & WEBSOCKET ====================
+
+// API info (service description and endpoint list)
+expressApp.get(['/api', '/api/v1'], (_req, res) => {
+    res.json({
+        service: 'a2a-client-api',
+        version: '1.0.0',
+        endpoints: {
+            config: '/api/config',
+            projects: '/api/projects',
+            sessions: '/api/sessions',
+            terminal: '/api/terminal',
+            fs: '/api/fs',
+            rag: '/api/rag',
+            files: '/api/files',
+            ws: '/api/ws',
+            storage: '/api/storage',
+        },
+        wsUrl: `ws://${HOST}:${WS_PORT}`,
+        timestamp: new Date().toISOString(),
+    });
+});
 
 // Get WebSocket connection info
 expressApp.get(['/api/ws', '/api/v1/ws'], (req, res) => {
@@ -2252,7 +2273,7 @@ expressApp.get(['/api/ws', '/api/v1/ws'], (req, res) => {
 
 const STORAGE_DIR = path.join(storageDir, 'kv');
 
-async function ensureStorageDir(): Promise<void> {
+async function ensureKVStorageDir(): Promise<void> {
     await fs.mkdir(STORAGE_DIR, { recursive: true });
 }
 
@@ -2266,7 +2287,10 @@ expressApp.get(['/api/storage/:namespace/:key', '/api/v1/storage/:namespace/:key
         try {
             await fs.access(filePath);
         } catch {
-            return res.status(404).json({ error: 'Key not found' });
+            return res.status(404).json({
+                error: 'Key not found',
+                details: { namespace, key, path: filePath }
+            });
         }
 
         const data = await fs.readFile(filePath, 'utf-8');
@@ -2282,7 +2306,7 @@ expressApp.get(['/api/storage/:namespace/:key', '/api/v1/storage/:namespace/:key
 // POST /api/storage/:namespace/:key - Store value
 expressApp.post(['/api/storage/:namespace/:key', '/api/v1/storage/:namespace/:key'], async (req, res) => {
     try {
-        await ensureStorageDir();
+        await ensureKVStorageDir();
         const { namespace, key } = req.params;
         const { value } = req.body || {};
 
@@ -2302,7 +2326,7 @@ expressApp.post(['/api/storage/:namespace/:key', '/api/v1/storage/:namespace/:ke
 // PUT /api/storage/:namespace/:key - Update value (alias for POST)
 expressApp.put(['/api/storage/:namespace/:key', '/api/v1/storage/:namespace/:key'], async (req, res) => {
     try {
-        await ensureStorageDir();
+        await ensureKVStorageDir();
         const { namespace, key } = req.params;
         const { value } = req.body || {};
 

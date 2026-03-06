@@ -145,9 +145,9 @@
             };
             try {
                 // Try async storage first, fallback to sync
-                StorageAPI.ui.setItem(this.STORAGE_KEY, JSON.stringify(state)).catch(asyncError => {
+                StorageAPI.ui.setItem(this.STORAGE_KEY, state).catch(asyncError => {
                     console.warn('[PanelManager] Async storage failed, using sync fallback:', asyncError);
-                    StorageAPI.ui.setItemSync(this.STORAGE_KEY, JSON.stringify(state));
+                    StorageAPI.ui.setItemSync(this.STORAGE_KEY, state);
                 });
             } catch (e) {
                 console.warn('[PanelManager] Failed to save state:', e);
@@ -273,7 +273,6 @@
                 'logs-panel': 'logs',
                 'chat-panel': 'chat',
                 'debug-panel': 'debug',
-                'sessions-panel': 'sessions',
                 'settings-panel': 'settings'
             };
 

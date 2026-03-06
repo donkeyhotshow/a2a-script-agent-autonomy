@@ -104,7 +104,7 @@
             // Modal backdrop
             if (this.config.slot === 'modal') {
                 this.backdrop = document.createElement('div');
-                this.backdrop.className = 'pm-backdrop';
+                this.backdrop.className = 'pm-backdrop pm-modal-backdrop';
                 this.backdrop.addEventListener('click', () => this.close());
             }
         }

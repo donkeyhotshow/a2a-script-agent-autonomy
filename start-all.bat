@@ -17,13 +17,7 @@ set WEB_UI_PORT=5173
 set OLLAMA_MODELS=C:\Users\dev\Desktop\.ollama
 set EXIT_CODE=0
 
-REM Generate log names with timestamps
-set TIMESTAMP=%TIME:~0,2%%TIME:~3,2%%TIME:~6,2%
-set TIMESTAMP=%TIMESTAMP: =0%
-set SERVER_LOG=a2a-server-%TIMESTAMP%.log
-set CLIENT_API_LOG=client-api-%TIMESTAMP%.log
-set WEB_UI_LOG=web-ui-%TIMESTAMP%.log
-set AI_LOG=ai-integration-%TIMESTAMP%.log
+REM Logs are overwritten on each start (fixed names in project logs folders)
 
 REM ==========================================
 REM Step 1: Kill existing processes first
@@ -93,12 +87,12 @@ echo.
 echo [Step 5/8] Starting ai-integration on port %PROXY_PORT%...
 call :wait_port_free %PROXY_PORT% 5 || goto :startup_failed
 
-start /b "" cmd /c "cd ai-integration && set OLLAMA_HOST=http://localhost:%OLLAMA_PORT% && set OLLAMA_MODELS=%OLLAMA_MODELS% && python -m uvicorn proxy.asgi:application --host 0.0.0.0 --port %PROXY_PORT% ^> %AI_LOG% 2^>^&1"
+start /b "" cmd /c "cd ai-integration && set OLLAMA_HOST=http://localhost:%OLLAMA_PORT% && set OLLAMA_MODELS=%OLLAMA_MODELS% && python -m uvicorn proxy.asgi:application --host 0.0.0.0 --port %PROXY_PORT%" ^> ..\ai-integration\logs\ai.log 2^>^&1
 powershell -Command "Start-Sleep -Seconds 3"
 
 for /f "tokens=5" %%a in ('netstat -ano ^| findstr ":%PROXY_PORT%" ^| findstr "LISTENING"') do (
     echo AI_INTEGRATION_PID=%%a >> %PID_FILE%
-    echo [OK] ai-integration started (PID: %%a, log: %AI_LOG%)
+    echo [OK] ai-integration started (PID: %%a, log: ai-integration\logs\ai.log)
     goto :ai_done
 )
 echo [WARN] Could not determine ai-integration PID
@@ -112,13 +106,13 @@ echo [Step 6/8] Starting a2a-server on port %SERVER_PORT%...
 call :wait_port_free %SERVER_PORT% 5 || goto :startup_failed
 
 cd a2a-server
-start /b "" cmd /c "npm run dev ^> ..\%SERVER_LOG% 2^>^&1"
+start /b "" cmd /c "npm run dev ^> logs\server.log 2^>^&1"
 cd ..
 powershell -Command "Start-Sleep -Seconds 5"
 
 for /f "tokens=5" %%a in ('netstat -ano ^| findstr ":%SERVER_PORT%" ^| findstr "LISTENING"') do (
     echo A2A_SERVER_PID=%%a >> %PID_FILE%
-    echo [OK] a2a-server started (PID: %%a, log: %SERVER_LOG%)
+    echo [OK] a2a-server started (PID: %%a, log: a2a-server\logs\server.log)
     goto :server_done
 )
 echo [WARN] Could not determine a2a-server PID
@@ -132,13 +126,13 @@ echo [Step 7/8] Starting client-api on port %CLIENT_API_PORT%...
 call :wait_port_free %CLIENT_API_PORT% 5 || goto :startup_failed
 
 cd a2a-client\packages\sdk
-start /b "" cmd /c "npm run dev ^> ..\..\..\%CLIENT_API_LOG% 2^>^&1"
+start /b "" cmd /c "npm run dev ^> ..\..\logs\client-api.log 2^>^&1"
 cd ..\..\..
 powershell -Command "Start-Sleep -Seconds 5"
 
 for /f "tokens=5" %%a in ('netstat -ano ^| findstr ":%CLIENT_API_PORT%" ^| findstr "LISTENING"') do (
     echo CLIENT_API_PID=%%a >> %PID_FILE%
-    echo [OK] client-api started (PID: %%a, log: %CLIENT_API_LOG%)
+    echo [OK] client-api started (PID: %%a, log: a2a-client\logs\client-api.log)
     goto :client_api_done
 )
 echo [WARN] Could not determine client-api PID
@@ -152,13 +146,13 @@ echo [Step 8/8] Starting web-ui on port %WEB_UI_PORT%...
 call :wait_port_free %WEB_UI_PORT% 5 || goto :startup_failed
 
 cd a2a-client
-start /b "" cmd /c "npm run dev ^> ..\%WEB_UI_LOG% 2^>^&1"
+start /b "" cmd /c "npm run dev ^> logs\web-ui.log 2^>^&1"
 cd ..
 powershell -Command "Start-Sleep -Seconds 5"
 
 for /f "tokens=5" %%a in ('netstat -ano ^| findstr ":%WEB_UI_PORT%" ^| findstr "LISTENING"') do (
     echo WEB_UI_PID=%%a >> %PID_FILE%
-    echo [OK] web-ui started (PID: %%a, log: %WEB_UI_LOG%)
+    echo [OK] web-ui started (PID: %%a, log: a2a-client\logs\web-ui.log)
     goto :web_ui_done
 )
 echo [WARN] Could not determine web-ui PID

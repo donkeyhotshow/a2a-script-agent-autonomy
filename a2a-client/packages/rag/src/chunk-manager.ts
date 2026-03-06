@@ -3,6 +3,7 @@
  */
 
 import crypto from 'crypto';
+import {ASTChunker, createASTChunker} from './ast-chunker.js';
 
 export interface Chunk {
     id: string;
@@ -17,14 +18,30 @@ export interface Chunk {
 }
 
 export interface ChunkManagerConfig {
+    /**
+     * Enable AST-based chunking for supported languages
+     * @default true
+     */
+    useAST?: boolean;
+    /**
+     * Fallback to regex chunking if AST parsing fails
+     * @default true
+     */
+    fallbackToRegex?: boolean;
     [key: string]: unknown;
 }
 
 export class ChunkManager {
-    private config: ChunkManagerConfig;
+    private config: Required<Pick<ChunkManagerConfig, 'useAST' | 'fallbackToRegex'>> & ChunkManagerConfig;
+    private astChunker: ASTChunker;
 
     constructor(config: ChunkManagerConfig = {}) {
-        this.config = config;
+        this.config = {
+            useAST: config.useAST ?? true,
+            fallbackToRegex: config.fallbackToRegex ?? true,
+            ...config,
+        };
+        this.astChunker = createASTChunker();
     }
 
     hashContent(content: string): string {
@@ -32,6 +49,19 @@ export class ChunkManager {
     }
 
     chunkFile(filePath: string, content: string, ext: string): Chunk[] {
+        // Try AST chunking first if enabled
+        if (this.config.useAST) {
+            const astChunks = this.tryASTChunking(filePath, content, ext);
+            if (astChunks.length > 0) {
+                return astChunks;
+            }
+            // If AST failed and fallback is disabled, return empty
+            if (!this.config.fallbackToRegex) {
+                return [];
+            }
+        }
+
+        // Fall back to regex-based chunking
         switch (ext) {
             case '.php':
                 return this.chunkPHP(filePath, content);
@@ -45,6 +75,31 @@ export class ChunkManager {
             default:
                 return this.chunkLines(filePath, content);
         }
+    }
+
+    /**
+     * Attempt AST-based chunking for supported languages
+     * Returns empty array if AST parsing fails or language not supported
+     */
+    private tryASTChunking(filePath: string, content: string, ext: string): Chunk[] {
+        const supportedExts = ['.js', '.jsx', '.ts', '.tsx', '.php'];
+        if (!supportedExts.includes(ext)) {
+            return [];
+        }
+
+        try {
+            const chunks = this.astChunker.chunkFile(filePath, content, ext);
+            // Only return if we actually got meaningful chunks
+            if (chunks.length > 0) {
+                console.log(`[RAG] AST chunking succeeded for ${filePath}: ${chunks.length} chunks`);
+                return chunks;
+            }
+        } catch {
+            // AST parsing failed, will fall back to regex
+            console.log(`[RAG] AST chunking failed for ${filePath}, falling back to regex`);
+        }
+
+        return [];
     }
 
     chunkVue(filePath: string, content: string): Chunk[] {

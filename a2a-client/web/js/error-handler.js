@@ -74,6 +74,14 @@
          * Handle API errors specifically
          */
         handleApiError(response, context = {}) {
+            // Skip storage API 404s - they are expected when key doesn't exist
+            const url = context?.url || '';
+            const isStorage404 = url.includes('/api/storage/') && response?.status === 404;
+            if (isStorage404) {
+                console.log('[ErrorHandler] Ignoring expected storage 404 in handleApiError:', url);
+                return null;
+            }
+
             const userMessage = this._formatApiMessage(response) || 'API request failed';
             const code = response?.data?.error?.code
                 || response?.error?.code
@@ -226,20 +234,33 @@
         showErrorDetails(error) {
             if (typeof document === 'undefined') return;
 
+            const ctx = error.context ?? {};
+            const requestUrl = ctx.url ?? ctx.requestUrl ?? '';
+            const requestMethod = (ctx.method ?? ctx.requestMethod ?? 'GET').toUpperCase();
+            const requestPayload = ctx.payload ?? ctx.body ?? ctx.requestPayload;
+
             const stackText = error.stack || 'Stack trace unavailable';
-            const contextText = JSON.stringify(error.context ?? {}, null, 2) || 'No context data';
+            const contextText = JSON.stringify(ctx, null, 2) || 'No context data';
             const metaPieces = [];
             if (error.code) metaPieces.push(error.code);
-            if (error.context?.status) metaPieces.push(`status ${error.context.status}`);
+            if (ctx.status) metaPieces.push(`status ${ctx.status}`);
             const metaText = metaPieces.join(' · ') || 'Details';
-            const payload = [
+
+            const requestBlock = [
+                requestUrl ? `URL: ${requestUrl}` : null,
+                `Method: ${requestMethod}`,
+                requestPayload != null && requestPayload !== '' ? `Request payload:\n${typeof requestPayload === 'string' ? requestPayload : JSON.stringify(requestPayload, null, 2)}` : null
+            ].filter(Boolean).join('\n');
+
+            const copyPayload = [
                 `Message: ${error.message}`,
                 `Code: ${error.code || 'UNSPECIFIED'}`,
+                requestBlock ? `Request:\n${requestBlock}` : null,
                 'Stack trace:',
                 stackText,
                 'Context:',
                 contextText
-            ].join('\n\n');
+            ].filter(Boolean).join('\n\n');
 
             const existingOverlay = document.querySelector('.error-detail-backdrop');
             if (existingOverlay) existingOverlay.remove();
@@ -280,6 +301,23 @@
             const body = document.createElement('div');
             body.className = 'error-detail-body';
 
+            if (requestUrl || requestPayload != null) {
+                const reqLabel = document.createElement('div');
+                reqLabel.className = 'error-detail-section-title';
+                reqLabel.textContent = 'Request';
+                const reqPre = document.createElement('pre');
+                reqPre.className = 'error-detail-request';
+                reqPre.textContent = [
+                    requestUrl ? `URL: ${requestUrl}` : null,
+                    `Method: ${requestMethod}`,
+                    requestPayload != null && requestPayload !== ''
+                        ? `Payload:\n${(typeof requestPayload === 'string' ? requestPayload : JSON.stringify(requestPayload, null, 2))}`
+                        : null
+                ].filter(Boolean).join('\n');
+                body.appendChild(reqLabel);
+                body.appendChild(reqPre);
+            }
+
             const stackLabel = document.createElement('div');
             stackLabel.className = 'error-detail-section-title';
             stackLabel.textContent = 'Stack trace';
@@ -311,14 +349,14 @@
             copyBtn.addEventListener('click', async () => {
                 try {
                     if (navigator.clipboard?.writeText) {
-                        await navigator.clipboard.writeText(payload);
+                        await navigator.clipboard.writeText(copyPayload);
                     } else {
                         throw new Error('clipboard not available');
                     }
                     copyBtn.textContent = 'Copied';
                 } catch (err) {
                     const tmp = document.createElement('textarea');
-                    tmp.value = payload;
+                    tmp.value = copyPayload;
                     document.body.appendChild(tmp);
                     tmp.select();
                     document.execCommand('copy');
@@ -471,11 +509,31 @@
     // Export
     global.ErrorHandler = ErrorHandler;
 
+    // Build request context (url, method, payload) for error details
+    function getRequestContext(input, options) {
+        const url = typeof input === 'string' ? input : (input?.url || String(input));
+        const method = (options?.method || input?.method || 'GET').toUpperCase();
+        let payload = options?.body !== undefined ? options.body : input?.body;
+        if (payload != null && typeof payload !== 'string') {
+            try {
+                payload = typeof payload === 'object' && (payload instanceof FormData || payload instanceof URLSearchParams)
+                    ? payload.toString()
+                    : JSON.stringify(payload);
+            } catch (_) {
+                payload = String(payload);
+            }
+        }
+        return { url, method, payload: payload != null ? String(payload) : undefined };
+    }
+
     // Auto-integrate with fetch
     if (typeof window !== 'undefined') {
         const originalFetch = window.fetch;
         window.fetch = async function(...args) {
-            const url = String(args[0] || '');
+            const input = args[0];
+            const options = args[1] || {};
+            const reqCtx = getRequestContext(input, options);
+            const url = reqCtx.url;
             const isStorageApi = url.includes('/api/storage/');
 
             try {
@@ -485,20 +543,23 @@
                 if (!response.ok) {
                     const isExpected404 = isStorageApi && response.status === 404;
 
+                    if (isStorageApi && response.status === 404) {
+                        console.log('[ErrorHandler] Skipping expected storage 404 - returning response without error');
+                    }
+
                     if (!isExpected404) {
                         const data = await response.json().catch(() => ({}));
                         ErrorHandler.handleApiError({
                             status: response.status,
                             data
-                        }, { url: args[0] });
+                        }, { ...reqCtx });
                     }
                 }
 
                 return response;
             } catch (error) {
-                // Don't handle storage API errors - let the caller handle them
                 if (!isStorageApi) {
-                    ErrorHandler.handleNetworkError(error, { url: args[0] });
+                    ErrorHandler.handleNetworkError(error, { ...reqCtx });
                 }
                 throw error;
             }

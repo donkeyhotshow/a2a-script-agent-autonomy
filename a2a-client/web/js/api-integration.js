@@ -109,18 +109,22 @@ class APIIntegration {
             const data = await response.json().catch(() => ({}));
 
             if (!response.ok) {
-                global.ErrorHandler?.handleApiError({
-                    status: response.status,
-                    data,
-                    error: data?.error
-                }, errorContext);
+                // Skip error handling for storage API 404s (expected when key doesn't exist)
+                const isStorage404 = url.includes('/api/storage/') && response.status === 404;
+                if (!isStorage404) {
+                    (typeof window !== 'undefined' ? window : globalThis).ErrorHandler?.handleApiError({
+                        status: response.status,
+                        data,
+                        error: data?.error
+                    }, errorContext);
+                }
                 throw new Error(data?.error?.message || `Request failed: ${response.status}`);
             }
 
             return data.data || data;
         } catch (error) {
             console.error('[API] Request error:', error);
-            global.ErrorHandler?.handleNetworkError(error, errorContext);
+            (typeof window !== 'undefined' ? window : globalThis).ErrorHandler?.handleNetworkError(error, errorContext);
             throw error;
         }
     }
@@ -223,6 +227,56 @@ class APIIntegration {
     async searchActions(query) {
         const result = await this.sendTask(`Find relevant actions for: ${query}`);
         return result;
+    }
+
+    /**
+     * Analyze task query and get suggested actions from AI
+     */
+    async analyzeTask(query, context = 'new-task') {
+        try {
+            // Try the dedicated analyze endpoint first
+            const result = await this.request('POST', '/tasks/analyze', {
+                query,
+                context
+            });
+            return result;
+        } catch (error) {
+            // Fallback: use generic invoke to get suggestions
+            console.log('[API] Analyze endpoint not available, using fallback');
+            const result = await this.sendTask(`Analyze this request and suggest the best way to proceed: "${query}". Return a JSON with "options" array containing objects with "title", "description", "action", and optional "icon" fields.`);
+
+            // Parse suggestions from result if available
+            if (result?.execute?.message?.content) {
+                try {
+                    const content = result.execute.message.content;
+                    const jsonMatch = content.match(/\{[\s\S]*"options"[\s\S]*\}/);
+                    if (jsonMatch) {
+                        return JSON.parse(jsonMatch[0]);
+                    }
+                } catch (parseError) {
+                    console.warn('[API] Failed to parse suggestions:', parseError);
+                }
+            }
+
+            // Return default options if parsing fails
+            return {
+                summary: `Task: ${query}`,
+                options: [
+                    {
+                        title: 'Start General Task',
+                        description: `Work on: ${query.slice(0, 60)}${query.length > 60 ? '...' : ''}`,
+                        action: 'general-task',
+                        icon: '🚀'
+                    },
+                    {
+                        title: 'Ask for Clarification',
+                        description: 'Get more details before proceeding',
+                        action: 'clarify',
+                        icon: '❓'
+                    }
+                ]
+            };
+        }
     }
 
     /**

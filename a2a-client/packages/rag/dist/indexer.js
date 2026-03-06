@@ -275,6 +275,43 @@ class RAGIndexer {
     getIndexedChunksCount() {
         return this.index?.chunks?.length ?? 0;
     }
+    /**
+     * Health check for the index - returns diagnostics
+     */
+    async health() {
+        const index = await this.loadIndex();
+        const staleFiles = [];
+        let orphanedChunks = 0;
+        // Check for stale files (files that no longer exist)
+        for (const file of index.files) {
+            const fullPath = path_1.default.join(this.projectPath, file.path);
+            try {
+                await promises_1.default.access(fullPath);
+            }
+            catch {
+                staleFiles.push(file.path);
+            }
+        }
+        // Check for orphaned chunks (chunks without corresponding files)
+        const filePaths = new Set(index.files.map(f => f.path));
+        for (const chunk of index.chunks) {
+            if (!filePaths.has(chunk.filePath)) {
+                orphanedChunks++;
+            }
+        }
+        // Calculate coverage (files with chunks / total files)
+        const filesWithChunks = new Set(index.chunks.map(c => c.filePath));
+        const coverage = index.files.length > 0
+            ? filesWithChunks.size / index.files.length
+            : 0;
+        return {
+            staleFiles,
+            orphanedChunks,
+            coverage,
+            totalFiles: index.files.length,
+            totalChunks: index.chunks.length,
+        };
+    }
     dispose() {
         this.index = null;
     }

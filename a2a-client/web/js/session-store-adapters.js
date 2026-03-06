@@ -163,11 +163,15 @@
                 const response = await fetch(url, options);
                 const data = await response.json().catch(() => ({}));
                 if (!response.ok) {
-                    global.ErrorHandler?.handleApiError({
-                        status: response.status,
-                        data,
-                        error: data?.error
-                    }, { module: 'SessionManagerAdapter', path: url, method });
+                    // Skip error handling for storage API 404s (expected when key doesn't exist)
+                    const isStorage404 = url.includes('/api/storage/') && response.status === 404;
+                    if (!isStorage404) {
+                        global.ErrorHandler?.handleApiError({
+                            status: response.status,
+                            data,
+                            error: data?.error
+                        }, { module: 'SessionManagerAdapter', path: url, method });
+                    }
                     throw new Error(data?.error?.message || `Request failed: ${response.status}`);
                 }
                 return data.data || data;
@@ -474,101 +478,6 @@
 
         // Stop checking after 30 seconds
         setTimeout(() => clearInterval(checkInterval), 30000);
-    }
-
-    // === Create AIActionsSessionPanel via PanelManager ===
-    function initAIActionsPanel() {
-        const pm = global.PanelManager;
-        const Panel = global.Panel;
-        const AIActionsClass = global.AIActionsSessionPanel;
-
-        if (!pm || !Panel || !AIActionsClass) {
-            console.log('[SessionStore Adapters] Waiting for PanelManager, Panel, AIActionsSessionPanel...');
-            return false;
-        }
-
-        // Check if already initialized
-        if (global.aiActionsPanel) return true;
-
-        // Create panel via PanelManager
-        const panel = pm.open('sessions', {
-            id: 'ai-actions-sessions',
-            title: 'AI Actions Sessions',
-            critical: false,
-            slot: 'floating',
-            width: 600,
-            height: 400
-        });
-
-        if (!panel) {
-            console.error('[SessionStore Adapters] Failed to create AI Actions panel');
-            return false;
-        }
-
-        // Create AIActionsSessionPanel instance with panel's DOM
-        const contentEl = panel.getContentEl();
-        if (!contentEl) {
-            console.error('[SessionStore Adapters] Panel has no content element');
-            return false;
-        }
-
-        // Create container for AIActionsSessionPanel
-        const container = document.createElement('div');
-        container.className = 'ai-actions-container';
-        container.style.cssText = 'width:100%;height:100%;';
-        contentEl.innerHTML = '';
-        contentEl.appendChild(container);
-
-        // Initialize AIActionsSessionPanel
-        const aiPanel = new AIActionsClass(container, {
-            id: 'ai-actions-sessions',
-            slot: 'floating',
-            critical: false,
-            onClose: () => {
-                pm.close('ai-actions-sessions');
-            }
-        });
-
-        // Set global reference
-        global.aiActionsPanel = aiPanel;
-
-        // Sync with SessionStore
-        const store = global.SessionStore;
-        if (store) {
-            // Create session in panel when store gets session
-            store.on('session', (sessionId) => {
-                if (sessionId && !aiPanel.sessions.has(sessionId)) {
-                    aiPanel.createSession(sessionId);
-                }
-                aiPanel.switchToSession(sessionId);
-            });
-
-            // Process execute through panel
-            store.on('execute', (execute) => {
-                if (execute) {
-                    aiPanel.processExecute(execute, store.context);
-                }
-            });
-
-            // Sync existing session
-            if (store.sessionId) {
-                aiPanel.createSession(store.sessionId);
-                aiPanel.switchToSession(store.sessionId);
-            }
-        }
-
-        console.log('[SessionStore Adapters] AIActionsSessionPanel created and connected');
-        return true;
-    }
-
-    // Try to init immediately
-    if (!initAIActionsPanel()) {
-        const initInterval = setInterval(() => {
-            if (initAIActionsPanel()) {
-                clearInterval(initInterval);
-            }
-        }, 500);
-        setTimeout(() => clearInterval(initInterval), 30000);
     }
 
 })(typeof window !== 'undefined' ? window : globalThis);

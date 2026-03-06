@@ -14,6 +14,7 @@ This folder contains the old architecture files that have been replaced by the u
 | `plasticine-ui.js` | `panel-manager.js` | Simplified panel system |
 | `plasticine-workflow.js` | `panel-manager.js` | Unified panel/modal management |
 | `session-panel-manager.js` | `panel-manager.js` | Consolidated panel logic |
+| `task-flow.js` | `task-flow/` (modular) | Split into api/render/core modules |
 
 ## Archived CSS Files
 

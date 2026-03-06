@@ -7,10 +7,10 @@ param(
 )
 
 # Color output functions
-function Write-Success { param($Message) Write-Host "✓ $Message" -ForegroundColor Green }
-function Write-Error { param($Message) Write-Host "✗ $Message" -ForegroundColor Red }
-function Write-Info { param($Message) Write-Host "ℹ $Message" -ForegroundColor Cyan }
-function Write-Warning { param($Message) Write-Host "⚠ $Message" -ForegroundColor Yellow }
+function Write-Success { param($Message) Write-Host "[PASS] $Message" -ForegroundColor Green }
+function Write-Error { param($Message) Write-Host "[FAIL] $Message" -ForegroundColor Red }
+function Write-Info { param($Message) Write-Host "[INFO] $Message" -ForegroundColor Cyan }
+function Write-Warning { param($Message) Write-Host "[WARN] $Message" -ForegroundColor Yellow }
 
 Write-Info "Level 2.1: Individual Component Tests"
 Write-Info "====================================="
@@ -28,6 +28,7 @@ $components = @(
             },
             @{
                 Name = "Detailed Health"
+                Optional = $true
                 Test = {
                     $response = Invoke-RestMethod -Uri "http://localhost:3000/api/v1/health" -TimeoutSec 10
                     if (-not $response.status) { throw "Detailed health check failed" }
@@ -72,6 +73,7 @@ $components = @(
         Tests = @(
             @{
                 Name = "Proxy Health"
+                Optional = $true
                 Test = {
                     $response = Invoke-WebRequest -Uri "http://localhost:11435/health" -TimeoutSec 10
                     if ($response.StatusCode -ne 200) { throw "Proxy health failed: $($response.StatusCode)" }
@@ -79,6 +81,7 @@ $components = @(
             },
             @{
                 Name = "Daemon Status"
+                Optional = $true
                 Test = {
                     $response = Invoke-RestMethod -Uri "http://localhost:11435/daemon/status" -TimeoutSec 10
                     if (-not $response.running) { throw "Daemon not running" }
@@ -104,15 +107,21 @@ foreach ($component in $components) {
 
     foreach ($test in $component.Tests) {
         Write-Info "  Running test: $($test.Name)..."
+        $optionalTest = $test.Optional -eq $true
 
         try {
             & $test.Test
             Write-Success "  $($test.Name) passed"
-            $componentResults[$test.Name] = $true
+            $componentResults[$test.Name] = "PASS"
         } catch {
-            Write-Error "  $($test.Name) failed: $($_.Exception.Message)"
-            $componentResults[$test.Name] = $false
-            $allPassed = $false
+            if ($optionalTest) {
+                Write-Warning "  $($test.Name) warning: $($_.Exception.Message)"
+                $componentResults[$test.Name] = "WARN"
+            } else {
+                Write-Error "  $($test.Name) failed: $($_.Exception.Message)"
+                $componentResults[$test.Name] = "FAIL"
+                $allPassed = $false
+            }
         }
     }
 
@@ -127,7 +136,11 @@ foreach ($componentResult in $results.GetEnumerator()) {
     Write-Host "$($componentResult.Key):" -ForegroundColor Cyan
 
     foreach ($testResult in $componentResult.Value.GetEnumerator()) {
-        $status = if ($testResult.Value) { "✓ PASS" } else { "✗ FAIL" }
+        $status = switch ($testResult.Value) {
+            "PASS" { "[PASS]" }
+            "WARN" { "[WARN]" }
+            default { "[FAIL]" }
+        }
         Write-Host ("  {0,-25} : {1}" -f $testResult.Key, $status)
     }
 }

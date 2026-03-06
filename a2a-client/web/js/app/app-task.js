@@ -13,11 +13,23 @@
             console.log('[AppTask] Initializing...');
 
             try {
+                // Ensure header template is loaded (for Settings/Projects buttons)
+                if (global.TemplateLoader && !document.getElementById('header-container')?.innerHTML?.trim()) {
+                    await global.TemplateLoader.initTaskOnly();
+                }
+
                 // Load all modules first
                 await this.loadModules();
 
                 // Initialize managers
                 await global.ProjectManager?.init();
+                // Apply stored Client API URL so /api/tasks/analyze and /api/sessions hit the right host
+                const apiUrl = await global.ProjectManager?.getStoredClientApiUrl?.();
+                if (apiUrl && String(apiUrl).trim()) {
+                    const base = String(apiUrl).trim().replace(/\/?$/, '');
+                    if (global.apiIntegration) global.apiIntegration.configure({ apiBase: base });
+                    if (global.TransportManager) global.TransportManager.apiBase = base;
+                }
                 await global.SessionManager?.init();
                 await global.WindowManager?.init();
                 global.TaskbarManager?.init();
@@ -91,6 +103,68 @@
                 // Update off-screen indicators
                 global.TaskbarManager?.updateOffScreenIndicators();
             });
+
+            // Modals (Settings, Projects) via PanelManager – same hierarchy as panels
+            this.setupModalButtons();
+        },
+
+        /**
+         * Open Settings/Projects as PanelManager modals; inject content from legacy modal markup on first open.
+         */
+        setupModalButtons() {
+            const pm = global.PanelManager;
+            if (!pm) return;
+
+            const openModal = (type, sourceId) => {
+                const id = type;
+                let panel = pm.get(id);
+                if (panel && panel.state === global.PANEL_STATES.VISIBLE) {
+                    pm.bringToFront(id);
+                    return;
+                }
+                panel = pm.open(type, { id });
+                if (!panel) return;
+                const contentEl = panel.getContentEl();
+                if (!contentEl || !contentEl.innerHTML.trim()) {
+                    const src = document.getElementById(sourceId);
+                    const body = src?.querySelector('.modal-body');
+                    const footer = src?.querySelector('.modal-footer');
+                    if (body || footer) {
+                        panel.setContent((body?.innerHTML ?? '') + (footer?.innerHTML ?? ''));
+                    }
+                    this._wireModalContent(type, panel);
+                }
+            };
+
+            document.getElementById('settingsBtn')?.addEventListener('click', () => openModal('settings', 'settingsModal'));
+            document.getElementById('projectsBtn')?.addEventListener('click', () => openModal('projects', 'projectsModal'));
+            document.getElementById('newTaskBtn')?.addEventListener('click', () => global.TaskCreator?.open());
+        },
+
+        _wireModalContent(type, panel) {
+            const content = panel.getContentEl();
+            if (!content) return;
+
+            if (type === 'settings') {
+                global.ProjectManager?.getStoredClientApiUrl?.().then((url) => {
+                    const input = content.querySelector('#settingsApiUrl');
+                    if (input) input.value = url || '/api';
+                });
+                content.querySelector('#cancelSettings')?.addEventListener('click', () => panel.close());
+                content.querySelector('#saveSettings')?.addEventListener('click', () => {
+                    const input = content.querySelector('#settingsApiUrl');
+                    const url = input?.value?.trim() || '/api';
+                    const base = url ? String(url).replace(/\/?$/, '') : '/api';
+                    global.ProjectManager?.setStoredClientApiUrl(url).then(() => {
+                        if (global.apiIntegration) global.apiIntegration.configure({ apiBase: base });
+                        if (global.TransportManager) global.TransportManager.apiBase = base;
+                        panel.close();
+                    });
+                });
+            }
+            if (type === 'projects') {
+                content.querySelector('#cancelProjects')?.addEventListener('click', () => panel.close());
+            }
         },
 
         /**
@@ -110,7 +184,8 @@
         async createNewSession() {
             try {
                 const projectId = await global.ProjectManager?.getSelectedProjectId();
-                const response = await fetch('/api/sessions', {
+                const base = (global.apiIntegration?.apiBase || '/api').replace(/\/?$/, '');
+                const response = await fetch(`${base}/sessions`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -145,7 +220,7 @@
                 console.log('[AppTask] Created new session:', session.id);
             } catch (error) {
                 console.error('[AppTask] Failed to create session:', error);
-                alert('Failed to create new session');
+                window.ErrorHandler?.handle(new Error('Failed to create new session'), { action: 'createSession' });
             }
         },
 

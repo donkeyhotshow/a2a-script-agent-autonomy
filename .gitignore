@@ -2,3 +2,10 @@ output/
 
 node_modules/
 
+dist/
+
+# Project-specific log folders
+**/logs/
+
+# Legacy root-level logs (to be cleaned up)
+*.log

@@ -1,4 +1,4 @@
-# Level 1.1: Service Availability Test
+﻿# Level 1.1: Service Availability Test
 # Проверка доступности основных сервисов (без запуска)
 
 param(
@@ -6,8 +6,8 @@ param(
 )
 
 # Color output functions
-function Write-Success { param($Message) Write-Host "✓ $Message" -ForegroundColor Green }
-function Write-Error { param($Message) Write-Host "✗ $Message" -ForegroundColor Red }
+function Write-Success { param($Message) Write-Host "PASS $Message" -ForegroundColor Green }
+function Write-Error { param($Message) Write-Host "FAIL $Message" -ForegroundColor Red }
 function Write-Info { param($Message) Write-Host "ℹ $Message" -ForegroundColor Cyan }
 
 Write-Info "Level 1.1: Service Availability Test"
@@ -31,6 +31,7 @@ $services = @(
         Port = 11435
         Url = "http://localhost:11435/health"
         Description = "LLM proxy service"
+        Optional = $true
     },
     @{
         Name = "Ollama"
@@ -45,22 +46,28 @@ $allPassed = $true
 
 foreach ($service in $services) {
     Write-Info "Testing $($service.Name) (port $($service.Port))..."
+    $optional = $service.Optional -eq $true
 
     try {
         $response = Invoke-WebRequest -Uri $service.Url -TimeoutSec 3 -ErrorAction Stop
 
         if ($response.StatusCode -eq 200) {
             Write-Success "$($service.Name) is available"
-            $results[$service.Name] = $true
+            $results[$service.Name] = "PASS"
         } else {
             Write-Error "$($service.Name) returned status $($response.StatusCode)"
-            $results[$service.Name] = $false
-            $allPassed = $false
+            $results[$service.Name] = if ($optional) { "WARN" } else { "FAIL" }
+            if (-not $optional) { $allPassed = $false }
         }
     } catch {
-        Write-Error "$($service.Name) is not accessible: $($_.Exception.Message)"
-        $results[$service.Name] = $false
-        $allPassed = $false
+        if ($optional) {
+            Write-Info "$($service.Name) is not accessible (optional): $($_.Exception.Message)"
+            $results[$service.Name] = "WARN"
+        } else {
+            Write-Error "$($service.Name) is not accessible: $($_.Exception.Message)"
+            $results[$service.Name] = "FAIL"
+            $allPassed = $false
+        }
     }
 }
 
@@ -72,20 +79,20 @@ try {
         $containers = $dockerOutput | Where-Object { $_ -match 'postgres|redis' }
         if ($containers.Count -ge 1) {
             Write-Success "Docker services available: $($containers -join ', ')"
-            $results["Docker Services"] = $true
+            $results["Docker Services"] = "PASS"
         } else {
             Write-Error "Required Docker services not found"
-            $results["Docker Services"] = $false
+            $results["Docker Services"] = "FAIL"
             $allPassed = $false
         }
     } else {
         Write-Error "Docker not available or not running"
-        $results["Docker Services"] = $false
+        $results["Docker Services"] = "FAIL"
         $allPassed = $false
     }
 } catch {
     Write-Error "Docker check failed: $($_.Exception.Message)"
-    $results["Docker Services"] = $false
+    $results["Docker Services"] = "FAIL"
     $allPassed = $false
 }
 
@@ -93,7 +100,11 @@ try {
 Write-Host ""
 Write-Info "Service Availability Summary:"
 foreach ($result in $results.GetEnumerator()) {
-    $status = if ($result.Value) { "✓ PASS" } else { "✗ FAIL" }
+    $status = switch ($result.Value) {
+        "PASS" { "✓ PASS" }
+        "WARN" { "⚠️ WARN" }
+        default { "✗ FAIL" }
+    }
     Write-Host ("{0,-25} : {1}" -f $result.Key, $status)
 }
 

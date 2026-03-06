@@ -6,7 +6,13 @@
 (function (global) {
     'use strict';
 
-    const STORAGE_BASE_URL = '/api/storage';
+    const CLIENT_API_STORAGE_KEY = 'a2a_clientApiUrl';
+    const DEFAULT_API_BASE = '/api';
+
+    function getStorageBase() {
+        const base = (typeof localStorage !== 'undefined' && localStorage.getItem(CLIENT_API_STORAGE_KEY)) || DEFAULT_API_BASE;
+        return (base || DEFAULT_API_BASE).replace(/\/$/, '') + '/storage';
+    }
 
     // Fetch with timeout and retry logic
     const DEFAULT_TIMEOUT = 10000; // 10 seconds
@@ -52,7 +58,7 @@
          */
         async getItem(key) {
             try {
-                const response = await fetchWithRetry(`${STORAGE_BASE_URL}/${this.namespace}/${key}`, {
+                const response = await fetchWithRetry(`${getStorageBase()}/${this.namespace}/${key}`, {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json'
@@ -61,15 +67,24 @@
 
                 if (!response.ok) {
                     if (response.status === 404) {
+                        console.log('[CustomStorage] Key not found (404), returning null:', key);
                         return null; // Item not found
                     }
                     throw new Error(`Storage get failed: ${response.status}`);
                 }
 
-                const data = await response.json();
-                return data.value;
+                const text = await response.text();
+                if (!text || text.trim().startsWith('<')) {
+                    return null;
+                }
+                try {
+                    const data = JSON.parse(text);
+                    return data.value;
+                } catch {
+                    return null;
+                }
             } catch (error) {
-                console.warn('[CustomStorage] Get failed:', error);
+                console.warn('[CustomStorage] Get failed:', error.message || error);
                 return null;
             }
         }
@@ -79,7 +94,7 @@
          */
         async setItem(key, value) {
             try {
-                const response = await fetchWithRetry(`${STORAGE_BASE_URL}/${this.namespace}/${key}`, {
+                const response = await fetchWithRetry(`${getStorageBase()}/${this.namespace}/${key}`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json'
@@ -104,7 +119,7 @@
          */
         async removeItem(key) {
             try {
-                const response = await fetchWithRetry(`${STORAGE_BASE_URL}/${this.namespace}/${key}`, {
+                const response = await fetchWithRetry(`${getStorageBase()}/${this.namespace}/${key}`, {
                     method: 'DELETE',
                     headers: {
                         'Content-Type': 'application/json'
@@ -125,7 +140,7 @@
          */
         async clear() {
             try {
-                const response = await fetchWithRetry(`${STORAGE_BASE_URL}/${this.namespace}`, {
+                const response = await fetchWithRetry(`${getStorageBase()}/${this.namespace}`, {
                     method: 'DELETE',
                     headers: {
                         'Content-Type': 'application/json'
@@ -146,7 +161,7 @@
          */
         async keys() {
             try {
-                const response = await fetchWithRetry(`${STORAGE_BASE_URL}/${this.namespace}/keys`, {
+                const response = await fetchWithRetry(`${getStorageBase()}/${this.namespace}/keys`, {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json'
@@ -165,8 +180,43 @@
             }
         }
 
-        // Note: All storage operations are async via file-based API
-        // No sync/localStorage fallbacks - ensures data consistency
+        /**
+         * Sync fallback: Store item in localStorage
+         */
+        setItemSync(key, value) {
+            try {
+                const fullKey = `${this.namespace}:${key}`;
+                localStorage.setItem(fullKey, JSON.stringify(value));
+            } catch (error) {
+                console.warn('[CustomStorage] setItemSync failed:', error);
+            }
+        }
+
+        /**
+         * Sync fallback: Get item from localStorage
+         */
+        getItemSync(key) {
+            try {
+                const fullKey = `${this.namespace}:${key}`;
+                const data = localStorage.getItem(fullKey);
+                return data ? JSON.parse(data) : null;
+            } catch (error) {
+                console.warn('[CustomStorage] getItemSync failed:', error);
+                return null;
+            }
+        }
+
+        /**
+         * Sync fallback: Remove item from localStorage
+         */
+        removeItemSync(key) {
+            try {
+                const fullKey = `${this.namespace}:${key}`;
+                localStorage.removeItem(fullKey);
+            } catch (error) {
+                console.warn('[CustomStorage] removeItemSync failed:', error);
+            }
+        }
     }
 
     // Create storage instances for different namespaces

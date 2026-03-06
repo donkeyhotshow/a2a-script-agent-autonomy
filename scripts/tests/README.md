@@ -1,265 +1,69 @@
-# A2A Script Agent - Testing Framework
+﻿# A2A Script Agent — Testing Framework
 
-> **Иерархическая система тестирования с fail-fast логикой**
+**Hierarchical, fail-fast validation of the agent stack.**
+The test suite is organized into three levels (basic health, component integration, end-to-end workflows) that progressively cover more surface area. Runners stop on the first failure unless `-ContinueOnError` is passed so problems are easy to localize.
 
-## Обзор
-
-Система тестирования организована в **3 уровня** сложности с подуровнями. Каждый уровень проверяет все предыдущие + дополнительные аспекты. Применяется **fail-fast логика** - при первой ошибке выполнение останавливается для быстрого выявления проблем.
-
+## Suite layout
 ```
-📊 Уровни тестирования
-├── 🎯 Level 1: Basic Health Checks (30 сек)
-│   ├── 1.1 Services - Доступность сервисов
-│   ├── 1.2 Connectivity - Сетевая связность
-│   └── 1.3 Basic API - Базовые эндпоинты
-├── 🔗 Level 2: Component Integration (2-3 мин)
-│   ├── 2.1 Individual - Отдельные компоненты
-│   ├── 2.2 Interaction - Взаимодействие компонентов
-│   └── 2.3 Persistence - Персистентность данных
-└── 🚀 Level 3: End-to-End Workflows (6-16 мин)
-    ├── 3.1 Workflow - Полные процессы
-    ├── 3.2 CLI - CLI автоматизация
-    └── 3.3 Performance - Производительность
+scripts/tests/
+├── run-all.ps1         # Master runner for Level 1+2+3
+├── level1/             # Basic health checks (services, connectivity, API)
+├── level2/             # Component integration (individual services, interactions, persistence)
+└── level3/             # End-to-end workflows (workflow automations, CLI, performance)
 ```
+Each level has its own `run.ps1` plus subdirectories for the three sub-levels described below.
 
-## Быстрый старт
-
-```bash
-# Полное тестирование всех уровней
+## Running the suite
+```powershell
+# All levels (default): Level 1 -> Level 2 -> Level 3
 .\scripts\tests\run-all.ps1
 
-# Только базовые проверки (быстро)
+# Run only one level when you are iterating on a specific boundary
 .\scripts\tests\run-all.ps1 -Level1Only
-
-# Диагностический режим (с продолжением при ошибках)
-.\scripts\tests\run-all.ps1 -ContinueOnError -Verbose
-
-# Быстрый режим (пропустить долгие тесты)
-.\scripts\tests\run-all.ps1 -Quick
+.\scripts\tests\run-all.ps1 -Level2Only
+.\scripts\tests\run-all.ps1 -Level3Only
 ```
+All runner scripts accept `-Verbose` for extra logs and `-ContinueOnError` to keep executing after failures (diagnostic mode).
 
-## Детальное использование
+## Level overview
+| Level | Focus | Key checks | Typical duration |
+|-------|-------|------------|------------------|
+| Level 1 | Basic health | Services, networking, basic API endpoints | ~30 s |
+| Level 2 | Component integration | Individual services, interactions, persistence | 2-3 min |
+| Level 3 | End-to-end workflows | Workflow automation, CLI controls, load/performance | 6-16 min |
 
-### Запуск отдельных уровней
+Each level runner enforces a fixed order of its three sub-levels and fails fast by default. Sub-level runners live under `level*/{run.ps1,test-*.ps1}` and are invoked by the master runner.
 
-```bash
-# Level 1: Базовые проверки
+## Flags reference
+| Flag | Description |
+|------|-------------|
+| `-Verbose` | Propagates to every nested runner and prints detailed progress messages |
+| `-ContinueOnError` | Runs all scheduled sub-levels even if earlier ones fail (useful for diagnostics) |
+| `-Quick` | Passed down only to Level 3 workflows to skip some heavier setup when speeding up iteration |
+| `-Light` | Passed down to Level 3 performance tests to toggle lighter resource usage |
+| `-Level[1|2|3]Only` | Shortcut to execute a single level without running the rest |
+
+## Requirements and order
+1. Always start with Level 1 — it verifies foundational services (A2A HTTP/AI proxies, Docker services, DB).  
+2. When Level 1 succeeds, Level 2 validates component boundaries (server, client, AI integration, persistence).  
+3. Level 3 assumes the full stack is running (Web UI on 5173, PostgreSQL, Ollama/model, etc.) before exercising end-to-end flows.
+
+Run the level-specific runners directly for faster iteration against a broken suite:
+```powershell
 .\scripts\tests\level1\run.ps1
-
-# Level 2: Интеграционные тесты
 .\scripts\tests\level2\run.ps1
-
-# Level 3: Полные E2E тесты
 .\scripts\tests\level3\run.ps1
 ```
 
-### Параметры командной строки
+## Diagnostics & CI guidance
+- Use `-ContinueOnError -Verbose` when you want a complete failure report in logs before fixing issues.
+- `run-all.ps1` exits with `0` when every level passes, `2` when some levels fail but diagnostics are complete, and `1` for critical failures.
+- In CI pipelines, run `run-all.ps1 -Level1Only` on every push and the full suite (with `-ContinueOnError` if desired) before release.
 
-| Параметр | Описание |
-|-----------|----------|
-| `-Verbose` | Подробный вывод логов |
-| `-ContinueOnError` | Продолжить выполнение при ошибках (диагностика) |
-| `-Level1Only` | Только Level 1 (быстрые проверки) |
-| `-Level2Only` | Только Level 2 (интеграция) |
-| `-Level3Only` | Только Level 3 (полные тесты) |
-| `-Quick` | Быстрый режим (пропустить долгие операции) |
-| `-Light` | Облегченный режим (минимальная нагрузка) |
+## Shared runtime helpers
+- `scripts/tests/common/run-sequence.ps1` exposes `Invoke-TestSequence`, which accepts stage metadata, propagates global flags, renders consistent logging, and tracks failures. Every level and the master runner dot-source this helper so the fail-fast behavior and reporting stay in sync.
+- Level runners now declare their sub-levels as metadata objects and feed them to `Invoke-TestSequence`, which handles verbosity, continue-on-error, Quick/Light inheritance, and final bookkeeping. This keeps the command-line interfaces tight while ensuring bigger orchestrations reuse the same safety net.
 
-## Что проверяет каждый уровень
-
-### Level 1: Basic Health Checks
-
-**Цель**: Быстрая проверка доступности всех компонентов без нагрузки.
-
-#### 1.1 Services (Доступность сервисов)
-- ✅ A2A Server (порт 3000)
-- ✅ Client API (порт 3001)
-- ✅ AI Integration Proxy (порт 11435)
-- ✅ Ollama (порт 11434)
-- ✅ Docker services (PostgreSQL, Redis)
-
-#### 1.2 Connectivity (Сетевая связность)
-- ✅ DNS resolution (localhost)
-- ✅ TCP connectivity (loopback)
-- ✅ Port availability
-- ✅ Internet connectivity
-
-#### 1.3 Basic API (Базовые эндпоинты)
-- ✅ Health endpoints (`/health`)
-- ✅ Basic API responses
-- ✅ Service status endpoints
-
-### Level 2: Component Integration
-
-**Цель**: Проверка взаимодействия компонентов и внутренней логики.
-
-#### 2.1 Individual (Отдельные компоненты)
-- ✅ A2A Server: API, neuron processing, storage
-- ✅ Client API: session management, tester API
-- ✅ AI Integration: proxy, daemon, promises
-
-#### 2.2 Interaction (Взаимодействие)
-- ✅ Server ↔ Client API communication
-- ✅ Server ↔ AI Integration workflow
-- ✅ Database connectivity and operations
-
-#### 2.3 Persistence (Персистентность)
-- ✅ Storage API operations (PUT/GET/DELETE)
-- ✅ Session data persistence
-- ✅ Log file accessibility
-
-### Level 3: End-to-End Workflows
-
-**Цель**: Полная проверка пользовательских сценариев и производительности.
-
-#### 3.1 Workflow (Полные процессы)
-- ✅ Request creation and status tracking
-- ✅ Storage operations workflow
-- ✅ AI integration workflow
-
-#### 3.2 CLI (CLI автоматизация)
-- ✅ CLI status and ping commands
-- ✅ Panel control via CLI
-- ✅ Session management
-- ✅ Automated test suites
-
-#### 3.3 Performance (Производительность)
-- ✅ API response times (< 1000ms)
-- ✅ Concurrent requests handling
-- ✅ Memory usage monitoring
-
-## Время выполнения
-
-| Уровень | Время | Когда использовать |
-|---------|-------|-------------------|
-| Level 1 | 30 сек | Частые проверки, CI/CD |
-| Level 2 | 2-3 мин | После изменений в компонентах |
-| Level 3 | 6-16 мин | Перед релизом, полная валидация |
-| All Levels | 8-20 мин | Ночное тестирование, полный аудит |
-
-## Стратегия fail-fast
-
-### Принцип работы
-1. **Level 1** выполняется всегда первым
-2. При **первой ошибке** в уровне - остановка выполнения
-3. **Следующие уровни не запускаются** до исправления ошибок
-4. Используйте `-ContinueOnError` для диагностики всех проблем сразу
-
-### Преимущества
-- ⚡ **Быстрое выявление** проблем
-- 💰 **Экономия ресурсов** - не тратить время на заведомо проблемные тесты
-- 🎯 **Четкая локализация** - ошибка указывает на конкретный уровень/компонент
-
-## Диагностика и отладка
-
-### При неудачных тестах
-
-```bash
-# Детальная диагностика с продолжением
-.\scripts\tests\run-all.ps1 -ContinueOnError -Verbose
-
-# Тестирование отдельных подуровней
-.\scripts\tests\level1\1-services\run.ps1 -Verbose
-.\scripts\tests\level2\2-interaction\run.ps1 -Verbose
-
-# Быстрые проверки без нагрузки
-.\scripts\tests\run-all.ps1 -Quick -Light
-```
-
-### Распространенные проблемы
-
-| Проблема | Возможная причина | Решение |
-|----------|------------------|---------|
-| Level 1 fails | Сервисы не запущены | `npm run dev` |
-| Port conflicts | Другие процессы | `netstat -ano`, `taskkill` |
-| Database issues | PostgreSQL не работает | `docker-compose up -d` |
-| AI not available | Ollama не запущен | `ollama serve` |
-| Slow responses | Высокая нагрузка | `-Light` режим |
-
-## Интеграция с CI/CD
-
-### GitHub Actions пример
-
-```yaml
-- name: Run Tests
-  run: .\scripts\tests\run-all.ps1 -Level1Only
-
-- name: Full Integration Tests
-  run: .\scripts\tests\run-all.ps1 -ContinueOnError
-  if: github.event_name == 'push'
-```
-
-### Локальная разработка
-
-```bash
-# Перед коммитом
-.\scripts\tests\run-all.ps1 -Level1Only
-
-# После изменений в API
-.\scripts\tests\level2\run.ps1
-
-# Перед релизом
-.\scripts\tests\run-all.ps1
-```
-
-## Структура файлов
-
-```
-scripts/tests/
-├── run-all.ps1           # Главный runner всех уровней
-├── README.md             # Эта документация
-├── level1/               # Базовые проверки
-│   ├── run.ps1          # Runner Level 1
-│   ├── README.md        # Описание Level 1
-│   ├── 1-services/      # Проверка сервисов
-│   ├── 2-connectivity/  # Сетевая связность
-│   └── 3-basic-api/     # Базовые API
-├── level2/               # Интеграционные тесты
-│   ├── run.ps1          # Runner Level 2
-│   ├── README.md        # Описание Level 2
-│   ├── 1-individual/    # Отдельные компоненты
-│   ├── 2-interaction/   # Взаимодействие
-│   └── 3-persistence/   # Персистентность
-└── level3/               # E2E тесты
-    ├── run.ps1          # Runner Level 3
-    ├── README.md        # Описание Level 3
-    ├── 1-workflow/      # Полные процессы
-    ├── 2-cli/           # CLI автоматизация
-    └── 3-performance/   # Производительность
-```
-
-## Советы по использованию
-
-1. **Ежедневная разработка**: `Level1Only` для быстрой проверки
-2. **После изменений**: Запускайте соответствующий уровень
-3. **Перед коммитом**: Минимум Level 1 + измененные компоненты
-4. **CI/CD**: Level 1 для быстрых проверок, полное тестирование ночью
-5. **Отладка**: `-ContinueOnError -Verbose` для полной диагностики
-
-## Расширение системы
-
-### Добавление новых тестов
-
-1. Создайте тест в соответствующем подуровне
-2. Добавьте его в `test-*.ps1` файл
-3. Обновите документацию
-4. Протестируйте с `-Verbose` флагом
-
-### Кастомные конфигурации
-
-```bash
-# Кастомные порты
-$env:A2A_SERVER_PORT = "3005"
-.\scripts\tests\run-all.ps1
-
-# Кастомные таймауты
-$env:TEST_TIMEOUT = "30"
-.\scripts\tests\run-all.ps1
-```
-
-## Поддержка и помощь
-
-- 📖 **Документация**: `workflows/troubleshooting.md`
-- 🐛 **Отладка**: Используйте `-Verbose -ContinueOnError`
-- 📊 **Метрики**: Проверяйте логи в `a2a-server/logs/`
-- 🔧 **CLI помощь**: `node cli.js --help`
+## Notes for maintainers
+- The fast path (`-Quick`/`-Light`) is wired only into Level 3 runners (Workflows and Performance sub-levels) because earlier levels already run quickly.
+- Keep documentation in sync with any new `test-*.ps1` scripts — add a short description inside the corresponding subdirectory when you add new checks.

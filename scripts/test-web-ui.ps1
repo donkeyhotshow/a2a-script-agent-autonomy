@@ -190,19 +190,40 @@ function Start-ServiceProcess {
         [string]$Command,
         [string]$Arguments,
         [string]$WorkingDirectory,
-        [string]$HealthUrl
+        [string]$HealthUrl,
+        [string]$LogFile = $null
     )
 
     Write-Info "Starting $Name..."
 
+    # Determine log path based on working directory
+    $logPath = if ($LogFile) {
+        Join-Path $WorkingDirectory $LogFile
+    } elseif ($WorkingDirectory -like "*a2a-server*") {
+        Join-Path $WorkingDirectory "logs/server.log"
+    } elseif ($WorkingDirectory -like "*sdk*") {
+        Join-Path (Split-Path $WorkingDirectory -Parent) "../../logs/client-api.log"
+    } elseif ($WorkingDirectory -like "*a2a-client*") {
+        Join-Path $WorkingDirectory "logs/web-ui.log"
+    } else {
+        "$env:TEMP\$Name.log"
+    }
+
+    # Ensure log directory exists
+    $logDir = Split-Path $logPath -Parent
+    if (-not (Test-Path $logDir)) { New-Item -ItemType Directory -Path $logDir -Force | Out-Null }
+
+    # Combine stdout and stderr to single log file
+    $mergedArgs = "$Arguments *> '$logPath' 2>&1"
+
     try {
         $process = Start-Process -FilePath $Command `
-                                -ArgumentList $Arguments `
+                                -ArgumentList $mergedArgs `
                                 -WorkingDirectory $WorkingDirectory `
                                 -NoNewWindow `
-                                -PassThru `
-                                -RedirectStandardOutput "$env:TEMP\$Name.out.log" `
-                                -RedirectStandardError "$env:TEMP\$Name.err.log"
+                                -PassThru
+
+        Write-Info "$Name started (PID: $($process.Id), log: $logPath)"
 
         $processes += $process
         Write-Info "$Name started (PID: $($process.Id))"

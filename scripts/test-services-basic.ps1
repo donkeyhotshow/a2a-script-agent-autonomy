@@ -38,9 +38,10 @@ try {
     # Test 2: A2A Server
     Write-Info "Testing A2A Server..."
     $env:PORT = "3000"
-    $serverProcess = Start-Process -FilePath "npm" -ArgumentList "run", "dev:no-auth" -WorkingDirectory "$rootDir\a2a-server" -NoNewWindow -PassThru
+    if (-not (Test-Path "$rootDir\a2a-server\logs")) { New-Item -ItemType Directory -Path "$rootDir\a2a-server\logs" -Force | Out-Null }
+    $serverProcess = Start-Process -FilePath "powershell" -ArgumentList "-Command", "cd '$rootDir\a2a-server'; `$env:PORT='3000'; `$env:SKIP_AUTH='1'; npm run dev *> logs/server.log 2>&1" -NoNewWindow -PassThru
     $processes += $serverProcess
-    Write-Info "Started A2A Server (PID: $($serverProcess.Id))"
+    Write-Info "Started A2A Server (PID: $($serverProcess.Id), log: a2a-server/logs/server.log)"
 
     # Wait for server to start
     Start-Sleep -Seconds 5
@@ -60,9 +61,10 @@ try {
     # Test 3: Client API
     Write-Info "Testing Client API..."
     $env:PORT = "3001"
-    $clientProcess = Start-Process -FilePath "npm" -ArgumentList "run", "dev" -WorkingDirectory "$rootDir\a2a-client\packages\sdk" -NoNewWindow -PassThru
+    if (-not (Test-Path "$rootDir\a2a-client\logs")) { New-Item -ItemType Directory -Path "$rootDir\a2a-client\logs" -Force | Out-Null }
+    $clientProcess = Start-Process -FilePath "powershell" -ArgumentList "-Command", "cd '$rootDir\a2a-client\packages\sdk'; `$env:PORT='3001'; npm run dev *> ../../logs/client-api.log 2>&1" -NoNewWindow -PassThru
     $processes += $clientProcess
-    Write-Info "Started Client API (PID: $($clientProcess.Id))"
+    Write-Info "Started Client API (PID: $($clientProcess.Id), log: a2a-client/logs/client-api.log)"
 
     # Wait for client API to start
     Start-Sleep -Seconds 5
@@ -82,9 +84,9 @@ try {
     # Test 4: Web UI
     Write-Info "Testing Web UI..."
     $env:PORT = "5173"
-    $webProcess = Start-Process -FilePath "npm" -ArgumentList "run", "dev" -WorkingDirectory "$rootDir\a2a-client" -NoNewWindow -PassThru
+    $webProcess = Start-Process -FilePath "powershell" -ArgumentList "-Command", "cd '$rootDir\a2a-client'; `$env:PORT='5173'; npm run dev *> logs/web-ui.log 2>&1" -NoNewWindow -PassThru
     $processes += $webProcess
-    Write-Info "Started Web UI (PID: $($webProcess.Id))"
+    Write-Info "Started Web UI (PID: $($webProcess.Id), log: a2a-client/logs/web-ui.log)"
 
     # Wait for web UI to start
     Start-Sleep -Seconds 5

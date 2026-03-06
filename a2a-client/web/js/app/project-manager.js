@@ -17,9 +17,12 @@
         async getStoredClientApiUrl() {
             try {
                 const stored = await StorageAPI.config.getItem(CLIENT_API_STORAGE_KEY);
-                return stored || DEFAULT_CLIENT_API_URL;
+                const url = stored || DEFAULT_CLIENT_API_URL;
+                if (typeof localStorage !== 'undefined') localStorage.setItem(CLIENT_API_STORAGE_KEY, url);
+                return url;
             } catch {
-                return DEFAULT_CLIENT_API_URL;
+                const fallback = (typeof localStorage !== 'undefined' && localStorage.getItem(CLIENT_API_STORAGE_KEY)) || DEFAULT_CLIENT_API_URL;
+                return fallback;
             }
         },
 
@@ -27,8 +30,10 @@
          * Set stored client API URL
          */
         async setStoredClientApiUrl(url) {
+            const value = url || DEFAULT_CLIENT_API_URL;
+            if (typeof localStorage !== 'undefined') localStorage.setItem(CLIENT_API_STORAGE_KEY, value);
             try {
-                await StorageAPI.config.setItem(CLIENT_API_STORAGE_KEY, url || DEFAULT_CLIENT_API_URL);
+                await StorageAPI.config.setItem(CLIENT_API_STORAGE_KEY, value);
             } catch (error) {
                 console.warn('[ProjectManager] Failed to save client API URL:', error);
             }
@@ -107,7 +112,7 @@
                 // Refresh project list would happen here
             } catch (error) {
                 console.error('[ProjectManager] Failed to create project:', error);
-                alert('Failed to create project');
+                window.ErrorHandler?.handle(new Error('Failed to create project'), { action: 'createProject' });
             }
         },
 
@@ -123,7 +128,7 @@
                 // Refresh project list would happen here
             } catch (error) {
                 console.error('[ProjectManager] Failed to delete project:', error);
-                alert('Failed to delete project');
+                window.ErrorHandler?.handle(new Error('Failed to delete project'), { action: 'deleteProject' });
             }
         },
 

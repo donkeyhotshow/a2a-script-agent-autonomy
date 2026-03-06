@@ -31,16 +31,16 @@ $Config = @{
     PidFile = '.pids.txt'
     OllamaModels = 'C:\Users\dev\Desktop\.ollama'
     Services = @(
-        @{ Name = 'Ollama'; Port = 11434; PidKey = 'OLLAMA_PID'; Enabled = -not $SkipOllama; 
-           Command = { param($p) & ollama serve }; WorkingDir = $null; HealthUrl = 'http://localhost:11434/api/tags' }
+        @{ Name = 'Ollama'; Port = 11434; PidKey = 'OLLAMA_PID'; Enabled = -not $SkipOllama;
+           Command = { param($p) & ollama serve }; WorkingDir = $null; HealthUrl = 'http://localhost:11434/api/tags'; LogFile = $null }
         @{ Name = 'ai-integration'; Port = 11435; PidKey = 'AI_INTEGRATION_PID'; Enabled = -not $SkipAiIntegration;
-           Command = { param($p) & python -m uvicorn proxy.asgi:application --host 0.0.0.0 --port $p }; WorkingDir = 'ai-integration'; HealthUrl = $null }
+           Command = { param($p) & python -m uvicorn proxy.asgi:application --host 0.0.0.0 --port $p }; WorkingDir = 'ai-integration'; HealthUrl = $null; LogFile = 'logs/ai.log' }
         @{ Name = 'a2a-server'; Port = 3000; PidKey = 'A2A_SERVER_PID'; Enabled = -not $SkipServer;
-           Command = { param($p) & npm run dev }; WorkingDir = 'a2a-server'; HealthUrl = 'http://localhost:3000/health' }
+           Command = { param($p) & npm run dev }; WorkingDir = 'a2a-server'; HealthUrl = 'http://localhost:3000/health'; LogFile = 'logs/server.log' }
         @{ Name = 'client-api'; Port = 3001; PidKey = 'CLIENT_API_PID'; Enabled = -not $SkipClientApi;
-           Command = { param($p) & npm run dev }; WorkingDir = 'a2a-client/packages/sdk'; HealthUrl = 'http://localhost:3001/health' }
+           Command = { param($p) & npm run dev }; WorkingDir = 'a2a-client/packages/sdk'; HealthUrl = 'http://localhost:3001/health'; LogFile = '../../logs/client-api.log' }
         @{ Name = 'web-ui'; Port = 5173; PidKey = 'WEB_UI_PID'; Enabled = -not $SkipWebUi;
-           Command = { param($p) & npm run dev }; WorkingDir = 'a2a-client'; HealthUrl = 'http://localhost:5173' }
+           Command = { param($p) & npm run dev }; WorkingDir = 'a2a-client'; HealthUrl = 'http://localhost:5173'; LogFile = 'logs/web-ui.log' }
     )
 }
 
@@ -142,9 +142,19 @@ function Start-Service {
         
         Write-Log "Executing: $($Svc.Command.ToString().Trim())"
         
+        # Prepare log redirection
+        $logArg = ""
+        if ($Svc.LogFile) {
+            $logPath = Join-Path (Get-Location) $Svc.LogFile
+            $logDir = Split-Path $logPath -Parent
+            if (-not (Test-Path $logDir)) { New-Item -ItemType Directory -Path $logDir -Force | Out-Null }
+            $logArg = " *> '$logPath' 2>&1"
+            Write-Log "Logging to: $logPath" 'INFO'
+        }
+
         # Use Start-Process for proper PID capture and background execution
-        $proc = Start-Process -FilePath "powershell.exe" -ArgumentList "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", 
-            "& { cd '$((Get-Location).Path)'; & { $($Svc.Command.ToString()) } param($($Svc.Port)) }" `
+        $commandString = "& { cd '$((Get-Location).Path)'; & { $($Svc.Command.ToString()) } param($($Svc.Port)) }$logArg"
+        $proc = Start-Process -FilePath "powershell.exe" -ArgumentList "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", $commandString `
             -PassThru -WindowStyle Hidden
         
         Start-Sleep -Seconds 2

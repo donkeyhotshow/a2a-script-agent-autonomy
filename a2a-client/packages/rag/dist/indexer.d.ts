@@ -69,5 +69,15 @@ export declare class RAGIndexer {
     removeDirectory(dirPath: string): Promise<void>;
     getIndexedFilesCount(): number;
     getIndexedChunksCount(): number;
+    /**
+     * Health check for the index - returns diagnostics
+     */
+    health(): Promise<{
+        staleFiles: string[];
+        orphanedChunks: number;
+        coverage: number;
+        totalFiles: number;
+        totalChunks: number;
+    }>;
     dispose(): void;
 }

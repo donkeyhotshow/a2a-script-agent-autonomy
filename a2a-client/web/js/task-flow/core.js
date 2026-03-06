@@ -126,28 +126,14 @@
 
         /**
          * Инициализация
+         * Task entry is via TaskCreator modal (header-task-form replaced by task-creator-modal).
          */
         init() {
-            const form = document.getElementById('taskSendForm');
-            const input = document.getElementById('taskInputField');
             const sel = document.getElementById('projectSelect');
-            if (!form || !input) return;
-
-            form.addEventListener('submit', (e) => {
-                e.preventDefault();
-                const task = (input?.value || '').trim();
-                if (!task) return;
-                const projectId = getProjectId();
-                if (!projectId) {
-                    alert('Please select a project first');
-                    return;
-                }
-                this.run(task, projectId);
-                input.value = '';
-            });
-
-            this._ensureProjectSelect();
-            this._restoreProjectSelection();
+            if (sel) {
+                this._ensureProjectSelect();
+                this._restoreProjectSelection();
+            }
             this._setupPanelAutoOpen();
         },
 
