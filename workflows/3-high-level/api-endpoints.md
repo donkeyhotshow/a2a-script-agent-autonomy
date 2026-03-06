@@ -95,7 +95,6 @@
 | Method | Endpoint | Description | Body |
 |--------|----------|-------------|------|
 | POST | `/daemon/start` | Start daemon | - |
-| POST | `/daemon/stop` | Stop daemon | - |
 
 ### Cleanup API
 

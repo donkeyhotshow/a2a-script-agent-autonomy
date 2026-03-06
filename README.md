@@ -123,19 +123,22 @@ See [Port Management Documentation](docs/PORT_MANAGEMENT.md) for details.
 
 ### Testing
 
+- **Health checks by stack part** (no service startup): [scripts/direct-tests/run-checks.ps1](scripts/direct-tests/run-checks.ps1) — `.\scripts\direct-tests\run-checks.ps1 -Scope LLM | ServerLLM | ClientServer | ClientServerLLM | WebClient | WebClientServer | Full`. See [scripts/direct-tests/README.md](scripts/direct-tests/README.md).
+- **Level 1–3 suite**: `.\scripts\tests\run-all.ps1` — see [scripts/tests/README.md](scripts/tests/README.md).
+
 #### Web UI Smoke Test
 
 For comprehensive Web UI testing including browser interaction and SSE connectivity:
 
 ```powershell
 # Full smoke test with browser launch (requires Docker + browser)
-.\scripts\test-web-ui.ps1
+.\scripts\tests\test-web-ui.ps1
 
 # Headless mode (no browser, for CI)
-.\scripts\test-web-ui.ps1 -SkipBrowser
+.\scripts\tests\test-web-ui.ps1 -SkipBrowser
 
 # Firefox instead of Chromium
-.\scripts\test-web-ui.ps1 -Browser firefox
+.\scripts\tests\test-web-ui.ps1 -Browser firefox
 ```
 
 **Requirements:**

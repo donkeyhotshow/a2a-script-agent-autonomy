@@ -1,9 +1,0 @@
-[
-  {
-    "name": "ollama-hello",
-    "payload": {
-      "model": "qwen3:8b",
-      "prompt": "Return one sentence that contains the phrase OLLAMA OK."
-    }
-  }
-]

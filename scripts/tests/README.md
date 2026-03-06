@@ -1,4 +1,4 @@
-﻿# A2A Script Agent — Testing Framework
+# A2A Script Agent — Testing Framework
 
 **Hierarchical, fail-fast validation of the agent stack.**
 The test suite is organized into three levels (basic health, component integration, end-to-end workflows) that progressively cover more surface area. Runners stop on the first failure unless `-ContinueOnError` is passed so problems are easy to localize.
@@ -67,3 +67,7 @@ Run the level-specific runners directly for faster iteration against a broken su
 ## Notes for maintainers
 - The fast path (`-Quick`/`-Light`) is wired only into Level 3 runners (Workflows and Performance sub-levels) because earlier levels already run quickly.
 - Keep documentation in sync with any new `test-*.ps1` scripts — add a short description inside the corresponding subdirectory when you add new checks.
+
+## See also
+- **[scripts/direct-tests/](../direct-tests/README.md)** — Hub for health checks by stack part (`run-checks.ps1 -Scope LLM|ServerLLM|ClientServer|…`) and runners for RAG, SDK, AI, server sim, and scripts (no service startup; run from repo root).
+- Direct test scripts in this folder: `test-services-basic.ps1`, `test-web-ui.ps1`, `test-a2a-client.ps1` (also invokable via `scripts/direct-tests/scripts/run-*.ps1`).

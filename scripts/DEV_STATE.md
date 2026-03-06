@@ -2,6 +2,16 @@
 
 ## Скрипты проекта
 
+### Тестирование
+
+| Что | Где | Запуск |
+|-----|-----|--------|
+| **Хаб проверок по частям стека** | [scripts/direct-tests/run-checks.ps1](direct-tests/run-checks.ps1) | `.\scripts\direct-tests\run-checks.ps1 -Scope LLM \| ServerLLM \| ClientServer \| Full` и др. |
+| **Level 1–3 suite** | [scripts/tests/](tests/README.md) | `.\scripts\tests\run-all.ps1` |
+| **Прямые тесты (runner'ы)** | [scripts/direct-tests/README.md](direct-tests/README.md) | RAG, SDK, AI, server sim, test-services/test-web-ui/test-a2a-client через `direct-tests\scripts\run-*.ps1` |
+
+Тест-скрипты `test-services-basic.ps1`, `test-web-ui.ps1`, `test-a2a-client.ps1` лежат в **scripts/tests/**; вызов через них или через `scripts/direct-tests/scripts/run-*.ps1`.
+
 ### Основные скрипты
 
 | Скрипт | Назначение | Статус |
@@ -11,7 +21,7 @@
 | `orchestrator.js` | Оркестрация компонентов | ✅ Работает |
 | `port-manager.js` | Управление портами сервисов | ✅ Работает |
 | `wait-for-ports-free.js` | Ожидание освобождения портов | ✅ Работает |
-| `test-web-ui.ps1` | Web UI smoke test: Docker infra, server/api/Vite, browser launch, SSE verification | ✅ Работает |
+| `tests/test-web-ui.ps1` | Web UI smoke test: Docker infra, server/api/Vite, browser launch, SSE verification | ✅ Работает |
 
 ### Генераторы кода
 
@@ -28,7 +38,7 @@
 | `inspect-dist-transform.ts` | Инспекция трансформаций | ✅ Работает |
 | `run-dist-transform.ts` | Запуск трансформаций | ✅ Работает |
 
-### Web UI Smoke Test (`test-web-ui.ps1`)
+### Web UI Smoke Test (`tests/test-web-ui.ps1`)
 
 PowerShell скрипт для комплексного тестирования Web UI уровня.
 
