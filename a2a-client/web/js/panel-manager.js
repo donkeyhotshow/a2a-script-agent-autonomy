@@ -12,7 +12,7 @@
         task: { slot: 'floating', title: 'Task', critical: true },
         chat: { slot: 'right', title: 'Chat', critical: false },
         logs: { slot: 'bottom', title: 'Logs', critical: false },
-        sessions: { slot: 'left', title: 'Sessions', critical: false },
+        taskbar: { slot: 'taskbar', title: 'Sessions', critical: true },
         settings: { slot: 'modal', title: 'Settings', critical: false },
         projects: { slot: 'modal', title: 'Projects', critical: false },
         debug: { slot: 'floating', title: 'Debug', critical: false }
@@ -46,7 +46,16 @@
             
             // Handlers
             this._onClose = options.onClose || (() => {});
-            this._onStateChange = options.onStateChange || (() => {});
+            this._onStateChange = (state) => {
+                // Auto-save panel state
+                if (PanelManager?.saveState) {
+                    PanelManager.saveState();
+                }
+                // Call user-provided handler
+                if (options.onStateChange) {
+                    options.onStateChange(state);
+                }
+            };
             this._dragHandler = null;
             
             this._buildDOM();
@@ -61,6 +70,8 @@
             
             if (this.config.slot === 'modal') {
                 this.container.classList.add('pm-modal');
+            } else if (this.config.slot === 'taskbar') {
+                this.container.classList.add('pm-taskbar');
             } else if (this.config.slot !== 'floating') {
                 this.container.classList.add(`pm-slot-${this.config.slot}`);
             } else {
@@ -144,6 +155,10 @@
                     if (isDragging) {
                         isDragging = false;
                         this.container.classList.remove('pm-dragging');
+                        // Save state after drag
+                        if (PanelManager?.saveState) {
+                            PanelManager.saveState();
+                        }
                     }
                 });
             }
@@ -391,6 +406,96 @@
             return this;
         },
 
+        // === Persistence: Save/Load State ===
+
+        STORAGE_KEY: 'a2a-panel-state',
+
+        saveState() {
+            const state = {
+                panels: Array.from(this._panels.values()).map(panel => ({
+                    id: panel.id,
+                    type: panel.type,
+                    state: panel.state,
+                    position: { ...panel.position },
+                    size: { ...panel.size },
+                    dockSide: panel.dockSide,
+                    config: {
+                        title: panel.config.title,
+                        slot: panel.config.slot,
+                        critical: panel.config.critical
+                    }
+                })),
+                timestamp: Date.now()
+            };
+            try {
+                localStorage.setItem(this.STORAGE_KEY, JSON.stringify(state));
+            } catch (e) {
+                console.warn('[PanelManager] Failed to save state:', e);
+            }
+            return this;
+        },
+
+        loadState() {
+            try {
+                const saved = localStorage.getItem(this.STORAGE_KEY);
+                if (!saved) return this;
+                const state = JSON.parse(saved);
+                if (!state?.panels?.length) return this;
+
+                // Restore panels
+                state.panels.forEach(savedPanel => {
+                    const existing = this._panels.get(savedPanel.id);
+                    if (existing) {
+                        // Update existing panel
+                        existing.position = savedPanel.position || existing.position;
+                        existing.size = savedPanel.size || existing.size;
+                        existing.dockSide = savedPanel.dockSide || existing.dockSide;
+                        if (savedPanel.config?.title) {
+                            existing.setTitle(savedPanel.config.title);
+                        }
+                        // Restore position styles for floating panels
+                        if (existing.config.slot === 'floating') {
+                            existing.container.style.left = `${existing.position.x}px`;
+                            existing.container.style.top = `${existing.position.y}px`;
+                            existing.container.style.width = `${existing.size.width}px`;
+                            existing.container.style.height = `${existing.size.height}px`;
+                        }
+                        // Restore state
+                        if (savedPanel.state === PANEL_STATES.VISIBLE) {
+                            existing.restore();
+                        } else if (savedPanel.state === PANEL_STATES.MINIMIZED) {
+                            existing.minimize();
+                        }
+                    } else {
+                        // Create new panel from saved state
+                        const panel = this.create(savedPanel.type, {
+                            id: savedPanel.id,
+                            title: savedPanel.config?.title,
+                            critical: savedPanel.config?.critical,
+                            x: savedPanel.position?.x,
+                            y: savedPanel.position?.y,
+                            width: savedPanel.size?.width,
+                            height: savedPanel.size?.height
+                        });
+                        if (savedPanel.state === PANEL_STATES.VISIBLE) {
+                            panel.show();
+                        } else if (savedPanel.state === PANEL_STATES.MINIMIZED) {
+                            panel.show().minimize();
+                        }
+                    }
+                });
+                console.log('[PanelManager] State restored:', state.panels.length, 'panels');
+            } catch (e) {
+                console.warn('[PanelManager] Failed to load state:', e);
+            }
+            return this;
+        },
+
+        clearState() {
+            localStorage.removeItem(this.STORAGE_KEY);
+            return this;
+        },
+
         // === State Integration with SessionStore ===
 
         syncWithSessionStore() {
@@ -407,6 +512,8 @@
                     // Auto-restore task panel when new execute arrives
                     taskPanel.restore();
                 }
+                // Auto-save state on execute changes
+                this.saveState();
             });
 
             // Listen for messages to update chat panel indicator
@@ -416,6 +523,9 @@
                     chatPanel.setStatus('unread');
                 }
             });
+
+            // Load saved state after init
+            this.loadState();
 
             return this;
         },

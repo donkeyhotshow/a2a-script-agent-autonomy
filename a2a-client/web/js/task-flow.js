@@ -523,14 +523,19 @@
                 }
 
                 const normalizedResponse = serverResponse?.data ?? serverResponse;
+                
+                // DEBUG: Log what server returned
+                console.log('[TaskFlow] Session created:', { sessionId, serverResponse, normalizedResponse });
 
                 // If server returns immediate execute, use it
                 if (normalizedResponse?.execute) {
+                    console.log('[TaskFlow] Immediate execute received:', normalizedResponse.execute);
                     applyExecuteResponse(normalizedResponse, contentEl, 'firstResponse');
                     return;
                 }
 
                 // Otherwise wait for first response via SSE (no HTTP polling)
+                console.log('[TaskFlow] No immediate execute, waiting for SSE...');
                 updateStatus(contentEl, 'Waiting for first response via SSE…');
                 const { status, result, execute, context } = await waitForFirstResponse();
                 

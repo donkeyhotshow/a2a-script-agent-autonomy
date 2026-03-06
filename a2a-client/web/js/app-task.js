@@ -1,9 +1,13 @@
 /**
- * Minimal app init for task form only: header, task input + Send, Settings, Projects, notifications.
+ * Minimal app init with Windows-style taskbar for sessions.
+ * Taskbar shows session buttons at bottom, each opens a floating window.
  */
 (function () {
     const DEFAULT_CLIENT_API_URL = '/api';
     const CLIENT_API_STORAGE_KEY = 'a2a_clientApiUrl';
+
+    // Track opened session windows
+    const sessionWindows = new Map(); // sessionId -> panel
 
     function getStoredClientApiUrl() {
         try {
@@ -19,21 +23,186 @@
         } catch (_) {}
     }
 
-    function ensureSessionPanel() {
-        // Use new PanelManager instead of archived PlasticineWorkflow
+    async function loadTaskbarSessions(contentEl) {
+        if (!contentEl) return;
+
+        try {
+            const sessions = await window.apiIntegration?.getSessions() || [];
+            if (!sessions.length) {
+                contentEl.innerHTML = '<div class="taskbar-empty">No sessions</div>';
+                return;
+            }
+
+            const html = sessions.map(s => {
+                const id = s.id || s.sessionId || 'unknown';
+                const title = s.title || s.task || `Session ${id.slice(-6)}`;
+                const status = s.status || 'idle';
+                const hasWindow = sessionWindows.has(id);
+                const windowPanel = hasWindow ? sessionWindows.get(id) : null;
+                const isVisible = windowPanel?.state === 'visible';
+                const btnClass = ['taskbar-session-btn', status, isVisible ? 'active' : 'minimized'].filter(Boolean).join(' ');
+
+                return `
+                    <button class="${btnClass}" data-session-id="${id}" title="${escapeHtml(title)}">
+                        <span class="session-indicator"></span>
+                        <span class="session-title">${escapeHtml(title)}</span>
+                        <span class="session-close" data-action="close" title="Close">×</span>
+                    </button>
+                `;
+            }).join('');
+
+            contentEl.innerHTML = `<div class="taskbar-sessions">${html}</div>`;
+
+            // Click handlers
+            contentEl.querySelectorAll('.taskbar-session-btn').forEach(btn => {
+                const sessionId = btn.dataset.sessionId;
+
+                // Main click - toggle window
+                btn.addEventListener('click', (e) => {
+                    if (e.target.dataset.action === 'close') return;
+                    toggleSessionWindow(sessionId, btn);
+                });
+
+                // Close button
+                btn.querySelector('[data-action="close"]')?.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    closeSessionWindow(sessionId);
+                });
+            });
+        } catch (e) {
+            contentEl.innerHTML = '<div class="taskbar-empty">Error loading sessions</div>';
+        }
+    }
+
+    async function toggleSessionWindow(sessionId, btnEl) {
         const pm = window.PanelManager;
         if (!pm) return;
-        
-        // Check if sessions panel already exists
-        const existing = pm.getByType('sessions')[0];
-        if (existing) return;
-        
-        // Create sessions panel
-        pm.open('sessions', {
-            id: 'sessions-panel',
+
+        // If window exists, toggle minimize/restore
+        if (sessionWindows.has(sessionId)) {
+            const panel = sessionWindows.get(sessionId);
+            if (panel.state === 'visible') {
+                panel.minimize();
+                btnEl?.classList.remove('active');
+                btnEl?.classList.add('minimized');
+            } else {
+                panel.restore();
+                btnEl?.classList.add('active');
+                btnEl?.classList.remove('minimized');
+            }
+            return;
+        }
+
+        // Create new floating window for session
+        try {
+            const session = await window.apiIntegration?.getSession(sessionId);
+            const title = session?.title || session?.task || `Session ${sessionId.slice(-6)}`;
+
+            const panel = pm.open('task', {
+                id: `session-win-${sessionId}`,
+                title: title,
+                x: 100 + (sessionWindows.size * 30),
+                y: 100 + (sessionWindows.size * 30),
+                width: 500,
+                height: 400,
+                onClose: () => {
+                    sessionWindows.delete(sessionId);
+                    refreshTaskbar();
+                },
+                onStateChange: (state) => {
+                    refreshTaskbar();
+                }
+            });
+
+            // Load session content
+            renderSessionContent(panel.getContentEl(), session);
+
+            // Store reference
+            sessionWindows.set(sessionId, panel);
+
+            // Update button state
+            btnEl?.classList.add('active');
+            btnEl?.classList.remove('minimized');
+
+        } catch (e) {
+            window.addNotification?.('Failed to open session', 'error');
+        }
+    }
+
+    function closeSessionWindow(sessionId) {
+        const panel = sessionWindows.get(sessionId);
+        if (panel) {
+            panel.close();
+            sessionWindows.delete(sessionId);
+        }
+        refreshTaskbar();
+    }
+
+    function renderSessionContent(contentEl, session) {
+        const context = session?.context || {};
+        const execute = context?.execute || session?.execute || {};
+        const messages = context?.history || session?.messages || [];
+
+        let messagesHtml = '';
+        if (messages.length) {
+            messagesHtml = messages.slice(-10).map(m => {
+                const role = m.role || 'assistant';
+                const content = typeof m.content === 'string' ? m.content : JSON.stringify(m.content);
+                return `<div class="session-msg ${role}"><strong>${role}:</strong> ${escapeHtml(content.slice(0, 200))}${content.length > 200 ? '...' : ''}</div>`;
+            }).join('');
+        }
+
+        contentEl.innerHTML = `
+            <div class="session-window-content">
+                <div class="session-info">
+                    <div><strong>ID:</strong> <code>${session.id}</code></div>
+                    <div><strong>Status:</strong> ${session.status || 'idle'}</div>
+                    <div><strong>Step:</strong> ${context?.execution?.step || 'none'}</div>
+                </div>
+                <div class="session-messages">
+                    ${messagesHtml || '<em>No messages</em>'}
+                </div>
+            </div>
+        `;
+    }
+
+    function refreshTaskbar() {
+        const pm = window.PanelManager;
+        const taskbar = pm?.getByType('taskbar')[0];
+        if (taskbar) {
+            loadTaskbarSessions(taskbar.getContentEl());
+        }
+    }
+
+    function ensureTaskbar() {
+        const pm = window.PanelManager;
+        if (!pm) return;
+
+        // Check if taskbar already exists
+        const existing = pm.getByType('taskbar')[0];
+        if (existing) {
+            loadTaskbarSessions(existing.getContentEl());
+            return;
+        }
+
+        // Create taskbar panel
+        const panel = pm.open('taskbar', {
+            id: 'taskbar-panel',
             title: 'Sessions',
-            onClose: () => console.log('[App] Sessions panel closed')
+            critical: true
         });
+
+        // Load sessions
+        loadTaskbarSessions(panel.getContentEl());
+
+        // Refresh periodically
+        setInterval(() => refreshTaskbar(), 5000);
+    }
+
+    function escapeHtml(s) {
+        const el = document.createElement('div');
+        el.textContent = s;
+        return el.innerHTML;
     }
 
     async function init() {
@@ -48,7 +217,7 @@
         if (window.TaskFlow && window.TaskFlow.init) {
             window.TaskFlow.init();
         }
-        ensureSessionPanel();
+        ensureTaskbar();
 
         const settingsModal = document.getElementById('settingsModal');
         const settingsApiUrl = document.getElementById('settingsApiUrl');
@@ -112,9 +281,7 @@
                 const message = (messageInput?.value || '').trim();
                 if (!message) return;
 
-                // Send message using TaskFlow if available
                 if (window.TaskFlow?.sendMessageResult) {
-                    // Find the active task panel content using PanelManager
                     const pm = window.PanelManager;
                     const taskPanel = pm?.get('task-flow-panel');
                     if (taskPanel) {
@@ -140,7 +307,6 @@
             });
         }
 
-        // Expose functions globally for testing
         window.showMessageInput = showMessageInput;
         window.hideMessageInput = hideMessageInput;
 
@@ -184,12 +350,6 @@
             } catch (e) {
                 window.addNotification?.(e?.message || 'Error', 'error');
             }
-        }
-
-        function escapeHtml(s) {
-            const el = document.createElement('div');
-            el.textContent = s;
-            return el.innerHTML;
         }
     }
 
