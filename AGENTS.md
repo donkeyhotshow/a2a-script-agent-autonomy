@@ -126,6 +126,49 @@ npm test -- --update
 - `ENCRYPTION_KEY` - Must be exactly 32 characters
 - `JWT_SECRET` - Minimum 32 characters
 
+### DEV_STATE File Hierarchy
+
+> **Important:** As the project grows, keep DEV_STATE files organized to avoid duplication and maintain clarity.
+
+#### Hierarchy Rules
+
+| Scenario | Action |
+|----------|--------|
+| Root `DEV_STATE.md` becomes too large | Create component-specific `DEV_STATE.md` in subfolders |
+| Subfolder already has `DEV_STATE.md` | Continue maintaining it, avoid duplicates |
+| New component section is added | Create corresponding subfile |
+
+#### File Structure
+
+```
+DEV_STATE.md                    # Root - contains links to subfiles
+├── a2a-client/DEV_STATE.md     # Full documentation for client component
+├── a2a-server/DEV_STATE.md     # Full documentation for server component
+└── ai-integration/DEV_STATE.md # Full documentation for AI integration
+```
+
+#### Guidelines
+
+1. **Root `DEV_STATE.md`** - Contains only:
+   - Table of contents with links to subfiles
+   - High-level overview of project state
+   - References to component-specific files
+
+2. **Subfiles** (`a2a-client/DEV_STATE.md`, etc.) - Contain:
+   - Full documentation for that specific component
+   - Detailed status, logs, and notes
+   - No duplicate content from root file
+
+3. **Avoid Duplicates**:
+   - Don't repeat the same information in root and subfiles
+   - Root file should only reference, not duplicate content
+   - Each subfile should be self-contained for its component
+
+4. **Maintenance**:
+   - Update the relevant subfile when working on a component
+   - Keep root file in sync with existing subfiles
+   - Delete empty/unused DEV_STATE files
+
 ---
 
 ## A2A Protocol Conventions

@@ -336,12 +336,16 @@
                     this.pui.removePanel('task-flow-panel');
                     this.panelId = null;
                     this.panel = null;
+                    // Hide message input when task panel is closed
+                    if (window.hideMessageInput) window.hideMessageInput();
                 }
             });
             this.panelId = 'task-flow-panel';
             this.fixed = false;
             const content = this.pui.getContentEl(this.panelId);
             this._doRun(task, projectId, content);
+            // Show message input when task panel is created
+            if (window.showMessageInput) window.showMessageInput();
         },
 
         async _doRun(task, projectId, contentEl) {

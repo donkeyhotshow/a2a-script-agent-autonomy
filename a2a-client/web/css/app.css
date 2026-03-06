@@ -19,6 +19,7 @@
 @import 'components/mini-zones.css';
 @import 'components/session-manager.css';
 @import 'components/session-panel.css';
+@import 'components/message-input.css';
 @import 'components/progress.css';
 @import 'components/errors.css';
 @import 'utils/transitions.css';

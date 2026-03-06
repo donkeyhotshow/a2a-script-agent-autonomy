@@ -82,6 +82,54 @@
             document.getElementById('taskInputField')?.focus();
         });
 
+        // Message input handling
+        const messageInput = document.getElementById('messageInput');
+        const sendMessageBtn = document.getElementById('sendMessage');
+        const messageInputSection = document.getElementById('messageInputSection');
+
+        function showMessageInput() {
+            if (messageInputSection) messageInputSection.style.display = 'block';
+            if (messageInput) messageInput.focus();
+        }
+
+        function hideMessageInput() {
+            if (messageInputSection) messageInputSection.style.display = 'none';
+            if (messageInput) messageInput.value = '';
+        }
+
+        if (sendMessageBtn) {
+            sendMessageBtn.addEventListener('click', () => {
+                const message = (messageInput?.value || '').trim();
+                if (!message) return;
+
+                // Send message using TaskFlow if available
+                if (window.TaskFlow?.sendMessageResult) {
+                    // Find the active task panel content
+                    const taskPanel = document.querySelector('.pui-panel[data-panel-id*="task-flow"] .pui-panel-content');
+                    if (taskPanel) {
+                        window.TaskFlow.sendMessageResult(message, taskPanel);
+                        messageInput.value = '';
+                    } else {
+                        window.addNotification?.('No active task panel', 'error');
+                    }
+                } else {
+                    window.addNotification?.('TaskFlow not available', 'error');
+                }
+            });
+        }
+
+        if (messageInput) {
+            messageInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    sendMessageBtn?.click();
+                }
+            });
+        }
+
+        // Expose functions globally for testing
+        window.showMessageInput = showMessageInput;
+        window.hideMessageInput = hideMessageInput;
+
         async function loadProjects() {
             if (!projectsGrid) return;
             projectsGrid.innerHTML = '<div class="loading-indicator">Loading...</div>';

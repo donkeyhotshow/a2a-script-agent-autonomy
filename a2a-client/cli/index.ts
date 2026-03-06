@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
+import {execSync, spawn} from 'node:child_process';
 import {HistoryManager} from '../packages/history/src/history-manager.ts';
 
 type GlobalOptions = {
@@ -22,6 +23,7 @@ Commands:
   messages <sessionId>       Show reconstructed messages stored for a session.
   create-session <name>      Create a new session (optional --description and --tags).
   add-exchange <sessionId>   Append an exchange-log entry (--type, --content, --metadata).
+  start-promise-daemon       Start the promise processing daemon (ai-integration/scripts/promise_queue_daemon.py).
 
 Examples:
   npm run cli list-sessions
@@ -29,6 +31,8 @@ Examples:
   npm run cli exchange-log 86a2c3e --type=response
   npm run cli create-session "Manual test" --description "Testing offline flows"
   npm run cli add-exchange 86a2c3e --type=response --content '{"execute":{"form":{"choice":"confirm"}}}'
+  npm run cli start-promise-daemon --interval 5 --log-level DEBUG
+  npm run cli start-promise-daemon --dry-run --log-level INFO
 `;
 
 function splitArgs(args: string[]) {
@@ -278,6 +282,73 @@ async function main() {
             }
             await historyManager.addExchangeLog(type, content, metadata);
             console.log(`Added ${type} log to session ${session.metadata.id}.`);
+            break;
+        }
+
+        case 'start-promise-daemon': {
+            const cliDir = path.dirname(fileURLToPath(import.meta.url));
+            const scriptPath = path.resolve(cliDir, '..', '..', 'ai-integration', 'scripts', 'promise_queue_daemon.py');
+            
+            // Build arguments for the daemon
+            const daemonArgs: string[] = [];
+            
+            if (options.proxyUrl) {
+                daemonArgs.push('--proxy-url', options.proxyUrl);
+            }
+            if (options.interval) {
+                daemonArgs.push('--interval', options.interval);
+            }
+            if (options.timeout) {
+                daemonArgs.push('--timeout', options.timeout);
+            }
+            if (options.logLevel) {
+                daemonArgs.push('--log-level', options.logLevel);
+            }
+            if (options.dryRun === 'true') {
+                daemonArgs.push('--dry-run');
+            }
+            if (options.noAutoApprove === 'true') {
+                daemonArgs.push('--no-auto-approve');
+            }
+            if (options.maxEmptyCycles) {
+                daemonArgs.push('--max-empty-cycles', options.maxEmptyCycles);
+            }
+            if (options.responseAttempts) {
+                daemonArgs.push('--response-attempts', options.responseAttempts);
+            }
+            if (options.responseDelay) {
+                daemonArgs.push('--response-delay', options.responseDelay);
+            }
+
+            console.log(`Starting promise daemon: python ${scriptPath} ${daemonArgs.join(' ')}`);
+            
+            const daemon = spawn('python', [scriptPath, ...daemonArgs], {
+                stdio: 'inherit',
+                shell: true,
+                cwd: path.resolve(cliDir, '..', '..'),
+            });
+
+            daemon.on('error', (err) => {
+                console.error('Failed to start promise daemon:', err.message);
+                process.exit(1);
+            });
+
+            daemon.on('exit', (code) => {
+                if (code !== 0) {
+                    console.error(`Promise daemon exited with code ${code}`);
+                }
+                process.exit(code ?? 0);
+            });
+
+            // Handle Ctrl+C gracefully
+            process.on('SIGINT', () => {
+                console.log('\nStopping promise daemon...');
+                daemon.kill('SIGINT');
+            });
+
+            process.on('SIGTERM', () => {
+                daemon.kill('SIGTERM');
+            });
             break;
         }
 
