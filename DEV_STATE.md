@@ -1,5 +1,268 @@
 ﻿# DEV_STATE (2026-03-06)
 
+## 2026-03-06 03:30 - Полная документация связки (proxy + ollama + server + client)
+
+### Проверка статуса сервисов
+
+| Сервис | Порт | Статус | URL проверки |
+|--------|------|--------|--------------|
+| Proxy | 11435 | ✅ Работает | http://localhost:11435/daemon/status |
+| Ollama | 11434 | ⚠️ Не запущена (но прокси работает) | http://localhost:11434/ |
+| a2a-server | 3000 | ✅ Работает | http://localhost:3000/health |
+| client-api (WS) | 3001 | ❌ Не запущен | - |
+
+### Полная архитектура
+
+```
+┌─────────────┐     ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+│   Client    │────▶│ a2a-server  │────▶│   Proxy     │────▶│   Ollama    │
+│  (HTTP/WS)  │     │  :3000     │     │  :11435    │     │   :11434    │
+└─────────────┘     └─────────────┘     └─────────────┘     └─────────────┘
+                           │                   │
+                           │                   │
+                    ┌──────┴──────┐    ┌──────┴──────┐
+                    │   Database  │    │   Daemon    │
+                    │ PostgreSQL  │    │ (built-in)  │
+                    │   :5433     │    │ polling     │
+                    └─────────────┘    └─────────────┘
+```
+
+## Пускатели (start-all.bat / kill-all.bat)
+
+### Обзор
+
+Для удобства запуска и остановки всех сервисов используются два bat-скрипта:
+- **start-all.bat** — последовательный запуск всех сервисов с очисткой портов
+- **kill-all.bat** — остановка всех сервисов и очистка PID-файла
+
+### Файлы
+
+| Файл | Описание |
+|------|----------|
+| start-all.bat | Универсальный пускатель для a2a-script-agent |
+| kill-all.bat | Остановка всех процессов (Ollama, Node.js, Python, CMD-обёртки) |
+| .pids.txt | Файл с PID запущенных процессов (создаётся при старте) |
+
+### Порядок запуска (start-all.bat)
+
+```
+1. [1/6] kill-all.bat — остановка существующих процессов
+2. [2/6] Очистка .pids.txt
+3. [3/6] Ollama (порт 11434)
+4. [4/6] ai-integration/proxy (порт 11435)
+5. [5/6] a2a-server (порт 3000)
+6. [6/6] client-api (порт 3001)
+```
+
+#### Очистка портов перед запуском
+
+Перед запуском каждого сервиса выполняется проверка и освобождение портов:
+- Используется `netstat` для поиска процессов на порту
+- `taskkill /F /PID <pid>` для принудительного завершения
+- Функция `:wait_port_free` с повторными попытками (до 20)
+
+### Переменные окружения (start-all.bat)
+
+| Переменная | Значение | Описание |
+|------------|----------|----------|
+| OLLAMA_PORT | 11434 | Порт Ollama |
+| PROXY_PORT | 11435 | Порт ai-integration прокси |
+| SERVER_PORT | 3000 | Порт a2a-server |
+| CLIENT_API_PORT | 3001 | Порт client-api |
+| OLLAMA_MODELS | C:\Users\dev\Desktop\.ollama | Путь к моделям Ollama |
+
+### Логи
+
+При запуске создаются лог-файлы с случайными именами:
+- `a2a-server-<RANDOM>.log` — логи a2a-server
+- `client-api-<RANDOM>.log` — логи client-api
+- `ai-integration-<RANDOM>.log` — логи ai-integration
+
+### kill-all.bat — остановка сервисов
+
+Процессы завершаются в следующем порядке:
+1. Ollama (ollama.exe)
+2. Node.js (node.exe, npm.exe)
+3. Python (python.exe, python3.exe)
+4. CMD-обёртки (по командной строке):
+   - `npm run dev`
+   - `ollama serve`
+   - `python -m uvicorn`
+   - `tsx watch src/index.ts`
+5. Удаление .pids.txt
+
+### Использование
+
+```bash
+# Запуск всех сервисов
+start-all.bat
+
+# Остановка всех сервисов
+kill-all.bat
+```
+
+### Компоненты
+
+#### 1. Proxy (ai-integration/proxy)
+- **Порт:** 11435
+- **Описание:** Python Flask прокси с встроенным демоном
+- **Функции:**
+  - Проксирование запросов к Ollama
+  - Управление тикетами (promises)
+  - Встроенный демон для асинхронного выполнения
+- **Конфигурация (переменные окружения):**
+  | Переменная | Описание | Значение по умолчанию |
+  |------------|----------|----------------------|
+  | DAEMON_ENABLED | Включить демон | true |
+  | DAEMON_POLL_INTERVAL | Интервал опроса (сек) | 4 |
+  | DAEMON_EXECUTE_TIMEOUT | Таймаут выполнения (сек) | 120 |
+  | OLLAMA_HOST | Хост Ollama | localhost:11434 |
+- **API Endpoints:**
+  - `GET /health` - Liveness probe
+  - `GET /health/ollama` - Ollama availability
+  - `GET /daemon/status` - Статус демона
+  - `POST /daemon/start` - Запустить демон
+  - `POST /daemon/stop` - Остановить демон
+  - `GET /promises/pending` - Получить ожидающие тикеты
+  - `GET /promise/<id>` - Получить тикет
+  - `POST /api/generate` - Создать генерацию (с X-Promise: true для async)
+
+#### 2. Ollama
+- **Порт:** 11434
+- **Модель:** qwen3:8b
+- **Описание:** Локальный LLM сервер
+
+#### 3. a2a-server
+- **HTTP Порт:** 3000
+- **WebSocket Порт:** 3001 (не запущен)
+- **Описание:** A2A Protocol Server
+- **Конфигурация (переменные окружения в a2a-server/.env):**
+  | Переменная | Описание | Значение |
+  |------------|----------|----------|
+  | LLM_PROVIDER | Провайдер LLM | ollama |
+  | AI_HUB_URL | URL прокси | http://localhost:11435 |
+  | OLLAMA_MODEL | Модель Ollama | qwen3:8b |
+  | SKIP_AUTH | Пропустить авторизацию | 1 |
+- **API Endpoints:**
+  - `GET /health` - Liveness probe
+  - `GET /api/v1/health` - Detailed health
+  - `POST /api/v1/requests` - Создать запрос
+  - `GET /api/v1/requests/:promiseId/status` - Статус запроса
+
+### Потоки данных
+
+#### 1. Синхронный запрос (без LLM)
+```
+Client → POST /api/v1/requests → a2a-server → (neuron processing) → response
+```
+
+#### 2. Асинхронный запрос (с LLM)
+```
+Client → POST /api/v1/requests → a2a-server → AI_HUB_URL (proxy) → Ollama
+                                         ↓
+                              Создание promise
+                                         ↓
+                         a2a-server возвращает promiseId
+                                         ↓
+Client ← promiseId + status=pending
+                                         ↓
+                            Proxy Daemon (polling every 4s)
+                                         ↓
+                         GET /promises/pending → Находит тикет
+                                         ↓
+                         POST /promise/<id>/execute → Ollama
+                                         ↓
+                         Результат сохраняется в файл
+                                         ↓
+Client → GET /api/v1/requests/:promiseId/status → Возвращает результат
+```
+
+### Тестирование цепочки
+
+#### Тест 1: Проверка прокси
+```bash
+curl -s http://localhost:11435/daemon/status
+# Ответ: {"auto_execute":true,"enabled":true,"poll_interval":4.0,"running":true}
+```
+
+#### Тест 2: Проверка a2a-server
+```bash
+curl -s http://localhost:3000/health
+# Ответ: {"status":"ok","timestamp":"2026-03-06T01:24:16.215Z","version":"1.0.0"}
+```
+
+#### Тест 3: Создание запроса (нейронная обработка без LLM)
+```bash
+curl -s -X POST http://localhost:3000/api/v1/requests \
+  -H "Content-Type: application/json" \
+  -d '{"message": "test", "context": {}}'
+# Ответ: {"success":true,"data":{"promiseId":"cmme7q5ap00005921pm7g3dj6","requestId":"req_1772760325198_ln3jl2ttx","status":"pending"}}
+
+# Проверка статуса:
+curl -s http://localhost:3000/api/v1/requests/cmme7q5ap00005921pm7g3dj6/status
+# Ответ: {"success":true,"data":{"promiseId":"...","status":"completed",...}}
+```
+
+### Запуск сервисов
+
+```bash
+# 1. Запуск прокси (с встроенным демоном):
+cd ai-integration && python -m proxy
+
+# 2. Запуск a2a-server:
+cd a2a-server && npm run dev:no-auth
+
+# 3. Проверка статуса:
+curl -s http://localhost:11435/daemon/status
+curl -s http://localhost:3000/health
+```
+
+### Выводы
+
+- ✅ Proxy (11435) работает с встроенным демоном
+- ⚠️ Ollama (11434) не запущена, но прокси работает независимо
+- ✅ a2a-server (3000) работает и обрабатывает запросы
+- ❌ WebSocket (3001) не запущен
+- ✅ Полная цепочка проверена: Client → a2a-server → neuron processing → response
+
+---
+
+## 2026-03-06 01:50 - Подтверждение работы встроенного демона
+
+### Результат тестирования
+Проверено, что встроенный демон работает корректно:
+
+1. **Прокси запущен** на порту 11435
+2. **Демон активен** (проверено через `/daemon/status`):
+   ```json
+   {"auto_execute":true,"enabled":true,"poll_interval":4.0,"running":true}
+   ```
+3. **Опрос работает** - каждые 4 секунды демон запрашивает `/promises/pending`
+
+### Тест создания и обработки promise
+```bash
+# Создание тестового promise
+curl -X POST "http://localhost:11435/api/generate" \
+  -H "Content-Type: application/json" \
+  -H "X-Promise: true" \
+  -d '{"model":"qwen3:8b","prompt":"test"}'
+
+# Ответ: {"promiseId": "015b2b921910462196c29cc9d15928e1", "status": "pending"}
+
+# Через 5 секунд:
+curl "http://localhost:11435/promise/015b2b921910462196c29cc9d15928e1"
+# Ответ: {"promiseId": "...", "status": "error", "error": "...port 11434..."}
+```
+
+### Вывод
+Демон работает корректно:
+- ✅ Автоматически запускается с прокси
+- ✅ Периодически опрашивает `/promises/pending`
+- ✅ Обнаруживает и обрабатывает тикеты
+- ✅ Внешний `promise_queue_daemon.py` больше не нужен
+
+---
+
 ## 2026-03-06 01:30 - Встроенный демон в прокси
 
 Реализован встроенный демон для выполнения запросов из тикетов (вместо внешнего Python `promise_queue_daemon.py`).
