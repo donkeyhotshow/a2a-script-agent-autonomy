@@ -165,33 +165,8 @@
             }
         }
 
-        /**
-         * Synchronous versions that fallback to localStorage for immediate access
-         * These are useful for initialization before async storage is available
-         */
-        getItemSync(key) {
-            try {
-                return localStorage.getItem(`${this.namespace}:${key}`);
-            } catch {
-                return null;
-            }
-        }
-
-        setItemSync(key, value) {
-            try {
-                localStorage.setItem(`${this.namespace}:${key}`, value);
-            } catch (error) {
-                console.warn('[CustomStorage] Sync set failed:', error);
-            }
-        }
-
-        removeItemSync(key) {
-            try {
-                localStorage.removeItem(`${this.namespace}:${key}`);
-            } catch (error) {
-                console.warn('[CustomStorage] Sync remove failed:', error);
-            }
-        }
+        // Note: All storage operations are async via file-based API
+        // No sync/localStorage fallbacks - ensures data consistency
     }
 
     // Create storage instances for different namespaces

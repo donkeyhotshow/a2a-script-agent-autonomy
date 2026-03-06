@@ -61,8 +61,6 @@ describe('Legacy to Canonical Converter', () => {
         it('should convert legacy context to canonical format', () => {
             const legacyContext = {
                 actions: [{name: 'action1'}],
-                proposedActions: [{name: 'action2'}],
-                subActions: [{name: 'action3'}],
                 executingAction: 'current-action',
                 dslScript: 'some script',
                 history: [],
@@ -81,6 +79,8 @@ describe('Legacy to Canonical Converter', () => {
             expect((result as any).context).toBeDefined();
             expect((result as any).context.execution).toBeDefined();
         });
+
+        // Note: proposedActions and subActions removed - use canonical format
 
         it('should handle minimal context', () => {
             const minimalContext = {
@@ -169,12 +169,7 @@ describe('Legacy to Canonical Converter', () => {
             expect(isLegacyFormat(legacyData)).toBe(true);
         });
 
-        it('should detect legacy format by proposedActions', () => {
-            const legacyData = {
-                proposedActions: [{name: 'test'}]
-            };
-            expect(isLegacyFormat(legacyData)).toBe(true);
-        });
+        // Note: proposedActions detection removed - use canonical format
 
         it('should detect legacy format by executingAction', () => {
             const legacyData = {

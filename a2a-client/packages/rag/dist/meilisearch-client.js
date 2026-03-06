@@ -5,13 +5,8 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.DEFAULT_SETTINGS = exports.MeilisearchClient = void 0;
 exports.createMeilisearchClient = createMeilisearchClient;
-const DEFAULT_SETTINGS = {
-    searchableAttributes: ['content', 'name', 'path', 'type'],
-    filterableAttributes: ['type', 'extension', 'framework'],
-    sortableAttributes: ['score', 'lastModified', 'path'],
-    rankingRules: ['words', 'typo', 'proximity', 'attribute', 'sort', 'exactness'],
-};
-exports.DEFAULT_SETTINGS = DEFAULT_SETTINGS;
+const meilisearch_defaults_js_1 = require("./meilisearch-defaults.js");
+Object.defineProperty(exports, "DEFAULT_SETTINGS", { enumerable: true, get: function () { return meilisearch_defaults_js_1.DEFAULT_SETTINGS; } });
 class MeilisearchClient {
     constructor(config = {}) {
         this.index = null;
@@ -75,7 +70,7 @@ class MeilisearchClient {
         const response = await fetch(`${this.host}/indexes/${this.indexName}/settings`, {
             method: 'PATCH',
             headers: this._getHeaders(),
-            body: JSON.stringify(DEFAULT_SETTINGS),
+            body: JSON.stringify(meilisearch_defaults_js_1.DEFAULT_SETTINGS),
         });
         if (!response.ok)
             throw new Error(`Failed to configure index: ${response.status}`);

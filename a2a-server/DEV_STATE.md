@@ -16,6 +16,10 @@
 | AI_HUB_URL | URL прокси | http://localhost:11435 |
 | OLLAMA_MODEL | Модель Ollama | qwen3:8b |
 | SKIP_AUTH | Пропустить авторизацию | 1 |
+| RATE_LIMIT_WINDOW_MS | Окно rate limiting (мс) | 60000 |
+| RATE_LIMIT_MAX_REQUESTS | Макс. запросов в окне | 200 |
+| LOG_LEVEL | Уровень логирования | info |
+| LOG_FORMAT | Формат логов | json |
 
 ### API Endpoints
 
@@ -25,6 +29,18 @@
 | GET | /api/v1/health | Detailed health |
 | POST | /api/v1/requests | Создать запрос |
 | GET | /api/v1/requests/:promiseId/status | Статус запроса |
+| POST | /api/v1/invoke | Универсальный endpoint для invoke |
+| GET/POST/PUT/DELETE | /api/v1/storage/:namespace/:key | Storage API для файлового хранилища |
+| DELETE | /api/v1/storage/:namespace | Очистка namespace |
+| GET | /api/v1/storage/:namespace/keys | Список ключей в namespace |
+| GET | /metrics | Prometheus метрики |
+| GET | /api/v1/queue/metrics | Метрики очереди |
+| GET | /api/v1/polling/metrics | Метрики polling optimizer |
+| GET | /api/v1/pipeline/metrics | Метрики pipeline |
+| POST | /api/v1/tester/command | CLI команды для веб-клиента |
+| GET | /api/v1/tester/status | Статус tester API |
+| GET | /api/v1/tester/sessions | Активные сессии |
+| POST | /api/v1/tester/broadcast | Широковещательные команды |
 
 ### Выполненные тесты
 
@@ -264,3 +280,48 @@ docker exec -it a2a-server-postgres psql -U postgres -d a2a_server -c "\
 - Нейроны обрабатывают запросы
 - Интеграция с прокси (11435) работает
 - База данных доступна
+
+---
+
+## Недавние улучшения (2026-03-06)
+
+### ✅ Storage API
+- **Новые endpoints**: CRUD операции для файлового хранилища
+- **Валидация**: Ограничения на размер (10MB), формат имен, проверка JSON
+- **Автоматическая очистка**: Удаление файлов старше 30 дней
+- **Безопасность**: Проверка прав доступа, обработка ошибок
+
+### ✅ Логирование и мониторинг
+- **Ротация логов**: Ежедневная ротация с архивацией (7-14 дней хранения)
+- **Типы логов**: error, combined, access логи отдельно
+- **Мониторинг производительности**: Отслеживание памяти, uptime, метрик
+- **Access логи**: Детальное логирование HTTP запросов
+
+### ✅ Производительность и безопасность
+- **Rate limiting**: Защита от перегрузки (200 запросов/минуту по умолчанию)
+- **Оптимизация**: Улучшенная обработка ошибок, валидация входных данных
+- **Метрики**: Расширенные метрики для Prometheus и внутреннего мониторинга
+- **CLI тестирование**: API для удалённого управления веб-клиентом
+
+### ✅ Исправления тестов
+- **Симуляции**: Исправлены тесты для поддержки step-based формата
+- **Совместимость**: Поддержка как legacy, так и новых форматов симуляций
+- **Надёжность**: Улучшенная обработка ошибок в тестах
+
+### Новые возможности тестирования
+
+```bash
+# Storage API тесты
+curl -X PUT http://localhost:3000/api/v1/storage/test/mykey \
+  -H "Content-Type: application/json" \
+  -d '{"value": {"test": "data"}, "timestamp": "2026-03-06T12:00:00Z"}'
+
+# CLI команды для веб-клиента
+curl -X POST http://localhost:3000/api/v1/tester/command \
+  -H "Content-Type: application/json" \
+  -d '{"type": "tester_command", "command": "run_test", "sessionId": "session-123"}'
+
+# Метрики производительности
+curl http://localhost:3000/metrics
+curl http://localhost:3000/api/v1/queue/metrics
+```

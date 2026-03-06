@@ -29,22 +29,24 @@ const LEGACY_FIELD_MAPPINGS: Record<string, string> = {
 
 /**
  * Legacy format patterns
- * @deprecated Эти интерфейсы используются только для обратной совместимости
+ * @deprecated These interfaces are for backwards compatibility only
  * @see docs/new-request-flow/PROTOCOL.md
  */
 interface LegacyRequest {
-  /** @deprecated */
+  /** @deprecated Use execute.form.choices */
   actions?: unknown[];
-  /** @deprecated */
-  proposedActions?: unknown[];
-  /** @deprecated */
-  subActions?: unknown[];
-  /** @deprecated */
+  /** @deprecated Use context.execution.step */
   executingAction?: string;
-  /** @deprecated */
+  /** @deprecated Use execute with action-type keys */
   dslScript?: string;
   [key: string]: unknown;
 }
+
+/**
+ * Removed legacy fields:
+ * - proposedActions: use execute.form.choices
+ * - subActions: use context.execution.step
+ */
 
 /**
  * Legacy response format
@@ -70,12 +72,11 @@ export function isLegacyFormat(data: unknown): boolean {
   
   // Check for legacy action fields
   if (ctx.actions !== undefined ||
-      ctx.proposedActions !== undefined ||
-      ctx.subActions !== undefined ||
       ctx.executingAction !== undefined ||
       ctx.dslScript !== undefined) {
     return true;
   }
+  // Note: proposedActions and subActions removed - use canonical format
   
   // Check for legacy response format
   if (ctx.content !== undefined && ctx.action === undefined && ctx.result === undefined) {
@@ -171,25 +172,9 @@ export function transformLegacyRequest(data: unknown): unknown {
     };
     delete result.actions;
   }
-  
-  // Handle proposedActions
-  if (ctx.proposedActions !== undefined) {
-    result.context = {
-      ...(result.context as Record<string, unknown>),
-      proposedActions: ctx.proposedActions
-    };
-    delete result.proposedActions;
-  }
-  
-  // Handle subActions
-  if (ctx.subActions !== undefined) {
-    result.context = {
-      ...(result.context as Record<string, unknown>),
-      subActions: ctx.subActions
-    };
-    delete result.subActions;
-  }
-  
+
+  // Note: proposedActions and subActions removed - use canonical format
+
   // Handle executingAction
   if (ctx.executingAction !== undefined) {
     result.context = {
@@ -292,9 +277,8 @@ export function applyCompatibility(
   
   // Transform legacy format
   if (transformLegacy && isLegacyFormat(data)) {
-    const isRequest = (data as Record<string, unknown>).actions !== undefined ||
-                      (data as Record<string, unknown>).proposedActions !== undefined;
-    
+    const isRequest = (data as Record<string, unknown>).actions !== undefined;
+
     if (isRequest) {
       result = transformLegacyRequest(data);
     } else {
@@ -380,11 +364,10 @@ export enum FormatType {
 
 /**
  * Legacy field indicators (for detection)
+ * Removed: proposedActions, subActions (use canonical format)
  */
 const LEGACY_REQUEST_INDICATORS = [
   'actions',
-  'proposedActions', 
-  'subActions',
   'executingAction',
   'dslScript'
 ];
@@ -428,25 +411,27 @@ const CANONICAL_CONTEXT_KEYS = [
 
 /**
  * Determine if the data uses the new AI-Action format (canonical)
- * 
+ *
  * Canonical format uses:
  * - execute.form.choices
- * - execute.message  
+ * - execute.message
  * - execute.script
  * - execute."action-type"
  * - result."action-type"
  * - context.execution.step
  * - context.history[]
- * 
+ *
  * Legacy format uses:
  * - actions[]
- * - proposedActions
- * - subActions
  * - executingAction
  * - dslScript
  * - result.content (flat)
  * - execute.action (generic)
- * 
+ *
+ * Removed legacy fields:
+ * - proposedActions (use execute.form.choices)
+ * - subActions (use context.execution.step)
+ *
  * @param data - The request/response data to analyze
  * @returns FormatType - Whether it's LEGACY, CANONICAL, or UNKNOWN
  */

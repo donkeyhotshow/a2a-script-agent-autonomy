@@ -2,8 +2,28 @@ import { test, expect, Page } from '@playwright/test';
 
 /**
  * Session Persistence and Replay Tests
+ * 
+ * @deprecated localStorage/sessionStorage is deprecated in production code.
+ * These tests use localStorage/sessionStorage for backward compatibility only.
+ * 
+ * For new tests, use StorageAPI:
+ * - StorageAPI.sessions for session data
+ * - StorageAPI.ui for panel layouts
+ * - StorageAPI.config for configuration
+ * 
+ * Example migration:
+ * ```typescript
+ * // Old (deprecated):
+ * await persistenceTester.saveToLocalStorage('key', data);
+ * const value = await persistenceTester.loadFromLocalStorage('key');
+ * 
+ * // New (recommended):
+ * await StorageAPI.sessions.setItem('key', JSON.stringify(data));
+ * const value = await StorageAPI.sessions.getItem('key');
+ * ```
+ * 
  * Tests session state persistence across page reloads, browser restarts,
- * and long-term storage of message history, panel layouts, and execution context
+ * and long-term storage of message history, panel layouts, and execution context.
  */
 
 interface SessionSnapshot {
@@ -127,6 +147,11 @@ class SessionPersistenceTester {
       delete (window as any).SSEClient;
       delete (window as any).WebSocketClient;
 
+      // @deprecated localStorage/sessionStorage deprecated - use StorageAPI
+      // Clear StorageAPI if available
+      if (typeof StorageAPI !== 'undefined') {
+        console.warn('[StorageAPI] Browser restart simulation: clear all storage');
+      }
       // Reload scripts (simplified)
       localStorage.clear();
       sessionStorage.clear();
@@ -159,6 +184,64 @@ class SessionPersistenceTester {
       const data = sessionStorage.getItem(key);
       return data ? JSON.parse(data) : null;
     }, key);
+  }
+
+  /**
+   * @deprecated Use StorageAPI instead of localStorage/sessionStorage
+   * These methods kept for backward compatibility with legacy tests
+   */
+
+  /**
+   * Save to StorageAPI.sessions (recommended)
+   * Uses file-based storage via /api/storage endpoint
+   */
+  async saveToStorageAPI(key: string, data: any) {
+    await this.page.evaluate(({ key, data }) => {
+      if (typeof StorageAPI !== 'undefined' && StorageAPI.sessions) {
+        StorageAPI.sessions.setItem(key, JSON.stringify(data)).catch(console.error);
+      } else {
+        console.warn('[StorageAPI] Not available, falling back to localStorage');
+        localStorage.setItem(key, JSON.stringify(data));
+      }
+    }, { key, data });
+  }
+
+  /**
+   * Load from StorageAPI.sessions (recommended)
+   */
+  async loadFromStorageAPI(key: string): Promise<any> {
+    return await this.page.evaluate(async (key) => {
+      if (typeof StorageAPI !== 'undefined' && StorageAPI.sessions) {
+        try {
+          const data = await StorageAPI.sessions.getItem(key);
+          return data ? JSON.parse(data) : null;
+        } catch (e) {
+          console.warn('[StorageAPI] Load failed, falling back to localStorage:', e);
+          const fallback = localStorage.getItem(key);
+          return fallback ? JSON.parse(fallback) : null;
+        }
+      }
+      const fallback = localStorage.getItem(key);
+      return fallback ? JSON.parse(fallback) : null;
+    }, key);
+  }
+
+  /**
+   * Clear all storage (StorageAPI + localStorage fallback)
+   */
+  async clearAllStorage() {
+    await this.page.evaluate(() => {
+      localStorage.clear();
+      sessionStorage.clear();
+      if (typeof StorageAPI !== 'undefined') {
+        // StorageAPI doesn't have a clear method, individual removes needed
+        StorageAPI.sessions?.removeItem?.('session-backup');
+        StorageAPI.sessions?.removeItem?.('layout-backup');
+        StorageAPI.sessions?.removeItem?.('execution-backup');
+        StorageAPI.sessions?.removeItem?.('cycle-backup');
+        StorageAPI.sessions?.removeItem?.('history-backup');
+      }
+    });
   }
 }
 
@@ -224,6 +307,8 @@ test.describe('Session State Persistence', () => {
   });
 
   test('survives browser refresh with localStorage', async ({ page }) => {
+    // @deprecated This test uses localStorage for backward compatibility
+    // For new tests, use saveToStorageAPI/loadFromStorageAPI instead
     // Create complex session state
     await page.evaluate(() => {
       const sessionViewModel = (window as any).SessionViewModel;

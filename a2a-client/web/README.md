@@ -66,9 +66,9 @@ npm run dev
 
 ### Конфигурация
 
-Настройка Client API URL в localStorage:
+Настройка Client API URL через Storage API:
 ```javascript
-localStorage.setItem('a2a_clientApiUrl', 'http://localhost:3001/api');
+await StorageAPI.config.setItem('clientApiUrl', 'http://localhost:3001/api');
 ```
 
 ### Основные модули

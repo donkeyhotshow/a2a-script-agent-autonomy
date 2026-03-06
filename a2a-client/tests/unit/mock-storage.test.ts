@@ -1,7 +1,11 @@
 /**
  * Unit Tests for MockStorage
  * 
- * Tests the mock localStorage/sessionStorage implementation.
+ * @deprecated localStorage/sessionStorage is deprecated in production code.
+ * Use StorageAPI (file-based) instead for persistence.
+ * 
+ * This mock is kept for backward compatibility with legacy tests only.
+ * See: a2a-client/tests/mocks/README.md for migration guide.
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';

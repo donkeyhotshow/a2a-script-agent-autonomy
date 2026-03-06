@@ -1,9 +1,12 @@
 @echo off
-REM Unified starter for a2a-script-agent
-REM Kills processes before starting, saves PIDs to manager file
+chcp 65001 >nul
+REM start-all.bat - Standardized service startup
+REM Following docs/troubleshooting/standardize-stop-scripts.md
+REM
+REM Pattern: 1) Call kill-all.bat to clean environment -> 2) Verify ports free -> 3) Clear .pids.txt -> 4) Start services
 
-echo === Unified Starter for a2a-script-agent ===
-echo.
+echo === start-all.bat : Standardized service startup ===
+setlocal EnableDelayedExpansion
 
 set PID_FILE=.pids.txt
 set OLLAMA_PORT=11434
@@ -11,174 +14,204 @@ set PROXY_PORT=11435
 set SERVER_PORT=3000
 set CLIENT_API_PORT=3001
 set WEB_UI_PORT=5173
-set SERVER_LOG=a2a-server-%RANDOM%.log
-set CLIENT_API_LOG=client-api-%RANDOM%.log
-set WEB_UI_LOG=web-ui-%RANDOM%.log
-set AI_LOG=ai-integration-%RANDOM%.log
 set OLLAMA_MODELS=C:\Users\dev\Desktop\.ollama
+set EXIT_CODE=0
+
+REM Generate log names with timestamps
+set TIMESTAMP=%TIME:~0,2%%TIME:~3,2%%TIME:~6,2%
+set TIMESTAMP=%TIMESTAMP: =0%
+set SERVER_LOG=a2a-server-%TIMESTAMP%.log
+set CLIENT_API_LOG=client-api-%TIMESTAMP%.log
+set WEB_UI_LOG=web-ui-%TIMESTAMP%.log
+set AI_LOG=ai-integration-%TIMESTAMP%.log
 
 REM ==========================================
 REM Step 1: Kill existing processes first
 REM ==========================================
-echo [1/7] Killing existing processes...
+echo.
+echo [Step 1/8] Cleaning environment with kill-all.bat...
 call kill-all.bat
+if errorlevel 1 (
+    echo [WARN] kill-all.bat reported issues, continuing with caution...
+)
 powershell -Command "Start-Sleep -Seconds 2"
 
 REM ==========================================
-REM Step 2: Clear PID file
+REM Step 2: Verify all ports are free
 REM ==========================================
-echo [2/7] Clearing PID file...
+echo.
+echo [Step 2/8] Verifying all ports are free...
+set PORTS_OK=1
+for %%p in (%OLLAMA_PORT% %PROXY_PORT% %SERVER_PORT% %CLIENT_API_PORT% %WEB_UI_PORT%) do (
+    call :verify_port_free %%p 10
+    if errorlevel 1 (
+        echo   [ERROR] Port %%p still occupied
+        set PORTS_OK=0
+    ) else (
+        echo   [OK] Port %%p verified free
+    )
+)
+if %PORTS_OK% equ 0 (
+    echo [FATAL] Not all ports could be freed. Aborting startup.
+    exit /b 1
+)
+
+REM ==========================================
+REM Step 3: Clear PID file
+REM ==========================================
+echo.
+echo [Step 3/8] Clearing PID file...
 if exist %PID_FILE% del %PID_FILE%
 echo. > %PID_FILE%
+echo [OK] %PID_FILE% reset
 
 REM ==========================================
-REM Step 3: Start Ollama in background
+REM Step 4: Start Ollama
 REM ==========================================
-echo [3/7] Starting Ollama...
-for /f "tokens=5" %%p in ('netstat -ano ^| findstr ":%OLLAMA_PORT%" ^| findstr "LISTENING"') do (
-    echo [Port cleanup] Killing PID %%p listening on %OLLAMA_PORT%...
-    taskkill /F /PID %%p >nul 2>&1
-)
-powershell -Command "Start-Sleep -Seconds 1"
-call :wait_port_free %OLLAMA_PORT% || goto :startup_failed
-start /b "" cmd /c "set OLLAMA_HOST=0.0.0.0:%OLLAMA_PORT% && set OLLAMA_MODELS=C:\Users\dev\Desktop\.ollama && ollama serve"
+echo.
+echo [Step 4/8] Starting Ollama on port %OLLAMA_PORT%...
+call :wait_port_free %OLLAMA_PORT% 5 || goto :startup_failed
+
+set OLLAMA_PID=
+start /b "" cmd /c "set OLLAMA_HOST=0.0.0.0:%OLLAMA_PORT% && set OLLAMA_MODELS=%OLLAMA_MODELS% && set OLLAMA_ORIGINS=* && ollama serve"
 powershell -Command "Start-Sleep -Seconds 3"
-echo Ollama started
 
-REM Get Ollama PID
+REM Capture Ollama PID
 for /f "tokens=5" %%a in ('netstat -ano ^| findstr ":%OLLAMA_PORT%" ^| findstr "LISTENING"') do (
+    set OLLAMA_PID=%%a
     echo OLLAMA_PID=%%a >> %PID_FILE%
+    echo [OK] Ollama started (PID: %%a)
     goto :ollama_done
 )
+echo [ERROR] Could not determine Ollama PID
 :ollama_done
 
 REM ==========================================
-REM Step 4: Start ai-integration in background
+REM Step 5: Start ai-integration
 REM ==========================================
-echo [4/7] Starting ai-integration...
-for /f "tokens=5" %%p in ('netstat -ano ^| findstr ":%PROXY_PORT%" ^| findstr "LISTENING"') do (
-    echo [Port cleanup] Killing PID %%p listening on %PROXY_PORT%...
-    taskkill /F /PID %%p >nul 2>&1
-)
-powershell -Command "Start-Sleep -Seconds 1"
-call :wait_port_free %PROXY_PORT% || goto :startup_failed
-start /b "" cmd /c "cd ai-integration && set OLLAMA_HOST=http://localhost:%OLLAMA_PORT% && set OLLAMA_MODELS=C:\Users\dev\Desktop\.ollama && python -m uvicorn proxy.asgi:application --host 0.0.0.0 --port %PROXY_PORT% > %AI_LOG% 2>&1"
-powershell -Command "Start-Sleep -Seconds 3"
-echo ai-integration log: %AI_LOG%
+echo.
+echo [Step 5/8] Starting ai-integration on port %PROXY_PORT%...
+call :wait_port_free %PROXY_PORT% 5 || goto :startup_failed
 
-REM Get uvicorn PID
+start /b "" cmd /c "cd ai-integration && set OLLAMA_HOST=http://localhost:%OLLAMA_PORT% && set OLLAMA_MODELS=%OLLAMA_MODELS% && python -m uvicorn proxy.asgi:application --host 0.0.0.0 --port %PROXY_PORT% ^> %AI_LOG% 2^>^&1"
+powershell -Command "Start-Sleep -Seconds 3"
+
 for /f "tokens=5" %%a in ('netstat -ano ^| findstr ":%PROXY_PORT%" ^| findstr "LISTENING"') do (
     echo AI_INTEGRATION_PID=%%a >> %PID_FILE%
+    echo [OK] ai-integration started (PID: %%a, log: %AI_LOG%)
     goto :ai_done
 )
+echo [WARN] Could not determine ai-integration PID
 :ai_done
 
 REM ==========================================
-REM Step 5: Start a2a-server in background
+REM Step 6: Start a2a-server
 REM ==========================================
-echo [5/7] Starting a2a-server...
-for /f "tokens=5" %%p in ('netstat -ano ^| findstr ":3000" ^| findstr "LISTENING"') do (
-    echo [Port cleanup] Killing PID %%p listening on 3000...
-    taskkill /F /PID %%p >nul 2>&1
-)
-powershell -Command "Start-Sleep -Seconds 1"
-taskkill /F /IM node.exe >nul 2>&1
-call :wait_port_free 3000 || goto :startup_failed
-start /b "" cmd /c "cd a2a-server && npm run dev > %SERVER_LOG% 2>&1"
-powershell -Command "Start-Sleep -Seconds 5"
-echo a2a-server log: %SERVER_LOG%
+echo.
+echo [Step 6/8] Starting a2a-server on port %SERVER_PORT%...
+call :wait_port_free %SERVER_PORT% 5 || goto :startup_failed
 
-REM Get a2a-server PID (node.exe on port 3000)
-for /f "tokens=5" %%a in ('netstat -ano ^| findstr ":3000" ^| findstr "LISTENING"') do (
+cd a2a-server
+start /b "" cmd /c "npm run dev ^> ..\%SERVER_LOG% 2^>^&1"
+cd ..
+powershell -Command "Start-Sleep -Seconds 5"
+
+for /f "tokens=5" %%a in ('netstat -ano ^| findstr ":%SERVER_PORT%" ^| findstr "LISTENING"') do (
     echo A2A_SERVER_PID=%%a >> %PID_FILE%
-    goto :a2a_done
+    echo [OK] a2a-server started (PID: %%a, log: %SERVER_LOG%)
+    goto :server_done
 )
-:a2a_done
+echo [WARN] Could not determine a2a-server PID
+:server_done
 
 REM ==========================================
-REM Step 6: Start client-api in background
+REM Step 7: Start client-api
 REM ==========================================
-echo [6/7] Starting client-api...
-for /f "tokens=5" %%p in ('netstat -ano ^| findstr ":%CLIENT_API_PORT%" ^| findstr "LISTENING"') do (
-    echo [Port cleanup] Killing PID %%p listening on %CLIENT_API_PORT%...
-    taskkill /F /PID %%p >nul 2>&1
-)
-powershell -Command "Start-Sleep -Seconds 1"
-call :wait_port_free %CLIENT_API_PORT% || goto :startup_failed
-start /b "" cmd /c "cd a2a-client/packages/sdk && npm run dev > %CLIENT_API_LOG% 2>&1"
+echo.
+echo [Step 7/8] Starting client-api on port %CLIENT_API_PORT%...
+call :wait_port_free %CLIENT_API_PORT% 5 || goto :startup_failed
+
+cd a2a-client\packages\sdk
+start /b "" cmd /c "npm run dev ^> ..\..\..\%CLIENT_API_LOG% 2^>^&1"
+cd ..\..\..
 powershell -Command "Start-Sleep -Seconds 5"
-echo client-api log: %CLIENT_API_LOG%
 
-REM Get client-api PID (node.exe on port 3001)
 for /f "tokens=5" %%a in ('netstat -ano ^| findstr ":%CLIENT_API_PORT%" ^| findstr "LISTENING"') do (
     echo CLIENT_API_PID=%%a >> %PID_FILE%
+    echo [OK] client-api started (PID: %%a, log: %CLIENT_API_LOG%)
     goto :client_api_done
 )
+echo [WARN] Could not determine client-api PID
 :client_api_done
 
 REM ==========================================
-REM Step 7: Start web-ui in background
+REM Step 8: Start web-ui
 REM ==========================================
-echo [7/7] Starting web-ui...
-for /f "tokens=5" %%p in ('netstat -ano ^| findstr ":%WEB_UI_PORT%" ^| findstr "LISTENING"') do (
-    echo [Port cleanup] Killing PID %%p listening on %WEB_UI_PORT%...
-    taskkill /F /PID %%p >nul 2>&1
-)
-powershell -Command "Start-Sleep -Seconds 1"
-call :wait_port_free %WEB_UI_PORT% || goto :startup_failed
-start /b /d "a2a-client" npm run dev
-powershell -Command "Start-Sleep -Seconds 5"
-echo web-ui log: %WEB_UI_LOG%
+echo.
+echo [Step 8/8] Starting web-ui on port %WEB_UI_PORT%...
+call :wait_port_free %WEB_UI_PORT% 5 || goto :startup_failed
 
-REM Web UI PID will be managed by port killing in kill-all.bat
+cd a2a-client
+start /b "" cmd /c "npm run dev ^> ..\%WEB_UI_LOG% 2^>^&1"
+cd ..
+powershell -Command "Start-Sleep -Seconds 5"
+
+for /f "tokens=5" %%a in ('netstat -ano ^| findstr ":%WEB_UI_PORT%" ^| findstr "LISTENING"') do (
+    echo WEB_UI_PID=%%a >> %PID_FILE%
+    echo [OK] web-ui started (PID: %%a, log: %WEB_UI_LOG%)
+    goto :web_ui_done
+)
+echo [WARN] Could not determine web-ui PID
 :web_ui_done
 
+REM ==========================================
+REM Summary
+REM ==========================================
 echo.
-echo === All services started successfully! ===
+echo === All services started successfully ===
 echo.
-echo PID file: %PID_FILE%
+echo Services:
+echo   - Ollama:       http://localhost:%OLLAMA_PORT%
+echo   - ai-integration: http://localhost:%PROXY_PORT% (API proxy)
+echo   - a2a-server:   http://localhost:%SERVER_PORT%
+echo   - client-api:   http://localhost:%CLIENT_API_PORT%
+echo   - web-ui:       http://localhost:%WEB_UI_PORT%
 echo.
-
-REM Show what's running
-echo Running processes:
-echo   - Ollama (port %OLLAMA_PORT%)
-echo   - ai-integration (port %PROXY_PORT%)
-echo   - a2a-server (port %SERVER_PORT%)
-echo   - client-api (port %CLIENT_API_PORT%)
-echo   - web-ui (port %WEB_UI_PORT%)
-echo.
-
-REM Read and display PIDs
-echo Saved PIDs:
+echo Saved PIDs in %PID_FILE%:
 type %PID_FILE%
 echo.
-
 echo To stop all services, run: kill-all.bat
 goto :eof
 
 :startup_failed
 echo.
-echo ERROR: Could not free required port(s); aborting startup.
+echo [FATAL] Could not free required port(s). Startup aborted.
 exit /b 1
+
+:verify_port_free
+setlocal
+set PORT=%~1
+for /f "tokens=5" %%p in ('netstat -ano ^| findstr ":%PORT%" ^| findstr "LISTENING"') do (
+    endlocal
+    exit /b 1
+)
+endlocal
+exit /b 0
 
 :wait_port_free
 setlocal EnableDelayedExpansion
-set "PORT=%~1"
-set /a ATTEMPTS=0
+set PORT=%~1
+set MAX_ATTEMPTS=%~2
+set ATTEMPTS=0
 :wait_port_loop
-set "FOUND="
 for /f "tokens=5" %%p in ('netstat -ano ^| findstr ":%PORT%" ^| findstr "LISTENING"') do (
-    set "FOUND=1"
     taskkill /F /PID %%p >nul 2>&1
-)
-if defined FOUND (
     set /a ATTEMPTS+=1
-    if !ATTEMPTS! geq 20 (
-        echo ERROR: Port %PORT% still busy after !ATTEMPTS! attempts.
+    if !ATTEMPTS! geq %MAX_ATTEMPTS% (
         endlocal
         exit /b 1
     )
-    powershell -Command "Start-Sleep -Seconds 1"
+    ping -n 1 -w 500 localhost >nul
     goto wait_port_loop
 )
 endlocal

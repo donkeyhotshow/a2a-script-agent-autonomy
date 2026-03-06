@@ -1,0 +1,22 @@
+
+> @a2a/sdk@1.0.0 dev
+> tsx watch src/server/index.ts
+
+
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+Error [TransformError]: Transform failed with 1 error:
+C:\workspace\org-carrier\a2a-script-agent\a2a-client\packages\sdk\src\server\index.ts:2255:15: ERROR: The symbol "ensureStorageDir" has already been declared
+    at failureErrorWithLog (C:\workspace\org-carrier\a2a-script-agent\a2a-client\node_modules\tsx\node_modules\esbuild\lib\main.js:1467:15)
+    at C:\workspace\org-carrier\a2a-script-agent\a2a-client\node_modules\tsx\node_modules\esbuild\lib\main.js:736:50
+    at responseCallbacks.<computed> (C:\workspace\org-carrier\a2a-script-agent\a2a-client\node_modules\tsx\node_modules\esbuild\lib\main.js:603:9)
+    at handleIncomingPacket (C:\workspace\org-carrier\a2a-script-agent\a2a-client\node_modules\tsx\node_modules\esbuild\lib\main.js:658:12)
+    at Socket.readFromStdout (C:\workspace\org-carrier\a2a-script-agent\a2a-client\node_modules\tsx\node_modules\esbuild\lib\main.js:581:7)
+    at Socket.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:510:3)
+    at Readable.push (node:internal/streams/readable:390:5)
+    at Pipe.onStreamRead (node:internal/stream_base_commons:189:23)
+
+Node.js v25.1.0

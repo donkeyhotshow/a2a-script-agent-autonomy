@@ -2,6 +2,9 @@
  * A2A Client Mocks
  * 
  * Central export point for all mock utilities for testing a2a-client SDK.
+ * 
+ * @deprecated MockStorage is deprecated - use StorageAPI instead.
+ * See: a2a-client/tests/mocks/README.md for details.
  */
 
 export { MockA2AServer, createMockA2AServer } from './server/mock-a2a-server.js';

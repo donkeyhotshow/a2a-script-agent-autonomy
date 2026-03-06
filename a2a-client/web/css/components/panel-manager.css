@@ -112,6 +112,63 @@
 }
 
 /* ===== Taskbar (Windows-style bottom bar) ===== */
+.taskbar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 48px;
+    background: var(--surface, #1e1e2e);
+    border-top: 1px solid var(--border, #313244);
+    display: flex;
+    align-items: center;
+    padding: 0 8px;
+    z-index: 9999;
+    gap: 8px;
+}
+
+/* Taskbar left section with AI Actions button */
+.taskbar-left {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+.taskbar-btn {
+    width: 40px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--surface-light, #252536);
+    border: 1px solid var(--border, #313244);
+    border-radius: 6px;
+    color: var(--text-primary, #cdd6f4);
+    cursor: pointer;
+    font-size: 20px;
+    transition: all 0.15s;
+}
+
+.taskbar-btn:hover {
+    background: var(--hover, #313244);
+    border-color: var(--primary, #6366f1);
+    transform: translateY(-1px);
+}
+
+.taskbar-btn:active {
+    transform: translateY(0);
+}
+
+/* Taskbar content area for session buttons */
+.taskbar-content {
+    flex: 1;
+    height: 100%;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+}
+
 .pm-panel.pm-taskbar {
     position: fixed;
     left: 0;

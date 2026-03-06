@@ -59,10 +59,12 @@ export interface FallbackAction {
 
 /**
  * Result block for action_proposal response
+ * @deprecated Use canonical format with execute.form.choices
  */
 export interface ActionProposalResult {
     context: ContextBlock;
-    proposedActions: Action[];
+    /** @deprecated Use execute.form.choices in canonical format */
+    proposedActions?: Action[];
     fallbackActions?: FallbackAction[];
 }
 

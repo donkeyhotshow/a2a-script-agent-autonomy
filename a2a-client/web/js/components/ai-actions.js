@@ -157,12 +157,22 @@
             try {
                 // Используем формат для /result endpoint
                 const response = await this._request('POST', `/sessions/${sessionId}/result`, result);
-                
-                // Обрабатываем ответ сервера
+
+                // Обрабатываем ответ сервера - поддержка execute и finalResult
                 if (response?.execute) {
                     this.processExecute(response.execute, response.context);
                 }
-                
+
+                // Handle direct finalResult in response (task completion)
+                if (response?.finalResult) {
+                    this.processExecute({ finalResult: response.finalResult }, response.context);
+                }
+
+                // Check for completed status in context
+                if (response?.context?.execution?.status === 'completed') {
+                    this.updateSessionStatus(sessionId, 'completed');
+                }
+
                 this.emit('resultSent', { sessionId, response });
                 console.log('[AIActionsSessionPanel] Result sent to server:', result);
             } catch (error) {
@@ -620,44 +630,102 @@
                     `;
 
                 case 'script':
+                    const scriptResult = action.result?.script || action.script || {};
                     return `
                         <div class="action-script">
-                            <div class="script-input">Input: ${JSON.stringify(action.input || {}, null, 2)}</div>
-                            <div class="script-output">Output: ${action.output || 'No output'}</div>
-                            <div class="script-code">Code: ${action.code || 'No code'}</div>
+                            <div class="script-header">
+                                <span class="script-status ${action.status}">${action.status}</span>
+                                ${scriptResult.placeholder ? '<span class="script-badge">placeholder</span>' : ''}
+                            </div>
+                            <div class="script-input">Input: ${JSON.stringify(scriptResult.input || action.script?.input || {}, null, 2)}</div>
+                            <div class="script-output">Output: ${scriptResult.output || action.script?.output || 'No output'}</div>
+                            ${scriptResult.error ? `<div class="script-error">Error: ${escapeHtml(String(scriptResult.error))}</div>` : ''}
+                            <div class="script-code"><pre>${escapeHtml(String(action.script?.code || 'No code').substring(0, 500))}</pre></div>
                         </div>
                     `;
 
                 case 'rag-search':
+                    const ragResult = action.result?.['rag-search'] || action['rag-search'] || {};
                     return `
                         <div class="action-rag">
-                            <div class="rag-query">Query: ${action.query || 'No query'}</div>
-                            <div class="rag-results">Results: ${action.results ? action.results.length : 0} items</div>
+                            <div class="rag-header">
+                                <span class="rag-status ${action.status}">${action.status}</span>
+                                ${ragResult.placeholder ? '<span class="rag-badge">placeholder</span>' : ''}
+                            </div>
+                            <div class="rag-query">Query: ${escapeHtml(String(ragResult.query || action['rag-search']?.query || 'No query'))}</div>
+                            <div class="rag-results">
+                                Results: ${(ragResult.results || []).length} items
+                                ${(ragResult.results || []).length > 0 ? `
+                                    <ul class="rag-results-list">
+                                        ${ragResult.results.slice(0, 5).map(r => `
+                                            <li>${escapeHtml(String(r.title || r.path || r.id || JSON.stringify(r)))}</li>
+                                        `).join('')}
+                                        ${ragResult.results.length > 5 ? `<li>... and ${ragResult.results.length - 5} more</li>` : ''}
+                                    </ul>
+                                ` : ''}
+                            </div>
+                            ${ragResult.error ? `<div class="rag-error">Error: ${escapeHtml(String(ragResult.error))}</div>` : ''}
                         </div>
                     `;
 
                 case 'read-file':
+                    const readResult = action.result?.['read-file'] || action['read-file'] || {};
                     return `
                         <div class="action-file">
-                            <div class="file-path">Path: ${action.path || 'Unknown'}</div>
-                            <div class="file-content">Content: ${action.content ? action.content.substring(0, 200) + '...' : 'No content'}</div>
+                            <div class="file-header">
+                                <span class="file-status ${action.status}">${action.status}</span>
+                                ${readResult.placeholder ? '<span class="file-badge">placeholder</span>' : ''}
+                            </div>
+                            <div class="file-path">Path: ${escapeHtml(String(readResult.path || action['read-file']?.path || 'Unknown'))}</div>
+                            ${readResult.error ?
+                                `<div class="file-error">Error: ${escapeHtml(String(readResult.error))}</div>` :
+                                `<div class="file-content"><pre>${escapeHtml(String(readResult.content || 'No content').substring(0, 500))}</pre></div>`
+                            }
                         </div>
                     `;
 
                 case 'write-file':
+                    const writeResult = action.result?.['write-file'] || action['write-file'] || {};
                     return `
                         <div class="action-file">
-                            <div class="file-path">Path: ${action.path || 'Unknown'}</div>
-                            <div class="file-content">Content: ${action.content ? action.content.substring(0, 200) + '...' : 'No content'}</div>
+                            <div class="file-header">
+                                <span class="file-status ${action.status}">${action.status}</span>
+                                ${writeResult.placeholder ? '<span class="file-badge">placeholder</span>' : ''}
+                            </div>
+                            <div class="file-path">Path: ${escapeHtml(String(writeResult.path || action['write-file']?.path || 'Unknown'))}</div>
+                            <div class="file-size">Size: ${action['write-file']?.content?.length || 0} chars</div>
+                            ${writeResult.error ? `<div class="file-error">Error: ${escapeHtml(String(writeResult.error))}</div>` : ''}
+                            ${writeResult.success ? '<div class="file-success">File written successfully</div>' : ''}
                         </div>
                     `;
 
                 case 'execute-command':
+                    const cmdResult = action.result?.['execute-command'] || action['execute-command'] || {};
                     return `
                         <div class="action-command">
-                            <div class="command-text">Command: ${action.command || 'No command'}</div>
-                            <div class="command-output">Output: ${action.output || 'No output'}</div>
-                            <div class="command-error">Error: ${action.error || 'No error'}</div>
+                            <div class="command-header">
+                                <span class="command-status ${action.status}">${action.status}</span>
+                                ${cmdResult.exitCode !== undefined ? `<span class="command-exit-code">exit: ${cmdResult.exitCode}</span>` : ''}
+                            </div>
+                            <div class="command-text">${escapeHtml(String(cmdResult.command || action['execute-command']?.command || 'No command'))}</div>
+                            ${cmdResult.stdout ? `<div class="command-stdout"><pre>${escapeHtml(String(cmdResult.stdout).substring(0, 300))}</pre></div>` : ''}
+                            ${cmdResult.stderr ? `<div class="command-stderr"><pre>${escapeHtml(String(cmdResult.stderr).substring(0, 300))}</pre></div>` : ''}
+                            ${cmdResult.error ? `<div class="command-error">Error: ${escapeHtml(String(cmdResult.error))}</div>` : ''}
+                        </div>
+                    `;
+
+                case 'finalResult':
+                    const finalResult = action.finalResult || action;
+                    const summary = finalResult.summary || {};
+                    const summaryHtml = Object.entries(summary)
+                        .map(([key, value]) => `<div class="summary-item"><span class="summary-key">${escapeHtml(String(key))}:</span> <span class="summary-value">${escapeHtml(String(value))}</span></div>`)
+                        .join('');
+                    return `
+                        <div class="action-final-result">
+                            <div class="final-result-header">Task Completed: ${escapeHtml(String(finalResult.action || 'Unknown'))}</div>
+                            <div class="final-result-summary">
+                                ${summaryHtml || '<div class="no-summary">No summary available</div>'}
+                            </div>
                         </div>
                     `;
 
@@ -680,9 +748,10 @@
         _getActionType(action) {
             // Check direct type first
             if (action.type) return action.type;
-            
+
             // Check execute object structure (new protocol v2.0)
             if (action.execute) {
+                if (action.execute.finalResult) return 'finalResult';
                 if (action.execute.form) return 'form';
                 if (action.execute.message) return 'message';
                 if (action.execute.script) return 'script';
@@ -691,8 +760,9 @@
                 if (action.execute['write-file']) return 'write-file';
                 if (action.execute['execute-command']) return 'execute-command';
             }
-            
+
             // Legacy format check
+            if (action.finalResult) return 'finalResult';
             if (action.form) return 'form';
             if (action.message) return 'message';
             if (action.script) return 'script';
@@ -805,6 +875,20 @@
                 return;
             }
 
+            // Handle execute.finalResult (task completion)
+            if (execute?.finalResult) {
+                this.addActionToSession(this.currentSessionId, {
+                    type: 'finalResult',
+                    finalResult: execute.finalResult,
+                    context: context,
+                    status: 'completed',
+                    timestamp: new Date().toISOString()
+                });
+                // Update session status to completed
+                this.updateSessionStatus(this.currentSessionId, 'completed');
+                return;
+            }
+
             // Handle execute.form
             if (execute?.form) {
                 const form = execute.form;
@@ -836,7 +920,7 @@
                 return;
             }
 
-            // Handle execute.script
+            // Handle execute.script - auto-execute client-side
             if (execute?.script) {
                 this.addActionToSession(this.currentSessionId, {
                     type: 'script',
@@ -845,10 +929,12 @@
                     status: 'pending',
                     timestamp: new Date().toISOString()
                 });
+                // Auto-execute client-side action
+                this._executeClientAction('script', execute.script, context);
                 return;
             }
 
-            // Handle execute['rag-search']
+            // Handle execute['rag-search'] - auto-execute client-side
             if (execute?.['rag-search']) {
                 this.addActionToSession(this.currentSessionId, {
                     type: 'rag-search',
@@ -857,10 +943,12 @@
                     status: 'pending',
                     timestamp: new Date().toISOString()
                 });
+                // Auto-execute client-side action
+                this._executeClientAction('rag-search', execute['rag-search'], context);
                 return;
             }
 
-            // Handle execute['read-file']
+            // Handle execute['read-file'] - auto-execute client-side
             if (execute?.['read-file']) {
                 this.addActionToSession(this.currentSessionId, {
                     type: 'read-file',
@@ -869,10 +957,12 @@
                     status: 'pending',
                     timestamp: new Date().toISOString()
                 });
+                // Auto-execute client-side action
+                this._executeClientAction('read-file', execute['read-file'], context);
                 return;
             }
 
-            // Handle execute['write-file']
+            // Handle execute['write-file'] - auto-execute client-side
             if (execute?.['write-file']) {
                 this.addActionToSession(this.currentSessionId, {
                     type: 'write-file',
@@ -881,10 +971,12 @@
                     status: 'pending',
                     timestamp: new Date().toISOString()
                 });
+                // Auto-execute client-side action
+                this._executeClientAction('write-file', execute['write-file'], context);
                 return;
             }
 
-            // Handle execute['execute-command']
+            // Handle execute['execute-command'] - auto-execute client-side
             if (execute?.['execute-command']) {
                 this.addActionToSession(this.currentSessionId, {
                     type: 'execute-command',
@@ -893,11 +985,257 @@
                     status: 'pending',
                     timestamp: new Date().toISOString()
                 });
+                // Auto-execute client-side action
+                this._executeClientAction('execute-command', execute['execute-command'], context);
                 return;
             }
 
             // Unknown execute type
             console.warn('[AIActionsSessionPanel] Unknown execute type:', execute);
+        }
+
+        /**
+         * Execute client-side action and send result to server
+         * @param {string} actionType - Type of action (script, read-file, etc.)
+         * @param {Object} actionData - Action data from execute
+         * @param {Object} context - Context from server
+         * @private
+         */
+        async _executeClientAction(actionType, actionData, context = null) {
+            const sessionId = this.currentSessionId;
+            if (!sessionId) {
+                console.warn('[AIActionsSessionPanel] Cannot execute action: no active session');
+                return;
+            }
+
+            // Update action status to executing
+            this._updateActionStatusByType(sessionId, actionType, 'executing');
+
+            let result = null;
+            let error = null;
+
+            try {
+                switch (actionType) {
+                    case 'script':
+                        result = await this._executeScript(actionData);
+                        break;
+                    case 'read-file':
+                        result = await this._executeReadFile(actionData);
+                        break;
+                    case 'write-file':
+                        result = await this._executeWriteFile(actionData);
+                        break;
+                    case 'execute-command':
+                        result = await this._executeCommand(actionData);
+                        break;
+                    case 'rag-search':
+                        result = await this._executeRagSearch(actionData);
+                        break;
+                    default:
+                        throw new Error(`Unknown client action type: ${actionType}`);
+                }
+            } catch (err) {
+                error = err.message || String(err);
+                console.error(`[AIActionsSessionPanel] Action execution failed:`, err);
+            }
+
+            // Build action-key result
+            const actionResult = error
+                ? { [actionType]: { error, success: false } }
+                : { [actionType]: result };
+
+            // Update action with result
+            this._updateActionResult(sessionId, actionType, actionResult, error ? 'error' : 'completed');
+
+            // Send result to server via ActionHandler
+            if (global.ActionHandler) {
+                try {
+                    const store = global.SessionStore;
+                    const projectId = store?.projectId || context?.project_id;
+                    await global.ActionHandler.submit(sessionId, projectId, actionResult, context);
+                } catch (submitErr) {
+                    console.error('[AIActionsSessionPanel] Failed to submit result:', submitErr);
+                }
+            }
+        }
+
+        /**
+         * Execute script (placeholder - actual script execution in sandbox)
+         * @private
+         */
+        async _executeScript(scriptData) {
+            // Script execution is handled by the execution package
+            // This is a placeholder that returns the expected output structure
+            const { input, output, code } = scriptData;
+            console.log('[AIActionsSessionPanel] Executing script:', { input, output, code: code?.substring(0, 100) });
+
+            // TODO: Integrate with @a2a/execution package for actual script execution
+            // For now, return a placeholder result
+            return {
+                output: output || 'Script executed (placeholder)',
+                input: input || {},
+                executed: true
+            };
+        }
+
+        /**
+         * Execute read-file action
+         * @private
+         */
+        async _executeReadFile(fileData) {
+            const { path } = fileData;
+            if (!path) throw new Error('File path required');
+
+            console.log('[AIActionsSessionPanel] Reading file:', path);
+
+            // Use FileSystem API if available, otherwise placeholder
+            if (global.FileSystemAPI) {
+                try {
+                    const content = await global.FileSystemAPI.readFile(path);
+                    return { path, content, success: true };
+                } catch (err) {
+                    return { path, content: null, error: err.message, success: false };
+                }
+            }
+
+            // Placeholder - actual implementation would use FileSystemAPI
+            return {
+                path,
+                content: `// Placeholder content for ${path}`,
+                success: true,
+                placeholder: true
+            };
+        }
+
+        /**
+         * Execute write-file action
+         * @private
+         */
+        async _executeWriteFile(fileData) {
+            const { path, content } = fileData;
+            if (!path) throw new Error('File path required');
+
+            console.log('[AIActionsSessionPanel] Writing file:', path, 'size:', content?.length);
+
+            if (global.FileSystemAPI) {
+                try {
+                    await global.FileSystemAPI.writeFile(path, content);
+                    return { path, success: true };
+                } catch (err) {
+                    return { path, error: err.message, success: false };
+                }
+            }
+
+            return {
+                path,
+                success: true,
+                placeholder: true
+            };
+        }
+
+        /**
+         * Execute command action
+         * @private
+         */
+        async _executeCommand(commandData) {
+            const { command } = commandData;
+            if (!command) throw new Error('Command required');
+
+            console.log('[AIActionsSessionPanel] Executing command:', command);
+
+            // Commands cannot be executed in browser - return error or use TerminalAPI
+            if (global.TerminalAPI) {
+                try {
+                    const output = await global.TerminalAPI.execute(command);
+                    return { command, exitCode: 0, stdout: output, stderr: '', success: true };
+                } catch (err) {
+                    return { command, exitCode: 1, stdout: '', stderr: err.message, success: false };
+                }
+            }
+
+            return {
+                command,
+                exitCode: -1,
+                stdout: '',
+                stderr: 'Command execution not available in browser',
+                success: false,
+                error: 'TerminalAPI not available'
+            };
+        }
+
+        /**
+         * Execute RAG search action
+         * @private
+         */
+        async _executeRagSearch(searchData) {
+            const { query, projectId } = searchData;
+            if (!query) throw new Error('Search query required');
+
+            console.log('[AIActionsSessionPanel] RAG search:', query);
+
+            if (global.RAGSearchUI || global.apiIntegration) {
+                try {
+                    const results = await (global.RAGSearchUI?.search || global.apiIntegration?.searchActions)?.(query);
+                    return {
+                        query,
+                        results: results || [],
+                        success: true
+                    };
+                } catch (err) {
+                    return { query, results: [], error: err.message, success: false };
+                }
+            }
+
+            return {
+                query,
+                results: [],
+                success: true,
+                placeholder: true
+            };
+        }
+
+        /**
+         * Update action status by type
+         * @private
+         */
+        _updateActionStatusByType(sessionId, actionType, status) {
+            const session = this.sessions.get(sessionId);
+            if (!session) return;
+
+            // Find the most recent action of this type with 'pending' status
+            const action = [...session.actions].reverse().find(a =>
+                a.type === actionType && a.status === 'pending'
+            );
+
+            if (action) {
+                action.status = status;
+                action.updatedAt = new Date().toISOString();
+                if (this.currentSessionId === sessionId) {
+                    this._renderSessionContent(sessionId);
+                }
+            }
+        }
+
+        /**
+         * Update action with execution result
+         * @private
+         */
+        _updateActionResult(sessionId, actionType, result, status) {
+            const session = this.sessions.get(sessionId);
+            if (!session) return;
+
+            const action = [...session.actions].reverse().find(a =>
+                a.type === actionType && (a.status === 'executing' || a.status === 'pending')
+            );
+
+            if (action) {
+                action.result = result;
+                action.status = status;
+                action.completedAt = new Date().toISOString();
+                if (this.currentSessionId === sessionId) {
+                    this._renderSessionContent(sessionId);
+                }
+            }
         }
 
         /**

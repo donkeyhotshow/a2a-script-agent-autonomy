@@ -120,7 +120,7 @@ describe('Transform Governance', () => {
 
   it('should detect legacy format', () => {
     expect(detectVersion({ actions: [], session_id: 'test' })).toBe('1.0');
-    expect(detectVersion({ proposedActions: [], session_id: 'test' })).toBe('1.0');
+    // Note: proposedActions detection removed - use canonical format
   });
 
   it('should normalize to current version', () => {
@@ -144,7 +144,7 @@ describe('Transform Governance', () => {
 describe('Backwards Compatibility', () => {
   it('should detect legacy format', () => {
     expect(isLegacyFormat({ actions: [] })).toBe(true);
-    expect(isLegacyFormat({ proposedActions: [] })).toBe(true);
+    // Note: proposedActions detection removed - use canonical format
     expect(isLegacyFormat({ content: 'test' })).toBe(true);
     expect(isLegacyFormat({ sessionId: 'test' })).toBe(true);
     expect(isLegacyFormat({ version: '2.0', session_id: 'test' })).toBe(false);
@@ -165,14 +165,13 @@ describe('Backwards Compatibility', () => {
   it('should transform legacy request', () => {
     const legacy = {
       actions: ['action1', 'action2'],
-      proposedActions: ['prop1'],
       sessionId: 'test'
     };
-    
+
     const result = transformLegacyRequest(legacy);
     expect(result).toHaveProperty('context');
     expect((result as any).context.actions).toEqual(['action1', 'action2']);
-    expect((result as any).context.proposedActions).toEqual(['prop1']);
+    // Note: proposedActions removed - use canonical format
     expect((result as any).session_id).toBe('test');
   });
 

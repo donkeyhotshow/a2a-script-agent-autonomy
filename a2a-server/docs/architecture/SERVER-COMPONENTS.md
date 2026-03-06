@@ -621,8 +621,7 @@ interface StepResult {
       code: string;
     }
   };
-  executingAction: { actionId: string; title: string; ... };
-  nextSteps: Array<{ actionId: string; title: string }>;
+  // Note: execution state tracked in context.execution.step
 }
 ```
 
@@ -674,7 +673,7 @@ interface ActionDefinition {
   priority: number;
   triggers?: string[];
   context: ActionContext;
-  subActions: SubAction[];
+  steps: SubAction[];  // renamed from subActions (canonical format)
 }
 
 // Под-действие (шаг)

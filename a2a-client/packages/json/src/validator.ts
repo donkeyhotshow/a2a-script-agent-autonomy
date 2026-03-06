@@ -81,10 +81,11 @@ export const fallbackActionSchema = z.object({
 
 /**
  * Action proposal result schema
+ * @deprecated Use canonical format with execute.form.choices
  */
 export const actionProposalResultSchema = z.object({
     context: contextBlockSchema,
-    proposedActions: z.array(actionSchema),
+    proposedActions: z.array(actionSchema).optional(),
     fallbackActions: z.array(fallbackActionSchema).optional(),
 });
 

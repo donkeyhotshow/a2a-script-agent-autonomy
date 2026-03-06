@@ -31,7 +31,7 @@
         ]
       },
       "output": "fixed_files[]",
-      "code": "// vue-import-apply.dsl\n// Застосування виправлень до файлів\n\nconst result = await script.execute('vue-import-apply', { patches });"
+      "code": "const { readFileSync, writeFileSync } = require('node:fs');\n\nconst byFile = new Map();\nfor (const p of input.patches) {\n  if (!byFile.has(p.file)) byFile.set(p.file, []);\n  byFile.get(p.file).push(p);\n}\n\nconst fixed = [];\nfor (const [file, patches] of byFile) {\n  const lines = readFileSync(file, 'utf-8').split('\\n');\n  let changes = 0;\n  for (const p of patches.sort((a, b) => b.line - a.line)) {\n    const i = p.line - 1;\n    if (i >= 0 && i < lines.length) {\n      const orig = lines[i];\n      const fix = orig.replace(p.from, p.to);\n      if (orig !== fix) { lines[i] = fix; changes++; }\n    }\n  }\n  if (changes > 0) {\n    writeFileSync(file, lines.join('\\n'), 'utf-8');\n    fixed.push({ file, changes });\n  }\n}\n\nreturn { fixed_files: fixed };"
     }
   }
 }

@@ -320,9 +320,40 @@
                 taskbar = document.createElement('div');
                 taskbar.className = 'taskbar';
                 taskbar.innerHTML = `
+                    <div class="taskbar-left">
+                        <button class="taskbar-btn taskbar-ai-actions" title="AI Actions Sessions">🤖</button>
+                    </div>
                     <div class="taskbar-content"></div>
                 `;
                 document.body.appendChild(taskbar);
+
+                // Bind AI Actions button
+                const aiActionsBtn = taskbar.querySelector('.taskbar-ai-actions');
+                if (aiActionsBtn) {
+                    aiActionsBtn.addEventListener('click', () => {
+                        const pm = global.PanelManager;
+                        const aiPanel = global.aiActionsPanel;
+
+                        if (aiPanel && pm) {
+                            // Toggle panel visibility
+                            const panel = pm.get('ai-actions-sessions');
+                            if (panel) {
+                                if (panel.state === global.PANEL_STATES?.MINIMIZED || panel.state === global.PANEL_STATES?.HIDDEN) {
+                                    panel.restore();
+                                    pm.bringToFront('ai-actions-sessions');
+                                } else {
+                                    panel.minimize();
+                                }
+                            } else {
+                                // Recreate if missing
+                                pm.open('sessions', {
+                                    id: 'ai-actions-sessions',
+                                    title: 'AI Actions Sessions'
+                                });
+                            }
+                        }
+                    });
+                }
             }
 
             const contentEl = taskbar.querySelector('.taskbar-content');

@@ -11,6 +11,7 @@ const promises_1 = __importDefault(require("fs/promises"));
 const path_1 = __importDefault(require("path"));
 const fs_utils_1 = require("@a2a/fs-utils");
 const chunk_manager_js_1 = require("./chunk-manager.js");
+const file_relevance_js_1 = require("./file-relevance.js");
 const DEFAULT_EXCLUDE = [
     '.a2a/', '.a2a/index/**', '.a2a/index/rag-files.json', '.amazonq/**', '.cursor/**',
     '.idea/**', '.vscode/**', 'node_modules/**', 'node_modules/', 'vendor/**', 'storage/**',
@@ -25,6 +26,7 @@ class RAGIndexer {
         this.includePatterns = config.includePatterns ?? ['**/*.php', '**/*.js', '**/*.vue', '**/*.ts', '**/*.tsx', '**/*.json', '**/*.md', '**/*.sql'];
         this.excludePatterns = config.excludePatterns ?? DEFAULT_EXCLUDE;
         this.chunkManager = new chunk_manager_js_1.ChunkManager(config);
+        this.fileRelevanceModel = config.fileRelevanceModel;
         this._initIgnoreDetectorPromise = this._initIgnoreDetector(config);
     }
     async _initIgnoreDetector(config) {
@@ -154,6 +156,15 @@ class RAGIndexer {
             hash: this.chunkManager.hashContent(content),
             language: this.detectLanguage(ext),
         };
+        // Compute per-file relevance once during indexing.
+        const relevance = (0, file_relevance_js_1.scoreFileRelevance)({
+            relativePath,
+            ext,
+            size: stats.size,
+        }, this.fileRelevanceModel);
+        file.relevanceScore = relevance.relevance;
+        file.relevanceLabel = relevance.label;
+        file.relevanceReasons = relevance.reasons;
         const chunks = this.chunkManager.chunkFile(relativePath, content, ext);
         return { file, chunks };
     }

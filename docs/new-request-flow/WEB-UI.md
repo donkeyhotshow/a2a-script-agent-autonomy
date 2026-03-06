@@ -529,10 +529,11 @@ const session = await apiIntegration.post('/sessions', {
 
 <!-- Инициализация -->
 <script>
-document.addEventListener('DOMContentLoaded', () => {
-    // Настройка API
+document.addEventListener('DOMContentLoaded', async () => {
+    // Настройка API (from storage or default)
+    const savedUrl = await StorageAPI.config.getItem('serverUrl');
     window.apiIntegration = {
-        serverUrl: localStorage.getItem('a2a_serverUrl') || '/api/v1'
+        serverUrl: savedUrl || '/api/v1'
     };
     
     // Инициализация менеджера сессий

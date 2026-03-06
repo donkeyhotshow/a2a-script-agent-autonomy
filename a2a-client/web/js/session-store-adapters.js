@@ -417,4 +417,158 @@
         }
     };
 
+    // === AIActionsSessionPanel Integration ===
+    // Bridge SessionStore events to AIActionsSessionPanel.processExecute
+
+    function connectAIActionsPanel() {
+        const store = global.SessionStore;
+        const panel = global.aiActionsPanel;
+
+        if (!store || !panel) {
+            console.log('[SessionStore Adapters] AIActionsSessionPanel connection: waiting for both Store and Panel');
+            return false;
+        }
+
+        // Already connected?
+        if (panel._storeConnected) return true;
+
+        // Listen for execute events and forward to panel
+        store.on('execute', (execute) => {
+            if (!execute) return;
+            try {
+                panel.processExecute(execute, store.context);
+            } catch (err) {
+                console.error('[SessionStore Adapters] Failed to process execute:', err);
+            }
+        });
+
+        // Listen for completed status
+        store.on('completed', (data) => {
+            const sessionId = panel.currentSessionId || store.sessionId;
+            if (sessionId) {
+                panel.updateSessionStatus(sessionId, 'completed');
+            }
+        });
+
+        // Listen for status changes
+        store.on('status', (status) => {
+            const sessionId = panel.currentSessionId || store.sessionId;
+            if (sessionId && ['active', 'waiting', 'error', 'cancelled'].includes(status)) {
+                panel.updateSessionStatus(sessionId, status);
+            }
+        });
+
+        panel._storeConnected = true;
+        console.log('[SessionStore Adapters] AIActionsSessionPanel connected to SessionStore');
+        return true;
+    }
+
+    // Try to connect immediately if both exist
+    if (!connectAIActionsPanel()) {
+        // Retry when AIActionsSessionPanel is created
+        const checkInterval = setInterval(() => {
+            if (connectAIActionsPanel()) {
+                clearInterval(checkInterval);
+            }
+        }, 500);
+
+        // Stop checking after 30 seconds
+        setTimeout(() => clearInterval(checkInterval), 30000);
+    }
+
+    // === Create AIActionsSessionPanel via PanelManager ===
+    function initAIActionsPanel() {
+        const pm = global.PanelManager;
+        const Panel = global.Panel;
+        const AIActionsClass = global.AIActionsSessionPanel;
+
+        if (!pm || !Panel || !AIActionsClass) {
+            console.log('[SessionStore Adapters] Waiting for PanelManager, Panel, AIActionsSessionPanel...');
+            return false;
+        }
+
+        // Check if already initialized
+        if (global.aiActionsPanel) return true;
+
+        // Create panel via PanelManager
+        const panel = pm.open('sessions', {
+            id: 'ai-actions-sessions',
+            title: 'AI Actions Sessions',
+            critical: false,
+            slot: 'floating',
+            width: 600,
+            height: 400
+        });
+
+        if (!panel) {
+            console.error('[SessionStore Adapters] Failed to create AI Actions panel');
+            return false;
+        }
+
+        // Create AIActionsSessionPanel instance with panel's DOM
+        const contentEl = panel.getContentEl();
+        if (!contentEl) {
+            console.error('[SessionStore Adapters] Panel has no content element');
+            return false;
+        }
+
+        // Create container for AIActionsSessionPanel
+        const container = document.createElement('div');
+        container.className = 'ai-actions-container';
+        container.style.cssText = 'width:100%;height:100%;';
+        contentEl.innerHTML = '';
+        contentEl.appendChild(container);
+
+        // Initialize AIActionsSessionPanel
+        const aiPanel = new AIActionsClass(container, {
+            id: 'ai-actions-sessions',
+            slot: 'floating',
+            critical: false,
+            onClose: () => {
+                pm.close('ai-actions-sessions');
+            }
+        });
+
+        // Set global reference
+        global.aiActionsPanel = aiPanel;
+
+        // Sync with SessionStore
+        const store = global.SessionStore;
+        if (store) {
+            // Create session in panel when store gets session
+            store.on('session', (sessionId) => {
+                if (sessionId && !aiPanel.sessions.has(sessionId)) {
+                    aiPanel.createSession(sessionId);
+                }
+                aiPanel.switchToSession(sessionId);
+            });
+
+            // Process execute through panel
+            store.on('execute', (execute) => {
+                if (execute) {
+                    aiPanel.processExecute(execute, store.context);
+                }
+            });
+
+            // Sync existing session
+            if (store.sessionId) {
+                aiPanel.createSession(store.sessionId);
+                aiPanel.switchToSession(store.sessionId);
+            }
+        }
+
+        console.log('[SessionStore Adapters] AIActionsSessionPanel created and connected');
+        return true;
+    }
+
+    // Try to init immediately
+    if (!initAIActionsPanel()) {
+        const initInterval = setInterval(() => {
+            if (initAIActionsPanel()) {
+                clearInterval(initInterval);
+            }
+        }, 500);
+        setTimeout(() => clearInterval(initInterval), 30000);
+    }
+
 })(typeof window !== 'undefined' ? window : globalThis);

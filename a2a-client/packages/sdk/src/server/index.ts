@@ -2252,7 +2252,7 @@ expressApp.get(['/api/ws', '/api/v1/ws'], (req, res) => {
 
 const STORAGE_DIR = path.join(storageDir, 'kv');
 
-async function ensureKVStorageDir(): Promise<void> {
+async function ensureStorageDir(): Promise<void> {
     await fs.mkdir(STORAGE_DIR, { recursive: true });
 }
 
@@ -2282,7 +2282,7 @@ expressApp.get(['/api/storage/:namespace/:key', '/api/v1/storage/:namespace/:key
 // POST /api/storage/:namespace/:key - Store value
 expressApp.post(['/api/storage/:namespace/:key', '/api/v1/storage/:namespace/:key'], async (req, res) => {
     try {
-        await ensureKVStorageDir();
+        await ensureStorageDir();
         const { namespace, key } = req.params;
         const { value } = req.body || {};
 
@@ -2302,7 +2302,7 @@ expressApp.post(['/api/storage/:namespace/:key', '/api/v1/storage/:namespace/:ke
 // PUT /api/storage/:namespace/:key - Update value (alias for POST)
 expressApp.put(['/api/storage/:namespace/:key', '/api/v1/storage/:namespace/:key'], async (req, res) => {
     try {
-        await ensureKVStorageDir();
+        await ensureStorageDir();
         const { namespace, key } = req.params;
         const { value } = req.body || {};
 

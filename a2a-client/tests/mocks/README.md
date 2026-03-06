@@ -171,11 +171,16 @@ const server = createMockA2AServer({
 ```typescript
 import { installGlobalStorage } from './mocks/storage/mock-storage.js';
 
-// Установка глобальных localStorage/sessionStorage
+// Note: localStorage is deprecated in production code
+// Use StorageAPI or SessionStore instead
+// Mock available for legacy test compatibility only
 installGlobalStorage();
+```
 
-// Теперь можно использовать нативно
-localStorage.setItem('test', 'value');
+**Note:** Production code uses `StorageAPI` (file-based) instead of localStorage. Update tests to use:
+```typescript
+await StorageAPI.default.setItem('key', 'value');
+const value = await StorageAPI.default.getItem('key');
 ```
 
 ## Интеграция с Vitest

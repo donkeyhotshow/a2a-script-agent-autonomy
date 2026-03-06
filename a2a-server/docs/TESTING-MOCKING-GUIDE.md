@@ -19,7 +19,34 @@ This guide documents the testing infrastructure in a2a-server, covering:
 | **Unit** | [`tests/unit/`](tests/unit/) | Тестирование отдельных функций и сервисов | ⚡ Fast |
 | **Integration** | [`tests/integration/`](tests/integration/) | Тестирование взаимодействия компонентов | 🟡 Medium |
 | **E2E** | [`tests/e2e/`](tests/e2e/) | Полные end-to-end сценарии | 🔴 Slow |
-| **Simulation-based** | [`tests/simulation/`](tests/simulation/) | Тестирование через симуляции | ⚡ Fast |
+| **Simulation-based** | [`tests/simulation/`](tests/simulation/) | Тестирование через симуляции (поддержка legacy и step-based форматов) | ⚡ Fast |
+
+### Форматы симуляций
+
+Система тестирования поддерживает два формата симуляций:
+
+**Legacy формат:**
+```
+simulations/
+├── simulation-name/
+│   ├── request.json
+│   └── server-response.json
+```
+
+**Step-based формат:**
+```
+simulations/
+├── simulation-name/
+│   ├── 1/
+│   │   ├── request.json
+│   │   └── server-response.json
+│   ├── 2/
+│   │   ├── request.json
+│   │   └── server-response.json
+│   └── ...
+```
+
+Тесты автоматически определяют и поддерживают оба формата.
 
 ## Разница между тестами с моками и без
 

@@ -42,7 +42,7 @@ export class ContextParserRegistry {
                 if (!data || typeof data !== 'object') return false;
                 const ctx = data as Record<string, unknown>;
                 return (
-                    ctx['proposedActions'] !== undefined ||
+                    // Note: proposedActions removed - use canonical format
                     ctx['executingAction'] !== undefined ||
                     ctx['actionId'] !== undefined
                 );

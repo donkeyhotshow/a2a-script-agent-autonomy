@@ -105,23 +105,23 @@ function auditEventHandlers() {
 - Task progress lost
 - Session context becomes empty
 
-### Context Preservation
+### Context Preservation (Server-Side)
 ```javascript
-// Backup context before risky operations
-function backupContext() {
+// Context is preserved server-side automatically
+// For critical operations, force server sync
+async function syncContextToServer() {
   const context = SessionStore.getState().context;
-  localStorage.setItem('session_context_backup', JSON.stringify(context));
+  await api.saveContext(context);
   return context;
 }
 
-// Restore context after failure
-function restoreContext() {
+// Restore context from server after failure
+async function restoreContextFromServer() {
   try {
-    const backup = localStorage.getItem('session_context_backup');
-    if (backup) {
-      const context = JSON.parse(backup);
+    const context = await api.loadContext();
+    if (context) {
       SessionStore.setContext(context);
-      console.log('Context restored from backup');
+      console.log('Context restored from server');
     }
   } catch (e) {
     console.error('Failed to restore context:', e);
@@ -244,29 +244,29 @@ function checkPanelManagerLeaks() {
 
 ## State Persistence Issues
 
-### Local Storage Corruption
+### Server Storage Issues
 ```javascript
-function diagnoseLocalStorage() {
+async function diagnoseServerStorage() {
   try {
-    // Test localStorage availability
-    localStorage.setItem('test', 'value');
-    localStorage.removeItem('test');
+    // Test server storage availability
+    const testResponse = await fetch('/api/storage/health');
+    if (!testResponse.ok) {
+      console.error('Server storage unavailable');
+      return false;
+    }
 
-    // Check for corrupted session data
-    const keys = Object.keys(localStorage);
-    const sessionKeys = keys.filter(k => k.includes('session'));
+    // Test read/write
+    await StorageAPI.default.setItem('test', 'value');
+    const value = await StorageAPI.default.getItem('test');
+    await StorageAPI.default.removeItem('test');
 
-    sessionKeys.forEach(key => {
-      try {
-        JSON.parse(localStorage.getItem(key));
-      } catch (e) {
-        console.error(`Corrupted localStorage key: ${key}`);
-        localStorage.removeItem(key);
-      }
-    });
-
+    if (value === 'value') {
+      console.log('Server storage working correctly');
+      return true;
+    }
   } catch (e) {
-    console.error('localStorage not available:', e.message);
+    console.error('Server storage error:', e.message);
+    return false;
   }
 }
 ```
@@ -402,10 +402,10 @@ function setupStateMonitoring() {
 
 ### Complete State Reset
 ```javascript
-function emergencyReset() {
-  // Clear all storage
-  localStorage.clear();
-  sessionStorage.clear();
+async function emergencyReset() {
+  // Clear server-side storage
+  await StorageAPI.sessions.clear();
+  await StorageAPI.default.clear();
 
   // Reset all components
   TransportManager.disconnect();

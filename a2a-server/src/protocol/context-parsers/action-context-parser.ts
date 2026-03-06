@@ -2,7 +2,7 @@
  * Action Context Parser
  *
  * Specialized parser for action-related context
- * @deprecated Используйте новый формат с execute.form.choices
+ * @deprecated Use canonical format with execute.form.choices
  */
 
 import {
@@ -30,28 +30,20 @@ export interface ActionExecutionState {
 }
 
 /**
- * Proposed action structure
- * @deprecated Используйте `execute.form.choices`
- */
-export interface ProposedAction {
-    id: string;
-    title: string;
-    description?: string;
-    priority?: number;
-}
-
-/**
  * Action context data
- * @deprecated Используйте контекст с execute и result (action-key shape)
+ * @deprecated Use context with execute and result (action-key shape)
  */
 export interface ActionContext {
     sessionId: string;
-    /** @deprecated Используйте `execute.form.choices` */
-    proposedActions?: ProposedAction[];
-    /** @deprecated Используйте `context.execution` (новый формат) */
+    /** @deprecated Use context.execution (new format) */
     executingAction?: ActionExecutionState;
     task?: string;
 }
+
+/**
+ * Removed: ProposedAction interface
+ * Use execute.form.choices in canonical format instead
+ */
 
 /**
  * Parser for action-related context
@@ -80,19 +72,7 @@ export class ActionContextParser extends BaseContextParser<ActionContext> {
             errors.push('session_id cannot be empty');
         }
 
-        // Validate proposedActions if present
-        if (ctx['proposedActions'] !== undefined) {
-            if (!Array.isArray(ctx['proposedActions'])) {
-                errors.push('proposedActions must be an array');
-            } else {
-                for (let i = 0; i < ctx['proposedActions'].length; i++) {
-                    const action = ctx['proposedActions'][i];
-                    if (!this.isValidProposedAction(action)) {
-                        errors.push(`proposedActions[${i}] is invalid: must have id and title`);
-                    }
-                }
-            }
-        }
+        // Note: proposedActions removed - use execute.form.choices in canonical format
 
         // Validate executingAction if present
         if (ctx['executingAction'] !== undefined) {
@@ -124,9 +104,7 @@ export class ActionContextParser extends BaseContextParser<ActionContext> {
             sessionId: ctx['session_id'] as string,
         };
 
-        if (ctx['proposedActions']) {
-            result.proposedActions = ctx['proposedActions'] as ProposedAction[];
-        }
+        // Note: proposedActions removed - use canonical format
 
         if (ctx['executingAction']) {
             result.executingAction = ctx['executingAction'] as ActionExecutionState;
@@ -151,7 +129,7 @@ export class ActionContextParser extends BaseContextParser<ActionContext> {
 
         return {
             sessionId: this.isString(ctx['session_id']) ? ctx['session_id'] : 'unknown',
-            proposedActions: this.normalizeProposedActions(ctx['proposedActions']),
+            // Note: proposedActions removed - use canonical format
             executingAction: this.normalizeExecutingAction(ctx['executingAction']),
             task: this.isString(ctx['task']) ? ctx['task'] : undefined,
         };
@@ -176,16 +154,11 @@ export class ActionContextParser extends BaseContextParser<ActionContext> {
     }
 
     /**
-     * Add proposed actions to context
+     * Note: addProposedActions removed - use canonical format with execute.form.choices
+     * @deprecated
      */
-    addProposedActions(
-        context: ActionContext,
-        actions: ProposedAction[]
-    ): ActionContext {
-        return {
-            ...context,
-            proposedActions: [...(context.proposedActions || []), ...actions],
-        };
+    addProposedActions(): never {
+        throw new Error('addProposedActions removed - use execute.form.choices in canonical format');
     }
 
     /**
@@ -225,13 +198,11 @@ export class ActionContextParser extends BaseContextParser<ActionContext> {
     }
 
     /**
-     * Check if context has proposed actions
+     * Note: hasProposedActions removed - use canonical format
+     * @deprecated
      */
-    hasProposedActions(context: ActionContext): boolean {
-        return (
-            context.proposedActions !== undefined &&
-            context.proposedActions.length > 0
-        );
+    hasProposedActions(): boolean {
+        return false;
     }
 
     /**
@@ -245,11 +216,7 @@ export class ActionContextParser extends BaseContextParser<ActionContext> {
     // Private Helpers
     // ============================================
 
-    private isValidProposedAction(value: unknown): boolean {
-        if (!this.isObject(value)) return false;
-        const action = value as Record<string, unknown>;
-        return this.isString(action['id']) && this.isString(action['title']);
-    }
+    // Note: isValidProposedAction removed - use canonical format
 
     private isValidExecutingAction(value: unknown): boolean {
         if (!this.isObject(value)) return false;
@@ -261,22 +228,7 @@ export class ActionContextParser extends BaseContextParser<ActionContext> {
         );
     }
 
-    private normalizeProposedActions(value: unknown): ProposedAction[] | undefined {
-        if (!Array.isArray(value)) return undefined;
-
-        return value
-            .filter(this.isValidProposedAction.bind(this))
-            .map((action) => ({
-                id: (action as Record<string, unknown>)['id'] as string,
-                title: (action as Record<string, unknown>)['title'] as string,
-                description: this.isString((action as Record<string, unknown>)['description'])
-                    ? (action as Record<string, unknown>)['description']
-                    : undefined,
-                priority: this.isNumber((action as Record<string, unknown>)['priority'])
-                    ? (action as Record<string, unknown>)['priority']
-                    : undefined,
-            }));
-    }
+    // Note: normalizeProposedActions removed - use canonical format
 
     private normalizeExecutingAction(value: unknown): ActionExecutionState | undefined {
         if (!this.isValidExecutingAction(value)) return undefined;

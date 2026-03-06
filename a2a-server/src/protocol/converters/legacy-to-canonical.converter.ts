@@ -6,8 +6,6 @@
  *
  * Legacy format:
  * - actions[]
- * - proposedActions
- * - subActions
  * - executingAction
  * - dslScript
  * - result.content (flat)
@@ -21,6 +19,10 @@
  * - result."action-type"
  * - context.execution.step
  * - context.history[]
+ *
+ * Removed legacy fields:
+ * - proposedActions (use execute.form.choices)
+ * - subActions (use context.execution.step)
  */
 
 import { FormatType, isAIActionFormat } from '../versioning/backwards-compat.js';
@@ -50,8 +52,6 @@ interface LegacyResult {
  */
 interface LegacyContext {
   actions?: unknown[];
-  proposedActions?: unknown[];
-  subActions?: unknown[];
   executingAction?: string;
   dslScript?: string;
   history?: unknown[];
@@ -221,21 +221,9 @@ function convertLegacyContext(context: LegacyContext): LegacyContext {
     delete converted.actions;
   }
 
-  if (context.proposedActions !== undefined) {
-    converted.history = [
-      ...(converted.history || []),
-      { type: 'proposedActions', data: context.proposedActions, timestamp: Date.now() }
-    ];
-    delete converted.proposedActions;
-  }
-
-  if (context.subActions !== undefined) {
-    converted.history = [
-      ...(converted.history || []),
-      { type: 'subActions', data: context.subActions, timestamp: Date.now() }
-    ];
-    delete converted.subActions;
-  }
+  // Note: proposedActions and subActions removed - use canonical format
+  // - proposedActions -> execute.form.choices
+  // - subActions -> context.execution.step
 
   if (context.executingAction !== undefined) {
     // Convert to execution.step
@@ -381,8 +369,6 @@ export function convertToCanonicalFormat(data: unknown): unknown {
     // Determine if it's a request or response
     const ctx = data as Record<string, unknown>;
     const isRequest = ctx.actions !== undefined ||
-                      ctx.proposedActions !== undefined ||
-                      ctx.subActions !== undefined ||
                       ctx.execute !== undefined;
 
     if (isRequest) {

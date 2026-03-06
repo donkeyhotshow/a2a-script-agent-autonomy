@@ -4,8 +4,11 @@
  *
  * ✅ IMPLEMENTED: transform search results to { results: [{ file, path, score, matches, metadata }], files?: string[], query? }
  * ✅ IMPLEMENTED: policy: max results, allowed dirs/extensions (Task 39)
+ * ✅ IMPLEMENTED: improved snippet generation with semantic context
  * @see docs/new-request-flow/PROTOCOL.md#action-key-shape-обязательно
  */
+
+import { generateSnippets, type SnippetConfig } from './searcher/snippet-generator.js';
 
 export interface RagSearchMatch {
     line_start: number;
@@ -13,6 +16,7 @@ export interface RagSearchMatch {
     content: string;
     highlight: string;
     context_score: number;
+    matched_terms?: string[];
 }
 
 export interface RagSearchResultMetadata {
@@ -38,6 +42,7 @@ export interface RagSearchProtocolResult {
 /** 
  * Transform RAG search output to result["rag-search"] shape for simulations.
  * Implements Task 03: protocol result mapping with policy integration.
+ * Uses improved snippet generation with semantic context.
  */
 export function toRagSearchResult(
     rawResults: Array<{
@@ -48,14 +53,15 @@ export function toRagSearchResult(
             endLine?: number;
         };
         score: number;
-        highlights: string[];
+        highlights?: string[];
     }>,
-    options?: { 
-        query?: string; 
+    options?: {
+        query?: string;
         maxFiles?: number;
         allowedDirs?: string[];
         allowedExtensions?: string[];
         maxResults?: number;
+        snippetConfig?: SnippetConfig;
     }
 ): RagSearchProtocolResult {
     // Apply policy limits
@@ -66,7 +72,7 @@ export function toRagSearchResult(
 
     // Filter results based on policy
     let filteredResults = rawResults;
-    
+
     // Filter by allowed directories
     if (allowedDirs.length > 0) {
         filteredResults = filteredResults.filter(result => {
@@ -74,7 +80,7 @@ export function toRagSearchResult(
             return allowedDirs.some(allowedDir => filePath.startsWith(allowedDir));
         });
     }
-    
+
     // Filter by allowed extensions
     if (allowedExtensions.length > 0) {
         filteredResults = filteredResults.filter(result => {
@@ -82,7 +88,7 @@ export function toRagSearchResult(
             return allowedExtensions.includes(ext);
         });
     }
-    
+
     // Sort by score
     const sortedResults = filteredResults.sort((a, b) => b.score - a.score);
 
@@ -95,27 +101,46 @@ export function toRagSearchResult(
             fileMap.set(filePath, result);
         }
     }
-    
+
     // Convert to array and apply limits
     const fileResults = Array.from(fileMap.values());
-    
+
     // Apply result limit (after grouping)
     const limitedResults = fileResults.slice(0, maxResults);
-    
+
     // Apply file limit (should be same as result limit after grouping)
     const finalResults = limitedResults.slice(0, maxFiles);
 
-    // Transform to protocol format with matches
+    // Transform to protocol format with improved snippets
+    const query = options?.query ?? '';
+    const snippetConfig = options?.snippetConfig;
+
     const results: RagSearchResultEntry[] = finalResults.map(result => {
-        // Build matches array from highlights
-        const matches: RagSearchMatch[] = result.highlights.map((highlight, idx) => ({
-            line_start: result.chunk.startLine ?? (idx * 10 + 1),
-            line_end: result.chunk.endLine ?? (idx * 10 + 10),
-            content: result.chunk.content,
-            highlight: highlight,
-            context_score: result.score,
+        // Use improved snippet generator
+        const snippets = generateSnippets(
+            {
+                id: `${result.chunk.filePath}:${result.chunk.startLine ?? 0}`,
+                filePath: result.chunk.filePath,
+                type: 'unknown',
+                content: result.chunk.content,
+                startLine: result.chunk.startLine ?? 1,
+                endLine: result.chunk.endLine,
+            },
+            query,
+            result.score,
+            snippetConfig
+        );
+
+        // Map snippets to protocol format
+        const matches: RagSearchMatch[] = snippets.map(s => ({
+            line_start: s.line_start,
+            line_end: s.line_end,
+            content: s.content,
+            highlight: s.highlight,
+            context_score: s.context_score,
+            matched_terms: s.matched_terms,
         }));
-        
+
         return {
             file: result.chunk.filePath,
             path: result.chunk.filePath,

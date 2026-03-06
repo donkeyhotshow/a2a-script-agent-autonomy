@@ -3,6 +3,7 @@
  */
 import { IgnoreDetector } from '@a2a/fs-utils';
 import { type Chunk } from './chunk-manager.js';
+import type { FileRelevanceLabel } from './file-relevance';
 export interface RAGIndexerConfig {
     projectPath: string;
     includePatterns?: string[];
@@ -16,6 +17,13 @@ export interface IndexFileInfo {
     modified: string;
     hash: string;
     language: string;
+    /**
+     * Optional relevance score and metadata produced by file-relevance module.
+     * Used by RAG searcher to downrank low-signal files (archives, backups, storage, etc).
+     */
+    relevanceScore?: number;
+    relevanceLabel?: FileRelevanceLabel;
+    relevanceReasons?: string[];
 }
 export interface RAGIndexData {
     version: string;
@@ -33,6 +41,7 @@ export declare class RAGIndexer {
     private _initIgnoreDetectorPromise;
     private chunkManager;
     index: RAGIndexData | null;
+    private fileRelevanceModel?;
     constructor(config: RAGIndexerConfig);
     private _initIgnoreDetector;
     private _ensureIgnoreDetector;

@@ -1,6 +1,28 @@
 /**
  * Mock Storage for a2a-client SDK Tests
  * 
+ * @deprecated localStorage/sessionStorage is deprecated in production code.
+ * Use StorageAPI (file-based via /api/storage) instead.
+ * 
+ * This mock is provided for backward compatibility with legacy tests only.
+ * For new tests, use:
+ * 
+ * - FileStorageBackend from './session-storage/storage-backends.js'
+ * - MemoryStorageBackend for in-memory testing
+ * - Or mock the StorageAPI directly
+ * 
+ * Migration example:
+ * ```typescript
+ * // Old (deprecated):
+ * import { createMockStorage } from './mocks/storage/mock-storage.js';
+ * const storage = createMockStorage({ initialData: { key: 'value' } });
+ * 
+ * // New (recommended):
+ * import { MemoryStorageBackend } from '../../packages/history/src/session-storage/storage-backends.js';
+ * const backend = new MemoryStorageBackend();
+ * await backend.set('key', 'value');
+ * ```
+ * 
  * Provides mock implementation for localStorage/sessionStorage:
  * - In-memory storage
  * - Supports get, set, remove, clear operations

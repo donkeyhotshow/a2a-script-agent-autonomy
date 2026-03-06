@@ -24,7 +24,7 @@
 ## Поток задачи (Task Flow): Web → Client API → Server
 
 1. **Web:** поле ввода задачи + кнопка Send → панель с прелоадером
-2. **POST /api/v1/sessions** (Web → Client API): `{ projectId, task }` **[OUTDATED: актуальный эндпоинт — `POST /api/sessions`]**
+2. **POST /api/sessions** (Web → Client API): `{ projectId, task }`
 3. **Client API** сохраняет сессию, проксирует на Server только `{ task }`
 4. **Server** возвращает `execute.form.choices` (первый ответ) или `execute.*` (последующие)
 5. **Опрос:** Client API опрашивает promiseId до completed, возвращает Web

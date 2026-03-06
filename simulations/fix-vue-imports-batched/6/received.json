@@ -5,7 +5,7 @@
     "script": {
       "input": {},
       "output": "cleanup_count",
-      "code": "// vue-import-cleanup.dsl\n// Очищення тимчасових файлів та генерація звіту\n\nconst result = await script.execute('vue-import-cleanup', {});"
+      "code": "const { unlinkSync, existsSync, writeFileSync } = require('node:fs');\nconst { join } = require('node:path');\n\nlet cleanup = 0;\nconst tempFiles = ['.fix-vue-imports.tmp', '.import-cache.json'];\n\nfor (const f of tempFiles) {\n  const p = join(input.rootDir || '.', f);\n  if (existsSync(p)) { unlinkSync(p); cleanup++; }\n}\n\nconst report = {\n  action: 'fix-vue-imports-batched',\n  totalFiles: input.progress?.totalFiles || 0,\n  fixedCount: input.fixed_count || 0,\n  timestamp: new Date().toISOString()\n};\n\nwriteFileSync(join(input.rootDir || '.', '.carrier', 'reports', 'fix-imports-report.json'), JSON.stringify(report, null, 2));\n\nreturn { cleanup_count: cleanup, report_path: '.carrier/reports/fix-imports-report.json' };"
     }
   }
 }

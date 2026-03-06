@@ -30,6 +30,44 @@ npm run dev
 | `npm run dev:status` | Show service status |
 | `npm run dev:stop` | Stop all services |
 
+### Alternative: Standardized Start/Stop Scripts
+
+For environments without npm orchestrator or when you need direct process control, use the standardized scripts that implement **dual verification** (port + process checks):
+
+**Windows:**
+```powershell
+# Start all services with pre-flight cleanup
+.\start-all.ps1
+
+# Stop all services with dual verification
+.\kill-all.ps1
+```
+
+**Linux/macOS:**
+```bash
+# Make scripts executable (first time only)
+chmod +x start-all.sh kill-all.sh
+
+# Start all services with pre-flight cleanup
+./start-all.sh
+
+# Stop all services with dual verification
+./kill-all.sh
+```
+
+**Legacy batch (Windows):**
+```batch
+start-all.bat
+kill-all.bat
+```
+
+These scripts follow the pattern from `docs/troubleshooting/standardize-stop-scripts.md`:
+1. **Kill by port**: Find processes listening on service ports and terminate them
+2. **Verify port free**: Confirm no process remains on the port
+3. **Kill by PID/process name**: Terminate from `.pids.txt` and by executable patterns
+4. **Verify processes gone**: Check no matching processes remain
+5. **Clean `.pids.txt`**: Only after all verifications pass
+
 ### Service Architecture
 
 ```
@@ -141,7 +179,9 @@ Press `Ctrl+C` to stop all services gracefully. The orchestrator will:
 
 ---
 
-## Project Status (2026-03-03)
+## Project Status (2026-03-06)
+
+*Last updated: 2026-03-06*
 
 ### Recently Completed
 - ✅ **Port Management System** - Dynamic allocation, conflict detection, health gating automation
@@ -149,31 +189,49 @@ Press `Ctrl+C` to stop all services gracefully. The orchestrator will:
 - ✅ **12 Major Tasks** - Web Integration, Simulation Framework, Server Refactoring
 - ✅ **3 Refactoring Tasks** - request-processor, message-builder, context-parser
 - ✅ **Server Analysis** - Inventory check aligned with simulations
+- ✅ **Server Improvements** - Storage API, log rotation, rate limiting, performance monitoring, test fixes
 
-### Current Focus: Server Cleanup & Alignment
+### Server Enhancement Summary (2026-03-06)
 
-We are analyzing the server codebase to align it with simulation scenarios. This involves:
+Recent server improvements include:
 
-1. **Identifying Unused Systems** (~58,000 lines potentially removable)
-   - entity-recognizer.service.ts (~21k lines)
-   - phase-machine.service.ts (~14k lines)
-   - framework-extractor.service.ts (~9k lines)
-   - graph-store.service.ts (~7k lines)
-   - Neuron system lint rules (~3k lines)
+#### 🔧 **Storage API**
+- CRUD operations for file-based storage (`/api/v1/storage/*`)
+- Input validation and size limits (10MB max)
+- Automatic cleanup of old files (30+ days)
+- Enhanced error handling and security
 
-2. **Decision Required**
-   - Review [Server Cleanup Decisions](docs/server-cleanup-decisions.md)
-   - Choose: KEEP / REMOVE / REFACTOR for each system
+#### 📊 **Monitoring & Observability**
+- Daily log rotation with compression (7-14 day retention)
+- Performance metrics collection (memory, uptime, throughput)
+- Access logging with request duration tracking
+- Prometheus-compatible metrics endpoints
 
-3. **Missing Systems to Implement**
-   - RAG Service (for coder/coder-smart simulations)
-   - Script Engine (for batch processing simulations)
-   - File/Command Services (for file operations)
+#### 🛡️ **Security & Performance**
+- Configurable rate limiting (200 req/min default)
+- Input validation and sanitization
+- Enhanced error responses with specific error codes
+- Memory usage monitoring and alerts
+
+#### 🧪 **Testing Improvements**
+- Fixed simulation-based tests (legacy + step-based format support)
+- Enhanced test reliability and coverage
+- CLI testing API for remote web client control
+
+### Current Status: Server Production Ready
+
+The a2a-server component is now production-ready with:
+- Comprehensive API coverage
+- Robust error handling and validation
+- Performance monitoring and optimization
+- Automated maintenance (log rotation, cleanup)
+- Full test coverage
 
 ### Documentation
 
 | Document | Purpose |
 |----------|---------|
+| [Workflows](workflows/README.md) | **Start here** - How to edit code at every level |
 | [Port Management](docs/PORT_MANAGEMENT.md) | Port allocation, conflict detection, health gating |
 | [Server Inventory Report](docs/server-inventory-report.md) | Full analysis of server systems |
 | [Server Cleanup Decisions](docs/server-cleanup-decisions.md) | Decision form for unused systems |

@@ -83,7 +83,7 @@
                 'connected', 'message', 'log', 'progress', 'status',
                 'task_response', 'session_update', 'action_proposal',
                 'action_executing', 'step_result', 'complete', 'error',
-                'node_added', 'node_updated', 'edge_added',
+                'finalResult', 'node_added', 'node_updated', 'edge_added',
                 'tester_command', 'tester_broadcast'
             ];
 

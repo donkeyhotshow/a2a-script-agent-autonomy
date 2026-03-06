@@ -83,10 +83,26 @@
         store.setStatus('completed');
         store.applyServerResponse({
             context: data?.context,
-            execute: data?.execute
+            execute: data?.execute,
+            finalResult: data?.finalResult || data?.result
         });
+        if (data?.finalResult) {
+            store._emit('completed', data.finalResult);
+        }
         if (data?.result?.message) {
             store.pushMessage(data.result.message, 'assistant');
+        }
+    });
+
+    // Handle finalResult from server (task completion with summary)
+    register('finalResult', data => {
+        if (data?.finalResult) {
+            store.applyServerResponse({
+                context: data?.context,
+                execute: { finalResult: data.finalResult }
+            });
+            store.setStatus('completed');
+            store._emit('completed', data.finalResult);
         }
     });
 

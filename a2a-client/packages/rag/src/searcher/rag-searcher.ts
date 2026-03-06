@@ -68,9 +68,9 @@ export class RAGSearcher {
             const bm25Data = this.bm25.serialize();
             await fs.writeFile(
                 path.join(this.cachePath, 'bm25-cache.json'),
-                JSONData)
+                JSON.stringify(bm25Data)
             );
-.stringify(bm25            console.log('[RAG] BM25 cache saved');
+            console.log('[RAG] BM25 cache saved');
         }
         
         console.log('[RAG] Index cache saved');
@@ -621,16 +621,17 @@ export class RAGSearcher {
      * Integrates policy limits and transforms results to protocol format
      */
     async searchWithProtocol(
-        query: string, 
+        query: string,
         options: SearchOptions & {
             maxFiles?: number;
             allowedDirs?: string[];
             allowedExtensions?: string[];
             maxResults?: number;
+            snippetConfig?: import('../searcher/snippet-generator.js').SnippetConfig;
         } = {}
     ): Promise<import('../protocol-rag-search.js').RagSearchProtocolResult> {
         const searchResults = await this.search(query, options);
-        
+
         // Transform raw search results to protocol format
         const rawResults = searchResults.map(result => ({
             chunk: {
@@ -648,7 +649,8 @@ export class RAGSearcher {
             maxFiles: options.maxFiles,
             allowedDirs: options.allowedDirs,
             allowedExtensions: options.allowedExtensions,
-            maxResults: options.maxResults
+            maxResults: options.maxResults,
+            snippetConfig: options.snippetConfig
         });
     }
 }

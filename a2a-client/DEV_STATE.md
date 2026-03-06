@@ -134,7 +134,7 @@ npm run test:performance              # Тестирование произво�
 |----------|----------|--------|
 | **Устаревшие данные сессии** | При длительном простое данные сессии могут утратить актуальность (запросы устаревают, история не синхронизируется) | Реализовать TTL для данных сессии, периодическую синхронизацию с сервером |
 | **Конфликты данных** | При параллельных запросах из нескольких вкладок возможны конфликты данных (дублирование, перезапись) | Использовать optimistic locking, версионирование сессий |
-| **Потеря сессии** | При очистке localStorage/sessionStorage данные теряются | Реализовать backup на сервере, механизм восстановления |
+| **Потеря сессии на рефреше** | Сессия эфемерна, теряется при обновлении страницы | Реализовать session restore API, reconnect на загрузке |
 
 ### 2. Проблемы с SSE/WebSocket
 
@@ -169,7 +169,7 @@ npm run test:performance              # Тестирование произво�
 | **SSE поддержка** | Не все браузеры полностью поддерживают SSE | Polyfill, fallback на polling |
 | **WebSocket версии** | Разные версии WS протокола | Feature detection, fallback |
 | **CORS ограничения** | Ограничения на кросс-доменные запросы | Проксирование, CORS заголовки |
-| **Private/Incognito режим** | Ограничения localStorage | sessionStorage fallback, in-memory хранилище |
+| **Private/Incognito режим** | Ограничения browser storage | Серверное хранилище, полная функциональность |
 
 ### 6. Проблемы с аутентификацией и токенами
 
@@ -256,7 +256,7 @@ node cli.js test --interactive
 
 **Status**: Active development with unified architecture (SessionStore, TransportManager, PanelManager).
 
-**Documentation**: Web UI component status, architecture, and implementation notes are covered in the web/docs/README.md section.
+**Documentation**: Web UI component status, architecture, and implementation notes are covered in the docs/README.md section.
 
 ---
 
@@ -312,11 +312,10 @@ Web UI: renderExecute(execute) - форма появляется сразу
 ### Реализация
 
 **`session-store.js`**
-- Автосохранение в `localStorage` (debounced 100ms)
-- Сохраняются: `sessionId`, `projectId`, `execute`, `context`, `messages` (последние 20)
-- Хранится до явной очистки (через `reset()` или `clearStorage()`)
-- `restoreAndReconnect()` - восстановление и переподключение к SSE
-- `clearStorage()` - очистка сохраненного состояния
+- Нет автосохранения в браузер - состояние эфемерно
+- Данные сессии на сервере (через `/api/storage`)
+- `restoreAndReconnect(sessionId)` - восстановление с сервера и переподключение к SSE
+- `clearStorage()` - no-op (нет локального хранилища)
 
 **`task-flow.js`**
 - `restorePanel(state)` - восстановление UI панели из сохраненного состояния
@@ -333,11 +332,11 @@ Web UI: renderExecute(execute) - форма появляется сразу
   ↓
 DOMContentLoaded
   ↓
-SessionStore.init() → restoreFromStorage()
+Получаем sessionId из URL или API
   ↓
-restoreAndReconnect() → TransportManager.connect(sessionId)
+restoreAndReconnect(sessionId) → TransportManager.connect(sessionId)
   ↓
-Если есть execute → TaskFlow.restorePanel(state)
+Загружаем состояние с сервера → TaskFlow.restorePanel(state)
   ↓
 Панель открыта, форма/сообщение видны, SSE подключен
 ```

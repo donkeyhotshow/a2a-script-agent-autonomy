@@ -49,106 +49,20 @@
         init(options = {}) {
             this._apiBase = options.apiBase || this._apiBase;
 
-            // Restore from localStorage if available
-            this._restoreFromStorage();
+            // Note: Storage persistence removed - state is ephemeral
+            // Sessions restored via API on reconnect, not local storage
 
-            // Setup auto-persist
-            this._setupAutoPersist();
-
-            console.log('[SessionStore] Initialized', this._state.sessionId ? `(restored session ${this._state.sessionId})` : '(no saved session)');
+            console.log('[SessionStore] Initialized', this._state.sessionId ? `(session ${this._state.sessionId})` : '(no session)');
             return this;
         },
 
         // === Persistence ===
-
-        _setupAutoPersist() {
-            // Persist state changes to localStorage (debounced)
-            this.on('reset', () => this._persist());
-            this.on('session', () => this._persist());
-            this.on('execute', () => this._persist());
-            this.on('messages', () => this._persist());
-            this.on('context', () => this._persist());
-            this.on('status', () => this._persist());
-        },
-
-        async _persist() {
-            // Debounce persistence
-            if (this._persistTimer) clearTimeout(this._persistTimer);
-            this._persistTimer = setTimeout(async () => {
-                try {
-                    const data = {
-                        sessionId: this._state.sessionId,
-                        projectId: this._state.projectId,
-                        execute: this._state.execute,
-                        context: this._state.context,
-                        status: this._state.status,
-                        pendingForm: this._state.pendingForm,
-                        messages: this._state.messages.slice(-20), // Keep last 20 messages only
-                        timestamp: new Date().toISOString()
-                    };
-
-                    // Try async storage first, fallback to sync
-                    try {
-                        await StorageAPI.sessions.setItem(STORAGE_KEY, JSON.stringify(data));
-                    } catch (asyncError) {
-                        console.warn('[SessionStore] Async storage failed, using sync fallback:', asyncError);
-                        StorageAPI.sessions.setItemSync(STORAGE_KEY, JSON.stringify(data));
-                    }
-                } catch (err) {
-                    console.warn('[SessionStore] Failed to persist:', err);
-                }
-            }, 100);
-        },
-
-        async _restoreFromStorage() {
-            try {
-                // Try async storage first, fallback to sync
-                let saved;
-                try {
-                    saved = await StorageAPI.sessions.getItem(STORAGE_KEY);
-                } catch (asyncError) {
-                    console.warn('[SessionStore] Async storage failed, using sync fallback:', asyncError);
-                    saved = StorageAPI.sessions.getItemSync(STORAGE_KEY);
-                }
-
-                if (!saved) return false;
-
-                const data = typeof saved === 'string' ? JSON.parse(saved) : saved;
-
-                // Restore state (no TTL - persists until explicitly cleared)
-                if (data.sessionId) this._state.sessionId = data.sessionId;
-                if (data.projectId) this._state.projectId = data.projectId;
-                if (data.execute) this._state.execute = data.execute;
-                if (data.context) this._state.context = data.context;
-                if (data.status) this._state.status = data.status;
-                if (data.pendingForm) this._state.pendingForm = data.pendingForm;
-                if (data.messages?.length) this._state.messages = data.messages;
-
-                console.log('[SessionStore] Restored from storage:', {
-                    sessionId: data.sessionId,
-                    projectId: data.projectId,
-                    status: data.status
-                });
-                return true;
-            } catch (err) {
-                console.warn('[SessionStore] Failed to restore:', err);
-                return false;
-            }
-        },
+        // Note: Local persistence removed - all state is ephemeral
+        // Server-side session storage handles persistence
 
         async clearStorage() {
-            try {
-                // Try async storage first, fallback to sync
-                try {
-                    await StorageAPI.sessions.removeItem(STORAGE_KEY);
-                } catch (asyncError) {
-                    console.warn('[SessionStore] Async storage failed, using sync fallback:', asyncError);
-                    StorageAPI.sessions.removeItemSync(STORAGE_KEY);
-                }
-                console.log('[SessionStore] Storage cleared');
-            } catch (err) {
-                console.warn('[SessionStore] Failed to clear storage:', err);
-            }
+            // No-op: no local storage to clear
+            console.log('[SessionStore] No local storage to clear');
         },
 
         // === State Accessors ===
@@ -240,17 +154,29 @@
             this._state.execute = execute || null;
             this._emit('execute', this._state.execute);
 
+            // Handle form with choices - waiting for user input
             if (execute?.form?.choices) {
                 this._state.pendingForm = execute.form;
                 this._state.status = 'waiting';
                 this._emit('pendingForm', execute.form);
             }
 
+            // Handle message - display to user
             if (execute?.message) {
                 const msg = typeof execute.message === 'string'
                     ? { content: execute.message }
                     : execute.message;
                 this.pushMessage(msg, 'assistant');
+            }
+
+            // Handle finalResult - task completed
+            if (execute?.finalResult) {
+                this._state.status = 'completed';
+                this._emit('completed', execute.finalResult);
+                this.pushMessage({
+                    content: `Task completed: ${execute.finalResult.action || 'unknown'}`,
+                    metadata: { type: 'completion', summary: execute.finalResult.summary }
+                }, 'system');
             }
 
             return this;
@@ -262,6 +188,12 @@
 
             if (context?.execution) {
                 this._emit('execution', context.execution);
+
+                // Detect completed status from execution
+                if (context.execution.status === 'completed') {
+                    this.setStatus('completed');
+                    this._emit('completed', context.execution);
+                }
             }
 
             return this;
@@ -306,14 +238,37 @@
         // === Batch Updates (from server response) ===
 
         applyServerResponse(data) {
-            const { context, execute, messages } = data;
+            const { context, execute, messages, finalResult } = data;
 
             if (context) this.setContext(context);
             if (execute) this.setExecute(execute);
             if (messages?.length) this.setMessages(messages);
 
+            // Handle explicit status from response
             if (data.status) this.setStatus(data.status);
+
+            // Handle session ID from response
             if (data.sessionId) this.setSession(data.sessionId, data.projectId);
+
+            // Detect completion from context.execution.status
+            if (context?.execution?.status === 'completed') {
+                this.setStatus('completed');
+                this._emit('completed', context.execution);
+            }
+
+            // Detect completion from finalResult in execute
+            if (execute?.finalResult) {
+                this.setStatus('completed');
+                this._emit('completed', execute.finalResult);
+            }
+
+            // Detect completion from top-level finalResult
+            if (finalResult) {
+                this.setStatus('completed');
+                this._emit('completed', finalResult);
+                // Also update execute with finalResult for UI processing
+                this.setExecute({ finalResult });
+            }
 
             this._emit('serverResponse', data);
             return this;
@@ -357,22 +312,23 @@
         // === Restore and Reconnect ===
 
         /**
-         * Restore session from storage and reconnect to transport
+         * Restore session from server and reconnect to transport
          * Call this on page load if you want to resume last session
          */
-        async restoreAndReconnect() {
-            const restored = await this._restoreFromStorage();
-            if (!restored || !this._state.sessionId) {
+        async restoreAndReconnect(sessionId) {
+            if (!sessionId) {
+                // No session to restore - start fresh
                 return false;
             }
 
-            console.log('[SessionStore] Restoring session:', this._state.sessionId);
+            console.log('[SessionStore] Restoring session:', sessionId);
+            this._state.sessionId = sessionId;
 
             // Reconnect to transport (SSE/WebSocket)
             const transport = global.TransportManager;
             if (transport && typeof transport.connect === 'function') {
                 try {
-                    await transport.connect(this._state.sessionId);
+                    await transport.connect(sessionId);
                     this._state.status = 'active';
                     console.log('[SessionStore] Transport reconnected');
                 } catch (err) {
@@ -389,25 +345,11 @@
 
         /**
          * Check if there's a saved session to restore
+         * Note: Now requires explicit sessionId - no local storage lookup
          */
         async hasSavedSession() {
-            try {
-                // Try async storage first, fallback to sync
-                let saved;
-                try {
-                    saved = await StorageAPI.sessions.getItem(STORAGE_KEY);
-                } catch (asyncError) {
-                    saved = StorageAPI.sessions.getItemSync(STORAGE_KEY);
-                }
-
-                if (!saved) return false;
-                const data = typeof saved === 'string' ? JSON.parse(saved) : saved;
-
-                // Return true if sessionId exists (no TTL limit)
-                return !!data.sessionId;
-            } catch {
-                return false;
-            }
+            // No local storage - session existence checked via API
+            return !!this._state.sessionId;
         },
 
         // === Result Submission Helpers ===
