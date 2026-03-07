@@ -335,18 +335,24 @@
 
                     // Bind input handlers
                     Render.bindInputHandlers(contentEl, {
-                        sendMessageResult: (text) => {
+                        sendMessageResult: async (text) => {
                             if (!text || !text.trim()) return;
                             // Add to store first so history shows it
                             store.pushMessage?.({ content: String(text).trim() }, 'user');
-                            // Send to server (ActionHandler will set promisePending)
-                            this.sendMessage(sessionId, text);
-                            // Refresh to show message + waiting state
+                            // Set waiting state immediately for UI feedback
+                            store?.setPromisePending?.(true);
+                            // Refresh to show waiting state
                             refreshContent();
+                            // Send to server
+                            await this.sendMessage(sessionId, text);
                         },
-                        sendChoiceResult: (choiceId) => {
+                        sendChoiceResult: async (choiceId) => {
+                            // Set waiting state immediately for UI feedback
+                            store?.setPromisePending?.(true);
+                            // Refresh to show waiting state (form will be cleared)
+                            refreshContent();
                             // Send choice to server
-                            this.sendChoice(sessionId, choiceId);
+                            await this.sendChoice(sessionId, choiceId);
                         }
                     });
 
@@ -423,21 +429,21 @@
         /**
          * Send message to session
          */
-        sendMessage(sessionId, message) {
+        async sendMessage(sessionId, message) {
             // Message already added in sendMessageResult before this is called
             const store = global.SessionStore;
 
             // Send via API
             if (global.apiIntegration?.sendMessage) {
-                global.apiIntegration.sendMessage(sessionId, message);
+                await global.apiIntegration.sendMessage(sessionId, message);
             } else if (global.ActionHandler?.sendMessage) {
                 // Use ActionHandler for proper action-key format
-                global.ActionHandler.sendMessage(sessionId, store?.projectId, message);
+                await global.ActionHandler.sendMessage(sessionId, store?.projectId, message);
             } else if (global.ActionHandler?.submit) {
                 // Fallback to raw submit
                 const projectId = store?.projectId;
                 const context = store?.context || {};
-                global.ActionHandler.submit(sessionId, projectId, { message: message }, context);
+                await global.ActionHandler.submit(sessionId, projectId, { message: message }, context);
             }
 
             console.log('[WindowManager] Sent message:', sessionId, message);
@@ -446,30 +452,28 @@
         /**
          * Send choice result to session (for form.choices)
          */
-        sendChoice(sessionId, choiceId) {
+        async sendChoice(sessionId, choiceId) {
             const store = global.SessionStore;
             const projectId = store?.projectId;
             const result = { choice: choiceId };
 
             // Send via Client API POST /sessions/:id/result
+            const promises = [];
             if (global.apiIntegration?.sendResult) {
-                global.apiIntegration.sendResult(sessionId, result, projectId).catch(err =>
-                    console.error('[WindowManager] sendResult failed:', err)
-                );
+                promises.push(global.apiIntegration.sendResult(sessionId, result, projectId));
             } else if (global.webApiClient?.sendChoice) {
-                global.webApiClient.sendChoice(sessionId, result).catch(err =>
-                    console.error('[WindowManager] sendResult failed:', err)
-                );
+                promises.push(global.webApiClient.sendChoice(sessionId, result));
             } else if (global.ActionHandler?.submit && projectId) {
-                global.ActionHandler.submit(sessionId, projectId, result, store?.context || {}).catch(err =>
-                    console.error('[WindowManager] submit failed:', err)
-                );
+                promises.push(global.ActionHandler.submit(sessionId, projectId, result, store?.context || {}));
             }
 
-            // Clear form and execute state to hide UI immediately
-            if (store?.clearPendingForm) store.clearPendingForm();
-            if (store?.setExecute) store.setExecute(null);
-            console.log('[WindowManager] Sent choice:', sessionId, choiceId);
+            try {
+                await Promise.all(promises);
+                console.log('[WindowManager] Sent choice:', sessionId, choiceId);
+            } catch (err) {
+                console.error('[WindowManager] sendChoice failed:', err);
+                throw err;
+            }
         },
 
         /**

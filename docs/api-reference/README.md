@@ -72,4 +72,4 @@ try {
 - **[Glossary](../glossary.md)** - Technical terminology
 - **[Workflow Documentation](../../workflows/)** - Usage patterns
 - **[Troubleshooting](../troubleshooting/)** - Common issues
-- **[Examples](../examples/)** - Practical implementations
+- **[Simulations Documentation](../new-request-flow/SIMULATION-FORMAT.md)** - Practical implementations

@@ -47,6 +47,38 @@ router.post('/', (req: Request, res: Response) => {
             }
         });
 
+        // If task is "диалог" or "dialog", return router form immediately
+        const task = body.task?.toLowerCase() || '';
+        if (task === 'диалог' || task === 'dialog') {
+            const response = {
+                success: true,
+                data: session,
+                serverResponse: {
+                    data: {
+                        context: {
+                            task: body.task,
+                            execution: {
+                                action: 'task',
+                                step: 'router'
+                            }
+                        },
+                        execute: {
+                            form: {
+                                title: 'Оберіть спосіб виконання',
+                                choices: [
+                                    { id: 'dialog', label: 'AI діалог з користувачем' },
+                                    { id: 'auto-ai', label: 'AI Action Generator' },
+                                    { id: 'task-decomposition', label: 'Декомпозиція задачі' }
+                                ]
+                            }
+                        }
+                    }
+                }
+            };
+            res.status(201).json(response);
+            return;
+        }
+
         res.status(201).json({
             success: true,
             data: session

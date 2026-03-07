@@ -524,7 +524,7 @@ SKIP_AUTH=1 npm run test:e2e -- --test=ai-action-llm
 
 ## Связанные документы
 
-- [AGENTS.md](AGENTS.md) — правила проекта
-- [plans/ai-action-transform-template.md](plans/ai-action-transform-template.md) — канонический паттерн
-- [docs/new-request-flow/PROTOCOL.md](docs/new-request-flow/PROTOCOL.md) — протокол
-- [a2a-server/docs/TESTING-MOCKING-GUIDE.md](a2a-server/docs/TESTING-MOCKING-GUIDE.md) — тестирование
+- [AGENTS.md](../AGENTS.md) — правила проекта
+- [ai-action-transform-template.md](ai-action-transform-template.md) — канонический паттерн
+- [PROTOCOL.md](../docs/new-request-flow/PROTOCOL.md) — протокол
+- [TESTING-MOCKING-GUIDE.md](../a2a-server/docs/TESTING-MOCKING-GUIDE.md) — тестирование

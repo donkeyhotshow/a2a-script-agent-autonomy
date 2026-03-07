@@ -327,8 +327,8 @@ gantt
 
 ## Ссылки
 
-- [PROTOCOL.md](docs/new-request-flow/PROTOCOL.md)
-- [SCHEMAS.md](docs/new-request-flow/SCHEMAS.md)
-- [SERVER-ARCHITECTURE.md](docs/new-request-flow/SERVER-ARCHITECTURE.md)
-- [simulations/SCHEMA.md](simulations/SCHEMA.md)
-- [simulations/REFERENCE.md](simulations/REFERENCE.md)
+- [PROTOCOL.md](../docs/new-request-flow/PROTOCOL.md)
+- [SCHEMAS.md](../docs/new-request-flow/SCHEMAS.md)
+- [SERVER-ARCHITECTURE.md](../docs/new-request-flow/SERVER-ARCHITECTURE.md)
+- [simulations/SCHEMA.md](../simulations/SCHEMA.md)
+- [simulations/REFERENCE.md](../simulations/REFERENCE.md)

@@ -6,18 +6,8 @@
 (function (global) {
     'use strict';
 
-    const CLIENT_API_STORAGE_KEY = 'a2a_clientApiUrl';
-    const DEFAULT_API_BASE = '/api';
-
-    function getStorageBase() {
-        let base = (typeof localStorage !== 'undefined' && localStorage.getItem(CLIENT_API_STORAGE_KEY)) || DEFAULT_API_BASE;
-        // Fix corrupted object string if present
-        if (base === '[object Object]' || typeof base !== 'string' || !base.startsWith('/')) {
-            base = DEFAULT_API_BASE;
-            localStorage.setItem(CLIENT_API_STORAGE_KEY, base);
-        }
-        return (base || DEFAULT_API_BASE).replace(/\/$/, '') + '/storage';
-    }
+    // Fixed storage base URL - no dynamic lookup needed
+    const STORAGE_BASE = '/api/storage';
 
     // Fetch with timeout and retry logic
     const DEFAULT_TIMEOUT = 10000; // 10 seconds
@@ -63,7 +53,7 @@
          */
         async getItem(key) {
             try {
-                const response = await fetchWithRetry(`${getStorageBase()}/${this.namespace}/${key}`, {
+                const response = await fetchWithRetry(`${STORAGE_BASE}/${this.namespace}/${key}`, {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json'
@@ -99,7 +89,7 @@
          */
         async setItem(key, value) {
             try {
-                const response = await fetchWithRetry(`${getStorageBase()}/${this.namespace}/${key}`, {
+                const response = await fetchWithRetry(`${STORAGE_BASE}/${this.namespace}/${key}`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json'
@@ -124,7 +114,7 @@
          */
         async removeItem(key) {
             try {
-                const response = await fetchWithRetry(`${getStorageBase()}/${this.namespace}/${key}`, {
+                const response = await fetchWithRetry(`${STORAGE_BASE}/${this.namespace}/${key}`, {
                     method: 'DELETE',
                     headers: {
                         'Content-Type': 'application/json'
@@ -145,7 +135,7 @@
          */
         async clear() {
             try {
-                const response = await fetchWithRetry(`${getStorageBase()}/${this.namespace}`, {
+                const response = await fetchWithRetry(`${STORAGE_BASE}/${this.namespace}`, {
                     method: 'DELETE',
                     headers: {
                         'Content-Type': 'application/json'
@@ -166,7 +156,7 @@
          */
         async keys() {
             try {
-                const response = await fetchWithRetry(`${getStorageBase()}/${this.namespace}/keys`, {
+                const response = await fetchWithRetry(`${STORAGE_BASE}/${this.namespace}/keys`, {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json'
@@ -186,42 +176,34 @@
         }
 
         /**
-         * Sync fallback: store in localStorage when API async failed (e.g. offline).
-         * Prefer async getItem/setItem which use Client API.
+         * In-memory sync fallback when API is unavailable.
+         * No localStorage - uses memory only.
          */
         setItemSync(key, value) {
-            try {
-                const fullKey = `${this.namespace}:${key}`;
-                localStorage.setItem(fullKey, JSON.stringify(value));
-            } catch (error) {
-                console.warn('[CustomStorage] setItemSync failed:', error);
-            }
+            // Store in memory only (session-only fallback)
+            if (!global.__storageFallback) global.__storageFallback = new Map();
+            const fullKey = `${this.namespace}:${key}`;
+            global.__storageFallback.set(fullKey, JSON.stringify(value));
         }
 
         /**
-         * Sync fallback: read from localStorage when API was unavailable.
+         * In-memory sync fallback when API is unavailable.
+         * No localStorage - uses memory only.
          */
         getItemSync(key) {
-            try {
-                const fullKey = `${this.namespace}:${key}`;
-                const data = localStorage.getItem(fullKey);
-                return data ? JSON.parse(data) : null;
-            } catch (error) {
-                console.warn('[CustomStorage] getItemSync failed:', error);
-                return null;
-            }
+            if (!global.__storageFallback) return null;
+            const fullKey = `${this.namespace}:${key}`;
+            const data = global.__storageFallback.get(fullKey);
+            return data ? JSON.parse(data) : null;
         }
 
         /**
-         * Sync fallback: Remove item from localStorage
+         * In-memory sync fallback - remove from memory only.
          */
         removeItemSync(key) {
-            try {
-                const fullKey = `${this.namespace}:${key}`;
-                localStorage.removeItem(fullKey);
-            } catch (error) {
-                console.warn('[CustomStorage] removeItemSync failed:', error);
-            }
+            if (!global.__storageFallback) return;
+            const fullKey = `${this.namespace}:${key}`;
+            global.__storageFallback.delete(fullKey);
         }
     }
 

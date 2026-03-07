@@ -4,7 +4,7 @@
 
 **Priority:** 10
 
-**Планы:** [actions-definitions-for-auto-ai](../../../../plans/actions-definitions-for-auto-ai.md) (пример) · [fix-vue-imports-improvements](../../../../plans/later/fix-vue-imports-improvements.md), [fix-vue-imports-batch](../../../../plans/later/fix-vue-imports-batch.md) (варианты) · [ai-integration-ui-improvements](../../../../ai-integration/plans/ai-integration-ui-improvements-plan.md) (UI).
+**Планы:** [new request flow](../../../../plans/a2a-server-new-request-flow.md) · [fix-vue-imports альтернативы](../../../../plans/fix-vue-imports-alternatives-design.md) · [ai-integration UI improvements](../../../../ai-integration/plans/ai-integration-ui-improvements-plan.md) (UI).
 
 ## Sub-actions (4 steps)
 

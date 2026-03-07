@@ -263,7 +263,7 @@ GET /api/v1/requests/req_llm_abc123/result
 См. также:
 
 - [`SIMULATION-FIX-VUE-IMPORTS.md`](SIMULATION-FIX-VUE-IMPORTS.md) - синхронный поток без LLM
-- [`SIMULATION-coder.md`](SIMULATION-coder.md) - диалог с RAG + запись файлов
+- [`SIMULATION-coder.md`](SIMULATION-CODER-DIALOG.md) - диалог с RAG + запись файлов
 - [`simulations/dialog/`](../../simulations/dialog/) - пример с LLM (требует обновления)
 
 ---

@@ -476,15 +476,15 @@ GET /api/v1/health/database          - Database check
 | [a2a-server/docs/detailed-architecture.md](a2a-server/docs/detailed-architecture.md) | Detailed server architecture |
 | [a2a-server/docs/entry-points.md](a2a-server/docs/entry-points.md) | Entry points & root context |
 | [a2a-server/docs/action-api.md](a2a-server/docs/action-api.md) | Action API |
-| [simulations/SCHEMA.md](../simulations/SCHEMA.md) | Canonical simulation schema |
-| [simulations/REFERENCE.md](../simulations/REFERENCE.md) | Action reference |
+| [simulations/SCHEMA.md](../../simulations/SCHEMA.md) | Canonical simulation schema |
+| [simulations/REFERENCE.md](../../simulations/REFERENCE.md) | Action reference |
 
 ### AI Integration
 
 | Document | Description |
 |----------|-------------|
-| [ai-integration/README.md](../ai-integration/README.md) | AI Hub documentation |
-| [ai-integration/docs/UPGRADE.md](../ai-integration/docs/UPGRADE.md) | Upgrade guide |
+| [ai-integration/README.md](../../ai-integration/README.md) | AI Hub documentation |
+| [ai-integration/docs/UPGRADE.md](../../ai-integration/docs/UPGRADE.md) | Upgrade guide |
 
 ---
 

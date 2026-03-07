@@ -80,4 +80,4 @@ src/
 ## Ссылки
 
 - [Полная документация](./proxy-integration.md)
-- [План интеграции](../../../plans/server/03-server-proxy-integration-plan.md)
+- [План интеграции](../../../plans/a2a-server-new-request-flow.md)

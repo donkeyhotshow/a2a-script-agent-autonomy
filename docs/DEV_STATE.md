@@ -30,8 +30,7 @@
 
 #### Продакшн
 - [Full Launch Plan](production/FULL_LAUNCH_PLAN.md)
-- [Production Mode](production/PRODUCTION_MODE.md)
-- [System Schema](production/SYSTEM_SCHEMA.md)
+- [Production Tests](production/PROD_TESTS.md)
 
 ### Статус обновлений
 

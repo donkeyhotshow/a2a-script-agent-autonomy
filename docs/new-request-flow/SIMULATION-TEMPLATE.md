@@ -518,9 +518,9 @@ simulations/
 
 ## Примеры реальных симуляций
 
-- **Actions:** [`fix-vue-imports`](../simulations/fix-vue-imports/description.md) — hardcoded steps, сервер переключает
-- **AI-Actions:** [`dialog`](../simulations/dialog/description.md) — LLM-driven диалог
-- **AI-Actions:** [`coder`](../simulations/coder/description.md) — LLM + RAG + файлы
+- **Actions:** [`fix-vue-imports`](../../simulations/fix-vue-imports/description.md) — hardcoded steps, сервер переключает
+- **AI-Actions:** [`dialog`](../../simulations/dialog/description.md) — LLM-driven диалог
+- **AI-Actions:** [`coder`](../../simulations/coder/description.md) — LLM + RAG + файлы
 
 ---
 
@@ -528,4 +528,4 @@ simulations/
 
 - [PROTOCOL.md](./PROTOCOL.md) — полное описание протокола
 - [SIMULATION-FORMAT.md](./SIMULATION-FORMAT.md) — формат файлов симуляций
-- [SCHEMA.md](../simulations/SCHEMA.md) — каноническая схема
+- [SCHEMA.md](../../simulations/SCHEMA.md) — каноническая схема

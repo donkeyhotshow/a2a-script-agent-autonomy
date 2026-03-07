@@ -12,7 +12,7 @@
 
     const ProjectManager = {
         /**
-         * Get stored client API URL
+         * Get stored client API URL - uses file-based storage only
          */
         async getStoredClientApiUrl() {
             try {
@@ -21,21 +21,17 @@
                 if (stored && typeof stored === 'object') {
                     stored = stored.url || stored.apiBase || null;
                 }
-                const url = (typeof stored === 'string' ? stored : null) || DEFAULT_CLIENT_API_URL;
-                if (typeof localStorage !== 'undefined') localStorage.setItem(CLIENT_API_STORAGE_KEY, url);
-                return url;
+                return (typeof stored === 'string' ? stored : null) || DEFAULT_CLIENT_API_URL;
             } catch {
-                const fallback = (typeof localStorage !== 'undefined' && localStorage.getItem(CLIENT_API_STORAGE_KEY)) || DEFAULT_CLIENT_API_URL;
-                return fallback;
+                return DEFAULT_CLIENT_API_URL;
             }
         },
 
         /**
-         * Set stored client API URL
+         * Set stored client API URL - uses file-based storage only
          */
         async setStoredClientApiUrl(url) {
             const value = (typeof url === 'string' && url.trim()) ? url.trim() : DEFAULT_CLIENT_API_URL;
-            if (typeof localStorage !== 'undefined') localStorage.setItem(CLIENT_API_STORAGE_KEY, value);
             try {
                 await StorageAPI.config.setItem(CLIENT_API_STORAGE_KEY, value);
             } catch (error) {

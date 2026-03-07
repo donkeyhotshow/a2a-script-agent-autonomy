@@ -383,12 +383,24 @@
 
             const displayText = (messageText || '').trim() || 'continue';
 
-            contentEl.innerHTML = `
-                <div class="task-flow-sending">
-                    <p>Sending: <strong>${escapeHtml(displayText)}</strong></p>
-                    <div class="task-flow-spinner"></div>
-                </div>
-            `;
+            // Add message to history and show waiting state
+            const store = global.SessionStore;
+            if (store?.pushMessage) {
+                store.pushMessage({ content: displayText }, 'user');
+            }
+
+            // Replace only input area with waiting indicator, preserve history
+            const inputArea = contentEl.querySelector('.task-flow-input-area');
+            if (inputArea) {
+                inputArea.outerHTML = `
+                    <div class="task-flow-input-area waiting">
+                        <div class="task-flow-waiting-indicator">
+                            <span class="loading-spinner"></span>
+                            <span>Waiting for response...</span>
+                        </div>
+                    </div>
+                `;
+            }
 
             try {
                 const handler = global.ActionHandler;

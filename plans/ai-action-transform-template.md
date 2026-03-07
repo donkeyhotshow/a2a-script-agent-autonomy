@@ -8,7 +8,7 @@
 
 ### Auto-AI (канонический пример)
 
-**Prompt** — [`a2a-server/prompts/auto-ai-request.md`](a2a-server/prompts/auto-ai-request.md):
+**Prompt** — [`auto-ai-request.md`](../../a2a-server/prompts/auto-ai-request.md):
 - LLM возвращает JSON: `{ step, message, execute, completed }`
 - `step` — явное имя семантического этапа
 - `execute` — action-key shape, ровно одно действие
@@ -44,8 +44,8 @@
 
 | Simulation | Prompt | Transform Pattern | Проблема |
 |------------|--------|-------------------|-----------|
-| `coder-smart` | [`a2a-server/prompts/coder-request.md`](a2a-server/prompts/coder-request.md) | switch по `action`, нет `step` | Не использует `context.execution.step` |
-| `analyze` | [`a2a-server/prompts/analyze-request.md`](a2a-server/prompts/analyze-request.md) | switch по `action`, нет `step` | Не использует `context.execution.step` |
+| `coder-smart` | [`coder-request.md`](../../a2a-server/prompts/coder-request.md) | switch по `action`, нет `step` | Не использует `context.execution.step` |
+| `analyze` | [`analyze-request.md`](../../a2a-server/prompts/analyze-request.md) | switch по `action`, нет `step` | Не использует `context.execution.step` |
 
 ## Переиспользуемый шаблон
 
@@ -165,7 +165,7 @@ mkdir -p templates/ai-action-transforms
 
 ### Шаг 5: Обновить документацию
 
-Добавить в [`AGENTS.md`](AGENTS.md):
+Добавить в [`AGENTS.md`](../AGENTS.md):
 - Секцию о каноническом паттерне AI-actions
 - Ссылку на шаблоны
 

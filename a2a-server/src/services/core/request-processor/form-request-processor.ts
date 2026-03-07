@@ -275,6 +275,81 @@ export class FormRequestProcessor extends BaseRequestProcessor {
                     }
                 } as ProcessResult;
 
+            case 'dialog':
+                // AI Dialog mode - requires LLM processing
+                logger.info('[FormRequestProcessor] Dialog mode selected, routing to AI-Actions', {choiceId});
+                return {
+                    outcome: 'ai_action_ready',
+                    message: 'AI Dialog mode selected',
+                    selection: { choiceId, formId, timestamp: new Date().toISOString() },
+                    context: {
+                        action: 'dialog',
+                        execution: {
+                            step: 'llm-request',
+                            progress: 0
+                        }
+                    },
+                    execute: {
+                        message: 'AI діалог активовано. Очікуйте відповіді від LLM...',
+                        finalResult: {
+                            action: 'dialog',
+                            summary: { mode: 'ai-dialog', status: 'processing' }
+                        }
+                    },
+                    // Signal to route to neuron processor for LLM
+                    aiActions: {
+                        action: 'dialog',
+                        mode: 'llm-driven',
+                        step: 'start',
+                        completed: false
+                    }
+                } as ProcessResult;
+
+            case 'auto-ai':
+                // Auto-AI Action Generator mode
+                logger.info('[FormRequestProcessor] Auto-AI mode selected, routing to AI-Actions', {choiceId});
+                return {
+                    outcome: 'ai_action_ready',
+                    message: 'Auto-AI mode selected',
+                    selection: { choiceId, formId, timestamp: new Date().toISOString() },
+                    context: {
+                        action: 'auto-ai',
+                        execution: {
+                            step: 'llm-request',
+                            progress: 0
+                        }
+                    },
+                    execute: {
+                        message: 'Auto-AI генератор активовано. Аналіз задачі через LLM...',
+                        finalResult: {
+                            action: 'auto-ai',
+                            summary: { mode: 'auto-ai', status: 'processing' }
+                        }
+                    },
+                    aiActions: {
+                        action: 'auto-ai',
+                        mode: 'llm-driven',
+                        step: 'start',
+                        completed: false
+                    }
+                } as ProcessResult;
+
+            case 'task-decomposition':
+                // Task decomposition mode
+                logger.info('[FormRequestProcessor] Task decomposition mode selected', {choiceId});
+                return {
+                    outcome: 'completed',
+                    message: 'Task decomposition mode selected',
+                    selection: { choiceId, formId, timestamp: new Date().toISOString() },
+                    execute: {
+                        message: 'Декомпозиція задачі. Розбиття на підзадачі...',
+                        finalResult: {
+                            action: 'task-decomposition',
+                            summary: { mode: 'decomposition', status: 'processing' }
+                        }
+                    }
+                } as ProcessResult;
+
             default:
                 return {
                     outcome: 'completed',

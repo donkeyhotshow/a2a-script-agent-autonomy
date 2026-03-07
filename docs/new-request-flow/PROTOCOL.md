@@ -62,7 +62,7 @@ doc:
 - Кроки захардкожены в definition действия
 - Сервер сам переключает `execution.step` на основе `result`
 - Предсказуемый, алгоритмический поток
-- **Примеры:** [`fix-vue-imports`](simulations/fix-vue-imports/description.md), [`phpunit-deprecations`](simulations/phpunit-deprecations/description.md)
+- **Примеры:** [`fix-vue-imports`](simulations/fix-vue-imports/description.md), [`phpunit-deprecations`](simulations/phpunit-deprecations/analysis.md)
 
 **Структура execution:**
 ```json

@@ -1,9 +1,9 @@
-﻿# Smoke Testing System - Quick Start
+# Smoke Testing System - Quick Start
 
 ## One Command Setup
-`ash
+```bash
 npm run setup:smoke-system
-`
+```
 
 This command automatically:
 - Fixes smoke test (environment variables for Vite)
@@ -16,32 +16,32 @@ This command automatically:
 ## Available Commands After Setup
 
 ### Smoke Testing
-`ash
+```bash
 npm run smoke-test        # Quick test (~2 min)
 npm run smoke-test:full   # Full test with browser (~3 min)
-`
+```
 
 ### Pre-release Validation
-`ash
+```bash
 npm run pre-release       # Complete validation (~5-10 min)
-`
+```
 
 ### Retrospectives & Analysis
-`ash
+```bash
 npm run retrospective:daily    # Daily analysis
 npm run retrospective:weekly   # Weekly analysis
 npm run setup-retrospectives   # Setup automatic retrospectives
-`
+```
 
 ## System Architecture
 
-`
+```
 Web UI (5173) <-> Client API (3001) <-> A2A Server (3000)
                      ^
                      |
                Infrastructure
                (PostgreSQL + Redis)
-`
+```
 
 ## Monitoring & KPIs
 

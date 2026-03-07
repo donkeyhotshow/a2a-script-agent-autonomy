@@ -148,9 +148,7 @@ Date: [YYYY-MM-DD]
 ## Related Documentation
 
 - [Main Architecture Documentation](../README.md)
-- [Technical Specifications](../technical-specifications.md)
-- [Development Guidelines](../development-guidelines.md)
-- [API Documentation](../api/)
+- [Workflows Documentation](../workflows/)
 
 ## Contributing
 

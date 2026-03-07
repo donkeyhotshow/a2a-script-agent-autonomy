@@ -1057,11 +1057,5 @@ flowchart LR
 
 ## 15. Ссылки
 
-- [Task 26: Transform DSL Executor](tasks/server/26-transform-dsl-executor.md)
-- [Task 27: Request.md Schema and Templates](tasks/server/27-request-md-schema-and-templates.md)
-- [Task 28: LLM Adapter Replay and Logging](tasks/server/28-llm-adapter-replay-and-logging.md)
-- [Task 29: Response.md to Response.json](tasks/server/29-response-md-to-response-json.md)
-- [Task 30: Engine Integration](tasks/server/30-engine-integration-into-endpoints.md)
-- [Task 31: Golden Tests](tasks/server/31-simulation-alignment-and-tests.md)
-- [Simulations Schema](simulations/SCHEMA.md)
-- [Protocol Documentation](docs/new-request-flow/PROTOCOL.md)
+- [Simulations Schema](../simulations/SCHEMA.md)
+- [Protocol Documentation](../new-request-flow/PROTOCOL.md)

@@ -126,7 +126,7 @@ a2a-script-agent/
 | [`ai-session-context.md`](a2a-server/src/actions/definitions/ai-session-context.md)                     | Контекст сесії AI             |
 | [`dialog.md`](a2a-server/src/actions/definitions/dialog.md)                                             | Діалог з LLM                  |
 | [`fix-vue-imports.md`](a2a-server/src/actions/definitions/fix-vue-imports.md)                           | Виправлення Vue імпортів      |
-| [`fix-vue-imports-alternatives.md`](a2a-server/src/actions/definitions/fix-vue-imports-alternatives.md) | Альтернативи                  |
+| [`fix-vue-imports-alternatives.md`](a2a-server/src/actions/definitions/auto-ai/fix-vue-imports-alternatives.md) | Альтернативи                  |
 | [`fix-vue-imports-improvements.md`](a2a-server/src/actions/definitions/fix-vue-imports-improvements.md) | Покращення                    |
 | `analysis/*.md`                                                                                         | Аналізи різних типів проектів |
 | `context/*.md`                                                                                          | Контекст документація         |

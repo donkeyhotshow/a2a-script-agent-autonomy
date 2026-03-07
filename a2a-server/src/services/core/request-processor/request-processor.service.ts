@@ -102,6 +102,47 @@ export async function processOneRequest(): Promise<ProcessResult | null> {
 
         const result = await routeRequest(requestContext);
 
+        // Handle AI-Actions continuation (form choice -> LLM processing)
+        if (result.outcome === 'ai_action_ready' && result.aiActions?.action) {
+            logger.info('[RequestProcessor] AI-Action ready, creating LLM follow-up request', {
+                promiseId,
+                action: result.aiActions.action
+            });
+
+            // Create new request for neuron processor with LLM
+            const followUpRequest = await requestService.create({
+                clientId: promiseId, // Link to original
+                context: {
+                    ...context,
+                    action: result.aiActions.action,
+                    ai_action: true,
+                    previousChoice: result.selection,
+                    task: message ?? context?.task ?? result.aiActions.action,
+                },
+                message: message ?? `AI-Action: ${result.aiActions.action}`,
+            });
+
+            logger.info('[RequestProcessor] Created LLM follow-up request', {
+                originalPromiseId: promiseId,
+                followUpPromiseId: followUpRequest.promiseId,
+                action: result.aiActions.action
+            });
+
+            // Complete current request with reference to follow-up
+            await requestService.updateStatus(
+                promiseId,
+                'completed',
+                {
+                    ...result,
+                    followUpRequestId: followUpPromiseId.promiseId,
+                    note: 'AI-Action routed to LLM processing'
+                }
+            );
+
+            trackRequestComplete(promiseId, true);
+            return result;
+        }
+
         // Update request status based on result
         await requestService.updateStatus(
             promiseId,

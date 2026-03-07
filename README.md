@@ -119,7 +119,7 @@ node scripts/port-manager.js release 3000
 
 Use `node scripts/port-manager.js kill-batch <port>` to terminate the cached PID bundle for a specific port or `node scripts/port-manager.js kill-all` to clear every stored batch before retrying the stack. The orchestrator also runs the `kill-all` cleanup automatically every time it initializes ports, so leftover PID packs from previous sessions are removed before allocation.
 
-See [Port Management Documentation](docs/PORT_MANAGEMENT.md) for details.
+See [System Startup Documentation](docs/SYSTEM_STARTUP.md) for details.
 
 ### Testing
 
@@ -235,11 +235,9 @@ The a2a-server component is now production-ready with:
 | Document | Purpose |
 |----------|---------|
 | [Workflows](workflows/README.md) | **Start here** - How to edit code at every level |
-| [Port Management](docs/PORT_MANAGEMENT.md) | Port allocation, conflict detection, health gating |
-| [Server Inventory Report](docs/server-inventory-report.md) | Full analysis of server systems |
-| [Server Cleanup Decisions](docs/server-cleanup-decisions.md) | Decision form for unused systems |
-| [Implementation Roadmap](plans/server/04-comprehensive-implementation-roadmap.md) | Overall project roadmap |
-| [Progress Report](docs/PROGRESS-2026-03-03.md) | Detailed progress tracking |
+| [System Startup](docs/SYSTEM_STARTUP.md) | Port allocation, conflict detection, health gating |
+| [Machine-Readable Docs](docs/DOCUMENTATION-MACHINE-READABLE.md) | Documentation requirements for parsing |
+| [Troubleshooting](docs/troubleshooting/standardize-stop-scripts.md) | Standardized stop scripts guide |
 
 ### Documentation Requirements (Machine-Readable)
 
@@ -282,4 +280,4 @@ npm run sim:validate
 
 ## Contributing
 
-See [Server Cleanup Decisions](docs/server-cleanup-decisions.md) for current decisions needed.
+Contributions are welcome. Please check the documentation for guidelines.

@@ -104,6 +104,6 @@ When reporting issues, include:
 ## Related Documentation
 
 - **[API Reference](../api-reference/)** - Component method details
-- **[Examples](../examples/)** - Working code samples
+- **[Simulations Documentation](../new-request-flow/SIMULATION-FORMAT.md)** - Working code samples
 - **[Glossary](../glossary.md)** - Technical terminology
 - **[Workflow Documentation](../../workflows/)** - Usage patterns
