@@ -2,6 +2,12 @@
     "name":  "a2a-coding-orchestrator",
     "private":  true,
     "type":  "module",
+    "devRoots":  [
+        "a2a-client",
+        "a2a-server",
+        "ai-integration",
+        "a2a-client/web"
+    ],
     "scripts":  {
                     "dev":  "start-all.bat",
                     "tester":  "cd a2a-client/tester && npm run start",

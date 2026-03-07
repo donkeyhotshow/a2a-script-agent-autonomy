@@ -404,14 +404,16 @@
         async sendResult(result) {
             if (!this.currentSessionId) throw new Error('No active session');
             const response = await this._request('POST', `/sessions/${this.currentSessionId}/result`, result);
-            if (response?.execute) this.processExecute(response.execute, response.context);
+            const payload = response?.data || response;
+            if (payload?.execute) this.processExecute(payload.execute, payload.context);
             return response;
         },
 
         async executeNext(mode = 'manual') {
             if (!this.currentSessionId) throw new Error('No active session');
             const response = await this._request('POST', `/sessions/${this.currentSessionId}/next`, { mode });
-            if (response?.execute) this.processExecute(response.execute, response.context);
+            const payload = response?.data || response;
+            if (payload?.execute) this.processExecute(payload.execute, payload.context);
             return response;
         },
 
@@ -420,7 +422,8 @@
             const response = await this._request('POST', `/sessions/${this.currentSessionId}/action`, {
                 selectedAction: actionId
             });
-            if (response?.execute) this.processExecute(response.execute, response.context);
+            const payload = response?.data || response;
+            if (payload?.execute) this.processExecute(payload.execute, payload.context);
             return response;
         },
 

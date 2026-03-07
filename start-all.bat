@@ -64,20 +64,7 @@ REM Step 4: Start Ollama
 REM ==========================================
 echo.
 echo [Step 4/8] Starting Ollama on port %OLLAMA_PORT%...
-call :wait_port_free %OLLAMA_PORT% 5 || goto :startup_failed
-
-set OLLAMA_PID=
-start /b "" cmd /c "set OLLAMA_HOST=0.0.0.0:%OLLAMA_PORT% && set OLLAMA_MODELS=%OLLAMA_MODELS% && set OLLAMA_ORIGINS=* && ollama serve"
-powershell -Command "Start-Sleep -Seconds 3"
-
-REM Capture Ollama PID
-for /f "tokens=5" %%a in ('netstat -ano ^| findstr ":%OLLAMA_PORT%" ^| findstr "LISTENING"') do (
-    set OLLAMA_PID=%%a
-    echo OLLAMA_PID=%%a >> %PID_FILE%
-    echo [OK] Ollama started (PID: %%a)
-    goto :ollama_done
-)
-echo [ERROR] Could not determine Ollama PID
+call scripts\start-ollama.bat 2>&1
 :ollama_done
 
 REM ==========================================
@@ -85,17 +72,7 @@ REM Step 5: Start ai-integration
 REM ==========================================
 echo.
 echo [Step 5/8] Starting ai-integration on port %PROXY_PORT%...
-call :wait_port_free %PROXY_PORT% 5 || goto :startup_failed
-
-start /b "" cmd /c "cd ai-integration && set OLLAMA_HOST=http://localhost:%OLLAMA_PORT% && set OLLAMA_MODELS=%OLLAMA_MODELS% && python -m uvicorn proxy.asgi:application --host 0.0.0.0 --port %PROXY_PORT%" ^> ..\ai-integration\logs\ai.log 2^>^&1
-powershell -Command "Start-Sleep -Seconds 3"
-
-for /f "tokens=5" %%a in ('netstat -ano ^| findstr ":%PROXY_PORT%" ^| findstr "LISTENING"') do (
-    echo AI_INTEGRATION_PID=%%a >> %PID_FILE%
-    echo [OK] ai-integration started (PID: %%a, log: ai-integration\logs\ai.log)
-    goto :ai_done
-)
-echo [WARN] Could not determine ai-integration PID
+call scripts\start-ai-integration.bat 2>&1
 :ai_done
 
 REM ==========================================
@@ -103,19 +80,7 @@ REM Step 6: Start a2a-server
 REM ==========================================
 echo.
 echo [Step 6/8] Starting a2a-server on port %SERVER_PORT%...
-call :wait_port_free %SERVER_PORT% 5 || goto :startup_failed
-
-cd a2a-server
-start /b "" cmd /c "npm run dev ^> logs\server.log 2^>^&1"
-cd ..
-powershell -Command "Start-Sleep -Seconds 5"
-
-for /f "tokens=5" %%a in ('netstat -ano ^| findstr ":%SERVER_PORT%" ^| findstr "LISTENING"') do (
-    echo A2A_SERVER_PID=%%a >> %PID_FILE%
-    echo [OK] a2a-server started (PID: %%a, log: a2a-server\logs\server.log)
-    goto :server_done
-)
-echo [WARN] Could not determine a2a-server PID
+call scripts\start-a2a-server.bat 2>&1
 :server_done
 
 REM ==========================================
@@ -123,19 +88,7 @@ REM Step 7: Start client-api
 REM ==========================================
 echo.
 echo [Step 7/8] Starting client-api on port %CLIENT_API_PORT%...
-call :wait_port_free %CLIENT_API_PORT% 5 || goto :startup_failed
-
-cd a2a-client\packages\sdk
-start /b "" cmd /c "npm run dev ^> ..\..\logs\client-api.log 2^>^&1"
-cd ..\..\..
-powershell -Command "Start-Sleep -Seconds 5"
-
-for /f "tokens=5" %%a in ('netstat -ano ^| findstr ":%CLIENT_API_PORT%" ^| findstr "LISTENING"') do (
-    echo CLIENT_API_PID=%%a >> %PID_FILE%
-    echo [OK] client-api started (PID: %%a, log: a2a-client\logs\client-api.log)
-    goto :client_api_done
-)
-echo [WARN] Could not determine client-api PID
+call scripts\start-client-api.bat 2>&1
 :client_api_done
 
 REM ==========================================
@@ -143,20 +96,19 @@ REM Step 8: Start web-ui
 REM ==========================================
 echo.
 echo [Step 8/8] Starting web-ui on port %WEB_UI_PORT%...
-call :wait_port_free %WEB_UI_PORT% 5 || goto :startup_failed
-
-cd a2a-client
-start /b "" cmd /c "npm run dev ^> logs\web-ui.log 2^>^&1"
-cd ..
-powershell -Command "Start-Sleep -Seconds 5"
-
-for /f "tokens=5" %%a in ('netstat -ano ^| findstr ":%WEB_UI_PORT%" ^| findstr "LISTENING"') do (
-    echo WEB_UI_PID=%%a >> %PID_FILE%
-    echo [OK] web-ui started (PID: %%a, log: a2a-client\logs\web-ui.log)
-    goto :web_ui_done
-)
-echo [WARN] Could not determine web-ui PID
+call scripts\start-web-ui.bat 2>&1
 :web_ui_done
+
+REM ==========================================
+REM Final verification - Check all PIDs are captured
+REM ==========================================
+echo.
+echo [Final Check] Verifying all PIDs captured...
+call :verify_and_capture_pid %OLLAMA_PORT% OLLAMA_PID "Ollama"
+call :verify_and_capture_pid %PROXY_PORT% AI_INTEGRATION_PID "ai-integration"
+call :verify_and_capture_pid %SERVER_PORT% A2A_SERVER_PID "a2a-server"
+call :verify_and_capture_pid %CLIENT_API_PORT% CLIENT_API_PID "client-api"
+call :verify_and_capture_pid %WEB_UI_PORT% WEB_UI_PID "web-ui"
 
 REM ==========================================
 REM Summary
@@ -176,6 +128,87 @@ type %PID_FILE%
 echo.
 echo To stop all services, run: kill-all.bat
 goto :eof
+
+REM ==========================================
+REM Function: wait_for_pid - Polls for process to appear on port
+REM %1 = port number
+REM %2 = PID variable name (for .pids.txt)
+REM %3 = service name (for display)
+REM %4 = log path (for display)
+REM %5 = max attempts (default 10)
+REM %6 = sleep ms between attempts (default 500)
+REM ==========================================
+:wait_for_pid
+setlocal EnableDelayedExpansion
+set PORT=%~1
+set VAR_NAME=%~2
+set SVC_NAME=%~3
+set LOG_PATH=%~4
+set MAX_ATTEMPTS=%~5
+if "%MAX_ATTEMPTS%"=="" set MAX_ATTEMPTS=10
+set SLEEP_MS=%~6
+if "%SLEEP_MS%"=="" set SLEEP_MS=500
+set ATTEMPTS=0
+
+:pid_poll_loop
+setlocal EnableDelayedExpansion
+set FOUND_PID=
+for /f "tokens=5" %%p in ('netstat -ano ^| findstr ":%PORT%" ^| findstr "LISTENING"') do (
+    if not defined FOUND_PID (
+        set FOUND_PID=%%p
+        echo %VAR_NAME%=%%p >> %PID_FILE%
+        echo [OK] %SVC_NAME% started (PID: %%p, log: %LOG_PATH%)
+    )
+)
+if defined FOUND_PID (
+    endlocal
+    exit /b 0
+)
+endlocal
+set /a ATTEMPTS+=1
+if !ATTEMPTS! geq %MAX_ATTEMPTS% (
+    echo [WARN] Could not determine %SVC_NAME% PID after %MAX_ATTEMPTS% attempts
+    endlocal
+    exit /b 1
+)
+powershell -Command "Start-Sleep -Milliseconds %SLEEP_MS%"
+goto pid_poll_loop
+
+REM ==========================================
+REM Function: verify_and_capture_pid - Final check for missing PIDs
+REM %1 = port number
+REM %2 = PID variable name
+REM %3 = service name
+REM ==========================================
+:verify_and_capture_pid
+setlocal
+set PORT=%~1
+set VAR_NAME=%~2
+set SVC_NAME=%~3
+
+REM Check if already in PID file
+findstr /B "%VAR_NAME%=" %PID_FILE% >nul 2>&1
+if %errorlevel% equ 0 (
+    endlocal
+    exit /b 0
+)
+
+REM Not found - try to capture now
+set FOUND_PID=
+for /f "tokens=5" %%p in ('netstat -ano ^| findstr ":%PORT%" ^| findstr "LISTENING"') do (
+    if not defined FOUND_PID (
+        set FOUND_PID=%%p
+        echo %VAR_NAME%=%%p >> %PID_FILE%
+        echo [CAPTURED] %SVC_NAME% PID: %%p (late capture)
+    )
+)
+if defined FOUND_PID (
+    endlocal
+    exit /b 0
+)
+echo [MISSING] %SVC_NAME% - not running on port %PORT%
+endlocal
+exit /b 1
 
 :startup_failed
 echo.

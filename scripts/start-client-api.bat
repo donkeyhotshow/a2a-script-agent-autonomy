@@ -1,0 +1,33 @@
+@echo off
+chcp 65001 >nul
+REM Start client-api service only
+
+set CLIENT_API_PORT=3001
+set PID_FILE=.pids.txt
+
+echo [Client-API] Starting on port %CLIENT_API_PORT%...
+
+REM Check if already running
+for /f "tokens=5" %%p in ('netstat -ano ^| findstr ":%CLIENT_API_PORT%" ^| findstr "LISTENING"') do (
+    echo [Client-API] Already running on PID %%p
+    echo CLIENT_API_PID=%%p >> %PID_FILE%
+    exit /b 0
+)
+
+REM Start client-api
+cd a2a-client\packages\sdk
+start /b "" cmd /c "npx cross-env DEFAULT_SYNC_MODE=1 tsx watch src/server/index.ts ^> ..\..\logs\client-api.log 2^>^&1"
+cd ..\..\..
+
+powershell -Command "Start-Sleep -Seconds 5"
+
+REM Capture PID
+for /f "tokens=5" %%p in ('netstat -ano ^| findstr ":%CLIENT_API_PORT%" ^| findstr "LISTENING"') do (
+    echo CLIENT_API_PID=%%p >> %PID_FILE%
+    echo [Client-API] Started on PID %%p
+    exit /b 0
+)
+
+echo [Client-API] Failed to start
+echo CLIENT_API_PID= >> %PID_FILE%
+exit /b 1

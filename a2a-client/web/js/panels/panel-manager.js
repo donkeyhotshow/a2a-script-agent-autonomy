@@ -266,6 +266,92 @@
 
         // === Legacy Adapter Methods ===
 
+        getPanel(id) {
+            return this._panels.get(id) || null;
+        },
+
+        createPanel(id, options = {}) {
+            const typeMap = {
+                'task-flow-panel': 'task',
+                'logs-panel': 'logs',
+                'chat-panel': 'chat',
+                'debug-panel': 'debug',
+                'settings-panel': 'settings'
+            };
+            const type = typeMap[id] || options.type || 'floating';
+            const panel = this.create(type, { ...options, id });
+            return panel;
+        },
+
+        showPanel(id) {
+            const panel = this._panels.get(id);
+            if (panel) {
+                panel.show();
+                this.bringToFront(id);
+            }
+            return this;
+        },
+
+        hidePanel(id) {
+            const panel = this._panels.get(id);
+            if (panel) {
+                panel.container.style.display = 'none';
+            }
+            return this;
+        },
+
+        closePanel(id) {
+            return this.close(id);
+        },
+
+        minimizePanel(id) {
+            const panel = this._panels.get(id);
+            if (panel) {
+                panel.minimize();
+            }
+            return this;
+        },
+
+        maximizePanel(id) {
+            const panel = this._panels.get(id);
+            if (panel) {
+                panel.maximize();
+            }
+            return this;
+        },
+
+        movePanel(id, x, y) {
+            const panel = this._panels.get(id);
+            if (panel && panel.config.slot === 'floating') {
+                panel.position.x = x;
+                panel.position.y = y;
+                panel.container.style.left = `${x}px`;
+                panel.container.style.top = `${y}px`;
+            }
+            return this;
+        },
+
+        resizePanel(id, width, height) {
+            const panel = this._panels.get(id);
+            if (panel && panel.config.slot === 'floating') {
+                panel.size.width = width;
+                panel.size.height = height;
+                panel.container.style.width = `${width}px`;
+                panel.container.style.height = `${height}px`;
+            }
+            return this;
+        },
+
+        getPanelStates() {
+            return Array.from(this._panels.values()).map(panel => ({
+                id: panel.id,
+                type: panel.type,
+                state: panel.state,
+                visible: panel.state === global.PANEL_STATES.VISIBLE,
+                minimized: panel.state === global.PANEL_STATES.MINIMIZED
+            }));
+        },
+
         addPanel(opts) {
             // Adapter for legacy PlasticineUI.addPanel() calls
             const typeMap = {

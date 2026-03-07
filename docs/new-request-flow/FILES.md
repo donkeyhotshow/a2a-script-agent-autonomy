@@ -190,11 +190,12 @@ simulations/
 
 ```
 PORT=3000
-DATABASE_URL=postgresql://...
 JWT_SECRET=...
 ENCRYPTION_KEY=32-characters-key-here
 SKIP_AUTH=1
 ```
+
+> **Примітка:** Сервер stateless - не потребує бази даних. Всі дані зберігаються на Client API.
 
 ### External AI Hub
 

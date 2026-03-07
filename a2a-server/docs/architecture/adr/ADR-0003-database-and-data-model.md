@@ -1,208 +1,159 @@
-# ADR-0003: Database and Data Model
+# ADR-0003: Stateless Architecture (Revised)
 
-Status: accepted
+Status: accepted (revised 2026-03-07)
 Date: 2026-03-03
+Original: PostgreSQL + Prisma
+Revised: In-memory stateless
 
 ## Context
 
-The A2A Server requires persistent storage for:
-- **Requests and their states** - Long-running request tracking
-- **Messages and conversations** - Communication history
-- **Client authentication** - User and client management
-- **Action definitions** - Static action configurations
-- **Context and state** - Session and processing context
-- **Audit logs** - Security and compliance tracking
+The A2A Server was originally designed with PostgreSQL for persistence. However, this added operational complexity:
+- Database setup and maintenance
+- Connection management
+- Migration complexity
+- Redis dependency for queues
 
-The data model must support:
-- **High write throughput** for request processing
-- **Complex queries** for status and history retrieval
-- **Data consistency** across related entities
-- **Scalability** for growing data volumes
-- **Backup and recovery** for data protection
-- **Performance** for real-time operations
+The new design principle: **Server is completely stateless**.
 
 ## Decision
 
-Use **PostgreSQL** with **Prisma ORM** for the primary database with the following data model:
+Use **in-memory storage only** - no database required.
 
-### 1. Database Technology
+### 1. Storage Architecture
 
-**PostgreSQL:**
-- **Relational database** with ACID compliance
-- **JSON support** for flexible schema evolution
-- **Performance** for both OLTP and analytical queries
-- **Maturity** and ecosystem support
-- **Scalability** through connection pooling and read replicas
+**Server: Stateless**
+- No persistent storage
+- All data stored in memory only
+- Data lost on restart (by design)
+- No external dependencies
 
-**Prisma ORM:**
-- **Type-safe** database access with TypeScript
-- **Schema migrations** with version control
-- **Developer experience** with auto-completion and validation
-- **Multi-database** support for future flexibility
+**Client API: File-based storage**
+- Sessions stored in JSON files
+- Projects configuration in local files
+- State persists on client side
 
-### 2. Core Entities
+### 2. Core Services (In-Memory)
 
-**Request Entity:**
-```prisma
-model Request {
-  id          String   @id @default(cuid())
-  promiseId   String   @unique
-  clientId    String
-  status      RequestStatus
-  context     Json?
-  message     String?
-  result      Json?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  startedAt   DateTime?
-  completedAt DateTime?
-  
-  client      Client   @relation(fields: [clientId], references: [id])
-  messages    Message[]
-  
-  @@index([status])
-  @@index([clientId])
-  @@index([createdAt])
-}
+**Request Service:**
+```typescript
+// In-memory Map
+const requests = new Map<string, RequestResult>();
 ```
 
-**Message Entity:**
-```prisma
-model Message {
-  id        String     @id @default(cuid())
-  requestId String
-  type      MessageType
-  content   Json
-  status    MessageStatus
-  createdAt DateTime   @default(now())
-  
-  request   Request    @relation(fields: [requestId], references: [id])
-  
-  @@index([requestId])
-  @@index([type, createdAt])
-}
+**Message Service:**
+```typescript
+// In-memory Map
+const messages = new Map<string, Message>();
 ```
 
-**Client Entity:**
-```prisma
-model Client {
-  id           String   @id @default(cuid())
-  name         String   @unique
-  apiKey       String   @unique
-  encryptedKey String
-  isActive     Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  lastUsedAt   DateTime?
-  
-  requests     Request[]
-  
-  @@index([isActive])
-}
+**Client Repository:**
+```typescript
+// In-memory Map
+const clients = new Map<string, Client>();
 ```
 
-### 3. Data Relationships
+**Task Queue:**
+```typescript
+// Simple in-memory array
+const queue: QueueJobData[] = [];
+```
 
-**Request Lifecycle:**
-- One `Client` can have many `Request`s
-- One `Request` can have many `Message`s
-- Messages are ordered by creation time within a request
+### 3. Data Flow
 
-**Context Management:**
-- Request context stored as JSON for flexibility
-- Session context managed in-memory with database backup
-- Entity relationships preserved for consistency
+```
+┌─────────────┐     ┌──────────────┐     ┌─────────────┐
+│   Web UI    │────▶│  Client API  │────▶│ a2a-server  │
+│  (port 5173)│     │ (port 3001)  │     │ (port 3000) │
+└─────────────┘     └──────────────┘     └─────────────┘
+     │                    │                    │
+     │                    │                    │
+     │           ┌────────┴────────┐           │
+     │           │  JSON files     │           │
+     │           │  (sessions)     │           │
+     │           └─────────────────┘           │
+     │                                         │
+     └─────────── State persisted here         │
+                                               │
+                          No storage here ────┘
+```
 
-### 4. Indexing Strategy
+### 4. Rationale
 
-**Primary Indexes:**
-- `Request.id` - Primary key
-- `Request.promiseId` - Unique identifier for external systems
-- `Client.id` and `Client.name` - Client identification
+**Why Stateless?**
+- Simpler deployment - just run `npm start`
+- No database to configure or maintain
+- No connection issues
+- No migrations
+- Horizontal scaling without database coordination
+- Session state naturally belongs to client
 
-**Secondary Indexes:**
-- `Request.status` - For queue management
-- `Request.clientId` - For client-specific queries
-- `Request.createdAt` - For time-based queries
-- `Message.requestId` - For request history
-- `Message.type` and `Message.createdAt` - For message filtering
-
-### 5. Data Retention and Cleanup
-
-**Retention Policies:**
-- **Requests**: Keep for 30 days (configurable)
-- **Messages**: Keep with associated requests
-- **Clients**: Keep indefinitely (with lastUsedAt tracking)
-- **Audit logs**: Keep for 90 days
-
-**Cleanup Strategy:**
-- **Soft deletes** for audit trail
-- **Batch cleanup** jobs for large datasets
-- **Archiving** for long-term storage
-- **Vacuum operations** for performance
-
-### 6. Migration Strategy
-
-**Schema Evolution:**
-- **Prisma migrations** for schema changes
-- **Version control** for migration scripts
-- **Rollback capability** for failed migrations
-- **Zero-downtime** deployments where possible
-
-**Data Migration:**
-- **Backward compatibility** for existing data
-- **Data transformation** scripts for schema changes
-- **Validation** of migrated data
-- **Rollback plans** for migration failures
+**Where is state stored?**
+- Client API (a2a-client) stores sessions in JSON files
+- Web UI maintains UI state
+- Server only processes, doesn't store
 
 ## Consequences
 
 ### Positive
 
-- **Type Safety**: Prisma provides compile-time type checking
-- **Developer Experience**: Excellent tooling and auto-completion
-- **Schema Evolution**: Managed migrations with rollback capability
-- **Performance**: Optimized queries and proper indexing
-- **Consistency**: ACID compliance ensures data integrity
-- **Flexibility**: JSON fields allow schema evolution
+- **Simplicity**: No database setup required
+- **Reliability**: No database connection failures
+- **Portability**: Run anywhere, no external deps
+- **Speed**: In-memory operations are fast
+- **Cost**: No database infrastructure needed
 
 ### Trade-offs
 
-- **Vendor Lock-in**: Prisma ties us to supported databases
-- **Runtime Overhead**: ORM adds some performance overhead
-- **Learning Curve**: Team needs to learn Prisma patterns
-- **Migration Complexity**: Schema changes require careful planning
+- **Data Loss**: Requests lost on server restart (acceptable for short-lived requests)
+- **No Querying**: Can't query historical data on server (Client API handles this)
+- **Single Instance**: Each request must complete on same server instance (no load balancing mid-request)
 
-### Implementation Requirements
+## Migration from Database
 
-- **Database Setup**: PostgreSQL with proper configuration
-- **Connection Pooling**: Efficient connection management
-- **Backup Strategy**: Regular backups with restore testing
-- **Monitoring**: Database performance and health monitoring
-- **Security**: Proper access controls and encryption
+### Removed Components
+- PostgreSQL database
+- Prisma ORM
+- Redis (for queues)
+- Database migrations
+- Connection pooling
 
-## Alternatives Considered
+### Updated Services
+- `request.service.ts` - Map instead of Prisma
+- `message.service.ts` - Map instead of Prisma
+- `client.repository.ts` - Map instead of Prisma
+- `request-queue.service.ts` - Array instead of BullMQ
+- `database.ts` - No-op stub
 
-### 1. NoSQL Database (MongoDB)
-- **Pros**: Flexible schema, horizontal scaling
-- **Cons**: Complex transactions, eventual consistency
-- **Rejected**: Relational model better fits our data relationships
+### Package.json Changes
+```json
+// Removed:
+- @prisma/client
+- prisma
+- pg
+- @types/pg
+- bullmq
+- ioredis
+```
 
-### 2. SQLite for Development
-- **Pros**: Simple setup, no external dependencies
-- **Cons**: Limited scalability, single-writer
-- **Rejected**: PostgreSQL provides better production readiness
+## Environment Variables
 
-### 3. Multiple Databases
-- **Pros**: Optimized storage per use case
-- **Cons**: Data consistency challenges, operational complexity
-- **Rejected**: Single database simpler for current scale
+**Before:**
+```
+DATABASE_URL=postgresql://...
+REDIS_URL=redis://...
+```
 
-## Notes / Follow-ups
+**After:**
+```
+# No database variables needed
+PORT=3000
+JWT_SECRET=...
+SKIP_AUTH=1
+```
 
-- Implement database connection pooling for performance
-- Add database monitoring and alerting
-- Plan for read replicas for scaling read operations
-- Consider implementing caching layer for frequently accessed data
-- Implement proper backup and disaster recovery procedures
-- Add database performance tuning and optimization
-- Consider implementing data encryption at rest
+## Notes
+
+- Server restart clears all pending requests
+- Client API handles session persistence
+- Queue is in-memory only (no persistence)
+- Health check removed `/api/v1/health/database` endpoint

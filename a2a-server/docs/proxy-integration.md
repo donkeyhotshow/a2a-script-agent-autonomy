@@ -136,12 +136,13 @@ PROXY_RETRY_DELAY_MS=1000
 PROXY_RETRY_MAX_DELAY_MS=30000
 PROXY_RETRY_BACKOFF_MULTIPLIER=2
 
-# Cache Configuration
+# Cache Configuration (in-memory only)
 PROXY_CACHE_ENABLED=true
 PROXY_CACHE_TTL_SECONDS=300
 PROXY_CACHE_MAX_ITEMS=1000
-PROXY_CACHE_REDIS_URL=redis://localhost:6379
 PROXY_CACHE_KEY_PREFIX=a2a:proxy
+
+# Note: Redis L2 cache removed - server is stateless
 
 # Rate Limiting
 PROXY_RATE_LIMIT_ENABLED=true
@@ -416,10 +417,8 @@ const cache = getProxyCacheService({
     ttlSeconds: 600,
 });
 
-// Use Redis for distributed caching
-const cache = getProxyCacheService({
-    redisUrl: 'redis://cluster:6379',
-});
+// Note: Redis L2 cache removed - server is stateless
+// All caching is in-memory only (L1)
 ```
 
 ### Retry Configuration

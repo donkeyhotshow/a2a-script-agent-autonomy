@@ -34,12 +34,8 @@
 │   Web UI    │────▶│  Client API  │────▶│ a2a-server  │────▶│ External AI Hub │
 │  (port 5173)│     │ (port 3001)  │     │ (port 3000) │     │  (ai-integration)│
 └─────────────┘     └──────────────┘     └─────────────┘     └─────────────────┘
-                                                │
-                                                ▼
-                                        ┌───────────────┐
-                                        │  PostgreSQL   │
-                                        │   + Redis     │
-                                        └───────────────┘
+                                                                          
+                                          Stateless - no database
 ```
 
 ### Ключевые Принципы
@@ -70,7 +66,7 @@ POST /api/v1/invoke
           ▼
 ┌───────────────────┐
 │  request.service  │
-│  (создание в БД)  │
+│  (in-memory only) │
 └─────────┬─────────┘
           │
           ▼
@@ -522,8 +518,9 @@ simulations/
 
 | Переменная | Описание | Пример |
 |------------|----------|--------|
-| `DATABASE_URL` | PostgreSQL connection string | `postgresql://user:pass@localhost:5432/a2a_server` |
 | `JWT_SECRET` | Минимум 32 символа | `your-super-secret-key` |
+
+> **Примечание:** Сервер stateless - не требует `DATABASE_URL` или других переменных базы данных.
 
 #### Опциональные (с значениями по умолчанию)
 
@@ -559,17 +556,17 @@ simulations/
 | Порт | Назначение |
 |------|------------|
 | `3000` | HTTP сервер (по умолчанию) |
-| `3001` | WebSocket порт |
-| `5432` | PostgreSQL (docker) |
-| `6379` | Redis (docker) |
+| `3001` | Client API (хранит сессии) |
+| `5173` | Web UI (Vite dev server) |
+
+> **Примечание:** Порты `5432` (PostgreSQL) и `6379` (Redis) больше не используются - сервер stateless.
 
 ### Запуск в Dev-режиме
 
 #### Требования
 
 - Node.js 20+
-- Docker & Docker Compose
-- PostgreSQL 16 с pgvector
+- Ollama (опционально, для AI-функций)
 
 #### Команды
 
@@ -577,38 +574,36 @@ simulations/
 # 1. Установка зависимостей
 npm install
 
-# 2. Копировать env
-cp .env.example .env
+# 2. Создать .env файл
+cat > .env << EOF
+NODE_ENV=development
+JWT_SECRET=your-32-char-secret-key-here-min-length
+ENCRYPTION_KEY=your-32-char-encryption-key-here!!
+SKIP_AUTH=1
+EOF
 
-# 3. Запустить PostgreSQL и Redis
-npm run docker:up
-
-# 4. Генерация Prisma клиента
-npm run prisma:generate
-
-# 5. Применить миграции
-npm run prisma:migrate
-
-# 6. Запуск dev сервера
+# 3. Запуск dev сервера (stateless - нет database!)
 npm run dev              # С auth
 npm run dev:no-auth      # Без auth (SKIP_AUTH=1)
 ```
 
-#### Docker Compose
+> **Важно:** Сервер теперь stateless. Не требует PostgreSQL, Redis, или Prisma.
+
+#### Docker Compose (только AI Integration)
 
 ```yaml
 services:
-  postgres:
-    image: pgvector/pgvector:pg16
-    ports: ["5432:5432"]
+  ollama:
+    image: ollama/ollama:latest
+    ports: ["11435:11434"]
+    volumes:
+      - ollama_data:/root/.ollama
 
-  redis:
-    image: redis:7-alpine
-    ports: ["6379:6379"]
-
-  app:
-    build: .
-    ports: ["3000:3000", "3001:3001"]
+  ai-proxy:
+    build: ./ai-integration
+    ports: ["11434:11434"]
+    environment:
+      - OLLAMA_HOST=http://ollama:11434
 ```
 
 ### Health Checks

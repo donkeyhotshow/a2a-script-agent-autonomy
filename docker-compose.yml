@@ -1,43 +1,4 @@
 services:
-  # PostgreSQL with pgvector extension
-  postgres:
-    image: pgvector/pgvector:pg16
-    container_name: a2a-postgres
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER:-a2a}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-a2a_secret}
-      POSTGRES_DB: ${POSTGRES_DB:-a2a_server}
-    ports:
-      - "${POSTGRES_PORT:-5432}:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-a2a} -d ${POSTGRES_DB:-a2a_server}"]
-      interval: 5s
-      timeout: 3s
-      retries: 10
-      start_period: 10s
-    networks:
-      - a2a-network
-
-  # Redis for caching and queues
-  redis:
-    image: redis:7-alpine
-    container_name: a2a-redis
-    ports:
-      - "${REDIS_PORT:-6379}:6379"
-    volumes:
-      - redis_data:/data
-    command: redis-server --appendonly yes
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 3s
-      retries: 10
-      start_period: 5s
-    networks:
-      - a2a-network
-
   # AI Proxy Service
   ai-proxy:
     build:
@@ -51,7 +12,7 @@ services:
       - PROXY_HOST=0.0.0.0
       - OLLAMA_HOST=http://ollama:11434
       - OLLAMA_MODEL=${OLLAMA_MODEL:-qwen3:8b}
-      - OLLAMA_TIMEOUT=60
+      - OLLAMA_TIMEOUT=6000
       - OLLAMA_AUTO_START=false
       - STORAGE_DIR=/app/proxy_logs
       - LOG_LEVEL=INFO
@@ -102,8 +63,6 @@ services:
       - full
 
 volumes:
-  postgres_data:
-  redis_data:
   ollama_data:
   ai_proxy_logs:
 

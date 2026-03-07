@@ -16,11 +16,9 @@ import {
     actionRequestProcessor,
     simulationRequestProcessor,
     formRequestProcessor,
-    neuronRequestProcessor,
     processorRegistry
 } from './index.js';
 import type {RequestType} from './request-processor.interfaces.js';
-import {trackRequestComplete, trackRequestError} from '../../utils/pipeline-observability.service.js';
 
 const DEFAULT_INTERVAL_MS = 5000;
 let timerId: ReturnType<typeof setInterval> | null = null;
@@ -29,7 +27,6 @@ let timerId: ReturnType<typeof setInterval> | null = null;
 processorRegistry.register('action', actionRequestProcessor);
 processorRegistry.register('simulation', simulationRequestProcessor);
 processorRegistry.register('form', formRequestProcessor);
-processorRegistry.register('neuron', neuronRequestProcessor);
 
 /**
  * Determine the request type based on context
@@ -55,8 +52,8 @@ function determineRequestType(context: Record<string, unknown>): RequestType {
         return 'action';
     }
 
-    // Default to neuron processing
-    return 'neuron';
+    // Default to action processing for simulations
+    return 'action';
 }
 
 /**
@@ -140,7 +137,6 @@ export async function processOneRequest(): Promise<ProcessResult | null> {
                 }
             );
 
-            trackRequestComplete(promiseId, true);
             return result;
         }
 
@@ -151,9 +147,6 @@ export async function processOneRequest(): Promise<ProcessResult | null> {
             result
         );
         
-        // Track request completion for observability
-        trackRequestComplete(promiseId, result.outcome !== 'failed');
-
         return result;
 
     } catch (err) {
@@ -162,8 +155,6 @@ export async function processOneRequest(): Promise<ProcessResult | null> {
             code: 'PROCESS_ERROR',
             message: String(err),
         });
-        // Track request error for observability
-        trackRequestError(promiseId, 'PROCESS_ERROR');
         return {outcome: 'failed' as ProcessOutcome};
     }
 }

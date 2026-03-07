@@ -76,6 +76,10 @@ $step1Response = Invoke-RestMethod -Uri "$baseUrl/api/sessions" -Method POST -Bo
 $sessionId = $step1Response.session.id
 Write-Host "  Session ID: $sessionId"
 
+# Debug: Show what the server actually returned
+Write-Host "  Server response:" -ForegroundColor Cyan
+$step1Response.serverResponse | ConvertTo-Json -Depth 5 | Write-Host
+
 # Check if sync or async response
 if ($step1Response.serverResponse.data.execute) {
     Write-Host "  Sync response detected"
@@ -90,26 +94,31 @@ if ($step1Response.serverResponse.data.execute) {
         Write-Host "  WARNING: Expected router form but got something else" -ForegroundColor Yellow
     }
 } else {
-    Write-Host "  ASYNC: Response pending, poll for result at /api/v1/requests/$($step1Response.serverResponse.data.promiseId)/status" -ForegroundColor Yellow
-    # Poll for async result
+    Write-Host "  ASYNC: Response pending" -ForegroundColor Yellow
     $promiseId = $step1Response.serverResponse.data.promiseId
-    $maxPolls = 30
-    $pollCount = 0
-    do {
-        Start-Sleep 1
-        $pollCount++
-        $statusResponse = Invoke-RestMethod -Uri "$baseUrl/api/v1/requests/$promiseId/status" -Method GET
-        Write-Host "  Poll $pollCount : status = $($statusResponse.status)" -ForegroundColor Gray
-    } while ($statusResponse.status -eq "pending" -and $pollCount -lt $maxPolls)
+    Write-Host "  PromiseId: '$promiseId'" -ForegroundColor Yellow
+    if ($promiseId) {
+        # Poll for async result
+        $maxPolls = 30
+        $pollCount = 0
+        do {
+            Start-Sleep 1
+            $pollCount++
+            $statusResponse = Invoke-RestMethod -Uri "$baseUrl/api/v1/requests/$promiseId/status" -Method GET
+            Write-Host "  Poll $pollCount : status = $($statusResponse.status)" -ForegroundColor Gray
+        } while ($statusResponse.status -eq "pending" -and $pollCount -lt $maxPolls)
 
-    if ($statusResponse.status -eq "completed" -and $statusResponse.result) {
-        Write-Host "  ASYNC result received" -ForegroundColor Green
-        Test-Response $statusResponse.result "../../simulations/dialog/1/response.json" @(
-            "context.execution.step",
-            "execute.form.choices"
-        )
+        if ($statusResponse.status -eq "completed" -and $statusResponse.result) {
+            Write-Host "  ASYNC result received" -ForegroundColor Green
+            Test-Response $statusResponse.result "../../simulations/dialog/1/response.json" @(
+                "context.execution.step",
+                "execute.form.choices"
+            )
+        } else {
+            Write-Host "  ASYNC result timeout or failed" -ForegroundColor Red
+        }
     } else {
-        Write-Host "  ASYNC result timeout or failed" -ForegroundColor Red
+        Write-Host "  ERROR: No promiseId in async response" -ForegroundColor Red
     }
 }
 

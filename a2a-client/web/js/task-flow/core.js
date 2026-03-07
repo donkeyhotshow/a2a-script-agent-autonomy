@@ -265,8 +265,7 @@
                 // Initialize SessionStore for this session
                 const store = global.SessionStore;
                 if (store) {
-                    store.sessionId = sessionId;
-                    store.projectId = projectId;
+                    store.setSession(sessionId, projectId);
                 }
 
                 // Connect transport (SSE primary, WebSocket fallback)
@@ -336,6 +335,9 @@
             `;
 
             try {
+                // Start waiting for response BEFORE submitting (prevents race condition)
+                const outcomePromise = waitForFirstResponse(60000);
+
                 const handler = global.ActionHandler;
                 let result;
 
@@ -351,7 +353,7 @@
                 }
 
                 // Wait for response via SSE
-                const outcome = await waitForFirstResponse(60000);
+                const outcome = await outcomePromise;
                 if (outcome.execute) {
                     setPanelContent(contentEl, 'execute', { execute: outcome.execute, sessionId, projectId }, this);
                     updateStatus(contentEl, 'Received response');
@@ -403,6 +405,9 @@
             }
 
             try {
+                // Start waiting for response BEFORE submitting (prevents race condition)
+                const outcomePromise = waitForFirstResponse(60000);
+
                 const handler = global.ActionHandler;
                 let result;
 
@@ -418,7 +423,7 @@
                 }
 
                 // Wait for response via SSE
-                const outcome = await waitForFirstResponse(60000);
+                const outcome = await outcomePromise;
                 if (outcome.execute) {
                     setPanelContent(contentEl, 'execute', { execute: outcome.execute, sessionId, projectId }, this);
                     updateStatus(contentEl, 'Received response');

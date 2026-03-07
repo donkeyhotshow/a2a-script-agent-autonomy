@@ -95,8 +95,7 @@
 ```
 
 **Взаимодействие:**
-- [`request.service.ts`](a2a-server/src/services/request.service.ts) - CRUD операции
-- Prisma Client - работа с БД
+- [`request.service.ts`](a2a-server/src/services/request.service.ts) - CRUD операции (in-memory)
 
 ---
 

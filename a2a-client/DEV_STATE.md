@@ -1,4 +1,4 @@
-# DEV_STATE - a2a-client (2026-03-06)
+# DEV_STATE - a2a-client (2026-03-07)
 
 ## Web UI (Порт 5173)
 
@@ -123,6 +123,62 @@ npm run test:performance              # Тестирование произво�
 
 - Запросы остаются в статусе "pending", так как асинхронный обработчик (promise-daemon) не запущен
 - Для полноценной обработки запросов необходимо запустить `promise-daemon` или аналогичный процессор
+
+---
+
+## Исправленные баги (2026-03-07)
+
+### Обзор исправлений
+
+Исправлено 6 критических багов в кодовой базе:
+
+| Bug ID | Компонент | Проблема | Решение |
+|--------|-----------|----------|---------|
+| **Bug 12** | `task-flow/core.js` | Попытка присвоения к getter-only свойствам `store.sessionId`/`store.projectId` | Замена на `store.setSession(sessionId, projectId)` |
+| **Bug 13** | `task-flow/core.js` | Race condition в `sendChoice`/`sendMessageResult` | Перемещение `waitForFirstResponse()` перед `handler.submit()` |
+| **Bug 14** | `packages/sdk/src/server/index.ts` | PATCH `/sessions` позволяет перезаписывать критические поля | Добавлен whitelist разрешенных полей обновления |
+| **Bug 15** | `web/js/app/window-manager.js` | Singleton SessionStore делится между окнами сессий | Создание per-window SessionStore экземпляров |
+| **Bug 16** | `web/js/session-store.js` | `reset()` пропускает `promisePending: false` | Добавлено `promisePending: false` в reset state |
+| **Bug 17** | `packages/sdk/src/server/index.ts` | WebSocket handlers всегда используют `projects[0]` | Замена на `findSessionInAllProjects(sessionId)` |
+
+### Детали исправлений
+
+#### Bug 12: Getter-only свойства SessionStore
+**Проблема:** В `task-flow/core.js` метод `_doRun` пытался присвоить значения свойствам `store.sessionId` и `store.projectId`, которые определены как getters без setters.
+
+**Решение:** Заменил прямое присвоение на вызов метода `store.setSession(sessionId, projectId)`.
+
+#### Bug 13: Race condition в обработке ответов
+**Проблема:** `handler.submit()` выполнялся до подписки на события в `waitForFirstResponse()`, что приводило к потере события `execute`.
+
+**Решение:** Переместил создание промиса `waitForFirstResponse()` перед вызовом `handler.submit()`.
+
+#### Bug 14: Уязвимость PATCH endpoint
+**Проблема:** PATCH `/sessions/:sessionId` позволял клиентам перезаписывать критические поля (`id`, `projectId`, `createdAt`).
+
+**Решение:** Добавлен whitelist разрешенных полей: `title`, `task`, `status`, `selectedAction`, `lastPromiseId`, `messages`, `version`, `execution`.
+
+#### Bug 15: Конфликт SessionStore между окнами
+**Проблема:** Все окна сессий использовали один глобальный `SessionStore`, что приводило к перезаписи данных между окнами.
+
+**Решение:** Изменен `SessionStore` с object literal на constructor function, созданы per-window экземпляры.
+
+#### Bug 16: Неполное состояние reset
+**Проблема:** Метод `reset()` не включал `promisePending: false` в новое состояние.
+
+**Решение:** Добавлено `promisePending: false` в объект состояния reset.
+
+#### Bug 17: Неправильный поиск проекта в WebSocket
+**Проблема:** WebSocket handlers `handleChoiceSelection` и `handleActionResult` всегда использовали `projects[0]`.
+
+**Решение:** Заменено на `findSessionInAllProjects(sessionId)` для поиска правильного проекта.
+
+### Архитектурные изменения
+
+- **SessionStore**: Переход от singleton к multi-instance архитектуре
+- **Window Manager**: Поддержка per-window SessionStore экземпляров
+- **Server Security**: Field whitelisting для PATCH операций
+- **WebSocket**: Правильное разрешение проектов для сессий
 
 ---
 

@@ -403,12 +403,13 @@ simulations/{simulation-name}/
 **Server (.env)**:
 ```
 PORT=3000
-DATABASE_URL=postgresql://user:pass@localhost:5432/a2a_server
 JWT_SECRET=your-32-character-minimum-secret-key
 ENCRYPTION_KEY=32-characters-key-here
 SKIP_AUTH=1
 REQUEST_PROCESSOR_INTERVAL_MS=5000
 ```
+
+> **Note:** Server is stateless - no database required. All state is stored by Client API.
 
 **AI Hub (ai-integration)**:
 ```
@@ -431,7 +432,7 @@ AI_HUB_CONFIG=path/to/config.json
 ### Startup
 
 ```bash
-# Server
+# Server (stateless - no database needed)
 cd a2a-server
 npm install
 npm run dev
@@ -441,7 +442,7 @@ cd ai-integration
 pip install -r requirements.txt
 python -m proxy
 
-# Or with Docker
+# Or with Docker (AI services only, no database)
 docker-compose up
 ```
 
@@ -451,8 +452,9 @@ docker-compose up
 GET /health                          - Basic health
 GET /api/v1/health/live              - Liveness probe
 GET /api/v1/health/ready             - Readiness probe
-GET /api/v1/health/database          - Database check
 ```
+
+> **Note:** No database health check - server is stateless.
 
 ---
 

@@ -210,7 +210,7 @@
             const check = () => {
                 const transportReady = window._transportModulesLoaded || typeof window.TransportManager !== 'undefined';
                 const appReady = window._appModulesLoaded || typeof window.SessionManager !== 'undefined';
-                const panelReady = typeof window.Panel !== 'undefined' && typeof window.PanelManager !== 'undefined';
+                const panelReady = window._panelModulesLoaded && typeof window.Panel !== 'undefined' && typeof window.PanelManager !== 'undefined';
 
                 if (transportReady && appReady && panelReady) {
                     resolve();

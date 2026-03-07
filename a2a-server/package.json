@@ -1,10 +1,11 @@
 {
   "name": "a2a-server",
   "version": "1.0.0",
-  "description": "A2A (Agent-to-Agent) Server - Intelligent code analysis and transformation server",
+  "description": "A2A (Agent-to-Agent) Server - Intelligent code analysis and transformation server (stateless edition)",
   "main": "dist/index.js",
   "scripts": {
-    "dev": "cross-env NODE_ENV=development tsx watch src/index.ts",
+    "dev": "..\\scripts\\start-a2a-server.bat",
+    "dev:local": "cross-env NODE_ENV=development tsx watch src/index.ts",
     "dev:no-auth": "cross-env SKIP_AUTH=1 tsx watch src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
@@ -15,19 +16,9 @@
     "test:record": "cross-env TEST_MODE=recording vitest run",
     "test:replay": "cross-env TEST_MODE=replay vitest run",
     "test:real": "cross-env TEST_MODE=real vitest run",
-    "test:config": "cross-env TEST_MODE=mocked vitest run tests/integration/configurable.test.ts",
     "lint": "eslint src/**/*.ts",
     "lint:fix": "eslint src/**/*.ts --fix",
     "format": "prettier --write \"src/**/*.ts\"",
-    "prisma:generate": "prisma generate",
-    "prisma:migrate": "prisma migrate dev",
-    "prisma:studio": "prisma studio",
-    "prisma:seed": "ts-node prisma/seed.ts",
-    "init-db": "tsx scripts/init-db.ts",
-    "export-db": "tsx scripts/export-db.ts",
-    "docker:up": "docker-compose up -d",
-    "docker:down": "docker-compose down",
-    "docker:logs": "docker-compose logs -f",
     "sim:create": "tsx scripts/sim-scaffold.ts",
     "sim:run": "tsx scripts/sim-run.ts",
     "sim:run-all": "tsx scripts/sim-run.ts --all",
@@ -36,42 +27,29 @@
     "sim:validate": "tsx scripts/sim-validate.ts",
     "sim:validate:all": "tsx scripts/sim-validate.ts --all",
     "sim:compare": "tsx scripts/sim-compare.ts",
-    "sim:report": "tsx scripts/sim-report.ts",
-    "test:sim": "tsx scripts/sim-run.ts",
-    "test:sim:all": "tsx scripts/sim-run.ts --all",
-    "test:sim:validate": "tsx scripts/sim-validate.ts",
-    "test:sim:validate:all": "tsx scripts/sim-validate.ts --all",
-    "ci:validate": "npm run sim:validate:all",
-    "ci:sim": "npm run sim:run-all"
+    "sim:report": "tsx scripts/sim-report.ts"
   },
   "keywords": [
     "a2a",
     "agent-to-agent",
     "code-analysis",
-    "ml",
-    "laravel",
-    "semantic-search"
+    "stateless"
   ],
   "author": "",
   "license": "MIT",
   "dependencies": {
     "@a2a/rag": "file:../a2a-client/packages/rag",
-    "@prisma/client": "^5.8.1",
-    "@types/pg": "^8.16.0",
     "bcrypt": "^5.1.1",
-    "bullmq": "^5.1.0",
     "compression": "^1.7.4",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
     "handlebars": "^4.7.8",
     "helmet": "^7.1.0",
-    "ioredis": "^5.3.2",
     "js-yaml": "^4.1.1",
     "jsonpath-plus": "^10.4.0",
     "jsonwebtoken": "^9.0.2",
     "multer": "^1.4.5-lts.1",
-    "pg": "^8.18.0",
     "simple-git": "^3.22.1",
     "uuid": "^9.0.1",
     "winston": "^3.11.0",
@@ -101,7 +79,6 @@
     "jsonify": "^0.0.1",
     "nock": "^13.5.6",
     "prettier": "^3.2.4",
-    "prisma": "^5.8.1",
     "supertest": "^6.3.4",
     "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
@@ -111,8 +88,5 @@
   },
   "engines": {
     "node": ">=20.0.0"
-  },
-  "prisma": {
-    "seed": "tsx prisma/seed.ts"
   }
 }

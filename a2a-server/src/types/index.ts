@@ -2,7 +2,7 @@
 
 // Protocol types based on a2a-codebase-agen-v1.md
 
-import type {ProtocolVersion} from '../protocol/versioning/protocol-versions.js';
+type ProtocolVersion = '0.1.0' | '1.0.0';
 
 // Re-export Unified JSON types
 export * from './unified.js';

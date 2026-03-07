@@ -28,10 +28,10 @@ Implement a multi-level testing pipeline with increasing complexity and scope, f
 - **Environment**: Isolated LLM mocks, local daemon processes
 
 **Level 2: A2A Server Testing**
-- **Scope**: API endpoints, neuron processing, database operations
-- **Tools**: Integration tests, API tests, database tests
-- **Focus**: Request processing, data persistence, authentication
-- **Environment**: Test database, mock external services
+- **Scope**: API endpoints, neuron processing, stateless request handling
+- **Tools**: Integration tests, API tests
+- **Focus**: Request processing, in-memory state, authentication
+- **Environment**: Stateless server (no database), mock external services
 
 **Level 3: A2A Client Testing**
 - **Scope**: Client API proxy, SDK functionality, WebSocket/SSE

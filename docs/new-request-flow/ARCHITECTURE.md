@@ -373,12 +373,13 @@ SIMULATION_ENABLED=false # Включить симуляцию
 ```
 
 PORT=3000
-DATABASE_URL=postgresql://...
 JWT_SECRET=...
 ENCRYPTION_KEY=32-characters-key-here
 SKIP_AUTH=1
 
 ```
+
+> **Примечание:** Сервер stateless - не требует базы данных. Все данные хранятся на Client API.
 
 ### Client
 ```

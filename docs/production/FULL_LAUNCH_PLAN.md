@@ -1,56 +1,46 @@
-# План полного запуска продакшн режима
+# План полного запуска (Stateless версия)
 
 ## Полный цикл: Client → Server → AI → Response (туда и обратно)
+
+> **Важно:** Сервер теперь stateless - не требует PostgreSQL, Redis, RabbitMQ.
+> Все данные хранятся на Client API (JSON файлы).
 
 ---
 
 ## 1. Предварительные требования
 
 ### 1.1 Установленные компоненты
-- Docker + Docker Compose
+- Docker + Docker Compose (только для AI Integration)
 - Node.js 18+ (для a2a-server и a2a-client)
 - Python 3.9+ (для ai-integration прокси)
 - Ollama с установленными моделями
 
-### 1.2 Требуемые порты (должны быть свободны)
+### 1.2 Требуемые порты
 | Порт | Компонент | Описание |
 |------|-----------|----------|
-| 5432 | PostgreSQL | База данных |
-| 6379 | Redis | Очереди и кэш |
-| 5672 | RabbitMQ | AMQP брокер |
-| 11434 | Ollama | LLM сервер |
-| 3000 | a2a-server | A2A API сервер |
-| 3001 | a2a-client | Client API |
+| 11434 | AI Integration | LLM прокси |
+| 11435 | Ollama | LLM сервер |
+| 3000 | a2a-server | A2A API сервер (stateless) |
+| 3001 | a2a-client | Client API (хранит сессии) |
 | 5173 | Vite Dev | Web UI |
+
+> **Примечание:** Порты 5432 (PostgreSQL), 6379 (Redis), 5672 (RabbitMQ) больше не используются.
 
 ---
 
 ## 2. Последовательность запуска
 
-### ЭТАП 1: Запуск инфраструктуры
-
-```bash
-# Запуск PostgreSQL, Redis, RabbitMQ
-cd a2a-script-agent
-docker-compose up -d postgres redis rabbitmq
-
-# Проверка готовности
-docker ps
-```
-
-**Ожидаемый результат:** 3 контейнера работают (postgres, redis, rabbitmq)
-
-### ЭТАП 2: Запуск Ollama
+### ЭТАП 1: Запуск Ollama (единственная внешняя зависимость)
 
 ```bash
 # Запуск Ollama
-docker run -d -v ollama_data:/root/.ollama -p 11434:11434 --name ollama ollama/ollama:latest
+docker run -d -v ollama_data:/root/.ollama -p 11435:11434 --name ollama ollama/ollama:latest
 
 # Установка модели (обязательно)
 docker exec ollama ollama pull qwen3:8b
 
 # Проверка
-curl http://localhost:11434/api/tags
+curl http://localhost:11435/api/tags
 ```
 
 **Ожидаемый ответ:**
@@ -68,18 +58,28 @@ curl http://localhost:11434/api/tags
 
 > ⚠️ **КРИТИЧНО:** Без модели дальнейший запуск невозможен!
 
+### ЭТАП 2: Запуск AI Integration (опционально, для проксирования)
+
+```bash
+cd ai-integration
+pip install -r requirements.txt
+python -m proxy
+```
+
 ### ЭТАП 3: Настройка переменных окружения
 
 ```bash
-# Основные переменные для продакшна
-export DATABASE_URL="postgresql://postgres:postgres@localhost:5432/a2a_server"
-export REDIS_URL="redis://localhost:6379"
-export RABBITMQ_URL="amqp://guest:guest@localhost:5672"
-export OLLAMA_URL="http://localhost:11434"
+# Основные переменные (stateless - нет database/redis)
+export OLLAMA_URL="http://localhost:11435"
 export OLLAMA_MODEL="qwen3:8b"
 export SKIP_AUTH="1"  # Только для dev!
 export ENCRYPTION_KEY="12345678901234567890123456789012"  # 32 символа
+
+# AI Integration (если запущен)
+export AI_HUB_URL="http://localhost:11434"
 ```
+
+> **Примечание:** `DATABASE_URL` и `REDIS_URL` больше не требуются!
 
 ### ЭТАП 4: Запуск a2a-server
 
@@ -89,10 +89,8 @@ cd a2a-server
 # Установка зависимостей
 npm install
 
-# Запуск в продакшн режиме
-NODE_ENV=production npm run start
-# Или dev режим с hot reload
-npm run dev
+# Запуск (stateless - no db needed!)
+NODE_ENV=development npm run dev
 ```
 
 **Проверка:**
@@ -100,19 +98,12 @@ npm run dev
 curl http://localhost:3000/health
 ```
 
-### ЭТАП 5: Запуск ai-integration прокси
-
-```bash
-cd ai-integration
-python -m proxy
+Ожидаемый ответ:
+```json
+{"status": "ok", "mode": "stateless"}
 ```
 
-**Проверка:**
-```bash
-curl http://localhost:5000/api/tags
-```
-
-### ЭТАП 6: Запуск a2a-client
+### ЭТАП 5: Запуск a2a-client
 
 ```bash
 cd a2a-client
@@ -120,172 +111,155 @@ cd a2a-client
 # Установка зависимостей
 npm install
 
-# Сборка
-npm run build
-
-# Запуск
+# Запуск Client API (port 3001) - хранит сессии в JSON
 npm run dev
 ```
 
-**Проверка:** Открыть http://localhost:5173 в браузере
-
----
-
-## 3. Проверка сквозного цикла
-
-### 3.1 Быстрый тест через curl
+### ЭТАП 6: Запуск Web UI
 
 ```bash
-# Создание сессии
-curl -X POST http://localhost:3000/api/sessions \
-  -H "Content-Type: application/json" \
-  -d '{"projectId": "test-prod"}'
+cd a2a-client/web
 
-# Отправка задачи (симуляция первого клиента)
-curl -X POST http://localhost:3000/api/requests \
-  -H "Content-Type: application/json" \
-  -d '{
-    "sessionId": "<session_id>",
-    "content": "Hello, this is production test",
-    "mode": "production"
-  }'
-```
+# Установка зависимостей
+npm install
 
-### 3.2 Тест через WebSocket
-
-```bash
-# Подключение к WebSocket
-wscat -c ws://localhost:3000/ws?sessionId=<session_id>
-
-# Отправка сообщения
-{"type": "message", "content": "Привет"}
+# Запуск Web UI (port 5173)
+npm run dev
 ```
 
 ---
 
-## 4. Режимы работы
+## 3. Упрощенный запуск (все скриптом)
 
-### 4.1 Simulation Mode (по умолчанию)
-- Использует мок данные
-- Быстрые ответы
-- Для разработки и тестирования UI
+```bash
+# 1. Только Ollama нужен
+docker run -d -v ollama_data:/root/.ollama -p 11435:11434 --name ollama ollama/ollama:latest
+docker exec ollama ollama pull qwen3:8b
 
-### 4.2 Production Mode (реальный стек)
-- Реальные вызовы LLM
-- Настоящие файловые операции
-- Полный цикл: Client → Server → PostgreSQL → BullMQ → Ollama → Response
-
-**Активация:** Установить `OLLAMA_URL` и использовать реальные endpoints
+# 2. Запуск всех компонентов Node.js
+./start-all.bat  # Windows
+# или
+./start-all.sh   # Linux/Mac (если есть)
+```
 
 ---
 
-## 5. Troubleshooting
+## 4. Проверка работоспособности
 
-### Проблема: Ollama не отвечает
+### 4.1 Проверка компонентов
+
+```bash
+# Server (stateless)
+curl http://localhost:3000/health
+# {"status": "ok", "mode": "stateless"}
+
+# Client API
+curl http://localhost:3001/api/health
+# {"status": "ok"}
+
+# AI Integration (если запущен)
+curl http://localhost:11434/health
+# {"status": "ready"}
+
+# Ollama
+curl http://localhost:11435/api/tags
+# {"models": [...]}
+```
+
+### 4.2 Проверка потока
+
+```bash
+# Создание сессии через Client API
+curl -X POST http://localhost:3001/api/sessions \
+  -H "Content-Type: application/json" \
+  -d '{"task": "test", "projectId": "default"}'
+```
+
+---
+
+## 5. Устранение неполадок
+
+### Проблема: Порт занят
+
+```bash
+# Найти и убить процесс на порту
+# Windows:
+netstat -ano | findstr :3000
+taskkill /F /PID <PID>
+
+# Linux/Mac:
+lsof -ti:3000 | xargs kill -9
+```
+
+### Проблема: Сервер не запускается
+
 ```bash
 # Проверка логов
-docker logs ollama
+cd a2a-server
+npm run dev  # смотреть ошибки в консоли
+```
 
-# Перезапуск
+### Проблема: Нет соединения с Ollama
+
+```bash
+# Проверка Ollama
+curl http://localhost:11435/api/tags
+# Должен вернуть список моделей
+
+# Если не работает - перезапуск
 docker restart ollama
 ```
 
-### Проблема: PostgreSQL не подключается
+### Проблема: Сессии не сохраняются
+
 ```bash
-# Проверка статуса
-docker ps | grep postgres
+# Проверка прав на папку storage
+cd a2a-client
+ls -la storage/
 
-# Логи
-docker logs <postgres_container_id>
-```
-
-### Проблема: 500 ошибки в ai-integration
-```bash
-# Проверка прокси
-curl -v http://localhost:5000/api/tags
-
-# Логи Python
-# Смотри Terminal 1 output
+# Должна быть writable
 ```
 
 ---
 
-## 6. Команды для мониторинга
+## 6. Архитектура (Stateless)
 
-```bash
-# Статус всех сервисов
-docker ps
-
-# Логи a2a-server
-docker logs a2a-server -f
-
-# Логи Redis
-docker exec redis redis-cli INFO
-
-# Тест Ollama
-curl http://localhost:11434/api/generate -d '{
-  "model": "qwen3:8b",
-  "prompt": "Hello",
-  "stream": false
-}'
 ```
+┌─────────────┐     ┌──────────────┐     ┌─────────────┐     ┌─────────────────┐
+│   Web UI    │────▶│  Client API  │────▶│ a2a-server  │────▶│   AI/Ollama     │
+│  (port 5173)│     │ (port 3001)  │     │ (port 3000) │     │  (port 11435)   │
+└─────────────┘     └──────┬───────┘     └─────────────┘     └─────────────────┘
+                           │
+                           │ JSON files
+                           ▼
+                    ┌───────────────┐
+                    │   storage/    │
+                    │  (sessions)   │
+                    └───────────────┘
+```
+
+**Ключевое отличие:**
+- Раньше: Server → PostgreSQL + Redis
+- Теперь: Server → ничего (stateless), Client API → JSON files
 
 ---
 
-## 7. Стоп/Старт
+## 7. Что изменилось
 
-```bash
-# Остановка всей системы
-docker-compose down
-docker stop ollama
+### Удалено:
+- PostgreSQL (база данных)
+- Redis (очереди)
+- RabbitMQ (брокер)
+- Prisma ORM
+- Миграции базы данных
+- Сложные health checks
 
-# Чистый старт (удалить все volumes!)
-docker-compose down -v
-docker volume rm a2a-script-agent_ollama_data
-```
-
----
-
-## 8. Production чеклист
-
-- [ ] Все порты свободны
-- [ ] PostgreSQL запущена и таблицы созданы
-- [ ] Redis работает
-- [ ] RabbitMQ работает  
-- [ ] Ollama запущена с моделью qwen3:8b
-- [ ] a2a-server запущен на порту 3000
-- [ ] ai-integration прокси работает
-- [ ] a2a-client запущен на порту 5173
-- [ ] Health checks проходят
-- [ ] Первый тестовый запрос проходит
+### Упрощено:
+- Запуск: не нужен docker-compose для базы
+- Конфигурация: нет DATABASE_URL
+- Тестирование: не нужна тестовая БД
+- Резервное копирование: только JSON файлы
 
 ---
 
-## 9. Архитектура потока данных
-
-```
-┌─────────┐     ┌────────────┐     ┌───────────┐     ┌─────────┐
-│  Client │────▶│ a2a-server │────▶│ PostgreSQL│     │         │
-│  (5173) │     │  (3000)    │     │ (5432)    │     │         │
-└─────────┘     └─────┬──────┘     └───────────┘     │         │
-                     │                                  │         │
-                     ▼                                  ▼         │
-              ┌────────────┐                    ┌───────────┐    │
-              │  BullMQ    │                    │  RabbitMQ │◀───┘
-              │  (Redis)   │                    │  (5672)   │
-              └─────┬──────┘                    └───────────┘
-                    │
-                    ▼
-              ┌────────────┐     ┌───────────┐
-              │   Ollama   │◀────│ ai-integ  │
-              │ (11434)    │     │ (proxy)   │
-              └────────────┘     └───────────┘
-```
-
-**Полный цикл:**
-1. Клиент отправляет запрос на a2a-server
-2. Server сохраняет в PostgreSQL
-3. BullMQ ставит в очередь
-4. ai-integration прокси вызывает Ollama
-5. Ollama обрабатывает (реальный LLM!)
-6. Response возвращается обратно клиенту
+**Последнее обновление:** 2026-03-07 (переход на stateless)

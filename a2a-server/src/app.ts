@@ -4,8 +4,6 @@ import helmet from 'helmet';
 import compression from 'compression';
 import {logger, requestLogger} from './utils/logger.js';
 import {errorHandler} from './middleware/error.middleware.js';
-import {createRateLimitMiddleware} from './middleware/rate-limit.middleware.js';
-import {config} from './config/index.js';
 import routes from './routes/index.js';
 
 const app: Express = express();
@@ -15,12 +13,6 @@ app.use(cors({origin: true, credentials: true}));
 app.use(compression());
 app.use(express.json({limit: '10mb'}));
 app.use(express.urlencoded({extended: true, limit: '10mb'}));
-
-// Apply rate limiting
-app.use(createRateLimitMiddleware({
-    maxRequests: config.rateLimitMaxRequests,
-    windowMs: config.rateLimitWindowMs,
-}));
 
 app.use(requestLogger);
 

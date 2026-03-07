@@ -154,12 +154,15 @@
                         }
                     });
 
-                    // Restore session data to store and reconnect
-                    const store = global.SessionStore;
+                    // Create per-window SessionStore instance to avoid conflicts
+                    const store = new global.SessionStore.constructor();
+                    // Store reference on the panel for cleanup
+                    panel._sessionStore = store;
+
                     if (store && sessionData) {
-                        // Set project ID from session data
-                        if (sessionData.projectId) {
-                            store.setProject(sessionData.projectId);
+                        // Set session info
+                        if (sessionData.id) {
+                            store.setSession(sessionData.id, sessionData.projectId);
                         }
                         // Load messages if available from session data
                         if (sessionData.messages?.length) {
@@ -171,6 +174,10 @@
                         }
                         if (sessionData.execute) {
                             store.setExecute(sessionData.execute);
+                        }
+                        // Set status
+                        if (sessionData.status) {
+                            store.setStatus(sessionData.status);
                         }
                     }
 
@@ -193,7 +200,9 @@
                     }
 
                     // Render session content
-                    this.renderSessionContent(panel.getContentEl(), sessionId);
+                    const contentEl = panel.getContentEl();
+                    console.log('[WindowManager] About to render content:', { hasPanel: !!panel, hasContentEl: !!contentEl, contentElTag: contentEl?.tagName });
+                    this.renderSessionContent(contentEl, sessionId, store);
 
                     // Save state
                     await this.saveSessionWindowsState();
@@ -293,10 +302,15 @@
         /**
          * Render session content in panel
          */
-        renderSessionContent(contentEl, sessionId) {
+        renderSessionContent(contentEl, sessionId, store = null) {
+            console.log('[WindowManager] renderSessionContent called:', { sessionId, hasContentEl: !!contentEl, hasInnerHTML: !!(contentEl?.innerHTML) });
+
             // Use TaskFlow rendering system if available
             const Render = global.TaskFlowRender;
-            const store = global.SessionStore;
+            // Use provided store (per-window) or fall back to global
+            store = store || global.SessionStore;
+
+            console.log('[WindowManager] renderSessionContent deps:', { hasRender: !!Render, hasStore: !!store, hasTaskFlowRef: !!global.TaskFlow });
 
             if (Render && store) {
                 // Note: store should already be set up with session data from createSessionWindow
@@ -413,18 +427,32 @@
             // Message already added in sendMessageResult before this is called
             const store = global.SessionStore;
 
+            let response = null;
+
             // Send via API
             if (global.apiIntegration?.sendMessage) {
-                await global.apiIntegration.sendMessage(sessionId, message);
+                response = await global.apiIntegration.sendMessage(sessionId, message);
             } else if (global.ActionHandler?.sendMessage) {
-                // Use ActionHandler for proper action-key format
-                await global.ActionHandler.sendMessage(sessionId, store?.projectId, message);
+                response = await global.ActionHandler.sendMessage(sessionId, store?.projectId, message);
             } else if (global.ActionHandler?.submit) {
-                // Fallback to raw submit
                 const projectId = store?.projectId;
                 const context = store?.context || {};
-                await global.ActionHandler.submit(sessionId, projectId, { message: message }, context);
+                response = await global.ActionHandler.submit(sessionId, projectId, { message: message }, context);
             }
+
+            // Apply HTTP response to store as fallback (SSE may race or be unavailable)
+            const payload = response?.data || response;
+            if (payload?.execute || payload?.context) {
+                store?.applyServerResponse?.({
+                    execute: payload.execute,
+                    context: payload.context,
+                    messages: payload.messages
+                });
+            } else if (!payload?.promiseId) {
+                // No execute and no pending promise — clear waiting state
+                store?.setPromisePending?.(false);
+            }
+            // If promiseId present: keep promisePending=true, SSE will resolve it
 
             console.log('[WindowManager] Sent message:', sessionId, message);
         },
@@ -448,7 +476,17 @@
             }
 
             try {
-                await Promise.all(promises);
+                const results = await Promise.all(promises);
+                const payload = results[0]?.data || results[0];
+                if (payload?.execute || payload?.context) {
+                    store?.applyServerResponse?.({
+                        execute: payload.execute,
+                        context: payload.context,
+                        messages: payload.messages
+                    });
+                } else if (!payload?.promiseId) {
+                    store?.setPromisePending?.(false);
+                }
                 console.log('[WindowManager] Sent choice:', sessionId, choiceId);
             } catch (err) {
                 console.error('[WindowManager] sendChoice failed:', err);

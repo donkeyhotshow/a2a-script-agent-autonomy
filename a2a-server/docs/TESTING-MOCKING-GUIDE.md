@@ -432,8 +432,9 @@ describe('Real Filesystem', () => {
 | `TEST_LLM_PROVIDER=mock` | Использовать мок LLM | `TEST_LLM_PROVIDER=mock npm test` |
 | `RECORD_HTTP=1` | Записывать HTTP ответы | `RECORD_HTTP=1 npm run test:integration` |
 | `LLM_REPLAY_DIR` | Директория для replay | `LLM_REPLAY_DIR=./tests/fixtures/llm npm test` |
-| `DATABASE_URL` | Строка подключения к БД | `postgresql://.../a2a_test` |
 | `ENCRYPTION_KEY` | Ключ шифрования (32 символа) | `test-key-12345678901234567890` |
+
+> **Примечание:** Сервер stateless - не требует базы данных для тестов.
 
 ---
 

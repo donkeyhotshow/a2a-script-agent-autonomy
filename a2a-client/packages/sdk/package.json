@@ -10,7 +10,7 @@
     "./server": "./src/server/index.js"
   },
   "scripts": {
-    "dev": "cross-env DEFAULT_SYNC_MODE=1 tsx watch src/server/index.ts",
+    "dev": "..\\..\\..\\scripts\\start-client-api.bat",
     "build": "tsc",
     "start": "node dist/server/index.js",
     "test": "vitest run"

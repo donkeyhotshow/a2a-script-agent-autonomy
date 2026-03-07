@@ -1,15 +1,8 @@
 /**
- * Index file for Actions system - exports all modules
- *
- * Реализация на основе плана: plans/action-scripts-integration.md
- *
- * Usage:
- * ```typescript
- * import { actionService, ActionDefinition, ... } from './actions/index.js';
- * ```
+ * Index file for Actions system - Simulation Mode
  */
 
- // Types from types.ts
+// Types from types.ts
 export type {
     DSLDefinition,
     ActionContext,
@@ -23,32 +16,6 @@ export type {
     ActionResponse,
 } from './types.js';
 
-// Generated types (from YAML definitions)
-export type {
-    // Execute action types
-    FormInput,
-    FormChoice,
-    FormAction,
-    ScriptAction,
-    RagSearchFilters,
-    RagSearchOptions,
-    RagSearchAction,
-    RagSearchResult,
-    ReadFileAction,
-    WriteFileAction,
-    ExecuteCommandAction,
-    ExecuteCommandResult,
-    MessageAction,
-    ExecutePayload,
-    ExecuteActionType,
-    ActionResult,
-    FormResult,
-    ScriptResult,
-    RagSearchResultPayload,
-    ReadFileResult,
-    WriteFileResult,
-} from './generated-types.js';
-
 // Validation functions
 export {
     validateExecutePayload,
@@ -56,7 +23,6 @@ export {
     validateActionDefinition,
     validateFormAction,
     validateScriptAction,
-    validateRagSearchAction,
     validateReadFileAction,
     validateWriteFileAction,
     validateExecuteCommandAction,
@@ -65,7 +31,6 @@ export {
     validateActionKeyShape,
     validateActionResponse,
     createActionValidator,
-    validateRagSearchResult,
     validateReadFileResult,
     validateWriteFileResult,
     validateExecuteCommandResult,
@@ -76,7 +41,6 @@ export {
 export {
     parseActionFromMarkdown,
     parseAllActionsFromDirectory,
-    // Additional parser utilities
     parsePrimitive,
     parseSubAction,
     parseActionContext,
@@ -111,17 +75,6 @@ export {
     actionProcessor,
     type ActionProcessorResult,
 } from './action-processor.js';
-
-// Auto-AI definitions index
-export {
-    AUTO_AI_CATEGORIES,
-    AUTO_AI_ACTION_IDS,
-    getActionIdsByCategory,
-    getCategories,
-    isAutoAiAction,
-    getCategoryForAction,
-    type AutoAiCategory,
-} from './definitions/auto-ai-index.js';
 
 // Action Handler Registry
 export {

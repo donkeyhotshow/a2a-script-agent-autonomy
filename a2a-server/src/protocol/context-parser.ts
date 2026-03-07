@@ -1,13 +1,7 @@
 /**
- * Context Parser
- *
- * Реализация на основе плана: plans/context-parser-improvements.md
+ * Context Parser - Simulation Mode
  *
  * Parses and validates Context Blocks according to A2A protocol.
- * This file now serves as a compatibility layer - use specialized
- * parsers from './context-parsers/' for new code.
- *
- * @deprecated Use specialized parsers from './context-parsers/' instead
  */
 
 import {
@@ -17,43 +11,18 @@ import {
     TaskStatus,
     ProtocolError,
 } from '../types/index.js';
-import { VALID_TASK_TYPES, VALID_TASK_STATUSES } from './context-parsers/base-parser.js';
-import { PROTOCOL_VERSIONS, isSupportedVersion, type ProtocolVersion } from './versioning/protocol-versions.js';
 
-// Re-export all specialized parsers
-export * from './context-parsers/index.js';
+const VALID_TASK_TYPES: TaskType[] = ['analyze', 'refactor', 'test', 'document', 'fix', 'create', 'delete'];
+const VALID_TASK_STATUSES: TaskStatus[] = ['pending', 'in_progress', 'completed', 'failed', 'cancelled'];
+const PROTOCOL_VERSIONS = ['0.1.0', '1.0.0'];
 
-// Re-export legacy functions for backward compatibility
-export {
-    extractNewTask,
-    extractRequestedFiles,
-    extractArchitecturalFeatures,
-    parseTasks,
-    hasContinueFlag,
-    hasConfirmFlag,
-    createInitialContext,
-    createNewTaskContext,
-    createFileRequestContext,
-    updateTaskProgress,
-    addTaskToContext,
-    removeTaskFromContext,
-    addErrorToContext,
-    clearErrorsFromContext,
-    serializeContext,
-    deserializeContext,
-    deserializeContextSafe,
-    mergeContexts,
-    cloneContext,
-    hasActiveTasks,
-    getTaskById,
-    getTasksByStatus,
-    calculateOverallProgress,
-} from './context-parsers/legacy.js';
+type ProtocolVersion = typeof PROTOCOL_VERSIONS[number];
 
-// ============================================
+function isSupportedVersion(version: string): version is ProtocolVersion {
+    return PROTOCOL_VERSIONS.includes(version as ProtocolVersion);
+}
+
 // Type Guards
-// ============================================
-
 function isObject(value: unknown): value is Record<string, unknown> {
     return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
@@ -103,10 +72,7 @@ function isProtocolError(value: unknown): value is ProtocolError {
     );
 }
 
-// ============================================
 // Validation & Parsing
-// ============================================
-
 export function validateContextBlock(context: unknown): { valid: boolean; errors: string[] } {
     const errors: string[] = [];
 
@@ -178,6 +144,8 @@ export function parseContextBlock(data: unknown): ContextBlock {
     if (ctx['request_files'] !== undefined) result.request_files = ctx['request_files'] as string[];
     if (ctx['confirm'] !== undefined) result.confirm = ctx['confirm'] as boolean;
     if (ctx['errors'] !== undefined) result.errors = ctx['errors'] as ProtocolError[];
+    if (ctx['task'] !== undefined) result.task = ctx['task'] as string;
+    if (ctx['execution'] !== undefined) result.execution = ctx['execution'] as ContextBlock['execution'];
 
     return result;
 }

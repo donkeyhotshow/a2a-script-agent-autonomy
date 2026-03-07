@@ -5,10 +5,15 @@
  * These interfaces define the contracts between components.
  */
 
-import type { Graph } from './graph-store.service.js';
-import type { FrameworkDetectionResult } from './framework-detector.service.js';
-import type { CodeBlock } from '../types/entity.types.js';
-import type { RequestContextBlock } from '../types/index.js';
+import type { Graph } from '../graph-store.service.js';
+import type { CodeBlock } from '../../types/entity.types.js';
+import type { RequestContextBlock } from '../../types/index.js';
+
+// Simple framework detection result for simulations
+type FrameworkDetectionResult = {
+    frameworks: string[];
+    confidence: number;
+} | undefined;
 
 // ========================================
 // Core Request Processing Types
@@ -30,7 +35,7 @@ export interface ProcessResult {
     relations?: { count: number } | undefined;
     questions?: string[] | undefined;
     missing?: string[] | undefined;
-    frameworks?: FrameworkDetectionResult | undefined;
+    frameworks?: { frameworks: string[]; confidence: number } | undefined;
     context?: RequestContextBlock | undefined;
     request_files?: string[] | undefined;
     activated_neuron_ids?: string[] | undefined;
@@ -85,7 +90,7 @@ export interface ActionContext {
     sessionId: string;
     taskText: string;
     codeBlocks: CodeBlock[];
-    frameworks: FrameworkDetectionResult | undefined;
+    frameworks: { frameworks: string[]; confidence: number } | undefined;
     graph: Graph;
 }
 
@@ -168,7 +173,7 @@ export interface RequestState {
 export interface ProcessingContext {
     taskText: string;
     codeBlocks: CodeBlock[];
-    frameworks: FrameworkDetectionResult | undefined;
+    frameworks: { frameworks: string[]; confidence: number } | undefined;
     graph: Graph;
     taskAnalysis: TaskAnalysis | null;
     activatedNeurons: string[];
