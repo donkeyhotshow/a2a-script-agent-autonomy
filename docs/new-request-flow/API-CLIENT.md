@@ -60,8 +60,8 @@ API Client (`a2a-client/packages/sdk`) — это HTTP-клиент для вз�
 
 | Файл | Назначение |
 |------|------------|
-| [`src/index.ts`](../../a2a-client/packages/api-client/src/index.ts) | Главный экспорт, класс ApiClient |
-| [`src/async-client.ts`](../../a2a-client/packages/api-client/src/async-client.ts) | Асинхронный клиент с PromisePoller |
+| [`src/index.ts`](../../a2a-client/packages/sdk/src/index.ts) | Главный экспорт, класс ApiClient |
+| [`src/async-client.ts`](../../a2a-client/packages/sdk/src/async-client.ts) | Асинхронный клиент с PromisePoller |
 | [`src/protocol.ts`](../../a2a-client/packages/sdk/src/protocol.ts) | Утилиты протокола для контекста |
 | [`src/action-handler.ts`](../../a2a-client/packages/sdk/src/action-handler.ts) | Обработчики действий |
 
@@ -379,7 +379,7 @@ const result = await asyncClient.continueAction(
 
 ## Protocol Utilities
 
-Модуль [`protocol.ts`](../../a2a-client/packages/api-client/src/protocol.ts) предоставляет утилиты для построения контекста:
+Модуль [`protocol.ts`](../../a2a-client/packages/sdk/src/protocol.ts) предоставляет утилиты для построения контекста:
 
 ```typescript
 import {
@@ -463,7 +463,7 @@ const parsed = parseMessage('```context\n{"session_id": "abc"}\n```\n\n```file:t
 
 ## Action Handler
 
-Модуль [`action-handler.ts`](../../a2a-client/packages/api-client/src/action-handler.ts) обрабатывает ответы действий:
+Модуль [`action-handler.ts`](../../a2a-client/packages/sdk/src/action-handler.ts) обрабатывает ответы действий:
 
 ```typescript
 import {

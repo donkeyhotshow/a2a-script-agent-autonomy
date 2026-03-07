@@ -1,17 +1,17 @@
 {
   "success": true,
   "data": {
-    "id": "req_1772855030209_fd5wixic1",
-    "promiseId": "cmmfs405e00116l3cpx1e4ygo",
+    "id": "req_1772855019447_5bos47lzo",
+    "promiseId": "cmmfs3rug000q6l3c17lkci57",
     "clientId": "simulation-client",
     "status": "completed",
     "priority": 0,
     "context": {
-      "task": "тест вибору дій",
+      "task": "виправити імпорти у vue компонентах",
       "version": "1.0",
       "session_id": "stateless"
     },
-    "message": "тест вибору дій",
+    "message": "виправити імпорти у vue компонентах",
     "codeBlocks": null,
     "result": {
       "graph": {
@@ -24,7 +24,7 @@
           "relations": []
         },
         "new_task": [
-          "тест вибору дій"
+          "виправити імпорти у vue компонентах"
         ],
         "request_files": [
           "No entities recognized"
@@ -42,8 +42,8 @@
       ]
     },
     "error": null,
-    "createdAt": "2026-03-07T03:43:50.211Z",
-    "startedAt": "2026-03-07T03:43:50.965Z",
-    "completedAt": "2026-03-07T03:43:50.971Z"
+    "createdAt": "2026-03-07T03:43:39.449Z",
+    "startedAt": "2026-03-07T03:43:39.759Z",
+    "completedAt": "2026-03-07T03:43:39.765Z"
   }
 }

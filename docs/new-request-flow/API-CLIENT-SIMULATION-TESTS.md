@@ -4,7 +4,7 @@
 
 ## Обзор
 
-Данный документ описывает подход к тестированию [`api-client`](../../a2a-client/packages/api-client/src/index.ts) с использованием симуляций из директории [`simulations/`](../../simulations/).
+Данный документ описывает подход к тестированию [`sdk`](../../a2a-client/packages/sdk/src/index.ts) с использованием симуляций из директории [`simulations/`](../../simulations/).
 
 ## Архитектура тестирования
 
@@ -41,7 +41,7 @@
 Создайте тестовый раннер, который проигрывает каждый шаг симуляции:
 
 ```typescript
-// a2a-client/packages/api-client/tests/simulation-runner.ts
+// a2a-client/packages/sdk/tests/simulation-runner.ts
 import {ApiClient} from '../src/index.js';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -189,7 +189,7 @@ export class SimulationTestRunner {
 ### Запуск одной симуляции
 
 ```typescript
-// a2a-client/packages/api-client/tests/simulation.test.ts
+// a2a-client/packages/sdk/tests/simulation.test.ts
 import { SimulationTestRunner } from './simulation-runner.js';
 
 describe('API Client Simulation Tests', () => {
@@ -351,7 +351,7 @@ jobs:
       - name: Install dependencies
         run: |
           cd a2a-server && npm install
-          cd ../a2a-client/packages/api-client && npm install
+          cd ../a2a-client/packages/sdk && npm install
           
       - name: Start a2a-server
         run: |
@@ -362,7 +362,7 @@ jobs:
           
       - name: Run simulation tests
         run: |
-          cd a2a-client/packages/api-client
+          cd a2a-client/packages/sdk
           npm run test:simulation
           
       - name: Stop server

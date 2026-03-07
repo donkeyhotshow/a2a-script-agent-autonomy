@@ -46,6 +46,7 @@ function determineRequestType(context: Record<string, unknown>): RequestType {
         return 'form';
     }
 
+
     // Check for action requests
     const actionType = context['action'] as string | undefined;
     if (actionType === 'step_result' || actionType === 'approve_action' ||

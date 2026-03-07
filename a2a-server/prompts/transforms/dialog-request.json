@@ -1,0 +1,31 @@
+{
+  "type": "pipeline",
+  "steps": [
+    {
+      "op": "copy",
+      "from": "$",
+      "to": "$out"
+    },
+    {
+      "op": "set",
+      "path": "$.context.execution.step",
+      "value": "request"
+    },
+    {
+      "op": "set",
+      "path": "$.execute",
+      "value": {
+        "form": {
+          "input": [
+            {
+              "name": "message",
+              "type": "text",
+              "label": "Повідомлення",
+              "required": true
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

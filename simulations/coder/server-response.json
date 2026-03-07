@@ -1,17 +1,17 @@
 {
   "success": true,
   "data": {
-    "id": "req_1772855030209_fd5wixic1",
-    "promiseId": "cmmfs405e00116l3cpx1e4ygo",
+    "id": "req_1772855014097_ldovcf8w3",
+    "promiseId": "cmmfs3npv000n6l3cz9romczi",
     "clientId": "simulation-client",
     "status": "completed",
     "priority": 0,
     "context": {
-      "task": "тест вибору дій",
+      "task": "допоможи розібратись з кодом",
       "version": "1.0",
       "session_id": "stateless"
     },
-    "message": "тест вибору дій",
+    "message": "допоможи розібратись з кодом",
     "codeBlocks": null,
     "result": {
       "graph": {
@@ -24,7 +24,7 @@
           "relations": []
         },
         "new_task": [
-          "тест вибору дій"
+          "допоможи розібратись з кодом"
         ],
         "request_files": [
           "No entities recognized"
@@ -42,8 +42,8 @@
       ]
     },
     "error": null,
-    "createdAt": "2026-03-07T03:43:50.211Z",
-    "startedAt": "2026-03-07T03:43:50.965Z",
-    "completedAt": "2026-03-07T03:43:50.971Z"
+    "createdAt": "2026-03-07T03:43:34.099Z",
+    "startedAt": "2026-03-07T03:43:35.556Z",
+    "completedAt": "2026-03-07T03:43:35.562Z"
   }
 }

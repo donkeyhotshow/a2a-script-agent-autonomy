@@ -1,0 +1,32 @@
+{
+  "type": "pipeline",
+  "steps": [
+    {
+      "op": "copy",
+      "from": "$",
+      "to": "$out"
+    },
+    {
+      "op": "set",
+      "path": "$.context.execution.step",
+      "value": "llm-request"
+    },
+    {
+      "op": "set",
+      "path": "$.execute",
+      "value": {
+        "message": "$.result.message",
+        "form": {
+          "input": [
+            {
+              "name": "message",
+              "type": "text",
+              "label": "Повідомлення",
+              "required": true
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

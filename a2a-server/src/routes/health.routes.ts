@@ -60,5 +60,25 @@ router.get('/database', async (_req, res) => {
     }
 });
 
+router.get('/sync-flow', (_req, res) => {
+    const defaultSyncMode = process.env.DEFAULT_SYNC_MODE === '1';
+    const skipAuth = process.env.SKIP_AUTH === '1';
+
+    res.json({
+        success: true,
+        data: {
+            defaultSyncMode,
+            skipAuth,
+            syncFlowEnabled: true,
+            protocolVersion: '1.0',
+            supportedActions: [
+                'form', 'message', 'script', 'read-file', 'write-file',
+                'execute-command', 'rag-search', 'choice'
+            ],
+            timestamp: new Date().toISOString(),
+        },
+    });
+});
+
 export default router;
 

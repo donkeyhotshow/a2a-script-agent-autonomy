@@ -1376,8 +1376,11 @@ expressApp.post(['/api/sessions/:sessionId/result', '/api/v1/sessions/:sessionId
                             // Got sync-like result from polling
                             let syncResult = resultPayload.data;
                             // Construct expected responses based on the sent result type
-                            if (result?.choice === 'dialog') {
-                                // User chose dialog - return input form
+                            const taskText = (session.task || '').toLowerCase();
+
+                            if (result?.choice === 'dialog' ||
+                                (taskText.includes('dialog') || taskText.includes('диалог'))) {
+                                // User chose dialog or direct dialog task - return input form
                                 syncResult = {
                                     execute: {
                                         form: {
@@ -1392,7 +1395,7 @@ expressApp.post(['/api/sessions/:sessionId/result', '/api/v1/sessions/:sessionId
                                         }
                                     },
                                     context: {
-                                        task: "диалог",
+                                        task: session.task || "диалог",
                                         execution: {
                                             action: "dialog",
                                             step: "request"

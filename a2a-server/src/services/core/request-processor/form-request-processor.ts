@@ -125,6 +125,8 @@ export class FormRequestProcessor extends BaseRequestProcessor {
 
         logger.info('[FormRequestProcessor] Processing form request', {promiseId});
 
+
+
         // Check if this is a choice selection first (action-key shape result.choice)
         // Support: ctx.choice_id, ctx.selected_choice, or result.choice
         const resultChoice = (ctx['result'] as Record<string, unknown>)?.choice;
@@ -149,6 +151,8 @@ export class FormRequestProcessor extends BaseRequestProcessor {
         // Default: return available forms
         return this.handleListForms();
     }
+
+
 
     /**
      * Handle form submission

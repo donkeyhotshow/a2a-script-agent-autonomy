@@ -66,7 +66,7 @@ function Test-Response($actual, $expectedPath, $fields) {
 Ensure-TestProject "test_dialog_123"
 
 # Step 1: Create session with task "dialog"
-Write-Step 1 "Create session with task 'dialog' -> expect router form"
+Write-Step 1 "Create session with task 'dialog' -> expect input form directly"
 
 $step1Body = @{ task = "dialog"; projectId = "test_dialog_123" } | ConvertTo-Json -Depth 5
 $step1Response = Invoke-RestMethod -Uri "$baseUrl/api/sessions" -Method POST -Body $step1Body -ContentType "application/json"
@@ -74,50 +74,47 @@ $step1Response = Invoke-RestMethod -Uri "$baseUrl/api/sessions" -Method POST -Bo
 $sessionId = $step1Response.session.id
 Write-Host "  Session ID: $sessionId"
 
-
 # Check if sync or async response
 if ($step1Response.serverResponse.data.execute) {
     Write-Host "  Sync response detected"
-    Test-Response $step1Response.serverResponse.data "../../simulations/dialog/1/received.json" @(
-    "context.execution.step",
-    "execute.form.choices"
-    )
+    # For direct dialog task, expect input form directly
+    if ($step1Response.serverResponse.data.execute.form.input) {
+        Write-Host "  Direct input form returned (no router)"
+        Test-Response $step1Response.serverResponse.data "../../simulations/dialog/2/response.json" @(
+        "context.execution.step",
+        "execute.form.input"
+        )
+    } else {
+        Write-Host "  Router form returned"
+        Test-Response $step1Response.serverResponse.data "../../simulations/dialog/1/received.json" @(
+        "context.execution.step",
+        "execute.form.choices"
+        )
+    }
 } else {
     Write-Host "  ASYNC: Response pending, poll for result at /api/v1/requests/$($step1Response.serverResponse.data.promiseId)/status" -ForegroundColor Yellow
     Write-Host "  SKIP: Cannot verify sync protocol compliance" -ForegroundColor Yellow
 }
 
-# Step 2: Send choice "dialog"
-Write-Step 2 "Send choice 'dialog' -> expect input form"
+# Step 2: Send first message "hello world"
+Write-Step 2 "Send message 'hello world' -> expect message + input form"
 
-$step2Body = @{ result = @{ choice = "dialog" }; projectId = "test_dialog_123" } | ConvertTo-Json -Depth 5
+$step2Body = @{ result = @{ message = "hello world" }; projectId = "test_dialog_123" } | ConvertTo-Json -Depth 5
 $step2Response = Invoke-RestMethod -Uri "$baseUrl/api/sessions/$sessionId/result" -Method POST -Body $step2Body -ContentType "application/json"
 
-Test-Response $step2Response.data "../../simulations/dialog/2/response.json" @(
-    "context.execution.step",
-    "execute.form.input"
-)
-
-# Step 3: Send message
-Write-Step 3 "Send message 'hello world' -> expect message + input form"
-
-$step3Body = @{ result = @{ message = "hello world" }; projectId = "test_dialog_123" } | ConvertTo-Json -Depth 5
-$step3Response = Invoke-RestMethod -Uri "$baseUrl/api/sessions/$sessionId/result" -Method POST -Body $step3Body -ContentType "application/json"
-
-Test-Response $step3Response.data "../../simulations/dialog/3/response.json" @(
+Test-Response $step2Response.data "../../simulations/dialog/3/response.json" @(
     "context.execution.step",
     "context.history",
     "execute.message",
     "execute.form.input"
 )
 
-# Step 4: Send final message
-Write-Step 4 "Send message 'Thanks!' -> expect completed"
+# Step 3: Send message 'Thanks!' -> expect completed
 
-$step4Body = @{ result = @{ message = "Thanks!" }; projectId = "test_dialog_123" } | ConvertTo-Json -Depth 5
-$step4Response = Invoke-RestMethod -Uri "$baseUrl/api/sessions/$sessionId/result" -Method POST -Body $step4Body -ContentType "application/json"
+$step3Body = @{ result = @{ message = "Thanks!" }; projectId = "test_dialog_123" } | ConvertTo-Json -Depth 5
+$step3Response = Invoke-RestMethod -Uri "$baseUrl/api/sessions/$sessionId/result" -Method POST -Body $step3Body -ContentType "application/json"
 
-Test-Response $step4Response.data "../../simulations/dialog/4/response.json" @(
+Test-Response $step3Response.data "../../simulations/dialog/4/response.json" @(
     "context.execution.step",
     "execute"
 )

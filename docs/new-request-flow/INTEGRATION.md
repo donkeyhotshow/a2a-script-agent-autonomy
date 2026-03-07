@@ -191,22 +191,22 @@ ARCHITECTURE.md
     │
     ├──▶ WEB-UI.md
     │       │
-    │       ├──▶ sessions.js (Web UI)
-    │       ├──▶ app-boot.js
-    │       ├──▶ web-api-client.js
+    │       ├──▶ js/app/session-manager.js (Web UI)
+    │       ├──▶ js/storage.js
+    │       ├──▶ js/web-api-client.js
     │       └──▶ [API-SERVER.md]
     │
     ├──▶ API-SERVER.md
     │       │
-    │       ├──▶ api-server/src/index.ts
+    │       ├──▶ sdk/src/server/index.ts
     │       ├──▶ [API-CLIENT.md]
     │       └──▶ [WEB-UI.md]
     │
     ├──▶ API-CLIENT.md
     │       │
-    │       ├──▶ api-client/src/index.ts
-    │       ├──▶ api-client/src/async-client.ts
-    │       ├──▶ api-client/src/protocol.ts
+    │       ├──▶ sdk/src/index.ts
+    │       ├──▶ sdk/src/async-client.ts
+    │       ├──▶ sdk/src/protocol.ts
     │       └──▶ [API-SERVER.md]
     │
     ├──▶ PROTOCOL.md
@@ -270,6 +270,6 @@ npm run sim:report <simulation-name>
 |-----------|------|
 | Web UI | [`a2a-client/web/`](../../a2a-client/web/) |
 | Client API Server | [`a2a-client/packages/sdk/`](../../a2a-client/packages/sdk/) |
-| API Client | [`a2a-client/packages/api-client/`](../../a2a-client/packages/api-client/) |
+| API Client | [`a2a-client/packages/sdk/`](../../a2a-client/packages/sdk/) |
 | A2A Server | [`a2a-server/src/`](../../a2a-server/src/) |
 | Симуляции | [`simulations/`](../../simulations/) |

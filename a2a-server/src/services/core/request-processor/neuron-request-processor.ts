@@ -87,7 +87,8 @@ export class NeuronRequestProcessor extends BaseRequestProcessor {
     private getExecutionMode(ctx: Record<string, unknown>): ExecutionMode {
         // AI-Actions mode if:
         // - ctx has 'ai_action' flag
-        // - ctx has 'action' with AI-action type (dialog, coder, etc.)
+        // - ctx has 'action' with AI-action type (coder, coder-smart, auto-ai, chat)
+        // - dialog action or task (uses simple transform)
         // - simulation with AI-action type
         if (ctx['ai_action'] === true) {
             return 'ai-actions';
@@ -95,16 +96,30 @@ export class NeuronRequestProcessor extends BaseRequestProcessor {
 
         const action = ctx['action'] as string | undefined;
         if (action) {
-            const aiActionTypes = ['dialog', 'coder', 'coder-smart', 'auto-ai', 'chat'];
+            // Dialog action uses ai-actions with simple transform
+            if (action === 'dialog') {
+                return 'ai-actions';
+            }
+            const aiActionTypes = ['coder', 'coder-smart', 'auto-ai', 'chat'];
             if (aiActionTypes.includes(action)) {
                 return 'ai-actions';
             }
         }
 
+        // Check if task indicates dialog intent (simple dialog -> ai-actions with transform)
+        const taskText = ctx['task'] as string || '';
+        if (taskText.toLowerCase().includes('dialog') || taskText.toLowerCase().includes('диалог') ||
+            taskText.toLowerCase().includes('chat') || taskText.toLowerCase().includes('беседа')) {
+            return 'ai-actions';
+        }
+
         const simulationName = ctx['simulation_name'] as string | undefined;
         if (simulationName) {
-            const aiSimulationTypes = ['dialog', 'coder', 'coder-smart', 'auto-ai'];
+            const aiSimulationTypes = ['coder', 'coder-smart', 'auto-ai'];
             if (aiSimulationTypes.some(type => simulationName.toLowerCase().includes(type))) {
+                return 'ai-actions';
+            }
+            if (simulationName.toLowerCase().includes('dialog')) {
                 return 'ai-actions';
             }
         }
@@ -529,7 +544,7 @@ export class NeuronRequestProcessor extends BaseRequestProcessor {
         // Get the transform service singleton
         const transformService = getAIActionTransformService();
 
-        // Determine prompt name based on action type
+        // Determine prompt name and transform type based on action type
         const promptNameMap: Record<string, string> = {
             'auto-ai': 'auto-ai-request.md',
             'coder': 'coder-request.md',
@@ -565,10 +580,19 @@ export class NeuronRequestProcessor extends BaseRequestProcessor {
         // Run the AI-Action with transforms
         let transformResult;
         try {
-            transformResult = await transformService.runAIAction(aiActionContext, {
-                promptName,
-                temperature: 0.7,
-            });
+            // For simple dialog, use simple transform without LLM
+            if (action === 'dialog' && !aiActionContext.result.message) {
+                logger.info('[NeuronRequestProcessor] Using simple transform for dialog');
+                transformResult = await transformService.runSimpleTransform(aiActionContext, {
+                    promptName,
+                });
+            } else {
+                logger.info('[NeuronRequestProcessor] Using AI action for complex task');
+                transformResult = await transformService.runAIAction(aiActionContext, {
+                    promptName,
+                    temperature: 0.7,
+                });
+            }
         } catch (error) {
             logger.error('[NeuronRequestProcessor] AI-Action transform error', {
                 error: String(error),

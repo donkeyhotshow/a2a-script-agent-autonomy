@@ -109,78 +109,37 @@ async function handleInvoke(req: Request, res: Response, next: NextFunction): Pr
                 if (status?.status === 'completed') {
                     const result = await requestService.getResult(invokeResult.promiseId!);
                     if (result) {
-                        // For dialog task, construct router form if not present
+                        // Construct response data
                         let executeData = (result as any).execute;
-                        if (body.task === 'dialog' && !executeData) {
-                            executeData = {
-                                form: {
-                                    title: "Оберіть спосіб виконання",
-                                    choices: [
-                                        { id: "dialog", label: "AI діалог з користувачем" },
-                                        { id: "auto-ai", label: "AI Action Generator" },
-                                        { id: "task-decomposition", label: "Декомпозиція задачі" }
-                                    ]
-                                }
-                            };
-                        } else if (body.result?.choice === 'dialog') {
-                            executeData = {
-                                form: {
-                                    input: [
-                                        {
-                                            name: "message",
-                                            type: "text",
-                                            label: "Повідомлення",
-                                            required: true
-                                        }
-                                    ]
-                                }
-                            };
-                        } else if (body.result?.message && !executeData) {
-                            executeData = {
-                                message: body.result.message,
-                                form: {
-                                    input: [
-                                        {
-                                            name: "message",
-                                            type: "text",
-                                            label: "Повідомлення",
-                                            required: true
-                                        }
-                                    ]
-                                }
-                            };
-                        }
-
-                        // Construct context with execution info
                         let contextData = (result as any).context || {};
-                        if (body.result?.choice === 'dialog') {
-                            contextData = {
-                                ...contextData,
-                                task: "диалог",
-                                execution: {
-                                    action: "dialog",
-                                    step: "request"
+
+                        // For dialog tasks, ensure we have proper execute and context
+                        const taskText = (body.task as string || '').toLowerCase();
+                        if ((taskText.includes('dialog') || taskText.includes('диалог') ||
+                             taskText.includes('chat') || taskText.includes('беседа')) && !executeData) {
+                            executeData = {
+                                form: {
+                                    input: [
+                                        {
+                                            name: 'message',
+                                            type: 'text',
+                                            label: 'Повідомлення',
+                                            required: true
+                                        }
+                                    ]
                                 }
                             };
-                        } else if (body.result?.message) {
-                            contextData = {
-                                ...contextData,
-                                task: contextData.task || "диалог",
-                                execution: {
-                                    action: "dialog",
-                                    step: "llm-request"
-                                },
-                                history: [
-                                    {
-                                        role: "user",
-                                        message: body.result.message
-                                    },
-                                    {
-                                        role: "assistant",
-                                        message: body.result.message
+                            // Ensure execution context
+                            if (!contextData.execution) {
+                                contextData = {
+                                    ...contextData,
+                                    task: body.task || 'диалог',
+                                    execution: {
+                                        action: 'dialog',
+                                        step: 'request'
                                     }
-                                ]
-                            };
+                                };
+                            }
                         }
 
                         return res.status(200).json({

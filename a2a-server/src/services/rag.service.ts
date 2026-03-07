@@ -307,44 +307,18 @@ export class RAGService {
 
     private async generateEmbedding(text: string): Promise<number[]> {
         if (!this.aiService) {
-            // Return mock embedding for testing
-            logger.warn('[RAGService] AI service not available, using mock embedding');
-            return this.createMockEmbedding(text);
+            throw new Error('[RAGService] AI service not available - embedding service not configured');
         }
 
         try {
             const result = await this.aiService.createEmbedding(text);
             return result.embedding;
         } catch (error) {
-            logger.warn('[RAGService] Failed to generate embedding, using mock', {
+            logger.error('[RAGService] Failed to generate embedding', {
                 error: String(error),
             });
-            return this.createMockEmbedding(text);
+            throw new Error(`[RAGService] Embedding generation failed: ${String(error)}`);
         }
-    }
-
-    private createMockEmbedding(text: string): number[] {
-        // Create deterministic mock embedding based on text hash
-        const dimensions = 384; // Common embedding size
-        const embedding: number[] = [];
-
-        // Simple hash-based pseudo-embedding
-        let hash = 0;
-        for (let i = 0; i < text.length; i++) {
-            hash = ((hash << 5) - hash) + text.charCodeAt(i);
-            hash = hash & hash;
-        }
-
-        const seed = Math.abs(hash);
-        for (let i = 0; i < dimensions; i++) {
-            // Generate pseudo-random values between -1 and 1
-            const value = Math.sin(seed + i * 0.1) * Math.cos(seed + i * 0.2);
-            embedding.push(value);
-        }
-
-        // Normalize
-        const magnitude = Math.sqrt(embedding.reduce((sum, v) => sum + v * v, 0));
-        return embedding.map((v) => v / magnitude);
     }
 
     private async searchInProject(

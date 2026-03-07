@@ -9,7 +9,7 @@
 ```
 c:/workspace/org-carrier/a2a-script-agent/
 ├── a2a-client/           # Клієнтська частина
-│   ├── packages/        # npm пакети (api-client, api-server, fs-utils, rag, etc.)
+│   ├── packages/        # npm пакети (sdk, rag, execution, embedding, history, json, types)
 │   └── web/             # Web UI (порт 5173)
 ├── a2a-server/          # Серверна частина (порт 3000)
 ├── ai-integration/    # Проксі для Ollama (порт 11434)
@@ -29,9 +29,9 @@ Web інтерфейс (UI). Працює на порту 5173 (Vite dev server)
 | `index.html`            | Головна HTML сторінка               |
 | `js/app-boot.js`        | Ініціалізація додатку               |
 | `js/app-init.js`        | Налаштування додатку                |
-| `js/app-state.js`       | Управління станом                   |
-| `js/sessions.js`        | Управління сесіями в UI             |
-| `js/actions-manager.js` | Менеджер дій                        |
+| `js/app/`               | Основні модулі додатку              |
+| `js/session-store.js`   | Сховище сесій                       |
+| `js/components/`        | UI компоненти                        |
 | `js/sse-client.js`      | SSE клієнт для real-time оновлень   |
 | `js/web-api-client.js`  | API клієнт для зв'язку з Client API |
 | `js/flow/`              | Flow-based UI компоненти            |
@@ -44,12 +44,13 @@ NPM пакети всередині monorepo:
 
 | Пакет           | Шлях                      | Опис                                     |
 |-----------------|---------------------------|------------------------------------------|
-| `api-client`    | `packages/api-client/`    | HTTP клієнт для Server API               |
-| `sdk`           | `packages/sdk/`           | HTTP сервер для Web (client API, sessions, fs, etc.) |
-| `fs-utils`      | `packages/fs-utils/`      | Файлові утиліти                          |
+| `sdk`           | `packages/sdk/`           | Основний SDK (API client + API server) |
 | `rag`           | `packages/rag/`           | RAG функціональність                     |
-| `script-runner` | `packages/script-runner/` | Запуск скриптів                          |
-| `terminal`      | `packages/terminal/`      | Термінал                                 |
+| `execution`    | `packages/execution/`      | Виконання скриптів                      |
+| `embedding`     | `packages/embedding/`     | Ембедінги                               |
+| `history`       | `packages/history/`       | Історія                                  |
+| `json`          | `packages/json/`          | JSON утиліти                            |
+| `types`         | `packages/types/`         | Спільні типи                            |
 | `types`         | `packages/types/`         | Спільні типи                             |
 | `embedding`     | `packages/embedding/`     | Ембедінги                                |
 

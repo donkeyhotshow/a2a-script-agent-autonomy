@@ -212,13 +212,12 @@ a2a-script-agent/
 
 | Файл                                                            | Призначення                      |
 |-----------------------------------------------------------------|----------------------------------|
-| [`js/app-boot.js`](a2a-client/web/js/app-boot.js)               | Ініціалізація додатку            |
-| [`js/app-init.js`](a2a-client/web/js/app-init.js)               | Налаштування app                 |
-| [`js/app-state.js`](a2a-client/web/js/app-state.js)             | Стан додатку                     |
-| [`js/sessions.js`](a2a-client/web/js/sessions.js)               | Управління сесіями (UI)          |
-| [`js/actions-manager.js`](a2a-client/web/js/actions-manager.js) | Менеджер дій                     |
+| [`js/app/project-manager.js`](a2a-client/web/js/app/project-manager.js) | Управління проектами            |
+| [`js/storage.js`](a2a-client/web/js/storage.js) | Сховище даних                     |
+| [`js/app/session-manager.js`](a2a-client/web/js/app/session-manager.js) | Управління сесіями              |
+| [`js/components/ai-actions.js`](a2a-client/web/js/components/ai-actions.js) | AI Actions                     |
 | [`js/web-api-client.js`](a2a-client/web/js/web-api-client.js)   | API клієнт                       |
-| [`js/sse-client.js`](a2a-client/web/js/sse-client.js)           | SSE клієнт                       |
+| [`js/transport/sse-transport.js`](a2a-client/web/js/transport/sse-transport.js) | SSE транспорт                   |
 
 ### Flow UI
 

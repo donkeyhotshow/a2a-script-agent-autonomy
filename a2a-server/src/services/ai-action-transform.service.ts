@@ -43,6 +43,10 @@ const TRANSFORM_MAP: Record<string, { request: string; response: string }> = {
     request: 'analyze-request.json',
     response: 'analyze-response.json',
   },
+  'dialog-request.md': {
+    request: 'server-transforms-request.json',
+    response: 'server-transforms-response.json',
+  },
 };
 
 export interface AIActionContext {
@@ -177,8 +181,75 @@ export class AIActionTransformService {
   }
 
   /**
+   * Запуск простого трансформа без LLM (для синхронных операций)
+   *
+   * @param context - Текущий контекст выполнения
+   * @param options - Опции трансформации
+   */
+  async runSimpleTransform(
+    context: AIActionContext,
+    options?: {
+      promptName?: string;
+    }
+  ): Promise<AIActionResult> {
+    const startTime = Date.now();
+
+    // Initialize if not done
+    if (!this.requestTransform) {
+      await this.initialize(options?.promptName);
+    }
+
+    const promptName = options?.promptName ?? 'dialog-request.md';
+
+    logger.info('[AIActionTransform] Running simple transform', {
+      promptName,
+      contextStep: context.context.execution?.step
+    });
+
+    // Apply request transform only (no LLM)
+    let requestResult: TransformResult;
+    try {
+      logger.info('[AIActionTransform] Running request transform for simple dialog');
+      requestResult = await runTransformPipeline(
+        this.requestTransform!,
+        context as unknown as Record<string, unknown>,
+        { baseDir: this.transformsDir }
+      );
+
+      if (!requestResult.success) {
+        throw new Error(`Request transform failed: ${requestResult.error}`);
+      }
+
+      logger.info('[AIActionTransform] Request transform result:', { output: requestResult.output });
+      logger.debug('[AIActionTransform] Simple transform complete');
+    } catch (error) {
+      logger.error('[AIActionTransform] Simple transform error', { error: String(error) });
+      throw error;
+    }
+
+    // Return result directly from transform output
+    const result = requestResult.output as Record<string, unknown>;
+
+    return {
+      message: 'Simple transform completed',
+      step: (result.context as any)?.execution?.step || 'request',
+      execute: result.execute as Record<string, unknown>,
+      completed: false,
+      context: {
+        ...context,
+        ...result.context as AIActionContext,
+      },
+      metadata: {
+        promiseId: context.promiseId,
+        model: 'transform-only',
+        transformTime: Date.now() - startTime,
+      },
+    };
+  }
+
+  /**
    * Запуск AI-Action с полным pipeline трансформаций
-   * 
+   *
    * @param context - Текущий контекст выполнения
    * @param options - Опции трансформации
    */

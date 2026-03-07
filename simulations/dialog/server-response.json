@@ -1,17 +1,16 @@
 {
   "success": true,
   "data": {
-    "id": "req_1772855030209_fd5wixic1",
-    "promiseId": "cmmfs405e00116l3cpx1e4ygo",
+    "id": "req_1772855018189_xdzj0c3xu",
+    "promiseId": "cmmfs3qvi000p6l3c63zt8v69",
     "clientId": "simulation-client",
     "status": "completed",
     "priority": 0,
     "context": {
-      "task": "тест вибору дій",
       "version": "1.0",
       "session_id": "stateless"
     },
-    "message": "тест вибору дій",
+    "message": null,
     "codeBlocks": null,
     "result": {
       "graph": {
@@ -23,9 +22,6 @@
           "entities": [],
           "relations": []
         },
-        "new_task": [
-          "тест вибору дій"
-        ],
         "request_files": [
           "No entities recognized"
         ]
@@ -42,8 +38,8 @@
       ]
     },
     "error": null,
-    "createdAt": "2026-03-07T03:43:50.211Z",
-    "startedAt": "2026-03-07T03:43:50.965Z",
-    "completedAt": "2026-03-07T03:43:50.971Z"
+    "createdAt": "2026-03-07T03:43:38.190Z",
+    "startedAt": "2026-03-07T03:43:38.732Z",
+    "completedAt": "2026-03-07T03:43:38.741Z"
   }
 }

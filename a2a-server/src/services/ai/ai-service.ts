@@ -10,7 +10,7 @@
  * request/phase machinery, so it can be adopted incrementally.
  */
 
-import {ProxyClient, ProxyClientConfig} from './proxy-client.js';
+import {ProxyClient, ProxyClientConfig} from '../proxy/proxy-client.js';
 import {hashSha256} from '../utils/crypto.js';
 import {logger} from '../utils/logger.js';
 

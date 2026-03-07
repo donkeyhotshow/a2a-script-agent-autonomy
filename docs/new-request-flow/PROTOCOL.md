@@ -571,7 +571,8 @@ interface SessionSummary {
 - UI взаимодействия (формы, выбор опций)
 - Простые операции без LLM
 - Симуляции и тесты
-- Маршрутизация (dialog → auto-ai → task-decomposition)
+- **Прямые задачи:** dialog, chat → сразу input форма
+- Маршрутизация: общие задачи → роутер с вариантами
 
 #### Асинхронный ответ (Async Flow с PromiseId)
 

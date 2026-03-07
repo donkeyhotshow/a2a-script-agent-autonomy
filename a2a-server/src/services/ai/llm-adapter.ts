@@ -13,13 +13,13 @@ import {proxyCacheConfig} from '../../config/proxy.config.js';
 import {createOllamaPromise, waitForPromise} from './ollama-adapter.js';
 import {AIService} from './ai-service.js';
 
-const PLACEHOLDER = 'Request processed (placeholder for ChatGPT)';
+// Removed PLACEHOLDER - system should throw errors instead of returning mock responses
 const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions';
 const AI_PROXY_URL = (process.env.AI_HUB_URL ?? 'http://localhost:11434').trim();
 const LLM_ARCHIVE_DIR =
     (process.env.LLM_ARCHIVE_DIR ?? '').trim() || resolvePath(process.cwd(), 'storage', 'llm-archive');
 
-type LlmProvider = 'openai' | 'ollama' | 'proxy' | 'placeholder';
+type LlmProvider = 'openai' | 'ollama' | 'proxy';
 
 function getProvider(): LlmProvider {
     const explicit = (process.env.LLM_PROVIDER ?? '').trim().toLowerCase();
@@ -32,7 +32,9 @@ function getProvider(): LlmProvider {
     if (['1', 'true', 'yes', 'y', 'on'].includes(useOllama)) return 'ollama';
 
     if ((process.env.OPENAI_API_KEY ?? '').trim()) return 'openai';
-    return 'placeholder';
+
+    // No provider configured
+    throw new Error('No LLM provider configured. Set LLM_PROVIDER or configure OPENAI_API_KEY/AI_HUB_URL/USE_OLLAMA');
 }
 
 let cachedProxyService: AIService | null = null;
@@ -67,7 +69,7 @@ export interface LLMInput {
 }
 
 /**
- * Call external LLM with context block. Returns placeholder when unavailable.
+ * Call external LLM with context block. Throws error when unavailable.
  */
 export async function callLLM(input: LLMInput): Promise<string> {
     const replayDir = (process.env.LLM_REPLAY_DIR ?? '').trim();
@@ -91,14 +93,16 @@ export async function callLLM(input: LLMInput): Promise<string> {
     if (provider === 'proxy') {
         const svc = getProxyService();
         if (!svc) {
-            logger.warn('[LLM/Proxy] Service not available, falling back to placeholder');
-            return PLACEHOLDER;
+            throw new Error('[LLM/Proxy] Service not available - AI_PROXY_URL not configured or service failed to initialize');
         }
         try {
             const result = await svc.generateText(prompt, {
                 model: process.env.OPENAI_MODEL ?? undefined,
             });
-            const text = result.text?.trim() || PLACEHOLDER;
+            const text = result.text?.trim();
+            if (!text) {
+                throw new Error('[LLM/Proxy] Empty response from proxy service');
+            }
             await archiveLlmInteraction({
                 provider: 'proxy',
                 prompt,
@@ -116,7 +120,7 @@ export async function callLLM(input: LLMInput): Promise<string> {
                 context: input.context,
                 requestFiles: input.requestFiles,
             });
-            return PLACEHOLDER;
+            throw new Error('[LLM/Proxy] Request failed - check proxy service configuration');
         }
     }
 
@@ -132,7 +136,10 @@ export async function callLLM(input: LLMInput): Promise<string> {
             const text = await waitForPromise(promiseId, (status) => {
                 logger.debug('[LLM/Ollama] Promise status', {promiseId, status: status.status});
             });
-            const finalText = text?.trim() || PLACEHOLDER;
+            const finalText = text?.trim();
+            if (!finalText) {
+                throw new Error('[LLM/Ollama] Empty response from Ollama service');
+            }
             await archiveLlmInteraction({
                 provider: 'ollama',
                 prompt,
@@ -151,7 +158,7 @@ export async function callLLM(input: LLMInput): Promise<string> {
                 context: input.context,
                 requestFiles: input.requestFiles,
             });
-            return PLACEHOLDER;
+            throw new Error('[LLM/Proxy] Request failed - check proxy service configuration');
         }
     }
 
@@ -165,7 +172,7 @@ export async function callLLM(input: LLMInput): Promise<string> {
                 context: input.context,
                 requestFiles: input.requestFiles,
             });
-            return PLACEHOLDER;
+            throw new Error('[LLM/Proxy] Request failed - check proxy service configuration');
         }
 
         try {
@@ -191,12 +198,15 @@ export async function callLLM(input: LLMInput): Promise<string> {
                     context: input.context,
                     requestFiles: input.requestFiles,
                 });
-                return PLACEHOLDER;
+                throw new Error('[LLM/Proxy] Request failed - check proxy service configuration');
             }
 
             const data = (await res.json()) as { choices?: Array<{ message?: { content?: string } }> };
             const content = data.choices?.[0]?.message?.content?.trim();
-            const finalText = content ?? PLACEHOLDER;
+            if (!content) {
+                throw new Error('[LLM/OpenAI] Empty response from OpenAI API');
+            }
+            const finalText = content;
             await archiveLlmInteraction({
                 provider: 'openai',
                 prompt,
@@ -214,24 +224,12 @@ export async function callLLM(input: LLMInput): Promise<string> {
                 context: input.context,
                 requestFiles: input.requestFiles,
             });
-            return PLACEHOLDER;
+            throw new Error('[LLM/Proxy] Request failed - check proxy service configuration');
         }
     }
 
-    // placeholder (default when no API key configured)
-    logger.warn('[LLM] Using placeholder provider - no LLM configured', {
-        provider,
-        hasApiKey: !!(process.env.OPENAI_API_KEY ?? '').trim(),
-        hasAiHubUrl: !!(process.env.AI_HUB_URL ?? '').trim(),
-    });
-    await archiveLlmInteraction({
-        provider,
-        prompt,
-        response: PLACEHOLDER,
-        context: input.context,
-        requestFiles: input.requestFiles,
-    });
-    return PLACEHOLDER;
+    // This should never be reached due to getProvider() throwing earlier
+    throw new Error(`[LLM] Unsupported provider: ${provider}`);
 }
 
 function buildPrompt(input: LLMInput): string {

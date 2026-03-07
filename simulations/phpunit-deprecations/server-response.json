@@ -1,17 +1,17 @@
 {
   "success": true,
   "data": {
-    "id": "req_1772855030209_fd5wixic1",
-    "promiseId": "cmmfs405e00116l3cpx1e4ygo",
+    "id": "req_1772855028205_montjbg0y",
+    "promiseId": "cmmfs3ylr000z6l3cgv2v78qx",
     "clientId": "simulation-client",
     "status": "completed",
     "priority": 0,
     "context": {
-      "task": "тест вибору дій",
+      "task": "знайти застарілі PHPUnit методи",
       "version": "1.0",
       "session_id": "stateless"
     },
-    "message": "тест вибору дій",
+    "message": "знайти застарілі PHPUnit методи",
     "codeBlocks": null,
     "result": {
       "graph": {
@@ -24,7 +24,7 @@
           "relations": []
         },
         "new_task": [
-          "тест вибору дій"
+          "знайти застарілі PHPUnit методи"
         ],
         "request_files": [
           "No entities recognized"
@@ -42,8 +42,8 @@
       ]
     },
     "error": null,
-    "createdAt": "2026-03-07T03:43:50.211Z",
-    "startedAt": "2026-03-07T03:43:50.965Z",
-    "completedAt": "2026-03-07T03:43:50.971Z"
+    "createdAt": "2026-03-07T03:43:48.207Z",
+    "startedAt": "2026-03-07T03:43:48.937Z",
+    "completedAt": "2026-03-07T03:43:48.941Z"
   }
 }

@@ -37,13 +37,13 @@ doc:
 │  - Знает адрес сервера                                           │
 │  - API: localhost:3001                                           │
 │  - Содержит пакеты:                                              │
-│    - api-client - HTTP клиент для сервера                        │
-│    - agent - агент                                               │
-│    - fs-utils - файловые утилиты                                 │
-│    - rag - RAG функциональность                                  │
-│    - script-runner - запуск скриптов                             │
-│    - terminal - терминал                                        │
-│    - types - общие типы                                          │
+│    - sdk - Основной SDK                                           │
+│    - rag - RAG функциональность                                   │
+│    - execution - выполнение скриптов                              │
+│    - embedding - эмбеддинги                                       │
+│    - history - история                                            │
+│    - json - JSON утилиты                                          │
+│    - types - общие типы                                           │
 └─────────────────────────────────────────────────────────────────┘
                               │
                               ▼
@@ -106,7 +106,6 @@ const response = await fetch('/api/v1/projects');
 │  │ POST /api/sessions          - создать сессию                ││
 │  │ GET  /api/sessions          - получить список сессий         ││
 │  │ GET  /api/sessions/:id     - получить сессию                ││
-│  │ POST /api/sessions/:id/task - отправить задачу               ││
 │  │ POST /api/sessions/:id/next - следующий шаг                  ││
 │  │ POST /api/sessions/:id/cancel - отменить сессию              ││
 │  │ GET  /api/projects          - получить список проектов       ││
@@ -117,7 +116,7 @@ const response = await fetch('/api/v1/projects');
 │                              │                                   │
 │                              ▼                                   │
 │  ┌─────────────────────────────────────────────────────────────┐│
-│  │ ApiClient (a2a-client/packages/api-client)                  ││
+│  │ ApiClient (a2a-client/packages/sdk)                             ││
 │  │ - Знает адрес сервера (localhost:3000)                      ││
 │  │ - Создает сессии на сервере                                  ││
 │  │ - Отправляет задачи                                          ││
@@ -296,11 +295,16 @@ a2a-client/packages/
 
 a2a-client/web/
 ├── js/
+│ ├── app/                    # Основные модули приложения
+│ │   ├── app-task.js         # Управление задачами
+│ │   ├── session-manager.js  # Управление сессиями
+│ │   ├── project-manager.js  # Управление проектами
+│ │   ├── taskbar-manager.js  # Управление таскбаром
+│ │   └── window-manager.js   # Управление окнами
 │ ├── app-boot.js # Инициализация
 │ ├── app-init.js # Настройка app
-│ ├── app-state.js # Состояние приложения
-│ ├── sessions.js # Управление сессиями (UI)
-│ ├── actions-manager.js # Менеджер действий
+│ ├── app/ # Основные модули
+│ ├── components/ # UI компоненты
 │ ├── sse-client.js # SSE клиент
 │ ├── web-api-client.js # API клиента (NEW!)
 │ └── ...

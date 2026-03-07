@@ -27,7 +27,9 @@
 1. **Web:** поле ввода задачи + кнопка Send → панель с прелоадером
 2. **POST /api/sessions** (Web → Client API): `{ projectId, task }`
 3. **Client API** сохраняет сессию, проксирует на Server: `{ task, sync: true }`
-4. **Server** возвращает `execute.form.choices` (первый ответ) или `execute.*` (последующие)
+4. **Server** анализирует задачу:
+   - Если задача содержит "dialog" - возвращает `execute.form.input` (прямой диалог)
+   - Иначе возвращает `execute.form.choices` (роутер с вариантами)
 5. **Client API** возвращает sync ответ Web
 
 ### Async Flow (PromiseId - для AI операций)

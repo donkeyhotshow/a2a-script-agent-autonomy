@@ -51,9 +51,13 @@ a2a-client/web/
 ├── js/
 │   ├── app-task.js               # Инициализация приложения
 │   ├── api-integration.js        # Интеграция с API
-│   ├── session-manager.js        # Управление сессиями
-│   ├── task-flow.js              # Поток задач
-│   ├── sse-client.js             # SSE клиент
+│   ├── app/                    # Основные модули
+│   │   ├── session-manager.js    # Управление сессиями
+│   │   ├── taskbar-manager.js    # Управление таскбаром
+│   │   └── window-manager.js    # Управление окнами
+│   ├── components/              # UI компоненты
+│   ├── task-flow/              # Поток задач
+│   └── sse-client.js          # SSE клиент
 │   ├── error-handler.js          # Обработка ошибок
 │   ├── progress-indicators.js    # Индикаторы прогресса
 │   ├── terminal-emulator.js      # Эмулятор терминала
@@ -74,7 +78,7 @@ a2a-client/web/
 
 Модуль управления сессиями. Обеспечивает создание, загрузку и удаление сессий.
 
-**Файл:** [`js/sessions.js`](a2a-client/web/js/sessions.js) (управление сессиями в UI)
+**Файл:** [`js/app/session-manager.js`](a2a-client/web/js/app/session-manager.js)
 
 #### Конфигурация
 
@@ -119,7 +123,7 @@ await SessionManager.deleteSession('sess_123');
 
 Модуль потока задач. Управляет созданием задач, отправкой на сервер и отображением результатов.
 
-**Файл:** [`task-flow.js`](../../a2a-client/web/js/task-flow.js)
+**Файл:** [`task-flow/`](../../a2a-client/web/js/task-flow/) (модуль управления потоком задач)
 
 #### Конфигурация
 
@@ -396,12 +400,12 @@ console.log(results);
 
 ```javascript
 FileTransfer.configure({
-    apiBase: '/api/v1',
+    apiBase: '/api',
     sessionId: 'sess_123',
     chunkSize: 1024 * 1024,           // 1MB
-    maxFileSize: 100 * 1024 * 1024,    // 100MB
+    maxFileSize: 100 * 1024 * 1024,   // 100MB
     allowedTypes: ['.js', '.ts', '.md'], // Разрешённые типы
-    maxConcurrent: 3                    // Макс. параллельных загрузок
+    maxConcurrent: 3                   // Макс. параллельных загрузок
 });
 ```
 
@@ -457,7 +461,7 @@ FileTransfer.on('upload-complete', (data) => {
 
 ```javascript
 window.apiIntegration = {
-    serverUrl: 'http://localhost:3001/api/v1',
+    serverUrl: 'http://localhost:3001/api',
     token: 'jwt-token'
 };
 ```
@@ -521,8 +525,8 @@ const session = await apiIntegration.post('/sessions', {
 ```html
 <!-- Подключение скриптов -->
 <script src="js/api-integration.js"></script>
-<script src="js/session-manager.js"></script>
-<script src="js/task-flow.js"></script>
+<script src="js/app/session-manager.js"></script>
+<script src="js/task-flow/index.js"></script>
 <script src="js/sse-client.js"></script>
 <script src="js/error-handler.js"></script>
 <script src="js/progress-indicators.js"></script>
@@ -533,11 +537,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Настройка API (from storage or default)
     const savedUrl = await StorageAPI.config.getItem('serverUrl');
     window.apiIntegration = {
-        serverUrl: savedUrl || '/api/v1'
+        serverUrl: savedUrl || '/api'
     };
     
     // Инициализация менеджера сессий
-    SessionManager.init({ apiBase: '/api/v1' });
+    SessionManager.init({ apiBase: '/api' });
     
     // Инициализация обработчика ошибок
     ErrorHandler.init({ autoHideDelay: 5000 });

@@ -9,12 +9,11 @@ declare global {
     }
 }
 
-// Hardcoded password for server access
-const SERVER_PASSWORD = process.env['A2A_SERVER_PASSWORD'] || 'a2a_dev_password';
+// Removed hardcoded password - proper authentication required
 
 /**
- * Simple password-based authentication
- * Password is hardcoded in client
+ * JWT-based authentication
+ * Requires proper JWT token in Authorization header
  */
 export async function authenticate(
     req: Request,
@@ -29,13 +28,8 @@ export async function authenticate(
         }
 
         const authHeader = req.headers.authorization;
-        const tokenParam = typeof req.query?.token === 'string' ? req.query.token : undefined;
 
         if (!authHeader) {
-            if (tokenParam === SERVER_PASSWORD) {
-                req.client = {id: 'client', email: 'client@a2a.local'};
-                return next();
-            }
             throw unauthorized('AUTH_001', 'Authorization header required');
         }
 
