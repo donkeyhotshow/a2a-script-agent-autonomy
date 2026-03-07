@@ -1,0 +1,12 @@
+{
+  "id": "sess_0aa70a44-77ae-432a-b32e-391801e1a191",
+  "projectId": "test",
+  "title": "New Session",
+  "task": "dialog",
+  "status": "PENDING",
+  "version": "2.0",
+  "createdAt": "2026-03-07T04:20:58.999Z",
+  "updatedAt": "2026-03-07T04:20:58.999Z",
+  "messages": [],
+  "context": {}
+}

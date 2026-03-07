@@ -1,0 +1,63 @@
+{
+  "id": "sess_5444d853-2233-4ae6-a594-039542e45f41",
+  "projectId": "test",
+  "title": "test dialog",
+  "task": "диалог",
+  "status": "READY",
+  "version": "2.0",
+  "createdAt": "2026-03-07T18:01:37.290Z",
+  "updatedAt": "2026-03-07T18:01:54.759Z",
+  "messages": [],
+  "context": {
+    "task": "диалог",
+    "execution": {
+      "action": "dialog",
+      "step": "request"
+    },
+    "execute": {
+      "form": {
+        "input": [
+          {
+            "name": "message",
+            "type": "text",
+            "label": "Повідомлення",
+            "required": true
+          }
+        ]
+      }
+    },
+    "formChoices": {
+      "input": [
+        {
+          "name": "message",
+          "type": "text",
+          "label": "Повідомлення",
+          "required": true
+        }
+      ]
+    }
+  },
+  "execution": {
+    "action": "dialog",
+    "step": "request"
+  },
+  "currentExecute": {
+    "form": {
+      "title": "Оберіть спосіб виконання",
+      "choices": [
+        {
+          "id": "dialog",
+          "label": "AI діалог з користувачем"
+        },
+        {
+          "id": "auto-ai",
+          "label": "AI Action Generator"
+        },
+        {
+          "id": "task-decomposition",
+          "label": "Декомпозиція задачі"
+        }
+      ]
+    }
+  }
+}

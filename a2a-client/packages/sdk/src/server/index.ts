@@ -191,11 +191,12 @@ async function handleChoiceSelection(
         
         const upstream = await serverFetch('POST', serverBase, '/invoke', requestBody);
         const payload = (await upstream.json().catch(() => ({}))) as any;
-        
-        // Update session
-        const updatedSession = await updateSessionWithServerResponse(project, session, payload);
+
+        // Update session (unwrap data if present)
+        const serverData = payload?.data || payload;
+        const updatedSession = await updateSessionWithServerResponse(project, session, serverData);
         await saveSession(project, updatedSession);
-        
+
         // Send response back to client
         ws.send(JSON.stringify({
             type: 'choice_response',
@@ -203,7 +204,7 @@ async function handleChoiceSelection(
             serverResponse: payload,
             timestamp: new Date().toISOString(),
         }));
-        
+
         // Also broadcast to all session clients
         broadcastProgress(sessionId, {
             status: 'choice_processed',
@@ -279,11 +280,12 @@ async function handleActionResult(
         
         const upstream = await serverFetch('POST', serverBase, '/invoke', requestBody);
         const payload = (await upstream.json().catch(() => ({}))) as any;
-        
-        // Update session
-        const updatedSession = await updateSessionWithServerResponse(project, session, payload);
+
+        // Update session (unwrap data if present)
+        const serverData = payload?.data || payload;
+        const updatedSession = await updateSessionWithServerResponse(project, session, serverData);
         await saveSession(project, updatedSession);
-        
+
         // Send response back to client
         ws.send(JSON.stringify({
             type: 'action_result_response',
@@ -732,6 +734,7 @@ expressApp.get(['/api/sessions', '/api/v1/sessions'], async (req, res) => {
 
 expressApp.post(['/api/sessions', '/api/v1/sessions'], async (req, res) => {
     const body = (req.body || {}) as {projectId?: string; title?: string; task?: string};
+    console.log('[SDK] Creating session with body:', body);
     const projectId = String(body.projectId || '').trim();
     if (!projectId) {
         jsonError(res, 400, 'projectId is required');
@@ -776,15 +779,16 @@ expressApp.post(['/api/sessions', '/api/v1/sessions'], async (req, res) => {
             const payload = (await upstream.json().catch(() => ({}))) as any;
             
             if (upstream.ok) {
-                // Update session with server response
-                const updatedSession = await updateSessionWithServerResponse(project, session, payload);
+                // Update session with server response (unwrap data if present)
+                const serverData = payload?.data || payload;
+                const updatedSession = await updateSessionWithServerResponse(project, session, serverData);
 
                 // Check for synchronous response (immediate execute)
                 const syncExecute = payload?.data?.execute;
                 const isSync = payload?.data?.sync === true;
 
                 if (isSync && syncExecute) {
-                    // Synchronous response - session is ready with execute
+                    // Synchronous response - session is ready with execute (router or other)
                     updatedSession.status = 'READY';
                     updatedSession.currentExecute = syncExecute;
                     await saveSession(project, updatedSession);
@@ -854,7 +858,7 @@ expressApp.post(['/api/sessions', '/api/v1/sessions'], async (req, res) => {
 
                                     if (resultPayload?.data) {
                                         // Update session with completed result
-                                        const completedSession = await updateSessionWithServerResponse(project, updatedSession, { data: resultPayload.data });
+                                        const completedSession = await updateSessionWithServerResponse(project, updatedSession, resultPayload.data);
 
                                         if (hasFormChoices({ execute: resultPayload.data.execute })) {
                                             completedSession.status = 'READY';
@@ -1114,8 +1118,9 @@ expressApp.post(['/api/sessions/:sessionId/next', '/api/v1/sessions/:sessionId/n
             status: 'completed',
         };
 
-        // Update session
-        const updatedSession = await updateSessionWithServerResponse(project, session, payload);
+        // Update session (unwrap data if present)
+        const serverData = payload?.data || payload;
+        const updatedSession = await updateSessionWithServerResponse(project, session, serverData);
         await saveSession(project, updatedSession);
 
         // Broadcast to Web UI via SSE
@@ -1154,8 +1159,9 @@ expressApp.post(['/api/sessions/:sessionId/next', '/api/v1/sessions/:sessionId/n
         emitServerSse(sessionId, { promiseId, sessionId }, 'status');
     }
 
-    // Update session with server response data
-    const updatedSession = await updateSessionWithServerResponse(project, session, payload);
+    // Update session with server response data (unwrap data if present)
+    const serverData = payload?.data || payload;
+    const updatedSession = await updateSessionWithServerResponse(project, session, serverData);
     await saveSession(project, updatedSession);
 
     // Broadcast server response to Web UI
@@ -1235,6 +1241,15 @@ expressApp.post(['/api/sessions/:sessionId/result', '/api/v1/sessions/:sessionId
     };
     requestBody.result = result;  // action-key shape: { choice: "..." } или { message: "..." }
 
+    // Persist user message to session before forwarding
+    if (typeof result.message === 'string' && result.message.trim()) {
+        session.messages = [
+            ...(session.messages || []),
+            { role: 'user', content: result.message.trim(), timestamp: new Date().toISOString() }
+        ];
+        await saveSession(project, session);
+    }
+
     // Forward to server /invoke
     const upstream = await serverFetch('POST', serverBase, '/invoke', requestBody);
     const payload = (await upstream.json().catch(() => ({}))) as any;
@@ -1273,45 +1288,13 @@ expressApp.post(['/api/sessions/:sessionId/result', '/api/v1/sessions/:sessionId
                     step: "request"
                 }
             };
-        } else if (result?.message) {
-            correctedExecute = {
-                message: result.message,
-                form: {
-                    input: [
-                        {
-                            name: "message",
-                            type: "text",
-                            label: "Повідомлення",
-                            required: true
-                        }
-                    ]
-                }
-            };
-            correctedContext = {
-                ...correctedContext,
-                task: session.task || "диалог",
-                execution: {
-                    action: "dialog",
-                    step: "llm-request"
-                },
-                history: [
-                    {
-                        role: "user",
-                        message: result.message
-                    },
-                    {
-                        role: "assistant",
-                        message: result.message
-                    }
-                ]
-            };
         } else {
             // For other sync responses, use as-is
             correctedExecute = syncExecute;
             correctedContext = payload?.data?.context;
         }
 
-        const updatedSession = await updateSessionWithServerResponse(project, session, { data: { ...payload.data, execute: correctedExecute, context: correctedContext } });
+        const updatedSession = await updateSessionWithServerResponse(project, session, { ...payload.data, execute: correctedExecute, context: correctedContext });
         updatedSession.status = 'READY';
         await saveSession(project, updatedSession);
 
@@ -1402,43 +1385,9 @@ expressApp.post(['/api/sessions/:sessionId/result', '/api/v1/sessions/:sessionId
                                         }
                                     }
                                 };
-                            } else if (result?.message) {
-                                // Message input - should return LLM response + input form
-                                syncResult = {
-                                    execute: {
-                                        message: result.message,
-                                        form: {
-                                            input: [
-                                                {
-                                                    name: "message",
-                                                    type: "text",
-                                                    label: "Повідомлення",
-                                                    required: true
-                                                }
-                                            ]
-                                        }
-                                    },
-                                    context: {
-                                        task: session.task || "диалог",
-                                        execution: {
-                                            action: "dialog",
-                                            step: "llm-request"
-                                        },
-                                        history: [
-                                            {
-                                                role: "user",
-                                                message: result.message
-                                            },
-                                            {
-                                                role: "assistant",
-                                                message: result.message
-                                            }
-                                        ]
-                                    }
-                                };
                             }
 
-                            const updatedSession = await updateSessionWithServerResponse(project, session, { data: syncResult });
+                            const updatedSession = await updateSessionWithServerResponse(project, session, syncResult);
                             updatedSession.status = 'READY';
                             await saveSession(project, updatedSession);
 
@@ -1507,8 +1456,9 @@ expressApp.post(['/api/sessions/:sessionId/result', '/api/v1/sessions/:sessionId
         return;
     }
 
-    // No promiseId - update session normally
-    const updatedSession = await updateSessionWithServerResponse(project, session, payload);
+    // No promiseId - update session normally (unwrap data if present)
+    const serverData = payload?.data || payload;
+    const updatedSession = await updateSessionWithServerResponse(project, session, serverData);
     await saveSession(project, updatedSession);
 
     broadcastProgress(sessionId, {
@@ -1570,6 +1520,21 @@ async function updateSessionWithServerResponse(
     // Update messages from server response
     if (serverResponse?.messages && Array.isArray(serverResponse.messages)) {
         updatedSession.messages = [...(session.messages || []), ...serverResponse.messages];
+    }
+
+    // Persist assistant message from execute.message if not already in messages
+    const assistantText: string | undefined =
+        typeof serverResponse?.execute?.message === 'string' ? serverResponse.execute.message :
+        typeof serverResponse?.execute?.message?.content === 'string' ? serverResponse.execute.message.content :
+        typeof serverResponse?.execute?.form?.title === 'string' ? serverResponse.execute.form.title :
+        undefined;
+
+    if (assistantText) {
+        const existing = updatedSession.messages || [];
+        const alreadyAdded = existing.some(m => m.role === 'assistant' && m.content === assistantText);
+        if (!alreadyAdded) {
+            updatedSession.messages = [...existing, { role: 'assistant', content: assistantText, timestamp: new Date().toISOString() }];
+        }
     }
     
     // Update exchange log from server response

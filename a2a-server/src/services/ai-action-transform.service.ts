@@ -203,24 +203,33 @@ export class AIActionTransformService {
 
     logger.info('[AIActionTransform] Running simple transform', {
       promptName,
+      hasMessage: !!context.result?.message,
       contextStep: context.context.execution?.step
     });
 
-    // Apply request transform only (no LLM)
+    // Choose transform based on whether we have a message
+    const hasMessage = !!(context.result?.message && context.result.message.trim());
+    const transformToUse = hasMessage ? this.responseTransform : this.requestTransform;
+
+    if (!transformToUse) {
+      throw new Error(`No transform available for dialog ${hasMessage ? 'response' : 'request'}`);
+    }
+
+    // Apply transform only (no LLM)
     let requestResult: TransformResult;
     try {
-      logger.info('[AIActionTransform] Running request transform for simple dialog');
+      logger.info(`[AIActionTransform] Running ${hasMessage ? 'response' : 'request'} transform for dialog`);
       requestResult = await runTransformPipeline(
-        this.requestTransform!,
+        transformToUse,
         context as unknown as Record<string, unknown>,
         { baseDir: this.transformsDir }
       );
 
       if (!requestResult.success) {
-        throw new Error(`Request transform failed: ${requestResult.error}`);
+        throw new Error(`${hasMessage ? 'Response' : 'Request'} transform failed: ${requestResult.error}`);
       }
 
-      logger.info('[AIActionTransform] Request transform result:', { output: requestResult.output });
+      logger.info(`[AIActionTransform] Transform result:`, { output: JSON.stringify(requestResult.output, null, 2) });
       logger.debug('[AIActionTransform] Simple transform complete');
     } catch (error) {
       logger.error('[AIActionTransform] Simple transform error', { error: String(error) });

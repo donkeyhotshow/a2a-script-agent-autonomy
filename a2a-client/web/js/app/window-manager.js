@@ -302,69 +302,49 @@
                 // Note: store should already be set up with session data from createSessionWindow
                 // Don't reset here as it would clear loaded messages
 
-                    // Initial render with message history and execute panel
-                    const refreshContent = () => {
-                        const messages = store.messages || [];
-                        const execute = store.getExecute?.() || store.execute;
-                        const context = store.context || {};
-                        const isWaiting = store.isInputBlocked?.() || false;
+                const taskFlowRef = {
+                    sendMessageResult: async (text, el) => {
+                        if (!text || !text.trim()) return;
+                        store.pushMessage?.({ content: String(text).trim() }, 'user');
+                        store?.setPromisePending?.(true);
+                        refreshContent();
+                        await this.sendMessage(sessionId, text);
+                    },
+                    sendChoice: async (choiceId, el) => {
+                        store?.setPromisePending?.(true);
+                        refreshContent();
+                        await this.sendChoice(sessionId, choiceId);
+                    }
+                };
 
-                        const historyHtml = Render.renderMessageHistory(contentEl);
+                // Use renderExecute to render full panel (history + execute + input)
+                // renderExecute renders the complete content: history + execute block + input area
+                const refreshContent = () => {
+                    const execute = store.getExecute?.() || store.execute;
+                    const context = store.context || {};
+                    const isWaiting = store.isInputBlocked?.() || false;
 
-                        // Render execute panel if there's execute data with form/message
-                        let executeHtml = '';
-                        if (execute && (execute.form || execute.message || execute.finalResult)) {
-                            const tempDiv = document.createElement('div');
-                            Render.renderExecute(tempDiv, { execute, context, messages }, null);
-                            executeHtml = tempDiv.innerHTML;
-                        }
-
+                    if (execute && !isWaiting) {
+                        // Let renderExecute handle the full layout (history + form/message + input)
+                        Render.renderExecute(contentEl, execute, { execute, context }, taskFlowRef);
+                    } else {
+                        // Waiting or no execute: show history + waiting indicator
                         contentEl.innerHTML = `
                             <div class="session-content">
                                 <div class="session-header">
                                     <div class="session-info">
                                         <span class="session-id">ID: ${sessionId.slice(-8)}</span>
-                                        <span class="session-status">${isWaiting ? 'Waiting...' : (context.status || 'Active')}</span>
+                                        <span class="session-status">${isWaiting ? 'Waiting...' : 'Active'}</span>
                                     </div>
                                 </div>
-                                ${historyHtml}
-                                ${executeHtml}
+                                ${Render.renderMessageHistory(contentEl)}
                                 ${Render.getInputAreaHtml(isWaiting)}
                             </div>
                         `;
-
-                    // Bind input handlers
-                    Render.bindInputHandlers(contentEl, {
-                        sendMessageResult: async (text) => {
-                            if (!text || !text.trim()) return;
-                            // Add to store first so history shows it
-                            store.pushMessage?.({ content: String(text).trim() }, 'user');
-                            // Set waiting state immediately for UI feedback
-                            store?.setPromisePending?.(true);
-                            // Refresh to show waiting state
-                            refreshContent();
-                            // Send to server
-                            await this.sendMessage(sessionId, text);
-                        },
-                        sendChoiceResult: async (choiceId) => {
-                            // Set waiting state immediately for UI feedback
-                            store?.setPromisePending?.(true);
-                            // Refresh to show waiting state (form will be cleared)
-                            refreshContent();
-                            // Send choice to server
-                            await this.sendChoice(sessionId, choiceId);
+                        if (!isWaiting) {
+                            Render.bindInputHandlers(contentEl, taskFlowRef);
                         }
-                    });
-
-                    // Bind choice button handlers
-                    contentEl.querySelectorAll('.task-flow-choice-btn').forEach(btn => {
-                        btn.addEventListener('click', () => {
-                            const choiceId = btn.dataset.choiceId;
-                            if (choiceId) {
-                                this.sendChoice(sessionId, choiceId);
-                            }
-                        });
-                    });
+                    }
 
                     // Scroll to bottom
                     const historyEl = contentEl.querySelector('.task-flow-history');

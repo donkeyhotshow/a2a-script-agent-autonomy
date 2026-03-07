@@ -1,0 +1,13 @@
+{
+  "id": "sess_3f4f015f-4c45-4521-8681-7368c47f4354",
+  "projectId": "test",
+  "title": "New Session",
+  "task": "dialog",
+  "status": "IN_PROGRESS",
+  "version": "2.0",
+  "createdAt": "2026-03-07T16:31:52.352Z",
+  "updatedAt": "2026-03-07T16:32:03.162Z",
+  "messages": [],
+  "context": {},
+  "lastPromiseId": "cmmgjjpl60000jznyr4fdkjzi"
+}

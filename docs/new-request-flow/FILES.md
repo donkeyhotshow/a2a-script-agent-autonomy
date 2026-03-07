@@ -27,12 +27,12 @@ Web інтерфейс (UI). Працює на порту 5173 (Vite dev server)
 | Файл                    | Опис                                |
 |-------------------------|-------------------------------------|
 | `index.html`            | Головна HTML сторінка               |
-| `js/app-boot.js`        | Ініціалізація додатку               |
-| `js/app-init.js`        | Налаштування додатку                |
+| `js/storage.js`        | Ініціалізація додатку               |
+| `js/`        | Налаштування додатку                |
 | `js/app/`               | Основні модулі додатку              |
 | `js/session-store.js`   | Сховище сесій                       |
 | `js/components/`        | UI компоненти                        |
-| `js/sse-client.js`      | SSE клієнт для real-time оновлень   |
+| `js/transport/sse-transport.js  # SSE транспорт`      | SSE клієнт для real-time оновлень   |
 | `js/web-api-client.js`  | API клієнт для зв'язку з Client API |
 | `js/flow/`              | Flow-based UI компоненти            |
 | `js/json/`              | JSON UI компоненти                  |

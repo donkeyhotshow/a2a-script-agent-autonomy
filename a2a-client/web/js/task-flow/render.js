@@ -28,7 +28,7 @@
     /**
      * Получить HTML области ввода
      */
-    function getInputAreaHtml(isWaiting = false) {
+    function getInputAreaHtml(isWaiting = false, placeholder = 'Type your message...') {
         if (isWaiting) {
             return `
                 <div class="task-flow-input-area waiting">
@@ -41,7 +41,7 @@
         }
         return `
             <div class="task-flow-input-area">
-                <input type="text" id="taskMessageInput" placeholder="Type your message..." class="task-flow-input" />
+                <input type="text" id="taskMessageInput" placeholder="${escapeHtml(placeholder)}" class="task-flow-input" />
                 <button id="taskSendMessage" class="task-flow-send-btn">Send</button>
             </div>
         `;
@@ -144,6 +144,10 @@
         }
 
         // Route to specific renderer
+        // execute.form.input + execute.message: message shown via history (set by SessionStore), input stays open
+        // execute.form.choices: choice buttons
+        // execute.form.input only: text input
+        // execute.message only: show message + generic input to continue
         if (execute.form) {
             return renderForm(contentEl, execute.form, executionStepHtml, progressBarHtml, finalResultHtml, taskFlowRef);
         } else if (execute.message) {
@@ -178,24 +182,18 @@
             formContent += `${title}<div class="task-flow-choices">${buttons}</div>`;
         }
 
-        // Render input fields (only when server explicitly sends form.input)
-        let inputAreaHtml = '';
-        if (hasInput) {
-            const inputs = form.input.map((field) => {
-                if (field.type === 'text' || field.type === 'string') {
-                    return `
-                        <div class="task-flow-field">
-                            <label>${escapeHtml(field.label || field.name)}</label>
-                            <input type="text" name="${escapeHtml(field.name)}" ${field.required ? 'required' : ''} />
-                        </div>
-                    `;
-                }
-                return '';
-            }).join('');
-            inputAreaHtml = `<div class="task-flow-inputs">${inputs}</div>`;
+        // When form.input present (no choices): use first field label as placeholder for bottom input.
+        // Do NOT render separate labeled fields - they have no submit handler and duplicate the bottom input.
+        let inputPlaceholder = 'Type your message...';
+        if (hasInput && !hasChoices) {
+            const firstField = form.input[0];
+            if (firstField?.label) inputPlaceholder = firstField.label;
         }
 
         const historyHtml = renderMessageHistory(contentEl);
+
+        // Show bottom input only when there are input fields or form with no choices
+        const showBottomInput = hasInput && !hasChoices;
 
         contentEl.innerHTML = `
             ${historyHtml}
@@ -203,10 +201,9 @@
                 ${executionStepHtml}
                 ${progressBarHtml}
                 ${formContent}
-                ${inputAreaHtml}
                 ${finalResultHtml}
             </div>
-            ${getInputAreaHtml()}
+            ${showBottomInput ? getInputAreaHtml(false, inputPlaceholder) : ''}
         `;
 
         // Bind choice button handlers
@@ -219,7 +216,9 @@
             });
         });
 
-        bindInputHandlers(contentEl, taskFlowRef);
+        if (showBottomInput) {
+            bindInputHandlers(contentEl, taskFlowRef);
+        }
     }
 
     /**
@@ -233,7 +232,6 @@
      */
     function renderMessage(contentEl, message, executionStepHtml, progressBarHtml, finalResultHtml, taskFlowRef) {
         const messageContent = typeof message === 'string' ? message : (message.content || message.text || '');
-        const encodedMessage = encodeURIComponent(messageContent || '');
 
         const historyHtml = renderMessageHistory(contentEl);
 
@@ -249,15 +247,6 @@
             </div>
             ${getInputAreaHtml()}
         `;
-
-        const messageBtn = contentEl.querySelector('.task-flow-message-btn');
-        messageBtn?.addEventListener('click', () => {
-            const payload = messageBtn.dataset.message;
-            const decoded = payload ? decodeURIComponent(payload) : '';
-            if (taskFlowRef?.sendMessageResult) {
-                taskFlowRef.sendMessageResult(decoded, contentEl);
-            }
-        });
 
         bindInputHandlers(contentEl, taskFlowRef);
     }

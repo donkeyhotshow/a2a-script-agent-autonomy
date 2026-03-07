@@ -1,0 +1,77 @@
+{
+  "id": "sess_3dcba443-22b4-4b44-8ae2-ecb4ec0382bd",
+  "projectId": "test",
+  "title": "test dialog",
+  "task": "диалог",
+  "status": "READY",
+  "version": "2.0",
+  "createdAt": "2026-03-07T17:59:19.913Z",
+  "updatedAt": "2026-03-07T17:59:20.746Z",
+  "messages": [],
+  "context": {
+    "task": "диалог",
+    "execution": {
+      "action": "task",
+      "step": "router"
+    },
+    "execute": {
+      "form": {
+        "title": "Оберіть спосіб виконання",
+        "choices": [
+          {
+            "id": "dialog",
+            "label": "AI діалог з користувачем"
+          },
+          {
+            "id": "auto-ai",
+            "label": "AI Action Generator"
+          },
+          {
+            "id": "task-decomposition",
+            "label": "Декомпозиція задачі"
+          }
+        ]
+      }
+    },
+    "formChoices": {
+      "title": "Оберіть спосіб виконання",
+      "choices": [
+        {
+          "id": "dialog",
+          "label": "AI діалог з користувачем"
+        },
+        {
+          "id": "auto-ai",
+          "label": "AI Action Generator"
+        },
+        {
+          "id": "task-decomposition",
+          "label": "Декомпозиція задачі"
+        }
+      ]
+    }
+  },
+  "execution": {
+    "action": "task",
+    "step": "router"
+  },
+  "currentExecute": {
+    "form": {
+      "title": "Оберіть спосіб виконання",
+      "choices": [
+        {
+          "id": "dialog",
+          "label": "AI діалог з користувачем"
+        },
+        {
+          "id": "auto-ai",
+          "label": "AI Action Generator"
+        },
+        {
+          "id": "task-decomposition",
+          "label": "Декомпозиція задачі"
+        }
+      ]
+    }
+  }
+}

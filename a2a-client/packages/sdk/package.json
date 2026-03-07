@@ -10,7 +10,7 @@
     "./server": "./src/server/index.js"
   },
   "scripts": {
-    "dev": "tsx watch src/server/index.ts",
+    "dev": "cross-env DEFAULT_SYNC_MODE=1 tsx watch src/server/index.ts",
     "build": "tsc",
     "start": "node dist/server/index.js",
     "test": "vitest run"

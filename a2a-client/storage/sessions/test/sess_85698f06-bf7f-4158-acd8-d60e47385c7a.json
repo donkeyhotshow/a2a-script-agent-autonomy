@@ -1,0 +1,13 @@
+{
+  "id": "sess_85698f06-bf7f-4158-acd8-d60e47385c7a",
+  "projectId": "test",
+  "title": "test dialog",
+  "task": "диалог",
+  "status": "IN_PROGRESS",
+  "version": "2.0",
+  "createdAt": "2026-03-07T18:01:08.697Z",
+  "updatedAt": "2026-03-07T18:01:19.118Z",
+  "messages": [],
+  "context": {},
+  "lastPromiseId": "cmmgmqicd0004a7gt5th0ghl4"
+}

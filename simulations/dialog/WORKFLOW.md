@@ -1,5 +1,27 @@
 # Dialog Simulation Files Workflow
 
+## Web Execute Variants (Web Rendering Contract)
+
+The `received.json` files define what the web receives. The web must handle all these `execute` shapes:
+
+| Step | `received.json` execute shape | Web renders |
+|------|-------------------------------|-------------|
+| 1 | `{ form: { title, choices: [...] } }` | Choice buttons (router) |
+| 2 | `{ form: { input: [{ name, type, label }] } }` | Text input (begin dialog) |
+| 3+ | `{ message: "...", form: { input: [...] } }` | History (message added to store) + text input |
+| any | `{ finalResult: {...} }` | Completed state |
+
+**Key rules:**
+- `execute.form.choices` → render choice buttons, NO text input at bottom
+- `execute.form.input` (no choices) → use `input[0].label` as placeholder for bottom text input; no separate labeled fields
+- `execute.message + execute.form.input` → message is pushed to history by `SessionStore.setExecute()` before render; bottom input stays open
+- `execute.message` only (no form) → show message in container + bottom input to continue
+- Client sends: `{ result: { choice: "id" } }` for choices, `{ result: { message: "text" } }` for text input
+
+**Renderer:** `a2a-client/web/js/task-flow/render.js` → `renderExecute()` → `renderForm()` / `renderMessage()`
+
+---
+
 ## File Types
 
 Each dialog step can contain up to 8 files, covering the complete Web ↔ Client API ↔ Server ↔ LLM pipeline:

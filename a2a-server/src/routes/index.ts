@@ -109,44 +109,39 @@ async function handleInvoke(req: Request, res: Response, next: NextFunction): Pr
                 if (status?.status === 'completed') {
                     const result = await requestService.getResult(invokeResult.promiseId!);
                     if (result) {
-                        // Construct response data
+                        // Construct execute data from result
                         let executeData = (result as any).execute;
-                        let contextData = (result as any).context || {};
-
-                        // For dialog tasks, ensure we have proper execute and context
                         const taskText = (body.task as string || '').toLowerCase();
-                        if ((taskText.includes('dialog') || taskText.includes('диалог') ||
-                             taskText.includes('chat') || taskText.includes('беседа')) && !executeData) {
+
+                        if (!executeData) {
+                            // Return router form for general tasks
                             executeData = {
                                 form: {
-                                    input: [
-                                        {
-                                            name: 'message',
-                                            type: 'text',
-                                            label: 'Повідомлення',
-                                            required: true
-                                        }
-                                    ]
-                                }
-                            };
-                            // Ensure execution context
-                            if (!contextData.execution) {
-                                contextData = {
-                                    ...contextData,
-                                    task: body.task || 'диалог',
-                                    execution: {
-                                        action: 'dialog',
-                                        step: 'request'
+                                    title: "Оберіть спосіб виконання",
+                                        choices: [
+                                            { id: "dialog", label: "AI діалог з користувачем" },
+                                            { id: "auto-ai", label: "AI Action Generator" },
+                                            { id: "task-decomposition", label: "Декомпозиція задачі" }
+                                        ]
                                     }
                                 };
                             }
-                        }
+
+                            // Set context for router step
+                            const contextData = {
+                                task: body.task,
+                                execution: {
+                                    action: "task",
+                                    step: "router"
+                                }
+                            };
+                            (result as any).context = contextData;
 
                         return res.status(200).json({
                             success: true,
                             data: {
                                 execute: executeData,
-                                context: contextData,
+                                context: (result as any).context,
                                 status: 'completed',
                                 sync: true,
                             },

@@ -541,8 +541,8 @@ API Server интегрирован с Web UI через следующие мо
 
 - [`session-manager.js`](../../a2a-client/web/js/session-manager.js) - управление сессиями
 - [`api-integration.js`](../../a2a-client/web/js/api-integration.js) - API интеграция
-- [`terminal-emulator.js`](../../a2a-client/web/js/terminal-emulator.js) - эмулятор терминала
-- [`file-transfer.js`](../../a2a-client/web/js/file-transfer.js) - передача файлов
+
+
 - [`error-handler.js`](../../a2a-client/web/js/error-handler.js) - обработка ошибок
 
 ## Запуск сервера

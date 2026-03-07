@@ -33,7 +33,7 @@ a2a-client/web/
 ├── index.html                    # Главная HTML страница
 ├── css/
 │   ├── app.css                   # Основные стили
-│   ├── plasticine-ui.css         # Стили пластилинового UI
+
 │   ├── base/
 │   │   ├── typography.css        # Типографика
 │   │   └── variables.css         # CSS переменные
@@ -57,15 +57,15 @@ a2a-client/web/
 │   │   └── window-manager.js    # Управление окнами
 │   ├── components/              # UI компоненты
 │   ├── task-flow/              # Поток задач
-│   └── sse-client.js          # SSE клиент
+│   └── transport/sse-transport.js  # SSE транспорт
 │   ├── error-handler.js          # Обработка ошибок
 │   ├── progress-indicators.js    # Индикаторы прогресса
-│   ├── terminal-emulator.js      # Эмулятор терминала
-│   ├── rag-search-ui.js          # UI для RAG поиска
+│   ├── 
+│   ├── 
 │   ├── file-transfer.js          # Передача файлов
-│   ├── plasticine-ui.js          # Пластилиновый UI
-│   ├── plasticine-workflow.js    # Workflow компонент
-│   ├── ui-components.js          # UI компоненты
+
+
+│   ├── 
 │   ├── web-api-client.js         # Web API клиент
 │   └── components/               # Дополнительные компоненты
 └── examples/
@@ -160,7 +160,7 @@ TaskFlow.sendChoice('confirm_action', containerElement);
 
 Клиент для Server-Sent Events. Обеспечивает real-time получение обновлений от сервера.
 
-**Файл:** [`sse-client.js`](../../a2a-client/web/js/sse-client.js)
+**Файл:** [`transport/sse-transport.js`](../../a2a-client/web/js/transport/sse-transport.js)
 
 #### Конфигурация
 
@@ -308,7 +308,7 @@ tracker.remove();
 
 Эмулятор терминала в браузере. Обеспечивает выполнение команд и отображение вывода.
 
-**Файл:** [`terminal-emulator.js`](../../a2a-client/web/js/terminal-emulator.js)
+
 
 #### Конфигурация
 
@@ -527,7 +527,7 @@ const session = await apiIntegration.post('/sessions', {
 <script src="js/api-integration.js"></script>
 <script src="js/app/session-manager.js"></script>
 <script src="js/task-flow/index.js"></script>
-<script src="js/sse-client.js"></script>
+<script src="js/transport/sse-transport.js"></script>
 <script src="js/error-handler.js"></script>
 <script src="js/progress-indicators.js"></script>
 

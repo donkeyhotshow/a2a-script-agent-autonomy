@@ -19,7 +19,7 @@ const router = Router();
  * POST /api/sessions
  * Create a new session
  */
-router.post('/', (req: Request, res: Response) => {
+router.post('/', async (req: Request, res: Response) => {
     try {
         const body = req.body as {
             title?: string;
@@ -47,10 +47,53 @@ router.post('/', (req: Request, res: Response) => {
             }
         });
 
-        res.status(201).json({
+        let serverResponse = null;
+
+        // If task is provided, call a2a-server to get initial response
+        if (body.task) {
+            try {
+                // Import serverFetch and getServerBaseUrl
+                const { serverFetch, getServerBaseUrl } = await import('../../index.js');
+
+                const serverBase = await getServerBaseUrl();
+                const requestBody = {
+                    context: {
+                        version: '2.0',
+                        session_id: sessionId,
+                        execution: {
+                            action: 'task',
+                            step: 'new'
+                        }
+                    },
+                    result: {
+                        message: body.task
+                    }
+                };
+
+                const upstream = await serverFetch('POST', serverBase, '/invoke', requestBody);
+                serverResponse = await upstream.json().catch(() => null);
+
+                if (upstream.ok && serverResponse) {
+                    console.log('[SESSIONS API] Got initial server response for task:', body.task);
+                } else {
+                    console.warn('[SESSIONS API] Server call failed:', upstream.status, serverResponse);
+                }
+            } catch (serverError) {
+                console.warn('[SESSIONS API] Failed to call server for task:', serverError);
+                // Don't fail the session creation if server call fails
+            }
+        }
+
+        const response: any = {
             success: true,
             data: session
-        });
+        };
+
+        if (serverResponse) {
+            response.serverResponse = serverResponse;
+        }
+
+        res.status(201).json(response);
     } catch (error) {
         console.error('[SESSIONS API] Error creating session:', error);
         res.status(500).json({

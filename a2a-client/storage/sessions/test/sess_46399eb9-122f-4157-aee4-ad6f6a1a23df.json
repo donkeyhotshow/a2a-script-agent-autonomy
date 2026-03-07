@@ -1,0 +1,31 @@
+{
+  "id": "sess_46399eb9-122f-4157-aee4-ad6f6a1a23df",
+  "projectId": "test",
+  "title": "New Session",
+  "task": "dialog",
+  "status": "READY",
+  "version": "2.0",
+  "createdAt": "2026-03-07T04:36:59.933Z",
+  "updatedAt": "2026-03-07T04:37:01.104Z",
+  "messages": [],
+  "context": {},
+  "currentExecute": {
+    "form": {
+      "title": "Оберіть спосіб виконання",
+      "choices": [
+        {
+          "id": "dialog",
+          "label": "AI діалог з користувачем"
+        },
+        {
+          "id": "auto-ai",
+          "label": "AI Action Generator"
+        },
+        {
+          "id": "task-decomposition",
+          "label": "Декомпозиція задачі"
+        }
+      ]
+    }
+  }
+}

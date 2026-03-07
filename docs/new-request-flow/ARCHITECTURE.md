@@ -64,8 +64,7 @@ doc:
 В текущей реализации web напрямую обращается к серверу:
 
 ```javascript
-// a2a-client/web/js/app-enhancements.js:748
-const response = await fetch('/api/v1/projects');
+
 ```
 
 Это **НЕПРАВИЛЬНО** по следующим причинам:
@@ -301,11 +300,13 @@ a2a-client/web/
 │ │   ├── project-manager.js  # Управление проектами
 │ │   ├── taskbar-manager.js  # Управление таскбаром
 │ │   └── window-manager.js   # Управление окнами
-│ ├── app-boot.js # Инициализация
-│ ├── app-init.js # Настройка app
+│ ├── storage.js             # Сховище даних
+│ ├── 
 │ ├── app/ # Основные модули
 │ ├── components/ # UI компоненты
-│ ├── sse-client.js # SSE клиент
+│ ├── transport/            # Транспортний рівень
+│ │   ├── sse-transport.js   # SSE транспорт
+│ │   └── websocket-transport.js # WebSocket
 │ ├── web-api-client.js # API клиента (NEW!)
 │ └── ...
 ├── css/

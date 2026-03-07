@@ -580,12 +580,21 @@ export class NeuronRequestProcessor extends BaseRequestProcessor {
         // Run the AI-Action with transforms
         let transformResult;
         try {
-            // For simple dialog, use simple transform without LLM
-            if (action === 'dialog' && !aiActionContext.result.message) {
-                logger.info('[NeuronRequestProcessor] Using simple transform for dialog');
-                transformResult = await transformService.runSimpleTransform(aiActionContext, {
-                    promptName,
-                });
+            // For dialog, use AI action when responding to user messages, simple transform for setup
+            if (action === 'dialog') {
+                const hasUserMessage = !!(aiActionContext.result?.message && aiActionContext.result.message.trim());
+                if (hasUserMessage) {
+                    logger.info('[NeuronRequestProcessor] Using AI action for dialog response');
+                    transformResult = await transformService.runAIAction(aiActionContext, {
+                        promptName,
+                        temperature: 0.7,
+                    });
+                } else {
+                    logger.info('[NeuronRequestProcessor] Using simple transform for dialog setup');
+                    transformResult = await transformService.runSimpleTransform(aiActionContext, {
+                        promptName,
+                    });
+                }
             } else {
                 logger.info('[NeuronRequestProcessor] Using AI action for complex task');
                 transformResult = await transformService.runAIAction(aiActionContext, {
