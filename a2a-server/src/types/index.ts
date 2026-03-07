@@ -2,8 +2,6 @@
 
 // Protocol types based on a2a-codebase-agen-v1.md
 
-type ProtocolVersion = '0.1.0' | '1.0.0';
-
 // Re-export Unified JSON types
 export * from './unified.js';
 
@@ -12,8 +10,8 @@ export * from './unified.js';
 // ============================================
 
 export interface ContextBlock {
-    version: ProtocolVersion;
     session_id: string;
+    version?: string;
     new_task?: string[];
     architectural_features?: string[];
     continue?: boolean;

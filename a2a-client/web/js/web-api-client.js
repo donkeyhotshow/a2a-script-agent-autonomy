@@ -358,13 +358,14 @@
 
         /**
          * Send form choice result (new protocol v2.0)
-         * @param {string} sessionId - Session ID
-         * @param {Object} result - Result object in action-key shape: { choice: "..." }
+         * Payload matches simulations client.json: { projectId, sessionId, result }
          */
         async sendChoice(sessionId, result) {
             if (this.sessions) {
                 try {
-                    const response = await this.sessions._request('POST', `/sessions/${sessionId}/result`, result);
+                    const projectId = this.sessions.currentProjectId ?? this.sessions.projectId ?? null;
+                    const body = { projectId, sessionId, result };
+                    const response = await this.sessions._request('POST', `/sessions/${sessionId}/result`, body);
                     // Эмитим событие для компонентов
                     this._emit('choiceResult', { sessionId, result, response });
                     return response;

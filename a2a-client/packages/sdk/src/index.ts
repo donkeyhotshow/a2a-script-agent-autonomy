@@ -265,18 +265,3 @@ export type {
     FinalResult,
     HistoryEntry,
 } from './simulation-helpers.js';
-
-// Message Queue exports for reliable message delivery
-export {
-    MessageQueue,
-    getGlobalQueue,
-    setGlobalQueue,
-    destroyGlobalQueue,
-} from './message-queue.js';
-export type {
-    QueuedMessage,
-    MessageStatus,
-    QueueStats,
-    PedalerOptions,
-    SendFunction,
-} from './message-queue.js';

@@ -78,8 +78,8 @@
          * @returns {Promise<Object>} Server response
          */
         async submit(sessionId, projectId, result, context = null) {
-            if (!sessionId || !projectId) {
-                throw new Error('Session ID and Project ID required');
+            if (!sessionId) {
+                throw new Error('Session ID required');
             }
 
             // Validate action-key shape
@@ -88,8 +88,10 @@
                 throw new Error('Result must have exactly one action-type key');
             }
 
+            // Match simulations client.json: { projectId, sessionId, result }
             const requestBody = {
-                projectId,
+                projectId: projectId ?? null,
+                sessionId,
                 result,
                 ...(context && { context })
             };

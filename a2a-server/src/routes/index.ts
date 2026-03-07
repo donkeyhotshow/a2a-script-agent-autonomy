@@ -1,7 +1,11 @@
 import {Router, Request, Response, NextFunction} from 'express';
 import {invoke} from '../services/utils/invoke.service.js';
+import requestsRouter from './requests.routes.js';
 
 const router = Router();
+
+// Mount requests API (status, result, batch status)
+router.use('/requests', requestsRouter);
 
 /**
  * Main invoke endpoint - all processing happens here

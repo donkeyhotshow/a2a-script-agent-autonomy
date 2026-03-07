@@ -344,11 +344,11 @@
                 if (handler?.submit) {
                     result = await handler.submit(sessionId, projectId, { choice: choiceId }, this._buildContext());
                 } else {
-                    // Fallback: manual submission
-                    const context = this._buildContext();
+                    // Fallback: client.json format { projectId, sessionId, result }
                     result = await request('POST', `/sessions/${encodeURIComponent(sessionId)}/result`, {
-                        result: { choice: choiceId },
-                        context
+                        projectId,
+                        sessionId,
+                        result: { choice: choiceId }
                     });
                 }
 
@@ -414,11 +414,11 @@
                 if (handler?.submit) {
                     result = await handler.submit(sessionId, projectId, { message: messageText }, this._buildContext());
                 } else {
-                    // Fallback: manual submission
-                    const context = this._buildContext();
+                    // Fallback: client.json format { projectId, sessionId, result }
                     result = await request('POST', `/sessions/${encodeURIComponent(sessionId)}/result`, {
-                        result: { message: messageText },
-                        context
+                        projectId,
+                        sessionId,
+                        result: { message: messageText }
                     });
                 }
 

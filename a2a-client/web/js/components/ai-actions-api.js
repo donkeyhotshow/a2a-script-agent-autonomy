@@ -51,9 +51,10 @@
             try {
                 const api = global.apiIntegration;
                 const projectId = store?.projectId ?? await (global.ProjectManager?.getSelectedProjectId?.()) ?? null;
+                const body = { projectId, sessionId, result };
                 const response = api?.sendResult
                     ? await api.sendResult(sessionId, result, projectId)
-                    : await this._request('POST', `/sessions/${sessionId}/result`, result);
+                    : await this._request('POST', `/sessions/${sessionId}/result`, body);
 
                 if (response?.execute) this.processExecute(response.execute, response.context);
                 if (response?.finalResult) this.processExecute({ finalResult: response.finalResult }, response.context);

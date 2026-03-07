@@ -14,13 +14,6 @@ import {
 
 const VALID_TASK_TYPES: TaskType[] = ['analyze', 'refactor', 'test', 'document', 'fix', 'create', 'delete'];
 const VALID_TASK_STATUSES: TaskStatus[] = ['pending', 'in_progress', 'completed', 'failed', 'cancelled'];
-const PROTOCOL_VERSIONS = ['0.1.0', '1.0.0'];
-
-type ProtocolVersion = typeof PROTOCOL_VERSIONS[number];
-
-function isSupportedVersion(version: string): version is ProtocolVersion {
-    return PROTOCOL_VERSIONS.includes(version as ProtocolVersion);
-}
 
 // Type Guards
 function isObject(value: unknown): value is Record<string, unknown> {
@@ -82,12 +75,6 @@ export function validateContextBlock(context: unknown): { valid: boolean; errors
 
     const ctx = context as Record<string, unknown>;
 
-    if (!isString(ctx['version'])) {
-        errors.push('version is required and must be a string');
-    } else if (!isSupportedVersion(ctx['version'])) {
-        errors.push(`version must be one of: ${PROTOCOL_VERSIONS.join(', ')}`);
-    }
-
     if (!isString(ctx['session_id']) || ctx['session_id'].length === 0) {
         errors.push('session_id is required and must be a non-empty string');
     }
@@ -133,9 +120,9 @@ export function parseContextBlock(data: unknown): ContextBlock {
     const ctx = data as Record<string, unknown>;
 
     const result: ContextBlock = {
-        version: ctx['version'] as ProtocolVersion,
         session_id: ctx['session_id'] as string,
     };
+    if (ctx['version'] !== undefined) result.version = ctx['version'] as string;
 
     if (ctx['new_task'] !== undefined) result.new_task = ctx['new_task'] as string[];
     if (ctx['architectural_features'] !== undefined) result.architectural_features = ctx['architectural_features'] as string[];

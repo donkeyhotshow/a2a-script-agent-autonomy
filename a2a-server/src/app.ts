@@ -1,4 +1,5 @@
-import express, {Express, Request, Response, NextFunction} from 'express';
+import 'express-async-errors';
+import express, {Express, Request, Response} from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import compression from 'compression';

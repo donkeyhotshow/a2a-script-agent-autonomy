@@ -403,7 +403,8 @@
 
         async sendResult(result) {
             if (!this.currentSessionId) throw new Error('No active session');
-            const response = await this._request('POST', `/sessions/${this.currentSessionId}/result`, result);
+            const body = { projectId: this.projectId ?? null, sessionId: this.currentSessionId, result };
+            const response = await this._request('POST', `/sessions/${this.currentSessionId}/result`, body);
             const payload = response?.data || response;
             if (payload?.execute) this.processExecute(payload.execute, payload.context);
             return response;

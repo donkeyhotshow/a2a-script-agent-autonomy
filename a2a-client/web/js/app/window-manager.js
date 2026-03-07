@@ -172,8 +172,9 @@
                         if (sessionData.context) {
                             store.setContext(sessionData.context);
                         }
-                        if (sessionData.execute) {
-                            store.setExecute(sessionData.execute);
+                        const execute = sessionData.execute ?? sessionData.context?.execute ?? sessionData.currentExecute;
+                        if (execute) {
+                            store.setExecute(execute);
                         }
                         // Set status
                         if (sessionData.status) {
@@ -340,7 +341,7 @@
 
                     if (execute && !isWaiting) {
                         // Let renderExecute handle the full layout (history + form/message + input)
-                        Render.renderExecute(contentEl, execute, { execute, context }, taskFlowRef);
+                        Render.renderExecute(contentEl, execute, { execute, context, store }, taskFlowRef);
                     } else {
                         // Waiting or no execute: show history + waiting indicator
                         contentEl.innerHTML = `
@@ -351,7 +352,7 @@
                                         <span class="session-status">${isWaiting ? 'Waiting...' : 'Active'}</span>
                                     </div>
                                 </div>
-                                ${Render.renderMessageHistory(contentEl)}
+                                ${Render.renderMessageHistory(contentEl, store)}
                                 ${Render.getInputAreaHtml(isWaiting)}
                             </div>
                         `;
@@ -368,13 +369,15 @@
                 // Initial render
                 refreshContent();
 
-                // Listen for message updates
+                // Listen for message updates (messages=plural from setMessages, message=singular from pushMessage)
+                const unsubMessages = store.on?.('messages', () => refreshContent());
                 const unsubMessage = store.on?.('message', () => refreshContent());
                 const unsubExecute = store.on?.('execute', () => refreshContent());
                 const unsubPromisePending = store.on?.('promisePending', () => refreshContent());
 
                 // Cleanup on panel close
                 contentEl._cleanup = () => {
+                    unsubMessages?.();
                     unsubMessage?.();
                     unsubExecute?.();
                     unsubPromisePending?.();

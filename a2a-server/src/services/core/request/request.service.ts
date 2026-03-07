@@ -173,6 +173,29 @@ export class RequestService {
         }
         return count;
     }
+
+    /**
+     * Get status for multiple promiseIds in one call
+     */
+    async getStatusBatch(promiseIds: string[]): Promise<Array<{
+        promiseId: string;
+        status: RequestStatus;
+        createdAt: Date;
+        startedAt: Date | null;
+        completedAt: Date | null;
+    } | null>> {
+        return promiseIds.map((id) => {
+            const req = requests.get(id);
+            if (!req) return null;
+            return {
+                promiseId: req.promiseId,
+                status: req.status,
+                createdAt: req.createdAt,
+                startedAt: req.startedAt,
+                completedAt: req.completedAt,
+            };
+        });
+    }
 }
 
 export const requestService = new RequestService();

@@ -50,9 +50,10 @@
     /**
      * Рендеринг истории сообщений
      * @param {HTMLElement} contentEl - элемент контента
+     * @param {Object} [store] - optional store (per-window); falls back to global.SessionStore
      */
-    function renderMessageHistory(contentEl) {
-        const store = global.SessionStore;
+    function renderMessageHistory(contentEl, store) {
+        store = store || global.SessionStore;
         const messages = (store?.getState?.()?.messages ?? store?.messages ?? []);
 
         if (!messages || messages.length === 0) {
@@ -148,10 +149,11 @@
         // execute.form.choices: choice buttons
         // execute.form.input only: text input
         // execute.message only: show message + generic input to continue
+        const store = data?.store;
         if (execute.form) {
-            return renderForm(contentEl, execute.form, executionStepHtml, progressBarHtml, finalResultHtml, taskFlowRef);
+            return renderForm(contentEl, execute.form, executionStepHtml, progressBarHtml, finalResultHtml, taskFlowRef, store);
         } else if (execute.message) {
-            return renderMessage(contentEl, execute.message, executionStepHtml, progressBarHtml, finalResultHtml, taskFlowRef);
+            return renderMessage(contentEl, execute.message, executionStepHtml, progressBarHtml, finalResultHtml, taskFlowRef, store);
         } else if (execute.script || execute['rag-search'] || execute['read-file'] || execute['write-file'] || execute['execute-command']) {
             return renderClientAction(contentEl, Object.keys(execute)[0], execute, executionStepHtml, progressBarHtml, finalResultHtml, taskFlowRef);
         } else if (execute.debug) {
@@ -168,7 +170,7 @@
      * @param {string} finalResultHtml - HTML финального результата
      * @param {Object} taskFlowRef - ссылка на TaskFlow
      */
-    function renderForm(contentEl, form, executionStepHtml, progressBarHtml, finalResultHtml, taskFlowRef) {
+    function renderForm(contentEl, form, executionStepHtml, progressBarHtml, finalResultHtml, taskFlowRef, store) {
         const hasChoices = form?.choices?.length > 0;
         const hasInput = form?.input?.length > 0;
 
@@ -190,7 +192,7 @@
             if (firstField?.label) inputPlaceholder = firstField.label;
         }
 
-        const historyHtml = renderMessageHistory(contentEl);
+        const historyHtml = renderMessageHistory(contentEl, store);
 
         // Show bottom input only when there are input fields or form with no choices
         const showBottomInput = hasInput && !hasChoices;
@@ -230,10 +232,10 @@
      * @param {string} finalResultHtml - HTML финального результата
      * @param {Object} taskFlowRef - ссылка на TaskFlow
      */
-    function renderMessage(contentEl, message, executionStepHtml, progressBarHtml, finalResultHtml, taskFlowRef) {
+    function renderMessage(contentEl, message, executionStepHtml, progressBarHtml, finalResultHtml, taskFlowRef, store) {
         const messageContent = typeof message === 'string' ? message : (message.content || message.text || '');
 
-        const historyHtml = renderMessageHistory(contentEl);
+        const historyHtml = renderMessageHistory(contentEl, store);
 
         contentEl.innerHTML = `
             ${historyHtml}

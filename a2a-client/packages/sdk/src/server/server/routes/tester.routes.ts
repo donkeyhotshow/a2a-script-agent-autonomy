@@ -7,52 +7,34 @@
 
 import {Router, Request, Response} from 'express';
 
-// Import functions from main index.ts
-const { sendSseEvent, getActiveConnections, getSessionCount, getActiveSessions, broadcastAll } = (() => {
-    // These functions are defined in the main index.ts file
-    // We'll access them through a closure
-    return {
-        sendSseEvent: (sessionId: string, event: string, data: unknown) => {
-            const clients = (global as any).sseClients?.get(sessionId);
-            if (!clients || clients.size === 0) return false;
+// Use WebSocket broadcast (SSE removed - pull model)
+const { sendToSession, getActiveConnections, getSessionCount, getActiveSessions, broadcastAll } = (() => {
+    const wsConnections = (globalThis as any).wsConnections as Map<string, Set<WebSocket>> | undefined;
+    const broadcastToSession = (globalThis as any).broadcastToSession as ((sid: string, data: unknown) => void) | undefined;
 
-            const message = `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
-            for (const res of clients) {
-                res.write(message);
-            }
+    return {
+        sendToSession: (sessionId: string, event: string, data: unknown) => {
+            if (!broadcastToSession) return false;
+            broadcastToSession(sessionId, { type: event, ...(typeof data === 'object' && data ? data : { data }) });
             return true;
         },
         getActiveConnections: () => {
-            const clients = (global as any).sseClients;
-            if (!clients) return 0;
+            if (!wsConnections) return 0;
             let total = 0;
-            for (const clientSet of clients.values()) {
+            for (const clientSet of wsConnections.values()) {
                 total += clientSet.size;
             }
             return total;
         },
-        getSessionCount: () => {
-            const clients = (global as any).sseClients;
-            return clients ? clients.size : 0;
-        },
-        getActiveSessions: () => {
-            const clients = (global as any).sseClients;
-            return clients ? Array.from(clients.keys()) : [];
-        },
+        getSessionCount: () => wsConnections ? wsConnections.size : 0,
+        getActiveSessions: () => wsConnections ? Array.from(wsConnections.keys()) : [],
         broadcastAll: (event: string, data: unknown, excludeSessionId?: string) => {
-            const clients = (global as any).sseClients;
-            if (!clients) return 0;
-
+            if (!wsConnections || !broadcastToSession) return 0;
             let sentCount = 0;
-            for (const [sessionId, clientSet] of clients.entries()) {
+            for (const [sessionId] of wsConnections.entries()) {
                 if (excludeSessionId && sessionId === excludeSessionId) continue;
-                if (clientSet.size > 0) {
-                    const message = `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
-                    for (const res of clientSet) {
-                        res.write(message);
-                    }
-                    sentCount++;
-                }
+                broadcastToSession(sessionId, { type: event, ...(typeof data === 'object' && data ? data : { data }) });
+                sentCount++;
             }
             return sentCount;
         }
@@ -110,11 +92,11 @@ router.post('/command', async (req: Request, res: Response) => {
             source: 'api_server'
         };
 
-        // Send command via SSE to web client
-        const success = sendSseEvent(sessionId, 'tester_command', commandPayload);
+        // Send command via WebSocket to web client
+        const success = sendToSession(sessionId, 'tester_command', commandPayload);
 
         if (!success) {
-            console.warn('[Tester API] No SSE clients connected for session', { sessionId });
+            console.warn('[Tester API] No WebSocket clients connected for session', { sessionId });
             return res.status(404).json({
                 success: false,
                 error: 'No web clients connected to session',
@@ -122,7 +104,7 @@ router.post('/command', async (req: Request, res: Response) => {
             });
         }
 
-        console.log('[Tester API] Command sent via SSE', {
+        console.log('[Tester API] Command sent via WebSocket', {
             sessionId,
             command: body.command,
             commandId

@@ -45,7 +45,7 @@
         sessionId: null,
 
         // Transport state
-        primaryTransport: 'sse',      // 'sse' | 'websocket'
+        primaryTransport: 'poll',     // 'poll' | 'websocket'
         activeTransport: null,          // 'sse' | 'websocket' | null
         currentTransportInstance: null,
 
@@ -69,7 +69,7 @@
             this._loadDependencies();
 
             this.apiBase = options.apiBase || this.apiBase;
-            this.primaryTransport = options.primaryTransport || 'sse';
+            this.primaryTransport = options.primaryTransport || 'poll';
             this._heartbeatManager = new global.HeartbeatManager(this);
 
             console.log(`[TransportManager] Initialized (primary: ${this.primaryTransport})`);
@@ -80,12 +80,8 @@
          * Load transport dependencies
          */
         _loadDependencies() {
-            // These should be loaded via script tags or module system
-            if (!global.BaseTransport) {
-                console.error('[TransportManager] BaseTransport not loaded');
-            }
-            if (!global.SSETransport) {
-                console.error('[TransportManager] SSETransport not loaded');
+            if (!global.PollTransport) {
+                console.error('[TransportManager] PollTransport not loaded');
             }
             if (!global.WebSocketTransport) {
                 console.error('[TransportManager] WebSocketTransport not loaded');
@@ -111,31 +107,21 @@
             // Disconnect any existing transport
             this.disconnect();
 
-            // Try primary transport first
-            if (this.primaryTransport === 'sse') {
-                const sseSuccess = await this._tryTransport(global.SSETransport, sid);
-                if (sseSuccess) {
-                    this.activeTransport = 'sse';
+            // Try primary transport (poll)
+            if (this.primaryTransport === 'poll' && global.PollTransport) {
+                const pollSuccess = await this._tryTransport(global.PollTransport, sid);
+                if (pollSuccess) {
+                    this.activeTransport = 'poll';
                     this.connectionState = 'connected';
                     this.reconnectAttempts = 0;
-                    this._emit('connected', { sessionId: sid, transport: 'sse' });
-                    this._heartbeatManager.start();
+                    this._emit('connected', { sessionId: sid, transport: 'poll' });
+                    this._heartbeatManager?.start?.();
                     return true;
                 }
+            }
 
-                // SSE failed - try WebSocket fallback
-                console.log('[TransportManager] SSE failed, trying WebSocket fallback...');
-                const wsSuccess = await this._tryTransport(global.WebSocketTransport, sid);
-                if (wsSuccess) {
-                    this.activeTransport = 'websocket';
-                    this.connectionState = 'connected';
-                    this.reconnectAttempts = 0;
-                    this._emit('connected', { sessionId: sid, transport: 'websocket', fallback: true });
-                    this._heartbeatManager.start();
-                    return true;
-                }
-            } else {
-                // WebSocket as primary (not typical)
+            // WebSocket fallback
+            if (global.WebSocketTransport) {
                 const wsSuccess = await this._tryTransport(global.WebSocketTransport, sid);
                 if (wsSuccess) {
                     this.activeTransport = 'websocket';

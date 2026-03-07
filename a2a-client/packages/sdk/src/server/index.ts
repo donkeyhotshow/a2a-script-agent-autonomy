@@ -36,38 +36,6 @@ import { MeilisearchClient } from './services/meilisearch-client.js';
 
 // Import WebSocket connections map
 const wsConnections = new Map<string, Set<WebSocket>>();
-const sseClients = new Map<string, Set<express.Response>>();
-
-function subscribeSseClient(sessionId: string, res: express.Response): void {
-    if (!sseClients.has(sessionId)) {
-        sseClients.set(sessionId, new Set());
-    }
-    sseClients.get(sessionId)!.add(res);
-}
-
-function unsubscribeSseClient(sessionId: string, res: express.Response): void {
-    const clients = sseClients.get(sessionId);
-    if (!clients) return;
-    clients.delete(res);
-    if (clients.size === 0) {
-        sseClients.delete(sessionId);
-    }
-}
-
-function sendSseEvent(sessionId: string, event: string, data: unknown): void {
-    const clients = sseClients.get(sessionId);
-    if (!clients) return;
-    const payload = `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
-    for (const res of clients) {
-        res.write(payload);
-    }
-}
-
-function emitServerSse(sessionId: string, serverResponse: unknown, event: 'task_response' | 'status' | 'session_update' = 'task_response'): void {
-    if (!serverResponse) return;
-    const payload = (serverResponse as any)?.data ?? serverResponse;
-    sendSseEvent(sessionId, event, payload);
-}
 
 const execAsyncPromisified = promisify(execAsync);
 
@@ -82,22 +50,6 @@ const WS_PORT = Number(process.env.WS_PORT || 3002);
 // Initialize modular components
 const websocketServer = new WebSocketServerManager();
 const expressApp = express();
-
-// Initialize Message Queue for reliable message delivery
-const messageQueue = getGlobalQueue({
-  baseDir: path.join(process.cwd(), '.a2a', 'message-queue'),
-  maxRetries: 5,
-  initialDelay: 1000,
-  maxDelay: 30000,
-  backoffMultiplier: 2,
-  pedalInterval: 1000,
-  autoStart: false, // Will start after server is ready
-});
-
-// Register sender function for the queue
-messageQueue.registerSender(async (sessionId, projectId, result, context) => {
-  return sendMessageToServer(sessionId, projectId, result, context);
-});
 
 // The session service is a simple singleton and requires no explicit initialization.
 
@@ -218,7 +170,6 @@ async function handleChoiceSelection(
             message: 'Choice processed by server',
             result: payload,
         });
-        emitServerSse(sessionId, payload, 'task_response');
         
     } catch (error) {
         ws.send(JSON.stringify({ 
@@ -298,7 +249,6 @@ async function handleActionResult(
             message: 'Action result processed by server',
             result: payload,
         });
-        emitServerSse(sessionId, payload, 'task_response');
         
     } catch (error) {
         ws.send(JSON.stringify({ 
@@ -322,6 +272,10 @@ function broadcastToSession(sessionId: string, data: unknown): void {
     }
 }
 
+// Expose for tester routes (WebSocket replaces SSE)
+(globalThis as any).broadcastToSession = broadcastToSession;
+(globalThis as any).wsConnections = wsConnections;
+
 // Broadcast progress update to session
 function broadcastProgress(sessionId: string, progress: {
     promiseId?: string;
@@ -332,10 +286,6 @@ function broadcastProgress(sessionId: string, progress: {
 }): void {
     broadcastToSession(sessionId, {
         type: 'progress',
-        timestamp: new Date().toISOString(),
-        ...progress,
-    });
-    sendSseEvent(sessionId, 'progress', {
         timestamp: new Date().toISOString(),
         ...progress,
     });
@@ -612,76 +562,6 @@ function jsonError(res: express.Response, status: number, message: string, detai
     res.status(status).json({success: false, error: {message}, details});
 }
 
-/**
- * Send message to server via /invoke endpoint
- * This is the actual sender function used by the message queue
- */
-async function sendMessageToServer(
-  sessionId: string,
-  projectId: string,
-  result: Record<string, unknown>,
-  context?: Record<string, unknown> | null
-): Promise<Record<string, unknown>> {
-  const projects = await loadProjects();
-  const project = projects.find(p => p.id === projectId);
-
-  if (!project) {
-    throw new Error(`Project ${projectId} not found`);
-  }
-
-  const session = await loadSession(project, sessionId);
-  if (!session) {
-    throw new Error(`Session ${sessionId} not found`);
-  }
-
-  const serverBase = await getServerBaseUrl();
-
-  // Build request body for new protocol
-  const requestBody: Record<string, unknown> = {
-    context: context || {
-      version: '2.0',
-      session_id: sessionId,
-      execution: session.execution || { action: session.suggestedAction || 'dialog', step: 'new' },
-      task: session.task,
-    },
-    result,
-  };
-
-  if (config.defaultSyncMode) {
-    requestBody.sync = true;
-  }
-
-  // Forward to server /invoke
-  const upstream = await serverFetch('POST', serverBase, '/invoke', requestBody);
-  const payload = (await upstream.json().catch(() => ({}))) as any;
-
-  if (!upstream.ok) {
-    throw new Error(payload?.error?.message || `Server returned ${upstream.status}`);
-  }
-
-  // Update session with server response
-  const updatedSession = await updateSessionWithServerResponse(project, session, payload?.data || payload);
-  await saveSession(project, updatedSession);
-
-  // Broadcast to connected clients
-  const response = {
-    sessionId,
-    projectId: project.id,
-    execute: payload?.data?.execute,
-    context: payload?.data?.context,
-    status: payload?.data?.sync === true ? 'completed' : 'pending',
-  };
-
-  broadcastProgress(sessionId, {
-    status: 'response',
-    message: 'Response received from server',
-    result: response,
-  });
-  emitServerSse(sessionId, response, 'task_response');
-
-  return response;
-}
-
 // ==================== CLIENT API (NEW-REQUEST-FLOW) ====================
 
 // --- config
@@ -877,15 +757,6 @@ expressApp.post(['/api/sessions', '/api/v1/sessions'], async (req, res) => {
                         result: syncResponse,
                     });
 
-                    // Emit to SSE with proper format for Web UI
-                    emitServerSse(session.id, {
-                        sessionId: session.id,
-                        projectId,
-                        execute: syncExecute,
-                        context: payload?.data?.context,
-                        status: 'completed',
-                    }, 'task_response');
-
                     res.status(201).json(syncResponse);
                     return;
                 }
@@ -931,14 +802,6 @@ expressApp.post(['/api/sessions', '/api/v1/sessions'], async (req, res) => {
                                     message: 'Asynchronous response received',
                                     result: completedResponse,
                                 });
-
-                                emitServerSse(session.id, {
-                                    sessionId: session.id,
-                                    projectId,
-                                    execute: resultPayload.data.execute,
-                                    context: resultPayload.data.context,
-                                    status: 'completed',
-                                }, 'task_response');
 
                                 res.status(201).json(completedResponse);
                                 return;
@@ -986,14 +849,6 @@ expressApp.post(['/api/sessions', '/api/v1/sessions'], async (req, res) => {
                         result: syncResponse,
                     });
 
-                    emitServerSse(session.id, {
-                        sessionId: session.id,
-                        projectId,
-                        execute: (payload?.data || payload)?.execute,
-                        context: (payload?.data || payload)?.context,
-                        status: 'completed',
-                    }, 'task_response');
-
                     res.status(201).json(syncResponse);
                     return;
                 }
@@ -1020,6 +875,78 @@ expressApp.post(['/api/sessions', '/api/v1/sessions'], async (req, res) => {
 
     await saveSession(project, session);
     res.status(201).json(session);
+});
+
+// GET /api/sessions/updates - Pull model: web requests updates, client checks promises, returns any new data
+// Query: sessionIds=id1,id2 (optional - if omitted, checks all sessions with lastPromiseId)
+expressApp.get(['/api/sessions/updates', '/api/v1/sessions/updates'], async (req, res) => {
+    try {
+        const sessionIdsParam = req.query.sessionIds;
+        const requestedIds = typeof sessionIdsParam === 'string'
+            ? sessionIdsParam.split(',').map(s => s.trim()).filter(Boolean)
+            : null;
+
+        const projects = await loadProjects();
+        const serverBase = await getServerBaseUrl();
+
+        // Collect sessions with lastPromiseId
+        const sessionsToCheck: { session: Session; project: Project }[] = [];
+        for (const project of projects) {
+            const sessions = await listSessions(project);
+            for (const s of sessions) {
+                if (!s.lastPromiseId) continue;
+                if (requestedIds && requestedIds.length > 0 && !requestedIds.includes(s.id)) continue;
+                const full = await loadSession(project, s.id);
+                if (full) sessionsToCheck.push({ session: full, project });
+            }
+        }
+
+        if (sessionsToCheck.length === 0) {
+            res.json({ success: true, data: { updates: [] } });
+            return;
+        }
+
+        const promiseIds = sessionsToCheck.map(({ session }) => session.lastPromiseId!).filter(Boolean);
+        const statusUrl = `${serverBase}/requests/status?ids=${promiseIds.join(',')}`;
+        const statusRes = await serverFetch('GET', statusUrl);
+        const statusPayload = (await statusRes.json().catch(() => ({}))) as { data?: { items?: Array<{ promiseId: string; status: string }> } };
+        const items = statusPayload?.data?.items ?? [];
+
+        const updates: Array<{ sessionId: string; projectId: string; execute?: unknown; context?: unknown; messages?: unknown[] }> = [];
+
+        for (let i = 0; i < sessionsToCheck.length; i++) {
+            const { session, project } = sessionsToCheck[i];
+            const item = items[i];
+            if (!item || item.status !== 'completed') continue;
+
+            try {
+                const resultRes = await serverFetch('GET', `${serverBase}/requests/${item.promiseId}/result`);
+                const resultPayload = (await resultRes.json().catch(() => ({}))) as { data?: unknown };
+                const resultData = resultPayload?.data ?? resultPayload;
+
+                const updatedSession = await updateSessionWithServerResponse(project, session, resultData as Record<string, unknown>);
+                updatedSession.lastPromiseId = undefined;
+                updatedSession.status = 'READY';
+                await saveSession(project, updatedSession);
+
+                updates.push({
+                    sessionId: session.id,
+                    projectId: project.id,
+                    execute: (resultData as Record<string, unknown>)?.execute,
+                    context: (resultData as Record<string, unknown>)?.context,
+                    messages: updatedSession.messages,
+                });
+            } catch (err) {
+                console.warn(`[updates] Failed to fetch result for ${session.id}:`, err);
+            }
+        }
+
+        res.json({ success: true, data: { updates } });
+    } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        console.error('[updates] Error:', message);
+        jsonError(res, 500, 'Failed to fetch updates', message);
+    }
 });
 
 expressApp.get(['/api/sessions/:sessionId', '/api/v1/sessions/:sessionId'], async (req, res) => {
@@ -1194,7 +1121,6 @@ expressApp.post(['/api/sessions/:sessionId/next', '/api/v1/sessions/:sessionId/n
             message: 'Synchronous response received',
             result: syncResponse,
         });
-        emitServerSse(sessionId, syncResponse, 'task_response');
 
         res.status(200).json({
             success: true,
@@ -1221,7 +1147,6 @@ expressApp.post(['/api/sessions/:sessionId/next', '/api/v1/sessions/:sessionId/n
             message: `New promiseId assigned: ${promiseId}`,
             result: { promiseId, sessionId },
         });
-        emitServerSse(sessionId, { promiseId, sessionId }, 'status');
         return; // Prevent falling through to session update below
     }
 
@@ -1237,7 +1162,6 @@ expressApp.post(['/api/sessions/:sessionId/next', '/api/v1/sessions/:sessionId/n
         message: 'Server response received and session updated',
         result: payload,
     });
-    emitServerSse(sessionId, payload, 'task_response');
 
     res.status(upstream.status).json(payload);
 });
@@ -1305,52 +1229,27 @@ expressApp.post(['/api/sessions/:sessionId/result', '/api/v1/sessions/:sessionId
         execution: session.execution || { action: session.suggestedAction || 'dialog', step: 'new' },
         task: session.task,
     };
-    requestBody.result = result;  // action-key shape: { choice: "..." } или { message: "..." }
+    // Support both result.message (direct) and result.input.message (form submission)
+    const messageText = (typeof result.message === 'string' ? result.message : null)
+        ?? (typeof (result.input as Record<string, unknown>)?.message === 'string' ? (result.input as Record<string, unknown>).message : null);
+    const trimmedMessage = messageText && String(messageText).trim() ? String(messageText).trim() : null;
 
     // Persist user message to session before forwarding
-    if (typeof result.message === 'string' && result.message.trim()) {
+    if (trimmedMessage) {
         session.messages = [
             ...(session.messages || []),
-            { role: 'user', content: result.message.trim(), timestamp: new Date().toISOString() }
+            { role: 'user', content: trimmedMessage, timestamp: new Date().toISOString() }
         ];
         await saveSession(project, session);
     }
 
-    // === MESSAGE QUEUE PATTERN: Save first, then pedal ===
-    // Check if we should use immediate send or queue (based on query param or default)
-    const useQueue = req.query.queue !== 'false' && process.env.DISABLE_MESSAGE_QUEUE !== '1';
+    // Normalize result for server: ensure result.message when from form.input
+    const serverResult = trimmedMessage && !result.message
+        ? { ...result, message: trimmedMessage }
+        : result;
+    requestBody.result = serverResult;
 
-    if (useQueue) {
-        // Enqueue the message for reliable delivery
-        const queuedMessage = await messageQueue.enqueue(
-            sessionId,
-            project.id,
-            result,
-            requestBody.context as Record<string, unknown>
-        );
-
-        // Trigger immediate pedal attempt for this session
-        messageQueue.pedalSession(sessionId).catch(err => {
-            console.error('[SDK RESULT] Pedal error:', err);
-        });
-
-        // Return queue status immediately
-        res.status(202).json({
-            success: true,
-            data: {
-                queued: true,
-                messageId: queuedMessage.id,
-                sessionId,
-                projectId: project.id,
-                status: 'pending',
-                message: 'Message queued for delivery',
-            },
-        });
-        return;
-    }
-
-    // === LEGACY IMMEDIATE SEND (when queue is disabled) ===
-    // Forward to server /invoke immediately
+    // Forward to server /invoke
     const upstream = await serverFetch('POST', serverBase, '/invoke', requestBody);
     const payload = (await upstream.json().catch(() => ({}))) as any;
     if (!upstream.ok) {
@@ -1413,7 +1312,6 @@ expressApp.post(['/api/sessions/:sessionId/result', '/api/v1/sessions/:sessionId
             result: syncResponse,
         });
 
-        emitServerSse(sessionId, syncResponse, 'task_response');
 
         res.status(200).json({
             success: true,
@@ -1507,7 +1405,6 @@ expressApp.post(['/api/sessions/:sessionId/result', '/api/v1/sessions/:sessionId
                                 message: 'Synchronous response received via polling',
                                 result: syncResponse,
                             });
-                            emitServerSse(sessionId, syncResponse, 'task_response');
 
                             res.status(200).json({
                                 success: true,
@@ -1545,7 +1442,6 @@ expressApp.post(['/api/sessions/:sessionId/result', '/api/v1/sessions/:sessionId
             message: `New promiseId assigned: ${promiseId}`,
             result: { promiseId, sessionId },
         });
-        emitServerSse(sessionId, { promiseId, sessionId }, 'status');
 
         res.status(200).json({
             success: true,
@@ -1568,7 +1464,6 @@ expressApp.post(['/api/sessions/:sessionId/result', '/api/v1/sessions/:sessionId
         message: 'Result processed and session updated',
         result: payload,
     });
-    emitServerSse(sessionId, payload, 'task_response');
 
     res.status(upstream.status).json(payload);
 });
@@ -1636,16 +1531,22 @@ expressApp.post('/api/sessions/:sessionId/result', async (req, res) => {
         execution: session.execution || { action: session.suggestedAction || 'dialog', step: 'new' },
         task: session.task,
     };
-    requestBody.result = result;  // action-key shape: { choice: "..." } или { message: "..." }
 
-    // Persist user message to session before forwarding
-    if (typeof result.message === 'string' && result.message.trim()) {
+    // Support both result.message (direct) and result.input.message (form submission)
+    const messageText2 = (typeof result.message === 'string' ? result.message : null)
+        ?? (typeof (result.input as Record<string, unknown>)?.message === 'string' ? (result.input as Record<string, unknown>).message : null);
+    const trimmedMessage2 = messageText2 && String(messageText2).trim() ? String(messageText2).trim() : null;
+
+    if (trimmedMessage2) {
         session.messages = [
             ...(session.messages || []),
-            { role: 'user', content: result.message.trim(), timestamp: new Date().toISOString() }
+            { role: 'user', content: trimmedMessage2, timestamp: new Date().toISOString() }
         ];
         await saveSession(project, session);
     }
+
+    const serverResult2 = trimmedMessage2 && !result.message ? { ...result, message: trimmedMessage2 } : result;
+    requestBody.result = serverResult2;
 
     // Mock handling for testing
     if (result?.choice === 'dialog') {
@@ -1687,14 +1588,6 @@ expressApp.post('/api/sessions/:sessionId/result', async (req, res) => {
             message: 'Mock dialog input form',
             result: syncResponse,
         });
-
-        emitServerSse(session.id, {
-            sessionId: session.id,
-            projectId,
-            execute: mockResponse.execute,
-            context: mockResponse.context,
-            status: 'completed',
-        }, 'task_response');
 
         res.status(201).json(syncResponse);
         return;
@@ -1741,14 +1634,6 @@ expressApp.post('/api/sessions/:sessionId/result', async (req, res) => {
                 message: 'Dialog completed',
                 result: syncResponse,
             });
-
-            emitServerSse(session.id, {
-                sessionId: session.id,
-                projectId,
-                execute: mockResponse.execute,
-                context: mockResponse.context,
-                status: 'completed',
-            }, 'task_response');
 
             res.status(201).json(syncResponse);
             return;
@@ -2116,7 +2001,6 @@ expressApp.all(['/api/requests*', '/api/v1/requests*'], async (req, res) => {
                         message: 'Session status updated from server',
                         result: updatedSession,
                     });
-                    emitServerSse(sessionId, payload, 'status');
                 }
             }
         } catch (error) {
@@ -2135,40 +2019,6 @@ function extractSessionIdFromPath(pathName: string): string | null {
     const match = pathName.match(/\/requests\/([^\/]+)\/status/);
     return match ? match[1] : null;
 }
-
-expressApp.get(['/api/v1/sse/:sessionId', '/api/sse/:sessionId'], (req, res) => {
-    const sessionId = String(req.params.sessionId || 'default');
-
-    res.writeHead(200, {
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
-        Connection: 'keep-alive',
-        'X-Accel-Buffering': 'no',
-    });
-
-    res.write(`event: connected\ndata: ${JSON.stringify({sessionId, timestamp: new Date().toISOString()})}\n\n`);
-    subscribeSseClient(sessionId, res);
-
-    req.on('close', () => {
-        unsubscribeSseClient(sessionId, res);
-    });
-});
-
-expressApp.get(['/api/v1/sse', '/api/sse'], (_req, res) => {
-    res.writeHead(200, {
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive',
-    });
-
-    const timestamp = new Date().toISOString();
-    res.write(`event: connected\ndata: ${JSON.stringify({timestamp})}\n\n`);
-    subscribeSseClient('global', res);
-
-    _req.on('close', () => {
-        unsubscribeSseClient('global', res);
-    });
-});
 
 // ==================== TERMINAL API ====================
 
@@ -2801,8 +2651,6 @@ expressApp.patch(['/api/sessions/:sessionId', '/api/v1/sessions/:sessionId'], as
         message: 'Session updated',
         result: updated,
     });
-    emitServerSse(sessionId, updated, 'session_update');
-    
     res.json(updated);
 });
 
@@ -3160,69 +3008,6 @@ expressApp.use((err: unknown, _req: express.Request, res: express.Response, _nex
     }
 });
 
-// ==================== MESSAGE QUEUE ENDPOINTS ====================
-
-// GET /api/queue/stats - Message queue statistics
-expressApp.get(['/api/queue/stats', '/api/v1/queue/stats'], async (_req, res) => {
-    try {
-        const stats = await messageQueue.getStats();
-        res.json({ success: true, data: stats });
-    } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
-        jsonError(res, 500, 'Failed to get queue stats', message);
-    }
-});
-
-// GET /api/queue/messages - List unserved messages
-expressApp.get(['/api/queue/messages', '/api/v1/queue/messages'], async (req, res) => {
-    try {
-        const sessionId = req.query.sessionId as string | undefined;
-        let messages: QueuedMessage[];
-
-        if (sessionId) {
-            messages = await messageQueue.getPendingMessages(sessionId);
-        } else {
-            messages = await messageQueue.getUnservedMessages();
-        }
-
-        res.json({ success: true, data: messages });
-    } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
-        jsonError(res, 500, 'Failed to get queue messages', message);
-    }
-});
-
-// POST /api/queue/retry/:messageId - Retry a failed message
-expressApp.post(['/api/queue/retry/:messageId', '/api/v1/queue/retry/:messageId'], async (req, res) => {
-    try {
-        const messageId = String(req.params.messageId || '');
-        const success = await messageQueue.retryMessage(messageId);
-
-        if (success) {
-            // Trigger pedal for this message
-            messageQueue.pedalSession((await messageQueue.getMessage(messageId))?.sessionId || '');
-            res.json({ success: true, message: 'Message queued for retry' });
-        } else {
-            jsonError(res, 404, 'Message not found');
-        }
-    } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
-        jsonError(res, 500, 'Failed to retry message', message);
-    }
-});
-
-// POST /api/queue/pedal/:sessionId - Force pedal messages for a session
-expressApp.post(['/api/queue/pedal/:sessionId', '/api/v1/queue/pedal/:sessionId'], async (req, res) => {
-    try {
-        const sessionId = String(req.params.sessionId || '');
-        await messageQueue.pedalSession(sessionId);
-        res.json({ success: true, message: 'Pedal triggered for session' });
-    } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
-        jsonError(res, 500, 'Failed to pedal session', message);
-    }
-});
-
 // ==================== START SERVER ====================
 
 if (process.env.NODE_ENV !== 'test') {
@@ -3235,19 +3020,6 @@ if (process.env.NODE_ENV !== 'test') {
         console.log(`File System: http://${HOST}:${PORT}/api/fs/*`);
         console.log(`Sessions: http://${HOST}:${PORT}/api/sessions/*`);
         console.log(`File Upload: http://${HOST}:${PORT}/api/files/upload`);
-        console.log(`Message Queue: http://${HOST}:${PORT}/api/queue/stats`);
-
-        // Start message queue pedaler and resume unserved messages
-        messageQueue.start();
-        messageQueue.resumeOnStartup().then(result => {
-            if (result.resumed) {
-                console.log(`[MessageQueue] Resumed ${result.count} unserved messages`);
-            } else {
-                console.log('[MessageQueue] No unserved messages to resume');
-            }
-        }).catch(err => {
-            console.error('[MessageQueue] Startup resume failed:', err);
-        });
     });
 }
 
