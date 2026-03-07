@@ -271,7 +271,7 @@ class APIIntegration {
 
     /**
      * Send result to session (POST /sessions/:id/result)
-     * result: action-key shape e.g. { message }, { choice }, { form: { choice } }
+     * result: action-key shape e.g. { message: "..." }, { choice: "..." }, { input: {...} }
      */
     async sendResult(sessionId, result, projectId = null) {
         const pid = projectId ?? this.currentSession ? (await (typeof window !== 'undefined' && window.ProjectManager?.getSelectedProjectId?.()) ?? window.SessionStore?.projectId) : null;

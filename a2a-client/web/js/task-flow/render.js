@@ -53,9 +53,9 @@
      */
     function renderMessageHistory(contentEl) {
         const store = global.SessionStore;
-        const messages = store?.messages || [];
+        const messages = (store?.getState?.()?.messages ?? store?.messages ?? []);
 
-        if (messages.length === 0) {
+        if (!messages || messages.length === 0) {
             return '<div class="task-flow-history-empty">No messages yet</div>';
         }
 

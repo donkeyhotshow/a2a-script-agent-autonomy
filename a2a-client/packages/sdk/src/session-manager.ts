@@ -12,6 +12,49 @@ import type {
     ProgressCallbacks
 } from './types/session.js';
 
+/**
+ * Lightweight EventEmitter implementation for browser/Node compatibility
+ */
+class EventEmitter {
+    private events: Map<string, Array<(...args: unknown[]) => void>> = new Map();
+
+    on(event: string, listener: (...args: unknown[]) => void): this {
+        if (!this.events.has(event)) {
+            this.events.set(event, []);
+        }
+        this.events.get(event)!.push(listener);
+        return this;
+    }
+
+    off(event: string, listener: (...args: unknown[]) => void): this {
+        const listeners = this.events.get(event);
+        if (listeners) {
+            const index = listeners.indexOf(listener);
+            if (index > -1) {
+                listeners.splice(index, 1);
+            }
+        }
+        return this;
+    }
+
+    emit(event: string, ...args: unknown[]): boolean {
+        const listeners = this.events.get(event);
+        if (!listeners || listeners.length === 0) {
+            return false;
+        }
+        listeners.forEach(listener => listener(...args));
+        return true;
+    }
+
+    once(event: string, listener: (...args: unknown[]) => void): this {
+        const onceListener = (...args: unknown[]) => {
+            this.off(event, onceListener);
+            listener(...args);
+        };
+        return this.on(event, onceListener);
+    }
+}
+
 export interface SessionManagerConfig {
     serverUrl?: string;
     token?: string;
@@ -55,14 +98,18 @@ export class ApiError extends Error {
 /**
  * Session management client with enhanced features
  */
-export class SessionManager {
+export class SessionManager extends EventEmitter {
     private serverUrl: string;
     private token?: string;
     private clientId?: string;
     private timeout: number;
     private retryConfig: Required<RetryConfig>;
+    sessions: SessionMetadata[] = [];
+    currentSessionId?: string;
+    currentProjectId?: string;
 
     constructor(config: SessionManagerConfig = {}) {
+        super();
         this.serverUrl = (config.serverUrl ?? 'http://localhost:3000/api/v1').replace(/\/?$/, '');
         this.token = config.token;
         this.clientId = config.clientId;
@@ -178,7 +225,9 @@ export class SessionManager {
             title: options.title ?? 'New Session',
             task: options.task,
         });
-        return (res as { data?: Session }).data as Session;
+        const session = (res as { data?: Session }).data as Session;
+        this.emit('sessionCreated', session);
+        return session;
     }
 
     /**
@@ -235,7 +284,9 @@ export class SessionManager {
      */
     async createSession(projectId: string, title?: string): Promise<unknown> {
         const res = await this.request('POST', '/sessions', {projectId, title});
-        return (res as { data?: unknown }).data;
+        const session = (res as { data?: unknown }).data;
+        this.emit('sessionCreated', session);
+        return session;
     }
 
     /**
@@ -274,7 +325,36 @@ export class SessionManager {
      */
     async deleteSession(sessionId: string): Promise<unknown> {
         const res = await this.request('DELETE', `/sessions/${sessionId}`);
+        this.emit('sessionDeleted', sessionId);
         return (res as { data?: unknown }).data;
+    }
+
+    /**
+     * Load sessions for a project and emit sessionsLoaded event
+     */
+    async loadSessions(projectId: string): Promise<SessionMetadata[]> {
+        this.currentProjectId = projectId;
+        const sessions = await this.listSessionsWithFilter({projectId}) as SessionMetadata[];
+        this.sessions = sessions;
+        this.emit('sessionsLoaded', sessions);
+        return sessions;
+    }
+
+    /**
+     * Set current session and emit sessionChanged event
+     */
+    setCurrentSession(sessionId: string): void {
+        this.currentSessionId = sessionId;
+        this.emit('sessionChanged', sessionId);
+    }
+
+    /**
+     * Load conversation messages and emit conversationLoaded event
+     */
+    async loadConversation(sessionId: string): Promise<unknown> {
+        const messages = await this.getMessages(sessionId);
+        this.emit('conversationLoaded', {sessionId, messages});
+        return messages;
     }
 
     // ==================== Message Management ====================

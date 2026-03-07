@@ -336,12 +336,13 @@
                     // Bind input handlers
                     Render.bindInputHandlers(contentEl, {
                         sendMessageResult: (text) => {
-                            // Add to local messages immediately
-                            store.pushMessage?.(text, 'user');
-                            // Send to server
+                            if (!text || !text.trim()) return;
+                            // Add to store first so history shows it
+                            store.pushMessage?.({ content: String(text).trim() }, 'user');
+                            // Send to server (ActionHandler will set promisePending)
                             this.sendMessage(sessionId, text);
-                            // Refresh to show new message
-                            setTimeout(refreshContent, 50);
+                            // Refresh to show message + waiting state
+                            refreshContent();
                         },
                         sendChoiceResult: (choiceId) => {
                             // Send choice to server
@@ -423,11 +424,8 @@
          * Send message to session
          */
         sendMessage(sessionId, message) {
-            // Add to SessionStore if available (for immediate UI update)
+            // Message already added in sendMessageResult before this is called
             const store = global.SessionStore;
-            if (store?.pushMessage) {
-                store.pushMessage(message, 'user');
-            }
 
             // Send via API
             if (global.apiIntegration?.sendMessage) {
@@ -451,7 +449,7 @@
         sendChoice(sessionId, choiceId) {
             const store = global.SessionStore;
             const projectId = store?.projectId;
-            const result = { form: { choice: choiceId } };
+            const result = { choice: choiceId };
 
             // Send via Client API POST /sessions/:id/result
             if (global.apiIntegration?.sendResult) {
@@ -468,7 +466,9 @@
                 );
             }
 
+            // Clear form and execute state to hide UI immediately
             if (store?.clearPendingForm) store.clearPendingForm();
+            if (store?.setExecute) store.setExecute(null);
             console.log('[WindowManager] Sent choice:', sessionId, choiceId);
         },
 

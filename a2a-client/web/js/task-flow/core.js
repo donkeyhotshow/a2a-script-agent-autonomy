@@ -340,12 +340,12 @@
                 let result;
 
                 if (handler?.submit) {
-                    result = await handler.submit(sessionId, projectId, { form: { choice: choiceId } }, this._buildContext());
+                    result = await handler.submit(sessionId, projectId, { choice: choiceId }, this._buildContext());
                 } else {
                     // Fallback: manual submission
                     const context = this._buildContext();
                     result = await request('POST', `/sessions/${encodeURIComponent(sessionId)}/result`, {
-                        result: { form: { choice: choiceId } },
+                        result: { choice: choiceId },
                         context
                     });
                 }
@@ -395,12 +395,12 @@
                 let result;
 
                 if (handler?.submit) {
-                    result = await handler.submit(sessionId, projectId, { message: { content: messageText } }, this._buildContext());
+                    result = await handler.submit(sessionId, projectId, { message: messageText }, this._buildContext());
                 } else {
                     // Fallback: manual submission
                     const context = this._buildContext();
                     result = await request('POST', `/sessions/${encodeURIComponent(sessionId)}/result`, {
-                        result: { message: { content: messageText } },
+                        result: { message: messageText },
                         context
                     });
                 }

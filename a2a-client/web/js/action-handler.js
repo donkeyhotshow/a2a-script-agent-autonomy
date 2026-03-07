@@ -95,7 +95,17 @@
             };
 
             try {
-                return await this._request('POST', `/sessions/${encodeURIComponent(sessionId)}/result`, requestBody);
+                const response = await this._request('POST', `/sessions/${encodeURIComponent(sessionId)}/result`, requestBody);
+                // Sync flow (dialog simulation): apply execute/context from response immediately
+                const store = global.SessionStore;
+                if (store?.applyServerResponse) {
+                    const execute = response?.execute ?? response?.data?.execute;
+                    const context = response?.context ?? response?.data?.context;
+                    if (execute || context) {
+                        store.applyServerResponse({ execute, context });
+                    }
+                }
+                return response;
             } catch (error) {
                 // Unblock input on error so user can retry
                 global.SessionStore?.setPromisePending?.(false);
@@ -116,9 +126,9 @@
                 return Promise.reject(new Error('Waiting for server response'));
             }
             
-            // Update local state and block further input
-            store?.pushMessage({ content: choiceId }, 'user');
+            // Clear form and execute to hide UI immediately
             store?.clearPendingForm();
+            store?.setExecute?.(null);
             store?.setPromisePending?.(true);
 
             return this.submit(sessionId, projectId, { choice: choiceId });
@@ -139,8 +149,8 @@
             
             const payload = (text || '').trim() || 'continue';
             
-            // Update local state and block further input
-            store?.pushMessage({ content: payload }, 'user');
+            // Clear execute to hide form immediately after sending
+            store?.setExecute?.(null);
             store?.setPromisePending?.(true);
 
             return this.submit(sessionId, projectId, { message: payload });

@@ -359,7 +359,7 @@
         /**
          * Send form choice result (new protocol v2.0)
          * @param {string} sessionId - Session ID
-         * @param {Object} result - Result object in action-key shape: { form: { choice: "..." } }
+         * @param {Object} result - Result object in action-key shape: { choice: "..." }
          */
         async sendChoice(sessionId, result) {
             if (this.sessions) {

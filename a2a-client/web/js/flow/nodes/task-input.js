@@ -1,110 +1,97 @@
 /**
- * Flow Nodes - Task Input Node
- * Узел ввода задачи для VueFlow
+ * VueFlow Custom Node - TaskInputNode
+ * 
+ * Entry point for user tasks
+ * Green header, shows user task input
  */
 
-(function (global) {
-    'use strict';
+import { Handle, Position } from '@vue-flow/core';
 
-    /**
-     * Компонент узла ввода задачи
-     */
-    export const TaskInputNode = {
-        // Component name for VueFlow
-        name: 'TaskInputNode',
-        
-        /**
-         * Props validator
-         */
-        props: {
-            data: {
-                type: Object,
-                required: true
-            },
-            selected: {
-                type: Boolean,
-                default: false
-            }
-        },
+export const TaskInputNode = {
+    name: 'TaskInputNode',
+    type: 'taskInput',
+    nodeType: 'input',
+    props: ['id', 'type', 'data', 'selected'],
 
-        /**
-         * Template for the node
-         */
-        template: `
-            <div :class="['vue-flow__node-task-input', { selected }]">
-                <div class="node-header">
-                    <span class="node-icon">📝</span>
-                    <span class="node-title">Task Input</span>
-                </div>
-                <div class="node-content">
-                    <div class="task-text">{{ data.task || 'No task specified' }}</div>
-                    <div class="task-timestamp" v-if="data.timestamp">
-                        {{ formatTimestamp(data.timestamp) }}
-                    </div>
-                </div>
-            </div>
-        `,
-
-        /**
-         * Setup function for Vue 3
-         */
-        setup(props) {
-            const formatTimestamp = (timestamp) => {
-                if (!timestamp) return '';
-                const date = new Date(timestamp);
-                return date.toLocaleTimeString();
-            };
+    setup(props) {
+        return () => {
+            const { data } = props;
+            const task = data?.task || 'No task specified';
+            const timestamp = data?.timestamp || '';
 
             return {
-                formatTimestamp
-            };
-        },
-
-        /**
-         * VueFlow node configuration
-         */
-        type: 'taskInput',
-        
-        /**
-         * Default data for new nodes
-         */
-        defaultData: {
-            task: '',
-            timestamp: ''
-        },
-
-        /**
-         * Create node element
-         */
-        createElement(data = {}) {
-            return () => {
-                const { task = 'No task specified', timestamp = '' } = data;
-                const timestampStr = timestamp ? new Date(timestamp).toLocaleTimeString() : '';
-
-                return {
-                    props: {
-                        class: 'vue-flow__node-default',
-                        style: {
-                            background: '#ecfdf5',
-                            border: '2px solid #22c55e',
-                            borderRadius: '8px',
-                            padding: '10px',
-                            minWidth: '150px'
-                        }
-                    },
-                    // Vue component would be rendered here
-                    // For now return data for custom rendering
-                    data: {
-                        task,
-                        timestamp: timestampStr,
-                        type: 'taskInput'
+                tag: 'div',
+                props: {
+                    class: 'vue-flow__node-default',
+                    style: {
+                        backgroundColor: '#fff',
+                        border: '2px solid #22c55e',
+                        borderRadius: '8px',
+                        padding: '0',
+                        minWidth: '300px'
                     }
-                };
+                },
+                children: [
+                    // Header
+                    {
+                        tag: 'div',
+                        props: {
+                            style: {
+                                backgroundColor: '#22c55e',
+                                color: 'white',
+                                padding: '8px 12px',
+                                fontWeight: 'bold',
+                                borderTopLeftRadius: '6px',
+                                borderTopRightRadius: '6px'
+                            }
+                        },
+                        children: ['Task Input']
+                    },
+                    // Content
+                    {
+                        tag: 'div',
+                        props: {
+                            style: {
+                                padding: '12px'
+                            }
+                        },
+                        children: [
+                            {
+                                tag: 'div',
+                                props: {
+                                    style: {
+                                        fontSize: '14px',
+                                        marginBottom: '8px'
+                                    }
+                                },
+                                children: [task]
+                            },
+                            timestamp && {
+                                tag: 'div',
+                                props: {
+                                    style: {
+                                        fontSize: '12px',
+                                        color: '#666',
+                                        marginTop: '4px'
+                                    }
+                                },
+                                children: [`${timestamp}`]
+                            }
+                        ].filter(Boolean)
+                    },
+                    // Bottom handle
+                    {
+                        tag: Handle,
+                        props: {
+                            type: 'source',
+                            position: Position.Bottom,
+                            style: {
+                                backgroundColor: '#22c55e'
+                            }
+                        }
+                    }
+                ]
             };
-        }
-    };
-
-    // Export for use
-    global.TaskInputNode = TaskInputNode;
-
-})(typeof window !== 'undefined' ? window : global);
+        };
+    }
+};

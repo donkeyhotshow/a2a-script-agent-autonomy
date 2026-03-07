@@ -403,12 +403,16 @@
         buildChoiceResult(choiceId) {
             this.clearPendingForm();
             this.pushMessage({ content: choiceId }, 'user');
+            // Clear execute to hide form immediately after choice
+            this.setExecute(null);
             return { choice: choiceId };
         },
 
         buildMessageResult(message) {
             const payload = (message || '').trim() || 'continue';
             this.pushMessage({ content: payload }, 'user');
+            // Clear execute to hide message form immediately after sending
+            this.setExecute(null);
             return { message: payload };
         },
 
