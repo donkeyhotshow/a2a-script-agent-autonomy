@@ -764,9 +764,10 @@ expressApp.post(['/api/sessions', '/api/v1/sessions'], async (req, res) => {
             const serverBase = await getServerBaseUrl();
             
             // Build new protocol request
-            const requestBody: Record<string, unknown> = {
-                sync: true, // Force sync responses for simulations/testing
-            };
+            const requestBody: Record<string, unknown> = {};
+            if (config.defaultSyncMode) {
+                requestBody.sync = true; // Force sync responses by default
+            }
             if (session.task) {
                 requestBody.task = session.task;
             }
@@ -1222,16 +1223,17 @@ expressApp.post(['/api/sessions/:sessionId/result', '/api/v1/sessions/:sessionId
 
     // Build request body for new protocol - формат как в симуляциях
     // { context: { version, session_id, execution: { action, step } }, result: { message } }
-    const requestBody: Record<string, unknown> = {
-        sync: true, // Force sync responses for simulations/testing
-        context: {
-            version: '2.0',
-            session_id: sessionId,
-            execution: session.execution || { action: session.suggestedAction || 'dialog', step: 'new' },
-            task: session.task,
-        },
-        result: result,  // action-key shape: { choice: "..." } или { message: "..." }
+    const requestBody: Record<string, unknown> = {};
+    if (config.defaultSyncMode) {
+        requestBody.sync = true; // Force sync responses by default
+    }
+    requestBody.context = {
+        version: '2.0',
+        session_id: sessionId,
+        execution: session.execution || { action: session.suggestedAction || 'dialog', step: 'new' },
+        task: session.task,
     };
+    requestBody.result = result;  // action-key shape: { choice: "..." } или { message: "..." }
 
     // Forward to server /invoke
     const upstream = await serverFetch('POST', serverBase, '/invoke', requestBody);
@@ -1338,6 +1340,7 @@ expressApp.post(['/api/sessions/:sessionId/result', '/api/v1/sessions/:sessionId
 
     const promiseId: string | undefined = payload?.data?.promiseId || payload?.promiseId;
     if (promiseId) {
+        console.log('[SDK RESULT] Starting polling for promiseId:', promiseId);
         // For simulation/testing: immediately poll for result to get sync-like behavior
         let attempts = 0;
         const maxAttempts = 30; // 3 seconds max wait

@@ -90,7 +90,7 @@ if ($step1Response.serverResponse.data.execute) {
 # Step 2: Send choice "dialog"
 Write-Step 2 "Send choice 'dialog' -> expect input form"
 
-$step2Body = @{ choice = "dialog"; projectId = "test_dialog_123" } | ConvertTo-Json -Depth 5
+$step2Body = @{ result = @{ choice = "dialog" }; projectId = "test_dialog_123" } | ConvertTo-Json -Depth 5
 $step2Response = Invoke-RestMethod -Uri "$baseUrl/api/sessions/$sessionId/result" -Method POST -Body $step2Body -ContentType "application/json"
 
 Test-Response $step2Response.data "../../simulations/dialog/2/response.json" @(
@@ -101,7 +101,7 @@ Test-Response $step2Response.data "../../simulations/dialog/2/response.json" @(
 # Step 3: Send message
 Write-Step 3 "Send message 'hello world' -> expect message + input form"
 
-$step3Body = @{ message = "hello world"; projectId = "test_dialog_123" } | ConvertTo-Json -Depth 5
+$step3Body = @{ result = @{ message = "hello world" }; projectId = "test_dialog_123" } | ConvertTo-Json -Depth 5
 $step3Response = Invoke-RestMethod -Uri "$baseUrl/api/sessions/$sessionId/result" -Method POST -Body $step3Body -ContentType "application/json"
 
 Test-Response $step3Response.data "../../simulations/dialog/3/response.json" @(
@@ -114,7 +114,7 @@ Test-Response $step3Response.data "../../simulations/dialog/3/response.json" @(
 # Step 4: Send final message
 Write-Step 4 "Send message 'Thanks!' -> expect completed"
 
-$step4Body = @{ message = "Thanks!"; projectId = "test_dialog_123" } | ConvertTo-Json -Depth 5
+$step4Body = @{ result = @{ message = "Thanks!" }; projectId = "test_dialog_123" } | ConvertTo-Json -Depth 5
 $step4Response = Invoke-RestMethod -Uri "$baseUrl/api/sessions/$sessionId/result" -Method POST -Body $step4Body -ContentType "application/json"
 
 Test-Response $step4Response.data "../../simulations/dialog/4/response.json" @(

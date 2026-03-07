@@ -417,11 +417,6 @@
                         context: 'ai-suggested'
                     });
                     console.log('[TaskCreator] Created session from option:', session.id);
-                    
-                    // If option has immediate action, trigger it
-                    if (option.autoExecute && option.action) {
-                        this._triggerAction(session.id, option);
-                    }
                 }
             } catch (error) {
                 console.error('[TaskCreator] Failed to create session:', error);
@@ -460,22 +455,6 @@
             }
 
             return session;
-        },
-
-        /**
-         * Trigger immediate action on session
-         * @private
-         */
-        async _triggerAction(sessionId, option) {
-            const g = (typeof window !== 'undefined' ? window : globalThis);
-            // This would call the action handler to start the task
-            if (g.ActionHandler) {
-                try {
-                    await g.ActionHandler.start(sessionId, option.action, option.params);
-                } catch (error) {
-                    console.error('[TaskCreator] Failed to trigger action:', error);
-                }
-            }
         },
 
         /**

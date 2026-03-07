@@ -276,32 +276,30 @@ export class FormRequestProcessor extends BaseRequestProcessor {
                 } as ProcessResult;
 
             case 'dialog':
-                // AI Dialog mode - requires LLM processing
-                logger.info('[FormRequestProcessor] Dialog mode selected, routing to AI-Actions', {choiceId});
+                // Dialog mode selected - return input form for user message
+                logger.info('[FormRequestProcessor] Dialog mode selected, returning input form', {choiceId});
                 return {
-                    outcome: 'ai_action_ready',
-                    message: 'AI Dialog mode selected',
+                    outcome: 'completed',
+                    message: 'Dialog mode selected',
                     selection: { choiceId, formId, timestamp: new Date().toISOString() },
                     context: {
-                        action: 'dialog',
+                        task: context?.task || 'диалог',
                         execution: {
-                            step: 'llm-request',
-                            progress: 0
+                            action: 'dialog',
+                            step: 'request'
                         }
                     },
                     execute: {
-                        message: 'AI діалог активовано. Очікуйте відповіді від LLM...',
-                        finalResult: {
-                            action: 'dialog',
-                            summary: { mode: 'ai-dialog', status: 'processing' }
+                        form: {
+                            input: [
+                                {
+                                    name: 'message',
+                                    type: 'text',
+                                    label: 'Повідомлення',
+                                    required: true
+                                }
+                            ]
                         }
-                    },
-                    // Signal to route to neuron processor for LLM
-                    aiActions: {
-                        action: 'dialog',
-                        mode: 'llm-driven',
-                        step: 'start',
-                        completed: false
                     }
                 } as ProcessResult;
 

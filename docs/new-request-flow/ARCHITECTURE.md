@@ -280,20 +280,13 @@ SIMULATION_ENABLED=false # Включить симуляцию
 ```
 
 a2a-client/packages/
-├── api-client/ # HTTP клиент для сервера
-│ ├── src/
-│ │ ├── index.ts # основной API
-│ │ ├── async-client.ts
-│ │ ├── protocol.ts
-│ │ └── action-handler.ts
-│ └── tests/
-│
-├── agent/ # Агент
-├── fs-utils/ # Файловые утилиты
-├── rag/ # RAG
-├── script-runner/ # Запуск скриптов
-├── terminal/ # Терминал
-└── types/ # Общие типы
+├── sdk/           # Основний SDK (API клієнт + API сервер)
+├── rag/           # RAG
+├── execution/     # виконання скриптів
+├── embedding/     # ембедінги
+├── history/       # історія
+├── json/          # JSON утиліти
+└── types/         # Спільні типи
 
 ```
 

@@ -74,18 +74,18 @@ a2a-client/web/
 
 Модуль управления сессиями. Обеспечивает создание, загрузку и удаление сессий.
 
-**Файл:** [`session-manager.js`](../../a2a-client/web/js/session-manager.js)
+**Файл:** [`js/sessions.js`](a2a-client/web/js/sessions.js) (управление сессиями в UI)
 
 #### Конфигурация
 
 ```javascript
 SessionManager.init({
-    apiBase: '/api/v1',           // Базовый API URL
-    projectId: 'p_123456 // ID проекта
+    apiBase: '/api',           // Базовый API URL (Client API на порту 3001)
+    projectId: 'p_1234567890'    // ID проекта
 });
 ```
 
-####7890'    Методы
+#### Методы
 
 | Метод | Описание |
 |-------|----------|
@@ -125,7 +125,7 @@ await SessionManager.deleteSession('sess_123');
 
 ```javascript
 TaskFlow.init({
-    apiBase: '/api/v1',
+    apiBase: '/api',
     projectId: 'p_1234567890'
 });
 ```
@@ -162,7 +162,7 @@ TaskFlow.sendChoice('confirm_action', containerElement);
 
 ```javascript
 SSEClient.configure({
-    apiBase: '/api/v1',
+    apiBase: '/api',
     sessionId: 'sess_123',
     promiseId: 'promise_456'
 });
@@ -311,10 +311,10 @@ tracker.remove();
 ```javascript
 TerminalEmulator.configure({
     wsUrl: 'ws://localhost:3002',      // WebSocket URL
-    apiBase: '/api/v1',               // API базовый URL
-    fontSize: 14,                     // Размер шрифта
-    fontFamily: 'Monaco, monospace',  // Шрифт
-    theme: 'dark'                     // Тема (dark/light)
+    apiBase: '/api',                    // API базовый URL
+    fontSize: 14,                      // Размер шрифта
+    fontFamily: 'Monaco, monospace',   // Шрифт
+    theme: 'dark'                      // Тема (dark/light)
 });
 ```
 
@@ -358,7 +358,7 @@ TerminalEmulator.clear();
 
 ```javascript
 RAGSearchUI.configure({
-    apiBase: '/api/v1',
+    apiBase: '/api',
     searchEndpoint: '/rag/search',
     indexEndpoint: '/rag/index'
 });

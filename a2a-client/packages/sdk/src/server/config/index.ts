@@ -63,6 +63,8 @@ export interface ApiServerConfig {
     enableRateLimit: boolean;
     rateLimitWindow: number;
     rateLimitMax: number;
+
+    defaultSyncMode: boolean;
 }
 
 export const config: ApiServerConfig = {
@@ -106,6 +108,8 @@ export const config: ApiServerConfig = {
     enableRateLimit: toBoolean(process.env.ENABLE_RATE_LIMIT, true),
     rateLimitWindow: toNumber(process.env.RATE_LIMIT_WINDOW, 60 * 1000),
     rateLimitMax: toNumber(process.env.RATE_LIMIT_MAX, 100),
+
+    defaultSyncMode: toBoolean(process.env.DEFAULT_SYNC_MODE, false),
 };
 
 export default config;

@@ -97,7 +97,6 @@ async function handleInvoke(req: Request, res: Response, next: NextFunction): Pr
 
         // Synchronous response - return execute immediately
         if (invokeResult.sync || body.sync) {
-            console.log('[SYNC MODE] Starting sync polling for request:', invokeResult.promiseId);
             // For sync mode, wait for the request to complete and return result immediately
             const maxWaitTime = 10000; // 10 seconds max wait
             const pollInterval = 200; // 200ms
@@ -107,7 +106,6 @@ async function handleInvoke(req: Request, res: Response, next: NextFunction): Pr
                 attempts++;
 
                 const status = await requestService.getStatus(invokeResult.promiseId!);
-                console.log(`[SYNC MODE] Attempt ${attempts}, status:`, status?.status);
                 if (status?.status === 'completed') {
                     const result = await requestService.getResult(invokeResult.promiseId!);
                     if (result) {

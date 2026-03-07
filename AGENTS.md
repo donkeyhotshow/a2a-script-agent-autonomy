@@ -61,13 +61,14 @@ request.json → server-transforms → request.md → [LLM] → response.md → 
 
 ### Request Flow Types (Critical)
 
-**Sync Flow (Default for Simulations):**
+**Sync Flow (For Testing/Simulations):**
 - **When:** Simple operations, form interactions, dialog routing, choice selections
 - **Response:** Immediate `execute` object with form/input data
-- **Use Case:** UI interactions, routing decisions, simple actions
+- **Use Case:** UI interactions, routing decisions, simple actions, automated testing
 - **Example:** `task: "dialog"` → `execute.form.choices` (router)
+- **Enable:** Set `DEFAULT_SYNC_MODE=1` in environment
 
-**Async Flow (PromiseId):**
+**Async Flow (PromiseId - Default):**
 - **When:** Complex AI processing, LLM calls, long-running operations
 - **Response:** `promiseId` for polling status/result
 - **Use Case:** AI generation, complex analysis, external API calls

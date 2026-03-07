@@ -573,14 +573,24 @@ interface SessionSummary {
 - Симуляции и тесты
 - Маршрутизация (dialog → auto-ai → task-decomposition)
 
-#### Асинхронный ответ (с External AI Hub)
+#### Асинхронный ответ (Async Flow с PromiseId)
 
-Когда сервер отправляет запрос к External AI Hub (прокси для Ollama), он использует `promiseId`:
+Когда сервер отправляет запрос к External AI Hub (прокси для Ollama) или выполняет сложную AI обработку, он использует `promiseId`:
 
 ```json
+// Запрос клиента (без sync флага)
 {
-  "promiseId": "abc123def456",
-  "status": "pending"
+  "task": "complex analysis"
+}
+
+// Ответ сервера
+{
+  "success": true,
+  "data": {
+    "promiseId": "abc123def456",
+    "status": "pending",
+    "message": "Request queued for processing. Poll /api/v1/requests/:promiseId/status for status."
+  }
 }
 ```
 
