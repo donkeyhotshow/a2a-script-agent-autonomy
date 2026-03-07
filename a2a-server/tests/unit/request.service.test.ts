@@ -1,16 +1,10 @@
 /**
  * Request Service Unit Tests
+ * Stateless - in-memory only
  */
 
 import {describe, it, expect, vi, beforeEach} from 'vitest';
-
-// Mock Prisma
-vi.mock('@prisma/client', () => ({
-    PrismaClient: vi.fn().mockImplementation(() => ({
-        $executeRaw: vi.fn().mockResolvedValue(1),
-        $queryRaw: vi.fn().mockResolvedValue([]),
-    })),
-}));
+import {requestService} from '../../src/services/core/request/request.service.js';
 
 vi.mock('../../src/utils/logger.js', () => ({
     logger: {

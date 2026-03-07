@@ -1,4 +1,4 @@
-# API Test Results - 2026-03-04
+# API Test Results - 2026-03-07 (Stateless)
 
 ## Server: a2a-server (localhost:3000)
 
@@ -6,31 +6,21 @@
 
 | Endpoint | Method | Status | Response |
 |----------|--------|--------|----------|
-| `/api/v1/health` | GET | ✅ | `{"status":"healthy","database":{"status":"healthy","latency":106}}` |
-| `/api/v1/versions` | GET | ✅ | `{"version":"2.0","supported":["1.0","1.1","2.0"]}` |
-| `/api/v1/metrics` | GET | ✅ | Prometheus format |
-| `/api/v1/requests` | POST | ✅ | Created request with promiseId |
-| `/api/v1/requests/:id/status` | GET | ✅ | Returns status |
-| `/api/v1/requests/:id/result` | GET | ✅ | Returns result with graph |
-| `/api/v1/requests/queue/stats` | GET | ✅ | Returns queue stats |
+| `/health` | GET | ✅ | `{"status":"ok","mode":"stateless"}` |
+| `/api/v1/invoke` | POST | ✅ | Returns execute object |
 
 ### Test Request:
 ```bash
-curl -X POST http://localhost:3000/api/v1/requests \
+curl -X POST http://localhost:3000/api/v1/invoke \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer a2a_dev_password" \
-  -d '{"context": {"version": "1.0"}, "message": {"role": "user", "parts": [{"type": "text", "text": "Hello"}]}}'
+  -d '{"task": "Test invoke"}'
 ```
 
-### Bug Found & Fixed:
-- File: `a2a-server/src/services/core/request/request.service.ts:49`
-- Issue: message not serialized to JSON string for Prisma
-- Fix: Added JSON.stringify for message field
-
 ### Notes:
-- Some requests complete immediately (first test)
-- Some requests stay in pending state (needs investigation of request processor)
-- Database connection is healthy
+- Server is stateless - no database required
+- Health check returns `"mode": "stateless"`
+- All storage is in-memory only (lost on restart)
+- Client API (port 3001) handles session persistence via JSON files
 
 ## Invoke Endpoint Test:
 

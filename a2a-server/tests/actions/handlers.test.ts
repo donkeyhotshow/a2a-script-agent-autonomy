@@ -1,5 +1,6 @@
 /**
  * Tests for Action Handlers
+ * Stateless - in-memory only
  */
 
 import {describe, it, expect, vi} from 'vitest';
@@ -11,53 +12,15 @@ import {
     validateCommand,
 } from '../../src/actions/handlers/index.js';
 
-// Mock Prisma for capture-task
-vi.mock('@prisma/client', () => ({
-    PrismaClient: vi.fn().mockImplementation(() => ({
-        capturedTask: {
-            create: vi.fn().mockResolvedValue({
-                id: 'task-1',
-                rawInput: 'Test task',
-                sessionId: 'session-1',
-                status: 'pending',
-                priority: 'medium',
-                createdAt: new Date(),
-                updatedAt: new Date(),
-                metadata: null,
-            }),
-            findUnique: vi.fn(),
-            findMany: vi.fn().mockResolvedValue([]),
-            update: vi.fn(),
-        },
-        structuredTask: {
-            create: vi.fn().mockResolvedValue({
-                id: 'structured-1',
-                title: 'Test',
-                description: 'Test',
-                requirements: '[]',
-                capturedTaskId: 'task-1',
-                status: 'in-progress',
-                priority: 'medium',
-                sessionId: 'session-1',
-                createdAt: new Date(),
-                updatedAt: new Date(),
-            }),
-            findFirst: vi.fn(),
-            updateMany: vi.fn(),
-        },
-        taskHistory: {
-            create: vi.fn(),
-            findMany: vi.fn().mockResolvedValue([]),
-        },
-        subtask: {
-            create: vi.fn().mockImplementation((args) => ({
-                id: `subtask-${Date.now()}`,
-                ...args.data,
-                createdAt: new Date(),
-                updatedAt: new Date(),
-            })),
-            findMany: vi.fn().mockResolvedValue([]),
-        },
+// Mock logger
+vi.mock('../../src/utils/logger.js', () => ({
+    logger: {
+        info: vi.fn(),
+        error: vi.fn(),
+        warn: vi.fn(),
+        debug: vi.fn(),
+    },
+}));
         step: {
             create: vi.fn(),
             findMany: vi.fn().mockResolvedValue([]),

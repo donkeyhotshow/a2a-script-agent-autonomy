@@ -83,6 +83,22 @@ const WS_PORT = Number(process.env.WS_PORT || 3002);
 const websocketServer = new WebSocketServerManager();
 const expressApp = express();
 
+// Initialize Message Queue for reliable message delivery
+const messageQueue = getGlobalQueue({
+  baseDir: path.join(process.cwd(), '.a2a', 'message-queue'),
+  maxRetries: 5,
+  initialDelay: 1000,
+  maxDelay: 30000,
+  backoffMultiplier: 2,
+  pedalInterval: 1000,
+  autoStart: false, // Will start after server is ready
+});
+
+// Register sender function for the queue
+messageQueue.registerSender(async (sessionId, projectId, result, context) => {
+  return sendMessageToServer(sessionId, projectId, result, context);
+});
+
 // The session service is a simple singleton and requires no explicit initialization.
 
 // Handle WebSocket messages from clients
@@ -594,6 +610,76 @@ async function getServerBaseUrl(): Promise<string> {
 
 function jsonError(res: express.Response, status: number, message: string, details?: unknown) {
     res.status(status).json({success: false, error: {message}, details});
+}
+
+/**
+ * Send message to server via /invoke endpoint
+ * This is the actual sender function used by the message queue
+ */
+async function sendMessageToServer(
+  sessionId: string,
+  projectId: string,
+  result: Record<string, unknown>,
+  context?: Record<string, unknown> | null
+): Promise<Record<string, unknown>> {
+  const projects = await loadProjects();
+  const project = projects.find(p => p.id === projectId);
+
+  if (!project) {
+    throw new Error(`Project ${projectId} not found`);
+  }
+
+  const session = await loadSession(project, sessionId);
+  if (!session) {
+    throw new Error(`Session ${sessionId} not found`);
+  }
+
+  const serverBase = await getServerBaseUrl();
+
+  // Build request body for new protocol
+  const requestBody: Record<string, unknown> = {
+    context: context || {
+      version: '2.0',
+      session_id: sessionId,
+      execution: session.execution || { action: session.suggestedAction || 'dialog', step: 'new' },
+      task: session.task,
+    },
+    result,
+  };
+
+  if (config.defaultSyncMode) {
+    requestBody.sync = true;
+  }
+
+  // Forward to server /invoke
+  const upstream = await serverFetch('POST', serverBase, '/invoke', requestBody);
+  const payload = (await upstream.json().catch(() => ({}))) as any;
+
+  if (!upstream.ok) {
+    throw new Error(payload?.error?.message || `Server returned ${upstream.status}`);
+  }
+
+  // Update session with server response
+  const updatedSession = await updateSessionWithServerResponse(project, session, payload?.data || payload);
+  await saveSession(project, updatedSession);
+
+  // Broadcast to connected clients
+  const response = {
+    sessionId,
+    projectId: project.id,
+    execute: payload?.data?.execute,
+    context: payload?.data?.context,
+    status: payload?.data?.sync === true ? 'completed' : 'pending',
+  };
+
+  broadcastProgress(sessionId, {
+    status: 'response',
+    message: 'Response received from server',
+    result: response,
+  });
+  emitServerSse(sessionId, response, 'task_response');
+
+  return response;
 }
 
 // ==================== CLIENT API (NEW-REQUEST-FLOW) ====================
@@ -1230,7 +1316,41 @@ expressApp.post(['/api/sessions/:sessionId/result', '/api/v1/sessions/:sessionId
         await saveSession(project, session);
     }
 
-    // Forward to server /invoke
+    // === MESSAGE QUEUE PATTERN: Save first, then pedal ===
+    // Check if we should use immediate send or queue (based on query param or default)
+    const useQueue = req.query.queue !== 'false' && process.env.DISABLE_MESSAGE_QUEUE !== '1';
+
+    if (useQueue) {
+        // Enqueue the message for reliable delivery
+        const queuedMessage = await messageQueue.enqueue(
+            sessionId,
+            project.id,
+            result,
+            requestBody.context as Record<string, unknown>
+        );
+
+        // Trigger immediate pedal attempt for this session
+        messageQueue.pedalSession(sessionId).catch(err => {
+            console.error('[SDK RESULT] Pedal error:', err);
+        });
+
+        // Return queue status immediately
+        res.status(202).json({
+            success: true,
+            data: {
+                queued: true,
+                messageId: queuedMessage.id,
+                sessionId,
+                projectId: project.id,
+                status: 'pending',
+                message: 'Message queued for delivery',
+            },
+        });
+        return;
+    }
+
+    // === LEGACY IMMEDIATE SEND (when queue is disabled) ===
+    // Forward to server /invoke immediately
     const upstream = await serverFetch('POST', serverBase, '/invoke', requestBody);
     const payload = (await upstream.json().catch(() => ({}))) as any;
     if (!upstream.ok) {
@@ -3040,6 +3160,69 @@ expressApp.use((err: unknown, _req: express.Request, res: express.Response, _nex
     }
 });
 
+// ==================== MESSAGE QUEUE ENDPOINTS ====================
+
+// GET /api/queue/stats - Message queue statistics
+expressApp.get(['/api/queue/stats', '/api/v1/queue/stats'], async (_req, res) => {
+    try {
+        const stats = await messageQueue.getStats();
+        res.json({ success: true, data: stats });
+    } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        jsonError(res, 500, 'Failed to get queue stats', message);
+    }
+});
+
+// GET /api/queue/messages - List unserved messages
+expressApp.get(['/api/queue/messages', '/api/v1/queue/messages'], async (req, res) => {
+    try {
+        const sessionId = req.query.sessionId as string | undefined;
+        let messages: QueuedMessage[];
+
+        if (sessionId) {
+            messages = await messageQueue.getPendingMessages(sessionId);
+        } else {
+            messages = await messageQueue.getUnservedMessages();
+        }
+
+        res.json({ success: true, data: messages });
+    } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        jsonError(res, 500, 'Failed to get queue messages', message);
+    }
+});
+
+// POST /api/queue/retry/:messageId - Retry a failed message
+expressApp.post(['/api/queue/retry/:messageId', '/api/v1/queue/retry/:messageId'], async (req, res) => {
+    try {
+        const messageId = String(req.params.messageId || '');
+        const success = await messageQueue.retryMessage(messageId);
+
+        if (success) {
+            // Trigger pedal for this message
+            messageQueue.pedalSession((await messageQueue.getMessage(messageId))?.sessionId || '');
+            res.json({ success: true, message: 'Message queued for retry' });
+        } else {
+            jsonError(res, 404, 'Message not found');
+        }
+    } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        jsonError(res, 500, 'Failed to retry message', message);
+    }
+});
+
+// POST /api/queue/pedal/:sessionId - Force pedal messages for a session
+expressApp.post(['/api/queue/pedal/:sessionId', '/api/v1/queue/pedal/:sessionId'], async (req, res) => {
+    try {
+        const sessionId = String(req.params.sessionId || '');
+        await messageQueue.pedalSession(sessionId);
+        res.json({ success: true, message: 'Pedal triggered for session' });
+    } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        jsonError(res, 500, 'Failed to pedal session', message);
+    }
+});
+
 // ==================== START SERVER ====================
 
 if (process.env.NODE_ENV !== 'test') {
@@ -3052,6 +3235,19 @@ if (process.env.NODE_ENV !== 'test') {
         console.log(`File System: http://${HOST}:${PORT}/api/fs/*`);
         console.log(`Sessions: http://${HOST}:${PORT}/api/sessions/*`);
         console.log(`File Upload: http://${HOST}:${PORT}/api/files/upload`);
+        console.log(`Message Queue: http://${HOST}:${PORT}/api/queue/stats`);
+
+        // Start message queue pedaler and resume unserved messages
+        messageQueue.start();
+        messageQueue.resumeOnStartup().then(result => {
+            if (result.resumed) {
+                console.log(`[MessageQueue] Resumed ${result.count} unserved messages`);
+            } else {
+                console.log('[MessageQueue] No unserved messages to resume');
+            }
+        }).catch(err => {
+            console.error('[MessageQueue] Startup resume failed:', err);
+        });
     });
 }
 
