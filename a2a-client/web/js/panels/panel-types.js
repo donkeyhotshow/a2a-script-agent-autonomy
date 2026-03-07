@@ -6,7 +6,7 @@
 
     const PANEL_TYPES = {
         task: { slot: 'floating', title: 'Task', critical: true },
-        chat: { slot: 'right', title: 'Chat', critical: false },
+        chat: { slot: 'floating', title: 'Chat', critical: false },
         logs: { slot: 'bottom', title: 'Logs', critical: false },
         taskbar: { slot: 'taskbar', title: 'Sessions', critical: true },
         settings: { slot: 'modal', title: 'Settings', critical: false },

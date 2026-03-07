@@ -31,6 +31,7 @@ export interface InvokeInput {
     stepResult?: unknown;  // result with action-key shape: { "script": {...}, "read-file": {...} }
     result?: Record<string, unknown>;  // action-key result: { choice: "..." } or { message: "..." }
     code_blocks?: FileBlock[];
+    sync?: boolean;  // force synchronous processing for testing/simulations
 }
 
 export interface InvokeResult {

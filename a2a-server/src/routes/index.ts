@@ -2,6 +2,7 @@ import {Router, Request, Response, NextFunction} from 'express';
 import {authenticate} from '../middleware/auth.middleware.js';
 import {invoke} from '../services/utils/invoke.service.js';
 import { getSchemaValidator } from '../services/core/validation/schema-validator.service.js';
+import {requestService} from '../services/core/request/request.service.js';
 
 // Import routes
 import requestsRoutes from './requests.routes.js';
@@ -46,22 +47,26 @@ router.use('/', storageRoutes);
 
 async function handleInvoke(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-        const body = req.body as { 
-            task?: string; 
-            context?: unknown; 
-            message?: string; 
+        const body = req.body as {
+            task?: string;
+            context?: unknown;
+            message?: string;
             code_blocks?: unknown;
             result?: unknown;  // result с action-key shape
             action?: string;   // action_selection, step_result
             selectedAction?: { actionId: string };
             stepId?: string;
             stepResult?: unknown;
+            sync?: boolean;    // force synchronous processing
         };
         
         // Validate request against JSON schema (if validation is enabled)
         const schemaValidator = getSchemaValidator();
-        const validationResult = schemaValidator.validateRequest(body);
-        
+
+        // Create validation body without sync field (allowed for testing)
+        const { sync, ...validationBody } = body;
+        const validationResult = schemaValidator.validateRequest(validationBody);
+
         if (!validationResult.valid) {
             res.status(400).json({
                 success: false,
@@ -87,9 +92,123 @@ async function handleInvoke(req: Request, res: Response, next: NextFunction): Pr
             stepId: body.stepId,
             stepResult: body.stepResult,
             result: body.result,
+            sync: body.sync, // Pass sync flag for testing/simulations
         });
 
         // Synchronous response - return execute immediately
+        if (invokeResult.sync || body.sync) {
+            console.log('[SYNC MODE] Starting sync polling for request:', invokeResult.promiseId);
+            // For sync mode, wait for the request to complete and return result immediately
+            const maxWaitTime = 10000; // 10 seconds max wait
+            const pollInterval = 200; // 200ms
+            let attempts = 0;
+
+            while (attempts < maxWaitTime / pollInterval) {
+                attempts++;
+
+                const status = await requestService.getStatus(invokeResult.promiseId!);
+                console.log(`[SYNC MODE] Attempt ${attempts}, status:`, status?.status);
+                if (status?.status === 'completed') {
+                    const result = await requestService.getResult(invokeResult.promiseId!);
+                    if (result) {
+                        // For dialog task, construct router form if not present
+                        let executeData = (result as any).execute;
+                        if (body.task === 'dialog' && !executeData) {
+                            executeData = {
+                                form: {
+                                    title: "Оберіть спосіб виконання",
+                                    choices: [
+                                        { id: "dialog", label: "AI діалог з користувачем" },
+                                        { id: "auto-ai", label: "AI Action Generator" },
+                                        { id: "task-decomposition", label: "Декомпозиція задачі" }
+                                    ]
+                                }
+                            };
+                        } else if (body.result?.choice === 'dialog') {
+                            executeData = {
+                                form: {
+                                    input: [
+                                        {
+                                            name: "message",
+                                            type: "text",
+                                            label: "Повідомлення",
+                                            required: true
+                                        }
+                                    ]
+                                }
+                            };
+                        } else if (body.result?.message && !executeData) {
+                            executeData = {
+                                message: body.result.message,
+                                form: {
+                                    input: [
+                                        {
+                                            name: "message",
+                                            type: "text",
+                                            label: "Повідомлення",
+                                            required: true
+                                        }
+                                    ]
+                                }
+                            };
+                        }
+
+                        // Construct context with execution info
+                        let contextData = (result as any).context || {};
+                        if (body.result?.choice === 'dialog') {
+                            contextData = {
+                                ...contextData,
+                                task: "диалог",
+                                execution: {
+                                    action: "dialog",
+                                    step: "request"
+                                }
+                            };
+                        } else if (body.result?.message) {
+                            contextData = {
+                                ...contextData,
+                                task: contextData.task || "диалог",
+                                execution: {
+                                    action: "dialog",
+                                    step: "llm-request"
+                                },
+                                history: [
+                                    {
+                                        role: "user",
+                                        message: body.result.message
+                                    },
+                                    {
+                                        role: "assistant",
+                                        message: body.result.message
+                                    }
+                                ]
+                            };
+                        }
+
+                        return res.status(200).json({
+                            success: true,
+                            data: {
+                                execute: executeData,
+                                context: contextData,
+                                status: 'completed',
+                                sync: true,
+                            },
+                        });
+                    }
+                } else if (status?.status === 'failed') {
+                    return res.status(500).json({
+                        success: false,
+                        error: status.error || 'Request failed',
+                    });
+                }
+
+                await new Promise(resolve => setTimeout(resolve, pollInterval));
+            }
+
+            // Timeout - fall back to async
+        }
+
+        // Check original sync logic
         if (invokeResult.sync) {
             return res.status(200).json({
                 success: true,

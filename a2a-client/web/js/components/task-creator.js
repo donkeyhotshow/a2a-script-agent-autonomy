@@ -215,8 +215,12 @@
                 this._hideLoading();
                 const response = raw && typeof raw === 'object' ? (raw.data !== undefined ? raw.data : raw) : null;
 
-                if (response && Array.isArray(response.options) && response.options.length > 0) {
-                    this._showOptions(response.options, response.summary ?? '');
+                // Check for options in different formats
+                const choices = response?.execute?.form?.choices || response?.serverResponse?.data?.execute?.form?.choices;
+                const options = response?.options || choices;
+                
+                if (options && options.length > 0) {
+                    this._showOptions(options, response?.summary ?? response?.execute?.form?.title ?? '');
                 } else {
                     // No options from server → start session with query as-is
                     this._createSessionWithQuery(query);
@@ -274,17 +278,22 @@
                 this._suggestionsContainer.innerHTML = `<div class="suggestions-summary">${this._escapeHtml(summary)}</div>`;
             }
 
-            // Render options
-            optionsList.innerHTML = options.map((option, index) => `
-                <button class="option-card" data-index="${index}" data-action="${this._escapeHtml(option.action || '')}">
-                    <div class="option-icon">${option.icon || '⚡'}</div>
+            // Render options (support both action options and choice options)
+            optionsList.innerHTML = options.map((option, index) => {
+                const title = option.title || option.label || 'Option ' + (index + 1);
+                const description = option.description || '';
+                const icon = option.icon || (option.id ? '🔘' : '⚡');
+                const action = option.action || option.id || '';
+                return `
+                <button class="option-card" data-index="${index}" data-action="${this._escapeHtml(action)}">
+                    <div class="option-icon">${icon}</div>
                     <div class="option-content">
-                        <div class="option-title">${this._escapeHtml(option.title)}</div>
-                        <div class="option-description">${this._escapeHtml(option.description || '')}</div>
+                        <div class="option-title">${this._escapeHtml(title)}</div>
+                        ${description ? `<div class="option-description">${this._escapeHtml(description)}</div>` : ''}
                     </div>
                     <div class="option-arrow">→</div>
                 </button>
-            `).join('');
+            `}).join('');
 
             // Bind option click handlers
             optionsList.querySelectorAll('.option-card').forEach(card => {
@@ -376,21 +385,43 @@
                     window.ErrorHandler?.handle(new Error('Select a project first.'), { action: 'createSession', code: 'NO_PROJECT' });
                     return;
                 }
-                // Note: query is only for finding the action, NOT sent as task/message
-                const session = await this._createSession({
-                    projectId,
-                    title: option.title,
-                    task: null,
-                    suggestedAction: option.action,
-                    actionParams: option.params,
-                    context: 'ai-suggested'
-                });
-
-                console.log('[TaskCreator] Created session from option:', session.id);
-
-                // If option has immediate action, trigger it
-                if (option.autoExecute && option.action) {
-                    this._triggerAction(session.id, option);
+                
+                // Check if this is a choice option (id + label) or action option (action + title)
+                const isChoice = option.id && !option.action;
+                
+                if (isChoice) {
+                    // Choice option: create session with task to get router response, then send choice
+                    const session = await this._createSession({
+                        projectId,
+                        title: option.label || option.id,
+                        task: query,  // Send original query to trigger router
+                        context: 'user-query'
+                    });
+                    console.log('[TaskCreator] Created session from choice:', session.id);
+                    
+                    // Send the choice selection
+                    const g = (typeof window !== 'undefined' ? window : globalThis);
+                    if (g.ActionHandler?.sendChoice) {
+                        await g.ActionHandler.sendChoice(session.id, projectId, option.id);
+                    } else if (g.apiIntegration?.sendResult) {
+                        await g.apiIntegration.sendResult(session.id, { choice: option.id }, projectId);
+                    }
+                } else {
+                    // Action option: standard flow
+                    const session = await this._createSession({
+                        projectId,
+                        title: option.title,
+                        task: null,
+                        suggestedAction: option.action,
+                        actionParams: option.params,
+                        context: 'ai-suggested'
+                    });
+                    console.log('[TaskCreator] Created session from option:', session.id);
+                    
+                    // If option has immediate action, trigger it
+                    if (option.autoExecute && option.action) {
+                        this._triggerAction(session.id, option);
+                    }
                 }
             } catch (error) {
                 console.error('[TaskCreator] Failed to create session:', error);

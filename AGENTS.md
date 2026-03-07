@@ -59,6 +59,24 @@ LLM controls `context.execution.step`, server persists via transforms. Prompt fo
 request.json → server-transforms → request.md → [LLM] → response.md → server-transforms → response.json
 ```
 
+### Request Flow Types (Critical)
+
+**Sync Flow (Default for Simulations):**
+- **When:** Simple operations, form interactions, dialog routing, choice selections
+- **Response:** Immediate `execute` object with form/input data
+- **Use Case:** UI interactions, routing decisions, simple actions
+- **Example:** `task: "dialog"` → `execute.form.choices` (router)
+
+**Async Flow (PromiseId):**
+- **When:** Complex AI processing, LLM calls, long-running operations
+- **Response:** `promiseId` for polling status/result
+- **Use Case:** AI generation, complex analysis, external API calls
+- **Example:** LLM dialog processing → `promiseId` → poll for completion
+
+**Flow Detection:**
+- **Client Request:** Include `sync: true` for sync responses
+- **Server Response:** `sync: true` + `execute` = sync, `promiseId` = async
+
 ### Context Fields (System-Managed - Do Not Modify Manually)
 - `context.history` - Array of execution records
 - `context.execution` - Current state: `{ action, step, progress }`

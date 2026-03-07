@@ -540,18 +540,38 @@ interface SessionSummary {
 
 Сервер может ответить синхронно или асинхронно.
 
-#### Синхронный ответ
+#### Синхронный ответ (Sync Flow)
 
-Сервер обрабатывает запрос без внешних AI - сразу возвращает результат:
+Сервер обрабатывает запрос синхронно и сразу возвращает результат. Клиент отправляет `sync: true` для принудительного sync режима:
 
 ```json
+// Запрос клиента
 {
-  "context": { ... },
-  "actions?: Action[],     // Только в первом ответе
-  "execute?: { script: { input, output, code } },
-  "finalResult?: { action: string; summary: any }
+  "task": "dialog",
+  "sync": true  // Принудительный sync режим
+}
+
+// Ответ сервера
+{
+  "success": true,
+  "data": {
+    "context": { ... },
+    "execute": {
+      "form": {
+        "choices": [...]  // или input: [...], или message: "..."
+      }
+    },
+    "status": "completed",
+    "sync": true
+  }
 }
 ```
+
+**Когда используется sync flow:**
+- UI взаимодействия (формы, выбор опций)
+- Простые операции без LLM
+- Симуляции и тесты
+- Маршрутизация (dialog → auto-ai → task-decomposition)
 
 #### Асинхронный ответ (с External AI Hub)
 

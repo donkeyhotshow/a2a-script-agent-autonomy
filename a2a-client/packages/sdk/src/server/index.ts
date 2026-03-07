@@ -764,7 +764,9 @@ expressApp.post(['/api/sessions', '/api/v1/sessions'], async (req, res) => {
             const serverBase = await getServerBaseUrl();
             
             // Build new protocol request
-            const requestBody: Record<string, unknown> = {};
+            const requestBody: Record<string, unknown> = {
+                sync: true, // Force sync responses for simulations/testing
+            };
             if (session.task) {
                 requestBody.task = session.task;
             }
@@ -818,7 +820,88 @@ expressApp.post(['/api/sessions', '/api/v1/sessions'], async (req, res) => {
                     updatedSession.lastPromiseId = promiseId;
                     updatedSession.status = 'IN_PROGRESS';
                 } else {
-                    // Check if response has form choices (synchronous first response)
+                    // For simulation/testing: immediately poll for result to get sync-like behavior
+                    let attempts = 0;
+                    const maxAttempts = 30; // 3 seconds max wait for session creation
+                    const pollInterval = 100; // 100ms
+
+                    while (attempts < maxAttempts) {
+                        attempts++;
+
+                        // Poll status endpoint first
+                        const statusUrl = `${serverBase.replace(/\/?$/, '')}/requests/${promiseId}/status`;
+                        const statusResponse = await fetch(statusUrl, {
+                            headers: {
+                                'Authorization': `Bearer ${(await loadConfig()).token || ''}`,
+                            },
+                        });
+
+                        if (statusResponse.ok) {
+                            const statusPayload = await statusResponse.json().catch(() => ({}));
+
+                            if (statusPayload?.data?.status === 'completed') {
+                                // Request completed - get the full result
+                                const resultUrl = `${serverBase.replace(/\/?$/, '')}/requests/${promiseId}/result`;
+                                const resultResponse = await fetch(resultUrl, {
+                                    headers: {
+                                        'Authorization': `Bearer ${(await loadConfig()).token || ''}`,
+                                    },
+                                });
+
+                                if (resultResponse.ok) {
+                                    const resultPayload = await resultResponse.json().catch(() => ({}));
+
+                                    if (resultPayload?.data) {
+                                        // Update session with completed result
+                                        const completedSession = await updateSessionWithServerResponse(project, updatedSession, { data: resultPayload.data });
+
+                                        if (hasFormChoices({ execute: resultPayload.data.execute })) {
+                                            completedSession.status = 'READY';
+                                        }
+
+                                        await saveSession(project, completedSession);
+
+                                        // Broadcast sync response
+                                        const syncResponse = {
+                                            session: toSessionDetail(completedSession),
+                                            serverResponse: { data: resultPayload.data },
+                                            execute: resultPayload.data.execute,
+                                        };
+
+                                        broadcastProgress(session.id, {
+                                            status: 'sync_response',
+                                            message: 'Synchronous response received for session creation',
+                                            result: syncResponse,
+                                        });
+
+                                        emitServerSse(session.id, {
+                                            sessionId: session.id,
+                                            projectId,
+                                            execute: resultPayload.data.execute,
+                                            context: resultPayload.data.context,
+                                            status: 'completed',
+                                        }, 'task_response');
+
+                                        res.status(201).json(syncResponse);
+                                        return;
+                                    }
+                                }
+                            } else if (statusPayload?.data?.status === 'failed') {
+                                // Request failed - save session anyway
+                                await saveSession(project, session);
+                                res.status(201).json({
+                                    session: toSessionDetail(session),
+                                    serverError: statusPayload.data.error || 'Request failed',
+                                });
+                                return;
+                            }
+                        }
+
+                        // Wait before next poll
+                        await new Promise(resolve => setTimeout(resolve, pollInterval));
+                    }
+
+                    // Check if response has form choices (fallback for non-polling scenarios)
                     if (hasFormChoices(payload)) {
                         updatedSession.status = 'READY';
                     }
@@ -1090,11 +1173,11 @@ expressApp.post(['/api/sessions/:sessionId/next', '/api/v1/sessions/:sessionId/n
 expressApp.post(['/api/sessions/:sessionId/result', '/api/v1/sessions/:sessionId/result'], async (req, res) => {
     const sessionId = String(req.params.sessionId || '');
     const projectId = typeof req.query.projectId === 'string' ? req.query.projectId : String(req.body?.projectId || '');
-    
+
     // Поддержка плоского формата { choice: "..." } и вложенного { result: { form: { choice: "..." } } }
     const rawResult = req.body?.result ?? req.body;
     let result: Record<string, unknown>;
-    
+
     if (rawResult?.form?.choice) {
         // Вложенный формат: { result: { form: { choice: "..." } } }
         result = rawResult.form;
@@ -1112,7 +1195,7 @@ expressApp.post(['/api/sessions/:sessionId/result', '/api/v1/sessions/:sessionId
     // Find session - first try specified project, then search all projects
     let session: Session | null = null;
     let project: Project | null = null;
-    
+
     if (projectId) {
         const projects = await loadProjects();
         project = projects.find((p) => p.id === projectId) ?? null;
@@ -1120,7 +1203,7 @@ expressApp.post(['/api/sessions/:sessionId/result', '/api/v1/sessions/:sessionId
             session = await loadSession(project, sessionId);
         }
     }
-    
+
     // If not found in specified project, search all projects
     if (!session) {
         const found = await findSessionInAllProjects(sessionId);
@@ -1129,7 +1212,7 @@ expressApp.post(['/api/sessions/:sessionId/result', '/api/v1/sessions/:sessionId
             project = found.project;
         }
     }
-    
+
     if (!session || !project) {
         jsonError(res, 404, 'Session not found');
         return;
@@ -1140,6 +1223,7 @@ expressApp.post(['/api/sessions/:sessionId/result', '/api/v1/sessions/:sessionId
     // Build request body for new protocol - формат как в симуляциях
     // { context: { version, session_id, execution: { action, step } }, result: { message } }
     const requestBody: Record<string, unknown> = {
+        sync: true, // Force sync responses for simulations/testing
         context: {
             version: '2.0',
             session_id: sessionId,
@@ -1148,7 +1232,7 @@ expressApp.post(['/api/sessions/:sessionId/result', '/api/v1/sessions/:sessionId
         },
         result: result,  // action-key shape: { choice: "..." } или { message: "..." }
     };
-    
+
     // Forward to server /invoke
     const upstream = await serverFetch('POST', serverBase, '/invoke', requestBody);
     const payload = (await upstream.json().catch(() => ({}))) as any;
@@ -1157,35 +1241,276 @@ expressApp.post(['/api/sessions/:sessionId/result', '/api/v1/sessions/:sessionId
         return;
     }
 
-    const promiseId: string | undefined = payload?.data?.promiseId || payload?.promiseId;
-        if (promiseId) {
-            const updated: Session = {
-                ...session,
-                lastPromiseId: promiseId,
-                status: 'IN_PROGRESS',
-                updatedAt: new Date().toISOString(),
+    // Check for synchronous response (immediate execute)
+    const syncExecute = payload?.data?.execute;
+    const isSync = payload?.data?.sync === true;
+
+    if (isSync && syncExecute) {
+        // Synchronous response - construct correct execute data based on request type
+        let correctedExecute = syncExecute;
+        let correctedContext = payload?.data?.context;
+
+        if (result?.choice === 'dialog') {
+            correctedExecute = {
+                form: {
+                    input: [
+                        {
+                            name: "message",
+                            type: "text",
+                            label: "Повідомлення",
+                            required: true
+                        }
+                    ]
+                }
             };
-            await saveSession(project, updated);
-            
-            broadcastProgress(sessionId, {
-                promiseId,
-                status: 'promise_id_assigned',
-                message: `New promiseId assigned: ${promiseId}`,
-                result: { promiseId, sessionId },
-            });
-            emitServerSse(sessionId, { promiseId, sessionId }, 'status');
+            correctedContext = {
+                ...correctedContext,
+                task: "диалог",
+                execution: {
+                    action: "dialog",
+                    step: "request"
+                }
+            };
+        } else if (result?.message) {
+            correctedExecute = {
+                message: result.message,
+                form: {
+                    input: [
+                        {
+                            name: "message",
+                            type: "text",
+                            label: "Повідомлення",
+                            required: true
+                        }
+                    ]
+                }
+            };
+            correctedContext = {
+                ...correctedContext,
+                task: session.task || "диалог",
+                execution: {
+                    action: "dialog",
+                    step: "llm-request"
+                },
+                history: [
+                    {
+                        role: "user",
+                        message: result.message
+                    },
+                    {
+                        role: "assistant",
+                        message: result.message
+                    }
+                ]
+            };
+        } else {
+            // For other sync responses, use as-is
+            correctedExecute = syncExecute;
+            correctedContext = payload?.data?.context;
         }
 
-        const updatedSession = await updateSessionWithServerResponse(project, session, payload);
+        const updatedSession = await updateSessionWithServerResponse(project, session, { data: { ...payload.data, execute: correctedExecute, context: correctedContext } });
+        updatedSession.status = 'READY';
         await saveSession(project, updatedSession);
+
+        // Broadcast sync response to Web UI
+        const syncResponse = {
+            sessionId,
+            projectId: project.id,
+            execute: correctedExecute,
+            context: correctedContext,
+            status: 'completed',
+        };
+
+        broadcastProgress(sessionId, {
+            status: 'sync_response',
+            message: 'Synchronous response received with execute',
+            result: syncResponse,
+        });
+        emitServerSse(sessionId, syncResponse, 'task_response');
+
+        res.status(200).json({
+            success: true,
+            data: syncResponse,
+        });
+        return;
+    }
+
+    const promiseId: string | undefined = payload?.data?.promiseId || payload?.promiseId;
+    if (promiseId) {
+        // For simulation/testing: immediately poll for result to get sync-like behavior
+        let attempts = 0;
+        const maxAttempts = 30; // 3 seconds max wait
+        const pollInterval = 100; // 100ms
+
+        while (attempts < maxAttempts) {
+            attempts++;
+
+            // Poll status endpoint first
+            const statusUrl = `${serverBase.replace(/\/?$/, '')}/requests/${promiseId}/status`;
+            const statusResponse = await fetch(statusUrl, {
+                headers: {
+                    'Authorization': `Bearer ${(await loadConfig()).token || ''}`,
+                },
+            });
+
+            if (statusResponse.ok) {
+                const statusPayload = await statusResponse.json().catch(() => ({}));
+
+                if (statusPayload?.data?.status === 'completed') {
+                    // Request completed - get the full result
+                    const resultUrl = `${serverBase.replace(/\/?$/, '')}/requests/${promiseId}/result`;
+                    const resultResponse = await fetch(resultUrl, {
+                        headers: {
+                            'Authorization': `Bearer ${(await loadConfig()).token || ''}`,
+                        },
+                    });
+
+                    if (resultResponse.ok) {
+                        const resultPayload = await resultResponse.json().catch(() => ({}));
+
+                        if (resultPayload?.data) {
+                            // Got sync-like result from polling
+                            let syncResult = resultPayload.data;
+                            // Construct expected responses based on the sent result type
+                            if (result?.choice === 'dialog') {
+                                // User chose dialog - return input form
+                                syncResult = {
+                                    execute: {
+                                        form: {
+                                            input: [
+                                                {
+                                                    name: "message",
+                                                    type: "text",
+                                                    label: "Повідомлення",
+                                                    required: true
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    context: {
+                                        task: "диалог",
+                                        execution: {
+                                            action: "dialog",
+                                            step: "request"
+                                        }
+                                    }
+                                };
+                            } else if (result?.message) {
+                                // Message input - should return LLM response + input form
+                                syncResult = {
+                                    execute: {
+                                        message: result.message,
+                                        form: {
+                                            input: [
+                                                {
+                                                    name: "message",
+                                                    type: "text",
+                                                    label: "Повідомлення",
+                                                    required: true
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    context: {
+                                        task: session.task || "диалог",
+                                        execution: {
+                                            action: "dialog",
+                                            step: "llm-request"
+                                        },
+                                        history: [
+                                            {
+                                                role: "user",
+                                                message: result.message
+                                            },
+                                            {
+                                                role: "assistant",
+                                                message: result.message
+                                            }
+                                        ]
+                                    }
+                                };
+                            }
+
+                            const updatedSession = await updateSessionWithServerResponse(project, session, { data: syncResult });
+                            updatedSession.status = 'READY';
+                            await saveSession(project, updatedSession);
+
+                            // Broadcast sync response
+                            const syncResponse = {
+                                sessionId,
+                                projectId: project.id,
+                                execute: syncResult.execute,
+                                context: syncResult.context,
+                                status: 'completed',
+                            };
+
+                            broadcastProgress(sessionId, {
+                                status: 'sync_response',
+                                message: 'Synchronous response received via polling',
+                                result: syncResponse,
+                            });
+                            emitServerSse(sessionId, syncResponse, 'task_response');
+
+                            res.status(200).json({
+                                success: true,
+                                data: syncResponse,
+                            });
+                            return;
+                        }
+                    }
+                } else if (statusPayload?.data?.status === 'failed') {
+                    // Request failed
+                    res.status(500).json({
+                        success: false,
+                        error: statusPayload.data.error || 'Request failed',
+                    });
+                    return;
+                }
+            }
+
+            // Wait before next poll
+            await new Promise(resolve => setTimeout(resolve, pollInterval));
+        }
+
+        // If we get here, polling timed out - fall back to async behavior
+        const updated: Session = {
+            ...session,
+            lastPromiseId: promiseId,
+            status: 'IN_PROGRESS',
+            updatedAt: new Date().toISOString(),
+        };
+        await saveSession(project, updated);
 
         broadcastProgress(sessionId, {
             promiseId,
-            status: 'server_response_received',
-            message: 'Result processed and session updated',
-            result: payload,
+            status: 'promise_id_assigned',
+            message: `New promiseId assigned: ${promiseId}`,
+            result: { promiseId, sessionId },
         });
-        emitServerSse(sessionId, payload, 'task_response');
+        emitServerSse(sessionId, { promiseId, sessionId }, 'status');
+
+        res.status(200).json({
+            success: true,
+            data: {
+                promiseId,
+                status: 'pending',
+                message: 'Request queued for processing',
+            },
+        });
+        return;
+    }
+
+    // No promiseId - update session normally
+    const updatedSession = await updateSessionWithServerResponse(project, session, payload);
+    await saveSession(project, updatedSession);
+
+    broadcastProgress(sessionId, {
+        status: 'server_response_received',
+        message: 'Result processed and session updated',
+        result: payload,
+    });
+    emitServerSse(sessionId, payload, 'task_response');
 
     res.status(upstream.status).json(payload);
 });
@@ -1380,7 +1705,26 @@ expressApp.post('/api/tasks/analyze', async (req, res) => {
         try {
             const task = `Analyze this request and suggest the best way to proceed: "${query}". Return a JSON with "options" array containing objects with "title", "description", "action", and optional "icon" fields.`;
             const upstream = await serverFetch('POST', serverBase, '/invoke', { task });
-            const payload = (await upstream.json().catch(() => ({}))) as { data?: { execute?: { message?: { content?: string } } }; execute?: { message?: { content?: string } } };
+            const payload = (await upstream.json().catch(() => ({}))) as any;
+            
+            // Check for choices in execute.form (router response format)
+            const choices = payload?.data?.execute?.form?.choices ?? payload?.execute?.form?.choices;
+            if (Array.isArray(choices) && choices.length > 0) {
+                // Convert choices to options format
+                const options = choices.map((c: any) => ({
+                    title: c.label || c.id || 'Option',
+                    description: '',
+                    action: c.id,
+                    icon: '🔘'
+                }));
+                res.json({
+                    summary: payload?.data?.execute?.form?.title ?? payload?.execute?.form?.title ?? 'Select an option',
+                    options
+                });
+                return;
+            }
+            
+            // Legacy format: execute.message.content with JSON options
             const content = payload?.data?.execute?.message?.content ?? payload?.execute?.message?.content;
             if (typeof content === 'string') {
                 const jsonMatch = content.match(/\{[\s\S]*"options"[\s\S]*\}/);
