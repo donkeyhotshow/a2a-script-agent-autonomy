@@ -24,8 +24,12 @@
                 // Initialize managers
                 await global.ProjectManager?.init();
                 // Apply stored Client API URL so /api/tasks/analyze and /api/sessions hit the right host
-                const apiUrl = await global.ProjectManager?.getStoredClientApiUrl?.();
-                if (apiUrl && String(apiUrl).trim()) {
+                let apiUrl = await global.ProjectManager?.getStoredClientApiUrl?.();
+                // Handle case where StorageAPI returns an object instead of string
+                if (apiUrl && typeof apiUrl === 'object') {
+                    apiUrl = apiUrl.url || apiUrl.apiBase || apiUrl.toString?.() || null;
+                }
+                if (apiUrl && String(apiUrl).trim() && String(apiUrl).trim() !== '[object Object]') {
                     const base = String(apiUrl).trim().replace(/\/?$/, '');
                     if (global.apiIntegration) global.apiIntegration.configure({ apiBase: base });
                     if (global.TransportManager) global.TransportManager.apiBase = base;
@@ -34,8 +38,14 @@
                 await global.WindowManager?.init();
                 global.TaskbarManager?.init();
 
+                // Initialize AI Actions Panel
+                this.initAIActionsPanel();
+
                 // Setup UI
                 this.setupUI();
+
+                // Populate header project select (header is ready, API is set)
+                await this._populateHeaderProjectSelect();
 
                 // Restore previous state
                 await this.restoreState();
@@ -52,7 +62,6 @@
         async loadModules() {
             const modules = [
                 'js/app/project-manager.js',
-                'js/app/session-manager.js',
                 'js/app/window-manager.js',
                 'js/app/taskbar-manager.js'
             ];
@@ -76,6 +85,49 @@
             });
 
             await Promise.all(loadPromises);
+        },
+
+        /**
+         * Initialize AI Actions Panel
+         */
+        initAIActionsPanel() {
+            // Skip if already initialized
+            if (global.aiActionsPanel) {
+                console.log('[AppTask] AI Actions Panel already initialized');
+                return;
+            }
+
+            // Check if AIActionsSessionPanel is available
+            if (typeof global.AIActionsSessionPanel === 'undefined') {
+                console.warn('[AppTask] AIActionsSessionPanel not loaded yet, skipping initialization');
+                return;
+            }
+
+            // Get or create container
+            let container = document.getElementById('ai-actions-container');
+            if (!container) {
+                container = document.createElement('div');
+                container.id = 'ai-actions-container';
+                document.body.appendChild(container);
+            }
+
+            // Create the panel instance
+            try {
+                global.aiActionsPanel = new global.AIActionsSessionPanel(container, {
+                    id: 'ai-actions-panel',
+                    slot: 'floating',
+                    critical: true,
+                    onStateChange: (state) => {
+                        console.log('[AppTask] AI Actions Panel state changed:', state);
+                    }
+                });
+                if (global.SessionManager && global.aiActionsPanel.integrateWithSessionManager) {
+                    global.aiActionsPanel.integrateWithSessionManager(global.SessionManager);
+                }
+                console.log('[AppTask] AI Actions Panel initialized:', global.aiActionsPanel.id);
+            } catch (error) {
+                console.error('[AppTask] Failed to initialize AI Actions Panel:', error);
+            }
         },
 
         /**
@@ -147,8 +199,12 @@
 
             if (type === 'settings') {
                 global.ProjectManager?.getStoredClientApiUrl?.().then((url) => {
+                    // Handle case where StorageAPI returns an object
+                    if (url && typeof url === 'object') {
+                        url = url.url || url.apiBase || '/api';
+                    }
                     const input = content.querySelector('#settingsApiUrl');
-                    if (input) input.value = url || '/api';
+                    if (input) input.value = (typeof url === 'string' ? url : '/api');
                 });
                 content.querySelector('#cancelSettings')?.addEventListener('click', () => panel.close());
                 content.querySelector('#saveSettings')?.addEventListener('click', () => {
@@ -164,6 +220,121 @@
             }
             if (type === 'projects') {
                 content.querySelector('#cancelProjects')?.addEventListener('click', () => panel.close());
+                const grid = content.querySelector('#projectsGrid');
+                if (grid) this._loadProjectsIntoGrid(grid);
+                content.addEventListener('click', (e) => {
+                    const card = e.target.closest('.project-card');
+                    if (!card) return;
+                    const projectId = card.dataset.projectId;
+                    if (!projectId) return;
+                    global.ProjectManager?.setSelectedProjectId(projectId);
+                    const sel = document.getElementById('projectSelect');
+                    if (sel) {
+                        if (!sel.querySelector(`option[value="${projectId}"]`)) {
+                            const opt = document.createElement('option');
+                            opt.value = projectId;
+                            opt.textContent = card.querySelector('.project-name')?.textContent || projectId;
+                            sel.appendChild(opt);
+                        }
+                        sel.value = projectId;
+                    }
+                    panel.close();
+                });
+            }
+        },
+
+        /**
+         * Refresh projects UI: header select, taskbar, and projects panel grid. Call after create/delete project.
+         */
+        async refreshProjectsUI() {
+            const sel = document.getElementById('projectSelect');
+            if (sel) {
+                const saved = await global.ProjectManager?.getSelectedProjectId?.() || global.ProjectManager?.getLastSelectedProjectId?.();
+                sel.innerHTML = '<option value="">Select Project...</option>';
+                try {
+                    const list = await (global.apiIntegration?.getProjects?.() ?? Promise.resolve([]));
+                    (Array.isArray(list) ? list : []).forEach(p => {
+                        const opt = document.createElement('option');
+                        opt.value = p.id;
+                        opt.textContent = p.name || p.id;
+                        sel.appendChild(opt);
+                    });
+                    if (saved && Array.from(sel.options).some(o => o.value === saved)) sel.value = saved;
+                } catch (e) {
+                    console.warn('[AppTask] Could not load projects for header:', e);
+                    if (saved) {
+                        const opt = document.createElement('option');
+                        opt.value = saved;
+                        opt.textContent = saved;
+                        sel.appendChild(opt);
+                        sel.value = saved;
+                    }
+                }
+            }
+            const taskbarContent = document.querySelector('.taskbar-content');
+            if (taskbarContent && global.TaskbarManager) await global.TaskbarManager.refreshTaskbar(taskbarContent);
+            const grid = document.getElementById('projectsGrid');
+            if (grid) await this._loadProjectsIntoGrid(grid);
+        },
+
+        /**
+         * Populate header #projectSelect with projects (called after init when header and API are ready)
+         */
+        async _populateHeaderProjectSelect() {
+            const sel = document.getElementById('projectSelect');
+            if (!sel || sel.options.length > 1) return;
+            let saved = await global.ProjectManager?.getSelectedProjectId?.();
+            if (!saved && global.ProjectManager?.getLastSelectedProjectId) saved = global.ProjectManager.getLastSelectedProjectId();
+            try {
+                const list = await (global.apiIntegration?.getProjects?.() ?? Promise.resolve([]));
+                (Array.isArray(list) ? list : []).forEach(p => {
+                    const opt = document.createElement('option');
+                    opt.value = p.id;
+                    opt.textContent = p.name || p.id;
+                    sel.appendChild(opt);
+                });
+                if (saved) {
+                    const hasOption = Array.from(sel.options).some(o => o.value === saved);
+                    if (!hasOption) {
+                        const opt = document.createElement('option');
+                        opt.value = saved;
+                        opt.textContent = saved;
+                        sel.appendChild(opt);
+                    }
+                    sel.value = saved;
+                }
+            } catch (e) {
+                console.warn('[AppTask] Could not load projects for header:', e);
+                if (saved) {
+                    const opt = document.createElement('option');
+                    opt.value = saved;
+                    opt.textContent = saved;
+                    sel.appendChild(opt);
+                    sel.value = saved;
+                }
+            }
+        },
+
+        /**
+         * Fetch projects from API and render into grid
+         */
+        async _loadProjectsIntoGrid(gridEl) {
+            gridEl.innerHTML = '<div class="loading-indicator">Loading...</div>';
+            try {
+                const list = await (global.apiIntegration?.getProjects?.() ?? Promise.resolve([]));
+                const projects = Array.isArray(list) ? list : [];
+                if (projects.length === 0) {
+                    gridEl.innerHTML = '<p class="projects-empty">No projects yet.</p>';
+                    return;
+                }
+                gridEl.innerHTML = projects.map(p => {
+                    const id = (p.id || '').replace(/"/g, '&quot;');
+                    const name = (p.name || p.id || '').replace(/</g, '&lt;');
+                    return `<div class="project-card" data-project-id="${id}"><span class="project-name">${name}</span></div>`;
+                }).join('');
+            } catch (e) {
+                console.warn('[AppTask] Failed to load projects:', e);
+                gridEl.innerHTML = '<p class="projects-error">Could not load projects. Check API URL in Settings.</p>';
             }
         },
 
@@ -184,29 +355,21 @@
         async createNewSession() {
             try {
                 const projectId = await global.ProjectManager?.getSelectedProjectId();
-                const base = (global.apiIntegration?.apiBase || '/api').replace(/\/?$/, '');
-                const response = await fetch(`${base}/sessions`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${global.apiIntegration?.token || ''}`
-                    },
-                    body: JSON.stringify({
-                        projectId,
-                        name: `Session ${new Date().toLocaleTimeString()}`
-                    })
+                if (!global.apiIntegration?.createSession) throw new Error('API not available');
+                const session = await global.apiIntegration.createSession({
+                    projectId,
+                    title: `Session ${new Date().toLocaleTimeString()}`
                 });
-
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}`);
+                const sessionId = session?.id || session?.sessionId;
+                if (sessionId) {
+                    if (global.SessionStore?.createSession) global.SessionStore.createSession(session);
+                    if (global.SessionManager?.setActiveSession) global.SessionManager.setActiveSession(sessionId);
                 }
 
-                const session = await response.json();
-
                 // Refresh taskbar to show new session
-                const taskbarContent = global.SessionManager?.getTaskbarContentEl();
-                if (taskbarContent) {
-                    await global.TaskbarManager?.refreshTaskbar(taskbarContent);
+                const taskbarContent = global.SessionManager?.getTaskbarContentEl?.() || document.querySelector('.taskbar-content');
+                if (taskbarContent && global.TaskbarManager) {
+                    await global.TaskbarManager.refreshTaskbar(taskbarContent);
                 }
 
                 // Auto-open the new session

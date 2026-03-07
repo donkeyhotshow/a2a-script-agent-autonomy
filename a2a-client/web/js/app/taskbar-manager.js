@@ -162,23 +162,22 @@
         },
 
         /**
-         * Fetch sessions from API
+         * Fetch sessions from API for current project
          */
         async fetchSessions() {
+            const g = (typeof window !== 'undefined' ? window : globalThis);
+            const projectId = await g.ProjectManager?.getSelectedProjectId?.() ||
+                             g.SessionStore?.projectId ||
+                             g.SessionManagerAdapter?.currentProjectId;
+            if (!projectId) {
+                console.warn('[TaskbarManager] No project selected');
+                return [];
+            }
             try {
-                const base = (global.apiIntegration?.apiBase || '/api').replace(/\/?$/, '');
-                const response = await fetch(`${base}/sessions`, {
-                    headers: {
-                        'Authorization': `Bearer ${global.apiIntegration?.token || ''}`
-                    }
-                });
-
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}`);
-                }
-
-                const sessions = await response.json();
-                return Array.isArray(sessions) ? sessions : [];
+                const sessions = await g.apiIntegration?.getSessions?.(projectId) ?? [];
+                return Array.isArray(sessions) ? sessions.filter(s =>
+                    s.projectId === projectId || s.project_id === projectId || s.projectId === undefined
+                ) : [];
             } catch (error) {
                 console.warn('[TaskbarManager] Failed to fetch sessions:', error);
                 return [];

@@ -1,4 +1,4 @@
-/* Taskbar Styles */
+/* Taskbar Styles - Nebula Theme */
 
 /* Main Taskbar Container */
 .taskbar {
@@ -6,13 +6,15 @@
   bottom: 0;
   left: 0;
   right: 0;
-  height: 48px;
-  background: var(--color-bg-secondary);
-  border-top: 1px solid var(--color-border);
+  height: 52px;
+  background: var(--glass-bg);
+  border-top: 1px solid var(--glass-border);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
   display: flex;
   align-items: center;
-  padding: 0 12px;
-  gap: 8px;
+  padding: 0 var(--space-md);
+  gap: var(--space-sm);
   z-index: 200;
 }
 
@@ -20,30 +22,35 @@
 .taskbar-right {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-sm);
   flex-shrink: 0;
 }
 
 /* New Task Button */
 .taskbar-btn-new-task {
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--color-accent);
+  background: var(--brand-gradient);
   border: none;
   border-radius: var(--radius-md);
   color: #fff;
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 500;
   cursor: pointer;
   transition: all var(--transition-fast);
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
 }
 
 .taskbar-btn-new-task:hover {
-  background: var(--color-accent-hover);
+  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.4);
   transform: scale(1.05);
+}
+
+.taskbar-btn-new-task:active {
+  transform: scale(1);
 }
 
 /* Content area with sessions */
@@ -60,7 +67,7 @@
   align-items: center;
   width: 100%;
   height: 100%;
-  gap: 4px;
+  gap: var(--space-xs);
 }
 
 /* Sessions wrapper (scrollable area) */
@@ -71,9 +78,10 @@
   height: 100%;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-sm);
   scrollbar-width: none;
   -ms-overflow-style: none;
+  padding: 0 var(--space-xs);
 }
 
 .taskbar-sessions-wrapper::-webkit-scrollbar {
@@ -83,16 +91,16 @@
 /* Scroll buttons */
 .taskbar-scroll-left,
 .taskbar-scroll-right {
-  width: 24px;
+  width: 28px;
   height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
   background: var(--color-bg-tertiary);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   color: var(--color-text-secondary);
-  font-size: 12px;
+  font-size: 14px;
   cursor: pointer;
   transition: all var(--transition-fast);
   flex-shrink: 0;
@@ -115,18 +123,32 @@
 .taskbar-session-btn {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 6px 12px;
+  gap: var(--space-sm);
+  padding: 8px 14px;
   background: var(--color-bg-tertiary);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   color: var(--color-text-primary);
-  font-size: 12px;
+  font-size: 13px;
   cursor: pointer;
   transition: all var(--transition-fast);
   white-space: nowrap;
   flex-shrink: 0;
   max-width: 200px;
+  position: relative;
+}
+
+.taskbar-session-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--brand-gradient);
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
 }
 
 .taskbar-session-btn:hover {
@@ -134,10 +156,20 @@
   border-color: var(--color-border-light);
 }
 
+.taskbar-session-btn:hover::before {
+  opacity: 0.5;
+}
+
 .taskbar-session-btn.active {
   background: var(--color-accent);
   border-color: var(--color-accent);
   color: #fff;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+}
+
+.taskbar-session-btn.active::before {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.3);
 }
 
 /* Session icon */
@@ -152,6 +184,7 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   flex: 1;
+  font-weight: 500;
 }
 
 /* Session status indicator */
@@ -165,50 +198,62 @@
 
 .taskbar-session-status.active {
   background: var(--color-success);
-  animation: pulse 1.5s ease-in-out infinite;
+  box-shadow: 0 0 8px var(--color-success);
+  animation: pulse-glow 1.5s ease-in-out infinite;
 }
 
 .taskbar-session-status.pending {
   background: var(--color-warning);
+  box-shadow: 0 0 8px var(--color-warning);
+  animation: pulse-glow 1.5s ease-in-out infinite;
 }
 
 .taskbar-session-status.error {
   background: var(--color-error);
+  box-shadow: 0 0 8px var(--color-error);
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    opacity: 1;
+    box-shadow: 0 0 8px currentColor;
+  }
+  50% {
+    opacity: 0.6;
+    box-shadow: 0 0 4px currentColor;
+  }
 }
 
 /* Off-screen indicators */
 .offscreen-indicator {
   position: fixed;
-  bottom: 52px;
-  width: 24px;
-  height: 24px;
+  bottom: 56px;
+  width: 28px;
+  height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
   background: var(--color-bg-tertiary);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   color: var(--color-text-secondary);
   font-size: 14px;
   cursor: pointer;
   z-index: 199;
   transition: all var(--transition-fast);
+  box-shadow: var(--shadow-md);
 }
 
 .offscreen-indicator:hover {
   background: var(--color-bg-hover);
   color: var(--color-text-primary);
+  border-color: var(--color-border-light);
 }
 
 .offscreen-left {
-  left: 10px;
+  left: var(--space-md);
 }
 
 .offscreen-right {
-  right: 10px;
-}
-
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
+  right: var(--space-md);
 }

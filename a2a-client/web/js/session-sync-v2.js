@@ -96,7 +96,16 @@
 
         register(transport, 'error', data => {
             const error = data?.error || data?.message || 'Server error';
-            store.setError(error);
+            const isConnectionError = data?.message?.includes('transports failed') ||
+                                    data?.message?.includes('connection') ||
+                                    !store.sessionId;
+            if (isConnectionError) {
+                store._state.status = 'disconnected';
+                store._emit('status', 'disconnected');
+                store._emit('connectionError', error);
+            } else {
+                store.setError(error);
+            }
         });
 
         register(transport, 'action_proposal', data => {

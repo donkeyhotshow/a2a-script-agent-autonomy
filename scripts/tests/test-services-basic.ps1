@@ -39,7 +39,7 @@ try {
     Write-Info "Testing A2A Server..."
     $env:PORT = "3000"
     if (-not (Test-Path "$rootDir\a2a-server\logs")) { New-Item -ItemType Directory -Path "$rootDir\a2a-server\logs" -Force | Out-Null }
-    $serverProcess = Start-Process -FilePath "powershell" -ArgumentList "-Command", "cd '$rootDir\a2a-server'; `$env:PORT='3000'; `$env:SKIP_AUTH='1'; npm run dev *> logs/server.log 2>&1" -NoNewWindow -PassThru
+    $serverProcess = Start-Process -FilePath "powershell" -ArgumentList "-Command", "cd '$rootDir\a2a-server'; `$env:PORT='3000'; `$env:SKIP_AUTH='1'; `$logDir = '`$PWD/logs'; if (!(Test-Path `$logDir)) {{ New-Item -ItemType Directory -Path `$logDir -Force | Out-Null }}; npm run dev *> `$logDir/server.log 2>&1" -NoNewWindow -PassThru
     $processes += $serverProcess
     Write-Info "Started A2A Server (PID: $($serverProcess.Id), log: a2a-server/logs/server.log)"
 
@@ -61,8 +61,8 @@ try {
     # Test 3: Client API
     Write-Info "Testing Client API..."
     $env:PORT = "3001"
-    if (-not (Test-Path "$rootDir\a2a-client\logs")) { New-Item -ItemType Directory -Path "$rootDir\a2a-client\logs" -Force | Out-Null }
-    $clientProcess = Start-Process -FilePath "powershell" -ArgumentList "-Command", "cd '$rootDir\a2a-client\packages\sdk'; `$env:PORT='3001'; npm run dev *> ../../logs/client-api.log 2>&1" -NoNewWindow -PassThru
+    if (-not (Test-Path "$rootDir\a2a-client\packages\sdk\logs")) { New-Item -ItemType Directory -Path "$rootDir\a2a-client\packages\sdk\logs" -Force | Out-Null }
+    $clientProcess = Start-Process -FilePath "powershell" -ArgumentList "-Command", "cd '$rootDir\a2a-client\packages\sdk'; `$env:PORT='3001'; `$logDir = '`$PWD/logs'; if (!(Test-Path `$logDir)) {{ New-Item -ItemType Directory -Path `$logDir -Force | Out-Null }}; npm run dev *> `$logDir/client-api.log 2>&1" -NoNewWindow -PassThru
     $processes += $clientProcess
     Write-Info "Started Client API (PID: $($clientProcess.Id), log: a2a-client/logs/client-api.log)"
 
@@ -84,7 +84,8 @@ try {
     # Test 4: Web UI
     Write-Info "Testing Web UI..."
     $env:PORT = "5173"
-    $webProcess = Start-Process -FilePath "powershell" -ArgumentList "-Command", "cd '$rootDir\a2a-client'; `$env:PORT='5173'; npm run dev *> logs/web-ui.log 2>&1" -NoNewWindow -PassThru
+    if (-not (Test-Path "$rootDir\a2a-client\logs")) { New-Item -ItemType Directory -Path "$rootDir\a2a-client\logs" -Force | Out-Null }
+    $webProcess = Start-Process -FilePath "powershell" -ArgumentList "-Command", "cd '$rootDir\a2a-client'; `$env:PORT='5173'; `$logDir = '`$PWD/logs'; if (!(Test-Path `$logDir)) {{ New-Item -ItemType Directory -Path `$logDir -Force | Out-Null }}; npm run dev *> `$logDir/web-ui.log 2>&1" -NoNewWindow -PassThru
     $processes += $webProcess
     Write-Info "Started Web UI (PID: $($webProcess.Id), log: a2a-client/logs/web-ui.log)"
 

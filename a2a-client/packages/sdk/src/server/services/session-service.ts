@@ -5,8 +5,9 @@
  * Separated from main index.ts to improve maintainability and testability.
  */
 
-import {SessionDetail, SessionSummary} from '../session-dto.js';
+import {SessionDetail, SessionSummary, createSessionMessage} from '../session-dto.js';
 import {websocketServer} from '../server/websocket-server.js';
+import crypto from 'crypto';
 
 export interface SessionServiceOptions {
     defaultTimeout?: number;
@@ -33,10 +34,22 @@ export class SessionService {
      * Create a new session
      */
     public createSession(sessionId: string, options: Partial<SessionDetail> = {}): SessionDetail {
+        const now = new Date().toISOString();
+        
+        // Create initial messages array with task as first user message if provided
+        const messages: any[] = [];
+        if (options.metadata?.task) {
+            messages.push(createSessionMessage(
+                options.metadata.task,
+                'user',
+                { source: 'initial_task', projectId: options.metadata.projectId }
+            ));
+        }
+
         const session: SessionDetail = {
             id: sessionId,
             status: 'active',
-            startTime: new Date().toISOString(),
+            startTime: now,
             endTime: null,
             progress: 0,
             totalSteps: 0,
@@ -44,9 +57,11 @@ export class SessionService {
             context: {},
             history: [],
             connections: 0,
+            messages,
+            messageCount: messages.length,
             metadata: {
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString(),
+                createdAt: now,
+                updatedAt: now,
                 ...options.metadata
             },
             ...options
@@ -57,7 +72,7 @@ export class SessionService {
         // Broadcast session creation
         websocketServer.broadcastSessionUpdate(sessionId, session);
         
-        console.log(`[SESSION] Created session: ${sessionId}`);
+        console.log(`[SESSION] Created session: ${sessionId} with ${messages.length} message(s)`);
         return session;
     }
 
@@ -146,6 +161,34 @@ export class SessionService {
         });
 
         return updatedSession;
+    }
+
+    /**
+     * Add a message to the session
+     */
+    public addMessage(sessionId: string, content: unknown, role: 'user' | 'assistant' | 'system' = 'assistant', metadata?: Record<string, unknown>): SessionDetail | null {
+        const session = this.sessions.get(sessionId);
+        if (!session) return null;
+
+        const message = createSessionMessage(content, role, metadata);
+        const messages = Array.isArray(session.messages) ? [...session.messages, message] : [message];
+
+        const updatedSession = this.updateSession(sessionId, {
+            messages,
+            messageCount: messages.length
+        });
+
+        console.log(`[SESSION] Added ${role} message to session: ${sessionId}, total messages: ${messages.length}`);
+        return updatedSession;
+    }
+
+    /**
+     * Get messages from session
+     */
+    public getMessages(sessionId: string): any[] {
+        const session = this.sessions.get(sessionId);
+        if (!session) return [];
+        return Array.isArray(session.messages) ? session.messages : [];
     }
 
     /**

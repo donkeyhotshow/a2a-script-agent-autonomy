@@ -110,6 +110,66 @@
         currentProjectId: null,
         sessions: [],
         _listeners: new Map(),
+        _taskbarContentEl: null,
+
+        getActiveSessionId() {
+            return this.currentSessionId;
+        },
+
+        setTaskbarContentEl(el) {
+            this._taskbarContentEl = el;
+        },
+
+        updateActiveSessionUI(sessionId) {
+            const el = this._taskbarContentEl;
+            if (!el) return;
+            const wrapper = el.querySelector('.taskbar-sessions-wrapper') || el;
+            el.querySelectorAll('.taskbar-session-btn').forEach(btn => btn.classList.remove('active'));
+            if (sessionId) {
+                const btn = el.querySelector(`[data-session-id="${sessionId}"]`);
+                if (btn) {
+                    btn.classList.add('active');
+                    this._centerActiveButton(wrapper, btn);
+                }
+            }
+        },
+
+        _centerActiveButton(container, activeBtn) {
+            if (!container || !activeBtn) return;
+            const rect = container.getBoundingClientRect();
+            const btnRect = activeBtn.getBoundingClientRect();
+            const scrollLeft = container.scrollLeft;
+            const centerOffset = (rect.width - btnRect.width) / 2;
+            const targetScroll = scrollLeft + btnRect.left - rect.left - centerOffset;
+            container.scrollTo({ left: Math.max(0, targetScroll), behavior: 'smooth' });
+        },
+
+        showContextMenu(e, sessionId, btnEl) {
+            e.preventDefault();
+            document.querySelectorAll('.session-context-menu').forEach(menu => menu.remove());
+            const menu = document.createElement('div');
+            menu.className = 'session-context-menu';
+            menu.style.cssText = 'position:fixed;left:' + e.clientX + 'px;top:' + e.clientY + 'px;background:var(--surface,#1e1e2e);border:1px solid var(--border,#313244);border-radius:4px;padding:4px 0;z-index:10000;min-width:120px;box-shadow:0 2px 8px rgba(0,0,0,0.3);';
+            const items = [{ label: 'Close', action: 'close', icon: '\u2715' }];
+            items.forEach(({ label, action, icon }) => {
+                const item = document.createElement('div');
+                item.className = 'context-menu-item';
+                item.style.cssText = 'padding:8px 12px;cursor:pointer;display:flex;align-items:center;gap:8px;color:var(--text-primary,#cdd6f4);';
+                item.textContent = icon + ' ' + label;
+                item.addEventListener('click', () => {
+                    if (action === 'close' && global.confirm('Close this session?')) {
+                        global.WindowManager?.closeSessionWindow(sessionId);
+                    }
+                    menu.remove();
+                });
+                menu.appendChild(item);
+            });
+            document.body.appendChild(menu);
+            const closeHandler = (ev) => {
+                if (!menu.contains(ev.target)) { menu.remove(); document.removeEventListener('click', closeHandler); }
+            };
+            setTimeout(() => document.addEventListener('click', closeHandler), 0);
+        },
 
         init(options = {}) {
             this.apiBase = options.apiBase || this.apiBase;
@@ -118,6 +178,20 @@
             // Sync from store
             this.currentSessionId = store.sessionId;
             this.currentProjectId = store.projectId || this.currentProjectId;
+
+            // Restore active session from storage (persistence)
+            (async () => {
+                try {
+                    const stored = await global.StorageAPI?.sessions?.getItem?.('active-session');
+                    const sid = stored || null;
+                    if (sid && sid !== this.currentSessionId) {
+                        this.currentSessionId = sid;
+                        store.setSession(sid);
+                        this.updateActiveSessionUI(sid);
+                        if (global.SSEClient) global.SSEClient.connect(sid, this.apiBase);
+                    }
+                } catch (e) {}
+            })();
 
             // Subscribe to store
             store.on('session', (id) => { this.currentSessionId = id; this._emit('sessionChanged', id); });
@@ -231,9 +305,18 @@
         setActiveSession(sessionId) {
             this.currentSessionId = sessionId;
             store.setSession(sessionId);
+            this.updateActiveSessionUI(sessionId);
             this._emit('sessionChanged', sessionId);
 
-            if (global.SSEClient) {
+            try {
+                if (sessionId) {
+                    global.StorageAPI?.sessions?.setItem?.('active-session', sessionId).catch(() => {});
+                } else {
+                    global.StorageAPI?.sessions?.removeItem?.('active-session').catch(() => {});
+                }
+            } catch (e) {}
+
+            if (global.SSEClient && sessionId) {
                 global.SSEClient.connect(sessionId, this.apiBase);
             }
         },
@@ -386,14 +469,96 @@
             });
         },
 
-        // === Legacy render methods (stubs) ===
+        // === Legacy render methods (use SessionStore / API) ===
+
+        _escapeHtml(s) {
+            if (s == null) return '';
+            const div = typeof document !== 'undefined' && document.createElement('div');
+            if (div) { div.textContent = s; return div.innerHTML; }
+            return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        },
 
         renderSessionsList(containerId, options = {}) {
-            console.warn('[SessionManagerAdapter] renderSessionsList: migrate to direct DOM manipulation');
+            const container = typeof document !== 'undefined' && document.getElementById(containerId);
+            if (!container) return;
+
+            const { onSelect = () => {}, onDelete = () => {}, onCreate = () => {}, emptyMessage = 'No sessions yet', showCreateButton = true } = options;
+            const list = Array.isArray(this.sessions) ? this.sessions : [];
+
+            let html = '';
+            if (showCreateButton) {
+                html += '<div class="session-manager-actions"><button type="button" class="btn btn-primary session-manager-create-btn">+ New Session</button></div>';
+            }
+            if (list.length === 0) {
+                html += `<div class="session-manager-empty">${this._escapeHtml(emptyMessage)}</div>`;
+            } else {
+                html += '<div class="session-manager-list">';
+                list.forEach(session => {
+                    const id = session.id || session.sessionId || session;
+                    const title = session.title || session.name || `Session ${String(id).slice(0, 8)}`;
+                    const active = id === this.currentSessionId ? ' active' : '';
+                    const status = session.status || '';
+                    html += `<div class="session-item${active}" data-session-id="${this._escapeHtml(id)}">
+                        <div class="session-item-content">
+                            <span class="session-item-title">${this._escapeHtml(title)}</span>
+                            ${status ? `<span class="session-item-status">${this._escapeHtml(status)}</span>` : ''}
+                        </div>
+                        <button type="button" class="session-item-delete" title="Delete">&times;</button>
+                    </div>`;
+                });
+                html += '</div>';
+            }
+            container.innerHTML = html;
+
+            container.querySelectorAll('.session-item').forEach(item => {
+                item.addEventListener('click', (e) => {
+                    if (!e.target.classList.contains('session-item-delete')) {
+                        const sid = item.dataset.sessionId;
+                        if (sid) { this.setActiveSession(sid); onSelect(sid); }
+                    }
+                });
+            });
+            container.querySelectorAll('.session-item-delete').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const sid = btn.closest('.session-item')?.dataset?.sessionId;
+                    if (sid && confirm('Delete this session?')) this.deleteSession(sid).then(() => onDelete(sid));
+                });
+            });
+            const createBtn = container.querySelector('.session-manager-create-btn');
+            if (createBtn) createBtn.addEventListener('click', () => {
+                this.createSession().then(session => {
+                    const sid = session?.id || session?.sessionId;
+                    if (sid) { this.setActiveSession(sid); onCreate(session); }
+                }).catch(() => {});
+            });
         },
 
         renderConversation(containerId, messages = []) {
-            console.warn('[SessionManagerAdapter] renderConversation: UI should subscribe to SessionStore');
+            const container = typeof document !== 'undefined' && document.getElementById(containerId);
+            if (!container) return;
+
+            const list = Array.isArray(messages) && messages.length > 0 ? messages : (store.messages || []);
+            if (list.length === 0) {
+                container.innerHTML = '<div class="conversation-empty">No messages yet</div>';
+                return;
+            }
+            let html = '<div class="conversation-messages">';
+            list.forEach(msg => {
+                const role = msg.role || msg.direction || 'unknown';
+                const content = msg.content || msg.text || msg.message || '';
+                const timestamp = msg.timestamp || msg.createdAt || '';
+                html += `<div class="conversation-message message-${this._escapeHtml(role)}">
+                    <div class="message-header">
+                        <span class="message-role">${this._escapeHtml(role)}</span>
+                        ${timestamp ? `<span class="message-time">${new Date(timestamp).toLocaleTimeString()}</span>` : ''}
+                    </div>
+                    <div class="message-content">${this._escapeHtml(String(content))}</div>
+                </div>`;
+            });
+            html += '</div>';
+            container.innerHTML = html;
+            container.scrollTop = container.scrollHeight;
         }
     };
 
@@ -426,12 +591,19 @@
     // === AIActionsSessionPanel Integration ===
     // Bridge SessionStore events to AIActionsSessionPanel.processExecute
 
+    let _panelConnectionLogThrottled = false;
+
     function connectAIActionsPanel() {
         const store = global.SessionStore;
         const panel = global.aiActionsPanel;
 
         if (!store || !panel) {
-            console.log('[SessionStore Adapters] AIActionsSessionPanel connection: waiting for both Store and Panel');
+            if (!_panelConnectionLogThrottled) {
+                console.log('[SessionStore Adapters] AIActionsSessionPanel connection: waiting for both Store and Panel');
+                _panelConnectionLogThrottled = true;
+                // Reset throttle after 10 seconds
+                setTimeout(() => { _panelConnectionLogThrottled = false; }, 10000);
+            }
             return false;
         }
 

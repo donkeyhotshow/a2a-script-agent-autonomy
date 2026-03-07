@@ -1,9 +1,6 @@
 /**
  * API Integration Module
- * Connects UI components with A2A Server API
- *
- * TODO(Task-07): use only Client API base URL (no direct a2a-server) – tasks/client/07-web-client-api-only-no-direct-server.md
- * TODO(Task-07): single config for "API base" = Client API (e.g. localhost:3001); remove server URL
+ * Connects UI components with Client API (single apiBase, e.g. localhost:3001).
  */
 
 // Fetch with timeout and retry logic
@@ -65,13 +62,20 @@ class APIIntegration {
      * Configure API client
      */
     configure(options = {}) {
-        const base = options.apiBase || options.clientApiUrl || options.serverUrl;
+        let base = options.apiBase || options.clientApiUrl || options.serverUrl;
+
+        // Handle case where base is an object (extract string property)
+        if (base && typeof base === 'object') {
+            base = base.url || base.apiBase || base.toString?.();
+        }
+
+        // Validate and set apiBase
         if (base && typeof base === 'string' && base !== '[object Object]') {
             this.apiBase = base.replace(/\/?$/, '');
-        } else if (base && typeof base === 'object') {
-            // Handle case where object was passed - extract url property or use default
-            this.apiBase = base.url || base.apiBase || '/api';
+        } else {
+            this.apiBase = '/api';
         }
+
         if (options.token) this.token = options.token;
 
         console.log('[API] Configured:', this.apiBase);
@@ -103,6 +107,7 @@ class APIIntegration {
         const errorContext = {
             module: meta.module || 'APIIntegration',
             path: url,
+            url,
             method,
             ...(meta.context || {})
         };
@@ -148,13 +153,9 @@ class APIIntegration {
 
         try {
             const requestData = {
-                message: taskText,
-                context: {
-                    project_id: projectPath,
-                    version: '1.0',
-                    ...context
-                },
-                code_blocks: codeBlocks
+                task: taskText,
+                projectId: projectPath,
+                ...context
             };
 
             const result = await this.request('POST', '/invoke', requestData);
@@ -203,18 +204,54 @@ class APIIntegration {
     }
 
     /**
+     * Get projects list
+     */
+    async getProjects() {
+        const raw = await this.request('GET', '/projects');
+        return Array.isArray(raw) ? raw : (raw?.projects || raw?.data || []);
+    }
+
+    /**
+     * Create project (POST /projects)
+     */
+    async createProject(params) {
+        const body = typeof params === 'string' ? { name: params } : (params || {});
+        const raw = await this.request('POST', '/projects', body);
+        return raw?.data ?? raw;
+    }
+
+    /**
+     * Delete project (DELETE /projects/:projectId)
+     */
+    async deleteProject(projectId) {
+        return this.request('DELETE', `/projects/${encodeURIComponent(projectId)}`);
+    }
+
+    /**
      * Get sessions
      */
     async getSessions(projectId = null) {
         const path = projectId ? `/sessions?projectId=${projectId}` : '/sessions';
-        return this.request('GET', path);
+        const raw = await this.request('GET', path);
+        return Array.isArray(raw) ? raw : (raw?.sessions || raw?.data || []);
     }
 
     /**
-     * Get session by ID
+     * Create session (POST /sessions)
      */
-    async getSession(sessionId) {
-        return this.request('GET', `/sessions/${sessionId}`);
+    async createSession(params) {
+        const raw = await this.request('POST', '/sessions', params);
+        const s = raw?.session ?? raw?.data ?? raw;
+        if (s && !s.id && s.sessionId) s.id = s.sessionId;
+        return s;
+    }
+
+    /**
+     * Get session by ID (pass projectId when known so server finds the session)
+     */
+    async getSession(sessionId, projectId = null) {
+        const path = projectId ? `/sessions/${sessionId}?projectId=${encodeURIComponent(projectId)}` : `/sessions/${sessionId}`;
+        return this.request('GET', path);
     }
 
     /**
@@ -222,6 +259,24 @@ class APIIntegration {
      */
     async deleteSession(sessionId) {
         return this.request('DELETE', `/sessions/${sessionId}`);
+    }
+
+    /**
+     * Send message to session (POST /sessions/:id/result with result.message)
+     */
+    async sendMessage(sessionId, message, projectId = null) {
+        const payload = (message || '').trim() || 'continue';
+        return this.sendResult(sessionId, { message: payload }, projectId);
+    }
+
+    /**
+     * Send result to session (POST /sessions/:id/result)
+     * result: action-key shape e.g. { message }, { choice }, { form: { choice } }
+     */
+    async sendResult(sessionId, result, projectId = null) {
+        const pid = projectId ?? this.currentSession ? (await (typeof window !== 'undefined' && window.ProjectManager?.getSelectedProjectId?.()) ?? window.SessionStore?.projectId) : null;
+        const path = pid ? `/sessions/${sessionId}/result?projectId=${encodeURIComponent(pid)}` : `/sessions/${sessionId}/result`;
+        return this.request('POST', path, { result, projectId: pid });
     }
 
     /**
@@ -233,53 +288,14 @@ class APIIntegration {
     }
 
     /**
-     * Analyze task query and get suggested actions from AI
+     * Analyze task query: get suggested actions from server. Web only displays; server defines the list.
      */
     async analyzeTask(query, context = 'new-task') {
-        try {
-            // Try the dedicated analyze endpoint first
-            const result = await this.request('POST', '/tasks/analyze', {
-                query,
-                context
-            });
-            return result;
-        } catch (error) {
-            // Fallback: use generic invoke to get suggestions
-            console.log('[API] Analyze endpoint not available, using fallback');
-            const result = await this.sendTask(`Analyze this request and suggest the best way to proceed: "${query}". Return a JSON with "options" array containing objects with "title", "description", "action", and optional "icon" fields.`);
-
-            // Parse suggestions from result if available
-            if (result?.execute?.message?.content) {
-                try {
-                    const content = result.execute.message.content;
-                    const jsonMatch = content.match(/\{[\s\S]*"options"[\s\S]*\}/);
-                    if (jsonMatch) {
-                        return JSON.parse(jsonMatch[0]);
-                    }
-                } catch (parseError) {
-                    console.warn('[API] Failed to parse suggestions:', parseError);
-                }
-            }
-
-            // Return default options if parsing fails
-            return {
-                summary: `Task: ${query}`,
-                options: [
-                    {
-                        title: 'Start General Task',
-                        description: `Work on: ${query.slice(0, 60)}${query.length > 60 ? '...' : ''}`,
-                        action: 'general-task',
-                        icon: '🚀'
-                    },
-                    {
-                        title: 'Ask for Clarification',
-                        description: 'Get more details before proceeding',
-                        action: 'clarify',
-                        icon: '❓'
-                    }
-                ]
-            };
-        }
+        const result = await this.request('POST', '/tasks/analyze', {
+            query,
+            context
+        });
+        return result;
     }
 
     /**

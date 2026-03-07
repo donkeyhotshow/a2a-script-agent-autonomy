@@ -200,11 +200,17 @@ function Start-ServiceProcess {
     $logPath = if ($LogFile) {
         Join-Path $WorkingDirectory $LogFile
     } elseif ($WorkingDirectory -like "*a2a-server*") {
-        Join-Path $WorkingDirectory "logs/server.log"
+        $logDir = Join-Path $WorkingDirectory "logs"
+        if (-not (Test-Path $logDir)) { New-Item -ItemType Directory -Path $logDir -Force | Out-Null }
+        Join-Path $logDir "server.log"
     } elseif ($WorkingDirectory -like "*sdk*") {
-        Join-Path (Split-Path $WorkingDirectory -Parent) "../../logs/client-api.log"
-    } elseif ($WorkingDirectory -like "*a2a-client*") {
-        Join-Path $WorkingDirectory "logs/web-ui.log"
+        $logDir = Join-Path $WorkingDirectory "logs"
+        if (-not (Test-Path $logDir)) { New-Item -ItemType Directory -Path $logDir -Force | Out-Null }
+        Join-Path $logDir "client-api.log"
+    } elseif ($WorkingDirectory -like "*a2a-client*" -and $WorkingDirectory -notlike "*packages*") {
+        $logDir = Join-Path $WorkingDirectory "logs"
+        if (-not (Test-Path $logDir)) { New-Item -ItemType Directory -Path $logDir -Force | Out-Null }
+        Join-Path $logDir "web-ui.log"
     } else {
         "$env:TEMP\$Name.log"
     }

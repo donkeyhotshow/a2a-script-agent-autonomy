@@ -37,7 +37,8 @@
             context: null,
             status: 'idle',
             pendingForm: null,
-            lastError: null
+            lastError: null,
+            promisePending: false  // Block input while waiting for server response
         },
 
         _listeners: new Map(),
@@ -90,6 +91,16 @@
             return this._state.status === 'active' || this._state.status === 'waiting';
         },
 
+        isInputBlocked() {
+            return this._state.promisePending || this._state.status === 'loading';
+        },
+
+        setPromisePending(pending) {
+            this._state.promisePending = pending;
+            this._emit('promisePending', pending);
+            return this;
+        },
+
         isCompleted() {
             return this._state.status === 'completed';
         },
@@ -138,6 +149,27 @@
             return this;
         },
 
+        createSession(session) {
+            const { id, sessionId, projectId, project_id, task, title, messages = [] } = session || {};
+            const sid = id || sessionId;
+            const pid = projectId || project_id || this._state.projectId;
+
+            if (!sid) {
+                console.error('[SessionStore] createSession: No session ID provided');
+                return this;
+            }
+
+            // Reset state with new session
+            this.reset(sid, pid);
+            this._state.status = 'created';
+
+            // Web does NOT insert any messages - it waits for server response on promise
+            // Server will send messages via SSE/response when ready
+            this._emit('sessionCreated', { id: sid, projectId: pid, task, title });
+            console.log('[SessionStore] Session created:', sid);
+            return this;
+        },
+
         setProject(projectId) {
             this._state.projectId = projectId;
             this._emit('project', projectId);
@@ -154,11 +186,19 @@
             this._state.execute = execute || null;
             this._emit('execute', this._state.execute);
 
+            // Server responded - unblock input
+            this._state.promisePending = false;
+            this._emit('promisePending', false);
+
             // Handle form with choices - waiting for user input
             if (execute?.form?.choices) {
                 this._state.pendingForm = execute.form;
                 this._state.status = 'waiting';
                 this._emit('pendingForm', execute.form);
+            } else {
+                // No form choices - clear any existing form (user made a choice or action completed)
+                this._state.pendingForm = null;
+                this._emit('pendingForm', null);
             }
 
             // Handle message - display to user
@@ -332,9 +372,15 @@
                     this._state.status = 'active';
                     console.log('[SessionStore] Transport reconnected');
                 } catch (err) {
-                    console.warn('[SessionStore] Failed to reconnect transport:', err);
-                    // Continue anyway - can try to reconnect later
+                    console.warn('[SessionStore] Failed to reconnect transport:', err.message || err);
+                    this._state.status = 'disconnected';
+                    this._state.error = 'Transport connection failed: ' + (err.message || err);
+                    // Emit error event so UI can show notification
+                    this._emit('error', { type: 'transport', message: err.message || err });
                 }
+            } else {
+                this._state.status = 'disconnected';
+                console.warn('[SessionStore] TransportManager not available');
             }
 
             // Emit restore event so UI can re-render

@@ -186,7 +186,8 @@
         }
 
         /**
-         * Sync fallback: Store item in localStorage
+         * Sync fallback: store in localStorage when API async failed (e.g. offline).
+         * Prefer async getItem/setItem which use Client API.
          */
         setItemSync(key, value) {
             try {
@@ -198,7 +199,7 @@
         }
 
         /**
-         * Sync fallback: Get item from localStorage
+         * Sync fallback: read from localStorage when API was unavailable.
          */
         getItemSync(key) {
             try {

@@ -200,24 +200,15 @@
          */
         async _sendResultToServer(sessionId, result) {
             try {
-                // Используем формат для /result endpoint
-                const response = await this._request('POST', `/sessions/${sessionId}/result`, result);
+                const api = global.apiIntegration;
+                const projectId = global.SessionStore?.projectId ?? await (global.ProjectManager?.getSelectedProjectId?.()) ?? null;
+                const response = api?.sendResult
+                    ? await api.sendResult(sessionId, result, projectId)
+                    : await this._request('POST', `/sessions/${sessionId}/result`, result);
 
-                // Обрабатываем ответ сервера - поддержка execute и finalResult
-                if (response?.execute) {
-                    this.processExecute(response.execute, response.context);
-                }
-
-                // Handle direct finalResult in response (task completion)
-                if (response?.finalResult) {
-                    this.processExecute({ finalResult: response.finalResult }, response.context);
-                }
-
-                // Check for completed status in context
-                if (response?.context?.execution?.status === 'completed') {
-                    this.updateSessionStatus(sessionId, 'completed');
-                }
-
+                if (response?.execute) this.processExecute(response.execute, response.context);
+                if (response?.finalResult) this.processExecute({ finalResult: response.finalResult }, response.context);
+                if (response?.context?.execution?.status === 'completed') this.updateSessionStatus(sessionId, 'completed');
                 this.emit('resultSent', { sessionId, response });
                 console.log('[AIActionsSessionPanel] Result sent to server:', result);
             } catch (error) {
@@ -681,7 +672,6 @@
                         <div class="action-script">
                             <div class="script-header">
                                 <span class="script-status ${action.status}">${action.status}</span>
-                                ${scriptResult.placeholder ? '<span class="script-badge">placeholder</span>' : ''}
                             </div>
                             <div class="script-input">Input: ${JSON.stringify(scriptResult.input || action.script?.input || {}, null, 2)}</div>
                             <div class="script-output">Output: ${scriptResult.output || action.script?.output || 'No output'}</div>
@@ -696,7 +686,6 @@
                         <div class="action-rag">
                             <div class="rag-header">
                                 <span class="rag-status ${action.status}">${action.status}</span>
-                                ${ragResult.placeholder ? '<span class="rag-badge">placeholder</span>' : ''}
                             </div>
                             <div class="rag-query">Query: ${escapeHtml(String(ragResult.query || action['rag-search']?.query || 'No query'))}</div>
                             <div class="rag-results">
@@ -720,7 +709,6 @@
                         <div class="action-file">
                             <div class="file-header">
                                 <span class="file-status ${action.status}">${action.status}</span>
-                                ${readResult.placeholder ? '<span class="file-badge">placeholder</span>' : ''}
                             </div>
                             <div class="file-path">Path: ${escapeHtml(String(readResult.path || action['read-file']?.path || 'Unknown'))}</div>
                             ${readResult.error ?
@@ -736,7 +724,6 @@
                         <div class="action-file">
                             <div class="file-header">
                                 <span class="file-status ${action.status}">${action.status}</span>
-                                ${writeResult.placeholder ? '<span class="file-badge">placeholder</span>' : ''}
                             </div>
                             <div class="file-path">Path: ${escapeHtml(String(writeResult.path || action['write-file']?.path || 'Unknown'))}</div>
                             <div class="file-size">Size: ${action['write-file']?.content?.length || 0} chars</div>
@@ -1106,19 +1093,36 @@
         }
 
         /**
-         * Execute script (placeholder - actual script execution in sandbox)
+         * Execute script: use Client API /api/terminal/execute for command-like code, else return server-side result shape.
          * @private
          */
         async _executeScript(scriptData) {
-            // Script execution is handled by the execution package
-            // This is a placeholder that returns the expected output structure
             const { input, output, code } = scriptData;
             console.log('[AIActionsSessionPanel] Executing script:', { input, output, code: code?.substring(0, 100) });
 
-            // TODO: Integrate with @a2a/execution package for actual script execution
-            // For now, return a placeholder result
+            const api = global.apiIntegration;
+            const trimmed = (code || '').trim();
+            const singleLine = trimmed.indexOf('\n') === -1 && trimmed.length > 0;
+            if (singleLine && api) {
+                try {
+                    const data = await api.request('POST', '/terminal/execute', { command: trimmed, timeout: 120 });
+                    const out = data?.stdout ?? data?.output ?? '';
+                    const err = data?.stderr ?? data?.error ?? '';
+                    return {
+                        output: [out, err].filter(Boolean).join('\n') || (output || ''),
+                        input: input || {},
+                        executed: true
+                    };
+                } catch (e) {
+                    return {
+                        output: (output || '') + (e?.message ? `\nError: ${e.message}` : ''),
+                        input: input || {},
+                        executed: false
+                    };
+                }
+            }
             return {
-                output: output || 'Script executed (placeholder)',
+                output: output || 'Script sent to server for execution',
                 input: input || {},
                 executed: true
             };
@@ -1134,7 +1138,6 @@
 
             console.log('[AIActionsSessionPanel] Reading file:', path);
 
-            // Use FileSystem API if available, otherwise placeholder
             if (global.FileSystemAPI) {
                 try {
                     const content = await global.FileSystemAPI.readFile(path);
@@ -1144,13 +1147,23 @@
                 }
             }
 
-            // Placeholder - actual implementation would use FileSystemAPI
-            return {
-                path,
-                content: `// Placeholder content for ${path}`,
-                success: true,
-                placeholder: true
-            };
+            const projectId = global.SessionStore?.projectId;
+            const api = global.apiIntegration;
+            if (projectId && api) {
+                try {
+                    const encPath = path.split('/').map(encodeURIComponent).join('/');
+                    const base = (api.apiBase || '').replace(/\/?$/, '');
+                    const url = `${base}/projects/${projectId}/files/${encPath}`;
+                    const res = await fetch(url, { headers: api._getHeaders?.() || {} });
+                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                    const content = await res.text();
+                    return { path, content, success: true };
+                } catch (err) {
+                    return { path, content: null, error: err.message, success: false };
+                }
+            }
+
+            return { path, content: null, error: 'FileSystemAPI and project file API unavailable', success: false };
         }
 
         /**
@@ -1172,11 +1185,7 @@
                 }
             }
 
-            return {
-                path,
-                success: true,
-                placeholder: true
-            };
+            return { path, error: 'FileSystemAPI required for write in browser', success: false };
         }
 
         /**
@@ -1235,8 +1244,8 @@
             return {
                 query,
                 results: [],
-                success: true,
-                placeholder: true
+                error: 'RAG/search API not available',
+                success: false
             };
         }
 
@@ -1291,8 +1300,7 @@
          * @private
          */
         _formatTime(isoString) {
-            const date = new Date(isoString);
-            return date.toLocaleString();
+            return formatTime(isoString);
         }
 
         /**
@@ -1441,8 +1449,8 @@
             // Подписываемся на события SessionManager
             this._setupSessionManagerListeners();
             
-            // Синхронизируем существующие сессии
-            this.syncWithSessionManager();
+            // Синхронизируем существующие сессии (загрузка из API при необходимости)
+            this.syncWithSessionManager().catch(() => {});
             
             console.log('[AIActionsSessionPanel] Integrated with SessionManager');
             return this;
@@ -1519,12 +1527,17 @@
         }
 
         /**
-         * Синхронизировать сессии с SessionManager
+         * Синхронизировать сессии с SessionManager (загружает из API при необходимости)
          */
-        syncWithSessionManager() {
+        async syncWithSessionManager() {
             if (!this.sessionManager) return;
 
-            // Загружаем сессии из SessionManager
+            const projectId = this.sessionManager.currentProjectId
+                || (typeof global !== 'undefined' && await global.ProjectManager?.getSelectedProjectId?.());
+            if (projectId && typeof this.sessionManager.loadSessions === 'function') {
+                await this.sessionManager.loadSessions(projectId).catch(() => {});
+            }
+
             const sessions = this.sessionManager.sessions || [];
             sessions.forEach(session => {
                 const sessionId = session.id || session.sessionId;
@@ -1765,20 +1778,9 @@
         return div;
     }
 
-    /**
-     * Экранирование HTML
-     * @param {string} s
-     * @returns {string}
-     */
-    function escapeHtml(s) {
-        const el = document.createElement('div');
-        el.textContent = s;
-        return el.innerHTML;
-    }
-
-    // Export
+    // Use global escapeHtml from ai-actions-utils.js
+    // Also export
     global.AIActionsSessionPanel = AIActionsSessionPanel;
     global.createAIActionsPanelDOM = createAIActionsPanelDOM;
-    global.escapeHtml = escapeHtml;
 
 })(typeof window !== 'undefined' ? window : globalThis);

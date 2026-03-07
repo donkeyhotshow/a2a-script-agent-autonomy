@@ -1,0 +1,147 @@
+/* Modal and Popup Utilities */
+
+/* Base overlay/modal styles with proper visibility handling */
+.overlay,
+.popup,
+.dialog {
+  display: none;
+}
+
+/* Active states - use !important to override inline styles */
+.modal.active,
+.modal.show,
+.overlay.active,
+.overlay.show,
+.popup.active,
+.popup.show,
+.dialog.active,
+.dialog.show,
+.notifications-panel.active,
+.notifications-panel.show,
+.error-modal-overlay.active,
+.error-modal-overlay.show,
+.task-creator-overlay.active,
+.task-creator-overlay.show,
+/* Support for JS removing display:none inline style */
+.modal:not([style*="none"]),
+.overlay:not([style*="none"]),
+.popup:not([style*="none"]),
+.dialog:not([style*="none"]),
+.notifications-panel:not([style*="none"]),
+.error-modal-overlay:not([style*="none"]),
+.task-creator-overlay:not([style*="none"]) {
+  display: flex !important;
+}
+
+/* Modals are centered by default */
+.modal,
+.modal-overlay,
+.error-modal-overlay {
+  align-items: center;
+  justify-content: center;
+}
+
+/* Panels that should display as block (not flex) when shown */
+.ai-actions-container.active,
+.ai-actions-container.show,
+.ai-actions-container:not([style*="none"]),
+.message-input-section.active,
+.message-input-section.show,
+.message-input-section:not([style*="none"]) {
+  display: block !important;
+}
+
+/* Fade in animation for modals */
+@keyframes modal-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes modal-content-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.modal.active .modal-content,
+.modal.show .modal-content {
+  animation: modal-content-in 0.2s ease;
+}
+
+/* Backdrop click to close */
+.modal-backdrop,
+.modal::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: inherit;
+  z-index: -1;
+}
+
+/* Modal sizes */
+.modal-content.modal-small {
+  max-width: 360px;
+}
+
+.modal-content.modal-medium {
+  max-width: 560px;
+}
+
+.modal-content.modal-large {
+  max-width: 800px;
+}
+
+.modal-content.modal-xl {
+  max-width: 1000px;
+}
+
+/* Popup/dropdown positioning */
+.popup {
+  position: absolute;
+  z-index: 1000;
+}
+
+.popup.popup-top {
+  bottom: 100%;
+  margin-bottom: 8px;
+}
+
+.popup.popup-bottom {
+  top: 100%;
+  margin-top: 8px;
+}
+
+.popup.popup-left {
+  right: 100%;
+  margin-right: 8px;
+}
+
+.popup.popup-right {
+  left: 100%;
+  margin-left: 8px;
+}
+
+/* Toast notifications container */
+.toast-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 10001;
+  pointer-events: none;
+}
+
+.toast-container .toast {
+  pointer-events: auto;
+}

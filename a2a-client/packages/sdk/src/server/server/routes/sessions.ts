@@ -136,6 +136,105 @@ router.get('/:id', (req: Request, res: Response) => {
 });
 
 /**
+ * GET /api/sessions/:id/messages
+ * Get all messages from a session
+ */
+router.get('/:id/messages', (req: Request, res: Response) => {
+    try {
+        const {id} = req.params;
+        const session = sessionService.getSession(id);
+
+        if (!session) {
+            res.status(404).json({
+                success: false,
+                error: {
+                    code: 'SESSION_NOT_FOUND',
+                    message: `Session ${id} not found`
+                }
+            });
+            return;
+        }
+
+        const messages = sessionService.getMessages(id);
+
+        res.json({
+            success: true,
+            data: messages,
+            count: messages.length
+        });
+    } catch (error) {
+        console.error('[SESSIONS API] Error getting session messages:', error);
+        res.status(500).json({
+            success: false,
+            error: {
+                code: 'SESSION_MESSAGES_GET_ERROR',
+                message: error instanceof Error ? error.message : 'Failed to get session messages'
+            }
+        });
+    }
+});
+
+/**
+ * POST /api/sessions/:id/messages
+ * Add a message to a session
+ */
+router.post('/:id/messages', (req: Request, res: Response) => {
+    try {
+        const {id} = req.params;
+        const body = req.body as {
+            content: unknown;
+            role?: 'user' | 'assistant' | 'system';
+            metadata?: Record<string, unknown>;
+        };
+
+        const session = sessionService.getSession(id);
+
+        if (!session) {
+            res.status(404).json({
+                success: false,
+                error: {
+                    code: 'SESSION_NOT_FOUND',
+                    message: `Session ${id} not found`
+                }
+            });
+            return;
+        }
+
+        if (!body.content) {
+            res.status(400).json({
+                success: false,
+                error: {
+                    code: 'INVALID_MESSAGE_CONTENT',
+                    message: 'Message content is required'
+                }
+            });
+            return;
+        }
+
+        const updatedSession = sessionService.addMessage(
+            id,
+            body.content,
+            body.role || 'assistant',
+            body.metadata
+        );
+
+        res.json({
+            success: true,
+            data: updatedSession?.messages
+        });
+    } catch (error) {
+        console.error('[SESSIONS API] Error adding session message:', error);
+        res.status(500).json({
+            success: false,
+            error: {
+                code: 'SESSION_MESSAGE_ADD_ERROR',
+                message: error instanceof Error ? error.message : 'Failed to add session message'
+            }
+        });
+    }
+});
+
+/**
  * PATCH /api/sessions/:id
  * Update session
  */

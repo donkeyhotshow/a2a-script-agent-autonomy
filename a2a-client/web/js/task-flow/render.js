@@ -28,7 +28,17 @@
     /**
      * Получить HTML области ввода
      */
-    function getInputAreaHtml() {
+    function getInputAreaHtml(isWaiting = false) {
+        if (isWaiting) {
+            return `
+                <div class="task-flow-input-area waiting">
+                    <div class="task-flow-waiting-indicator">
+                        <span class="loading-spinner"></span>
+                        <span>Waiting for response...</span>
+                    </div>
+                </div>
+            `;
+        }
         return `
             <div class="task-flow-input-area">
                 <input type="text" id="taskMessageInput" placeholder="Type your message..." class="task-flow-input" />

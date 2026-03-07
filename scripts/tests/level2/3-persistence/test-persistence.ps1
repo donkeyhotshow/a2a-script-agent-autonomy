@@ -5,6 +5,8 @@ param(
     [switch]$Verbose
 )
 
+$rootDir = (Resolve-Path (Join-Path $PSScriptRoot '..\..\..\..')).Path
+
 function Write-Success { param($Message) Write-Host "[PASS] $Message" -ForegroundColor Green }
 function Write-Error { param($Message) Write-Host "[FAIL] $Message" -ForegroundColor Red }
 function Write-Info { param($Message) Write-Host "[INFO] $Message" -ForegroundColor Cyan }
@@ -50,14 +52,29 @@ $persistenceTests = @(
         Optional = $true
         Test = {
             # Check if logs directory exists and is writable
-            $logDir = "$PSScriptRoot/../../../a2a-server/logs"
-            if (Test-Path $logDir) {
+            # Create logs directory in a2a-server if it doesn't exist
+            $logDir = "$rootDir\a2a-server\storage\logs"
+            if (-not (Test-Path $logDir)) {
+                try {
+                    New-Item -ItemType Directory -Path $logDir -Force | Out-Null
+                    Write-Info "Created logs directory: $logDir"
+                } catch {
+                    Write-Warning "Could not create logs directory: $($_.Exception.Message)"
+                    # Try alternative location
+                    $logDir = "$env:TEMP\a2a-test-logs"
+                    if (-not (Test-Path $logDir)) {
+                        New-Item -ItemType Directory -Path $logDir -Force | Out-Null
+                    }
+                }
+            }
+            
+            if (Test-Path (Split-Path $logDir -Parent)) {
                 $testFile = Join-Path $logDir "persistence-test.log"
                 try {
                     "Test log entry at $(Get-Date)" | Out-File -FilePath $testFile -Encoding UTF8
                     if (Test-Path $testFile) {
                         Remove-Item $testFile -Force
-                        Write-Info "Log directory is writable"
+                        Write-Info "Log directory is writable: $logDir"
                     } else {
                         throw "Could not create test log file"
                     }

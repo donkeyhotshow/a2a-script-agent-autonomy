@@ -2,6 +2,8 @@
 
 This doc captures the intent and outcomes of the dialog architecture audit that was originally captured in `a2a-client/DEV_STATE.md`. It keeps the essential flows, decisions, and QA checkpoints for the session/SSE stack without the verbatim code dumps.
 
+**Implementation tasks:** [dialog-frontend-tasks.md](dialog-frontend-tasks.md) (8 tasks, priorities, acceptance criteria).
+
 ## Related Workflows
 
 For implementation of the dialog architecture patterns:

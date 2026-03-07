@@ -2,6 +2,25 @@
 
 Based on `simulations/dialog/WORKFLOW.md` - complete Web ↔ Client API ↔ Server ↔ LLM pipeline implementation.
 
+**Example (payloads + code mapping):** [dialog-client-example.md](dialog-client-example.md).
+
+**Architecture & audit:** [dialog-architecture-tasks.md](dialog-architecture-tasks.md) (session lifecycle, execute catalog, SSE/WS, SessionSync).
+
+## Status (updated)
+
+| Task | Status | Notes |
+|------|--------|--------|
+| 1 Dialog Message Flow Core | Pending | No `dialog-handler.js`; flow partly in `api-integration.js`, `session-sync-v2.js`, `session-store.js` |
+| 2 Server Transform Pipeline UI | Pending | No `transform-renderer.js` |
+| 3 Execute Types (form, message, finalResult) | Done | `ai-actions.js`, `session-store.js`, `session-store-adapters.js`, `task-flow/render.js`, `action-handler.js` |
+| 4 Session Store Dialog Integration | Partial | `session-store.js`: `pendingForm`, history, `setExecute` for form/message/finalResult |
+| 5 Dialog UI Components | Partial | Chat/message UI in `ai-actions.js`, `window-manager.js`; no dedicated `dialog-panel.js` |
+| 6 Action-Key Shape Compliance | Done | `action-handler.js`: `submit()`, `sendChoice()`, `sendMessage()`, action-key validation |
+| 7 LLM Request/Response Display | Pending | No `llm-debug-panel.js` |
+| 8 Dialog E2E Tests | Pending | No `web/tests/e2e/dialog-flow.spec.js` |
+
+---
+
 ## Task 1: Dialog Message Flow Core
 
 **File:** `web/js/dialog-handler.js` (new)

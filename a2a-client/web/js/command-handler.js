@@ -306,40 +306,47 @@
             }
         },
 
+        async _getProjectId() {
+            return await (global.ProjectManager?.getSelectedProjectId?.()) || global.SessionStore?.projectId || null;
+        },
+
         async _handleCreateSession(data, commandData) {
             const { title } = data;
+            if (!global.apiIntegration?.createSession) throw new Error('API not available');
 
-            if (!global.SessionStore) {
-                throw new Error('SessionStore not available');
-            }
+            const projectId = await this._getProjectId();
+            if (!projectId) throw new Error('No project selected');
 
-            const sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-            const session = {
-                id: sessionId,
-                title: title || 'CLI Created Session',
-                createdAt: new Date().toISOString()
-            };
+            const session = await global.apiIntegration.createSession({
+                projectId,
+                title: title || 'CLI Created Session'
+            });
+            const sessionId = session?.id || session?.sessionId;
+            if (!sessionId) throw new Error('Create session returned no id');
 
-            // Add to session store
-            global.SessionStore.createSession(session);
+            if (global.SessionStore) global.SessionStore.createSession(session);
+            if (global.SessionManager?.setActiveSession) global.SessionManager.setActiveSession(sessionId);
+            const taskbarContent = document.querySelector('.taskbar-content');
+            if (taskbarContent && global.TaskbarManager) await global.TaskbarManager.refreshTaskbar(taskbarContent);
 
-            return { sessionId, title: session.title, action: 'created' };
+            return { sessionId, title: session?.title || session?.name, action: 'created' };
         },
 
         async _handleListSessions(data, commandData) {
-            if (!global.SessionStore) {
-                throw new Error('SessionStore not available');
-            }
+            if (!global.apiIntegration?.getSessions) throw new Error('API not available');
 
-            const sessions = global.SessionStore.getAllSessions();
+            const projectId = await this._getProjectId();
+            const sessions = await global.apiIntegration.getSessions(projectId);
+            const list = Array.isArray(sessions) ? sessions : [];
+
             return {
-                sessions: sessions.map(s => ({
-                    id: s.id,
-                    title: s.title,
-                    active: s.active,
-                    createdAt: s.createdAt
+                sessions: list.map(s => ({
+                    id: s.id || s.sessionId,
+                    title: s.title || s.name || s.id,
+                    active: s.id === global.SessionStore?.sessionId,
+                    createdAt: s.createdAt || s.created_at
                 })),
-                count: sessions.length
+                count: list.length
             };
         },
 
@@ -347,11 +354,10 @@
             const { sessionId } = data;
             if (!sessionId) throw new Error('sessionId required');
 
-            if (!global.SessionStore) {
-                throw new Error('SessionStore not available');
-            }
+            if (global.SessionManager?.setActiveSession) global.SessionManager.setActiveSession(sessionId);
+            if (global.SessionStore?.setSession) global.SessionStore.setSession(sessionId);
+            if (global.WindowManager?.toggleSessionWindow) await global.WindowManager.toggleSessionWindow(sessionId);
 
-            global.SessionStore.switchToSession(sessionId);
             return { sessionId, action: 'switched' };
         },
 
@@ -359,38 +365,52 @@
             const { sessionId } = data;
             if (!sessionId) throw new Error('sessionId required');
 
-            if (!global.SessionStore) {
-                throw new Error('SessionStore not available');
-            }
+            if (!global.apiIntegration?.deleteSession) throw new Error('API not available');
+            await global.apiIntegration.deleteSession(sessionId);
 
-            global.SessionStore.deleteSession(sessionId);
+            if (global.SessionStore?.sessionId === sessionId && global.SessionStore?.reset) {
+                global.SessionStore.reset();
+            }
+            if (global.SessionManager?.setActiveSession && global.SessionManager.getActiveSessionId?.() === sessionId) {
+                global.SessionManager.setActiveSession(null);
+            }
+            const taskbarContent = document.querySelector('.taskbar-content');
+            if (taskbarContent && global.TaskbarManager) await global.TaskbarManager.refreshTaskbar(taskbarContent);
+
             return { sessionId, action: 'deleted' };
         },
 
         async _handleSessionStatus(data, commandData) {
             const { sessionId } = data;
+            const currentId = sessionId || global.SessionStore?.sessionId;
 
-            if (!global.SessionStore) {
-                throw new Error('SessionStore not available');
-            }
-
-            const session = sessionId ?
-                global.SessionStore.getSession(sessionId) :
-                global.SessionStore.getCurrentSession();
-
-            if (!session) {
-                throw new Error(`Session not found: ${sessionId || 'current'}`);
-            }
-
-            return {
-                session: {
-                    id: session.id,
-                    title: session.title,
-                    active: session.active,
-                    createdAt: session.createdAt,
-                    lastActivity: session.lastActivity
+            if (currentId && global.apiIntegration?.getSession) {
+                const projectId = await this._getProjectId();
+                const session = await global.apiIntegration.getSession(currentId, projectId).catch(() => null);
+                if (session) {
+                    return {
+                        session: {
+                            id: session.id || session.sessionId,
+                            title: session.title || session.name,
+                            active: currentId === global.SessionStore?.sessionId,
+                            createdAt: session.createdAt || session.created_at,
+                            lastActivity: session.lastActivity || session.updatedAt
+                        }
+                    };
                 }
-            };
+            }
+            if (currentId && global.SessionStore?.sessionId === currentId) {
+                return {
+                    session: {
+                        id: currentId,
+                        title: null,
+                        active: true,
+                        createdAt: null,
+                        lastActivity: null
+                    }
+                };
+            }
+            throw new Error(`Session not found: ${sessionId || 'current'}`);
         },
 
         // ===== UTILITY COMMAND HANDLERS =====
@@ -411,6 +431,12 @@
         },
 
         async _handleGetStatus(data, commandData) {
+            let sessionCount = 0;
+            if (global.apiIntegration?.getSessions) {
+                const projectId = await this._getProjectId();
+                const list = await global.apiIntegration.getSessions(projectId).catch(() => []);
+                sessionCount = Array.isArray(list) ? list.length : 0;
+            }
             return {
                 status: 'online',
                 timestamp: new Date().toISOString(),
@@ -418,7 +444,7 @@
                 userAgent: navigator.userAgent,
                 url: window.location.href,
                 panels: global.PanelManager ? global.PanelManager.getPanelStates() : [],
-                sessions: global.SessionStore ? global.SessionStore.getAllSessions().length : 0
+                sessions: sessionCount
             };
         },
 
@@ -432,6 +458,12 @@
         // ===== DEBUG COMMAND HANDLERS =====
 
         async _handleDebugInfo(data, commandData) {
+            let sessionCount = 0;
+            if (global.apiIntegration?.getSessions) {
+                const projectId = await this._getProjectId();
+                const list = await global.apiIntegration.getSessions(projectId).catch(() => []);
+                sessionCount = Array.isArray(list) ? list.length : 0;
+            }
             const debugInfo = {
                 timestamp: new Date().toISOString(),
                 location: window.location.href,
@@ -447,8 +479,8 @@
                     height: window.innerHeight
                 },
                 sessionStore: global.SessionStore ? {
-                    currentSession: global.SessionStore.getCurrentSession()?.id,
-                    totalSessions: global.SessionStore.getAllSessions().length
+                    currentSession: global.SessionStore.sessionId,
+                    totalSessions: sessionCount
                 } : null,
                 panelManager: global.PanelManager ? {
                     panels: Object.keys(global.PanelManager._panels || {}),

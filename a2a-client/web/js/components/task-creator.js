@@ -210,50 +210,32 @@
             this._showLoading();
 
             try {
-                // Call server to analyze query and get suggestions (POST /tasks/analyze or fallback)
+                // Server returns suggestions (options); web only displays them
                 const raw = await this._fetchSuggestions(query);
                 this._hideLoading();
-                const response = raw && typeof raw === 'object' && raw.data !== undefined ? raw.data : raw;
+                const response = raw && typeof raw === 'object' ? (raw.data !== undefined ? raw.data : raw) : null;
 
                 if (response && Array.isArray(response.options) && response.options.length > 0) {
-                    this._showOptions(response.options, response.summary);
+                    this._showOptions(response.options, response.summary ?? '');
                 } else {
+                    // No options from server → start session with query as-is
                     this._createSessionWithQuery(query);
                 }
             } catch (error) {
                 console.error('[TaskCreator] Failed to get suggestions:', error);
                 this._hideLoading();
-                // Fall back to creating session with raw query
                 this._createSessionWithQuery(query);
             }
         },
 
         /**
-         * Fetch suggestions from server
+         * Fetch suggestions from server. List is defined by server; we only request and pass through.
          * @private
          */
         async _fetchSuggestions(query) {
             const g = (typeof window !== 'undefined' ? window : globalThis);
-            if (g.apiIntegration && typeof g.apiIntegration.analyzeTask === 'function') {
-                return await g.apiIntegration.analyzeTask(query, 'new-task');
-            }
-
-            // Fallback direct fetch if API integration not available
-            const apiBase = (typeof g.apiIntegration?.apiBase === 'string' && g.apiIntegration.apiBase) ? g.apiIntegration.apiBase.replace(/\/?$/, '') : '/api';
-            const url = `${apiBase}/tasks/analyze`;
-
-            const response = await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ query, context: 'new-task' })
-            });
-
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}`);
-            }
-
-            const data = await response.json();
-            return data.data || data;
+            if (!g.apiIntegration?.analyzeTask) throw new Error('API not available');
+            return await g.apiIntegration.analyzeTask(query, 'new-task');
         },
 
         /**
@@ -279,7 +261,7 @@
         },
 
         /**
-         * Show suggestion options
+         * Show suggestion options from server response (display only; list comes from server).
          * @private
          */
         _showOptions(options, summary) {
@@ -352,7 +334,8 @@
          * @private
          */
         async _getProjectId() {
-            return global.ProjectManager?.getSelectedProjectId?.() ?? null;
+            const g = (typeof window !== 'undefined' ? window : globalThis);
+            return g.ProjectManager?.getSelectedProjectId?.() ?? null;
         },
 
         /**
@@ -383,7 +366,7 @@
         },
 
         /**
-         * Create a new session with selected option
+         * Create a new session with selected option (search query is NOT sent as message)
          * @private
          */
         async _createSessionWithOption(query, option) {
@@ -393,10 +376,11 @@
                     window.ErrorHandler?.handle(new Error('Select a project first.'), { action: 'createSession', code: 'NO_PROJECT' });
                     return;
                 }
+                // Note: query is only for finding the action, NOT sent as task/message
                 const session = await this._createSession({
                     projectId,
                     title: option.title,
-                    task: query,
+                    task: null,
                     suggestedAction: option.action,
                     actionParams: option.params,
                     context: 'ai-suggested'
@@ -420,47 +404,27 @@
          * @private
          */
         async _createSession(params) {
-            let session;
-
-            if (global.apiIntegration) {
-                const raw = await global.apiIntegration.request('POST', '/sessions', params);
-                session = raw?.session || raw;
-            } else {
-                // Fallback direct fetch
-                const base = (global.apiIntegration?.apiBase || '/api').replace(/\/?$/, '');
-                const response = await fetch(`${base}/sessions`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(params)
-                });
-
-                if (!response.ok) {
-                    const data = await response.json().catch(() => ({}));
-                    throw new Error(data?.error?.message || data?.error || `HTTP ${response.status}`);
-                }
-
-                const data = await response.json();
-                session = data?.session || (data?.data !== undefined ? data.data : data);
-                if (session && !session.id && data?.id) session = { ...session, id: data.id };
-            }
+            const g = (typeof window !== 'undefined' ? window : globalThis);
+            if (!g.apiIntegration?.createSession) throw new Error('API not available');
+            const session = await g.apiIntegration.createSession(params);
 
             // Add to SessionStore if available
-            if (global.SessionStore) {
-                global.SessionStore.createSession(session);
+            if (g.SessionStore) {
+                g.SessionStore.createSession(session);
             }
 
             // Refresh taskbar to show new session
-            if (global.TaskbarManager) {
+            if (g.TaskbarManager) {
                 const taskbarContent = document.querySelector('.taskbar-content');
                 if (taskbarContent) {
-                    global.TaskbarManager.refreshTaskbar(taskbarContent);
+                    g.TaskbarManager.refreshTaskbar(taskbarContent);
                 }
             }
 
             // Open the new session window
-            if (global.WindowManager) {
+            if (g.WindowManager) {
                 setTimeout(() => {
-                    global.WindowManager.toggleSessionWindow(session.id);
+                    g.WindowManager.toggleSessionWindow(session.id);
                 }, 100);
             }
 

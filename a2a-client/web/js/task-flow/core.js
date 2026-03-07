@@ -26,8 +26,7 @@
         const proj = window.appState?.get?.('project');
         if (proj?.id) return proj.id;
         const pm = window.ProjectManager;
-        if (pm?.currentProject?.id) return pm.currentProject.id;
-        // Note: No localStorage fallback - project from appState or ProjectManager only
+        if (pm?.getLastSelectedProjectId) return pm.getLastSelectedProjectId() || null;
         return null;
     }
 

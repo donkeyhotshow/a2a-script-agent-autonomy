@@ -453,8 +453,11 @@ type Session = {
     };
 };
 
-const packageRoot = path.resolve(__dirname, '..');
-const a2aClientRoot = path.resolve(packageRoot, '../..');
+// Resolve a2a-client root: from .../sdk/src/server or .../sdk/dist/server -> .../sdk -> .../a2a-client
+const sdkRoot = __dirname.includes(path.sep + 'dist' + path.sep)
+    ? path.resolve(__dirname, '../../..')
+    : path.resolve(__dirname, '../..');
+const a2aClientRoot = path.resolve(sdkRoot, '../..');
 const storageDir = process.env.A2A_CLIENT_STORAGE_DIR || path.join(a2aClientRoot, 'storage');
 const PROJECTS_FILE = path.join(storageDir, 'projects.json');
 const CONFIG_FILE = path.join(storageDir, 'config.json');
@@ -551,6 +554,20 @@ async function loadSession(project: Project, sessionId: string): Promise<Session
     } catch {
         return null;
     }
+}
+
+/**
+ * Find session across all projects - used when projectId is unknown/mismatched
+ */
+async function findSessionInAllProjects(sessionId: string): Promise<{ session: Session; project: Project } | null> {
+    const projects = await loadProjects();
+    for (const project of projects) {
+        const session = await loadSession(project, sessionId);
+        if (session) {
+            return { session, project };
+        }
+    }
+    return null;
 }
 
 async function saveSession(project: Project, session: Session): Promise<void> {
@@ -857,14 +874,28 @@ expressApp.get(['/api/sessions/:sessionId', '/api/v1/sessions/:sessionId'], asyn
         const sessionId = String(req.params.sessionId || '');
         const projectId = typeof req.query.projectId === 'string' ? req.query.projectId : '';
 
-        const projects = await loadProjects();
-        const project = projects.find((p) => p.id === projectId) ?? projects[0];
-        if (!project) {
-            jsonError(res, 404, 'Project not found');
-            return;
+        // Find session - first try specified project, then search all projects
+        let session: Session | null = null;
+        let project: Project | null = null;
+        
+        if (projectId) {
+            const projects = await loadProjects();
+            project = projects.find((p) => p.id === projectId) ?? null;
+            if (project) {
+                session = await loadSession(project, sessionId);
+            }
         }
-        const session = await loadSession(project, sessionId);
+        
+        // If not found in specified project, search all projects
         if (!session) {
+            const found = await findSessionInAllProjects(sessionId);
+            if (found) {
+                session = found.session;
+                project = found.project;
+            }
+        }
+        
+        if (!session || !project) {
             jsonError(res, 404, 'Session not found');
             return;
         }
@@ -1078,33 +1109,44 @@ expressApp.post(['/api/sessions/:sessionId/result', '/api/v1/sessions/:sessionId
         return;
     }
 
-    const projects = await loadProjects();
-    const project = projects.find((p) => p.id === projectId) ?? projects[0];
-    if (!project) {
-        jsonError(res, 404, 'Project not found');
-        return;
+    // Find session - first try specified project, then search all projects
+    let session: Session | null = null;
+    let project: Project | null = null;
+    
+    if (projectId) {
+        const projects = await loadProjects();
+        project = projects.find((p) => p.id === projectId) ?? null;
+        if (project) {
+            session = await loadSession(project, sessionId);
+        }
     }
     
-    const session = await loadSession(project, sessionId);
+    // If not found in specified project, search all projects
     if (!session) {
+        const found = await findSessionInAllProjects(sessionId);
+        if (found) {
+            session = found.session;
+            project = found.project;
+        }
+    }
+    
+    if (!session || !project) {
         jsonError(res, 404, 'Session not found');
         return;
     }
 
     const serverBase = await getServerBaseUrl();
 
-    // Build request body for new protocol - используем action-key shape
-    // result уже содержит action-key: { choice: "..." } или { message: "..." }
+    // Build request body for new protocol - формат как в симуляциях
+    // { context: { version, session_id, execution: { action, step } }, result: { message } }
     const requestBody: Record<string, unknown> = {
         context: {
-            version: session.version || '2.0',
+            version: '2.0',
             session_id: sessionId,
+            execution: session.execution || { action: session.suggestedAction || 'dialog', step: 'new' },
             task: session.task,
-            execution: session.execution,
-            history: session.context?.history || [],
-            result: result,  // Добавляем result в контекст для обработки
         },
-        result: result,  // action-key shape напрямую
+        result: result,  // action-key shape: { choice: "..." } или { message: "..." }
     };
     
     // Forward to server /invoke
@@ -1291,10 +1333,11 @@ expressApp.post(['/api/sessions/:sessionId/cancel', '/api/v1/sessions/:sessionId
     res.json(updated);
 });
 
-// --- server proxy (web must not know server address). Body: task, sessionId?, projectId?
-expressApp.post('/api/v1/invoke', async (req, res) => {
-    const body = (req.body || {}) as { task?: string; sessionId?: string; projectId?: string; context?: unknown };
-    const serverBody: Record<string, unknown> = { task: body.task };
+// --- server proxy (web must not know server address). Body: task|message, sessionId?, projectId?, context?
+async function handleInvoke(req: import('express').Request, res: import('express').Response): Promise<void> {
+    const body = (req.body || {}) as { task?: string; message?: string; sessionId?: string; projectId?: string; context?: unknown };
+    const task = body.task ?? body.message;
+    const serverBody: Record<string, unknown> = { task };
     if (body.context) serverBody.context = body.context;
 
     const serverBase = await getServerBaseUrl();
@@ -1322,6 +1365,41 @@ expressApp.post('/api/v1/invoke', async (req, res) => {
         }
     }
     res.status(upstream.status).json(payload);
+}
+expressApp.post(['/api/v1/invoke', '/api/invoke'], (req, res) => {
+    void handleInvoke(req, res);
+});
+
+// --- task analysis: forward to upstream /invoke; on failure return empty options (no hardcoded stub)
+// POST /api/tasks/analyze – server returns { summary?, options } for the web to display
+expressApp.post('/api/tasks/analyze', async (req, res) => {
+    const body = (req.body || {}) as { query?: string; context?: string };
+    const query = String(body.query ?? '').trim();
+    const serverBase = await getServerBaseUrl().catch(() => null);
+    if (serverBase && query) {
+        try {
+            const task = `Analyze this request and suggest the best way to proceed: "${query}". Return a JSON with "options" array containing objects with "title", "description", "action", and optional "icon" fields.`;
+            const upstream = await serverFetch('POST', serverBase, '/invoke', { task });
+            const payload = (await upstream.json().catch(() => ({}))) as { data?: { execute?: { message?: { content?: string } } }; execute?: { message?: { content?: string } } };
+            const content = payload?.data?.execute?.message?.content ?? payload?.execute?.message?.content;
+            if (typeof content === 'string') {
+                const jsonMatch = content.match(/\{[\s\S]*"options"[\s\S]*\}/);
+                if (jsonMatch) {
+                    const parsed = JSON.parse(jsonMatch[0]) as { options?: Array<{ title?: string; description?: string; action?: string; icon?: string }> };
+                    if (Array.isArray(parsed?.options)) {
+                        res.json(parsed);
+                        return;
+                    }
+                }
+            }
+        } catch {
+            // upstream failed: return empty options, no fake suggestions
+        }
+    }
+    res.json({
+        summary: query ? `Task: ${query.slice(0, 80)}${query.length > 80 ? '...' : ''}` : 'New task',
+        options: [],
+    });
 });
 
 expressApp.all(['/api/requests*', '/api/v1/requests*'], async (req, res) => {
@@ -1337,25 +1415,26 @@ expressApp.all(['/api/requests*', '/api/v1/requests*'], async (req, res) => {
             const sessionId = extractSessionIdFromPath(pathName);
             if (sessionId) {
                 const projects = await loadProjects();
-                const project = projects[0]; // Use first project for now
-                if (project) {
-                    const session = await loadSession(project, sessionId);
+                let project: Project | undefined;
+                let session: Session | null = null;
+                for (const p of projects) {
+                    session = await loadSession(p, sessionId);
                     if (session) {
-                        const updatedSession = await updateSessionWithStatusResponse(project, session, payload);
-                        await saveSession(project, updatedSession);
-                        
-                        // Check for promiseId in status response and broadcast
-                        const promiseId: string | undefined = payload?.data?.promiseId || payload?.promiseId;
-                        
-                        // Broadcast update via WebSocket
-                        broadcastProgress(sessionId, {
-                            promiseId,
-                            status: 'status_updated',
-                            message: 'Session status updated from server',
-                            result: updatedSession,
-                        });
-                        emitServerSse(sessionId, payload, 'status');
+                        project = p;
+                        break;
                     }
+                }
+                if (project && session) {
+                    const updatedSession = await updateSessionWithStatusResponse(project, session, payload);
+                    await saveSession(project, updatedSession);
+                    const promiseId: string | undefined = payload?.data?.promiseId || payload?.promiseId;
+                    broadcastProgress(sessionId, {
+                        promiseId,
+                        status: 'status_updated',
+                        message: 'Session status updated from server',
+                        result: updatedSession,
+                    });
+                    emitServerSse(sessionId, payload, 'status');
                 }
             }
         } catch (error) {
@@ -2248,6 +2327,7 @@ expressApp.get(['/api', '/api/v1'], (_req, res) => {
             config: '/api/config',
             projects: '/api/projects',
             sessions: '/api/sessions',
+            tasks: '/api/tasks/analyze',
             terminal: '/api/terminal',
             fs: '/api/fs',
             rag: '/api/rag',
@@ -2274,6 +2354,7 @@ expressApp.get(['/api/ws', '/api/v1/ws'], (req, res) => {
 const STORAGE_DIR = path.join(storageDir, 'kv');
 
 async function ensureKVStorageDir(): Promise<void> {
+    await fs.mkdir(path.join(storageDir), { recursive: true });
     await fs.mkdir(STORAGE_DIR, { recursive: true });
 }
 
@@ -2283,25 +2364,31 @@ expressApp.get(['/api/storage/:namespace/:key', '/api/v1/storage/:namespace/:key
         const { namespace, key } = req.params;
         const filePath = path.join(STORAGE_DIR, namespace, `${key}.json`);
 
-        // Check if file exists
+        // Missing key = no value yet (e.g. new window state); return null
         try {
             await fs.access(filePath);
         } catch {
-            return res.status(404).json({
-                error: 'Key not found',
-                details: { namespace, key, path: filePath }
-            });
+            return res.json({ key, namespace, value: null });
         }
 
         const data = await fs.readFile(filePath, 'utf-8');
-        const value = JSON.parse(data);
-
+        let value: unknown;
+        try {
+            value = JSON.parse(data);
+        } catch {
+            value = null;
+        }
         res.json({ key, namespace, value });
     } catch (error: any) {
         console.error('Storage get error:', error);
         res.status(500).json({ error: error.message });
     }
 });
+
+function serializeStorageValue(value: unknown): string {
+    const payload = value === undefined ? null : value;
+    return JSON.stringify(payload);
+}
 
 // POST /api/storage/:namespace/:key - Store value
 expressApp.post(['/api/storage/:namespace/:key', '/api/v1/storage/:namespace/:key'], async (req, res) => {
@@ -2314,7 +2401,7 @@ expressApp.post(['/api/storage/:namespace/:key', '/api/v1/storage/:namespace/:ke
         await fs.mkdir(namespaceDir, { recursive: true });
 
         const filePath = path.join(namespaceDir, `${key}.json`);
-        await fs.writeFile(filePath, JSON.stringify(value), 'utf-8');
+        await fs.writeFile(filePath, serializeStorageValue(value), 'utf-8');
 
         res.json({ success: true, key, namespace });
     } catch (error: any) {
@@ -2334,7 +2421,7 @@ expressApp.put(['/api/storage/:namespace/:key', '/api/v1/storage/:namespace/:key
         await fs.mkdir(namespaceDir, { recursive: true });
 
         const filePath = path.join(namespaceDir, `${key}.json`);
-        await fs.writeFile(filePath, JSON.stringify(value), 'utf-8');
+        await fs.writeFile(filePath, serializeStorageValue(value), 'utf-8');
 
         res.json({ success: true, key, namespace });
     } catch (error: any) {

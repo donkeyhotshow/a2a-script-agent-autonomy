@@ -94,7 +94,13 @@
                 ...(context && { context })
             };
 
-            return this._request('POST', `/sessions/${encodeURIComponent(sessionId)}/result`, requestBody);
+            try {
+                return await this._request('POST', `/sessions/${encodeURIComponent(sessionId)}/result`, requestBody);
+            } catch (error) {
+                // Unblock input on error so user can retry
+                global.SessionStore?.setPromisePending?.(false);
+                throw error;
+            }
         },
 
         /**
@@ -104,9 +110,16 @@
         async sendChoice(sessionId, projectId, choiceId) {
             const store = global.SessionStore;
             
-            // Update local state
+            // Block if already waiting for response
+            if (store?.isInputBlocked?.()) {
+                console.log('[ActionHandler] Input blocked - waiting for server response');
+                return Promise.reject(new Error('Waiting for server response'));
+            }
+            
+            // Update local state and block further input
             store?.pushMessage({ content: choiceId }, 'user');
             store?.clearPendingForm();
+            store?.setPromisePending?.(true);
 
             return this.submit(sessionId, projectId, { choice: choiceId });
         },
@@ -116,11 +129,19 @@
          * Action-key: { message: "text" }
          */
         async sendMessage(sessionId, projectId, text) {
-            const payload = (text || '').trim() || 'continue';
             const store = global.SessionStore;
             
-            // Update local state
+            // Block if already waiting for response
+            if (store?.isInputBlocked?.()) {
+                console.log('[ActionHandler] Input blocked - waiting for server response');
+                return Promise.reject(new Error('Waiting for server response'));
+            }
+            
+            const payload = (text || '').trim() || 'continue';
+            
+            // Update local state and block further input
             store?.pushMessage({ content: payload }, 'user');
+            store?.setPromisePending?.(true);
 
             return this.submit(sessionId, projectId, { message: payload });
         },
