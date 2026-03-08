@@ -16,10 +16,10 @@ for /f "tokens=5" %%p in ('netstat -ano ^| findstr ":%WEB_UI_PORT%" ^| findstr "
 
 REM Start web-ui
 cd a2a-client
-start /b "" cmd /c "npx vite ^> logs\web-ui.log 2^>^&1"
+start "web-ui" cmd /c "npx vite ^> logs\web-ui.log 2^>^&1"
 cd ..
 
-powershell -Command "Start-Sleep -Seconds 5"
+powershell -Command "Start-Sleep -Seconds 15"
 
 REM Capture PID
 for /f "tokens=5" %%p in ('netstat -ano ^| findstr ":%WEB_UI_PORT%" ^| findstr "LISTENING"') do (

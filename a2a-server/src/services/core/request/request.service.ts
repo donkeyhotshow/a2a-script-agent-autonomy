@@ -40,6 +40,8 @@ const RETRY_DELAY_MS = 8000;
 
 export function isRetryableError(err: string): boolean {
     const s = err.toLowerCase();
+    // Exclude "read timed out" / "read timeout" - LLM processing timeout, not transient
+    if (/read\s+(timed?\s*out|timeout)/.test(s)) return false;
     return /fetch failed|econnrefused|etimedout|network|timeout|socket hang up/.test(s);
 }
 

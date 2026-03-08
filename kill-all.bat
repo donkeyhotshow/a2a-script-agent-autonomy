@@ -47,17 +47,8 @@ call :p3 "a2a-server" "A2A_SERVER_PID" "node.exe" ""
 call :p3 "client-api" "CLIENT_API_PID" "node.exe" ""
 call :p3 "web-ui" "WEB_UI_PID" "node.exe" ""
 
-REM Phase 4: Kill wrappers
-echo.
-echo === Phase 4: Kill common wrapper processes ===
-for %%e in (node.exe npm.exe npx.exe tsx.exe) do (
-    tasklist /FI "IMAGENAME eq %%e" 2>nul | findstr /I "%%e" >nul
-    if not errorlevel 1 (
-        taskkill /F /IM %%e >nul 2>&1
-        echo   [OK] Killed %%e
-    )
-)
-powershell -Command "Get-CimInstance Win32_Process -Filter \"Name='cmd.exe'\" 2>$null | Where-Object { $_.CommandLine -match 'tsx|npm|uvicorn|ollama' } | ForEach-Object { Write-Host ('   [OK] Killed cmd.exe wrapper PID ' + $_.ProcessId); Stop-Process -Id $_.ProcessId -Force 2>$null }" 2>nul
+REM Phase 4: Skip blanket kill of node/npm/npx/tsx - would kill parent when called from "npm run dev"
+REM Port-based kill in Phase 1 already terminated our services.
 
 REM Phase 5: Final check
 echo.
@@ -119,10 +110,14 @@ goto :eof
 echo.
 echo [3] %~1
 if defined PID_%~2 (
-    echo   Killing by PID !PID_%~2!...
-    tasklist /FI "PID eq !PID_%~2!" 2>nul | findstr "!PID_%~2!" >nul && (
-        taskkill /F /PID !PID_%~2! >nul 2>&1 && echo   [OK] Killed PID !PID_%~2! || echo   [WARN] Could not kill PID !PID_%~2!
-    ) || echo   [OK] PID !PID_%~2! not running
+    set "p3_pid=!PID_%~2!"
+    set "p3_pid=!p3_pid: =!"
+    if not "!p3_pid!"=="" (
+        echo   Killing by PID !p3_pid!...
+        tasklist /FI "PID eq !p3_pid!" 2>nul | findstr /C:"!p3_pid!" >nul 2>nul && (
+            taskkill /F /PID !p3_pid! >nul 2>&1 && echo   [OK] Killed PID !p3_pid! || echo   [WARN] Could not kill PID !p3_pid!
+        ) || echo   [OK] PID !p3_pid! not running
+    ) else echo   No PID file entry
 ) else echo   No PID file entry
 if not "%~3"=="" (
     tasklist /FI "IMAGENAME eq %~3" 2>nul | findstr /I "%~3" >nul && taskkill /F /IM %~3 >nul 2>&1 && echo   [OK] Killed %~3

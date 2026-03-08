@@ -16,10 +16,10 @@ for /f "tokens=5" %%p in ('netstat -ano ^| findstr ":%SERVER_PORT%" ^| findstr "
 
 REM Start a2a-server
 cd a2a-server
-start /b "" cmd /c "npm run dev:local ^> logs\server.log 2^>^&1"
+start "a2a-server" cmd /c "npm run dev:local ^> logs\server.log 2^>^&1"
 cd ..
 
-powershell -Command "Start-Sleep -Seconds 5"
+powershell -Command "Start-Sleep -Seconds 10"
 
 REM Capture PID
 for /f "tokens=5" %%p in ('netstat -ano ^| findstr ":%SERVER_PORT%" ^| findstr "LISTENING"') do (

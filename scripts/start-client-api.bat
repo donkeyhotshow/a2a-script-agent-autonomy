@@ -16,10 +16,10 @@ for /f "tokens=5" %%p in ('netstat -ano ^| findstr ":%CLIENT_API_PORT%" ^| finds
 
 REM Start client-api
 cd a2a-client\packages\sdk
-start /b "" cmd /c "npx cross-env DEFAULT_SYNC_MODE=1 tsx watch src/server/index.ts ^> ..\..\logs\client-api.log 2^>^&1"
+start "client-api" cmd /c "npx cross-env PORT=3001 WS_PORT=3002 DEFAULT_SYNC_MODE=1 tsx watch src/server/index.ts ^> ..\..\logs\client-api.log 2^>^&1"
 cd ..\..\..
 
-powershell -Command "Start-Sleep -Seconds 5"
+powershell -Command "Start-Sleep -Seconds 15"
 
 REM Capture PID
 for /f "tokens=5" %%p in ('netstat -ano ^| findstr ":%CLIENT_API_PORT%" ^| findstr "LISTENING"') do (

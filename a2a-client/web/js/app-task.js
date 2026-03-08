@@ -14,6 +14,12 @@
         const modules = [
             '/js/app/project-manager.js',
             '/js/app/session-manager.js',
+            '/js/app/windows/window-registry.js',
+            '/js/app/windows/window-position.js',
+            '/js/app/windows/window-events.js',
+            '/js/app/windows/window-state.js',
+            '/js/app/windows/window-manager.js',
+            '/js/app/windows/index.js',
             '/js/app/window-manager.js',
             '/js/app/taskbar-manager.js',
             '/js/app/app-task.js'
