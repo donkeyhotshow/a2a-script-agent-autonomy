@@ -1,6 +1,10 @@
 /**
  * SessionManager Adapter
  * Combines store state with API operations for session management
+ * Использует внешние модули:
+ * - session-api.js - API методы
+ * - session-events.js - система событий
+ * - session-ui.js - UI методы
  */
 
 (function (global) {
@@ -12,12 +16,17 @@
         return;
     }
 
+    // Подключаем модули
+    const SessionAPI = global.createSessionAPI ? global.createSessionAPI(store) : {};
+    const SessionEvents = global.createSessionEvents ? global.createSessionEvents() : {};
+    const sessionUI = global.sessionUI || {};
+
     const SessionManagerAdapter = {
         apiBase: '/api',
         currentSessionId: null,
         currentProjectId: null,
         sessions: [],
-        _listeners: new Map(),
+        _listeners: SessionEvents,
         _taskbarContentEl: null,
 
         getActiveSessionId() {
@@ -29,60 +38,21 @@
         },
 
         updateActiveSessionUI(sessionId) {
-            const el = this._taskbarContentEl;
-            if (!el) return;
-            const wrapper = el.querySelector('.taskbar-sessions-wrapper') || el;
-            el.querySelectorAll('.taskbar-session-btn').forEach(btn => btn.classList.remove('active'));
-            if (sessionId) {
-                const btn = el.querySelector(`[data-session-id="${sessionId}"]`);
-                if (btn) {
-                    btn.classList.add('active');
-                    this._centerActiveButton(wrapper, btn);
-                }
-            }
+            sessionUI.updateActiveSessionUI(this._taskbarContentEl, sessionId);
         },
 
         _centerActiveButton(container, activeBtn) {
-            if (!container || !activeBtn) return;
-            const rect = container.getBoundingClientRect();
-            const btnRect = activeBtn.getBoundingClientRect();
-            const scrollLeft = container.scrollLeft;
-            const centerOffset = (rect.width - btnRect.width) / 2;
-            const targetScroll = scrollLeft + btnRect.left - rect.left - centerOffset;
-            container.scrollTo({ left: Math.max(0, targetScroll), behavior: 'smooth' });
+            sessionUI.centerActiveButton(container, activeBtn);
         },
 
         showContextMenu(e, sessionId, btnEl) {
-            e.preventDefault();
-            document.querySelectorAll('.session-context-menu').forEach(menu => menu.remove());
-            const menu = document.createElement('div');
-            menu.className = 'session-context-menu';
-            menu.style.cssText = 'position:fixed;left:' + e.clientX + 'px;top:' + e.clientY + 'px;background:var(--surface,#1e1e2e);border:1px solid var(--border,#313244);border-radius:4px;padding:4px 0;z-index:10000;min-width:120px;box-shadow:0 2px 8px rgba(0,0,0,0.3);';
-            const items = [{ label: 'Close', action: 'close', icon: '\u2715' }];
-            items.forEach(({ label, action, icon }) => {
-                const item = document.createElement('div');
-                item.className = 'context-menu-item';
-                item.style.cssText = 'padding:8px 12px;cursor:pointer;display:flex;align-items:center;gap:8px;color:var(--text-primary,#cdd6f4);';
-                item.textContent = icon + ' ' + label;
-                item.addEventListener('click', () => {
-                    if (action === 'close' && global.confirm('Close this session?')) {
-                        global.WindowManager?.closeSessionWindow(sessionId);
-                    }
-                    menu.remove();
-                });
-                menu.appendChild(item);
-            });
-            document.body.appendChild(menu);
-            const closeHandler = (ev) => {
-                if (!menu.contains(ev.target)) { menu.remove(); document.removeEventListener('click', closeHandler); }
-            };
-            setTimeout(() => document.addEventListener('click', closeHandler), 0);
+            sessionUI.showContextMenu(e, sessionId, btnEl);
         },
 
         init(options = {}) {
             this.apiBase = options.apiBase || this.apiBase;
             this.currentProjectId = options.projectId || null;
-
+            
             // Sync from store
             this.currentSessionId = store.sessionId;
             this.currentProjectId = store.projectId || this.currentProjectId;
@@ -102,7 +72,10 @@
             })();
 
             // Subscribe to store
-            store.on('session', (id) => { this.currentSessionId = id; this._emit('sessionChanged', id); });
+            store.on('session', (id) => { 
+                this.currentSessionId = id; 
+                this._emit('sessionChanged', id); 
+            });
             store.on('execute', (exec) => {
                 if (exec?.form) this._emit('formReceived', exec.form);
                 if (exec?.message) this._emit('messageReceived', exec.message);
@@ -131,40 +104,7 @@
             return this;
         },
 
-        _getHeaders() {
-            const headers = { 'Content-Type': 'application/json' };
-            const token = global.apiIntegration?.token;
-            if (token) headers['Authorization'] = `Bearer ${token}`;
-            return headers;
-        },
-
-        async _request(method, path, body = null) {
-            const url = `${this.apiBase}${path}`;
-            const options = { method, headers: this._getHeaders() };
-            if (body) options.body = JSON.stringify(body);
-
-            try {
-                const response = await fetch(url, options);
-                const data = await response.json().catch(() => ({}));
-                if (!response.ok) {
-                    // Skip error handling for storage API 404s (expected when key doesn't exist)
-                    const isStorage404 = url.includes('/api/storage/') && response.status === 404;
-                    if (!isStorage404) {
-                        global.ErrorHandler?.handleApiError({
-                            status: response.status,
-                            data,
-                            error: data?.error
-                        }, { module: 'SessionManagerAdapter', path: url, method });
-                    }
-                    throw new Error(data?.error?.message || `Request failed: ${response.status}`);
-                }
-                return data.data || data;
-            } catch (error) {
-                console.error('[SessionManagerAdapter] Request error:', error);
-                global.ErrorHandler?.handleNetworkError(error, { module: 'SessionManagerAdapter', path: url, method });
-                throw error;
-            }
-        },
+        // === API Methods (делегирование в session-api) ===
 
         async loadSessions(projectId = null) {
             const pid = projectId || this.currentProjectId;
@@ -173,7 +113,7 @@
                 return [];
             }
             try {
-                this.sessions = await this._request('GET', `/sessions?projectId=${pid}`);
+                this.sessions = await SessionAPI.loadSessions.call(this, pid);
                 this._emit('sessionsLoaded', this.sessions);
                 return this.sessions;
             } catch (error) {
@@ -186,11 +126,7 @@
             const { projectId = this.currentProjectId, title = '', task = '' } = options;
             if (!projectId) throw new Error('Project ID required');
 
-            const session = await this._request('POST', '/sessions', {
-                projectId,
-                title: title || `Session ${new Date().toLocaleString()}`,
-                task
-            });
+            const session = await SessionAPI.createSession.call(this, { projectId, title, task });
 
             this.sessions.unshift(session);
             this._emit('sessionCreated', session);
@@ -198,13 +134,13 @@
         },
 
         async getSession(sessionId) {
-            const session = await this._request('GET', `/sessions/${sessionId}`);
+            const session = await SessionAPI.getSession.call(this, sessionId);
             this._emit('sessionLoaded', session);
             return session;
         },
 
         async deleteSession(sessionId) {
-            await this._request('DELETE', `/sessions/${sessionId}`);
+            await SessionAPI.deleteSession.call(this, sessionId);
             this.sessions = this.sessions.filter(s => s.id !== sessionId && s.sessionId !== sessionId);
             this._emit('sessionDeleted', sessionId);
             return true;
@@ -230,15 +166,13 @@
         },
 
         async getConversation(sessionId) {
-            const sid = sessionId || this.currentSessionId;
-            const session = await this._request('GET', `/sessions/${sid}`);
-            const messages = session?.messages || session?.dialog || [];
+            const messages = await SessionAPI.getConversation.call(this, sessionId);
             store.setMessages(messages);
-            this._emit('conversationLoaded', { sessionId: sid, messages });
+            this._emit('conversationLoaded', { sessionId: sessionId || this.currentSessionId, messages });
             return messages;
         },
 
-        // === Legacy execute processing (now delegates to store) ===
+        // === Execute processing ===
 
         processExecute(execute, context = null) {
             if (context) store.setContext(context);
@@ -261,7 +195,7 @@
             return { type: 'unknown', data: execute };
         },
 
-        // === Result submission (delegates to store helpers) ===
+        // === Result submission ===
 
         submitChoice(choiceId) {
             const result = store.buildChoiceResult(choiceId);
@@ -312,7 +246,7 @@
         async sendResult(result) {
             if (!this.currentSessionId) throw new Error('No active session');
             const body = { projectId: this.projectId ?? null, sessionId: this.currentSessionId, result };
-            const response = await this._request('POST', `/sessions/${this.currentSessionId}/result`, body);
+            const response = await SessionAPI._request.call(this, 'POST', `/sessions/${this.currentSessionId}/result`, body);
             const payload = response?.data || response;
             if (payload?.execute) this.processExecute(payload.execute, payload.context);
             return response;
@@ -320,30 +254,25 @@
 
         async executeNext(mode = 'manual') {
             if (!this.currentSessionId) throw new Error('No active session');
-            const response = await this._request('POST', `/sessions/${this.currentSessionId}/next`, { mode });
-            const payload = response?.data || response;
+            const payload = await SessionAPI.executeNext.call(this, this.currentSessionId, mode);
             if (payload?.execute) this.processExecute(payload.execute, payload.context);
-            return response;
+            return payload;
         },
 
         async selectAction(actionId) {
             if (!this.currentSessionId) throw new Error('No active session');
-            const response = await this._request('POST', `/sessions/${this.currentSessionId}/action`, {
-                selectedAction: actionId
-            });
-            const payload = response?.data || response;
+            const payload = await SessionAPI.selectAction.call(this, this.currentSessionId, actionId);
             if (payload?.execute) this.processExecute(payload.execute, payload.context);
-            return response;
+            return payload;
         },
 
-        // === Legacy SSE handling (now handled by SessionSyncV2) ===
+        // === SSE handling ===
 
         handleSSEMessage(data) {
-            // Forward to store directly
             store.applyServerResponse(data);
         },
 
-        // === Legacy render methods (minimal implementation) ===
+        // === Legacy render methods ===
 
         appendMessage(message) {
             store.pushMessage(message, message?.role || 'assistant');
@@ -361,116 +290,38 @@
             return store.getExecution();
         },
 
-        // === Event system ===
+        // === Event system (делегирование в session-events) ===
 
         on(event, callback) {
-            if (!this._listeners.has(event)) {
-                this._listeners.set(event, new Set());
-            }
-            this._listeners.get(event).add(callback);
-            return () => this.off(event, callback);
+            return SessionEvents.on.call(SessionEvents, event, callback);
         },
 
         off(event, callback) {
-            this._listeners.get(event)?.delete(callback);
+            SessionEvents.off.call(SessionEvents, event, callback);
         },
 
         _emit(event, data) {
-            this._listeners.get(event)?.forEach(cb => {
-                try { cb(data); } catch (e) { console.error('[SessionManagerAdapter] Event error:', e); }
-            });
+            SessionEvents._emit.call(SessionEvents, event, data);
         },
 
-        // === Legacy render methods (use SessionStore / API) ===
+        // === Render methods (делегирование в session-ui) ===
 
         _escapeHtml(s) {
-            if (s == null) return '';
-            const div = typeof document !== 'undefined' && document.createElement('div');
-            if (div) { div.textContent = s; return div.innerHTML; }
-            return String(s).replace(/&/g, '&').replace(/</g, '<').replace(/>/g, '>').replace(/"/g, '"');
+            return sessionUI.escapeHtml ? sessionUI.escapeHtml(s) : String(s);
         },
 
         renderSessionsList(containerId, options = {}) {
-            const container = typeof document !== 'undefined' && document.getElementById(containerId);
-            if (!container) return;
-
-            const { onSelect = () => {}, onDelete = () => {}, onCreate = () => {}, emptyMessage = 'No sessions yet', showCreateButton = true } = options;
-            const list = Array.isArray(this.sessions) ? this.sessions : [];
-
-            let html = '';
-            if (showCreateButton) {
-                html += '<div class="session-manager-actions"><button type="button" class="btn btn-primary session-manager-create-btn">+ New Session</button></div>';
-            }
-            if (list.length === 0) {
-                html += `<div class="session-manager-empty">${this._escapeHtml(emptyMessage)}</div>`;
-            } else {
-                html += '<div class="session-manager-list">';
-                list.forEach(session => {
-                    const id = session.id || session.sessionId || session;
-                    const title = session.title || session.name || `Session ${String(id).slice(0, 8)}`;
-                    const active = id === this.currentSessionId ? ' active' : '';
-                    const status = session.status || '';
-                    html += `<div class="session-item${active}" data-session-id="${this._escapeHtml(id)}">
-                        <div class="session-item-content">
-                            <span class="session-item-title">${this._escapeHtml(title)}</span>
-                            ${status ? `<span class="session-item-status">${this._escapeHtml(status)}</span>` : ''}
-                        </div>
-                        <button type="button" class="session-item-delete" title="Delete">&times;</button>
-                    </div>`;
-                });
-                html += '</div>';
-            }
-            container.innerHTML = html;
-
-            container.querySelectorAll('.session-item').forEach(item => {
-                item.addEventListener('click', (e) => {
-                    if (!e.target.classList.contains('session-item-delete')) {
-                        const sid = item.dataset.sessionId;
-                        if (sid) { this.setActiveSession(sid); onSelect(sid); }
-                    }
-                });
-            });
-            container.querySelectorAll('.session-item-delete').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    const sid = btn.closest('.session-item')?.dataset?.sessionId;
-                    if (sid && confirm('Delete this session?')) this.deleteSession(sid).then(() => onDelete(sid));
-                });
-            });
-            const createBtn = container.querySelector('.session-manager-create-btn');
-            if (createBtn) createBtn.addEventListener('click', () => {
-                this.createSession().then(session => {
-                    const sid = session?.id || session?.sessionId;
-                    if (sid) { this.setActiveSession(sid); onCreate(session); }
-                }).catch(() => {});
-            });
+            const optionsWithCallbacks = {
+                ...options,
+                setActiveSession: (sid) => this.setActiveSession(sid),
+                createSession: () => this.createSession(),
+                deleteSessionFn: (sid) => this.deleteSession(sid)
+            };
+            sessionUI.renderSessionsList(containerId, this.sessions, this.currentSessionId, optionsWithCallbacks);
         },
 
         renderConversation(containerId, messages = []) {
-            const container = typeof document !== 'undefined' && document.getElementById(containerId);
-            if (!container) return;
-
-            const list = Array.isArray(messages) && messages.length > 0 ? messages : (store.messages || []);
-            if (list.length === 0) {
-                container.innerHTML = '<div class="conversation-empty">No messages yet</div>';
-                return;
-            }
-            let html = '<div class="conversation-messages">';
-            list.forEach(msg => {
-                const role = msg.role || msg.direction || 'unknown';
-                const content = msg.content || msg.text || msg.message || '';
-                const timestamp = msg.timestamp || msg.createdAt || '';
-                html += `<div class="conversation-message message-${this._escapeHtml(role)}">
-                    <div class="message-header">
-                        <span class="message-role">${this._escapeHtml(role)}</span>
-                        ${timestamp ? `<span class="message-time">${new Date(timestamp).toLocaleTimeString()}</span>` : ''}
-                    </div>
-                    <div class="message-content">${this._escapeHtml(String(content))}</div>
-                </div>`;
-            });
-            html += '</div>';
-            container.innerHTML = html;
-            container.scrollTop = container.scrollHeight;
+            sessionUI.renderConversation(containerId, messages);
         }
     };
 

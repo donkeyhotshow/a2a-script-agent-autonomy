@@ -1,87 +1,77 @@
 /**
- * AI Actions Utilities
- * Утилитарные функции для AI Actions панели
- * 
- * Использование:
- * <script src="ai-actions-utils.js"></script>
- * <script src="ai-actions.js"></script>
+ * AI Actions Utils - утилиты для AI Actions панели
  */
 
 (function (global) {
     'use strict';
 
     /**
-     * Экранирование HTML
-     * @param {string} s - строка для экранирования
-     * @returns {string} - экранированная строка
-     */
-    function escapeHtml(s) {
-        const el = document.createElement('div');
-        el.textContent = s;
-        return el.innerHTML;
-    }
-
-    /**
-     * Форматирование времени из ISO строки
-     * @param {string} isoString - ISO дата строка
-     * @returns {string} - отформатированное время
+     * Форматировать время
+     * @param {string} isoString
+     * @returns {string}
      */
     function formatTime(isoString) {
-        const date = new Date(isoString);
-        const now = new Date();
-        const diff = now - date;
-
-        // Менее минуты
-        if (diff < 60000) {
-            return 'just now';
+        if (typeof formatTime === 'function') {
+            return formatTime(isoString);
         }
-        
-        // Менее часа
-        if (diff < 3600000) {
-            const mins = Math.floor(diff / 60000);
-            return `${mins}m ago`;
+        if (!isoString) return '';
+        try {
+            const date = new Date(isoString);
+            return date.toLocaleTimeString();
+        } catch (e) {
+            return isoString;
         }
-        
-        // Менее суток
-        if (diff < 86400000) {
-            const hours = Math.floor(diff / 3600000);
-            return `${hours}h ago`;
-        }
-        
-        // Иначе показываем дату
-        return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     }
 
     /**
-     * Генерация уникального ID
-     * @param {string} prefix - префикс ID
-     * @returns {string} - уникальный ID
+     * Получить тип действия
+     * @param {Object} action
+     * @returns {string}
      */
-    function generateId(prefix = 'id') {
-        return prefix + '-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
+    function getActionType(action) {
+        // Check direct type first
+        if (action.type) return action.type;
+
+        // Check execute object structure (new protocol v2.0)
+        if (action.execute) {
+            if (action.execute.finalResult) return 'finalResult';
+            if (action.execute.form) return 'form';
+            if (action.execute.message) return 'message';
+            if (action.execute.script) return 'script';
+            if (action.execute['rag-search']) return 'rag-search';
+            if (action.execute['read-file']) return 'read-file';
+            if (action.execute['write-file']) return 'write-file';
+            if (action.execute['execute-command']) return 'execute-command';
+        }
+
+        // Legacy format check
+        if (action.finalResult) return 'finalResult';
+        if (action.form) return 'form';
+        if (action.message) return 'message';
+        if (action.script) return 'script';
+        if (action['rag-search']) return 'rag-search';
+        if (action['read-file']) return 'read-file';
+        if (action['write-file']) return 'write-file';
+        if (action['execute-command']) return 'execute-command';
+        return 'unknown';
     }
 
     /**
-     *deep clone объекта
-     * @param {*} obj - объект для клонирования
-     * @returns {*} - клонированный объект
+     * Сортировка сессий по дате обновления
+     * @param {Map} sessions
+     * @returns {Array}
      */
-    function deepClone(obj) {
-        return JSON.parse(JSON.stringify(obj));
+    function sortSessions(sessions) {
+        return Array.from(sessions.values()).sort((a, b) => 
+            new Date(b.updatedAt) - new Date(a.updatedAt)
+        );
     }
 
-    // Export to global
-    global.AIActionsUtils = {
-        escapeHtml,
+    // Export utils
+    global.aiActionsUtils = {
         formatTime,
-        generateId,
-        deepClone
+        getActionType,
+        sortSessions
     };
-
-    // Also export individual functions for convenience
-    global.escapeHtml = escapeHtml;
-    global.formatTime = formatTime;
-    global.generateId = generateId;
-    global.deepClone = deepClone;
 
 })(typeof window !== 'undefined' ? window : globalThis);
