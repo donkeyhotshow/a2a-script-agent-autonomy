@@ -40,7 +40,7 @@ export const DEFAULT_PROCESSOR_CONFIG: BaseProcessorConfig = {
 /**
  * Request type enum for processor selection
  */
-export type RequestType = 'action' | 'simulation' | 'form' | 'neuron' | 'unknown';
+export type RequestType = 'action' | 'simulation' | 'form' | 'dialog' | 'neuron' | 'unknown';
 
 /**
  * Abstract base class for all request processors

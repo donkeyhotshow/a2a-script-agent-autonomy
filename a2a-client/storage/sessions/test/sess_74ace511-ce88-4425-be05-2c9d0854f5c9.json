@@ -6,8 +6,14 @@
   "status": "READY",
   "version": "2.0",
   "createdAt": "2026-03-07T04:05:16.733Z",
-  "updatedAt": "2026-03-07T04:05:17.376Z",
-  "messages": [],
+  "updatedAt": "2026-03-07T22:43:15.762Z",
+  "messages": [
+    {
+      "role": "user",
+      "content": "hello",
+      "timestamp": "2026-03-07T22:43:15.746Z"
+    }
+  ],
   "context": {},
   "currentExecute": {
     "form": {

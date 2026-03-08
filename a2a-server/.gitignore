@@ -60,6 +60,9 @@ repos/
 # File cache
 file_cache/
 
+# Request storage (file-based)
+storage/
+
 # Uploaded files
 uploads/
 

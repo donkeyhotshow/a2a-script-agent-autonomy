@@ -1,10 +1,11 @@
 /**
- * Request Service - Stateless Edition
- * No database, no storage. Just in-memory processing.
- * Client holds all state.
+ * Request Service - File-based storage.
+ * Each request stored as {promiseId}.json in storage/requests/
  */
 
+import * as path from 'path';
 import {logger} from '../../../utils/logger.js';
+import {RequestFileStorage} from './request-file-storage.js';
 
 export type RequestStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled';
 
@@ -30,10 +31,20 @@ export interface RequestResult {
     createdAt: Date;
     startedAt: Date | null;
     completedAt: Date | null;
+    retryCount?: number;
+    retryAfter?: string;
 }
 
-// In-memory storage only - lost on restart
-const requests = new Map<string, RequestResult>();
+const MAX_RETRIES = 5;
+const RETRY_DELAY_MS = 8000;
+
+export function isRetryableError(err: string): boolean {
+    const s = err.toLowerCase();
+    return /fetch failed|econnrefused|etimedout|network|timeout|socket hang up/.test(s);
+}
+
+const storageDir = process.env.REQUESTS_STORAGE_PATH ?? path.resolve(process.cwd(), 'storage', 'requests');
+const storage = new RequestFileStorage(storageDir);
 
 export class RequestService {
     /**
@@ -42,7 +53,7 @@ export class RequestService {
     async create(data: CreateRequestData): Promise<{ promiseId: string; id: string }> {
         const id = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
         const promiseId = `prom_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-        
+
         const req: RequestResult = {
             id,
             promiseId,
@@ -51,15 +62,15 @@ export class RequestService {
             priority: data.priority ?? 0,
             context: data.context,
             message: data.message || null,
-            codeBlocks: data.codeBlocks || null,
+            codeBlocks: data.codeBlocks ?? null,
             result: null,
             error: null,
             createdAt: new Date(),
             startedAt: null,
             completedAt: null,
         };
-        
-        requests.set(promiseId, req);
+
+        await storage.save(req);
         logger.info('Request created', {requestId: id, promiseId, clientId: data.clientId});
         return {promiseId, id};
     }
@@ -74,9 +85,9 @@ export class RequestService {
         startedAt: Date | null;
         completedAt: Date | null;
     } | null> {
-        const req = requests.get(promiseId);
+        const req = await storage.load(promiseId);
         if (!req) return null;
-        
+
         return {
             promiseId: req.promiseId,
             status: req.status,
@@ -90,7 +101,7 @@ export class RequestService {
      * Get full request result by promiseId
      */
     async getResult(promiseId: string): Promise<RequestResult | null> {
-        return requests.get(promiseId) || null;
+        return storage.load(promiseId);
     }
 
     /**
@@ -102,17 +113,17 @@ export class RequestService {
         result?: Record<string, unknown>,
         error?: Record<string, unknown>
     ): Promise<boolean> {
-        const req = requests.get(promiseId);
+        const req = await storage.load(promiseId);
         if (!req) return false;
-        
+
         const now = new Date();
         req.status = status;
-        
         if (status === 'processing') req.startedAt = now;
         if (status === 'completed' || status === 'failed') req.completedAt = now;
         if (result !== undefined) req.result = result;
         if (error !== undefined) req.error = error;
-        
+
+        await storage.save(req);
         logger.info('Request status updated', {promiseId, status});
         return true;
     }
@@ -121,14 +132,12 @@ export class RequestService {
      * Cancel a pending request
      */
     async cancel(promiseId: string): Promise<boolean> {
-        const req = requests.get(promiseId);
+        const req = await storage.load(promiseId);
         if (!req) return false;
-        
         if (req.status !== 'pending') {
             logger.warn('Cannot cancel request - not in pending state', {promiseId, currentStatus: req.status});
             return false;
         }
-        
         return this.updateStatus(promiseId, 'cancelled');
     }
 
@@ -136,42 +145,92 @@ export class RequestService {
      * Cancel all pending requests
      */
     async cancelAllPending(): Promise<{ cancelledCount: number }> {
+        const ids = await storage.listPending();
         let count = 0;
-        for (const [promiseId, req] of requests) {
-            if (req.status === 'pending') {
-                req.status = 'cancelled';
-                req.completedAt = new Date();
-                count++;
-            }
+        for (const promiseId of ids) {
+            await this.updateStatus(promiseId, 'cancelled');
+            count++;
         }
-        logger.warn('Cancelled all pending requests', {cancelledCount: count});
+        if (count > 0) {
+            logger.warn('Cancelled all pending requests', {cancelledCount: count});
+        }
         return {cancelledCount: count};
+    }
+
+    /**
+     * Schedule retry for a failed request (transient error)
+     */
+    async scheduleRetry(promiseId: string, delayMs: number = RETRY_DELAY_MS): Promise<boolean> {
+        const req = await storage.load(promiseId);
+        if (!req) return false;
+        const count = (req.retryCount ?? 0) + 1;
+        if (count > MAX_RETRIES) {
+            logger.warn('Max retries exceeded', {promiseId, count});
+            return false;
+        }
+        req.status = 'pending';
+        req.startedAt = null;
+        req.completedAt = null;
+        req.result = null;
+        req.error = null;
+        (req as RequestResult).retryCount = count;
+        (req as RequestResult).retryAfter = new Date(Date.now() + delayMs).toISOString();
+        await storage.save(req);
+        logger.info('Scheduled retry', {promiseId, retryCount: count, delayMs});
+        return true;
+    }
+
+    /**
+     * Revive retryable failed requests (e.g. after server restart)
+     */
+    async scheduleRetryForFailed(): Promise<number> {
+        const ids = await storage.listFailed();
+        let revived = 0;
+        for (const id of ids) {
+            const req = await storage.load(id);
+            if (!req) continue;
+            const errMsg = req.error ? String((req.error as Record<string, unknown>).message ?? (req.error as Record<string, unknown>).error ?? '') : '';
+            const resultError = req.result ? String((req.result as Record<string, unknown>).error ?? '') : '';
+            const err = errMsg || resultError;
+            if (!isRetryableError(err)) continue;
+            const count = (req.retryCount ?? 0);
+            if (count >= MAX_RETRIES) continue;
+            const ok = await this.scheduleRetry(id, RETRY_DELAY_MS);
+            if (ok) revived++;
+        }
+        if (revived > 0) logger.info('Revived failed requests for retry', {count: revived});
+        return revived;
     }
 
     /**
      * Get next pending request for processing
      */
     async getNextPending(): Promise<RequestResult | null> {
-        for (const [promiseId, req] of requests) {
-            if (req.status === 'pending') {
-                req.status = 'processing';
-                req.startedAt = new Date();
-                logger.info('Processing request', {promiseId});
-                return req;
-            }
-        }
-        return null;
+        const ids = await storage.listPending();
+        if (ids.length === 0) return null;
+
+        const all = await Promise.all(ids.map((id) => storage.load(id)));
+        const withCreated = all
+            .filter((r): r is RequestResult => r !== null)
+            .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+
+        const next = withCreated[0];
+        if (!next) return null;
+
+        next.status = 'processing';
+        next.startedAt = new Date();
+        (next as RequestResult).retryAfter = undefined; // clear when processing
+        await storage.save(next);
+        logger.info('Processing request', {promiseId: next.promiseId, retryCount: next.retryCount});
+        return next;
     }
 
     /**
      * Get queue length
      */
     async getQueueLength(): Promise<number> {
-        let count = 0;
-        for (const req of requests.values()) {
-            if (req.status === 'pending') count++;
-        }
-        return count;
+        const ids = await storage.listPending();
+        return ids.length;
     }
 
     /**
@@ -184,17 +243,7 @@ export class RequestService {
         startedAt: Date | null;
         completedAt: Date | null;
     } | null>> {
-        return promiseIds.map((id) => {
-            const req = requests.get(id);
-            if (!req) return null;
-            return {
-                promiseId: req.promiseId,
-                status: req.status,
-                createdAt: req.createdAt,
-                startedAt: req.startedAt,
-                completedAt: req.completedAt,
-            };
-        });
+        return Promise.all(promiseIds.map((id) => this.getStatus(id)));
     }
 }
 

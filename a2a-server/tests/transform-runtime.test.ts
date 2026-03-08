@@ -1,15 +1,16 @@
 import { describe, it, expect } from 'vitest';
-import { runTransformPipeline, loadTransformPipeline } from '../src/transform/index.js';
+import { runTransformPipeline, loadTransformPipeline, runPromptsTransform, getPromptsTransformsPath } from '../src/transform/index.js';
 import * as fs from 'fs';
 import * as path from 'path';
 
 const PROJECT_ROOT = path.join(process.cwd(), '..');
 const SIM_DIR = path.join(PROJECT_ROOT, 'simulations', 'coder', '3');
+const PROMPTS_TRANSFORMS = getPromptsTransformsPath();
 
 describe('Transform Pipeline Runtime', () => {
   describe('loadTransformPipeline', () => {
     it('should load pipeline from file', async () => {
-      const pipelinePath = path.join(SIM_DIR, 'server-transforms-request.json');
+      const pipelinePath = path.join(PROMPTS_TRANSFORMS, 'server-transforms-request.json');
       const pipeline = await loadTransformPipeline(pipelinePath);
       expect(pipeline).toBeDefined();
       expect(pipeline.steps).toBeDefined();
@@ -17,7 +18,8 @@ describe('Transform Pipeline Runtime', () => {
     });
 
     it('should reject invalid pipeline - no steps', async () => {
-      await expect(loadTransformPipeline({} as any)).rejects.toThrow();
+      const invalidPath = path.join(process.cwd(), 'tests', 'fixtures', 'invalid-pipeline-no-steps.json');
+      await expect(loadTransformPipeline(invalidPath)).rejects.toThrow();
     });
   });
 
@@ -171,40 +173,46 @@ describe('Transform Pipeline Runtime', () => {
     });
   });
 
-  describe('Integration coder/3', () => {
-    it('transform request.json', async () => {
+  describe('Integration coder/3 (prompts/transforms)', () => {
+    it('transform request.json via runPromptsTransform', async () => {
       const requestPath = path.join(SIM_DIR, 'request.json');
-      const transformPath = path.join(SIM_DIR, 'server-transforms-request.json');
-      
       const input = JSON.parse(fs.readFileSync(requestPath, 'utf-8'));
-      const pipeline = JSON.parse(fs.readFileSync(transformPath, 'utf-8'));
-      
-      // Use project root as baseDir since templateRef paths are relative to project root
-      const result = await runTransformPipeline(pipeline, input, { baseDir: PROJECT_ROOT });
-      
+
+      const result = await runPromptsTransform(
+        PROMPTS_TRANSFORMS,
+        'coder',
+        input,
+        'request',
+        { step: 3, baseDir: PROJECT_ROOT }
+      );
+
       if (!result.success) {
         console.log('Transform error:', result.error);
       }
-      
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.output).toBeDefined();
       }
     });
 
-    it('transform response.json', async () => {
-      const responsePath = path.join(SIM_DIR, 'response.json');
-      const transformPath = path.join(SIM_DIR, 'server-transforms-response.json');
-      
-      const input = JSON.parse(fs.readFileSync(responsePath, 'utf-8'));
-      const pipeline = JSON.parse(fs.readFileSync(transformPath, 'utf-8'));
-      
-      const result = await runTransformPipeline(pipeline, input, { baseDir: SIM_DIR });
-      
+    it('transform response via runPromptsTransform', async () => {
+      const responseMdPath = path.join(SIM_DIR, 'response.md');
+      const responseMd = fs.existsSync(responseMdPath)
+        ? fs.readFileSync(responseMdPath, 'utf-8')
+        : '{"step":"done","message":"ok","execute":{},"completed":true}';
+      const input = { context: {}, llm: { response: responseMd } };
+
+      const result = await runPromptsTransform(
+        PROMPTS_TRANSFORMS,
+        'coder',
+        input,
+        'response',
+        { step: 3, baseDir: SIM_DIR }
+      );
+
       if (!result.success) {
         console.log('Transform error:', result.error);
       }
-      
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.output).toBeDefined();

@@ -909,7 +909,7 @@ expressApp.get(['/api/sessions/updates', '/api/v1/sessions/updates'], async (req
         const promiseIds = sessionsToCheck.map(({ session }) => session.lastPromiseId!).filter(Boolean);
         const statusUrl = `${serverBase}/requests/status?ids=${promiseIds.join(',')}`;
         const statusRes = await serverFetch('GET', statusUrl);
-        const statusPayload = (await statusRes.json().catch(() => ({}))) as { data?: { items?: Array<{ promiseId: string; status: string }> } };
+        const statusPayload = (await statusRes.json().catch(() => ({}))) as { data?: { items?: Array<{ promiseId: string; status: string; found?: boolean }> } };
         const items = statusPayload?.data?.items ?? [];
 
         const updates: Array<{ sessionId: string; projectId: string; execute?: unknown; context?: unknown; messages?: unknown[] }> = [];
@@ -917,6 +917,20 @@ expressApp.get(['/api/sessions/updates', '/api/v1/sessions/updates'], async (req
         for (let i = 0; i < sessionsToCheck.length; i++) {
             const { session, project } = sessionsToCheck[i];
             const item = items[i];
+            // Orphaned: server restarted or request not found - clear lastPromiseId to stop polling
+            if (item?.found === false) {
+                session.lastPromiseId = undefined;
+                session.status = 'READY';
+                await saveSession(project, session);
+                continue;
+            }
+            // Failed: clear lastPromiseId so session stops polling
+            if (item?.status === 'failed') {
+                session.lastPromiseId = undefined;
+                session.status = 'READY';
+                await saveSession(project, session);
+                continue;
+            }
             if (!item || item.status !== 'completed') continue;
 
             try {
@@ -1170,6 +1184,8 @@ expressApp.post(['/api/sessions/:sessionId/next', '/api/v1/sessions/:sessionId/n
 expressApp.post(['/api/sessions/:sessionId/result', '/api/v1/sessions/:sessionId/result'], async (req, res) => {
     const sessionId = String(req.params.sessionId || '');
     const projectId = typeof req.query.projectId === 'string' ? req.query.projectId : String(req.body?.projectId || '');
+    const resultPreview = req.body?.result ? Object.keys(req.body.result) : [];
+    console.log('[ClientAPI] POST /sessions/:id/result received', { sessionId, resultKeys: resultPreview });
 
     // Поддержка плоского формата { choice: "..." } и вложенного { result: { form: { choice: "..." } } }
     const rawResult = req.body?.result ?? req.body;
@@ -1250,7 +1266,9 @@ expressApp.post(['/api/sessions/:sessionId/result', '/api/v1/sessions/:sessionId
     requestBody.result = serverResult;
 
     // Forward to server /invoke
+    console.log('[ClientAPI] Forwarding to server', { sessionId, serverBase, resultKeys: Object.keys(serverResult) });
     const upstream = await serverFetch('POST', serverBase, '/invoke', requestBody);
+    console.log('[ClientAPI] Server response', { sessionId, ok: upstream.ok, status: upstream.status });
     const payload = (await upstream.json().catch(() => ({}))) as any;
     if (!upstream.ok) {
         res.status(upstream.status).json(payload);

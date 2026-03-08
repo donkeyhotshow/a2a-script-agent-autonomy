@@ -10,7 +10,7 @@
     // Base transport first
     if (!document.querySelector('script[src*="base-transport.js"]')) {
         const script = document.createElement('script');
-        script.src = 'js/transport/base-transport.js';
+        script.src = '/js/transport/base-transport.js';
         script.onload = () => {
             console.log('[TransportIndex] BaseTransport loaded');
             loadSSETransport();
@@ -23,7 +23,7 @@
     function loadSSETransport() {
         if (!document.querySelector('script[src*="sse-transport.js"]')) {
             const script = document.createElement('script');
-            script.src = 'js/transport/sse-transport.js';
+            script.src = '/js/transport/sse-transport.js';
             script.onload = () => {
                 console.log('[TransportIndex] SSETransport loaded');
                 loadWebSocketTransport();
@@ -37,7 +37,7 @@
     function loadWebSocketTransport() {
         if (!document.querySelector('script[src*="websocket-transport.js"]')) {
             const script = document.createElement('script');
-            script.src = 'js/transport/websocket-transport.js';
+            script.src = '/js/transport/websocket-transport.js';
             script.onload = () => {
                 console.log('[TransportIndex] WebSocketTransport loaded');
                 loadHeartbeatManager();
@@ -51,7 +51,7 @@
     function loadHeartbeatManager() {
         if (!document.querySelector('script[src*="heartbeat-manager.js"]')) {
             const script = document.createElement('script');
-            script.src = 'js/transport/heartbeat-manager.js';
+            script.src = '/js/transport/heartbeat-manager.js';
             script.onload = () => {
                 console.log('[TransportIndex] HeartbeatManager loaded');
                 loadTransportManager();
@@ -65,7 +65,7 @@
     function loadTransportManager() {
         if (!document.querySelector('script[src*="transport/transport-manager.js"]')) {
             const script = document.createElement('script');
-            script.src = 'js/transport/transport-manager.js';
+            script.src = '/js/transport/transport-manager.js';
             script.onload = () => {
                 console.log('[TransportIndex] TransportManager loaded');
                 global._transportModulesLoaded = true;

@@ -61,9 +61,9 @@
          */
         async loadModules() {
             const modules = [
-                'js/app/project-manager.js',
-                'js/app/window-manager.js',
-                'js/app/taskbar-manager.js'
+                '/js/app/project-manager.js',
+                '/js/app/window-manager.js',
+                '/js/app/taskbar-manager.js'
             ];
 
             const loadPromises = modules.map(src => {

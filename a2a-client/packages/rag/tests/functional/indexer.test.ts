@@ -388,7 +388,11 @@ describe('RAG Indexer Functional Tests', () => {
       expect(index).toBeDefined();
 
       // Cleanup
-      await fs.unlink(problematicFile).catch(() => {});
+      try {
+        await fs.unlink(problematicFile);
+      } catch (e) {
+        // Ignore cleanup errors in tests
+      }
     });
 
     it('should handle empty directories', async () => {

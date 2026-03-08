@@ -287,7 +287,7 @@ export class FormRequestProcessor extends BaseRequestProcessor {
                     message: 'Dialog mode selected',
                     selection: { choiceId, formId, timestamp: new Date().toISOString() },
                     context: {
-                        task: context?.task || 'диалог',
+                        task: (ctx['task'] as string) || 'диалог',
                         execution: {
                             action: 'dialog',
                             step: 'request'

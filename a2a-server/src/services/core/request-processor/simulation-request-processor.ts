@@ -13,9 +13,10 @@ import {readFile} from 'fs/promises';
 import {existsSync} from 'fs';
 import path from 'path';
 import {
-    runTransformPipeline,
-    runSimulationTransform,
-    loadSimulationTransform,
+    runPromptsTransform,
+    getPromptsTransformsPath,
+    SIMULATION_TO_SCHEMA,
+    loadPromptsTransform,
     type TransformPipeline
 } from '../../../transform/index.js';
 import type {
@@ -29,6 +30,7 @@ import {BaseRequestProcessor, type RequestType} from './base-processor.js';
  */
 export interface SimulationConfig {
     simulationsBasePath: string;
+    promptsTransformsPath: string;
     enableReplay: boolean;
     defaultSimulation: string | null;
 }
@@ -53,6 +55,7 @@ export class SimulationRequestProcessor extends BaseRequestProcessor {
         super('SimulationRequestProcessor', config);
         this.config = {
             simulationsBasePath: process.env.SIMULATIONS_PATH || './simulations',
+            promptsTransformsPath: getPromptsTransformsPath(),
             enableReplay: true,
             defaultSimulation: null,
             ...config
@@ -155,16 +158,19 @@ export class SimulationRequestProcessor extends BaseRequestProcessor {
                 simContext.stepNumber
             );
 
-            // Apply server-transforms-request.json if exists
+            // Apply transforms from prompts/transforms (schema from simulation name)
             let requestData = requestContent ? JSON.parse(requestContent) : ctx;
             const simulationDir = path.join(this.config.simulationsBasePath, simContext.simulationName, String(simContext.stepNumber));
-            
-            const requestTransformResult = await runSimulationTransform(
-                simulationDir,
+            const schemaName = SIMULATION_TO_SCHEMA[simContext.simulationName] ?? simContext.simulationName;
+
+            const requestTransformResult = await runPromptsTransform(
+                this.config.promptsTransformsPath,
+                schemaName,
                 requestData,
-                'request'
+                'request',
+                { step: simContext.stepNumber }
             );
-            
+
             if (requestTransformResult.success) {
                 logger.info('[SimulationRequestProcessor] Applied request transforms', {
                     simulation: simContext.simulationName,
@@ -186,14 +192,16 @@ export class SimulationRequestProcessor extends BaseRequestProcessor {
                 } as ProcessResult;
             }
 
-            // Apply server-transforms-response.json if exists
-            let responseData = { llm: { response: responseContent } };
-            const responseTransformResult = await runSimulationTransform(
-                simulationDir,
+            // Apply response transforms from prompts/transforms (baseDir = simulation dir for response.md)
+            let responseData = { context: requestData.context ?? requestData, llm: { response: responseContent } };
+            const responseTransformResult = await runPromptsTransform(
+                this.config.promptsTransformsPath,
+                schemaName,
                 responseData,
-                'response'
+                'response',
+                { step: simContext.stepNumber, baseDir: simulationDir }
             );
-            
+
             if (responseTransformResult.success) {
                 logger.info('[SimulationRequestProcessor] Applied response transforms', {
                     simulation: simContext.simulationName,
@@ -322,32 +330,25 @@ export class SimulationRequestProcessor extends BaseRequestProcessor {
     }
 
     /**
-     * Load server transforms for a simulation step
-     * 
-     * Uses the transform pipeline module to load and optionally execute transforms
+     * Load server transforms for a simulation step (from prompts/transforms)
      */
     async loadSimulationTransforms(
         simulationName: string,
         step: number,
         type: 'request' | 'response'
     ): Promise<Record<string, unknown> | null> {
-        const simulationDir = path.join(this.config.simulationsBasePath, simulationName, String(step));
-        
-        // Use the transform module's loadSimulationTransform function
-        const pipeline = await loadSimulationTransform(simulationDir, type);
-        
-        if (!pipeline) {
-            return null;
-        }
-        
-        // Return the pipeline structure for reference
-        return pipeline as unknown as Record<string, unknown>;
+        const schemaName = SIMULATION_TO_SCHEMA[simulationName] ?? simulationName;
+        const pipeline = await loadPromptsTransform(
+            this.config.promptsTransformsPath,
+            schemaName,
+            type,
+            step
+        );
+        return pipeline ? (pipeline as unknown as Record<string, unknown>) : null;
     }
 
     /**
-     * Run server transforms for a simulation step
-     * 
-     * Applies the transform pipeline to the input data
+     * Run server transforms for a simulation step (from prompts/transforms)
      */
     async runSimulationTransforms(
         simulationName: string,
@@ -355,10 +356,17 @@ export class SimulationRequestProcessor extends BaseRequestProcessor {
         type: 'request' | 'response',
         input: Record<string, unknown>
     ): Promise<Record<string, unknown>> {
+        const schemaName = SIMULATION_TO_SCHEMA[simulationName] ?? simulationName;
         const simulationDir = path.join(this.config.simulationsBasePath, simulationName, String(step));
-        
-        const result = await runSimulationTransform(simulationDir, input, type);
-        
+
+        const result = await runPromptsTransform(
+            this.config.promptsTransformsPath,
+            schemaName,
+            input,
+            type,
+            { step, baseDir: type === 'response' ? simulationDir : undefined }
+        );
+
         if (!result.success) {
             logger.warn('[SimulationRequestProcessor] Transform failed', {
                 simulation: simulationName,
@@ -366,10 +374,8 @@ export class SimulationRequestProcessor extends BaseRequestProcessor {
                 type,
                 error: result.error
             });
-            // Return input on failure
             return input;
         }
-        
         return result.output;
     }
 

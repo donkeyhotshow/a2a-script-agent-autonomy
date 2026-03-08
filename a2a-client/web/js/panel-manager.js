@@ -14,9 +14,9 @@
     // Load panel modules
     function loadPanelModules() {
         const modules = [
-            'js/panels/panel-types.js',
-            'js/panels/panel.js',
-            'js/panels/panel-manager.js'
+            '/js/panels/panel-types.js',
+            '/js/panels/panel.js',
+            '/js/panels/panel-manager.js'
         ];
 
         let loadedCount = 0;

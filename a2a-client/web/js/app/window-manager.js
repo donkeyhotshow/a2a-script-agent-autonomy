@@ -1,541 +1,104 @@
 /**
  * Window Manager - Handles session windows, positioning and state
+ * 
+ * DEPRECATED: This file is now a shim that loads modules from windows/ directory.
+ * Please use the new modular structure:
+ * - a2a-client/web/js/app/windows/window-registry.js
+ * - a2a-client/web/js/app/windows/window-position.js
+ * - a2a-client/web/js/app/windows/window-events.js
+ * - a2a-client/web/js/app/windows/window-state.js
+ * - a2a-client/web/js/app/windows/window-manager.js
+ * 
+ * This file is kept for backward compatibility and loads the new modules.
  */
 (function (global) {
     'use strict';
 
+    // The new modular window manager is now in windows/ directory
+    // This shim maintains backward compatibility
     const SESSION_WINDOWS_KEY = 'a2a_session_windows';
 
-    // Track opened session windows
-    const sessionWindows = new Map(); // sessionId -> panel
+    // Re-export from modular implementation
+    const WindowManager = global.WindowManager || {};
 
-    const WindowManager = {
-        /**
-         * Get session windows map
-         */
-        getSessionWindows() {
-            return sessionWindows;
-        },
-
-        /**
-         * Save session windows state
-         */
-        async saveSessionWindowsState() {
-            try {
-                const state = {
-                    windows: Array.from(sessionWindows.keys()),
-                    active: global.SessionManager?.getActiveSessionId(),
-                    timestamp: Date.now()
-                };
-                await StorageAPI.ui.setItem(SESSION_WINDOWS_KEY, JSON.stringify(state));
-            } catch (e) {
-                console.warn('[WindowManager] Failed to save session windows state:', e);
+    // Ensure compatibility by copying over any missing methods
+    if (global.WindowModules) {
+        const modules = global.WindowModules.getModules();
+        
+        // Copy from registry if available
+        if (modules.registry) {
+            if (!WindowManager.getSessionWindows) {
+                WindowManager.getSessionWindows = modules.registry.getSessionWindows.bind(modules.registry);
             }
-        },
-
-        /**
-         * Load session windows state
-         */
-        async loadSessionWindowsState() {
-            try {
-                const saved = await StorageAPI.ui.getItem(SESSION_WINDOWS_KEY);
-                if (!saved) return [];
-                const state = typeof saved === 'string' ? JSON.parse(saved) : saved;
-                if (global.SessionManager) {
-                    global.SessionManager.setActiveSession(state.active || null);
-                }
-                return state.windows || [];
-            } catch (e) {
-                console.warn('[WindowManager] Failed to load session windows state:', e);
-                return [];
-            }
-        },
-
-        /**
-         * Clear session windows state
-         */
-        async clearSessionWindowsState() {
-            try {
-                await StorageAPI.ui.removeItem(SESSION_WINDOWS_KEY);
-            } catch (e) {
-                console.warn('[WindowManager] Failed to clear session windows state:', e);
-            }
-        },
-
-        /**
-         * Toggle session window
-         */
-        async toggleSessionWindow(sessionId, btnEl) {
-            const existingPanel = sessionWindows.get(sessionId);
-
-            if (existingPanel) {
-                // Window exists - toggle visibility
-                if (existingPanel.state === 'visible') {
-                    existingPanel.minimize();
-                } else {
-                    existingPanel.restore();
-                    global.PanelManager?.bringToFront(existingPanel.id);
-                }
-            } else {
-                // Create new window
-                await this.createSessionWindow(sessionId, btnEl);
-            }
-
-            // Update active session
-            if (global.SessionManager) {
-                global.SessionManager.setActiveSession(sessionId);
-            }
-        },
-
-        /**
-         * Create new session window
-         */
-        async createSessionWindow(sessionId, btnEl) {
-            try {
-                // Load saved window state
-                const savedState = await this.loadWindowState(sessionId);
-                const position = savedState?.position || this.getDefaultWindowPosition(sessionId);
-                const size = savedState?.size || { width: 800, height: 600 };
-
-                // Fetch session data from server first (pass projectId so server finds the session)
-                let sessionData = null;
-                try {
-                    if (global.apiIntegration?.getSession) {
-                        const projectId = await global.ProjectManager?.getSelectedProjectId?.() || global.SessionStore?.projectId;
-                        sessionData = await global.apiIntegration.getSession(sessionId, projectId);
-                        console.log('[WindowManager] Loaded session data:', sessionId);
-                    }
-                } catch (err) {
-                    console.warn('[WindowManager] Failed to load session data:', err);
-                }
-
-                // Create panel as floating (not docked)
-                const panel = global.PanelManager?.open('chat', {
-                    id: `session-${sessionId}`,
-                    title: `Session ${sessionId.slice(-8)}`,
-                    x: position.x,
-                    y: position.y,
-                    width: size.width,
-                    height: size.height,
-                    slot: 'floating'
-                });
-
-                if (panel) {
-                    sessionWindows.set(sessionId, panel);
-
-                    // Setup panel event handlers
-                    panel.container.addEventListener('mousedown', () => {
-                        if (global.SessionManager) {
-                            global.SessionManager.setActiveSession(sessionId);
-                        }
-                    });
-
-                    // Listen for panel state changes to save position/size
-                    panel._onStateChange = (state) => {
-                        if (state === 'closed') {
-                            sessionWindows.delete(sessionId);
-                            this.saveSessionWindowsState();
-                            // Cleanup store listeners
-                            const contentEl = panel.getContentEl();
-                            if (contentEl?._cleanup) contentEl._cleanup();
-                        }
-                        // Save position/size on any state change
-                        this.saveWindowState(sessionId, panel.position, panel.size);
-                    };
-
-                    // Listen for drag end to save position
-                    let dragTimeout;
-                    panel.container.addEventListener('mouseup', () => {
-                        if (panel.container.classList.contains('pm-dragging')) {
-                            clearTimeout(dragTimeout);
-                            dragTimeout = setTimeout(() => {
-                                this.saveWindowState(sessionId, panel.position, panel.size);
-                            }, 100);
-                        }
-                    });
-
-                    // Create per-window SessionStore instance to avoid conflicts
-                    const store = new global.SessionStore.constructor();
-                    // Store reference on the panel for cleanup
-                    panel._sessionStore = store;
-
-                    if (store && sessionData) {
-                        // Set session info
-                        if (sessionData.id) {
-                            store.setSession(sessionData.id, sessionData.projectId);
-                        }
-                        // Load messages if available from session data
-                        if (sessionData.messages?.length) {
-                            store.setMessages(sessionData.messages);
-                        }
-                        // Load context/execute if available
-                        if (sessionData.context) {
-                            store.setContext(sessionData.context);
-                        }
-                        const execute = sessionData.execute ?? sessionData.context?.execute ?? sessionData.currentExecute;
-                        if (execute) {
-                            store.setExecute(execute);
-                        }
-                        // Set status
-                        if (sessionData.status) {
-                            store.setStatus(sessionData.status);
-                        }
-                    }
-
-                    // If messages weren't in session data, load them separately
-                    if (store && !sessionData?.messages?.length) {
-                        try {
-                            const adapter = global.SessionManagerAdapter || global.SessionManager;
-                            if (adapter?.getConversation) {
-                                await adapter.getConversation(sessionId);
-                                console.log('[WindowManager] Loaded conversation:', sessionId);
-                            }
-                        } catch (err) {
-                            console.warn('[WindowManager] Failed to load conversation:', err);
-                        }
-                    }
-
-                    // Reconnect to SSE for this session
-                    if (store?.restoreAndReconnect) {
-                        await store.restoreAndReconnect(sessionId);
-                    }
-
-                    // Render session content
-                    const contentEl = panel.getContentEl();
-                    console.log('[WindowManager] About to render content:', { hasPanel: !!panel, hasContentEl: !!contentEl, contentElTag: contentEl?.tagName });
-                    this.renderSessionContent(contentEl, sessionId, store);
-
-                    // Save state
-                    await this.saveSessionWindowsState();
-
-                    console.log('[WindowManager] Created session window:', sessionId);
-                }
-            } catch (error) {
-                console.error('[WindowManager] Failed to create session window:', error);
-            }
-        },
-
-        /**
-         * Close session window
-         */
-        closeSessionWindow(sessionId) {
-            const panel = sessionWindows.get(sessionId);
-            if (panel) {
-                panel.close();
-                sessionWindows.delete(sessionId);
-                this.saveSessionWindowsState();
-            }
-        },
-
-        /**
-         * Close all session windows (e.g. when switching project)
-         */
-        closeAllSessionWindows() {
-            const ids = Array.from(sessionWindows.keys());
-            ids.forEach(sessionId => this.closeSessionWindow(sessionId));
-            if (global.SessionManager) global.SessionManager.setActiveSession(null);
-        },
-
-        /**
-         * Save window state
-         */
-        async saveWindowState(sessionId, position, size) {
-            try {
-                const key = `window_state_${sessionId}`;
-                const state = { position, size, timestamp: Date.now() };
-                await StorageAPI.ui.setItem(key, JSON.stringify(state));
-            } catch (e) {
-                console.warn('[WindowManager] Failed to save window state:', e);
-            }
-        },
-
-        /**
-         * Load window state
-         */
-        async loadWindowState(sessionId) {
-            try {
-                const key = `window_state_${sessionId}`;
-                const saved = await StorageAPI.ui.getItem(key);
-                
-                if (saved) {
-                    return JSON.parse(saved);
-                }
-                
-                // Return default window state if not found
-                const defaultPosition = this.getDefaultWindowPosition(sessionId);
-                return {
-                    position: defaultPosition,
-                    size: { width: 800, height: 600 },
-                    timestamp: Date.now()
-                };
-            } catch (e) {
-                console.warn('[WindowManager] Failed to load window state:', e);
-                const defaultPosition = this.getDefaultWindowPosition(sessionId);
-                return {
-                    position: defaultPosition,
-                    size: { width: 800, height: 600 },
-                    timestamp: Date.now()
-                };
-            }
-        },
-
-        /**
-         * Get default window position
-         */
-        getDefaultWindowPosition(sessionId) {
-            // Calculate position based on existing windows to avoid overlap
-            const existingPositions = Array.from(sessionWindows.values())
-                .map(panel => panel.position);
-
-            let x = 50 + (existingPositions.length * 30);
-            let y = 50 + (existingPositions.length * 30);
-
-            // Ensure within viewport bounds
-            const maxX = window.innerWidth - 400;
-            const maxY = window.innerHeight - 300;
-
-            return {
-                x: Math.min(x, maxX),
-                y: Math.min(y, maxY)
-            };
-        },
-
-        /**
-         * Render session content in panel
-         */
-        renderSessionContent(contentEl, sessionId, store = null) {
-            console.log('[WindowManager] renderSessionContent called:', { sessionId, hasContentEl: !!contentEl, hasInnerHTML: !!(contentEl?.innerHTML) });
-
-            // Use TaskFlow rendering system if available
-            const Render = global.TaskFlowRender;
-            // Use provided store (per-window) or fall back to global
-            store = store || global.SessionStore;
-
-            console.log('[WindowManager] renderSessionContent deps:', { hasRender: !!Render, hasStore: !!store, hasTaskFlowRef: !!global.TaskFlow });
-
-            if (Render && store) {
-                // Note: store should already be set up with session data from createSessionWindow
-                // Don't reset here as it would clear loaded messages
-
-                const taskFlowRef = {
-                    sendMessageResult: async (text, el) => {
-                        if (!text || !text.trim()) return;
-                        store.pushMessage?.({ content: String(text).trim() }, 'user');
-                        store?.setPromisePending?.(true);
-                        refreshContent();
-                        await this.sendMessage(sessionId, text);
-                    },
-                    sendChoice: async (choiceId, el) => {
-                        store?.setPromisePending?.(true);
-                        refreshContent();
-                        await this.sendChoice(sessionId, choiceId);
-                    }
-                };
-
-                // Use renderExecute to render full panel (history + execute + input)
-                // renderExecute renders the complete content: history + execute block + input area
-                const refreshContent = () => {
-                    const execute = store.getExecute?.() || store.execute;
-                    const context = store.context || {};
-                    const isWaiting = store.isInputBlocked?.() || false;
-
-                    if (execute && !isWaiting) {
-                        // Let renderExecute handle the full layout (history + form/message + input)
-                        Render.renderExecute(contentEl, execute, { execute, context, store }, taskFlowRef);
-                    } else {
-                        // Waiting or no execute: show history + waiting indicator
-                        contentEl.innerHTML = `
-                            <div class="session-content">
-                                <div class="session-header">
-                                    <div class="session-info">
-                                        <span class="session-id">ID: ${sessionId.slice(-8)}</span>
-                                        <span class="session-status">${isWaiting ? 'Waiting...' : 'Active'}</span>
-                                    </div>
-                                </div>
-                                ${Render.renderMessageHistory(contentEl, store)}
-                                ${Render.getInputAreaHtml(isWaiting)}
-                            </div>
-                        `;
-                        if (!isWaiting) {
-                            Render.bindInputHandlers(contentEl, taskFlowRef);
-                        }
-                    }
-
-                    // Scroll to bottom
-                    const historyEl = contentEl.querySelector('.task-flow-history');
-                    if (historyEl) historyEl.scrollTop = historyEl.scrollHeight;
-                };
-
-                // Initial render
-                refreshContent();
-
-                // Listen for message updates (messages=plural from setMessages, message=singular from pushMessage)
-                const unsubMessages = store.on?.('messages', () => refreshContent());
-                const unsubMessage = store.on?.('message', () => refreshContent());
-                const unsubExecute = store.on?.('execute', () => refreshContent());
-                const unsubPromisePending = store.on?.('promisePending', () => refreshContent());
-
-                // Cleanup on panel close
-                contentEl._cleanup = () => {
-                    unsubMessages?.();
-                    unsubMessage?.();
-                    unsubExecute?.();
-                    unsubPromisePending?.();
-                };
-            } else {
-                // Fallback to simple UI
-                contentEl.innerHTML = `
-                    <div class="session-content">
-                        <div class="session-header">
-                            <div class="session-info">
-                                <span class="session-id">ID: ${sessionId}</span>
-                                <span class="session-status">Active</span>
-                            </div>
-                        </div>
-                        <div class="session-messages" id="messages-${sessionId}">
-                            <div class="message system">Session initialized</div>
-                        </div>
-                        <div class="session-input">
-                            <textarea placeholder="Type your message..." rows="3"></textarea>
-                            <button class="send-btn">Send</button>
-                        </div>
-                    </div>
-                `;
-
-                const textarea = contentEl.querySelector('textarea');
-                const sendBtn = contentEl.querySelector('.send-btn');
-
-                const sendMessage = () => {
-                    const message = textarea.value.trim();
-                    if (message) {
-                        this.sendMessage(sessionId, message);
-                        textarea.value = '';
-                    }
-                };
-
-                sendBtn.addEventListener('click', sendMessage);
-                textarea.addEventListener('keydown', (e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        sendMessage();
-                    }
-                });
-            }
-        },
-
-        /**
-         * Send message to session
-         */
-        async sendMessage(sessionId, message) {
-            // Message already added in sendMessageResult before this is called
-            const store = global.SessionStore;
-
-            let response = null;
-
-            // Send via API
-            if (global.apiIntegration?.sendMessage) {
-                response = await global.apiIntegration.sendMessage(sessionId, message);
-            } else if (global.ActionHandler?.sendMessage) {
-                response = await global.ActionHandler.sendMessage(sessionId, store?.projectId, message);
-            } else if (global.ActionHandler?.submit) {
-                const projectId = store?.projectId;
-                const context = store?.context || {};
-                response = await global.ActionHandler.submit(sessionId, projectId, { message: message }, context);
-            }
-
-            // Apply HTTP response to store as fallback (SSE may race or be unavailable)
-            const payload = response?.data || response;
-            if (payload?.execute || payload?.context) {
-                store?.applyServerResponse?.({
-                    execute: payload.execute,
-                    context: payload.context,
-                    messages: payload.messages
-                });
-            } else if (!payload?.promiseId) {
-                // No execute and no pending promise — clear waiting state
-                store?.setPromisePending?.(false);
-            }
-            // If promiseId present: keep promisePending=true, SSE will resolve it
-
-            console.log('[WindowManager] Sent message:', sessionId, message);
-        },
-
-        /**
-         * Send choice result to session (for form.choices)
-         */
-        async sendChoice(sessionId, choiceId) {
-            const store = global.SessionStore;
-            const projectId = store?.projectId;
-            const result = { choice: choiceId };
-
-            // Send via Client API POST /sessions/:id/result
-            const promises = [];
-            if (global.apiIntegration?.sendResult) {
-                promises.push(global.apiIntegration.sendResult(sessionId, result, projectId));
-            } else if (global.webApiClient?.sendChoice) {
-                promises.push(global.webApiClient.sendChoice(sessionId, result));
-            } else if (global.ActionHandler?.submit && projectId) {
-                promises.push(global.ActionHandler.submit(sessionId, projectId, result, store?.context || {}));
-            }
-
-            try {
-                const results = await Promise.all(promises);
-                const payload = results[0]?.data || results[0];
-                if (payload?.execute || payload?.context) {
-                    store?.applyServerResponse?.({
-                        execute: payload.execute,
-                        context: payload.context,
-                        messages: payload.messages
-                    });
-                } else if (!payload?.promiseId) {
-                    store?.setPromisePending?.(false);
-                }
-                console.log('[WindowManager] Sent choice:', sessionId, choiceId);
-            } catch (err) {
-                console.error('[WindowManager] sendChoice failed:', err);
-                throw err;
-            }
-        },
-
-        /**
-         * Restore session windows from saved state
-         */
-        async restoreSessionWindows() {
-            const savedWindows = await this.loadSessionWindowsState();
-
-            for (const sessionId of savedWindows) {
-                try {
-                    // Check if session still exists
-                    const sessionExists = await this.checkSessionExists(sessionId);
-                    if (sessionExists) {
-                        await this.createSessionWindow(sessionId);
-                    }
-                } catch (error) {
-                    console.warn('[WindowManager] Failed to restore window:', sessionId, error);
-                }
-            }
-        },
-
-        /**
-         * Check if session exists via Client API
-         */
-        async checkSessionExists(sessionId) {
-            if (!sessionId || !global.apiIntegration) return false;
-            try {
-                await global.apiIntegration.getSession(sessionId);
-                return true;
-            } catch (e) {
-                return false;
-            }
-        },
-
-        /**
-         * Initialize window manager
-         */
-        async init() {
-            console.log('[WindowManager] Initialized');
         }
-    };
+        
+        // Copy from position if available  
+        if (modules.position) {
+            if (!WindowManager.saveWindowState) {
+                WindowManager.saveWindowState = modules.position.saveWindowState.bind(modules.position);
+            }
+            if (!WindowManager.loadWindowState) {
+                WindowManager.loadWindowState = modules.position.loadWindowState.bind(modules.position);
+            }
+            if (!WindowManager.getDefaultWindowPosition) {
+                WindowManager.getDefaultWindowPosition = modules.position.getDefaultWindowPosition.bind(modules.position);
+            }
+        }
+        
+        // Copy from state if available
+        if (modules.state) {
+            if (!WindowManager.toggleSessionWindow) {
+                WindowManager.toggleSessionWindow = modules.state.toggleSessionWindow.bind(modules.state);
+            }
+            if (!WindowManager.createSessionWindow) {
+                WindowManager.createSessionWindow = modules.state.createSessionWindow.bind(modules.state);
+            }
+            if (!WindowManager.closeSessionWindow) {
+                WindowManager.closeSessionWindow = modules.state.closeSessionWindow.bind(modules.state);
+            }
+            if (!WindowManager.closeAllSessionWindows) {
+                WindowManager.closeAllSessionWindows = modules.state.closeAllSessionWindows.bind(modules.state);
+            }
+            if (!WindowManager.restoreSessionWindows) {
+                WindowManager.restoreSessionWindows = modules.state.restoreSessionWindows.bind(modules.state);
+            }
+            if (!WindowManager.checkSessionExists) {
+                WindowManager.checkSessionExists = modules.state.checkSessionExists.bind(modules.state);
+            }
+        }
+        
+        // Copy from events if available
+        if (modules.events) {
+            if (!WindowManager.renderSessionContent) {
+                WindowManager.renderSessionContent = modules.events.renderSessionContent.bind(modules.events);
+            }
+            if (!WindowManager.sendMessage) {
+                WindowManager.sendMessage = modules.events.sendMessage.bind(modules.events);
+            }
+            if (!WindowManager.sendChoice) {
+                WindowManager.sendChoice = modules.events.sendChoice.bind(modules.events);
+            }
+        }
+        
+        // Copy from manager if available
+        if (modules.manager) {
+            if (!WindowManager.saveSessionWindowsState) {
+                WindowManager.saveSessionWindowsState = modules.manager.saveSessionWindowsState.bind(modules.manager);
+            }
+            if (!WindowManager.loadSessionWindowsState) {
+                WindowManager.loadSessionWindowsState = modules.manager.loadSessionWindowsState.bind(modules.manager);
+            }
+            if (!WindowManager.clearSessionWindowsState) {
+                WindowManager.clearSessionWindowsState = modules.manager.clearSessionWindowsState.bind(modules.manager);
+            }
+            if (!WindowManager.init) {
+                WindowManager.init = modules.manager.init.bind(modules.manager);
+            }
+        }
+    }
+
+    // Keep the original SESSION_WINDOWS_KEY for compatibility
+    WindowManager.SESSION_WINDOWS_KEY = SESSION_WINDOWS_KEY;
 
     // Export
     global.WindowManager = WindowManager;

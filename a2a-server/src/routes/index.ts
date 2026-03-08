@@ -26,6 +26,8 @@ router.post('/invoke', async (req: Request, res: Response, next: NextFunction): 
         };
         
         const clientId = 'anonymous';
+        const resultKeys = body.result && typeof body.result === 'object' ? Object.keys(body.result) : [];
+        console.log('[a2a-server] /invoke received', { resultKeys, task: body.task?.slice(0, 50) });
         
         const invokeResult = await invoke(clientId, {
             task: body.task,
@@ -55,6 +57,7 @@ router.post('/invoke', async (req: Request, res: Response, next: NextFunction): 
         }
 
         // Async response with promiseId
+        console.log('[a2a-server] /invoke returning promiseId', { promiseId: invokeResult.promiseId });
         res.json({
             success: true,
             data: {

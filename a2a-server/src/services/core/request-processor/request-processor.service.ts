@@ -9,13 +9,14 @@
  * ContextManager is reset per request (resetContextManager) — no cache of context/code between iterations.
  */
 
-import {requestService} from '../request/request.service.js';
+import {requestService, isRetryableError} from '../request/request.service.js';
 import {logger} from '../../../utils/logger.js';
 import type {RequestContext, ProcessResult, ProcessOutcome, Task, TaskAnalysis} from './request-processor.interfaces.js';
 import {
     actionRequestProcessor,
     simulationRequestProcessor,
     formRequestProcessor,
+    dialogRequestProcessor,
     processorRegistry
 } from './index.js';
 import type {RequestType} from './request-processor.interfaces.js';
@@ -27,6 +28,7 @@ let timerId: ReturnType<typeof setInterval> | null = null;
 processorRegistry.register('action', actionRequestProcessor);
 processorRegistry.register('simulation', simulationRequestProcessor);
 processorRegistry.register('form', formRequestProcessor);
+processorRegistry.register('dialog', dialogRequestProcessor);
 
 /**
  * Determine the request type based on context
@@ -37,6 +39,17 @@ function determineRequestType(context: Record<string, unknown>): RequestType {
         return 'simulation';
     }
 
+    // Transform pipeline / LLM: transformSchema, action=dialog+message, or ai_action (auto-ai, coder, etc.)
+    const exec = context['execution'] as Record<string, unknown> | undefined;
+    const result = context['result'] as Record<string, unknown> | undefined;
+    const transformSchema = context['transformSchema'] as string | undefined;
+    const action = (exec?.action ?? context['action']) as string | undefined;
+    const hasMessage = result?.message ?? context['task'] ?? context['message'];
+    const llmActions = ['dialog', 'auto-ai', 'coder', 'analyze', 'task-decomposition'];
+    if (transformSchema || (action && hasMessage && llmActions.includes(action))) {
+        return 'dialog';
+    }
+
     // Check for form requests
     if (context['form_submission'] || context['form_data'] || context['form_id'] ||
         context['selected_choice'] || context['choice_id']) {
@@ -45,7 +58,7 @@ function determineRequestType(context: Record<string, unknown>): RequestType {
 
 
     // Check for action requests
-    const actionType = context['action'] as string | undefined;
+    const actionType = (context['action'] ?? exec?.action) as string | undefined;
     if (actionType === 'step_result' || actionType === 'approve_action' ||
         actionType === 'task_request' ||
         (context['continue'] && context['step_result'])) {
@@ -89,6 +102,7 @@ export async function processOneRequest(): Promise<ProcessResult | null> {
     if (!request) return null;
 
     const {promiseId, context, codeBlocks, message} = request;
+    console.log('[RequestProcessor] Processing request', { promiseId, action: context?.action, resultKeys: context?.result ? Object.keys(context.result as object) : [] });
 
     try {
         const requestContext: RequestContext = {
@@ -132,7 +146,7 @@ export async function processOneRequest(): Promise<ProcessResult | null> {
                 'completed',
                 {
                     ...result,
-                    followUpRequestId: followUpPromiseId.promiseId,
+                    followUpRequestId: followUpRequest.promiseId,
                     note: 'AI-Action routed to LLM processing'
                 }
             );
@@ -141,19 +155,36 @@ export async function processOneRequest(): Promise<ProcessResult | null> {
         }
 
         // Update request status based on result
+        if (result.outcome === 'failed') {
+            const err = String(result.error ?? '');
+            if (isRetryableError(err)) {
+                const ok = await requestService.scheduleRetry(promiseId);
+                if (ok) {
+                    logger.info('[RequestProcessor] Scheduled retry for transient error', {promiseId});
+                    return result;
+                }
+            }
+        }
         await requestService.updateStatus(
             promiseId,
             result.outcome === 'failed' ? 'failed' : 'completed',
             result
         );
-        
         return result;
 
     } catch (err) {
-        logger.error('[RequestProcessor] Error', {promiseId, error: String(err)});
+        const errStr = String(err);
+        logger.error('[RequestProcessor] Error', {promiseId, error: errStr});
+        if (isRetryableError(errStr)) {
+            const ok = await requestService.scheduleRetry(promiseId);
+            if (ok) {
+                logger.info('[RequestProcessor] Scheduled retry for caught error', {promiseId});
+                return {outcome: 'failed' as ProcessOutcome};
+            }
+        }
         await requestService.updateStatus(promiseId, 'failed', undefined, {
             code: 'PROCESS_ERROR',
-            message: String(err),
+            message: errStr,
         });
         return {outcome: 'failed' as ProcessOutcome};
     }
@@ -166,6 +197,10 @@ async function tick(): Promise<void> {
     const result = await processOneRequest();
     if (result?.outcome === 'failed') {
         logger.warn('[RequestProcessor] Request failed, continuing...');
+    }
+    // When idle, revive retryable failed requests (e.g. after ai-integration starts)
+    if (!result) {
+        await requestService.scheduleRetryForFailed();
     }
 }
 

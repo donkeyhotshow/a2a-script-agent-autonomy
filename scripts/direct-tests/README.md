@@ -8,6 +8,7 @@ Scripts that run test/check flows **directly** (no test framework). Original fil
 |-------|---------|
 | [run-checks.ps1](run-checks.ps1) | Hub: health checks by scope (LLM, ServerLLM, ClientServer, …) |
 | [scripts/](scripts/) | Runners → `scripts/tests/` and root `scripts/` (prod-test, pre-release, web-ui-smoke-report) |
+| [dialog/](dialog/) | Dialog flow with direct Ollama (bypass ai-integration timeout) |
 | [rag/](rag/), [sdk/](sdk/), [ai-integration/](ai-integration/), [server/](server/) | Runners → packages (RAG, SDK, AI, sim) |
 
 ---
@@ -33,6 +34,15 @@ Scripts that run test/check flows **directly** (no test framework). Original fil
 # Override ports/URLs:
 .\scripts\direct-tests\run-checks.ps1 -Scope Full -ServerPort 3000 -ClientPort 3001 -WebPort 5173 -AiProxyUrl http://localhost:11435
 ```
+
+## Dialog
+
+```powershell
+.\scripts\direct-tests\dialog\run-dialog-direct-ollama.ps1
+.\scripts\direct-tests\dialog\run-dialog-direct-ollama.ps1 -RetryRequest "a2a-server\storage\requests\prom_xxx.json"
+```
+
+ai-integration uses FORWARD_TIMEOUT_SECONDS=180 (set in start-ai-integration.bat) for slow models.
 
 ## Locations (do not move originals)
 

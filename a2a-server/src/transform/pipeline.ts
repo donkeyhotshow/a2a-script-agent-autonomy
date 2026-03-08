@@ -173,6 +173,137 @@ export async function runSimulationTransform(
   return runTransformPipelineFromFile(transformPath, input, options);
 }
 
+/** Schema name → template file for request transforms (e.g. dialog → dialog-request.md) */
+const SCHEMA_TO_TEMPLATE: Record<string, string> = {
+  dialog: 'dialog-request.md',
+  'auto-ai': 'auto-ai-request.md',
+  coder: 'coder-request.md',
+  analyze: 'analyze-request.md',
+  'fix-vue-imports': '',  // DSL script, no LLM; uses fix-vue-imports-*-request.json
+  'task-decomposition': 'task-decomposition-request.md',
+  'test-action-flow': 'test-action-flow-request.md',
+};
+
+/** Simulation name → schema name for prompts/transforms lookup */
+export const SIMULATION_TO_SCHEMA: Record<string, string> = {
+  dialog: 'dialog',
+  coder: 'coder',
+  'coder-smart': 'coder',
+  analyze: 'analyze',
+  'auto-ai': 'auto-ai',
+  'fix-vue-imports': 'fix-vue-imports',
+  'fix-vue-imports-batched': 'fix-vue-imports',
+  'task-decomposition': 'task-decomposition',
+  'test-action-flow': 'test-action-flow',
+  'phpunit-deprecations': 'coder',
+};
+
+function substitutePipelineVars(pipeline: TransformPipeline, vars: Record<string, string>): TransformPipeline {
+  const str = JSON.stringify(pipeline);
+  const substituted = Object.entries(vars).reduce(
+    (s, [k, v]) => s.replace(new RegExp(`\\{\\{${k}\\}\\}`, 'g'), v),
+    str
+  );
+  return JSON.parse(substituted) as TransformPipeline;
+}
+
+/**
+ * Resolve path to prompts/transforms directory.
+ * Uses PROMPTS_TRANSFORMS_PATH env or default: cwd/prompts/transforms
+ */
+export function getPromptsTransformsPath(): string {
+  const envPath = process.env.PROMPTS_TRANSFORMS_PATH;
+  if (envPath) return path.resolve(envPath);
+  return path.resolve(process.cwd(), 'prompts', 'transforms');
+}
+
+/**
+ * Find first existing transform file. Lookup order:
+ * 1. {schema}-{step}-{type}.json
+ * 2. {schema}-{type}.json
+ * 3. server-transforms-{type}.json
+ * When forceServerTransforms: true, use only server-transforms-{type}.json (for LLM pipeline).
+ */
+async function resolveTransformFile(
+  dir: string,
+  schemaName: string,
+  step: number | undefined,
+  type: 'request' | 'response',
+  forceServerTransforms?: boolean
+): Promise<string> {
+  const candidates: string[] = [];
+  if (forceServerTransforms) {
+    candidates.push(path.resolve(dir, `server-transforms-${type}.json`));
+  } else {
+    if (step !== undefined && step > 0) {
+      candidates.push(path.resolve(dir, `${schemaName}-${step}-${type}.json`));
+    }
+    candidates.push(path.resolve(dir, `${schemaName}-${type}.json`));
+    candidates.push(path.resolve(dir, `server-transforms-${type}.json`));
+  }
+
+  for (const filePath of candidates) {
+    try {
+      await fs.access(filePath);
+      return filePath;
+    } catch {
+      continue;
+    }
+  }
+  throw new Error(`No transform file found for ${schemaName}/${step ?? '?'} ${type}`);
+}
+
+/**
+ * Load transform pipeline from prompts/transforms for a schema (and optional step).
+ * Uses same lookup order as runPromptsTransform.
+ */
+export async function loadPromptsTransform(
+  promptsTransformsDir: string,
+  schemaName: string,
+  type: 'request' | 'response',
+  step?: number
+): Promise<TransformPipeline | null> {
+  try {
+    const filePath = await resolveTransformFile(promptsTransformsDir, schemaName, step, type);
+    return await loadTransformPipeline(filePath);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Run transforms from prompts/transforms/
+ * Lookup: {schema}-{step}-{type}.json → {schema}-{type}.json → server-transforms-{type}.json
+ * For request type: substitutes {{TEMPLATE_NAME}} when using server-transforms-request.json
+ * forceServerTransforms: use server-transforms-*.json only (for LLM pipeline; dialog-request.json is form-only).
+ *
+ * @param promptsTransformsDir - Path to prompts/transforms
+ * @param schemaName - Schema name (e.g. 'dialog')
+ * @param input - Input document
+ * @param type - 'request' or 'response'
+ * @param options - Transform options; step, forceServerTransforms
+ */
+export async function runPromptsTransform(
+  promptsTransformsDir: string,
+  schemaName: string,
+  input: Record<string, unknown>,
+  type: 'request' | 'response',
+  options: TransformOptions & { step?: number; forceServerTransforms?: boolean } = {}
+): Promise<TransformResult> {
+  const { step, forceServerTransforms, ...transformOptions } = options;
+  const filePath = await resolveTransformFile(promptsTransformsDir, schemaName, step, type, forceServerTransforms);
+  const content = await fs.readFile(filePath, 'utf-8');
+  let pipeline = JSON.parse(content) as TransformPipeline;
+
+  if (type === 'request') {
+    const templateName = SCHEMA_TO_TEMPLATE[schemaName] ?? `${schemaName}-request.md`;
+    pipeline = substitutePipelineVars(pipeline, { TEMPLATE_NAME: templateName });
+  }
+
+  const baseDir = transformOptions.baseDir ?? path.resolve(promptsTransformsDir, '../../..');
+  return runTransformPipeline(pipeline, input, { ...transformOptions, baseDir });
+}
+
 /**
  * Validate a transform pipeline
  * 

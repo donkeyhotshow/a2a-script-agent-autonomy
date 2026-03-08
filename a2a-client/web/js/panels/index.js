@@ -10,7 +10,7 @@
     // Panel types first
     if (!document.querySelector('script[src*="panels/panel-types.js"]')) {
         const script = document.createElement('script');
-        script.src = 'js/panels/panel-types.js';
+        script.src = '/js/panels/panel-types.js';
         script.onload = () => {
             console.log('[PanelsIndex] PanelTypes loaded');
             loadPanelClass();
@@ -23,7 +23,7 @@
     function loadPanelClass() {
         if (!document.querySelector('script[src*="panels/panel.js"]')) {
             const script = document.createElement('script');
-            script.src = 'js/panels/panel.js';
+            script.src = '/js/panels/panel.js';
             script.onload = () => {
                 console.log('[PanelsIndex] Panel class loaded');
                 loadPanelManager();
@@ -37,7 +37,7 @@
     function loadPanelManager() {
         if (!document.querySelector('script[src*="panels/panel-manager.js"]')) {
             const script = document.createElement('script');
-            script.src = 'js/panels/panel-manager.js';
+            script.src = '/js/panels/panel-manager.js';
             script.onload = () => {
                 console.log('[PanelsIndex] PanelManager loaded');
                 global._panelModulesLoaded = true;

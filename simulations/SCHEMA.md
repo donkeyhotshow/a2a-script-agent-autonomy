@@ -13,10 +13,10 @@ Each step folder can contain up to **8** files, covering both **Web ↔ Client A
 |---------------------------------|----------------------|---------------------------------------------------------------------------------------------------------------------------|
 | `client.json`                   | Web → Client API     | What Web sends to Client API (e.g. `{ task, projectId }`, `{ sessionId, result }`).                                       |
 | `request.json`                  | Client API → Server  | Payload from Client API to Server (context + result), already без `projectId`/`sessionId`.                               |
-| `server-transforms-request.json`  | —                    | How the server processes `request.json` and builds the LLM input (transformation before calling LLM). Optional.           |
+| `server-transforms-request.json`  | —                    | **DEPRECATED.** Transforms now live in `a2a-server/prompts/transforms/`. Kept for reference only.           |
 | `request.md`                    | Server → LLM         | Markdown sent to LLM (system prompt + current state).                                                                     |
 | `response.md`                   | LLM → Server         | Expected LLM output (e.g. JSON with `message`, `action`).                                                                 |
-| `server-transforms-response.json` | —                    | How the server processes `response.md` and builds the client payload (transformation before sending to client). Optional. |
+| `server-transforms-response.json` | —                    | **DEPRECATED.** Transforms now live in `a2a-server/prompts/transforms/`. Kept for reference only. |
 | `response.json`                 | Server → Client API  | Payload sent to Client API (context + execute, etc.).                                                                     |
 | `received.json`                 | Client API → Web     | What Client API returns to Web (e.g. `{ projectId, sessionId, execute }`).                                                |
 

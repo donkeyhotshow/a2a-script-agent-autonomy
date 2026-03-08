@@ -12,11 +12,11 @@
     // Load app modules
     function loadAppModules() {
         const modules = [
-            'js/app/project-manager.js',
-            'js/app/session-manager.js',
-            'js/app/window-manager.js',
-            'js/app/taskbar-manager.js',
-            'js/app/app-task.js'
+            '/js/app/project-manager.js',
+            '/js/app/session-manager.js',
+            '/js/app/window-manager.js',
+            '/js/app/taskbar-manager.js',
+            '/js/app/app-task.js'
         ];
 
         let loadedCount = 0;

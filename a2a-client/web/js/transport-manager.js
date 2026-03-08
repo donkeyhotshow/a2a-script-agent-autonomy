@@ -13,11 +13,11 @@
     // Load transport modules
     function loadTransportModules() {
         const modules = [
-            'js/transport/base-transport.js',
-            'js/transport/poll-transport.js',
-            'js/transport/websocket-transport.js',
-            'js/transport/heartbeat-manager.js',
-            'js/transport/transport-manager.js'
+            '/js/transport/base-transport.js',
+            '/js/transport/poll-transport.js',
+            '/js/transport/websocket-transport.js',
+            '/js/transport/heartbeat-manager.js',
+            '/js/transport/transport-manager.js'
         ];
 
         let loadedCount = 0;
