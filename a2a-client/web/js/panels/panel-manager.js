@@ -188,14 +188,14 @@
                             existing.container.style.width = `${existing.size.width}px`;
                             existing.container.style.height = `${existing.size.height}px`;
                         }
-                        // Restore state
-                        if (savedPanel.state === global.PANEL_STATES.VISIBLE) {
-                            existing.restore();
-                        } else if (savedPanel.state === global.PANEL_STATES.MINIMIZED) {
+                        // NOTE: Do NOT restore visibility - panels start hidden by default
+                        // Only restore minimized state for indicators
+                        if (savedPanel.state === global.PANEL_STATES.MINIMIZED) {
                             existing.minimize();
                         }
                     } else {
                         // Create new panel from saved state
+                        // NOTE: Do NOT restore visibility - panels start hidden by default
                         const panel = this.create(savedPanel.type, {
                             id: savedPanel.id,
                             title: savedPanel.config?.title,
@@ -205,9 +205,8 @@
                             width: savedPanel.size?.width,
                             height: savedPanel.size?.height
                         });
-                        if (savedPanel.state === global.PANEL_STATES.VISIBLE) {
-                            panel.show();
-                        } else if (savedPanel.state === global.PANEL_STATES.MINIMIZED) {
+                        // Only restore minimized state for indicators
+                        if (savedPanel.state === global.PANEL_STATES.MINIMIZED) {
                             panel.show().minimize();
                         }
                     }

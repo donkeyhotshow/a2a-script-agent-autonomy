@@ -17,6 +17,9 @@
         _trackers: new Map(),
         _listeners: new Map(),
         
+        // Wait indicator state
+        _waitIndicator: null,
+        
         // Default configuration
         defaults: {
             animated: true,
@@ -54,6 +57,141 @@
                 tracker.destroy();
                 this._trackers.delete(id);
             }
+        },
+
+        /**
+         * Show wait indicator - called when server sends execute.wait
+         * @param {Object} waitData - { message?: string, showFormAfter?: boolean }
+         */
+        showWaitIndicator(waitData = {}) {
+            // Remove existing wait indicator if any
+            this.hideWaitIndicator();
+            
+            const message = waitData.message || 'Ожидайте...';
+            const containerId = 'wait-indicator-container';
+            
+            // Create container
+            let container = document.getElementById(containerId);
+            if (!container) {
+                container = document.createElement('div');
+                container.id = containerId;
+                container.className = 'wait-indicator';
+                document.body.appendChild(container);
+            }
+            
+            // Build HTML
+            container.innerHTML = `
+                <div class="wait-indicator-content">
+                    <div class="wait-spinner"></div>
+                    <div class="wait-message">${this._escapeHtml(message)}</div>
+                </div>
+            `;
+            
+            // Add styles if not already added
+            this._ensureWaitIndicatorStyles();
+            
+            // Show with animation
+            container.classList.add('wait-indicator-visible');
+            
+            this._waitIndicator = {
+                container,
+                message,
+                showFormAfter: waitData.showFormAfter
+            };
+            
+            console.log('[ProgressIndicators] Wait indicator shown:', message);
+        },
+
+        /**
+         * Hide wait indicator - called when server sends final execute
+         */
+        hideWaitIndicator() {
+            if (!this._waitIndicator) return;
+            
+            const container = this._waitIndicator.container;
+            if (container) {
+                container.classList.remove('wait-indicator-visible');
+                
+                // Remove after animation
+                setTimeout(() => {
+                    if (container.parentNode) {
+                        container.parentNode.removeChild(container);
+                    }
+                }, 300);
+            }
+            
+            console.log('[ProgressIndicators] Wait indicator hidden');
+            this._waitIndicator = null;
+        },
+
+        /**
+         * Get current wait indicator state
+         */
+        getWaitIndicator() {
+            return this._waitIndicator;
+        },
+
+        /**
+         * Escape HTML to prevent XSS
+         */
+        _escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        },
+
+        /**
+         * Ensure wait indicator styles are loaded
+         */
+        _ensureWaitIndicatorStyles() {
+            const styleId = 'wait-indicator-styles';
+            if (document.getElementById(styleId)) return;
+            
+            const style = document.createElement('style');
+            style.id = styleId;
+            style.textContent = `
+                .wait-indicator {
+                    position: fixed;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    background: rgba(0, 0, 0, 0.85);
+                    border-radius: 12px;
+                    padding: 24px 40px;
+                    z-index: 10000;
+                    opacity: 0;
+                    transition: opacity 0.3s ease;
+                    pointer-events: none;
+                }
+                .wait-indicator-visible {
+                    opacity: 1;
+                    pointer-events: auto;
+                }
+                .wait-indicator-content {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    gap: 16px;
+                }
+                .wait-spinner {
+                    width: 40px;
+                    height: 40px;
+                    border: 3px solid rgba(255, 255, 255, 0.2);
+                    border-top-color: #4CAF50;
+                    border-radius: 50%;
+                    animation: wait-spin 1s linear infinite;
+                }
+                @keyframes wait-spin {
+                    to { transform: rotate(360deg); }
+                }
+                .wait-message {
+                    color: #fff;
+                    font-size: 16px;
+                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                    text-align: center;
+                }
+            `;
+            document.head.appendChild(style);
         },
 
         /**

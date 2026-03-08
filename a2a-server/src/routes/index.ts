@@ -56,16 +56,23 @@ router.post('/invoke', async (req: Request, res: Response, next: NextFunction): 
             return;
         }
 
-        // Async response with promiseId
-        console.log('[a2a-server] /invoke returning promiseId', { promiseId: invokeResult.promiseId });
-        res.json({
+        // Async response with promiseId and wait indicator
+        console.log('[a2a-server] /invoke returning promiseId', { promiseId: invokeResult.promiseId, hasExecute: !!invokeResult.execute });
+        const asyncResponse: Record<string, unknown> = {
             success: true,
             data: {
                 promiseId: invokeResult.promiseId,
                 status: 'pending',
                 pollUrl: `/requests/${invokeResult.promiseId}`,
             }
-        });
+        };
+        
+        // Include execute (wait indicator) if present
+        if (invokeResult.execute) {
+            asyncResponse.data.execute = invokeResult.execute;
+        }
+        
+        res.json(asyncResponse);
     } catch (error) {
         next(error);
     }

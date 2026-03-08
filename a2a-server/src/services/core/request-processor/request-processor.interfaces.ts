@@ -153,6 +153,11 @@ export interface ExecuteCommand {
         code: string;
     };
     message?: string;
+    /** Wait indicator - tells client to show loading spinner while server processes */
+    wait?: {
+        message?: string;
+        showFormAfter?: boolean;
+    };
 }
 
 // ========================================

@@ -38,7 +38,12 @@
             status: 'idle',
             pendingForm: null,
             lastError: null,
-            promisePending: false  // Block input while waiting for server response
+            promisePending: false,  // Block input while waiting for server response
+            _waitIndicatorActive: false,  // Track if wait indicator is showing
+            
+            // Session logs (two types)
+            responsesLog: [],  // Raw server responses
+            messagesLog: []   // Human-readable messages for frontend display
         };
 
         this._listeners = new Map();
@@ -191,6 +196,15 @@
         this._state.execute = execute || null;
         this._emit('execute', this._state.execute);
 
+        // Hide wait indicator if we had one and now receiving new execute
+        const hadWaitIndicator = this._waitIndicatorActive;
+        if (hadWaitIndicator && execute && !execute.wait) {
+            if (typeof ProgressIndicators !== 'undefined') {
+                ProgressIndicators.hideWaitIndicator();
+            }
+            this._waitIndicatorActive = false;
+        }
+
         // Server responded - unblock input
         this._state.promisePending = false;
         this._emit('promisePending', false);
@@ -222,6 +236,24 @@
                 content: `Task completed: ${execute.finalResult.action || 'unknown'}`,
                 metadata: { type: 'completion', summary: execute.finalResult.summary }
             }, 'system');
+        }
+
+        // Handle wait indicator - show loading while server processes
+        if (execute?.wait) {
+            const waitData = execute.wait;
+            this._state.status = 'waiting';
+            this._waitIndicatorActive = true;
+            this._emit('wait', waitData);
+            
+            // Show wait indicator UI if ProgressIndicators is available
+            if (typeof ProgressIndicators !== 'undefined') {
+                ProgressIndicators.showWaitIndicator(waitData);
+            }
+            
+            // Log wait message for frontend display
+            if (waitData.message) {
+                this.logMessage('system', waitData.message, { type: 'wait', showFormAfter: waitData.showFormAfter });
+            }
         }
 
         return this;
@@ -295,6 +327,9 @@
 
     SessionStore.prototype.applyServerResponse = function(data) {
         const { context, execute, messages, finalResult } = data;
+
+        // Log raw server response
+        this.logResponse(data);
 
         if (context) this.setContext(context);
         if (execute) this.setExecute(execute);
@@ -455,6 +490,78 @@
     SessionStore.prototype.debug = function() {
         console.log('[SessionStore] Current state:', this.toJSON());
         console.log('[SessionStore] Full state:', this.getState());
+    };
+
+    // === Session Logging (two logs: responses + messages) ===
+
+    /**
+     * Log raw server response
+     * @param {Object} response - Raw server response data
+     */
+    SessionStore.prototype.logResponse = function(response) {
+        const logEntry = {
+            timestamp: new Date().toISOString(),
+            data: response
+        };
+        this._state.responsesLog.push(logEntry);
+        
+        // Keep max 100 entries
+        if (this._state.responsesLog.length > 100) {
+            this._state.responsesLog.shift();
+        }
+        
+        console.log('[SessionStore] Response logged:', logEntry.timestamp);
+        this._emit('responseLogged', logEntry);
+    };
+
+    /**
+     * Log human-readable message for frontend display
+     * @param {string} role - user, assistant, system
+     * @param {string} content - Message content
+     * @param {Object} metadata - Optional metadata
+     */
+    SessionStore.prototype.logMessage = function(role, content, metadata = {}) {
+        const logEntry = {
+            timestamp: new Date().toISOString(),
+            role: role,
+            content: content,
+            metadata: metadata
+        };
+        this._state.messagesLog.push(logEntry);
+        
+        // Keep max 100 entries
+        if (this._state.messagesLog.length > 100) {
+            this._state.messagesLog.shift();
+        }
+        
+        console.log('[SessionStore] Message logged:', role, content.slice(0, 50));
+        this._emit('messageLogged', logEntry);
+    };
+
+    /**
+     * Get all logged responses
+     * @returns {Array} Array of response log entries
+     */
+    SessionStore.prototype.getResponsesLog = function() {
+        return [...this._state.responsesLog];
+    };
+
+    /**
+     * Get all logged messages
+     * @returns {Array} Array of message log entries
+     */
+    SessionStore.prototype.getMessagesLog = function() {
+        return [...this._state.messagesLog];
+    };
+
+    /**
+     * Clear all logs
+     */
+    SessionStore.prototype.clearLogs = function() {
+        this._state.responsesLog = [];
+        this._state.messagesLog = [];
+        this._emit('logsCleared');
+        console.log('[SessionStore] Logs cleared');
     };
 
     // Export - create global instance for backward compatibility
