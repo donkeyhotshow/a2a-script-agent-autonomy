@@ -1,0 +1,89 @@
+# Протоколы обмена A2A
+
+## Обзор
+
+Этот раздел содержит детальные протоколы обмена для системы A2A Script Agent. Протоколы описывают форматы запросов и ответов для всех типов взаимодействий.
+
+## Структура разделов
+
+### 1. [Действия (Actions)](actions/README.md)
+
+Детальные протоколы для каждого типа действий:
+
+| Action | Описание | Статус |
+|--------|----------|--------|
+| `read-file` | Чтение файла | ✅ |
+| `write-file` | Запись файла | ✅ |
+| `execute-command` | Выполнение команды | ✅ |
+| `script` | Выполнение скрипта | ✅ |
+| `rag-search` | RAG поиск | ✅ |
+| `form` | Интерактивные формы | ✅ |
+| `message` | Отображение сообщений | ✅ |
+| `list-directory` | Список директории | 🔶 |
+| `grep-search` | Текстовый поиск | ❌ |
+| `file-exists` | Проверка файла | ❌ |
+| `scan-directory` | Сканирование директории | 🔶 |
+| `edit-patch` | Редактирование патчем | ❌ |
+| `run-script` | Запуск скрипта | ❌ |
+
+### 2. [Состояния (States)](states/README.md)
+
+Протоколы для различных состояний системы:
+
+| State | Описание | Статус |
+|-------|----------|--------|
+| `pending` | Ожидание выполнения | ✅ |
+| `waiting` | Ожидание пользователя | ✅ |
+| `processing` | Активная обработка | ✅ |
+| `error` | Состояние ошибки | 🔶 |
+| `completed` | Успешное завершение | ✅ |
+| `cancelled` | Отменено | ❌ |
+
+### 3. [Promise System](promise/README.md)
+
+Протоколы для асинхронных операций:
+
+- Создание Promise
+- Polling результата
+- Обработка прогресса
+- Таймауты
+
+### 4. [Сессии (Sessions)](sessions/README.md)
+
+Протоколы управления сессиями:
+
+- Создание сессии
+- Жизненный цикл
+- Контекст сессии
+- Завершение сессии
+
+## Диаграмма потока данных
+
+```mermaid
+graph LR
+    Web[Web UI] -->|task| Client[Client API]
+    Client -->|request.json| Server[A2A Server]
+    Server -->|response.json| Client
+    Client -->|execute.ui| Web
+    Web -->|result| Client
+    Client -->|result| Server
+    
+    Server -->|prompt| AI[AI Hub]
+    AI -->|promiseId| Server
+    
+    Client -->|poll| Promise[Promise Queue]
+    Promise -->|result| Client
+```
+
+## Статусы реализации
+
+- ✅ **Полностью реализовано** - протокол готов
+- 🔶 **Частично реализовано** - требует доработки
+- ❌ **Не реализовано** - запланировано
+
+## Быстрые ссылки
+
+- [Этапы протокола](../STAGES/README.md)
+- [JSON Схемы](../json-schemas/README.md)
+- [Симуляции](../STAGES/simulations/OVERVIEW.md)
+- [PROTOCOL](../PROTOCOL.md)

@@ -1,6 +1,9 @@
 /**
  * API Integration Module
  * Connects UI components with Client API (single apiBase, e.g. localhost:3001).
+ * 
+ * @see docs/new-request-flow/PROTOCOLS/promise/ - Promise System
+ * @see docs/new-request-flow/PROTOCOLS/sessions/ - Session Management
  */
 
 // Fetch with timeout and retry logic

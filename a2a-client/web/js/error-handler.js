@@ -3,6 +3,8 @@
  * Centralized error handling and display for the web interface.
  * API errors are routed via fetch wrapper below and handleApiError(); user messages
  * are shown in session panel (_pushSessionMessage) and global notification (addNotification).
+ * 
+ * @see docs/new-request-flow/PROTOCOLS/states/error.md - Состояние ошибки
  */
 
 (function (global) {

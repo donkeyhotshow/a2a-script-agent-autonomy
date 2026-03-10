@@ -2,6 +2,9 @@
  * Action Handler - Unified action submission
  * Standardizes all submissions on action-key shape
  * Handles: choice, message, script, rag-search, read-file, write-file, execute-command
+ * 
+ * @see docs/new-request-flow/PROTOCOLS/actions/ - Детальные протоколы действий
+ * @see docs/new-request-flow/PROTOCOLS/states/ - Состояния системы
  */
 
 (function (global) {
