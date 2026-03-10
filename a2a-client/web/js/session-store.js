@@ -118,6 +118,14 @@
         return this._state.context?.execution || this._state.execute?.execution || null;
     };
 
+    /**
+     * Get current execute object
+     * @returns {Object|null} The execute object
+     */
+    SessionStore.prototype.getExecute = function() {
+        return this._state.execute;
+    };
+
     SessionStore.prototype.getCurrentStep = function() {
         const exec = this.getExecution();
         return exec?.step || null;

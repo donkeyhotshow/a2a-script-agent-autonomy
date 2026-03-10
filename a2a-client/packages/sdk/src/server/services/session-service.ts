@@ -94,6 +94,9 @@ export class SessionService {
             totalSteps: s.totalSteps ?? 0,
             currentStep: s.currentStep ?? null,
             context: s.context ?? {},
+            // Map execute fields - check both 'execute' and 'currentExecute'
+            execute: s.execute ?? s.currentExecute ?? null,
+            currentExecute: s.currentExecute ?? s.execute ?? null,
             history: Array.isArray(s.history) ? s.history : [],
             connections: s.connections ?? 0,
             messages: Array.isArray(s.messages) ? s.messages : [],

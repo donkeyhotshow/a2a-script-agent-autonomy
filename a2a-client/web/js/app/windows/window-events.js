@@ -40,8 +40,15 @@
                 // Use renderExecute to render full panel (history + execute + input)
                 // renderExecute renders the complete content: history + execute block + input area
                 const refreshContent = () => {
-                    const execute = store.getExecute?.() || store.execute;
+                    // Get execute - use method if available for consistency
+                    const execute = store.getExecute ? store.getExecute() : store.execute;
                     const context = store.context || {};
+
+                    console.log('[WindowEvents] refreshContent:', { 
+                        hasExecute: !!execute, 
+                        executeType: execute ? Object.keys(execute)[0] : null,
+                        status: store.status 
+                    });
                     const isWaiting = store.isInputBlocked?.() || false;
 
                     if (execute && !isWaiting) {

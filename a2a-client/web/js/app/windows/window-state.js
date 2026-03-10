@@ -196,6 +196,8 @@
                         const projectId = await global.ProjectManager?.getSelectedProjectId?.() || global.SessionStore?.projectId;
                         sessionData = await global.apiIntegration.getSession(sessionId, projectId);
                         console.log('[WindowState] Loaded session data:', sessionId);
+                        console.log('[WindowState] Session execute:', sessionData?.execute);
+                        console.log('[WindowState] Session context:', sessionData?.context);
                     }
                 } catch (err) {
                     console.warn('[WindowState] Failed to load session data:', err);
@@ -261,6 +263,7 @@
                         const execute = sessionData.execute ?? sessionData.context?.execute ?? sessionData.currentExecute;
                         if (execute) {
                             store.setExecute(execute);
+                            console.log('[WindowState] Set execute in store:', execute);
                         }
                         // Set status
                         if (sessionData.status) {

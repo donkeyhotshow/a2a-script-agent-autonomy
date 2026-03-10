@@ -21,6 +21,8 @@ export interface PersistedSession {
     totalSteps?: number;
     currentStep?: string | null;
     context?: Record<string, unknown>;
+    execute?: Record<string, unknown>;
+    currentExecute?: Record<string, unknown>;
     history?: unknown[];
     connections?: number;
     messages?: unknown[];

@@ -283,6 +283,8 @@ export default function vitePluginA2a() {
                                 ...existing,
                                 ...(d.title !== undefined && {title: d.title}),
                                 ...(d.messages !== undefined && {messages: d.messages}),
+                                ...(d.context !== undefined && {context: d.context}),
+                                ...(d.execute !== undefined && {execute: d.execute}),
                                 updatedAt: new Date().toISOString(),
                             };
                             saveSession(proj.path, session);

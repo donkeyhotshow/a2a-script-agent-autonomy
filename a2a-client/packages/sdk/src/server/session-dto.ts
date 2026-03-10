@@ -83,6 +83,7 @@ export interface SessionDetail {
     version?: string;
     execution?: ExecutionState;
     formChoices?: FormData;
+    execute?: Record<string, unknown>;
     currentExecute?: Record<string, unknown>;
 }
 
