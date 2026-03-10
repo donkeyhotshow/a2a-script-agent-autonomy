@@ -72,9 +72,6 @@
       ],
       "@queue/*": [
         "src/queue/*"
-      ],
-      "@websocket/*": [
-        "src/websocket/*"
       ]
     }
   },

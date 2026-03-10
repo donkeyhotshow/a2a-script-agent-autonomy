@@ -181,14 +181,6 @@ export const plexeConfigSchema = z.object({
 });
 
 // ===========================================
-// WebSocket Configuration Schema
-// ===========================================
-export const websocketConfigSchema = z.object({
-    port: portSchema(3001),
-    heartbeatIntervalMs: intSchema(1000, 300000, 30000),
-});
-
-// ===========================================
 // Request Processor Configuration Schema
 // ===========================================
 export const requestProcessorConfigSchema = z.object({
@@ -212,7 +204,6 @@ export const appConfigSchema = z.object({
     ml: mlConfigSchema,
     session: sessionConfigSchema,
     plexe: plexeConfigSchema,
-    websocket: websocketConfigSchema,
     requestProcessor: requestProcessorConfigSchema,
 });
 
@@ -232,6 +223,5 @@ export type QueueConfig = z.infer<typeof queueConfigSchema>;
 export type MLConfig = z.infer<typeof mlConfigSchema>;
 export type SessionConfig = z.infer<typeof sessionConfigSchema>;
 export type PlexeConfig = z.infer<typeof plexeConfigSchema>;
-export type WebSocketConfig = z.infer<typeof websocketConfigSchema>;
 export type RequestProcessorConfig = z.infer<typeof requestProcessorConfigSchema>;
 export type AppConfig = z.infer<typeof appConfigSchema>;

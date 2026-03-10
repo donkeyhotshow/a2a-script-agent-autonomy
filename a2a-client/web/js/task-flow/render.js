@@ -26,28 +26,6 @@
     }
 
     /**
-     * Получить HTML области ввода
-     */
-    function getInputAreaHtml(isWaiting = false, placeholder = 'Type your message...') {
-        if (isWaiting) {
-            return `
-                <div class="task-flow-input-area waiting">
-                    <div class="task-flow-waiting-indicator">
-                        <span class="loading-spinner"></span>
-                        <span>Waiting for response...</span>
-                    </div>
-                </div>
-            `;
-        }
-        return `
-            <div class="task-flow-input-area">
-                <input type="text" id="taskMessageInput" placeholder="${escapeHtml(placeholder)}" class="task-flow-input" />
-                <button id="taskSendMessage" class="task-flow-send-btn">Send</button>
-            </div>
-        `;
-    }
-
-    /**
      * Рендеринг истории сообщений
      * @param {HTMLElement} contentEl - элемент контента
      * @param {Object} [store] - optional store (per-window); falls back to global.SessionStore
@@ -172,7 +150,6 @@
      */
     function renderForm(contentEl, form, executionStepHtml, progressBarHtml, finalResultHtml, taskFlowRef, store) {
         const hasChoices = form?.choices?.length > 0;
-        const hasInput = form?.input?.length > 0;
 
         let formContent = '';
 
@@ -184,18 +161,7 @@
             formContent += `${title}<div class="task-flow-choices">${buttons}</div>`;
         }
 
-        // When form.input present (no choices): use first field label as placeholder for bottom input.
-        // Do NOT render separate labeled fields - they have no submit handler and duplicate the bottom input.
-        let inputPlaceholder = 'Type your message...';
-        if (hasInput && !hasChoices) {
-            const firstField = form.input[0];
-            if (firstField?.label) inputPlaceholder = firstField.label;
-        }
-
         const historyHtml = renderMessageHistory(contentEl, store);
-
-        // Show bottom input only when there are input fields or form with no choices
-        const showBottomInput = hasInput && !hasChoices;
 
         contentEl.innerHTML = `
             ${historyHtml}
@@ -205,7 +171,6 @@
                 ${formContent}
                 ${finalResultHtml}
             </div>
-            ${showBottomInput ? getInputAreaHtml(false, inputPlaceholder) : ''}
         `;
 
         // Bind choice button handlers
@@ -217,10 +182,6 @@
                 }
             });
         });
-
-        if (showBottomInput) {
-            bindInputHandlers(contentEl, taskFlowRef);
-        }
     }
 
     /**
@@ -247,10 +208,7 @@
                 </div>
                 ${finalResultHtml}
             </div>
-            ${getInputAreaHtml()}
         `;
-
-        bindInputHandlers(contentEl, taskFlowRef);
     }
 
     /**
@@ -319,10 +277,7 @@
                 </details>
                 ${finalResultHtml}
             </div>
-            ${getInputAreaHtml()}
         `;
-
-        bindInputHandlers(contentEl, taskFlowRef);
     }
 
     /**
@@ -330,29 +285,6 @@
      * @param {HTMLElement} contentEl - элемент контента
      * @param {Object} taskFlowRef - ссылка на TaskFlow
      */
-    function bindInputHandlers(contentEl, taskFlowRef) {
-        const input = contentEl.querySelector('#taskMessageInput');
-        const sendBtn = contentEl.querySelector('#taskSendMessage');
-
-        const sendHandler = () => {
-            const text = input.value.trim();
-            if (!text) return;
-            if (taskFlowRef?.sendMessageResult) {
-                taskFlowRef.sendMessageResult(text, contentEl);
-            }
-        };
-
-        sendBtn?.addEventListener('click', sendHandler);
-        input?.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                sendHandler();
-            }
-        });
-
-        // Focus input
-        input?.focus();
-    }
-
     /**
      * Установить контент панели
      * @param {HTMLElement} contentEl - элемент контента
@@ -415,14 +347,12 @@
     global.TaskFlowRender = {
         escapeHtml,
         updateStatus,
-        getInputAreaHtml,
         renderMessageHistory,
         renderExecute,
         renderForm,
         renderMessage,
         renderClientAction,
         renderDebug,
-        bindInputHandlers,
         setPanelContent
     };
 

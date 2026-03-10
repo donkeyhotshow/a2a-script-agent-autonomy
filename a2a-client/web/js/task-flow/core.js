@@ -268,12 +268,6 @@
                     store.setSession(sessionId, projectId);
                 }
 
-                // Connect transport (HTTP polling)
-                const transport = global.TransportManager;
-                if (transport) {
-                    transport.connect(sessionId, projectId);
-                }
-
                 // Handle sync response: serverResponse.data.execute
                 const normalizedResponse = serverResponse?.data ?? serverResponse;
                 const syncExecute = normalizedResponse?.execute;
@@ -283,7 +277,7 @@
                     setPanelContent(contentEl, 'execute', { execute: syncExecute, context: normalizedResponse?.context, sessionId, projectId }, this);
                     updateStatus(contentEl, 'Received response');
                 } else {
-                    // Wait for async response via SSE
+                    // Wait for async response (promiseId polling in SDK)
                     updateStatus(contentEl, 'Waiting for response...');
                 }
 
@@ -345,7 +339,7 @@
 
                 await handler.submit(sessionId, projectId, { choice: choiceId }, this._buildContext());
 
-                // Wait for response via SSE
+                // Wait for response (promiseId polling in SDK)
                 const outcome = await outcomePromise;
                 if (outcome.execute) {
                     setPanelContent(contentEl, 'execute', { execute: outcome.execute, sessionId, projectId }, this);
@@ -408,7 +402,7 @@
 
                 await handler.submit(sessionId, projectId, { message: messageText }, this._buildContext());
 
-                // Wait for response via SSE
+                // Wait for response (promiseId polling in SDK)
                 const outcome = await outcomePromise;
                 if (outcome.execute) {
                     setPanelContent(contentEl, 'execute', { execute: outcome.execute, sessionId, projectId }, this);

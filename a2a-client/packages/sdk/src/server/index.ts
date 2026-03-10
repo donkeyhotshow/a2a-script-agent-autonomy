@@ -45,9 +45,6 @@ import {
 // Import setupRoutes function separately
 import { setupRoutes } from './server/routes/index.js';
 
-// Import WebSocket server manager
-import { WebSocketServerManager } from './server/websocket-server.js';
-
 // Re-export services for external use
 export {
     // Config
@@ -81,10 +78,6 @@ export {
 
 // Express app instance
 let app: Application | null = null;
-let websocketServer: WebSocketServerManager | null = null;
-
-// WebSocket connections map (for broadcasting)
-export const wsConnections = new Map<string, Set<any>>();
 
 /**
  * Create and configure Express application
@@ -124,46 +117,26 @@ export function createApp(): Application {
 }
 
 /**
- * Initialize WebSocket server
- */
-export function initWebSocketServer(port: number = 3002): WebSocketServerManager {
-    websocketServer = new WebSocketServerManager();
-    return websocketServer;
-}
-
-/**
  * Start the server
  */
 export function startServer(options?: {
     port?: number;
     host?: string;
-    enableWebSocket?: boolean;
-}): { app: Application; websocketServer?: WebSocketServerManager } {
+}): { app: Application } {
     const port = options?.port || Number(process.env.PORT) || 3001;
     const host = options?.host || process.env.HOST || 'localhost';
-    const enableWebSocket = options?.enableWebSocket !== false;
 
     // Create Express app
     app = createApp();
-
-    // Initialize WebSocket if enabled
-    if (enableWebSocket) {
-        websocketServer = initWebSocketServer();
-    }
 
     // Start listening
     app.listen(port, host, () => {
         console.log(`A2A Client API Server started on http://${host}:${port}`);
         console.log(`Health check: http://${host}:${port}/health`);
         console.log(`API info: http://${host}:${port}/api`);
-
-        if (websocketServer) {
-            const wsInfo = websocketServer.getServerInfo();
-            console.log(`WebSocket Server: ${wsInfo.wsUrl}`);
-        }
     });
 
-    return { app, websocketServer: websocketServer || undefined };
+    return { app };
 }
 
 /**
@@ -172,16 +145,6 @@ export function startServer(options?: {
 export function getApp(): Application | null {
     return app;
 }
-
-/**
- * Get WebSocket server instance
- */
-export function getWebSocketServer(): WebSocketServerManager | null {
-    return websocketServer;
-}
-
-// Export wsConnections for external use (e.g., WebSocket message handlers)
-export { wsConnections as connectionsMap };
 
 // Default export for convenience
 export default {
@@ -207,8 +170,6 @@ export default {
     sessionsRoutes,
     // App functions
     createApp,
-    initWebSocketServer,
     startServer,
     getApp,
-    getWebSocketServer,
 };

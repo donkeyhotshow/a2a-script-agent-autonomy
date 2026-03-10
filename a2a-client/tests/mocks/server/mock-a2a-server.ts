@@ -2,7 +2,7 @@
  * Mock A2A Server for SDK Tests
  * 
  * Emulates A2A server behavior on port 3000 for testing SDK interactions.
- * Supports endpoints: /api/v1/invoke, /api/v1/requests/:id/status, /api/v1/sse/:sessionId
+ * Supports endpoints: /api/v1/invoke, /api/v1/requests/:id/status
  */
 
 import { vi } from 'vitest';
@@ -25,7 +25,6 @@ export interface A2AResponse {
 export interface A2AEndpointHandlers {
     onInvoke?: (request: A2ARequest) => A2AResponse | Promise<A2AResponse>;
     onStatus?: (promiseId: string) => A2AResponse | Promise<A2AResponse>;
-    onSSE?: (sessionId: string) => AsyncIterable<any> | null;
 }
 
 export interface MockA2AServerConfig {
@@ -84,13 +83,6 @@ export class MockA2AServer {
      */
     setStatusHandler(handler: A2AEndpointHandlers['onStatus']): void {
         this.config.handlers.onStatus = handler;
-    }
-
-    /**
-     * Set custom handler for SSE endpoint
-     */
-    setSSEHandler(handler: A2AEndpointHandlers['onSSE']): void {
-        this.config.handlers.onSSE = handler;
     }
 
     /**
@@ -199,35 +191,6 @@ export class MockA2AServer {
     }
 
     /**
-     * Simulate SSE endpoint GET /api/v1/sse/:sessionId
-     */
-    async *handleSSE(sessionId: string): Promise<AsyncIterable<any>> {
-        this.callCount++;
-        this.requests.push({ endpoint: `/api/v1/sse/${sessionId}`, method: 'GET' });
-
-        if (this.config.verbose) {
-            console.log('[MockA2AServer] GET /api/v1/sse/:sessionId', sessionId);
-        }
-
-        if (this.config.handlers.onSSE) {
-            const handler = this.config.handlers.onSSE(sessionId);
-            if (handler) {
-                yield* handler;
-                return;
-            }
-        }
-
-        // Default SSE stream
-        const messages = this.sessions.get(sessionId) || [];
-        for (const msg of messages) {
-            yield msg;
-            if (this.config.delay > 0) {
-                await new Promise(resolve => setTimeout(resolve, this.config.delay));
-            }
-        }
-    }
-
-    /**
      * Get mock fetch function for use with vitest
      */
     getMockFetchFn(): typeof fetch {
@@ -251,23 +214,6 @@ export class MockA2AServer {
                 else if (options.method === 'GET' && pathname.match(/^\/api\/v1\/requests\/[^/]+\/status$/)) {
                     const promiseId = pathname.split('/')[4];
                     response = await self.handleStatus(promiseId);
-                }
-                // GET /api/v1/sse/:sessionId
-                else if (options.method === 'GET' && pathname.match(/^\/api\/v1\/sse\/[^/]+$/)) {
-                    const sessionId = pathname.split('/')[4];
-                    // For SSE, we return a mock event stream
-                    const encoder = new TextEncoder();
-                    const stream = new ReadableStream({
-                        async start(controller) {
-                            for await (const event of await self.handleSSE(sessionId)) {
-                                controller.enqueue(encoder.encode(`data: ${JSON.stringify(event)}\n\n`));
-                            }
-                            controller.close();
-                        }
-                    });
-                    return new Response(stream, {
-                        headers: { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache' }
-                    });
                 }
                 // Unknown endpoint
                 else {

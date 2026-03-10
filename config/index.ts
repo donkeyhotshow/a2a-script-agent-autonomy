@@ -33,7 +33,6 @@ import {
     mlConfigSchema,
     sessionConfigSchema,
     plexeConfigSchema,
-    websocketConfigSchema,
     requestProcessorConfigSchema,
 } from './schema.js';
 import type {AppConfig} from './types.js';
@@ -162,11 +161,6 @@ function mapEnvironmentVariables() {
         plexe: {
             apiUrl: process.env.PLEXE_API_URL,
             apiKey: process.env.PLEXE_API_KEY,
-        },
-        // WebSocket
-        websocket: {
-            port: process.env.WS_PORT,
-            heartbeatIntervalMs: process.env.WS_HEARTBEAT_INTERVAL_MS,
         },
         // Request Processor
         requestProcessor: {
@@ -354,7 +348,6 @@ export {
     mlConfigSchema,
     sessionConfigSchema,
     plexeConfigSchema,
-    websocketConfigSchema,
     requestProcessorConfigSchema,
 };
 

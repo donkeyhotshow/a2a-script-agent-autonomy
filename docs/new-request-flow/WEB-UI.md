@@ -52,20 +52,20 @@ a2a-client/web/
 │   │   └── ...
 │   └── layouts/                  # Макеты
 ├── js/
-│   ├── app-task.js               # Инициализация приложения
-│   ├── api-integration.js        # Интеграция с API (HTTP, sync/async)
+│   ├── api-integration.js        # HTTP запросы к Client API
+│   ├── action-handler.js         # Отправка result на сервер
+│   ├── session-store.js          # Состояние сессии, события execute
 │   ├── app/                      # Основные модули
 │   │   ├── session-manager.js    # Управление сессиями
 │   │   ├── taskbar-manager.js    # Управление таскбаром
 │   │   └── window-manager.js     # Управление окнами
 │   ├── components/               # UI компоненты
-│   ├── task-flow/                # Поток задач (promiseId polling)
-│   ├── transport/                # SSE/WebSocket транспорт (optional)
+│   ├── task-flow/                # Поток задач
+│   │   ├── api.js                # HTTP fetch + retry
+│   │   ├── core.js               # TaskFlow логика
+│   │   └── render.js             # Рендеринг execute
 │   ├── error-handler.js          # Обработка ошибок
-│   ├── progress-indicators.js    # Индикаторы прогресса
-│   ├── file-transfer.js          # Передача файлов
-│   ├── web-api-client.js         # Web API клиент (HTTP)
-│   └── components/               # Дополнительные компоненты
+│   └── progress-indicators.js    # Индикаторы прогресса
 └── examples/
     └── advanced-features.html     # Примеры
 ```

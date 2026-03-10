@@ -132,12 +132,12 @@
                 throw new Error('Result must have exactly one action-type key');
             }
 
-            // Match simulations client.json: { projectId, sessionId, result, sync }
+            // Match simulations client.json: { projectId, sessionId, result }
+            // Note: Client API uses promiseId polling internally, returns when completed
             const requestBody = {
                 projectId: projectId ?? null,
                 sessionId,
                 result,
-                sync: true,  // Request sync response (no SSE/WS needed)
                 ...(context && { context })
             };
 

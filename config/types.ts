@@ -236,16 +236,6 @@ export interface PlexeConfig {
 }
 
 // ===========================================
-// WebSocket Configuration
-// ===========================================
-export interface WebSocketConfig {
-    /** WebSocket port */
-    port: number;
-    /** Heartbeat interval in milliseconds */
-    heartbeatIntervalMs: number;
-}
-
-// ===========================================
 // Request Processor Configuration
 // ===========================================
 export interface RequestProcessorConfig {
@@ -270,7 +260,6 @@ export interface AppConfig {
     ml: MLConfig;
     session: SessionConfig;
     plexe: PlexeConfig;
-    websocket: WebSocketConfig;
     requestProcessor: RequestProcessorConfig;
 }
 
@@ -278,4 +267,4 @@ export interface AppConfig {
 export type { PortConfig, PortMetadata, DatabaseConfig, AIConfig, SecurityConfig };
 export type { ServerConfig, ProxyConfig, StorageConfig, LoggingConfig };
 export type { RateLimitConfig, QueueConfig, MLConfig, SessionConfig };
-export type { PlexeConfig, WebSocketConfig, RequestProcessorConfig };
+export type { PlexeConfig, RequestProcessorConfig };

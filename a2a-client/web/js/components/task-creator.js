@@ -151,6 +151,9 @@
          */
         open() {
             if (this._isOpen) return;
+            if (!this._overlay) {
+                this.init();
+            }
             this._isOpen = true;
 
             this._overlay.style.display = 'flex';
@@ -199,7 +202,7 @@
         },
 
         /**
-         * Submit the query to server for analysis
+         * Submit the query - creates session directly
          * @private
          */
         async _submitQuery() {
@@ -210,36 +213,34 @@
             this._showLoading();
 
             try {
-                // Server returns suggestions (options); web only displays them
-                const raw = await this._fetchSuggestions(query);
-                this._hideLoading();
-                const response = raw && typeof raw === 'object' ? (raw.data !== undefined ? raw.data : raw) : null;
-
-                // Check for options in different formats
-                const choices = response?.execute?.form?.choices || response?.serverResponse?.data?.execute?.form?.choices;
-                const options = response?.options || choices;
-                
-                if (options && options.length > 0) {
-                    this._showOptions(options, response?.summary ?? response?.execute?.form?.title ?? '');
-                } else {
-                    // No options from server → start session with query as-is
-                    this._createSessionWithQuery(query);
-                }
+                await this._fetchSuggestions(query);
             } catch (error) {
-                console.error('[TaskCreator] Failed to get suggestions:', error);
+                console.error('[TaskCreator] Failed to create session:', error);
                 this._hideLoading();
-                this._createSessionWithQuery(query);
             }
         },
 
         /**
-         * Fetch suggestions from server. List is defined by server; we only request and pass through.
+         * Create session directly with query (analyzeTask removed)
          * @private
          */
         async _fetchSuggestions(query) {
             const g = (typeof window !== 'undefined' ? window : globalThis);
-            if (!g.apiIntegration?.analyzeTask) throw new Error('API not available');
-            return await g.apiIntegration.analyzeTask(query, 'new-task');
+            const projectId = await g.ProjectManager?.getSelectedProjectId?.();
+            if (!projectId) throw new Error('No project selected');
+            
+            const session = await g.apiIntegration?.createSession?.({
+                projectId,
+                title: query.slice(0, 50) + (query.length > 50 ? '...' : '')
+            });
+            
+            if (session?.id) {
+                this.close();
+                g.SessionManager?.setActiveSession?.(session.id);
+                const btn = document.querySelector(`[data-session-id="${session.id}"]`);
+                if (btn) g.WindowManager?.toggleSessionWindow?.(session.id, btn);
+            }
+            return null;
         },
 
         /**

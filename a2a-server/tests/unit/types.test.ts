@@ -17,8 +17,6 @@ import type {
     SearchMatch,
     ApiResponse,
     PaginatedResponse,
-    WsEvent,
-    WsEventType,
 } from '../../src/types/index.js';
 
 describe('Types', () => {
@@ -241,41 +239,6 @@ describe('Types', () => {
             expect(response.items).toHaveLength(3);
             expect(response.total).toBe(10);
             expect(response.page).toBe(2);
-        });
-    });
-
-    describe('WebSocket Event Types', () => {
-        it('should create valid ws event', () => {
-            const event: WsEvent = {
-                type: 'task:progress',
-                payload: {
-                    task_id: 'task-1',
-                    progress: 50,
-                    status: 'in_progress',
-                },
-                timestamp: new Date(),
-            };
-
-            expect(event.type).toBe('task:progress');
-        });
-
-        it('should allow all event types', () => {
-            const eventTypes: WsEventType[] = [
-                'task:progress',
-                'task:completed',
-                'files:updated',
-                'files:requested',
-                'error',
-            ];
-
-            eventTypes.forEach(type => {
-                const event: WsEvent = {
-                    type,
-                    payload: {},
-                    timestamp: new Date(),
-                };
-                expect(event.type).toBe(type);
-            });
         });
     });
 });

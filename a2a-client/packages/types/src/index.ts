@@ -11,7 +11,6 @@
  * - search/ - Search functionality types
  * - rag/ - RAG (Retrieval-Augmented Generation) types
  * - api/ - API response types
- * - websocket/ - WebSocket event types
  * - arch/ - Architectural feature types
  * - file/ - File operation types
  * - message/ - Client/server message types
@@ -65,7 +64,6 @@ export * from './state/index.js';
 export * from './search/index.js';
 export * from './rag/index.js';
 export * from './api/index.js';
-export * from './websocket/index.js';
 export * from './arch/index.js';
 export * from './file/index.js';
 export * from './message/index.js';

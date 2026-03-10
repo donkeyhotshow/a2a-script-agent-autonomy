@@ -82,14 +82,6 @@ const state = SessionStore.getState();
 await SessionStore.restoreAndReconnect();
 ```
 
-#### TransportManager
-Унифицированный транспорт SSE/WebSocket (заменяет sse-client.js и websocket-client.js).
-```javascript
-TransportManager.init();
-TransportManager.connect(sessionId, promiseId);
-TransportManager.on('message', (data) => { /* handle */ });
-```
-
 #### PanelManager
 Управление панелями UI (заменяет plasticine-ui.js и session-panel-manager.js).
 ```javascript

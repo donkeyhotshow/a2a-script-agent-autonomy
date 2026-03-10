@@ -32,10 +32,6 @@ export interface ApiServerConfig {
     enableCORS: boolean;
     skipAuth: boolean;
 
-    websocketPort: number;
-    websocketHost: string;
-    websocketPingInterval: number;
-
     clientApiPort: number;
     clientApiHost: string;
     enableDebug: boolean;
@@ -73,10 +69,6 @@ export const config: ApiServerConfig = {
     enableLogging: toBoolean(process.env.ENABLE_LOGGING, true),
     enableCORS: toBoolean(process.env.ENABLE_CORS, true),
     skipAuth: toBoolean(process.env.SKIP_AUTH, false),
-
-    websocketPort: toNumber(process.env.WS_PORT, 3002),
-    websocketHost: process.env.WS_HOST || HOST,
-    websocketPingInterval: toNumber(process.env.WS_PING_INTERVAL_MS, 30000),
 
     clientApiPort: PORT,
     clientApiHost: process.env.CLIENT_API_HOST || HOST,

@@ -77,7 +77,6 @@
                         this.currentSessionId = sid;
                         store.setSession(sid);
                         this.updateActiveSessionUI(sid);
-                        if (global.SSEClient) global.SSEClient.connect(sid, this.apiBase);
                     }
                 } catch (e) {}
             })();
@@ -170,10 +169,6 @@
                     global.StorageAPI?.sessions?.removeItem?.('active-session').catch(() => {});
                 }
             } catch (e) {}
-
-            if (global.SSEClient && sessionId) {
-                global.SSEClient.connect(sessionId, this.apiBase);
-            }
         },
 
         async getConversation(sessionId) {
@@ -280,10 +275,15 @@
             return payload;
         },
 
-        // === SSE handling ===
+        // === Server response handling ===
 
-        handleSSEMessage(data) {
+        handleServerResponse(data) {
             store.applyServerResponse(data);
+        },
+
+        // Legacy alias
+        handleSSEMessage(data) {
+            this.handleServerResponse(data);
         },
 
         // === Legacy render methods ===

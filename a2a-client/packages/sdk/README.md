@@ -37,12 +37,6 @@ SDK сервер запускается на `http://localhost:3001`
 | GET | `/api/sessions/:sessionId` | Получить состояние сессии |
 | GET | `/api/sessions` | Список сессий |
 
-### WebSocket
-
-| Путь | Описание |
-|------|----------|
-| `ws://localhost:3002` | SSE/WebSocket для real-time обновлений |
-
 ## Протокол
 
 ### Формат запроса (Web → SDK)
@@ -125,7 +119,7 @@ localStorage.setItem('a2a_clientApiUrl', 'http://localhost:3001/api');
 | `error` | Ошибка |
 | `success` | Успех |
 
-## Типы событий (SSE)
+## Типы событий
 
 - `message` - новое сообщение
 - `task_response` - ответ задачи

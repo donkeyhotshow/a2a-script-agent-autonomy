@@ -85,8 +85,8 @@
                     return null;
                 }
             } catch (error) {
-                console.warn('[CustomStorage] Get failed:', error.message || error);
-                return null;
+                console.error('[CustomStorage] Get failed:', error.message || error);
+                throw error;
             }
         }
 
@@ -175,10 +175,10 @@
 
                 const data = await response.json();
                 return data.keys || [];
-            } catch (error) {
-                console.warn('[CustomStorage] Keys failed:', error);
-                return [];
-            }
+        } catch (error) {
+            console.error('[CustomStorage] Keys failed:', error);
+            throw error;
+        }
         }
 
         /**

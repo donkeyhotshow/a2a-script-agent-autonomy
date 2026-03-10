@@ -95,7 +95,6 @@ interface TestResult {
 class SmokeTestLogger {
   private results: TestResult[] = [];
   private startTime: Date;
-  private sseLogStream: fs.WriteStream;
   private infraLogStream: fs.WriteStream;
 
   constructor() {
@@ -105,15 +104,12 @@ class SmokeTestLogger {
     }
 
     // Create detailed log streams
-    const sseLogPath = path.join(LOG_DIR, `sse-heartbeat-${timestamp}.log`);
     const infraLogPath = path.join(LOG_DIR, `infrastructure-${timestamp}.log`);
 
-    this.sseLogStream = fs.createWriteStream(sseLogPath, { flags: 'a' });
     this.infraLogStream = fs.createWriteStream(infraLogPath, { flags: 'a' });
 
     // Log startup
     this.infraLogStream.write(`[${new Date().toISOString()}] Infrastructure logging started for run ${runId}\n`);
-    this.sseLogStream.write(`[${new Date().toISOString()}] SSE logging started for run ${runId}\n`);
   }
 
   logTest(testName: string, status: 'passed' | 'failed', duration?: number, error?: string, services?: TestResult['services']) {
@@ -126,16 +122,6 @@ class SmokeTestLogger {
       error,
       services
     });
-  }
-
-  logSSE(event: string, details?: any) {
-    const timestamp = new Date().toISOString();
-    const logEntry = `[${timestamp}] ${event}`;
-    if (details) {
-      this.sseLogStream.write(`${logEntry} - ${JSON.stringify(details)}\n`);
-    } else {
-      this.sseLogStream.write(`${logEntry}\n`);
-    }
   }
 
   logInfrastructure(event: string, details?: any) {
@@ -151,7 +137,6 @@ class SmokeTestLogger {
   saveResults() {
     // Close log streams
     this.infraLogStream.end();
-    this.sseLogStream.end();
 
     const summary = {
       runId,
@@ -162,7 +147,6 @@ class SmokeTestLogger {
       duration: Date.now() - this.startTime.getTime(),
       results: this.results,
       logs: {
-        sseLog: `sse-heartbeat-${timestamp}.log`,
         infrastructureLog: `infrastructure-${timestamp}.log`
       }
     };
@@ -170,7 +154,6 @@ class SmokeTestLogger {
     const logFile = path.join(LOG_DIR, `${runId}.json`);
     fs.writeFileSync(logFile, JSON.stringify(summary, null, 2));
     console.log(`✓ Test results saved to: ${logFile}`);
-    console.log(`✓ SSE logs saved to: sse-heartbeat-${timestamp}.log`);
     console.log(`✓ Infrastructure logs saved to: infrastructure-${timestamp}.log`);
   }
 }
@@ -310,98 +293,6 @@ test.describe('Web UI Smoke Test - Enhanced Automation', () => {
         }
     });
 
-    // Enhanced SSE connectivity test (with actual EventSource simulation)
-    test('SSE connectivity with heartbeat validation', async ({ page }) => {
-        const startTime = Date.now();
-
-        try {
-            test.setTimeout(45000);
-
-            // Create test session first
-            const sessionResponse = await fetch('http://localhost:3001/api/sessions', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    projectId: 'sse-heartbeat-test',
-                    task: 'Validate SSE heartbeat and connectivity'
-                })
-            });
-
-            expect(sessionResponse.ok()).toBeTruthy();
-            const sessionData = await sessionResponse.json();
-            const sessionId = sessionData.data.session.id;
-            console.log(`✓ Created test session for SSE: ${sessionId}`);
-            logger.logSSE('Test session created', { sessionId });
-
-            // Use page to create actual EventSource connection (closer to real browser behavior)
-            const sseResult = await page.evaluate(async (sessionId: string) => {
-                return new Promise<{connected: boolean, messageCount: number, heartbeatCount: number, duration: number}>((resolve, reject) => {
-                    const eventSource = new EventSource(`http://localhost:3001/api/sse/${sessionId}`);
-                    let connected = false;
-                    let messageCount = 0;
-                    let heartbeatCount = 0;
-                    const startTime = Date.now();
-
-                    eventSource.onopen = () => {
-                        connected = true;
-                        console.log('SSE Connected');
-                    };
-
-                    eventSource.onmessage = (event) => {
-                        messageCount++;
-                        console.log('SSE Message:', event.data);
-
-                        // Check for heartbeat events
-                        try {
-                            const data = JSON.parse(event.data);
-                            if (data.type === 'heartbeat' || data.heartbeat) {
-                                heartbeatCount++;
-                            }
-                        } catch (e) {
-                            // Not JSON, continue
-                        }
-                    };
-
-                    eventSource.onerror = (error) => {
-                        console.error('SSE Error:', error);
-                        if (!connected) {
-                            reject(new Error('Failed to establish SSE connection'));
-                        }
-                    };
-
-                    // Wait for connection and some messages
-                    setTimeout(() => {
-                        eventSource.close();
-                        resolve({
-                            connected,
-                            messageCount,
-                            heartbeatCount,
-                            duration: Date.now() - startTime
-                        });
-                    }, 10000); // Wait 10 seconds for SSE activity
-                });
-            }, sessionId);
-
-            console.log(`✓ SSE test results: connected=${sseResult.connected}, messages=${sseResult.messageCount}, heartbeats=${sseResult.heartbeatCount}`);
-
-            logger.logSSE('Heartbeat test completed', {
-                connected: sseResult.connected,
-                messageCount: sseResult.messageCount,
-                heartbeatCount: sseResult.heartbeatCount,
-                duration: sseResult.duration
-            });
-
-            // Validate SSE connection was established
-            expect(sseResult.connected).toBeTruthy();
-            expect(sseResult.messageCount).toBeGreaterThan(0);
-
-            logger.logTest('SSE connectivity with heartbeat', 'passed', Date.now() - startTime);
-        } catch (error) {
-            logger.logTest('SSE connectivity with heartbeat', 'failed', Date.now() - startTime, error.message);
-            throw error;
-        }
-    });
-
     // Original service health test (now secondary after infrastructure validation)
     test('Service health endpoints detailed validation', async ({ request }) => {
         const startTime = Date.now();
@@ -444,48 +335,6 @@ test.describe('Web UI Smoke Test - Enhanced Automation', () => {
         }
     });
 
-    // Test SSE endpoint availability (without full EventSource connection)
-    test('SSE endpoint /api/sse/:sessionId is accessible', async ({ request }) => {
-        const startTime = Date.now();
-
-        try {
-            // Create a test session first to get a valid sessionId
-            const sessionResponse = await request.post('http://localhost:3001/api/sessions', {
-                data: {
-                    projectId: 'smoke-test-project',
-                    task: 'Verify SSE connectivity'
-                }
-            });
-
-            expect(sessionResponse.ok()).toBeTruthy();
-            const sessionData = await sessionResponse.json();
-            expect(sessionData).toHaveProperty('data.session.id');
-
-            const sessionId = sessionData.data.session.id;
-            console.log(`✓ Created test session: ${sessionId}`);
-
-            // Test SSE endpoint for this session
-            const sseResponse = await request.get(`http://localhost:3001/api/sse/${sessionId}`, {
-                headers: {
-                    'Accept': 'text/event-stream',
-                    'Cache-Control': 'no-cache'
-                },
-                timeout: 5000
-            });
-
-            // SSE endpoint should return 200 and proper headers for EventSource
-            expect(sseResponse.status()).toBe(200);
-            expect(sseResponse.headers()['content-type']).toContain('text/event-stream');
-            expect(sseResponse.headers()['cache-control']).toBe('no-cache');
-
-            console.log(`✓ SSE endpoint accessible for session ${sessionId}`);
-            logger.logTest('SSE endpoint accessibility', 'passed', Date.now() - startTime);
-        } catch (error) {
-            logger.logTest('SSE endpoint accessibility', 'failed', Date.now() - startTime, error.message);
-            throw error;
-        }
-    });
-
     // Test session creation via API (minimal session without browser)
     test('Session creation via API works end-to-end', async ({ request }) => {
         const startTime = Date.now();
@@ -522,44 +371,6 @@ test.describe('Web UI Smoke Test - Enhanced Automation', () => {
             logger.logTest('Session creation via API', 'passed', Date.now() - startTime);
         } catch (error) {
             logger.logTest('Session creation via API', 'failed', Date.now() - startTime, error.message);
-            throw error;
-        }
-    });
-
-    // Test SSE connectivity simulation (API-level check)
-    test('SSE connectivity simulation via fetch', async ({ request }) => {
-        const startTime = Date.now();
-
-        try {
-            // Create session for SSE testing
-            const sessionResponse = await request.post('http://localhost:3001/api/sessions', {
-                data: {
-                    projectId: 'smoke-test-project',
-                    task: 'SSE connectivity test'
-                }
-            });
-
-            const sessionId = (await sessionResponse.json()).data.session.id;
-
-            // Simulate SSE connection attempt (fetch with EventSource-like headers)
-            const sseCheckResponse = await request.get(`http://localhost:3001/api/sse/${sessionId}`, {
-                headers: {
-                    'Accept': 'text/event-stream',
-                    'Cache-Control': 'no-cache',
-                    'Connection': 'keep-alive'
-                }
-            });
-
-            expect(sseCheckResponse.ok()).toBeTruthy();
-
-            // Check for CORS headers (important for browser SSE)
-            const corsHeaders = sseCheckResponse.headers();
-            expect(corsHeaders).toHaveProperty('access-control-allow-origin');
-
-            console.log(`✓ SSE connectivity check passed for session ${sessionId}`);
-            logger.logTest('SSE connectivity simulation', 'passed', Date.now() - startTime);
-        } catch (error) {
-            logger.logTest('SSE connectivity simulation', 'failed', Date.now() - startTime, error.message);
             throw error;
         }
     });

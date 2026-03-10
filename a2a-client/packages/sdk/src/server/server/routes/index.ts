@@ -9,6 +9,7 @@ import {Router} from 'express';
 import {AuthenticatedRequest, authMiddleware, sessionMiddleware} from '../middleware/auth.js';
 import {configRoutes} from './config.js';
 import sessionsRoutes from './sessions.js';
+import {storageRoutes} from './storage.js';
 
 export interface RouteOptions {
     prefix?: string;
@@ -38,17 +39,16 @@ export function setupRoutes(options: RouteOptions = {}): Router {
             service: 'a2a-client-api',
             version: '1.0.0',
             endpoints: {
-                config: '/api/config',
-                projects: '/api/projects',
-                sessions: '/api/sessions',
-                fs: '/api/fs',
-                rag: '/api/rag',
-                files: '/api/files',
-                ws: '/api/ws'
+                config: '/api/v1/config',
+                sessions: '/api/v1/sessions',
+                storage: '/api/storage'
             },
             timestamp: new Date().toISOString()
         });
     });
+
+    // Storage routes (bypasses auth) - must be before middleware
+    router.use('/api/storage', storageRoutes);
 
     // Apply global middleware if enabled
     if (enableAuth) {
@@ -83,5 +83,6 @@ export function setupRoutes(options: RouteOptions = {}): Router {
 // Export individual route modules for testing
 export {
     configRoutes,
-    sessionsRoutes
+    sessionsRoutes,
+    storageRoutes
 };

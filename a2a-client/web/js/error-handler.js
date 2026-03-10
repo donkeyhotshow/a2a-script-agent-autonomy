@@ -710,12 +710,4 @@
         };
     }
 
-    // Auto-integrate with SSE client
-    if (global.SSEClient) {
-        global.SSEClient.on('error', (data) => {
-            const error = data?.error || data?.message || 'SSE Error';
-            ErrorHandler.handle(new Error(error), { type: 'sse' });
-        });
-    }
-
 })(typeof window !== 'undefined' ? window : globalThis);

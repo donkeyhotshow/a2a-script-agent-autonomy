@@ -144,80 +144,59 @@ export async function sendSessionCommand(action, sessionOptions = {}) {
 }
 
 /**
- * Wait for command response with timeout
+ * Wait for command response with timeout (using polling)
  */
 export async function waitForResponse(commandId, options = {}) {
   const {
     apiUrl = 'http://localhost:3001',
     sessionId = 'tester-session',
-    timeout = 10000
+    timeout = 10000,
+    pollInterval = 1000
   } = options;
 
   const startTime = Date.now();
 
-  // Connect to SSE to listen for responses
-  const response = await fetch(`${apiUrl}/api/sse/${sessionId}`, {
-    headers: {
-      'Accept': 'text/event-stream',
-      'Cache-Control': 'no-cache'
+  const poll = async () => {
+    const elapsed = Date.now() - startTime;
+    if (elapsed >= timeout) {
+      throw new Error('Timeout waiting for response');
     }
-  });
 
-  if (!response.ok) {
-    throw new Error(`SSE connection failed: ${response.status}`);
-  }
-
-  return new Promise((resolve, reject) => {
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder();
-
-    const timeoutId = setTimeout(() => {
-      reader.cancel();
-      reject(new Error('Timeout waiting for response'));
-    }, timeout);
-
-    const processStream = async () => {
-      try {
-        const { done, value } = await reader.read();
-
-        if (done) {
-          clearTimeout(timeoutId);
-          reject(new Error('Stream ended without response'));
-          return;
+    try {
+      // Poll the session status endpoint
+      const response = await fetch(`${apiUrl}/api/sessions/${sessionId}/events?since=${startTime}`, {
+        headers: {
+          'Accept': 'application/json',
+          'Cache-Control': 'no-cache'
         }
+      });
 
-        const chunk = decoder.decode(value);
-        const lines = chunk.split('\n');
-
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            try {
-              const data = JSON.parse(line.slice(6));
-
-              if (data.commandId === commandId ||
-                  (data.type === 'tester_response' && data.originalCommandId === commandId)) {
-                clearTimeout(timeoutId);
-                reader.cancel();
-                resolve(data);
-                return;
-              }
-            } catch (e) {
-              // Skip invalid JSON
-            }
-          }
-        }
-
-        // Continue reading
-        processStream();
-
-      } catch (error) {
-        clearTimeout(timeoutId);
-        reject(error);
+      if (!response.ok) {
+        throw new Error(`Polling failed: ${response.status}`);
       }
-    };
 
-    processStream();
-  });
+      const events = await response.json();
+      
+      // Find matching event
+      for (const event of events) {
+        if (event.commandId === commandId ||
+            (event.type === 'tester_response' && event.originalCommandId === commandId)) {
+          return event;
+        }
+      }
+
+      // Continue polling
+      await new Promise(resolve => setTimeout(resolve, pollInterval));
+      return poll();
+
+    } catch (error) {
+      // Continue polling on error
+      await new Promise(resolve => setTimeout(resolve, pollInterval));
+      return poll();
+    }
+  };
+
+  return poll();
 }
 
 /**

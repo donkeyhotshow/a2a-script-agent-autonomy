@@ -26,13 +26,6 @@ router.get('/', (req: AuthenticatedRequest, res: Response) => {
                 skipAuth: config.skipAuth
             },
             
-            // WebSocket configuration
-            websocket: {
-                port: config.websocketPort,
-                host: config.websocketHost,
-                pingInterval: config.websocketPingInterval
-            },
-            
             // Client configuration
             client: {
                 apiPort: config.clientApiPort,
@@ -162,14 +155,6 @@ router.get('/schema', (req: AuthenticatedRequest, res: Response) => {
                         skipAuth: { type: 'boolean' }
                     }
                 },
-                websocket: {
-                    type: 'object',
-                    properties: {
-                        port: { type: 'number' },
-                        host: { type: 'string' },
-                        pingInterval: { type: 'number' }
-                    }
-                },
                 client: {
                     type: 'object',
                     properties: {
@@ -278,10 +263,6 @@ router.post('/validate', (req: AuthenticatedRequest, res: Response) => {
         
         if (configToValidate.server?.port && (configToValidate.server.port < 1 || configToValidate.server.port > 65535)) {
             errors.push('Server port must be between 1 and 65535');
-        }
-        
-        if (configToValidate.websocket?.port && (configToValidate.websocket.port < 1 || configToValidate.websocket.port > 65535)) {
-            errors.push('WebSocket port must be between 1 and 65535');
         }
         
         if (configToValidate.session?.timeout && configToValidate.session.timeout < 0) {

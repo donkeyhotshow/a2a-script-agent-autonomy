@@ -1,12 +1,15 @@
 /**
  * Vite plugin: serve .a2a data from project folders.
  * Projects stored in storage/projects.json
+ * Also handles /api/storage for KV storage
  */
 import fs from 'fs';
 import path from 'path';
 
 const PROJECTS_FILE = 'storage/projects.json';
 const API_PREFIX = '/api/a2a';
+const STORAGE_PREFIX = '/api/storage';
+const SAFE_SEGMENT = /^[a-zA-Z0-9_-]+$/;
 
 function loadProjects(cwd) {
     const file = path.join(cwd, PROJECTS_FILE);
@@ -73,6 +76,45 @@ function saveSession(projectPath, session) {
 function deleteSession(projectPath, sessionId) {
     const file = path.join(getSessionsDir(projectPath), `${sessionId}.json`);
     if (fs.existsSync(file)) fs.unlinkSync(file);
+}
+
+function getKvDir(cwd, namespace) {
+    const dir = path.join(cwd, 'storage', 'kv', namespace);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, {recursive: true});
+    return dir;
+}
+
+function kvGet(cwd, namespace, key) {
+    const file = path.join(getKvDir(cwd, namespace), `${key}.json`);
+    if (!fs.existsSync(file)) return null;
+    try {
+        return JSON.parse(fs.readFileSync(file, 'utf8'));
+    } catch {
+        return null;
+    }
+}
+
+function kvSet(cwd, namespace, key, data) {
+    const file = path.join(getKvDir(cwd, namespace), `${key}.json`);
+    fs.writeFileSync(file, JSON.stringify(data, null, 2));
+}
+
+function kvDelete(cwd, namespace, key) {
+    const file = path.join(getKvDir(cwd, namespace), `${key}.json`);
+    if (fs.existsSync(file)) fs.unlinkSync(file);
+}
+
+function kvKeys(cwd, namespace) {
+    const dir = getKvDir(cwd, namespace);
+    if (!fs.existsSync(dir)) return [];
+    return fs.readdirSync(dir)
+        .filter(f => f.endsWith('.json'))
+        .map(f => f.replace(/\.json$/, ''));
+}
+
+function kvClear(cwd, namespace) {
+    const dir = path.join(cwd, 'storage', 'kv', namespace);
+    if (fs.existsSync(dir)) fs.rmSync(dir, {recursive: true, force: true});
 }
 
 export default function vitePluginA2a() {
@@ -261,6 +303,87 @@ export default function vitePluginA2a() {
                         return;
                     }
                     deleteSession(proj.path, sessionDetailMatch[2]);
+                    res.setHeader('Content-Type', 'application/json');
+                    res.end(JSON.stringify({success: true}));
+                    return;
+                }
+
+                next();
+            });
+
+            // Storage KV API handler
+            server.middlewares.use((req, res, next) => {
+                if (!req.url?.startsWith(STORAGE_PREFIX)) return next();
+
+                const url = new URL(req.url, 'http://localhost');
+                const p = url.pathname.slice(STORAGE_PREFIX.length);
+
+                // GET /:namespace/keys
+                const keysMatch = p.match(/^\/([^/]+)\/keys$/);
+                if (req.method === 'GET' && keysMatch) {
+                    const ns = keysMatch[1];
+                    if (!SAFE_SEGMENT.test(ns)) {
+                        res.writeHead(400).end(JSON.stringify({error: 'Invalid namespace'}));
+                        return;
+                    }
+                    res.setHeader('Content-Type', 'application/json');
+                    res.end(JSON.stringify({keys: kvKeys(cwd, ns)}));
+                    return;
+                }
+
+                // GET/PUT/DELETE /:namespace/:key
+                const kvMatch = p.match(/^\/([^/]+)\/([^/]+)$/);
+                if (kvMatch) {
+                    const [, ns, key] = kvMatch;
+                    if (!SAFE_SEGMENT.test(ns) || !SAFE_SEGMENT.test(key)) {
+                        res.writeHead(400).end(JSON.stringify({error: 'Invalid namespace or key'}));
+                        return;
+                    }
+
+                    if (req.method === 'GET') {
+                        const data = kvGet(cwd, ns, key);
+                        if (data === null) {
+                            res.writeHead(404).end(JSON.stringify({error: 'Key not found'}));
+                            return;
+                        }
+                        res.setHeader('Content-Type', 'application/json');
+                        res.end(JSON.stringify(data));
+                        return;
+                    }
+
+                    if (req.method === 'PUT') {
+                        let body = '';
+                        req.on('data', c => (body += c));
+                        req.on('end', () => {
+                            try {
+                                const data = JSON.parse(body || '{}');
+                                kvSet(cwd, ns, key, data);
+                                res.setHeader('Content-Type', 'application/json');
+                                res.end(JSON.stringify({success: true}));
+                            } catch (e) {
+                                res.writeHead(400).end(JSON.stringify({error: String(e?.message || e)}));
+                            }
+                        });
+                        return;
+                    }
+
+                    if (req.method === 'DELETE') {
+                        kvDelete(cwd, ns, key);
+                        res.setHeader('Content-Type', 'application/json');
+                        res.end(JSON.stringify({success: true}));
+                        return;
+                    }
+                }
+
+                // DELETE /:namespace (clear all)
+                const nsMatch = p.match(/^\/([^/]+)$/);
+                if (req.method === 'DELETE' && nsMatch) {
+                    const ns = nsMatch[1];
+                    if (!SAFE_SEGMENT.test(ns)) {
+                        res.writeHead(400).end(JSON.stringify({error: 'Invalid namespace'}));
+                        return;
+                    }
+                    kvClear(cwd, ns);
                     res.setHeader('Content-Type', 'application/json');
                     res.end(JSON.stringify({success: true}));
                     return;

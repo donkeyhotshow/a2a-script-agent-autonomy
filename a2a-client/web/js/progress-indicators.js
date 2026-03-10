@@ -6,7 +6,7 @@
  * - Loading state for POST /api/sessions/:id/next
  * - "Running…" status with promiseId polling
  * - Cancel/stop updates UI
- * - Integration with SSE events
+ * - Integration with HTTP responses (promiseId flow)
  */
 
 (function (global) {
@@ -195,7 +195,7 @@
         },
 
         /**
-         * Update progress from SSE/progress event
+         * Update progress from HTTP response/progress event
          */
         handleProgressEvent(eventData) {
             const { current, total, message, progressId } = eventData;
@@ -440,23 +440,8 @@
     // Export
     global.ProgressIndicators = ProgressIndicators;
 
-    // Auto-integrate with SSE client events
-    if (global.SSEClient) {
-        global.SSEClient.on('progress', (data) => {
-            ProgressIndicators.handleProgressEvent(data);
-        });
-        
-        global.SSEClient.on('complete', (data) => {
-            ProgressIndicators.emit('complete', data);
-        });
-        
-        global.SSEClient.on('error', (data) => {
-            ProgressIndicators.emit('error', data);
-        });
-    }
-    
-    // ✅ Auto-integrate with API Integration for execute.ui from SDK
-    // SDK sends execute.ui via SSE, we receive it through api-integration events
+    // Auto-integrate with API Integration for execute.ui from SDK
+    // SDK returns execute.ui in HTTP response, api-integration forwards events
     if (global.apiIntegration) {
         global.apiIntegration.on('uiStateChange', (data) => {
             SessionProgressManager.handleUiStateFromSdk(data);
@@ -489,6 +474,20 @@
      */
     const SessionProgressManager = {
         _activeSessions: new Map(),
+        _trackers: new Map(),
+        _listeners: new Map(),
+
+        on(event, callback) {
+            if (!this._listeners.has(event)) {
+                this._listeners.set(event, new Set());
+            }
+            this._listeners.get(event).add(callback);
+            return () => this._listeners.get(event)?.delete(callback);
+        },
+
+        _emit(event, data) {
+            this._listeners.get(event)?.forEach(cb => cb(data));
+        },
 
         /**
          * Start progress tracking for session operation
@@ -545,7 +544,7 @@
         },
 
         /**
-         * ✅ New method: handle execute.ui sent by SDK via SSE/WS
+         * Handle execute.ui sent by SDK via HTTP response
          * See: docs/new-request-flow/PROTOCOLS/states/pending.md
          */
         async handleUiStateFromSdk(uiState) {
@@ -556,7 +555,7 @@
                 
                 // Get or create progress tracker for this promiseId
                 const progressId = promiseId ? `promise-${promiseId}` : 'sdk-ui';
-                let tracker = this._trackers.get(progressId);
+                let tracker = ProgressIndicators.get(progressId);
                 
                 if (!tracker) {
                     tracker = ProgressIndicators.create(progressId, {
@@ -601,7 +600,7 @@
                     tracker.setMessage(message);
                 }
 
-                // ✅ No more polling - SDK will send execute.ui via SSE/WS
+                // SDK returns execute.ui in HTTP response (promiseId polling happens in SDK)
                 // This method now just initializes the tracker, actual UI updates come from SDK
                 
                 return progressId;

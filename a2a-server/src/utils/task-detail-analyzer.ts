@@ -28,7 +28,7 @@ const TECHNICAL_TERMS = [
     'authentication', 'authorization', 'jwt', 'oauth', 'cors', 'csrf',
     'testing', 'unit', 'feature', 'e2e', 'vitest', 'phpunit', 'jest',
     'docker', 'kubernetes', 'nginx', 'apache', 'aws', 'gcp', 'azure',
-    'crud', 'restful', 'graphql', 'sse',
+    'crud', 'restful', 'graphql',
     'repository', 'factory', 'seeder', 'request', 'resource',
     'observer', 'event', 'listener', 'mail', 'notification',
     'validation', 'authorization', 'policy', 'gate',

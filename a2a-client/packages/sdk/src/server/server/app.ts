@@ -7,7 +7,6 @@
 
 import express from 'express';
 import cors from 'cors';
-import {WebSocketServerManager} from './websocket-server.js';
 
 export interface AppOptions {
     port: number;
@@ -22,11 +21,9 @@ export interface AppOptions {
 export class ExpressAppManager {
     private app: express.Application;
     private options: AppOptions;
-    private websocketServer: WebSocketServerManager;
 
-    constructor(options: AppOptions, websocketServer: WebSocketServerManager) {
+    constructor(options: AppOptions) {
         this.options = options;
-        this.websocketServer = websocketServer;
         this.app = express();
         
         this.setupMiddleware();
@@ -67,11 +64,6 @@ export class ExpressAppManager {
             });
         });
 
-        // WebSocket info endpoint
-        this.app.get(['/api/ws', '/api/v1/ws'], (req, res) => {
-            res.json(this.websocketServer.getServerInfo());
-        });
-
         // API info endpoint
         this.app.get(['/api', '/api/v1'], (req, res) => {
             res.json({
@@ -84,10 +76,8 @@ export class ExpressAppManager {
                     terminal: '/api/terminal',
                     fs: '/api/fs',
                     rag: '/api/rag',
-                    files: '/api/files',
-                    ws: '/api/ws'
+                    files: '/api/files'
                 },
-                websocket: this.websocketServer.getServerInfo(),
                 timestamp: new Date().toISOString()
             });
         });
@@ -106,7 +96,6 @@ export class ExpressAppManager {
     public start(): void {
         this.app.listen(this.options.port, this.options.host, () => {
             console.log(`A2A Client API Server started on http://${this.options.host}:${this.options.port}`);
-            console.log(`WebSocket Server started on ws://${this.options.host}:${this.options.websocketServer?.getServerInfo().wsUrl.split(':')[2] || 3002}`);
             console.log(`Health check: http://${this.options.host}:${this.options.port}/health`);
             console.log(`API info: http://${this.options.host}:${this.options.port}/api`);
         });
@@ -127,13 +116,6 @@ export class ExpressAppManager {
     public getOptions(): AppOptions {
         return {...this.options};
     }
-
-    /**
-     * Get WebSocket server instance
-     */
-    public getWebSocketServer(): WebSocketServerManager {
-        return this.websocketServer;
-    }
 }
 
 // Export singleton instance
@@ -142,7 +124,7 @@ export let expressApp: ExpressAppManager | null = null;
 /**
  * Initialize Express application
  */
-export function initExpressApp(options: AppOptions, websocketServer: WebSocketServerManager): ExpressAppManager {
-    expressApp = new ExpressAppManager(options, websocketServer);
+export function initExpressApp(options: AppOptions): ExpressAppManager {
+    expressApp = new ExpressAppManager(options);
     return expressApp;
 }

@@ -6,7 +6,6 @@
  */
 
 import {SessionDetail, SessionSummary, createSessionMessage} from '../session-dto.js';
-import {websocketServer} from '../server/websocket-server.js';
 import {
     loadSessionsFromStorage,
     saveSessionToStorage,
@@ -147,9 +146,6 @@ export class SessionService {
         this.sessions.set(sessionId, session);
         this.persistSession(session);
 
-        // Broadcast session creation
-        websocketServer.broadcastSessionUpdate(sessionId, session);
-
         console.log(`[SESSION] Created session: ${sessionId} with ${messages.length} message(s)`);
         return session;
     }
@@ -206,9 +202,6 @@ export class SessionService {
 
         this.sessions.set(sessionId, updatedSession);
         this.persistSession(updatedSession);
-
-        // Broadcast session update
-        websocketServer.broadcastSessionUpdate(sessionId, updatedSession);
 
         console.log(`[SESSION] Updated session: ${sessionId}`);
         return updatedSession;

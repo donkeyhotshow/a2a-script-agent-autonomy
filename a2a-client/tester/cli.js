@@ -4,15 +4,13 @@
  * A2A Web Client Tester CLI
  *
  * Command-line interface for managing and testing A2A web client
- * through API server commands sent via SSE (Server-Sent Events).
+ * through API server commands.
  *
  * Usage:
  *   a2a-tester <command> [options]
  *
  * Commands:
- *   connect    - Connect to web client session
  *   send       - Send command to web client
- *   monitor    - Monitor web client events
  *   panel      - Control panels (show/hide/move)
  *   session    - Manage sessions
  *   status     - Get web client status
@@ -21,7 +19,6 @@
 
 import { Command } from 'commander';
 import chalk from 'chalk';
-import { WebSocket } from 'ws';
 import fetch from 'node-fetch';
 
 const program = new Command();
@@ -38,7 +35,6 @@ const DEFAULT_SESSION_ID = process.env.A2A_SESSION_ID || 'tester-session';
 // Global state
 let apiUrl = DEFAULT_API_URL;
 let sessionId = DEFAULT_SESSION_ID;
-let wsConnection = null;
 
 /**
  * Initialize CLI with common options
@@ -50,56 +46,6 @@ function setupCommonOptions(cmd) {
     .option('-v, --verbose', 'Verbose output')
     .option('--json', 'Output JSON format');
 }
-
-/**
- * Connect to web client session
- */
-program
-  .command('connect')
-  .description('Connect to web client session')
-  .option('-t, --timeout <ms>', 'Connection timeout', '5000')
-  .action(async (options) => {
-    try {
-      const { apiUrl: url, session: sessId, timeout, verbose } = { ...program.opts(), ...options };
-
-      console.log(chalk.blue(`Connecting to session ${sessId} at ${url}...`));
-
-      // Test API connection
-      const healthResponse = await fetch(`${url}/health`, {
-        timeout: parseInt(timeout)
-      });
-
-      if (!healthResponse.ok) {
-        throw new Error(`API server not responding: ${healthResponse.status}`);
-      }
-
-      // Connect via WebSocket for real-time communication
-      const wsUrl = url.replace(/^http/, 'ws').replace(/\/$/, '');
-      wsConnection = new WebSocket(`${wsUrl}/ws/${sessId}`);
-
-      await new Promise((resolve, reject) => {
-        wsConnection.on('open', () => {
-          console.log(chalk.green('✓ Connected to web client'));
-          resolve();
-        });
-
-        wsConnection.on('error', (error) => {
-          reject(new Error(`WebSocket connection failed: ${error.message}`));
-        });
-
-        // Timeout
-        setTimeout(() => {
-          reject(new Error('Connection timeout'));
-        }, parseInt(timeout));
-      });
-
-      console.log(chalk.green('✓ Ready to send commands to web client'));
-
-    } catch (error) {
-      console.error(chalk.red('✗ Connection failed:'), error.message);
-      process.exit(1);
-    }
-  });
 
 /**
  * Send command to web client
@@ -160,64 +106,6 @@ program
 
     } catch (error) {
       console.error(chalk.red('✗ Command failed:'), error.message);
-      process.exit(1);
-    }
-  });
-
-/**
- * Monitor web client events
- */
-program
-  .command('monitor')
-  .description('Monitor web client events via SSE')
-  .option('-f, --filter <type>', 'Filter events by type')
-  .action(async (options) => {
-    const { apiUrl: url, session: sessId, filter, verbose } = { ...program.opts(), ...options };
-
-    console.log(chalk.blue(`Monitoring session ${sessId} at ${url}...`));
-    console.log(chalk.gray('Press Ctrl+C to stop monitoring'));
-
-    try {
-      // Connect to SSE endpoint
-      const response = await fetch(`${url}/api/sse/${sessId}`, {
-        headers: {
-          'Accept': 'text/event-stream',
-          'Cache-Control': 'no-cache'
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error(`SSE connection failed: ${response.status}`);
-      }
-
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        const chunk = decoder.decode(value);
-        const lines = chunk.split('\n');
-
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            try {
-              const data = JSON.parse(line.slice(6));
-
-              if (!filter || data.type === filter || data.event === filter) {
-                const timestamp = new Date().toLocaleTimeString();
-                console.log(`[${timestamp}] ${chalk.cyan(data.type || data.event)}:`, JSON.stringify(data, null, 2));
-              }
-            } catch (e) {
-              // Skip invalid JSON
-            }
-          }
-        }
-      }
-
-    } catch (error) {
-      console.error(chalk.red('✗ Monitoring failed:'), error.message);
       process.exit(1);
     }
   });
@@ -299,8 +187,7 @@ program
       } else {
         console.log(chalk.green('✓ Tester API Status:'));
         console.log(chalk.blue('  Service:'), result.data?.service || 'unknown');
-        console.log(chalk.blue('  Active Connections:'), result.data?.sseManager?.activeConnections || 0);
-        console.log(chalk.blue('  Sessions:'), result.data?.sseManager?.sessionCount || 0);
+        console.log(chalk.blue('  Sessions:'), result.data?.sessionCount || 0);
       }
 
     } catch (error) {

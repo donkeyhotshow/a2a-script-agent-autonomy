@@ -1,7 +1,7 @@
 /**
  * API Integration Module
  * Connects UI components with Client API (single apiBase, e.g. localhost:3001).
- * Keeps only configuration/request helpers, project/session/task APIs, and SSE wiring.
+ * Uses HTTP with promiseId polling. SSE/WebSocket removed.
  */
 
 // Fetch with timeout and retry logic (shared across web client)
@@ -40,69 +40,7 @@ class APIIntegration {
     constructor() {
         this.apiBase = '/api';
         this.token = null;
-        this.sseConnected = false;
         this._listeners = new Map();
-    }
-
-    /**
-     * Setup SSE listener for execute.ui from SDK
-     */
-    _setupSseListener() {
-        if (typeof EventSource === 'undefined') {
-            console.warn('[api-integration] EventSource not available, skipping SSE listener');
-            return;
-        }
-
-        try {
-            const eventSource = new EventSource(`${this.apiBase}/sse`);
-
-            eventSource.addEventListener('status', (event) => {
-                this._handleSseEvent('status', event);
-            });
-
-            eventSource.addEventListener('task_response', (event) => {
-                this._handleSseEvent('task_response', event);
-            });
-
-            eventSource.onerror = (error) => {
-                console.warn('[api-integration] SSE connection error:', error);
-                this.sseConnected = false;
-                this.emit('promiseError', { source: 'sse', error });
-            };
-
-            eventSource.onopen = () => {
-                this.sseConnected = true;
-                console.log('[api-integration] SSE connected');
-            };
-
-            this._eventSource = eventSource;
-        } catch (error) {
-            console.warn('[api-integration] SSE setup failed:', error);
-        }
-    }
-
-    _handleSseEvent(eventName, event) {
-        try {
-            const data = JSON.parse(event.data);
-
-            if (data.execute?.ui) {
-                this.emit('uiStateChange', {
-                    promiseId: data.promiseId,
-                    ui: data.execute.ui
-                });
-            }
-
-            if (eventName === 'task_response' && (data.result || data.execute)) {
-                this.emit('taskCompleted', {
-                    promiseId: data.promiseId,
-                    result: data.result || data
-                });
-            }
-
-            this.emit('serverResponse', { type: eventName, data });
-        } catch (error) {
-            console.warn('[api-integration] Failed to parse SSE event:', error);
-        }
     }
 
     /**
@@ -177,59 +115,96 @@ class APIIntegration {
     }
 
     /**
-     * Get projects list
+     * Get projects list (uses Vite plugin at /api/a2a/projects)
      */
     async getProjects() {
-        const raw = await this.request('GET', '/projects');
+        const res = await fetch('/api/a2a/projects');
+        if (!res.ok) throw new Error(`getProjects failed: ${res.status}`);
+        const raw = await res.json();
         return Array.isArray(raw) ? raw : (raw?.projects || raw?.data || []);
     }
 
     /**
-     * Create project (POST /projects)
+     * Create/update projects (POST /api/a2a/projects)
      */
     async createProject(params) {
         const body = typeof params === 'string' ? { name: params } : (params || {});
-        const raw = await this.request('POST', '/projects', body);
+        const res = await fetch('/api/a2a/projects', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        });
+        if (!res.ok) throw new Error(`createProject failed: ${res.status}`);
+        const raw = await res.json();
         return raw?.data ?? raw;
     }
 
     /**
-     * Delete project (DELETE /projects/:projectId)
+     * Delete project (not implemented in vite-plugin-a2a)
      */
     async deleteProject(projectId) {
-        return this.request('DELETE', `/projects/${encodeURIComponent(projectId)}`);
+        console.warn('[API] deleteProject not implemented');
+        return { success: false };
     }
 
     /**
-     * Get sessions
+     * Get sessions (uses Vite plugin)
      */
     async getSessions(projectId = null) {
-        const path = projectId ? `/sessions?projectId=${projectId}` : '/sessions';
-        const raw = await this.request('GET', path);
+        if (!projectId) {
+            console.warn('[API] getSessions requires projectId');
+            return [];
+        }
+        const res = await fetch(`/api/a2a/projects/${encodeURIComponent(projectId)}/sessions`);
+        if (!res.ok) return [];
+        const raw = await res.json();
         return Array.isArray(raw) ? raw : (raw?.sessions || raw?.data || []);
     }
 
     /**
-     * Create session (POST /sessions)
+     * Create session (uses Vite plugin)
      */
     async createSession(params) {
-        const raw = await this.request('POST', '/sessions', { ...params, sync: true });
+        const projectId = params?.projectId;
+        if (!projectId) {
+            console.warn('[API] createSession requires projectId');
+            return null;
+        }
+        const res = await fetch(`/api/a2a/projects/${encodeURIComponent(projectId)}/sessions`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(params)
+        });
+        if (!res.ok) throw new Error(`createSession failed: ${res.status}`);
+        const raw = await res.json();
         return raw?.session ?? raw?.data ?? raw;
     }
 
     /**
-     * Get session by ID
+     * Get session by ID (uses Vite plugin)
      */
     async getSession(sessionId, projectId = null) {
-        const path = projectId ? `/sessions/${sessionId}?projectId=${encodeURIComponent(projectId)}` : `/sessions/${sessionId}`;
-        return this.request('GET', path);
+        if (!projectId) {
+            console.warn('[API] getSession requires projectId');
+            return null;
+        }
+        const res = await fetch(`/api/a2a/projects/${encodeURIComponent(projectId)}/sessions/${encodeURIComponent(sessionId)}`);
+        if (!res.ok) return null;
+        return res.json();
     }
 
     /**
-     * Delete session
+     * Delete session (uses Vite plugin)
      */
-    async deleteSession(sessionId) {
-        return this.request('DELETE', `/sessions/${sessionId}`);
+    async deleteSession(sessionId, projectId = null) {
+        if (!projectId) {
+            console.warn('[API] deleteSession requires projectId');
+            return { success: false };
+        }
+        const res = await fetch(`/api/a2a/projects/${encodeURIComponent(projectId)}/sessions/${encodeURIComponent(sessionId)}`, {
+            method: 'DELETE'
+        });
+        return { success: res.ok };
     }
 
     /**
@@ -240,23 +215,19 @@ class APIIntegration {
     }
 
     /**
-     * Search actions
+     * Search actions - deprecated, use session flow
      */
     async searchActions(query) {
-        return this.request('POST', '/tasks/analyze', {
-            query,
-            context: 'search-actions'
-        });
+        console.warn('[API] searchActions deprecated - use session flow');
+        return { actions: [] };
     }
 
     /**
-     * Analyze task
+     * Analyze task - deprecated, use session flow
      */
     async analyzeTask(query, context = 'new-task') {
-        return this.request('POST', '/tasks/analyze', {
-            query,
-            context
-        });
+        console.warn('[API] analyzeTask deprecated - use session flow');
+        return null;
     }
 
     /**

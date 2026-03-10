@@ -23,7 +23,7 @@
 
                 // Initialize managers
                 await global.ProjectManager?.init();
-                // Apply stored Client API URL so /api/tasks/analyze and /api/sessions hit the right host
+                // Apply stored Client API URL for operations requiring Client API server
                 let apiUrl = await global.ProjectManager?.getStoredClientApiUrl?.();
                 // Handle case where StorageAPI returns an object instead of string
                 if (apiUrl && typeof apiUrl === 'object') {
@@ -32,7 +32,6 @@
                 if (apiUrl && String(apiUrl).trim() && String(apiUrl).trim() !== '[object Object]') {
                     const base = String(apiUrl).trim().replace(/\/?$/, '');
                     if (global.apiIntegration) global.apiIntegration.configure({ apiBase: base });
-                    if (global.TransportManager) global.TransportManager.apiBase = base;
                 }
                 await global.SessionManager?.init();
                 await global.WindowManager?.init();
@@ -213,7 +212,6 @@
                     const base = url ? String(url).replace(/\/?$/, '') : '/api';
                     global.ProjectManager?.setStoredClientApiUrl(url).then(() => {
                         if (global.apiIntegration) global.apiIntegration.configure({ apiBase: base });
-                        if (global.TransportManager) global.TransportManager.apiBase = base;
                         panel.close();
                     });
                 });

@@ -174,7 +174,7 @@
         this._state.status = 'created';
 
         // Web does NOT insert any messages - it waits for server response on promise
-        // Server will send messages via SSE/response when ready
+        // Server returns messages via HTTP response (promiseId polling in SDK)
         this._emit('sessionCreated', { id: sid, projectId: pid, task, title });
         console.log('[SessionStore] Session created:', sid);
         return this;
@@ -397,25 +397,7 @@
 
         console.log('[SessionStore] Restoring session:', sessionId);
         this._state.sessionId = sessionId;
-
-        // Reconnect to transport (HTTP polling)
-        const transport = global.TransportManager;
-        if (transport && typeof transport.connect === 'function') {
-            try {
-                await transport.connect(sessionId);
-                this._state.status = 'active';
-                console.log('[SessionStore] Transport reconnected');
-            } catch (err) {
-                console.warn('[SessionStore] Failed to reconnect transport:', err.message || err);
-                this._state.status = 'disconnected';
-                this._state.error = 'Transport connection failed: ' + (err.message || err);
-                // Emit error event so UI can show notification
-                this._emit('error', { type: 'transport', message: err.message || err });
-            }
-        } else {
-            this._state.status = 'disconnected';
-            console.warn('[SessionStore] TransportManager not available');
-        }
+        this._state.status = 'active';
 
         // Emit restore event so UI can re-render
         this._emit('restore', this.getState());
