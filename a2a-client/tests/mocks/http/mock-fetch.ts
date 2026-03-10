@@ -107,20 +107,6 @@ export class MockFetch {
     }
 
     /**
-     * Add mock for SSE endpoint
-     */
-    addSSEMock(sessionId: string | RegExp, response: MockFetchResponse): void {
-        const url = typeof sessionId === 'string'
-            ? new RegExp(`/api/v1/sse/${sessionId}$`)
-            : sessionId;
-        this.addMock({
-            url,
-            method: 'GET',
-            response
-        });
-    }
-
-    /**
      * Remove a mock by URL
      */
     removeMock(url: string | RegExp): void {

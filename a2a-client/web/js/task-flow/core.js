@@ -10,7 +10,6 @@
     const API = global.TaskFlowAPI;
     const Render = global.TaskFlowRender;
     const request = API?.request;
-    const getInputAreaHtml = Render?.getInputAreaHtml;
     const setPanelContent = Render?.setPanelContent;
     const updateStatus = Render?.updateStatus;
     const getChoiceLabel = API?.getChoiceLabel;
@@ -125,7 +124,7 @@
 
         /**
          * Инициализация
-         * Task entry is via TaskCreator modal (header-task-form replaced by task-creator-modal).
+        * Task entry is via the header "+" button which now creates an empty session (handled by AppTask).
          */
         init() {
             const sel = document.getElementById('projectSelect');
@@ -376,19 +375,6 @@
             const store = global.SessionStore;
             if (store?.pushMessage) {
                 store.pushMessage({ content: displayText }, 'user');
-            }
-
-            // Replace only input area with waiting indicator, preserve history
-            const inputArea = contentEl.querySelector('.task-flow-input-area');
-            if (inputArea) {
-                inputArea.outerHTML = `
-                    <div class="task-flow-input-area waiting">
-                        <div class="task-flow-waiting-indicator">
-                            <span class="loading-spinner"></span>
-                            <span>Waiting for response...</span>
-                        </div>
-                    </div>
-                `;
             }
 
             try {

@@ -13,7 +13,6 @@ const LOG_DIR = path.join(__dirname, '..', 'a2a-client', 'tests', 'logs', 'web-u
 class LogAnalyzer {
     constructor() {
         this.results = [];
-        this.sseLogs = [];
         this.infrastructureLogs = [];
     }
 
@@ -27,16 +26,6 @@ class LogAnalyzer {
                 const content = fs.readFileSync(path.join(LOG_DIR, file), 'utf8');
                 return { ...JSON.parse(content), filename: file };
             }).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-
-            // Load SSE logs
-            const sseFiles = fs.readdirSync(LOG_DIR)
-                .filter(file => file.startsWith('sse-heartbeat-') && file.endsWith('.log'));
-
-            this.sseLogs = sseFiles.map(file => ({
-                filename: file,
-                content: fs.readFileSync(path.join(LOG_DIR, file), 'utf8'),
-                timestamp: this.extractTimestamp(file)
-            })).sort((a, b) => b.timestamp - a.timestamp);
 
             // Load infrastructure logs
             const infraFiles = fs.readdirSync(LOG_DIR)
@@ -134,48 +123,12 @@ class LogAnalyzer {
         }
     }
 
-    analyzeSSELogs() {
-        if (this.sseLogs.length === 0) {
-            console.log('No SSE logs found.');
-            return;
-        }
-
-        console.log('\n=== SSE RELIABILITY ANALYSIS ===\n');
-
-        const latest = this.sseLogs[0];
-
-        // Analyze connection patterns
-        const connections = (latest.content.match(/SSE Connected/g) || []).length;
-        const messages = (latest.content.match(/SSE Message:/g) || []).length;
-        const errors = (latest.content.match(/SSE Error:/g) || []).length;
-        const heartbeats = (latest.content.match(/heartbeat/g) || []).length;
-
-        console.log('LATEST SSE SESSION:');
-        console.log(`Connections established: ${connections}`);
-        console.log(`Messages received: ${messages}`);
-        console.log(`Heartbeat events: ${heartbeats}`);
-        console.log(`Errors encountered: ${errors}`);
-        console.log('');
-
-        // Analyze connection stability over time
-        const recentLogs = this.sseLogs.slice(0, 5);
-        console.log('CONNECTION STABILITY (last 5 sessions):');
-        recentLogs.forEach(log => {
-            const conn = (log.content.match(/SSE Connected/g) || []).length;
-            const msgs = (log.content.match(/SSE Message:/g) || []).length;
-            const errs = (log.content.match(/SSE Error:/g) || []).length;
-            const date = log.timestamp.toISOString().split('T')[0];
-            console.log(`${date}: ${conn} connections, ${msgs} messages, ${errs} errors`);
-        });
-    }
-
     generateReport() {
         const report = {
             generated: new Date().toISOString(),
             summary: {
                 totalTestRuns: this.results.length,
                 latestTestStatus: this.results[0]?.status,
-                sseLogCount: this.sseLogs.length,
                 infrastructureLogCount: this.infrastructureLogs.length
             },
             recommendations: []
@@ -185,14 +138,6 @@ class LogAnalyzer {
         const failureRate = this.results.filter(r => r.status === 'failed').length / this.results.length;
         if (failureRate > 0.2) {
             report.recommendations.push('High failure rate detected - investigate infrastructure stability');
-        }
-
-        if (this.sseLogs.length > 0) {
-            const latestSSE = this.sseLogs[0];
-            const errors = (latestSSE.content.match(/SSE Error:/g) || []).length;
-            if (errors > 0) {
-                report.recommendations.push('SSE connection errors detected - check server heartbeat implementation');
-            }
         }
 
         const reportPath = path.join(LOG_DIR, `analysis-report-${Date.now()}.json`);
@@ -207,7 +152,6 @@ class LogAnalyzer {
         this.loadLogs();
 
         this.analyzeTestResults();
-        this.analyzeSSELogs();
 
         return this.generateReport();
     }

@@ -67,19 +67,11 @@ test.describe('Session panel quick integration smoke test', () => {
             await route.continue();
         });
 
-        await page.route('**/api/sse/**', async (route) => {
-            await route.fulfill({
-                status: 200,
-                headers: { 'Content-Type': 'text/event-stream' },
-                body: 'retry: 1000\n\n'
-            });
-        });
-
         await page.goto('/');
         await page.waitForLoadState('networkidle');
     });
 
-    test('session panel reflects server execute and SSE updates', async ({ page }) => {
+    test('session panel reflects server execute', async ({ page }) => {
         await page.waitForSelector('.session-panel');
 
         await page.fill('#taskInputField', 'Check session panel sync');
@@ -87,18 +79,5 @@ test.describe('Session panel quick integration smoke test', () => {
 
         const assistantMessage = page.locator('.session-panel-message-body').first();
         await expect(assistantMessage).toContainText('Server-side execute message');
-
-        // Simulate SSE live events
-        await page.evaluate(() => {
-            window.SSEClient?.emit('message', { message: 'Realtime notice', role: 'assistant' });
-            window.SSEClient?.emit('progress', { progress: 45 });
-        });
-
-        await page.waitForTimeout(200);
-        const messages = page.locator('.session-panel-message-body');
-        await expect(messages).toContainText('Realtime notice');
-
-        const progress = page.locator('.session-panel-execute-progress');
-        await expect(progress).toHaveText('45%');
     });
 });

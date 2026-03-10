@@ -81,13 +81,6 @@ const LOCALE_MATRIX = [
     { locale: 'de-DE', timezoneId: 'Europe/Berlin' },
 ];
 
-// SSE load states for stability testing
-const SSE_LOAD_STATES = [
-    'idle',      // No active SSE connections
-    'active',    // SSE connected with regular messages
-    'high-load', // Simulated high-frequency SSE events
-];
-
 export default defineConfig({
     // Test directory
     testDir: './tests/e2e',
@@ -137,7 +130,6 @@ export default defineConfig({
         // Navigation timeout: increased for slower browsers
         navigationTimeout: 45000,
 
-        // SSE-specific timeouts
         expect: {
             timeout: 10000,
         },
@@ -150,7 +142,6 @@ export default defineConfig({
         metadata: {
             browser: browser.name.split('-')[0],
             device: browser.name.split('-')[1],
-            sse_support: true,
         },
         // Test grouping for better parallelization
         testMatch: [
@@ -173,7 +164,7 @@ export default defineConfig({
             ...(browser.name.includes('webkit') && {
                 actionTimeout: 30000,
                 navigationTimeout: 90000,
-                // WebKit-specific settings for better SSE compatibility
+                // WebKit-specific settings
                 launchOptions: {
                     slowMo: process.env.CI ? 150 : 0,
                 },
@@ -185,13 +176,6 @@ export default defineConfig({
                 // Mobile-specific timeouts
                 actionTimeout: 20000,
                 navigationTimeout: 60000,
-            }),
-            // Cross-browser SSE stability settings
-            ...(browser.name && {
-                // Extra buffer for SSE connection establishment
-                expect: {
-                    timeout: browser.name.includes('webkit') ? 15000 : 10000,
-                },
             }),
         },
     })),
@@ -242,7 +226,6 @@ export default defineConfig({
         matrix: {
             browsers: BROWSER_MATRIX.map(b => b.name),
             locales: LOCALE_MATRIX.map(l => l.locale),
-            sseStates: SSE_LOAD_STATES,
         },
     },
 });

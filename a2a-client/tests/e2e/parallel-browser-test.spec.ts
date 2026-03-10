@@ -92,12 +92,7 @@ test.describe('Parallel Browser Testing', () => {
           await page.waitForTimeout(1000);
         }
 
-        // Test SSE connection (simplified - check for connection indicators)
-        const sseStartTime = Date.now();
-        // Look for SSE connection indicators in network or DOM
-        const sseConnectionTime = Date.now() - sseStartTime; // Placeholder
-
-        // Wait for potential SSE messages or timeout
+        // Wait for potential messages
         await page.waitForTimeout(5000);
 
         // Collect final metrics
@@ -116,8 +111,6 @@ test.describe('Parallel Browser Testing', () => {
           device,
           sessionId,
           pageMetrics: finalMetrics,
-          sseConnectionTime,
-          sseMessagesReceived: 0, // Would need SSE instrumentation
           errors,
           screenshots,
           duration: Date.now() - startTime

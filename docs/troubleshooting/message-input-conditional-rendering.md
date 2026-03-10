@@ -22,35 +22,7 @@ The message input container was appearing automatically on every response, regar
 
 ## Solution
 
-Modified `a2a-client/web/js/task-flow.js` to conditionally render input based on server response:
-
-### renderForm function
-
-- **Before**: Always rendered input area at bottom
-- **After**: Only renders input when `form.input` array exists and has items
-
-```javascript
-function renderForm(contentEl, form, ...) {
-    const hasChoices = form?.choices?.length > 0;
-    const hasInput = form?.input?.length > 0;
-
-    // Only show input area if server sent form.input
-    let inputAreaHtml = '';
-    if (hasInput) {
-        // ... render inputs ...
-        inputAreaHtml = getInputAreaHtml();
-    }
-    // ...
-}
-```
-
-### Other render functions
-
-Removed input area from:
-- `renderMessage` - shows message with Continue button only
-- `renderClientAction` - shows action status only
-- `renderDebug` - shows debug data only
-- `setPanelContent` (loading states) - shows status only
+Rather than trying to show or hide an input field from within the TaskFlow renderer, we now render only message history, choice buttons, execution metadata, and debug information. No input area is injected by `a2a-client/web/js/task-flow/render.js` (and `getInputAreaHtml` has been removed), so the TaskFlow panel never adds a text box on every response. When the server needs user input it should present `execute.form.choices` (which still render as buttons) or rely on the broader session UI/simulations to collect typed messages.
 
 ## Protocol Reference
 
@@ -86,7 +58,11 @@ From `simulations/SCHEMA.md`:
 
 ## Files Changed
 
-- `a2a-client/web/js/task-flow.js` - Conditional input rendering
+- `a2a-client/web/js/task-flow/render.js` - Removed input-area rendering and handler exports so the renderer only shows history, choices, and status blocks
+- `a2a-client/web/js/task-flow/core.js` - Dropped references to `getInputAreaHtml` and no longer monkey-patches a waiting indicator inside the removed input block
+- `a2a-client/web/js/app/windows/window-events.js` - Removed the session header and `.session-info` markup so waiting states only show history and a short status line
+- `a2a-client/web/css/components/task-flow.css` - Deleted the `.task-flow-input-area`/input/button styles
+- `a2a-client/web/css/components/session-window.css` - Removed the unused `.session-info`, `.session-id`, and `.session-status` rules because the header markup is gone
 
 ## Testing
 
@@ -94,3 +70,8 @@ From `simulations/SCHEMA.md`:
 2. Verify first response shows choice buttons without input field
 3. Select a dialog option
 4. Verify input field appears for subsequent messages
+
+## Legacy UI removals
+
+- The old `ai-actions` panel and overlay have been deleted, so no extra container or CSS is loaded on the client side; only the simplified TaskFlow history/panel UI remains.
+- `message-input-section` (the standalone header input) has also been removed along with `message-input.css`, so any automation that previously worked through `#messageInput` should now interact via the TaskFlow panel instead.

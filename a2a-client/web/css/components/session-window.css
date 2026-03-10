@@ -8,41 +8,6 @@
   background: var(--color-bg-primary);
 }
 
-/* Session Header */
-.session-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 14px;
-  background: var(--color-bg-tertiary);
-  border-bottom: 1px solid var(--color-border);
-  flex-shrink: 0;
-}
-
-.session-info {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.session-id {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  color: var(--color-text-muted);
-}
-
-.session-status {
-  font-size: 11px;
-  padding: 2px 8px;
-  background: var(--color-bg-hover);
-  border-radius: var(--radius-sm);
-  color: var(--color-text-secondary);
-}
-
-.session-status.active {
-  background: rgba(63, 185, 80, 0.15);
-  color: var(--color-success);
-}
 
 /* Session Messages Area */
 .session-messages {

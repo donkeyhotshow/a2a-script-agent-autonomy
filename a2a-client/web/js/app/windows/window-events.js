@@ -45,25 +45,16 @@
                     const isWaiting = store.isInputBlocked?.() || false;
 
                     if (execute && !isWaiting) {
-                        // Let renderExecute handle the full layout (history + form/message + input)
+                        // Let renderExecute handle the full layout (history + form/message)
                         Render.renderExecute(contentEl, execute, { execute, context, store }, taskFlowRef);
                     } else {
-                        // Waiting or no execute: show history + waiting indicator
+                        const statusText = isWaiting ? 'Waiting...' : 'Active';
                         contentEl.innerHTML = `
                             <div class="session-content">
-                                <div class="session-header">
-                                    <div class="session-info">
-                                        <span class="session-id">ID: ${sessionId.slice(-8)}</span>
-                                        <span class="session-status">${isWaiting ? 'Waiting...' : 'Active'}</span>
-                                    </div>
-                                </div>
                                 ${Render.renderMessageHistory(contentEl, store)}
-                                ${Render.getInputAreaHtml(isWaiting)}
+                                ${isWaiting ? `<p>Waiting for response (${statusText})...</p>` : ''}
                             </div>
                         `;
-                        if (!isWaiting) {
-                            Render.bindInputHandlers(contentEl, taskFlowRef);
-                        }
                     }
 
                     // Scroll to bottom
@@ -91,12 +82,6 @@
                 // Fallback to simple UI
                 contentEl.innerHTML = `
                     <div class="session-content">
-                        <div class="session-header">
-                            <div class="session-info">
-                                <span class="session-id">ID: ${sessionId}</span>
-                                <span class="session-status">Active</span>
-                            </div>
-                        </div>
                         <div class="session-messages" id="messages-${sessionId}">
                             <div class="message system">Session initialized</div>
                         </div>

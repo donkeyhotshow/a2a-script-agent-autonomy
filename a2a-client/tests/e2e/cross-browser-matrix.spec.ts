@@ -2,19 +2,13 @@ import { test, expect } from '@playwright/test';
 
 /**
  * Cross-browser stability matrix tests
- * Tests UI behavior across different browsers, viewports, and SSE load states
+ * Tests UI behavior across different browsers and viewports
  */
 
 const VIEWPORT_MATRIX = [
   { name: 'desktop', width: 1280, height: 720 },
   { name: 'tablet', width: 768, height: 1024 },
   { name: 'mobile', width: 375, height: 667 },
-];
-
-const SSE_LOAD_SCENARIOS = [
-  { name: 'idle', description: 'No active SSE connections' },
-  { name: 'normal', description: 'Regular SSE message flow' },
-  { name: 'high-load', description: 'High-frequency SSE events' },
 ];
 
 test.describe('Cross-browser Stability Matrix', () => {
@@ -24,100 +18,55 @@ test.describe('Cross-browser Stability Matrix', () => {
         viewport: { width: viewport.width, height: viewport.height },
       });
 
-      for (const scenario of SSE_LOAD_SCENARIOS) {
-        test.describe(`SSE Load: ${scenario.name}`, () => {
-          test.beforeEach(async ({ page }) => {
-            // Set up SSE load scenario
-            await page.addInitScript(() => {
-              // Mock different SSE load patterns
-              window.testSSEScenario = scenario.name;
+      test.beforeEach(async ({ page }) => {
+        await page.goto('/');
+        await page.waitForLoadState('networkidle');
+      });
 
-              if (scenario.name === 'high-load') {
-                // Simulate high-frequency SSE events
-                let eventCount = 0;
-                setInterval(() => {
-                  window.dispatchEvent(new CustomEvent('sse-message', {
-                    detail: { type: 'progress', count: eventCount++ }
-                  }));
-                }, 100); // 10 events per second
-              }
-            });
+      test('UI loads without crashes', async ({ page }) => {
+        // Basic smoke test - page should load
+        await expect(page).toHaveTitle(/A2A/);
 
-            await page.goto('/');
-            await page.waitForLoadState('networkidle');
-          });
+        // Check for critical UI elements
+        await expect(page.locator('[data-testid="session-panel"]')).toBeVisible();
 
-          test('UI loads without crashes', async ({ page }) => {
-            // Basic smoke test - page should load
-            await expect(page).toHaveTitle(/A2A/);
+        // No console errors
+        const errors = [];
+        page.on('console', msg => {
+          if (msg.type() === 'error') {
+            errors.push(msg.text());
+          }
+        });
 
-            // Check for critical UI elements
-            await expect(page.locator('[data-testid="session-panel"]')).toBeVisible();
+        await page.waitForTimeout(2000);
+        expect(errors).toHaveLength(0);
+      });
 
-            // No console errors
-            const errors = [];
-            page.on('console', msg => {
-              if (msg.type() === 'error') {
-                errors.push(msg.text());
-              }
-            });
+      test('Session panel responsive layout', async ({ page }) => {
+        const panel = page.locator('[data-testid="session-panel"]');
 
-            await page.waitForTimeout(2000);
-            expect(errors).toHaveLength(0);
-          });
+        // Panel should be visible and properly sized
+        await expect(panel).toBeVisible();
+        const box = await panel.boundingBox();
+        expect(box?.width).toBeGreaterThan(100);
+        expect(box?.height).toBeGreaterThan(100);
 
-          test('Session panel responsive layout', async ({ page }) => {
-            const panel = page.locator('[data-testid="session-panel"]');
+        // Layout should adapt to viewport
+        if (viewport.name === 'mobile') {
+          // Mobile layout checks
+          await expect(panel).toHaveCSS('max-width', '100vw');
+        } else {
+          // Desktop/tablet layout checks
+          await expect(panel).toHaveCSS('position', 'relative');
+        }
+      });
 
-            // Panel should be visible and properly sized
-            await expect(panel).toBeVisible();
-            const box = await panel.boundingBox();
-            expect(box?.width).toBeGreaterThan(100);
-            expect(box?.height).toBeGreaterThan(100);
+      test('Memory usage stability', async ({ page }) => {
+        // Track memory usage over time
+        const memoryReadings = [];
 
-            // Layout should adapt to viewport
-            if (viewport.name === 'mobile') {
-              // Mobile layout checks
-              await expect(panel).toHaveCSS('max-width', '100vw');
-            } else {
-              // Desktop/tablet layout checks
-              await expect(panel).toHaveCSS('position', 'relative');
-            }
-          });
-
-          test('SSE connection stability', async ({ page }) => {
-            // Wait for SSE connection indicator
-            const sseIndicator = page.locator('[data-testid="sse-status"]');
-            await expect(sseIndicator).toBeVisible();
-
-            // Check connection status
-            await expect(sseIndicator).toHaveAttribute('data-status', /(connected|connecting)/);
-
-            // Monitor for disconnections during load
-            let disconnectCount = 0;
-            page.on('console', msg => {
-              if (msg.text().includes('SSE connection lost')) {
-                disconnectCount++;
-              }
-            });
-
-            // Run for 10 seconds under load
-            await page.waitForTimeout(10000);
-
-            // Allow max 2 disconnections for high-load scenario
-            if (scenario.name === 'high-load') {
-              expect(disconnectCount).toBeLessThanOrEqual(2);
-            } else {
-              expect(disconnectCount).toBe(0);
-            }
-          });
-
-          test('Memory usage stability', async ({ page }) => {
-            // Track memory usage over time
-            const memoryReadings = [];
-
-            for (let i = 0; i < 5; i++) {
-              const metrics = await page.metrics();
+        for (let i = 0; i < 5; i++) {
+          const metrics = await page.metrics();
               memoryReadings.push(metrics.JSHeapUsedSize);
               await page.waitForTimeout(2000);
             }
@@ -144,8 +93,7 @@ test.describe('Cross-browser Stability Matrix', () => {
               expect(endTime - startTime).toBeLessThan(500);
             }
           });
-        });
-      }
+      });
     });
   }
 });

@@ -37,9 +37,6 @@
                 await global.WindowManager?.init();
                 global.TaskbarManager?.init();
 
-                // Initialize AI Actions Panel
-                this.initAIActionsPanel();
-
                 // Setup UI
                 this.setupUI();
 
@@ -86,50 +83,7 @@
             await Promise.all(loadPromises);
         },
 
-        /**
-         * Initialize AI Actions Panel
-         */
-        initAIActionsPanel() {
-            // Skip if already initialized
-            if (global.aiActionsPanel) {
-                console.log('[AppTask] AI Actions Panel already initialized');
-                return;
-            }
-
-            // Check if AIActionsSessionPanel is available
-            if (typeof global.AIActionsSessionPanel === 'undefined') {
-                console.warn('[AppTask] AIActionsSessionPanel not loaded yet, skipping initialization');
-                return;
-            }
-
-            // Get or create container
-            let container = document.getElementById('ai-actions-container');
-            if (!container) {
-                container = document.createElement('div');
-                container.id = 'ai-actions-container';
-                document.body.appendChild(container);
-            }
-
-            // Create the panel instance
-            try {
-                global.aiActionsPanel = new global.AIActionsSessionPanel(container, {
-                    id: 'ai-actions-panel',
-                    slot: 'floating',
-                    critical: true,
-                    onStateChange: (state) => {
-                        console.log('[AppTask] AI Actions Panel state changed:', state);
-                    }
-                });
-                if (global.SessionManager && global.aiActionsPanel.integrateWithSessionManager) {
-                    global.aiActionsPanel.integrateWithSessionManager(global.SessionManager);
-                }
-                console.log('[AppTask] AI Actions Panel initialized:', global.aiActionsPanel.id);
-            } catch (error) {
-                console.error('[AppTask] Failed to initialize AI Actions Panel:', error);
-            }
-        },
-
-        /**
+       /**
          * Setup UI event handlers
          */
         setupUI() {
@@ -189,7 +143,7 @@
 
             document.getElementById('settingsBtn')?.addEventListener('click', () => openModal('settings', 'settingsModal'));
             document.getElementById('projectsBtn')?.addEventListener('click', () => openModal('projects', 'projectsModal'));
-            document.getElementById('newTaskBtn')?.addEventListener('click', () => global.TaskCreator?.open());
+            document.getElementById('newTaskBtn')?.addEventListener('click', () => this.createNewSession());
         },
 
         _wireModalContent(type, panel) {

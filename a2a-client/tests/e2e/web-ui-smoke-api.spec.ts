@@ -11,9 +11,8 @@ import { execSync, spawn } from 'child_process';
  * 1. Infrastructure validation (Docker PostgreSQL + Redis)
  * 2. Service health checks with retries (A2A Server, Client API, Vite)
  * 3. Browser automation (UI load, console errors, session panel)
- * 4. SSE connectivity with heartbeat validation
- * 5. Session creation and API validation
- * 6. CORS and infrastructure cleanup verification
+ * 4. Session creation and API validation
+ * 5. CORS and infrastructure cleanup verification
  *
  * Designed for comprehensive CI validation with real browser interaction
  */

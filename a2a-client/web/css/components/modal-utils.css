@@ -20,16 +20,13 @@
 .notifications-panel.show,
 .error-modal-overlay.active,
 .error-modal-overlay.show,
-.task-creator-overlay.active,
-.task-creator-overlay.show,
 /* Support for JS removing display:none inline style */
 .modal:not([style*="none"]),
 .overlay:not([style*="none"]),
 .popup:not([style*="none"]),
 .dialog:not([style*="none"]),
 .notifications-panel:not([style*="none"]),
-.error-modal-overlay:not([style*="none"]),
-.task-creator-overlay:not([style*="none"]) {
+.error-modal-overlay:not([style*="none"]) {
   display: flex !important;
 }
 
@@ -39,16 +36,6 @@
 .error-modal-overlay {
   align-items: center;
   justify-content: center;
-}
-
-/* Panels that should display as block (not flex) when shown */
-.ai-actions-container.active,
-.ai-actions-container.show,
-.ai-actions-container:not([style*="none"]),
-.message-input-section.active,
-.message-input-section.show,
-.message-input-section:not([style*="none"]) {
-  display: block !important;
 }
 
 /* Fade in animation for modals */

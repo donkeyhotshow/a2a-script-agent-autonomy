@@ -16,7 +16,6 @@ class LogCleanup {
         this.now = new Date();
         this.retention = {
             testResults: 50,      // Keep last 50 test runs
-            sseLogs: 30,          // Keep last 30 days
             infraLogs: 30,        // Keep last 30 days
             analysisReports: 10   // Keep last 10 analysis reports
         };
@@ -32,7 +31,6 @@ class LogCleanup {
         const files = fs.readdirSync(LOG_DIR);
         return {
             testResults: files.filter(f => f.startsWith('web-ui-smoke-enhanced-') && f.endsWith('.json')),
-            sseLogs: files.filter(f => f.startsWith('sse-heartbeat-') && f.endsWith('.log')),
             infraLogs: files.filter(f => f.startsWith('infrastructure-') && f.endsWith('.log')),
             analysisReports: files.filter(f => f.startsWith('analysis-report-') && f.endsWith('.json')),
             archives: files.filter(f => f.startsWith('archive-'))
@@ -112,7 +110,6 @@ class LogCleanup {
             after: after,
             archived: {
                 testResults: before.testResults.length - after.testResults.length,
-                sseLogs: before.sseLogs.length - after.sseLogs.length,
                 infraLogs: before.infraLogs.length - after.infraLogs.length,
                 analysisReports: before.analysisReports.length - after.analysisReports.length
             }
@@ -139,7 +136,6 @@ class LogCleanup {
 
         // Cleanup each type
         this.cleanupTestResults(before.testResults);
-        this.cleanupTimeBased(before.sseLogs, this.retention.sseLogs, 'sse');
         this.cleanupTimeBased(before.infraLogs, this.retention.infraLogs, 'infra');
         this.cleanupAnalysisReports(before.analysisReports);
 

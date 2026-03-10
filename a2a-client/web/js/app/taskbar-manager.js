@@ -331,10 +331,10 @@
                 const newTaskBtn = taskbar.querySelector('.taskbar-btn-new-task');
                 if (newTaskBtn) {
                     newTaskBtn.addEventListener('click', () => {
-                        if (global.TaskCreator) {
-                            global.TaskCreator.open();
+                        if (global.AppTask?.createNewSession) {
+                            global.AppTask.createNewSession();
                         } else {
-                            console.warn('[TaskbarManager] TaskCreator not available');
+                            console.warn('[TaskbarManager] AppTask.createNewSession not available');
                         }
                     });
                 }

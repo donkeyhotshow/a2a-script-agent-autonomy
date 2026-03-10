@@ -74,7 +74,6 @@ describe('A2AFlowManager', () => {
         vi.clearAllMocks();
         manager = new A2AFlowManager();
         global.window.Sessions = null;
-        global.window.SSEClient = null;
     });
 
     afterEach(() => {
@@ -299,18 +298,6 @@ describe('A2AFlowManager', () => {
             expect(mockSessions.on).toHaveBeenCalledWith('responseReceived', expect.any(Function));
             expect(mockSessions.on).toHaveBeenCalledWith('executionStep', expect.any(Function));
             expect(mockSessions.on).toHaveBeenCalledWith('executionProgress', expect.any(Function));
-        });
-
-        it('should set up SSE event listeners', () => {
-            const mockSSE = {
-                on: vi.fn(),
-                off: vi.fn()
-            };
-            global.window.SSEClient = mockSSE;
-
-            manager.setupEventListeners();
-
-            expect(mockSSE.on).toHaveBeenCalledWith('message', expect.any(Function));
         });
 
         it('should clean up event listeners on destroy', () => {

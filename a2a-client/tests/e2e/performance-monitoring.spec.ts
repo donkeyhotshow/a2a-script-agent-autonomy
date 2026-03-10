@@ -1,6 +1,5 @@
 import { test, expect } from '@playwright/test';
 import { PerformanceMonitor, PageMetrics, ConnectionMetrics } from '../helpers/performance-monitor';
-import { SSEInstrumentation } from './helpers/sse-instrumentation';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -75,90 +74,6 @@ test.describe('Performance Monitoring', () => {
     expect(finalMetrics.loadComplete).toBeLessThan(5000); // Should load within 5 seconds
     expect(finalMetrics.failedRequests).toBe(0); // No failed network requests
     expect(monitor.getAverageHeapUsage()).toBeGreaterThan(0); // Should have heap usage data
-  });
-
-  test('SSE Connection Performance', async ({ page }) => {
-    monitor.start();
-
-    // Create session
-    const sessionResponse = await page.request.post('http://localhost:3001/api/sessions', {
-      data: { name: 'PerformanceTest' }
-    });
-    expect(sessionResponse.ok()).toBeTruthy();
-    const sessionData = await sessionResponse.json();
-    const sessionId = sessionData.id;
-
-    // Initialize SSE instrumentation
-    const instrumentation = new SSEInstrumentation(page, sessionId);
-
-    const connectionStart = Date.now();
-    await instrumentation.connect();
-    const connectionTime = Date.now() - connectionStart;
-
-    // Record initial connection metrics
-    const initialConnectionMetrics: ConnectionMetrics = {
-      timestamp: Date.now(),
-      sessionId,
-      connected: true,
-      messagesReceived: 0,
-      messagesSent: 0,
-      connectionTime,
-      reconnectCount: 0,
-      errors: []
-    };
-    monitor.recordConnectionMetrics(initialConnectionMetrics);
-
-    // Wait and monitor connection
-    await page.waitForTimeout(10000); // Monitor for 10 seconds
-
-    // Send some test messages
-    for (let i = 0; i < 5; i++) {
-      try {
-        await instrumentation.sendTestMessage(`Performance test message ${i + 1}`);
-        await page.waitForTimeout(1000);
-      } catch (error) {
-        console.warn(`Failed to send message ${i + 1}:`, error);
-      }
-    }
-
-    // Collect final connection metrics
-    const finalMessageCount = await instrumentation.getMessageCount();
-    const finalConnectionMetrics: ConnectionMetrics = {
-      timestamp: Date.now(),
-      sessionId,
-      connected: await instrumentation.isConnected(),
-      messagesReceived: finalMessageCount,
-      messagesSent: 5,
-      connectionTime,
-      lastMessageTime: Date.now(),
-      reconnectCount: 0,
-      errors: []
-    };
-    monitor.recordConnectionMetrics(finalConnectionMetrics);
-
-    // Collect page metrics
-    const pageMetrics = await monitor.collectPageMetrics(page, sessionId);
-
-    await instrumentation.disconnect();
-    monitor.stop();
-
-    const results = {
-      timestamp: new Date().toISOString(),
-      test: 'SSE Connection Performance',
-      sessionId,
-      connectionMetrics: [initialConnectionMetrics, finalConnectionMetrics],
-      pageMetrics,
-      nodeMetrics: monitor.getMetrics().node,
-      summary: monitor.getConnectionHealthSummary()
-    };
-
-    const filename = `sse-performance-${Date.now()}.json`;
-    fs.writeFileSync(path.join(RESULTS_DIR, filename), JSON.stringify(results, null, 2));
-
-    // Assertions
-    expect(connectionTime).toBeLessThan(5000); // Connection should establish within 5 seconds
-    expect(finalConnectionMetrics.connected).toBeTruthy(); // Should remain connected
-    expect(finalMessageCount).toBeGreaterThanOrEqual(0); // Should receive some messages
   });
 
   test('Memory Leak Detection', async ({ page }) => {

@@ -52,7 +52,5 @@
         }
     };
 
-    // AIActionsSessionPanel Integration is handled by ai-actions-integration.js
-    // which auto-connects when both SessionStore and aiActionsPanel are available
-
+  
 })(typeof window !== 'undefined' ? window : globalThis);
