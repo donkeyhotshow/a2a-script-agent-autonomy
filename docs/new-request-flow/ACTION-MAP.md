@@ -1,6 +1,8 @@
 # Карта коду (Action Map)
 
 > Де який код знаходиться в проекті A2A
+>
+> **Транспорт:** Web ↔ Client API ↔ Server — **async flow з `promiseId`**.
 
 ---
 
@@ -217,7 +219,6 @@ a2a-script-agent/
 | [`js/app/session-manager.js`](a2a-client/web/js/app/session-manager.js) | Управління сесіями              |
 | [`js/components/ai-actions.js`](a2a-client/web/js/components/ai-actions.js) | AI Actions                     |
 | [`js/web-api-client.js`](a2a-client/web/js/web-api-client.js)   | API клієнт                       |
-| [`js/transport/sse-transport.js`](a2a-client/web/js/transport/sse-transport.js) | SSE транспорт                   |
 
 ### Flow UI
 

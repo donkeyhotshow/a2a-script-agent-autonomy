@@ -10,7 +10,7 @@
  */
 
 import {Router, Request, Response} from 'express';
-import {sessionService} from '../services/session-service.js';
+import {sessionService} from '../../services/session-service.js';
 import crypto from 'crypto';
 
 const router = Router();
@@ -351,6 +351,312 @@ router.delete('/:id', (req: Request, res: Response) => {
             error: {
                 code: 'SESSION_DELETE_ERROR',
                 message: error instanceof Error ? error.message : 'Failed to delete session'
+            }
+        });
+    }
+});
+
+/**
+ * POST /api/sessions/:sessionId/action
+ * Submit user action choice
+ * 
+ * Accepts: { choice: string, input?: any }
+ * Returns: { execute, context, promiseId? }
+ */
+router.post('/:sessionId/action', async (req: Request, res: Response) => {
+    try {
+        const { sessionId } = req.params;
+        const body = req.body as {
+            choice: string;
+            input?: unknown;
+        };
+
+        // Validate required fields
+        if (!body.choice) {
+            res.status(400).json({
+                success: false,
+                error: {
+                    code: 'INVALID_ACTION',
+                    message: 'Choice is required'
+                }
+            });
+            return;
+        }
+
+        // Get session
+        const session = sessionService.getSession(sessionId);
+        if (!session) {
+            res.status(404).json({
+                success: false,
+                error: {
+                    code: 'SESSION_NOT_FOUND',
+                    message: `Session ${sessionId} not found`
+                }
+            });
+            return;
+        }
+
+        // Update session with selected action
+        sessionService.updateSession(sessionId, {
+            selectedAction: body.choice,
+            metadata: {
+                ...session.metadata,
+                lastUserInput: body.input
+            }
+        });
+
+        // Add user action to messages
+        sessionService.addMessage(
+            sessionId,
+            { action: body.choice, input: body.input },
+            'user',
+            { source: 'user-action' }
+        );
+
+        // Call a2a-server to process the action
+        let serverResponse = null;
+        let promiseId = null;
+
+        try {
+            const { serverFetch, getServerBaseUrl } = await import('../../index.js');
+            const serverBase = await getServerBaseUrl();
+
+            const requestBody = {
+                context: {
+                    version: '2.0',
+                    session_id: sessionId,
+                    execution: {
+                        action: 'action',
+                        step: body.choice
+                    },
+                    ...session.context
+                },
+                result: {
+                    choice: body.choice,
+                    input: body.input
+                }
+            };
+
+            const upstream = await serverFetch('POST', serverBase, '/invoke', requestBody);
+            serverResponse = await upstream.json().catch(() => null);
+
+            if (upstream.ok && serverResponse) {
+                console.log('[SESSIONS API] Got server response for action:', body.choice);
+                
+                // Extract promiseId if async
+                promiseId = serverResponse.promiseId || serverResponse.context?.promiseId || null;
+
+                // Update session with server response
+                if (serverResponse.context) {
+                    sessionService.updateSessionContext(sessionId, serverResponse.context);
+                }
+                if (serverResponse.execute) {
+                    sessionService.updateSession(sessionId, {
+                        currentExecute: serverResponse.execute
+                    });
+                }
+            } else {
+                console.warn('[SESSIONS API] Server call failed:', upstream.status, serverResponse);
+            }
+        } catch (serverError) {
+            console.warn('[SESSIONS API] Failed to call server for action:', serverError);
+        }
+
+        // Build response
+        const response: any = {
+            success: true,
+            execute: serverResponse?.execute || null,
+            context: serverResponse?.context || session.context || {}
+        };
+
+        if (promiseId) {
+            response.promiseId = promiseId;
+        }
+
+        res.json(response);
+    } catch (error) {
+        console.error('[SESSIONS API] Error processing action:', error);
+        res.status(500).json({
+            success: false,
+            error: {
+                code: 'ACTION_ERROR',
+                message: error instanceof Error ? error.message : 'Failed to process action'
+            }
+        });
+    }
+});
+
+/**
+ * POST /api/sessions/:sessionId/next
+ * Continue execution after user response
+ * 
+ * Accepts: { result: any }
+ * Returns: { execute, context, promiseId? }
+ */
+router.post('/:sessionId/next', async (req: Request, res: Response) => {
+    try {
+        const { sessionId } = req.params;
+        const body = req.body as {
+            result?: unknown;
+        };
+
+        // Get session
+        const session = sessionService.getSession(sessionId);
+        if (!session) {
+            res.status(404).json({
+                success: false,
+                error: {
+                    code: 'SESSION_NOT_FOUND',
+                    message: `Session ${sessionId} not found`
+                }
+            });
+            return;
+        }
+
+        // Add user result to messages
+        sessionService.addMessage(
+            sessionId,
+            body.result,
+            'user',
+            { source: 'user-result' }
+        );
+
+        // Call a2a-server to continue execution
+        let serverResponse = null;
+        let promiseId = null;
+
+        try {
+            const { serverFetch, getServerBaseUrl } = await import('../../index.js');
+            const serverBase = await getServerBaseUrl();
+
+            const requestBody = {
+                context: {
+                    version: '2.0',
+                    session_id: sessionId,
+                    execution: {
+                        action: 'continue',
+                        step: 'next'
+                    },
+                    ...session.context
+                },
+                result: body.result || {}
+            };
+
+            const upstream = await serverFetch('POST', serverBase, '/invoke', requestBody);
+            serverResponse = await upstream.json().catch(() => null);
+
+            if (upstream.ok && serverResponse) {
+                console.log('[SESSIONS API] Got server response for next step');
+                
+                // Extract promiseId if async
+                promiseId = serverResponse.promiseId || serverResponse.context?.promiseId || null;
+
+                // Update session with server response
+                if (serverResponse.context) {
+                    sessionService.updateSessionContext(sessionId, serverResponse.context);
+                }
+                if (serverResponse.execute) {
+                    sessionService.updateSession(sessionId, {
+                        currentExecute: serverResponse.execute
+                    });
+                }
+            } else {
+                console.warn('[SESSIONS API] Server call failed:', upstream.status, serverResponse);
+            }
+        } catch (serverError) {
+            console.warn('[SESSIONS API] Failed to call server for next:', serverError);
+        }
+
+        // Build response
+        const response: any = {
+            success: true,
+            execute: serverResponse?.execute || null,
+            context: serverResponse?.context || session.context || {}
+        };
+
+        if (promiseId) {
+            response.promiseId = promiseId;
+        }
+
+        res.json(response);
+    } catch (error) {
+        console.error('[SESSIONS API] Error processing next:', error);
+        res.status(500).json({
+            success: false,
+            error: {
+                code: 'NEXT_ERROR',
+                message: error instanceof Error ? error.message : 'Failed to process next'
+            }
+        });
+    }
+});
+
+/**
+ * POST /api/sessions/:sessionId/cancel
+ * Cancel a running session
+ * 
+ * Accepts: empty body
+ * Returns: { success: true, cancelled: true }
+ */
+router.post('/:sessionId/cancel', (req: Request, res: Response) => {
+    try {
+        const { sessionId } = req.params;
+
+        // Get session
+        const session = sessionService.getSession(sessionId);
+        if (!session) {
+            res.status(404).json({
+                success: false,
+                error: {
+                    code: 'SESSION_NOT_FOUND',
+                    message: `Session ${sessionId} not found`
+                }
+            });
+            return;
+        }
+
+        // Check if session can be cancelled
+        if (session.status === 'cancelled' || session.status === 'completed' || session.status === 'failed') {
+            res.status(400).json({
+                success: false,
+                error: {
+                    code: 'SESSION_NOT_CANCELLABLE',
+                    message: `Session is already ${session.status}`
+                }
+            });
+            return;
+        }
+
+        // Update session status to cancelled
+        const updatedSession = sessionService.updateSession(sessionId, {
+            status: 'cancelled',
+            endTime: new Date().toISOString()
+        });
+
+        // Add cancellation message
+        sessionService.addMessage(
+            sessionId,
+            { action: 'cancelled', reason: 'User requested cancellation' },
+            'system',
+            { source: 'session-cancelled' }
+        );
+
+        res.json({
+            success: true,
+            data: {
+                id: sessionId,
+                status: 'cancelled',
+                cancelled: true,
+                endTime: updatedSession?.endTime
+            }
+        });
+    } catch (error) {
+        console.error('[SESSIONS API] Error cancelling session:', error);
+        res.status(500).json({
+            success: false,
+            error: {
+                code: 'CANCEL_ERROR',
+                message: error instanceof Error ? error.message : 'Failed to cancel session'
             }
         });
     }

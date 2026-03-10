@@ -28,7 +28,7 @@ Recommended sections:
 
 - `ADR-0001-simulations-as-golden-standard.md` - simulations are the golden standard for comparing behavior across layers
 - `ADR-0012-session-state-unification.md` - Unified SessionStore as single source of truth vs distributed state
-- `ADR-0013-unified-transport-layer.md` - SSE primary + WebSocket fallback + HTTP polling strategy
+- `ADR-0013-unified-transport-layer.md` - Unified transport layer with synchronous HTTP requests and fallback handling
 - `ADR-0014-transport-fallback-mechanisms.md` - Automatic failover logic and reconnection strategies
 - `ADR-0015-message-ordering-guarantees.md` - Ensuring event ordering in real-time communications
 - `ADR-0016-promise-queue-architecture.md` - Asynchronous task processing with daemon workers
@@ -40,4 +40,3 @@ Recommended sections:
 - `ADR-0022-error-recovery-patterns.md` - Comprehensive error handling and recovery strategies
 - `ADR-0023-connection-resilience.md` - Handling network failures and reconnections
 - `ADR-0024-graceful-degradation.md` - System behavior when components fail
-

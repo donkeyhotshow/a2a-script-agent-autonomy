@@ -140,8 +140,8 @@
             } else if (global.ActionHandler?.submit) {
                 const context = store?.context || {};
                 await global.ActionHandler.submit(sessionId, projectId, { message }, context);
-            } else if (global.apiIntegration?.sendMessage) {
-                await global.apiIntegration.sendMessage(sessionId, message, projectId);
+            } else {
+                throw new Error('ActionHandler is not available for sending message');
             }
 
             console.log('[WindowEvents] Sent message:', sessionId, message);
@@ -159,10 +159,8 @@
                 await global.ActionHandler.sendChoice(sessionId, projectId, choiceId);
             } else if (global.ActionHandler?.submit && projectId) {
                 await global.ActionHandler.submit(sessionId, projectId, result, store?.context || {});
-            } else if (global.apiIntegration?.sendResult) {
-                await global.apiIntegration.sendResult(sessionId, result, projectId);
-            } else if (global.webApiClient?.sendChoice) {
-                await global.webApiClient.sendChoice(sessionId, result);
+            } else {
+                throw new Error('ActionHandler is not available for sending choice');
             }
 
             console.log('[WindowEvents] Sent choice:', sessionId, choiceId);

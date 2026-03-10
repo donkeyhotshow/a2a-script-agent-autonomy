@@ -1,7 +1,7 @@
 /**
  * Transport Manager - Unified real-time communication
- * Primary: SSE (Server-Sent Events)
- * Fallback: WebSocket (when SSE blocked/fails)
+ * Primary: HTTP polling
+ * Fallback: None (HTTP is the only transport)
  *
  * This file now loads modular transport components.
  * Original monolithic code moved to js/transport/ directory.
@@ -14,8 +14,6 @@
     function loadTransportModules() {
         const modules = [
             '/js/transport/base-transport.js',
-            '/js/transport/sse-transport.js',
-            '/js/transport/websocket-transport.js',
             '/js/transport/heartbeat-manager.js'
         ];
 

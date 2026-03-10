@@ -80,7 +80,8 @@
                 const session = await this._request('POST', '/sessions', {
                     projectId,
                     title: title || `Session ${new Date().toLocaleString()}`,
-                    task
+                    task,
+                    sync: true
                 });
                 return session;
             },
@@ -102,7 +103,7 @@
             },
 
             async sendResult(sessionId, projectId, result) {
-                const body = { projectId, sessionId, result };
+                const body = { projectId, sessionId, result, sync: true };
                 const response = await this._request('POST', `/sessions/${sessionId}/result`, body);
                 return response?.data || response;
             },

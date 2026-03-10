@@ -1,49 +1,33 @@
 # ADR-0013: Unified Transport Layer
 
-Status: accepted
+Status: superseded
 Date: 2026-03-06
 
-## Context
+## Note
 
-The Web UI component required reliable real-time communication with the server for session updates, but different transport mechanisms (SSE, WebSocket, HTTP polling) were handled by separate components with inconsistent fallback logic. This led to:
+This ADR has been superseded by the **async `promiseId` flow**. The system now uses HTTP with `promiseId` polling:
+Server returns `promiseId`, Client API polls `/requests/:id/status` until `completed`, then returns `execute.*` to Web.
 
-- Complex transport selection logic scattered across components
-- Inconsistent error handling and reconnection strategies
-- Race conditions between transport switches
-- Poor user experience during network issues
-- Difficult maintenance and testing of transport logic
+## Previous Decision (Superseded)
 
-The project needed a unified transport layer that could seamlessly handle multiple communication protocols with automatic failover and consistent behavior.
+Implement a unified TransportManager that consolidates multiple transport channels into a single abstraction with automatic protocol selection and failover.
 
-## Decision
+### Architecture (Superseded)
 
-Implement a unified TransportManager that consolidates SSE, WebSocket, and HTTP polling into a single abstraction with automatic protocol selection and failover.
-
-### Architecture
-
-**TransportManager** (`transport-manager.js`) provides:
-- Primary SSE transport with automatic WebSocket fallback
+**TransportManager** (`transport-manager.js`) originally provided:
+- Primary real-time channel with automatic fallback
 - HTTP polling as last resort for complete transport failure
 - Consistent reconnection logic with exponential backoff
 - Unified event interface for all transport types
 - Connection health monitoring and reporting
 
-### Protocol Priority
+### Current Implementation
 
-1. **SSE (Server-Sent Events)** - Primary transport
-   - Low latency for server-to-client messages
-   - Automatic reconnection built into browser API
-   - Heartbeat monitoring every 30 seconds
-
-2. **WebSocket** - Fallback transport
-   - Bidirectional communication when SSE fails
-   - Manual reconnection with backoff strategy
-   - Message queuing during reconnection
-
-3. **HTTP Polling** - Last resort
-   - Traditional request/response for environments blocking SSE/WebSocket
-   - Higher latency but guaranteed delivery
-   - Configurable polling intervals
+**TransportManager** now uses async `promiseId` polling:
+- Server returns `{ promiseId, status: "pending" }`
+- Client API polls `/requests/:promiseId/status` until `completed`
+- When completed, Client API returns `execute.*` to Web
+- SSE/WebSocket optional for realtime progress updates
 
 ### Connection States
 
@@ -80,8 +64,7 @@ enum ConnectionState {
 
 ### Completed
 - ✅ TransportManager core implementation
-- ✅ SSE primary transport integration
-- ✅ WebSocket fallback logic
+- ✅ Real-time channel integration
 - ✅ HTTP polling last resort
 - ✅ Connection health monitoring
 - ✅ Exponential backoff reconnection

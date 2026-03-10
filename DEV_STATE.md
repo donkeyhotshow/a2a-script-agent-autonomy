@@ -56,3 +56,9 @@ External AI (Ollama/OpenAI/etc)
 - **Operational improvements**: Automatic cleanup, monitoring metrics, access logging
 
 See individual component DEV_STATE files for detailed status and implementation notes.
+
+## Current Blockers (2026-03-10)
+
+| Issue | Component | Impact | Notes |
+|-------|-----------|--------|-------|
+| Web UI never receives final async responses | a2a-client / Web UI | Async tasks stall and UX waits indefinitely for `execute` | When a request requires LLM processing, the server returns a `promiseId`, but the client stops after storing it and does not poll `/api/v1/requests/:promiseId/status` or `/result`. As a result SSE/WebSocket never broadcasts the final `execute` payload and the web client shows no data. Reproducible by posting an async task to `/api/v1/requests` and watching that the client API issues no further GETs for that `promiseId`. |

@@ -13,13 +13,13 @@ export * from '../action-types.js';
  * @see docs/new-request-flow/PROTOCOL.md
  */
 export type SessionStatus = 
-  | 'pending'    // Ожидает выбора действия
-  | 'ready'      // Действие выбрано
-  | 'in_progress' // Выполняется
-  | 'waiting_confirmation' // Ожидает подтверждения
-  | 'completed'  // Завершено
-  | 'error'      // Ошибка
-  | 'cancelled'; // Отменено
+  | 'PENDING'    // Ожидает выбора действия
+  | 'READY'      // Действие выбрано
+  | 'IN_PROGRESS' // Выполняется
+  | 'WAITING_CONFIRMATION' // Ожидает подтверждения
+  | 'COMPLETED'  // Завершено
+  | 'ERROR'      // Ошибка
+  | 'CANCELLED'; // Отменено
 
 /**
  * Execution context for tracking current action state

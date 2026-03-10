@@ -48,7 +48,7 @@ Implement graceful degradation with feature detection, fallback modes, and progr
 
 **Level 2: Degraded Real-time**
 - Core functionality available
-- HTTP polling instead of SSE/WebSocket
+- HTTP polling for real-time updates
 - Reduced update frequency
 - Performance warnings
 
@@ -69,14 +69,6 @@ Implement graceful degradation with feature detection, fallback modes, and progr
 **Feature Detection:**
 ```javascript
 class FeatureDetector {
-  static hasWebSocket() {
-    return 'WebSocket' in window && WebSocket.prototype.send;
-  }
-
-  static hasEventSource() {
-    return 'EventSource' in window;
-  }
-
   static hasLocalStorage() {
     try {
       return 'localStorage' in window && window.localStorage !== null;
@@ -97,10 +89,6 @@ class FeatureDetector {
 let messaging = new BasicMessaging();
 
 // Enhance if features available
-if (FeatureDetector.hasWebSocket()) {
-  messaging = new RealTimeMessaging(messaging);
-}
-
 if (FeatureDetector.hasLocalStorage()) {
   messaging = new PersistentMessaging(messaging);
 }

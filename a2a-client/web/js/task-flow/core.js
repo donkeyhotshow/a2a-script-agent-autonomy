@@ -268,7 +268,7 @@
                     store.setSession(sessionId, projectId);
                 }
 
-                // Connect transport (SSE primary, WebSocket fallback)
+                // Connect transport (HTTP polling)
                 const transport = global.TransportManager;
                 if (transport) {
                     transport.connect(sessionId, projectId);
@@ -339,18 +339,11 @@
                 const outcomePromise = waitForFirstResponse(60000);
 
                 const handler = global.ActionHandler;
-                let result;
-
-                if (handler?.submit) {
-                    result = await handler.submit(sessionId, projectId, { choice: choiceId }, this._buildContext());
-                } else {
-                    // Fallback: client.json format { projectId, sessionId, result }
-                    result = await request('POST', `/sessions/${encodeURIComponent(sessionId)}/result`, {
-                        projectId,
-                        sessionId,
-                        result: { choice: choiceId }
-                    });
+                if (!handler?.submit) {
+                    throw new Error('ActionHandler is not available for sending choice');
                 }
+
+                await handler.submit(sessionId, projectId, { choice: choiceId }, this._buildContext());
 
                 // Wait for response via SSE
                 const outcome = await outcomePromise;
@@ -409,18 +402,11 @@
                 const outcomePromise = waitForFirstResponse(60000);
 
                 const handler = global.ActionHandler;
-                let result;
-
-                if (handler?.submit) {
-                    result = await handler.submit(sessionId, projectId, { message: messageText }, this._buildContext());
-                } else {
-                    // Fallback: client.json format { projectId, sessionId, result }
-                    result = await request('POST', `/sessions/${encodeURIComponent(sessionId)}/result`, {
-                        projectId,
-                        sessionId,
-                        result: { message: messageText }
-                    });
+                if (!handler?.submit) {
+                    throw new Error('ActionHandler is not available for sending message');
                 }
+
+                await handler.submit(sessionId, projectId, { message: messageText }, this._buildContext());
 
                 // Wait for response via SSE
                 const outcome = await outcomePromise;

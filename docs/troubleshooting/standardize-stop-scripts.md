@@ -56,7 +56,7 @@ All scripts implement this sequence:
    - By process name: taskkill /F /IM <name> (Windows)
                      pkill -f <pattern> (Linux/macOS)
 
-4. VERIFY PROCESSES GONE
+4. VERIFY TASKS GONE
    - Check: tasklist /FI "PID eq <pid>" (Windows)
             ps -p <pid> (Linux/macOS)
    - Pattern match: Get-CimInstance Win32_Process (PowerShell)

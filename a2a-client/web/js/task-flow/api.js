@@ -27,7 +27,7 @@
     // Fetch with timeout and retry logic
     const DEFAULT_TIMEOUT = 15000; // 15 seconds for API calls
     const MAX_RETRIES = 3;
-    const BASE_DELAY = 1000;
+    const BASE_DELAY = 2000; // 2 seconds per PROTOCOLS specification
 
     /**
      * Выполнить запрос с повторными попытками

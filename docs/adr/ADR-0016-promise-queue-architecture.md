@@ -53,7 +53,7 @@ User Request → Promise Creation → Queue → Worker Processing → Result Sto
 
 **Key Features:**
 - **Non-blocking**: User requests return immediately with promise ID
-- **Progress Tracking**: Real-time progress updates via SSE/WebSocket
+- **Progress Tracking**: Real-time progress updates via consistent HTTP notifications
 - **Cancellation**: Users can cancel queued or processing tasks
 - **Timeout Handling**: Automatic cleanup of stale promises
 - **Resource Limits**: Configurable concurrent processing limits
@@ -83,7 +83,7 @@ User Request → Promise Creation → Queue → Worker Processing → Result Sto
 ### Completed
 - ✅ Promise queue implementation
 - ✅ Daemon worker architecture
-- ✅ Progress tracking via real-time updates
+- ✅ Progress tracking via real-time notifications
 - ✅ Cancellation and timeout handling
 - ✅ Resource limit configuration
 - ✅ Integration with existing request flow

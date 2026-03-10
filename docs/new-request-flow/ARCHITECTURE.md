@@ -18,6 +18,9 @@ doc:
 > **⚠️ Важно:** Старый формат (`actions[]`, `executingAction`, `actionId`) устарел.
 > Используйте `execute.form.choices` для первого ответа и action-key shape для execute/result.
 > 
+> **Транспорт:** Web ↔ Client API ↔ Server — **async flow с `promiseId`**. Server возвращает `promiseId`,
+> Client API опрашивает статус до `completed`, затем возвращает `execute.*` в Web.
+> 
 > **См.:** [PROTOCOL.md](PROTOCOL.md)
 
 ```
@@ -135,7 +138,6 @@ doc:
 │  │ GET  /api/v1/requests/:id/result   - результат запроса      ││
 │  │ DELETE /api/v1/requests/:id - отменить запрос              ││
 │  │ GET  /api/v1/actions/:id   - получить действие             ││
-│  │ GET  /api/v1/sse/:sessionId - SSE подписка                 ││
 │  └─────────────────────────────────────────────────────────────┘│
 │                                                                          │
 │  Сервер НЕ хранит сессии - только обрабатывает запросы и возвращает    │
@@ -305,8 +307,6 @@ a2a-client/web/
 │ ├── app/ # Основные модули
 │ ├── components/ # UI компоненты
 │ ├── transport/            # Транспортний рівень
-│ │   ├── sse-transport.js   # SSE транспорт
-│ │   └── websocket-transport.js # WebSocket
 │ ├── web-api-client.js # API клиента (NEW!)
 │ └── ...
 ├── css/

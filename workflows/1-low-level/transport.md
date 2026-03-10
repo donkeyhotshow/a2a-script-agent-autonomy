@@ -1,17 +1,16 @@
 # Transport Workflow
 
-> **Files:** `transport/sse-transport.js`, `transport/websocket-transport.js`, `transport-manager.js`
+> **Files:** `transport/http-transport.js`, `transport-manager.js`
 
 ## Overview
 
-Transport layer handles real-time communication between web client and API server. Supports SSE (Server-Sent Events) and WebSocket protocols.
+Transport layer handles communication between web client and API server using synchronous HTTP requests. No SSE or WebSocket connections required.
 
 ## Architecture
 
 ```
 TransportManager (singleton)
-    ├── SSETransport (default)
-    └── WebSocketTransport (fallback)
+    └── HTTP Transport (synchronous requests)
             ↓
     Event dispatch to components
 ```
@@ -21,7 +20,7 @@ TransportManager (singleton)
 | Task | File | Method |
 |------|------|--------|
 | Add transport type | `transport/` | New class extending BaseTransport |
-| Change reconnection | `transport/sse-transport.js` | `reconnect()` |
+| Change reconnection | Not needed (HTTP sync) | N/A |
 | Add auth headers | `transport-manager.js` | Connection setup |
 | Modify event routing | `transport-manager.js` | `dispatchEvent()` |
 
@@ -108,9 +107,8 @@ dispatchEvent(type, payload) {
 # Test transport layer
 npm run test:transport
 
-# Test SSE specifically
-npm run test:transport:sse
+# Test HTTP sync requests
+npm run test:transport:http
 
-# Test WebSocket
-npm run test:transport:ws
+# No SSE/WebSocket tests needed
 ```

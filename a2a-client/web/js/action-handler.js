@@ -13,9 +13,10 @@
     // Fetch with timeout and retry logic (reused from global helper when available)
     const DEFAULT_TIMEOUT = 15000;
     const MAX_RETRIES = 3;
-    const BASE_DELAY = 1000;
+    const BASE_DELAY = 2000; // 2 seconds per PROTOCOLS specification
 
     const sharedFetchWithRetry = global.fetchWithRetry;
+    const CLIENT_ACTIONS = ['script', 'rag-search', 'read-file', 'write-file', 'execute-command'];
 
     async function localFetchWithRetry(url, options = {}, retryCount = 0) {
         const controller = new AbortController();
@@ -48,6 +49,22 @@
         ? sharedFetchWithRetry
         : localFetchWithRetry;
 
+    const ResultBuilder = {
+        buildChoiceResult(choiceId) {
+            return { choice: choiceId };
+        },
+        buildMessageResult(message) {
+            const payload = (message || '').trim() || 'continue';
+            return { message: payload };
+        },
+        buildActionResult(actionType, data) {
+            if (!actionType) {
+                return data && typeof data === 'object' ? data : { value: data };
+            }
+            return { [actionType]: data ?? {} };
+        }
+    };
+
     const ActionHandler = {
         apiBase: '/api',
 
@@ -65,6 +82,12 @@
         },
 
         async _request(method, path, body = null) {
+            // Use apiIntegration if available (preferred)
+            if (global.apiIntegration?.request) {
+                return global.apiIntegration.request(method, path, body);
+            }
+            
+            // Fallback to direct fetch
             const url = `${this.apiBase}${path}`;
             const options = { method, headers: this._getHeaders() };
             if (body) options.body = JSON.stringify(body);
@@ -76,6 +99,18 @@
                 throw new Error(data?.error?.message || `Request failed: ${response.status}`);
             }
             return data.data || data;
+        },
+
+        buildChoiceResult(choiceId) {
+            return ResultBuilder.buildChoiceResult(choiceId);
+        },
+
+        buildMessageResult(message) {
+            return ResultBuilder.buildMessageResult(message);
+        },
+
+        buildActionResult(actionType, data) {
+            return ResultBuilder.buildActionResult(actionType, data);
         },
 
         /**
@@ -97,11 +132,12 @@
                 throw new Error('Result must have exactly one action-type key');
             }
 
-            // Match simulations client.json: { projectId, sessionId, result }
+            // Match simulations client.json: { projectId, sessionId, result, sync }
             const requestBody = {
                 projectId: projectId ?? null,
                 sessionId,
                 result,
+                sync: true,  // Request sync response (no SSE/WS needed)
                 ...(context && { context })
             };
 
@@ -138,11 +174,13 @@
             }
             
             // Clear form and execute to hide UI immediately
-            store?.clearPendingForm();
+            store?.clearPendingForm?.();
             store?.setExecute?.(null);
+            store?.pushMessage?.({ content: choiceId }, 'user');
             store?.setPromisePending?.(true);
 
-            return this.submit(sessionId, projectId, { choice: choiceId });
+            const result = this.buildChoiceResult(choiceId);
+            return this.submit(sessionId, projectId, result);
         },
 
         /**
@@ -158,13 +196,15 @@
                 return Promise.reject(new Error('Waiting for server response'));
             }
             
-            const payload = (text || '').trim() || 'continue';
+            const result = this.buildMessageResult(text);
+            const payload = result.message;
             
             // Clear execute to hide form immediately after sending
             store?.setExecute?.(null);
+            store?.pushMessage?.({ content: payload }, 'user');
             store?.setPromisePending?.(true);
 
-            return this.submit(sessionId, projectId, { message: payload });
+            return this.submit(sessionId, projectId, result);
         },
 
         /**
@@ -215,31 +255,46 @@
         processExecute(execute) {
             if (!execute) return { type: 'unknown', data: null };
 
-            // Check for each action type in priority order
-            const actionTypes = [
-                'finalResult',
-                'form',
-                'message', 
-                'script',
-                'rag-search',
-                'read-file',
-                'write-file',
-                'execute-command'
-            ];
-
-            for (const type of actionTypes) {
-                if (execute[type]) {
-                    return {
-                        type,
-                        data: execute[type],
-                        action: type,
-                        isInput: type === 'form' || type === 'message',
-                        isClientAction: ['script', 'rag-search', 'read-file', 'write-file', 'execute-command'].includes(type)
-                    };
-                }
+            if (execute.finalResult) {
+                return {
+                    type: 'finalResult',
+                    data: execute.finalResult,
+                    action: execute.finalResult.action || null
+                };
             }
 
-            return { type: 'unknown', data: execute, action: null };
+            if (execute.form) {
+                return {
+                    type: 'form',
+                    data: execute.form,
+                    action: execute?.execution?.action ?? null,
+                    isInput: true
+                };
+            }
+
+            if (execute.message) {
+                const messageData = typeof execute.message === 'string'
+                    ? { content: execute.message }
+                    : execute.message;
+                return {
+                    type: 'message',
+                    data: messageData,
+                    isInput: true
+                };
+            }
+
+            const actionType = CLIENT_ACTIONS.find(type => execute[type]);
+            if (actionType) {
+                return {
+                    type: 'actions',
+                    actionType,
+                    data: execute[actionType],
+                    action: actionType,
+                    isClientAction: true
+                };
+            }
+
+            return { type: 'unknown', data: execute };
         },
 
         /**
@@ -259,6 +314,8 @@
             return context;
         }
     };
+
+    ActionHandler.ResultBuilder = ResultBuilder;
 
     // Export
     global.ActionHandler = ActionHandler;

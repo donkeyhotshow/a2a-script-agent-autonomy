@@ -146,9 +146,16 @@
 
     let tryInitAttempts = 0;
     const TRY_INIT_MAX = 100; // ~5s at 50ms
+    let attachedToApiIntegration = false;
 
     function tryInit() {
         const sse = global.SSEClient;
+        const apiIntegration = global.apiIntegration;
+        if (!attachedToApiIntegration && apiIntegration && typeof apiIntegration.on === 'function') {
+            attachToTransport(apiIntegration);
+            attachedToApiIntegration = true;
+            console.log('[SessionSync v2] Initialized (APIIntegration)');
+        }
         if (sse && typeof sse.on === 'function') {
             attachToTransport(sse);
             console.log('[SessionSync v2] Initialized (SSEClient)');

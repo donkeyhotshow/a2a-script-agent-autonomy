@@ -1,5 +1,7 @@
 # Карта файлів проекту
 
+> **Транспорт:** Web ↔ Client API ↔ Server — **async flow з `promiseId`**.
+
 ## Огляд
 
 Цей документ показує структуру проекту і де який код знаходиться.
@@ -32,7 +34,6 @@ Web інтерфейс (UI). Працює на порту 5173 (Vite dev server)
 | `js/app/`               | Основні модулі додатку              |
 | `js/session-store.js`   | Сховище сесій                       |
 | `js/components/`        | UI компоненти                        |
-| `js/transport/sse-transport.js  # SSE транспорт`      | SSE клієнт для real-time оновлень   |
 | `js/web-api-client.js`  | API клієнт для зв'язку з Client API |
 | `js/flow/`              | Flow-based UI компоненти            |
 | `js/json/`              | JSON UI компоненти                  |

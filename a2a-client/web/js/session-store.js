@@ -318,36 +318,30 @@
     // === Batch Updates (from server response) ===
 
     SessionStore.prototype.applyServerResponse = function(data) {
-        const { context, execute, messages, finalResult } = data;
+        const { sessionId, projectId, status, context, execute, messages, finalResult } = data;
 
+        if (projectId) this.setProject(projectId);
+        if (sessionId) this.setSession(sessionId, projectId);
+
+        if (status) this.setStatus(status);
         if (context) this.setContext(context);
-        if (execute) this.setExecute(execute);
+        if (execute) {
+            this.setExecute(execute);
+        } else if (finalResult) {
+            this.setExecute({ finalResult });
+        }
         if (messages?.length) this.appendMessages(messages);
 
-        // Handle explicit status from response
-        if (data.status) this.setStatus(data.status);
-
-        // Handle session ID from response
-        if (data.sessionId) this.setSession(data.sessionId, data.projectId);
-
-        // Detect completion from context.execution.status
-        if (context?.execution?.status === 'completed') {
-            this.setStatus('completed');
-            this._emit('completed', context.execution);
+        if (execute?.form) {
+            this._state.pendingForm = execute.form;
+            this._state.status = 'waiting';
+            this._emit('pendingForm', execute.form);
         }
 
-        // Detect completion from finalResult in execute
-        if (execute?.finalResult) {
+        const completionResult = execute?.finalResult ?? finalResult;
+        if (completionResult && this._state.status !== 'completed') {
             this.setStatus('completed');
-            this._emit('completed', execute.finalResult);
-        }
-
-        // Detect completion from top-level finalResult
-        if (finalResult) {
-            this.setStatus('completed');
-            this._emit('completed', finalResult);
-            // Also update execute with finalResult for UI processing
-            this.setExecute({ finalResult });
+            this._emit('completed', completionResult);
         }
 
         this._emit('serverResponse', data);
@@ -404,7 +398,7 @@
         console.log('[SessionStore] Restoring session:', sessionId);
         this._state.sessionId = sessionId;
 
-        // Reconnect to transport (SSE/WebSocket)
+        // Reconnect to transport (HTTP polling)
         const transport = global.TransportManager;
         if (transport && typeof transport.connect === 'function') {
             try {
@@ -436,28 +430,6 @@
     SessionStore.prototype.hasSavedSession = async function() {
         // No local storage - session existence checked via API
         return !!this._state.sessionId;
-    };
-
-    // === Result Submission Helpers ===
-
-    SessionStore.prototype.buildChoiceResult = function(choiceId) {
-        this.clearPendingForm();
-        this.pushMessage({ content: choiceId }, 'user');
-        // Clear execute to hide form immediately after choice
-        this.setExecute(null);
-        return { choice: choiceId };
-    };
-
-    SessionStore.prototype.buildMessageResult = function(message) {
-        const payload = (message || '').trim() || 'continue';
-        this.pushMessage({ content: payload }, 'user');
-        // Clear execute to hide message form immediately after sending
-        this.setExecute(null);
-        return { message: payload };
-    };
-
-    SessionStore.prototype.buildActionResult = function(actionType, resultData) {
-        return { [actionType]: resultData };
     };
 
     // === Utility ===

@@ -1,8 +1,7 @@
 /**
  * Transport Manager - Unified real-time communication
- * Primary: SSE (Server-Sent Events)
- * Fallback: WebSocket (when SSE blocked/fails)
- * No HTTP polling for async requests (removed)
+ * Primary: HTTP polling
+ * No WebSocket transport (removed)
  */
 (function (global) {
     'use strict';
@@ -17,7 +16,7 @@
 
         const DEFAULT_TIMEOUT = 10000;
         const MAX_RETRIES = 3;
-        const BASE_DELAY = 1000;
+        const BASE_DELAY = 2000; // 2 seconds per PROTOCOLS specification
 
         const controller = new AbortController();
         const timeout = options.timeout || DEFAULT_TIMEOUT;
@@ -51,9 +50,9 @@
         sessionId: null,
 
         // Transport state
-        // HTTP polling is disabled; primary transport is WebSocket (SSE handled separately by api-integration).
-        primaryTransport: 'websocket',
-        activeTransport: null,          // 'websocket' | null
+        // Uses HTTP polling for async requests.
+        primaryTransport: 'poll',
+        activeTransport: 'poll',
         currentTransportInstance: null,
 
         // Connection state
@@ -64,6 +63,7 @@
 
         // Managers
         _heartbeatManager: null,
+        resultSender: null,
 
         // Event handlers
         _listeners: new Map(),
@@ -77,6 +77,7 @@
 
             this.apiBase = options.apiBase || this.apiBase;
             this.primaryTransport = options.primaryTransport || 'poll';
+            this.resultSender = options.resultSender || this.resultSender;
             this._heartbeatManager = new global.HeartbeatManager(this);
 
             console.log(`[TransportManager] Initialized (primary: ${this.primaryTransport})`);
@@ -87,16 +88,13 @@
          * Load transport dependencies
          */
         _loadDependencies() {
-            if (!global.WebSocketTransport) {
-                console.error('[TransportManager] WebSocketTransport not loaded');
-            }
             if (!global.HeartbeatManager) {
                 console.error('[TransportManager] HeartbeatManager not loaded');
             }
         },
 
         /**
-         * Connect to session - tries SSE first, falls back to WebSocket
+         * Connect to session - uses HTTP polling
          */
         async connect(sessionId, options = {}) {
             const sid = sessionId || this.sessionId;
@@ -108,47 +106,54 @@
             this.connectionState = 'connecting';
             this._emit('connecting', { sessionId: sid });
 
-            // Disconnect any existing transport
-            this.disconnect();
-
-            // WebSocket transport (primary)
-            if (global.WebSocketTransport) {
-                const wsSuccess = await this._tryTransport(global.WebSocketTransport, sid);
-                if (wsSuccess) {
-                    this.activeTransport = 'websocket';
-                    this.connectionState = 'connected';
-                    this.reconnectAttempts = 0;
-                    this._emit('connected', { sessionId: sid, transport: 'websocket' });
-                    this._heartbeatManager.start();
-                    return true;
-                }
-            }
-
-            // Both failed
-            this.connectionState = 'disconnected';
-            this._emit('error', {
-                message: 'All transports failed',
-                sessionId: sid,
-                attempts: this.reconnectAttempts
-            });
-
-            return false;
+            // HTTP polling transport (primary)
+            this.activeTransport = 'poll';
+            this.connectionState = 'connected';
+            this.reconnectAttempts = 0;
+            this._emit('connected', { sessionId: sid, transport: 'poll' });
+            
+            // Start polling for updates
+            this._startPolling();
+            
+            return true;
         },
 
         /**
-         * Try specific transport
+         * Start HTTP polling for updates
          */
-        async _tryTransport(TransportClass, sessionId) {
+        _startPolling() {
+            if (this._pollInterval) {
+                clearInterval(this._pollInterval);
+            }
+            
+            this._pollInterval = setInterval(async () => {
+                await this._pollUpdates();
+            }, this.pollInterval || 5000); // Default 5 seconds
+        },
+
+        /**
+         * Poll for updates via HTTP
+         */
+        async _pollUpdates() {
+            const sessionId = this.sessionId;
+            if (!sessionId) return;
+
             try {
-                this.currentTransportInstance = new TransportClass(this, sessionId);
-                const success = await this.currentTransportInstance.connect();
-                if (success) {
-                    this.currentTransportInstance.bindEvents();
+                const response = await transportFetchWithRetry(
+                    `${this.apiBase}/sessions/${encodeURIComponent(sessionId)}/events`,
+                    { method: 'GET' }
+                );
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data && data.events) {
+                        data.events.forEach(event => {
+                            this._emit('event', event);
+                        });
+                    }
                 }
-                return success;
             } catch (e) {
-                console.error(`[TransportManager] ${TransportClass.name} failed:`, e);
-                return false;
+                console.warn('[TransportManager] Poll failed:', e.message);
             }
         },
 
@@ -196,11 +201,10 @@
          * Disconnect all transports
          */
         disconnect() {
-            this._heartbeatManager?.stop();
-
-            if (this.currentTransportInstance) {
-                this.currentTransportInstance.disconnect();
-                this.currentTransportInstance = null;
+            // Stop polling
+            if (this._pollInterval) {
+                clearInterval(this._pollInterval);
+                this._pollInterval = null;
             }
 
             this.activeTransport = null;
@@ -225,20 +229,67 @@
          * Send via HTTP when transport send unavailable
          */
         async _sendViaHttp(type, payload) {
+            const sessionId = this.sessionId;
+            if (!sessionId) {
+                console.error('[TransportManager] Cannot send HTTP message without sessionId');
+                return false;
+            }
+
+            const projectId = global.SessionStore?.projectId || null;
+            const resultPayload = this._buildResultPayload(type, payload);
+
+            if (await this._invokeResultSender(sessionId, projectId, resultPayload)) {
+                return true;
+            }
+
             try {
-                const response = await transportFetchWithRetry(`${this.apiBase}/sessions/${this.sessionId}/message`, {
+                const response = await transportFetchWithRetry(`${this.apiBase}/sessions/${encodeURIComponent(sessionId)}/result`, {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${global.apiIntegration?.token || ''}`
+                        'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ type, payload })
+                    body: JSON.stringify({
+                        sessionId,
+                        projectId,
+                        result: resultPayload
+                    })
                 });
                 return response.ok;
             } catch (e) {
                 console.error('[TransportManager] HTTP send failed:', e);
                 return false;
             }
+        },
+
+        _buildResultPayload(type, payload) {
+            if (!type) {
+                return payload && typeof payload === 'object' ? payload : { value: payload };
+            }
+            return { [type]: payload ?? {} };
+        },
+
+        async _invokeResultSender(sessionId, projectId, resultPayload) {
+            const sender = this.resultSender;
+            if (typeof sender === 'function') {
+                try {
+                    await sender(sessionId, projectId, resultPayload);
+                    return true;
+                } catch (error) {
+                    console.warn('[TransportManager] Custom result sender failed:', error);
+                }
+            }
+
+            const actionHandler = global.ActionHandler;
+            if (actionHandler?.submit) {
+                try {
+                    await actionHandler.submit(sessionId, projectId, resultPayload);
+                    return true;
+                } catch (error) {
+                    console.warn('[TransportManager] ActionHandler.submit failed:', error);
+                }
+            }
+
+            return false;
         },
 
         /**

@@ -6,18 +6,17 @@ This directory contains troubleshooting guides for common issues in the A2A Scri
 
 | Issue Category | Common Symptoms | Quick Fix |
 |----------------|-----------------|-----------|
-| **SSE Connection** | No real-time updates, stuck loading | Check CORS, try WebSocket fallback |
+| **HTTP Requests** | No response from server | Check server is running on port 3001 |
 | **Session State** | UI not updating, state corruption | Clear local storage, check synchronization |
 | **Panel Rendering** | Panels not showing, layout broken | Check CSS, clear panel state |
 | **Execute Processing** | Actions not working, malformed responses | Validate action-key shape, check server logs |
 
 ## Issue Categories
 
-### 🔗 [SSE Connection Issues](sse-connections.md)
-- CORS blocking and workarounds
-- Network failures and reconnection
-- Server-side SSE problems
-- WebSocket fallback debugging
+### 🔗 HTTP Communication
+- All requests use synchronous HTTP mode
+- Server returns `execute.ui` in HTTP response body
+- No persistent real-time connections required
 
 ### 🔄 [Session State Problems](session-state.md)
 - State corruption detection and recovery
@@ -51,7 +50,7 @@ TransportManager.on('transportError', (err) => console.error('Transport error:',
 ```
 
 ### Network Inspection
-- Check SSE/WebSocket connections in Network tab
+- Check network activity in the Network tab
 - Look for CORS errors in console
 - Verify API endpoints are accessible
 

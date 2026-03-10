@@ -1,42 +1,29 @@
 # ADR-0014: Transport Fallback Mechanisms
 
-Status: accepted
+Status: superseded
 Date: 2026-03-06
 
-## Context
+## Note
 
-Real-time communication failures can occur due to network issues, firewall restrictions, proxy configurations, or protocol limitations. The system needed robust fallback mechanisms to ensure continuous operation when primary transport methods fail. Without proper fallbacks:
+This ADR has been superseded by the **async `promiseId` flow**. The system now uses HTTP with `promiseId` polling.
+Fallback mechanisms are no longer needed — Client API simply polls until `completed`.
 
-- Users experience complete loss of real-time updates
-- Sessions become unresponsive during network issues
-- No graceful degradation when SSE/WebSocket are blocked
-- Difficult recovery from transient network failures
-- Poor user experience in enterprise environments with restrictive proxies
-
-## Decision
+## Previous Decision (Superseded)
 
 Implement automatic transport fallback with progressive degradation and intelligent recovery mechanisms.
 
-### Fallback Hierarchy
+### Fallback Hierarchy (Superseded)
 
-1. **SSE (Primary)** - Attempt connection, monitor for 30 seconds
-2. **WebSocket (Fallback)** - If SSE fails, attempt WebSocket connection
-3. **HTTP Polling (Last Resort)** - If WebSocket fails, use HTTP polling
+1. **Primary channel** - Attempt connection, monitor for 30 seconds
+2. **Secondary channel** - If the primary channel fails, switch to the backup path
+3. **HTTP Polling (Last Resort)** - If all fallback channels fail, use HTTP polling
 
-### Fallback Triggers
+### Current Implementation
 
-**Automatic Fallback Conditions:**
-- SSE connection timeout (>30 seconds)
-- SSE network errors (CORS, firewall blocking)
-- SSE protocol errors (malformed events)
-- WebSocket connection failure
-- WebSocket protocol errors
-
-**Recovery Logic:**
-- Attempt fallback only after primary transport fails
-- Maintain message queue during transition
-- Preserve session state across transport switches
-- Revert to better transport when available
+No fallback mechanisms needed — all communication uses async `promiseId` polling:
+- Server returns `promiseId`
+- Client API polls `/requests/:promiseId/status` until `completed`
+- When completed, returns `execute.*` to Web
 
 ### Reconnection Strategy
 
@@ -78,8 +65,8 @@ attempts: [3s, 6s, 12s, 24s, 48s]
 
 ### Completed
 - ✅ Fallback decision tree implementation
-- ✅ SSE to WebSocket automatic switching
-- ✅ WebSocket to HTTP polling fallback
+- ✅ Automated channel switching
+- ✅ HTTP polling fallback
 - ✅ Exponential backoff reconnection
 - ✅ Message queuing during transitions
 - ✅ Transport health monitoring

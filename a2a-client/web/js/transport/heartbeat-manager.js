@@ -52,10 +52,7 @@
                 return;
             }
 
-            // Send ping through WebSocket if active
-            if (this.manager.activeTransport === 'websocket') {
-                this.manager.send('ping', { timestamp: Date.now() });
-            }
+            // HTTP polling - no ping needed, polling continues automatically
         }
     }
 

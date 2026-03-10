@@ -11,6 +11,17 @@
     'use strict';
 
     const store = global.SessionStore;
+    const ResultBuilder = global.ActionHandler?.ResultBuilder || {
+        buildChoiceResult(choiceId) {
+            return { choice: choiceId };
+        },
+        buildActionResult(actionType, data) {
+            if (!actionType) {
+                return data && typeof data === 'object' ? data : { value: data };
+            }
+            return { [actionType]: data ?? {} };
+        }
+    };
     if (!store) {
         console.error('[SessionManager Adapter] SessionStore not found');
         return;
@@ -198,7 +209,10 @@
         // === Result submission ===
 
         submitChoice(choiceId) {
-            const result = store.buildChoiceResult(choiceId);
+            store.clearPendingForm?.();
+            store.pushMessage?.({ content: choiceId }, 'user');
+            store.setExecute?.(null);
+            const result = ResultBuilder.buildChoiceResult(choiceId);
             this._emit('choiceSubmitted', { choiceId, result });
             return result;
         },
@@ -212,31 +226,31 @@
         },
 
         submitScriptResult(scriptResult) {
-            const result = store.buildActionResult('script', scriptResult);
+            const result = ResultBuilder.buildActionResult('script', scriptResult);
             this._emit('scriptResultSubmitted', { result });
             return result;
         },
 
         submitRagSearchResult(searchResult) {
-            const result = store.buildActionResult('rag-search', searchResult);
+            const result = ResultBuilder.buildActionResult('rag-search', searchResult);
             this._emit('ragSearchResultSubmitted', { result });
             return result;
         },
 
         submitReadFileResult(fileResult) {
-            const result = store.buildActionResult('read-file', fileResult);
+            const result = ResultBuilder.buildActionResult('read-file', fileResult);
             this._emit('readFileResultSubmitted', { result });
             return result;
         },
 
         submitWriteFileResult(fileResult) {
-            const result = store.buildActionResult('write-file', fileResult);
+            const result = ResultBuilder.buildActionResult('write-file', fileResult);
             this._emit('writeFileResultSubmitted', { result });
             return result;
         },
 
         submitExecuteCommandResult(commandResult) {
-            const result = store.buildActionResult('execute-command', commandResult);
+            const result = ResultBuilder.buildActionResult('execute-command', commandResult);
             this._emit('executeCommandResultSubmitted', { result });
             return result;
         },

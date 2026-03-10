@@ -5,13 +5,16 @@ doc:
   id: new-request-flow/api-server
   type: spec
   machine_readable: true
-  tags: [client-api, http, websocket, fs, terminal, rag]
+  tags: [client-api, http, fs, terminal, rag]
   references:
     - docs/DOCUMENTATION-MACHINE-READABLE.md
     - docs/new-request-flow/PROTOCOL.md
 ---
 
 > **⚠️ Важно:** Это документация для Client API Server (порт 3001).
+> 
+> **Транспорт:** Web взаимодействует с Client API через HTTP. Server возвращает `promiseId`, Client API
+> опрашивает статус до `completed`, затем возвращает `execute.*` в Web.
 > 
 > **См.:** [ARCHITECTURE.md](ARCHITECTURE.md), [PROTOCOL.md](PROTOCOL.md), [API-CLIENT.md](API-CLIENT.md)
 
@@ -24,7 +27,6 @@ API Server (`a2a-client/packages/sdk`) — это REST API сервер, кот�
 - Выполнение терминальных команд
 - Файловые операции
 - RAG поиск
-- WebSocket для real-time обновлений
 
 ## Архитектура
 
@@ -37,10 +39,10 @@ API Server (`a2a-client/packages/sdk`) — это REST API сервер, кот�
 │  │  │  Projects    │  │  Sessions    │  │  Terminal       │  ││
 │  │  │  Management  │  │  Management  │  │  Execution      │  ││
 │  │  └──────────────┘  └──────────────┘  └──────────────────┘  ││
-│  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────────┐  ││
-│  │  │  File System │  │  RAG Search  │  │  WebSocket      │  ││
-│  │  │  Operations  │  │  (Meilisearch)│ │  Real-time      │  ││
-│  │  └──────────────┘  └──────────────┘  └──────────────────┘  ││
+│  │  ┌──────────────┐  ┌──────────────┐                                ││
+│  │  │  File System │  │  RAG Search  │                                ││
+│  │  │  Operations  │  │  (Meilisearch)│                               ││
+│  │  └──────────────┘  └──────────────┘                                ││
 │  └─────────────────────────────────────────────────────────────┘│
 │                              │                                      │
 │                              ↓                                      │
@@ -59,7 +61,6 @@ API Server (`a2a-client/packages/sdk`) — это REST API сервер, кот�
 |------------|-------------|----------|
 | `PORT` | `3001` | HTTP порт сервера |
 | `HOST` | `localhost` | Хост сервера |
-| `WS_PORT` | `3002` | WebSocket порт |
 | `A2A_SERVER_URL` | `http://localhost:3000/api/v1` | URL A2A Server |
 | `A2A_SERVER_TOKEN` | - | JWT токен для A2A Server |
 | `A2A_CLIENT_STORAGE_DIR` | `./storage` | Директория для хранения данных |
@@ -226,10 +227,6 @@ API Server (`a2a-client/packages/sdk`) — это REST API сервер, кот�
 #### GET/POST/PUT/DELETE /api/v1/requests*
 
 Проксирование любых запросов к A2A Server `/requests/*`.
-
-#### GET /api/v1/sse/:sessionId
-
-Проксирование SSE (Server-Sent Events) от A2A Server.
 
 ### Терминал
 
@@ -429,49 +426,6 @@ API Server (`a2a-client/packages/sdk`) — это REST API сервер, кот�
 
 Запись файла в проект.
 
-### WebSocket
-
-#### WS /?sessionId=:sessionId
-
-WebSocket соединение для real-time обновлений сессии.
-
-**Порт:** 3002 (по умолчанию, настраивается через `WS_PORT`)
-
-**Сообщения от клиента:**
-```json
-// Ping
-{ "type": "ping" }
-
-// Subscribe (подписка на обновления - автоматически при подключении)
-{ "type": "subscribe" }
-
-// Unsubscribe
-{ "type": "unsubscribe" }
-```
-
-**Сообщения от сервера:**
-```json
-// Подтверждение подключения
-{
-  "type": "connected",
-  "sessionId": "sess_...",
-  "timestamp": "2024-01-01T00:00:00.000Z"
-}
-
-// Pong
-{ "type": "pong", "timestamp": "..." }
-
-// Прогресс выполнения
-{
-  "type": "progress",
-  "promiseId": "...",
-  "status": "in_progress",
-  "progress": 50,
-  "message": "Processing...",
-  "timestamp": "2024-01-01T00:00:00.000Z"
-}
-```
-
 ## Примеры использования
 
 ### JavaScript (браузер)
@@ -509,30 +463,6 @@ async function readFile(filePath) {
   });
   return response.json();
 }
-```
-
-### WebSocket клиент
-
-```javascript
-const ws = new WebSocket('ws://localhost:3002?sessionId=sess_123');
-
-ws.onopen = () => {
-  console.log('Connected to WebSocket');
-};
-
-ws.onmessage = (event) => {
-  const data = JSON.parse(event.data);
-  console.log('Received:', data);
-  
-  if (data.type === 'progress') {
-    updateProgress(data.progress, data.message);
-  }
-};
-
-// Ping для проверки соединения
-setInterval(() => {
-  ws.send(JSON.stringify({ type: 'ping' }));
-}, 30000);
 ```
 
 ## Интеграция с Web UI

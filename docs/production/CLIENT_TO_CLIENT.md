@@ -20,13 +20,13 @@ Ollama (LLM)
       ▼ Execute actions
 a2a-server
       │
-      ▼ WebSocket/HTTP Response
+      ▼ HTTP Response
 Client (Web UI) ← ТУТА ВОЗВРАТ
 ```
 
 ## Algorithm Steps
 
-1. **Client** отправляет запрос через WebSocket или HTTP
+1. **Client** отправляет запрос через HTTP
 2. **RequestService** сохраняет запрос в PostgreSQL (status: pending)
 3. **RequestProcessor** опрашивает каждые 5 сек pending запросы
 4. **NeuronActivator** активирует нужные нейроны
@@ -37,17 +37,16 @@ Client (Web UI) ← ТУТА ВОЗВРАТ
 
 ## Production Mode Characteristics
 
-- **Режим**: Реальные HTTP/WebSocket запросы, реальные LLM вызовы
+- **Режим**: Реальные HTTP запросы, реальные LLM вызовы
 - **LLM**: Возвращает настоящие значения `step` (plan, clarify, research, execute, completed)
 - **I/O**: Реальная работа с файлами, выполнение команд
-- **WebSocket**: Настоящие сообщения клиенту
 - **Нет**: моков, реплея, тестовых данных
 
 ## Key Difference from Simulation
 
 | Feature | Production | Simulation |
 |---------|------------|------------|
-| HTTP/WebSocket | Real | Mocked |
+| HTTP | Real | Mocked |
 | LLM Calls | Real Ollama | Mock/Replay |
 | Data | Real DB | Test fixtures |
 | Results | Actual execution | Deterministic |

@@ -43,12 +43,12 @@ Implement a cross-browser testing matrix with automated testing across multiple 
 
 **Functional Testing:**
 - Session creation and management
-- Real-time communication (SSE/WebSocket)
+- Real-time communication (persistent connection)
 - UI interactions and state management
 - Error handling and recovery
 
 **Compatibility Testing:**
-- JavaScript API support (EventSource, WebSocket, fetch)
+- JavaScript API support (fetch, XMLHttpRequest)
 - CSS rendering consistency
 - Network protocol support
 - Local storage and session storage

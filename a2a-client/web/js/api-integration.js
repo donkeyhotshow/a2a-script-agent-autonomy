@@ -1,15 +1,13 @@
 /**
  * API Integration Module
  * Connects UI components with Client API (single apiBase, e.g. localhost:3001).
- * 
- * @see docs/new-request-flow/PROTOCOLS/promise/ - Promise System
- * @see docs/new-request-flow/PROTOCOLS/sessions/ - Session Management
+ * Keeps only configuration/request helpers, project/session/task APIs, and SSE wiring.
  */
 
 // Fetch with timeout and retry logic (shared across web client)
 const DEFAULT_TIMEOUT = 15000;
 const MAX_RETRIES = 3;
-const BASE_DELAY = 1000;
+const BASE_DELAY = 2000; // 2 seconds per PROTOCOLS specification
 
 async function fetchWithRetry(url, options = {}, retryCount = 0) {
     const controller = new AbortController();
@@ -42,110 +40,68 @@ class APIIntegration {
     constructor() {
         this.apiBase = '/api';
         this.token = null;
-        this.connected = false;
         this.sseConnected = false;
-        this.currentSession = null;
-        this.currentPromiseId = null;
-        this.listeners = new Map();
-        this.reconnectAttempts = 0;
-        this.maxReconnectAttempts = 5;
-        
-        // ✅ Setup SSE listener for execute.ui from SDK - See: docs/new-request-flow/PROTOCOLS/states/pending.md
-        this._setupSseListener();
+        this._listeners = new Map();
     }
 
     /**
      * Setup SSE listener for execute.ui from SDK
-     * SDK sends execute.ui with state updates via SSE events
      */
     _setupSseListener() {
-        // Check if EventSource is available
         if (typeof EventSource === 'undefined') {
             console.warn('[api-integration] EventSource not available, skipping SSE listener');
             return;
         }
-        
+
         try {
-            const eventSource = new EventSource('/api/sse');
-            
+            const eventSource = new EventSource(`${this.apiBase}/sse`);
+
             eventSource.addEventListener('status', (event) => {
-                try {
-                    const data = JSON.parse(event.data);
-                    
-                    // ✅ Handle execute.ui in status events
-                    if (data.execute?.ui) {
-                        console.log('[api-integration] Received execute.ui via SSE (status):', data.execute.ui);
-                        this.emit('uiStateChange', {
-                            promiseId: data.promiseId,
-                            ui: data.execute.ui
-                        });
-                        
-                        // Forward to SessionStore for UI rendering
-                        const root = typeof window !== 'undefined' ? window : globalThis;
-                        root.SessionStore?.applyServerResponse?.({
-                            execute: data.execute
-                        });
-                    }
-                } catch (e) {
-                    console.warn('[api-integration] Failed to parse SSE status event:', e);
-                }
+                this._handleSseEvent('status', event);
             });
-            
+
             eventSource.addEventListener('task_response', (event) => {
-                try {
-                    const data = JSON.parse(event.data);
-                    
-                    // ✅ Handle execute.ui in final response
-                    if (data.execute?.ui) {
-                        console.log('[api-integration] Received execute.ui via SSE (task_response):', data.execute.ui);
-                        this.emit('uiStateChange', {
-                            promiseId: data.promiseId,
-                            ui: data.execute.ui
-                        });
-                        
-                        // Forward to SessionStore for UI rendering
-                        const root = typeof window !== 'undefined' ? window : globalThis;
-                        root.SessionStore?.applyServerResponse?.({
-                            execute: data.execute
-                        });
-                    }
-                    
-                    // Handle task completion
-                    if (data.result || data.execute) {
-                        this.emit('taskCompleted', { 
-                            promiseId: data.promiseId, 
-                            result: data.result || data 
-                        });
-                    }
-                } catch (e) {
-                    console.warn('[api-integration] Failed to parse SSE task_response event:', e);
-                }
+                this._handleSseEvent('task_response', event);
             });
-            
+
             eventSource.onerror = (error) => {
                 console.warn('[api-integration] SSE connection error:', error);
                 this.sseConnected = false;
+                this.emit('promiseError', { source: 'sse', error });
             };
-            
+
             eventSource.onopen = () => {
-                console.log('[api-integration] SSE connection established');
                 this.sseConnected = true;
+                console.log('[api-integration] SSE connected');
             };
-            
+
             this._eventSource = eventSource;
-            console.log('[api-integration] SSE listener setup complete');
-        } catch (e) {
-            console.warn('[api-integration] Failed to setup SSE listener:', e);
+        } catch (error) {
+            console.warn('[api-integration] SSE setup failed:', error);
         }
     }
 
-    get serverUrl() {
-        return this.apiBase;
-    }
+    _handleSseEvent(eventName, event) {
+        try {
+            const data = JSON.parse(event.data);
 
-    set serverUrl(value) {
-        if (value) {
-            this.configure({ apiBase: value });
+            if (data.execute?.ui) {
+                this.emit('uiStateChange', {
+                    promiseId: data.promiseId,
+                    ui: data.execute.ui
+                });
+            }
+
+            if (eventName === 'task_response' && (data.result || data.execute)) {
+                this.emit('taskCompleted', {
+                    promiseId: data.promiseId,
+                    result: data.result || data
+                });
+            }
+
+            this.emit('serverResponse', { type: eventName, data });
+        } catch (error) {
+            console.warn('[api-integration] Failed to parse SSE event:', error);
         }
     }
 
@@ -153,21 +109,18 @@ class APIIntegration {
      * Configure API client
      */
     configure(options = {}) {
-        let base = options.apiBase || options.clientApiUrl || options.serverUrl;
-
-        // Handle case where base is an object (extract string property)
+        let base = options.apiBase || options.clientApiUrl;
         if (base && typeof base === 'object') {
             base = base.url || base.apiBase || base.toString?.();
         }
 
-        // Validate and set apiBase
         if (base && typeof base === 'string' && base !== '[object Object]') {
             this.apiBase = base.replace(/\/?$/, '');
-        } else {
-            this.apiBase = '/api';
         }
 
-        if (options.token) this.token = options.token;
+        if (options.token) {
+            this.token = options.token;
+        }
 
         console.log('[API] Configured:', this.apiBase);
         return this;
@@ -177,8 +130,10 @@ class APIIntegration {
      * Get headers for requests
      */
     _getHeaders() {
-        const headers = {'Content-Type': 'application/json'};
-        if (this.token) headers['Authorization'] = `Bearer ${this.token}`;
+        const headers = { 'Content-Type': 'application/json' };
+        if (this.token) {
+            headers['Authorization'] = `Bearer ${this.token}`;
+        }
         return headers;
     }
 
@@ -198,7 +153,6 @@ class APIIntegration {
         const errorContext = {
             module: meta.module || 'APIIntegration',
             path: url,
-            url,
             method,
             ...(meta.context || {})
         };
@@ -208,22 +162,16 @@ class APIIntegration {
             const data = await response.json().catch(() => ({}));
 
             if (!response.ok) {
-                // Skip error handling for storage API 404s (expected when key doesn't exist)
-                const isStorage404 = url.includes('/api/storage/') && response.status === 404;
-                if (!isStorage404) {
-                    (typeof window !== 'undefined' ? window : globalThis).ErrorHandler?.handleApiError({
-                        status: response.status,
-                        data,
-                        error: data?.error
-                    }, errorContext);
-                }
+                const payload = { status: response.status, data, context: errorContext };
+                this.emit('promiseError', payload);
                 throw new Error(data?.error?.message || `Request failed: ${response.status}`);
             }
 
             return data.data || data;
         } catch (error) {
             console.error('[API] Request error:', error);
-            (typeof window !== 'undefined' ? window : globalThis).ErrorHandler?.handleNetworkError(error, errorContext);
+            this.emit('networkError', { error, context: errorContext });
+            this.emit('promiseError', { error, context: errorContext });
             throw error;
         }
     }
@@ -258,32 +206,19 @@ class APIIntegration {
     async getSessions(projectId = null) {
         const path = projectId ? `/sessions?projectId=${projectId}` : '/sessions';
         const raw = await this.request('GET', path);
-        const arr = Array.isArray(raw) ? raw : (raw?.sessions || raw?.data || []);
-        return arr.map(s => this._normalizeSession(s));
-    }
-
-    _normalizeSession(s) {
-        if (!s || !s.id) return s;
-        return {
-            ...s,
-            projectId: s.projectId ?? s.project_id ?? s.metadata?.projectId,
-            title: s.title ?? s.name ?? s.metadata?.title ?? `Session ${String(s.id).slice(-8)}`,
-            name: s.name ?? s.title ?? s.metadata?.title ?? `Session ${String(s.id).slice(-8)}`
-        };
+        return Array.isArray(raw) ? raw : (raw?.sessions || raw?.data || []);
     }
 
     /**
      * Create session (POST /sessions)
      */
     async createSession(params) {
-        const raw = await this.request('POST', '/sessions', params);
-        const s = raw?.session ?? raw?.data ?? raw;
-        if (s && !s.id && s.sessionId) s.id = s.sessionId;
-        return s;
+        const raw = await this.request('POST', '/sessions', { ...params, sync: true });
+        return raw?.session ?? raw?.data ?? raw;
     }
 
     /**
-     * Get session by ID (pass projectId when known so server finds the session)
+     * Get session by ID
      */
     async getSession(sessionId, projectId = null) {
         const path = projectId ? `/sessions/${sessionId}?projectId=${encodeURIComponent(projectId)}` : `/sessions/${sessionId}`;
@@ -298,75 +233,56 @@ class APIIntegration {
     }
 
     /**
-     * Send message to session (POST /sessions/:id/result with result.message)
+     * Cancel running session
      */
-    async sendMessage(sessionId, message, projectId = null) {
-        const payload = (message || '').trim() || 'continue';
-        return this.sendResult(sessionId, { message: payload }, projectId);
+    async cancelSession(sessionId) {
+        return this.request('POST', `/sessions/${sessionId}/cancel`);
     }
 
     /**
-     * Send result to session (POST /sessions/:id/result)
-     * Payload matches simulations client.json: { projectId, sessionId, result }
-     */
-    async sendResult(sessionId, result, projectId = null) {
-        const pid = projectId ?? (this.currentSession ? (await (typeof window !== 'undefined' && window.ProjectManager?.getSelectedProjectId?.()) ?? window.SessionStore?.projectId) : null);
-        const path = `/sessions/${encodeURIComponent(sessionId)}/result`;
-        const body = { projectId: pid, sessionId, result };
-        return this.request('POST', path, body);
-    }
-
-    /**
-     * Search actions (using AI)
-     * Uses dedicated tasks/analyze endpoint instead of legacy invoke.
+     * Search actions
      */
     async searchActions(query) {
-        const result = await this.request('POST', '/tasks/analyze', {
+        return this.request('POST', '/tasks/analyze', {
             query,
             context: 'search-actions'
         });
-        return result;
     }
 
     /**
-     * Analyze task query: get suggested actions from server. Web only displays; server defines the list.
+     * Analyze task
      */
     async analyzeTask(query, context = 'new-task') {
-        const result = await this.request('POST', '/tasks/analyze', {
+        return this.request('POST', '/tasks/analyze', {
             query,
             context
         });
-        return result;
     }
 
     /**
      * Subscribe to events
      */
     on(event, callback) {
-        if (!this.listeners.has(event)) {
-            this.listeners.set(event, new Set());
+        if (!this._listeners.has(event)) {
+            this._listeners.set(event, new Set());
         }
-        this.listeners.get(event).add(callback);
-
-        return () => this.listeners.get(event)?.delete(callback);
+        this._listeners.get(event).add(callback);
+        return () => this._listeners.get(event)?.delete(callback);
     }
 
     /**
      * Emit event
      */
     emit(event, data) {
-        this.listeners.get(event)?.forEach(cb => cb(data));
+        this._listeners.get(event)?.forEach(cb => cb(data));
     }
 }
 
-// Create singleton instance
 const apiIntegration = new APIIntegration();
 
-// Make available globally
 if (typeof window !== 'undefined') {
     window.APIIntegration = APIIntegration;
     window.apiIntegration = apiIntegration;
-    // Expose shared fetchWithRetry for other modules (e.g. ActionHandler)
     if (!window.fetchWithRetry) {
         window.fetchWithRetry = fetchWithRetry;
     }

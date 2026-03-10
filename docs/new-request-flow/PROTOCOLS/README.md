@@ -1,5 +1,8 @@
 # Протоколы обмена A2A
 
+> **Транспорт:** Все запросы используют **async flow с `promiseId`**.
+> Server возвращает `promiseId`, Client API опрашивает статус до `completed`, затем возвращает результат Web.
+
 ## Обзор
 
 Этот раздел содержит детальные протоколы обмена для системы A2A Script Agent. Протоколы описывают форматы запросов и ответов для всех типов взаимодействий.
@@ -63,17 +66,19 @@
 graph LR
     Web[Web UI] -->|task| Client[Client API]
     Client -->|request.json| Server[A2A Server]
-    Server -->|response.json| Client
+    Server -->|promiseId| Client
+    Client -->|"poll /status"| Server
+    Server -->|"completed + execute.*"| Client
     Client -->|execute.ui| Web
     Web -->|result| Client
     Client -->|result| Server
     
     Server -->|prompt| AI[AI Hub]
     AI -->|promiseId| Server
-    
-    Client -->|poll| Promise[Promise Queue]
-    Promise -->|result| Client
 ```
+
+> **Примечание:** Server возвращает `promiseId`. Client API опрашивает `/requests/:id/status` до `completed`,
+> затем получает результат и возвращает `execute.*` в Web.
 
 ## Статусы реализации
 

@@ -47,12 +47,10 @@ Singleton component providing unified session state management:
 - **Event System**: Emits events like `'messages'`, `'execute'`, `'status'`
 
 ### TransportManager
-Handles real-time communication between client and server:
-- **Primary Transport**: SSE (Server-Sent Events) - preferred
-- **Fallback Transport**: WebSocket when SSE fails
+Handles communication between client and server using synchronous HTTP requests:
+- **Mode**: Synchronous (response in HTTP body)
 - **Connection States**: `disconnected`, `connecting`, `connected`
-- **Heartbeat**: Automatic connection health monitoring
-- **Reconnection**: Exponential backoff retry logic
+- **No real-time streaming**: All data returned in HTTP response
 
 ### PanelManager
 Manages UI panels and their lifecycle:
@@ -81,17 +79,11 @@ The complete lifecycle of a session from creation to completion:
 
 ### Communication Patterns
 
-#### SSE (Server-Sent Events)
-- **Direction**: Server-to-client only
-- **Usage**: Real-time updates, streaming responses
-- **Events**: `message`, `execute`, `status`, `progress`, `error`
-- **Fallback**: WebSocket when SSE unavailable
-
-#### WebSocket
-- **Direction**: Bidirectional communication
-- **Usage**: Fallback when SSE fails, interactive features
-- **Messages**: JSON with `type` and `payload` fields
-- **Heartbeat**: Automatic ping/pong for connection health
+#### Synchronous HTTP
+- **Direction**: Client-to-server (request/response)
+- **Usage**: All requests return complete response in HTTP body
+- **Includes**: `execute.ui` with state, form choices, messages
+- **No streaming required**: Single HTTP request/response cycle
 
 #### HTTP POST
 - **Direction**: Client-to-server
@@ -195,7 +187,7 @@ Browser environment protection:
 Communication layer protection:
 - **HTTPS Requirements**: Encrypted connections
 - **Authentication**: Token-based access control
-- **Secure WebSockets**: WSS protocol usage
+- **Secure HTTP Channels**: TLS/HTTPS for all HTTP endpoints
 - **Certificate Validation**: SSL/TLS certificate verification
 
 ### Data Protection

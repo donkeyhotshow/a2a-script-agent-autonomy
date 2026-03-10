@@ -27,7 +27,7 @@ Implement a unified SessionStore as the single source of truth for all session-r
    - Computed properties for derived state
    - Batch update methods for server responses
 
-2. **TransportManager** (`transport-manager.js`) - Unified transport layer handling SSE/WebSocket with automatic fallback
+2. **TransportManager** (`transport-manager.js`) - Unified transport layer handling HTTP with automatic fallback
 
 3. **SessionSync V2** (`session-sync-v2.js`) - Direct bridge between transport and store
 

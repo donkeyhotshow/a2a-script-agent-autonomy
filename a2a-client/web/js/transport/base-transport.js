@@ -29,7 +29,7 @@
         }
 
         /**
-         * Send message (WebSocket only - SSE is receive-only)
+         * Send message (implemented by transport subclass)
          */
         send(type, payload) {
             throw new Error('send() not supported by this transport');

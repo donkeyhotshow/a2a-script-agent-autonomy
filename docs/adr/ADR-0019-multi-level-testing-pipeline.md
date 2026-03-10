@@ -33,11 +33,11 @@ Implement a multi-level testing pipeline with increasing complexity and scope, f
 - **Focus**: Request processing, in-memory state, authentication
 - **Environment**: Stateless server (no database), mock external services
 
-**Level 3: A2A Client Testing**
-- **Scope**: Client API proxy, SDK functionality, WebSocket/SSE
-- **Tools**: API tests, component tests, WebSocket tests
+- **Level 3: A2A Client Testing**
+- **Scope**: Client API proxy, SDK functionality, real-time transport behavior
+- **Tools**: API tests, component tests, transport reliability checks
 - **Focus**: API proxying, real-time communication, session management
-- **Environment**: Mock server, test WebSocket connections
+- **Environment**: Mock server, transport reliability harness
 
 **Level 4: Web UI Testing**
 - **Scope**: Browser interface, session panels, transport layer

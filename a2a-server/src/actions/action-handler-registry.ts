@@ -12,7 +12,10 @@ export type ActionType =
     | 'write-file'
     | 'file-exists'
     | 'list-directory'
-    | 'execute-command';
+    | 'execute-command'
+    | 'grep-search'
+    | 'edit-patch'
+    | 'run-script';
 
 export interface ActionHandlerContext {
     sessionId: string;
@@ -117,7 +120,11 @@ class ActionHandlerRegistry {
         });
 
         this.register('file-exists', async (input) => {
-            return handlers.executeFileExists(input as { filePath: string });
+            // Support both 'path' and 'filePath' for backward compatibility
+            const params = input as { path?: string; filePath?: string };
+            return handlers.executeFileExists({
+                path: params.path || params.filePath || '',
+            } as handlers.FileExistsActionInput);
         });
 
         this.register('list-directory', async (input) => {
@@ -129,6 +136,21 @@ class ActionHandlerRegistry {
             return handlers.executeCommand(input as handlers.ExecuteCommandInput);
         });
 
+        // Grep Search handler
+        this.register('grep-search', async (input) => {
+            return handlers.executeGrepSearch(input as handlers.GrepSearchInput);
+        });
+
+        // Edit Patch handler
+        this.register('edit-patch', async (input) => {
+            return handlers.executeEditPatch(input as handlers.EditPatchInput);
+        });
+
+        // Run Script handler
+        this.register('run-script', async (input) => {
+            return handlers.executeRunScript(input as handlers.RunScriptInput);
+        });
+
         this.initialized = true;
         logger.info('[ActionHandlerRegistry] Default handlers registered');
     }
@@ -136,6 +158,9 @@ class ActionHandlerRegistry {
 
 // Global instance
 export const actionHandlerRegistry = new ActionHandlerRegistry();
+
+// Export class for direct usage
+export { ActionHandlerRegistry };
 
 // Factory function for testing
 export function getActionHandlerRegistry(): ActionHandlerRegistry {

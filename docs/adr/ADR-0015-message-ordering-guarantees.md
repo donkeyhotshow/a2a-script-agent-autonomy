@@ -64,17 +64,13 @@ class MessageBuffer {
 
 ### Transport-Specific Handling
 
-**SSE Ordering:**
-- Browser EventSource guarantees order within connection
-- Reconnection may cause gaps requiring buffering
-
-**WebSocket Ordering:**
-- TCP guarantees order within connection
-- Message fragmentation handled by protocol
+**Persistent-channel ordering:**
+- The persistent connection guarantees order within each session
+- Reconnection may still cause gaps that require buffering and validation
 
 **HTTP Polling Ordering:**
-- Client-side buffering required
-- Sequence validation on each poll response
+- Client-side buffering ensures chronologic playback between polls
+- Sequence validation on each poll response detects missing or duplicate items
 
 ## Consequences
 

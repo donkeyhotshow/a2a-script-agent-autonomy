@@ -7,7 +7,7 @@
 
 All 4 major refactoring steps from the decomposition document have been implemented:
 
-1. ✅ **Transport Strategy**: SSE primary with WebSocket fallback, HTTP polling removed
+1. ✅ **Transport Strategy**: Synchronous HTTP requests (sync mode)
 2. ✅ **Unified State**: SessionStore as single source of truth (replaced 3 state sources)
 3. ✅ **Simplified Panels**: PanelManager replaces 3-level hierarchy (panels→cubes→modals)
 4. ✅ **Action Standardization**: ActionHandler with uniform action-key shape
@@ -18,8 +18,7 @@ All 4 major refactoring steps from the decomposition document have been implemen
 ```
 js/
 ├── session-store.js              # Single source of truth
-├── transport-manager.js          # Unified transport (SSE → WebSocket)
-├── session-sync-v2.js            # Direct SSE→Store bridge
+├── transport-manager.js          # HTTP sync requests (no SSE/WS)
 ├── session-store-adapters.js     # Legacy compatibility
 ├── panel-manager.js              # Simplified panel system
 └── action-handler.js             # Standardized action submission
@@ -85,12 +84,12 @@ store.on('context', handler)
 ### 2. TransportManager - Communication
 ```javascript
 // Connection
-await TransportManager.connect(sessionId)  // Auto-fallback SSE → WebSocket
+await TransportManager.connect(sessionId)  // HTTP sync requests
 transport.isConnected()
 transport.getState()  // { connectionState, activeTransport, sessionId }
 
 // Events
-transport.on('connected', ({ transport }) => {})  // 'sse' or 'websocket'
+transport.on('connected', ({ transport }) => {})  // 'http' (sync mode)
 transport.on('message', ({ type, data }) => {})
 transport.on('execute', (data) => {})
 ```
@@ -135,11 +134,11 @@ const { type, data, isInput, isClientAction } = ActionHandler.processExecute(exe
 | Before | After |
 |--------|-------|
 | 3 state sources (Manager, ViewModel, Sync) | 1 (SessionStore) |
-| Manual SSE + WS + HTTP polling | Auto-fallback TransportManager |
+| Manual SSE + WS + HTTP polling | Synchronous HTTP requests |
 | 4-level panel hierarchy | 3 states (visible/minimized/closed) |
 | Multiple submission formats | Single action-key shape |
 | Event chains: Manager→TaskFlow→SSE→UI | Direct: Store→UI |
-| ~50 lines polling code | 0 (SSE events only) |
+| ~50 lines polling code | 0 (HTTP sync responses) |
 | 8 core JS files | 6 unified files |
 
 ## Backward Compatibility

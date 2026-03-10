@@ -23,14 +23,16 @@
 
 ## Поток задачи (Task Flow): Web → Client API → Server
 
-### Sync Flow (Стандарт для симуляций)
+### Async Flow (promiseId — стандарт)
 1. **Web:** поле ввода задачи + кнопка Send → панель с прелоадером
 2. **POST /api/sessions** (Web → Client API): `{ projectId, task }`
-3. **Client API** сохраняет сессию, проксирует на Server: `{ task, sync: true }`
-4. **Server** анализирует задачу:
-   - Если задача содержит "dialog" - возвращает `execute.form.input` (прямой диалог)
-   - Иначе возвращает `execute.form.choices` (роутер с вариантами)
-5. **Client API** возвращает sync ответ Web
+3. **Client API** сохраняет сессию, проксирует на Server: `{ task }`
+4. **Server** возвращает `{ promiseId, status: "pending" }`
+5. **Client API** опрашивает `GET /api/v1/requests/:promiseId/status` до `completed`
+6. **Server** возвращает результат:
+   - Если задача содержит "dialog" — `execute.form.input` (прямой диалог)
+   - Иначе `execute.form.choices` (роутер с вариантами)
+7. **Client API** возвращает `execute.*` в Web
 
 ### Async Flow (PromiseId - для AI операций)
 1. **Web:** поле ввода задачи + кнопка Send → панель с прелоадером

@@ -1,5 +1,8 @@
 # Детальный разбор этапов симуляции dialog
 
+> **Транспорт:** Web ↔ Client API ↔ Server — **async flow с `promiseId`**.
+> Server возвращает `promiseId`, Client API опрашивает статус до `completed`, затем возвращает `execute.*` в Web.
+
 ## Обзор
 
 Симуляция `dialog` демонстрирует полный цикл AI-диалога между пользователем и LLM.
@@ -27,7 +30,8 @@
 ```json
 {
     "task": "диалог",
-    "projectId": "123"
+    "projectId": "123",
+    "sync": true
 }
 ```
 
@@ -86,6 +90,8 @@
     }
 }
 ```
+
+> **Примечание:** Client API получает `promiseId` от Server, опрашивает до `completed`, затем возвращает `execute.*` в Web.
 
 ### Ключевые поля
 | Поле | Значение | Описание |
@@ -434,3 +440,6 @@ flowchart TD
 - [simulations/dialog/description.md](../../simulations/dialog/description.md)
 - [simulations/dialog/WORKFLOW.md](../../simulations/dialog/WORKFLOW.md)
 - [SCHEMAS.md](../SCHEMAS.md)
+- [PROTOCOL.md](../../PROTOCOL.md) — promiseId async flow
+- [ADR-0013](../../../adr/ADR-0013-unified-transport-layer.md) — Transport layer (superseded by promiseId)
+- [ADR-0014](../../../adr/ADR-0014-transport-fallback-mechanisms.md) — Fallback mechanisms (superseded by promiseId)

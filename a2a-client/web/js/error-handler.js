@@ -22,8 +22,17 @@
             showStackTrace: false,
             showDetailsButton: true,
             logToConsole: true,
-            retryableErrors: ['ECONNREFUSED', 'ETIMEDOUT', 'ENOTFOUND', 'network_error']
+            // Retry configuration
+            retryDelay: 2000, // 2 seconds
+            maxRetries: 3,
+            // Retryable error codes (can be retried)
+            retryableErrors: ['NETWORK_ERROR', 'TIMEOUT', 'RATE_LIMIT', 'LLM_ERROR'],
+            // Non-retryable error codes (should not be retried)
+            nonRetryableErrors: ['VALIDATION_ERROR', 'FILE_NOT_FOUND', 'PERMISSION_DENIED', 'EXECUTION_ERROR', 'INTERNAL_ERROR']
         },
+        
+        // Active retry timers (for cleanup)
+        _retryTimers: new Map(),
         
         // Event listeners
         _listeners: new Map(),
@@ -208,7 +217,9 @@
             }
 
             if (error.retryable) {
-                html += `<button class="error-notification-retry" title="Retry">↻ Retry</button>`;
+                const retryId = `retry-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+                html += `<button class="error-notification-retry" data-retry-id="${retryId}" title="Retry">↻ Повторить</button>`;
+                html += `<div class="error-notification-retry-info" data-retry-id="${retryId}"></div>`;
             }
 
             el.innerHTML = html;
@@ -222,8 +233,7 @@
 
             const retryBtn = el.querySelector('.error-notification-retry');
             retryBtn?.addEventListener('click', () => {
-                this.emit('retry', error);
-                el.remove();
+                this._executeRetry(error, retryId, el);
             });
 
             const detailsBtn = el.querySelector('.error-notification-details');
@@ -402,14 +412,144 @@
 
         /**
          * Check if error is retryable
+         * Returns true only for NETWORK_ERROR, TIMEOUT, RATE_LIMIT, LLM_ERROR
          */
         _isRetryable(error) {
             const code = error.code || '';
-            const message = error.message || '';
             
-            return this.config.retryableErrors.some(err => 
-                code.includes(err) || message.includes(err)
-            );
+            // First check non-retryable errors (explicit exclusion)
+            if (this.config.nonRetryableErrors.includes(code)) {
+                return false;
+            }
+            
+            // Then check retryable errors (exact match required)
+            return this.config.retryableErrors.includes(code);
+        },
+
+        /**
+         * Execute retry with delay and attempt tracking
+         * @param {Object} error - The error object
+         * @param {string} retryId - Unique ID for this retry operation
+         * @param {HTMLElement} element - The error notification element
+         */
+        _executeRetry(error, retryId, element) {
+            const context = error.context || {};
+            const attemptNumber = context.retryAttempt || 0;
+            const maxRetries = this.config.maxRetries;
+            const retryDelay = this.config.retryDelay;
+            
+            // Check if max retries exceeded
+            if (attemptNumber >= maxRetries) {
+                this._showRetryResult(element, retryId, false, 'Превышен максимум попыток');
+                console.warn(`[ErrorHandler] Max retries (${maxRetries}) exceeded for error:`, error.code);
+                return;
+            }
+            
+            // Disable retry button and show countdown
+            const retryBtn = element.querySelector('.error-notification-retry');
+            const retryInfo = element.querySelector('.error-notification-retry-info');
+            
+            if (retryBtn) {
+                retryBtn.disabled = true;
+                retryBtn.textContent = '⏳';
+            }
+            
+            let remainingSeconds = Math.ceil(retryDelay / 1000);
+            
+            // Update retry info display
+            const updateCountdown = () => {
+                if (retryInfo) {
+                    retryInfo.textContent = `Повтор через ${remainingSeconds}с... (попытка ${attemptNumber + 1}/${maxRetries})`;
+                }
+            };
+            
+            updateCountdown();
+            
+            // Create countdown timer
+            const countdownTimer = setInterval(() => {
+                remainingSeconds--;
+                if (remainingSeconds > 0) {
+                    updateCountdown();
+                }
+            }, 1000);
+            
+            // Create retry timer
+            const retryTimer = setTimeout(() => {
+                // Clear countdown
+                clearInterval(countdownTimer);
+                
+                // Clean up old timer reference
+                this._retryTimers.delete(retryId);
+                
+                // Update context with attempt number
+                const retryContext = {
+                    ...context,
+                    retryAttempt: attemptNumber + 1,
+                    originalError: error
+                };
+                
+                console.log(`[ErrorHandler] Executing retry ${attemptNumber + 1}/${maxRetries} for error:`, error.code);
+                
+                // Emit retry event with updated context
+                this.emit('retry', {
+                    ...error,
+                    context: retryContext,
+                    retryAttempt: attemptNumber + 1
+                });
+                
+                // Remove error element
+                element.remove();
+                
+            }, retryDelay);
+            
+            // Store timers for cleanup
+            this._retryTimers.set(retryId, { retryTimer, countdownTimer });
+            
+            // Allow cancellation
+            element._retryId = retryId;
+        },
+
+        /**
+         * Show retry result message
+         */
+        _showRetryResult(element, retryId, success, message) {
+            const retryInfo = element.querySelector('.error-notification-retry-info');
+            if (retryInfo) {
+                retryInfo.textContent = message;
+                retryInfo.className = 'error-notification-retry-info ' + (success ? 'success' : 'failed');
+            }
+            
+            const retryBtn = element.querySelector('.error-notification-retry');
+            if (retryBtn) {
+                retryBtn.disabled = true;
+                retryBtn.textContent = success ? '✓' : '✗';
+            }
+        },
+
+        /**
+         * Cancel retry operation
+         * @param {string} retryId - The retry ID to cancel
+         */
+        cancelRetry(retryId) {
+            const timers = this._retryTimers.get(retryId);
+            if (timers) {
+                clearTimeout(timers.retryTimer);
+                clearInterval(timers.countdownTimer);
+                this._retryTimers.delete(retryId);
+                console.log(`[ErrorHandler] Cancelled retry:`, retryId);
+            }
+        },
+
+        /**
+         * Cancel all pending retry operations
+         */
+        cancelAllRetries() {
+            for (const [retryId, timers] of this._retryTimers) {
+                clearTimeout(timers.retryTimer);
+                clearInterval(timers.countdownTimer);
+            }
+            this._retryTimers.clear();
+            console.log('[ErrorHandler] Cancelled all retries');
         },
 
         _formatApiMessage(response) {
@@ -476,6 +616,9 @@
          * Clear all errors
          */
         clearErrors() {
+            // Cancel all pending retry operations
+            this.cancelAllRetries();
+            
             this.errors = [];
             const container = document.getElementById('errorNotifications');
             if (container) {

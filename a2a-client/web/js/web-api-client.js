@@ -1,5 +1,6 @@
 /**
- * Unified Web API Client
+ * Unified Web API Client - DEPRECATED
+ * @deprecated Use api-integration.js for sync HTTP mode
  * Combines session management, real-time communication, and file transfer
  * for the A2A web interface. Uses single apiBase (Client API).
  */
@@ -364,7 +365,7 @@
             if (this.sessions) {
                 try {
                     const projectId = this.sessions.currentProjectId ?? this.sessions.projectId ?? null;
-                    const body = { projectId, sessionId, result };
+                    const body = { projectId, sessionId, result, sync: true };
                     const response = await this.sessions._request('POST', `/sessions/${sessionId}/result`, body);
                     // Эмитим событие для компонентов
                     this._emit('choiceResult', { sessionId, result, response });

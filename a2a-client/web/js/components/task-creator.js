@@ -403,8 +403,10 @@
                     const g = (typeof window !== 'undefined' ? window : globalThis);
                     if (g.ActionHandler?.sendChoice) {
                         await g.ActionHandler.sendChoice(session.id, projectId, option.id);
-                    } else if (g.apiIntegration?.sendResult) {
-                        await g.apiIntegration.sendResult(session.id, { choice: option.id }, projectId);
+                    } else if (g.ActionHandler?.submit) {
+                        await g.ActionHandler.submit(session.id, projectId, { choice: option.id });
+                    } else {
+                        throw new Error('ActionHandler unavailable for choice submission');
                     }
                 } else {
                     // Action option: standard flow

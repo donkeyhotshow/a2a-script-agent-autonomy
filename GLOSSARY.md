@@ -96,8 +96,8 @@ The fundamental communication pattern where:
 - Client sends request with context and optional result
 - Server processes and returns response with execute or final result
 
-### SSE (Server-Sent Events)
-Real-time communication protocol used for streaming updates from server to client during long-running operations.
+### Synchronous Mode
+Server returns response immediately in HTTP body without waiting for background processing.
 
 ### Batch Processing
 Execution mode where multiple operations are grouped together for efficiency, particularly useful for large-scale code analysis.

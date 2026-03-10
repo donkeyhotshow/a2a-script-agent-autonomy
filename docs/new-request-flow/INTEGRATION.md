@@ -2,6 +2,8 @@
 
 > **⚠️ Важно:** Это документация для обновлённой системы.
 > 
+> **Транспорт:** Web ↔ Client API ↔ Server — **async flow с `promiseId`**.
+> 
 > **См.:** [ARCHITECTURE.md](ARCHITECTURE.md), [PROTOCOL.md](PROTOCOL.md)
 
 ## Общая диаграмма потока данных
@@ -33,7 +35,6 @@
 │   │  - GET/POST /api/config                                                         │   │
 │   │  - POST /api/terminal/execute                                                  │   │
 │   │  - POST /api/v1/invoke (прокси)                                                │   │
-│   │  - GET /api/v1/sse/* (Server-Sent Events)                                      │   │
 │   └─────────────────────────────────────────────────────────────────────────────────────┘   │
 │                              │                                                                   │
 │                              │ HTTP + API Client                                              │
@@ -52,7 +53,6 @@
 │   │  - POST /sessions/:id/message                                                    │   │
 │   │  - POST /sessions/:id/continue                                                   │   │
 │   │  - POST /sessions/:id/confirm                                                    │   │
-│   │  - GET /sse/:sessionId                                                          │   │
 │   │                                                                                   │   │
 │   │  Stateless!                                                                       │   │
 │   │  - Не хранит сессии                                                              │   │

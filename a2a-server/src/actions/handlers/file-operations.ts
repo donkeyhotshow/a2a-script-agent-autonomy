@@ -24,7 +24,9 @@ export interface WriteFileActionInput {
 }
 
 export interface FileExistsActionInput {
-    filePath: string;
+    path: string;
+    filePath?: string; // For backward compatibility
+    type?: 'file' | 'directory' | 'any';
 }
 
 export interface ListDirActionInput {
@@ -235,13 +237,40 @@ export async function executeWriteFile(
 export async function executeFileExists(
     input: FileExistsActionInput
 ): Promise<FileExistsActionOutput> {
-    logger.info('[file-exists] Executing', {filePath: input.filePath});
+    logger.info('[file-exists] Executing', {path: input.path});
 
     try {
-        const fullPath = path.resolve(input.filePath);
+        // Support both 'path' and 'filePath' for backward compatibility
+        const filePath = input.path || input.filePath || '';
+        if (!filePath) {
+            return {
+                success: false,
+                error: 'Path is required',
+            };
+        }
+        const fullPath = path.resolve(filePath);
 
         try {
             const stats = await fs.stat(fullPath);
+            
+            // Check type filter if specified
+            if (input.type === 'file' && !stats.isFile()) {
+                return {
+                    success: true,
+                    exists: false,
+                    isFile: stats.isFile(),
+                    isDirectory: stats.isDirectory(),
+                };
+            }
+            
+            if (input.type === 'directory' && !stats.isDirectory()) {
+                return {
+                    success: true,
+                    exists: false,
+                    isFile: stats.isFile(),
+                    isDirectory: stats.isDirectory(),
+                };
+            }
 
             return {
                 success: true,

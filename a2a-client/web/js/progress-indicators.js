@@ -489,7 +489,6 @@
      */
     const SessionProgressManager = {
         _activeSessions: new Map(),
-        _apiBase: '/api',
 
         /**
          * Start progress tracking for session operation
@@ -622,15 +621,10 @@
             if (!sessionInfo) return false;
 
             try {
-                const response = await fetch(`${this._apiBase}/sessions/${sessionId}/cancel`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ operation })
-                });
+                // Use Client API instead of direct fetch
+                const response = await global.apiIntegration.cancelSession(sessionId);
 
-                if (response.ok) {
+                if (response) {
                     const tracker = sessionInfo.tracker;
                     tracker.setMessage('Operation cancelled');
                     tracker.error('Cancelled by user');

@@ -14,6 +14,9 @@ doc:
 > **⚠️ Важно:** Это документация для Web UI компонентов (a2a-client/web).
 > 
 > **См.:** [ARCHITECTURE.md](ARCHITECTURE.md), [PROTOCOL.md](PROTOCOL.md), [API-SERVER.md](API-SERVER.md)
+>
+> **Транспорт:** Web общается с Client API через HTTP. Client API проксирует на Server, получает `promiseId`,
+> опрашивает статус до `completed`, затем возвращает `execute.*` в Web.
 
 ## Обзор
 
@@ -50,23 +53,18 @@ a2a-client/web/
 │   └── layouts/                  # Макеты
 ├── js/
 │   ├── app-task.js               # Инициализация приложения
-│   ├── api-integration.js        # Интеграция с API
-│   ├── app/                    # Основные модули
+│   ├── api-integration.js        # Интеграция с API (HTTP, sync/async)
+│   ├── app/                      # Основные модули
 │   │   ├── session-manager.js    # Управление сессиями
 │   │   ├── taskbar-manager.js    # Управление таскбаром
-│   │   └── window-manager.js    # Управление окнами
-│   ├── components/              # UI компоненты
-│   ├── task-flow/              # Поток задач
-│   └── transport/sse-transport.js  # SSE транспорт
+│   │   └── window-manager.js     # Управление окнами
+│   ├── components/               # UI компоненты
+│   ├── task-flow/                # Поток задач (promiseId polling)
+│   ├── transport/                # SSE/WebSocket транспорт (optional)
 │   ├── error-handler.js          # Обработка ошибок
 │   ├── progress-indicators.js    # Индикаторы прогресса
-│   ├── 
-│   ├── 
 │   ├── file-transfer.js          # Передача файлов
-
-
-│   ├── 
-│   ├── web-api-client.js         # Web API клиент
+│   ├── web-api-client.js         # Web API клиент (HTTP)
 │   └── components/               # Дополнительные компоненты
 └── examples/
     └── advanced-features.html     # Примеры
@@ -152,59 +150,6 @@ const result = await TaskFlow.sendTask('Create a new file');
 
 // Обработка формы (выбор действия)
 TaskFlow.sendChoice('confirm_action', containerElement);
-```
-
----
-
-### SSEClient
-
-Клиент для Server-Sent Events. Обеспечивает real-time получение обновлений от сервера.
-
-**Файл:** [`transport/sse-transport.js`](../../a2a-client/web/js/transport/sse-transport.js)
-
-#### Конфигурация
-
-```javascript
-SSEClient.configure({
-    apiBase: '/api',
-    sessionId: 'sess_123',
-    promiseId: 'promise_456'
-});
-```
-
-#### Методы
-
-| Метод | Описание |
-|-------|----------|
-| `connect(sessionId, promiseId)` | Подключение к SSE потоку |
-| `disconnect()` | Отключение от потока |
-| `on(event, handler)` | Подписка на событие |
-| `off(event, handler)` | Отписка от события |
-
-#### События
-
-| Событие | Описание |
-|---------|----------|
-| `connected` | Установлено соединение |
-| `message` | Получено сообщение |
-| `progress` | Обновление прогресса |
-| `complete` | Выполнение завершено |
-| `error` | Ошибка |
-
-#### Пример использования
-
-```javascript
-// Подключение к SSE
-SSEClient.connect('sess_123', 'promise_456');
-
-// Обработка событий
-SSEClient.on('progress', (data) => {
-    console.log('Progress:', data.progress, data.message);
-});
-
-SSEClient.on('complete', (result) => {
-    console.log('Result:', result);
-});
 ```
 
 ---
@@ -314,7 +259,6 @@ tracker.remove();
 
 ```javascript
 TerminalEmulator.configure({
-    wsUrl: 'ws://localhost:3002',      // WebSocket URL
     apiBase: '/api',                    // API базовый URL
     fontSize: 14,                      // Размер шрифта
     fontFamily: 'Monaco, monospace',   // Шрифт
@@ -527,7 +471,6 @@ const session = await apiIntegration.post('/sessions', {
 <script src="js/api-integration.js"></script>
 <script src="js/app/session-manager.js"></script>
 <script src="js/task-flow/index.js"></script>
-<script src="js/transport/sse-transport.js"></script>
 <script src="js/error-handler.js"></script>
 <script src="js/progress-indicators.js"></script>
 
@@ -555,21 +498,21 @@ document.addEventListener('DOMContentLoaded', async () => {
 ### Обработка событий
 
 ```javascript
-// Обработка прогресса через SSE
-SSEClient.on('progress', (data) => {
+// Async promiseId flow: TaskFlow опрашивает статус и транслирует прогресс.
+
+function handleTaskProgress(data) {
     ProgressIndicators.handleProgressEvent({
         current: data.progress,
-        total: 100,
+        total: data.total ?? 100,
         message: data.message,
         progressId: data.promiseId
     });
-});
+}
 
-// Обработка завершения
-SSEClient.on('complete', (result) => {
+function handleTaskComplete(result) {
     ProgressIndicators.complete('Task completed');
     TaskFlow.renderResult(result);
-});
+}
 
 // Обработка ошибок
 ErrorHandler.on('error', (error) => {
@@ -617,7 +560,6 @@ async function createTask(taskText) {
 ```javascript
 // Инициализация терминала
 TerminalEmulator.configure({
-    wsUrl: 'ws://localhost:3002',
     theme: 'dark'
 });
 
@@ -640,5 +582,6 @@ TerminalEmulator.on('output', (text) => {
 ## Требования
 
 - API Server должен быть запущен на порту 3001
-- Для WebSocket соединений требуется порт 3002
 - Для RAG поиска требуется Meilisearch на порту 7700
+
+> **Примечание:** Основной поток использует `promiseId` async polling. SSE/WebSocket опционально для realtime updates.

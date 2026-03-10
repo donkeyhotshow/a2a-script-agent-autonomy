@@ -19,7 +19,7 @@
 
         const DEFAULT_TIMEOUT = 10000; // 10 seconds
         const MAX_RETRIES = 3;
-        const BASE_DELAY = 1000; // 1 second base for exponential backoff
+        const BASE_DELAY = 2000; // 2 seconds per PROTOCOLS specification
 
         const controller = new AbortController();
         const timeout = options.timeout || DEFAULT_TIMEOUT;

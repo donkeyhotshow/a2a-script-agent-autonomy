@@ -53,13 +53,60 @@ const MessageActionSchema = z.object({
   message: z.string()
 });
 
+const GrepSearchActionSchema = z.object({
+  'grep-search': z.object({
+    pattern: z.string(),
+    path: z.string().optional(),
+    options: z.object({
+      regex: z.boolean().optional(),
+      caseSensitive: z.boolean().optional(),
+      wholeWord: z.boolean().optional(),
+      include: z.array(z.string()).optional(),
+      exclude: z.array(z.string()).optional(),
+      maxResults: z.number().optional()
+    }).optional()
+  })
+});
+
+const FileExistsActionSchema = z.object({
+  'file-exists': z.object({
+    path: z.string(),
+    type: z.enum(['file', 'directory', 'any']).optional()
+  })
+});
+
+const EditPatchActionSchema = z.object({
+  'edit-patch': z.object({
+    path: z.string(),
+    operations: z.array(z.object({
+      type: z.enum(['replace', 'insert', 'delete', 'replaceContent']),
+      startLine: z.number().optional(),
+      endLine: z.number().optional(),
+      content: z.string().optional(),
+      search: z.string().optional()
+    })),
+    backup: z.boolean().optional()
+  })
+});
+
+const RunScriptActionSchema = z.object({
+  'run-script': z.object({
+    scriptId: z.string(),
+    params: z.record(z.unknown()).optional()
+  })
+});
+
 const ExecutePayloadSchema = z.union([
   FormActionSchema,
   ScriptActionSchema,
   ReadFileActionSchema,
   WriteFileActionSchema,
   ExecuteCommandActionSchema,
-  MessageActionSchema
+  MessageActionSchema,
+  GrepSearchActionSchema,
+  FileExistsActionSchema,
+  EditPatchActionSchema,
+  RunScriptActionSchema
 ]);
 
 const ActionResultSchema = z.record(z.unknown());
@@ -79,7 +126,7 @@ export function validateActionDefinition(definition: unknown): ValidationResult 
     steps: z.array(z.object({
       id: z.string(),
       description: z.string(),
-      action: z.enum(['script', 'form', 'message', 'read-file', 'write-file', 'execute-command']).optional(),
+      action: z.enum(['script', 'form', 'message', 'read-file', 'write-file', 'execute-command', 'grep-search', 'file-exists', 'edit-patch', 'run-script']).optional(),
       input: z.record(z.unknown()).optional(),
       output: z.string().optional(),
       code: z.string().optional()
@@ -137,7 +184,7 @@ export function validateExecutePayloadDetailed(payload: unknown): ValidationResu
   const result = ExecutePayloadSchema.safeParse(payload);
   if (result.success) {
     const keys = Object.keys(payload as object);
-    const validKeys = ['form', 'script', 'read-file', 'write-file', 'execute-command', 'message'];
+    const validKeys = ['form', 'script', 'read-file', 'write-file', 'execute-command', 'message', 'grep-search', 'file-exists', 'edit-patch', 'run-script'];
     const hasValidKey = keys.some(k => validKeys.includes(k));
     if (!hasValidKey) {
       return { success: false, errors: [`Execute payload must contain at least one action key`] };
@@ -158,7 +205,7 @@ export function validateActionKeyShape(obj: unknown, context: 'execute' | 'resul
     return { success: false, errors: ['Must be an object'] };
   }
 
-  const validExecuteKeys = ['form', 'script', 'read-file', 'write-file', 'execute-command', 'message'];
+  const validExecuteKeys = ['form', 'script', 'read-file', 'write-file', 'execute-command', 'message', 'grep-search', 'file-exists', 'edit-patch', 'run-script'];
   const validResultKeys = [...validExecuteKeys, 'choice', 'completed'];
   const validKeys = context === 'execute' ? validExecuteKeys : validResultKeys;
 
