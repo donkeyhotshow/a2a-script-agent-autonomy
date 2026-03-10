@@ -21,7 +21,6 @@ js/
 ├── transport-manager.js          # HTTP sync requests (no SSE/WS)
 ├── session-store-adapters.js     # Legacy compatibility
 ├── panel-manager.js              # Simplified panel system
-└── action-handler.js             # Standardized action submission
 
 css/components/
 └── panel-manager.css             # New panel styles

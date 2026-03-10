@@ -223,14 +223,6 @@ class APIIntegration {
     }
 
     /**
-     * Analyze task - deprecated, use session flow
-     */
-    async analyzeTask(query, context = 'new-task') {
-        console.warn('[API] analyzeTask deprecated - use session flow');
-        return null;
-    }
-
-    /**
      * Subscribe to events
      */
     on(event, callback) {

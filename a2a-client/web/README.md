@@ -34,7 +34,6 @@ web/
 │   ├── app-task.js          # Инициализация приложения
 │   ├── error-handler.js     # Обработка ошибок
 │   ├── file-transfer.js     # Передача файлов
-│   ├── progress-indicators.js # Индикаторы прогресса
 │   ├── rag-search-ui.js     # RAG поиск UI
 │   ├── terminal-emulator.js # Терминал
 │   ├── ui-components.js    # UI компоненты

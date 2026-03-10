@@ -31,7 +31,6 @@ This directory contains comprehensive documentation of all user workflows and sy
 
 ### Legacy & Archive
 - **[AI Actions Integration Guide](../archive/ai-actions-integration-guide.md)** - Legacy AI actions implementation
-- **[Progress Indicators Guide](../archive/progress-indicators-guide.md)** - Legacy progress UI guide
 - **[AI Actions Session Panel](../archive/ai-actions-session-panel.md)** - Legacy session panel documentation
 
 ## Key Scenarios Overview

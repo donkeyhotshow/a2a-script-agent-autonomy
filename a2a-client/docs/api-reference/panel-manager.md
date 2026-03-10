@@ -518,4 +518,3 @@ PanelManager operations are generally safe:
 
 - **[SessionStore](../api-reference/session-store.md)** - State synchronization
 - **[TransportManager](../api-reference/transport-manager.md)** - Real-time updates
-- **[ActionHandler](../api-reference/action-handler.md)** - Action processing

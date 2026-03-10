@@ -402,6 +402,6 @@ store.on('error', (error) => {
 
 ## Related Components
 
-- **[ActionHandler](../api-reference/action-handler.md)** - Submitting results
+
 - **[TransportManager](../api-reference/transport-manager.md)** - Server communication
 - **[PanelManager](../api-reference/panel-manager.md)** - UI synchronization
