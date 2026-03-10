@@ -539,8 +539,14 @@
                 attempts++;
                 
                 try {
-                    const response = await fetch(`${this._apiBase}/sessions/${sessionId}/promise/${promiseId}`);
-                    const data = await response.json();
+                    // FIX: Use correct server endpoint for promise status
+                    const pollUrl = `/api/v1/requests/${promiseId}/status`;
+                    console.log('[SessionProgressManager] Polling URL (FIXED):', pollUrl);
+                    const response = await fetch(pollUrl);
+                    const json = await response.json();
+                    
+                    // Server returns { success: true, data: { status, ... } }
+                    const data = json.data || json;
 
                     if (response.ok) {
                         if (data.status === 'completed') {
@@ -548,6 +554,21 @@
                             this._pollingIntervals.delete(progressId);
                             
                             tracker.setProgress(100, 'Operation completed');
+                            
+                            // Fetch the result after completion
+                            try {
+                                const resultUrl = `/api/v1/requests/${promiseId}/result`;
+                                console.log('[SessionProgressManager] Fetching result from:', resultUrl);
+                                const resultResponse = await fetch(resultUrl);
+                                const resultJson = await resultResponse.json();
+                                const result = resultJson.data || resultJson;
+                                
+                                // Emit completion event with result
+                                this._emit('promiseCompleted', { promiseId, result, sessionId });
+                            } catch (e) {
+                                console.warn('[SessionProgressManager] Failed to fetch result:', e);
+                            }
+                            
                             setTimeout(() => {
                                 ProgressIndicators.remove(progressId);
                                 this._activeSessions.delete(progressId);

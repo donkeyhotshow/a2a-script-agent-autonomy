@@ -176,7 +176,7 @@
             try {
                 const sessions = await g.apiIntegration?.getSessions?.(projectId) ?? [];
                 return Array.isArray(sessions) ? sessions.filter(s =>
-                    s.projectId === projectId || s.project_id === projectId || s.projectId === undefined
+                    (s.projectId ?? s.metadata?.projectId) === projectId || (s.projectId ?? s.metadata?.projectId) === undefined
                 ) : [];
             } catch (error) {
                 console.warn('[TaskbarManager] Failed to fetch sessions:', error);

@@ -197,12 +197,9 @@
         this._emit('execute', this._state.execute);
 
         // Hide wait indicator if we had one and now receiving new execute
-        const hadWaitIndicator = this._waitIndicatorActive;
+        const hadWaitIndicator = this._state._waitIndicatorActive;
         if (hadWaitIndicator && execute && !execute.wait) {
-            if (typeof ProgressIndicators !== 'undefined') {
-                ProgressIndicators.hideWaitIndicator();
-            }
-            this._waitIndicatorActive = false;
+            this._state._waitIndicatorActive = false;
         }
 
         // Server responded - unblock input
@@ -242,13 +239,8 @@
         if (execute?.wait) {
             const waitData = execute.wait;
             this._state.status = 'waiting';
-            this._waitIndicatorActive = true;
+            this._state._waitIndicatorActive = true;
             this._emit('wait', waitData);
-            
-            // Show wait indicator UI if ProgressIndicators is available
-            if (typeof ProgressIndicators !== 'undefined') {
-                ProgressIndicators.showWaitIndicator(waitData);
-            }
             
             // Log wait message for frontend display
             if (waitData.message) {
@@ -327,9 +319,6 @@
 
     SessionStore.prototype.applyServerResponse = function(data) {
         const { context, execute, messages, finalResult } = data;
-
-        // Log raw server response
-        this.logResponse(data);
 
         if (context) this.setContext(context);
         if (execute) this.setExecute(execute);

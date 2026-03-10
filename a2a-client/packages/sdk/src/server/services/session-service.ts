@@ -7,7 +7,13 @@
 
 import {SessionDetail, SessionSummary, createSessionMessage} from '../session-dto.js';
 import {websocketServer} from '../server/websocket-server.js';
-import crypto from 'crypto';
+import {
+    loadSessionsFromStorage,
+    saveSessionToStorage,
+    deleteSessionFromStorage,
+    loadSessionIdsFromPanelState,
+    type PersistedSession
+} from './session-storage.js';
 
 export interface SessionServiceOptions {
     defaultTimeout?: number;
@@ -28,6 +34,77 @@ export class SessionService {
             maxConnectionsPerSession: 10,
             ...options
         };
+    }
+
+    /**
+     * Load persisted sessions from storage (call on startup)
+     */
+    public async loadFromStorage(): Promise<void> {
+        const persisted = await loadSessionsFromStorage();
+        for (const s of persisted) {
+            const session = this.normalizePersistedSession(s);
+            if (session) this.sessions.set(session.id, session);
+        }
+
+        // Merge stub sessions from panel state (sessions with panels but no persisted data)
+        const { sessionIds, projectId } = await loadSessionIdsFromPanelState();
+        let stubCount = 0;
+        for (const sid of sessionIds) {
+            if (!this.sessions.has(sid) && sid) {
+                const pid = projectId || undefined;
+                const now = new Date().toISOString();
+                const stub: SessionDetail = {
+                    id: sid,
+                    status: 'active',
+                    startTime: now,
+                    endTime: null,
+                    progress: 0,
+                    totalSteps: 0,
+                    currentStep: null,
+                    context: {},
+                    history: [],
+                    connections: 0,
+                    messages: [],
+                    messageCount: 0,
+                    metadata: {
+                        createdAt: now,
+                        updatedAt: now,
+                        projectId: pid,
+                        title: `Session ${sid.slice(-8)}`
+                    }
+                } as SessionDetail;
+                this.sessions.set(sid, stub);
+                this.persistSession(stub);
+                stubCount++;
+            }
+        }
+        if (stubCount > 0) {
+            console.log(`[SESSION] Created ${stubCount} stub session(s) from panel state`);
+        }
+        console.log(`[SESSION] Loaded ${persisted.length} session(s) from storage`);
+    }
+
+    private normalizePersistedSession(s: PersistedSession): SessionDetail | null {
+        if (!s?.id) return null;
+        return {
+            id: s.id,
+            status: s.status ?? 'active',
+            startTime: s.startTime ?? new Date().toISOString(),
+            endTime: s.endTime ?? null,
+            progress: s.progress ?? 0,
+            totalSteps: s.totalSteps ?? 0,
+            currentStep: s.currentStep ?? null,
+            context: s.context ?? {},
+            history: Array.isArray(s.history) ? s.history : [],
+            connections: s.connections ?? 0,
+            messages: Array.isArray(s.messages) ? s.messages : [],
+            messageCount: s.messageCount ?? 0,
+            metadata: s.metadata ?? {}
+        } as SessionDetail;
+    }
+
+    private persistSession(session: SessionDetail): void {
+        saveSessionToStorage(session as unknown as PersistedSession).catch(() => {});
     }
 
     /**
@@ -68,10 +145,11 @@ export class SessionService {
         };
 
         this.sessions.set(sessionId, session);
-        
+        this.persistSession(session);
+
         // Broadcast session creation
         websocketServer.broadcastSessionUpdate(sessionId, session);
-        
+
         console.log(`[SESSION] Created session: ${sessionId} with ${messages.length} message(s)`);
         return session;
     }
@@ -127,10 +205,11 @@ export class SessionService {
         };
 
         this.sessions.set(sessionId, updatedSession);
-        
+        this.persistSession(updatedSession);
+
         // Broadcast session update
         websocketServer.broadcastSessionUpdate(sessionId, updatedSession);
-        
+
         console.log(`[SESSION] Updated session: ${sessionId}`);
         return updatedSession;
     }
@@ -323,6 +402,7 @@ export class SessionService {
             // Clean up sessions that are older than maxAge and not active
             if (sessionAge > maxAge && session.status !== 'active') {
                 this.sessions.delete(sessionId);
+                deleteSessionFromStorage(sessionId).catch(() => {});
                 cleanedCount++;
                 console.log(`[SESSION] Cleaned up old session: ${sessionId}`);
             }
@@ -386,6 +466,7 @@ export class SessionService {
         const existed = this.sessions.has(sessionId);
         if (existed) {
             this.sessions.delete(sessionId);
+            deleteSessionFromStorage(sessionId).catch(() => {});
             console.log(`[SESSION] Deleted session: ${sessionId}`);
         }
         return existed;

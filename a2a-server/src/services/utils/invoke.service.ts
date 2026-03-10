@@ -97,32 +97,5 @@ export async function invoke(clientId: string, input: InvokeInput): Promise<Invo
     // Track request start for observability
     trackRequestStart(promiseId);
 
-    // Determine if we should send wait indicator to client
-    // For async requests (with promiseId), always send wait indicator
-    // so client knows to show loading state
-    const needsWaitIndicator = !input.sync;
-    
-    // Build response with optional wait indicator
-    const response: InvokeResult = { promiseId };
-    
-    if (needsWaitIndicator) {
-        // Determine message based on action type
-        let waitMessage = 'Обрабатываю запрос...';
-        if (ctx.action === 'dialog') {
-            waitMessage = 'ИИ обрабатывает ваш запрос...';
-        } else if (ctx.action === 'auto-ai' || ctx.action === 'task_request') {
-            waitMessage = 'Анализирую задачу...';
-        } else if (ctx.selectedAction) {
-            waitMessage = 'Выполняю выбранное действие...';
-        }
-        
-        response.execute = {
-            wait: {
-                message: waitMessage,
-                showFormAfter: true
-            }
-        };
-    }
-    
-    return response;
+    return {promiseId};
 }

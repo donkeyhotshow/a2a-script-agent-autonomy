@@ -236,6 +236,30 @@ export class RequestService {
     }
 
     /**
+     * Persist llmPromiseId for recovery when server restarts during polling
+     */
+    async updateLlmPromiseId(promiseId: string, llmPromiseId: string): Promise<boolean> {
+        const req = await storage.load(promiseId);
+        if (!req) return false;
+        (req.context as Record<string, unknown>).llmPromiseId = llmPromiseId;
+        await storage.save(req);
+        return true;
+    }
+
+    /**
+     * List processing request promiseIds (for recovery)
+     */
+    async listProcessing(): Promise<string[]> {
+        const ids = await storage.listAll();
+        const processing: string[] = [];
+        for (const id of ids) {
+            const req = await storage.load(id);
+            if (req?.status === 'processing') processing.push(id);
+        }
+        return processing;
+    }
+
+    /**
      * Get status for multiple promiseIds in one call
      */
     async getStatusBatch(promiseIds: string[]): Promise<Array<{

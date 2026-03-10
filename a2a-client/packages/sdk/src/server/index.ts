@@ -3030,14 +3030,21 @@ expressApp.use((err: unknown, _req: express.Request, res: express.Response, _nex
 
 if (process.env.NODE_ENV !== 'test') {
     console.log(`[server] storageDir: ${storageDir}`);
-    expressApp.listen(PORT, HOST, () => {
-        console.log(`A2A Client API Server started on http://${HOST}:${PORT}`);
-        console.log(`WebSocket Server started on ws://${HOST}:${WS_PORT}`);
-        console.log(`Health check: http://${HOST}:${PORT}/health`);
-        console.log(`Terminal: http://${HOST}:${PORT}/api/terminal/execute`);
-        console.log(`File System: http://${HOST}:${PORT}/api/fs/*`);
-        console.log(`Sessions: http://${HOST}:${PORT}/api/sessions/*`);
-        console.log(`File Upload: http://${HOST}:${PORT}/api/files/upload`);
+    sessionService.loadFromStorage().then(() => {
+        expressApp.listen(PORT, HOST, () => {
+            console.log(`A2A Client API Server started on http://${HOST}:${PORT}`);
+            console.log(`WebSocket Server started on ws://${HOST}:${WS_PORT}`);
+            console.log(`Health check: http://${HOST}:${PORT}/health`);
+            console.log(`Terminal: http://${HOST}:${PORT}/api/terminal/execute`);
+            console.log(`File System: http://${HOST}:${PORT}/api/fs/*`);
+            console.log(`Sessions: http://${HOST}:${PORT}/api/sessions/*`);
+            console.log(`File Upload: http://${HOST}:${PORT}/api/files/upload`);
+        });
+    }).catch((err) => {
+        console.error('[server] Failed to load sessions, starting anyway:', err);
+        expressApp.listen(PORT, HOST, () => {
+            console.log(`A2A Client API Server started on http://${HOST}:${PORT}`);
+        });
     });
 }
 

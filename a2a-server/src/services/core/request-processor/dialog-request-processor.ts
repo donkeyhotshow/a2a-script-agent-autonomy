@@ -11,6 +11,7 @@ import {logger} from '../../../utils/logger.js';
 import {runPromptsTransform} from '../../../transform/index.js';
 import type {RequestContext, ProcessResult} from './request-processor.interfaces.js';
 import {BaseRequestProcessor, type RequestType} from './base-processor.js';
+import {requestService} from '../request/request.service.js';
 
 /**
  * action → transformSchema for LLM pipeline.
@@ -31,6 +32,59 @@ function getPromptsTransformsPath(): string {
     if (envPath) return path.resolve(envPath);
     const dir = typeof __dirname !== 'undefined' ? __dirname : path.dirname(fileURLToPath(import.meta.url));
     return path.resolve(dir, '../../../../prompts/transforms');
+}
+
+async function fetchLlmResponse(base: string, llmPromiseId: string): Promise<string | null> {
+    const bodyRes = await fetch(`${base}/promise/${llmPromiseId}/response`);
+    if (!bodyRes.ok) return null;
+    const chatData = (await bodyRes.json()) as {message?: {content?: string}};
+    return chatData?.message?.content ?? null;
+}
+
+async function pollReadyThenFetch(base: string, llmPromiseId: string): Promise<string | null> {
+    const pollIntervalMs = 500;
+    const pollTimeoutMs = 200000;
+    const started = Date.now();
+    for (;;) {
+        const res = await fetch(`${base}/promises/status`);
+        if (res.ok) {
+            const data = (await res.json()) as {ready?: Array<{promiseId?: string}>};
+            if ((data.ready ?? []).some((p) => p.promiseId === llmPromiseId)) {
+                return fetchLlmResponse(base, llmPromiseId);
+            }
+        }
+        if (Date.now() - started > pollTimeoutMs) throw new Error('LLM promise timeout');
+        await new Promise((r) => setTimeout(r, pollIntervalMs));
+    }
+}
+
+async function runResponseTransform(
+    promptsPath: string,
+    schemaName: string,
+    ctx: Record<string, unknown>,
+    responseMd: string
+): Promise<ProcessResult | null> {
+    try {
+        const {writeFile, mkdtemp} = await import('fs/promises');
+        const {tmpdir} = await import('os');
+        const tempDir = await mkdtemp(path.join(tmpdir(), 'a2a-dialog-'));
+        await writeFile(path.join(tempDir, 'response.md'), responseMd, 'utf-8');
+        const responseData = {context: ctx, llm: {response: responseMd}};
+        const responseTransformResult = await runPromptsTransform(
+            promptsPath, schemaName, responseData, 'response', {baseDir: tempDir, forceServerTransforms: true}
+        );
+        const output = responseTransformResult.success ? responseTransformResult.output : responseData;
+        const execute = (output as Record<string, unknown>)?.execute as Record<string, unknown> | undefined;
+        const contextOut = (output as Record<string, unknown>)?.context as Record<string, unknown> | undefined;
+        return {
+            outcome: 'completed',
+            message: 'Dialog response',
+            context: contextOut ?? ctx,
+            execute: execute ?? {form: {input: [{name: 'message', type: 'text', label: 'Повідомлення', required: true}]}},
+        } as ProcessResult;
+    } catch {
+        return null;
+    }
 }
 
 function resolveTransformSchema(ctx: Record<string, unknown>): string | null {
@@ -79,7 +133,18 @@ export class DialogRequestProcessor extends BaseRequestProcessor {
 
         logger.info('[DialogRequestProcessor] Processing', {promiseId});
 
+        const base = aiHubUrl.replace(/\/$/, '');
+        const existingLlmId = ctx['llmPromiseId'] as string | undefined;
+
         try {
+            if (existingLlmId) {
+                const responseMd = await pollReadyThenFetch(base, existingLlmId);
+                if (!responseMd) return {outcome: 'failed', error: 'LLM poll/fetch failed'} as ProcessResult;
+                const res = await runResponseTransform(this.promptsTransformsPath, schemaName, ctx, responseMd);
+                if (res) return res;
+                return {outcome: 'failed', error: 'Response transform failed'} as ProcessResult;
+            }
+
             // 1. Request transforms → request.md (use server-transforms; dialog-request.json is form-only)
             const requestTransformResult = await runPromptsTransform(
                 this.promptsTransformsPath, schemaName, ctx, 'request', {forceServerTransforms: true}
@@ -93,10 +158,12 @@ export class DialogRequestProcessor extends BaseRequestProcessor {
             }
 
             // 2. Call LLM via promise flow (ai-integration proxy)
-            const base = aiHubUrl.replace(/\/$/, '');
             const chatRes = await fetch(`${base}/api/chat?promise=1`, {
                 method: 'POST',
-                headers: {'Content-Type': 'application/json'},
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Server-Promise-Id': promiseId,
+                },
                 body: JSON.stringify({
                     model,
                     messages: [{role: 'user', content: requestMd}],
@@ -113,61 +180,16 @@ export class DialogRequestProcessor extends BaseRequestProcessor {
             if (!llmPromiseId) {
                 return {outcome: 'failed', error: 'No promiseId in LLM response'} as ProcessResult;
             }
+            await requestService.updateLlmPromiseId(promiseId, llmPromiseId);
             logger.info('[DialogRequestProcessor] Polling promise', {llmPromiseId});
 
-            const pollIntervalMs = 500;
-            const pollTimeoutMs = 200000;
-            const started = Date.now();
-            let statusRes: Response;
-            let statusData: {status?: string; error?: string};
-            for (;;) {
-                statusRes = await fetch(`${base}/promise/${llmPromiseId}`);
-                statusData = (await statusRes.json()) as {status?: string; error?: string};
-                if (statusData.status === 'done') break;
-                if (statusData.status === 'error') {
-                    return {outcome: 'failed', error: statusData.error ?? 'LLM promise error'} as ProcessResult;
-                }
-                if (Date.now() - started > pollTimeoutMs) {
-                    return {outcome: 'failed', error: 'LLM promise timeout'} as ProcessResult;
-                }
-                await new Promise((r) => setTimeout(r, pollIntervalMs));
+            const responseMd = await pollReadyThenFetch(base, llmPromiseId);
+            if (!responseMd) {
+                return {outcome: 'failed', error: 'LLM response fetch failed'} as ProcessResult;
             }
-
-            const bodyRes = await fetch(`${base}/promise/${llmPromiseId}/response`);
-            if (!bodyRes.ok) {
-                return {outcome: 'failed', error: `LLM response fetch failed: ${bodyRes.status}`} as ProcessResult;
-            }
-            const chatData = (await bodyRes.json()) as {message?: {content?: string}};
-            const responseMd = chatData?.message?.content ?? '';
-
-            // 3. Temp dir for response transform (response.md must be in baseDir for parse-json-from-md)
-            const {writeFile, mkdtemp} = await import('fs/promises');
-            const {tmpdir} = await import('os');
-            const tempDir = await mkdtemp(path.join(tmpdir(), 'a2a-dialog-'));
-            await writeFile(path.join(tempDir, 'response.md'), responseMd, 'utf-8');
-
-            // 4. Response transforms → execute + context (use server-transforms for parse-json-from-md)
-            const responseData = {context: ctx, llm: {response: responseMd}};
-            const responseTransformResult = await runPromptsTransform(
-                this.promptsTransformsPath, schemaName, responseData, 'response', {baseDir: tempDir, forceServerTransforms: true}
-            );
-            const output = responseTransformResult.success ? responseTransformResult.output : responseData;
-
-            const execute = (output as Record<string, unknown>)?.execute as Record<string, unknown> | undefined;
-            const contextOut = (output as Record<string, unknown>)?.context as Record<string, unknown> | undefined;
-
-            return {
-                outcome: 'completed',
-                message: 'Dialog response',
-                context: contextOut ?? ctx,
-                execute:
-                    execute ??
-                    ({
-                        form: {
-                            input: [{name: 'message', type: 'text', label: 'Повідомлення', required: true}],
-                        },
-                    } as Record<string, unknown>),
-            } as ProcessResult;
+            const res = await runResponseTransform(this.promptsTransformsPath, schemaName, ctx, responseMd);
+            if (res) return res;
+            return {outcome: 'failed', error: 'Response transform failed'} as ProcessResult;
         } catch (err) {
             logger.error('[DialogRequestProcessor] Failed', {error: String(err)});
             return {
@@ -179,3 +201,48 @@ export class DialogRequestProcessor extends BaseRequestProcessor {
 }
 
 export const dialogRequestProcessor = new DialogRequestProcessor();
+
+/**
+ * Recover a stuck dialog request that has llmPromiseId (e.g. after server restart during polling).
+ * Fetches result from proxy and runs response transform.
+ */
+export async function recoverDialogFromLlmPromise(
+    _promiseId: string,
+    ctx: Record<string, unknown>,
+    llmPromiseId: string
+): Promise<ProcessResult | null> {
+    const base = (process.env.AI_HUB_URL || DEFAULT_AI_HUB).replace(/\/$/, '');
+    try {
+        const res = await fetch(`${base}/promises/status`);
+        if (!res.ok) return null;
+        const data = (await res.json()) as {ready?: Array<{promiseId?: string}>};
+        if (!(data.ready ?? []).some((p) => p.promiseId === llmPromiseId)) return null;
+        const responseMd = await fetchLlmResponse(base, llmPromiseId);
+        if (!responseMd) return null;
+        const schema = resolveTransformSchema(ctx);
+        if (!schema) return null;
+        const schemaName = schema.split('/')[0] || 'dialog';
+        const promptsPath = process.env.PROMPTS_TRANSFORMS_PATH
+            ? path.resolve(process.env.PROMPTS_TRANSFORMS_PATH)
+            : path.join(process.cwd(), 'prompts', 'transforms');
+        const {writeFile, mkdtemp} = await import('fs/promises');
+        const {tmpdir} = await import('os');
+        const tempDir = await mkdtemp(path.join(tmpdir(), 'a2a-dialog-'));
+        await writeFile(path.join(tempDir, 'response.md'), responseMd, 'utf-8');
+        const responseData = {context: ctx, llm: {response: responseMd}};
+        const responseTransformResult = await runPromptsTransform(
+            promptsPath, schemaName, responseData, 'response', {baseDir: tempDir, forceServerTransforms: true}
+        );
+        const output = responseTransformResult.success ? responseTransformResult.output : responseData;
+        const execute = (output as Record<string, unknown>)?.execute as Record<string, unknown> | undefined;
+        const contextOut = (output as Record<string, unknown>)?.context as Record<string, unknown> | undefined;
+        return {
+            outcome: 'completed',
+            message: 'Dialog response (recovered)',
+            context: contextOut ?? ctx,
+            execute: execute ?? {form: {input: [{name: 'message', type: 'text', label: 'Повідомлення', required: true}]}},
+        } as ProcessResult;
+    } catch {
+        return null;
+    }
+}

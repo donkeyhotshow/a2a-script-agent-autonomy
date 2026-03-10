@@ -161,6 +161,16 @@ class APIIntegration {
             const result = await this.request('POST', '/invoke', requestData);
 
             this.currentPromiseId = result.promiseId || result.promise_id;
+            
+            // DEBUG: Log promiseId handling
+            console.log('[api-integration] Received promiseId:', this.currentPromiseId);
+            console.log('[api-integration] Full result:', result);
+            
+            // Start polling if we have a promiseId (async response)
+            if (this.currentPromiseId) {
+                console.log('[api-integration] Starting polling for promiseId:', this.currentPromiseId);
+                this._startPromisePolling(this.currentPromiseId);
+            }
 
             if (window.appState) {
                 window.appState.set('loading.tasks', false);
@@ -176,6 +186,60 @@ class APIIntegration {
             this.emit('taskError', error);
             throw error;
         }
+    }
+
+    /**
+     * Start polling for promise status
+     */
+    _startPromisePolling(promiseId) {
+        const pollInterval = 2000;
+        const maxAttempts = 60; // 2 minutes max
+        let attempts = 0;
+        
+        console.log('[api-integration] Starting poll for:', promiseId);
+        
+        const intervalId = setInterval(async () => {
+            attempts++;
+            
+            if (attempts >= maxAttempts) {
+                clearInterval(intervalId);
+                this.emit('promiseError', { promiseId, error: 'Timeout waiting for result' });
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/v1/requests/${promiseId}/status`);
+                const json = await response.json();
+                const data = json.data || json;
+                
+                console.log('[api-integration] Poll response:', data);
+                
+                if (data.status === 'completed') {
+                    clearInterval(intervalId);
+                    
+                    // Fetch full result
+                    const resultResponse = await fetch(`/api/v1/requests/${promiseId}/result`);
+                    const resultJson = await resultResponse.json();
+                    const result = resultJson.data || resultJson;
+                    
+                    console.log('[api-integration] Task completed with result:', result);
+                    this.emit('taskCompleted', { promiseId, result });
+                    
+                } else if (data.status === 'failed') {
+                    clearInterval(intervalId);
+                    this.emit('promiseError', { promiseId, error: data.error || 'Task failed' });
+                } else {
+                    // Still pending - emit progress
+                    this.emit('promiseProgress', { promiseId, status: data.status });
+                }
+            } catch (e) {
+                console.warn('[api-integration] Poll error:', e);
+            }
+        }, pollInterval);
+        
+        // Store interval ID for cleanup
+        this._promisePollIntervals = this._promisePollIntervals || [];
+        this._promisePollIntervals.push(intervalId);
     }
 
     /**
@@ -233,7 +297,18 @@ class APIIntegration {
     async getSessions(projectId = null) {
         const path = projectId ? `/sessions?projectId=${projectId}` : '/sessions';
         const raw = await this.request('GET', path);
-        return Array.isArray(raw) ? raw : (raw?.sessions || raw?.data || []);
+        const arr = Array.isArray(raw) ? raw : (raw?.sessions || raw?.data || []);
+        return arr.map(s => this._normalizeSession(s));
+    }
+
+    _normalizeSession(s) {
+        if (!s || !s.id) return s;
+        return {
+            ...s,
+            projectId: s.projectId ?? s.project_id ?? s.metadata?.projectId,
+            title: s.title ?? s.name ?? s.metadata?.title ?? `Session ${String(s.id).slice(-8)}`,
+            name: s.name ?? s.title ?? s.metadata?.title ?? `Session ${String(s.id).slice(-8)}`
+        };
     }
 
     /**

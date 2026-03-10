@@ -55,11 +55,22 @@
                     return [];
                 }
                 try {
-                    const sessions = await this._request('GET', `/sessions?projectId=${pid}`);
-                    return sessions;
+                    const raw = await this._request('GET', `/sessions?projectId=${pid}`);
+                    const arr = Array.isArray(raw) ? raw : [];
+                    return arr.map(s => this._normalizeSession(s));
                 } catch (error) {
                     return [];
                 }
+            },
+
+            _normalizeSession(s) {
+                if (!s || !s.id) return s;
+                return {
+                    ...s,
+                    projectId: s.projectId ?? s.project_id ?? s.metadata?.projectId,
+                    title: s.title ?? s.name ?? s.metadata?.title ?? `Session ${String(s.id).slice(-8)}`,
+                    name: s.name ?? s.title ?? s.metadata?.title ?? `Session ${String(s.id).slice(-8)}`
+                };
             },
 
             async createSession(options = {}) {

@@ -40,7 +40,10 @@
         async _poll() {
             if (!this.connected || !this.sessionId) return;
             try {
-                const url = `${this.manager.apiBase}/sessions/updates?sessionIds=${encodeURIComponent(this.sessionId)}`;
+                // FIX: Use correct server endpoint - batch status by promiseIds
+                // Note: This requires session to track promiseId, not just sessionId
+                const url = `/api/v1/requests/status?ids=${encodeURIComponent(this.sessionId)}`;
+                console.log('[PollTransport] Polling URL (FIXED):', url);
                 const res = await fetch(url);
                 const data = await res.json().catch(() => ({}));
                 const updates = data?.data?.updates ?? [];

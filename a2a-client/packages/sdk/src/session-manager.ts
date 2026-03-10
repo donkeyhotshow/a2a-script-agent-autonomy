@@ -404,7 +404,8 @@ export class SessionManager extends EventEmitter {
      * Get request status
      */
     async getRequestStatus(promiseId: string): Promise<unknown> {
-        const res = await this.request('GET', `/requests/${promiseId}/status`);
+        // FIX: Use correct endpoint path with /api/v1 prefix
+        const res = await this.request('GET', `/api/v1/requests/${promiseId}/status`);
         return (res as { data?: unknown }).data ?? res;
     }
 
@@ -412,7 +413,8 @@ export class SessionManager extends EventEmitter {
      * Get request result
      */
     async getRequestResult(promiseId: string): Promise<unknown> {
-        const res = await this.request('GET', `/requests/${promiseId}/result`);
+        // FIX: Use correct endpoint path with /api/v1 prefix
+        const res = await this.request('GET', `/api/v1/requests/${promiseId}/result`);
         return (res as { data?: unknown }).data ?? res;
     }
 
@@ -420,7 +422,8 @@ export class SessionManager extends EventEmitter {
      * Cancel request
      */
     async cancelRequest(promiseId: string): Promise<unknown> {
-        const res = await this.request('DELETE', `/requests/${promiseId}`);
+        // FIX: Use correct endpoint path with /api/v1 prefix
+        const res = await this.request('DELETE', `/api/v1/requests/${promiseId}`);
         return (res as { data?: unknown }).data ?? res;
     }
 
@@ -428,7 +431,8 @@ export class SessionManager extends EventEmitter {
      * Get queue stats
      */
     async getQueueStats(): Promise<unknown> {
-        const res = await this.request('GET', '/requests/queue/stats');
+        // FIX: Use correct endpoint path with /api/v1 prefix
+        const res = await this.request('GET', '/api/v1/requests/queue/stats');
         return (res as { data?: unknown }).data ?? res;
     }
 

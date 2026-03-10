@@ -17,7 +17,8 @@ import {
     simulationRequestProcessor,
     formRequestProcessor,
     dialogRequestProcessor,
-    processorRegistry
+    processorRegistry,
+    recoverDialogFromLlmPromise,
 } from './index.js';
 import type {RequestType} from './request-processor.interfaces.js';
 
@@ -205,11 +206,47 @@ async function tick(): Promise<void> {
 }
 
 /**
+ * Recover processing requests that have llmPromiseId (e.g. after server restart during polling)
+ */
+async function recoverProcessingRequests(): Promise<void> {
+    const base = (process.env.AI_HUB_URL || 'http://localhost:11435').replace(/\/$/, '');
+    const ids = await requestService.listProcessing();
+    for (const promiseId of ids) {
+        const req = await requestService.getResult(promiseId);
+        if (!req) continue;
+        let llmPromiseId = (req.context as Record<string, unknown>)?.llmPromiseId as string | undefined;
+        if (!llmPromiseId) {
+            try {
+                const lookupRes = await fetch(`${base}/promise/by-server-request/${encodeURIComponent(promiseId)}`);
+                if (lookupRes.ok) {
+                    const data = (await lookupRes.json()) as {promiseId?: string};
+                    llmPromiseId = data?.promiseId;
+                }
+            } catch {
+                continue;
+            }
+        }
+        if (!llmPromiseId) continue;
+        const result = await recoverDialogFromLlmPromise(promiseId, req.context, llmPromiseId);
+        if (result) {
+            if (result.outcome === 'failed') {
+                const errMsg = (result as ProcessResult & {error?: string}).error ?? 'Recovery failed';
+                await requestService.updateStatus(promiseId, 'failed', undefined, { message: errMsg });
+            } else {
+                await requestService.updateStatus(promiseId, 'completed', result as unknown as Record<string, unknown>);
+            }
+            logger.info('[RequestProcessor] Recovered stuck request', {promiseId, outcome: result.outcome});
+        }
+    }
+}
+
+/**
  * Start the request processor
  */
 export function startRequestProcessor(intervalMs: number = DEFAULT_INTERVAL_MS): void {
     if (timerId) return;
     logger.info('[RequestProcessor] Started', {intervalMs});
+    recoverProcessingRequests().catch((err) => logger.error('[RequestProcessor] Recovery failed', {error: String(err)}));
     timerId = setInterval(() => {
         tick().catch((err) => {
             logger.error('[RequestProcessor] Tick error', {error: String(err)});

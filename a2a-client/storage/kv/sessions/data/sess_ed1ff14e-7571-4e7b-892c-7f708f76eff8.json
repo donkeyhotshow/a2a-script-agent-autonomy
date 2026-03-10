@@ -1,0 +1,20 @@
+{
+  "id": "sess_ed1ff14e-7571-4e7b-892c-7f708f76eff8",
+  "status": "active",
+  "startTime": "2026-03-08T23:55:54.644Z",
+  "endTime": null,
+  "progress": 0,
+  "totalSteps": 0,
+  "currentStep": null,
+  "context": {},
+  "history": [],
+  "connections": 0,
+  "messages": [],
+  "messageCount": 0,
+  "metadata": {
+    "createdAt": "2026-03-08T23:55:54.644Z",
+    "updatedAt": "2026-03-08T23:55:54.644Z",
+    "projectId": "p_1771576028988",
+    "title": "Session 8f76eff8"
+  }
+}
