@@ -132,35 +132,17 @@
          * Send message to session
          */
         async sendMessage(sessionId, message) {
-            // Message already added in sendMessageResult before this is called
             const store = global.SessionStore;
+            const projectId = store?.projectId;
 
-            let response = null;
-
-            // Send via API
-            if (global.apiIntegration?.sendMessage) {
-                response = await global.apiIntegration.sendMessage(sessionId, message);
-            } else if (global.ActionHandler?.sendMessage) {
-                response = await global.ActionHandler.sendMessage(sessionId, store?.projectId, message);
+            if (global.ActionHandler?.sendMessage) {
+                await global.ActionHandler.sendMessage(sessionId, projectId, message);
             } else if (global.ActionHandler?.submit) {
-                const projectId = store?.projectId;
                 const context = store?.context || {};
-                response = await global.ActionHandler.submit(sessionId, projectId, { message: message }, context);
+                await global.ActionHandler.submit(sessionId, projectId, { message }, context);
+            } else if (global.apiIntegration?.sendMessage) {
+                await global.apiIntegration.sendMessage(sessionId, message, projectId);
             }
-
-            // Apply HTTP response to store as fallback (SSE may race or be unavailable)
-            const payload = response?.data || response;
-            if (payload?.execute || payload?.context) {
-                store?.applyServerResponse?.({
-                    execute: payload.execute,
-                    context: payload.context,
-                    messages: payload.messages
-                });
-            } else if (!payload?.promiseId) {
-                // No execute and no pending promise — clear waiting state
-                store?.setPromisePending?.(false);
-            }
-            // If promiseId present: keep promisePending=true, SSE will resolve it
 
             console.log('[WindowEvents] Sent message:', sessionId, message);
         },
@@ -173,33 +155,17 @@
             const projectId = store?.projectId;
             const result = { choice: choiceId };
 
-            // Send via Client API POST /sessions/:id/result
-            const promises = [];
-            if (global.apiIntegration?.sendResult) {
-                promises.push(global.apiIntegration.sendResult(sessionId, result, projectId));
-            } else if (global.webApiClient?.sendChoice) {
-                promises.push(global.webApiClient.sendChoice(sessionId, result));
+            if (global.ActionHandler?.sendChoice) {
+                await global.ActionHandler.sendChoice(sessionId, projectId, choiceId);
             } else if (global.ActionHandler?.submit && projectId) {
-                promises.push(global.ActionHandler.submit(sessionId, projectId, result, store?.context || {}));
+                await global.ActionHandler.submit(sessionId, projectId, result, store?.context || {});
+            } else if (global.apiIntegration?.sendResult) {
+                await global.apiIntegration.sendResult(sessionId, result, projectId);
+            } else if (global.webApiClient?.sendChoice) {
+                await global.webApiClient.sendChoice(sessionId, result);
             }
 
-            try {
-                const results = await Promise.all(promises);
-                const payload = results[0]?.data || results[0];
-                if (payload?.execute || payload?.context) {
-                    store?.applyServerResponse?.({
-                        execute: payload.execute,
-                        context: payload.context,
-                        messages: payload.messages
-                    });
-                } else if (!payload?.promiseId) {
-                    store?.setPromisePending?.(false);
-                }
-                console.log('[WindowEvents] Sent choice:', sessionId, choiceId);
-            } catch (err) {
-                console.error('[WindowEvents] sendChoice failed:', err);
-                throw err;
-            }
+            console.log('[WindowEvents] Sent choice:', sessionId, choiceId);
         },
 
         /**

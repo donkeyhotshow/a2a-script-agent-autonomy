@@ -10,12 +10,14 @@
 (function (global) {
     'use strict';
 
-    // Fetch with timeout and retry logic
+    // Fetch with timeout and retry logic (reused from global helper when available)
     const DEFAULT_TIMEOUT = 15000;
     const MAX_RETRIES = 3;
     const BASE_DELAY = 1000;
 
-    async function fetchWithRetry(url, options = {}, retryCount = 0) {
+    const sharedFetchWithRetry = global.fetchWithRetry;
+
+    async function localFetchWithRetry(url, options = {}, retryCount = 0) {
         const controller = new AbortController();
         const timeout = options.timeout || DEFAULT_TIMEOUT;
         const timeoutId = setTimeout(() => controller.abort(), timeout);
@@ -38,9 +40,13 @@
             console.warn(`[ActionHandler] Retry ${retryCount + 1}/${MAX_RETRIES} after ${delay}ms: ${url}`);
             await new Promise(resolve => setTimeout(resolve, delay));
 
-            return fetchWithRetry(url, options, retryCount + 1);
+            return localFetchWithRetry(url, options, retryCount + 1);
         }
     }
+
+    const fetchWithRetry = typeof sharedFetchWithRetry === 'function'
+        ? sharedFetchWithRetry
+        : localFetchWithRetry;
 
     const ActionHandler = {
         apiBase: '/api',

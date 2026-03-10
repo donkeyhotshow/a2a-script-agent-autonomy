@@ -1,0 +1,14 @@
+{
+    "projectId": "123",
+    "sessionId": "456",
+    "execute": {
+      "form": {
+        "title": "Оберіть спосіб виконання",
+        "choices": [
+          { "id": "dialog", "label": "AI діалог з користувачем" },
+          { "id": "auto-ai", "label": "AI Action Generator" },
+          { "id": "task-decomposition", "label": "Декомпозиція задачі" }
+        ]
+      }
+    }
+}

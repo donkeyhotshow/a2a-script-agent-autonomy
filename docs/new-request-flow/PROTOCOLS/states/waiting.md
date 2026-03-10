@@ -36,16 +36,32 @@
 
 ### UI трансляция (Client API → Web UI)
 
+**Важно:** Client API (a2a-client/packages/sdk) добавляет UI команды.
+
+Server возвращает только form:
+```json
+{
+  "execute": {
+    "form": {
+      "title": "Выберите действие",
+      "choices": [...]
+    }
+  }
+}
+```
+
+Client API добавляет ui state:
+
 ```json
 {
   "execute": {
     "ui": {
       "state": "waiting",
-      "message": "Выберите действие",
-      "form": {
-        "title": "Выберите действие",
-        "choices": [...]
-      }
+      "message": "Выберите действие"
+    },
+    "form": {
+      "title": "Выберите действие",
+      "choices": [...]
     }
   }
 }
@@ -174,17 +190,16 @@ async function handlePromiseWaiting(promiseId) {
 }
 ```
 
-**Client API → Web UI:**
+**Client API → Web UI (добавлен ui state):**
 ```json
 {
   "execute": {
     "ui": {
-      "state": "waiting",
-      "form": {
-        "title": "Оберіть спосіб виконання",
-        "type": "choices",
-        "choices": [...]
-      }
+      "state": "waiting"
+    },
+    "form": {
+      "title": "Оберіть спосіб виконання",
+      "choices": [...]
     }
   }
 }
@@ -207,11 +222,19 @@ async function handlePromiseWaiting(promiseId) {
 ```json
 {
   "promiseId": "promise_abc",
-  "status": "pending",
+  "status": "pending"
+}
+```
+
+**Client API → Web UI:**
+```json
+{
   "execute": {
     "ui": {
+      "state": "waiting",
       "message": "Анализирую код...",
-      "progress": 30
+      "progress": 30,
+      "spinner": true
     }
   }
 }

@@ -9,12 +9,18 @@
     // Fixed storage base URL - no dynamic lookup needed
     const STORAGE_BASE = '/api/storage';
 
-    // Fetch with timeout and retry logic
-    const DEFAULT_TIMEOUT = 10000; // 10 seconds
-    const MAX_RETRIES = 3;
-    const BASE_DELAY = 1000; // 1 second base for exponential backoff
+    // Reuse shared fetchWithRetry from APIIntegration when available to keep behavior consistent
+    const sharedFetchWithRetry = global.fetchWithRetry;
 
-    async function fetchWithRetry(url, options = {}, retryCount = 0) {
+    async function storageFetchWithRetry(url, options = {}, retryCount = 0) {
+        if (typeof sharedFetchWithRetry === 'function') {
+            return sharedFetchWithRetry(url, options, retryCount);
+        }
+
+        const DEFAULT_TIMEOUT = 10000; // 10 seconds
+        const MAX_RETRIES = 3;
+        const BASE_DELAY = 1000; // 1 second base for exponential backoff
+
         const controller = new AbortController();
         const timeout = options.timeout || DEFAULT_TIMEOUT;
         const timeoutId = setTimeout(() => controller.abort(), timeout);
@@ -39,7 +45,7 @@
             console.warn(`[CustomStorage] Retry ${retryCount + 1}/${MAX_RETRIES} after ${delay}ms: ${url}`);
             await new Promise(resolve => setTimeout(resolve, delay));
 
-            return fetchWithRetry(url, options, retryCount + 1);
+            return storageFetchWithRetry(url, options, retryCount + 1);
         }
     }
 
@@ -53,7 +59,7 @@
          */
         async getItem(key) {
             try {
-                const response = await fetchWithRetry(`${STORAGE_BASE}/${this.namespace}/${key}`, {
+                const response = await storageFetchWithRetry(`${STORAGE_BASE}/${this.namespace}/${key}`, {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json'
@@ -89,7 +95,7 @@
          */
         async setItem(key, value) {
             try {
-                const response = await fetchWithRetry(`${STORAGE_BASE}/${this.namespace}/${key}`, {
+                const response = await storageFetchWithRetry(`${STORAGE_BASE}/${this.namespace}/${key}`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json'
@@ -114,7 +120,7 @@
          */
         async removeItem(key) {
             try {
-                const response = await fetchWithRetry(`${STORAGE_BASE}/${this.namespace}/${key}`, {
+                const response = await storageFetchWithRetry(`${STORAGE_BASE}/${this.namespace}/${key}`, {
                     method: 'DELETE',
                     headers: {
                         'Content-Type': 'application/json'
@@ -135,7 +141,7 @@
          */
         async clear() {
             try {
-                const response = await fetchWithRetry(`${STORAGE_BASE}/${this.namespace}`, {
+                const response = await storageFetchWithRetry(`${STORAGE_BASE}/${this.namespace}`, {
                     method: 'DELETE',
                     headers: {
                         'Content-Type': 'application/json'
@@ -156,7 +162,7 @@
          */
         async keys() {
             try {
-                const response = await fetchWithRetry(`${STORAGE_BASE}/${this.namespace}/keys`, {
+                const response = await storageFetchWithRetry(`${STORAGE_BASE}/${this.namespace}/keys`, {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json'

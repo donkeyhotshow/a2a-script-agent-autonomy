@@ -29,8 +29,6 @@
     <link rel="stylesheet" href="css/components/taskbar.css">
     <link rel="stylesheet" href="css/components/session-window.css">
     <link rel="stylesheet" href="css/components/task-flow.css">
-    <link rel="stylesheet" href="css/components/archive.css">
-    <link rel="stylesheet" href="css/components/task-flow-archive.css">
     <link rel="stylesheet" href="css/components/modal-utils.css">
 </head>
 <body>
@@ -189,12 +187,6 @@
                 const restored = await SessionStore.restoreAndReconnect();
                 if (restored) {
                     console.log('[A2A] Session restored from storage');
-
-                    // Re-open task panel if there was an active session
-                    const state = SessionStore.getState();
-                    if (state.sessionId && state.execute && window.TaskFlow) {
-                        window.TaskFlow.restorePanel(state);
-                    }
                 }
             }
         } catch (error) {
@@ -209,10 +201,9 @@
         return new Promise((resolve) => {
             const check = () => {
                 const transportReady = window._transportModulesLoaded || typeof window.TransportManager !== 'undefined';
-                const appReady = window._appModulesLoaded || typeof window.SessionManager !== 'undefined';
                 const panelReady = window._panelModulesLoaded && typeof window.Panel !== 'undefined' && typeof window.PanelManager !== 'undefined';
 
-                if (transportReady && appReady && panelReady) {
+                if (transportReady && panelReady) {
                     resolve();
                 } else {
                     setTimeout(check, 50);

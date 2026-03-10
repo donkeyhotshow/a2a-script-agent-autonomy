@@ -81,7 +81,17 @@ async function startPolling(promiseId) {
 
 ## UI отображение
 
-Client API транслирует pending состояние в UI:
+**Важно:** Client API (a2a-client/packages/sdk) добавляет UI команды на основе ответа сервера.
+
+Server возвращает только:
+```json
+{
+  "promiseId": "promise_abc123",
+  "status": "pending"
+}
+```
+
+Client API транслирует это в UI:
 
 ```json
 {

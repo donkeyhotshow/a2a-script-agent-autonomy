@@ -14,10 +14,9 @@
     function loadTransportModules() {
         const modules = [
             '/js/transport/base-transport.js',
-            '/js/transport/poll-transport.js',
+            '/js/transport/sse-transport.js',
             '/js/transport/websocket-transport.js',
-            '/js/transport/heartbeat-manager.js',
-            '/js/transport/transport-manager.js'
+            '/js/transport/heartbeat-manager.js'
         ];
 
         let loadedCount = 0;

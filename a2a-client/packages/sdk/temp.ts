@@ -313,6 +313,7 @@ function broadcastProgress(sessionId: string, progress: {
     progress?: number;
     message?: string;
     result?: unknown;
+    execute?: { ui: { state: string; message?: string; progress?: number; spinner?: boolean; errorCode?: string } };
 }): void {
     broadcastToSession(sessionId, {
         type: 'progress',
@@ -866,6 +867,27 @@ expressApp.post(['/api/sessions', '/api/v1/sessions'], async (req, res) => {
                     updatedSession.lastPromiseId = promiseId;
                     updatedSession.status = 'IN_PROGRESS';
 
+                    // ✅ Generate initial execute.ui for waiting state - See: docs/new-request-flow/PROTOCOLS/states/pending.md
+                    const waitingUiCommand = {
+                        execute: {
+                            ui: {
+                                state: 'waiting' as const,
+                                message: 'AI обрабатывает ваш запрос...',
+                                spinner: true,
+                                progress: 0
+                            }
+                        }
+                    };
+                    
+                    // Emit initial waiting state
+                    emitServerSse(session.id, {
+                        sessionId: session.id,
+                        projectId,
+                        promiseId,
+                        ...waitingUiCommand,
+                        status: 'waiting'
+                    }, 'status');
+
                     // Poll for completion
                     const pollInterval = 1000; // 1 second
                     const maxPolls = 30;
@@ -888,6 +910,17 @@ expressApp.post(['/api/sessions', '/api/v1/sessions'], async (req, res) => {
 
                                 await saveSession(project, completedSession);
 
+                                // ✅ Generate execute.ui for success state - See: docs/new-request-flow/PROTOCOLS/states/completed.md
+                                const successUiCommand = {
+                                    execute: {
+                                        ui: {
+                                            state: 'success' as const,
+                                            message: 'Запрос выполнен успешно',
+                                            progress: 100
+                                        }
+                                    }
+                                };
+
                                 // Broadcast completed response
                                 const completedResponse = {
                                     session: toSessionDetail(completedSession),
@@ -899,6 +932,7 @@ expressApp.post(['/api/sessions', '/api/v1/sessions'], async (req, res) => {
                                     status: 'async_response',
                                     message: 'Asynchronous response received',
                                     result: completedResponse,
+                                    execute: successUiCommand.execute,
                                 });
 
                                 emitServerSse(session.id, {
@@ -906,6 +940,7 @@ expressApp.post(['/api/sessions', '/api/v1/sessions'], async (req, res) => {
                                     projectId,
                                     execute: resultPayload.data.execute,
                                     context: resultPayload.data.context,
+                                    ...successUiCommand,
                                     status: 'completed',
                                 }, 'task_response');
 
@@ -914,11 +949,55 @@ expressApp.post(['/api/sessions', '/api/v1/sessions'], async (req, res) => {
                             } else if (statusPayload?.data?.status === 'failed') {
                                 // Request failed - save session anyway
                                 await saveSession(project, session);
+                                
+                                // ✅ Generate execute.ui for error state - See: docs/new-request-flow/PROTOCOLS/states/error.md
+                                const errorUiCommand = {
+                                    execute: {
+                                        ui: {
+                                            state: 'error' as const,
+                                            message: statusPayload.data.error?.message || 'Ошибка выполнения',
+                                            errorCode: statusPayload.data.error?.code
+                                        }
+                                    }
+                                };
+                                
+                                emitServerSse(session.id, {
+                                    sessionId: session.id,
+                                    projectId,
+                                    promiseId,
+                                    ...errorUiCommand,
+                                    error: statusPayload.data.error,
+                                    status: 'failed',
+                                }, 'task_response');
+                                
                                 res.status(201).json({
                                     session: toSessionDetail(session),
                                     serverError: statusPayload.data.error || 'Request failed',
                                 });
                                 return;
+                            } else {
+                                // ✅ Generate execute.ui for processing state
+                                const processingState = statusPayload?.data?.status || 'processing';
+                                const progressPercent = Math.round((pollCount / maxPolls) * 100);
+                                
+                                const processingUiCommand = {
+                                    execute: {
+                                        ui: {
+                                            state: processingState === 'processing' ? 'processing' as const : 'waiting' as const,
+                                            message: statusPayload?.data?.message || 'AI обрабатывает...',
+                                            spinner: true,
+                                            progress: progressPercent
+                                        }
+                                    }
+                                };
+                                
+                                // Send progress update with execute.ui
+                                emitServerSse(session.id, {
+                                    sessionId: session.id,
+                                    promiseId,
+                                    ...processingUiCommand,
+                                    status: processingState
+                                }, 'status');
                             }
                         } catch (pollError) {
                             console.warn(`Poll ${pollCount + 1} failed:`, pollError);
@@ -1173,14 +1252,33 @@ expressApp.post(['/api/sessions/:sessionId/next', '/api/v1/sessions/:sessionId/n
         };
         await saveSession(project, updated);
 
+        // ✅ Generate execute.ui for Web UI - See: docs/new-request-flow/PROTOCOLS/states/pending.md
+        const uiCommand = {
+            execute: {
+                ui: {
+                    state: 'waiting' as const,
+                    message: 'AI обрабатывает ваш запрос...',
+                    spinner: true,
+                    progress: 0
+                }
+            }
+        };
+
         // Broadcast promiseId to Web UI via WebSocket
         broadcastProgress(sessionId, {
             promiseId,
             status: 'promise_id_assigned',
             message: `New promiseId assigned: ${promiseId}`,
             result: { promiseId, sessionId },
+            execute: uiCommand.execute,
         });
-        emitServerSse(sessionId, { promiseId, sessionId }, 'status');
+        
+        // ✅ Send execute.ui with promiseId - Web UI will receive this via SSE/WS
+        emitServerSse(sessionId, { 
+            promiseId, 
+            sessionId,
+            ...uiCommand  // ✅ Include execute.ui
+        }, 'status');
         return; // Prevent falling through to session update below
     }
 

@@ -7,12 +7,18 @@
 (function (global) {
     'use strict';
 
-    // Fetch with timeout and retry logic
-    const DEFAULT_TIMEOUT = 10000;
-    const MAX_RETRIES = 3;
-    const BASE_DELAY = 1000;
+    // Fetch with timeout and retry logic - reuse global helper when available
+    const sharedFetchWithRetry = global.fetchWithRetry;
 
-    async function fetchWithRetry(url, options = {}, retryCount = 0) {
+    async function transportFetchWithRetry(url, options = {}, retryCount = 0) {
+        if (typeof sharedFetchWithRetry === 'function') {
+            return sharedFetchWithRetry(url, options, retryCount);
+        }
+
+        const DEFAULT_TIMEOUT = 10000;
+        const MAX_RETRIES = 3;
+        const BASE_DELAY = 1000;
+
         const controller = new AbortController();
         const timeout = options.timeout || DEFAULT_TIMEOUT;
         const timeoutId = setTimeout(() => controller.abort(), timeout);
@@ -35,7 +41,7 @@
             console.warn(`[TransportManager] Retry ${retryCount + 1}/${MAX_RETRIES} after ${delay}ms: ${url}`);
             await new Promise(resolve => setTimeout(resolve, delay));
 
-            return fetchWithRetry(url, options, retryCount + 1);
+            return transportFetchWithRetry(url, options, retryCount + 1);
         }
     }
 
@@ -45,8 +51,9 @@
         sessionId: null,
 
         // Transport state
-        primaryTransport: 'poll',     // 'poll' | 'websocket'
-        activeTransport: null,          // 'sse' | 'websocket' | null
+        // HTTP polling is disabled; primary transport is WebSocket (SSE handled separately by api-integration).
+        primaryTransport: 'websocket',
+        activeTransport: null,          // 'websocket' | null
         currentTransportInstance: null,
 
         // Connection state
@@ -80,9 +87,6 @@
          * Load transport dependencies
          */
         _loadDependencies() {
-            if (!global.PollTransport) {
-                console.error('[TransportManager] PollTransport not loaded');
-            }
             if (!global.WebSocketTransport) {
                 console.error('[TransportManager] WebSocketTransport not loaded');
             }
@@ -107,20 +111,7 @@
             // Disconnect any existing transport
             this.disconnect();
 
-            // Try primary transport (poll)
-            if (this.primaryTransport === 'poll' && global.PollTransport) {
-                const pollSuccess = await this._tryTransport(global.PollTransport, sid);
-                if (pollSuccess) {
-                    this.activeTransport = 'poll';
-                    this.connectionState = 'connected';
-                    this.reconnectAttempts = 0;
-                    this._emit('connected', { sessionId: sid, transport: 'poll' });
-                    this._heartbeatManager?.start?.();
-                    return true;
-                }
-            }
-
-            // WebSocket fallback
+            // WebSocket transport (primary)
             if (global.WebSocketTransport) {
                 const wsSuccess = await this._tryTransport(global.WebSocketTransport, sid);
                 if (wsSuccess) {
@@ -235,7 +226,7 @@
          */
         async _sendViaHttp(type, payload) {
             try {
-                const response = await fetchWithRetry(`${this.apiBase}/sessions/${this.sessionId}/message`, {
+                const response = await transportFetchWithRetry(`${this.apiBase}/sessions/${this.sessionId}/message`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

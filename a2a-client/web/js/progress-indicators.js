@@ -454,14 +454,41 @@
             ProgressIndicators.emit('error', data);
         });
     }
+    
+    // ✅ Auto-integrate with API Integration for execute.ui from SDK
+    // SDK sends execute.ui via SSE, we receive it through api-integration events
+    if (global.apiIntegration) {
+        global.apiIntegration.on('uiStateChange', (data) => {
+            SessionProgressManager.handleUiStateFromSdk(data);
+        });
+        
+        global.apiIntegration.on('taskCompleted', (data) => {
+            SessionProgressManager._emit('promiseCompleted', data);
+        });
+        
+        global.apiIntegration.on('promiseError', (data) => {
+            SessionProgressManager._emit('promiseError', data);
+        });
+    }
+
+    // ✅ Integrate context.execution progress from SessionStore
+    if (global.SessionStore && typeof global.SessionStore.on === 'function') {
+        global.SessionStore.on('execution', (execution) => {
+            if (!execution || typeof execution.progress !== 'number') return;
+            SessionProgressManager.handleExecutionProgress({
+                progress: execution.progress,
+                action: execution.action,
+                step: execution.step
+            });
+        });
+    }
 
     /**
      * Session Progress Manager
-     * Manages progress for session operations with promiseId polling
+     * Manages progress for session operations via execute.ui from SDK
      */
     const SessionProgressManager = {
         _activeSessions: new Map(),
-        _pollingIntervals: new Map(),
         _apiBase: '/api',
 
         /**
@@ -519,103 +546,49 @@
         },
 
         /**
-         * Handle promiseId polling for session operations
+         * ✅ New method: handle execute.ui sent by SDK via SSE/WS
+         * See: docs/new-request-flow/PROTOCOLS/states/pending.md
          */
-        async pollPromiseId(sessionId, promiseId, progressId) {
-            const sessionInfo = this._activeSessions.get(progressId);
-            if (!sessionInfo) return;
-
-            const { tracker } = sessionInfo;
-            let attempts = 0;
-            const maxAttempts = 100; // 5 minutes with 3s intervals
-            const pollInterval = 3000;
-
-            // Clear existing polling
-            if (this._pollingIntervals.has(progressId)) {
-                clearInterval(this._pollingIntervals.get(progressId));
-            }
-
-            const intervalId = setInterval(async () => {
-                attempts++;
+        async handleUiStateFromSdk(uiState) {
+            const { promiseId, execute } = uiState;
+            
+            if (execute?.ui) {
+                console.log('[SessionProgressManager] Received execute.ui from SDK:', execute.ui);
                 
-                try {
-                    // FIX: Use correct server endpoint for promise status
-                    const pollUrl = `/api/v1/requests/${promiseId}/status`;
-                    console.log('[SessionProgressManager] Polling URL (FIXED):', pollUrl);
-                    const response = await fetch(pollUrl);
-                    const json = await response.json();
-                    
-                    // Server returns { success: true, data: { status, ... } }
-                    const data = json.data || json;
-
-                    if (response.ok) {
-                        if (data.status === 'completed') {
-                            clearInterval(intervalId);
-                            this._pollingIntervals.delete(progressId);
-                            
-                            tracker.setProgress(100, 'Operation completed');
-                            
-                            // Fetch the result after completion
-                            try {
-                                const resultUrl = `/api/v1/requests/${promiseId}/result`;
-                                console.log('[SessionProgressManager] Fetching result from:', resultUrl);
-                                const resultResponse = await fetch(resultUrl);
-                                const resultJson = await resultResponse.json();
-                                const result = resultJson.data || resultJson;
-                                
-                                // Emit completion event with result
-                                this._emit('promiseCompleted', { promiseId, result, sessionId });
-                            } catch (e) {
-                                console.warn('[SessionProgressManager] Failed to fetch result:', e);
-                            }
-                            
-                            setTimeout(() => {
-                                ProgressIndicators.remove(progressId);
-                                this._activeSessions.delete(progressId);
-                            }, 2000);
-                            
-                        } else if (data.status === 'failed') {
-                            clearInterval(intervalId);
-                            this._pollingIntervals.delete(progressId);
-                            
-                            tracker.error(data.error || 'Operation failed');
-                            
-                        } else if (data.progress) {
-                            // Update progress
-                            const { current, total, message } = data.progress;
-                            if (total > 0) {
-                                const percent = Math.round((current / total) * 100);
-                                tracker.setProgress(percent, message || `Processing... (${current}/${total})`);
-                            } else {
-                                tracker.setIndeterminate(message || 'Processing...');
-                            }
-                        } else {
-                            // Still running, show elapsed time
-                            const elapsed = Math.floor((Date.now() - sessionInfo.startTime) / 1000);
-                            tracker.setIndeterminate(`Running... (${elapsed}s elapsed)`);
-                        }
-                    } else {
-                        throw new Error(data.error || 'Polling failed');
-                    }
-
-                    if (attempts >= maxAttempts) {
-                        clearInterval(intervalId);
-                        this._pollingIntervals.delete(progressId);
-                        tracker.error('Operation timed out');
-                    }
-
-                } catch (error) {
-                    clearInterval(intervalId);
-                    this._pollingIntervals.delete(progressId);
-                    tracker.error(`Polling error: ${error.message}`);
+                // Get or create progress tracker for this promiseId
+                const progressId = promiseId ? `promise-${promiseId}` : 'sdk-ui';
+                let tracker = this._trackers.get(progressId);
+                
+                if (!tracker) {
+                    tracker = ProgressIndicators.create(progressId, {
+                        showLabel: true,
+                        showMessage: true,
+                        autoRemove: false
+                    });
                 }
-            }, pollInterval);
-
-            this._pollingIntervals.set(progressId, intervalId);
+                
+                // Update tracker based on UI state
+                const ui = execute.ui;
+                
+                if (ui.state === 'waiting' || ui.state === 'processing') {
+                    tracker.setIndeterminate(ui.message || 'Processing...');
+                } else if (ui.state === 'success') {
+                    tracker.setProgress(100, ui.message || 'Complete!');
+                    tracker.complete(ui.message || 'Complete!');
+                } else if (ui.state === 'error') {
+                    tracker.error(ui.message || 'Error');
+                } else if (ui.progress !== undefined) {
+                    tracker.setProgress(ui.progress, ui.message || `${ui.progress}%`);
+                }
+                
+                // Emit event for other components
+                this._emit('uiStateChange', { promiseId, ui: execute.ui });
+            }
         },
 
         /**
          * Handle POST /api/sessions/:id/next response
+         * ✅ Now uses execute.ui from SDK instead of local polling
          */
         async handleSessionNextResponse(sessionId, response) {
             const { promiseId, message } = response;
@@ -629,8 +602,8 @@
                     tracker.setMessage(message);
                 }
 
-                // Start polling for promiseId
-                this.pollPromiseId(sessionId, promiseId, progressId);
+                // ✅ No more polling - SDK will send execute.ui via SSE/WS
+                // This method now just initializes the tracker, actual UI updates come from SDK
                 
                 return progressId;
             } else {
@@ -704,10 +677,6 @@
          * Clean up all session progress
          */
         cleanup() {
-            // Clear all polling intervals
-            this._pollingIntervals.forEach(intervalId => clearInterval(intervalId));
-            this._pollingIntervals.clear();
-
             // Remove all trackers
             this._activeSessions.forEach((sessionInfo, progressId) => {
                 ProgressIndicators.remove(progressId);

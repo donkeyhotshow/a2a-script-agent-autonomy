@@ -1,0 +1,19 @@
+{
+  "context": {
+    "task": "диалог",
+    "execution": {
+      "action": "task",
+      "step": "router"
+    }
+  },
+  "execute": {
+    "form": {
+      "title": "Оберіть спосіб виконання",
+      "choices": [
+        { "id": "dialog", "label": "AI діалог з користувачем" },
+        { "id": "auto-ai", "label": "AI Action Generator" },
+        { "id": "task-decomposition", "label": "Декомпозиція задачі" }
+      ]
+    }
+  }
+}

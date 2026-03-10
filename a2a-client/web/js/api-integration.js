@@ -6,7 +6,7 @@
  * @see docs/new-request-flow/PROTOCOLS/sessions/ - Session Management
  */
 
-// Fetch with timeout and retry logic
+// Fetch with timeout and retry logic (shared across web client)
 const DEFAULT_TIMEOUT = 15000;
 const MAX_RETRIES = 3;
 const BASE_DELAY = 1000;
@@ -49,6 +49,94 @@ class APIIntegration {
         this.listeners = new Map();
         this.reconnectAttempts = 0;
         this.maxReconnectAttempts = 5;
+        
+        // ✅ Setup SSE listener for execute.ui from SDK - See: docs/new-request-flow/PROTOCOLS/states/pending.md
+        this._setupSseListener();
+    }
+
+    /**
+     * Setup SSE listener for execute.ui from SDK
+     * SDK sends execute.ui with state updates via SSE events
+     */
+    _setupSseListener() {
+        // Check if EventSource is available
+        if (typeof EventSource === 'undefined') {
+            console.warn('[api-integration] EventSource not available, skipping SSE listener');
+            return;
+        }
+        
+        try {
+            const eventSource = new EventSource('/api/sse');
+            
+            eventSource.addEventListener('status', (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    
+                    // ✅ Handle execute.ui in status events
+                    if (data.execute?.ui) {
+                        console.log('[api-integration] Received execute.ui via SSE (status):', data.execute.ui);
+                        this.emit('uiStateChange', {
+                            promiseId: data.promiseId,
+                            ui: data.execute.ui
+                        });
+                        
+                        // Forward to SessionStore for UI rendering
+                        const root = typeof window !== 'undefined' ? window : globalThis;
+                        root.SessionStore?.applyServerResponse?.({
+                            execute: data.execute
+                        });
+                    }
+                } catch (e) {
+                    console.warn('[api-integration] Failed to parse SSE status event:', e);
+                }
+            });
+            
+            eventSource.addEventListener('task_response', (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    
+                    // ✅ Handle execute.ui in final response
+                    if (data.execute?.ui) {
+                        console.log('[api-integration] Received execute.ui via SSE (task_response):', data.execute.ui);
+                        this.emit('uiStateChange', {
+                            promiseId: data.promiseId,
+                            ui: data.execute.ui
+                        });
+                        
+                        // Forward to SessionStore for UI rendering
+                        const root = typeof window !== 'undefined' ? window : globalThis;
+                        root.SessionStore?.applyServerResponse?.({
+                            execute: data.execute
+                        });
+                    }
+                    
+                    // Handle task completion
+                    if (data.result || data.execute) {
+                        this.emit('taskCompleted', { 
+                            promiseId: data.promiseId, 
+                            result: data.result || data 
+                        });
+                    }
+                } catch (e) {
+                    console.warn('[api-integration] Failed to parse SSE task_response event:', e);
+                }
+            });
+            
+            eventSource.onerror = (error) => {
+                console.warn('[api-integration] SSE connection error:', error);
+                this.sseConnected = false;
+            };
+            
+            eventSource.onopen = () => {
+                console.log('[api-integration] SSE connection established');
+                this.sseConnected = true;
+            };
+            
+            this._eventSource = eventSource;
+            console.log('[api-integration] SSE listener setup complete');
+        } catch (e) {
+            console.warn('[api-integration] Failed to setup SSE listener:', e);
+        }
     }
 
     get serverUrl() {
@@ -136,136 +224,6 @@ class APIIntegration {
         } catch (error) {
             console.error('[API] Request error:', error);
             (typeof window !== 'undefined' ? window : globalThis).ErrorHandler?.handleNetworkError(error, errorContext);
-            throw error;
-        }
-    }
-
-    /**
-     * Send task to server
-     */
-    async sendTask(taskText, options = {}) {
-        const {projectPath = '', codeBlocks = [], context = {}} = options;
-
-        console.log('[API] Sending task:', taskText);
-
-        // Emit loading state
-        if (window.appState) {
-            window.appState.set('loading.tasks', true);
-        }
-        this.emit('taskSending', {task: taskText});
-
-        try {
-            const requestData = {
-                task: taskText,
-                projectId: projectPath,
-                ...context
-            };
-
-            const result = await this.request('POST', '/invoke', requestData);
-
-            this.currentPromiseId = result.promiseId || result.promise_id;
-            
-            // DEBUG: Log promiseId handling
-            console.log('[api-integration] Received promiseId:', this.currentPromiseId);
-            console.log('[api-integration] Full result:', result);
-            
-            // Start polling if we have a promiseId (async response)
-            if (this.currentPromiseId) {
-                console.log('[api-integration] Starting polling for promiseId:', this.currentPromiseId);
-                this._startPromisePolling(this.currentPromiseId);
-            }
-
-            if (window.appState) {
-                window.appState.set('loading.tasks', false);
-            }
-
-            this.emit('taskSent', {task: taskText, result});
-
-            return result;
-        } catch (error) {
-            if (window.appState) {
-                window.appState.set('loading.tasks', false);
-            }
-            this.emit('taskError', error);
-            throw error;
-        }
-    }
-
-    /**
-     * Start polling for promise status
-     */
-    _startPromisePolling(promiseId) {
-        const pollInterval = 2000;
-        const maxAttempts = 60; // 2 minutes max
-        let attempts = 0;
-        
-        console.log('[api-integration] Starting poll for:', promiseId);
-        
-        const intervalId = setInterval(async () => {
-            attempts++;
-            
-            if (attempts >= maxAttempts) {
-                clearInterval(intervalId);
-                this.emit('promiseError', { promiseId, error: 'Timeout waiting for result' });
-                return;
-            }
-            
-            try {
-                const response = await fetch(`/api/v1/requests/${promiseId}/status`);
-                const json = await response.json();
-                const data = json.data || json;
-                
-                console.log('[api-integration] Poll response:', data);
-                
-                if (data.status === 'completed') {
-                    clearInterval(intervalId);
-                    
-                    // Fetch full result
-                    const resultResponse = await fetch(`/api/v1/requests/${promiseId}/result`);
-                    const resultJson = await resultResponse.json();
-                    const result = resultJson.data || resultJson;
-                    
-                    console.log('[api-integration] Task completed with result:', result);
-                    this.emit('taskCompleted', { promiseId, result });
-                    
-                } else if (data.status === 'failed') {
-                    clearInterval(intervalId);
-                    this.emit('promiseError', { promiseId, error: data.error || 'Task failed' });
-                } else {
-                    // Still pending - emit progress
-                    this.emit('promiseProgress', { promiseId, status: data.status });
-                }
-            } catch (e) {
-                console.warn('[api-integration] Poll error:', e);
-            }
-        }, pollInterval);
-        
-        // Store interval ID for cleanup
-        this._promisePollIntervals = this._promisePollIntervals || [];
-        this._promisePollIntervals.push(intervalId);
-    }
-
-    /**
-     * Send step result
-     */
-    async sendStepResult(stepResult) {
-        if (!this.currentSession) {
-            throw new Error('No active session');
-        }
-
-        const requestData = {
-            context: {
-                session_id: this.currentSession,
-                step_result: stepResult
-            }
-        };
-
-        try {
-            const result = await this.request('POST', '/invoke', requestData);
-            this.emit('stepResultSent', {stepResult, result});
-            return result;
-        } catch (error) {
-            this.emit('stepResultError', error);
             throw error;
         }
     }
@@ -360,9 +318,13 @@ class APIIntegration {
 
     /**
      * Search actions (using AI)
+     * Uses dedicated tasks/analyze endpoint instead of legacy invoke.
      */
     async searchActions(query) {
-        const result = await this.sendTask(`Find relevant actions for: ${query}`);
+        const result = await this.request('POST', '/tasks/analyze', {
+            query,
+            context: 'search-actions'
+        });
         return result;
     }
 
@@ -404,4 +366,12 @@ const apiIntegration = new APIIntegration();
 if (typeof window !== 'undefined') {
     window.APIIntegration = APIIntegration;
     window.apiIntegration = apiIntegration;
+    // Expose shared fetchWithRetry for other modules (e.g. ActionHandler)
+    if (!window.fetchWithRetry) {
+        window.fetchWithRetry = fetchWithRetry;
+    }
+} else {
+    if (!globalThis.fetchWithRetry) {
+        globalThis.fetchWithRetry = fetchWithRetry;
+    }
 }

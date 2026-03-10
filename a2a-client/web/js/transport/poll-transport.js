@@ -1,5 +1,9 @@
 /**
  * Poll Transport - Pull model
+ * @deprecated HTTP polling is disabled in the new A2A protocol.
+ * Use SSE Transport (sse-transport.js) or WebSocket Transport (websocket-transport.js) instead.
+ * This stub remains for backwards compatibility.
+ *
  * Web requests updates via GET /api/sessions/updates?sessionIds=...
  * No SSE/WebSocket - simple fetch polling
  */
@@ -40,21 +44,9 @@
         async _poll() {
             if (!this.connected || !this.sessionId) return;
             try {
-                // FIX: Use correct server endpoint - batch status by promiseIds
-                // Note: This requires session to track promiseId, not just sessionId
-                const url = `/api/v1/requests/status?ids=${encodeURIComponent(this.sessionId)}`;
-                console.log('[PollTransport] Polling URL (FIXED):', url);
-                const res = await fetch(url);
-                const data = await res.json().catch(() => ({}));
-                const updates = data?.data?.updates ?? [];
-                for (const u of updates) {
-                    if (u.sessionId !== this.sessionId) continue;
-                    this._emit('task_response', u);
-                    this._emit('message', { type: 'task_response', data: u });
-                    if (u.execute) this._emit('execute', u.execute);
-                    if (u.context) this._emit('context', u.context);
-                    if (u.messages?.length) this._emit('messages', u.messages);
-                }
+                // HTTP polling for async requests is disabled in the new protocol.
+                // PollTransport remains as a no-op stub for backwards compatibility.
+                console.warn('[PollTransport] _poll called but HTTP polling is disabled in the new protocol.');
             } catch (e) {
                 console.warn('[PollTransport] Poll error:', e);
             }

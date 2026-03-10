@@ -26,15 +26,15 @@ a2a-client/
 
 ### 2. Оптимизация JavaScript
 
-- [ ] Унифицировать fetchWithRetry в `action-handler.js` и `api-integration.js`
+- [x] Унифицировать fetchWithRetry в `action-handler.js`, `api-integration.js` и связанных модулях (`storage.js`, `transport-manager.js`, `task-flow/api.js`)
 - [ ] Обновить импорты типов для использования `packages/types`
 - [ ] Добавить документацию по протоколам
 
 ### 3. Интеграция протоколов
 
-- [ ] Обновить `api-integration.js` для поддержки Promise polling
-- [ ] Обновить `action-handler.js` для новых типов actions
-- [ ] Интегрировать UI state machine из документации
+- [x] Обновить `api-integration.js` для поддержки Promise polling (`/api/v1/requests/:promiseId/{status,result}`) и нового invoke контракта (`/api/v1/invoke`)
+- [x] Обновить `action-handler.js` для новых типов actions и action-key shape
+- [x] Интегрировать UI state machine через `SessionStore.applyServerResponse` и `SessionSync v2`
 
 ### 4. Обновление CSS
 
