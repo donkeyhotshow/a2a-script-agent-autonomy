@@ -9,3 +9,6 @@ dist/
 
 # Legacy root-level logs (to be cleaned up)
 *.log
+
+# Runtime state - PIDs change on every application start
+.pids.txt

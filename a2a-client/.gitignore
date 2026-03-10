@@ -2,3 +2,6 @@ node_modules/
 test-results/
 
 .a2a/index/
+
+# Runtime state - session and UI state
+storage/kv/
