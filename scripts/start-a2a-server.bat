@@ -14,10 +14,11 @@ for /f "tokens=5" %%p in ('netstat -ano ^| findstr ":%SERVER_PORT%" ^| findstr "
     exit /b 0
 )
 
-REM Start a2a-server
-cd a2a-server
-start "a2a-server" cmd /c "npm run dev:local ^> logs\server.log 2^>^&1"
-cd ..
+REM Create logs directory if it doesn't exist (required for redirect)
+if not exist "a2a-server\logs" mkdir "a2a-server\logs"
+
+REM Start a2a-server - use /d to set working directory explicitly
+start "a2a-server" /d "a2a-server" cmd /c "npm run dev:no-auth ^> logs\server.log 2^>^&1"
 
 powershell -Command "Start-Sleep -Seconds 10"
 

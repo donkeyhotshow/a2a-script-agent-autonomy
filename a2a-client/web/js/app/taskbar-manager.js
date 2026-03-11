@@ -166,18 +166,10 @@
          */
         async fetchSessions() {
             const g = (typeof window !== 'undefined' ? window : globalThis);
-            const projectId = await g.ProjectManager?.getSelectedProjectId?.() ||
-                             g.SessionStore?.projectId ||
-                             g.SessionManagerAdapter?.currentProjectId;
-            if (!projectId) {
-                console.warn('[TaskbarManager] No project selected');
-                return [];
-            }
+            // Use new API - no projectId required
             try {
-                const sessions = await g.apiIntegration?.getSessions?.(projectId) ?? [];
-                return Array.isArray(sessions) ? sessions.filter(s =>
-                    (s.projectId ?? s.metadata?.projectId) === projectId || (s.projectId ?? s.metadata?.projectId) === undefined
-                ) : [];
+                const sessions = await g.apiIntegration?.getSessions?.() ?? [];
+                return Array.isArray(sessions) ? sessions : [];
             } catch (error) {
                 console.warn('[TaskbarManager] Failed to fetch sessions:', error);
                 return [];
@@ -191,11 +183,12 @@
             const btn = document.createElement('button');
             btn.className = 'taskbar-session-btn';
             btn.dataset.sessionId = session.id;
-            btn.title = `Session: ${session.name || session.id}`;
+            const sessionLabel = session.title || session.name || `Session ${(session.id || '').slice(-8)}`;
+            btn.title = `Session: ${sessionLabel}`;
 
             btn.innerHTML = `
                 <div class="taskbar-session-icon">💬</div>
-                <div class="taskbar-session-title">${this.escapeHtml(session.name || `Session ${session.id.slice(-8)}`)}</div>
+                <div class="taskbar-session-title">${this.escapeHtml(sessionLabel)}</div>
                 <div class="taskbar-session-status"></div>
             `;
 

@@ -6,10 +6,10 @@ import fs from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
+import os from 'os';
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const sdkRoot = path.resolve(__dirname, '../../..');
-const a2aClientRoot = path.resolve(sdkRoot, '../..');
-const storageDir = process.env.A2A_CLIENT_STORAGE_DIR || path.join(a2aClientRoot, 'storage');
+const storageDir = process.env.A2A_CLIENT_STORAGE_DIR || path.join(os.homedir(), '.a2a-client');
 const SESSIONS_DATA_DIR = path.join(storageDir, 'kv', 'sessions', 'data');
 
 export interface PersistedSession {

@@ -312,10 +312,47 @@ interface SessionDetail extends SessionSummary {
 
 ---
 
+## Файловая структура шагов сессии
+
+> **Подробнее:** см. [`api-client-server-logic.md`](api-client-server-logic.md)
+
+### Директория шага
+
+Каждый шаг сессии хранится в отдельной папке `{STEP}/` внутри директории сессии:
+
+```
+storage/sessions/{SESSION_ID}/
+├── session.json                 # Данные сессии
+├── {STEP}/
+│   ├── server-response.json     # Ответ от A2A сервера
+│   ├── server-promise.json     # Данные о промисе (если есть)
+│   ├── client-result.json      # Результат от клиента (web/авто)
+│   ├── request-to-server.json  # Запрос к серверу
+│   └── messages.json           # История сообщений
+```
+
+### Логика обработки шага
+
+1. **Нет server-promise.json** → создать request-to-server.json → отправить запрос → сохранить promise
+2. **Есть server-promise.json** → проверить статус → при completed получить результат
+3. **Ответ от клиента** → сохранить client-result.json → создать следующий шаг
+4. **Ответ от сервера** → вернуть execute клиенту или завершить сессию
+
+### Типы обработки
+
+| Тип | Описание |
+|-----|----------|
+| Auto | Скрипт/симуляция самостоятельно отправляет данные |
+| Manual | Ожидание ввода от пользователя через Web UI |
+| Hybrid | Автоматическое продолжение после таймаута |
+
+---
+
 ## References
 
 - [API-CLIENT.md](../API-CLIENT.md)
 - [SCHEMAS.md](../SCHEMAS.md)
 - [DATA-FLOW.md](../DATA-FLOW.md)
+- [api-client-server-logic.md](api-client-server-logic.md) - Логика работы API клиент сервера
 - [server/index.ts (SDK)](../../a2a-client/packages/sdk/src/server/index.ts)
 - [session-service.ts](../../a2a-client/packages/sdk/src/server/services/session-service.ts)

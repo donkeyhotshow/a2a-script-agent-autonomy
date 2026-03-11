@@ -108,7 +108,7 @@ Execution mode where multiple operations are grouped together for efficiency, pa
 A logical container for related files and configurations, identified by a unique projectId.
 
 ### Session Storage
-Client-side storage for session data, typically located in `.a2a/sessions/` directory within project folders.
+Client-side storage for session data. Project mode: `.a2a/sessions/` in project. Storage mode: `~/.a2a-client/sessions/`.
 
 ### Virtual Document
 A conceptual document that accumulates content across multiple steps in a workflow, managed by the system.

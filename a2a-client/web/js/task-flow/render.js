@@ -150,6 +150,8 @@
      */
     function renderForm(contentEl, form, executionStepHtml, progressBarHtml, finalResultHtml, taskFlowRef, store) {
         const hasChoices = form?.choices?.length > 0;
+        const inputField = form?.input && typeof form.input === 'object' && !Array.isArray(form.input) ? form.input : null;
+        const inputFields = form?.input && Array.isArray(form.input) ? form.input : (inputField ? [inputField] : []);
 
         let formContent = '';
 
@@ -159,6 +161,17 @@
                 `<button type="button" class="task-flow-choice-btn" data-choice-id="${escapeHtml(c.id)}">${escapeHtml(c.label || c.id)}</button>`
             ).join('');
             formContent += `${title}<div class="task-flow-choices">${buttons}</div>`;
+        }
+
+        if (inputFields.length > 0) {
+            const inputsHtml = inputFields.map((f) => {
+                const name = f.name || 'input';
+                const label = f.label ? `<label for="task-flow-input-${escapeHtml(name)}">${escapeHtml(f.label)}</label>` : '';
+                const placeholder = f.placeholder || '';
+                const required = f.required ? 'required' : '';
+                return `<div class="task-flow-input-group">${label}<input type="text" id="task-flow-input-${escapeHtml(name)}" name="${escapeHtml(name)}" placeholder="${escapeHtml(placeholder)}" ${required} class="task-flow-input-field"></div>`;
+            }).join('');
+            formContent += `<div class="task-flow-input-form">${inputsHtml}<button type="button" class="task-flow-submit-btn">Submit</button></div>`;
         }
 
         const historyHtml = renderMessageHistory(contentEl, store);
@@ -182,6 +195,20 @@
                 }
             });
         });
+
+        // Bind input form submit
+        const submitBtn = contentEl.querySelector('.task-flow-submit-btn');
+        const inputEl = contentEl.querySelector('.task-flow-input-field');
+        if (submitBtn && inputEl && taskFlowRef?.sendMessageResult) {
+            const doSubmit = () => {
+                const val = inputEl.value?.trim();
+                if (val) taskFlowRef.sendMessageResult(val, contentEl);
+            };
+            submitBtn.addEventListener('click', doSubmit);
+            inputEl.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') { e.preventDefault(); doSubmit(); }
+            });
+        }
     }
 
     /**

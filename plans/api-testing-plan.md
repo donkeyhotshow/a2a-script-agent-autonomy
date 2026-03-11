@@ -1,0 +1,503 @@
+# API Testing Plan — Full System Chain Verification
+
+> **Purpose:** Guide for AI or automated testing to verify the entire data flow: Web Client API → Client API → a2a-server.
+>
+> **For AI:** Execute sections in order. Use curl commands as-is; replace `{SESSION_ID}` with actual id. Assert expected JSON shapes. Run section 7 one-shot script for quick validation.
+>
+> **Reference:** Payloads aligned with `simulations/dialog/` — client.json (Web→Client API), request.json (Client API→Server), received.json (expected response). See also: [api-client-server-logic.md](api-client-server-logic.md) for detailed step flow.
+
+---
+
+## 0. Client API Server — Responsibilities (Storage Files)
+
+> **Утверждено:** 2026-03-11. Client API server must manage files in `a2a-client/storage/sessions/{SESSION_ID}/` per step.
+
+### 0.1 When there is NO `server-promise.json` (in the next step)
+
+1. Save `request-to-server.json` (in current step folder)
+2. Make request to a2a-server
+3. Store promise data in **next step** folder: `{SESSION_ID}/{N+1}/server-promise.json`
+
+```
+{N}/
+├── request-to-server.json   ← save before request
+├── client-result.json       ← from web client
+└── ...
+{N+1}/
+├── server-promise.json      ← promiseId, status, submittedAt
+└── ...
+```
+
+### 0.2 When there IS client response
+
+1. Save `client-result.json` (from Web client form submit or auto)
+2. Build `request-to-server.json` from client-result + context
+3. Save `request-to-server.json` in current step folder
+
+### 0.3 When there IS server response
+
+1. Wait (polling) or auto-continue — different modes: manual, auto, hybrid
+2. Save `server-response.json` in current step folder
+3. Notify Web client what to respond (execute.form.input, execute.form.choices, execute.message)
+
+### 0.4 Required files per step
+
+| File | When | Location |
+|------|------|----------|
+| `request-to-server.json` | Before server request | `{SESSION_ID}/{N}/` |
+| `server-promise.json` | After async request (promiseId) | `{SESSION_ID}/{N+1}/` |
+| `client-result.json` | After client form submit | `{SESSION_ID}/{N}/` |
+| `server-response.json` | After server response | `{SESSION_ID}/{N}/` |
+| `messages.json` | Chat history | `{SESSION_ID}/{N}/` |
+
+**Windows/PowerShell:** Use single-quoted JSON for `-d` (e.g. `-d '{"title":"x"}'`). Avoid escaped quotes.
+
+**Last verified:** 2026-03-11 — Web client + full dialog chain via curl (no mocks). Storage: `server-response.json` + `messages.json` per step.
+
+**Client API:** Requires `X-Session-Id` header (any value) or `SKIP_AUTH=1`. Returns `promiseId` for async steps; poll `GET $A2A_SERVER/api/v1/requests/{promiseId}/result`.
+
+---
+
+## 1. Prerequisites
+
+### 1.1 Services to Start (in order)
+
+| Service       | Port | Start Command              | Health Check                    |
+|---------------|------|----------------------------|---------------------------------|
+| a2a-server    | 3000 | `npm run dev` (a2a-server) | `curl http://localhost:3000/health` |
+| Client API    | 3001 | `npm run dev:api` (a2a-client) | `curl http://localhost:3001/health` |
+| Web UI (Vite) | 5173 | `npm run dev` (a2a-client) | `curl -s -o /dev/null -w "%{http_code}" http://localhost:5173` |
+
+### 1.2 Base URLs
+
+```
+WEB_UI_BASE=http://localhost:5173
+API_A2A_PREFIX=/api/a2a
+CLIENT_API_BASE=http://localhost:3001
+A2A_SERVER_BASE=http://localhost:3000
+```
+
+---
+
+## 2. Web Client Sessions API (Vite Plugin)
+
+All requests to Web UI. Header `X-Storage-Mode: storage` or `X-Storage-Mode: project`.
+
+### 2.1 Create Session
+
+```bash
+curl -s -X POST "$WEB_UI_BASE/api/a2a/sessions" \
+  -H "Content-Type: application/json" \
+  -H "X-Storage-Mode: storage" \
+  -d '{"title": "API Test Session"}'
+```
+
+**Expected:** `{"success": true, "session": {...}}`  
+**Verify:** `session.id`, `session.execute.form.input`, `session.currentStep === 1`
+
+### 2.2 List Sessions
+
+```bash
+curl -s "$WEB_UI_BASE/api/a2a/sessions" -H "X-Storage-Mode: storage"
+```
+
+**Expected:** `{"sessions": [...]}`
+
+### 2.3 Get Session
+
+```bash
+curl -s "$WEB_UI_BASE/api/a2a/sessions/{SESSION_ID}" -H "X-Storage-Mode: storage"
+```
+
+**Expected:** `{"id":"...","title":"...","execute":{...}}` (session object, not wrapped)
+
+### 2.4 Update Session
+
+```bash
+curl -s -X PUT "$WEB_UI_BASE/api/a2a/sessions/{SESSION_ID}" \
+  -H "Content-Type: application/json" \
+  -H "X-Storage-Mode: storage" \
+  -d '{"title": "Updated Title"}'
+```
+
+### 2.5 Delete Session
+
+```bash
+curl -s -X DELETE "$WEB_UI_BASE/api/a2a/sessions/{SESSION_ID}" -H "X-Storage-Mode: storage"
+```
+
+**Expected:** `{"success": true}`
+
+---
+
+## 3. Steps API (Storage Mode Only)
+
+Requires `X-Storage-Mode: storage`. Project mode returns 404 for steps.
+
+### 3.1 List Steps
+
+```bash
+curl -s "$WEB_UI_BASE/api/a2a/sessions/{SESSION_ID}/steps" -H "X-Storage-Mode: storage"
+```
+
+**Expected:** `{"steps": [1, 2, ...]}`
+
+### 3.2 Get Step
+
+```bash
+curl -s "$WEB_UI_BASE/api/a2a/sessions/{SESSION_ID}/steps/1" -H "X-Storage-Mode: storage"
+```
+
+**Expected:** JSON with `step`, `execute`, `messages`, `stepText`
+
+### 3.3 Create Step
+
+```bash
+curl -s -X POST "$WEB_UI_BASE/api/a2a/sessions/{SESSION_ID}/steps" \
+  -H "Content-Type: application/json" \
+  -H "X-Storage-Mode: storage" \
+  -d '{
+    "execute": {"form": {"input": {"value": "test task"}}},
+    "messages": [{"role": "user", "content": "test task"}],
+    "context": {}
+  }'
+```
+
+**Expected:** `{"success": true, "step": 2}`
+
+### 3.4 Get Latest Step
+
+```bash
+curl -s "$WEB_UI_BASE/api/a2a/sessions/{SESSION_ID}/latest" -H "X-Storage-Mode: storage"
+```
+
+**Expected:** `{"session": {...}, "latestStep": N, "stepData": {...}, "hasResponse": bool}`
+
+### 3.5 Get History from Step
+
+```bash
+curl -s "$WEB_UI_BASE/api/a2a/sessions/{SESSION_ID}/history/1" -H "X-Storage-Mode: storage"
+```
+
+**Expected:** `{"history": [{"step": N, "data": {...}}, ...]}`
+
+---
+
+## 4. Storage Mode Toggle
+
+### 4.1 Project Mode (`.a2a/sessions`)
+
+```bash
+curl -s -X POST "$WEB_UI_BASE/api/a2a/sessions" \
+  -H "Content-Type: application/json" \
+  -H "X-Storage-Mode: project" \
+  -d '{"title": "Project Mode Test"}'
+```
+
+**Verify:** Session file at `{projectPath}/.a2a/sessions/{sessionId}.json`
+
+### 4.2 Storage Mode (numbered folders)
+
+```bash
+curl -s -X POST "$WEB_UI_BASE/api/a2a/sessions" \
+  -H "Content-Type: application/json" \
+  -H "X-Storage-Mode: storage" \
+  -d '{"title": "Storage Mode Test"}'
+```
+
+**Verify:** Directory `a2a-client/storage/sessions/{sessionId}/` with `session.json` and `1/server-response.json`
+
+---
+
+## 4.5 Step Flow: server-response → client-result → next-request → new step
+
+> **Подробнее:** см. [`api-client-server-logic.md`](api-client-server-logic.md#поток-обработки-шагов-step-flow)
+
+After each server response, the step folder contains:
+
+| File | Description | Source |
+|------|-------------|--------|
+| `server-response.json` | Server response (execute, messages, context) | From a2a-server / Client API |
+| `client-result.json` | Client result (user input: message, choice) | Web client form submit or auto |
+| `next-request.json` | Request payload for next step | Built from client-result + context |
+
+**Flow:**
+1. Step N folder receives `server-response.json` (from server)
+2. Get `client-result.json` — either automatically (script/sim) or via Web client (user fills form)
+3. Build `next-request.json` from client-result and context
+4. Execute next request (POST to Client API)
+5. New folder `N+1/` receives new `server-response.json`
+
+**Example step 1 folder:**
+```
+1/
+├── server-response.json   # execute.form.input (task prompt)
+├── messages.json          # Chat messages (role, content)
+├── client-result.json     # {"result":{"message":"my task"}}
+└── next-request.json      # request for step 2
+```
+
+---
+
+## 5. Full Chain: Client API → a2a-server
+
+Client API (3001) proxies to a2a-server (3000). Use Client API session endpoints.
+
+### 5.1 Create Session with Task (one-shot to a2a-server)
+
+```bash
+curl -s -X POST "$CLIENT_API_BASE/api/sessions" \
+  -H "Content-Type: application/json" \
+  -H "X-Session-Id: test" \
+  -d '{"title": "Full Chain Test", "task": "диалог"}'
+```
+
+**Expected:** `{"success": true, "data": {...}, "serverResponse": {"data": {"promiseId": "..."}}}`  
+Poll `GET $A2A_SERVER_BASE/api/v1/requests/{promiseId}/result` until `status: completed`. Result has `execute.form.choices`.
+
+### 5.2 Submit Choice (if form.choices returned)
+
+```bash
+# Use sessionId from step 5.1 response (data.id)
+curl -s -X POST "$CLIENT_API_BASE/api/sessions/{SESSION_ID}/action" \
+  -H "Content-Type: application/json" \
+  -d '{"choice": "dialog", "input": {}}'
+```
+
+**Expected:** `{"success": true, "execute": {...}, "promiseId": "..."}`
+
+### 5.3 Continue Session (next step)
+
+```bash
+curl -s -X POST "$CLIENT_API_BASE/api/sessions/{SESSION_ID}/next" \
+  -H "Content-Type: application/json" \
+  -d '{"result": {"message": "continue"}}'
+```
+
+### 5.4 Combined: Web Sessions + Client API
+
+1. Create session in Web storage: `POST $WEB_UI_BASE/api/a2a/sessions`
+2. Create matching session in Client API with task: `POST $CLIENT_API_BASE/api/sessions` with same or new id
+3. Or: use Client API session id for both (Client API generates UUID)
+
+---
+
+## 5.5 Dialog Simulation Flow (simulations/dialog)
+
+Mirrors `simulations/dialog/` step-by-step. Client API maps `client.json` → `request.json` → a2a-server → `received.json`.
+
+**File mapping:** `simulations/dialog/N/client.json` = Web payload; `N/request.json` = Server input; `N/received.json` = expected response.
+
+| Step | client.json (Web→Client API) | received.json (expected) |
+|------|------------------------------|--------------------------|
+| 1 | `result.message: "диалог"` | `execute.form.choices` (router) |
+| 2 | `result.choice: "dialog"` | `execute.form.input` (text input) |
+| 3 | `result.message: "hello world"` | `execute.message` + `form.input` |
+| 4 | `result.message: "Дякую!"` | `execute.message` + `form.input` or `finalResult` |
+
+### Step 1 — Task → Router
+
+```bash
+RESP=$(curl -s -X POST "$CLIENT_API_BASE/api/sessions" \
+  -H "Content-Type: application/json" -H "X-Session-Id: test" \
+  -d '{"title":"Dialog Test","task":"диалог"}')
+SESSION_ID=$(echo "$RESP" | jq -r '.data.id')
+PROMISE_ID=$(echo "$RESP" | jq -r '.serverResponse.data.promiseId')
+# Poll until completed
+until [ "$(curl -s "$A2A_SERVER_BASE/api/v1/requests/$PROMISE_ID/result" -H "x-skip-auth: true" | jq -r '.data.status')" = "completed" ]; do sleep 2; done
+# Assert: execute.form.choices exists
+curl -s "$A2A_SERVER_BASE/api/v1/requests/$PROMISE_ID/result" -H "x-skip-auth: true" | jq -e '.data.result.execute.form.choices | length > 0'
+```
+
+### Step 2 — Choice → Text Input
+
+```bash
+R2=$(curl -s -X POST "$CLIENT_API_BASE/api/sessions/$SESSION_ID/action" \
+  -H "Content-Type: application/json" -H "X-Session-Id: test" \
+  -d '{"choice":"dialog","input":{}}')
+PROM2=$(echo "$R2" | jq -r '.promiseId')
+# Poll until completed
+until [ "$(curl -s "$A2A_SERVER_BASE/api/v1/requests/$PROM2/result" -H "x-skip-auth: true" | jq -r '.data.status')" = "completed" ]; do sleep 2; done
+# Expected: execute.form.input
+curl -s "$A2A_SERVER_BASE/api/v1/requests/$PROM2/result" -H "x-skip-auth: true" | jq '.data.result.execute.form.input'
+```
+
+### Step 3 — Message → LLM Response
+
+```bash
+# Matches simulations/dialog/3/client.json
+curl -s -X POST "$CLIENT_API_BASE/api/sessions/$SESSION_ID/next" \
+  -H "Content-Type: application/json" \
+  -d '{"result":{"message":"hello world"}}'
+# Expected: execute.message + execute.form.input
+```
+
+### Step 4 — Final Message
+
+```bash
+# Matches simulations/dialog/4/client.json
+curl -s -X POST "$CLIENT_API_BASE/api/sessions/$SESSION_ID/next" \
+  -H "Content-Type: application/json" \
+  -d '{"result":{"message":"Дякую!"}}'
+# Expected: execute.message or finalResult
+```
+
+### Full Dialog Script (no mocks)
+
+Each step returns `promiseId`; poll `GET $A2A_SERVER_BASE/api/v1/requests/{promiseId}/result` until `status: completed`.
+
+```bash
+H="Content-Type: application/json" H2="X-Session-Id: test"
+R1=$(curl -s -X POST "$CLIENT_API_BASE/api/sessions" -H "$H" -H "$H2" -d '{"title":"Dialog","task":"диалог"}')
+SESSION_ID=$(echo "$R1" | jq -r '.data.id')
+P1=$(echo "$R1" | jq -r '.serverResponse.data.promiseId')
+# ... poll P1, then:
+R2=$(curl -s -X POST "$CLIENT_API_BASE/api/sessions/$SESSION_ID/action" -H "$H" -H "$H2" -d '{"choice":"dialog","input":{}}')
+P2=$(echo "$R2" | jq -r '.promiseId')
+# ... poll P2, then:
+R3=$(curl -s -X POST "$CLIENT_API_BASE/api/sessions/$SESSION_ID/next" -H "$H" -H "$H2" -d '{"result":{"message":"hello world"}}')
+# ... poll, then step 4
+```
+
+---
+
+## 6. Storage Verification
+
+### 6.1 Storage Mode Structure
+
+```bash
+# After creating session and submitting
+ls -la a2a-client/storage/sessions/
+ls -la a2a-client/storage/sessions/{SESSION_ID}/
+ls -la a2a-client/storage/sessions/{SESSION_ID}/1/
+cat a2a-client/storage/sessions/{SESSION_ID}/session.json
+cat a2a-client/storage/sessions/{SESSION_ID}/1/server-response.json
+cat a2a-client/storage/sessions/{SESSION_ID}/1/messages.json
+```
+
+**Expected in step folder:**
+- `server-response.json`: `step`, `timestamp`, `execute`, `context` (no `messages` — in messages.json)
+- `messages.json`: `[]` or `[{"role":"user","content":"..."}]`
+
+### 6.2 Project Mode Structure
+
+```bash
+# Project path from storage/projects.json first project
+cat {projectPath}/.a2a/sessions/{SESSION_ID}.json
+```
+
+---
+
+## 7. One-Shot Test Script
+
+```bash
+#!/bin/bash
+WEB_UI_BASE="${WEB_UI_BASE:-http://localhost:5173}"
+CLIENT_API_BASE="${CLIENT_API_BASE:-http://localhost:3001}"
+
+# 1. Create session
+RESP=$(curl -s -X POST "$WEB_UI_BASE/api/a2a/sessions" \
+  -H "Content-Type: application/json" \
+  -H "X-Storage-Mode: storage" \
+  -d '{"title": "Chain Test"}')
+SESSION_ID=$(echo "$RESP" | jq -r '.session.id')
+[[ -z "$SESSION_ID" || "$SESSION_ID" == "null" ]] && { echo "FAIL: No session id"; exit 1; }
+echo "OK: Created session $SESSION_ID"
+
+# 2. List sessions
+LIST=$(curl -s "$WEB_UI_BASE/api/a2a/sessions" -H "X-Storage-Mode: storage")
+echo "$LIST" | jq -e '.sessions | map(select(.id == "'"$SESSION_ID"'")) | length > 0' >/dev/null || { echo "FAIL: Session not in list"; exit 1; }
+echo "OK: Session in list"
+
+# 3. Get session
+curl -s "$WEB_UI_BASE/api/a2a/sessions/$SESSION_ID" -H "X-Storage-Mode: storage" | jq -e '.id' >/dev/null || { echo "FAIL: Get session"; exit 1; }
+echo "OK: Get session"
+
+# 4. Steps (storage mode)
+STEPS=$(curl -s "$WEB_UI_BASE/api/a2a/sessions/$SESSION_ID/steps" -H "X-Storage-Mode: storage")
+echo "$STEPS" | jq -e '.steps | length >= 1' >/dev/null || { echo "FAIL: Steps"; exit 1; }
+echo "OK: Steps API"
+
+# 5. Full chain: Client API session with task
+CLIENT_RESP=$(curl -s -X POST "$CLIENT_API_BASE/api/sessions" \
+  -H "Content-Type: application/json" \
+  -d '{"title":"Chain Test","task":"test"}')
+echo "$CLIENT_RESP" | jq -e '.success and (.data or .serverResponse)' >/dev/null || { echo "FAIL: Client API session"; exit 1; }
+echo "OK: Full chain (Client API -> a2a-server)"
+
+# 6. Cleanup (Web session)
+curl -s -X DELETE "$WEB_UI_BASE/api/a2a/sessions/$SESSION_ID" -H "X-Storage-Mode: storage" >/dev/null
+echo "OK: Full chain verified"
+```
+
+### 7.1 PowerShell (Windows) — Web Client Only
+
+```powershell
+$WEB_UI_BASE = "http://localhost:5173"
+
+# 1. Create session
+$RESP = curl -s -X POST "$WEB_UI_BASE/api/a2a/sessions" -H "Content-Type: application/json" -H "X-Storage-Mode: storage" -d '{"title": "Chain Test"}'
+$SESSION_ID = ($RESP | ConvertFrom-Json).session.id
+if (-not $SESSION_ID) { Write-Error "FAIL: No session id"; exit 1 }
+Write-Host "OK: Created session $SESSION_ID"
+
+# 2. List sessions
+$LIST = curl -s "$WEB_UI_BASE/api/a2a/sessions" -H "X-Storage-Mode: storage"
+$sessions = ($LIST | ConvertFrom-Json).sessions
+if ($sessions | Where-Object { $_.id -eq $SESSION_ID }) { Write-Host "OK: Session in list" } else { Write-Error "FAIL: Session not in list"; exit 1 }
+
+# 3. Get session
+$GET = curl -s "$WEB_UI_BASE/api/a2a/sessions/$SESSION_ID" -H "X-Storage-Mode: storage"
+if (($GET | ConvertFrom-Json).id) { Write-Host "OK: Get session" } else { Write-Error "FAIL: Get session"; exit 1 }
+
+# 4. Steps
+$STEPS = curl -s "$WEB_UI_BASE/api/a2a/sessions/$SESSION_ID/steps" -H "X-Storage-Mode: storage"
+if (($STEPS | ConvertFrom-Json).steps.Count -ge 1) { Write-Host "OK: Steps API" } else { Write-Error "FAIL: Steps"; exit 1 }
+
+# 5. Cleanup
+curl -s -X DELETE "$WEB_UI_BASE/api/a2a/sessions/$SESSION_ID" -H "X-Storage-Mode: storage" | Out-Null
+Write-Host "OK: Full chain verified"
+```
+
+---
+
+## 8. Checklist (Machine-Readable)
+
+| # | Test | Command / Assertion | Pass |
+|---|------|--------------------|------|
+| 1 | Health: a2a-server | `curl -sf $A2A_SERVER_BASE/health` | [ ] |
+| 2 | Health: Client API | `curl -sf $CLIENT_API_BASE/health` | [ ] |
+| 3 | Health: Web UI | `curl -sf -o /dev/null $WEB_UI_BASE` | [ ] |
+| 4 | POST /sessions (storage) | Returns session.id, execute.form.input | [ ] |
+| 5 | GET /sessions | Returns sessions array | [ ] |
+| 6 | GET /sessions/:id | Returns session object | [ ] |
+| 7 | PUT /sessions/:id | Returns success | [ ] |
+| 8 | GET /sessions/:id/steps | Returns steps array (storage mode) | [ ] |
+| 9 | GET /sessions/:id/steps/1 | Returns step (server-response.json) with stepText | [ ] |
+| 10 | POST /sessions/:id/steps | Returns step number | [ ] |
+| 11 | GET /sessions/:id/latest | Returns latestStep, hasResponse | [ ] |
+| 12 | GET /sessions/:id/history/1 | Returns history array | [ ] |
+| 13 | DELETE /sessions/:id | Returns success | [ ] |
+| 14 | POST /sessions (project) | Creates .a2a/sessions file | [ ] |
+| 15 | POST /api/sessions (Client API, with task) | Returns serverResponse (execute/promiseId) | [ ] |
+| 16 | Storage files exist | session.json, N/server-response.json, N/messages.json, N+1/server-promise.json (async) | [ ] |
+| 17 | Request files exist | N/request-to-server.json, N/client-result.json | [ ] |
+| 17 | Dialog sim step 1 (task→choices) | serverResponse.execute.form.choices | [ ] |
+| 18 | Dialog sim step 2 (choice→input) | execute.form.input | [ ] |
+| 19 | Dialog sim step 3 (message→LLM) | execute.message + form.input | [ ] |
+
+---
+
+## 9. Common Failures
+
+| Symptom | Cause | Fix |
+|---------|-------|-----|
+| 404 on /api/a2a/sessions | Web UI not running | Start `npm run dev` in a2a-client |
+| Empty sessions list | Wrong X-Storage-Mode | Use `storage` for numbered folders |
+| 404 on /steps | Project mode | Use X-Storage-Mode: storage |
+| Invoke timeout | a2a-server or Client API down | Start both services |
+| CORS errors | Wrong origin | Use same origin (5173) for /api/a2a |
+| Dialog sim: no form.choices | a2a-server not running or wrong task | Run `npm run test:sim` in simulations/dialog |
+| Dialog sim: wrong execute shape | Server transform mismatch | Compare with simulations/dialog/*/received.json |
+| No server-promise.json | Promise not saved | Saved in N+1/; see [`api-client-server-logic.md`](api-client-server-logic.md) |
+| request-to-server.json missing | Client result not processed | Verify client-result.json exists before next step |

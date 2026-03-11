@@ -109,6 +109,10 @@
                 global.TaskbarManager?.updateOffScreenIndicators();
             });
 
+            // Setup storage mode toggle and loader
+            this.setupStorageModeToggle();
+            this.setupLoaderIndicator();
+
             // Modals (Settings, Projects) via PanelManager – same hierarchy as panels
             this.setupModalButtons();
         },
@@ -144,6 +148,71 @@
             document.getElementById('settingsBtn')?.addEventListener('click', () => openModal('settings', 'settingsModal'));
             document.getElementById('projectsBtn')?.addEventListener('click', () => openModal('projects', 'projectsModal'));
             document.getElementById('newTaskBtn')?.addEventListener('click', () => this.createNewSession());
+        },
+
+        /**
+         * Setup storage mode toggle in header
+         */
+        setupStorageModeToggle() {
+            const storageSelect = document.getElementById('storageModeSelect');
+            if (!storageSelect) return;
+
+            // Load saved storage mode: project (.a2a/sessions) vs storage (~/.a2a-client/sessions)
+            const savedMode = localStorage.getItem('a2a_storage_mode') || 'storage';
+            const valid = ['project', 'storage'].includes(savedMode);
+            storageSelect.value = valid ? savedMode : 'storage';
+
+            if (global.SessionStore) {
+                global.SessionStore.setStorageMode(storageSelect.value);
+            }
+
+            storageSelect.addEventListener('change', (e) => {
+                const mode = e.target.value;
+                localStorage.setItem('a2a_storage_mode', mode);
+                if (global.SessionStore) {
+                    global.SessionStore.setStorageMode(mode);
+                }
+                // Refresh taskbar and projects UI
+                this.refreshProjectsUI();
+                console.log('[AppTask] Storage mode changed to:', mode);
+            });
+        },
+
+        /**
+         * Setup loader indicator for waiting server responses
+         */
+        setupLoaderIndicator() {
+            const loaderIndicator = document.getElementById('loaderIndicator');
+            if (!loaderIndicator) return;
+
+            // Listen for promise pending state changes
+            if (global.SessionStore) {
+                global.SessionStore.on('promisePending', (pending) => {
+                    if (pending) {
+                        loaderIndicator.style.display = 'flex';
+                    } else {
+                        loaderIndicator.style.display = 'none';
+                    }
+                });
+
+                // Also listen for wait indicator
+                global.SessionStore.on('wait', (waitData) => {
+                    if (waitData) {
+                        loaderIndicator.style.display = 'flex';
+                        const loaderText = loaderIndicator.querySelector('.loader-text');
+                        if (loaderText && waitData.message) {
+                            loaderText.textContent = waitData.message;
+                        }
+                    }
+                });
+
+                // Listen for execute to hide loader when we get response
+                global.SessionStore.on('execute', (execute) => {
+                    if (execute && !execute.wait) {
+                        loaderIndicator.style.display = 'none';
+                    }
+                });
+            }
         },
 
         _wireModalContent(type, panel) {
@@ -306,6 +375,45 @@
          */
         async createNewSession() {
             try {
+                // Check if using persistent storage mode
+                const usePersistentStorage = global.SessionStore?.isPersistentStorage?.() || false;
+                
+                if (usePersistentStorage && global.SessionStore?.createSessionWithForm) {
+                    try {
+                        // Use new session storage API with numbered folders
+                        const title = `Session ${new Date().toLocaleTimeString()}`;
+                        const session = await global.SessionStore.createSessionWithForm(title);
+                        
+                        if (session?.id) {
+                            // Set active session
+                            if (global.SessionManager?.setActiveSession) {
+                                global.SessionManager.setActiveSession(session.id);
+                            }
+                            
+                            // Refresh taskbar
+                            const taskbarContent = global.SessionManager?.getTaskbarContentEl?.() || document.querySelector('.taskbar-content');
+                            if (taskbarContent && global.TaskbarManager) {
+                                await global.TaskbarManager.refreshTaskbar(taskbarContent);
+                            }
+                            
+                            // Auto-open the new session
+                            setTimeout(() => {
+                                const btn = document.querySelector(`[data-session-id="${session.id}"]`);
+                                if (btn && global.WindowManager) {
+                                    global.WindowManager.toggleSessionWindow(session.id, btn);
+                                }
+                            }, 100);
+                            
+                            console.log('[AppTask] Created new persistent session:', session.id);
+                            return;
+                        }
+                    } catch (error) {
+                        console.warn('[AppTask] Persistent storage failed, falling back to old API:', error);
+                        // Fall through to old API
+                    }
+                }
+                
+                // Fallback to old API (memory mode or if new API fails)
                 const projectId = await global.ProjectManager?.getSelectedProjectId();
                 if (!global.apiIntegration?.createSession) throw new Error('API not available');
                 const session = await global.apiIntegration.createSession({

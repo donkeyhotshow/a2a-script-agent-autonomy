@@ -8,13 +8,13 @@ Client SDK (port 3001) взаимодействует с a2a-server (port 3000) 
 
 ### Расположение файлов
 
-Единый каталог хранилища: `a2a-client/storage/` (переопределяется через `A2A_CLIENT_STORAGE_DIR`).
+Storage directory: `~/.a2a-client/` (override via `A2A_CLIENT_STORAGE_DIR`). Sessions and KV stored outside project.
 
 | Компонент | Путь | Описание |
 |-----------|------|----------|
-| Конфигурация | `a2a-client/storage/config.json` | Настройки подключения к server |
-| Проекты | `a2a-client/storage/projects.json` | Список проектов |
-| Сессии | `a2a-client/storage/sessions/` | Данные сессий |
+| Config | `~/.a2a-client/config.json` | Server connection settings |
+| Projects | `~/.a2a-client/projects.json` | Project list |
+| Sessions | `~/.a2a-client/sessions/` | Session data |
 
 ### Формат config.json
 
@@ -33,7 +33,7 @@ Client SDK (port 3001) взаимодействует с a2a-server (port 3000) 
 
 ### 1. Через config.json (рекомендуемый)
 
-Создайте или отредактируйте файл `a2a-client/storage/config.json`:
+Создайте или отредактируйте файл `~/.a2a-client/config.json`:
 
 ```json
 {

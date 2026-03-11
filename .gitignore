@@ -12,3 +12,6 @@ dist/
 
 # Runtime state - PIDs change on every application start
 .pids.txt
+
+# Session/storage in project folder (legacy - now uses ~/.a2a-client)
+a2a-client/storage/

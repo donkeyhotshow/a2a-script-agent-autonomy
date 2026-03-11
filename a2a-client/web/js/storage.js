@@ -1,6 +1,10 @@
 /**
  * Custom storage API that replaces localStorage with file-based storage
  * Uses the a2a-client storage system
+ * 
+ * Supports two storage modes:
+ * - Default: KV storage via /api/storage/:namespace/:key
+ * - Sessions: Numbered folder storage via /api/a2a/sessions
  */
 
 (function (global) {
@@ -8,6 +12,7 @@
 
     // Fixed storage base URL - no dynamic lookup needed
     const STORAGE_BASE = '/api/storage';
+    const SESSIONS_BASE = '/api/a2a/sessions';
 
     // Reuse shared fetchWithRetry from APIIntegration when available to keep behavior consistent
     const sharedFetchWithRetry = global.fetchWithRetry;
@@ -234,8 +239,110 @@
         aiActions: new CustomStorage('ai-actions')
     };
 
+    // NEW: Session Storage with numbered folders
+    // Format: /api/a2a/sessions/{sessionId}/session.json - metadata
+    //         /api/a2a/sessions/{sessionId}/{stepNum}/server-response.json - step data
+    class SessionStorage {
+        constructor() {
+            this.baseUrl = SESSIONS_BASE;
+        }
+
+        async _request(method, path, body = null) {
+            const url = `${this.baseUrl}${path}`;
+            const options = {
+                method,
+                headers: { 'Content-Type': 'application/json' }
+            };
+            if (body) {
+                options.body = JSON.stringify(body);
+            }
+            const response = await fetch(url, options);
+            if (!response.ok) {
+                throw new Error(`SessionStorage ${method} failed: ${response.status}`);
+            }
+            return response.json();
+        }
+
+        /**
+         * List all sessions
+         */
+        async listSessions() {
+            const data = await this._request('GET', '');
+            return data.sessions || [];
+        }
+
+        /**
+         * Create new session with execute form input
+         */
+        async createSession(title = 'New Session') {
+            return this._request('POST', '', { title });
+        }
+
+        /**
+         * Get session metadata
+         */
+        async getSession(sessionId) {
+            return this._request('GET', `/${sessionId}`);
+        }
+
+        /**
+         * Update session
+         */
+        async updateSession(sessionId, data) {
+            return this._request('PUT', `/${sessionId}`, data);
+        }
+
+        /**
+         * Delete session
+         */
+        async deleteSession(sessionId) {
+            return this._request('DELETE', `/${sessionId}`);
+        }
+
+        /**
+         * List all steps in session
+         */
+        async listSteps(sessionId) {
+            const data = await this._request('GET', `/${sessionId}/steps`);
+            return data.steps || [];
+        }
+
+        /**
+         * Get specific step
+         */
+        async getStep(sessionId, stepNum) {
+            return this._request('GET', `/${sessionId}/steps/${stepNum}`);
+        }
+
+        /**
+         * Create new step
+         */
+        async createStep(sessionId, stepData) {
+            return this._request('POST', `/${sessionId}/steps`, stepData);
+        }
+
+        /**
+         * Get latest step (for polling/loader)
+         */
+        async getLatest(sessionId) {
+            return this._request('GET', `/${sessionId}/latest`);
+        }
+
+        /**
+         * Get history from specific step
+         */
+        async getHistory(sessionId, fromStep = 1) {
+            const data = await this._request('GET', `/${sessionId}/history/${fromStep}`);
+            return data.history || [];
+        }
+    }
+
+    // Add session storage to global object
+    const sessionStorage = new SessionStorage();
+
     // Export
     global.CustomStorage = CustomStorage;
     global.StorageAPI = storage;
+    global.SessionStorageAPI = sessionStorage;
 
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -14,10 +14,11 @@ for /f "tokens=5" %%p in ('netstat -ano ^| findstr ":%WEB_UI_PORT%" ^| findstr "
     exit /b 0
 )
 
-REM Start web-ui
-cd a2a-client
-start "web-ui" cmd /c "npx vite ^> logs\web-ui.log 2^>^&1"
-cd ..
+REM Create logs directory if it doesn't exist (required for redirect)
+if not exist "a2a-client\logs" mkdir "a2a-client\logs"
+
+REM Start web-ui - use /d to set working directory explicitly
+start "web-ui" /d "a2a-client" cmd /c "npx vite --port %WEB_UI_PORT% ^> logs\web-ui.log 2^>^&1"
 
 powershell -Command "Start-Sleep -Seconds 15"
 

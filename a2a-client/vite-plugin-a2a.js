@@ -2,31 +2,40 @@
  * Vite plugin: serve .a2a data from project folders.
  * Projects stored in storage/projects.json
  * Also handles /api/storage for KV storage
+ * Storage (sessions, kv) is outside project - in user data dir
  */
 import fs from 'fs';
 import path from 'path';
-
-const PROJECTS_FILE = 'storage/projects.json';
+import { getStorageRoot } from './vite-plugin-a2a/storage/root.js';
+import { loadProjects, saveProjects } from './vite-plugin-a2a/storage/projects.js';
+import {
+    getProjectPathForSessions,
+    listSessions,
+    loadSession,
+    saveSession,
+    deleteSession
+} from './vite-plugin-a2a/storage/projectSessions.js';
+import {
+    getNewSessionLatestStep,
+    getNewStepDir,
+    listNewSessions,
+    listNewSteps,
+    loadNewSession,
+    saveNewSession,
+    saveNewStep,
+    loadNewStep,
+    deleteNewSession,
+    saveServerResponse,
+    loadServerPromise,
+    saveServerPromise,
+    saveClientResult,
+    saveRequestToServer,
+    loadStepFile
+} from './vite-plugin-a2a/storage/newSessions.js';
+import { kvGet, kvSet, kvDelete, kvKeys, kvClear } from './vite-plugin-a2a/storage/kv.js';
 const API_PREFIX = '/api/a2a';
 const STORAGE_PREFIX = '/api/storage';
 const SAFE_SEGMENT = /^[a-zA-Z0-9_-]+$/;
-
-function loadProjects(cwd) {
-    const file = path.join(cwd, PROJECTS_FILE);
-    try {
-        const raw = fs.readFileSync(file, 'utf8');
-        const d = JSON.parse(raw);
-        return Array.isArray(d.projects) ? d.projects : [];
-    } catch {
-        return [{id: 'default', name: 'Workspace', path: cwd}];
-    }
-}
-
-function saveProjects(cwd, projects) {
-    const dir = path.join(cwd, 'storage');
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, {recursive: true});
-    fs.writeFileSync(path.join(dir, 'projects.json'), JSON.stringify({projects}, null, 2));
-}
 
 function safePath(base, sub) {
     const resolved = path.resolve(base, sub);
@@ -34,96 +43,55 @@ function safePath(base, sub) {
     return resolved;
 }
 
-function getSessionsDir(projectPath) {
-    return path.join(projectPath, '.a2a', 'sessions');
+function isValidSessionId(id) {
+    return /^[a-zA-Z0-9_-]+$/.test(id) && id.length <= 64;
 }
 
-function listSessions(projectPath) {
-    const dir = getSessionsDir(projectPath);
-    if (!fs.existsSync(dir)) return [];
-    return fs.readdirSync(dir)
-        .filter((f) => f.endsWith('.json'))
-        .map((f) => {
-            try {
-                const raw = fs.readFileSync(path.join(dir, f), 'utf8');
-                const s = JSON.parse(raw);
-                return {id: s.id, title: s.title || s.id, createdAt: s.createdAt};
-            } catch {
-                return null;
-            }
-        })
-        .filter(Boolean)
-        .sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
-}
-
-function loadSession(projectPath, sessionId) {
-    const file = path.join(getSessionsDir(projectPath), `${sessionId}.json`);
-    if (!fs.existsSync(file)) return null;
-    try {
-        return JSON.parse(fs.readFileSync(file, 'utf8'));
-    } catch {
-        return null;
-    }
-}
-
-function saveSession(projectPath, session) {
-    const dir = getSessionsDir(projectPath);
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, {recursive: true});
-    const file = path.join(dir, `${session.id}.json`);
-    fs.writeFileSync(file, JSON.stringify(session, null, 2));
-}
-
-function deleteSession(projectPath, sessionId) {
-    const file = path.join(getSessionsDir(projectPath), `${sessionId}.json`);
-    if (fs.existsSync(file)) fs.unlinkSync(file);
-}
-
-function getKvDir(cwd, namespace) {
-    const dir = path.join(cwd, 'storage', 'kv', namespace);
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, {recursive: true});
-    return dir;
-}
-
-function kvGet(cwd, namespace, key) {
-    const file = path.join(getKvDir(cwd, namespace), `${key}.json`);
-    if (!fs.existsSync(file)) return null;
-    try {
-        return JSON.parse(fs.readFileSync(file, 'utf8'));
-    } catch {
-        return null;
-    }
-}
-
-function kvSet(cwd, namespace, key, data) {
-    const file = path.join(getKvDir(cwd, namespace), `${key}.json`);
-    fs.writeFileSync(file, JSON.stringify(data, null, 2));
-}
-
-function kvDelete(cwd, namespace, key) {
-    const file = path.join(getKvDir(cwd, namespace), `${key}.json`);
-    if (fs.existsSync(file)) fs.unlinkSync(file);
-}
-
-function kvKeys(cwd, namespace) {
-    const dir = getKvDir(cwd, namespace);
-    if (!fs.existsSync(dir)) return [];
-    return fs.readdirSync(dir)
-        .filter(f => f.endsWith('.json'))
-        .map(f => f.replace(/\.json$/, ''));
-}
-
-function kvClear(cwd, namespace) {
-    const dir = path.join(cwd, 'storage', 'kv', namespace);
-    if (fs.existsSync(dir)) fs.rmSync(dir, {recursive: true, force: true});
+function getStorageMode(req) {
+    const h = req.headers['x-storage-mode'];
+    return (h === 'project' || h === 'storage') ? h : 'storage';
 }
 
 export default function vitePluginA2a() {
-    const cwd = process.cwd();
+    // Use absolute path to a2a-client directory
+    // This ensures storage goes to the correct location regardless of where vite is launched from
+    // Try multiple approaches to find the correct path
+    let basePath = process.cwd();
+    
+    // Check if we're in a2a-client or in a2a-script-agent
+    if (!fs.existsSync(path.join(basePath, 'a2a-client'))) {
+        // Maybe we're in a2a-client already
+        if (fs.existsSync(path.join(basePath, 'web')) || fs.existsSync(path.join(basePath, 'packages'))) {
+            // We're likely in a2a-client, use this as base
+        } else {
+            // Try parent directory (a2a-script-agent case)
+            const parentPath = path.join(basePath, '..');
+            if (fs.existsSync(path.join(parentPath, 'a2a-client'))) {
+                basePath = parentPath;
+            }
+        }
+    }
+    
+    const cwd = fs.existsSync(path.join(basePath, 'a2a-client')) 
+        ? path.join(basePath, 'a2a-client') 
+        : basePath;
+    
+    const storageRoot = getStorageRoot();
+    console.log('[vite-plugin-a2a] Project path:', cwd, '| Storage:', storageRoot);
+    
     return {
         name: 'vite-plugin-a2a',
         configureServer(server) {
+            // Use console.error to ensure visibility
+            console.error('[VitePlugin-A2A] Starting initialization...');
+            
             server.middlewares.use((req, res, next) => {
-                if (!req.url?.startsWith(API_PREFIX)) return next();
+                console.error('[VitePlugin-A2A] REQUEST:', req.method, req.url);
+                if (!req.url?.startsWith(API_PREFIX)) {
+                    console.error('[VitePlugin-A2A] Skipping - not API prefix');
+                    return next();
+                }
+                console.error('[VitePlugin-A2A] Processing:', req.method, req.url);
 
                 const url = new URL(req.url, 'http://localhost');
                 const p = url.pathname.slice(API_PREFIX.length);
@@ -199,42 +167,63 @@ export default function vitePluginA2a() {
                     return;
                 }
 
-                const sessionsListMatch = p.match(/^\/projects\/([^/]+)\/sessions$/);
-                if (req.method === 'GET' && sessionsListMatch) {
-                    const projects = loadProjects(cwd);
-                    const proj = projects.find((x) => x.id === sessionsListMatch[1]);
-                    if (!proj?.path) {
-                        res.writeHead(404).end(JSON.stringify({error: 'Project not found'}));
-                        return;
-                    }
-                    const sessions = listSessions(proj.path);
+                // Removed old project-based session routes - using direct /sessions API instead
+
+                // Session storage API - supports project (.a2a) or storage/sessions via X-Storage-Mode
+                const storageMode = getStorageMode(req);
+                console.log('[VitePlugin] Request:', req.method, p, 'storageMode:', storageMode);
+
+                // GET /api/a2a/sessions - list all sessions
+                if (req.method === 'GET' && p === '/sessions') {
+                    const sessions = storageMode === 'project'
+                        ? listSessions(getProjectPathForSessions(cwd))
+                        : listNewSessions(cwd);
                     res.setHeader('Content-Type', 'application/json');
                     res.end(JSON.stringify({sessions}));
                     return;
                 }
 
-                if (req.method === 'POST' && sessionsListMatch) {
+                // POST /api/a2a/sessions - create new session
+                if (req.method === 'POST' && p === '/sessions') {
                     let body = '';
                     req.on('data', (c) => (body += c));
                     req.on('end', () => {
                         try {
                             const d = JSON.parse(body || '{}');
                             const title = d.title || 'New Session';
-                            const projects = loadProjects(cwd);
-                            const proj = projects.find((x) => x.id === sessionsListMatch[1]);
-                            if (!proj?.path) {
-                                res.writeHead(404).end(JSON.stringify({error: 'Project not found'}));
-                                return;
-                            }
+                            const sessionId = d.id || `sess_${Date.now()}`;
                             const session = {
-                                id: `sess_${Date.now()}`,
-                                projectId: proj.id,
+                                id: sessionId,
                                 title,
                                 createdAt: new Date().toISOString(),
                                 updatedAt: new Date().toISOString(),
-                                messages: [],
+                                status: 'created',
+                                currentStep: 1,
+                                context: { execution: { action: 'task', step: 'new' } },
+                                execute: {
+                                    message:'What would you like me to do?',
+                                    form: {
+                                        input: {
+                                            name: 'task',
+                                            label: 'Enter your task'
+                                        }
+                                    }
+                                }
                             };
-                            saveSession(proj.path, session);
+
+                            if (storageMode === 'project') {
+                                const projectPath = getProjectPathForSessions(cwd);
+                                saveSession(projectPath, session);
+                            } else {
+                                saveNewSession(cwd, session);
+                                saveNewStep(cwd, sessionId, 1, {
+                                    step: 1,
+                                    execute: session.execute,
+                                    messages: [],
+                                    context: session.context
+                                });
+                            }
+
                             res.setHeader('Content-Type', 'application/json');
                             res.end(JSON.stringify({success: true, session}));
                         } catch (e) {
@@ -244,15 +233,17 @@ export default function vitePluginA2a() {
                     return;
                 }
 
-                const sessionDetailMatch = p.match(/^\/projects\/([^/]+)\/sessions\/([^/]+)$/);
-                if (req.method === 'GET' && sessionDetailMatch) {
-                    const projects = loadProjects(cwd);
-                    const proj = projects.find((x) => x.id === sessionDetailMatch[1]);
-                    if (!proj?.path) {
-                        res.writeHead(404).end(JSON.stringify({error: 'Project not found'}));
+                // GET /api/a2a/sessions/:sessionId - get session metadata
+                const newSessionMatch = p.match(/^\/sessions\/([^/]+)$/);
+                if (req.method === 'GET' && newSessionMatch) {
+                    const sessionId = newSessionMatch[1];
+                    if (!isValidSessionId(sessionId)) {
+                        res.writeHead(400).end(JSON.stringify({error: 'Invalid session ID'}));
                         return;
                     }
-                    const session = loadSession(proj.path, sessionDetailMatch[2]);
+                    const session = storageMode === 'project'
+                        ? loadSession(getProjectPathForSessions(cwd), sessionId)
+                        : loadNewSession(cwd, sessionId);
                     if (!session) {
                         res.writeHead(404).end(JSON.stringify({error: 'Session not found'}));
                         return;
@@ -262,19 +253,22 @@ export default function vitePluginA2a() {
                     return;
                 }
 
-                if (req.method === 'PUT' && sessionDetailMatch) {
+                // PUT /api/a2a/sessions/:sessionId - update session
+                if (req.method === 'PUT' && newSessionMatch) {
+                    const sessionId = newSessionMatch[1];
+                    if (!isValidSessionId(sessionId)) {
+                        res.writeHead(400).end(JSON.stringify({error: 'Invalid session ID'}));
+                        return;
+                    }
                     let body = '';
                     req.on('data', (c) => (body += c));
                     req.on('end', () => {
                         try {
                             const d = JSON.parse(body || '{}');
-                            const projects = loadProjects(cwd);
-                            const proj = projects.find((x) => x.id === sessionDetailMatch[1]);
-                            if (!proj?.path) {
-                                res.writeHead(404).end(JSON.stringify({error: 'Project not found'}));
-                                return;
-                            }
-                            const existing = loadSession(proj.path, sessionDetailMatch[2]);
+                            const projectPath = storageMode === 'project' ? getProjectPathForSessions(cwd) : null;
+                            const existing = storageMode === 'project'
+                                ? loadSession(projectPath, sessionId)
+                                : loadNewSession(cwd, sessionId);
                             if (!existing) {
                                 res.writeHead(404).end(JSON.stringify({error: 'Session not found'}));
                                 return;
@@ -282,12 +276,17 @@ export default function vitePluginA2a() {
                             const session = {
                                 ...existing,
                                 ...(d.title !== undefined && {title: d.title}),
-                                ...(d.messages !== undefined && {messages: d.messages}),
-                                ...(d.context !== undefined && {context: d.context}),
+                                ...(d.status !== undefined && {status: d.status}),
                                 ...(d.execute !== undefined && {execute: d.execute}),
+                                ...(d.context !== undefined && {context: d.context}),
+                                ...(d.currentStep !== undefined && {currentStep: d.currentStep}),
                                 updatedAt: new Date().toISOString(),
                             };
-                            saveSession(proj.path, session);
+                            if (storageMode === 'project') {
+                                saveSession(projectPath, session);
+                            } else {
+                                saveNewSession(cwd, session);
+                            }
                             res.setHeader('Content-Type', 'application/json');
                             res.end(JSON.stringify({success: true, session}));
                         } catch (e) {
@@ -297,16 +296,552 @@ export default function vitePluginA2a() {
                     return;
                 }
 
-                if (req.method === 'DELETE' && sessionDetailMatch) {
-                    const projects = loadProjects(cwd);
-                    const proj = projects.find((x) => x.id === sessionDetailMatch[1]);
-                    if (!proj?.path) {
-                        res.writeHead(404).end(JSON.stringify({error: 'Project not found'}));
+                // DELETE /api/a2a/sessions/:sessionId - delete session
+                if (req.method === 'DELETE' && newSessionMatch) {
+                    const sessionId = newSessionMatch[1];
+                    if (!isValidSessionId(sessionId)) {
+                        res.writeHead(400).end(JSON.stringify({error: 'Invalid session ID'}));
                         return;
                     }
-                    deleteSession(proj.path, sessionDetailMatch[2]);
+                    if (storageMode === 'project') {
+                        deleteSession(getProjectPathForSessions(cwd), sessionId);
+                    } else {
+                        deleteNewSession(cwd, sessionId);
+                    }
                     res.setHeader('Content-Type', 'application/json');
                     res.end(JSON.stringify({success: true}));
+                    return;
+                }
+
+                // Steps API - only for storage mode (project mode uses single file)
+                const stepsListMatch = p.match(/^\/sessions\/([^/]+)\/steps$/);
+                if (req.method === 'GET' && stepsListMatch && storageMode === 'storage') {
+                    const sessionId = stepsListMatch[1];
+                    if (!isValidSessionId(sessionId)) {
+                        res.writeHead(400).end(JSON.stringify({error: 'Invalid session ID'}));
+                        return;
+                    }
+                    const steps = listNewSteps(cwd, sessionId);
+                    res.setHeader('Content-Type', 'application/json');
+                    res.end(JSON.stringify({steps}));
+                    return;
+                }
+
+                const stepDetailMatch = p.match(/^\/sessions\/([^/]+)\/steps\/(\d+)$/);
+                if (req.method === 'GET' && stepDetailMatch && storageMode === 'storage') {
+                    const sessionId = stepDetailMatch[1];
+                    if (!isValidSessionId(sessionId)) {
+                        res.writeHead(400).end(JSON.stringify({error: 'Invalid session ID'}));
+                        return;
+                    }
+                    const stepNum = parseInt(stepDetailMatch[2], 10);
+                    const step = loadNewStep(cwd, sessionId, stepNum);
+                    if (!step) {
+                        res.writeHead(404).end(JSON.stringify({error: 'Step not found'}));
+                        return;
+                    }
+                    res.setHeader('Content-Type', 'application/json');
+                    res.end(JSON.stringify(step));
+                    return;
+                }
+
+                if (req.method === 'POST' && stepsListMatch && storageMode === 'storage') {
+                    const sessionId = stepsListMatch[1];
+                    console.log('[VitePlugin] POST /steps - sessionId:', sessionId, 'storageMode:', storageMode);
+                    if (!isValidSessionId(sessionId)) {
+                        console.log('[VitePlugin] Invalid session ID:', sessionId);
+                        res.writeHead(400).end(JSON.stringify({error: 'Invalid session ID'}));
+                        return;
+                    }
+                    let body = '';
+                    req.on('data', (c) => (body += c));
+                    req.on('end', async () => {
+                        try {
+                            const d = JSON.parse(body || '{}');
+                            console.log('[VitePlugin] Step data keys:', Object.keys(d));
+                            const session = loadNewSession(cwd, sessionId);
+                            console.log('[VitePlugin] Loaded session:', session ? 'found' : 'NOT FOUND', sessionId);
+                            if (!session) {
+                                res.writeHead(404).end(JSON.stringify({error: 'Session not found'}));
+                                return;
+                            }
+                            
+                            const nextStepNum = (session.currentStep || 0) + 1;
+                            const stepDir = getNewStepDir(cwd, sessionId, nextStepNum);
+                            
+                            // Save client-result.json (result from client)
+                            if (d.result) {
+                                saveClientResult(cwd, sessionId, nextStepNum, d.result);
+                            }
+                            
+                            // Save messages
+                            const messages = d.messages || [];
+                            
+                            // Prepare context from previous steps
+                            const context = d.context || session.context || {};
+                            
+                            // Build request-to-server.json if there's execute or result
+                            let requestToServer = null;
+                            if (d.result || d.execute) {
+                                requestToServer = {
+                                    step: nextStepNum,
+                                    timestamp: new Date().toISOString(),
+                                    result: d.result,
+                                    execute: d.execute,
+                                    context,
+                                    messages
+                                };
+                                saveRequestToServer(cwd, sessionId, nextStepNum, requestToServer);
+                            }
+                            
+                            // If there's a task or result, make request to A2A Server
+                            let serverResponse = null;
+                            let serverPromise = null;
+                            
+                            if (d.execute?.form?.input || d.result) {
+                                try {
+                                    const a2aUrl = process.env.A2A_SERVER_URL || 'http://localhost:3000';
+                                    const requestBody = {
+                                        id: `req_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+                                        sessionId: sessionId,
+                                        message: d.result?.message || d.execute?.form?.input?.value || '',
+                                        context,
+                                        execution: {
+                                            action: d.execute?.script ? 'script' : (d.result?.choice ? 'action' : 'continue'),
+                                            step: d.execute?.script ? 'run' : 'next'
+                                        }
+                                    };
+                                    
+                                    const serverReqRes = await fetch(`${a2aUrl}/api/v1/requests`, {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json',
+                                            'x-skip-auth': 'true'
+                                        },
+                                        body: JSON.stringify(requestBody)
+                                    });
+                                    
+                                    const serverData = await serverReqRes.json();
+                                    
+                                    // Save server-promise.json
+                                    if (serverData.data?.promiseId) {
+                                        serverPromise = {
+                                            promiseId: serverData.data.promiseId,
+                                            status: serverData.data.status || 'pending',
+                                            pollUrl: serverData.data.pollUrl,
+                                            submittedAt: new Date().toISOString()
+                                        };
+                                        saveServerPromise(cwd, sessionId, nextStepNum, serverPromise);
+                                        
+                                        // Poll for result
+                                        let pollResult = null;
+                                        const maxPolls = 10;
+                                        for (let i = 0; i < maxPolls; i++) {
+                                            await new Promise(r => setTimeout(r, 1000));
+                                            const pollRes = await fetch(`${a2aUrl}/api/v1/requests/${serverPromise.promiseId}/result`, {
+                                                headers: { 'x-skip-auth': 'true' }
+                                            });
+                                            const pollData = await pollRes.json();
+                                            if (pollData.data?.status === 'completed') {
+                                                pollResult = pollData.data;
+                                                break;
+                                            }
+                                        }
+                                        
+                                        if (pollResult) {
+                                            serverResponse = {
+                                                step: nextStepNum,
+                                                timestamp: new Date().toISOString(),
+                                                ...pollResult
+                                            };
+                                        }
+                                    } else if (serverData.data) {
+                                        // Sync response
+                                        serverResponse = {
+                                            step: nextStepNum,
+                                            timestamp: new Date().toISOString(),
+                                            ...serverData.data
+                                        };
+                                    }
+                                } catch (e) {
+                                    console.error('[vite-plugin-a2a] A2A Server request failed:', e.message);
+                                }
+                            }
+                            
+                            // Save server-response.json
+                            if (serverResponse) {
+                                saveServerResponse(cwd, sessionId, nextStepNum, serverResponse);
+                            }
+                            
+                            // Save step file ONLY if there's real data (server response or client result)
+                            // According to api-client-server-logic.md - save step only when there's actual data
+                            const hasRealData = serverResponse || d.result;
+                            if (hasRealData) {
+                                console.log('[VitePlugin] Saving step:', nextStepNum, 'hasRealData:', hasRealData);
+                                saveNewStep(cwd, sessionId, nextStepNum, {
+                                    step: nextStepNum,
+                                    execute: serverResponse?.result?.execute || d.execute,
+                                    messages: messages,
+                                    context: serverResponse?.context || context,
+                                    result: d.result
+                                });
+                            } else {
+                                console.log('[VitePlugin] Skipping step save - no real data');
+                            }
+                            
+                            // Update session metadata
+                            session.currentStep = nextStepNum;
+                            session.updatedAt = new Date().toISOString();
+                            if (serverResponse?.result?.execute) session.execute = serverResponse.result.execute;
+                            if (serverResponse?.context) session.context = serverResponse.context;
+                            if (serverPromise) session.lastPromiseId = serverPromise.promiseId;
+                            saveNewSession(cwd, session);
+                            
+                            res.setHeader('Content-Type', 'application/json');
+                            res.end(JSON.stringify({
+                                success: true,
+                                step: nextStepNum,
+                                session,
+                                serverPromise,
+                                serverResponse
+                            }));
+                        } catch (e) {
+                            res.writeHead(400).end(JSON.stringify({error: String(e?.message || e)}));
+                        }
+                    });
+                    return;
+                }
+
+                const latestMatch = p.match(/^\/sessions\/([^/]+)\/latest$/);
+                if (req.method === 'GET' && latestMatch && storageMode === 'storage') {
+                    const sessionId = latestMatch[1];
+                    if (!isValidSessionId(sessionId)) {
+                        res.writeHead(400).end(JSON.stringify({error: 'Invalid session ID'}));
+                        return;
+                    }
+                    const session = loadNewSession(cwd, sessionId);
+                    if (!session) {
+                        res.writeHead(404).end(JSON.stringify({error: 'Session not found'}));
+                        return;
+                    }
+                    const latestStepNum = getNewSessionLatestStep(cwd, sessionId);
+                    const latestStep = latestStepNum > 0 ? loadNewStep(cwd, sessionId, latestStepNum) : null;
+                    res.setHeader('Content-Type', 'application/json');
+                    res.end(JSON.stringify({
+                        session,
+                        latestStep: latestStepNum,
+                        stepData: latestStep,
+                        hasResponse: latestStep?.result !== undefined
+                    }));
+                    return;
+                }
+
+                const historyMatch = p.match(/^\/sessions\/([^/]+)\/history\/(\d+)$/);
+                if (req.method === 'GET' && historyMatch && storageMode === 'storage') {
+                    const sessionId = historyMatch[1];
+                    if (!isValidSessionId(sessionId)) {
+                        res.writeHead(400).end(JSON.stringify({error: 'Invalid session ID'}));
+                        return;
+                    }
+                    const fromStep = parseInt(historyMatch[2], 10);
+                    const session = loadNewSession(cwd, sessionId);
+                    if (!session) {
+                        res.writeHead(404).end(JSON.stringify({error: 'Session not found'}));
+                        return;
+                    }
+                    const allSteps = listNewSteps(cwd, sessionId);
+                    const stepsFrom = allSteps.filter(s => s >= fromStep);
+                    const history = stepsFrom.map(stepNum => ({
+                        step: stepNum,
+                        data: loadNewStep(cwd, sessionId, stepNum)
+                    }));
+                    res.setHeader('Content-Type', 'application/json');
+                    res.end(JSON.stringify({history}));
+                    return;
+                }
+
+                // === Step Action API: POST /sessions/:id/next - submit client result ===
+                const nextMatch = p.match(/^\/sessions\/([^/]+)\/next$/);
+                if (req.method === 'POST' && nextMatch && storageMode === 'storage') {
+                    const sessionId = nextMatch[1];
+                    if (!isValidSessionId(sessionId)) {
+                        res.writeHead(400).end(JSON.stringify({error: 'Invalid session ID'}));
+                        return;
+                    }
+                    let body = '';
+                    req.on('data', (c) => (body += c));
+                    req.on('end', () => {
+                        try {
+                            const d = JSON.parse(body || '{}');
+                            const { result, context } = d;
+                            
+                            const session = loadNewSession(cwd, sessionId);
+                            if (!session) {
+                                res.writeHead(404).end(JSON.stringify({error: 'Session not found'}));
+                                return;
+                            }
+                            
+                            const currentStep = session.currentStep || 1;
+                            
+                            // Save client-result.json
+                            saveClientResult(cwd, sessionId, currentStep, {
+                                result,
+                                context,
+                                timestamp: new Date().toISOString()
+                            });
+                            
+                            // Create next step with request-to-server.json
+                            const nextStepNum = currentStep + 1;
+                            
+                            // Build request to A2A Server
+                            const requestToServer = {
+                                sessionId,
+                                step: nextStepNum,
+                                context: context || session.context || {},
+                                result: result,
+                                previousStep: currentStep
+                            };
+                            
+                            // Save request-to-server.json for next step
+                            saveRequestToServer(cwd, sessionId, nextStepNum, requestToServer);
+                            
+                            // Initialize next step directory
+                            const stepDir = getNewStepDir(cwd, sessionId, nextStepNum);
+                            if (!fs.existsSync(stepDir)) fs.mkdirSync(stepDir, {recursive: true});
+                            
+                            // Send request to A2A Server (localhost:3000) using Node.js http
+                            const xhr = require('http');
+                            const a2aServerUrl = process.env.A2A_SERVER_URL || 'http://localhost:3000';
+                            const urlObj = new URL(`${a2aServerUrl}/api/v1/requests`);
+                            
+                            let serverResponse = null;
+                            let promiseData = null;
+                            
+                            const reqOptions = {
+                                hostname: urlObj.hostname,
+                                port: urlObj.port,
+                                path: urlObj.pathname,
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' }
+                            };
+                            
+                            const xhrReq = xhr.request(reqOptions, async (xhrRes) => {
+                                let data = '';
+                                xhrRes.on('data', chunk => data += chunk);
+                                xhrRes.on('end', async () => {
+                                    console.log('[VitePlugin] A2A response:', xhrRes.statusCode, 'data:', data.substring(0, 200));
+                                    try {
+                                        const a2aData = JSON.parse(data || '{}');
+                                        
+                                        if (a2aData.promiseId) {
+                                            // Async response - save promise AND wait for completion
+                                            console.log('[VitePlugin] Async response - promiseId:', a2aData.promiseId);
+                                            promiseData = {
+                                                promiseId: a2aData.promiseId,
+                                                status: 'pending',
+                                                submittedAt: new Date().toISOString()
+                                            };
+                                            saveServerPromise(cwd, sessionId, nextStepNum, promiseData);
+                                            
+                                            // Poll for result (max 30 seconds)
+                                            const maxPolls = 30;
+                                            for (let i = 0; i < maxPolls; i++) {
+                                                await new Promise(r => setTimeout(r, 1000));
+                                                try {
+                                                    const pollRes = await fetch(`${a2aServerUrl}/api/v1/requests/${promiseData.promiseId}/result`, {
+                                                        method: 'GET'
+                                                    });
+                                                    const pollData = await pollRes.json();
+                                                    console.log('[VitePlugin] Poll result:', i, pollData.data?.status);
+                                                    if (pollData.data?.status === 'completed') {
+                                                        serverResponse = pollData.data;
+                                                        saveServerResponse(cwd, sessionId, nextStepNum, {
+                                                            step: nextStepNum,
+                                                            timestamp: new Date().toISOString(),
+                                                            ...pollData.data
+                                                        });
+                                                        break;
+                                                    } else if (pollData.data?.status === 'failed') {
+                                                        console.error('[VitePlugin] Promise failed:', pollData.data.error);
+                                                        break;
+                                                    }
+                                                } catch (pollErr) {
+                                                    console.error('[VitePlugin] Poll error:', pollErr.message);
+                                                }
+                                            }
+                                        } else if (xhrRes.statusCode >= 200 && xhrRes.statusCode < 300) {
+                                            // Sync response - save server response directly
+                                            console.log('[VitePlugin] Sync response saved');
+                                            serverResponse = a2aData;
+                                            saveServerResponse(cwd, sessionId, nextStepNum, {
+                                                step: nextStepNum,
+                                                timestamp: new Date().toISOString(),
+                                                ...a2aData
+                                            });
+                                        } else {
+                                            console.error('[VitePlugin] A2A error status:', xhrRes.statusCode);
+                                        }
+                                    } catch (parseErr) {
+                                        console.error('[vite-plugin-a2a] Failed to parse A2A response:', parseErr.message);
+                                    }
+                                    
+                                    // Update session metadata (continue even if A2A request failed)
+                                    session.currentStep = nextStepNum;
+                                    session.updatedAt = new Date().toISOString();
+                                    if (serverResponse?.execute) session.execute = serverResponse.execute;
+                                    if (serverResponse?.context) session.context = serverResponse.context;
+                                    if (promiseData?.promiseId) session.promiseId = promiseData.promiseId;
+                                    saveNewSession(cwd, session);
+                                    
+                                    // Return response to client
+                                    const response = {
+                                        success: true,
+                                        step: nextStepNum,
+                                        session,
+                                        execute: serverResponse?.execute || null,
+                                        promiseId: promiseData?.promiseId || null,
+                                        sync: !promiseData
+                                    };
+                                    
+                                    res.setHeader('Content-Type', 'application/json');
+                                    res.end(JSON.stringify(response));
+                                });
+                            });
+                            
+                            xhrReq.on('error', (e) => {
+                                console.error('[vite-plugin-a2a] A2A Server request failed:', e.message);
+                                // Continue with error response
+                                session.currentStep = nextStepNum;
+                                session.updatedAt = new Date().toISOString();
+                                saveNewSession(cwd, session);
+                                
+                                const response = {
+                                    success: true,
+                                    step: nextStepNum,
+                                    session,
+                                    execute: null,
+                                    promiseId: null,
+                                    sync: true,
+                                    error: 'A2A server unavailable'
+                                };
+                                
+                                res.setHeader('Content-Type', 'application/json');
+                                res.end(JSON.stringify(response));
+                            });
+                            
+                            xhrReq.write(JSON.stringify(requestToServer));
+                            xhrReq.end();
+                        } catch (e) {
+                            res.writeHead(400).end(JSON.stringify({error: String(e?.message || e)}));
+                        }
+                    });
+                    return;
+                }
+
+                // === Promise Status API: GET /sessions/:id/promise/:promiseId ===
+                const promiseMatch = p.match(/^\/sessions\/([^/]+)\/promise\/([^/]+)$/);
+                if (req.method === 'GET' && promiseMatch && storageMode === 'storage') {
+                    const sessionId = promiseMatch[1];
+                    const promiseId = promiseMatch[2];
+                    if (!isValidSessionId(sessionId)) {
+                        res.writeHead(400).end(JSON.stringify({error: 'Invalid session ID'}));
+                        return;
+                    }
+                    
+                    const session = loadNewSession(cwd, sessionId);
+                    if (!session) {
+                        res.writeHead(404).end(JSON.stringify({error: 'Session not found'}));
+                        return;
+                    }
+                    
+                    // Poll A2A Server for promise status - using callback style
+                    const a2aServerUrl = process.env.A2A_SERVER_URL || 'http://localhost:3000';
+                    const xhr = require('http');
+                    const urlObj = new URL(`${a2aServerUrl}/api/v1/promises/${promiseId}`);
+                    
+                    const reqOptions = {
+                        hostname: urlObj.hostname,
+                        port: urlObj.port,
+                        path: urlObj.pathname,
+                        method: 'GET',
+                        headers: { 'Content-Type': 'application/json' }
+                    };
+                    
+                    const xhrReq = xhr.request(reqOptions, (xhrRes) => {
+                        let data = '';
+                        xhrRes.on('data', chunk => data += chunk);
+                        xhrRes.on('end', () => {
+                            try {
+                                const promiseStatus = JSON.parse(data || '{}');
+                                
+                                // Update server-promise.json with latest status
+                                const currentStep = session.currentStep || 1;
+                                const existingPromise = loadServerPromise(cwd, sessionId, currentStep);
+                                const updatedPromise = {
+                                    ...existingPromise,
+                                    ...promiseStatus,
+                                    checkedAt: new Date().toISOString()
+                                };
+                                saveServerPromise(cwd, sessionId, currentStep, updatedPromise);
+                                
+                                // If completed, save server response
+                                if (promiseStatus.status === 'completed' || promiseStatus.status === 'done') {
+                                    saveServerResponse(cwd, sessionId, currentStep, {
+                                        step: currentStep,
+                                        timestamp: new Date().toISOString(),
+                                        ...promiseStatus
+                                    });
+                                    
+                                    // Update session with response data
+                                    if (promiseStatus.execute) session.execute = promiseStatus.execute;
+                                    if (promiseStatus.context) session.context = promiseStatus.context;
+                                    session.status = 'completed';
+                                    session.updatedAt = new Date().toISOString();
+                                    saveNewSession(cwd, session);
+                                }
+                                
+                                res.setHeader('Content-Type', 'application/json');
+                                res.end(JSON.stringify({
+                                    promiseId,
+                                    status: promiseStatus.status || 'pending',
+                                    result: promiseStatus.result || null,
+                                    execute: promiseStatus.execute || null,
+                                    completed: promiseStatus.status === 'completed' || promiseStatus.status === 'done'
+                                }));
+                            } catch (e) {
+                                res.writeHead(500).end(JSON.stringify({error: 'Failed to parse promise response'}));
+                            }
+                        });
+                    });
+                    
+                    xhrReq.on('error', (e) => {
+                        res.writeHead(500).end(JSON.stringify({error: 'Failed to check promise status: ' + e.message}));
+                    });
+                    
+                    xhrReq.end();
+                    return;
+                }
+
+                // === Step Files API: GET/PUT /sessions/:id/step/:stepNum/files/:filename ===
+                const stepFileMatch = p.match(/^\/sessions\/([^/]+)\/step\/(\d+)\/(server-promise|client-result|request-to-server|server-response)\.json$/);
+                if (req.method === 'GET' && stepFileMatch && storageMode === 'storage') {
+                    const sessionId = stepFileMatch[1];
+                    const stepNum = parseInt(stepFileMatch[2], 10);
+                    const filename = stepFileMatch[3] + '.json';
+                    
+                    if (!isValidSessionId(sessionId)) {
+                        res.writeHead(400).end(JSON.stringify({error: 'Invalid session ID'}));
+                        return;
+                    }
+                    
+                    const data = loadStepFile(cwd, sessionId, stepNum, filename);
+                    if (!data) {
+                        res.writeHead(404).end(JSON.stringify({error: 'File not found'}));
+                        return;
+                    }
+                    
+                    res.setHeader('Content-Type', 'application/json');
+                    res.end(JSON.stringify(data));
                     return;
                 }
 
@@ -345,7 +880,8 @@ export default function vitePluginA2a() {
                     if (req.method === 'GET') {
                         const data = kvGet(cwd, ns, key);
                         if (data === null) {
-                            res.writeHead(404).end(JSON.stringify({error: 'Key not found'}));
+                            res.setHeader('Content-Type', 'application/json');
+                            res.end(JSON.stringify({value: null}));
                             return;
                         }
                         res.setHeader('Content-Type', 'application/json');

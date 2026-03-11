@@ -49,6 +49,10 @@ export function setupRoutes(options: RouteOptions = {}): Router {
 
     // Storage routes (bypasses auth) - must be before middleware
     router.use('/api/storage', storageRoutes);
+    
+    // Step file routes (bypasses auth for web client compatibility)
+    // These need to be before auth middleware to allow anonymous access
+    router.use('/api/a2a/sessions', sessionsRoutes);
 
     // Apply global middleware if enabled
     if (enableAuth) {

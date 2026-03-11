@@ -83,9 +83,15 @@ export async function invoke(clientId: string, input: InvokeInput): Promise<Invo
         if ((result as Record<string, unknown>).choice) {
             ctx['choice_id'] = (result as Record<string, unknown>).choice;
         }
+        // Parse task from result.message for action processor (Client API sends result.message)
+        const msg = (result as Record<string, unknown>).message;
+        if (msg && typeof msg === 'string') {
+            ctx['message'] = msg;
+            ctx['task'] = msg;
+        }
     }
 
-    const message = input.message ?? input.task;
+    const message = input.message ?? input.task ?? (result && typeof result === 'object' ? (result as Record<string, unknown>).message as string : undefined);
 
     const {promiseId} = await requestService.create({
         clientId,

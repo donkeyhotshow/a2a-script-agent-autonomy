@@ -12,9 +12,23 @@
         </div>
     </div>
     <div class="header-center">
-        <!-- Dynamic content can be inserted here -->
+        <!-- Storage mode toggle: project folder vs ~/.a2a-client/sessions -->
+        <div class="storage-mode-toggle">
+            <label class="toggle-label">
+                <span class="toggle-text">Storage:</span>
+                <select class="header-select storage-select" id="storageModeSelect">
+                    <option value="project">Project (.a2a)</option>
+                    <option value="storage">Persistent (~/.a2a-client)</option>
+                </select>
+            </label>
+        </div>
     </div>
     <div class="header-right">
+        <!-- Loader indicator (shown when waiting for server response) -->
+        <div class="loader-indicator" id="loaderIndicator" style="display: none;">
+            <div class="loader-spinner"></div>
+            <span class="loader-text">Processing...</span>
+        </div>
         <button class="header-btn" id="projectsBtn">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M3 7v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-6l-4-4H5a2 2 0 0 0-2 2z"/>

@@ -23,15 +23,23 @@
                 // Don't reset here as it would clear loaded messages
 
                 const taskFlowRef = {
+                    sendMessage: (sid, m) => WindowEvents.sendMessage(sid, m),
                     sendMessageResult: async (text, el) => {
                         if (!text || !text.trim()) return;
-                        store.pushMessage?.({ content: String(text).trim() }, 'user');
+                        const msg = String(text).trim();
+                        store.pushMessage?.({ content: msg }, 'user');
                         store?.setPromisePending?.(true);
+                        if (store?.saveStep && store?.isPersistentStorage?.()) {
+                            store.saveStep({ execute: { form: { input: { value: msg } } }, messages: [{ role: 'user', content: msg }], context: store?.context }).catch(() => {});
+                        }
                         refreshContent();
-                        await this.sendMessage(sessionId, text);
+                        await taskFlowRef.sendMessage(sessionId, msg);
                     },
                     sendChoice: async (choiceId, el) => {
                         store?.setPromisePending?.(true);
+                        if (store?.saveStep && store?.isPersistentStorage?.()) {
+                            store.saveStep({ execute: { form: { choice: choiceId } }, messages: [], context: store?.context }).catch(() => {});
+                        }
                         refreshContent();
                         await this.sendChoice(sessionId, choiceId);
                     }

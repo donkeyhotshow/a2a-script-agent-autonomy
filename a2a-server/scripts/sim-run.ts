@@ -101,6 +101,7 @@ async function runSingleSimulation(simDir: string, baseDir: string): Promise<boo
 
     const message = requestData.task ||
         requestData.message ||
+        requestData.result?.message ||
         requestData.context?.task ||
         requestData.context?.message ||
         'N/A';
@@ -128,10 +129,17 @@ async function runSingleSimulation(simDir: string, baseDir: string): Promise<boo
             context: context,
         };
 
+        // Handle task/message from various sources
         if (requestData.task) {
             invokeInput.task = requestData.task;
         } else if (requestData.message) {
             invokeInput.message = requestData.message;
+        } else if (requestData.result?.message) {
+            // Support format: { result: { message: "..." } }
+            invokeInput.message = requestData.result.message;
+        } else if (requestData.result?.choice) {
+            // Support format: { result: { choice: "..." } } for router selections
+            invokeInput.selectedAction = { actionId: requestData.result.choice };
         }
 
         if (requestData.action) {

@@ -257,11 +257,38 @@ export class ActionRequestProcessor extends BaseRequestProcessor {
             };
         }
 
-        // No action matched - return empty result to continue with neuron flow
-        logger.info('[ActionRequestProcessor] No action matched, continuing with neuron flow');
+        // No action matched - return default router with choices (server-side, not LLM)
+        logger.info('[ActionRequestProcessor] No action matched, returning default router');
         return {
-            outcome: 'completed',
-            message: 'No matching action found'
+            outcome: 'action_proposal',
+            context: {
+                session_id: sessionId,
+                version: '1.0',
+                execution: {
+                    action: 'task',
+                    step: 'router'
+                },
+                task: taskText
+            },
+            execute: {
+                form: {
+                    title: 'Оберіть спосіб виконання',
+                    choices: [
+                        {
+                            id: 'dialog',
+                            label: 'AI діалог з користувачем'
+                        },
+                        {
+                            id: 'auto-ai',
+                            label: 'AI Action Generator — сгенерировать экшен с помощью LLM'
+                        },
+                        {
+                            id: 'task-decomposition',
+                            label: 'Декомпозиция задачи вручную'
+                        }
+                    ]
+                }
+            }
         } as ProcessResult;
     }
 }

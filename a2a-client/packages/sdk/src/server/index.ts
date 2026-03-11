@@ -11,6 +11,7 @@
 
 import express, { type Application, type Request, type Response } from 'express';
 import cors from 'cors';
+import { fileURLToPath } from 'node:url';
 
 // Import services from ./services
 import {
@@ -173,3 +174,9 @@ export default {
     startServer,
     getApp,
 };
+
+const entryPoint = fileURLToPath(import.meta.url);
+
+if (process.argv[1] === entryPoint) {
+    startServer();
+}

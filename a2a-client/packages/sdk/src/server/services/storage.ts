@@ -2,10 +2,12 @@
  * Storage Utilities
  * 
  * Common utilities for file system operations used by services.
+ * Storage is outside project - in user data dir (~/.a2a-client)
  */
 
 import * as fs from 'fs/promises';
 import path from 'path';
+import os from 'os';
 import { fileURLToPath } from 'url';
 
 // ESM compatible __dirname
@@ -18,13 +20,12 @@ const __dirname = path.dirname(__filename);
 
 /**
  * Get the storage directory path
- * Resolves to a2a-client/storage relative to the SDK
+ * Uses A2A_CLIENT_STORAGE_DIR or local storage (a2a-client/storage)
  */
 export function getStorageDir(): string {
-    // Resolve a2a-client root: from .../sdk/src/server or .../sdk/dist/server -> .../sdk -> .../a2a-client
-    const sdkRoot = path.resolve(__dirname, '../..');
-    const a2aClientRoot = path.resolve(sdkRoot, '../..');
-    return process.env.A2A_CLIENT_STORAGE_DIR || path.join(a2aClientRoot, 'storage');
+    if (process.env.A2A_CLIENT_STORAGE_DIR) return process.env.A2A_CLIENT_STORAGE_DIR;
+    // Default to local storage in project for web client compatibility
+    return path.join(process.cwd(), '..', 'storage');
 }
 
 /**

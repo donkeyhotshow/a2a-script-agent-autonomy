@@ -2,6 +2,14 @@
  * API Integration Module
  * Connects UI components with Client API (single apiBase, e.g. localhost:3001).
  * Uses HTTP with promiseId polling. SSE/WebSocket removed.
+ * 
+ * Step Files Structure (storage mode):
+ * storage/sessions/{SESSION_ID}/{STEP}/
+ *   - server-response.json - ответ от A2A сервера
+ *   - server-promise.json - данные о промисе (если есть)
+ *   - client-result.json - результат от клиента (web/авто)
+ *   - request-to-server.json - запрос к серверу
+ *   - messages.json - история сообщений
  */
 
 // Fetch with timeout and retry logic (shared across web client)
@@ -147,32 +155,37 @@ class APIIntegration {
         return { success: false };
     }
 
+    _getStorageHeaders() {
+        const mode = (typeof window !== 'undefined' ? window : globalThis).SessionStore?.getStorageMode?.() || 'storage';
+        return { 'X-Storage-Mode': mode };
+    }
+
     /**
      * Get sessions (uses Vite plugin)
      */
     async getSessions(projectId = null) {
-        if (!projectId) {
-            console.warn('[API] getSessions requires projectId');
-            return [];
-        }
-        const res = await fetch(`/api/a2a/projects/${encodeURIComponent(projectId)}/sessions`);
+        const headers = { ...this._getHeaders(), ...this._getStorageHeaders() };
+        const res = await fetch(`/api/a2a/sessions`, { headers });
         if (!res.ok) return [];
         const raw = await res.json();
-        return Array.isArray(raw) ? raw : (raw?.sessions || raw?.data || []);
+        let sessions = Array.isArray(raw) ? raw : (raw?.sessions || raw?.data || []);
+        // Filter by projectId if provided (for backward compatibility)
+        if (projectId) {
+            sessions = sessions.filter(s =>
+                (s.projectId ?? s.metadata?.projectId) === projectId || (s.projectId ?? s.metadata?.projectId) === undefined
+            );
+        }
+        return sessions;
     }
 
     /**
      * Create session (uses Vite plugin)
      */
-    async createSession(params) {
-        const projectId = params?.projectId;
-        if (!projectId) {
-            console.warn('[API] createSession requires projectId');
-            return null;
-        }
-        const res = await fetch(`/api/a2a/projects/${encodeURIComponent(projectId)}/sessions`, {
+    async createSession(params = {}) {
+        const headers = { 'Content-Type': 'application/json', ...this._getStorageHeaders() };
+        const res = await fetch(`/api/a2a/sessions`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers,
             body: JSON.stringify(params)
         });
         if (!res.ok) throw new Error(`createSession failed: ${res.status}`);
@@ -184,11 +197,8 @@ class APIIntegration {
      * Get session by ID (uses Vite plugin)
      */
     async getSession(sessionId, projectId = null) {
-        if (!projectId) {
-            console.warn('[API] getSession requires projectId');
-            return null;
-        }
-        const res = await fetch(`/api/a2a/projects/${encodeURIComponent(projectId)}/sessions/${encodeURIComponent(sessionId)}`);
+        const headers = { ...this._getHeaders(), ...this._getStorageHeaders() };
+        const res = await fetch(`/api/a2a/sessions/${encodeURIComponent(sessionId)}`, { headers });
         if (!res.ok) return null;
         return res.json();
     }
@@ -197,12 +207,10 @@ class APIIntegration {
      * Delete session (uses Vite plugin)
      */
     async deleteSession(sessionId, projectId = null) {
-        if (!projectId) {
-            console.warn('[API] deleteSession requires projectId');
-            return { success: false };
-        }
-        const res = await fetch(`/api/a2a/projects/${encodeURIComponent(projectId)}/sessions/${encodeURIComponent(sessionId)}`, {
-            method: 'DELETE'
+        const headers = { ...this._getStorageHeaders() };
+        const res = await fetch(`/api/a2a/sessions/${encodeURIComponent(sessionId)}`, {
+            method: 'DELETE',
+            headers
         });
         return { success: res.ok };
     }
@@ -212,6 +220,113 @@ class APIIntegration {
      */
     async cancelSession(sessionId) {
         return this.request('POST', `/sessions/${sessionId}/cancel`);
+    }
+
+    // === Step Files API ===
+    
+    /**
+     * Get step files from session
+     * @param {string} sessionId - Session ID
+     * @param {number} stepNum - Step number
+     * @returns {Promise<Object>} Step data with all files
+     */
+    async getStep(sessionId, stepNum) {
+        const headers = { ...this._getHeaders(), ...this._getStorageHeaders() };
+        const res = await fetch(`/api/a2a/sessions/${encodeURIComponent(sessionId)}/steps/${stepNum}`, { headers });
+        if (!res.ok) return null;
+        return res.json();
+    }
+
+    /**
+     * Get server-promise.json for step
+     */
+    async getServerPromise(sessionId, stepNum) {
+        const headers = { ...this._getHeaders(), ...this._getStorageHeaders() };
+        const res = await fetch(`/api/a2a/sessions/${encodeURIComponent(sessionId)}/step/${stepNum}/server-promise.json`, { headers });
+        if (!res.ok) return null;
+        return res.json();
+    }
+
+    /**
+     * Get client-result.json for step
+     */
+    async getClientResult(sessionId, stepNum) {
+        const headers = { ...this._getHeaders(), ...this._getStorageHeaders() };
+        const res = await fetch(`/api/a2a/sessions/${encodeURIComponent(sessionId)}/step/${stepNum}/client-result.json`, { headers });
+        if (!res.ok) return null;
+        return res.json();
+    }
+
+    /**
+     * Get request-to-server.json for step
+     */
+    async getRequestToServer(sessionId, stepNum) {
+        const headers = { ...this._getHeaders(), ...this._getStorageHeaders() };
+        const res = await fetch(`/api/a2a/sessions/${encodeURIComponent(sessionId)}/step/${stepNum}/request-to-server.json`, { headers });
+        if (!res.ok) return null;
+        return res.json();
+    }
+
+    /**
+     * Get server-response.json for step
+     */
+    async getServerResponse(sessionId, stepNum) {
+        const headers = { ...this._getHeaders(), ...this._getStorageHeaders() };
+        const res = await fetch(`/api/a2a/sessions/${encodeURIComponent(sessionId)}/step/${stepNum}/server-response.json`, { headers });
+        if (!res.ok) return null;
+        return res.json();
+    }
+
+    /**
+     * Submit client result and trigger next step
+     * This creates client-result.json and sends request to A2A Server
+     */
+    async submitNext(sessionId, result, context = {}) {
+        const headers = { 'Content-Type': 'application/json', ...this._getStorageHeaders() };
+        const res = await fetch(`/api/a2a/sessions/${encodeURIComponent(sessionId)}/next`, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({ result, context })
+        });
+        if (!res.ok) {
+            const error = await res.json().catch(() => ({}));
+            throw new Error(error?.error?.message || `submitNext failed: ${res.status}`);
+        }
+        return res.json();
+    }
+
+    /**
+     * Check promise status
+     */
+    async checkPromise(sessionId, promiseId) {
+        const headers = { ...this._getHeaders(), ...this._getStorageHeaders() };
+        const res = await fetch(`/api/a2a/sessions/${encodeURIComponent(sessionId)}/promise/${encodeURIComponent(promiseId)}`, {
+            method: 'GET',
+            headers
+        });
+        if (!res.ok) return null;
+        return res.json();
+    }
+
+    /**
+     * Get session history from step
+     */
+    async getHistory(sessionId, fromStep = 1) {
+        const headers = { ...this._getHeaders(), ...this._getStorageHeaders() };
+        const res = await fetch(`/api/a2a/sessions/${encodeURIComponent(sessionId)}/history/${fromStep}`, { headers });
+        if (!res.ok) return [];
+        const raw = await res.json();
+        return raw?.history || [];
+    }
+
+    /**
+     * Get latest step data
+     */
+    async getLatestStep(sessionId) {
+        const headers = { ...this._getHeaders(), ...this._getStorageHeaders() };
+        const res = await fetch(`/api/a2a/sessions/${encodeURIComponent(sessionId)}/latest`, { headers });
+        if (!res.ok) return null;
+        return res.json();
     }
 
     /**

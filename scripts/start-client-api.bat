@@ -14,10 +14,11 @@ for /f "tokens=5" %%p in ('netstat -ano ^| findstr ":%CLIENT_API_PORT%" ^| finds
     exit /b 0
 )
 
-REM Start client-api
-cd a2a-client\packages\sdk
-start "client-api" cmd /c "npx cross-env PORT=3001 WS_PORT=3002 DEFAULT_SYNC_MODE=1 tsx watch src/server/index.ts ^> ..\..\logs\client-api.log 2^>^&1"
-cd ..\..\..
+REM Create logs directory if it doesn't exist (required for redirect)
+if not exist "a2a-client\packages\sdk\logs" mkdir "a2a-client\packages\sdk\logs"
+
+REM Start client-api - use /d to set working directory explicitly
+start "client-api" /d "a2a-client\packages\sdk" cmd /c "npx cross-env PORT=3001 WS_PORT=3002 DEFAULT_SYNC_MODE=1 SKIP_AUTH=1 tsx watch src/server/index.ts ^> ..\..\logs\client-api.log 2^>^&1"
 
 powershell -Command "Start-Sleep -Seconds 15"
 

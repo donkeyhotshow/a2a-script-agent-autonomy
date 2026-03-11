@@ -2,6 +2,10 @@
  * SessionStore - Unified session state management
  * Single source of truth for: context, execute, messages, session metadata
  * Replaces: SessionManager state + SessionViewModel + fragmented SessionSync
+ * 
+ * Supports two storage modes:
+ * - 'memory': In-memory only (default, legacy behavior)
+ * - 'storage': Persistent storage in ~/.a2a-client/sessions/ with numbered folders
  */
 
 (function (global) {
@@ -43,12 +47,20 @@
             
             // Session logs (two types)
             responsesLog: [],  // Raw server responses
-            messagesLog: []   // Human-readable messages for frontend display
+            messagesLog: [],   // Human-readable messages for frontend display
+            
+            // New: numbered steps tracking
+            currentStep: 0,
+            steps: []
         };
 
         this._listeners = new Map();
         this._apiBase = '/api';
         this._persistTimer = null;
+        
+        // Storage mode: 'project' (.a2a/sessions) or 'storage' (~/.a2a-client/sessions)
+        this._storageMode = 'storage';
+        this._storageBase = '/api/a2a/sessions';
 
     }
 
@@ -63,6 +75,39 @@
             console.log('[SessionStore] Initialized', this._state.sessionId ? `(session ${this._state.sessionId})` : '(no session)');
             return this;
         };
+
+    // === Storage Mode ===
+    
+    /**
+     * Set storage mode
+     * @param {string} mode - 'project' (.a2a/sessions) or 'storage' (~/.a2a-client/sessions)
+     */
+    SessionStore.prototype.setStorageMode = function(mode) {
+        if (mode !== 'project' && mode !== 'storage') {
+            console.warn('[SessionStore] Invalid storage mode:', mode, '- using storage');
+            mode = 'storage';
+        }
+        this._storageMode = mode;
+        console.log('[SessionStore] Storage mode:', mode);
+        this._emit('storageMode', mode);
+        return this;
+    };
+
+    /**
+     * Get current storage mode
+     * @returns {string} 'project' or 'storage'
+     */
+    SessionStore.prototype.getStorageMode = function() {
+        return this._storageMode;
+    };
+
+    /**
+     * Check if using persistent storage (~/.a2a-client/sessions with numbered folders)
+     * @returns {boolean}
+     */
+    SessionStore.prototype.isPersistentStorage = function() {
+        return this._storageMode === 'storage';
+    };
 
     // === Persistence ===
     // Note: Local persistence removed - all state is ephemeral
@@ -233,6 +278,43 @@
             this.pushMessage(msg, 'assistant');
         }
 
+        // NEW: Handle auto-execute commands (no user input required)
+        // When server sends execute without form.input or form.choices,
+        // create automatic system messages
+        if (execute && !execute.form?.input && !execute.form?.choices) {
+            // Auto-message: server is doing work without user input
+            if (execute.message) {
+                // Already handled above
+            } else if (execute.action) {
+                // Server is executing an action automatically
+                this.pushMessage({
+                    content: `Executing: ${execute.action}`,
+                    metadata: { type: 'auto-action', action: execute.action }
+                }, 'system');
+            } else if (execute.script) {
+                // Server is running a script
+                this.pushMessage({
+                    content: `Running script...`,
+                    metadata: { type: 'auto-script' }
+                }, 'system');
+            } else if (execute.result) {
+                // Server returned a result without user input
+                const resultMsg = typeof execute.result === 'string'
+                    ? execute.result
+                    : execute.result.summary || execute.result.action || 'Task completed';
+                this.pushMessage({
+                    content: resultMsg,
+                    metadata: { type: 'auto-result', result: execute.result }
+                }, 'system');
+            }
+            
+            // No form means auto-continue: server will process next step automatically
+            // Emit event for UI to handle auto-continue if needed
+            if (!execute.form) {
+                this._emit('autoContinue', execute);
+            }
+        }
+
         // Handle finalResult - task completed
         if (execute?.finalResult) {
             this._state.status = 'completed';
@@ -249,12 +331,38 @@
             this._state.status = 'waiting';
             this._state._waitIndicatorActive = true;
             this._emit('wait', waitData);
-            
-            // Log wait message for frontend display
+
             if (waitData.message) {
                 this.logMessage('system', waitData.message, { type: 'wait', showFormAfter: waitData.showFormAfter });
             }
         }
+
+        // NOTE: Auto-save disabled - server manages steps via /next endpoint
+        // Server creates steps when receiving result from client and response from A2A server
+        // See api-client-server-logic.md for details
+        /*if (this._storageMode === 'storage' && this._state.sessionId && execute) {
+            // Initial form has ONLY form.input (with value) and nothing else
+            // It's the "What would you like me to do?" prompt - DON'T save
+            const hasInput = !!execute.form?.input;
+            const hasChoices = !!execute.form?.choices;
+            const hasMessage = !!execute.message;
+            const hasWait = !!execute.wait;
+            const hasFinalResult = !!execute.finalResult;
+            const hasResult = !!execute.result;
+            
+            // Save step only if there's real data (not just initial form)
+            const hasRealData = hasChoices || hasMessage || hasWait || hasFinalResult || hasResult;
+            if (hasRealData) {
+                console.log('[SessionStore] Auto-save step for:', this._state.sessionId, 'hasRealData:', hasRealData);
+                console.log('[SessionStore] Auto-save step for:', this._state.sessionId);
+                this.saveStep({
+                    execute,
+                    messages: this._state.messages.slice(-5),
+                    context: this._state.context,
+                    result: execute.result || execute.finalResult
+                }).catch((err) => console.warn('[SessionStore] Auto-save step failed:', err));
+            }
+        }*/
 
         return this;
     };
@@ -513,6 +621,269 @@
         this._state.messagesLog = [];
         this._emit('logsCleared');
         console.log('[SessionStore] Logs cleared');
+    };
+
+    // === NEW: Session Storage API (numbered folders) ===
+
+    /**
+     * Create a new session with execute form input (Step 1)
+     * @param {string} title - Session title
+     * @returns {Promise<Object>} Created session data
+     */
+    SessionStore.prototype.createSessionWithForm = async function(title = 'New Session') {
+        try {
+            const headers = { 'Content-Type': 'application/json' };
+            if (this._storageMode) headers['X-Storage-Mode'] = this._storageMode;
+            const response = await fetch(`${this._storageBase}`, {
+                method: 'POST',
+                headers,
+                body: JSON.stringify({ title })
+            });
+
+            if (!response.ok) {
+                throw new Error(`Failed to create session: ${response.status}`);
+            }
+
+            const data = await response.json();
+
+            if (!data.success) {
+                throw new Error(data.error || 'Server returned unsuccessful response');
+            }
+
+            if (!data.session) {
+                throw new Error('Session data missing in response');
+            }
+
+            const session = data.session;
+            this.createSession(session);
+            this.setExecute(session.execute);
+            this._state.currentStep = session.currentStep || 1;
+            this._emit('sessionCreated', { id: session.id, projectId: session.projectId, task: session.task, title: session.title });
+            console.log('[SessionStore] Session created with form:', session.id);
+            return session;
+        } catch (error) {
+            console.error('[SessionStore] createSessionWithForm error:', error);
+            this.setError(error);
+            throw error;
+        }
+    };
+
+    /**
+     * Save current step to storage
+     * @param {Object} stepData - Step data (execute, messages, context, result)
+     * @returns {Promise<number>} Step number
+     */
+    SessionStore.prototype._storageHeaders = function() {
+        return { 'X-Storage-Mode': this._storageMode };
+    };
+
+    SessionStore.prototype.saveStep = async function(stepData) {
+        if (!this._state.sessionId) {
+            console.warn('[SessionStore] No session to save step to');
+            return null;
+        }
+
+        if (this._storageMode !== 'storage') {
+            this._state.currentStep++;
+            this._state.steps.push(this._state.currentStep);
+            return this._state.currentStep;
+        }
+
+        try {
+            const response = await fetch(`${this._storageBase}/${this._state.sessionId}/steps`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', ...this._storageHeaders() },
+                body: JSON.stringify(stepData)
+            });
+            
+            if (!response.ok) {
+                throw new Error(`Failed to save step: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            
+            if (!data.success) {
+                throw new Error(data.error || 'Failed to save step: server returned unsuccessful response');
+            }
+            
+            // Initialize steps array if not exists
+            if (!this._state.steps) {
+                this._state.steps = [];
+            }
+            
+            this._state.currentStep = data.step;
+            this._state.steps.push(data.step);
+            console.log('[SessionStore] Step saved:', data.step);
+            return data.step;
+        } catch (error) {
+            console.error('[SessionStore] saveStep error:', error);
+            throw error;
+        }
+    };
+
+    /**
+     * Load session from storage
+     * @param {string} sessionId - Session ID to load
+     * @returns {Promise<Object>} Session data
+     */
+    SessionStore.prototype.loadSession = async function(sessionId) {
+        try {
+            const response = await fetch(`${this._storageBase}/${sessionId}`, {
+                headers: this._storageHeaders()
+            });
+            
+            if (!response.ok) {
+                throw new Error(`Failed to load session: ${response.status}`);
+            }
+            
+            const session = await response.json();
+            
+            if (!session || !session.id) {
+                throw new Error('Invalid session data: missing session ID');
+            }
+            
+            // Restore state
+            this._state.sessionId = session.id;
+            this._state.projectId = session.projectId;
+            this._state.status = session.status || 'active';
+            this._state.currentStep = session.currentStep || 1;
+            this._state.execute = session.execute;
+            this._state.context = session.context;
+            
+            // Load step history if requested
+            if (session.currentStep > 0) {
+                const historyResponse = await fetch(`${this._storageBase}/${sessionId}/history/1`, {
+                    headers: this._storageHeaders()
+                });
+                if (historyResponse.ok) {
+                    const historyData = await historyResponse.json();
+                    this._state.steps = historyData.history?.map(h => h.step) || [];
+                }
+            }
+            
+            this._emit('sessionLoaded', session);
+            console.log('[SessionStore] Session loaded:', sessionId);
+            return session;
+        } catch (error) {
+            console.error('[SessionStore] loadSession error:', error);
+            throw error;
+        }
+    };
+
+    /**
+     * Get latest step to check for server response (for loader)
+     * @returns {Promise<Object>} Latest step data
+     */
+    SessionStore.prototype.checkLatestStep = async function() {
+        if (!this._state.sessionId) {
+            return null;
+        }
+        
+        if (this._storageMode !== 'storage') {
+            // In memory mode, just check if we have pending execute
+            return {
+                hasResponse: !!this._state.execute,
+                stepData: { execute: this._state.execute }
+            };
+        }
+        
+        try {
+            const response = await fetch(`${this._storageBase}/${this._state.sessionId}/latest`, {
+                headers: this._storageHeaders()
+            });
+            
+            if (!response.ok) {
+                return null;
+            }
+            
+            const data = await response.json();
+            
+            if (!data) {
+                return null;
+            }
+            
+            return data;
+        } catch (error) {
+            console.error('[SessionStore] checkLatestStep error:', error);
+            return null;
+        }
+    };
+
+    /**
+     * Get history from specific step
+     * @param {number} fromStep - Step number to start from
+     * @returns {Promise<Array>} History array
+     */
+    SessionStore.prototype.getHistory = async function(fromStep = 1) {
+        if (!this._state.sessionId) {
+            return [];
+        }
+        
+        if (this._storageMode !== 'storage') {
+            return this._state.messages.slice(fromStep - 1);
+        }
+        
+        try {
+            const response = await fetch(`${this._storageBase}/${this._state.sessionId}/history/${fromStep}`, {
+                headers: this._storageHeaders()
+            });
+            
+            if (!response.ok) {
+                throw new Error(`Failed to get history: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            
+            if (!data || !Array.isArray(data.history)) {
+                console.warn('[SessionStore] Invalid history response');
+                return [];
+            }
+            
+            return data.history || [];
+        } catch (error) {
+            console.error('[SessionStore] getHistory error:', error);
+            return [];
+        }
+    };
+
+    /**
+     * List all sessions
+     * @returns {Promise<Array>} Array of sessions
+     */
+    SessionStore.prototype.listSessions = async function() {
+        if (this._storageMode !== 'storage') {
+            return [];
+        }
+        
+        try {
+            const response = await fetch(`${this._storageBase}`, {
+                headers: this._storageHeaders()
+            });
+            
+            if (!response.ok) {
+                throw new Error(`Failed to list sessions: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            
+            if (!data || !Array.isArray(data.sessions)) {
+                console.warn('[SessionStore] Invalid sessions list response');
+                return [];
+            }
+            
+            return data.sessions || [];
+        } catch (error) {
+            console.error('[SessionStore] listSessions error:', error);
+            return [];
+        }
+    };
+
+    /**
+     * Get current step number (for numbered folder storage)
+     * @returns {number}
+     */
+    SessionStore.prototype.getCurrentStepNumber = function() {
+        return this._state.currentStep || 0;
     };
 
     // Export - create global instance for backward compatibility

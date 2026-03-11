@@ -7,6 +7,9 @@
 // Storage utilities
 export * from './storage.js';
 
+// Step storage (for step-based session files)
+export * from './step-storage.js';
+
 // Config service
 export { loadConfig, saveConfig } from './config.service.js';
 

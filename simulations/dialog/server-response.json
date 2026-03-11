@@ -1,21 +1,55 @@
 {
-  "success": false,
+  "success": true,
   "data": {
-    "id": "req_1772905561792_rp3sszhfo",
-    "promiseId": "cmmgm72no0000ba784x8wa6ah",
+    "id": "req_1773246014515_k7hhmjp9x",
+    "promiseId": "prom_1773246014515_trvjuvt9l",
     "clientId": "simulation-client",
-    "status": "pending",
+    "status": "completed",
     "priority": 0,
     "context": {
+      "session_id": "stateless",
       "version": "1.0",
-      "session_id": "stateless"
+      "execution": {
+        "action": "task",
+        "step": "new"
+      }
     },
-    "message": null,
+    "message": "диалог",
     "codeBlocks": null,
-    "result": null,
+    "result": {
+      "outcome": "action_proposal",
+      "context": {
+        "session_id": "stateless",
+        "version": "1.0",
+        "execution": {
+          "action": "task",
+          "step": "router"
+        },
+        "task": "диалог"
+      },
+      "execute": {
+        "form": {
+          "title": "Оберіть спосіб виконання",
+          "choices": [
+            {
+              "id": "dialog",
+              "label": "AI діалог з користувачем"
+            },
+            {
+              "id": "auto-ai",
+              "label": "AI Action Generator — сгенерировать экшен с помощью LLM"
+            },
+            {
+              "id": "task-decomposition",
+              "label": "Декомпозиция задачи вручную"
+            }
+          ]
+        }
+      }
+    },
     "error": null,
-    "createdAt": "2026-03-07T17:46:01.909Z",
-    "startedAt": null,
-    "completedAt": null
+    "createdAt": "2026-03-11T16:20:14.515Z",
+    "startedAt": "2026-03-11T16:20:18.135Z",
+    "completedAt": "2026-03-11T16:20:18.139Z"
   }
 }

@@ -37,7 +37,13 @@ Scripts that run test/check flows **directly** (no test framework). Original fil
 
 ## Dialog
 
+**No mocks.** Requires Client API (3001) + a2a-server (3000).
+
 ```powershell
+# Full dialog chain: task -> choices -> choice dialog -> input -> message -> message
+.\scripts\direct-tests\test-dialog-flow.ps1
+
+# With Ollama checks + retry helper
 .\scripts\direct-tests\dialog\run-dialog-direct-ollama.ps1
 .\scripts\direct-tests\dialog\run-dialog-direct-ollama.ps1 -RetryRequest "a2a-server\storage\requests\prom_xxx.json"
 ```
