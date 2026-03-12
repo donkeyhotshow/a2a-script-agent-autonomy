@@ -200,9 +200,16 @@ export default function vitePluginA2a() {
                                 updatedAt: new Date().toISOString(),
                                 status: 'created',
                                 currentStep: 1,
+                                messages: [
+                                    {
+                                        role: 'assistant',
+                                        content: 'What would you like me to do?',
+                                        step: 1
+                                    }
+                                ],
                                 context: { execution: { action: 'task', step: 'new' } },
                                 execute: {
-                                    message:'What would you like me to do?',
+                                    message: 'What would you like me to do?',
                                     form: {
                                         input: {
                                             name: 'task',
@@ -281,6 +288,7 @@ export default function vitePluginA2a() {
                                 ...(d.execute !== undefined && {execute: d.execute}),
                                 ...(d.context !== undefined && {context: d.context}),
                                 ...(d.currentStep !== undefined && {currentStep: d.currentStep}),
+                                ...(d.messages !== undefined && {messages: d.messages}),
                                 updatedAt: new Date().toISOString(),
                             };
                             if (storageMode === 'project') {
@@ -372,7 +380,7 @@ export default function vitePluginA2a() {
                             
                             // Save client-result.json in CURRENT step (N)
                             if (d.result) {
-                                saveClientResult(cwd, sessionId, currentStep, d.result);
+                                saveClientResult(cwd, sessionId, session.currentStep, d.result);
                             }
                             
                             // Save messages
@@ -472,6 +480,32 @@ export default function vitePluginA2a() {
                             // Save server-response.json
                             if (serverResponse) {
                                 saveServerResponse(cwd, sessionId, nextStepNum, serverResponse);
+                                
+                                // Extract message from server response and add to session messages
+                                const assistantMessage = 
+                                    serverResponse?.result?.message || 
+                                    serverResponse?.result?.execute?.message ||
+                                    serverResponse?.execute?.message ||
+                                    null;
+                                
+                                if (assistantMessage) {
+                                    session.messages = session.messages || [];
+                                    session.messages.push({
+                                        role: 'assistant',
+                                        content: assistantMessage,
+                                        step: nextStepNum
+                                    });
+                                }
+                            }
+                            
+                            // Add user message if there's a result
+                            if (d.result?.message) {
+                                session.messages = session.messages || [];
+                                session.messages.push({
+                                    role: 'user',
+                                    content: d.result.message,
+                                    step: nextStepNum
+                                });
                             }
                             
                             // Save step file ONLY if there's real data (server response or client result)
@@ -493,6 +527,10 @@ export default function vitePluginA2a() {
                             // Update session metadata
                             session.currentStep = nextStepNum;
                             session.updatedAt = new Date().toISOString();
+                            
+                            // Ensure messages array exists
+                            session.messages = session.messages || [];
+                            
                             if (serverResponse?.result?.execute) session.execute = serverResponse.result.execute;
                             if (serverResponse?.context) session.context = serverResponse.context;
                             if (serverPromise) session.lastPromiseId = serverPromise.promiseId;
