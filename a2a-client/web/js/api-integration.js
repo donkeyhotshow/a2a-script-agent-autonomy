@@ -213,12 +213,7 @@ class APIIntegration {
         return { success: res.ok };
     }
 
-    /**
-     * Cancel running session
-     */
-    async cancelSession(sessionId) {
-        return this.request('POST', `/sessions/${sessionId}/cancel`);
-    }
+
 
     // === Step Files API ===
     
@@ -327,13 +322,7 @@ class APIIntegration {
         return res.json();
     }
 
-    /**
-     * Search actions - deprecated, use session flow
-     */
-    async searchActions(query) {
-        console.warn('[API] searchActions deprecated - use session flow');
-        return { actions: [] };
-    }
+
 
     /**
      * Subscribe to events

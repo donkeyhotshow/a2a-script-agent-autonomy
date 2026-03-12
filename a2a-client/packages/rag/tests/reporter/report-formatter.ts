@@ -11,16 +11,31 @@
 
 import type {
   TestReport,
-  TestResult,
-  PerformanceMetrics,
-  AccuracyMetrics,
-  TestConfig,
-} from '../types.js';
+} from './types.js';
 
-import {
-  calculateCategorySummaries,
-  generateRecommendations,
-} from './result-aggregator.js';
+export type {
+  MarkdownReportOptions,
+  JSONReportOptions,
+  HTMLReportOptions,
+  ConsoleReporterOptions,
+} from './formatters';
+
+export {
+  generateMarkdownReport,
+} from './formatters/markdown.js';
+
+export {
+  generateJSONReport,
+} from './formatters/json.js';
+
+export {
+  generateHTMLReport,
+} from './formatters/html.js';
+
+export {
+  consoleReporter,
+} from './formatters/console.js';
+
 
 /**
  * Options for Markdown report generation

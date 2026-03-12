@@ -113,21 +113,7 @@
         }
     }
 
-    /**
-     * Обновить SessionViewModel
-     * @param {string} sessionId - ID сессии
-     * @param {string} projectId - ID проекта
-     * @param {Object} context - контекст
-     * @param {Object} execute - execute объект
-     */
-    function updateSessionViewModel(sessionId, projectId, context, execute) {
-        const vm = global.SessionViewModel;
-        if (!vm) return;
-        vm.sessionId = sessionId;
-        vm.projectId = projectId;
-        if (context) vm.context = context;
-        if (execute) vm.execute = execute;
-    }
+
 
     /**
      * Основной объект TaskFlow
@@ -317,8 +303,7 @@
                     });
                 }
 
-                // For backward compatibility also update SessionViewModel
-                updateSessionViewModel(sessionId, projectId, null, syncExecute);
+                // Removed legacy SessionViewModel update
 
             } catch (error) {
                 console.error('[TaskFlow] Error:', error);
@@ -359,7 +344,7 @@
                     throw new Error('ActionHandler is not available for sending choice');
                 }
 
-                await handler.submit(sessionId, projectId, { choice: choiceId });
+                await handler.submit(sessionId, { choice: choiceId });
 
                 // Wait for response (promiseId polling in SDK)
                 const outcome = await outcomePromise;
@@ -409,7 +394,7 @@
                     throw new Error('ActionHandler is not available for sending message');
                 }
 
-                await handler.submit(sessionId, projectId, { message: messageText });
+                await handler.submit(sessionId, { message: messageText });
 
                 // Wait for response (promiseId polling in SDK)
                 const outcome = await outcomePromise;
@@ -489,6 +474,6 @@
     global.getProjectId = getProjectId;
     global.waitForFirstResponse = waitForFirstResponse;
     global.applyExecuteResponse = applyExecuteResponse;
-    global.updateSessionViewModel = updateSessionViewModel;
+
 
 })(typeof window !== 'undefined' ? window : global);

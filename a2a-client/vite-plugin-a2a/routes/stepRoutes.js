@@ -1,52 +1,12 @@
-import fs from 'fs';
-import { getStorageMode, isValidSessionId } from '../utils/server.js';
-import {
-    getNewSessionLatestStep,
-    getNewStepDir,
-    listNewSteps,
-    loadNewStep,
-    saveNewStep,
-    saveClientResult,
-    saveRequestToServer,
-    saveServerResponse,
-    saveServerPromise,
-    loadServerResponse,
-    loadServerPromise,
-    loadNewSession,
-    saveNewSession,
-    loadStepFile
-} from '../storage/newSessions.js';
+import { isValidSessionId, getStorageMode } from './middleware/validators.js';
+import { createSessionStorageService } from './services/session-storage.js';
+import { serverProxy } from './services/server-proxy.js';
+import { mergeResponseContext, buildStepRecord } from './utils/builders.js';
 
 const API_PREFIX = '/api/a2a';
 
-function mergeResponseContext(sessionId, fallbackContext = {}, serverResponse = null) {
-    const base = { ...(fallbackContext || {}) };
-    if (serverResponse?.context) {
-        Object.assign(base, serverResponse.context);
-    }
-    if (serverResponse?.result?.context) {
-        Object.assign(base, serverResponse.result.context);
-    }
-    if (sessionId && !base.session_id) {
-        base.session_id = sessionId;
-    }
-    return base;
-}
 
-function buildStepRecord({ sessionId, stepNum, serverResponse, messages = [], fallbackContext = {} }) {
-    if (!serverResponse) return null;
-    const context = mergeResponseContext(sessionId, fallbackContext, serverResponse);
-    // Extract execute from result.execute, data.execute, or direct execute field
-    const execute = serverResponse?.result?.execute ?? serverResponse?.data?.execute ?? serverResponse?.execute;
-    const payload = {
-        step: stepNum,
-        timestamp: new Date().toISOString(),
-        execute: execute ?? null,
-        context,
-        messages
-    };
-    return payload;
-}
+
 
 export function createStepRoutes({ cwd }) {
     return (req, res, next) => {
@@ -129,7 +89,6 @@ export function createStepRoutes({ cwd }) {
                     if (d.result || d.execute) {
                         requestToServer = {
                             step: nextStepNum,
-                            timestamp: new Date().toISOString(),
                             result: d.result,
                             execute: d.execute,
                             context,
@@ -357,8 +316,7 @@ export function createStepRoutes({ cwd }) {
                     console.log('[VitePlugin] Saving client-result for step:', currentStep);
                     saveClientResult(cwd, sessionId, currentStep, {
                         step: currentStep,
-                        result,
-                        timestamp: new Date().toISOString()
+                        result
                     });
 
                     const nextStepNum = currentStep + 1;
@@ -388,8 +346,7 @@ export function createStepRoutes({ cwd }) {
                         step: nextStepNum,
                         context: mergedContext,
                         task: effectiveTask,
-                        result,
-                        previousStep: currentStep
+                        result
                     };
 
                     saveRequestToServer(cwd, sessionId, nextStepNum, requestToServer);
@@ -628,6 +585,18 @@ export function createStepRoutes({ cwd }) {
                         saveServerPromise(cwd, sessionId, currentStep, updatedPromise);
 
                         if (promiseStatus.status === 'completed' || promiseStatus.status === 'done') {
+                            // Add assistant message to session.messages
+                            const assistantMessage = promiseStatus?.result?.message;
+                            if (assistantMessage) {
+                                session.messages = session.messages || [];
+                                session.messages.push({
+                                    role: 'assistant',
+                                    content: assistantMessage,
+                                    step: currentStep
+                                });
+                            }
+                            
+                            console.log('[VitePlugin] Promise completed, building step record for step:', currentStep);
                             const stepRecord = buildStepRecord({
                                 sessionId,
                                 stepNum: currentStep,
@@ -635,8 +604,12 @@ export function createStepRoutes({ cwd }) {
                                 messages: session.messages || [],
                                 fallbackContext: session.context || {}
                             });
+                            console.log('[VitePlugin] Step record:', JSON.stringify(stepRecord, null, 2));
                             if (stepRecord) {
                                 saveServerResponse(cwd, sessionId, currentStep, stepRecord);
+                                console.log('[VitePlugin] Saved server response for step:', currentStep);
+                            } else {
+                                console.log('[VitePlugin] ERROR: stepRecord is null, not saving');
                             }
 
                             if (promiseStatus.execute) session.execute = promiseStatus.execute;
@@ -653,7 +626,8 @@ export function createStepRoutes({ cwd }) {
                             status: promiseStatus.status || 'pending',
                             result: promiseStatus.result || null,
                             execute: promiseStatus.execute || null,
-                            completed: promiseStatus.status === 'completed' || promiseStatus.status === 'done'
+                            completed: promiseStatus.status === 'completed' || promiseStatus.status === 'done',
+                            messages: stepRecord?.messages || []
                         }));
                     } catch (e) {
                         res.writeHead(500).end(JSON.stringify({ error: 'Failed to parse promise response' }));

@@ -10,11 +10,6 @@ export function getNewSessionDir(cwd, sessionId) {
   return path.join(getNewSessionsDir(cwd), sessionId);
 }
 
-export function getNewSessionMetaFile(cwd, sessionId) {
-  // DEPRECATED: Removed - session.json is no longer used
-  return null;
-}
-
 export function getNewStepDir(cwd, sessionId, stepNum) {
   return path.join(getNewSessionDir(cwd, sessionId), String(stepNum));
 }
@@ -77,13 +72,10 @@ export function saveNewStep(cwd, sessionId, stepNum, stepData) {
     });
   }
   const messages = stepData.messages || [];
-  const stepText = messages.map((m) => (typeof m === 'string' ? m : m?.content || '')).filter(Boolean).join('\n');
   const {messages: _m, ...rest} = stepData;
   const metaFile = path.join(stepDir, 'server-response.json');
   fs.writeFileSync(metaFile, JSON.stringify({
     step: stepNum,
-    timestamp: new Date().toISOString(),
-    stepText: stepText || undefined,
     ...rest
   }, null, 2));
   const messagesFile = path.join(stepDir, 'messages.json');
@@ -174,7 +166,9 @@ export function loadServerPromise(cwd, sessionId, stepNum) {
 }
 
 export function saveServerPromise(cwd, sessionId, stepNum, promiseData) {
-  return saveStepFile(cwd, sessionId, stepNum, 'server-promise.json', promiseData);
+  // Filter out unnecessary fields from promise data
+  const { createdAt, startedAt, completedAt, checkedAt, ...filteredData } = promiseData;
+  return saveStepFile(cwd, sessionId, stepNum, 'server-promise.json', filteredData);
 }
 
 export function loadClientResult(cwd, sessionId, stepNum) {

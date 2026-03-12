@@ -45,7 +45,7 @@
      * Submit result to session - triggers step processing
      * Saves client-result.json and creates next step via API
      */
-    async function submit(sessionId, projectId, result) {
+    async function submit(sessionId, result) {
         const store = resolveStore(sessionId);
         const base = getApiBase(store);
         if (!base) {

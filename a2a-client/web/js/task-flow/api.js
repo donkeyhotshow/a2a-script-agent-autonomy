@@ -10,6 +10,11 @@
      * Получить базовый URL API
      */
     function getApiBase() {
+        const store = (typeof window !== 'undefined' ? window : global).SessionStore;
+        const storageMode = store?.getStorageMode?.() || 'api';
+        if (storageMode === 'storage') {
+            return '/api/a2a';
+        }
         const base = global.apiIntegration?.apiBase || '/api';
         return String(base).replace(/\/?$/, '');
     }
@@ -24,42 +29,7 @@
         return h;
     }
 
-    // Fetch with timeout and retry logic
-    const DEFAULT_TIMEOUT = 15000; // 15 seconds for API calls
-    const MAX_RETRIES = 3;
-    const BASE_DELAY = 2000; // 2 seconds per PROTOCOLS specification
 
-    /**
-     * Выполнить запрос с повторными попытками
-     * @param {string} url - URL для запроса
-     * @param {Object} options - параметры fetch
-     * @param {number} retryCount - номер попытки
-     */
-    async function fetchWithRetry(url, options = {}, retryCount = 0) {
-        const controller = new AbortController();
-        const timeout = options.timeout || DEFAULT_TIMEOUT;
-        const timeoutId = setTimeout(() => controller.abort(), timeout);
-
-        try {
-            const response = await fetch(url, {
-                ...options,
-                signal: controller.signal,
-                headers: { ...getHeaders(), ...options.headers }
-            });
-            clearTimeout(timeoutId);
-            return response;
-        } catch (error) {
-            clearTimeout(timeoutId);
-            // Retry on network error or timeout
-            if (retryCount < MAX_RETRIES && (error.name === 'AbortError' || error.message.includes('network'))) {
-                const delay = BASE_DELAY * Math.pow(2, retryCount);
-                console.warn(`[TaskFlow] Retry ${retryCount + 1}/${MAX_RETRIES} after ${delay}ms: ${url}`);
-                await new Promise(r => setTimeout(r, delay));
-                return fetchWithRetry(url, options, retryCount + 1);
-            }
-            throw error;
-        }
-    }
 
     /**
      * Выполнить HTTP запрос
@@ -82,7 +52,7 @@
         }
 
         try {
-            const res = await fetchWithRetry(url, options);
+            const res = await window.fetchWithRetry(url, options);
             const data = await res.json().catch(() => ({}));
             if (!res.ok) {
                 // Try to extract error message
@@ -107,21 +77,22 @@
     function getChoiceLabel(choiceId) {
         if (!choiceId) return '';
         const TaskFlow = global.TaskFlow;
-        const execute = TaskFlow?._lastResponse?.execute;
+        if (!TaskFlow?._lastResponse) {
+            console.warn('[TaskFlow] getChoiceLabel: no _lastResponse, using choiceId fallback');
+            return String(choiceId);
+        }
+        const execute = TaskFlow._lastResponse.execute;
         const choices = execute?.form?.choices || [];
-        const match = choices.find(choice => choice.id === choiceId || choice.value === choiceId);
-        return String(match?.label || match?.value || match?.id || choiceId);
+        const match = choices.find(choice => choice.id === choiceId);
+        return String(match?.label || match?.id || choiceId);
     }
 
     // Export
     global.TaskFlowAPI = {
         getApiBase,
         getHeaders,
-        fetchWithRetry,
         request,
-        getChoiceLabel,
-        DEFAULT_TIMEOUT,
-        MAX_RETRIES
+        getChoiceLabel
     };
 
 })(typeof window !== 'undefined' ? window : global);

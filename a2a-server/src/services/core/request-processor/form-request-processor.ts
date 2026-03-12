@@ -417,89 +417,14 @@ export class FormRequestProcessor extends BaseRequestProcessor {
     }
 
     /**
-     * Validate form data against form definition
+     * Validate form data using external validator
      */
-    private validateFormData(form: FormDefinition, data: Record<string, unknown>): FormValidationError[] {
-        const errors: FormValidationError[] = [];
-
-        for (const field of form.fields) {
-            const value = data[field.id];
-
-            // Check required fields
-            if (field.required && (value === undefined || value === null || value === '')) {
-                errors.push({
-                    field: field.id,
-                    message: `${field.label} is required`,
-                    code: 'REQUIRED_FIELD'
-                });
-                continue;
-            }
-
-            // Skip validation for empty optional fields
-            if (!field.required && (value === undefined || value === null || value === '')) {
-                continue;
-            }
-
-            // Type validation
-            if (field.type === 'number' && typeof value !== 'number') {
-                errors.push({
-                    field: field.id,
-                    message: `${field.label} must be a number`,
-                    code: 'INVALID_TYPE'
-                });
-            }
-
-            // Pattern validation
-            if (field.validation?.pattern && typeof value === 'string') {
-                const regex = new RegExp(field.validation.pattern);
-                if (!regex.test(value)) {
-                    errors.push({
-                        field: field.id,
-                        message: `${field.label} format is invalid`,
-                        code: 'PATTERN_MISMATCH'
-                    });
-                }
-            }
-
-            // Length validation
-            if (typeof value === 'string') {
-                if (field.validation?.minLength && value.length < field.validation.minLength) {
-                    errors.push({
-                        field: field.id,
-                        message: `${field.label} must be at least ${field.validation.minLength} characters`,
-                        code: 'MIN_LENGTH'
-                    });
-                }
-                if (field.validation?.maxLength && value.length > field.validation.maxLength) {
-                    errors.push({
-                        field: field.id,
-                        message: `${field.label} must be at most ${field.validation.maxLength} characters`,
-                        code: 'MAX_LENGTH'
-                    });
-                }
-            }
-
-            // Range validation for numbers
-            if (typeof value === 'number') {
-                if (field.validation?.min !== undefined && value < field.validation.min) {
-                    errors.push({
-                        field: field.id,
-                        message: `${field.label} must be at least ${field.validation.min}`,
-                        code: 'MIN_VALUE'
-                    });
-                }
-                if (field.validation?.max !== undefined && value > field.validation.max) {
-                    errors.push({
-                        field: field.id,
-                        message: `${field.label} must be at most ${field.validation.max}`,
-                        code: 'MAX_VALUE'
-                    });
-                }
-            }
-        }
-
-        return errors;
+    private async validateFormData(form: FormDefinition, data: Record<string, unknown>): Promise<FormValidationError[]> {
+        const { validateFormData } = await import('./validators/form-validator.js');
+        return validateFormData(form, data);
     }
+
+
 
     /**
      * Register a form definition

@@ -183,7 +183,7 @@
             const btn = document.createElement('button');
             btn.className = 'taskbar-session-btn';
             btn.dataset.sessionId = session.id;
-            const sessionLabel = session.title || session.name || `Session ${(session.id || '').slice(-8)}`;
+            const sessionLabel = session.title || `Session ${(session.id || '').slice(-8)}`;
             btn.title = `Session: ${sessionLabel}`;
 
             btn.innerHTML = `

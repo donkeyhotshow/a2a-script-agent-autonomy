@@ -127,7 +127,7 @@
             if (global.ActionHandler?.sendMessage) {
                 await global.ActionHandler.sendMessage(sessionId, projectId, message);
             } else if (global.ActionHandler?.submit) {
-                await global.ActionHandler.submit(sessionId, projectId, { message });
+                await global.ActionHandler.submit(sessionId, { message });
             } else {
                 throw new Error('ActionHandler is not available for sending message');
             }
@@ -147,7 +147,7 @@
             if (global.ActionHandler?.sendChoice) {
                 await global.ActionHandler.sendChoice(sessionId, projectId, choiceId);
             } else if (global.ActionHandler?.submit && projectId) {
-                await global.ActionHandler.submit(sessionId, projectId, result);
+                await global.ActionHandler.submit(sessionId, result);
             } else {
                 throw new Error('ActionHandler is not available for sending choice');
             }

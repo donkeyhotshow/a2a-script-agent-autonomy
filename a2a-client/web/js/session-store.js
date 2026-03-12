@@ -196,9 +196,9 @@
     };
 
     SessionStore.prototype.createSession = function(session) {
-        const { id, sessionId, projectId, project_id, task, title } = session || {};
+        const { id, sessionId, projectId, task, title } = session || {};
         const sid = id || sessionId;
-        const pid = projectId || project_id || this._state.projectId;
+        const pid = projectId || this._state.projectId;
 
         if (!sid) {
             console.error('[SessionStore] createSession: No session ID provided');
