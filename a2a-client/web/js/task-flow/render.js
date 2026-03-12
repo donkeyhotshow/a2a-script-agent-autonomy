@@ -63,7 +63,7 @@
      * @param {Object} data - данные
      * @param {Object} taskFlowRef - ссылка на TaskFlow
      */
-    function renderExecute(contentEl, execute, data, taskFlowRef) {
+    function renderExecute(contentEl, execute, data, taskFlowRef, store) {
         if (!contentEl || !execute) return;
 
         // Use ActionHandler for uniform processing
@@ -72,6 +72,7 @@
 
         const context = data?.context;
         const execution = context?.execution;
+        const passedStore = store || data?.store; // Use passed store or from data
 
         // Build execution step display
         let executionStepHtml = '';
@@ -249,7 +250,7 @@
      * @param {string} finalResultHtml - HTML финального результата
      * @param {Object} taskFlowRef - ссылка на TaskFlow
      */
-    function renderClientAction(contentEl, actionType, data, executionStepHtml, progressBarHtml, finalResultHtml, taskFlowRef) {
+    function renderClientAction(contentEl, actionType, data, executionStepHtml, progressBarHtml, finalResultHtml, taskFlowRef, store) {
         // Client-side actions (script, rag-search, file ops, commands)
         const typeLabels = {
             'script': 'Script Execution',
@@ -260,7 +261,8 @@
         };
 
         const actionData = data[actionType];
-        const historyHtml = renderMessageHistory(contentEl);
+        const passedStore = store || data?.store; // Use passed store or from data
+        const historyHtml = renderMessageHistory(contentEl, passedStore);
 
         contentEl.innerHTML = `
             ${historyHtml}
@@ -284,11 +286,12 @@
      * @param {string} finalResultHtml - HTML финального результата
      * @param {Object} taskFlowRef - ссылка на TaskFlow
      */
-    function renderDebug(contentEl, data, executionStepHtml, progressBarHtml, finalResultHtml, taskFlowRef) {
+    function renderDebug(contentEl, data, executionStepHtml, progressBarHtml, finalResultHtml, taskFlowRef, store) {
         const ctx = data?.context ? JSON.stringify(data.context, null, 2) : '';
         const exec = data?.execute ? JSON.stringify(data.execute, null, 2) : '';
+        const passedStore = store || data?.store; // Use passed store or from data
 
-        const historyHtml = renderMessageHistory(contentEl);
+        const historyHtml = renderMessageHistory(contentEl, passedStore);
 
         contentEl.innerHTML = `
             ${historyHtml}

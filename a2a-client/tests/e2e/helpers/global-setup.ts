@@ -9,8 +9,7 @@ async function globalSetup() {
 
   // Verify services are running
   const services = [
-    { name: 'Vite Dev Server', url: 'http://localhost:5173', timeout: 5000 },
-    { name: 'Client API', url: 'http://localhost:3001/health', timeout: 10000 },
+    { name: 'Vite Dev Server (Web UI + Client API)', url: 'http://localhost:5173', timeout: 5000 },
     { name: 'A2A Server', url: 'http://localhost:3000/health', timeout: 15000 },
   ];
 

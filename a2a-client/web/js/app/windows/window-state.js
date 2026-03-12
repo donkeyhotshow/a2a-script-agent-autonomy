@@ -247,6 +247,10 @@
                     // Store reference on the panel for cleanup
                     panel._sessionStore = store;
 
+                    // Save messages from session data BEFORE any TaskFlow initialization
+                    // (TaskFlow.reset() clears messages, so we need to restore them after)
+                    let savedMessages = null;
+
                     if (store && sessionData) {
                         // Set session info
                         if (sessionData.id) {
@@ -256,10 +260,13 @@
                         console.log('[WindowState] Checking messages in sessionData:', { hasMessages: !!sessionData.messages, length: sessionData.messages?.length, keys: sessionData.messages ? Object.keys(sessionData.messages) : 'none' });
                         if (sessionData.messages && Array.isArray(sessionData.messages) && sessionData.messages.length > 0) {
                             store.setMessages(sessionData.messages);
+                            // Save messages for restore after TaskFlow reset
+                            savedMessages = sessionData.messages;
                         } else {
                             // Check if messages might be in context
                             if (sessionData.context?.messages) {
                                 store.setMessages(sessionData.context.messages);
+                                savedMessages = sessionData.context.messages;
                             }
                         }
                         // Load context/execute if available
@@ -303,6 +310,16 @@
                     
                     if (global.WindowEvents) {
                         global.WindowEvents.renderSessionContent(contentEl, sessionId, store);
+                    }
+
+                    // Restore messages that were cleared by TaskFlow.reset()
+                    if (savedMessages && savedMessages.length > 0) {
+                        store.setMessages(savedMessages);
+                        console.log('[WindowState] Restored messages after TaskFlow init:', savedMessages.length);
+                        // Force re-render to show restored messages
+                        if (global.WindowEvents && contentEl) {
+                            global.WindowEvents.renderSessionContent(contentEl, sessionId, store);
+                        }
                     }
 
                     // Save state

@@ -209,7 +209,9 @@
 
             // Use SessionStore instead of legacy SessionViewModel
             const store = resolveStore(this._sessionId);
+            console.log('[TaskFlow] Before reset, store messages:', store?.messages?.length, store?.getState?.()?.messages?.length);
             store?.reset();
+            console.log('[TaskFlow] After reset, store messages:', store?.messages?.length, store?.getState?.()?.messages?.length);
 
             // Check if task panel already exists
             const pm = global.PanelManager;

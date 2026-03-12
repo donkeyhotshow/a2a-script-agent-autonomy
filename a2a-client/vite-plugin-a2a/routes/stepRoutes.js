@@ -19,6 +19,36 @@ import {
 
 const API_PREFIX = '/api/a2a';
 
+function mergeResponseContext(sessionId, fallbackContext = {}, serverResponse = null) {
+    const base = { ...(fallbackContext || {}) };
+    if (serverResponse?.context) {
+        Object.assign(base, serverResponse.context);
+    }
+    if (serverResponse?.result?.context) {
+        Object.assign(base, serverResponse.result.context);
+    }
+    if (sessionId && !base.session_id) {
+        base.session_id = sessionId;
+    }
+    return base;
+}
+
+function buildStepRecord({ sessionId, stepNum, serverResponse, messages = [], fallbackContext = {}, clientResult = null }) {
+    if (!serverResponse) return null;
+    const context = mergeResponseContext(sessionId, fallbackContext, serverResponse);
+    const payload = {
+        ...serverResponse,
+        step: stepNum,
+        timestamp: new Date().toISOString(),
+        messages,
+        context
+    };
+    if (clientResult) {
+        payload.clientResult = clientResult;
+    }
+    return payload;
+}
+
 export function createStepRoutes({ cwd }) {
     return (req, res, next) => {
         if (!req.url?.startsWith(`${API_PREFIX}/sessions`)) {
@@ -177,23 +207,13 @@ export function createStepRoutes({ cwd }) {
                         }
                     }
 
+                    let assistantMessage = null;
                     if (serverResponse) {
-                        saveServerResponse(cwd, sessionId, nextStepNum, serverResponse);
-
-                        const assistantMessage =
+                        assistantMessage =
                             serverResponse?.result?.message ||
                             serverResponse?.result?.execute?.message ||
                             serverResponse?.execute?.message ||
                             null;
-
-                        if (assistantMessage) {
-                            session.messages = session.messages || [];
-                            session.messages.push({
-                                role: 'assistant',
-                                content: assistantMessage,
-                                step: nextStepNum
-                            });
-                        }
                     }
 
                     if (d.result?.message) {
@@ -205,16 +225,41 @@ export function createStepRoutes({ cwd }) {
                         });
                     }
 
+                    if (assistantMessage) {
+                        session.messages = session.messages || [];
+                        session.messages.push({
+                            role: 'assistant',
+                            content: assistantMessage,
+                            step: nextStepNum
+                        });
+                    }
+
                     const hasRealData = serverResponse || d.result || serverPromise;
                     if (hasRealData) {
                         console.log('[VitePlugin] Saving step:', nextStepNum, 'hasRealData:', typeof hasRealData);
-                        saveNewStep(cwd, sessionId, nextStepNum, {
-                            step: nextStepNum,
-                            execute: serverResponse?.result?.execute || serverResponse?.execute || d.execute,
-                            messages,
-                            context: serverResponse?.context || context,
-                            result: d.result
-                        });
+                        if (serverResponse) {
+                            const stepRecord = buildStepRecord({
+                                sessionId,
+                                stepNum: nextStepNum,
+                                serverResponse,
+                                messages,
+                                fallbackContext: context,
+                                clientResult: d.result
+                            });
+                            if (stepRecord) {
+                                saveServerResponse(cwd, sessionId, nextStepNum, stepRecord);
+                            }
+                            session.context = stepRecord?.context || context;
+                        } else {
+                            saveNewStep(cwd, sessionId, nextStepNum, {
+                                step: nextStepNum,
+                                execute: serverResponse?.result?.execute || serverResponse?.execute || d.execute,
+                                messages,
+                                context: context,
+                                result: d.result
+                            });
+                            session.context = context;
+                        }
                     } else {
                         console.log('[VitePlugin] Skipping step save - no real data (serverResponse:', !!serverResponse, ', d.result:', !!d.result, ', serverPromise:', !!serverPromise, ')');
                     }
@@ -224,7 +269,7 @@ export function createStepRoutes({ cwd }) {
                     session.messages = session.messages || [];
 
                     if (serverResponse?.result?.execute) session.execute = serverResponse.result.execute;
-                    if (serverResponse?.context) session.context = serverResponse.context;
+                    if (!session.context) session.context = context;
                     if (serverPromise) session.lastPromiseId = serverPromise.promiseId;
                     saveNewSession(cwd, session);
 
@@ -397,15 +442,17 @@ export function createStepRoutes({ cwd }) {
                                             });
                                             const pollData = await pollRes.json();
                                             console.log('[VitePlugin] Poll result:', i, pollData.data?.status);
-                                            if (pollData.data?.status === 'completed') {
-                                                serverResponse = pollData.data;
-                                                saveServerResponse(cwd, sessionId, nextStepNum, {
-                                                    step: nextStepNum,
-                                                    timestamp: new Date().toISOString(),
-                                                    ...pollData.data
-                                                });
-                                                break;
-                                            } else if (pollData.data?.status === 'failed') {
+                                        if (pollData.data?.status === 'completed') {
+                                            serverResponse = pollData.data;
+                                            promiseData = {
+                                                ...promiseData,
+                                                ...pollData.data,
+                                                status: pollData.data.status || 'completed',
+                                                checkedAt: new Date().toISOString()
+                                            };
+                                            saveServerPromise(cwd, sessionId, nextStepNum, promiseData);
+                                            break;
+                                        } else if (pollData.data?.status === 'failed') {
                                                 console.error('[VitePlugin] Promise failed:', pollData.data.error);
                                                 break;
                                             }
@@ -416,11 +463,6 @@ export function createStepRoutes({ cwd }) {
                                 } else if (xhrRes.statusCode >= 200 && xhrRes.statusCode < 300) {
                                     console.log('[VitePlugin] Sync response saved');
                                     serverResponse = a2aData;
-                                    saveServerResponse(cwd, sessionId, nextStepNum, {
-                                        step: nextStepNum,
-                                        timestamp: new Date().toISOString(),
-                                        ...a2aData
-                                    });
                                 } else {
                                     console.error('[VitePlugin] A2A error status:', xhrRes.statusCode);
                                 }
@@ -442,6 +484,15 @@ export function createStepRoutes({ cwd }) {
                                 assistantMessage = historyMsg?.message || null;
                             }
 
+                            if (result?.message) {
+                                session.messages = session.messages || [];
+                                session.messages.push({
+                                    role: 'user',
+                                    content: result.message,
+                                    step: nextStepNum
+                                });
+                            }
+
                             console.log('[VitePlugin] Extracted assistant message:', assistantMessage);
                             if (assistantMessage) {
                                 session.messages = session.messages || [];
@@ -452,36 +503,40 @@ export function createStepRoutes({ cwd }) {
                                 });
                             }
 
-                            if (result?.message) {
-                                session.messages = session.messages || [];
-                                session.messages.push({
-                                    role: 'user',
-                                    content: result.message,
-                                    step: nextStepNum
-                                });
-                            }
-
                             session.messages = session.messages || [];
 
                             if (serverResponse?.result?.execute) session.execute = serverResponse.result.execute;
-                            if (serverResponse?.context) {
-                                const ctx = { ...serverResponse.context };
-                                if (!ctx.session_id) ctx.session_id = sessionId;
-                                console.log('[VitePlugin] Updating session context from server:', ctx);
-                                session.context = ctx;
-                            }
-                            if (promiseData?.promiseId) session.promiseId = promiseData.promiseId;
+                            const savedContext = serverResponse
+                                ? mergeResponseContext(sessionId, mergedContext, serverResponse)
+                                : mergedContext;
+                            session.context = savedContext;
+                            const keepPromise = promiseData && promiseData.status && !['completed', 'done'].includes(promiseData.status);
+                            session.promiseId = keepPromise ? promiseData.promiseId : null;
 
                             const hasRealData = serverResponse || result;
                             if (hasRealData) {
                                 console.log('[VitePlugin] Saving step after polling:', nextStepNum);
-                                saveNewStep(cwd, sessionId, nextStepNum, {
-                                    step: nextStepNum,
-                                    execute: serverResponse?.result?.execute || null,
-                                    messages: session.messages || [],
-                                    context: serverResponse?.context || context,
-                                    result
-                                });
+                                if (serverResponse) {
+                                    const stepRecord = buildStepRecord({
+                                        sessionId,
+                                        stepNum: nextStepNum,
+                                        serverResponse,
+                                        messages: session.messages || [],
+                                        fallbackContext: mergedContext,
+                                        clientResult: result
+                                    });
+                                    if (stepRecord) {
+                                        saveServerResponse(cwd, sessionId, nextStepNum, stepRecord);
+                                    }
+                                } else {
+                                    saveNewStep(cwd, sessionId, nextStepNum, {
+                                        step: nextStepNum,
+                                        execute: null,
+                                        messages: session.messages || [],
+                                        context: mergedContext,
+                                        result
+                                    });
+                                }
                             }
 
                             saveNewSession(cwd, session);
@@ -491,7 +546,7 @@ export function createStepRoutes({ cwd }) {
                                 step: nextStepNum,
                                 session,
                                 execute: serverResponse?.result?.execute || null,
-                                promiseId: promiseData?.promiseId || null,
+                                promiseId: session.promiseId || null,
                                 sync: !promiseData
                             };
 
@@ -575,14 +630,20 @@ export function createStepRoutes({ cwd }) {
                         saveServerPromise(cwd, sessionId, currentStep, updatedPromise);
 
                         if (promiseStatus.status === 'completed' || promiseStatus.status === 'done') {
-                            saveServerResponse(cwd, sessionId, currentStep, {
-                                step: currentStep,
-                                timestamp: new Date().toISOString(),
-                                ...promiseStatus
+                            const stepRecord = buildStepRecord({
+                                sessionId,
+                                stepNum: currentStep,
+                                serverResponse: promiseStatus,
+                                messages: session.messages || [],
+                                fallbackContext: session.context || {}
                             });
+                            if (stepRecord) {
+                                saveServerResponse(cwd, sessionId, currentStep, stepRecord);
+                            }
 
                             if (promiseStatus.execute) session.execute = promiseStatus.execute;
-                            if (promiseStatus.context) session.context = promiseStatus.context;
+                            session.context = stepRecord?.context || session.context;
+                            session.promiseId = null;
                             session.status = 'completed';
                             session.updatedAt = new Date().toISOString();
                             saveNewSession(cwd, session);
