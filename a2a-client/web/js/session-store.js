@@ -45,8 +45,7 @@
             promisePending: false,  // Block input while waiting for server response
             _waitIndicatorActive: false,  // Track if wait indicator is showing
             
-            // Session logs (two types)
-            responsesLog: [],  // Raw server responses
+            // Session logs (only messages, responsesLog was unused)
             messagesLog: [],   // Human-readable messages for frontend display
             
             // New: numbered steps tracking
@@ -385,7 +384,9 @@
     };
 
     SessionStore.prototype.setMessages = function(messages) {
-        if (!Array.isArray(messages)) return this;
+        if (!Array.isArray(messages)) {
+            return this;
+        }
         
         // Don't re-normalize if messages are already normalized (have id field)
         const alreadyNormalized = messages.every(m => m.id && m.timestamp);
@@ -398,6 +399,7 @@
             .map(m => normalizeMessage(m, 'assistant'))
             .filter(Boolean)
             .slice(-MAX_MESSAGES);
+
         this._emit('messages', [...this._state.messages]);
         return this;
     };
@@ -559,27 +561,7 @@
         console.log('[SessionStore] Full state:', this.getState());
     };
 
-    // === Session Logging (two logs: responses + messages) ===
-
-    /**
-     * Log raw server response
-     * @param {Object} response - Raw server response data
-     */
-    SessionStore.prototype.logResponse = function(response) {
-        const logEntry = {
-            timestamp: new Date().toISOString(),
-            data: response
-        };
-        this._state.responsesLog.push(logEntry);
-        
-        // Keep max 100 entries
-        if (this._state.responsesLog.length > 100) {
-            this._state.responsesLog.shift();
-        }
-        
-        console.log('[SessionStore] Response logged:', logEntry.timestamp);
-        this._emit('responseLogged', logEntry);
-    };
+    // === Session Logging (messages only - responsesLog was unused) ===
 
     /**
      * Log human-readable message for frontend display
@@ -606,14 +588,6 @@
     };
 
     /**
-     * Get all logged responses
-     * @returns {Array} Array of response log entries
-     */
-    SessionStore.prototype.getResponsesLog = function() {
-        return [...this._state.responsesLog];
-    };
-
-    /**
      * Get all logged messages
      * @returns {Array} Array of message log entries
      */
@@ -625,7 +599,6 @@
      * Clear all logs
      */
     SessionStore.prototype.clearLogs = function() {
-        this._state.responsesLog = [];
         this._state.messagesLog = [];
         this._emit('logsCleared');
         console.log('[SessionStore] Logs cleared');
@@ -895,6 +868,7 @@
     };
 
     // Export - create global instance for backward compatibility
+    global.SessionStoreClass = SessionStore;  // Export class for creating new instances
     global.SessionStore = new SessionStore();
 
 })(typeof window !== 'undefined' ? window : globalThis);

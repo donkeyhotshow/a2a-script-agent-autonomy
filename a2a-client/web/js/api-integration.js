@@ -281,12 +281,12 @@ class APIIntegration {
      * Submit client result and trigger next step
      * This creates client-result.json and sends request to A2A Server
      */
-    async submitNext(sessionId, result, context = {}) {
+    async submitNext(sessionId, result) {
         const headers = { 'Content-Type': 'application/json', ...this._getStorageHeaders() };
         const res = await fetch(`/api/a2a/sessions/${encodeURIComponent(sessionId)}/next`, {
             method: 'POST',
             headers,
-            body: JSON.stringify({ result, context })
+            body: JSON.stringify({ result })
         });
         if (!res.ok) {
             const error = await res.json().catch(() => ({}));

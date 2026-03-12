@@ -33,19 +33,18 @@ function mergeResponseContext(sessionId, fallbackContext = {}, serverResponse = 
     return base;
 }
 
-function buildStepRecord({ sessionId, stepNum, serverResponse, messages = [], fallbackContext = {}, clientResult = null }) {
+function buildStepRecord({ sessionId, stepNum, serverResponse, messages = [], fallbackContext = {} }) {
     if (!serverResponse) return null;
     const context = mergeResponseContext(sessionId, fallbackContext, serverResponse);
+    // Extract execute from result.execute, data.execute, or direct execute field
+    const execute = serverResponse?.result?.execute ?? serverResponse?.data?.execute ?? serverResponse?.execute;
     const payload = {
-        ...serverResponse,
         step: stepNum,
         timestamp: new Date().toISOString(),
-        messages,
-        context
+        execute: execute ?? null,
+        context,
+        messages
     };
-    if (clientResult) {
-        payload.clientResult = clientResult;
-    }
     return payload;
 }
 
@@ -107,7 +106,9 @@ export function createStepRoutes({ cwd }) {
                 try {
                     const d = JSON.parse(body || '{}');
                     console.log('[VitePlugin] Step data keys:', Object.keys(d));
-                    const session = loadNewSession(cwd, sessionId);
+                    const session = loadNewSession(cwd, sessionId) || { id: sessionId, currentStep: 1 };
+                    // Initialize messages array if not present (loadNewSession doesn't return messages)
+                    session.messages = session.messages || [];
                     console.log('[VitePlugin] Loaded session:', session ? 'found' : 'NOT FOUND', sessionId);
                     if (!session) {
                         res.writeHead(404).end(JSON.stringify({ error: 'Session not found' }));
@@ -234,34 +235,31 @@ export function createStepRoutes({ cwd }) {
                         });
                     }
 
-                    const hasRealData = serverResponse || d.result || serverPromise;
-                    if (hasRealData) {
-                        console.log('[VitePlugin] Saving step:', nextStepNum, 'hasRealData:', typeof hasRealData);
-                        if (serverResponse) {
-                            const stepRecord = buildStepRecord({
-                                sessionId,
-                                stepNum: nextStepNum,
-                                serverResponse,
-                                messages,
-                                fallbackContext: context,
-                                clientResult: d.result
-                            });
-                            if (stepRecord) {
-                                saveServerResponse(cwd, sessionId, nextStepNum, stepRecord);
-                            }
-                            session.context = stepRecord?.context || context;
-                        } else {
-                            saveNewStep(cwd, sessionId, nextStepNum, {
-                                step: nextStepNum,
-                                execute: serverResponse?.result?.execute || serverResponse?.execute || d.execute,
-                                messages,
-                                context: context,
-                                result: d.result
-                            });
-                            session.context = context;
+                    // Always save step data - even if server response is empty
+                    // This ensures session can be loaded for next request
+                    console.log('[VitePlugin] Saving step:', nextStepNum, 'hasResponse:', !!serverResponse);
+                    if (serverResponse) {
+                        const stepRecord = buildStepRecord({
+                            sessionId,
+                            stepNum: nextStepNum,
+                            serverResponse,
+                            messages,
+                            fallbackContext: context
+                        });
+                        if (stepRecord) {
+                            saveServerResponse(cwd, sessionId, nextStepNum, stepRecord);
                         }
+                        session.context = stepRecord?.context || context;
                     } else {
-                        console.log('[VitePlugin] Skipping step save - no real data (serverResponse:', !!serverResponse, ', d.result:', !!d.result, ', serverPromise:', !!serverPromise, ')');
+                        // Save step even without server response - to preserve client result and messages
+                        saveNewStep(cwd, sessionId, nextStepNum, {
+                            step: nextStepNum,
+                            execute: d.execute,
+                            messages,
+                            context: context,
+                            result: d.result
+                        });
+                        session.context = context;
                     }
 
                     session.currentStep = nextStepNum;
@@ -276,7 +274,6 @@ export function createStepRoutes({ cwd }) {
                     res.setHeader('Content-Type', 'application/json');
                     res.end(JSON.stringify({
                         success: true,
-                        step: nextStepNum,
                         session,
                         serverPromise,
                         serverResponse
@@ -307,7 +304,7 @@ export function createStepRoutes({ cwd }) {
                 session,
                 latestStep: latestStepNum,
                 stepData: latestStep,
-                hasResponse: latestStep?.result !== undefined
+                hasResponse: !!latestStep?.execute
             }));
             return;
         }
@@ -348,7 +345,7 @@ export function createStepRoutes({ cwd }) {
             req.on('end', () => {
                 try {
                     const d = JSON.parse(body || '{}');
-                    const { result, context, task } = d;
+                    const { result } = d;
 
                     const session = loadNewSession(cwd, sessionId);
                     if (!session) {
@@ -361,7 +358,6 @@ export function createStepRoutes({ cwd }) {
                     saveClientResult(cwd, sessionId, currentStep, {
                         step: currentStep,
                         result,
-                        context,
                         timestamp: new Date().toISOString()
                     });
 
@@ -370,7 +366,7 @@ export function createStepRoutes({ cwd }) {
                     const previousContext = previousStepData?.context || {};
                     console.log('[VitePlugin] Previous step context:', previousContext);
 
-                    let mergedContext = { ...previousContext, ...context };
+                    let mergedContext = { ...previousContext };
                     if (previousStepData?.result?.context) {
                         mergedContext = { ...mergedContext, ...previousStepData.result.context };
                     }
@@ -384,8 +380,8 @@ export function createStepRoutes({ cwd }) {
                         console.log('[VitePlugin] Preserving execution.action from session:', previousExecution.action);
                     }
 
-                    console.log('[VitePlugin] Building request - task:', task, 'result:', result);
-                    const effectiveTask = task || result?.message;
+                    const effectiveTask = result?.message;
+                    console.log('[VitePlugin] Building request - effectiveTask:', effectiveTask, 'result:', result);
                     console.log('[VitePlugin] Effective task sent to server:', effectiveTask);
                     const requestToServer = {
                         sessionId,
@@ -493,7 +489,7 @@ export function createStepRoutes({ cwd }) {
                                 });
                             }
 
-                            console.log('[VitePlugin] Extracted assistant message:', assistantMessage);
+                            // Messages now handled by session.messages array
                             if (assistantMessage) {
                                 session.messages = session.messages || [];
                                 session.messages.push({
@@ -522,8 +518,7 @@ export function createStepRoutes({ cwd }) {
                                         stepNum: nextStepNum,
                                         serverResponse,
                                         messages: session.messages || [],
-                                        fallbackContext: mergedContext,
-                                        clientResult: result
+                                        fallbackContext: mergedContext
                                     });
                                     if (stepRecord) {
                                         saveServerResponse(cwd, sessionId, nextStepNum, stepRecord);
@@ -543,7 +538,6 @@ export function createStepRoutes({ cwd }) {
 
                             const response = {
                                 success: true,
-                                step: nextStepNum,
                                 session,
                                 execute: serverResponse?.result?.execute || null,
                                 promiseId: session.promiseId || null,
@@ -563,7 +557,6 @@ export function createStepRoutes({ cwd }) {
 
                         const response = {
                             success: true,
-                            step: nextStepNum,
                             session,
                             execute: null,
                             promiseId: null,
@@ -575,8 +568,13 @@ export function createStepRoutes({ cwd }) {
                         res.end(JSON.stringify(response));
                     });
 
-                    console.log('[VitePlugin] === SENDING TO A2A SERVER ===');
-                    xhrReq.write(JSON.stringify(requestToServer));
+                    const invokePayload = {
+                        context: mergedContext,
+                        result,
+                        ...(effectiveTask ? { task: effectiveTask } : {})
+                    };
+                    console.log('[VitePlugin] === SENDING TO A2A SERVER ===', Object.keys(invokePayload));
+                    xhrReq.write(JSON.stringify(invokePayload));
                     xhrReq.end();
                 } catch (e) {
                     res.writeHead(400).end(JSON.stringify({ error: String(e?.message || e) }));

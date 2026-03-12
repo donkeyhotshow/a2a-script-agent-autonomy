@@ -240,10 +240,14 @@
                     });
 
                     // Create per-window SessionStore instance to avoid conflicts
-                    // Use SessionStore constructor directly (not the global instance)
-                    const store = new window.SessionStore.constructor();
-                    // Initialize the store
-                    store.init?.();
+                    // Use SessionStoreClass to create new instances (not the global instance)
+                    const StoreClass = window.SessionStoreClass || global.SessionStoreClass;
+                    const store = StoreClass ? new StoreClass() : null;
+                    if (!store) {
+                        console.error('[WindowState] Failed to create SessionStore instance');
+                    } else {
+                        // SessionStore instance created
+                    }
                     // Store reference on the panel for cleanup
                     panel._sessionStore = store;
 
@@ -257,7 +261,6 @@
                             store.setSession(sessionData.id, sessionData.projectId);
                         }
                         // Load messages if available from session data
-                        console.log('[WindowState] Checking messages in sessionData:', { hasMessages: !!sessionData.messages, length: sessionData.messages?.length, keys: sessionData.messages ? Object.keys(sessionData.messages) : 'none' });
                         if (sessionData.messages && Array.isArray(sessionData.messages) && sessionData.messages.length > 0) {
                             store.setMessages(sessionData.messages);
                             // Save messages for restore after TaskFlow reset
@@ -285,13 +288,14 @@
 
                     // If messages weren't in session data at all, load them separately via adapter
                     // But only if we haven't already set messages above
-                    const storeHasMessages = store && (store.messages?.length > 0 || store.getState?.()?.messages?.length > 0);
+                    const storeState = store?.getState?.() || {};
+                    const storeHasMessages = store && (storeState.messages?.length > 0);
                     if (!storeHasMessages && sessionData.messages === undefined) {
                         try {
                             const adapter = global.SessionManagerAdapter || global.SessionManager;
                             if (adapter?.getConversation) {
                                 await adapter.getConversation(sessionId);
-                                console.log('[WindowState] Loaded conversation via adapter:', sessionId);
+                            console.log('[WindowState] Loaded conversation via adapter:', sessionId);
                             }
                         } catch (err) {
                             console.warn('[WindowState] Failed to load conversation:', err);
@@ -315,7 +319,7 @@
                     // Restore messages that were cleared by TaskFlow.reset()
                     if (savedMessages && savedMessages.length > 0) {
                         store.setMessages(savedMessages);
-                        console.log('[WindowState] Restored messages after TaskFlow init:', savedMessages.length);
+                        // Messages restored after TaskFlow init
                         // Force re-render to show restored messages
                         if (global.WindowEvents && contentEl) {
                             global.WindowEvents.renderSessionContent(contentEl, sessionId, store);

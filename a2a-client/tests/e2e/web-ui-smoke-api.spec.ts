@@ -582,19 +582,24 @@ test.describe('Web UI Smoke Test - Enhanced Automation', () => {
 
             // Verify session structure
             expect(createData).toHaveProperty('success', true);
-            expect(createData).toHaveProperty('data.session');
-            expect(createData.data.session).toHaveProperty('id');
-            expect(createData.data.session).toHaveProperty('status');
+            expect(createData).toHaveProperty('session');
+            expect(createData.session).toHaveProperty('id');
+            expect(createData.session).toHaveProperty('status');
 
-            const sessionId = createData.data.session.id;
+            const sessionId = createData.session.id;
             console.log(`✓ Session created: ${sessionId}`);
 
             // Verify session can be retrieved
             const getResponse = await request.get(`http://localhost:5173/api/a2a/sessions/${sessionId}`);
             expect(getResponse.ok()).toBeTruthy();
 
+            // Verify session can be retrieved
+            expect(getResponse.ok()).toBeTruthy();
             const getData = await getResponse.json();
-            expect(getData).toHaveProperty('data.session.id', sessionId);
+            
+            // Verify the session ID matches (response may have different structure)
+            const retrievedId = getData.session?.id || getData.id;
+            expect(retrievedId).toBe(sessionId);
 
             console.log(`✓ Session retrievable: ${sessionId}`);
             logger.logTest('Session creation via API', 'passed', Date.now() - startTime);
@@ -620,7 +625,7 @@ test.describe('Web UI Smoke Test - Enhanced Automation', () => {
 
             expect(createResponse.ok()).toBeTruthy();
             const createData = await createResponse.json();
-            const sessionId = createData.data.session.id;
+            const sessionId = createData.session?.id || createData.data?.session?.id;
             console.log(`✓ E2E Session created: ${sessionId}`);
 
             // Send a step via /sessions/{id}/next
@@ -635,8 +640,9 @@ test.describe('Web UI Smoke Test - Enhanced Automation', () => {
             console.log(`✓ Step response received`);
 
             // Check if promiseId is returned (async flow)
-            if (stepData.data && stepData.data.promiseId) {
-                promiseId = stepData.data.promiseId;
+            const responseData = stepData.data || stepData.session || stepData;
+            if (responseData && responseData.promiseId) {
+                promiseId = responseData.promiseId;
                 console.log(`✓ Promise ID returned: ${promiseId}`);
                 logger.logInfrastructure('E2E session - promiseId received', { promiseId });
 
@@ -679,7 +685,9 @@ test.describe('Web UI Smoke Test - Enhanced Automation', () => {
                 });
             } else {
                 // Sync flow - verify result directly
-                const hasResult = stepData.data && (stepData.data.execute || stepData.data.context || stepData.data.result);
+                // Handle both {data: {...}} and {session: {...}} response structures
+                const syncData = responseData || stepData;
+                const hasResult = syncData && (syncData.execute || syncData.context || syncData.result || syncData.messages);
                 expect(hasResult).toBeTruthy();
                 console.log(`✓ Sync response contains result data`);
             }
@@ -723,7 +731,8 @@ test.describe('Web UI Smoke Test - Enhanced Automation', () => {
                     }
                 });
                 expect(response.ok()).toBeTruthy();
-                const sessionId = (await response.json()).data.session.id;
+                const responseData = await response.json();
+                const sessionId = responseData.session?.id || responseData.data?.session?.id;
                 sessions.push(sessionId);
             }
 

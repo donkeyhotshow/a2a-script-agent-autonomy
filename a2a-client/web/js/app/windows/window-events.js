@@ -28,17 +28,11 @@
                         const msg = String(text).trim();
                         store.pushMessage?.({ content: msg }, 'user');
                         store?.setPromisePending?.(true);
-                        if (store?.saveStep && store?.isPersistentStorage?.()) {
-                            store.saveStep({ execute: { form: { input: { value: msg } } }, messages: [{ role: 'user', content: msg }], context: store?.context }).catch(() => {});
-                        }
                         refreshContent();
                         await taskFlowRef.sendMessage(sessionId, msg);
                     },
                     sendChoice: async (choiceId, el) => {
                         store?.setPromisePending?.(true);
-                        if (store?.saveStep && store?.isPersistentStorage?.()) {
-                            store.saveStep({ execute: { form: { choice: choiceId } }, messages: [], context: store?.context }).catch(() => {});
-                        }
                         refreshContent();
                         await this.sendChoice(sessionId, choiceId);
                     }
@@ -133,8 +127,7 @@
             if (global.ActionHandler?.sendMessage) {
                 await global.ActionHandler.sendMessage(sessionId, projectId, message);
             } else if (global.ActionHandler?.submit) {
-                const context = store?.context || {};
-                await global.ActionHandler.submit(sessionId, projectId, { message }, context);
+                await global.ActionHandler.submit(sessionId, projectId, { message });
             } else {
                 throw new Error('ActionHandler is not available for sending message');
             }
@@ -154,7 +147,7 @@
             if (global.ActionHandler?.sendChoice) {
                 await global.ActionHandler.sendChoice(sessionId, projectId, choiceId);
             } else if (global.ActionHandler?.submit && projectId) {
-                await global.ActionHandler.submit(sessionId, projectId, result, store?.context || {});
+                await global.ActionHandler.submit(sessionId, projectId, result);
             } else {
                 throw new Error('ActionHandler is not available for sending choice');
             }

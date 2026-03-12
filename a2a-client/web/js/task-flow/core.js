@@ -359,7 +359,7 @@
                     throw new Error('ActionHandler is not available for sending choice');
                 }
 
-                await handler.submit(sessionId, projectId, { choice: choiceId }, this._buildContext());
+                await handler.submit(sessionId, projectId, { choice: choiceId });
 
                 // Wait for response (promiseId polling in SDK)
                 const outcome = await outcomePromise;
@@ -409,7 +409,7 @@
                     throw new Error('ActionHandler is not available for sending message');
                 }
 
-                await handler.submit(sessionId, projectId, { message: messageText }, this._buildContext());
+                await handler.submit(sessionId, projectId, { message: messageText });
 
                 // Wait for response (promiseId polling in SDK)
                 const outcome = await outcomePromise;
@@ -426,37 +426,6 @@
                     </div>
                 `;
             }
-        },
-
-        /**
-         * Построить контекст
-         * @param {Object} overrides - переопределения
-         */
-        _buildContext(overrides = {}) {
-            const base = TaskFlow._lastContext && typeof TaskFlow._lastContext === 'object'
-                ? { ...TaskFlow._lastContext }
-                : {};
-            const context = { ...base };
-            if (overrides.task) {
-                context.task = overrides.task;
-            }
-            const executionBase = context.execution && typeof context.execution === 'object'
-                ? { ...context.execution }
-                : {};
-            const executionOverrides = { ...(overrides.execution || {}) };
-            if (overrides.action) executionOverrides.action = overrides.action;
-            if (overrides.step) executionOverrides.step = overrides.step;
-            const storeExecution = (() => {
-                const store = resolveStore(TaskFlow._sessionId);
-                return store?.getExecution ? store.getExecution() : null;
-            })();
-            const execution = {
-                ...executionBase,
-                ...executionOverrides,
-                ...(storeExecution || {})
-            };
-            context.execution = execution;
-            return context;
         },
 
         /**

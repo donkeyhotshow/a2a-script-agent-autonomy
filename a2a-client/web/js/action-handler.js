@@ -45,7 +45,7 @@
      * Submit result to session - triggers step processing
      * Saves client-result.json and creates next step via API
      */
-    async function submit(sessionId, projectId, result, context = {}) {
+    async function submit(sessionId, projectId, result) {
         const store = resolveStore(sessionId);
         const base = getApiBase(store);
         if (!base) {
@@ -65,7 +65,7 @@
         const res = await fetch(url, {
             method: 'POST',
             headers,
-            body: JSON.stringify({ result, context })
+            body: JSON.stringify({ result })
         });
         
         const data = await res.json().catch(() => ({}));
@@ -75,15 +75,14 @@
         
         if (store && data) {
             if (data.execute) store.setExecute?.(data.execute);
-            if (data.context) store.setContext?.(data.context);
+            const ctx = data.context ?? data.session?.context;
+            if (ctx) store.setContext?.(ctx);
             if (data.promiseId) {
-                store.setPromiseId?.(data.promiseId);
-                // Start polling for async responses
+                store.setPromisePending?.(true);
                 startPromisePolling(sessionId, data.promiseId);
             }
-            if (data.session) {
-                store.setSession?.(data.session);
-            }
+            const sess = data.session;
+            if (sess) store.setSession?.(sess.id ?? sess.sessionId, sess.projectId);
         }
         
         return data;
@@ -147,8 +146,6 @@
                 
                 if (store) {
                     if (status.execute) store.setExecute?.(status.execute);
-                    if (status.result) store.setLastResult?.(status.result);
-                    store.setPromiseId?.(null);
                 }
                 
                 // Emit event for UI to handle
@@ -168,7 +165,7 @@
                 }
                 
                 if (store) {
-                    store.setPromiseId?.(null);
+                    store.setPromisePending?.(false);
                 }
                 
                 global.apiIntegration?.emit?.('promiseError', {
@@ -191,15 +188,15 @@
     }
 
     async function sendMessage(sessionId, projectId, message) {
-        const store = resolveStore(sessionId);
-        const ctx = store?.context || {};
-        return submit(sessionId, projectId, { message: typeof message === 'string' ? message : { content: message } }, ctx);
+        const messageText =
+            typeof message === 'string'
+                ? message
+                : (message?.content ?? String(message ?? ''));
+        return submit(sessionId, projectId, { message: messageText });
     }
 
     async function sendChoice(sessionId, projectId, choiceId) {
-        const store = resolveStore(sessionId);
-        const ctx = store?.context || {};
-        return submit(sessionId, projectId, { choice: choiceId }, ctx);
+        return submit(sessionId, projectId, { choice: choiceId });
     }
 
     const ActionHandler = { 

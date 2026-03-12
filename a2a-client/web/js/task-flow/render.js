@@ -66,10 +66,6 @@
     function renderExecute(contentEl, execute, data, taskFlowRef, store) {
         if (!contentEl || !execute) return;
 
-        // Use ActionHandler for uniform processing
-        const handler = global.ActionHandler;
-        const processed = handler?.processExecute?.(execute) || { type: 'unknown', data: execute };
-
         const context = data?.context;
         const execution = context?.execution;
         const passedStore = store || data?.store; // Use passed store or from data
@@ -129,7 +125,7 @@
         // execute.form.choices: choice buttons
         // execute.form.input only: text input
         // execute.message only: show message + generic input to continue
-        const store = data?.store;
+        store = store || data?.store;
         if (execute.form) {
             return renderForm(contentEl, execute.form, executionStepHtml, progressBarHtml, finalResultHtml, taskFlowRef, store);
         } else if (execute.message) {

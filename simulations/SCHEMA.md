@@ -2,6 +2,16 @@
 
 Align all simulations to avoid redundant or conflicting values.
 
+## Scope: simulations vs runtime
+
+**Simulations do NOT cover** promise-related flows and async infrastructure:
+
+- `execute.wait` — loading/wait indicator while server processes
+- `promiseId` — async request polling
+- Polling, retries, timeout handling
+
+Simulations describe the **sync request-response contract** (client.json → received.json). Runtime systems add promise handling on top; that logic is outside simulation scope.
+
 > **Примечание о context:** Поля внутри `context` курируются системой и имеют свободный формат. Не проверять и не
 > трогать. Сюда входят `history`, `execution`, `vite_config`, `aliases` и любые другие поля.
 

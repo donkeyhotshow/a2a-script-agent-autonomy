@@ -8,6 +8,8 @@
 
 Симуляция показывает диалог с AI (action: dialog).
 
+> **Scope:** Симуляции не описывают работу с промисами (`execute.wait`, `promiseId`, polling). См. `simulations/SCHEMA.md` — "Scope: simulations vs runtime".
+
 ## Поток
 
 | Шаг | Request                                      | Response                                                                 |
