@@ -3,7 +3,7 @@
  * Extracted from stepRoutes.js
  */
 
-import { getStorageMode } from '../../utils/server.js';
+export { getStorageMode } from '../../utils/server.js';
 
 /**
  * Check if session ID is valid format
@@ -16,15 +16,6 @@ export function isValidSessionId(sessionId) {
   return typeof sessionId === 'string' && sessionId.length > 0 && !sessionId.includes('..');
 }
 
-/**
- * Get storage mode from request
- * @param req - Express request
- * @returns storage mode string
- */
-export function getStorageMode(req) {
-  // Delegate to server utils (existing import)
-  return getStorageMode(req);
-}
 
 /**
  * Validate POST steps body structure

@@ -1,7 +1,8 @@
 import { test, expect } from '@playwright/test';
-import * as fs from 'fs';
-import * as path from 'path';
-import { execSync, spawn } from 'child_process';
+import { infraManager } from './helpers/infra-manager.js';
+import { logger } from './helpers/smoke-logger.js';
+import { SERVICES } from './fixtures/services.js';
+
 
 /**
  * Web UI Smoke Test - Enhanced Automation

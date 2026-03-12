@@ -104,7 +104,6 @@
         const projectId = TaskFlow._projectId;
         const ctx = resultData?.context ?? resultData?.data?.context;
         const exec = resultData?.execute ?? resultData?.data?.execute;
-        TaskFlow._lastContext = ctx != null ? (typeof ctx === 'object' ? ctx : {}) : {};
         const responseData = { context: ctx, execute: exec, sessionId, projectId };
         TaskFlow._lastResponse = responseData;
 
@@ -124,7 +123,6 @@
         fixed: false,
         _sessionId: null,
         _projectId: null,
-        _lastContext: null,
         _lastResponse: null,
 
         /**

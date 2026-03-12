@@ -194,7 +194,7 @@ class APIIntegration {
     /**
      * Get session by ID (uses Vite plugin)
      */
-    async getSession(sessionId, projectId = null) {
+    async getSession(sessionId) {
         const headers = { ...this._getHeaders(), ...this._getStorageHeaders() };
         const res = await fetch(`/api/a2a/sessions/${encodeURIComponent(sessionId)}`, { headers });
         if (!res.ok) return null;
@@ -204,7 +204,7 @@ class APIIntegration {
     /**
      * Delete session (uses Vite plugin)
      */
-    async deleteSession(sessionId, projectId = null) {
+    async deleteSession(sessionId) {
         const headers = { ...this._getStorageHeaders() };
         const res = await fetch(`/api/a2a/sessions/${encodeURIComponent(sessionId)}`, {
             method: 'DELETE',
@@ -217,59 +217,6 @@ class APIIntegration {
 
     // === Step Files API ===
     
-    /**
-     * Get step files from session
-     * @param {string} sessionId - Session ID
-     * @param {number} stepNum - Step number
-     * @returns {Promise<Object>} Step data with all files
-     */
-    async getStep(sessionId, stepNum) {
-        const headers = { ...this._getHeaders(), ...this._getStorageHeaders() };
-        const res = await fetch(`/api/a2a/sessions/${encodeURIComponent(sessionId)}/steps/${stepNum}`, { headers });
-        if (!res.ok) return null;
-        return res.json();
-    }
-
-    /**
-     * Get server-promise.json for step
-     */
-    async getServerPromise(sessionId, stepNum) {
-        const headers = { ...this._getHeaders(), ...this._getStorageHeaders() };
-        const res = await fetch(`/api/a2a/sessions/${encodeURIComponent(sessionId)}/step/${stepNum}/server-promise.json`, { headers });
-        if (!res.ok) return null;
-        return res.json();
-    }
-
-    /**
-     * Get client-result.json for step
-     */
-    async getClientResult(sessionId, stepNum) {
-        const headers = { ...this._getHeaders(), ...this._getStorageHeaders() };
-        const res = await fetch(`/api/a2a/sessions/${encodeURIComponent(sessionId)}/step/${stepNum}/client-result.json`, { headers });
-        if (!res.ok) return null;
-        return res.json();
-    }
-
-    /**
-     * Get request-to-server.json for step
-     */
-    async getRequestToServer(sessionId, stepNum) {
-        const headers = { ...this._getHeaders(), ...this._getStorageHeaders() };
-        const res = await fetch(`/api/a2a/sessions/${encodeURIComponent(sessionId)}/step/${stepNum}/request-to-server.json`, { headers });
-        if (!res.ok) return null;
-        return res.json();
-    }
-
-    /**
-     * Get server-response.json for step
-     */
-    async getServerResponse(sessionId, stepNum) {
-        const headers = { ...this._getHeaders(), ...this._getStorageHeaders() };
-        const res = await fetch(`/api/a2a/sessions/${encodeURIComponent(sessionId)}/step/${stepNum}/server-response.json`, { headers });
-        if (!res.ok) return null;
-        return res.json();
-    }
-
     /**
      * Submit client result and trigger next step
      * This creates client-result.json and sends request to A2A Server

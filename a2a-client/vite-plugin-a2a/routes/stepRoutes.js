@@ -1,12 +1,12 @@
-import { isValidSessionId, getStorageMode } from './middleware/validators.js';
-import { createSessionStorageService } from './services/session-storage.js';
-import { serverProxy } from './services/server-proxy.js';
+import { getStorageMode, isValidSessionId } from './middleware/validators.js';
 import { mergeResponseContext, buildStepRecord } from './utils/builders.js';
+import * as stepHandlers from './handlers/step-handlers.js';
+import * as stepUtils from './utils/step-utils.js';
+import { proxyToA2AServer } from './proxy/a2a-proxy.js';
+
+import fs from 'fs';
 
 const API_PREFIX = '/api/a2a';
-
-
-
 
 export function createStepRoutes({ cwd }) {
     return (req, res, next) => {
@@ -23,226 +23,55 @@ export function createStepRoutes({ cwd }) {
 
         const stepsListMatch = p.match(/^\/sessions\/([^/]+)\/steps$/);
         if (req.method === 'GET' && stepsListMatch) {
-            const sessionId = stepsListMatch[1];
-            if (!isValidSessionId(sessionId)) {
-                res.writeHead(400).end(JSON.stringify({ error: 'Invalid session ID' }));
-                return;
+            try {
+                const sessionId = stepsListMatch[1];
+                const steps = stepHandlers.handleListSteps(sessionId, cwd);
+                res.setHeader('Content-Type', 'application/json');
+                res.end(JSON.stringify({ steps }));
+            } catch (error) {
+                res.writeHead(400).end(JSON.stringify({ error: error.message }));
             }
-            const steps = listNewSteps(cwd, sessionId);
-            res.setHeader('Content-Type', 'application/json');
-            res.end(JSON.stringify({ steps }));
             return;
         }
 
         const stepDetailMatch = p.match(/^\/sessions\/([^/]+)\/steps\/(\d+)$/);
         if (req.method === 'GET' && stepDetailMatch) {
-            const sessionId = stepDetailMatch[1];
-            if (!isValidSessionId(sessionId)) {
-                res.writeHead(400).end(JSON.stringify({ error: 'Invalid session ID' }));
-                return;
+            try {
+                const sessionId = stepDetailMatch[1];
+                const stepNum = parseInt(stepDetailMatch[2], 10);
+                const step = stepHandlers.handleStepDetail(sessionId, stepNum, cwd);
+                res.setHeader('Content-Type', 'application/json');
+                res.end(JSON.stringify(step));
+            } catch (error) {
+                if (error.message === 'Step not found') {
+                    res.writeHead(404).end(JSON.stringify({ error: error.message }));
+                } else {
+                    res.writeHead(400).end(JSON.stringify({ error: error.message }));
+                }
             }
-            const stepNum = parseInt(stepDetailMatch[2], 10);
-            const step = loadNewStep(cwd, sessionId, stepNum);
-            if (!step) {
-                res.writeHead(404).end(JSON.stringify({ error: 'Step not found' }));
-                return;
-            }
-            res.setHeader('Content-Type', 'application/json');
-            res.end(JSON.stringify(step));
             return;
         }
+
+
 
         if (req.method === 'POST' && stepsListMatch) {
             const sessionId = stepsListMatch[1];
             console.log('[VitePlugin] POST /steps - sessionId:', sessionId, 'storageMode:', storageMode);
-            if (!isValidSessionId(sessionId)) {
-                console.log('[VitePlugin] Invalid session ID:', sessionId);
-                res.writeHead(400).end(JSON.stringify({ error: 'Invalid session ID' }));
-                return;
-            }
             let body = '';
             req.on('data', (c) => (body += c));
             req.on('end', async () => {
                 try {
                     const d = JSON.parse(body || '{}');
-                    console.log('[VitePlugin] Step data keys:', Object.keys(d));
-                    const session = loadNewSession(cwd, sessionId) || { id: sessionId, currentStep: 1 };
-                    // Initialize messages array if not present (loadNewSession doesn't return messages)
-                    session.messages = session.messages || [];
-                    console.log('[VitePlugin] Loaded session:', session ? 'found' : 'NOT FOUND', sessionId);
-                    if (!session) {
-                        res.writeHead(404).end(JSON.stringify({ error: 'Session not found' }));
-                        return;
-                    }
-
-                    const nextStepNum = (session.currentStep || 0) + 1;
-                    const stepDir = getNewStepDir(cwd, sessionId, nextStepNum);
-
-                    if (d.result) {
-                        saveClientResult(cwd, sessionId, nextStepNum, d.result);
-                    }
-
-                    const messages = d.messages || [];
-                    const context = d.context || session.context || {};
-
-                    let requestToServer = null;
-                    if (d.result || d.execute) {
-                        requestToServer = {
-                            step: nextStepNum,
-                            result: d.result,
-                            execute: d.execute,
-                            context,
-                            messages
-                        };
-                        saveRequestToServer(cwd, sessionId, nextStepNum, requestToServer);
-                    }
-
-                    let serverResponse = null;
-                    let serverPromise = null;
-
-                    if (d.execute?.form?.input || d.result) {
-                        try {
-                            const a2aUrl = process.env.A2A_SERVER_URL || 'http://localhost:3000';
-                            const requestBody = {
-                                id: `req_${Date.now()}_${Math.random().toString(36).slice(2)}`,
-                                sessionId,
-                                message: d.result?.message || d.execute?.form?.input?.value || '',
-                                context,
-                                execution: {
-                                    action: d.execute?.script ? 'script' : (d.result?.choice ? 'action' : 'continue'),
-                                    step: d.execute?.script ? 'run' : 'next'
-                                }
-                            };
-
-                            const serverReqRes = await fetch(`${a2aUrl}/api/v1/requests`, {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'x-skip-auth': 'true'
-                                },
-                                body: JSON.stringify(requestBody)
-                            });
-
-                            const serverData = await serverReqRes.json();
-
-                            if (serverData.data?.promiseId) {
-                                serverPromise = {
-                                    promiseId: serverData.data.promiseId,
-                                    status: serverData.data.status || 'pending',
-                                    pollUrl: serverData.data.pollUrl,
-                                    submittedAt: new Date().toISOString()
-                                };
-                                saveServerPromise(cwd, sessionId, nextStepNum, serverPromise);
-
-                                let pollResult = null;
-                                const maxPolls = 10;
-                                for (let i = 0; i < maxPolls; i++) {
-                                    await new Promise((r) => setTimeout(r, 1000));
-                                    const pollRes = await fetch(`${a2aUrl}/api/v1/requests/${serverPromise.promiseId}/result`, {
-                                        headers: { 'x-skip-auth': 'true' }
-                                    });
-                                    const pollData = await pollRes.json();
-                                    if (pollData.data?.status === 'completed') {
-                                        pollResult = pollData.data;
-                                        break;
-                                    }
-                                }
-
-                                if (pollResult) {
-                                    serverResponse = {
-                                        step: nextStepNum,
-                                        timestamp: new Date().toISOString(),
-                                        ...pollResult
-                                    };
-                                }
-                            } else if (serverData.data) {
-                                serverResponse = {
-                                    step: nextStepNum,
-                                    timestamp: new Date().toISOString(),
-                                    ...serverData.data
-                                };
-                            }
-                        } catch (e) {
-                            console.error('[vite-plugin-a2a] A2A Server request failed:', e.message);
-                        }
-                    }
-
-                    let assistantMessage = null;
-                    if (serverResponse) {
-                        assistantMessage =
-                            serverResponse?.result?.message ||
-                            serverResponse?.result?.execute?.message ||
-                            serverResponse?.execute?.message ||
-                            null;
-                    }
-
-                    if (d.result?.message) {
-                        session.messages = session.messages || [];
-                        session.messages.push({
-                            role: 'user',
-                            content: d.result.message,
-                            step: nextStepNum
-                        });
-                    }
-
-                    if (assistantMessage) {
-                        session.messages = session.messages || [];
-                        session.messages.push({
-                            role: 'assistant',
-                            content: assistantMessage,
-                            step: nextStepNum
-                        });
-                    }
-
-                    // Always save step data - even if server response is empty
-                    // This ensures session can be loaded for next request
-                    console.log('[VitePlugin] Saving step:', nextStepNum, 'hasResponse:', !!serverResponse);
-                    if (serverResponse) {
-                        const stepRecord = buildStepRecord({
-                            sessionId,
-                            stepNum: nextStepNum,
-                            serverResponse,
-                            messages,
-                            fallbackContext: context
-                        });
-                        if (stepRecord) {
-                            saveServerResponse(cwd, sessionId, nextStepNum, stepRecord);
-                        }
-                        session.context = stepRecord?.context || context;
-                    } else {
-                        // Save step even without server response - to preserve client result and messages
-                        saveNewStep(cwd, sessionId, nextStepNum, {
-                            step: nextStepNum,
-                            execute: d.execute,
-                            messages,
-                            context: context,
-                            result: d.result
-                        });
-                        session.context = context;
-                    }
-
-                    session.currentStep = nextStepNum;
-                    session.updatedAt = new Date().toISOString();
-                    session.messages = session.messages || [];
-
-                    if (serverResponse?.result?.execute) session.execute = serverResponse.result.execute;
-                    if (!session.context) session.context = context;
-                    if (serverPromise) session.lastPromiseId = serverPromise.promiseId;
-                    saveNewSession(cwd, session);
-
+                    const result = await stepHandlers.handlePostStep(sessionId, d, cwd);
                     res.setHeader('Content-Type', 'application/json');
-                    res.end(JSON.stringify({
-                        success: true,
-                        session,
-                        serverPromise,
-                        serverResponse
-                    }));
+                    res.end(JSON.stringify(result));
                 } catch (e) {
                     res.writeHead(400).end(JSON.stringify({ error: String(e?.message || e) }));
                 }
             });
             return;
         }
+
 
         const latestMatch = p.match(/^\/sessions\/([^/]+)\/latest$/);
         if (req.method === 'GET' && latestMatch) {
@@ -261,9 +90,7 @@ export function createStepRoutes({ cwd }) {
             res.setHeader('Content-Type', 'application/json');
             res.end(JSON.stringify({
                 session,
-                latestStep: latestStepNum,
-                stepData: latestStep,
-                hasResponse: !!latestStep?.execute
+                latestStep: latestStepNum
             }));
             return;
         }
@@ -314,10 +141,7 @@ export function createStepRoutes({ cwd }) {
 
                     const currentStep = session.currentStep || 1;
                     console.log('[VitePlugin] Saving client-result for step:', currentStep);
-                    saveClientResult(cwd, sessionId, currentStep, {
-                        step: currentStep,
-                        result
-                    });
+                    saveClientResult(cwd, sessionId, currentStep, { result });
 
                     const nextStepNum = currentStep + 1;
                     const previousStepData = loadServerResponse(cwd, sessionId, currentStep);
@@ -342,10 +166,7 @@ export function createStepRoutes({ cwd }) {
                     console.log('[VitePlugin] Building request - effectiveTask:', effectiveTask, 'result:', result);
                     console.log('[VitePlugin] Effective task sent to server:', effectiveTask);
                     const requestToServer = {
-                        sessionId,
-                        step: nextStepNum,
                         context: mergedContext,
-                        task: effectiveTask,
                         result
                     };
 

@@ -82,7 +82,7 @@
                 startPromisePolling(sessionId, data.promiseId);
             }
             const sess = data.session;
-            if (sess) store.setSession?.(sess.id ?? sess.sessionId, sess.projectId);
+            if (sess) store.setSession?.(sess.sessionId, sess.projectId);
         }
         
         return data;
@@ -188,16 +188,16 @@
         }
     }
 
-    async function sendMessage(sessionId, projectId, message) {
+    async function sendMessage(sessionId, message) {
         const messageText =
             typeof message === 'string'
                 ? message
                 : (message?.content ?? String(message ?? ''));
-        return submit(sessionId, projectId, { message: messageText });
+        return submit(sessionId, { message: messageText });
     }
 
-    async function sendChoice(sessionId, projectId, choiceId) {
-        return submit(sessionId, projectId, { choice: choiceId });
+    async function sendChoice(sessionId, choiceId) {
+        return submit(sessionId, { choice: choiceId });
     }
 
     const ActionHandler = { 

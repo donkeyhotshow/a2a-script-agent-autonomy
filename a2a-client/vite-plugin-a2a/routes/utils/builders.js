@@ -65,7 +65,7 @@ export function buildStepRecord({ sessionId, stepNum, serverResponse, messages =
  * @param stepNum - step number
  * @returns step directory path
  */
-export function ensureStepDir(cwd, sessionId, stepNum) {
+export async function ensureStepDir(cwd, sessionId, stepNum) {
     const { getNewStepDir } = await import('../../storage/newSessions.js');
     const fs = await import('fs');
     const stepDir = getNewStepDir(cwd, sessionId, stepNum);

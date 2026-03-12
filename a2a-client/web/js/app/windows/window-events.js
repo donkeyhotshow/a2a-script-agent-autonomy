@@ -122,10 +122,9 @@
         async sendMessage(sessionId, message, usePassedStore = true) {
             // Use the store that was passed to renderSessionContent, not global
             let store = usePassedStore ? this._passedStore : global.SessionStore;
-            const projectId = store?.projectId;
 
             if (global.ActionHandler?.sendMessage) {
-                await global.ActionHandler.sendMessage(sessionId, projectId, message);
+                await global.ActionHandler.sendMessage(sessionId, message);
             } else if (global.ActionHandler?.submit) {
                 await global.ActionHandler.submit(sessionId, { message });
             } else {
@@ -141,12 +140,11 @@
         async sendChoice(sessionId, choiceId, usePassedStore = true) {
             // Use the store that was passed to renderSessionContent, not global
             let store = usePassedStore ? this._passedStore : global.SessionStore;
-            const projectId = store?.projectId;
             const result = { choice: choiceId };
 
             if (global.ActionHandler?.sendChoice) {
-                await global.ActionHandler.sendChoice(sessionId, projectId, choiceId);
-            } else if (global.ActionHandler?.submit && projectId) {
+                await global.ActionHandler.sendChoice(sessionId, choiceId);
+            } else if (global.ActionHandler?.submit) {
                 await global.ActionHandler.submit(sessionId, result);
             } else {
                 throw new Error('ActionHandler is not available for sending choice');
