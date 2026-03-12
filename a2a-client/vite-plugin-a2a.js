@@ -30,7 +30,8 @@ import {
     saveServerPromise,
     saveClientResult,
     saveRequestToServer,
-    loadStepFile
+    loadStepFile,
+    loadServerResponse
 } from './vite-plugin-a2a/storage/newSessions.js';
 import { kvGet, kvSet, kvDelete, kvKeys, kvClear } from './vite-plugin-a2a/storage/kv.js';
 const API_PREFIX = '/api/a2a';
@@ -369,9 +370,9 @@ export default function vitePluginA2a() {
                             const nextStepNum = (session.currentStep || 0) + 1;
                             const stepDir = getNewStepDir(cwd, sessionId, nextStepNum);
                             
-                            // Save client-result.json (result from client)
+                            // Save client-result.json in CURRENT step (N)
                             if (d.result) {
-                                saveClientResult(cwd, sessionId, nextStepNum, d.result);
+                                saveClientResult(cwd, sessionId, currentStep, d.result);
                             }
                             
                             // Save messages
@@ -573,7 +574,7 @@ export default function vitePluginA2a() {
                     req.on('end', () => {
                         try {
                             const d = JSON.parse(body || '{}');
-                            const { result, context } = d;
+                            const { result, context, task } = d;
                             
                             const session = loadNewSession(cwd, sessionId);
                             if (!session) {
@@ -593,16 +594,29 @@ export default function vitePluginA2a() {
                             // Create next step with request-to-server.json
                             const nextStepNum = currentStep + 1;
                             
+                            // Load context from previous step's server-response
+                            const previousStepData = loadServerResponse(cwd, sessionId, currentStep);
+                            const previousContext = previousStepData?.context || {};
+                            console.log('[VitePlugin] Previous step context:', previousContext);
+                            
+                            // Merge contexts: client context overrides previous
+                            const mergedContext = { ...previousContext, ...context };
+                            
+                            // Add session_id to context as required by a2a-server
+                            mergedContext.session_id = sessionId;
+                            
                             // Build request to A2A Server
                             const requestToServer = {
                                 sessionId,
                                 step: nextStepNum,
-                                context: context || session.context || {},
+                                context: mergedContext,
+                                task: task,
                                 result: result,
                                 previousStep: currentStep
                             };
                             
-                            // Save request-to-server.json for next step
+                            // Save request-to-server.json for NEXT step (N+1)
+                            // According to api-client-server-logic.md - request is prepared in current step but stored for next
                             saveRequestToServer(cwd, sessionId, nextStepNum, requestToServer);
                             
                             // Initialize next step directory
@@ -612,7 +626,7 @@ export default function vitePluginA2a() {
                             // Send request to A2A Server (localhost:3000) using Node.js http
                             const xhr = require('http');
                             const a2aServerUrl = process.env.A2A_SERVER_URL || 'http://localhost:3000';
-                            const urlObj = new URL(`${a2aServerUrl}/api/v1/requests`);
+                            const urlObj = new URL(`${a2aServerUrl}/api/v1/invoke`);
                             
                             let serverResponse = null;
                             let promiseData = null;
@@ -633,11 +647,11 @@ export default function vitePluginA2a() {
                                     try {
                                         const a2aData = JSON.parse(data || '{}');
                                         
-                                        if (a2aData.promiseId) {
+                                        if (a2aData.data?.promiseId) {
                                             // Async response - save promise AND wait for completion
-                                            console.log('[VitePlugin] Async response - promiseId:', a2aData.promiseId);
+                                            console.log('[VitePlugin] Async response - promiseId:', a2aData.data.promiseId);
                                             promiseData = {
-                                                promiseId: a2aData.promiseId,
+                                                promiseId: a2aData.data.promiseId,
                                                 status: 'pending',
                                                 submittedAt: new Date().toISOString()
                                             };
@@ -688,7 +702,7 @@ export default function vitePluginA2a() {
                                     // Update session metadata (continue even if A2A request failed)
                                     session.currentStep = nextStepNum;
                                     session.updatedAt = new Date().toISOString();
-                                    if (serverResponse?.execute) session.execute = serverResponse.execute;
+                                    if (serverResponse?.result?.execute) session.execute = serverResponse.result.execute;
                                     if (serverResponse?.context) session.context = serverResponse.context;
                                     if (promiseData?.promiseId) session.promiseId = promiseData.promiseId;
                                     saveNewSession(cwd, session);
@@ -698,7 +712,7 @@ export default function vitePluginA2a() {
                                         success: true,
                                         step: nextStepNum,
                                         session,
-                                        execute: serverResponse?.execute || null,
+                                        execute: serverResponse?.result?.execute || null,
                                         promiseId: promiseData?.promiseId || null,
                                         sync: !promiseData
                                     };
@@ -729,6 +743,8 @@ export default function vitePluginA2a() {
                                 res.end(JSON.stringify(response));
                             });
                             
+                            // Send request to A2A Server
+                            console.log('[VitePlugin] === SENDING TO A2A SERVER ===');
                             xhrReq.write(JSON.stringify(requestToServer));
                             xhrReq.end();
                         } catch (e) {
@@ -757,7 +773,7 @@ export default function vitePluginA2a() {
                     // Poll A2A Server for promise status - using callback style
                     const a2aServerUrl = process.env.A2A_SERVER_URL || 'http://localhost:3000';
                     const xhr = require('http');
-                    const urlObj = new URL(`${a2aServerUrl}/api/v1/promises/${promiseId}`);
+                    const urlObj = new URL(`${a2aServerUrl}/api/v1/requests/${promiseId}/result`);
                     
                     const reqOptions = {
                         hostname: urlObj.hostname,
