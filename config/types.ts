@@ -243,28 +243,42 @@ export interface RequestProcessorConfig {
     intervalMs: number;
 }
 
-// ===========================================
-// Unified Configuration
-// ===========================================
-export interface AppConfig {
-    ports: PortConfig;
-    database: DatabaseConfig;
-    ai: AIConfig;
-    security: SecurityConfig;
-    server: ServerConfig;
-    proxy: ProxyConfig;
-    storage: StorageConfig;
-    logging: LoggingConfig;
-    rateLimit: RateLimitConfig;
-    queue: QueueConfig;
-    ml: MLConfig;
-    session: SessionConfig;
-    plexe: PlexeConfig;
-    requestProcessor: RequestProcessorConfig;
-}
+/**
+ * Configuration Types Index
+ * Re-exports generated types from schemas for backward compatibility.
+ * Includes ports-specific types and interfaces.
+ */
 
-// Export individual config types for service-specific usage
-export type { PortConfig, PortMetadata, DatabaseConfig, AIConfig, SecurityConfig };
-export type { ServerConfig, ProxyConfig, StorageConfig, LoggingConfig };
-export type { RateLimitConfig, QueueConfig, MLConfig, SessionConfig };
-export type { PlexeConfig, RequestProcessorConfig };
+// Schema-generated types (imported from schemas/index.js via schema.ts)
+export type { 
+  AppConfig, 
+  PortConfig, 
+  DatabaseConfig, 
+  AIConfig, 
+  SecurityConfig, 
+  ServerConfig, 
+  ProxyConfig, 
+  StorageConfig, 
+  LoggingConfig, 
+  RateLimitConfig, 
+  QueueConfig, 
+  MLConfig, 
+  SessionConfig, 
+  PlexeConfig, 
+  RequestProcessorConfig 
+} from './schema.js';
+
+// Ports-specific types and interfaces
+export type { 
+  ServiceKey,
+  PortMetadata,
+  PortConfig as PortsPortConfig,
+  PortAllocation, 
+  PortConflict, 
+  PortSuggestion, 
+  PortAllocationSummary, 
+  CATEGORY_RANGES 
+} from './ports.js';
+
+
+

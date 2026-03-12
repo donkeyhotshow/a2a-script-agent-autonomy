@@ -1,11 +1,10 @@
 /**
- * Centralized Configuration Schema
- * 
- * Zod schemas for validating environment variables.
- * Provides type-safe configuration with fail-fast validation.
+ * Configuration Schema Index
+ * Re-exports all schemas from modular config/schemas/ structure.
  */
 
-import {z} from 'zod';
+export * from './schemas/index.js';
+
 
 // ===========================================
 // Helper Schemas

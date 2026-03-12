@@ -17,3 +17,4 @@ dist/
 
 # Session/storage in project folder (legacy - now uses ~/.a2a-client)
 a2a-client/storage/
+ai-integration

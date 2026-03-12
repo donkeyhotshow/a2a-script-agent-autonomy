@@ -37,5 +37,5 @@ export function handlePostStep(sessionId, body, cwd) {
 }
 
 // Export all fs utils for stepUtils.js
-export { loadNewSession, saveNewSession, getNewStepDir, listNewSteps, loadNewStep, saveNewStep, saveServerResponse, saveServerPromise, saveClientResult, saveRequestToServer, loadServerResponse, loadServerPromise, loadStepFile, getNewSessionLatestStep } from '../services/session-storage.js'; // adjust path
+export { loadNewSession, saveNewSession, getNewStepDir, listNewSteps, loadNewStep, saveNewStep, saveServerResponse, saveServerPromise, saveClientResult, saveRequestToServer, loadServerResponse, loadServerPromise, loadStepFile, getNewSessionLatestStep } from '../../storage/newSessions.js';
 

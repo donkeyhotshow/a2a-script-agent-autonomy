@@ -82,7 +82,7 @@
                 startPromisePolling(sessionId, data.promiseId);
             }
             const sess = data.session;
-            if (sess) store.setSession?.(sess.sessionId, sess.projectId);
+            if (sess) store.setSession?.(sess.id ?? sess.sessionId, sess.projectId);
         }
         
         return data;

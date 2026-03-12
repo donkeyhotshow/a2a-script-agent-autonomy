@@ -46,7 +46,6 @@ async function fetchWithRetry(url, options = {}, retryCount = 0) {
 
 class APIIntegration {
     constructor() {
-        this.apiBase = '/api';
         this.token = null;
         this._listeners = new Map();
     }
@@ -55,20 +54,10 @@ class APIIntegration {
      * Configure API client
      */
     configure(options = {}) {
-        let base = options.apiBase || options.clientApiUrl;
-        if (base && typeof base === 'object') {
-            base = base.url || base.apiBase || base.toString?.();
-        }
-
-        if (base && typeof base === 'string' && base !== '[object Object]') {
-            this.apiBase = base.replace(/\/?$/, '');
-        }
-
         if (options.token) {
             this.token = options.token;
         }
-
-        console.log('[API] Configured:', this.apiBase);
+        console.log('[API] Configured with token:', !!this.token);
         return this;
     }
 
@@ -81,45 +70,6 @@ class APIIntegration {
             headers['Authorization'] = `Bearer ${this.token}`;
         }
         return headers;
-    }
-
-    /**
-     * Make HTTP request
-     */
-    async request(method, path, body = null, meta = {}) {
-        const base = this.apiBase.replace(/\/?$/, '');
-        const url = path.startsWith('/') ? `${base}${path}` : `${base}/${path}`;
-        const options = {
-            method,
-            headers: this._getHeaders()
-        };
-
-        if (body) options.body = JSON.stringify(body);
-
-        const errorContext = {
-            module: meta.module || 'APIIntegration',
-            path: url,
-            method,
-            ...(meta.context || {})
-        };
-
-        try {
-            const response = await fetchWithRetry(url, options);
-            const data = await response.json().catch(() => ({}));
-
-            if (!response.ok) {
-                const payload = { status: response.status, data, context: errorContext };
-                this.emit('promiseError', payload);
-                throw new Error(data?.error?.message || `Request failed: ${response.status}`);
-            }
-
-            return data.data || data;
-        } catch (error) {
-            console.error('[API] Request error:', error);
-            this.emit('networkError', { error, context: errorContext });
-            this.emit('promiseError', { error, context: errorContext });
-            throw error;
-        }
     }
 
     /**
@@ -218,24 +168,6 @@ class APIIntegration {
     // === Step Files API ===
     
     /**
-     * Submit client result and trigger next step
-     * This creates client-result.json and sends request to A2A Server
-     */
-    async submitNext(sessionId, result) {
-        const headers = { 'Content-Type': 'application/json', ...this._getStorageHeaders() };
-        const res = await fetch(`/api/a2a/sessions/${encodeURIComponent(sessionId)}/next`, {
-            method: 'POST',
-            headers,
-            body: JSON.stringify({ result })
-        });
-        if (!res.ok) {
-            const error = await res.json().catch(() => ({}));
-            throw new Error(error?.error?.message || `submitNext failed: ${res.status}`);
-        }
-        return res.json();
-    }
-
-    /**
      * Check promise status
      */
     async checkPromise(sessionId, promiseId) {
@@ -244,27 +176,6 @@ class APIIntegration {
             method: 'GET',
             headers
         });
-        if (!res.ok) return null;
-        return res.json();
-    }
-
-    /**
-     * Get session history from step
-     */
-    async getHistory(sessionId, fromStep = 1) {
-        const headers = { ...this._getHeaders(), ...this._getStorageHeaders() };
-        const res = await fetch(`/api/a2a/sessions/${encodeURIComponent(sessionId)}/history/${fromStep}`, { headers });
-        if (!res.ok) return [];
-        const raw = await res.json();
-        return raw?.history || [];
-    }
-
-    /**
-     * Get latest step data
-     */
-    async getLatestStep(sessionId) {
-        const headers = { ...this._getHeaders(), ...this._getStorageHeaders() };
-        const res = await fetch(`/api/a2a/sessions/${encodeURIComponent(sessionId)}/latest`, { headers });
         if (!res.ok) return null;
         return res.json();
     }

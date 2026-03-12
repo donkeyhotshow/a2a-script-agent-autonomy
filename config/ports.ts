@@ -3,20 +3,8 @@
  * Centralized port management for all A2A services
  */
 
-import type { PortMetadata } from './types.js';
+import type { PortMetadata, ServiceKey, PortConfig } from './types.js';
 
-/** Service identifier type */
-export type ServiceKey = 
-  | 'server'
-  | 'clientApi'
-  | 'web'
-  | 'proxy'
-  | 'ollama'
-  | 'postgres'
-  | 'redis';
-
-/** Port configuration for a service (alias for PortMetadata) */
-export type PortConfig = PortMetadata;
 
 /** Port allocation result */
 export interface PortAllocation {

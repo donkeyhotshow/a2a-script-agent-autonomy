@@ -11,7 +11,7 @@
      */
     function getApiBase() {
         const store = (typeof window !== 'undefined' ? window : global).SessionStore;
-        const storageMode = store?.getStorageMode?.() || 'api';
+        const storageMode = store?.getStorageMode?.() || 'storage';
         if (storageMode === 'storage') {
             return '/api/a2a';
         }
