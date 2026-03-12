@@ -9,14 +9,13 @@
          * Render session content in panel
          */
         renderSessionContent(contentEl, sessionId, store = null) {
-            console.log('[WindowEvents] renderSessionContent called:', { sessionId, hasContentEl: !!contentEl, hasInnerHTML: !!(contentEl?.innerHTML) });
-
             // Use TaskFlow rendering system if available
             const Render = global.TaskFlowRender;
             // Use provided store (per-window) or fall back to global
             store = store || global.SessionStore;
-
-            console.log('[WindowEvents] renderSessionContent deps:', { hasRender: !!Render, hasStore: !!store, hasTaskFlowRef: !!global.TaskFlow });
+            
+            // Save store reference for use in sendMessage/sendChoice
+            this._passedStore = store;
 
             if (Render && store) {
                 // Note: store should already be set up with session data from createSessionWindow
@@ -52,11 +51,6 @@
                     const execute = store.getExecute ? store.getExecute() : store.execute;
                     const context = store.context || {};
 
-                    console.log('[WindowEvents] refreshContent:', { 
-                        hasExecute: !!execute, 
-                        executeType: execute ? Object.keys(execute)[0] : null,
-                        status: store.status 
-                    });
                     const isWaiting = store.isInputBlocked?.() || false;
 
                     if (execute && !isWaiting) {
@@ -131,8 +125,9 @@
         /**
          * Send message to session
          */
-        async sendMessage(sessionId, message) {
-            const store = global.SessionStore;
+        async sendMessage(sessionId, message, usePassedStore = true) {
+            // Use the store that was passed to renderSessionContent, not global
+            let store = usePassedStore ? this._passedStore : global.SessionStore;
             const projectId = store?.projectId;
 
             if (global.ActionHandler?.sendMessage) {
@@ -150,8 +145,9 @@
         /**
          * Send choice result to session (for form.choices)
          */
-        async sendChoice(sessionId, choiceId) {
-            const store = global.SessionStore;
+        async sendChoice(sessionId, choiceId, usePassedStore = true) {
+            // Use the store that was passed to renderSessionContent, not global
+            let store = usePassedStore ? this._passedStore : global.SessionStore;
             const projectId = store?.projectId;
             const result = { choice: choiceId };
 

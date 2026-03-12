@@ -318,33 +318,37 @@ interface SessionDetail extends SessionSummary {
 
 ### Директория шага
 
-Каждый шаг сессии хранится в отдельной папке `{STEP}/` внутри директории сессии:
+Каждый шаг сессии хранится в отдельной папке `{STEP}/` внутри директории сессии, обычно `a2a-client/storage/sessions/{SESSION_ID}/` (или `A2A_CLIENT_STORAGE_DIR/sessions`):
 
 ```
 storage/sessions/{SESSION_ID}/
-├── session.json                 # Данные сессии
-├── {STEP}/
-│   ├── server-response.json     # Ответ от A2A сервера
-│   ├── server-promise.json     # Данные о промисе (если есть)
-│   ├── client-result.json      # Результат от клиента (web/авто)
-│   ├── request-to-server.json  # Запрос к серверу
-│   └── messages.json           # История сообщений
+├── {N}/
+│   ├── messages.json           # История сообщений для шага N
+│   ├── client-result.json      # Результат от Web клиента
+│   └── request-to-server.json  # Payload для шага N+1
+├── {N+1}/
+│   ├── server-response.json    # Ответ A2A Server для шага N+1
+│   └── messages.json
+├── {N+2}/
+│   └── server-promise.json     # Promise metadata если ответ async
+└── ...
 ```
 
 ### Логика обработки шага
 
-1. **Нет server-promise.json** → создать request-to-server.json → отправить запрос → сохранить promise
-2. **Есть server-promise.json** → проверить статус → при completed получить результат
-3. **Ответ от клиента** → сохранить client-result.json → создать следующий шаг
-4. **Ответ от сервера** → вернуть execute клиенту или завершить сессию
+1. На шаге `N` хранится `server-response.json` и `messages.json`.
+2. Когда Web UI присылает `client-result` (message/choice), оно сохраняется как `{N}/client-result.json`.
+3. Client API собирает `request-to-server.json` в `{N+1}/` и отправляет `POST /invoke`.
+4. Если ответ синхронный, `server-response.json` попадает в `{N+1}/` и `stepNum` увеличивается на 1.
+5. Если ответ вернул `promiseId`, `server-promise.json` создаётся в `{N+2}/`, `stepNum` переносится туда, а UI опрашивает `/sessions/:id/promise/:promiseId` до `completed`, после чего финальный `server-response.json` сохраняется в том же шаге.
 
 ### Типы обработки
 
 | Тип | Описание |
 |-----|----------|
-| Auto | Скрипт/симуляция самостоятельно отправляет данные |
-| Manual | Ожидание ввода от пользователя через Web UI |
-| Hybrid | Автоматическое продолжение после таймаута |
+| Auto | Скрипт/симуляция автоматически пишет результат и отправляет запрос |
+| Manual | Ожидание ввода от пользователя через Web UI (form.input/form.choices) |
+| Hybrid | Сценарий автоматически продолжает после ожидания или таймаута |
 
 ---
 

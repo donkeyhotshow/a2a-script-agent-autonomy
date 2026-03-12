@@ -30,12 +30,31 @@
     }
 
     /**
+     * Resolve the SessionStore for a given session (falls back to active session or global store)
+     * @param {string|null} sessionId
+     * @returns {Object|null}
+     */
+    function resolveStore(sessionId = null) {
+        const registry = global.WindowRegistry;
+        const resolvedSessionId = sessionId
+            || global.SessionManager?.getActiveSessionId?.()
+            || null;
+        if (resolvedSessionId && registry?.getSessionStore) {
+            const windowStore = registry.getSessionStore(resolvedSessionId);
+            if (windowStore) {
+                return windowStore;
+            }
+        }
+        return global.SessionStore;
+    }
+
+    /**
      * Ожидать первый ответ от сервера
      * @param {number} timeoutMs - таймаут в мс
+     * @param {Object|null} store - SessionStore instance
      */
-    function waitForFirstResponse(timeoutMs = 120000) {
+    function waitForFirstResponse(timeoutMs = 120000, store = resolveStore()) {
         return new Promise((resolve, reject) => {
-            const store = global.SessionStore;
             if (!store) {
                 reject(new Error('SessionStore not available'));
                 return;
@@ -189,7 +208,7 @@
             }
 
             // Use SessionStore instead of legacy SessionViewModel
-            const store = global.SessionStore;
+            const store = resolveStore(this._sessionId);
             store?.reset();
 
             // Check if task panel already exists
@@ -262,7 +281,7 @@
                 this._sessionId = sessionId;
 
                 // Initialize SessionStore for this session
-                const store = global.SessionStore;
+                const store = resolveStore(sessionId);
                 if (store) {
                     store.setSession(sessionId, projectId);
                 }
@@ -318,6 +337,8 @@
                 return;
             }
 
+            const store = resolveStore(sessionId);
+
             // Show sending state with choice label
             const choiceLabel = getChoiceLabel(choiceId);
             contentEl.innerHTML = `
@@ -329,7 +350,7 @@
 
             try {
                 // Start waiting for response BEFORE submitting (prevents race condition)
-                const outcomePromise = waitForFirstResponse(60000);
+                const outcomePromise = waitForFirstResponse(60000, store);
 
                 const handler = global.ActionHandler;
                 if (!handler?.submit) {
@@ -372,14 +393,14 @@
             const displayText = (messageText || '').trim() || 'continue';
 
             // Add message to history and show waiting state
-            const store = global.SessionStore;
+            const store = resolveStore(sessionId);
             if (store?.pushMessage) {
                 store.pushMessage({ content: displayText }, 'user');
             }
 
             try {
                 // Start waiting for response BEFORE submitting (prevents race condition)
-                const outcomePromise = waitForFirstResponse(60000);
+                const outcomePromise = waitForFirstResponse(60000, store);
 
                 const handler = global.ActionHandler;
                 if (!handler?.submit) {
@@ -424,7 +445,7 @@
             if (overrides.action) executionOverrides.action = overrides.action;
             if (overrides.step) executionOverrides.step = overrides.step;
             const storeExecution = (() => {
-                const store = global.SessionStore;
+                const store = resolveStore(TaskFlow._sessionId);
                 return store?.getExecution ? store.getExecution() : null;
             })();
             const execution = {
@@ -461,7 +482,7 @@
             }
 
             // Integrate with SessionStore events (replaces SessionManager events)
-            const store = global.SessionStore;
+            const store = resolveStore(this._sessionId);
             if (store && typeof store.on === 'function') {
                 store.on('execute', (execute) => {
                     if (TaskFlow.panelId) {

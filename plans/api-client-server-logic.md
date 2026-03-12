@@ -19,7 +19,7 @@ API Client Server (порт 3001) остаётся проксирующим сл
 
 Если в запросе есть `task`, сервер формирует `context.execution: { action: 'task', step: 'new' }`, обогащает context `session_id`, возвращает `success` + `serverResponse` (если синхронный ответ). Перед вызовом `/invoke` сохраняет `request-to-server.json` в шаге 1, потом либо `server-response.json`, либо `server-promise.json`.
 
-`sessionService` создаёт `session.json` (метаданные/контекст/execute/messages), отслеживает `metadata.stepNum` и сохраняет `currentExecute`, `messages` (полная история), `status`.
+`sessionService` создаёт папку с шагами (1/, 2/, ...), отслеживает `stepNum` и сохраняет `currentExecute`, `messages` (полная история), `status` в файлах шагов.
 
 ## Структура шагов
 
@@ -86,7 +86,7 @@ A2A Server возвращает `{ data: { execute, context, result }, promiseId
 
 ### POST /api/sessions
 
-- Создаёт `session.json` с metadata `{ title, task, stepNum: 1, context, suggestedAction, actionParams }`.
+- Создаёт папку шага `1/` с `server-response.json` (metadata, context, execute).
 - При наличии `task` формирует `request-to-server.json` и вызывает `/invoke`.
 - Ответ содержит `session`, `serverResponse` (если получен).
 

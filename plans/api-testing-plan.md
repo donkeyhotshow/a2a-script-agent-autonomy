@@ -28,7 +28,7 @@
 ### 0.2 Синхронный ответ от A2A Server
 
 1. Когда ответ приходит без `promiseId`, `server-response.json` пишется в `{N+1}/` (тот же шаг, что и request-to-server).
-2. `session.metadata.stepNum` обновляется на `N+1`, `executes`/`context`/`messages` в `session.json` обновляются в `sessionService`.
+2. `currentStep` обновляется на `N+1`, данные сохраняются в `server-response.json` и `messages.json`.
 3. Web UI получает `execute` и, если нужно, ожидает `form.input`/`form.choices`.
 
 ### 0.3 Асинхронный ответ (promiseId)
@@ -201,7 +201,7 @@ curl -s -X POST "$WEB_UI_BASE/api/a2a/sessions" \
   -d '{"title": "Storage Mode Test"}'
 ```
 
-**Verify:** Directory `a2a-client/storage/sessions/{sessionId}/` with `session.json` and `1/server-response.json`
+**Verify:** Directory `a2a-client/storage/sessions/{sessionId}/` with `1/server-response.json` and `1/messages.json`
 
 ---
 
@@ -370,8 +370,8 @@ R3=$(curl -s -X POST "$CLIENT_API_BASE/api/sessions/$SESSION_ID/next" -H "$H" -H
 ls -la a2a-client/storage/sessions/
 ls -la a2a-client/storage/sessions/{SESSION_ID}/
 ls -la a2a-client/storage/sessions/{SESSION_ID}/1/
-cat a2a-client/storage/sessions/{SESSION_ID}/session.json
 cat a2a-client/storage/sessions/{SESSION_ID}/1/server-response.json
+cat a2a-client/storage/sessions/{SESSION_ID}/1/messages.json
 cat a2a-client/storage/sessions/{SESSION_ID}/1/messages.json
 ```
 
@@ -500,7 +500,7 @@ Write-Host "OK: Full chain verified"
 | 13 | DELETE /sessions/:id | Returns success | [ ] |
 | 14 | POST /sessions (project) | Creates .a2a/sessions file | [ ] |
 | 15 | POST /api/sessions (Client API, with task) | Returns serverResponse (execute/promiseId) | [ ] |
-| 16 | Storage files exist | session.json, N/server-response.json, N/messages.json, N+1/server-promise.json (async) | [ ] |
+| 16 | Storage files exist | N/server-response.json, N/messages.json, N+1/server-promise.json (async) | [ ] |
 | 17 | Request files exist | N/request-to-server.json, N/client-result.json | [ ] |
 | 18 | Step file API works | `curl -s "$CLIENT_API_BASE/api/sessions/{SESSION_ID}/step/1/request-to-server.json"` (and `.../step/2/server-promise.json` when async) | [ ] |
 | 19 | Dialog sim step 1 (task→choices) | serverResponse.execute.form.choices | [ ] |

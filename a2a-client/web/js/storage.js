@@ -240,8 +240,10 @@
     };
 
     // NEW: Session Storage with numbered folders
-    // Format: /api/a2a/sessions/{sessionId}/session.json - metadata
-    //         /api/a2a/sessions/{sessionId}/{stepNum}/server-response.json - step data
+    // Format: /api/a2a/sessions/{sessionId}/{stepNum}/server-response.json - step data (source of truth)
+    //         /api/a2a/sessions/{sessionId}/{stepNum}/client-result.json - user input
+    //         /api/a2a/sessions/{sessionId}/{stepNum}/messages.json - chat history slice
+    // NO session.json - session is reconstructed from step files
     class SessionStorage {
         constructor() {
             this.baseUrl = SESSIONS_BASE;

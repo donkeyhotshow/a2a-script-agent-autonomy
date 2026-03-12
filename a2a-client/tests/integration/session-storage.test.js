@@ -81,26 +81,37 @@ describe('Session Storage - Numbered Folders', () => {
             expect(exists).toBe(true);
         });
 
-        it('should store session metadata separately', async () => {
+        it('should reconstruct session from step files without session.json', async () => {
+            // NEW: Session is reconstructed from server-response.json in step folders
             const sessionDir = path.join(testStorageDir, 'storage', 'sessions', 'sess_test');
-            const metaFile = path.join(sessionDir, 'session.json');
+            await fs.mkdir(path.join(sessionDir, '1'), { recursive: true });
             
-            const metaData = {
-                id: 'sess_test',
-                title: 'Test Session',
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString(),
-                status: 'active',
-                currentStep: 1
+            // Create step 1 with server-response.json
+            const step1Data = {
+                step: 1,
+                timestamp: new Date().toISOString(),
+                execute: { form: { input: { name: 'task', label: 'Test Task' } } },
+                messages: [{ role: 'assistant', content: 'Hello' }],
+                context: { session_id: 'sess_test' }
             };
+            await fs.writeFile(
+                path.join(sessionDir, '1', 'server-response.json'),
+                JSON.stringify(step1Data, null, 2)
+            );
+            await fs.writeFile(
+                path.join(sessionDir, '1', 'messages.json'),
+                JSON.stringify(step1Data.messages, null, 2)
+            );
             
-            await fs.writeFile(metaFile, JSON.stringify(metaData, null, 2));
+            // Verify server-response.json exists
+            const stepFile = path.join(sessionDir, '1', 'server-response.json');
+            const exists = await fs.access(stepFile).then(() => true).catch(() => false);
+            expect(exists).toBe(true);
             
-            const content = await fs.readFile(metaFile, 'utf8');
-            const parsed = JSON.parse(content);
-            
-            expect(parsed.id).toBe('sess_test');
-            expect(parsed.currentStep).toBe(1);
+            // Verify NO session.json is created (it's deprecated)
+            const metaFile = path.join(sessionDir, 'session.json');
+            const metaExists = await fs.access(metaFile).then(() => true).catch(() => false);
+            expect(metaExists).toBe(false);
         });
     });
 
@@ -238,20 +249,39 @@ describe('Storage Mode Toggle', () => {
     });
 
     describe('Persistent Mode', () => {
-        it('should persist sessions to filesystem', async () => {
-            const sessionFile = path.join(testStorageDir, 'storage', 'sessions', 'sess_persist.json');
+        it('should persist sessions to step files without session.json', async () => {
+            // NEW: Sessions are stored in numbered folders with server-response.json
+            const sessionDir = path.join(testStorageDir, 'storage', 'sessions', 'sess_persist');
             
-            const sessionData = { id: 'sess_persist', title: 'Persistent Session' };
-            await fs.writeFile(sessionFile, JSON.stringify(sessionData));
+            // Create session with step 1
+            await fs.mkdir(path.join(sessionDir, '1'), { recursive: true });
+            const stepData = { 
+                id: 'sess_persist', 
+                title: 'Persistent Session',
+                step: 1,
+                timestamp: new Date().toISOString(),
+                execute: { form: { input: { name: 'task' } } },
+                messages: [],
+                context: null
+            };
             
-            const content = await fs.readFile(sessionFile, 'utf8');
+            await fs.writeFile(
+                path.join(sessionDir, '1', 'server-response.json'),
+                JSON.stringify(stepData, null, 2)
+            );
+            
+            // Verify step file exists
+            const stepFile = path.join(sessionDir, '1', 'server-response.json');
+            const content = await fs.readFile(stepFile, 'utf8');
             const parsed = JSON.parse(content);
             
             expect(parsed.id).toBe('sess_persist');
-            expect(parsed.title).toBe('Persistent Session');
+            expect(parsed.step).toBe(1);
             
-            // Cleanup
-            await fs.unlink(sessionFile);
+            // Verify NO root session.json exists
+            const rootSessionFile = path.join(sessionDir, 'session.json');
+            const rootExists = await fs.access(rootSessionFile).then(() => true).catch(() => false);
+            expect(rootExists).toBe(false);
         });
     });
 });

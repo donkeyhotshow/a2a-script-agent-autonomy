@@ -16,13 +16,24 @@
     const PROMISE_POLL_INTERVAL = 5000;
     let promisePollTimer = null;
 
-    function getApiBase() {
+    function resolveStore(sessionId = null) {
+        const registry = global.WindowRegistry;
+        const resolvedSessionId = sessionId || global.SessionManager?.getActiveSessionId?.() || null;
+        if (resolvedSessionId && registry?.getSessionStore) {
+            const windowStore = registry.getSessionStore(resolvedSessionId);
+            if (windowStore) {
+                return windowStore;
+            }
+        }
+        return global.SessionStore;
+    }
+
+    function getApiBase(store) {
         const api = global.apiIntegration;
         if (!api?.apiBase) return null;
-        
         // If storage mode is 'storage', use Vite dev server (port 5173) with /api/a2a prefix
         // Otherwise use client-api (port 3001)
-        const storageMode = (typeof window !== 'undefined' ? window : globalThis).SessionStore?.getStorageMode?.();
+        const storageMode = store?.getStorageMode?.();
         if (storageMode === 'storage') {
             return 'http://localhost:5173/api/a2a';
         }
@@ -35,13 +46,15 @@
      * Saves client-result.json and creates next step via API
      */
     async function submit(sessionId, projectId, result, context = {}) {
-        const base = getApiBase();
+        const store = resolveStore(sessionId);
+        const base = getApiBase(store);
         if (!base) {
             throw new Error('ActionHandler: API base not configured. Set Client API URL in Settings.');
         }
+        const storageMode = store?.getStorageMode?.();
+        const isStorageMode = storageMode === 'storage';
         // For Vite (storage mode), base already includes /api/a2a
         // For client-api, need to add /api
-        const isStorageMode = (typeof window !== 'undefined' ? window : globalThis).SessionStore?.getStorageMode?.() === 'storage';
         const apiPath = isStorageMode ? '' : '/api';
         const url = `${base}${apiPath}/sessions/${encodeURIComponent(sessionId)}/next`;
         const headers = { 'Content-Type': 'application/json' };
@@ -60,7 +73,6 @@
             throw new Error(data?.error?.message || `Request failed: ${res.status}`);
         }
         
-        const store = global.SessionStore;
         if (store && data) {
             if (data.execute) store.setExecute?.(data.execute);
             if (data.context) store.setContext?.(data.context);
@@ -81,10 +93,16 @@
      * Check promise status - polls A2A Server for async result
      */
     async function checkPromise(sessionId, promiseId) {
-        const base = getApiBase();
+        const store = resolveStore(sessionId);
+        const base = getApiBase(store);
         if (!base) return null;
         
-        const url = `${base}/api/sessions/${encodeURIComponent(sessionId)}/promise/${encodeURIComponent(promiseId)}`;
+        // For Vite (storage mode), base already includes /api/a2a
+        // For client-api, need to add /api
+        const storageMode = store?.getStorageMode?.();
+        const isStorageMode = storageMode === 'storage';
+        const apiPath = isStorageMode ? '' : '/api';
+        const url = `${base}${apiPath}/sessions/${encodeURIComponent(sessionId)}/promise/${encodeURIComponent(promiseId)}`;
         
         try {
             const res = await fetch(url, {
@@ -110,7 +128,7 @@
             promisePollTimer = null;
         }
         
-        const store = global.SessionStore;
+        const store = resolveStore(sessionId);
         
         promisePollTimer = setInterval(async () => {
             const status = await checkPromise(sessionId, promiseId);
@@ -173,12 +191,14 @@
     }
 
     async function sendMessage(sessionId, projectId, message) {
-        const ctx = global.SessionStore?.context || {};
+        const store = resolveStore(sessionId);
+        const ctx = store?.context || {};
         return submit(sessionId, projectId, { message: typeof message === 'string' ? message : { content: message } }, ctx);
     }
 
     async function sendChoice(sessionId, projectId, choiceId) {
-        const ctx = global.SessionStore?.context || {};
+        const store = resolveStore(sessionId);
+        const ctx = store?.context || {};
         return submit(sessionId, projectId, { choice: choiceId }, ctx);
     }
 

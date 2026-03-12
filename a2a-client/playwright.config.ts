@@ -181,17 +181,14 @@ export default defineConfig({
     })),
 
     // Enhanced web server configuration with cross-browser stability
+    // Note: Using reuseExistingServer: true to connect to already running servers
     webServer: [
         {
             // Main Vite dev server
             command: 'npm run dev',
             cwd: '.',
             url: 'http://localhost:5173',
-            // Stabilized reuseExistingServer: reuse in development, fresh on CI unless explicitly requested
-            // This prevents cross-browser state pollution while allowing faster local development
-            reuseExistingServer: process.env.NODE_ENV === 'development' ||
-                               (!process.env.CI && !process.env.FRESH_SERVER) ||
-                               process.env.REUSE_SERVER === 'true',
+            reuseExistingServer: true,
             timeout: 120000,
             // Enhanced health check for cross-browser stability
             healthCheck: {
@@ -205,15 +202,14 @@ export default defineConfig({
                 timeout: 30000,
             },
         },
-        {
-            // Client API proxy server (if running separately)
-            command: 'npm run dev',
-            cwd: './packages/sdk',
-            url: 'http://localhost:3001',
-            // More conservative reuse for API server to prevent port conflicts
-            reuseExistingServer: process.env.NODE_ENV === 'development' && !process.env.FRESH_SERVER,
-            timeout: 60000,
-        },
+        // Client API proxy server - disabled, using existing server
+        // {
+        //     command: 'npm run dev',
+        //     cwd: './packages/sdk',
+        //     url: 'http://localhost:3001',
+        //     reuseExistingServer: true,
+        //     timeout: 60000,
+        // },
     ],
 
     // Global setup and teardown

@@ -157,7 +157,7 @@
             const storageSelect = document.getElementById('storageModeSelect');
             if (!storageSelect) return;
 
-            // Load saved storage mode: project (.a2a/sessions) vs storage (~/.a2a-client/sessions)
+            // Load saved storage mode: project (.a2a/sessions) vs storage (a2a-client/storage/sessions or A2A_CLIENT_STORAGE_DIR)
             const savedMode = localStorage.getItem('a2a_storage_mode') || 'storage';
             const valid = ['project', 'storage'].includes(savedMode);
             storageSelect.value = valid ? savedMode : 'storage';

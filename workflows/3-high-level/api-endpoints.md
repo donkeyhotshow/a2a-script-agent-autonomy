@@ -227,7 +227,7 @@ All endpoints return standardized error responses:
 
 ### Log Files
 
-- **Server:** `a2a-server/logs/` (combined.log, error.log, access.log)
+- **Server:** `a2a-server/logs/a2a.log` (single consolidated server log)
 - **Client:** `a2a-client/packages/sdk/logs/`
 - **AI Integration:** `ai-integration/proxy/logs/`
 

@@ -226,128 +226,44 @@ curl -X POST http://localhost:3000/api/v1/invoke -H "Content-Type: application/j
 
 ### File Structure
 
-```
+`
 a2a-client/storage/sessions/{sessionId}/
-├── session.json                    # Session metadata + messages
-├── 1/
-│   ├── client-result.json          # User input (result from client)
-│   ├── request-to-server.json     # Request sent to A2A server
-│   ├── server-response.json        # Response from A2A server
-│   └── server-promise.json         # Async promise (if any)
-├── 2/
-│   ├── client-result.json
-│   ├── request-to-server.json
-│   ├── server-response.json
-│   └── server-promise.json
+├── {stepNumber}/
+│   ├── client-result.json      # User input or choice captured before step
+│   ├── request-to-server.json  # Payload that was sent to /api/v1/invoke
+│   ├── server-response.json    # Completed execute/context/result for the step
+│   ├── server-promise.json     # Optional: pending promise metadata
+│   └── messages.json           # Per-step chat history fragment
 └── ...
-```
+`
 
-### session.json Fields
+We no longer rely on a root session.json; all metadata (current step, last execute, messages, status) is derived from the highest-numbered step that already has a server-response.json. This keeps the filesystem focused on actionable step artifacts, which already contain every request/response needed to rebuild the dialogue.
 
-```json
-{
-  "id": "sess_1234567890123",
-  "currentStep": 2,
-  "createdAt": "2026-03-12T10:00:00.000Z",
-  "updatedAt": "2026-03-12T10:05:00.000Z",
-  "messages": [
-    {
-      "role": "assistant",
-      "content": "What would you like me to do?",
-      "step": 1
-    },
-    {
-      "role": "user",
-      "content": "напиши hello world на javascript",
-      "step": 2
-    },
-    {
-      "role": "assistant",
-      "content": "Ось приклад коду:",
-      "step": 2
-    }
-  ],
-  "execute": {
-    "message": "What would you like me to do?",
-    "form": {
-      "type": "input",
-      "name": "task",
-      "label": "What would you like me to do?"
-    }
-  },
-  "context": {
-    "execution": {
-      "action": "task",
-      "step": "new"
-    },
-    "session_id": "sess_1234567890123"
-  }
-}
-```
+### Step File Roles
 
-### Message Structure
+| File | Description |
+|------|-------------|
+| client-result.json | Stores the user input (typed message or choice) recorded for that step. |
+| 
+equest-to-server.json | Mirrors the request that was forwarded to the A2A Server (context, 
+esult, etc.). |
+| server-response.json | Finalized execute/context bundle from A2A Server once the step completes. The client uses this file to reconstruct xecute + context. |
+| server-promise.json | Temporary state for async responses (promiseId, status, submittedAt). The following step waits for completion before writing its server-response.json. |
+| messages.json | Step-scoped slice of the conversation; the client merges these slices when showing the full history. |
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `role` | string | "user" or "assistant" |
-| `content` | string | Message text |
-| `step` | number | Session step number |
+The highest-numbered step folder with server-response.json anchors the session state. When the server returns a promiseId, the client stores server-promise.json in the upcoming step directory (e.g., step N+1) until polling reports completed, at which point the same folder receives server-response.json and messages.json.
 
-### Step Files
+### Rebuilding the Session
 
-#### client-result.json
-```json
-{
-  "step": 2,
-  "result": {
-    "message": "напиши hello world на javascript"
-  }
-}
-```
+To answer questions like “what is the current step?” or “what execute/context should be shown?”, the Client API:
 
-#### request-to-server.json
-```json
-{
-  "task": "напиши hello world на javascript",
-  "context": {
-    "execution": {
-      "action": "dialog",
-      "step": "dialog"
-    },
-    "session_id": "sess_1234567890123",
-    "history": [...]
-  }
-}
-```
+1. Reads the step directories in order and finds the largest stepNumber that already has server-response.json.
+2. Uses the contents of that server-response.json to populate xecute, context, and status.
+3. Concatenates messages.json from step 1 through the current step to rebuild the full conversation.
 
-#### server-response.json
-```json
-{
-  "id": "req_1234567890123_abc",
-  "promiseId": "prom_1234567890123_xyz",
-  "status": "completed",
-  "result": {
-    "outcome": "success",
-    "message": "Ось приклад коду:",
-    "execute": {
-      "message": "Ось приклад коду:",
-      "script": {
-        "code": "console.log('Hello, World!');"
-      }
-    }
-  }
-}
-```
+This approach ensures that even if session.json is missing or stale, the step folders are sufficient for full dialogue recovery.
 
-#### server-promise.json (for async operations)
-```json
-{
-  "promiseId": "prom_1234567890123_xyz",
-  "status": "pending",
-  "submittedAt": "2026-03-12T10:00:00.000Z"
-}
-```
-
+---
 ---
 
 ## Debugging Tips
@@ -504,8 +420,9 @@ curl -X POST http://localhost:3000/api/v1/invoke -d '{}'
 **Problem:** Session has messages but UI doesn't display them.
 
 **Solution:**
-1. Verify `messages` array exists in session.json
+1. Verify messages are stored in step folders - check `{stepNum}/messages.json` files exist
 2. Check each message has `role`, `content`, `step` fields
+3. The client API merges messages from all step folders when loading the session
 3. Verify API returns messages in `/sessions/{id}` response
 
 ---

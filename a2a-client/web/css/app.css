@@ -1,6 +1,9 @@
 /* A2A Script Agent - Nebula Design System */
 /* Premium dark theme with purple-blue gradient accents */
 
+/* Import Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
 :root {
   /* Brand Colors - Nebula Theme */
   --brand-primary: #6366f1;
@@ -77,9 +80,6 @@
   --glass-border: rgba(255, 255, 255, 0.08);
   --glass-blur: blur(20px);
 }
-
-/* Import Google Fonts */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 * {
   box-sizing: border-box;

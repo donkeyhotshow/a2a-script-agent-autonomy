@@ -8,13 +8,14 @@ Client SDK (port 3001) взаимодействует с a2a-server (port 3000) 
 
 ### Расположение файлов
 
-Storage directory: `~/.a2a-client/` (override via `A2A_CLIENT_STORAGE_DIR`). Sessions and KV stored outside project.
+Storage directory: `../storage/` (override via `A2A_CLIENT_STORAGE_DIR`). Point the env var at a per-user directory (e.g., `$HOME/a2a-client` or `%APPDATA%/a2a-client`) when you need a shared store.
 
 | Компонент | Путь | Описание |
 |-----------|------|----------|
-| Config | `~/.a2a-client/config.json` | Server connection settings |
-| Projects | `~/.a2a-client/projects.json` | Project list |
-| Sessions | `~/.a2a-client/sessions/` | Session data |
+| Config | `<storageDir>/config.json` | Server connection settings |
+| Projects | `<storageDir>/projects.json` | Project list |
+| Sessions | `<storageDir>/sessions/` | Session data with numbered steps |
+| KV | `<storageDir>/kv/` | Step storage + metadata |
 
 ### Формат config.json
 
@@ -33,7 +34,7 @@ Storage directory: `~/.a2a-client/` (override via `A2A_CLIENT_STORAGE_DIR`). Ses
 
 ### 1. Через config.json (рекомендуемый)
 
-Создайте или отредактируйте файл `~/.a2a-client/config.json`:
+Создайте или отредактируйте файл `<storageDir>/config.json` (default `../storage`; set `A2A_CLIENT_STORAGE_DIR` for another path):
 
 ```json
 {

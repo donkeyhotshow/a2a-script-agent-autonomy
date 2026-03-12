@@ -11,7 +11,8 @@ export function getNewSessionDir(cwd, sessionId) {
 }
 
 export function getNewSessionMetaFile(cwd, sessionId) {
-  return path.join(getNewSessionDir(cwd, sessionId), 'session.json');
+  // DEPRECATED: Removed - session.json is no longer used
+  return null;
 }
 
 export function getNewStepDir(cwd, sessionId, stepNum) {
@@ -19,20 +20,52 @@ export function getNewStepDir(cwd, sessionId, stepNum) {
 }
 
 export function loadNewSession(cwd, sessionId) {
-  const metaFile = getNewSessionMetaFile(cwd, sessionId);
-  if (!fs.existsSync(metaFile)) return null;
-  try {
-    return JSON.parse(fs.readFileSync(metaFile, 'utf8'));
-  } catch {
-    return null;
+  // Reconstruct session from step files
+  // Session is defined by the highest step number with server-response.json
+  const steps = listNewSteps(cwd, sessionId);
+  if (steps.length === 0) return null;
+  
+  // Get the latest step with server-response.json
+  const latestStepNum = steps[steps.length - 1];
+  const latestStep = loadNewStep(cwd, sessionId, latestStepNum);
+  if (!latestStep) return null;
+  
+  // Reconstruct session metadata from step data
+  const session = {
+    id: sessionId,
+    currentStep: latestStepNum,
+    createdAt: latestStep.timestamp,
+    updatedAt: latestStep.timestamp,
+    status: 'active'
+  };
+  
+  // Add execute, context, result from latest step
+  if (latestStep.execute) session.execute = latestStep.execute;
+  if (latestStep.context) session.context = latestStep.context;
+  if (latestStep.result) session.result = latestStep.result;
+  
+  // Get title from step 1 if available
+  const step1 = loadNewStep(cwd, sessionId, 1);
+  if (step1?.execute?.form?.input?.label) {
+    session.title = step1.execute.form.input.label;
+  } else if (step1?.execute?.form?.choices) {
+    session.title = 'Selection Session';
+  } else {
+    session.title = sessionId;
   }
+  
+  return session;
 }
 
 export function saveNewSession(cwd, session) {
+  // DEPRECATED: session.json is no longer written
+  // All session state is now derived from step files
+  // This function is kept for backward compatibility but does nothing
+  // Session is reconstructed from: server-response.json + messages.json files
   const dir = getNewSessionDir(cwd, session.id);
   ensureDir(dir);
-  const metaFile = path.join(dir, 'session.json');
-  fs.writeFileSync(metaFile, JSON.stringify(session, null, 2));
+  // NOOP: We no longer write session.json
+  // The session is reconstructed from the highest step with server-response.json
 }
 
 export function saveNewStep(cwd, sessionId, stepNum, stepData) {

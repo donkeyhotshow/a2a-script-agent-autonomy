@@ -125,27 +125,10 @@ The `server-transforms-*.json` files define pipeline operations for processing d
 ```markdown
 ## System Prompt
 
-продовжи діалог в json . відповідь оновленим json 
-
-```json
-{
-  "context": {
-    "task": "dialog",
-    "execution": {
-      "action": "dialog",
-      "step": "llm-request"
-    },
-    "history": [
-      {
-        "role": "user",
-        "message": "hello world"
-      }
-    ]
-  }
-}
+<markdown instructions + embedded JSON>
 ```
 
-```
+Подробный пример находится ниже в разделе `request.md (Server → LLM)`.
 
 ## Flow Diagram
 

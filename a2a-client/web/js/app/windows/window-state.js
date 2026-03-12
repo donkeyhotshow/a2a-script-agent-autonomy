@@ -14,7 +14,7 @@
             // Create container
             const container = document.createElement('div');
             container.id = id;
-            container.className = 'floating-window';
+            container.className = 'pui-panel expanded';
             container.style.cssText = `
                 position: fixed;
                 left: ${x}px;
@@ -33,7 +33,7 @@
 
             // Create header
             const header = document.createElement('div');
-            header.className = 'floating-window-header';
+            header.className = 'pui-panel-header';
             header.style.cssText = `
                 display: flex;
                 align-items: center;
@@ -45,13 +45,13 @@
                 user-select: none;
             `;
             header.innerHTML = `
-                <span class="floating-window-title" style="font-weight: 500; color: var(--text-primary, #fff);">${title}</span>
-                <button class="floating-window-close" style="background: none; border: none; color: var(--text-secondary, #888); cursor: pointer; font-size: 18px; padding: 0 4px;">&times;</button>
+                <span class="pui-panel-title" style="font-weight: 500; color: var(--text-primary, #fff);">${title}</span>
+                <button class="pui-panel-close" style="background: none; border: none; color: var(--text-secondary, #888); cursor: pointer; font-size: 18px; padding: 0 4px;">&times;</button>
             `;
 
             // Create content area
             const content = document.createElement('div');
-            content.className = 'floating-window-content';
+            content.className = 'pui-panel-content';
             content.style.cssText = `
                 flex: 1;
                 overflow: auto;
@@ -105,14 +105,14 @@
             };
 
             // Close button
-            header.querySelector('.floating-window-close').addEventListener('click', () => panel.close());
+            header.querySelector('.pui-panel-close').addEventListener('click', () => panel.close());
 
             // Drag functionality
             let isDragging = false;
             let dragOffset = { x: 0, y: 0 };
 
             header.addEventListener('mousedown', (e) => {
-                if (e.target.classList.contains('floating-window-close')) return;
+                if (e.target.classList.contains('pui-panel-close')) return;
                 isDragging = true;
                 dragOffset.x = e.clientX - container.offsetLeft;
                 dragOffset.y = e.clientY - container.offsetTop;
@@ -195,9 +195,6 @@
                     if (global.apiIntegration?.getSession) {
                         const projectId = await global.ProjectManager?.getSelectedProjectId?.() || global.SessionStore?.projectId;
                         sessionData = await global.apiIntegration.getSession(sessionId, projectId);
-                        console.log('[WindowState] Loaded session data:', sessionId);
-                        console.log('[WindowState] Session execute:', sessionData?.execute);
-                        console.log('[WindowState] Session context:', sessionData?.context);
                     }
                 } catch (err) {
                     console.warn('[WindowState] Failed to load session data:', err);
@@ -243,7 +240,10 @@
                     });
 
                     // Create per-window SessionStore instance to avoid conflicts
-                    const store = new global.SessionStore.constructor();
+                    // Use SessionStore constructor directly (not the global instance)
+                    const store = new window.SessionStore.constructor();
+                    // Initialize the store
+                    store.init?.();
                     // Store reference on the panel for cleanup
                     panel._sessionStore = store;
 
@@ -253,8 +253,14 @@
                             store.setSession(sessionData.id, sessionData.projectId);
                         }
                         // Load messages if available from session data
-                        if (sessionData.messages?.length) {
+                        console.log('[WindowState] Checking messages in sessionData:', { hasMessages: !!sessionData.messages, length: sessionData.messages?.length, keys: sessionData.messages ? Object.keys(sessionData.messages) : 'none' });
+                        if (sessionData.messages && Array.isArray(sessionData.messages) && sessionData.messages.length > 0) {
                             store.setMessages(sessionData.messages);
+                        } else {
+                            // Check if messages might be in context
+                            if (sessionData.context?.messages) {
+                                store.setMessages(sessionData.context.messages);
+                            }
                         }
                         // Load context/execute if available
                         if (sessionData.context) {
@@ -263,7 +269,6 @@
                         const execute = sessionData.execute ?? sessionData.context?.execute ?? sessionData.currentExecute;
                         if (execute) {
                             store.setExecute(execute);
-                            console.log('[WindowState] Set execute in store:', execute);
                         }
                         // Set status
                         if (sessionData.status) {
@@ -271,13 +276,15 @@
                         }
                     }
 
-                    // If messages weren't in session data, load them separately
-                    if (store && !sessionData?.messages?.length) {
+                    // If messages weren't in session data at all, load them separately via adapter
+                    // But only if we haven't already set messages above
+                    const storeHasMessages = store && (store.messages?.length > 0 || store.getState?.()?.messages?.length > 0);
+                    if (!storeHasMessages && sessionData.messages === undefined) {
                         try {
                             const adapter = global.SessionManagerAdapter || global.SessionManager;
                             if (adapter?.getConversation) {
                                 await adapter.getConversation(sessionId);
-                                console.log('[WindowState] Loaded conversation:', sessionId);
+                                console.log('[WindowState] Loaded conversation via adapter:', sessionId);
                             }
                         } catch (err) {
                             console.warn('[WindowState] Failed to load conversation:', err);
@@ -285,13 +292,14 @@
                     }
 
                     // Restore session state
-                    if (store?.restoreAndReconnect) {
-                        await store.restoreAndReconnect(sessionId);
-                    }
+                    // Skip restoreAndReconnect as we already loaded session data above
+                    // This prevents duplicate messages
+                    // if (store?.restoreAndReconnect) {
+                    //     await store.restoreAndReconnect(sessionId);
+                    // }
 
                     // Render session content using window-events module
                     const contentEl = panel.getContentEl();
-                    console.log('[WindowState] About to render content:', { hasPanel: !!panel, hasContentEl: !!contentEl, contentElTag: contentEl?.tagName });
                     
                     if (global.WindowEvents) {
                         global.WindowEvents.renderSessionContent(contentEl, sessionId, store);
@@ -299,8 +307,6 @@
 
                     // Save state
                     await registry.saveSessionWindowsState();
-
-                    console.log('[WindowState] Created session window:', sessionId);
                 }
             } catch (error) {
                 console.error('[WindowState] Failed to create session window:', error);

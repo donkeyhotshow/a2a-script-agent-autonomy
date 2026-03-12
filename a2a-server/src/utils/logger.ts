@@ -1,8 +1,11 @@
 import winston from 'winston';
-import DailyRotateFile from 'winston-daily-rotate-file';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import {config} from '../config/index.js';
+
+const logsDir = path.join(process.cwd(), 'logs');
+const LOG_FILE_NAME = 'a2a.log';
+const logFilePath = path.join(logsDir, LOG_FILE_NAME);
 
 // Define log format
 const logFormat = winston.format.combine(
@@ -22,12 +25,24 @@ const logFormat = winston.format.combine(
 
 // Ensure logs directory exists
 async function ensureLogsDir(): Promise<void> {
-    const logsDir = path.join(process.cwd(), 'logs');
     try {
         await fs.access(logsDir);
     } catch {
         await fs.mkdir(logsDir, { recursive: true });
     }
+}
+
+async function prepareLogFile(): Promise<void> {
+    await ensureLogsDir();
+    const files = await fs.readdir(logsDir, {withFileTypes: true});
+
+    for (const file of files) {
+        if (file.isDirectory()) continue;
+        if (file.name === LOG_FILE_NAME) continue;
+        await fs.unlink(path.join(logsDir, file.name));
+    }
+
+    await fs.writeFile(logFilePath, '', {encoding: 'utf8'});
 }
 
 // Create logger instance
@@ -43,56 +58,18 @@ export const logger = winston.createLogger({
     ],
 });
 
-// Add file transports with rotation
 (async () => {
-    await ensureLogsDir();
-
-    // Error logs with daily rotation
-    logger.add(new DailyRotateFile({
-        filename: 'logs/error-%DATE%.log',
-        datePattern: 'YYYY-MM-DD',
-        level: 'error',
-        maxSize: '20m',
-        maxFiles: '14d', // Keep logs for 14 days
-        zippedArchive: true,
-    }));
-
-    // Combined logs with daily rotation
-    logger.add(new DailyRotateFile({
-        filename: 'logs/combined-%DATE%.log',
-        datePattern: 'YYYY-MM-DD',
-        maxSize: '20m',
-        maxFiles: '14d', // Keep logs for 14 days
-        zippedArchive: true,
-    }));
-
-    // Access logs for requests
-    logger.add(new DailyRotateFile({
-        filename: 'logs/access-%DATE%.log',
-        datePattern: 'YYYY-MM-DD',
-        maxSize: '20m',
-        maxFiles: '7d', // Keep access logs for 7 days
-        zippedArchive: true,
-    }));
+    try {
+        await prepareLogFile();
+        logger.add(new winston.transports.File({
+            filename: logFilePath,
+            format: logFormat,
+            level: config.logLevel,
+        }));
+    } catch (error) {
+        console.error('Failed to initialize log file', error);
+    }
 })();
-
-// Access logger for HTTP requests
-export const accessLogger = winston.createLogger({
-    level: 'info',
-    format: winston.format.combine(
-        winston.format.timestamp({format: 'YYYY-MM-DD HH:mm:ss'}),
-        winston.format.printf(({timestamp, message}) => `${timestamp} ${message}`)
-    ),
-    transports: [
-        new DailyRotateFile({
-            filename: 'logs/access-%DATE%.log',
-            datePattern: 'YYYY-MM-DD',
-            maxSize: '20m',
-            maxFiles: '7d',
-            zippedArchive: true,
-        }),
-    ],
-});
 
 // Request logging middleware
 export function requestLogger(req: any, res: any, next: any): void {
@@ -107,28 +84,28 @@ export function requestLogger(req: any, res: any, next: any): void {
         const logEntry = `${req.method} ${req.originalUrl} ${res.statusCode} ${duration}ms - ${clientId} - ${ip} - ${userAgent}`;
 
         if (res.statusCode >= 400) {
-            accessLogger.warn(logEntry);
+            logger.warn(logEntry);
         } else {
-            accessLogger.info(logEntry);
+            logger.info(logEntry);
         }
     });
 
     next();
 }
 
-// Cleanup old log archives (older than 30 days)
+// Cleanup old log files (older than 30 days, excluding the active log and directories)
 export async function cleanupOldLogs(): Promise<void> {
     try {
-        const logsDir = path.join(process.cwd(), 'logs');
-        const files = await fs.readdir(logsDir);
+        const files = await fs.readdir(logsDir, {withFileTypes: true});
         const now = Date.now();
         const maxAge = 30 * 24 * 60 * 60 * 1000; // 30 days
         let cleanedCount = 0;
 
         for (const file of files) {
-            if (!file.endsWith('.gz')) continue;
+            if (file.isDirectory()) continue;
+            if (file.name === LOG_FILE_NAME) continue;
 
-            const filePath = path.join(logsDir, file);
+            const filePath = path.join(logsDir, file.name);
             const stats = await fs.stat(filePath);
 
             if (now - stats.mtime.getTime() > maxAge) {
@@ -138,7 +115,7 @@ export async function cleanupOldLogs(): Promise<void> {
         }
 
         if (cleanedCount > 0) {
-            logger.info(`Cleaned up ${cleanedCount} old log archives`);
+            logger.info(`Cleaned up ${cleanedCount} old log files`);
         }
     } catch (error) {
         logger.error('Log cleanup error:', error);

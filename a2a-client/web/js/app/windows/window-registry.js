@@ -25,6 +25,14 @@
         },
 
         /**
+         * Get SessionStore instance associated with a window
+         */
+        getSessionStore(sessionId) {
+            const panel = sessionWindows.get(sessionId);
+            return panel?._sessionStore || null;
+        },
+
+        /**
          * Register a window
          */
         registerWindow(sessionId, panel) {

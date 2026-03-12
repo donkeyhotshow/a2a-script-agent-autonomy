@@ -2,7 +2,7 @@
  * Storage Utilities
  * 
  * Common utilities for file system operations used by services.
- * Storage is outside project - in user data dir (~/.a2a-client)
+ * Defaults to `<repo>/a2a-client/storage`, but can point to any path (for example `$HOME/a2a-client`) via `A2A_CLIENT_STORAGE_DIR`.
  */
 
 import * as fs from 'fs/promises';

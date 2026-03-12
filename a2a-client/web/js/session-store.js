@@ -5,7 +5,7 @@
  * 
  * Supports two storage modes:
  * - 'memory': In-memory only (default, legacy behavior)
- * - 'storage': Persistent storage in ~/.a2a-client/sessions/ with numbered folders
+ * - 'storage': Persistent storage in a2a-client/storage/sessions/ (override via A2A_CLIENT_STORAGE_DIR) with numbered folders
  */
 
 (function (global) {
@@ -58,7 +58,7 @@
         this._apiBase = '/api';
         this._persistTimer = null;
         
-        // Storage mode: 'project' (.a2a/sessions) or 'storage' (~/.a2a-client/sessions)
+        // Storage mode: 'project' (.a2a/sessions) or 'storage' (a2a-client/storage/sessions or A2A_CLIENT_STORAGE_DIR)
         this._storageMode = 'storage';
         this._storageBase = '/api/a2a/sessions';
 
@@ -80,7 +80,7 @@
     
     /**
      * Set storage mode
-     * @param {string} mode - 'project' (.a2a/sessions) or 'storage' (~/.a2a-client/sessions)
+     * @param {string} mode - 'project' (.a2a/sessions) or 'storage' (a2a-client/storage/sessions or A2A_CLIENT_STORAGE_DIR)
      */
     SessionStore.prototype.setStorageMode = function(mode) {
         if (mode !== 'project' && mode !== 'storage') {
@@ -102,7 +102,7 @@
     };
 
     /**
-     * Check if using persistent storage (~/.a2a-client/sessions with numbered folders)
+     * Check if using persistent storage (a2a-client/storage/sessions with numbered folders)
      * @returns {boolean}
      */
     SessionStore.prototype.isPersistentStorage = function() {
@@ -386,6 +386,14 @@
 
     SessionStore.prototype.setMessages = function(messages) {
         if (!Array.isArray(messages)) return this;
+        
+        // Don't re-normalize if messages are already normalized (have id field)
+        const alreadyNormalized = messages.every(m => m.id && m.timestamp);
+        if (alreadyNormalized && this._state.messages.length > 0) {
+            // Skip - already have normalized messages
+            return this;
+        }
+        
         this._state.messages = messages
             .map(m => normalizeMessage(m, 'assistant'))
             .filter(Boolean)

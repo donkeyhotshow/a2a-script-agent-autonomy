@@ -577,12 +577,29 @@
 
         _pushSessionMessage(message, meta = {}) {
             if (!message) return;
+            const severity = meta.code === 'API_ERROR' ? 'error' : 'warning';
+            const payload = {
+                content: message,
+                metadata: { ...meta, severity }
+            };
+
+            const sessionId = meta?.sessionId
+                || meta?.context?.sessionId
+                || meta?.context?.session_id
+                || global.SessionManager?.getActiveSessionId?.();
+
+            const store = sessionId
+                ? global.WindowRegistry?.getSessionStore?.(sessionId) || global.SessionStore
+                : global.SessionStore;
+
+            if (store?.pushMessage) {
+                store.pushMessage(payload, 'system');
+                return;
+            }
+
             const vm = global.SessionViewModel;
             if (!vm) return;
-            vm.pushMessage({
-                content: message,
-                metadata: {...meta, severity: meta.code === 'API_ERROR' ? 'error' : 'warning'}
-            }, 'system');
+            vm.pushMessage(payload, 'system');
         },
 
         /**

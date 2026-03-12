@@ -276,7 +276,7 @@ SessionStore.clearStorage();
 
 ```bash
 # Server logs
-tail -f a2a-server/logs/combined.log
+tail -f a2a-server/logs/a2a.log
 
 # Client API logs
 tail -f a2a-client/packages/sdk/logs/app.log

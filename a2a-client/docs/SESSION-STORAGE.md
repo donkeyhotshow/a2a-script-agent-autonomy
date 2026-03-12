@@ -2,26 +2,27 @@
 
 ## Overview
 
-The session storage system provides persistent storage for dialog sessions using numbered folders. Client API (port 3001) persists step files via `step-storage.ts`; see [api-client-server-logic.md](../../plans/api-client-server-logic.md). This allows for better session management, history tracking, and the ability to resume sessions from a specific message number.
+The session storage system provides numbered folders that mirror each dialog step. Client API (port 3001) persists step files via `step-storage.ts`; see [api-client-server-logic.md](../../plans/api-client-server-logic.md). By default the storage directory is `a2a-client/storage/sessions/{sessionId}` (relative to the repo root), but the environment variable `A2A_CLIENT_STORAGE_DIR` can point to another directory (for example `<storageDir>/sessions/`). Persistent storage keeps track of `context`, `execute`, `messages`, step files, and async `promiseId` metadata.
 
 ## Storage Structure
 
 ### File Format
 
-Sessions are stored in: `~/.a2a-client/sessions/{sessionId}/` (override via `A2A_CLIENT_STORAGE_DIR`)
+Sessions are stored under `<storageDir>/sessions/{sessionId}/`, where `<storageDir>` is `A2A_CLIENT_STORAGE_DIR` if set, otherwise the default repo-local `a2a-client/storage`. Each session directory no longer contains a root `session.json`; instead it is composed of per-step numbered folders that carry every request/response artifact:
 
 ```
-~/.a2a-client/sessions/
+<storageDir>/sessions/
 ├── sess_1234567890/
-│   ├── session.json          # Session metadata
-│   ├── 1/                    # Step 1 (initial form input)
-│   │   ├── server-response.json   # Server response (execute, context)
-│   │   ├── messages.json          # Chat messages (role, content)
-│   │   ├── client-result.json     # Client result (from form submit)
-│   │   └── request-to-server.json # Request payload (before server call)
-│   ├── 2/
-│   │   ├── server-promise.json    # Async promise (from step 1 request)
+│   ├── 1/
+│   │   ├── client-result.json
+│   │   ├── request-to-server.json
 │   │   ├── server-response.json
+│   │   └── messages.json
+│   ├── 2/
+│   │   ├── client-result.json
+│   │   ├── request-to-server.json
+│   │   ├── server-response.json
+│   │   ├── server-promise.json
 │   │   └── messages.json
 │   └── 3/
 │       └── ...
@@ -33,31 +34,15 @@ Sessions are stored in: `~/.a2a-client/sessions/{sessionId}/` (override via `A2A
 
 | File | Folder | When |
 |------|--------|------|
-| `request-to-server.json` | `{N}/` | Before server request |
-| `server-promise.json` | `{N+1}/` | After async request (promiseId) |
-| `client-result.json` | `{N}/` | After client form submit |
-| `server-response.json` | `{N}/` | After server response |
+| `request-to-server.json` | `{N+1}/` | Payload sent to A2A Server after step N |
+| `server-promise.json` | `{N+2}/` | Saved when the previous request returned a promiseId |
+| `client-result.json` | `{N}/` | User result (message or choice) |
+| `server-response.json` | `{N+1}/` | Completed A2A Server response |
+| `messages.json` | `{N}/` | Chat history for step N (merged into responses) |
 
-### session.json Format
+### Step-centric metadata
 
-```json
-{
-  "id": "sess_1234567890",
-  "title": "My Session",
-  "createdAt": "2024-01-15T10:30:00.000Z",
-  "updatedAt": "2024-01-15T10:35:00.000Z",
-  "status": "active",
-  "currentStep": 3,
-  "execute": { ... },
-  "context": { ... },
-  "messages": [
-    { "role": "user", "content": "Hello" },
-    { "role": "assistant", "content": "Hi there!" }
-  ]
-}
-```
-
-> **Note:** The `messages` array stores the complete conversation history for the session, allowing for better debugging and session continuity.
+Since there is no `session.json`, session metadata is reconstructed from the highest-numbered step that already contains `server-response.json`. That file provides the latest `execute`, `context`, `status`, and `result`. The Client API scans from step `1` up to the current step, concatenates every `messages.json` slice, and treats the final `server-response.json` as the source of truth for the dialogue state. This organization ensures that even if a root metadata file is missing, the numbered folders alone carry the full session history.
 
 ### server-response.json Format
 
@@ -87,7 +72,7 @@ Messages are stored in a separate file for clarity and easier updates:
 
 When loading a step, the API merges `messages.json` into the step response.
 
-**Step flow:** After `server-response.json`, get `client-result.json` (from Web client or auto), build `request-to-server.json`, send to server. Async: save `server-promise.json` in `{N+1}/`; when complete, save `server-response.json` in `{N+1}/`.
+**Step flow:** Once a server response lands in step `N`, the client writes `client-result.json` (either from Web UI or an auto script). The next step (`N+1`) receives `request-to-server.json` before the A2A Server call. Synchronous responses land immediately in `{N+1}/server-response.json`; asynchronous responses first record `server-promise.json` in `{N+2}/`, then the completed `server-response.json` in that same folder once the promise finishes. Refer to [api-client-server-logic.md](../../plans/api-client-server-logic.md#поток-обработки-шагов-step-flow) for the detailed diagram.
 
 ## API Endpoints
 
@@ -124,7 +109,7 @@ When loading a step, the API merges `messages.json` into the step response.
 - Uses first project from storage/projects.json
 
 ### Storage Mode (Persistent)
-- Sessions stored in `~/.a2a-client/sessions/`
+- Sessions stored in `<storageDir>/sessions/` (default `a2a-client/storage/sessions/`)
 - Numbered folders for each step (1/, 2/, 3/)
 - server-response.json with stepText for history fetch from message number
 - Survives page refresh, supports history retrieval
@@ -135,7 +120,7 @@ When loading a step, the API merges `messages.json` into the step response.
 
 In the header, use the dropdown to switch between:
 - **Project (.a2a)**: Project folder storage
-- **Persistent (~/.a2a-client/sessions)**: Numbered folder storage
+- **Persistent (<storageDir>/sessions/)**: Numbered folder storage (default `a2a-client/storage/sessions/`, override via `A2A_CLIENT_STORAGE_DIR`)
 
 The setting is persisted in localStorage under `a2a_storage_mode`.
 Client sends `X-Storage-Mode: project|storage` header. Default: storage.
