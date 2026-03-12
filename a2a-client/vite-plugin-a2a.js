@@ -638,7 +638,11 @@ export default function vitePluginA2a() {
                             console.log('[VitePlugin] Previous step context:', previousContext);
                             
                             // Merge contexts: client context overrides previous
-                            const mergedContext = { ...previousContext, ...context };
+                            // FIX: Also merge result.context into context (A2A server returns updated context in result.context)
+                            let mergedContext = { ...previousContext, ...context };
+                            if (previousStepData?.result?.context) {
+                                mergedContext = { ...mergedContext, ...previousStepData.result.context };
+                            }
                             
                             // Add session_id to context as required by a2a-server
                             mergedContext.session_id = sessionId;

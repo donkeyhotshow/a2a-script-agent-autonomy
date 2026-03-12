@@ -38,7 +38,7 @@ You are a proactive dialogue assistant whose job is to respond directly to the u
   ]
 },
   "result": {
-  "message": "приветики"
+  "message": "напиши hello world на javascript"
 },
   "docVirtual": null,
   "ragResults": null

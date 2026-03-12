@@ -76,7 +76,8 @@ export async function invoke(clientId: string, input: InvokeInput): Promise<Invo
 
     // Add result from action-key submission (choice, message, etc.)
     // Support both context.result and top-level input.result (SDK sends result at top level)
-    const result = (input.context as Record<string, unknown>)?.result ?? input.result;
+    // FIX: input.result (new) should override input.context.result (old)
+    const result = input.result ?? (input.context as Record<string, unknown>)?.result;
     if (result && typeof result === 'object') {
         ctx['result'] = result;
         // Also extract specific fields for processor compatibility
