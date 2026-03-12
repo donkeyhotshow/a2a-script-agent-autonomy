@@ -445,8 +445,8 @@ export function createStepRoutes({ cwd }) {
                             status: promiseStatus.status || 'pending',
                             result: promiseStatus.result || null,
                             execute: promiseStatus.execute || null,
-                            completed: promiseStatus.status === 'completed' || promiseStatus.status === 'done',
-                            messages: stepRecord?.messages || []
+                            completed: promiseStatus.status === 'completed' || promiseStatus.status === 'done'
+                            // Note: messages are stored in step files and available via /history endpoint
                         }));
                     } catch (e) {
                         res.writeHead(500).end(JSON.stringify({ error: 'Failed to parse promise response' }));
