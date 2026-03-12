@@ -47,8 +47,8 @@ export function buildStepRecord({ sessionId, stepNum, serverResponse, messages =
                    serverResponse?.data?.execute ?? 
                    serverResponse?.execute;
     
+    // Note: step number is derived from folder path, not stored in JSON
     const payload = {
-        step: stepNum,
         timestamp: new Date().toISOString(),
         execute: execute ?? null,
         context,

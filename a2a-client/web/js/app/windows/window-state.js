@@ -239,14 +239,22 @@
                         }, 200);
                     });
 
-                    // Create per-window SessionStore instance to avoid conflicts
-                    // Use SessionStoreClass to create new instances (not the global instance)
-                    const StoreClass = window.SessionStoreClass || global.SessionStoreClass;
-                    const store = StoreClass ? new StoreClass() : null;
+                    // Create per-window SessionStore instance w/ fallback
+                    var StoreClass = window.SessionStoreClass || global.SessionStoreClass;
+                    var store = null;
+                    if (StoreClass) {
+                        store = new StoreClass();
+                    } else if (global.SessionStore && global.SessionStore.constructor) {
+                        // Fallback: clone global instance
+                        store = Object.create(Object.getPrototypeOf(global.SessionStore));
+                        Object.assign(store, global.SessionStore);
+                        store.reset();  // Reset state for new window
+                        console.log('[WindowState] Using SessionStore fallback');
+                    }
                     if (!store) {
                         console.error('[WindowState] Failed to create SessionStore instance');
                     } else {
-                        // SessionStore instance created
+                        console.log('[WindowState] SessionStore instance created');
                     }
                     // Store reference on the panel for cleanup
                     panel._sessionStore = store;

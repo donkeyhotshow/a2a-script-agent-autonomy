@@ -34,10 +34,9 @@ export function loadNewSession(cwd, sessionId) {
     status: 'active'
   };
   
-  // Add execute, context, result from latest step
+  // Add execute, context from latest step (result is not needed - stored in client-result.json)
   if (latestStep.execute) session.execute = latestStep.execute;
   if (latestStep.context) session.context = latestStep.context;
-  if (latestStep.result) session.result = latestStep.result;
   
   // Get title from step 1 if available
   const step1 = loadNewStep(cwd, sessionId, 1);
@@ -74,8 +73,8 @@ export function saveNewStep(cwd, sessionId, stepNum, stepData) {
   const messages = stepData.messages || [];
   const {messages: _m, ...rest} = stepData;
   const metaFile = path.join(stepDir, 'server-response.json');
+  // Note: step number is derived from folder path, not stored in JSON
   fs.writeFileSync(metaFile, JSON.stringify({
-    step: stepNum,
     ...rest
   }, null, 2));
   const messagesFile = path.join(stepDir, 'messages.json');

@@ -10,6 +10,8 @@ export * from './schemas/index.js';
 // Helper Schemas
 // ===========================================
 
+import { z } from 'zod';
+
 /** Coerce string to boolean */
 const booleanSchema = z
     .union([z.boolean(), z.string()])

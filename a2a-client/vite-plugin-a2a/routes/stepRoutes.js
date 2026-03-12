@@ -318,8 +318,7 @@ export function createStepRoutes({ cwd }) {
                                 success: true,
                                 session,
                                 execute: serverResponse?.result?.execute || null,
-                                promiseId: session.promiseId || null,
-                                sync: !promiseData
+                                promiseId: session.promiseId || null
                             };
 
                             res.setHeader('Content-Type', 'application/json');
@@ -338,7 +337,6 @@ export function createStepRoutes({ cwd }) {
                             session,
                             execute: null,
                             promiseId: null,
-                            sync: true,
                             error: 'A2A server unavailable'
                         };
 
