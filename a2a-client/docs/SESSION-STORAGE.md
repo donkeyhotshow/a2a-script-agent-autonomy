@@ -49,9 +49,15 @@ Sessions are stored in: `~/.a2a-client/sessions/{sessionId}/` (override via `A2A
   "status": "active",
   "currentStep": 3,
   "execute": { ... },
-  "context": { ... }
+  "context": { ... },
+  "messages": [
+    { "role": "user", "content": "Hello" },
+    { "role": "assistant", "content": "Hi there!" }
+  ]
 }
 ```
+
+> **Note:** The `messages` array stores the complete conversation history for the session, allowing for better debugging and session continuity.
 
 ### server-response.json Format
 

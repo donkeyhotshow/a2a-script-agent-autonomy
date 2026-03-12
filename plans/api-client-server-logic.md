@@ -1,247 +1,147 @@
 # API Client Server — Логика работы
 
 > **Статус:** Утверждено  
-> **Дата:** 2026-03-11
+> **Дата:** 2026-03-12
 
 ## Обзор
 
-API Client Server (порт 3001) выступает прокси-сервером между Web UI (порт 5173) и A2A Server (порт 3000). Сервер управляет сессиями и обрабатывает асинхронные запросы с использованием Promise ID.
+API Client Server (порт 3001) остаётся проксирующим слоем между Web UI (порт 5173) и A2A Server (порт 3000), но теперь активно управляет файловым хранилищем шагов, контекстом и `Promise ID`. Клиент отправляет результат пользователя → сервер сохраняет step-артефакты, вызывает `/invoke` у A2A Server, фиксирует `server-promise.json`/`server-response.json` и обновляет сессию / execute → Web UI отображает `execute` и, если нужно, ожидает следующего действия.
 
-## Основные функции
+## Создание сессии и исходный контекст
 
-### 1. Проксирование запросов
+`POST /api/sessions` принимает:
 
-- Перенаправляет запросы от Web UI на A2A Server
-- Трансформирует формат данных между клиентом и сервером
-- Обрабатывает ответы и возвращает их клиенту
+- `title` (необязательный заголовок)
+- `task` (строковое задание для A2A Server)
+- `context` (любые дополнительные поля, `context.execution` допустим с обязательным `action`-строкой)
+- `suggestedAction` и `actionParams` (хранится в метаданных, используются UI)
+- `projectId` (для project-режима)
 
-### 2. Управление сессиями
+Если в запросе есть `task`, сервер формирует `context.execution: { action: 'task', step: 'new' }`, обогащает context `session_id`, возвращает `success` + `serverResponse` (если синхронный ответ). Перед вызовом `/invoke` сохраняет `request-to-server.json` в шаге 1, потом либо `server-response.json`, либо `server-promise.json`.
 
-- Создание новых сессий (`POST /api/sessions`)
-- Получение сессий (`GET /api/sessions/:id`)
-- Обновление сессий (`PUT /api/sessions/:id`)
-- Удаление сессий (`DELETE /api/sessions/:id`)
+`sessionService` создаёт `session.json` (метаданные/контекст/execute/messages), отслеживает `metadata.stepNum` и сохраняет `currentExecute`, `messages` (полная история), `status`.
 
-### 3. Обработка действий
+## Структура шагов
 
-- `POST /api/sessions/:id/action` — выбор варианта (form.choices)
-- `POST /api/sessions/:id/next` — отправка следующего сообщения
+По умолчанию шаги хранятся в `a2a-client/storage/sessions/{SESSION_ID}/{step}/`. Путь можно переопределить через `A2A_CLIENT_STORAGE_DIR`. В storage-режиме заголовок `X-Storage-Mode: storage` заставляет UI оперировать этими папками; в режиме `project` — `{projectPath}/.a2a/sessions/{sessionId}.json`.
 
-## Поток обработки шагов (Step Flow)
+| Файл | Папка | Назначение |
+|------|-------|-----------|
+| `request-to-server.json` | `{N}/` | Payload перед отправкой на A2A Server (context + result) |
+| `client-result.json` | `{N}/` | Входные данные от Web клиента (message/choice) |
+| `server-response.json` | `{N}/` | Ответ A2A Server (execute/context/result) |
+| `server-promise.json` | `{N+1}/` | `promiseId` и статус после async-запроса |
+| `messages.json` | `{N}/` | История сообщений, используемая при сборе истории |
 
-### Структура файлов шага
-
-Каждый шаг в директории сессии содержит:
-
-```
-storage/sessions/{SESSION_ID}/
-├── session.json                 # Данные сессии
-├── {N}/
-│   ├── server-response.json     # Ответ от A2A сервера
-│   ├── client-result.json       # Результат от клиента (web/авто)
-│   ├── request-to-server.json   # Запрос к серверу (перед отправкой)
-│   └── messages.json            # История сообщений
-├── {N+1}/
-│   ├── server-promise.json      # Данные о промисе (если async) — в следующем шаге
-│   └── ...
-```
-
-### Логика обработки шага
+## Поток обработки шага
 
 ```mermaid
 flowchart TD
-    A[Шаг N] --> B{Есть server-promise.json?}
-    B -->|Да| C{Промис выполнен?}
-    B -->|Нет| D[Создать request-to-server.json]
-    D --> E[Отправить запрос на A2A Server]
-    E --> F[Сохранить promise в server-promise.json]
-    F --> G[Перейти к шагу N+1]
-    C -->|Да| H[Получить результат]
-    C -->|Нет| I[Ожидать или опросить]
-    I --> C
-    H --> J[Сохранить в server-response.json]
-    J --> K{Нужно действие клиента?}
-    K -->|Да| L[Вернуть execute.form клиенту]
-    K -->|Нет| M[Завершить сессию]
+    A[Шаг N: пришёл client-result] --> B[Сохранить client-result.json]
+    B --> C[Сформировать request-to-server.json (context.execution += action)]
+    C --> D[Сохранить request-to-server.json и отправить POST /invoke]
+    D --> E{Ответ содержит promiseId?}
+    E -->|Да| F[Сохранить server-promise.json в шаге N+1, stepNum := N+1 + 1]
+    E -->|Нет| G[Сохранить server-response.json в шаге N+1, stepNum := N+1]
+    F --> H[Опросить GET /sessions/:id/promise/:promiseId → /requests/{promiseId}/status]
+    H --> I[при completed записать server-response.json, обновить execute/context]
+    G --> J[Обновить session.execute/context, вернуть execute клиенту]
 ```
 
-### Детальное описание
+1. Web клиент отправляет `POST /api/sessions/:id/action` (выбор) или `POST /api/sessions/:id/next` (form.input/message). Сервис сохраняет `client-result.json` и фиксирует `selectedAction`/последний `input` в metadata.
+2. Формируется `request-to-server.json` для шага `N+1` с `context.execution` (action `'task'`, `'action'` или `'continue'`), `session_id`, `result` и optional `actionParams`. `validateRequestToServer` проверяет, что есть `task` либо `context`, а `context.execution.action` — строка.
+3. `serverFetch` отправляет `POST /invoke` к A2A Server, затем:
+   * если в ответе есть `promiseId`, создаётся `server-promise.json` в шаге `N+2`, `stepNum` обновляется на этот шаг, и фронт начинает опрос `GET /sessions/:id/promise/:promiseId`.
+   * если промиса нет, сохраняется `server-response.json` в шаге `N+1`, `stepNum` увеличивается на 1.
+4. В обоих случаях `sessionService.updateSessionContext`/`updateSession` сохраняют новый `context`, `currentExecute`, `messages`.
 
-#### 1. Нет server-promise.json (новый запрос)
+## Формирование context.execution
 
-Если в папке шага нет файла `server-promise.json`:
+- **initial task:** `{ action: 'task', step: 'new' }`
+- **action:** `{ action: 'action', step: <choice> }`
+- **next:** `{ action: 'continue', step: 'next' }`
 
-1. Создать `request-to-server.json` на основе:
-   - `client-result.json` (если есть) — данные от пользователя
-   - Контекста из предыдущих шагов
-   - Текущего состояния сессии
+`result` передаётся как `{ choice, input }` или `{ message }`. `sessionService.addMessage` добавляет запись с `source: 'user-action'` или `'user-result'`, что позже читают при `GET /history`.
 
-2. Отправить запрос на A2A Server (`POST /api/v1/requests`)
+## Ответ A2A Server и auto-continuation
 
-3. Сохранить данные о промисе в **следующий шаг** `{N+1}/server-promise.json`:
-```json
-{
-  "promiseId": "uuid-...",
-  "status": "pending",
-  "submittedAt": "2026-03-11T..."
-}
-```
+A2A Server возвращает `{ data: { execute, context, result }, promiseId?, status? }`. Response:
 
-4. Перейти к шагу N+1 (promise хранится в папке N+1)
+- `execute` содержит `form`, `message`, `wait`, `action`, `finalResult`.
+- если `execute.form` не содержит `input`/`choices`, UI генерирует `autoContinue` (system-сообщение типа `auto-action`, `auto-script`, `auto-result`) и может продолжить без пользователя.
+- `execute.finalResult` переводит сессию в `completed`.
+- `context` сливается в `session.context`.
 
-#### 2. Есть server-promise.json (проверка статуса)
+При sync-ответе `server-response.json` фиксируется сразу. При async-ответе `server-promise.json` сохраняет `{ promiseId, status, submittedAt }`, UI держит `promisePending`, а `GET /sessions/:id/promise/:promiseId` поллит статус (см. ниже).
 
-Если файл существует:
+## Работа с промисами и статусами
 
-1. Проверить статус промиса:
-   - **pending** — ожидать завершения
-   - **completed** — получить результат
-   - **failed** — обработать ошибку
+`server-promise.json` используется как точка входа для async-работы:
 
-2. Для ожидающих промисов:
-   - Автоматический опрос (polling) каждые 5 секунд
-   - Или ожидание внешнего триггера
+- поля: `promiseId`, `status` (`pending|completed|failed|cancelled`), `submittedAt`, `updatedAt`.
+- когда статус `completed`, фронт находит `messages.json`/`server-response.json` через `GET /sessions/:id/step/:number/:file` или `latest`, обновляет UI и может заново вызвать `/next`.
+- `GET /sessions/:id/promise/:promiseId` делает `serverFetch('GET', /requests/${promiseId}/status')` и перекидывает ответ с A2A Server, чтобы UI мог узнать `completed`/`failed`.
 
-3. После завершения:
-   - Получить результат от A2A Server
-   - Сохранить в `server-response.json`
+## REST API и файловые маршруты
 
-#### 3. Ответ от клиента
+### POST /api/sessions
 
-Когда получен ответ от Web клиента:
+- Создаёт `session.json` с metadata `{ title, task, stepNum: 1, context, suggestedAction, actionParams }`.
+- При наличии `task` формирует `request-to-server.json` и вызывает `/invoke`.
+- Ответ содержит `session`, `serverResponse` (если получен).
 
-1. Сохранить в `client-result.json`:
-```json
-{
-  "result": {
-    "message": "текст сообщения"
-    // или
-    "choice": "выбранный вариант"
-  }
-}
-```
+### POST /api/sessions/:sessionId/action
 
-2. Создать новый шаг (N+1)
+- Обязательный `choice`; `input` опционален.
+- Сохраняет `client-result.json`, `selectedAction`, отправляет `request-to-server.json` → `/invoke`.
+- Возвращает `execute`, `context` и, если есть, `promiseId`.
 
-3. Создать `request-to-server.json` для следующего запроса
+### POST /api/sessions/:sessionId/next
 
-#### 4. Ответ от сервера
+- `result` обязателен; как минимум `result.message` или `result.choice`.
+- Аналогично action — сохраняет `client-result`, вызывает `/invoke`, возвращает execute/context/promiseId.
 
-Когда получен ответ от A2A Server:
+### POST /api/sessions/:sessionId/cancel
 
-1. Определить тип ответа:
-   - **sync** — немедленный ответ с `execute`
-   - **async** — требуется ожидание через promiseId
+- Меняет `session.status` на `cancelled`, фиксирует `endTime` и добавляет системное сообщение `{ action: 'cancelled', reason: 'User requested cancellation' }`.
 
-2. Для синхронного ответа:
-   - Вернуть `execute` объект клиенту
-   - Клиент отображает форму или сообщение
+### GET/PUT /api/sessions/:sessionId/step/:stepNum/:file
 
-3. Для асинхронного ответа:
-   - Сохранить promiseId
-   - Начать опрос статуса
-   - После завершения вернуть результат
+- Позволяет инспектировать/переопределять `request-to-server.json`, `client-result.json`, `server-response.json`, `server-promise.json`, `messages.json`.
 
-## Типы автоматической обработки
+### GET /api/sessions/:sessionId/promise/:promiseId
 
-### Автоматический (Auto Mode)
+- Проксирует `GET` к `A2A_SERVER/api/v1/requests/{promiseId}/status` и возвращает ответ для UI.
 
-- Скрипт или симуляция самостоятельно отправляет данные
-- Не требуется участие пользователя
-- Используется для тестирования
+### GET /api/sessions/:sessionId/history/:fromStep
 
-### Ручной (Manual Mode)
+- Читает `messages.json` начиная с указанного шага и возвращает массив `{ step, content }`.
 
-- Ожидание ввода от пользователя через Web UI
-- Сервер возвращает `execute.form.input` или `execute.form.choices`
-- Клиент отображает форму и ждёт ввода
+### GET /api/sessions/:sessionId/latest
 
-### Гибридный (Hybrid Mode)
+- Возвращает информацию о самом верхнем шаге: `server-response`, `messages`, `execute` (если есть) и номер шага.
 
-- Автоматическое продолжение после таймаута
-- Предопределённые ответы для известных сценариев
-- Fallback на ручной режим при неизвестном состоянии
+## Валидация
 
-## Файловая структура storage
+- `validateRequestToServer` требует хотя бы `task` или `context`.
+- `context.execution.action`, если есть, должен быть строкой.
 
-### Режим Storage (по умолчанию - локальный)
+## Автоматические ответы (Auto Mode)
 
-```
-a2a-client/storage/sessions/{SESSION_ID}/
-├── session.json
-├── 1/
-│   ├── server-response.json
-│   ├── client-result.json
-│   ├── request-to-server.json
-│   └── messages.json
-├── 2/
-│   └── ...
-```
+Когда `execute` не содержит `form`, UI:
 
-### Режим Project
+1. Создаёт системное сообщение (`auto-action`, `auto-script`, `auto-result`).
+2. Эмитит событие `autoContinue`.
+3. Может автоматически отправить следующий `result` (если сценарий позволяет).
 
-```
-{projectPath}/.a2a/sessions/{SESSION_ID}.json
-```
+## Статусы
 
-### Глобальный (для продакшена)
+- `session.status`: `active`, `completed`, `failed`, `cancelled`.
+- `server-promise.status`: `pending`, `completed`, `failed`, `cancelled`.
+- `session.metadata.stepNum` указывает на номер текущего шага по файловому дереву и обновляется после каждого запроса/промиса.
 
-Установите переменную окружения `A2A_CLIENT_STORAGE_DIR` для использования глобального хранилища:
+## Режим хранения
 
-```bash
-export A2A_CLIENT_STORAGE_DIR=~/.a2a-client
-```
-
-## Ожидаемые файлы
-
-| Файл | Папка | Описание |
-|------|-------|----------|
-| `request-to-server.json` | `{N}/` | Запрос к серверу (перед отправкой) |
-| `server-promise.json` | `{N+1}/` | promiseId после async-запроса из шага N |
-| `client-result.json` | `{N}/` | Результат от Web клиента |
-| `server-response.json` | `{N}/` | Ответ от A2A Server |
-| `messages.json` | `{N}/` | История сообщений |
-
-## Валидация правок кода
-
-### client-result (Web → Client API)
-
-При `POST /api/sessions/:id/next` проверять структуру:
-
-```json
-{
-  "result": {
-    "message": "string" | "choice": "string"
-  }
-}
-```
-
-- `result` — обязательно
-- `result.message` или `result.choice` — хотя бы одно
-
-### edit-patch (A2A Server)
-
-Валидация на стороне A2A Server (`action-validator.ts`, `edit-patch.ts`):
-
-| Уровень | Что проверяется |
-|---------|-----------------|
-| Schema | `path`, `operations[]`, `type` ∈ {replace, insert, delete, replaceContent} |
-| Path | Безопасность пути (вне workspace — отказ) |
-| File | Файл существует |
-| Operations | `startLine`/`endLine`/`content`/`search` по типу операции |
-
-При ошибке — `success: false`, `error` в ответе.
-
-### request-to-server (Client API → A2A)
-
-Перед отправкой на A2A Server:
-
-- Наличие `task`, `context`
-- Корректность `context.execution` при наличии
-
-## Коды завершения
-
-- `pending` — запрос в обработке
-- `completed` — успешно завершено
-- `failed` — ошибка выполнения
-- `cancelled` — отменено пользователем
+- Дефолтный путь: `a2a-client/storage/sessions/{sessionId}`.
+- Переназначается через `A2A_CLIENT_STORAGE_DIR`.
+- Web UI переключается между `storage` и `project` режимами через `X-Storage-Mode` (`storage` по умолчанию).

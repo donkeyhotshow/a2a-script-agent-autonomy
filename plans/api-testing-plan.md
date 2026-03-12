@@ -10,51 +10,47 @@
 
 ## 0. Client API Server — Responsibilities (Storage Files)
 
-> **Утверждено:** 2026-03-11. Client API server must manage files in `a2a-client/storage/sessions/{SESSION_ID}/` per step.
+> **Утверждено:** 2026-03-12. Client API server управляет step-файлами в `a2a-client/storage/sessions/{SESSION_ID}/`, сохраняет `context`, `execute`, `messages` и обрабатывает async `promiseId`.
 
-### 0.1 When there is NO `server-promise.json` (in the next step)
+### 0.1 После client-result → request-to-server
 
-1. Save `request-to-server.json` (in current step folder)
-2. Make request to a2a-server
-3. Store promise data in **next step** folder: `{SESSION_ID}/{N+1}/server-promise.json`
+1. `client-result.json` сохраняется в текущем шаге (`{N}/`) сразу после выборки/ввода пользователя (с `result.message` или `result.choice`).
+2. Формируется `request-to-server.json` для следующего шага `{N+1}/`: `context.execution` получает `action` (task/action/continue) и `result`, добавляется `session_id`.
+3. Перед отправкой на A2A Server сохраняется `request-to-server.json`.
+4. Делается `POST $A2A_SERVER/api/v1/invoke` с подготовленным payload.
 
 ```
 {N}/
-├── request-to-server.json   ← save before request
-├── client-result.json       ← from web client
-└── ...
-{N+1}/
-├── server-promise.json      ← promiseId, status, submittedAt
-└── ...
+├── client-result.json       ← пользователь (message/choice)
+└── request-to-server.json   ← payload для шага N+1
 ```
 
-### 0.2 When there IS client response
+### 0.2 Синхронный ответ от A2A Server
 
-1. Save `client-result.json` (from Web client form submit or auto)
-2. Build `request-to-server.json` from client-result + context
-3. Save `request-to-server.json` in current step folder
+1. Когда ответ приходит без `promiseId`, `server-response.json` пишется в `{N+1}/` (тот же шаг, что и request-to-server).
+2. `session.metadata.stepNum` обновляется на `N+1`, `executes`/`context`/`messages` в `session.json` обновляются в `sessionService`.
+3. Web UI получает `execute` и, если нужно, ожидает `form.input`/`form.choices`.
 
-### 0.3 When there IS server response
+### 0.3 Асинхронный ответ (promiseId)
 
-1. Wait (polling) or auto-continue — different modes: manual, auto, hybrid
-2. Save `server-response.json` in current step folder
-3. Notify Web client what to respond (execute.form.input, execute.form.choices, execute.message)
+1. Если A2A Server вернул `promiseId`, создаётся `server-promise.json` в `{N+2}/` (шаг ожидания).
+2. В `server-promise` хранятся `{ promiseId, status, submittedAt }`, `stepNum` переключается на `N+2`.
+3. Web UI поллит `GET /api/sessions/:id/promise/:promiseId` (proxy → `/requests/{promiseId}/status`) до `completed`.
+4. После завершения можно загрузить финальный `server-response.json` (через `latest` или `step/:file`) и отправить новый `result`.
 
 ### 0.4 Required files per step
 
-| File | When | Location |
-|------|------|----------|
-| `request-to-server.json` | Before server request | `{SESSION_ID}/{N}/` |
-| `server-promise.json` | After async request (promiseId) | `{SESSION_ID}/{N+1}/` |
-| `client-result.json` | After client form submit | `{SESSION_ID}/{N}/` |
-| `server-response.json` | After server response | `{SESSION_ID}/{N}/` |
-| `messages.json` | Chat history | `{SESSION_ID}/{N}/` |
+| File | Когда | Папка |
+|------|-------|-------|
+| `client-result.json` | После ввода пользователя | `{SESSION_ID}/{N}/` |
+| `request-to-server.json` | Перед запросом | `{SESSION_ID}/{N+1}/` |
+| `server-response.json` | При sync-ответе | `{SESSION_ID}/{N+1}/` |
+| `server-promise.json` | При async-ответе | `{SESSION_ID}/{N+2}/` |
+| `messages.json` | История сообщений | `{SESSION_ID}/{N}/` |
 
 **Windows/PowerShell:** Use single-quoted JSON for `-d` (e.g. `-d '{"title":"x"}'`). Avoid escaped quotes.
 
-**Last verified:** 2026-03-11 — Web client + full dialog chain via curl (no mocks). Storage: `server-response.json` + `messages.json` per step.
-
-**Client API:** Requires `X-Session-Id` header (any value) or `SKIP_AUTH=1`. Returns `promiseId` for async steps; poll `GET $A2A_SERVER/api/v1/requests/{promiseId}/result`.
+**С помощью Client API:** `X-Session-Id` (любой) или `SKIP_AUTH=1`. Async-ответ возвращает `promiseId`; опрашивайте `GET $A2A_SERVER/api/v1/requests/{promiseId}/result` (или через `/sessions/:id/promise/:promiseId`), пока статус `completed`.
 
 ---
 
@@ -209,33 +205,37 @@ curl -s -X POST "$WEB_UI_BASE/api/a2a/sessions" \
 
 ---
 
-## 4.5 Step Flow: server-response → client-result → next-request → new step
+## 4.5 Step Flow: server-response → client-result → request-to-server → new step
 
 > **Подробнее:** см. [`api-client-server-logic.md`](api-client-server-logic.md#поток-обработки-шагов-step-flow)
 
-After each server response, the step folder contains:
+После каждого server-response:
 
 | File | Description | Source |
 |------|-------------|--------|
-| `server-response.json` | Server response (execute, messages, context) | From a2a-server / Client API |
-| `client-result.json` | Client result (user input: message, choice) | Web client form submit or auto |
-| `next-request.json` | Request payload for next step | Built from client-result + context |
+| `server-response.json` | Ответ от сервера (execute, context, result) | Client API ← A2A Server |
+| `messages.json` | История сообщений до текущего шага | sessionService |
+| `client-result.json` | Данные от Web клиента | UI/form или авто-скрипт |
+| `request-to-server.json` | Payload для следующего шага | Client API |
+| `server-promise.json` | `promiseId`/`status` для async | Client API (если promiseId) |
 
 **Flow:**
-1. Step N folder receives `server-response.json` (from server)
-2. Get `client-result.json` — either automatically (script/sim) or via Web client (user fills form)
-3. Build `next-request.json` from client-result and context
-4. Execute next request (POST to Client API)
-5. New folder `N+1/` receives new `server-response.json`
+1. Step N уже содержит `server-response.json` и `messages.json`.
+2. Client API сохраняет `client-result.json` из Web (`result.message` или `result.choice`).
+3. Формирует `request-to-server.json` для шага `N+1` перемешивая context и result, адрес `execution.action`.
+4. POST `/api/v1/invoke` отправляется, ответ сохраняется синхронно (`server-response.json` в `N+1`) или содержит `promiseId`.
+5. При `promiseId` появляется `server-promise.json` в `N+2`; Web UI опрашивает `/promise/:promiseId` и после `completed` использует `latest`/`step` для обновления ответа.
 
-**Example step 1 folder:**
+**Пример шага 1:**
 ```
 1/
 ├── server-response.json   # execute.form.input (task prompt)
 ├── messages.json          # Chat messages (role, content)
 ├── client-result.json     # {"result":{"message":"my task"}}
-└── next-request.json      # request for step 2
+└── request-to-server.json # payload для шага 2
 ```
+
+**Async-пример:** когда первый request возвращает `promiseId`, в папке `3/` появится `server-promise.json`, пока `server-response.json` (с результатом) ждёт завершения promise.
 
 ---
 
@@ -376,8 +376,11 @@ cat a2a-client/storage/sessions/{SESSION_ID}/1/messages.json
 ```
 
 **Expected in step folder:**
-- `server-response.json`: `step`, `timestamp`, `execute`, `context` (no `messages` — in messages.json)
-- `messages.json`: `[]` or `[{"role":"user","content":"..."}]`
+- `request-to-server.json`: `context`, `result`, `execution` (matches `context.execution.action`)
+- `client-result.json`: последний результат пользователя
+- `server-response.json`: `step`, `timestamp`, `execute`, `context` (no `messages` — в `messages.json`)
+- `server-promise.json`: `{ promiseId, status, submittedAt }` (если ответ async)
+- `messages.json`: `[]` или `[{"role":"user","content":"..."}]`
 
 ### 6.2 Project Mode Structure
 
@@ -386,6 +389,23 @@ cat a2a-client/storage/sessions/{SESSION_ID}/1/messages.json
 cat {projectPath}/.a2a/sessions/{SESSION_ID}.json
 ```
 
+### 6.3 Step file API
+
+```bash
+curl -s "$CLIENT_API_BASE/api/sessions/{SESSION_ID}/step/1/request-to-server.json"
+curl -s "$CLIENT_API_BASE/api/sessions/{SESSION_ID}/step/2/server-response.json"
+curl -s "$CLIENT_API_BASE/api/sessions/{SESSION_ID}/step/3/server-promise.json"
+```
+
+**Verify:** файлы доступны через `GET`, `PUT` и содержат ожидаемые поля (`request-to-server` — context/result, `server-promise` — promiseId/status).
+
+### 6.4 Promise Status API
+
+```bash
+curl -s "$CLIENT_API_BASE/api/sessions/{SESSION_ID}/promise/{PROMISE_ID}"
+```
+
+**Verify:** Client API проксирует `GET $A2A_SERVER/api/v1/requests/{PROMISE_ID}/status` и возвращает `{ status }` (pending/completed/failed).
 ---
 
 ## 7. One-Shot Test Script
@@ -482,9 +502,11 @@ Write-Host "OK: Full chain verified"
 | 15 | POST /api/sessions (Client API, with task) | Returns serverResponse (execute/promiseId) | [ ] |
 | 16 | Storage files exist | session.json, N/server-response.json, N/messages.json, N+1/server-promise.json (async) | [ ] |
 | 17 | Request files exist | N/request-to-server.json, N/client-result.json | [ ] |
-| 17 | Dialog sim step 1 (task→choices) | serverResponse.execute.form.choices | [ ] |
-| 18 | Dialog sim step 2 (choice→input) | execute.form.input | [ ] |
-| 19 | Dialog sim step 3 (message→LLM) | execute.message + form.input | [ ] |
+| 18 | Step file API works | `curl -s "$CLIENT_API_BASE/api/sessions/{SESSION_ID}/step/1/request-to-server.json"` (and `.../step/2/server-promise.json` when async) | [ ] |
+| 19 | Dialog sim step 1 (task→choices) | serverResponse.execute.form.choices | [ ] |
+| 20 | Dialog sim step 2 (choice→input) | execute.form.input | [ ] |
+| 21 | Dialog sim step 3 (message→LLM) | execute.message + form.input | [ ] |
+| 22 | Promise status API | `curl -s "$CLIENT_API_BASE/api/sessions/{SESSION_ID}/promise/{PROMISE_ID}"` returns `status` | [ ] |
 
 ---
 
@@ -499,5 +521,5 @@ Write-Host "OK: Full chain verified"
 | CORS errors | Wrong origin | Use same origin (5173) for /api/a2a |
 | Dialog sim: no form.choices | a2a-server not running or wrong task | Run `npm run test:sim` in simulations/dialog |
 | Dialog sim: wrong execute shape | Server transform mismatch | Compare with simulations/dialog/*/received.json |
-| No server-promise.json | Promise not saved | Saved in N+1/; see [`api-client-server-logic.md`](api-client-server-logic.md) |
+| No server-promise.json | Promise not saved | Saved in N+2/ after the async request step; see [`api-client-server-logic.md`](api-client-server-logic.md) |
 | request-to-server.json missing | Client result not processed | Verify client-result.json exists before next step |
