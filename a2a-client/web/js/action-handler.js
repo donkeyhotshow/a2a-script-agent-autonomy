@@ -145,7 +145,8 @@
                 }
                 
                 if (store) {
-                    if (status.execute) store.setExecute?.(status.execute);
+                    const exec = status.execute ?? status.result?.execute;
+                    if (exec) store.setExecute?.(exec);
                 }
                 
                 // Emit event for UI to handle
@@ -153,7 +154,7 @@
                     sessionId,
                     promiseId,
                     result: status.result,
-                    execute: status.execute
+                    execute: status.execute ?? status.result?.execute
                 });
             }
             

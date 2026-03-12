@@ -169,11 +169,9 @@ class APIIntegration {
         if (!res.ok) return [];
         const raw = await res.json();
         let sessions = Array.isArray(raw) ? raw : (raw?.sessions || raw?.data || []);
-        // Filter by projectId if provided (for backward compatibility)
+        // Filter by projectId if provided
         if (projectId) {
-            sessions = sessions.filter(s =>
-                (s.projectId ?? s.metadata?.projectId) === projectId || (s.projectId ?? s.metadata?.projectId) === undefined
-            );
+            sessions = sessions.filter(s => s.projectId === projectId || s.projectId === undefined);
         }
         return sessions;
     }

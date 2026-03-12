@@ -29,8 +29,6 @@
         };
     }
 
-    const STORAGE_KEY = 'a2a_session_store';
-
     function SessionStore() {
         // Core state (single source of truth)
         this._state = {
@@ -45,9 +43,6 @@
             promisePending: false,  // Block input while waiting for server response
             _waitIndicatorActive: false,  // Track if wait indicator is showing
             
-            // Session logs (only messages, responsesLog was unused)
-            messagesLog: [],   // Human-readable messages for frontend display
-            
             // New: numbered steps tracking
             currentStep: 0,
             steps: []
@@ -55,7 +50,6 @@
 
         this._listeners = new Map();
         this._apiBase = '/api';
-        this._persistTimer = null;
         
         // Storage mode: 'project' (.a2a/sessions) or 'storage' (a2a-client/storage/sessions or A2A_CLIENT_STORAGE_DIR)
         this._storageMode = 'storage';
@@ -112,11 +106,6 @@
     // Note: Local persistence removed - all state is ephemeral
     // Server-side session storage handles persistence
 
-    SessionStore.prototype.clearStorage = async function() {
-            // No-op: no local storage to clear
-            console.log('[SessionStore] No local storage to clear');
-        };
-
     // === State Accessors ===
 
     SessionStore.prototype.getState = function() {
@@ -159,7 +148,7 @@
     };
 
     SessionStore.prototype.getExecution = function() {
-        return this._state.context?.execution || this._state.execute?.execution || null;
+        return this._state.context?.execution || null;
     };
 
     /**
@@ -195,11 +184,6 @@
             promisePending: false
         };
 
-        // Clear storage if explicit reset (no sessionId)
-        if (!sessionId) {
-            this.clearStorage();
-        }
-
         this._emit('reset', this.getState());
         return this;
     };
@@ -212,7 +196,7 @@
     };
 
     SessionStore.prototype.createSession = function(session) {
-        const { id, sessionId, projectId, project_id, task, title, messages = [] } = session || {};
+        const { id, sessionId, projectId, project_id, task, title } = session || {};
         const sid = id || sessionId;
         const pid = projectId || project_id || this._state.projectId;
 
@@ -332,7 +316,7 @@
             this._emit('wait', waitData);
 
             if (waitData.message) {
-                this.logMessage('system', waitData.message, { type: 'wait', showFormAfter: waitData.showFormAfter });
+                // Message logged via pushMessage
             }
         }
 
@@ -421,15 +405,6 @@
         this._state.messages = [...this._state.messages, normalized].slice(-MAX_MESSAGES);
         this._emit('message', normalized);
         this._emit('messages', [...this._state.messages]);
-        return this;
-    };
-
-    SessionStore.prototype.clearPendingForm = function() {
-        this._state.pendingForm = null;
-        if (this._state.status === 'waiting') {
-            this._state.status = 'active';
-        }
-        this._emit('pendingForm', null);
         return this;
     };
 
@@ -559,49 +534,6 @@
     SessionStore.prototype.debug = function() {
         console.log('[SessionStore] Current state:', this.toJSON());
         console.log('[SessionStore] Full state:', this.getState());
-    };
-
-    // === Session Logging (messages only - responsesLog was unused) ===
-
-    /**
-     * Log human-readable message for frontend display
-     * @param {string} role - user, assistant, system
-     * @param {string} content - Message content
-     * @param {Object} metadata - Optional metadata
-     */
-    SessionStore.prototype.logMessage = function(role, content, metadata = {}) {
-        const logEntry = {
-            timestamp: new Date().toISOString(),
-            role: role,
-            content: content,
-            metadata: metadata
-        };
-        this._state.messagesLog.push(logEntry);
-        
-        // Keep max 100 entries
-        if (this._state.messagesLog.length > 100) {
-            this._state.messagesLog.shift();
-        }
-        
-        console.log('[SessionStore] Message logged:', role, content.slice(0, 50));
-        this._emit('messageLogged', logEntry);
-    };
-
-    /**
-     * Get all logged messages
-     * @returns {Array} Array of message log entries
-     */
-    SessionStore.prototype.getMessagesLog = function() {
-        return [...this._state.messagesLog];
-    };
-
-    /**
-     * Clear all logs
-     */
-    SessionStore.prototype.clearLogs = function() {
-        this._state.messagesLog = [];
-        this._emit('logsCleared');
-        console.log('[SessionStore] Logs cleared');
     };
 
     // === NEW: Session Storage API (numbered folders) ===
