@@ -315,11 +315,66 @@ export async function recoverDialogFromLlmPromise(
         );
         const output = responseTransformResult.success ? responseTransformResult.output : responseData;
         const execute = (output as Record<string, unknown>)?.execute as Record<string, unknown> | undefined;
-        const contextOut = (output as Record<string, unknown>)?.context as Record<string, unknown> | undefined;
+        
+        // Fallback: if execute.message is missing, try to extract from LLM response
+        // This mirrors the logic in runResponseTransform
+        let llmMessage: string | undefined;
+        let llmForm: Record<string, unknown> | undefined;
+        
+        // Try to parse LLM response as JSON first
+        if (responseMd.trim().startsWith('{')) {
+            try {
+                const llmJson = JSON.parse(responseMd.trim());
+                const llmExecute = llmJson.execute as Record<string, unknown> | undefined;
+                llmMessage = llmJson.message ?? llmJson.response ?? llmExecute?.message;
+                llmForm = llmExecute?.form as Record<string, unknown> | undefined;
+            } catch {
+                // JSON parse failed, try as plain text
+                llmMessage = responseMd.trim();
+            }
+        } else {
+            // Not JSON - treat as plain text response from LLM
+            llmMessage = responseMd.trim();
+        }
+        
+        // Get existing history from ctx.context
+        const ctxContext = ctx['context'] as Record<string, unknown> | undefined;
+        const existingHistory = (ctxContext?.history ?? []) as Array<{role: string; message: string}>;
+        
+        // Get user message from ctx.result
+        const ctxResult = ctx['result'] as Record<string, unknown> | undefined;
+        const userMessage = ctxResult?.message as string | undefined;
+        
+        // Get assistant message from LLM response (or from execute if already set)
+        const assistantMessage = llmMessage ?? (execute?.message as string | undefined);
+        
+        // Build new history by appending user and assistant messages
+        const newHistory = [...existingHistory];
+        if (userMessage) {
+            newHistory.push({ role: 'user', message: userMessage });
+        }
+        if (assistantMessage) {
+            newHistory.push({ role: 'assistant', message: assistantMessage });
+        }
+        
+        // Return with history and proper execute structure
+        if (assistantMessage) {
+            return {
+                outcome: 'completed',
+                message: 'Dialog response (recovered)',
+                context: { ...ctx, history: newHistory },
+                execute: {
+                    message: assistantMessage,
+                    form: llmForm ?? (execute?.form as Record<string, unknown> | undefined) ?? {input: [{name: 'message', type: 'text', label: 'Повідомлення', required: true}]},
+                },
+            } as ProcessResult;
+        }
+        
+        // Fallback: return with history even if no message
         return {
             outcome: 'completed',
             message: 'Dialog response (recovered)',
-            context: contextOut ?? ctx,
+            context: { ...ctx, history: newHistory },
             execute: execute ?? {form: {input: [{name: 'message', type: 'text', label: 'Повідомлення', required: true}]}},
         } as ProcessResult;
     } catch {
