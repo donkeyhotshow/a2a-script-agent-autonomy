@@ -800,7 +800,7 @@ pipelines:
     steps:
       request:
         request: pipelines/dialog-request.yaml
-        response: pipelines/dialog-llm-response.yaml
+        response: pipelines/dialog-response.yaml
       
   coder:
     request: pipelines/coder-request.yaml

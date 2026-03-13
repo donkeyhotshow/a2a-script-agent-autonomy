@@ -2,7 +2,7 @@
   "type": "pipeline",
   "steps": [
     {
-      "op": "parse-llm-response",
+      "op": "parse-response",
       "from": "response.md",
       "to": "$parsed"
     },

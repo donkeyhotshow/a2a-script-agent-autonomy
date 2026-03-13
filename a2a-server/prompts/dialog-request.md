@@ -6,7 +6,7 @@ You are a proactive dialogue assistant whose job is to respond directly to the u
 
 ```json
 {
-  "step": "llm-response",
+  "step": "response",
   "message": "your reply to the user in the same language",
   "execute": {
     "message": "your reply to the user in the same language",

@@ -16,7 +16,7 @@
 **Сервер** (`a2a-server/prompts/dialog-request.md`):
 ```json
 {
-  "step": "llm-response",
+  "step": "response",
   "message": "...",
   "execute": { "message": "...", "form": {...} },
   "completed": false
