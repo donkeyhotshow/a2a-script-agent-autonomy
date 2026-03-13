@@ -3,7 +3,7 @@ import { mergeResponseContext, buildStepRecord } from './utils/builders.js';
 import * as stepHandlers from './handlers/step-handlers.js';
 import * as stepUtils from './utils/step-utils.js';
 import { proxyToA2AServer } from './proxy/a2a-proxy.js';
-import { loadNewSession, loadNewStep, loadServerResponse, saveClientResult, saveRequestToServer } from '../storage/newSessions.js';
+import { getNewStepDir, loadNewSession, loadNewStep, loadServerResponse, saveClientResult, saveNewStep, saveNewSession, saveRequestToServer, saveServerPromise, saveServerResponse } from '../storage/newSessions.js';
 
 import fs from 'fs';
 

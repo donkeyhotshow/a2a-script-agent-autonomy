@@ -1,0 +1,65 @@
+{
+  "id": "8ad6ae9b-f258-4301-aba5-85327834bfe9",
+  "status": "active",
+  "startTime": "2026-03-11T18:28:18.318Z",
+  "endTime": null,
+  "progress": 0,
+  "totalSteps": 0,
+  "currentStep": null,
+  "context": {},
+  "history": [],
+  "connections": 0,
+  "messages": [
+    {
+      "id": "msg_6a175b32-f81e-4dce-9fec-3941eeb2d805",
+      "content": "диалог",
+      "role": "user",
+      "timestamp": "2026-03-11T18:28:18.318Z",
+      "metadata": {
+        "source": "initial_task"
+      }
+    },
+    {
+      "id": "msg_de37cfe5-4e06-4340-bc0c-1babb63f1005",
+      "content": {
+        "action": "dialog",
+        "input": {}
+      },
+      "role": "user",
+      "timestamp": "2026-03-11T18:28:20.391Z",
+      "metadata": {
+        "source": "user-action"
+      }
+    },
+    {
+      "id": "msg_36c25f35-7168-4dd2-b46a-81a5136c0b09",
+      "content": {
+        "message": "hello world"
+      },
+      "role": "user",
+      "timestamp": "2026-03-11T18:28:24.438Z",
+      "metadata": {
+        "source": "user-result"
+      }
+    },
+    {
+      "id": "msg_dea6c173-2f66-468b-9240-a535720a53f1",
+      "content": {
+        "message": "Дякую!"
+      },
+      "role": "user",
+      "timestamp": "2026-03-11T18:28:30.494Z",
+      "metadata": {
+        "source": "user-result"
+      }
+    }
+  ],
+  "messageCount": 4,
+  "metadata": {
+    "title": "Dialog Test",
+    "task": "диалог",
+    "createdAt": "2026-03-11T18:28:18.318Z",
+    "updatedAt": "2026-03-11T18:28:30.494Z"
+  },
+  "selectedAction": "dialog"
+}

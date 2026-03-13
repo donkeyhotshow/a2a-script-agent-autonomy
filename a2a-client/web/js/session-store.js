@@ -85,8 +85,20 @@
                 state.promisePending = false;
                 emit('promisePending', false);
 
-                // Поддержка формы с choices или input полями
-                var hasForm = execute && execute.form && (execute.form.choices?.length || execute.form.input);
+                // If server tells us to "wait", show loader instead of form
+                if (execute && execute.wait) {
+                    state.status = 'processing';
+                    state.pendingForm = null;
+                    emit('pendingForm', null);
+                    emit('wait', typeof execute.wait === 'object' ? execute.wait : { message: String(execute.wait) });
+                    return this;
+                } else {
+                    // Clear wait state when not waiting
+                    emit('wait', null);
+                }
+
+                // Form with choices or input fields
+                var hasForm = execute && execute.form && ((execute.form.choices && execute.form.choices.length > 0) || execute.form.input);
                 if (hasForm) {
                     state.pendingForm = execute.form;
                     state.status = 'waiting';

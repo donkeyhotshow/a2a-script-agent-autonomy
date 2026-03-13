@@ -1,0 +1,12 @@
+[
+  {
+    "role": "user",
+    "content": "диалог",
+    "step": 2
+  },
+  {
+    "role": "assistant",
+    "content": "диалог",
+    "step": 2
+  }
+]

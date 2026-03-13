@@ -1,0 +1,44 @@
+{
+  "id": "d85641e1-84ca-4fef-aa98-dc7a887eb020",
+  "status": "active",
+  "startTime": "2026-03-11T18:25:16.685Z",
+  "endTime": null,
+  "progress": 0,
+  "totalSteps": 0,
+  "currentStep": null,
+  "context": {},
+  "history": [],
+  "connections": 0,
+  "messages": [
+    {
+      "id": "msg_0f350290-17b3-4883-94b9-7f4cf81b3638",
+      "content": "диалог",
+      "role": "user",
+      "timestamp": "2026-03-11T18:25:16.685Z",
+      "metadata": {
+        "source": "initial_task"
+      }
+    }
+  ],
+  "messageCount": 1,
+  "metadata": {
+    "title": "D",
+    "task": "диалог",
+    "createdAt": "2026-03-11T18:25:16.685Z",
+    "updatedAt": "2026-03-11T18:25:21.208Z"
+  },
+  "selectedAction": "dialog"
+}  "metadata": {
+        "source": "user-action"
+      }
+    }
+  ],
+  "messageCount": 2,
+  "metadata": {
+    "title": "D",
+    "task": "диалог",
+    "createdAt": "2026-03-11T18:25:16.685Z",
+    "updatedAt": "2026-03-11T18:25:21.208Z"
+  },
+  "selectedAction": "dialog"
+}

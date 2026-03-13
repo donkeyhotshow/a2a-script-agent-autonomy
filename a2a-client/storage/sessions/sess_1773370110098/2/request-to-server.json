@@ -1,0 +1,12 @@
+{
+  "context": {
+    "execution": {
+      "action": "task",
+      "step": "new"
+    },
+    "session_id": "sess_1773370110098"
+  },
+  "result": {
+    "message": "диалог"
+  }
+}

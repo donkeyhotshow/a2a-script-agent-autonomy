@@ -1,0 +1,18 @@
+{
+  "step": 1,
+  "execute": {
+    "message": "What would you like me to do?",
+    "form": {
+      "input": {
+        "name": "task",
+        "label": "Enter your task"
+      }
+    }
+  },
+  "context": {
+    "execution": {
+      "action": "task",
+      "step": "new"
+    }
+  }
+}
