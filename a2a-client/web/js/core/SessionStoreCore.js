@@ -41,7 +41,8 @@ export class SessionStoreCore {
     isWaitingForInput() {
         return this._state.status === 'waiting' ||
                this._state.pendingForm !== null ||
-               this._state.execute?.form?.choices?.length > 0;
+               this._state.execute?.form?.choices?.length > 0 ||
+               this._state.execute?.form?.input;
     }
 
     isActive() {
@@ -122,7 +123,8 @@ export class SessionStoreCore {
         this._state.promisePending = false;
         this._emit('promisePending', false);
 
-        if (execute?.form?.choices) {
+        // Поддержка формы с choices или input полями
+        if (execute?.form?.choices || execute?.form?.input) {
             this._state.pendingForm = execute.form;
             this._state.status = 'waiting';
             this._emit('pendingForm', execute.form);

@@ -52,7 +52,7 @@
             get messages() { return state.messages.slice(); },
 
             isWaitingForInput: function() {
-                return state.status === 'waiting' || state.pendingForm || (state.execute && state.execute.form && state.execute.form.choices && state.execute.form.choices.length > 0);
+                return state.status === 'waiting' || state.pendingForm || (state.execute && state.execute.form && (state.execute.form.choices?.length > 0 || state.execute.form.input));
             },
 
             reset: function(sessionId, projectId) {
@@ -81,9 +81,9 @@
                 state.promisePending = false;
                 emit('promisePending', false);
 
-                // Replace ?. ?? 
-                var hasChoices = execute && execute.form && execute.form.choices && execute.form.choices.length;
-                if (hasChoices) {
+                // Поддержка формы с choices или input полями
+                var hasForm = execute && execute.form && (execute.form.choices?.length || execute.form.input);
+                if (hasForm) {
                     state.pendingForm = execute.form;
                     state.status = 'waiting';
                     emit('pendingForm', execute.form);
@@ -136,7 +136,10 @@
                 }
                 this.reset(sid, session.projectId || null);
                 emit('sessionCreated', { id: sid });
-            }
+            },
+
+            // Expose emit for external use (e.g., setContext, setStatus)
+            emit: emit
         };
     }
 
@@ -171,10 +174,15 @@
 this.setStorageMode = (mode) => {
             this._storageMode = mode;
             console.log('[SessionStore] Storage mode:', mode);
-            this.core.emit('storageMode', mode);
+            console.log('[SessionStore] core check:', !!this.core, typeof this.core?.emit);
+            if (this.core && typeof this.core.emit === 'function') {
+                this.core.emit('storageMode', mode);
+            } else {
+                console.warn('[SessionStore] Cannot emit storageMode: core missing or invalid');
+            }
         };
 
-        // Proxy core methods
+// Proxy core methods
         this.getState = function() { return this.core.getState(); };
         this.setSession = function() { return this.core.setSession.apply(this.core, arguments); };
         this.setExecute = function() { return this.core.setExecute.apply(this.core, arguments); };
@@ -183,6 +191,38 @@ this.setStorageMode = (mode) => {
         this.reset = function() { return this.core.reset.apply(this.core, arguments); };
         this.setPromisePending = function() { return this.core.setPromisePending.apply(this.core, arguments); };
         this.isWaitingForInput = function() { return this.core.isWaitingForInput(); };
+
+        // Legacy API for window-state.js compatibility
+        this.setMessages = function(messages) {
+            if (!this.core) {
+                console.warn('[SessionStore] setMessages: core missing');
+                return;
+            }
+            this.reset(); // Clear first
+            if (Array.isArray(messages)) {
+                messages.forEach(msg => this.pushMessage(msg, msg.role || 'user'));
+            }
+            console.log('[SessionStore] Set', messages?.length || 0, 'messages');
+        };
+
+        this.setContext = function(context) {
+            if (this.core) {
+                this.core.context = context;
+                this.core.emit('context', context);
+            }
+        };
+
+        this.setStatus = function(status) {
+            if (this.core) {
+                this.core.status = status;
+                this.core.emit('status', status);
+            }
+        };
+
+        this.renameSession = function(sessionId, newName) {
+            console.log('[SessionStore] renameSession:', sessionId, newName);
+            // Could add title to state if needed
+        };
 
         this.createSessionWithForm = function(title) { 
             return this.storage.createSessionWithForm(title).then(function(session) {

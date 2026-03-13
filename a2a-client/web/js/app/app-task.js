@@ -165,15 +165,19 @@
             const valid = ['project', 'storage'].includes(savedMode);
             storageSelect.value = valid ? savedMode : 'storage';
 
-            if (global.SessionStore) {
+            if (global.SessionStore && typeof global.SessionStore.setStorageMode === 'function') {
                 global.SessionStore.setStorageMode(storageSelect.value);
+            } else {
+                console.warn('[AppTask] SessionStore.setStorageMode not available yet');
             }
 
             storageSelect.addEventListener('change', (e) => {
                 const mode = e.target.value;
                 localStorage.setItem('a2a_storage_mode', mode);
-                if (global.SessionStore) {
+                if (global.SessionStore && typeof global.SessionStore.setStorageMode === 'function') {
                     global.SessionStore.setStorageMode(mode);
+                } else {
+                    console.warn('[AppTask] SessionStore.setStorageMode not available on mode change');
                 }
                 // Refresh taskbar and projects UI
                 this.refreshProjectsUI();

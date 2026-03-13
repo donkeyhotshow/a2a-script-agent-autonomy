@@ -93,5 +93,4 @@ export function validatePorts() {
     }).parse(raw);
 }
 
-// Export for barrel
-export { validateConfig, validateConfigSafe, validatePorts };
+// Export for barrel (removed duplicate exports - functions already exported)

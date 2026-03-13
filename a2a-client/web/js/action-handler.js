@@ -30,14 +30,13 @@
 
     function getApiBase(store) {
         const api = global.apiIntegration;
-        if (!api?.apiBase) return null;
-        // If storage mode is 'storage', use Vite dev server (port 5173) with /api/a2a prefix
-        // Otherwise use client-api (port 3001)
-        const storageMode = store?.getStorageMode?.();
+        // Check storage mode first - if using Vite (storage mode), use default
+        const storageMode = store?.getStorageMode?.() || 'storage';
         if (storageMode === 'storage') {
             return 'http://localhost:5173/api/a2a';
         }
-        
+        // For client-api mode, require explicit apiBase
+        if (!api?.apiBase) return null;
         return String(api.apiBase).replace(/\/?$/, '');
     }
 
@@ -51,7 +50,8 @@
         if (!base) {
             throw new Error('ActionHandler: API base not configured. Set Client API URL in Settings.');
         }
-        const storageMode = store?.getStorageMode?.();
+        // Use storage mode with default fallback (same as getApiBase)
+        const storageMode = store?.getStorageMode?.() || 'storage';
         const isStorageMode = storageMode === 'storage';
         // For Vite (storage mode), base already includes /api/a2a
         // For client-api, need to add /api
@@ -96,9 +96,8 @@
         const base = getApiBase(store);
         if (!base) return null;
         
-        // For Vite (storage mode), base already includes /api/a2a
-        // For client-api, need to add /api
-        const storageMode = store?.getStorageMode?.();
+        // Use storage mode with default fallback
+        const storageMode = store?.getStorageMode?.() || 'storage';
         const isStorageMode = storageMode === 'storage';
         const apiPath = isStorageMode ? '' : '/api';
         const url = `${base}${apiPath}/sessions/${encodeURIComponent(sessionId)}/promise/${encodeURIComponent(promiseId)}`;
