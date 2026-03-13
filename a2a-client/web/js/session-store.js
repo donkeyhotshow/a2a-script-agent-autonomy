@@ -48,7 +48,11 @@
         return {
             getState: function() { return JSON.parse(JSON.stringify(state)); },
             get sessionId() { return state.sessionId; },
+            get projectId() { return state.projectId; },
             get execute() { return state.execute; },
+            get pendingForm() { return state.pendingForm; },
+            get context() { return state.context; },
+            set context(value) { state.context = value; },
             get messages() { return state.messages.slice(); },
 
             isWaitingForInput: function() {
@@ -92,10 +96,8 @@
                     emit('pendingForm', null);
                 }
 
-                if (execute && execute.message) {
-                    var msg = typeof execute.message === 'string' ? { content: execute.message } : execute.message;
-                    this.pushMessage(msg, 'assistant');
-                }
+                // Don't add message to history here - UI will display it from execute.message
+                // This prevents duplicates with messages from API
 
                 return this;
             },
@@ -185,12 +187,31 @@ this.setStorageMode = (mode) => {
 // Proxy core methods
         this.getState = function() { return this.core.getState(); };
         this.setSession = function() { return this.core.setSession.apply(this.core, arguments); };
-        this.setExecute = function() { return this.core.setExecute.apply(this.core, arguments); };
+        this.setExecute = function() { 
+            console.log('[SessionStore] setExecute called with:', arguments[0]);
+            // Don't add message to history here - it's handled by the UI layer
+            // This prevents duplicates with messages from API
+            return this.core.setExecute.apply(this.core, arguments); 
+        };
         this.pushMessage = function() { return this.core.pushMessage.apply(this.core, arguments); };
         this.on = function() { return this.core.on.apply(this.core, arguments); };
         this.reset = function() { return this.core.reset.apply(this.core, arguments); };
         this.setPromisePending = function() { return this.core.setPromisePending.apply(this.core, arguments); };
         this.isWaitingForInput = function() { return this.core.isWaitingForInput(); };
+
+        // Expose core properties for window-events.js compatibility
+        Object.defineProperty(this, 'execute', {
+            get: function() { return this.core ? this.core.execute : null; },
+            configurable: true
+        });
+        Object.defineProperty(this, '_state', {
+            get: function() { return this.core ? this.core.getState() : {}; },
+            configurable: true
+        });
+        Object.defineProperty(this, 'pendingForm', {
+            get: function() { return this.core ? this.core.pendingForm : null; },
+            configurable: true
+        });
 
         // Legacy API for window-state.js compatibility
         this.setMessages = function(messages) {
@@ -198,7 +219,15 @@ this.setStorageMode = (mode) => {
                 console.warn('[SessionStore] setMessages: core missing');
                 return;
             }
-            this.reset(); // Clear first
+            
+            // Check if messages are already set to avoid duplicates
+            const currentMessages = this.core.messages;
+            if (currentMessages && currentMessages.length > 0) {
+                console.log('[SessionStore] Messages already set, skipping');
+                return;
+            }
+            
+            // Just add new messages without resetting
             if (Array.isArray(messages)) {
                 messages.forEach(msg => this.pushMessage(msg, msg.role || 'user'));
             }

@@ -285,6 +285,7 @@
                             store.setContext(sessionData.context);
                         }
                         const execute = sessionData.execute ?? sessionData.context?.execute ?? sessionData.currentExecute;
+                        console.log('[WindowState] Setting execute:', execute);
                         if (execute) {
                             store.setExecute(execute);
                         }
@@ -319,6 +320,7 @@
 
                     // Render session content using window-events module
                     const contentEl = panel.getContentEl();
+                    console.log('[WindowState] renderSessionContent called, contentEl:', !!contentEl, 'sessionId:', sessionId);
                     
                     if (global.WindowEvents) {
                         global.WindowEvents.renderSessionContent(contentEl, sessionId, store);

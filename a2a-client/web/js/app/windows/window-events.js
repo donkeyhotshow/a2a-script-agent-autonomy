@@ -42,14 +42,28 @@
                 // renderExecute renders the complete content: history + execute block + input area
                 const refreshContent = () => {
                     // Get execute - use method if available for consistency
-                    const execute = store.getExecute ? store.getExecute() : store.execute;
-                    const context = store.context || {};
+                    const execute = store.getExecute ? store.getExecute() : (store.execute || store._state?.execute);
+                    const context = store.context || store._state?.context || {};
 
                     const isWaiting = store.isInputBlocked?.() || false;
+                    
+                    // Check for form in execute or in pendingForm
+                    const hasForm = execute?.form || store.pendingForm || store._state?.pendingForm;
+                    
+                    // Debug log
+                    console.log('[WindowEvents] refreshContent:', 
+                        'execute:', execute, 
+                        'hasForm:', hasForm, 
+                        'isWaiting:', isWaiting,
+                        'pendingForm:', store.pendingForm,
+                        'store._state.pendingForm:', store._state?.pendingForm);
 
-                    if (execute && !isWaiting) {
+                    // Render if we have execute or form, and not waiting
+                    if ((execute || hasForm) && !isWaiting) {
+                        // Use execute with form if available from pendingForm
+                        const executeToRender = execute || { form: store.pendingForm || store._state?.pendingForm };
                         // Let renderExecute handle the full layout (history + form/message)
-                        Render.renderExecute(contentEl, execute, { execute, context, store }, taskFlowRef);
+                        Render.renderExecute(contentEl, executeToRender, { execute: executeToRender, context, store }, taskFlowRef);
                     } else {
                         const statusText = isWaiting ? 'Waiting...' : 'Active';
                         contentEl.innerHTML = `

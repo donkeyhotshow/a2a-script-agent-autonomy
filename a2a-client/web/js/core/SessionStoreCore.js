@@ -34,8 +34,11 @@ export class SessionStoreCore {
     get projectId() { return this._state.projectId; }
     get messages() { return [...this._state.messages]; }
     get execute() { return this._state.execute; }
+    get pendingForm() { return this._state.pendingForm; }
     get context() { return this._state.context; }
+    set context(value) { this._state.context = value; }
     get status() { return this._state.status; }
+    set status(value) { this._state.status = value; }
 
     // Computed
     isWaitingForInput() {
