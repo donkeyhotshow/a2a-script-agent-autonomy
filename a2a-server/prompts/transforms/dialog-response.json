@@ -13,19 +13,16 @@
     },
     {
       "op": "set",
-      "path": "$.execute",
+      "path": "$.execute.form",
       "value": {
-        "message": "$.result.message",
-        "form": {
-          "input": [
-            {
-              "name": "message",
-              "type": "text",
-              "label": "Повідомлення",
-              "required": true
-            }
-          ]
-        }
+        "input": [
+          {
+            "name": "message",
+            "type": "text",
+            "label": "Повідомлення",
+            "required": true
+          }
+        ]
       }
     }
   ]

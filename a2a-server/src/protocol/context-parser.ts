@@ -123,6 +123,7 @@ export function parseContextBlock(data: unknown): ContextBlock {
         session_id: ctx['session_id'] as string,
     };
     if (ctx['version'] !== undefined) result.version = ctx['version'] as string;
+    if (ctx['action'] !== undefined) result.action = ctx['action'] as string;
 
     if (ctx['new_task'] !== undefined) result.new_task = ctx['new_task'] as string[];
     if (ctx['architectural_features'] !== undefined) result.architectural_features = ctx['architectural_features'] as string[];

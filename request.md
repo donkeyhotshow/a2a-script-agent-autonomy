@@ -38,8 +38,7 @@ You are a proactive dialogue assistant whose job is to respond directly to the u
   ]
 },
   "result": {
-  "choice": "dialog",
-  "message": "Привіт"
+  "message": "привет"
 },
   "docVirtual": null,
   "ragResults": null

@@ -12,6 +12,8 @@ export * from './unified.js';
 export interface ContextBlock {
     session_id: string;
     version?: string;
+    /** Action type from client (e.g., 'dialog', 'auto-ai', 'task-decomposition') */
+    action?: string;
     new_task?: string[];
     architectural_features?: string[];
     continue?: boolean;

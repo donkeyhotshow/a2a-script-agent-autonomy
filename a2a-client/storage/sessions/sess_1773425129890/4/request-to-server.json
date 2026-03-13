@@ -1,0 +1,19 @@
+{
+  "context": {
+    "execution": {
+      "action": "dialog",
+      "step": "request"
+    },
+    "session_id": "sess_1773425129890",
+    "task": "hello world",
+    "message": "hello world",
+    "result": {
+      "choice": "dialog"
+    },
+    "version": "1.0",
+    "choice_id": "dialog"
+  },
+  "result": {
+    "message": "hello world"
+  }
+}

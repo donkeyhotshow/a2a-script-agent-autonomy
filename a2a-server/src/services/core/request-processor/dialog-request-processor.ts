@@ -69,9 +69,10 @@ async function runResponseTransform(
         console.log('[DIALOG DEBUG] runResponseTransform called');
         console.log('[DIALOG DEBUG] ctx.result:', JSON.stringify(ctx['result']));
         console.log('[DIALOG DEBUG] ctx.context:', JSON.stringify(ctx['context']));
-        console.log('[DIALOG DEBUG] responseMd starts with:', responseMd.trim().substring(0, 50));
+        console.log('[DIALOG DEBUG] responseMd (first 200):', responseMd.trim().substring(0, 200));
         console.log('[DIALOG DEBUG] responseMd is JSON:', responseMd.trim().startsWith('{'));
         
+        // DEBUG: Log what transform produces
         const {writeFile, mkdtemp} = await import('fs/promises');
         const {tmpdir} = await import('os');
         const tempDir = await mkdtemp(path.join(tmpdir(), 'a2a-dialog-'));
@@ -86,62 +87,78 @@ async function runResponseTransform(
         
         console.log('[DIALOG DEBUG] execute after transform:', JSON.stringify(execute));
         console.log('[DIALOG DEBUG] contextOut after transform:', JSON.stringify(contextOut));
+        console.log('[DIALOG DEBUG] contextOut.history:', JSON.stringify(contextOut?.history));
+        console.log('[DIALOG DEBUG] Does execute.message exist?:', execute?.message ? 'YES' : 'NO');
+        console.log('[DIALOG DEBUG] execute.message value:', execute?.message);
         
-        // Fallback: if execute.message is missing but responseMd contains JSON, parse it
-        if (!execute?.message && responseMd.trim().startsWith('{')) {
+        // Fallback: if execute.message is missing, try to extract from LLM response
+        // This works for both JSON and plain text responses from LLM
+        let llmMessage: string | undefined;
+        let llmForm: Record<string, unknown> | undefined;
+        
+        // Try to parse LLM response as JSON first
+        if (responseMd.trim().startsWith('{')) {
             try {
                 const llmJson = JSON.parse(responseMd.trim());
                 console.log('[DIALOG DEBUG] Parsed LLM JSON:', JSON.stringify(llmJson));
                 const llmExecute = llmJson.execute as Record<string, unknown> | undefined;
-                const llmMessage = llmExecute?.message ?? llmJson.message;
-                const llmForm = llmExecute?.form;
-                
-                // Get existing history from ctx.context
-                const ctxContext = ctx['context'] as Record<string, unknown> | undefined;
-                const existingHistory = (ctxContext?.history ?? []) as Array<{role: string; message: string}>;
-                
-                // Get user message from ctx.result
-                const ctxResult = ctx['result'] as Record<string, unknown> | undefined;
-                const userMessage = ctxResult?.message as string | undefined;
-                
-                // Get assistant message from LLM response
-                const assistantMessage = llmMessage;
-                
-                // Build new history by appending user and assistant messages
-                const newHistory = [...existingHistory];
-                if (userMessage) {
-                    newHistory.push({ role: 'user', message: userMessage });
-                }
-                if (assistantMessage) {
-                    newHistory.push({ role: 'assistant', message: assistantMessage });
-                }
-                
-                console.log('[DIALOG DEBUG] llmMessage:', llmMessage);
-                console.log('[DIALOG DEBUG] existingHistory from ctx:', JSON.stringify(existingHistory));
-                console.log('[DIALOG DEBUG] userMessage:', userMessage);
-                console.log('[DIALOG DEBUG] newHistory:', JSON.stringify(newHistory));
-                
-                if (llmMessage) {
-                    return {
-                        outcome: 'completed',
-                        message: 'Dialog response',
-                        context: { ...ctx, history: newHistory },
-                        execute: {
-                            message: llmMessage,
-                            form: llmForm ?? {input: [{name: 'message', type: 'text', label: 'Повідомлення', required: true}]},
-                        },
-                    } as ProcessResult;
-                }
+                // Try multiple paths: llmJson.message, llmJson.execute.message, llmJson.response
+                llmMessage = llmJson.message ?? llmJson.response ?? llmExecute?.message;
+                llmForm = llmExecute?.form as Record<string, unknown> | undefined;
             } catch (e) {
                 console.log('[DIALOG DEBUG] JSON parse error:', e);
-                // JSON parse failed, continue with default fallback
+                // JSON parse failed, try as plain text
+                llmMessage = responseMd.trim();
             }
+        } else {
+            // Not JSON - treat as plain text response from LLM
+            llmMessage = responseMd.trim();
         }
         
+        // Get existing history from ctx.context
+        const ctxContext = ctx['context'] as Record<string, unknown> | undefined;
+        const existingHistory = (ctxContext?.history ?? []) as Array<{role: string; message: string}>;
+        
+        // Get user message from ctx.result
+        const ctxResult = ctx['result'] as Record<string, unknown> | undefined;
+        const userMessage = ctxResult?.message as string | undefined;
+        
+        // Get assistant message from LLM response (or from execute if already set)
+        const assistantMessage = llmMessage ?? (execute?.message as string | undefined);
+        
+        // Build new history by appending user and assistant messages
+        const newHistory = [...existingHistory];
+        if (userMessage) {
+            newHistory.push({ role: 'user', message: userMessage });
+        }
+        if (assistantMessage) {
+            newHistory.push({ role: 'assistant', message: assistantMessage });
+        }
+        
+        console.log('[DIALOG DEBUG] llmMessage:', llmMessage);
+        console.log('[DIALOG DEBUG] existingHistory from ctx:', JSON.stringify(existingHistory));
+        console.log('[DIALOG DEBUG] userMessage:', userMessage);
+        console.log('[DIALOG DEBUG] assistantMessage:', assistantMessage);
+        console.log('[DIALOG DEBUG] newHistory:', JSON.stringify(newHistory));
+        
+        // If we have a message from LLM or execute, return with history
+        if (assistantMessage) {
+            return {
+                outcome: 'completed',
+                message: 'Dialog response',
+                context: { ...ctx, history: newHistory },
+                execute: {
+                    message: assistantMessage,
+                    form: llmForm ?? (execute?.form as Record<string, unknown> | undefined) ?? {input: [{name: 'message', type: 'text', label: 'Повідомлення', required: true}]},
+                },
+            } as ProcessResult;
+        }
+        
+        // Fallback: return with history even if no message (for initial dialog step)
         return {
             outcome: 'completed',
             message: 'Dialog response',
-            context: contextOut ?? ctx,
+            context: { ...ctx, history: newHistory },
             execute: execute ?? {form: {input: [{name: 'message', type: 'text', label: 'Повідомлення', required: true}]}},
         } as ProcessResult;
     } catch (err) {

@@ -134,14 +134,21 @@ export function createStepRoutes({ cwd }) {
                     const d = JSON.parse(body || '{}');
                     const { result, task } = d;
                     // Support both "result" and "task" in request body
-                    const finalResult = result || (task ? { message: task } : undefined);
-                    console.log('[VitePlugin] Request body parsed - task:', task, 'result:', result, 'finalResult:', finalResult);
-
+                    
+                    // First load session to get current step
                     const session = loadNewSession(cwd, sessionId);
                     if (!session) {
                         res.writeHead(404).end(JSON.stringify({ error: 'Session not found' }));
                         return;
                     }
+                    
+                    // Check if previous step has choices (select/radio form)
+                    const prevStepData = loadServerResponse(cwd, sessionId, session.currentStep || 1);
+                    const hasChoices = prevStepData?.execute?.form?.choices && prevStepData.execute.form.choices.length > 0;
+                    
+                    // If previous step had choices, use { choice: value } format, otherwise use { message: value }
+                    const finalResult = result || (task ? { [hasChoices ? 'choice' : 'message']: task } : undefined);
+                    console.log('[VitePlugin] Request body parsed - task:', task, 'result:', result, 'finalResult:', finalResult, 'hasChoices:', hasChoices);
 
                     const currentStep = session.currentStep || 1;
                     console.log('[VitePlugin] Saving client-result for step:', currentStep);
@@ -179,6 +186,13 @@ export function createStepRoutes({ cwd }) {
                     const effectiveTask = finalResult?.message;
                     console.log('[VitePlugin] Building request - effectiveTask:', effectiveTask, 'result:', finalResult);
                     console.log('[VitePlugin] Effective task sent to server:', effectiveTask);
+
+                    // Update context with user's choice (task/message from result)
+                    if (effectiveTask) {
+                        mergedContext.task = effectiveTask;
+                        mergedContext.message = effectiveTask;
+                        console.log('[VitePlugin] Updated context.task to:', effectiveTask);
+                    }
 
                     const requestToServer = {
                         context: mergedContext,
@@ -361,7 +375,7 @@ export function createStepRoutes({ cwd }) {
 
                     const invokePayload = {
                         context: mergedContext,
-                        result,
+                        result: finalResult,
                         ...(effectiveTask ? { task: effectiveTask } : {})
                     };
                     console.log('[VitePlugin] === SENDING TO A2A SERVER ===', Object.keys(invokePayload));

@@ -61,7 +61,9 @@ export async function invoke(clientId: string, input: InvokeInput): Promise<Invo
     }
 
     // Add action fields to context
+    console.log('[DEBUG invoke.service] input.action:', input.action);
     if (input.action) {
+        console.log('[DEBUG invoke.service] Adding action to ctx:', input.action);
         ctx['action'] = input.action;
     }
     if (input.selectedAction) {
