@@ -1,0 +1,21 @@
+{
+  "step": 5,
+  "execute": null,
+  "context": {
+    "execution": {
+      "action": "dialog",
+      "step": "request"
+    },
+    "session_id": "sess_1773434786789",
+    "task": "ответь 1 символом 1",
+    "message": "ответь 1 символом 1",
+    "result": {
+      "choice": "dialog"
+    },
+    "version": "1.0",
+    "choice_id": "dialog"
+  },
+  "result": {
+    "message": "ответь 1 символом 1"
+  }
+}
