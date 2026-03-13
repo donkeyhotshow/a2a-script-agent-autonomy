@@ -25,7 +25,7 @@ Allowed actions: `rag-search`, `list-directory`, `read-file`, `write-file`, `gre
   "context": {
   "execution": {
     "action": "auto-ai",
-    "step": "llm-request"
+    "step": "request"
   },
   "history": [
     {

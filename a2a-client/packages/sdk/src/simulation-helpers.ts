@@ -478,14 +478,14 @@ export function getHistory(context: Record<string, unknown>): HistoryEntry[] {
 
 /**
  * Determine if the response is for an AI-Action (LLM-controlled)
- * AI-Actions typically have step = 'llm-request' or include availableSteps
+ * AI-Actions typically have step = 'request' or include availableSteps
  */
 export function isAiAction(response: { context?: Record<string, unknown> }): boolean {
     const execution = response?.context?.execution as Record<string, unknown> | undefined;
     if (!execution) return false;
     
     const step = String(execution.step ?? '');
-    // AI-Actions typically use 'llm-request' as the step
+    // AI-Actions typically use 'request' as the step
     if (step === 'llm-request') return true;
     
     // Check for availableSteps (present in AI-Actions)

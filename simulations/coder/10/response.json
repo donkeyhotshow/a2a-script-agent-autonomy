@@ -3,7 +3,7 @@
     "task": "проаналізуй код авторизації",
     "execution": {
       "action": "coder",
-      "step": "llm-request"
+      "step": "request"
     },
     "history": [
       {

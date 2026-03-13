@@ -87,7 +87,7 @@ response.json ← server-transforms-response.json
     "task": "описание задачи",
     "execution": {
       "action": "coder",
-      "step": "llm-request"
+      "step": "request"
     },
     "history": [
       {

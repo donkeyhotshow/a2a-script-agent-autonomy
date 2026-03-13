@@ -153,7 +153,7 @@ simulations/
     "task": "описание задачи пользователя",
     "execution": {
       "action": "action-name",
-      "step": "llm-request"
+      "step": "request"
     }
   },
   "execute": {
@@ -185,7 +185,7 @@ simulations/
     "task": "описание задачи пользователя",
     "execution": {
       "action": "action-name",
-      "step": "llm-request"
+      "step": "request"
     },
     "history": [
       {
@@ -242,7 +242,7 @@ simulations/
     "task": "описание задачи пользователя",
     "execution": {
       "action": "action-name",
-      "step": "llm-request"
+      "step": "request"
     },
     "history": [
       {
@@ -297,7 +297,7 @@ simulations/
     "task": "описание задачи пользователя",
     "execution": {
       "action": "action-name",
-      "step": "llm-request"
+      "step": "request"
     },
     "history": [
       {
@@ -331,7 +331,7 @@ simulations/
     "task": "описание задачи пользователя",
     "execution": {
       "action": "action-name",
-      "step": "llm-request"
+      "step": "request"
     },
     "history": [
       {

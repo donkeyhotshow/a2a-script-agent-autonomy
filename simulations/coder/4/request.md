@@ -51,7 +51,7 @@
     "task": "допоможи розібратись з кодом",
     "execution": {
       "action": "coder",
-      "step": "llm-request"
+      "step": "request"
     },
     "history": [
       {

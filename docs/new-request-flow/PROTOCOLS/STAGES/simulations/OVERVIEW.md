@@ -63,8 +63,8 @@
 |-----|--------|------|---------|--------|
 | 1 | task | new → router | form.choices | message: "диалог" |
 | 2 | task | router → request | form.input | choice: "dialog" |
-| 3 | dialog | request → llm-request | message + form.input | message: "..." |
-| 4 | dialog | llm-request → completed | message + form.input | message: "Дякую!" |
+| 3 | dialog | request → request | message + form.input | message: "..." |
+| 4 | dialog | request → completed | message + form.input | message: "Дякую!" |
 
 ### Этапы в coder
 
@@ -72,14 +72,14 @@
 |-----|--------|------|---------|--------|
 | 1 | task | new → router | form.choices | message: "допоможи..." |
 | 2 | task | router → request | form.input | choice: "coder" |
-| 3 | coder | request → llm-request | rag-search | message: "шукаю..." |
-| 4 | coder | llm-request | read-file | rag-search result |
-| 5 | coder | llm-request | message + form.input | read-file result |
-| 6 | coder | llm-request | message + form.input | message: "запишу..." |
-| 7 | coder | llm-request | write-file | message + form.input |
-| 8 | coder | llm-request | message + form.input | write-file result |
-| 9 | coder | llm-request | message + form.input | message: "готово" |
-| 10 | coder | llm-request → completed | - | completed |
+| 3 | coder | request → request | rag-search | message: "шукаю..." |
+| 4 | coder | request | read-file | rag-search result |
+| 5 | coder | request | message + form.input | read-file result |
+| 6 | coder | request | message + form.input | message: "запишу..." |
+| 7 | coder | request | write-file | message + form.input |
+| 8 | coder | request | message + form.input | write-file result |
+| 9 | coder | request | message + form.input | message: "готово" |
+| 10 | coder | request → completed | - | completed |
 
 ### Этапы в auto-ai
 

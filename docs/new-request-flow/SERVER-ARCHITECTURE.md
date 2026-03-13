@@ -200,7 +200,7 @@ request.json (result.script) → response.json (execute.script, step: "resolve")
     "task": "implement login",
     "execution": {
       "action": "coder",
-      "step": "llm-request"
+      "step": "request"
     }
   },
   "execute": {
@@ -235,7 +235,7 @@ request.json → request.md (LLM prompt) → response.md (LLM output)
 | Step Definition | Hardcoded in definition | Dynamic, from LLM |
 | Step Switching | Server automatic | LLM determines |
 | LLM Required | No (only for matching) | Yes, every step |
-| `execution.step` | Specific step name | Often `"llm-request"` |
+| `execution.step` | Specific step name | Often `"request"` |
 | Complexity | Simple, algorithmic | Complex, reasoning-based |
 | Examples | fix-vue-imports, phpunit-deprecations | dialog, coder, auto-ai |
 

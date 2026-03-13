@@ -8,8 +8,7 @@
 
 - Требуется выбор пользователя (form.choices)
 - Требуется ввод данных (form.input)
-- Длительная операция на стороне AI Hub
-- Ожидание подтверждения
+- Длительная операция на стороне AI Hub (execute.wait)
 
 ## Формат
 
@@ -69,12 +68,15 @@ Client API добавляет ui state:
 
 ## Типы waiting
 
-### 1. Waiting на выбор (choices)
+### 1. Ожидание ввода пользователя (form.choices / form.input)
+
+Когда есть `execute.form` с `choices` или `input` - это ожидание пользователя:
 
 ```json
 {
   "execute": {
     "form": {
+      "title": "Выберите действие",
       "choices": [
         { "id": "fix", "label": "Исправить" },
         { "id": "skip", "label": "Пропустить" }
@@ -84,37 +86,16 @@ Client API добавляет ui state:
 }
 ```
 
-### 2. Waiting на ввод (input)
+### 2. Ожидание сервера (execute.wait)
+
+Когда есть `execute.wait` - это длительная операция на стороне AI Hub. `SessionStore.setExecute` подавляет форму и эмитит событие `wait`:
 
 ```json
 {
   "execute": {
-    "form": {
-      "title": "Введите данные",
-      "input": [
-        {
-          "name": "name",
-          "type": "text",
-          "label": "Имя"
-        }
-      ]
-    }
-  }
-}
-```
-
-### 3. Waiting во время Promise
-
-```json
-{
-  "promiseId": "promise_123",
-  "status": "pending",
-  "execute": {
-    "ui": {
-      "state": "waiting",
+    "wait": {
       "message": "AI обрабатывает запрос...",
-      "progress": 50,
-      "spinner": true
+      "progress": 50
     }
   }
 }
@@ -122,45 +103,32 @@ Client API добавляет ui state:
 
 ## Client API поведение
 
-### Ожидание пользователя
+### Ожидание ввода пользователя (form.choices / form.input)
 
 ```javascript
 async function handleWaiting(execute) {
-  // Рендерим UI
-  renderForm(execute.form);
-  
-  // Ждем ввод от пользователя
-  const userInput = await waitForUserInput();
-  
-  // Отправляем result
-  return sendResult(userInput);
+  // Рендерим форму только если есть execute.form с choices или input
+  if (execute.form && (execute.form.choices?.length || execute.form.input)) {
+    renderForm(execute.form);
+    const userInput = await waitForUserInput();
+    return sendResult(userInput);
+  }
 }
 ```
 
-### Promise polling с UI
+### Ожидание сервера (execute.wait)
 
 ```javascript
-async function handlePromiseWaiting(promiseId) {
-  // Показываем loading UI
-  showLoadingUI("AI обрабатывает...");
+// SessionStore.setExecute проверяет наличие execute.wait
+// Если есть execute.wait - форма НЕ отображается, эмитится событие 'wait'
+// AppTask.setupLoaderIndicator слушает событие 'wait' и показывает loader
+
+function handleServerWaiting(execute) {
+  // Vite plugin (stepRoutes.js) делает polling к A2A Server
+  // Web UI реагирует на события SessionStore: wait / promisePending
   
-  // Начинаем polling
-  while (true) {
-    const status = await pollPromise(promiseId);
-    
-    if (status === 'completed') {
-      // Получаем результат
-      const result = await getPromiseResult(promiseId);
-      hideLoadingUI();
-      return result;
-    }
-    
-    // Обновляем UI
-    updateProgress(status.progress);
-    
-    // Ждем
-    await sleep(getBackoffDelay());
-  }
+  // Форма НЕ отображается, показывается только loader
+  showLoader(execute.wait?.message);
 }
 ```
 

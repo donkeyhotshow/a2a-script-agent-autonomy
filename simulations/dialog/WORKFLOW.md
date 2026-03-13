@@ -187,7 +187,7 @@ Web    Client API    Server    LLM
     "task": "dialog",
     "execution": {
       "action": "dialog",
-      "step": "llm-request"
+      "step": "request"
     },
     "history": [
       {
@@ -215,7 +215,7 @@ Web    Client API    Server    LLM
     "task": "dialog",
     "execution": {
       "action": "dialog",
-      "step": "llm-request"
+      "step": "request"
     },
     "history": [
       {
@@ -358,7 +358,7 @@ function buildContext(input: Input): Context {
   
   return {
     task: context.task,
-    execution: { action: 'dialog', step: 'llm-request' },
+    execution: { action: 'dialog', step: 'request' },
     history: messages
   }
 }
@@ -395,7 +395,7 @@ function buildResponse(llmResponse: LLMResponse, context: Context): ServerRespon
   return {
     context: {
       task: context.task,
-      execution: { action: 'dialog', step: 'llm-request' },
+      execution: { action: 'dialog', step: 'request' },
       history
     },
     execute: {

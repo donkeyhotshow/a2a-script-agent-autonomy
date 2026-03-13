@@ -322,6 +322,33 @@ curl http://localhost:11434/api/tags
 curl http://localhost:3000/api/v1/requests/{promiseId}/result
 ```
 
+### 8. LLM Timeout Workflow (2 minutes)
+
+LLM requests can take 2+ minutes to complete. When debugging promise status:
+
+1. **Check if promise is pending** - Status will be `"processing"` or `"pending"`
+2. **Wait up to 2 minutes** - Do NOT assume it's hung
+3. **Poll again** - Use a 2-minute timeout before checking again
+
+```bash
+# Example workflow:
+# 1. Send request - get promiseId
+curl -X POST http://localhost:3000/api/v1/invoke -d '{"task":"analyze"}'
+# Returns: {"success":true,"data":{"promiseId":"prom_123..."}}
+
+# 2. Check immediately - likely still processing
+curl http://localhost:3000/api/v1/requests/prom_123.../result
+# Returns: {"success":true,"data":{"status":"processing",...}}
+
+# 3. Wait 2 minutes, then check again
+# (use terminal sleep or do other work)
+sleep 120
+curl http://localhost:3000/api/v1/requests/prom_123.../result
+# Returns: {"success":true,"data":{"status":"completed","result":{...}}}
+```
+
+**Important**: The client automatically polls with a timeout, so this is mainly for manual debugging.
+
 ---
 
 ## Running Tests

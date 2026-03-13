@@ -376,7 +376,7 @@ logs/llm/
 ```json
 {
   "action": "dialog",
-  "step": "llm-request",
+  "step": "request",
   "timestamp": 1706812800000,
   "mode": "live",
   "model": "qwen3:8b",
@@ -551,7 +551,7 @@ actions:
     requestPipeline: pipelines/dialog-request.yaml
     responsePipeline: pipelines/dialog-response.yaml
     steps:
-      llm-request:
+      request:
         pipeline: pipelines/dialog-llm.yaml
         requiresLlm: true
       
@@ -798,8 +798,8 @@ pipelines:
     request: pipelines/dialog-request.yaml
     response: pipelines/dialog-response.yaml
     steps:
-      llm-request:
-        request: pipelines/dialog-llm-request.yaml
+      request:
+        request: pipelines/dialog-request.yaml
         response: pipelines/dialog-llm-response.yaml
       
   coder:
@@ -837,7 +837,7 @@ pipelines:
   "context": {
     "execution": {
       "action": "dialog",
-      "step": "llm-request"
+      "step": "request"
     },
     "history": [
       { "role": "user", "message": "hello world" }
@@ -869,7 +869,7 @@ pipelines:
 ```json
 {
   "context": {
-    "execution": { "action": "dialog", "step": "llm-request" },
+    "execution": { "action": "dialog", "step": "request" },
     "history": [
       { "role": "user", "message": "hello world" },
       { "role": "user", "message": "hello world" }
@@ -896,7 +896,7 @@ pipelines:
 ```json
 {
   "context": {
-    "execution": { "action": "dialog", "step": "llm-request" },
+    "execution": { "action": "dialog", "step": "request" },
     "history": [
       { "role": "user", "message": "hello world" },
       { "role": "user", "message": "hello world" },

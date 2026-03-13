@@ -263,7 +263,7 @@ hello world
     "task": "диалог",
     "execution": {
       "action": "dialog",
-      "step": "llm-request"
+      "step": "request"
     },
     "history": [
       { "role": "user", "message": "hello world" },
@@ -300,7 +300,7 @@ hello world
 ### Ключевые изменения
 | Поле | Значение | Описание |
 |------|----------|----------|
-| context.execution.step | "llm-request" | LLM обрабатывает запрос |
+| context.execution.step | "request" | LLM обрабатывает запрос |
 | context.history | [...] | История диалога |
 | execute.message | "hello world" | Ответ LLM |
 | execute.form.input | [...] | Поле для следующего ввода |
@@ -340,7 +340,7 @@ hello world
     "task": "диалог",
     "execution": {
       "action": "dialog",
-      "step": "llm-request"
+      "step": "request"
     },
     "history": [
       { "role": "user", "message": "hello world" },

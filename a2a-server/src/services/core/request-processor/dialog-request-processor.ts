@@ -65,6 +65,13 @@ async function runResponseTransform(
     responseMd: string
 ): Promise<ProcessResult | null> {
     try {
+        // DEBUG: Log input data
+        console.log('[DIALOG DEBUG] runResponseTransform called');
+        console.log('[DIALOG DEBUG] ctx.result:', JSON.stringify(ctx['result']));
+        console.log('[DIALOG DEBUG] ctx.context:', JSON.stringify(ctx['context']));
+        console.log('[DIALOG DEBUG] responseMd starts with:', responseMd.trim().substring(0, 50));
+        console.log('[DIALOG DEBUG] responseMd is JSON:', responseMd.trim().startsWith('{'));
+        
         const {writeFile, mkdtemp} = await import('fs/promises');
         const {tmpdir} = await import('os');
         const tempDir = await mkdtemp(path.join(tmpdir(), 'a2a-dialog-'));
@@ -76,13 +83,69 @@ async function runResponseTransform(
         const output = responseTransformResult.success ? responseTransformResult.output : responseData;
         const execute = (output as Record<string, unknown>)?.execute as Record<string, unknown> | undefined;
         const contextOut = (output as Record<string, unknown>)?.context as Record<string, unknown> | undefined;
+        
+        console.log('[DIALOG DEBUG] execute after transform:', JSON.stringify(execute));
+        console.log('[DIALOG DEBUG] contextOut after transform:', JSON.stringify(contextOut));
+        
+        // Fallback: if execute.message is missing but responseMd contains JSON, parse it
+        if (!execute?.message && responseMd.trim().startsWith('{')) {
+            try {
+                const llmJson = JSON.parse(responseMd.trim());
+                console.log('[DIALOG DEBUG] Parsed LLM JSON:', JSON.stringify(llmJson));
+                const llmExecute = llmJson.execute as Record<string, unknown> | undefined;
+                const llmMessage = llmExecute?.message ?? llmJson.message;
+                const llmForm = llmExecute?.form;
+                
+                // Get existing history from ctx.context
+                const ctxContext = ctx['context'] as Record<string, unknown> | undefined;
+                const existingHistory = (ctxContext?.history ?? []) as Array<{role: string; message: string}>;
+                
+                // Get user message from ctx.result
+                const ctxResult = ctx['result'] as Record<string, unknown> | undefined;
+                const userMessage = ctxResult?.message as string | undefined;
+                
+                // Get assistant message from LLM response
+                const assistantMessage = llmMessage;
+                
+                // Build new history by appending user and assistant messages
+                const newHistory = [...existingHistory];
+                if (userMessage) {
+                    newHistory.push({ role: 'user', message: userMessage });
+                }
+                if (assistantMessage) {
+                    newHistory.push({ role: 'assistant', message: assistantMessage });
+                }
+                
+                console.log('[DIALOG DEBUG] llmMessage:', llmMessage);
+                console.log('[DIALOG DEBUG] existingHistory from ctx:', JSON.stringify(existingHistory));
+                console.log('[DIALOG DEBUG] userMessage:', userMessage);
+                console.log('[DIALOG DEBUG] newHistory:', JSON.stringify(newHistory));
+                
+                if (llmMessage) {
+                    return {
+                        outcome: 'completed',
+                        message: 'Dialog response',
+                        context: { ...ctx, history: newHistory },
+                        execute: {
+                            message: llmMessage,
+                            form: llmForm ?? {input: [{name: 'message', type: 'text', label: 'Повідомлення', required: true}]},
+                        },
+                    } as ProcessResult;
+                }
+            } catch (e) {
+                console.log('[DIALOG DEBUG] JSON parse error:', e);
+                // JSON parse failed, continue with default fallback
+            }
+        }
+        
         return {
             outcome: 'completed',
             message: 'Dialog response',
             context: contextOut ?? ctx,
             execute: execute ?? {form: {input: [{name: 'message', type: 'text', label: 'Повідомлення', required: true}]}},
         } as ProcessResult;
-    } catch {
+    } catch (err) {
+        console.log('[DIALOG DEBUG] Transform error:', err);
         return null;
     }
 }

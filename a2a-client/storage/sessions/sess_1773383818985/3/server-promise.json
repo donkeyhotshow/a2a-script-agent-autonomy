@@ -1,0 +1,52 @@
+{
+  "promiseId": "prom_1773383850447_i63yzc07z",
+  "status": "completed",
+  "submittedAt": "2026-03-13T06:37:30.450Z",
+  "id": "req_1773383850447_g33ibop0r",
+  "clientId": "anonymous",
+  "priority": 0,
+  "context": {
+    "session_id": "sess_1773383818985",
+    "version": "1.0",
+    "task": "dialog",
+    "execution": {
+      "action": "task",
+      "step": "router"
+    },
+    "result": {
+      "choice": "dialog"
+    },
+    "choice_id": "dialog"
+  },
+  "message": null,
+  "codeBlocks": null,
+  "result": {
+    "outcome": "completed",
+    "message": "Dialog mode selected",
+    "selection": {
+      "choiceId": "dialog",
+      "formId": "default",
+      "timestamp": "2026-03-13T06:37:31.820Z"
+    },
+    "context": {
+      "task": "dialog",
+      "execution": {
+        "action": "dialog",
+        "step": "request"
+      }
+    },
+    "execute": {
+      "form": {
+        "input": [
+          {
+            "name": "message",
+            "type": "text",
+            "label": "Повідомлення",
+            "required": true
+          }
+        ]
+      }
+    }
+  },
+  "error": null
+}

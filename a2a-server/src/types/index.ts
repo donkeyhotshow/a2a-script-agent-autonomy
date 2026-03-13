@@ -25,7 +25,7 @@ export interface ContextBlock {
     execution?: {
         /** Action ID (e.g., 'fix-vue-imports', 'coder') */
         action: string;
-        /** Current step ID (e.g., 'vue-import-detect', 'llm-request') */
+        /** Current step ID (e.g., 'vue-import-detect', 'request') */
         step: string;
         /** Optional status for completion */
         status?: 'completed';

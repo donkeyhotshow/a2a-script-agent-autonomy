@@ -18,7 +18,7 @@
     "task": "диалог",
     "execution": {
       "action": "dialog",
-      "step": "llm-request"
+      "step": "request"
     },
     "history": [
       {

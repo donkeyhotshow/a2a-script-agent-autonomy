@@ -9,7 +9,7 @@
     {
       "op": "set",
       "path": "$.context.execution.step",
-      "value": "llm-request"
+      "value": "request"
     },
     {
       "op": "set",

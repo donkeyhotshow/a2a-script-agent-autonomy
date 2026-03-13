@@ -132,7 +132,10 @@ export function createStepRoutes({ cwd }) {
             req.on('end', () => {
                 try {
                     const d = JSON.parse(body || '{}');
-                    const { result } = d;
+                    const { result, task } = d;
+                    // Support both "result" and "task" in request body
+                    const finalResult = result || (task ? { message: task } : undefined);
+                    console.log('[VitePlugin] Request body parsed - task:', task, 'result:', result, 'finalResult:', finalResult);
 
                     const session = loadNewSession(cwd, sessionId);
                     if (!session) {
@@ -142,7 +145,7 @@ export function createStepRoutes({ cwd }) {
 
                     const currentStep = session.currentStep || 1;
                     console.log('[VitePlugin] Saving client-result for step:', currentStep);
-                    saveClientResult(cwd, sessionId, currentStep, { result });
+                    saveClientResult(cwd, sessionId, currentStep, { result: finalResult });
 
                     const nextStepNum = currentStep + 1;
                     const previousStepData = loadServerResponse(cwd, sessionId, currentStep);
@@ -151,9 +154,19 @@ export function createStepRoutes({ cwd }) {
 
                     let mergedContext = { ...previousContext };
                     if (previousStepData?.result?.context) {
-                        mergedContext = { ...mergedContext, ...previousStepData.result.context };
+                        // Filter context to only keep essential fields for invoke request
+                        // Based on simulation: only task and execution are needed
+                        const filteredContext = {};
+                        if (previousStepData.result.context.task) {
+                            filteredContext.task = previousStepData.result.context.task;
+                        }
+                        if (previousStepData.result.context.execution) {
+                            filteredContext.execution = previousStepData.result.context.execution;
+                        }
+                        mergedContext = { ...mergedContext, ...filteredContext };
                     }
 
+                    // Add session_id to context (required by server)
                     mergedContext.session_id = sessionId;
 
                     const sessionContext = session.context || {};
@@ -163,12 +176,13 @@ export function createStepRoutes({ cwd }) {
                         console.log('[VitePlugin] Preserving execution.action from session:', previousExecution.action);
                     }
 
-                    const effectiveTask = result?.message;
-                    console.log('[VitePlugin] Building request - effectiveTask:', effectiveTask, 'result:', result);
+                    const effectiveTask = finalResult?.message;
+                    console.log('[VitePlugin] Building request - effectiveTask:', effectiveTask, 'result:', finalResult);
                     console.log('[VitePlugin] Effective task sent to server:', effectiveTask);
+
                     const requestToServer = {
                         context: mergedContext,
-                        result
+                        result: finalResult
                     };
 
                     saveRequestToServer(cwd, sessionId, nextStepNum, requestToServer);

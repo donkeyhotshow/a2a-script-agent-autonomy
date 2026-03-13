@@ -170,7 +170,7 @@ JSONPath‑pipeline (див. `json-schemas/server-transform.schema.json`).
     "task": "dialog",
     "execution": {
       "action": "dialog",
-      "step": "llm-request"
+      "step": "request"
     },
     "history": [
       {

@@ -1,0 +1,11 @@
+{
+  "context": {
+    "execution": {
+      "action": "task",
+      "step": "new"
+    }
+  },
+  "result": {
+    "message": "hello"
+  }
+}

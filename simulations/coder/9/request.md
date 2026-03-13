@@ -39,7 +39,7 @@
     "task": "прочитай вміст файлів з директорії src",
     "execution": {
       "action": "coder",
-      "step": "llm-request"
+      "step": "request"
     },
     "history": [
       {

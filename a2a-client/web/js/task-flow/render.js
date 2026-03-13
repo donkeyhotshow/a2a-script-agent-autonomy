@@ -73,8 +73,8 @@
         // Build execution step display
         let executionStepHtml = '';
         if (execution?.step) {
-            const isLlmRequest = execution.step === 'llm-request' || execution.action?.startsWith('ai-');
-            const stepLabel = isLlmRequest ? 'llm-request' : execution.step;
+            const isLlmRequest = execution.step === 'request' || execution.action?.startsWith('ai-');
+            const stepLabel = isLlmRequest ? 'request' : execution.step;
             executionStepHtml = `
                 <div class="task-flow-execution-step">
                     <span class="step-label">${escapeHtml(stepLabel)}</span>

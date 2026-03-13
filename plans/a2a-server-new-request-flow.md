@@ -197,7 +197,7 @@ function validateRequest(data: unknown): ValidationResult {
 1. AI-Actions: шаги не в фиксированной последовательности
 2. Сервер показывает список *доступных* шагов
 3. Следующий шаг определяется из ответа LLM
-4. `execution.step` часто просто `"llm-request"`
+4. `execution.step` часто просто `"request"`
 
 ---
 

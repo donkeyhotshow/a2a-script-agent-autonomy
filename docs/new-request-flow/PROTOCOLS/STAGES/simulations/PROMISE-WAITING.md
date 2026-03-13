@@ -93,7 +93,7 @@ Client API должен передавать команды UI через `execu
     "task": "диалог",
     "execution": {
       "action": "dialog",
-      "step": "llm-request"
+      "step": "request"
     }
   },
   "promiseId": "abc123",
@@ -116,7 +116,7 @@ Client API должен передавать команды UI через `execu
     "task": "диалог",
     "execution": {
       "action": "dialog",
-      "step": "llm-request"
+      "step": "request"
     },
     "history": [...]
   },

@@ -448,7 +448,7 @@ test.describe('Long-term Session Persistence', () => {
       const sessionViewModel = (window as any).SessionViewModel;
       if (sessionViewModel) {
         sessionViewModel.setExecute({
-          step: 'llm-request',
+          step: 'request',
           action: 'ai-action',
           progress: 85,
           metadata: {
@@ -473,7 +473,7 @@ test.describe('Long-term Session Persistence', () => {
 
     // Verify execution context preserved
     const finalState = await persistenceTester.createSessionSnapshot();
-    expect(finalState.execute?.step).toBe('llm-request');
+    expect(finalState.execute?.step).toBe('request');
     expect(finalState.execute?.action).toBe('ai-action');
     expect(finalState.execute?.progress).toBe(85);
     expect(finalState.execute?.metadata?.model).toBe('gpt-4');

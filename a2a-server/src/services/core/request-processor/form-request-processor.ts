@@ -317,7 +317,7 @@ export class FormRequestProcessor extends BaseRequestProcessor {
                     context: {
                         action: 'auto-ai',
                         execution: {
-                            step: 'llm-request',
+                            step: 'request',
                             progress: 0
                         }
                     },

@@ -1,0 +1,50 @@
+{
+  "promiseId": "prom_1773383298625_1nnicye2u",
+  "status": "completed",
+  "submittedAt": "2026-03-13T06:28:18.627Z",
+  "id": "req_1773383298625_yw7ryhbuf",
+  "clientId": "anonymous",
+  "priority": 0,
+  "context": {
+    "session_id": "sess_1773383286099",
+    "execution": {
+      "action": "task",
+      "step": "new"
+    },
+    "task": "Привет"
+  },
+  "message": "Привет",
+  "codeBlocks": null,
+  "result": {
+    "outcome": "action_proposal",
+    "context": {
+      "session_id": "sess_1773383286099",
+      "version": "1.0",
+      "execution": {
+        "action": "task",
+        "step": "router"
+      },
+      "task": "Привет"
+    },
+    "execute": {
+      "form": {
+        "title": "Оберіть спосіб виконання",
+        "choices": [
+          {
+            "id": "dialog",
+            "label": "AI діалог з користувачем"
+          },
+          {
+            "id": "auto-ai",
+            "label": "AI Action Generator — сгенерировать экшен с помощью LLM"
+          },
+          {
+            "id": "task-decomposition",
+            "label": "Декомпозиция задачи вручную"
+          }
+        ]
+      }
+    }
+  },
+  "error": null
+}

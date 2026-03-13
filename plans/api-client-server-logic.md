@@ -72,15 +72,17 @@ A2A Server возвращает `{ data: { execute, context, result }, promiseId
 - `execute.finalResult` переводит сессию в `completed`.
 - `context` сливается в `session.context`.
 
-При sync-ответе `server-response.json` фиксируется сразу. При async-ответе `server-promise.json` сохраняет `{ promiseId, status, submittedAt }`, UI держит `promisePending`, а `GET /sessions/:id/promise/:promiseId` поллит статус (см. ниже).
+При sync-ответе `server-response.json` фиксируется сразу. При async-ответе `server-promise.json` сохраняет `{ promiseId, status, submittedAt }`, Vite plugin делает polling, Web UI реагирует на события `wait` / `promisePending` от SessionStore.
 
 ## Работа с промисами и статусами
 
 `server-promise.json` используется как точка входа для async-работы:
 
 - поля: `promiseId`, `status` (`pending|completed|failed|cancelled`), `submittedAt`, `updatedAt`.
-- когда статус `completed`, фронт находит `messages.json`/`server-response.json` через `GET /sessions/:id/step/:number/:file` или `latest`, обновляет UI и может заново вызвать `/next`.
-- `GET /sessions/:id/promise/:promiseId` делает `serverFetch('GET', /requests/${promiseId}/status')` и перекидывает ответ с A2A Server, чтобы UI мог узнать `completed`/`failed`.
+- когда статус `completed`, Vite plugin находит `messages.json`/`server-response.json`, обновляет execute/context и возвращает ответ клиенту.
+- В storage mode Vite plugin (`stepRoutes.js`) сам делает polling к `GET /api/v1/requests/{promiseId}/result` и записывает step файлы.
+- Web UI loader привязан к событиям `SessionStore`: `wait` / `promisePending` events, а не к прямому polling'у браузером.
+- `GET /sessions/:id/promise/:promiseId` проксирует запрос к A2A Server для совместимости, основной polling делает серверная сторона.
 
 ## REST API и файловые маршруты
 

@@ -100,7 +100,7 @@ request.json (result.script) → response.json (execute.script, step: "vue-impor
 {
   "execution": {
     "action": "coder",
-    "step": "llm-request"
+    "step": "request"
   }
 }
 ```
@@ -123,7 +123,7 @@ request.json → request.md (LLM prompt) → response.md (LLM output)
 | Определение шагов | Hardcoded в definition | Динамические, LLM-предложенные |
 | Переключение шагов | Сервер автоматически | LLM предлагает, **сервер утверждает/нормализует** |
 | Нужен LLM | Нет (только для первого matching) | Да, на каждый шаг |
-| `execution.step` | Конкретное имя шага | Часто просто `"llm-request"` |
+| `execution.step` | Конкретное имя шага | Часто просто `"request"` |
 | Примеры | fix-vue-imports, phpunit-deprecations | dialog, coder, auto-ai |
 | Сложность | Простая, алгоритмическая | Сложная, требует рассуждений |
 
