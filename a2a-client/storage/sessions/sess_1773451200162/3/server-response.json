@@ -1,0 +1,20 @@
+{
+  "step": 3,
+  "execute": null,
+  "context": {
+    "execution": {
+      "action": "dialog",
+      "step": "request"
+    },
+    "session_id": "sess_1773451200162",
+    "result": {
+      "choice": "dialog"
+    },
+    "choice_id": "dialog",
+    "task": "Привет",
+    "message": "Привет"
+  },
+  "result": {
+    "message": "Привет"
+  }
+}
