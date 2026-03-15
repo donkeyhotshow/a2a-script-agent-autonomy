@@ -6,6 +6,7 @@ test.describe('Dialog Flow E2E Test', () => {
     test.beforeEach(async ({ page }) => {
         // Reset console errors for each test
         consoleErrors.length = 0;
+        const baseUrl = 'http://localhost:5173';
 
         // Listen for console errors
         page.on('console', (msg) => {
@@ -15,7 +16,7 @@ test.describe('Dialog Flow E2E Test', () => {
         });
 
         // Navigate to the page
-        await page.goto('http://localhost:5173');
+        await page.goto(baseUrl);
         await page.waitForLoadState('networkidle');
     });
 
@@ -38,7 +39,8 @@ test.describe('Dialog Flow E2E Test', () => {
 
     test('API projects endpoint returns data', async ({ page }) => {
         // Test projects API - returns { projects: [...] }
-        const projectsResponse = await page.request.get('http://localhost:5173/api/a2a/projects');
+        const baseUrl = 'http://localhost:5173';
+        const projectsResponse = await page.request.get(baseUrl + '/api/a2a/projects');
         expect(projectsResponse.ok()).toBe(true);
         const projectsData = await projectsResponse.json();
         expect(projectsData.projects).toBeDefined();
@@ -47,7 +49,8 @@ test.describe('Dialog Flow E2E Test', () => {
 
     test('API sessions endpoint returns data', async ({ page }) => {
         // Test sessions API - returns { sessions: [...] }
-        const sessionsResponse = await page.request.get('http://localhost:5173/api/a2a/sessions');
+        const baseUrl = 'http://localhost:5173';
+        const sessionsResponse = await page.request.get(baseUrl + '/api/a2a/sessions');
         expect(sessionsResponse.ok()).toBe(true);
         const sessionsData = await sessionsResponse.json();
         expect(sessionsData.sessions).toBeDefined();
@@ -56,7 +59,8 @@ test.describe('Dialog Flow E2E Test', () => {
 
     test('can create session via API', async ({ page }) => {
         // Create session via API
-        const response = await page.request.post('http://localhost:5173/api/a2a/sessions', {
+        const baseUrl = 'http://localhost:5173';
+        const response = await page.request.post(baseUrl + '/api/a2a/sessions', {
             data: { projectId: 'test' }
         });
         
@@ -69,7 +73,8 @@ test.describe('Dialog Flow E2E Test', () => {
 
     test('session returns with execute data', async ({ page }) => {
         // Create session and check it returns execute data
-        const response = await page.request.post('http://localhost:5173/api/a2a/sessions', {
+        const baseUrl = 'http://localhost:5173';
+        const response = await page.request.post(baseUrl + '/api/a2a/sessions', {
             data: { projectId: 'test' }
         });
         

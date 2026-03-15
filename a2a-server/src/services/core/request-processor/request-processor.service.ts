@@ -35,7 +35,6 @@ processorRegistry.register('dialog', dialogRequestProcessor);
  * Determine the request type based on context
  */
 function determineRequestType(context: Record<string, unknown>): RequestType {
-    // DIAGNOSTIC: Log all relevant context values
     const exec = context['execution'] as Record<string, unknown> | undefined;
     const result = context['result'] as Record<string, unknown> | undefined;
     const transformSchema = context['transformSchema'] as string | undefined;
@@ -44,76 +43,33 @@ function determineRequestType(context: Record<string, unknown>): RequestType {
     const message = context['message'] as string | undefined;
     const hasMessage = result?.message ?? task ?? message;
     
-    console.log('[DEBUG determineRequestType] Context values:', {
-        action,
-        'exec.action': exec?.action,
-        'context.action': context['action'],
-        transformSchema,
-        hasMessage,
-        resultKeys: result ? Object.keys(result) : [],
-        task: task?.substring(0, 50),
-        simulation: context['simulation'],
-        replay: context['replay'],
-        form_submission: context['form_submission'],
-        form_data: context['form_data'],
-        selected_choice: context['selected_choice'],
-        choice_id: context['choice_id'],
-        step_result: context['step_result'],
-        continue: context['continue']
-    });
-
     // Check for simulation requests first
     if (context['simulation'] || context['replay'] || context['simulation_name'] || context['simulation_step']) {
-        console.log('[DEBUG determineRequestType] → SIMULATION (simulation context detected)');
         return 'simulation';
     }
 
     // Transform pipeline / LLM: transformSchema, action=dialog+message, or ai_action (auto-ai, coder, etc.)
     const llmActions = ['dialog', 'auto-ai', 'coder', 'analyze', 'task-decomposition'];
-    console.log('[DEBUG determineRequestType] Dialog check:', {
-        hasTransformSchema: !!transformSchema,
-        hasAction: !!action,
-        actionInLlmActions: action ? llmActions.includes(action) : false,
-        hasMessage: !!hasMessage
-    });
     if (transformSchema || (action && hasMessage && llmActions.includes(action))) {
-        console.log('[DEBUG determineRequestType] → DIALOG (matched)');
         return 'dialog';
     }
 
     // Check for form requests
-    console.log('[DEBUG determineRequestType] Form check:', {
-        form_submission: !!context['form_submission'],
-        form_data: !!context['form_data'],
-        form_id: !!context['form_id'],
-        selected_choice: !!context['selected_choice'],
-        choice_id: !!context['choice_id']
-    });
     if (context['form_submission'] || context['form_data'] || context['form_id'] ||
         context['selected_choice'] || context['choice_id']) {
-        console.log('[DEBUG determineRequestType] → FORM (matched)');
         return 'form';
     }
 
 
     // Check for action requests
     const actionType = (context['action'] ?? exec?.action) as string | undefined;
-    console.log('[DEBUG determineRequestType] Action check:', {
-        actionType,
-        isStepResult: actionType === 'step_result',
-        isApproveAction: actionType === 'approve_action',
-        isTaskRequest: actionType === 'task_request',
-        hasContinueAndStepResult: !!(context['continue'] && context['step_result'])
-    });
     if (actionType === 'step_result' || actionType === 'approve_action' ||
         actionType === 'task_request' ||
         (context['continue'] && context['step_result'])) {
-        console.log('[DEBUG determineRequestType] → ACTION (matched)');
         return 'action';
     }
 
     // Default to action processing for simulations
-    console.log('[DEBUG determineRequestType] → ACTION (default)');
     return 'action';
 }
 
@@ -130,12 +86,6 @@ async function routeRequest(request: RequestContext): Promise<ProcessResult> {
     });
 
     const processor = processorRegistry.get(requestType);
-
-    console.log('[DEBUG routeRequest] Processor selection:', {
-        requestType,
-        processorName: processor?.constructor.name ?? 'undefined',
-        hasProcessor: !!processor
-    });
 
     if (!processor) {
         logger.error('[RequestProcessor] No processor found for type', {requestType});
@@ -156,7 +106,6 @@ export async function processOneRequest(): Promise<ProcessResult | null> {
     if (!request) return null;
 
     const {promiseId, context, codeBlocks, message} = request;
-    console.log('[RequestProcessor] Processing request', { promiseId, action: context?.action, resultKeys: context?.result ? Object.keys(context.result as object) : [] });
 
     try {
         const requestContext: RequestContext = {

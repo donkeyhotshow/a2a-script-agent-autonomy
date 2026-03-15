@@ -211,6 +211,11 @@ export class SessionStoreCore {
         return this;
     }
 
+    renameSession(sessionId, newName) {
+        this._emit('rename', { sessionId, newName });
+        return this;
+    }
+
     // Events
     on(event, callback) {
         if (typeof callback !== 'function') return () => {};

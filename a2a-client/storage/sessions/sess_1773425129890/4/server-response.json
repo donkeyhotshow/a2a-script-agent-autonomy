@@ -1,21 +1,30 @@
 {
-  "step": 4,
-  "execute": null,
+  "timestamp": "2026-03-15T00:09:20.000Z",
+  "execute": {
+    "message": "Please provide your message:",
+    "form": {
+      "input": [
+        {
+          "name": "message",
+          "type": "text",
+          "label": "Повідомлення",
+          "required": true
+        }
+      ]
+    }
+  },
   "context": {
+    "task": "hello world",
     "execution": {
       "action": "dialog",
-      "step": "request"
+      "step": "response"
     },
-    "session_id": "sess_1773425129890",
-    "task": "hello world",
-    "message": "hello world",
-    "result": {
-      "choice": "dialog"
-    },
-    "version": "1.0",
-    "choice_id": "dialog"
-  },
-  "result": {
-    "message": "hello world"
+    "history": [
+      {
+        "role": "assistant",
+        "step": "response",
+        "message": "Hello! How can I assist you today?"
+      }
+    ]
   }
 }

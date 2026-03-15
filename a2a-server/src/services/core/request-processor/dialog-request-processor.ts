@@ -65,14 +65,6 @@ async function runResponseTransform(
     responseMd: string
 ): Promise<ProcessResult | null> {
     try {
-        // DEBUG: Log input data
-        console.log('[DIALOG DEBUG] runResponseTransform called');
-        console.log('[DIALOG DEBUG] ctx.result:', JSON.stringify(ctx['result']));
-        console.log('[DIALOG DEBUG] ctx.context:', JSON.stringify(ctx['context']));
-        console.log('[DIALOG DEBUG] responseMd (first 200):', responseMd.trim().substring(0, 200));
-        console.log('[DIALOG DEBUG] responseMd is JSON:', responseMd.trim().startsWith('{'));
-        
-        // DEBUG: Log what transform produces
         const {writeFile, mkdtemp} = await import('fs/promises');
         const {tmpdir} = await import('os');
         const tempDir = await mkdtemp(path.join(tmpdir(), 'a2a-dialog-'));
@@ -85,12 +77,6 @@ async function runResponseTransform(
         const execute = (output as Record<string, unknown>)?.execute as Record<string, unknown> | undefined;
         const contextOut = (output as Record<string, unknown>)?.context as Record<string, unknown> | undefined;
         
-        console.log('[DIALOG DEBUG] execute after transform:', JSON.stringify(execute));
-        console.log('[DIALOG DEBUG] contextOut after transform:', JSON.stringify(contextOut));
-        console.log('[DIALOG DEBUG] contextOut.history:', JSON.stringify(contextOut?.history));
-        console.log('[DIALOG DEBUG] Does execute.message exist?:', execute?.message ? 'YES' : 'NO');
-        console.log('[DIALOG DEBUG] execute.message value:', execute?.message);
-        
         // Fallback: if execute.message is missing, try to extract from LLM response
         // This works for both JSON and plain text responses from LLM
         let llmMessage: string | undefined;
@@ -100,13 +86,11 @@ async function runResponseTransform(
         if (responseMd.trim().startsWith('{')) {
             try {
                 const llmJson = JSON.parse(responseMd.trim());
-                console.log('[DIALOG DEBUG] Parsed LLM JSON:', JSON.stringify(llmJson));
                 const llmExecute = llmJson.execute as Record<string, unknown> | undefined;
                 // Try multiple paths: llmJson.message, llmJson.execute.message, llmJson.response
                 llmMessage = llmJson.message ?? llmJson.response ?? llmExecute?.message;
                 llmForm = llmExecute?.form as Record<string, unknown> | undefined;
             } catch (e) {
-                console.log('[DIALOG DEBUG] JSON parse error:', e);
                 // JSON parse failed, try as plain text
                 llmMessage = responseMd.trim();
             }
@@ -135,12 +119,6 @@ async function runResponseTransform(
             newHistory.push({ role: 'assistant', message: assistantMessage });
         }
         
-        console.log('[DIALOG DEBUG] llmMessage:', llmMessage);
-        console.log('[DIALOG DEBUG] existingHistory from ctx:', JSON.stringify(existingHistory));
-        console.log('[DIALOG DEBUG] userMessage:', userMessage);
-        console.log('[DIALOG DEBUG] assistantMessage:', assistantMessage);
-        console.log('[DIALOG DEBUG] newHistory:', JSON.stringify(newHistory));
-        
         // If we have a message from LLM or execute, return with history
         if (assistantMessage) {
             return {
@@ -162,7 +140,7 @@ async function runResponseTransform(
             execute: execute ?? {form: {input: [{name: 'message', type: 'text', label: 'Повідомлення', required: true}]}},
         } as ProcessResult;
     } catch (err) {
-        console.log('[DIALOG DEBUG] Transform error:', err);
+        logger.error('[DialogRequestProcessor] Transform error', { error: err });
         return null;
     }
 }

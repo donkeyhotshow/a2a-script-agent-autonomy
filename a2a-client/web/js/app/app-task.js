@@ -373,6 +373,9 @@
             // Restore session windows
             await global.WindowManager?.restoreSessionWindows();
 
+            // Restore pending promises if any
+            await global.SessionStore?.restorePendingPromises?.();
+
             // Ensure taskbar is visible
             global.TaskbarManager?.ensureTaskbar();
         },

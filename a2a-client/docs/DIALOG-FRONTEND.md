@@ -1,53 +1,134 @@
-# Диалоговая система на фронтенде (D2A Script Agent)
+# Диалоговая система на фронтенде (A2A Script Agent)
 
-> **ВАЖНО**: Протокол A2A серьёзный — документация может быть устаревшей. Все разработки опираются на файлы симуляции протокола обмена между частями системы.
+> **Дата обновления**: 2026-03-14
+> **Статус**: Актуальная документация
 
 ## Содержание
 
 1. [Обзор](#обзор)
-2. [Файловая структура диалога](#файловая-структура-диалога)
-3. [Поток данных](#поток-данных)
-4. [Ключевые компоненты](#ключевые-компоненты)
-5. [Non-obvious моменты 🔴](#non-obvious-моменты-)
-6. [Нарушения иерархии ⚠️](#нарушения-иерархии-)
-7. [Сравнение с симуляциями](#сравнение-с-симуляциями)
-8. [Рекомендации](#рекомендации)
+2. [Архитектура](#архитектура)
+3. [Файловая структура](#файловая-структура)
+4. [Загрузка модулей](#загрузка-модулей)
+5. [Поток данных](#поток-данных)
+6. [Исправленные проблемы](#исправленные-проблемы)
+7. [Известные проблемы](#известные-проблемы)
 
 ---
 
 ## Обзор
 
-Диалог — это основной режим взаимодействия пользователя с системой A2A. В отличие от классического execute-режима, диалоговый режим предполагает:
+Диалог — основной режим взаимодействия пользователя с системой A2A:
 
-- **Накопление контекста** — история хранится на сервере в `context.history`
-- **Интерактивность** — сервер ожидает ввод от пользователя (message или choice)
-- **Два режима работы** — синхронный (sync) и асинхронный (async/promiseId)
-- **Трансформы** — использует `dialog-request.json` и `dialog-response.json`
+- **Накопление контекста** — история в `context.history`
+- **Интерактивность** — сервер ожидает ввод (message или choice)
+- **Два режима** — синхронный (sync) и асинхронный (promiseId)
+- **Трансформы** — `dialog-request.json` и `dialog-response.json`
 
 ---
 
-## Файловая структура диалога
+## Архитектура
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                      index.html (Vite Dev Server)                │
+├─────────────────────────────────────────────────────────────────┤
+│  order  │  file                              │  type            │
+├─────────┼────────────────────────────────────┼──────────────────┤
+│    1    │  js/storage.js                     │  Legacy IIFE     │
+│    2    │  js/session-store-refactored.js    │  ES6 Module ✅   │
+│    3    │  js/session-store-adapters.js      │  ES6 Module     │
+│    4    │  js/template-loader.js             │  Legacy IIFE     │
+│    5    │  js/api-integration.js            │  Legacy IIFE     │
+│    6    │  js/action-handler.js             │  Legacy IIFE     │
+│    7    │  js/error-handler.js              │  Legacy IIFE     │
+│    8    │  js/task-flow/*                   │  Legacy IIFE     │
+│    9    │  js/app-task.js (dynamic load)    │  Dynamic         │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Слои системы:
+
+1. **Storage Layer** — `storage.js`, `SessionStorageAPI.js`
+2. **State Layer** — `SessionStoreCore.js`, `session-store-refactored.js`
+3. **API Layer** — `action-handler.js`, `api-integration.js`
+4. **UI Layer** — `task-flow/*`, `app/*`
+5. **Error Layer** — `error-handler.js`
+
+---
+
+## Файловая структура
 
 ```
 a2a-client/web/js/
 ├── task-flow/
-│   ├── api.js              ← HTTP-клиент для коммуникации с API
-│   ├── core.js             ← Ядро TaskFlow, координация run/sendMessage
-│   ├── index.js            ← Экспорты (sendTaskMessage)
-│   └── render.js           ← Рендеринг UI: история, формы, кнопки выбора
+│   ├── api.js              ← HTTP-клиент
+│   ├── core.js             ← Координация run/sendMessage
+│   ├── index.js            ← Экспорты
+│   └── render.js           ← Рендеринг UI
 ├── core/
-│   └── SessionStoreCore.js ← ES6 Module, EventEmitter, ядро управления состоянием
+│   └── SessionStoreCore.js ← ES6 Module, EventEmitter ✅
 ├── storage/
 │   └── SessionStorageAPI.js
 ├── utils/
-│   └── normalizers.js      ← Нормализация сообщений
-├── action-handler.js       ← Отправка message/choice на сервер, polling promise
-├── session-store-refactored.js  ← Wrapper (Composition)
-├── session-store.js        ← Legacy IIFE (ДУБЛЬ!)
+│   └── normalizers.js      ← normalizeMessage (РЕКОМЕНДУЕТСЯ)
+├── action-handler.js       ← Отправка message/choice
+├── session-store-refactored.js  ← Wrapper (Composition) ✅
+├── session-store.js        ← Legacy IIFE (fallback)
+├── session-store-adapters.js ← Backward Compatibility
 └── app/
+    ├── app-task.js         ← Dynamic loader
+    ├── project-manager.js
+    ├── session-manager.js
+    ├── taskbar-manager.js
     └── windows/
-        ├── window-events.js   ← UI события, отправка сообщений
-        └── window-state.js    ← Восстановление состояния окна
+        ├── window-events.js
+        ├── window-state.js
+        └── window-manager.js
+```
+
+---
+
+## Загрузка модулей
+
+### index.html (строки 88-116):
+
+```html
+<!-- 0. Storage API -->
+<script src="js/storage.js"></script>
+
+<!-- 1. Core State (Refactored - ES6 Modules) -->
+<script type="module" src="js/session-store-refactored.js"></script>
+
+<!-- 1b. Legacy (deprecated - for fallback only) -->
+<!-- <script type="module" src="js/session-store.js"></script> -->
+
+<!-- 2. Adapters (Backward Compatibility Layer) -->
+<script type="module" src="js/session-store-adapters.js"></script>
+
+<!-- 3. UI Modules -->
+<script src="js/template-loader.js"></script>
+<script src="js/api-integration.js"></script>
+<script src="js/action-handler.js"></script>
+<script src="js/error-handler.js"></script>
+
+<!-- 4. TaskFlow -->
+<script src="js/task-flow/api.js"></script>
+<script src="js/task-flow/render.js"></script>
+<script src="js/task-flow/core.js"></script>
+<script src="js/task-flow/index.js"></script>
+<script src="js/app-task.js"></script>
+```
+
+### Динамическая загрузка app/*:
+
+```javascript
+// app-task.js
+const modules = [
+    '/js/app/project-manager.js',
+    '/js/app/session-manager.js',
+    '/js/app/windows/window-registry.js',
+    // ...
+];
 ```
 
 ---
@@ -70,7 +151,7 @@ SessionStore.setExecute(execute)
 TaskFlow.on('execute') → Render.renderExecute()
 ```
 
-### 2. Отправка сообщения пользователя
+### 2. Отправка сообщения
 
 ```
 User types message + clicks Submit
@@ -94,436 +175,79 @@ SessionStore.setExecute(execute)
 Render.renderExecute()
 ```
 
-### 3. Рендеринг execute (сервер → клиент)
+---
 
+## Исправленные проблемы
+
+| # | Проблема | Дата | Файл |
+|---|----------|------|------|
+| 1 | Хардкод URL `localhost:5173` | 2026-03 | action-handler.js |
+| 2 | Лишние поля в ответе сервера | 2026-03 | requests.routes.ts |
+| 3 | Дубликат normalizeMessage | 2026-03 | session-store.js |
+| 4 | Отладочные console.log | 2026-03 | multiple files |
+| 5 | Миграция на refactored session-store | 2026-03 | index.html |
+
+### Детали исправлений:
+
+**1. URL в action-handler.js:36**
 ```javascript
-// Сервер отправляет объект execute:
-{
-    execute: {
-        message: { content: "Привет!", role: "assistant" },
-        form: {
-            input: { placeholder: "Введите вопрос..." }
-            // ИЛИ
-            choices: [{ id: "analyze", label: "Проанализировать" }]
-        }
-    }
-}
+// Было:
+return 'http://localhost:5173/api/a2a';
+
+// Стало:
+return window.location.origin + '/api/a2a';
 ```
 
-Рендеринг в [`render.js`](a2a-client/web/js/task-flow/render.js:123-137):
-
+**2. Фильтрация полей в requests.routes.ts**
 ```javascript
-// Маршрутизация по типу execute
-if (execute.form) {
-    return renderForm(...);           // Кнопки выбора или input
-} else if (execute.message) {
-    return renderMessage(...);        // Только сообщение
-} else if (execute.script || execute['read-file']) {
-    return renderClientAction(...);    // Действия на клиенте
-} else if (execute.debug) {
-    return renderDebug(...);          // Отладочная информация
-}
+// Удалены из response: timestamp, session_id, version, result, choice_id
 ```
 
----
-
-## Ключевые компоненты
-
-### task-flow/render.js
-
-Файл: [`a2a-client/web/js/task-flow/render.js`](a2a-client/web/js/task-flow/render.js)
-
-**Назначение:** Рендеринг UI - история сообщений, формы, кнопки выбора
-
-**Экспорт:** `TaskFlowRender`
-
-**Ключевые функции:**
-- `renderMessageHistory(contentEl, store)` — рендерит историю сообщений
-- `updateStatus(contentEl, text)` — обновляет статус выполнения
-- Формирует HTML для сообщений пользователя и AI
-
----
-
-### task-flow/core.js
-
-Файл: [`a2a-client/web/js/task-flow/core.js`](a2a-client/web/js/task-flow/core.js)
-
-**Назначение:** Основной объект `TaskFlow`, координация run/sendMessage
-
-**Экспорт:** `TaskFlow`
-
-**Ключевые функции:**
-- `resolveStore(sessionId)` — получить хранилище для сессии
-- `getProjectId()` — получить ID текущего проекта
-- `sendMessageResult(messageText, contentEl)` — отправить результат
-
----
-
-### task-flow/api.js
-
-Файл: [`a2a-client/web/js/task-flow/api.js`](a2a-client/web/js/task-flow/api.js)
-
-**Назначение:** HTTP-коммуникация с Client API
-
-**Экспорт:** `TaskFlowAPI`
-
-**Ключевые функции:**
-- `getApiBase()` — определяет базовый URL API
-- `getHeaders()` — формирует заголовки запросов
-- `request(method, path, body)` — выполняет HTTP-запросы
-
----
-
-### SessionStoreCore.js
-
-Файл: [`a2a-client/web/js/core/SessionStoreCore.js`](a2a-client/web/js/core/SessionStoreCore.js)
-
-**Назначение:** ES6 Module, ядро управления состоянием (EventEmitter)
-
-**Состояние:**
-
+**3. Документирование дубликата normalizeMessage**
 ```javascript
-_state = {
-    sessionId: null,
-    projectId: null,
-    messages: [],        // История сообщений
-    execute: null,       // Текущий execute от сервера
-    context: null,       // Контекст выполнения
-    status: 'idle',
-    pendingForm: null,
-    currentStep: 0,
-    steps: []
-};
+// session-store.js (legacy)
+// normalizers.js (рекомендуемая версия)
 ```
 
-**Ключевые методы:**
-- `getState()` — получить текущее состояние
-- `isWaitingForInput()` — проверить, ожидается ли ввод от пользователя
-
 ---
 
-### action-handler.js
-
-Файл: [`a2a-client/web/js/action-handler.js`](a2a-client/web/js/action-handler.js)
-
-**Назначение:** Отправка `message`/`choice` на сервер, polling promise
-
-**Ключевые функции:**
-- `submit(sessionId, result)` — отправляет результат (message или choice) на сервер
-- Автоматически создает новый шаг после отправки
-- Обрабатывает polling для асинхронных запросов (promiseId)
-
----
-
-## Non-obvious моменты 🔴
-
-### 1. ТРИ реализации нормализации сообщений
-
-В проекте существует **ТРИ** реализации нормализации сообщений:
-
-```javascript
-// 1. normalizers.js (ES6 module) - РЕКОМЕНДУЕМАЯ
-export function normalizeMessage(value, defaultRole) {
-    return {
-        id: value.id || `msg_${Date.now()}_...`,
-        role: value.role || defaultRole,
-        content: String(value.content || value.message || value.text),
-        timestamp: value.timestamp || new Date().toISOString()
-    };
-}
-
-// 2. session-store.js (inline, строки 8-19) - LEGACY
-function normalizeMessage(msg, role) { /* ... */ }
-
-// 3. SessionStoreCore.js (import из normalizers)
-import { normalizeMessage } from '../utils/normalizers.js';
-```
-
-**Проблема:** Дублирование логики, несогласованность форматов.
-
----
-
-### 2. Использование global.SessionStore
-
-Несмотря на рефакторинг в ES6 модули, код активно использует глобальную переменную:
-
-```javascript
-// render.js, строка 34
-store = store || global.SessionStore;
-
-// core.js, строка 48
-return global.SessionStore;
-```
-
-**Проблема:** Связь между модульной и глобальной системами затрудняет тестирование и понимание потока данных.
-
----
-
-### 3. Два пути отправки сообщений
-
-Сообщения можно отправлять через **ДВА** разных пути:
-
-**Путь 1: ActionHandler** ([`action-handler.js:47`](a2a-client/web/js/action-handler.js:47))
-```javascript
-ActionHandler.submit(sessionId, { message: "text" });
-```
-
-**Путь 2: TaskFlow** ([`core.js:370`](a2a-client/web/js/task-flow/core.js:370))
-```javascript
-TaskFlow.sendMessageResult(messageText, contentEl);
-```
-
-**Проблема:** Оба пути используют разную логику, что приводит к несогласованности и путанице.
-
----
-
-### 4. Параметр `store` в render.js поступает из ТРЁХ источников
-
-Функция [`renderExecute`](a2a-client/web/js/task-flow/render.js:66) получает `store` из трёх источников:
-
-```javascript
-const passedStore = store || data?.store; // Явная передача
-// ИЛИ
-store = store || data?.store;             // Из data
-// ИЛИ
-store = store || global.SessionStore;     // Глобальный fallback
-```
-
-**Проблема:** Неочевидная логика разрешения зависимости.
-
----
-
-### 5. Полиморфизм execute
-
-Объект `execute` может содержать разные ключи в зависимости от типа ответа:
-
-| Тип | Ключи |
-|-----|-------|
-| Диалог | `execute.message`, `execute.form` |
-| Действие | `execute.script`, `execute['read-file']`, `execute['write-file']`, `execute['execute-command']` |
-| Отладка | `execute.debug` |
-| Результат | `execute.finalResult` |
-
-**Проблема:** Нет явного enum или типа для различных вариантов execute.
-
----
-
-### 6. Ожидание ответа сервера (wait state)
-
-Сервер может отправить команду `wait` для блокировки ввода:
-
-```javascript
-// Из session-store.js, строка 89
-if (execute && execute.wait) {
-    state.status = 'processing';
-    emit('wait', { message: String(execute.wait) });
-}
-```
-
-**Проблема:** Состояние ожидания не обрабатывается единообразно.
-
----
-
-### 7. Жестко закодированный URL
-
-В [`action-handler.js:36`](a2a-client/web/js/action-handler.js:36):
-```javascript
-if (storageMode === 'storage') {
-    return 'http://localhost:5173/api/a2a';
-}
-```
-
-**Проблема:** Port `5173` захардкожен — не использует конфигурацию.
-
----
-
-### 8. Параметры execute.message
-
-В документации (archive) указано:
-```typescript
-message?: {
-    content: string;      // Текст сообщения
-    role?: 'assistant';    // Роль отправителя
-};
-```
-
-Но в симуляциях и реальном runtime используется:
-```typescript
-message?: string | {
-    content: string;
-    role?: 'assistant';
-};
-```
-
-**Проблема:** Несоответствие типов — поле `message` может быть строкой или объектом.
-
----
-
-## Нарушения иерархии ⚠️
-
-### 1. Тройная реализация SessionStore
-
-| Файл | Тип | Статус |
-|------|-----|--------|
-| `session-store.js` | Legacy IIFE | ⛔ УДАЛИТЬ |
-| `session-store-refactored.js` | Проксирует методы | ⚠️ Не используется везде |
-| `core/SessionStoreCore.js` | ES6 Module | ✅ Рекомендуемый |
-
-**Проблема:** Legacy код содержит свою копию логики, дублирует функциональность.
-
----
-
-### 2. Рассинхронизация между TaskFlow и ActionHandler
-
-Оба модуля имеют методы отправки, но **не синхронизированы**:
-
-```javascript
-// task-flow/core.js:395
-await handler.submit(sessionId, { message: messageText });
-
-// action-handler.js:47
-async function submit(sessionId, result) { ... }
-```
-
-**Проблема:** Нет единого интерфейса для отправки сообщений.
-
----
-
-### 3. Глобальное состояние повсюду
-
-Код активно использует глобальные переменные:
-
-```javascript
-global.SessionStore
-global.TaskFlow
-global.TaskFlowAPI
-global.TaskFlowRender
-global.ActionHandler
-global.WindowRegistry
-global.SessionManager
-```
-
-**Проблема:** Затрудняет тестирование, создает скрытые зависимости.
-
----
-
-### 4. Отсутствие единой точки инициализации
-
-Разные компоненты инициализируются в разных местах:
-
-- `TaskFlow.init()` — в `app-task.js`
-- `SessionStore` — создаётся при загрузке модуля
-- Обработчики событий — подписываются в разных местах
-
-**Проблема:** Нет четкого lifecycle инициализации.
-
----
-
-### 5. Обработка ошибок в нескольких слоях
-
-Ошибки обрабатываются в:
-- [`error-handler.js`](a2a-client/web/js/error-handler.js) — глобальный обработчик
-- `action-handler.js` — локальный try/catch
-- `task-flow/core.js` — try/catch при отправке
-
-**Проблема:** Дублирование логики обработки ошибок.
-
----
-
-### 6. Потенциальные утечки памяти
-
-Подписки на события создаются, но могут не отписываться:
-
-```javascript
-// core.js:66 — подписка без отписки
-const unsubscribe = store.on('execute', (execute) => { ... });
-```
-
-**Проблема:** Утечка памяти при пересоздании компонентов.
-
----
-
-## Сравнение с симуляциями
-
-### Ожидаемый формат (из симуляций)
-
-```json
-// simulations/dialog/3/response.json (ЭТАЛОН)
-{
-  "context": {
-    "task": "диалог",
-    "execution": { "action": "dialog", "step": "request" },
-    "history": [
-      { "role": "user", "message": "hello world" },
-      { "role": "assistant", "message": "hello world" }
-    ]
-  },
-  "execute": {
-    "message": "hello world",
-    "form": { "input": [ ... ] }
-  }
-}
-```
-
-### Реальный ответ сервера (после исправлений)
-
-```json
-// a2a-client/storage/sessions/sess_xxx/3/server-response.json
-{
-  "timestamp": "...",
-  "execute": {
-    "message": "hello world",
-    "form": { "input": [ { "name": "message", ... } ] }
-  },
-  "context": {
-    "execution": { "action": "dialog", "step": "request" },
-    "session_id": "sess_xxx",
-    "task": "диалог",
-    "result": { "choice": "dialog" },
-    "message": "диалог",
-    "version": "1.0",
-    "choice_id": "dialog"
-  }
-}
-```
-
-### Различия
-
-| Поле | Симуляция (эталон) | Реальность |
-|------|-------------------|------------|
-| `context.history` | ✅ Есть | ✅ Есть (после исправлений) |
-| `execute.message` | ✅ Есть | ✅ Есть |
-| `timestamp` | ❌ Нет | ✅ Лишнее |
-| `session_id` | ❌ Нет | ✅ Лишнее |
-| `version` | ❌ Нет | ✅ Лишнее |
-| `result.choice` | ❌ Нет | ✅ Лишнее |
-| `choice_id` | ❌ Нет | ✅ Лишнее |
+## Известные проблемы
+
+### Требуют внимания:
+
+1. **Смешанные парадигмы** — ES6 Modules + Legacy IIFE
+2. **Глобальные переменные** — window.SessionStore, window.TaskFlow и т.д.
+3. **Динамическая загрузка** — нет статического анализа зависимостей
+4. **Legacy IIFE файлы** — требуют миграции на ES6:
+   - action-handler.js
+   - api-integration.js
+   - error-handler.js
+   - task-flow/*
+
+### Не влияют на работу:
+
+- Дубликат normalizeMessage (добавлена документация)
+- session-store.js оставлен как fallback
 
 ---
 
 ## Рекомендации
 
-### Краткосрочные (1-2 недели)
+1. **Краткосрочные**: 
+   - Удалить неиспользуемые legacy файлы после миграции
 
-1. **Удалить legacy код**: `session-store.js` содержит дублирующую логику
-2. **Вынести конфигурацию**: URL API должен быть в конфиге, не захардкожен
-3. **Унифицировать отправку сообщений**: Оставить один путь (через ActionHandler)
-4. **Убрать лишние поля**: timestamp, session_id, version, result, choice_id из response
+2. **Среднесрочные**:
+   - Миграция action-handler.js → ES6 Module
+   - Заменить динамическую загрузку на статические import
 
-### Долгосрочные (1-2 месяца)
-
-1. **Минимизировать глобальные переменные**: Использовать DI или модули
-2. **Единая точка инициализации**: Создать фабрику/бутстрапер
-3. **Вынести нормализацию**: Оставить только одну реализацию в `normalizers.js`
-4. **Добавить отписку от событий**: Использовать паттерн cleanup в компонентах
-5. **Типизация**: Добавить TypeScript для явных контрактов
-6. **统一 execute types**: Создать enum для различных типов execute
+3. **Долгосрочные**:
+   - Полный рефакторинг в единую модульную систему
+   - Удаление глобальных переменных
 
 ---
 
 ## Ссылки
 
-- [Архивная документация (устаревшая)](archive/DIALOG-FRONTEND.md)
-- [Симуляции dialog](a2a-server/tests/simulations/dialog/)
-- [DialogRequestProcessor](a2a-server/src/services/core/request-processor/dialog-request-processor.ts)
-- [Трансформы диалога](a2a-server/prompts/transforms/)
+- [Симуляции протокола](../simulations/dialog/)
+- [API Reference](./api-reference/)
+- [Workflows](./workflows/)

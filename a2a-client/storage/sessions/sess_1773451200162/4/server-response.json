@@ -1,0 +1,26 @@
+{
+  "step": 4,
+  "execute": null,
+  "context": {
+    "task": "ответь одним символом \"1\"",
+    "execution": {
+      "action": "dialog",
+      "step": "request"
+    },
+    "history": [
+      {
+        "role": "user",
+        "message": "Привет"
+      },
+      {
+        "role": "assistant",
+        "message": "Вітаю!"
+      }
+    ],
+    "session_id": "sess_1773451200162",
+    "message": "ответь одним символом \"1\""
+  },
+  "result": {
+    "message": "ответь одним символом \"1\""
+  }
+}

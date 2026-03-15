@@ -11,6 +11,38 @@ import {requestService} from '../services/core/request/request.service.js';
 const router = Router();
 
 /**
+ * Filter out extra fields from response before sending to client.
+ * Keep only: execute.message, execute.form, context.task, context.execution, context.history
+ */
+function filterResponse(result: Record<string, unknown>): Record<string, unknown> {
+    const filtered: Record<string, unknown> = {};
+    
+    // Copy top-level fields (except timestamp)
+    if (result.execute !== undefined) {
+        filtered.execute = result.execute;
+    }
+    if (result.context !== undefined) {
+        const ctx = result.context as Record<string, unknown>;
+        const filteredContext: Record<string, unknown> = {};
+        
+        // Keep only allowed context fields
+        if (ctx.task !== undefined) {
+            filteredContext.task = ctx.task;
+        }
+        if (ctx.execution !== undefined) {
+            filteredContext.execution = ctx.execution;
+        }
+        if (ctx.history !== undefined) {
+            filteredContext.history = ctx.history;
+        }
+        
+        filtered.context = filteredContext;
+    }
+    
+    return filtered;
+}
+
+/**
  * GET /requests/status?ids=id1,id2,id3
  * Batch status for multiple promiseIds. Client can poll several sessions in one request.
  */
@@ -82,15 +114,29 @@ router.get('/:promiseId/status', async (req: Request, res: Response, next: NextF
 router.get('/:promiseId/result', async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
         const promiseId = String(req.params.promiseId || '');
-        const result = await requestService.getResult(promiseId);
-        if (!result) {
+        const fullResult = await requestService.getResult(promiseId);
+        if (!fullResult) {
             res.status(404).json({
                 success: false,
                 error: {message: 'Request not found'},
             });
             return;
         }
-        res.json({success: true, data: result});
+        
+        // Filter response to remove extra fields
+        let responseData: Record<string, unknown>;
+        
+        if (fullResult.result) {
+            // fullResult.result contains the ProcessResult from processor
+            responseData = filterResponse(fullResult.result as Record<string, unknown>);
+        } else if (fullResult.error) {
+            // Return error as-is
+            responseData = { error: fullResult.error };
+        } else {
+            responseData = {};
+        }
+        
+        res.json({success: true, data: responseData});
     } catch (error) {
         next(error);
     }

@@ -22,7 +22,7 @@ import { normalizeMessage } from './utils/normalizers.js';
          'isWaitingForInput', 'isActive', 'isInputBlocked', 'setPromisePending',
          'reset', 'setSession', 'createSession', 'setProject', 'setStatus',
          'setExecute', 'setContext', 'setMessages', 'appendMessages', 'pushMessage',
-         'setError', 'applyServerResponse'].forEach(method => {
+         'setError', 'applyServerResponse', 'renameSession', 'restorePendingPromises'].forEach(method => {
             this[method] = (...args) => this.core[method](...args);
         });
 
@@ -36,7 +36,6 @@ import { normalizeMessage } from './utils/normalizers.js';
         this.setStorageMode = (mode) => {
             this._storageMode = mode;
             this.storage = new SessionStorageAPI(this.storage._storageBase, mode);
-            console.log('[SessionStore] Storage mode:', mode);
             this.core._emit('storageMode', mode);
             return this;
         };
@@ -47,14 +46,42 @@ import { normalizeMessage } from './utils/normalizers.js';
         // Init compatibility
         this.init = (opts) => {
             this._apiBase = opts.apiBase || this._apiBase;
-            console.log('[SessionStore] Initialized', this.core.sessionId ? `(session ${this.core.sessionId})` : '(no session)');
             return this;
+        };
+
+        // Restore pending promises on session load
+        this.restorePendingPromises = async () => {
+            if (!this.core.sessionId) return;
+            try {
+                const currentStep = await this.storage.getCurrentStepNumber(this.core.sessionId);
+                if (currentStep > 0) {
+                    const stepPath = `${this.storage._storageBase}/${this.core.sessionId}/${currentStep}/server-promise.json`;
+                    const response = await fetch(stepPath);
+                    if (response.ok) {
+                        const promiseData = await response.json();
+                        if (promiseData.status === 'pending' && promiseData.promiseId) {
+                            console.log('[SessionStore] Restoring pending promise:', promiseData.promiseId);
+                            // Mark as waiting for input
+                            this.core.setPromisePending(true);
+                            // Trigger promise polling via global ActionHandler if available
+                            if (global.ActionHandler?.startPromisePolling) {
+                                global.ActionHandler.startPromisePolling(this.core.sessionId, promiseData.promiseId);
+                            }
+                            // Force UI refresh to show waiting state
+                            if (global.WindowManager?.refreshAll) {
+                                global.WindowManager.refreshAll();
+                            }
+                        }
+                    }
+                }
+            } catch (e) {
+                console.error('[SessionStore] Error restoring pending promises:', e);
+            }
         };
 
         // Debug
         this.debug = () => {
-            console.log('[SessionStore] Current state:', this.toJSON());
-            console.log('[SessionStore] Full state:', this.getState());
+            // Debug logging disabled
         };
     }
 

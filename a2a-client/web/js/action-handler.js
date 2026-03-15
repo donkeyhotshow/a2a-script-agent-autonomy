@@ -33,7 +33,8 @@
         // Check storage mode first - if using Vite (storage mode), use default
         const storageMode = store?.getStorageMode?.() || 'storage';
         if (storageMode === 'storage') {
-            return 'http://localhost:5173/api/a2a';
+            // Use relative path for dev/prod compatibility - Vite proxies /api/*
+            return window.location.origin + '/api/a2a';
         }
         // For client-api mode, require explicit apiBase
         if (!api?.apiBase) return null;
@@ -74,13 +75,19 @@
         }
         
         if (store && data) {
-            if (data.execute) store.setExecute?.(data.execute);
-            const ctx = data.context ?? data.session?.context;
-            if (ctx) store.setContext?.(ctx);
+            // First set promise pending to block input
             if (data.promiseId) {
                 store.setPromisePending?.(true);
                 startPromisePolling(sessionId, data.promiseId);
+                // Force UI refresh to show waiting state BEFORE setting execute
+                if (global.WindowManager?.refreshAll) {
+                    global.WindowManager.refreshAll();
+                }
             }
+            // Then update execute/context (may trigger another refresh)
+            if (data.execute) store.setExecute?.(data.execute);
+            const ctx = data.context ?? data.session?.context;
+            if (ctx) store.setContext?.(ctx);
             const sess = data.session;
             if (sess) store.setSession?.(sess.id ?? sess.sessionId, sess.projectId);
         }

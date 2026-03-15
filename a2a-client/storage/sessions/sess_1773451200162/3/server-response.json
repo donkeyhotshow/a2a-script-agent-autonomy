@@ -1,20 +1,33 @@
 {
-  "step": 3,
-  "execute": null,
+  "timestamp": "2026-03-14T23:59:50.000Z",
+  "execute": {
+    "message": "Вітаю!",
+    "form": {
+      "input": [
+        {
+          "name": "message",
+          "type": "text",
+          "label": "Повідомлення",
+          "required": true
+        }
+      ]
+    }
+  },
   "context": {
+    "task": "Привет",
     "execution": {
       "action": "dialog",
       "step": "request"
     },
-    "session_id": "sess_1773451200162",
-    "result": {
-      "choice": "dialog"
-    },
-    "choice_id": "dialog",
-    "task": "Привет",
-    "message": "Привет"
-  },
-  "result": {
-    "message": "Привет"
+    "history": [
+      {
+        "role": "user",
+        "message": "Привет"
+      },
+      {
+        "role": "assistant",
+        "message": "Вітаю!"
+      }
+    ]
   }
 }

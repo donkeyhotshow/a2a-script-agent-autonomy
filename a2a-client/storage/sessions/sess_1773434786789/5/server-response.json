@@ -1,21 +1,33 @@
 {
-  "step": 5,
-  "execute": null,
+  "timestamp": "2026-03-15T00:07:30.000Z",
+  "execute": {
+    "message": "1",
+    "form": {
+      "input": [
+        {
+          "name": "message",
+          "type": "text",
+          "label": "Повідомлення",
+          "required": true
+        }
+      ]
+    }
+  },
   "context": {
+    "task": "ответь 1 символом 1",
     "execution": {
       "action": "dialog",
       "step": "request"
     },
-    "session_id": "sess_1773434786789",
-    "task": "ответь 1 символом 1",
-    "message": "ответь 1 символом 1",
-    "result": {
-      "choice": "dialog"
-    },
-    "version": "1.0",
-    "choice_id": "dialog"
-  },
-  "result": {
-    "message": "ответь 1 символом 1"
+    "history": [
+      {
+        "role": "user",
+        "message": "ответь 1 символом 1"
+      },
+      {
+        "role": "assistant",
+        "message": "1"
+      }
+    ]
   }
 }

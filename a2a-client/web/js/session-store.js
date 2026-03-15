@@ -4,7 +4,9 @@
     // Inline constants
     var MAX_MESSAGES = 100;
 
-    // Inline simple normalizeMessage (no utils dep)
+    // Inline simple normalizeMessage (legacy - for new code use utils/normalizers.js)
+    // NOTE: This is a DUPLICATE of the function in utils/normalizers.js
+    // For new code, import normalizeMessage from './utils/normalizers.js' instead
     function normalizeMessage(msg, role) {
         if (!msg || typeof msg !== 'object') {
             return { content: String(msg || ''), role: role || 'user', timestamp: Date.now() };
@@ -187,12 +189,8 @@
         // Storage mode methods
 this.setStorageMode = (mode) => {
             this._storageMode = mode;
-            console.log('[SessionStore] Storage mode:', mode);
-            console.log('[SessionStore] core check:', !!this.core, typeof this.core?.emit);
             if (this.core && typeof this.core.emit === 'function') {
                 this.core.emit('storageMode', mode);
-            } else {
-                console.warn('[SessionStore] Cannot emit storageMode: core missing or invalid');
             }
         };
 
@@ -200,7 +198,6 @@ this.setStorageMode = (mode) => {
         this.getState = function() { return this.core.getState(); };
         this.setSession = function() { return this.core.setSession.apply(this.core, arguments); };
         this.setExecute = function() { 
-            console.log('[SessionStore] setExecute called with:', arguments[0]);
             // Don't add message to history here - it's handled by the UI layer
             // This prevents duplicates with messages from API
             return this.core.setExecute.apply(this.core, arguments); 
@@ -228,14 +225,12 @@ this.setStorageMode = (mode) => {
         // Legacy API for window-state.js compatibility
         this.setMessages = function(messages) {
             if (!this.core) {
-                console.warn('[SessionStore] setMessages: core missing');
                 return;
             }
             
             // Check if messages are already set to avoid duplicates
             const currentMessages = this.core.messages;
             if (currentMessages && currentMessages.length > 0) {
-                console.log('[SessionStore] Messages already set, skipping');
                 return;
             }
             
@@ -243,7 +238,6 @@ this.setStorageMode = (mode) => {
             if (Array.isArray(messages)) {
                 messages.forEach(msg => this.pushMessage(msg, msg.role || 'user'));
             }
-            console.log('[SessionStore] Set', messages?.length || 0, 'messages');
         };
 
         this.setContext = function(context) {
@@ -261,7 +255,6 @@ this.setStorageMode = (mode) => {
         };
 
         this.renameSession = function(sessionId, newName) {
-            console.log('[SessionStore] renameSession:', sessionId, newName);
             // Could add title to state if needed
         };
 
@@ -270,7 +263,6 @@ this.setStorageMode = (mode) => {
                 this.core.setSession(session.id, session.projectId);
                 this.core.setExecute(session.execute || null);
                 this.core.emit('sessionCreated', session);
-                console.log('[SessionStore] Session created:', session.id);
                 return session;
             }.bind(this));
         }.bind(this);
@@ -280,15 +272,13 @@ this.setStorageMode = (mode) => {
         };
 
         this.debug = function() {
-            console.log('[SessionStore] State:', this.getState());
+            // Debug logging disabled
         };
     }
 
     // Global exports - BACKWARD COMPATIBLE
     global.SessionStoreClass = SessionStore;
     global.SessionStore = new SessionStore();
-
-    console.log('[SessionStore] ES5 Loaded - globals set');
 
 })(typeof window !== 'undefined' ? window : globalThis);
 
