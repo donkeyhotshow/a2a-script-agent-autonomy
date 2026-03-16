@@ -370,6 +370,37 @@
         }
     }
 
+    /**
+     * Show wait element when promiseId is received (async operation started)
+     * @param {string} promiseId - the promise ID from server response
+     * @param {string} message - optional message to display
+     */
+    function showWaitElement(promiseId, message) {
+        const loaderIndicator = document.getElementById('loaderIndicator');
+        if (!loaderIndicator) return;
+        
+        loaderIndicator.classList.add('active');
+        loaderIndicator.style.display = 'flex';
+        
+        const loaderText = loaderIndicator.querySelector('.loader-text');
+        if (loaderText) {
+            loaderText.textContent = message || 'Processing...';
+        }
+        
+        console.log('[TaskFlowRender] Showing wait element for promise:', promiseId);
+    }
+
+    /**
+     * Hide wait element when execute/result is received
+     */
+    function hideWaitElement() {
+        const loaderIndicator = document.getElementById('loaderIndicator');
+        if (!loaderIndicator) return;
+        
+        loaderIndicator.style.display = 'none';
+        console.log('[TaskFlowRender] Hiding wait element');
+    }
+
     // Export
     global.TaskFlowRender = {
         escapeHtml,
@@ -380,7 +411,9 @@
         renderMessage,
         renderClientAction,
         renderDebug,
-        setPanelContent
+        setPanelContent,
+        showWaitElement,
+        hideWaitElement
     };
 
 })(typeof window !== 'undefined' ? window : global);

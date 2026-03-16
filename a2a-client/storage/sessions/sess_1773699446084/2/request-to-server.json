@@ -1,0 +1,14 @@
+{
+  "context": {
+    "execution": {
+      "action": "task",
+      "step": "new"
+    },
+    "session_id": "sess_1773699446084",
+    "task": "hello",
+    "message": "hello"
+  },
+  "result": {
+    "message": "hello"
+  }
+}

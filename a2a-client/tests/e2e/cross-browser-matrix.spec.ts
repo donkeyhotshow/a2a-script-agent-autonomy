@@ -67,20 +67,20 @@ test.describe('Cross-browser Stability Matrix', () => {
 
         for (let i = 0; i < 5; i++) {
           const metrics = await page.metrics();
-              memoryReadings.push(metrics.JSHeapUsedSize);
-              await page.waitForTimeout(2000);
-            }
+          memoryReadings.push(metrics.JSHeapUsedSize);
+          await page.waitForTimeout(2000);
+        }
 
-            // Memory should not grow excessively
-            const initialMemory = memoryReadings[0];
-            const finalMemory = memoryReadings[memoryReadings.length - 1];
-            const growthPercent = ((finalMemory - initialMemory) / initialMemory) * 100;
+        // Memory should not grow excessively
+        const initialMemory = memoryReadings[0];
+        const finalMemory = memoryReadings[memoryReadings.length - 1];
+        const growthPercent = ((finalMemory - initialMemory) / initialMemory) * 100;
 
-            // Allow max 50% growth during normal operation
-            expect(growthPercent).toBeLessThan(50);
-          });
+        // Allow max 50% growth during normal operation
+        expect(growthPercent).toBeLessThan(50);
+      });
 
-          test('Interaction responsiveness', async ({ page }) => {
+      test('Interaction responsiveness', async ({ page }) => {
             // Test button clicks and form interactions
             const createSessionBtn = page.locator('[data-testid="create-session-btn"]');
 

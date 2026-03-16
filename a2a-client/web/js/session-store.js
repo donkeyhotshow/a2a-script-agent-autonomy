@@ -87,16 +87,32 @@
                 state.promisePending = false;
                 emit('promisePending', false);
 
+                // Update loader indicator
+                const loaderIndicator = document.getElementById('loaderIndicator');
+                
                 // If server tells us to "wait", show loader instead of form
                 if (execute && execute.wait) {
                     state.status = 'processing';
                     state.pendingForm = null;
                     emit('pendingForm', null);
                     emit('wait', typeof execute.wait === 'object' ? execute.wait : { message: String(execute.wait) });
+                    
+                    // Show loader indicator when waiting
+                    if (loaderIndicator) {
+                        loaderIndicator.style.display = 'flex';
+                        const loaderText = loaderIndicator.querySelector('.loader-text');
+                        if (loaderText) {
+                            const waitMsg = typeof execute.wait === 'object' ? execute.wait.message : String(execute.wait);
+                            loaderText.textContent = waitMsg || 'Processing...';
+                        }
+                    }
                     return this;
                 } else {
-                    // Clear wait state when not waiting
+                    // Clear wait state when not waiting - hide loader indicator
                     emit('wait', null);
+                    if (loaderIndicator) {
+                        loaderIndicator.style.display = 'none';
+                    }
                 }
 
                 // Form with choices or input fields
@@ -135,6 +151,18 @@
             setPromisePending: function(pending) {
                 state.promisePending = pending;
                 emit('promisePending', pending);
+                
+                // Update loader indicator directly for API requests
+                const loader = document.getElementById('loaderIndicator');
+                if (loader) {
+                    if (pending) {
+                        loader.classList.add('active');
+                        loader.style.display = 'flex';
+                    } else {
+                        loader.classList.remove('active');
+                        loader.style.display = 'none';
+                    }
+                }
             },
 
             setError: function(error) {

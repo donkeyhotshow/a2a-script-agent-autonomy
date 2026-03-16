@@ -383,6 +383,14 @@
                 store.pushMessage({ content: displayText }, 'user');
             }
 
+            // Show sending state with message text
+            contentEl.innerHTML = `
+                <div class="task-flow-sending">
+                    <p>Sending message: <strong>${escapeHtml(displayText)}</strong></p>
+                    <div class="task-flow-spinner"></div>
+                </div>
+            `;
+
             try {
                 // Start waiting for response BEFORE submitting (prevents race condition)
                 const outcomePromise = waitForFirstResponse(60000, store);
