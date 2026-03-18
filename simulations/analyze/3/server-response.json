@@ -1,21 +1,26 @@
 {
   "success": false,
   "data": {
-    "id": "req_1772854816916_lvhstmrdv",
-    "promiseId": "cmmfrzfkl00026l3c50fgbr2k",
+    "id": "req_1773707081535_3vvp7ihru",
+    "promiseId": "prom_1773707081535_o5bp2nkh8",
     "clientId": "simulation-client",
-    "status": "pending",
+    "status": "processing",
     "priority": 0,
     "context": {
+      "session_id": "stateless",
       "version": "1.0",
-      "session_id": "stateless"
+      "task": "аналіз",
+      "execution": {
+        "action": "analyze"
+      },
+      "llmPromiseId": "af932e78877e4443bfa5cbe9e4c06bc6"
     },
-    "message": null,
+    "message": "опиши поточну архітектуру бекенду",
     "codeBlocks": null,
     "result": null,
     "error": null,
-    "createdAt": "2026-03-07T03:40:16.917Z",
-    "startedAt": null,
+    "createdAt": "2026-03-17T00:24:41.535Z",
+    "startedAt": "2026-03-17T00:24:46.222Z",
     "completedAt": null
   }
 }

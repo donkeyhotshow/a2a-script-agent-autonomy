@@ -351,6 +351,69 @@ curl http://localhost:3000/api/v1/requests/prom_123.../result
 
 ---
 
+## Loader Behavior (Critical)
+
+### Overview
+
+Loader (spinner/loading indicator) is mandatory UI element that shows when the system is processing a request. It is controlled by two levels:
+
+1. **Client (JS)** - Shows loader immediately after user action
+2. **Server (Client API)** - Controls when to hide loader after receiving response
+
+> **Key Principle**: Minimal logic on frontend. Server tells client when to hide loader.
+
+### Dialog Steps
+
+#### Step 1: New Session Panel
+
+- User enters session type and presses Enter
+- **Client** immediately shows loader (replaces input field)
+- **Minimum display time**: 5000ms (always enforced)
+- If server returns `execute` (not `promiseId`) → hide loader after min time
+- If server returns `promiseId` → keep showing until resolved
+
+#### Step 2: Choice Form (Routing)
+
+- User selects option from choices
+- **Client** immediately shows loader with selected option
+- **Minimum display time**: 5000ms
+- Hide after server response + min time elapsed
+
+#### Step 3: Message Sending (LLM Processing)
+
+- User sends message, goes to LLM (long-running)
+- **Client** immediately shows loader (mandatory)
+- If `promiseId` returned → show loader until promise resolves
+- **Page Reload**: If promise still pending, show loader on page load until resolved
+
+### API Response Format
+
+```typescript
+interface ServerResponse {
+    execute?: Execute;
+    context?: Context;
+    promiseId?: string;
+    
+    // Loader control
+    loader?: {
+        show: boolean;
+        message?: string;
+        minTime?: number;  // default: 5000ms
+    };
+}
+```
+
+### Key Files
+
+| File | Purpose |
+|------|---------|
+| `a2a-client/docs/LOADER-BEHAVIOR.md` | Full loader behavior specification |
+| `a2a-client/web/js/task-flow/core.js` | UI coordination, loader logic in run/sendChoice/sendMessageResult |
+| `a2a-client/web/js/session-store.js` | State management, loader flags |
+| `a2a-client/vite-plugin-a2a/routes/stepRoutes.js` | Server API, loader control fields |
+
+---
+
 ## Running Tests
 
 ### Single test file

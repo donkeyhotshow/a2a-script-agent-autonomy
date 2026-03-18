@@ -1,45 +1,26 @@
 {
-  "success": true,
+  "success": false,
   "data": {
-    "id": "req_1772854974667_igiih2okq",
-    "promiseId": "cmmfs2tak00076l3cezq55o4b",
+    "id": "req_1773707235562_12wcyon5u",
+    "promiseId": "prom_1773707235562_fi3k1zml0",
     "clientId": "simulation-client",
-    "status": "completed",
+    "status": "processing",
     "priority": 0,
     "context": {
+      "session_id": "stateless",
       "version": "1.0",
-      "session_id": "stateless"
+      "task": "проаналізуй архітектуру проекту",
+      "execution": {
+        "action": "analyze"
+      },
+      "llmPromiseId": "f21cdfd6df0f4c6aaf719d997407a711"
     },
     "message": null,
     "codeBlocks": null,
-    "result": {
-      "graph": {
-        "entities": [],
-        "relations": []
-      },
-      "context": {
-        "graph": {
-          "entities": [],
-          "relations": []
-        },
-        "request_files": [
-          "No entities recognized"
-        ]
-      },
-      "missing": [
-        "No entities recognized"
-      ],
-      "outcome": "graph_incomplete",
-      "questions": [
-        "Please provide the relevant code files (controller, model, service, or Vue components)."
-      ],
-      "request_files": [
-        "No entities recognized"
-      ]
-    },
+    "result": null,
     "error": null,
-    "createdAt": "2026-03-07T03:42:54.669Z",
-    "startedAt": "2026-03-07T03:43:10.881Z",
-    "completedAt": "2026-03-07T03:43:10.888Z"
+    "createdAt": "2026-03-17T00:27:15.562Z",
+    "startedAt": "2026-03-17T00:27:16.420Z",
+    "completedAt": null
   }
 }

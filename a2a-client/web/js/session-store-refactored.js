@@ -4,9 +4,9 @@
  * Backward compatible global exports
  */
 
-import { SessionStoreCore } from './core/SessionStoreCore.js';
-import { SessionStorageAPI } from './storage/SessionStorageAPI.js';
-import { normalizeMessage } from './utils/normalizers.js';
+// DISABLED: session-store-refactored.js - conflicting with inline session-store.js
+// Module imports removed to prevent loading broken SessionStoreCore
+// Fixed by using primary session-store.js inline implementation
 
 (function (global) {
     'use strict';

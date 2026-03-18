@@ -4,7 +4,12 @@
 
 import dotenv from 'dotenv';
 import path from 'path';
+import {fileURLToPath} from 'url';
 import {z} from 'zod';
+
+// ESM __dirname equivalent
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Load .env
 const serverRoot = path.resolve(__dirname, '../..');

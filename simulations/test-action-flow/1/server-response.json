@@ -1,49 +1,52 @@
 {
   "success": true,
   "data": {
-    "id": "req_1772855030209_fd5wixic1",
-    "promiseId": "cmmfs405e00116l3cpx1e4ygo",
+    "id": "req_1773707787523_slsfm6u6g",
+    "promiseId": "prom_1773707787523_v069demu1",
     "clientId": "simulation-client",
     "status": "completed",
     "priority": 0,
     "context": {
-      "task": "тест вибору дій",
+      "session_id": "stateless",
       "version": "1.0",
-      "session_id": "stateless"
+      "task": "тест вибору дій"
     },
     "message": "тест вибору дій",
     "codeBlocks": null,
     "result": {
-      "graph": {
-        "entities": [],
-        "relations": []
-      },
+      "outcome": "action_proposal",
       "context": {
-        "graph": {
-          "entities": [],
-          "relations": []
+        "session_id": "stateless",
+        "version": "1.0",
+        "execution": {
+          "action": "task",
+          "step": "router"
         },
-        "new_task": [
-          "тест вибору дій"
-        ],
-        "request_files": [
-          "No entities recognized"
-        ]
+        "task": "тест вибору дій"
       },
-      "missing": [
-        "No entities recognized"
-      ],
-      "outcome": "graph_incomplete",
-      "questions": [
-        "Please provide the relevant code files (controller, model, service, or Vue components)."
-      ],
-      "request_files": [
-        "No entities recognized"
-      ]
+      "execute": {
+        "form": {
+          "title": "Оберіть спосіб виконання",
+          "choices": [
+            {
+              "id": "dialog",
+              "label": "AI діалог з користувачем"
+            },
+            {
+              "id": "auto-ai",
+              "label": "AI Action Generator — сгенерировать экшен с помощью LLM"
+            },
+            {
+              "id": "task-decomposition",
+              "label": "Декомпозиция задачи вручную"
+            }
+          ]
+        }
+      }
     },
     "error": null,
-    "createdAt": "2026-03-07T03:43:50.211Z",
-    "startedAt": "2026-03-07T03:43:50.965Z",
-    "completedAt": "2026-03-07T03:43:50.971Z"
+    "createdAt": "2026-03-17T00:36:27.523Z",
+    "startedAt": "2026-03-17T00:36:32.137Z",
+    "completedAt": "2026-03-17T00:36:32.144Z"
   }
 }

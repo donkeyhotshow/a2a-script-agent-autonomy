@@ -193,11 +193,15 @@
                 let sessionData = null;
                 try {
                     if (global.apiIntegration?.getSession) {
-                        const projectId = await global.ProjectManager?.getSelectedProjectId?.() || global.SessionStore?.projectId;
+                        const projectId = await global.ProjectManager?.getSelectedProjectId?.() || global.SessionStore?.projectId || null;
                         sessionData = await global.apiIntegration.getSession(sessionId, projectId);
                     }
                 } catch (err) {
                     console.warn('[WindowState] Failed to load session data:', err);
+                }
+
+                if (!sessionData) {
+                    console.warn(`[WindowState] Session ${sessionId} not found - creating window with empty store`);
                 }
 
                 // Create floating window directly (no PanelManager dependency)
@@ -265,33 +269,42 @@
 
                     if (store && sessionData) {
                         // Set session info
-                        if (sessionData.id) {
-                            store.setSession(sessionData.id, sessionData.projectId);
-                        }
-                        // Load messages if available from session data
-                        if (sessionData.messages && Array.isArray(sessionData.messages) && sessionData.messages.length > 0) {
-                            store.setMessages(sessionData.messages);
-                            // Save messages for restore after TaskFlow reset
-                            savedMessages = sessionData.messages;
-                        } else {
-                            // Check if messages might be in context
-                            if (sessionData.context?.messages) {
-                                store.setMessages(sessionData.context.messages);
-                                savedMessages = sessionData.context.messages;
-                            }
-                        }
+                    if (sessionData?.id) {
+                        store.setSession(sessionData.id, sessionData.projectId);
+                    }
+                    // Load messages if available from session data
+                    if (sessionData?.messages && Array.isArray(sessionData.messages) && sessionData.messages.length > 0) {
+                        store.setMessages(sessionData.messages);
+                        // Save messages for restore after TaskFlow reset
+                        savedMessages = sessionData.messages;
+                    } else if (sessionData?.context?.messages && Array.isArray(sessionData.context.messages)) {
+                        store.setMessages(sessionData.context.messages);
+                        savedMessages = sessionData.context.messages;
+                    }
                         // Load context/execute if available
-                        if (sessionData.context) {
+                        if (sessionData?.context) {
                             store.setContext(sessionData.context);
                         }
-                        const execute = sessionData.execute ?? sessionData.context?.execute ?? sessionData.currentExecute;
+                        const execute = sessionData?.execute ?? sessionData?.context?.execute ?? sessionData?.currentExecute;
                         console.log('[WindowState] Setting execute:', execute);
                         if (execute) {
                             store.setExecute(execute);
                         }
                         // Set status
-                        if (sessionData.status) {
+                        if (sessionData?.status) {
                             store.setStatus(sessionData.status);
+                        }
+
+                        // Check for pending promise - restore loader if needed
+                        if (sessionData.promiseId) {
+                            console.log('[WindowState] Found pending promise:', sessionData.promiseId);
+                            store.setPromisePending(true);
+                            // Start loader and polling
+                            if (typeof store.startLoader === 'function') {
+                                store.startLoader();
+                            }
+                            // Start polling for promise result
+                            this._pollPromise(sessionData.promiseId, sessionId, store);
                         }
                     }
 
@@ -299,7 +312,7 @@
                     // But only if we haven't already set messages above
                     const storeState = store?.getState?.() || {};
                     const storeHasMessages = store && (storeState.messages?.length > 0);
-                    if (!storeHasMessages && sessionData.messages === undefined) {
+                    if (!storeHasMessages && sessionData?.messages === undefined) {
                         try {
                             const adapter = global.SessionManagerAdapter || global.SessionManager;
                             if (adapter?.getConversation) {
@@ -410,6 +423,55 @@
             } catch (e) {
                 return false;
             }
+        },
+
+        /**
+         * Poll for promise result and restore UI when done
+         */
+        async _pollPromise(promiseId, sessionId, store) {
+            if (!promiseId || !sessionId || !store) return;
+            
+            const poll = async () => {
+                try {
+                    const response = await fetch(`/api/a2a/sessions/${sessionId}/promise/${promiseId}`);
+                    const data = await response.json();
+                    
+                    if (data.status === 'completed' || data.status === 'done') {
+                        // Promise resolved - update store and stop loader
+                        console.log('[WindowState] Promise completed:', promiseId);
+                        
+                        if (data.result?.execute) {
+                            store.setExecute(data.result.execute);
+                        }
+                        if (data.result?.context) {
+                            store.setContext(data.result.context);
+                        }
+                        store.setPromisePending(false);
+                        
+                        // Stop loader
+                        if (typeof store.stopLoader === 'function') {
+                            store.stopLoader();
+                        }
+                    } else if (data.status === 'failed' || data.status === 'error') {
+                        // Promise failed
+                        console.error('[WindowState] Promise failed:', promiseId);
+                        store.setPromisePending(false);
+                        if (typeof store.stopLoader === 'function') {
+                            store.stopLoader();
+                        }
+                    } else {
+                        // Still processing - continue polling
+                        setTimeout(poll, 2000);
+                    }
+                } catch (err) {
+                    console.error('[WindowState] Promise poll error:', err);
+                    // Retry on error
+                    setTimeout(poll, 5000);
+                }
+            };
+            
+            // Start polling
+            poll();
         },
 
         /**

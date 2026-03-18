@@ -1,45 +1,27 @@
 {
-  "success": true,
+  "success": false,
   "data": {
-    "id": "req_1772855002947_u4tqs8ob4",
-    "promiseId": "cmmfs3f44000d6l3c7ckbtzlh",
+    "id": "req_1773707390532_9cu8byqbg",
+    "promiseId": "prom_1773707390532_d8vkp3865",
     "clientId": "simulation-client",
-    "status": "completed",
+    "status": "processing",
     "priority": 0,
     "context": {
+      "session_id": "stateless",
       "version": "1.0",
-      "session_id": "stateless"
+      "task": "Refactor the API: add a logging middleware, add a health check endpoint, update the API tests, run lint and tests, and write a short report to .carrier/reports/.",
+      "execution": {
+        "action": "auto-ai",
+        "step": "write_report"
+      },
+      "llmPromiseId": "334dd0842fb94ffaa826e2123dab1704"
     },
     "message": null,
     "codeBlocks": null,
-    "result": {
-      "graph": {
-        "entities": [],
-        "relations": []
-      },
-      "context": {
-        "graph": {
-          "entities": [],
-          "relations": []
-        },
-        "request_files": [
-          "No entities recognized"
-        ]
-      },
-      "missing": [
-        "No entities recognized"
-      ],
-      "outcome": "graph_incomplete",
-      "questions": [
-        "Please provide the relevant code files (controller, model, service, or Vue components)."
-      ],
-      "request_files": [
-        "No entities recognized"
-      ]
-    },
+    "result": null,
     "error": null,
-    "createdAt": "2026-03-07T03:43:22.949Z",
-    "startedAt": "2026-03-07T03:43:23.226Z",
-    "completedAt": "2026-03-07T03:43:23.235Z"
+    "createdAt": "2026-03-17T00:29:50.532Z",
+    "startedAt": "2026-03-17T00:29:56.624Z",
+    "completedAt": null
   }
 }

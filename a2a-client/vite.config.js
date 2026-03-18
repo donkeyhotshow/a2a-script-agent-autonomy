@@ -3,7 +3,7 @@ import vitePluginA2a from './vite-plugin-a2a.js';
 const devPort = Number(process.env.PORT) || 5173;
 const clientApiPort = Number(process.env.CLIENT_API_PORT) || 3001;
 const clientApiTarget = (process.env.CLIENT_API_URL || `http://localhost:${clientApiPort}`).replace(/\/$/, '');
-const apiProxyContext = '^(?!/api/a2a|/api/storage)/api';
+const apiProxyContext = '/api';
 
 /** @type {import('vite').UserConfig} */
 export default {

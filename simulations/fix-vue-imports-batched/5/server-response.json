@@ -1,45 +1,82 @@
 {
   "success": true,
   "data": {
-    "id": "req_1772855024242_64vl127ta",
-    "promiseId": "cmmfs3vjn000v6l3ch14879n2",
+    "id": "req_1773707737602_vrdxayg7f",
+    "promiseId": "prom_1773707737602_5e0x7w6g0",
     "clientId": "simulation-client",
     "status": "completed",
     "priority": 0,
     "context": {
+      "session_id": "stateless",
       "version": "1.0",
-      "session_id": "stateless"
+      "task": "виправити імпорти у vue компонентах",
+      "execution": {
+        "action": "fix-vue-imports-batched",
+        "step": "search-exporter",
+        "progress": {
+          "totalFiles": 50,
+          "currentFile": 2
+        }
+      }
     },
     "message": null,
     "codeBlocks": null,
     "result": {
-      "graph": {
-        "entities": [],
-        "relations": []
-      },
+      "outcome": "action_proposal",
       "context": {
-        "graph": {
-          "entities": [],
-          "relations": []
+        "version": "1.0.0",
+        "session_id": "stateless"
+      },
+      "activated_neuron_ids": [
+        "fix-vue-imports"
+      ],
+      "action": {
+        "id": "fix-vue-imports",
+        "title": "Исправить сломанные импорты в Vue файлах.",
+        "matchScore": 1.5,
+        "currentStep": {
+          "id": "vue-import-detect",
+          "title": "Определить сломанные импорты в Vue файлах.",
+          "code": "import { readdirSync, readFileSync, existsSync } from 'node:fs';\nimport { join, dirname, resolve } from 'node:path';\n\ninterface BrokenImport {\n  file: string;\n  line: number;\n  specifier: string;\n}\n\nconst IMPORT_RE = /(?:from\\s+|require\\s*\\(\\s*)['\"]([^'\"]+)['\"]/g;\n\nfunction stripQuery(s: string): string {\n  return s.replace(/[?#].*$/, '');\n}\n\nexport default async function run(input: { rootDir: string }): Promise<{ broken_imports: BrokenImport[] }> {\n  const root = resolve(input.rootDir || '.');\n  const broken: BrokenImport[] = [];\n  \n  const files = collectFiles(root, ['.ts', '.tsx', '.vue']);\n  \n  for (const file of files) {\n    const content = readFileSync(file, 'utf-8');\n    const lines = content.split('\\n');\n    \n    for (let i = 0; i < lines.length; i++) {\n      const line = lines[i];\n      if (!line) continue;\n      \n      IMPORT_RE.lastIndex = 0;\n      let m: RegExpExecArray | null;\n      \n      while ((m = IMPORT_RE.exec(line)) !== null) {\n        const spec = stripQuery(m[1] || '');\n        if (isPackageImport(spec)) continue;\n        \n        if (spec.startsWith('.')) {\n          const resolved = resolve(dirname(file), spec);\n          if (!resolveExists(resolved)) {\n            broken.push({ file, line: i + 1, specifier: spec });\n          }\n        }\n      }\n    }\n  }\n  \n  return { broken_imports: broken };\n}\n\nfunction isPackageImport(spec: string): boolean {\n  if (spec.startsWith('.')) return false;\n  if (spec.startsWith('@/')) return false;\n  if (/^@(components|utils|lib|features)\\//.test(spec)) return false;\n  if (/^@[\\w-]+\\//.test(spec)) return true;\n  if (spec.startsWith('#')) return true;\n  return !spec.includes('/');\n}\n\nfunction collectFiles(dir: string, exts: string[], out: string[] = []): string[] {\n  const entries = readdirSync(dir, { withFileTypes: true });\n  for (const e of entries) {\n    const full = join(dir, e.name);\n    if (e.name === 'node_modules') continue;\n    if (e.isDirectory()) collectFiles(full, exts, out);\n    else if (exts.some((x) => e.name.endsWith(x))) out.push(full);\n  }\n  return out;\n}\n\nfunction resolveExists(p: string): boolean {\n  return existsSync(p) || existsSync(p + '.ts') || existsSync(p + '.vue') || existsSync(join(p, 'index.ts'));\n}"
         },
-        "request_files": [
-          "No entities recognized"
+        "nextSteps": [
+          {
+            "id": "vue-import-resolve",
+            "title": "Разрешить правильные пути для сломанных импортов."
+          },
+          {
+            "id": "vue-import-apply",
+            "title": "Применить исправления к файлам."
+          },
+          {
+            "id": "vue-import-cleanup",
+            "title": "Очистить временные файлы."
+          }
         ]
       },
-      "missing": [
-        "No entities recognized"
-      ],
-      "outcome": "graph_incomplete",
-      "questions": [
-        "Please provide the relevant code files (controller, model, service, or Vue components)."
-      ],
-      "request_files": [
-        "No entities recognized"
-      ]
+      "execute": {
+        "form": {
+          "title": "Оберіть спосіб виконання",
+          "choices": [
+            {
+              "id": "fix-vue-imports",
+              "label": "Исправить сломанные импорты в Vue файлах."
+            },
+            {
+              "id": "auto-ai",
+              "label": "AI Action Generator — сгенерировать экшен с помощью LLM"
+            },
+            {
+              "id": "task-decomposition",
+              "label": "Декомпозиция задачи вручную"
+            }
+          ]
+        }
+      }
     },
     "error": null,
-    "createdAt": "2026-03-07T03:43:44.243Z",
-    "startedAt": "2026-03-07T03:43:44.878Z",
-    "completedAt": "2026-03-07T03:43:44.884Z"
+    "createdAt": "2026-03-17T00:35:37.602Z",
+    "startedAt": "2026-03-17T00:35:42.093Z",
+    "completedAt": "2026-03-17T00:35:42.096Z"
   }
 }

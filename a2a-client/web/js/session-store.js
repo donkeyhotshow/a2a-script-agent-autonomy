@@ -1,12 +1,177 @@
+/**
+ * SessionStore - Главное хранилище состояния сессии
+ * 
+ * Иерархия классов:
+ * EventEmitter (abstract)
+ * └── SessionStoreCore extends EventEmitter
+ *     └── SessionStore extends SessionStoreCore
+ * 
+ * Использует:
+ * - DialogState - управление состоянием диалога
+ * - DialogLoader - управление loader state  
+ * - DialogPromise - управление async promise
+ * 
+ * Обратная совместимость: window.SessionStore работает как раньше
+ */
+
 (function (global) {
     'use strict';
 
-    // Inline constants
-    var MAX_MESSAGES = 100;
+    // Импорт модулей (ES6 imports для Node/Vite совместимости)
+    // В браузере без сборщика модули будут недоступны - используем inline версии
+    let SessionStoreCore, EventEmitter, DialogState, DialogLoader, DialogPromise;
 
-    // Inline simple normalizeMessage (legacy - for new code use utils/normalizers.js)
-    // NOTE: This is a DUPLICATE of the function in utils/normalizers.js
-    // For new code, import normalizeMessage from './utils/normalizers.js' instead
+    // ES6 imports disabled - using inline implementations
+    // try { ... import.meta block removed to fix SyntaxError in classic script }
+
+    // === INLINE DEFINITIONS (fallback) ===
+    
+    // EventEmitter (inline - если ES6 модули недоступны)
+    const createEventEmitter = function() {
+        const listeners = new Map();
+        
+        return {
+            on: function(event, callback) {
+                if (!listeners.has(event)) listeners.set(event, new Set());
+                listeners.get(event).add(callback);
+                return () => this.off(event, callback);
+            },
+            once: function(event, callback) {
+                const wrapper = (...args) => {
+                    this.off(event, wrapper);
+                    callback.apply(this, args);
+                };
+                return this.on(event, wrapper);
+            },
+            off: function(event, callback) {
+                const handlers = listeners.get(event);
+                if (handlers) {
+                    handlers.delete(callback);
+                    if (handlers.size === 0) listeners.delete(event);
+                }
+            },
+            emit: function(event, payload) {
+                const handlers = listeners.get(event);
+                if (!handlers) return;
+                handlers.forEach(handler => {
+                    try { handler(payload); } 
+                    catch (err) { console.error('[EventEmitter] Handler failed:', event, err); }
+                });
+            }
+        };
+    };
+
+    // DialogLoader (inline)
+    const MINIMUM_LOADER_TIME = 5000;
+    const createDialogLoader = function() {
+        let active = false;
+        let minEndTime = null;
+        let timeoutId = null;
+        const emitter = createEventEmitter();
+        
+        return {
+            getState: () => ({ active, minEndTime, canHide: minEndTime && Date.now() >= minEndTime }),
+            get isActive() { return active; },
+            start: function() {
+                if (active) return this;
+                active = true;
+                minEndTime = Date.now() + MINIMUM_LOADER_TIME;
+                emitter.emit('loader', { active: true, minEndTime });
+                return this;
+            },
+            stop: function() {
+                const now = Date.now();
+                const canHide = minEndTime === null || now >= minEndTime;
+                if (canHide || !active) {
+                    this._forceStop();
+                } else {
+                    if (timeoutId) clearTimeout(timeoutId);
+                    timeoutId = setTimeout(() => this._forceStop(), minEndTime - now);
+                }
+                return this;
+            },
+            _forceStop: function() {
+                if (timeoutId) { clearTimeout(timeoutId); timeoutId = null; }
+                if (active) {
+                    active = false;
+                    minEndTime = null;
+                    emitter.emit('loader', { active: false });
+                }
+            },
+            reset: function() { this._forceStop(); return this; },
+            on: (...args) => emitter.on(...args),
+            off: (...args) => emitter.off(...args),
+            destroy: function() { this._forceStop(); }
+        };
+    };
+
+    // DialogPromise (inline)
+    const PROMISE_POLL_INTERVAL = 5000;
+    const createDialogPromise = function() {
+        let promiseId = null;
+        let pending = false;
+        let status = null;
+        let pollTimer = null;
+        const emitter = createEventEmitter();
+        
+        return {
+            getState: () => ({ promiseId, pending, status }),
+            get isPending() { return pending; },
+            get promiseId() { return promiseId; },
+            setPending: function(p) { pending = p; emitter.emit('promisePending', p); return this; },
+            setPromiseId: function(pid) {
+                promiseId = pid;
+                if (pid) { pending = true; status = 'pending'; }
+                else { pending = false; status = null; }
+                emitter.emit('promiseId', pid);
+                emitter.emit('promisePending', pending);
+                return this;
+            },
+            setStatus: function(s) { status = s; emitter.emit('status', s); return this; },
+            startPolling: function(checkFn) {
+                if (!promiseId) return this;
+                this._stopPolling();
+                pollTimer = setInterval(async () => {
+                    try {
+                        const result = await checkFn(promiseId);
+                        if (!result) return;
+                        if (result.completed || result.status === 'completed' || result.status === 'done') {
+                            this._stopPolling();
+                            this.setPending(false);
+                            this.setStatus('completed');
+                            emitter.emit('resolved', { promiseId, result: result.result, execute: result.execute });
+                        }
+                        if (result.status === 'failed' || result.status === 'error') {
+                            this._stopPolling();
+                            this.setPending(false);
+                            this.setStatus('failed');
+                            emitter.emit('rejected', { promiseId, error: result.error || 'Promise failed' });
+                        }
+                    } catch (err) { console.error('[DialogPromise] Polling error:', err); }
+                }, PROMISE_POLL_INTERVAL);
+                return this;
+            },
+            _stopPolling: function() {
+                if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+                return this;
+            },
+            stopPolling: function() { return this._stopPolling(); },
+            reset: function() {
+                this._stopPolling();
+                promiseId = null;
+                pending = false;
+                status = null;
+                emitter.emit('promisePending', false);
+                emitter.emit('reset');
+                return this;
+            },
+            on: (...args) => emitter.on(...args),
+            off: (...args) => emitter.off(...args),
+            destroy: function() { this._stopPolling(); }
+        };
+    };
+
+    // normalizeMessage (inline)
     function normalizeMessage(msg, role) {
         if (!msg || typeof msg !== 'object') {
             return { content: String(msg || ''), role: role || 'user', timestamp: Date.now() };
@@ -20,9 +185,11 @@
         };
     }
 
-    // Inline SessionStoreCore (simplified)
+    const MAX_MESSAGES = 100;
+
+    // === SessionStoreCore (inline) ===
     function createSessionStoreCore() {
-        var state = {
+        const state = {
             sessionId: null,
             projectId: null,
             messages: [],
@@ -31,24 +198,52 @@
             status: 'idle',
             pendingForm: null,
             lastError: null,
-            promisePending: false
+            promisePending: false,
+            _waitIndicatorActive: false
         };
-        var listeners = {};
+        const listeners = {};
+        
+        const loader = createDialogLoader();
+        const promise = createDialogPromise();
+        
+        // Forward events
+        loader.on('loader', (data) => emit('loader', data));
+        promise.on('promisePending', (p) => emit('promisePending', p));
+        promise.on('resolved', (data) => emit('promiseResolved', data));
+        promise.on('rejected', (data) => emit('promiseError', data));
 
         function emit(event, payload) {
-            var handlers = listeners[event];
+            const handlers = listeners[event];
             if (!handlers) return;
-            for (var i = 0; i < handlers.length; i++) {
-                try {
-                    handlers[i](payload);
-                } catch (err) {
-                    console.error('[SessionStore] Handler failed:', event, err);
-                }
-            }
+            handlers.forEach(handler => {
+                try { handler(payload); }
+                catch (err) { console.error('[SessionStore] Handler failed:', event, err); }
+            });
         }
 
         return {
-            getState: function() { return JSON.parse(JSON.stringify(state)); },
+            getState: function() { 
+                return { 
+                    ...state, 
+                    loaderActive: loader.isActive,
+                    promisePending: promise.isPending
+                }; 
+            },
+            
+            on: function(event, handler) {
+                if (!listeners[event]) listeners[event] = [];
+                listeners[event].push(handler);
+                return () => this.off(event, handler);
+            },
+            
+            off: function(event, handler) {
+                if (!listeners[event]) return;
+                const idx = listeners[event].indexOf(handler);
+                if (idx >= 0) listeners[event].splice(idx, 1);
+            },
+
+            emit: emit,
+
             get sessionId() { return state.sessionId; },
             get projectId() { return state.projectId; },
             get execute() { return state.execute; },
@@ -58,76 +253,77 @@
             get messages() { return state.messages.slice(); },
 
             isWaitingForInput: function() {
-                return state.status === 'waiting' || state.pendingForm || (state.execute && state.execute.form && (state.execute.form.choices?.length > 0 || state.execute.form.input));
+                return state.status === 'waiting' || state.pendingForm || 
+                       (state.execute && state.execute.form && (state.execute.form.choices?.length > 0 || state.execute.form.input));
             },
 
+            // Loader
+            startLoader: function() { loader.start(); return this; },
+            stopLoader: function() { loader.stop(); return this; },
+            getLoaderState: function() { return loader.getState(); },
+
+            // Promise
+            setPromisePending: function(pending) { promise.setPending(pending); return this; },
+            setPromiseId: function(promiseId) { promise.setPromiseId(promiseId); return this; },
+            startPromisePolling: function(checkFn) { promise.startPolling(checkFn); return this; },
+            stopPromisePolling: function() { promise.stopPolling(); return this; },
+
             reset: function(sessionId, projectId) {
-                state = {
-                    sessionId: sessionId || null,
-                    projectId: projectId || null,
-                    messages: [],
-                    execute: null,
-                    context: null,
-                    status: sessionId ? 'created' : 'idle',
-                    pendingForm: null,
-                    promisePending: false
-                };
+                state.sessionId = sessionId || null;
+                state.projectId = projectId || null;
+                state.messages = [];
+                state.execute = null;
+                state.context = null;
+                state.status = sessionId ? 'created' : 'idle';
+                state.pendingForm = null;
+                state.lastError = null;
+                state.promisePending = false;
+                state._waitIndicatorActive = false;
+                loader.reset();
+                promise.reset();
                 emit('reset', this.getState());
+                return this;
             },
 
             setSession: function(sessionId, projectId) {
                 state.sessionId = sessionId;
                 if (projectId) state.projectId = projectId;
                 emit('session', sessionId);
+                return this;
             },
 
             setExecute: function(execute) {
+                // Wait indicator
+                if (state._waitIndicatorActive && execute && !execute.wait) {
+                    state._waitIndicatorActive = false;
+                }
+
                 state.execute = execute || null;
-                emit('execute', state.execute);
                 state.promisePending = false;
+                promise.setPending(false);
+                
+                emit('execute', state.execute);
                 emit('promisePending', false);
 
-                // Update loader indicator
-                const loaderIndicator = document.getElementById('loaderIndicator');
-                
-                // If server tells us to "wait", show loader instead of form
                 if (execute && execute.wait) {
+                    state._waitIndicatorActive = true;
                     state.status = 'processing';
                     state.pendingForm = null;
                     emit('pendingForm', null);
                     emit('wait', typeof execute.wait === 'object' ? execute.wait : { message: String(execute.wait) });
-                    
-                    // Show loader indicator when waiting
-                    if (loaderIndicator) {
-                        loaderIndicator.style.display = 'flex';
-                        const loaderText = loaderIndicator.querySelector('.loader-text');
-                        if (loaderText) {
-                            const waitMsg = typeof execute.wait === 'object' ? execute.wait.message : String(execute.wait);
-                            loaderText.textContent = waitMsg || 'Processing...';
-                        }
-                    }
-                    return this;
                 } else {
-                    // Clear wait state when not waiting - hide loader indicator
                     emit('wait', null);
-                    if (loaderIndicator) {
-                        loaderIndicator.style.display = 'none';
+                    
+                    var hasForm = execute && execute.form && ((execute.form.choices && execute.form.choices.length > 0) || execute.form.input);
+                    if (hasForm) {
+                        state.pendingForm = execute.form;
+                        state.status = 'waiting';
+                        emit('pendingForm', execute.form);
+                    } else {
+                        state.pendingForm = null;
+                        emit('pendingForm', null);
                     }
                 }
-
-                // Form with choices or input fields
-                var hasForm = execute && execute.form && ((execute.form.choices && execute.form.choices.length > 0) || execute.form.input);
-                if (hasForm) {
-                    state.pendingForm = execute.form;
-                    state.status = 'waiting';
-                    emit('pendingForm', execute.form);
-                } else {
-                    state.pendingForm = null;
-                    emit('pendingForm', null);
-                }
-
-                // Don't add message to history here - UI will display it from execute.message
-                // This prevents duplicates with messages from API
 
                 return this;
             },
@@ -137,32 +333,14 @@
                 state.messages = state.messages.concat([normalized]).slice(-MAX_MESSAGES);
                 emit('messages', state.messages.slice());
                 emit('message', normalized);
-            },
-
-            on: function(event, callback) {
-                if (!listeners[event]) listeners[event] = [];
-                listeners[event].push(callback);
-                return function() { 
-                    var idx = listeners[event].indexOf(callback);
-                    if (idx > -1) listeners[event].splice(idx, 1);
-                };
+                return this;
             },
 
             setPromisePending: function(pending) {
                 state.promisePending = pending;
+                promise.setPending(pending);
                 emit('promisePending', pending);
-                
-                // Update loader indicator directly for API requests
-                const loader = document.getElementById('loaderIndicator');
-                if (loader) {
-                    if (pending) {
-                        loader.classList.add('active');
-                        loader.style.display = 'flex';
-                    } else {
-                        loader.classList.remove('active');
-                        loader.style.display = 'none';
-                    }
-                }
+                return this;
             },
 
             setError: function(error) {
@@ -170,6 +348,7 @@
                 state.status = 'error';
                 emit('error', error);
                 this.pushMessage(error && error.message || String(error), 'system');
+                return this;
             },
 
             createSession: function(session) {
@@ -180,14 +359,11 @@
                 }
                 this.reset(sid, session.projectId || null);
                 emit('sessionCreated', { id: sid });
-            },
-
-            // Expose emit for external use (e.g., setContext, setStatus)
-            emit: emit
+            }
         };
     }
 
-    // Inline SessionStorageAPI (simplified fetch)
+    // SessionStorageAPI (inline)
     function createSessionStorageAPI(storageBase, storageMode) {
         return {
             createSessionWithForm: function(title) {
@@ -215,19 +391,16 @@
         this._storageMode = options.storageMode || 'storage';
 
         // Storage mode methods
-this.setStorageMode = (mode) => {
+        this.setStorageMode = (mode) => {
             this._storageMode = mode;
-            if (this.core && typeof this.core.emit === 'function') {
-                this.core.emit('storageMode', mode);
-            }
+            this.core?.emit?.('storageMode', mode);
+            return this;
         };
 
-// Proxy core methods
+        // Proxy core methods
         this.getState = function() { return this.core.getState(); };
         this.setSession = function() { return this.core.setSession.apply(this.core, arguments); };
         this.setExecute = function() { 
-            // Don't add message to history here - it's handled by the UI layer
-            // This prevents duplicates with messages from API
             return this.core.setExecute.apply(this.core, arguments); 
         };
         this.pushMessage = function() { return this.core.pushMessage.apply(this.core, arguments); };
@@ -235,6 +408,11 @@ this.setStorageMode = (mode) => {
         this.reset = function() { return this.core.reset.apply(this.core, arguments); };
         this.setPromisePending = function() { return this.core.setPromisePending.apply(this.core, arguments); };
         this.isWaitingForInput = function() { return this.core.isWaitingForInput(); };
+
+        // Loader management - proxy to core
+        this.startLoader = function() { return this.core.startLoader(); };
+        this.stopLoader = function() { return this.core.stopLoader(); };
+        this.getLoaderState = function() { return this.core.getLoaderState(); };
 
         // Expose core properties for window-events.js compatibility
         Object.defineProperty(this, 'execute', {
@@ -252,17 +430,9 @@ this.setStorageMode = (mode) => {
 
         // Legacy API for window-state.js compatibility
         this.setMessages = function(messages) {
-            if (!this.core) {
-                return;
-            }
-            
-            // Check if messages are already set to avoid duplicates
+            if (!this.core) return;
             const currentMessages = this.core.messages;
-            if (currentMessages && currentMessages.length > 0) {
-                return;
-            }
-            
-            // Just add new messages without resetting
+            if (currentMessages && currentMessages.length > 0) return;
             if (Array.isArray(messages)) {
                 messages.forEach(msg => this.pushMessage(msg, msg.role || 'user'));
             }
@@ -309,4 +479,3 @@ this.setStorageMode = (mode) => {
     global.SessionStore = new SessionStore();
 
 })(typeof window !== 'undefined' ? window : globalThis);
-

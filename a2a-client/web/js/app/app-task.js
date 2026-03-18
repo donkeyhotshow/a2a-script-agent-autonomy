@@ -187,39 +187,12 @@
 
         /**
          * Setup loader indicator for waiting server responses
+         * Note: Global loader is disabled - wait is now shown in each dialog panel
          */
         setupLoaderIndicator() {
-            const loaderIndicator = document.getElementById('loaderIndicator');
-            if (!loaderIndicator) return;
-
-            // Listen for promise pending state changes
-            if (global.SessionStore) {
-                global.SessionStore.on('promisePending', (pending) => {
-                    if (pending) {
-                        loaderIndicator.style.display = 'flex';
-                    } else {
-                        loaderIndicator.style.display = 'none';
-                    }
-                });
-
-                // Also listen for wait indicator
-                global.SessionStore.on('wait', (waitData) => {
-                    if (waitData) {
-                        loaderIndicator.style.display = 'flex';
-                        const loaderText = loaderIndicator.querySelector('.loader-text');
-                        if (loaderText && waitData.message) {
-                            loaderText.textContent = waitData.message;
-                        }
-                    }
-                });
-
-                // Listen for execute to hide loader when we get response
-                global.SessionStore.on('execute', (execute) => {
-                    if (execute && !execute.wait) {
-                        loaderIndicator.style.display = 'none';
-                    }
-                });
-            }
+            // Global loader indicator is disabled - wait is now shown in each dialog panel
+            // This function is kept for backward compatibility but does nothing
+            console.log('[AppTask] Global loader indicator disabled - using panel-based wait elements');
         },
 
         _wireModalContent(type, panel) {

@@ -88,11 +88,13 @@
 <!-- 0. Storage API -->
 <script src="js/storage.js"></script>
 
-<!-- 1. Core State (Refactored - ES6 Modules) -->
-<script type="module" src="js/session-store-refactored.js"></script>
+<!-- 1. Core State - Using fixed classic script version -->
+<script src="js/session-store.js"></script>
 
-<!-- 1b. Legacy (deprecated - for fallback only) -->
-<!-- <script type="module" src="js/session-store.js"></script> -->
+<!-- Refactored version DISABLED (conflicted/broken _emit)
+<script type="module" src="js/session-store-refactored.js"></script> -->
+
+<!-- Legacy commented -->
 
 <!-- 2. Adapters (Backward Compatibility Layer) -->
 <script type="module" src="js/session-store-adapters.js"></script>

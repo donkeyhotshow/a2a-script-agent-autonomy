@@ -1,243 +1,392 @@
 /**
- * SessionStore Core - State management and events
- * Single source of truth for session state
+ * SessionStoreCore - Ядро управления состоянием сессии
+ * Наследует от EventEmitter, использует DialogState для состояния диалога
+ * 
+ * Иерархия:
+ * EventEmitter (abstract)
+ * └── SessionStoreCore extends EventEmitter
+ *     └── SessionStore extends SessionStoreCore
  */
 
-import { normalizeMessage, MAX_MESSAGES } from '../utils/normalizers.js';
+import { EventEmitter } from './EventEmitter.js';
+import { DialogState } from './DialogState.js';
+import { DialogLoader } from './DialogLoader.js';
+import { DialogPromise } from './DialogPromise.js';
 
-export class SessionStoreCore {
-    constructor() {
-        this._state = {
-            sessionId: null,
-            projectId: null,
-            messages: [],
-            execute: null,
-            context: null,
-            status: 'idle',
-            pendingForm: null,
-            lastError: null,
-            promisePending: false,
-            _waitIndicatorActive: false,
-            currentStep: 0,
-            steps: []
-        };
+/**
+ * @typedef {Object} SessionStoreCoreOptions
+ * @property {number} [maxMessages=100] - Максимальное количество сообщений
+ * @property {number} [loaderMinTime=5000] - Минимальное время показа loader
+ * @property {number} [promisePollInterval=5000] - Интервал polling для promise
+ */
 
-        this._listeners = new Map();
+export class SessionStoreCore extends EventEmitter {
+    /**
+     * @param {SessionStoreCoreOptions} [options]
+     */
+    constructor(options = {}) {
+        super();
+        
+        // Сервисы
+        /** @type {DialogState} */
+        this._dialogState = new DialogState({ maxMessages: options.maxMessages });
+        
+        /** @type {DialogLoader} */
+        this._loader = new DialogLoader({ minTime: options.loaderMinTime });
+        
+        /** @type {DialogPromise} */
+        this._promise = new DialogPromise({ pollInterval: options.promisePollInterval });
+        
+        // Перенаправляем события от сервисов
+        this._setupEventForwarding();
+        
+        // Дополнительное состояние
+        this._waitIndicatorActive = false;
     }
 
+    /**
+     * Настроить перенаправление событий от сервисов
+     * @private
+     */
+    _setupEventForwarding() {
+        // DialogLoader events
+        this._loader.on('loader', (data) => {
+            this.emit('loader', data);
+        });
+        
+        // DialogPromise events
+        this._promise.on('promisePending', (pending) => {
+            this.emit('promisePending', pending);
+        });
+        
+        this._promise.on('resolved', (data) => {
+            this.emit('promiseResolved', data);
+        });
+        
+        this._promise.on('rejected', (data) => {
+            this.emit('promiseError', data);
+        });
+    }
+
+    // === State Proxy (делегирование к DialogState) ===
+
+    /**
+     * Получить полное состояние
+     * @returns {Object}
+     */
     getState() {
-        return { ...this._state };
-    }
-
-    // Getters
-    get sessionId() { return this._state.sessionId; }
-    get projectId() { return this._state.projectId; }
-    get messages() { return [...this._state.messages]; }
-    get execute() { return this._state.execute; }
-    get pendingForm() { return this._state.pendingForm; }
-    get context() { return this._state.context; }
-    set context(value) { this._state.context = value; }
-    get status() { return this._state.status; }
-    set status(value) { this._state.status = value; }
-
-    // Computed
-    isWaitingForInput() {
-        return this._state.status === 'waiting' ||
-               this._state.pendingForm !== null ||
-               this._state.execute?.form?.choices?.length > 0 ||
-               this._state.execute?.form?.input;
-    }
-
-    isActive() {
-        return this._state.status === 'active' || this._state.status === 'waiting';
-    }
-
-    isInputBlocked() {
-        return this._state.promisePending || this._state.status === 'loading';
-    }
-
-    setPromisePending(pending) {
-        this._state.promisePending = pending;
-        this._emit('promisePending', pending);
-        return this;
-    }
-
-    // State modifiers
-    reset(sessionId = null, projectId = null) {
-        this._state = {
-            sessionId,
-            projectId,
-            messages: [],
-            execute: null,
-            context: null,
-            status: sessionId ? 'created' : 'idle',
-            pendingForm: null,
-            lastError: null,
-            promisePending: false
+        return {
+            ...this._dialogState.getState(),
+            loaderActive: this._loader.isActive,
+            promisePending: this._promise.isPending,
+            waitIndicatorActive: this._waitIndicatorActive
         };
-        this._emit('reset', this.getState());
+    }
+
+    // Getters - делегирование к _dialogState
+    get sessionId() { return this._dialogState.sessionId; }
+    get projectId() { return this._dialogState.projectId; }
+    get messages() { return this._dialogState.messages; }
+    get execute() { return this._dialogState.execute; }
+    get pendingForm() { return this._dialogState.pendingForm; }
+    get context() { return this._dialogState.context; }
+    set context(value) { this._dialogState.context = value; }
+    get status() { return this._dialogState.status; }
+    set status(value) { this._dialogState.status = value; }
+
+    /**
+     * Ожидает ли ввода
+     * @returns {boolean}
+     */
+    isWaitingForInput() {
+        return this._dialogState.isWaitingForInput();
+    }
+
+    /**
+     * Активен ли диалог
+     * @returns {boolean}
+     */
+    isActive() {
+        return this._dialogState.isActive();
+    }
+
+    /**
+     * Заблокирован ли ввод
+     * @returns {boolean}
+     */
+    isInputBlocked() {
+        return this._promise.isPending || this._dialogState.status === 'loading';
+    }
+
+    // === Loader Management ===
+
+    /**
+     * Запустить loader
+     * @returns {SessionStoreCore}
+     */
+    startLoader() {
+        this._loader.start();
         return this;
     }
 
+    /**
+     * Остановить loader
+     * @returns {SessionStoreCore}
+     */
+    stopLoader() {
+        this._loader.stop();
+        return this;
+    }
+
+    /**
+     * Получить состояние loader
+     * @returns {Object}
+     */
+    getLoaderState() {
+        return this._loader.getState();
+    }
+
+    // === Promise Management ===
+
+    /**
+     * Установить promise pending
+     * @param {boolean} pending
+     * @returns {SessionStoreCore}
+     */
+    setPromisePending(pending) {
+        this._promise.setPending(pending);
+        return this;
+    }
+
+    /**
+     * Установить promiseId
+     * @param {string|null} promiseId
+     * @returns {SessionStoreCore}
+     */
+    setPromiseId(promiseId) {
+        this._promise.setPromiseId(promiseId);
+        return this;
+    }
+
+    /**
+     * Запустить polling для promise
+     * @param {Function} checkFn
+     * @returns {SessionStoreCore}
+     */
+    startPromisePolling(checkFn) {
+        this._promise.startPolling(checkFn);
+        return this;
+    }
+
+    /**
+     * Остановить polling
+     * @returns {SessionStoreCore}
+     */
+    stopPromisePolling() {
+        this._promise.stopPolling();
+        return this;
+    }
+
+    // === State Modifiers ===
+
+    /**
+     * Сбросить состояние
+     * @param {string|null} sessionId
+     * @param {string|null} projectId
+     * @returns {SessionStoreCore}
+     */
+    reset(sessionId = null, projectId = null) {
+        this._dialogState.reset(sessionId, projectId);
+        this._loader.reset();
+        this._promise.reset();
+        this._waitIndicatorActive = false;
+        
+        this.emit('reset', this.getState());
+        return this;
+    }
+
+    /**
+     * Установить сессию
+     * @param {string} sessionId
+     * @param {string|null} [projectId]
+     * @returns {SessionStoreCore}
+     */
     setSession(sessionId, projectId = null) {
-        this._state.sessionId = sessionId;
-        if (projectId) this._state.projectId = projectId;
-        this._emit('session', sessionId);
+        this._dialogState.setSession(sessionId, projectId);
+        this.emit('session', sessionId);
         return this;
     }
 
+    /**
+     * Создать сессию
+     * @param {Object} session
+     * @returns {SessionStoreCore}
+     */
     createSession(session) {
         const { id, sessionId, projectId, task, title } = session || {};
         const sid = id || sessionId;
-        const pid = projectId || this._state.projectId;
+        const pid = projectId || this._dialogState.projectId;
 
         if (!sid) {
-            console.error('[SessionStore] createSession: No session ID provided');
+            console.error('[SessionStoreCore] createSession: No session ID provided');
             return this;
         }
 
         this.reset(sid, pid);
-        this._state.status = 'created';
-        this._emit('sessionCreated', { id: sid, projectId: pid, task, title });
+        this._dialogState.setStatus('created');
+        this.emit('sessionCreated', { id: sid, projectId: pid, task, title });
         return this;
     }
 
+    /**
+     * Установить проект
+     * @param {string} projectId
+     * @returns {SessionStoreCore}
+     */
     setProject(projectId) {
-        this._state.projectId = projectId;
-        this._emit('project', projectId);
+        this._dialogState.setProject(projectId);
+        this.emit('project', projectId);
         return this;
     }
 
+    /**
+     * Установить статус
+     * @param {string} status
+     * @returns {SessionStoreCore}
+     */
     setStatus(status) {
-        this._state.status = status;
-        this._emit('status', status);
+        this._dialogState.setStatus(status);
+        this.emit('status', status);
         return this;
     }
 
+    /**
+     * Установить execute
+     * @param {Object|null} execute
+     * @returns {SessionStoreCore}
+     */
     setExecute(execute) {
-        this._state.execute = execute || null;
-        this._emit('execute', this._state.execute);
-
-        const hadWaitIndicator = this._state._waitIndicatorActive;
-        if (hadWaitIndicator && execute && !execute.wait) {
-            this._state._waitIndicatorActive = false;
+        // Обработка wait индикатора
+        if (this._waitIndicatorActive && execute && !execute.wait) {
+            this._waitIndicatorActive = false;
         }
 
-        this._state.promisePending = false;
-        this._emit('promisePending', false);
+        this._dialogState.setExecute(execute);
+        
+        // Сброс promise pending
+        this._promise.setPending(false);
 
-        // Поддержка формы с choices или input полями
-        if (execute?.form?.choices || execute?.form?.input) {
-            this._state.pendingForm = execute.form;
-            this._state.status = 'waiting';
-            this._emit('pendingForm', execute.form);
+        this.emit('execute', this._dialogState.execute);
+        this.emit('promisePending', false);
+
+        // Emit wait event если есть
+        if (execute?.wait) {
+            this._waitIndicatorActive = true;
+            this.emit('wait', typeof execute.wait === 'object' ? execute.wait : { message: String(execute.wait) });
         } else {
-            this._state.pendingForm = null;
-            this._emit('pendingForm', null);
+            this.emit('wait', null);
         }
-
-        if (execute?.message) {
-            const msg = typeof execute.message === 'string'
-                ? { content: execute.message }
-                : execute.message;
-            this.pushMessage(msg, 'assistant');
-        }
-
-        // Handle auto-execute, finalResult, wait etc. (simplified)
-        // ... (full logic preserved in main file)
 
         return this;
     }
 
+    /**
+     * Установить контекст
+     * @param {Object|null} context
+     * @returns {SessionStoreCore}
+     */
     setContext(context) {
-        this._state.context = context || null;
-        this._emit('context', this._state.context);
+        this._dialogState.setContext(context);
+        this.emit('context', this._dialogState.context);
         return this;
     }
 
+    /**
+     * Установить сообщения
+     * @param {Array} messages
+     * @returns {SessionStoreCore}
+     */
     setMessages(messages) {
-        if (!Array.isArray(messages)) return this;
-        
-        const alreadyNormalized = messages.every(m => m.id && m.timestamp);
-        if (alreadyNormalized && this._state.messages.length > 0) return this;
-        
-        this._state.messages = messages
-            .map(m => normalizeMessage(m, 'assistant'))
-            .filter(Boolean)
-            .slice(-MAX_MESSAGES);
-
-        this._emit('messages', [...this._state.messages]);
+        this._dialogState.setMessages(messages);
+        this.emit('messages', this._dialogState.messages);
         return this;
     }
 
+    /**
+     * Добавить сообщения
+     * @param {Array} messages
+     * @returns {SessionStoreCore}
+     */
     appendMessages(messages) {
-        if (!Array.isArray(messages)) return this;
-        const normalized = messages.map(m => normalizeMessage(m, 'assistant')).filter(Boolean);
-        this._state.messages = [...this._state.messages, ...normalized].slice(-MAX_MESSAGES);
-        this._emit('messages', [...this._state.messages]);
+        this._dialogState.appendMessages(messages);
+        this.emit('messages', this._dialogState.messages);
         return this;
     }
 
+    /**
+     * Добавить сообщение
+     * @param {Object|string} message
+     * @param {string} [role='assistant']
+     * @returns {SessionStoreCore}
+     */
     pushMessage(message, role = 'assistant') {
-        const normalized = normalizeMessage(message, role);
-        if (!normalized) return this;
-        this._state.messages = [...this._state.messages, normalized].slice(-MAX_MESSAGES);
-        this._emit('message', normalized);
-        this._emit('messages', [...this._state.messages]);
+        this._dialogState.pushMessage(message, role);
+        const lastMessage = this._dialogState.messages[this._dialogState.messages.length - 1];
+        this.emit('message', lastMessage);
+        this.emit('messages', this._dialogState.messages);
         return this;
     }
 
+    /**
+     * Установить ошибку
+     * @param {Error|Object|string} error
+     * @returns {SessionStoreCore}
+     */
     setError(error) {
-        this._state.lastError = error;
-        this._state.status = 'error';
-        this._emit('error', error);
-        this.pushMessage({ content: error?.message || String(error), metadata: { type: 'error' } }, 'system');
+        this._dialogState.setError(error);
+        this.emit('error', error);
         return this;
     }
 
+    /**
+     * Применить ответ сервера
+     * @param {Object} data
+     * @returns {SessionStoreCore}
+     */
     applyServerResponse(data) {
         const { sessionId, projectId, status, context, execute, messages, finalResult } = data;
 
         if (projectId) this.setProject(projectId);
         if (sessionId) this.setSession(sessionId, projectId);
-
         if (status) this.setStatus(status);
         if (context) this.setContext(context);
         if (execute) this.setExecute(execute);
         else if (finalResult) this.setExecute({ finalResult });
         if (messages?.length) this.appendMessages(messages);
 
-        this._emit('serverResponse', data);
+        this.emit('serverResponse', data);
         return this;
     }
 
+    /**
+     * Переименовать сессию
+     * @param {string} sessionId
+     * @param {string} newName
+     * @returns {SessionStoreCore}
+     */
     renameSession(sessionId, newName) {
-        this._emit('rename', { sessionId, newName });
+        this.emit('rename', { sessionId, newName });
         return this;
     }
 
-    // Events
-    on(event, callback) {
-        if (typeof callback !== 'function') return () => {};
-        if (!this._listeners.has(event)) this._listeners.set(event, new Set());
-        this._listeners.get(event).add(callback);
-        return () => this.off(event, callback);
-    }
-
-    off(event, callback) {
-        this._listeners.get(event)?.delete(callback);
-    }
-
-    _emit(event, payload) {
-        const handlers = this._listeners.get(event);
-        if (!handlers) return;
-        handlers.forEach(handler => {
-            try {
-                handler(payload);
-            } catch (err) {
-                console.error('[SessionStore] Handler failed for', event, err);
-            }
-        });
+    /**
+     * Уничтожить экземпляр
+     */
+    destroy() {
+        this._loader.destroy();
+        this._promise.destroy();
+        this.removeAllListeners();
     }
 }
 
+export default SessionStoreCore;

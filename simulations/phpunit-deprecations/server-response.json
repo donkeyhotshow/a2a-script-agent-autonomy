@@ -1,49 +1,52 @@
 {
   "success": true,
   "data": {
-    "id": "req_1772855028205_montjbg0y",
-    "promiseId": "cmmfs3ylr000z6l3cgv2v78qx",
+    "id": "req_1773707772835_dyehynyo6",
+    "promiseId": "prom_1773707772835_1ausu8u9b",
     "clientId": "simulation-client",
     "status": "completed",
     "priority": 0,
     "context": {
-      "task": "знайти застарілі PHPUnit методи",
+      "session_id": "stateless",
       "version": "1.0",
-      "session_id": "stateless"
+      "task": "знайти застарілі PHPUnit методи"
     },
     "message": "знайти застарілі PHPUnit методи",
     "codeBlocks": null,
     "result": {
-      "graph": {
-        "entities": [],
-        "relations": []
-      },
+      "outcome": "action_proposal",
       "context": {
-        "graph": {
-          "entities": [],
-          "relations": []
+        "session_id": "stateless",
+        "version": "1.0",
+        "execution": {
+          "action": "task",
+          "step": "router"
         },
-        "new_task": [
-          "знайти застарілі PHPUnit методи"
-        ],
-        "request_files": [
-          "No entities recognized"
-        ]
+        "task": "знайти застарілі PHPUnit методи"
       },
-      "missing": [
-        "No entities recognized"
-      ],
-      "outcome": "graph_incomplete",
-      "questions": [
-        "Please provide the relevant code files (controller, model, service, or Vue components)."
-      ],
-      "request_files": [
-        "No entities recognized"
-      ]
+      "execute": {
+        "form": {
+          "title": "Оберіть спосіб виконання",
+          "choices": [
+            {
+              "id": "dialog",
+              "label": "AI діалог з користувачем"
+            },
+            {
+              "id": "auto-ai",
+              "label": "AI Action Generator — сгенерировать экшен с помощью LLM"
+            },
+            {
+              "id": "task-decomposition",
+              "label": "Декомпозиция задачи вручную"
+            }
+          ]
+        }
+      }
     },
     "error": null,
-    "createdAt": "2026-03-07T03:43:48.207Z",
-    "startedAt": "2026-03-07T03:43:48.937Z",
-    "completedAt": "2026-03-07T03:43:48.941Z"
+    "createdAt": "2026-03-17T00:36:12.835Z",
+    "startedAt": "2026-03-17T00:36:17.147Z",
+    "completedAt": "2026-03-17T00:36:17.150Z"
   }
 }

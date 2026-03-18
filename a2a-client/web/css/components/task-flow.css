@@ -520,6 +520,75 @@
   z-index: 100;
 }
 
+/* Global Loader - Shows as overlay but without dark background */
+.task-flow-global-loader {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: transparent;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 16px;
+  z-index: 10000;
+}
+
+.task-flow-global-loader.active {
+  display: flex;
+}
+
+.task-flow-global-loader p {
+  color: var(--color-text-secondary, #666);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* Inline loader - shown in panel instead of input */
+.task-flow-inline-loader {
+  position: fixed !important;
+  bottom: 20px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  display: none !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 16px 32px !important;
+  gap: 12px !important;
+  background: #fff !important;
+  border: 1px solid #e0e0e0 !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+  z-index: 99999 !important;
+}
+
+.task-flow-inline-loader.active {
+  display: flex !important;
+}
+
+.task-flow-inline-loader .task-flow-spinner {
+  width: 20px;
+  height: 20px;
+  border-width: 2px;
+}
+
+.task-flow-inline-loader p {
+  color: #666;
+  font-size: 14px;
+  margin: 0;
+}
+
+.task-flow-global-loader.active {
+  display: flex;
+}
+
+.task-flow-global-loader p {
+  color: white;
+  font-size: 16px;
+  font-weight: 500;
+}
+
 .task-flow-header {
   display: flex;
   align-items: center;

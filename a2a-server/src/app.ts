@@ -6,6 +6,7 @@ import compression from 'compression';
 import {logger, requestLogger} from './utils/logger.js';
 import {errorHandler} from './middleware/error.middleware.js';
 import routes from './routes/index.js';
+import sessionsRouter from './routes/sessions.routes.js';
 
 const app: Express = express();
 
@@ -22,6 +23,7 @@ app.get('/health', (_req: Request, res: Response) => {
 });
 
 app.use('/api/v1', routes);
+app.use('/api/a2a/sessions', sessionsRouter);
 
 app.use((_req: Request, res: Response) => {
     res.status(404).json({success: false, error: {code: 'NOT_FOUND', message: 'Not found'}});

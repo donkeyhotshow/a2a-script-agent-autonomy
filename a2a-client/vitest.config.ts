@@ -6,8 +6,10 @@ export default defineConfig({
     environment: 'jsdom',
     include: [
       'packages/**/*.{test,spec}.{js,ts}',
-      'tests/**/*.{test,spec}.{js,ts}',
-      'web/js/tests/**/*.{test,spec}.js'
+      'tests/**/*.{test,spec}.{js,ts,mjs}',
+      'web/js/tests/**/*.{test,spec}.js',
+      'tests/unit/**/*.{test,spec}.{js,ts}',
+      'tests/integration/**/*.{test,spec}.{js,ts,mjs}'
     ],
     exclude: [
       '**/node_modules/**',

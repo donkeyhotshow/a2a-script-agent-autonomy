@@ -1,6 +1,7 @@
 {
   "name": "a2a-server",
   "version": "1.0.0",
+  "type": "module",
   "description": "A2A (Agent-to-Agent) Server - Intelligent code analysis and transformation server (stateless edition)",
   "main": "dist/index.js",
   "scripts": {

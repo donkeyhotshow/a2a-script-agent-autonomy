@@ -1,21 +1,26 @@
 {
   "success": false,
   "data": {
-    "id": "req_1772854879626_fieoop8gm",
-    "promiseId": "cmmfs0ryj00046l3cornsixkb",
+    "id": "req_1773707142994_sleq1ohzc",
+    "promiseId": "prom_1773707142994_13blr2c0b",
     "clientId": "simulation-client",
-    "status": "pending",
+    "status": "processing",
     "priority": 0,
     "context": {
+      "session_id": "stateless",
       "version": "1.0",
-      "session_id": "stateless"
+      "task": "аналіз",
+      "execution": {
+        "action": "analyze"
+      },
+      "llmPromiseId": "c85de87193d84a8bb60b84b8fd8695b6"
     },
-    "message": null,
+    "message": "пошукай ще про клієнтський API та web UI",
     "codeBlocks": null,
     "result": null,
     "error": null,
-    "createdAt": "2026-03-07T03:41:19.627Z",
-    "startedAt": null,
+    "createdAt": "2026-03-17T00:25:42.994Z",
+    "startedAt": "2026-03-17T00:25:46.307Z",
     "completedAt": null
   }
 }

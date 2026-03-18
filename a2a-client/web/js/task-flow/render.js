@@ -197,16 +197,36 @@
         // Bind input form submit
         const submitBtn = contentEl.querySelector('.task-flow-submit-btn');
         const inputEl = contentEl.querySelector('.task-flow-input-field');
+        console.log('[Render] submitBtn:', !!submitBtn, 'inputEl:', !!inputEl, 'sendMessageResult:', !!(taskFlowRef && taskFlowRef.sendMessageResult));
         if (submitBtn && inputEl && taskFlowRef?.sendMessageResult) {
             const doSubmit = () => {
+                console.log('[Render] doSubmit called, value:', inputEl.value?.trim());
                 const val = inputEl.value?.trim();
-                if (val) taskFlowRef.sendMessageResult(val, contentEl);
+                if (val) {
+                    // Show loader directly
+                    showInlineLoader();
+                    taskFlowRef.sendMessageResult(val, contentEl);
+                }
             };
             submitBtn.addEventListener('click', doSubmit);
             inputEl.addEventListener('keydown', (e) => {
                 if (e.key === 'Enter') { e.preventDefault(); doSubmit(); }
             });
         }
+    }
+    
+    // Helper function to show inline loader
+    function showInlineLoader() {
+        let loaderEl = document.getElementById('global-task-loader');
+        if (!loaderEl) {
+            loaderEl = document.createElement('div');
+            loaderEl.id = 'global-task-loader';
+            loaderEl.className = 'task-flow-inline-loader';
+            loaderEl.innerHTML = '<div class="task-flow-spinner"></div><p>Processing...</p>';
+            document.body.appendChild(loaderEl);
+        }
+        loaderEl.classList.add('active');
+        console.log('[Render] Loader shown');
     }
 
     /**
@@ -372,32 +392,48 @@
 
     /**
      * Show wait element when promiseId is received (async operation started)
+     * Adds wait element inside the active dialog panel
      * @param {string} promiseId - the promise ID from server response
      * @param {string} message - optional message to display
      */
     function showWaitElement(promiseId, message) {
-        const loaderIndicator = document.getElementById('loaderIndicator');
-        if (!loaderIndicator) return;
-        
-        loaderIndicator.classList.add('active');
-        loaderIndicator.style.display = 'flex';
-        
-        const loaderText = loaderIndicator.querySelector('.loader-text');
-        if (loaderText) {
-            loaderText.textContent = message || 'Processing...';
+        const panel = document.querySelector('.pui-panel-content');
+        if (!panel) {
+            console.log('[TaskFlowRender] No active panel found for wait element');
+            return;
         }
         
-        console.log('[TaskFlowRender] Showing wait element for promise:', promiseId);
+        const historyEl = panel.querySelector('.task-flow-history');
+        if (!historyEl) {
+            console.log('[TaskFlowRender] No history element found');
+            return;
+        }
+        
+        // Check if already showing wait element
+        if (panel.querySelector('.task-flow-sending')) {
+            return;
+        }
+        
+        const waitElement = document.createElement('div');
+        waitElement.className = 'task-flow-sending';
+        waitElement.innerHTML = `
+            <p>Processing: <strong>${escapeHtml(message || 'Please wait...')}</strong></p>
+            <div class="task-flow-spinner"></div>
+        `;
+        
+        historyEl.after(waitElement);
+        console.log('[TaskFlowRender] Showing wait element in panel for promise:', promiseId);
     }
 
     /**
      * Hide wait element when execute/result is received
      */
     function hideWaitElement() {
-        const loaderIndicator = document.getElementById('loaderIndicator');
-        if (!loaderIndicator) return;
-        
-        loaderIndicator.style.display = 'none';
+        // Find and remove wait element from panel
+        const waitElement = document.querySelector('.task-flow-sending');
+        if (waitElement) {
+            waitElement.remove();
+        }
         console.log('[TaskFlowRender] Hiding wait element');
     }
 

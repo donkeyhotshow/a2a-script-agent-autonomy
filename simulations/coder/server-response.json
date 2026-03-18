@@ -1,49 +1,52 @@
 {
   "success": true,
   "data": {
-    "id": "req_1772855014097_ldovcf8w3",
-    "promiseId": "cmmfs3npv000n6l3cz9romczi",
+    "id": "req_1773707672806_6y3y4g4by",
+    "promiseId": "prom_1773707672806_7oga7d5d6",
     "clientId": "simulation-client",
     "status": "completed",
     "priority": 0,
     "context": {
-      "task": "допоможи розібратись з кодом",
+      "session_id": "stateless",
       "version": "1.0",
-      "session_id": "stateless"
+      "task": "допоможи розібратись з кодом"
     },
     "message": "допоможи розібратись з кодом",
     "codeBlocks": null,
     "result": {
-      "graph": {
-        "entities": [],
-        "relations": []
-      },
+      "outcome": "action_proposal",
       "context": {
-        "graph": {
-          "entities": [],
-          "relations": []
+        "session_id": "stateless",
+        "version": "1.0",
+        "execution": {
+          "action": "task",
+          "step": "router"
         },
-        "new_task": [
-          "допоможи розібратись з кодом"
-        ],
-        "request_files": [
-          "No entities recognized"
-        ]
+        "task": "допоможи розібратись з кодом"
       },
-      "missing": [
-        "No entities recognized"
-      ],
-      "outcome": "graph_incomplete",
-      "questions": [
-        "Please provide the relevant code files (controller, model, service, or Vue components)."
-      ],
-      "request_files": [
-        "No entities recognized"
-      ]
+      "execute": {
+        "form": {
+          "title": "Оберіть спосіб виконання",
+          "choices": [
+            {
+              "id": "dialog",
+              "label": "AI діалог з користувачем"
+            },
+            {
+              "id": "auto-ai",
+              "label": "AI Action Generator — сгенерировать экшен с помощью LLM"
+            },
+            {
+              "id": "task-decomposition",
+              "label": "Декомпозиция задачи вручную"
+            }
+          ]
+        }
+      }
     },
     "error": null,
-    "createdAt": "2026-03-07T03:43:34.099Z",
-    "startedAt": "2026-03-07T03:43:35.556Z",
-    "completedAt": "2026-03-07T03:43:35.562Z"
+    "createdAt": "2026-03-17T00:34:32.806Z",
+    "startedAt": "2026-03-17T00:34:37.050Z",
+    "completedAt": "2026-03-17T00:34:37.053Z"
   }
 }

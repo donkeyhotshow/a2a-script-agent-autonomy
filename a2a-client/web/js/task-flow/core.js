@@ -136,6 +136,112 @@
                 this._restoreProjectSelection();
             }
             this._setupPanelAutoOpen();
+            this._setupLoaderListener();
+        },
+
+        /**
+         * Setup loader event listener - listens to SessionStore 'loader' events
+         * and shows/hides the global loader indicator
+         * Uses direct method call approach for reliability
+         */
+        _setupLoaderListener(sessionId = null) {
+            // Don't use event listener approach - store may not be ready
+            // Instead, we'll call _updateLoaderUI directly when needed
+            console.log('[TaskFlow] _setupLoaderListener called (direct approach), sessionId:', sessionId);
+        },
+
+        /**
+         * Show loader immediately - called before any server request
+         */
+        _showLoader() {
+            console.log('[TaskFlow] _showLoader called');
+            // Create and show loader immediately
+            let loaderEl = document.getElementById('global-task-loader');
+            if (!loaderEl) {
+                loaderEl = document.createElement('div');
+                loaderEl.id = 'global-task-loader';
+                loaderEl.className = 'task-flow-inline-loader';
+                loaderEl.innerHTML = `
+                    <div class="task-flow-spinner"></div>
+                    <p>Processing...</p>
+                `;
+                document.body.appendChild(loaderEl);
+            }
+            
+            // Set minimum end time (5 seconds from now)
+            const minEndTime = Date.now() + 5000;
+            loaderEl.classList.add('active');
+            loaderEl.dataset.minEndTime = minEndTime;
+            
+            // Store in component state for later use
+            this._loaderMinEndTime = minEndTime;
+            console.log('[TaskFlow] Loader shown, minEndTime:', minEndTime);
+        },
+
+        /**
+         * Hide loader - called when server responds
+         */
+        _hideLoader() {
+            console.log('[TaskFlow] _hideLoader called');
+            const loaderEl = document.getElementById('global-task-loader');
+            if (!loaderEl) return;
+            
+            // Check if minimum time has passed
+            const minEndTime = parseInt(loaderEl.dataset.minEndTime) || 0;
+            const now = Date.now();
+            
+            if (now >= minEndTime) {
+                // Minimum time passed, hide immediately
+                loaderEl.classList.remove('active');
+                this._loaderMinEndTime = null;
+                console.log('[TaskFlow] Loader hidden (min time passed)');
+            } else {
+                // Wait for minimum time
+                const remaining = minEndTime - now;
+                console.log('[TaskFlow] Waiting', remaining, 'ms for minimum display time');
+                setTimeout(() => {
+                    loaderEl.classList.remove('active');
+                    this._loaderMinEndTime = null;
+                    console.log('[TaskFlow] Loader hidden (after min time wait)');
+                }, remaining);
+            }
+        },
+
+        /**
+         * Update loader UI based on loader state
+         * @param {Object} data - { active: boolean, minEndTime?: number }
+         */
+        _updateLoaderUI(data) {
+            console.log('[TaskFlow] _updateLoaderUI called:', data);
+            if (!data) return;
+            
+            // Find or create global loader element
+            let loaderEl = document.getElementById('global-task-loader');
+            if (!loaderEl && data.active) {
+                console.log('[TaskFlow] Creating loader element');
+                // Create loader element if it doesn't exist
+                loaderEl = document.createElement('div');
+                loaderEl.id = 'global-task-loader';
+                loaderEl.className = 'task-flow-inline-loader';
+                loaderEl.innerHTML = `
+                    <div class="task-flow-spinner"></div>
+                    <p>Processing...</p>
+                `;
+                document.body.appendChild(loaderEl);
+            }
+            
+            if (loaderEl) {
+                if (data.active) {
+                    loaderEl.classList.add('active');
+                    // Calculate remaining time for minimum display
+                    if (data.minEndTime) {
+                        const remaining = Math.max(0, data.minEndTime - Date.now());
+                        loaderEl.dataset.minRemaining = remaining;
+                    }
+                } else {
+                    loaderEl.classList.remove('active');
+                }
+            }
         },
 
         /**
@@ -266,11 +372,18 @@
 
                 this._sessionId = sessionId;
 
-                // Initialize SessionStore for this session
+                // Setup loader listener for this specific session store
+                this._setupLoaderListener(sessionId);
+
+                // Initialize SessionStore for this session and start loader immediately
                 const store = resolveStore(sessionId);
+                console.log('[TaskFlow] _doRun: store:', !!store);
                 if (store) {
                     store.setSession(sessionId, projectId);
                 }
+
+                // Start loader immediately - minimum 5 second display time enforced locally
+                this._showLoader();
 
                 // Handle sync response: serverResponse.data.execute
                 const normalizedResponse = serverResponse?.data ?? serverResponse;
@@ -280,6 +393,8 @@
                     // Render sync response immediately
                     setPanelContent(contentEl, 'execute', { execute: syncExecute, context: normalizedResponse?.context, sessionId, projectId }, this);
                     updateStatus(contentEl, 'Received response');
+                    // Stop loader - server returned execute, minimum 5s already passed
+                    this._hideLoader();
                 } else {
                     // Wait for async response (promiseId polling in SDK)
                     updateStatus(contentEl, 'Waiting for response...');
@@ -323,6 +438,12 @@
             }
 
             const store = resolveStore(sessionId);
+            
+            // Setup loader listener for this session
+            this._setupLoaderListener(sessionId);
+
+            // Start loader immediately - minimum 5 second display time
+            this._showLoader();
 
             // Show sending state with choice label
             const choiceLabel = getChoiceLabel(choiceId);
@@ -350,6 +471,9 @@
                     setPanelContent(contentEl, 'execute', { execute: outcome.execute, sessionId, projectId }, this);
                     updateStatus(contentEl, 'Received response');
                 }
+
+                // Stop loader - server returned execute or async promise, minimum 5s enforced locally
+                this._hideLoader();
 
             } catch (error) {
                 console.error('[TaskFlow] Error sending choice:', error);
@@ -383,6 +507,12 @@
                 store.pushMessage({ content: displayText }, 'user');
             }
 
+            // Setup loader listener for this session
+            this._setupLoaderListener(sessionId);
+
+            // Start loader immediately - LLM processing takes time
+            this._showLoader();
+
             // Show sending state with message text
             contentEl.innerHTML = `
                 <div class="task-flow-sending">
@@ -408,6 +538,9 @@
                     setPanelContent(contentEl, 'execute', { execute: outcome.execute, sessionId, projectId }, this);
                     updateStatus(contentEl, 'Received response');
                 }
+
+                // Stop loader - server returned execute or async promise, minimum 5s enforced locally
+                this._hideLoader();
 
             } catch (error) {
                 console.error('[TaskFlow] Error sending message:', error);

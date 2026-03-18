@@ -25,18 +25,77 @@
                     sendMessage: (sid, m) => WindowEvents.sendMessage(sid, m),
                     sendMessageResult: async (text, el) => {
                         if (!text || !text.trim()) return;
+                        
+                        // Show loader immediately - minimum 5 seconds
+                        _showGlobalLoader();
+                        
                         const msg = String(text).trim();
                         store.pushMessage?.({ content: msg }, 'user');
                         store?.setPromisePending?.(true);
                         refreshContent();
-                        await taskFlowRef.sendMessage(sessionId, msg);
+                        try {
+                            await taskFlowRef.sendMessage(sessionId, msg);
+                        } finally {
+                            // Hide loader - will respect minimum 5 second wait
+                            _hideGlobalLoader();
+                        }
                     },
                     sendChoice: async (choiceId, el) => {
+                        // Show loader immediately - minimum 5 seconds
+                        _showGlobalLoader();
+                        
                         store?.setPromisePending?.(true);
                         refreshContent();
-                        await this.sendChoice(sessionId, choiceId);
+                        try {
+                            await this.sendChoice(sessionId, choiceId);
+                        } finally {
+                            // Hide loader - will respect minimum 5 second wait
+                            _hideGlobalLoader();
+                        }
                     }
                 };
+
+                // Global loader helper functions
+                let _loaderMinEndTime = null;
+                function _showGlobalLoader() {
+                    let loaderEl = document.getElementById('global-task-loader');
+                    if (!loaderEl) {
+                        // Create loader element if it doesn't exist
+                        loaderEl = document.createElement('div');
+                        loaderEl.id = 'global-task-loader';
+                        loaderEl.className = 'task-flow-inline-loader';
+                        loaderEl.innerHTML = `
+                            <div class="task-flow-spinner"></div>
+                            <p>Processing...</p>
+                        `;
+                        document.body.appendChild(loaderEl);
+                        console.log('[WindowEvents] Created loader element');
+                    }
+                    
+                    loaderEl.classList.add('active');
+                    _loaderMinEndTime = Date.now() + 5000;
+                    loaderEl.dataset.minEndTime = _loaderMinEndTime;
+                    console.log('[WindowEvents] Loader shown');
+                }
+                function _hideGlobalLoader() {
+                    const loaderEl = document.getElementById('global-task-loader');
+                    if (!loaderEl) return;
+                    
+                    const minEndTime = parseInt(loaderEl.dataset.minEndTime) || 0;
+                    const now = Date.now();
+                    
+                    if (now >= minEndTime) {
+                        loaderEl.classList.remove('active');
+                        console.log('[WindowEvents] Loader hidden (min time passed)');
+                    } else {
+                        const remaining = minEndTime - now;
+                        console.log('[WindowEvents] Waiting', remaining, 'ms for min time');
+                        setTimeout(() => {
+                            loaderEl.classList.remove('active');
+                            console.log('[WindowEvents] Loader hidden (after wait)');
+                        }, remaining);
+                    }
+                }
 
                 // Use renderExecute to render full panel (history + execute + input)
                 // renderExecute renders the complete content: history + execute block + input area
