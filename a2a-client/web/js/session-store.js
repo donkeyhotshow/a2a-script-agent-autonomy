@@ -414,6 +414,11 @@
         this.stopLoader = function() { return this.core.stopLoader(); };
         this.getLoaderState = function() { return this.core.getLoaderState(); };
 
+        // Promise management - proxy to core
+        this.setPromiseId = function() { return this.core.setPromiseId.apply(this.core, arguments); };
+        this.startPromisePolling = function() { return this.core.startPromisePolling.apply(this.core, arguments); };
+        this.stopPromisePolling = function() { return this.core.stopPromisePolling.apply(this.core, arguments); };
+
         // Expose core properties for window-events.js compatibility
         Object.defineProperty(this, 'execute', {
             get: function() { return this.core ? this.core.execute : null; },
@@ -473,6 +478,9 @@
             // Debug logging disabled
         };
     }
+
+    // Export PROMISE_POLL_INTERVAL constant globally
+    global.PROMISE_POLL_INTERVAL = PROMISE_POLL_INTERVAL;
 
     // Global exports - BACKWARD COMPATIBLE
     global.SessionStoreClass = SessionStore;

@@ -58,7 +58,6 @@
         async loadModules() {
             const modules = [
                 '/js/session-store.js',  // Load FIRST for global.SessionStore
-                '/js/session-store-adapters.js',  // Then adapters
                 '/js/app/project-manager.js',
                 '/js/app/session-manager.js',
                 '/js/app/window-manager.js',

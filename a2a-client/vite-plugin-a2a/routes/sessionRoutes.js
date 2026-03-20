@@ -74,7 +74,7 @@ export function createSessionRoutes({ cwd }) {
                         saveNewStep(cwd, sessionId, 1, {
                             step: 1,
                             execute: session.execute,
-                            messages: [],
+                            messages: session.messages || [],
                             context: session.context
                         });
                     }
@@ -108,25 +108,39 @@ export function createSessionRoutes({ cwd }) {
                 if (storageMode !== 'project') {
                     const steps = listNewSteps(cwd, sessionId);
                     const allMessages = [];
+                    const seenMessages = new Set(); // Track seen content to avoid duplicates
+                    
                     for (const stepNum of steps) {
                         const stepData = loadNewStep(cwd, sessionId, stepNum);
-                        if (stepData?.execute?.message) {
-                            allMessages.push({
-                                role: 'assistant',
-                                content: typeof stepData.execute.message === 'string'
-                                    ? stepData.execute.message
-                                    : stepData.execute.message.content || stepData.execute.message.text || '',
-                                step: stepNum
-                            });
+                        
+                        // Only add execute.message if it's not already in stepData.messages
+                        // This prevents duplication when messages are stored in both places
+                        if (stepData?.execute?.message && (!stepData?.messages || !stepData.messages.some(m => m.content === stepData.execute.message))) {
+                            const msgContent = typeof stepData.execute.message === 'string'
+                                ? stepData.execute.message
+                                : stepData.execute.message.content || stepData.execute.message.text || '';
+                            
+                            if (!seenMessages.has(msgContent)) {
+                                allMessages.push({
+                                    role: 'assistant',
+                                    content: msgContent,
+                                    step: stepNum
+                                });
+                                seenMessages.add(msgContent);
+                            }
                         }
 
                         const clientResult = loadStepFile(cwd, sessionId, stepNum, 'client-result.json');
                         if (clientResult?.result?.message) {
-                            allMessages.push({
-                                role: 'user',
-                                content: clientResult.result.message,
-                                step: stepNum
-                            });
+                            const msgContent = clientResult.result.message;
+                            if (!seenMessages.has(msgContent)) {
+                                allMessages.push({
+                                    role: 'user',
+                                    content: msgContent,
+                                    step: stepNum
+                                });
+                                seenMessages.add(msgContent);
+                            }
                         }
 
                         if (stepData?.messages && Array.isArray(stepData.messages) && stepData.messages.length > 0) {
@@ -134,7 +148,10 @@ export function createSessionRoutes({ cwd }) {
                                 ...msg,
                                 step: stepNum
                             }));
-                            allMessages.push(...stepMessages);
+                            // Filter out duplicates with existing messages
+                            const newMessages = stepMessages.filter(msg => !seenMessages.has(msg.content));
+                            newMessages.forEach(msg => seenMessages.add(msg.content));
+                            allMessages.push(...newMessages);
                         }
                     }
                     if (allMessages.length > 0) {

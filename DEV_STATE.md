@@ -101,3 +101,34 @@
 - Ollama используется для AI-обработки (порт 11434)
 - Сессии хранятся в пронумерованных папках (1/, 2/, 3/, ...)
 - История сообщений сохраняется в session.json
+
+---
+
+## Непонятки с диалогом (2026-03-20)
+
+### Симптомы:
+1. **Promise остается в статусе "pending"** - в storage шага 2 (`server-promise.json`) статус "pending", но A2A сервер уже вернул результат
+2. **Сообщения не сохраняются в messages.json**:
+   - Шаг 1: `messages.json` пустой `[]` (должен содержать приветствие AI)
+   - Шаг 2: `messages.json` содержит только сообщение пользователя
+3. **Нет server-response.json для шага 2** - есть только `server-promise.json`
+
+### Анализ:
+- Проверено через curl: A2A Server возвращает результат для promise `prom_1774009557206_iecinj5xp`
+- Результат содержит `execute` с формой выбора (3 choices)
+- Client API (stepRoutes.js) должен был опросить promise и сохранить результат, но не сделал этого
+
+### Возможные причины:
+1. **Polling на стороне Client API не довел до завершения** - цикл в stepRoutes.js (строки 239-265) мог не найти статус 'completed' в ответе
+2. **Формат ответа A2A Server не соответствует ожиданиям** - возможно, поле status имеет другой формат ('done' вместо 'completed')
+3. **Сохранение messages.json не реализовано** - код для сохранения сообщений от AI отсутствует
+
+### Файлы для проверки:
+- [`a2a-client/vite-plugin-a2a/routes/stepRoutes.js`](a2a-client/vite-plugin-a2a/routes/stepRoutes.js:230-265) - логика polling и сохранения
+- [`a2a-client/web/js/action-handler.js`](a2a-client/web/js/action-handler.js:132-230) - клиентский polling
+- [`a2a-client/web/js/session-store.js`](a2a-client/web/js/session-store.js:330-337) - pushMessage
+
+### Следующие шаги:
+1. Проверить формат ответа A2A Server при polling (поле status)
+2. Добавить логирование в stepRoutes.js для диагностики polling
+3. Реализовать сохранение сообщений от AI в messages.json

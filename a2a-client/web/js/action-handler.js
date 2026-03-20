@@ -12,9 +12,11 @@
 (function (global) {
     'use strict';
 
-    // Polling interval for promise checking (5 seconds as per spec)
-    const PROMISE_POLL_INTERVAL = 5000;
-    let promisePollTimer = null;
+    // Use global PROMISE_POLL_INTERVAL from SessionStore (default 5000ms)
+    const POLL_INTERVAL = global.PROMISE_POLL_INTERVAL || 5000;
+
+    // Track local polling as fallback (when SessionStore is not available)
+    let localPollTimer = null;
 
     function resolveStore(sessionId = null) {
         const registry = global.WindowRegistry;
@@ -125,17 +127,60 @@
 
     /**
      * Start polling for promise resolution
+     * Uses SessionStore if available, otherwise falls back to local polling
      */
     function startPromisePolling(sessionId, promiseId) {
-        // Clear any existing timer
-        if (promisePollTimer) {
-            clearInterval(promisePollTimer);
-            promisePollTimer = null;
-        }
-        
         const store = resolveStore(sessionId);
         
-        promisePollTimer = setInterval(async () => {
+        // Try to use SessionStore for unified promise management
+        if (store?.startPromisePolling && store?.setPromiseId) {
+            // Set promise ID in store
+            store.setPromiseId(promiseId);
+            
+            // Start polling via SessionStore with checkPromise function
+            store.startPromisePolling((pid) => checkPromise(sessionId, pid));
+            
+            // Subscribe to promise resolved event from SessionStore
+            const onResolved = (data) => {
+                if (data.promiseId === promiseId) {
+                    const exec = data.execute ?? data.result?.execute;
+                    if (exec && store) store.setExecute?.(exec);
+                    global.apiIntegration?.emit?.('promiseResolved', {
+                        sessionId,
+                        promiseId,
+                        result: data.result,
+                        execute: data.execute
+                    });
+                }
+            };
+            
+            // Subscribe to promise rejected event from SessionStore
+            const onRejected = (data) => {
+                if (data.promiseId === promiseId) {
+                    if (store) store.setPromisePending?.(false);
+                    global.apiIntegration?.emit?.('promiseError', {
+                        sessionId,
+                        promiseId,
+                        error: data.error || 'Promise failed'
+                    });
+                }
+            };
+            
+            // Listen to SessionStore events
+            store.on?.('promiseResolved', onResolved);
+            store.on?.('promiseError', onRejected);
+            
+            return;
+        }
+        
+        // Fallback: local polling implementation (backward compatibility)
+        // Clear any existing timer
+        if (localPollTimer) {
+            clearInterval(localPollTimer);
+            localPollTimer = null;
+        }
+        
+        localPollTimer = setInterval(async () => {
             const status = await checkPromise(sessionId, promiseId);
             
             if (!status) {
@@ -145,9 +190,9 @@
             
             if (status.completed || status.status === 'completed' || status.status === 'done') {
                 // Promise resolved - clear timer and update session
-                if (promisePollTimer) {
-                    clearInterval(promisePollTimer);
-                    promisePollTimer = null;
+                if (localPollTimer) {
+                    clearInterval(localPollTimer);
+                    localPollTimer = null;
                 }
                 
                 if (store) {
@@ -166,9 +211,9 @@
             
             if (status.status === 'failed' || status.status === 'error') {
                 // Promise failed - clear timer
-                if (promisePollTimer) {
-                    clearInterval(promisePollTimer);
-                    promisePollTimer = null;
+                if (localPollTimer) {
+                    clearInterval(localPollTimer);
+                    localPollTimer = null;
                 }
                 
                 if (store) {
@@ -181,16 +226,26 @@
                     error: status.error || 'Promise failed'
                 });
             }
-        }, PROMISE_POLL_INTERVAL);
+        }, POLL_INTERVAL);
     }
 
     /**
      * Stop polling for promises
+     * Uses SessionStore if available, otherwise falls back to local polling
      */
-    function stopPromisePolling() {
-        if (promisePollTimer) {
-            clearInterval(promisePollTimer);
-            promisePollTimer = null;
+    function stopPromisePolling(sessionId) {
+        const store = resolveStore(sessionId);
+        
+        // Try to use SessionStore for unified promise management
+        if (store?.stopPromisePolling) {
+            store.stopPromisePolling();
+            return;
+        }
+        
+        // Fallback: local polling implementation (backward compatibility)
+        if (localPollTimer) {
+            clearInterval(localPollTimer);
+            localPollTimer = null;
         }
     }
 

@@ -3,7 +3,7 @@ import { mergeResponseContext, buildStepRecord } from './utils/builders.js';
 import * as stepHandlers from './handlers/step-handlers.js';
 import * as stepUtils from './utils/step-utils.js';
 import { proxyToA2AServer } from './proxy/a2a-proxy.js';
-import { getNewStepDir, loadNewSession, loadNewStep, loadServerResponse, saveClientResult, saveNewStep, saveNewSession, saveRequestToServer, saveServerPromise, saveServerResponse } from '../storage/newSessions.js';
+import { getNewStepDir, loadNewSession, loadNewStep, loadServerPromise, loadServerResponse, saveClientResult, saveNewStep, saveNewSession, saveRequestToServer, saveServerPromise, saveServerResponse } from '../storage/newSessions.js';
 
 import fs from 'fs';
 
@@ -245,7 +245,15 @@ export function createStepRoutes({ cwd }) {
                                             });
                                             const pollData = await pollRes.json();
                                             console.log('[VitePlugin] Poll result:', i, pollData.data?.status);
-                                        if (pollData.data?.status === 'completed') {
+                                        // A2A Server returns status implicitly - if execute is present, promise is completed
+                                        // Also check explicit status for backward compatibility
+                                        const isCompleted = pollData.data?.status === 'completed' || 
+                                                           pollData.data?.status === 'done' ||
+                                                           pollData.data?.execute != null;
+                                        const isFailed = pollData.data?.status === 'failed' || 
+                                                       pollData.data?.status === 'error';
+                                        
+                                        if (isCompleted) {
                                             serverResponse = pollData.data;
                                             promiseData = {
                                                 ...promiseData,
@@ -255,7 +263,7 @@ export function createStepRoutes({ cwd }) {
                                             };
                                             saveServerPromise(cwd, sessionId, nextStepNum, promiseData);
                                             break;
-                                        } else if (pollData.data?.status === 'failed') {
+                                        } else if (isFailed) {
                                                 console.error('[VitePlugin] Promise failed:', pollData.data.error);
                                                 break;
                                             }
@@ -308,7 +316,9 @@ export function createStepRoutes({ cwd }) {
 
                             session.messages = session.messages || [];
 
-                            if (serverResponse?.result?.execute) session.execute = serverResponse.result.execute;
+                            // Execute is at root level after promise polling, not in result
+                            const serverExecute = serverResponse?.execute || serverResponse?.result?.execute;
+                            if (serverExecute) session.execute = serverExecute;
                             const savedContext = serverResponse
                                 ? mergeResponseContext(sessionId, mergedContext, serverResponse)
                                 : mergedContext;
@@ -343,10 +353,12 @@ export function createStepRoutes({ cwd }) {
 
                             saveNewSession(cwd, session);
 
+                            // Execute is at root level after promise polling, not in result
+                            const responseExecute = serverResponse?.execute || serverResponse?.result?.execute || null;
                             const response = {
                                 success: true,
                                 session,
-                                execute: serverResponse?.result?.execute || null,
+                                execute: responseExecute,
                                 promiseId: session.promiseId || null
                             };
 
@@ -419,9 +431,12 @@ export function createStepRoutes({ cwd }) {
                 let data = '';
                 xhrRes.on('data', (chunk) => (data += chunk));
                 xhrRes.on('end', () => {
+                    console.log('[VitePlugin] Promise check - raw data:', data.substring(0, 500));
                     try {
                         const rawResponse = JSON.parse(data || '{}');
+                        console.log('[VitePlugin] Promise check - parsed rawResponse:', JSON.stringify(rawResponse).substring(0, 500));
                         const promiseStatus = rawResponse.success ? rawResponse.data : rawResponse;
+                        console.log('[VitePlugin] Promise check - promiseStatus:', JSON.stringify(promiseStatus).substring(0, 500));
 
                         const currentStep = session.currentStep || 1;
                         const existingPromise = loadServerPromise(cwd, sessionId, currentStep);
@@ -432,7 +447,13 @@ export function createStepRoutes({ cwd }) {
                         };
                         saveServerPromise(cwd, sessionId, currentStep, updatedPromise);
 
-                        if (promiseStatus.status === 'completed' || promiseStatus.status === 'done') {
+                        // A2A Server returns status implicitly - if execute is present, promise is completed
+                        // Also check explicit status for backward compatibility
+                        const isPromiseCompleted = promiseStatus.status === 'completed' || 
+                                                 promiseStatus.status === 'done' ||
+                                                 promiseStatus.execute != null;
+                        
+                        if (isPromiseCompleted) {
                             // Add assistant message to session.messages
                             const assistantMessage = promiseStatus?.result?.message;
                             if (assistantMessage) {
@@ -468,17 +489,21 @@ export function createStepRoutes({ cwd }) {
                             saveNewSession(cwd, session);
                         }
 
+                        // Determine status: if execute is present, promise is completed
+                        const isCompleted = !!(promiseStatus.execute || promiseStatus.status === 'completed' || promiseStatus.status === 'done');
+                        
                         res.setHeader('Content-Type', 'application/json');
                         res.end(JSON.stringify({
                             promiseId,
-                            status: promiseStatus.status || 'pending',
+                            status: promiseStatus.status || (isCompleted ? 'completed' : 'pending'),
                             result: promiseStatus.result || null,
                             execute: promiseStatus.execute || null,
-                            completed: promiseStatus.status === 'completed' || promiseStatus.status === 'done'
+                            completed: isCompleted
                             // Note: messages are stored in step files and available via /history endpoint
                         }));
                     } catch (e) {
-                        res.writeHead(500).end(JSON.stringify({ error: 'Failed to parse promise response' }));
+                        console.error('[VitePlugin] ERROR in promise check:', e.message, e.stack);
+                        res.writeHead(500).end(JSON.stringify({ error: 'Failed to parse promise response: ' + e.message }));
                     }
                 });
             });

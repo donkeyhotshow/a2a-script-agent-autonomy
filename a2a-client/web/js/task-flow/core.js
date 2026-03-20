@@ -140,22 +140,46 @@
         },
 
         /**
-         * Setup loader event listener - listens to SessionStore 'loader' events
+         * Setup loader event listener - subscribes to SessionStore 'loader' events
          * and shows/hides the global loader indicator
-         * Uses direct method call approach for reliability
+         * Uses SessionStore for unified loader management
          */
         _setupLoaderListener(sessionId = null) {
-            // Don't use event listener approach - store may not be ready
-            // Instead, we'll call _updateLoaderUI directly when needed
-            console.log('[TaskFlow] _setupLoaderListener called (direct approach), sessionId:', sessionId);
+            const store = resolveStore(sessionId);
+            if (!store || typeof store.on !== 'function') {
+                console.log('[TaskFlow] _setupLoaderListener: SessionStore not available');
+                return;
+            }
+
+            // Subscribe to loader events from SessionStore
+            // This ensures UI stays in sync with store state
+            const unsubscribe = store.on('loader', (data) => {
+                console.log('[TaskFlow] Loader event from store:', data);
+                this._updateLoaderUI(data);
+            });
+
+            // Store unsubscribe function for cleanup if needed
+            this._loaderUnsubscribe = unsubscribe;
+            console.log('[TaskFlow] _setupLoaderListener: subscribed to loader events');
         },
 
         /**
          * Show loader immediately - called before any server request
+         * Uses SessionStore for unified loader management
          */
         _showLoader() {
             console.log('[TaskFlow] _showLoader called');
-            // Create and show loader immediately
+            
+            // Try to use SessionStore for loader management
+            const store = resolveStore(this._sessionId);
+            if (store && typeof store.startLoader === 'function') {
+                store.startLoader();
+                console.log('[TaskFlow] Loader started via SessionStore');
+                return;
+            }
+            
+            // Fallback: Create and show loader DOM element directly
+            // This handles cases when SessionStore is not available
             let loaderEl = document.getElementById('global-task-loader');
             if (!loaderEl) {
                 loaderEl = document.createElement('div');
@@ -175,14 +199,25 @@
             
             // Store in component state for later use
             this._loaderMinEndTime = minEndTime;
-            console.log('[TaskFlow] Loader shown, minEndTime:', minEndTime);
+            console.log('[TaskFlow] Loader shown (fallback), minEndTime:', minEndTime);
         },
 
         /**
          * Hide loader - called when server responds
+         * Uses SessionStore for unified loader management
          */
         _hideLoader() {
             console.log('[TaskFlow] _hideLoader called');
+            
+            // Try to use SessionStore for loader management
+            const store = resolveStore(this._sessionId);
+            if (store && typeof store.stopLoader === 'function') {
+                store.stopLoader();
+                console.log('[TaskFlow] Loader stopped via SessionStore');
+                return;
+            }
+            
+            // Fallback: Handle hiding DOM element directly
             const loaderEl = document.getElementById('global-task-loader');
             if (!loaderEl) return;
             
@@ -194,15 +229,15 @@
                 // Minimum time passed, hide immediately
                 loaderEl.classList.remove('active');
                 this._loaderMinEndTime = null;
-                console.log('[TaskFlow] Loader hidden (min time passed)');
+                console.log('[TaskFlow] Loader hidden (fallback - min time passed)');
             } else {
                 // Wait for minimum time
                 const remaining = minEndTime - now;
-                console.log('[TaskFlow] Waiting', remaining, 'ms for minimum display time');
+                console.log('[TaskFlow] Waiting', remaining, 'ms for minimum display time (fallback)');
                 setTimeout(() => {
                     loaderEl.classList.remove('active');
                     this._loaderMinEndTime = null;
-                    console.log('[TaskFlow] Loader hidden (after min time wait)');
+                    console.log('[TaskFlow] Loader hidden (fallback - after min time wait)');
                 }, remaining);
             }
         },
