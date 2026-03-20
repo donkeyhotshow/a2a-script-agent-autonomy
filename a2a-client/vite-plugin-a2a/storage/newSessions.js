@@ -93,12 +93,13 @@ export function loadNewStep(cwd, sessionId, stepNum) {
     if (fs.existsSync(messagesFile)) {
       try {
         data.messages = JSON.parse(fs.readFileSync(messagesFile, 'utf8'));
-      } catch {
-        // Keep existing messages if parsing failed
+      } catch (e) {
+        console.error('[newSessions] Failed to parse messages.json:', e.message);
       }
     }
     return data;
-  } catch {
+  } catch (e) {
+    console.error('[newSessions] Failed to parse step file:', e.message);
     return null;
   }
 }
@@ -148,7 +149,8 @@ export function loadStepFile(cwd, sessionId, stepNum, filename) {
   if (!fs.existsSync(filePath)) return null;
   try {
     return JSON.parse(fs.readFileSync(filePath, 'utf8'));
-  } catch {
+  } catch (e) {
+    console.error('[newSessions] Failed to parse step file', filename, ':', e.message);
     return null;
   }
 }

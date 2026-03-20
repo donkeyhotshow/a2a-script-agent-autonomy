@@ -258,11 +258,17 @@
             if (body) {
                 options.body = JSON.stringify(body);
             }
-            const response = await fetch(url, options);
-            if (!response.ok) {
-                throw new Error(`SessionStorage ${method} failed: ${response.status}`);
+            try {
+                const response = await fetch(url, options);
+                if (!response.ok) {
+                    console.warn('[SessionStorage] Request failed:', method, url, response.status, response.statusText);
+                    throw new Error(`SessionStorage ${method} failed: ${response.status}`);
+                }
+                return response.json();
+            } catch (error) {
+                console.error('[SessionStorage] _request error:', method, url, error.message);
+                throw error;
             }
-            return response.json();
         }
 
         /**

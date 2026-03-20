@@ -13,7 +13,8 @@ export function kvGet(cwd, namespace, key) {
   if (!fs.existsSync(file)) return null;
   try {
     return JSON.parse(fs.readFileSync(file, 'utf8'));
-  } catch {
+  } catch (err) {
+    console.error(`[kv] Failed to parse JSON from ${file}:`, err);
     return null;
   }
 }

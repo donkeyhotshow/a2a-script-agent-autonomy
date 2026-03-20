@@ -179,6 +179,9 @@ export class AsyncClient {
             }
 
             const data = await response.json();
+            if (!data.pendingOperations) {
+                console.warn('[AsyncClient] No pendingOperations in response, returning empty array');
+            }
             return data.pendingOperations || [];
         } catch (error) {
             throw new AsyncClientError(`Failed to list pending operations: ${error instanceof Error ? error.message : String(error)}`, {

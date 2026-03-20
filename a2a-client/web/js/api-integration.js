@@ -116,7 +116,10 @@ class APIIntegration {
     async getSessions(projectId = null) {
         const headers = { ...this._getHeaders(), ...this._getStorageHeaders() };
         const res = await fetch(`/api/a2a/sessions`, { headers });
-        if (!res.ok) return [];
+        if (!res.ok) {
+            console.warn('[API] getSessions failed:', res.status, res.statusText);
+            return [];
+        }
         const raw = await res.json();
         let sessions = Array.isArray(raw) ? raw : (raw?.sessions || raw?.data || []);
         // Filter by projectId if provided
@@ -147,7 +150,10 @@ class APIIntegration {
     async getSession(sessionId) {
         const headers = { ...this._getHeaders(), ...this._getStorageHeaders() };
         const res = await fetch(`/api/a2a/sessions/${encodeURIComponent(sessionId)}`, { headers });
-        if (!res.ok) return null;
+        if (!res.ok) {
+            console.warn('[API] getSession failed:', res.status, res.statusText);
+            return null;
+        }
         return res.json();
     }
 

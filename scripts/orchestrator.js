@@ -130,7 +130,7 @@ async function checkHealth(serviceKey, customConfig = {}) {
         return true;
       }
     } catch (err) {
-      // Health check failed, continue to retry
+      console.error(`Health check failed for ${url}:`, err.message || err);
     }
     
     if (attempt === config.maxAttempts) {

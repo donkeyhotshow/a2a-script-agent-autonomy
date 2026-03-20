@@ -16,7 +16,8 @@ export function listSessions(projectPath) {
         const raw = fs.readFileSync(path.join(dir, f), 'utf8');
         const s = JSON.parse(raw);
         return {id: s.id, title: s.title || s.id, createdAt: s.createdAt};
-      } catch {
+      } catch (err) {
+        console.error(`[projectSessions] Failed to parse session file ${f}:`, err);
         return null;
       }
     })
@@ -29,7 +30,8 @@ export function loadSession(projectPath, sessionId) {
   if (!fs.existsSync(file)) return null;
   try {
     return JSON.parse(fs.readFileSync(file, 'utf8'));
-  } catch {
+  } catch (err) {
+    console.error(`[projectSessions] Failed to parse session ${sessionId}:`, err);
     return null;
   }
 }

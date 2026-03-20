@@ -59,7 +59,8 @@ function readMetadata(port) {
       data.pids = [];
     }
     return data;
-  } catch {
+  } catch (err) {
+    console.warn(`Failed to read port metadata for ${port}:`, err.message || err);
     return null;
   }
 }
@@ -107,7 +108,8 @@ function cleanupDeadPids(port) {
     try {
       process.kill(entry.pid, 0);
       return true;
-    } catch {
+    } catch (err) {
+      console.warn(`Failed to check if PID ${entry.pid} is alive:`, err.message || err);
       return false;
     }
   });
@@ -127,7 +129,9 @@ function deleteLockAndMetadata(port) {
   if (existsSync(lockFile)) {
     try {
       unlinkSync(lockFile);
-    } catch {}
+    } catch (err) {
+      console.warn(`Failed to remove lock file: ${lockPath}`, err.message || err);
+    }
   }
 }
 

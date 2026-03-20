@@ -204,7 +204,8 @@ export function parseMessage(text: string): { context: Record<string, unknown>; 
     let context: Record<string, unknown>;
     try {
         context = JSON.parse(contextMatch[1].trim());
-    } catch {
+    } catch (err) {
+        console.error('[Protocol] Failed to parse context JSON:', err);
         return null;
     }
     const files: FileBlockLike[] = [];

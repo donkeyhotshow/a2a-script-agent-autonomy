@@ -10,6 +10,6 @@ export interface HealthStatus {
 }
 
 export async function getHealthStatus(): Promise<HealthStatus> {
-    const db = await checkDatabaseHealth().catch((e) => ({status: 'unhealthy' as const, error: String(e)}));
+    const db = await checkDatabaseHealth().catch((e) => ({status: 'unhealthy' as const, error: e?.message || String(e), stack: e?.stack}));
     return {database: db};
 }

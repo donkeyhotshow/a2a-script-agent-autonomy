@@ -1,38 +1,33 @@
-# DEV_STATE - Диалог (Dialog)
+# DEV_STATE - a2a-client
 
-## Результаты работ (2026-03-20)
+> Клиентская часть: Web UI, Client API, Session Management
 
-### Баг: Promise polling не завершался
+## Подсистемы проекта
 
-**Проблема:** A2A Server возвращает результат promise БЕЗ поля `status`, код проверял только `status === 'completed'`
-
-**Файл:** `a2a-client/vite-plugin-a2a/routes/stepRoutes.js`
-
-**Исправление:** Теперь проверяется и наличие поля `execute`:
-```javascript
-const isCompleted = pollData.data?.status === 'completed' || 
-                   pollData.data?.status === 'done' ||
-                   pollData.data?.execute != null;
-```
+| Подсистема | Описание |
+|------------|----------|
+| **a2a-client** | Web UI, Client API, Session Management (этот файл) |
+| **a2a-server** | [DEV_STATE.md](../a2a-server/DEV_STATE.md) |
+| **ai-integration** | [DEV_STATE.md](../ai-integration/DEV_STATE.md) |
 
 ---
 
-### Конкретная проблема найдена:
+## Клиентские проблемы
 
-**Файл:** `a2a-client/vite-plugin-a2a/routes/sessionRoutes.js:77`
+### 1. UI/Browser
 
-**Баг:** При создании новой сессии передавался пустой массив `messages: []` вместо `session.messages || []`
+#### Баг: Глобальный processing (2026-03-20)
 
-**Влияние:**
-- При создании сессии сервер правильно создает `session.messages` с приглашением (строки 50-56)
-- Но при сохранении первого шага передавался пустой массив
-- Пользователь не видел историю сообщений при восстановлении сессии
+**Проблема:** Глобальный loader показывался для всех сессий, когда любая сессия ожидала ответ
 
-**Исправление:** Заменено `messages: []` на `messages: session.messages || []`
+**Причина:** Один глобальный элемент с ID `global-task-loader` для всех сессий
 
----
+**Исправление:** Переделано на per-session:
+- task-flow/core.js: session-specific ID `session-loader-{sessionId}`
+- task-flow/render.js: session-specific ID элемента
+- window-events.js: `_showGlobalLoader(sessionId)` и `_hideGlobalLoader(sessionId)`
 
-### Баг: Choices не отображались (2026-03-20)
+#### Баг: Choices не отображались (2026-03-20)
 
 **Проблема:** После отправки "диалог" вместо формы выбора показывалось снова поле ввода
 
@@ -42,71 +37,106 @@ const isCompleted = pollData.data?.status === 'completed' ||
 - stepRoutes.js строка 319: `serverResponse?.execute || serverResponse?.result?.execute`
 - stepRoutes.js строки 354-359: правильный путь к execute
 
----
-
-### Баг: Дублирование приветствия (2026-03-20)
+#### Баг: Дублирование приветствия (2026-03-20)
 
 **Проблема:** Сообщение "What would you like me to do?" показывалось 2 раза
 
-**Корневая причина:** sessionRoutes.js добавлял сообщение из execute.message, потом из stepData.messages (уже с этим же сообщением)
+**Корневая причина:** sessionRoutes.js добавлял сообщение из execute.message, потом из stepData.messages
 
 **Исправление:** Добавлена дедупликация с использованием Set
 
----
+#### Баг: Loader поведение (2026-03-20)
 
-## Непонятки с диалогом (2026-03-20)
+**Проблема:** Loader показывался некорректно - не было минимального времени показа
 
-### Симптомы:
-1. messages.json шаг 1 - пустой (должен содержать приветствие AI)
-2. server-response.json шаг 2 - отсутствует (есть только server-promise.json со статусом pending)
-3. Сервер возвращает результат, но клиент не сохраняет
-
-### Возможные причины:
-- action-handler.js: polling не сохраняет результат в storage
-- stepRoutes.js: не вызывается после завершения polling
-- SessionStore: метод saveStep не вызывается
-
-### Файлы для проверки:
-- a2a-client/web/js/action-handler.js
-- a2a-client/vite-plugin-a2a/routes/stepRoutes.js
-- a2a-client/web/js/session-store.js (метод saveStep)
+**Исправления:**
+- Loader показывается **сразу** при отправке пользователем
+- **Минимальное время показа**: 5000ms (всегда enforce)
+- Loader скрывается **только после resolved promise**
+- При перезагрузке страницы: loader показывается для сессий со статусом `pending`
 
 ---
 
-## Результаты работ (2026-03-19)
+### 2. Session Management
 
-### Выполненные работы:
+#### Баг: Восстановление сессии после перезагрузки (2026-03-20)
 
-1. **Удалены избыточные файлы:**
-   - session-store-refactored.js (был отключен)
-   - session-store-adapters.js (устарел)
+**Проблема:** После перезапуска страницы сессию нельзя было продолжить
 
-2. **Рефакторинг task-flow/core.js:**
-   - _showLoader() / _hideLoader() теперь используют SessionStore
-   - Подписка на loader events от SessionStore
-   - Fallback для обратной совместимости
+**Причина:** API не возвращал promiseId при загрузке сессии
 
-3. **Рефакторинг action-handler.js:**
-   - Polling теперь использует SessionStore._promise
-   - Константа PROMISE_POLL_INTERVAL экспортирована глобально
-   - Подписка на promiseResolved / promiseError events
-   - Fallback для обратной совместимости
+**Исправление:** sessionRoutes.js - при загрузке сессии проверяется server-promise.json и возвращаются поля promiseId и promiseStatus
 
-4. **Итоговая архитектура:**
-   ```
-   TaskFlow → SessionStore (loader/promise) → UI events
-   ActionHandler → SessionStore (api calls) → UI events
-   ```
+#### Баг: Пустые messages при создании сессии (2026-03-20)
+
+**Проблема:** messages.json шаг 1 содержал пустой массив `[]`
+
+**Корневая причина:** sessionRoutes.js:77 передавал пустой массив `messages: []` вместо `session.messages`
+
+**Исправление:** Заменено `messages: []` на `messages: session.messages || []`
+
+#### Баг: Определение шага в /promise/ endpoint (2026-03-20)
+
+**Проблема:** endpoint использовал устаревший `session.currentStep`
+
+**Исправление:** Добавлен поиск шага, где был создан promise:
+```javascript
+const allSteps = listNewSteps(cwd, sessionId);
+let promiseStepNum = null;
+for (const stepNum of allSteps) {
+    const promiseData = loadServerPromise(cwd, sessionId, stepNum);
+    if (promiseData?.promiseId === promiseId) {
+        promiseStepNum = stepNum;
+        break;
+    }
+}
+```
 
 ---
 
-## Результаты работ (2026-03-18)
+### 3. API Integration
 
-### Выполненные работы:
+#### Баг: Promise polling не завершался
 
-- **OOP рефакторинг**: созданы EventEmitter, DialogState, DialogLoader, DialogPromise
-- **Unit тесты**: dialog-components.test.js
-- **Интеграционные тесты**: dialog-flow.test.mjs
+**Проблема:** A2A Server возвращает результат promise БЕЗ поля `status`
+
+**Исправление:** Теперь проверяется и наличие поля `execute`:
+```javascript
+const isCompleted = pollData.data?.status === 'completed' || 
+                   pollData.data?.status === 'done' ||
+                   pollData.data?.execute != null;
+```
+
+#### Баг: Извлечение assistant message
+
+**Проблема:** В `/promise/` endpoint искали message в `promiseStatus?.result?.message`, но A2A Server возвращает его в `execute.message`
+
+**Исправление:** Добавлен правильный порядок извлечения:
+```javascript
+const assistantMessage = promiseStatus?.execute?.message || 
+                        promiseStatus?.result?.message ||
+                        promiseStatus?.message || null;
+```
+
+---
+
+## Тихие ошибки и дефолтные состояния (2026-03-20)
+
+### Исправления обработки ошибок:
+
+| # | Файл | Проблема | Исправление |
+|---|------|----------|-------------|
+| 1 | stepRoutes.js:370 | A2A server unavailable | Возврат `success: false` + HTTP 503 |
+| 2 | session-store.js:53,217 | EventEmitter ошибки | Пробрасываются через `emit('error')` |
+| 3 | session-store.js:438 | Дефолт `{}` | Заменен на `null` с предупреждением |
+| 4 | stepRoutes.js:228,438 | JSON.parse | Добавлена проверка пустого ответа |
+| 5 | task-flow/api.js:56 | Тихий catch | Логирование + throw |
+| 6 | task-flow/render.js:36,44 | Множественный fallback | Добавлено логирование |
+| 7 | api-integration.js:119,150 | Ошибки API | `console.warn` для видимости |
+
+---
+
+## Архитектура
 
 ### Иерархия классов:
 
@@ -116,73 +146,38 @@ EventEmitter (abstract)
     └── SessionStore extends SessionStoreCore
 ```
 
-### Тестовые файлы созданы:
+### Компоненты:
 
-- a2a-client/web/tests/unit/dialog-components.test.js
-- a2a-client/web/tests/integration/dialog-flow.test.mjs
+| Компонент | Файл | Описание |
+|-----------|------|----------|
+| EventEmitter | `web/js/core/EventEmitter.js` | Базовый класс событий |
+| DialogState | `web/js/core/DialogState.js` | Управление состоянием диалога |
+| DialogLoader | `web/js/core/DialogLoader.js` | Управление загрузкой |
+| DialogPromise | `web/js/core/DialogPromise.js` | Управление промисами |
+| SessionStore | `web/js/session-store.js` | Хранение сессий |
+| TaskFlow | `web/js/task-flow/core.js` | Основной поток задач |
+
+### API Endpoints (Client API):
+
+| Метод | Маршрут | Описание |
+|-------|---------|----------|
+| GET | `/api/a2a/projects` | Список проектов |
+| GET | `/api/a2a/sessions` | Список сессий |
+| POST | `/api/a2a/sessions` | Создать сессию |
+| GET | `/api/a2a/sessions/{id}` | Получить сессию |
+| POST | `/api/a2a/sessions/{id}/next` | Отправить сообщение |
+| POST | `/api/a2a/sessions/{id}/steps` | Сохранить шаг |
+| GET | `/api/a2a/sessions/{id}/promise/{promiseId}` | Статус промиса |
 
 ---
 
-## Непонятки с диалогом
+## Конфигурация
 
-### Конкретные симптомы:
-
-1. **Пустая история при восстановлении сессии** - При загрузке сохраненной сессии пользователь не видит приглашение к вводу (execute.message)
-2. **messages.json пустой в первом шаге** - В `storage/sessions/{id}/1/messages.json` записывается пустой массив `[]`
-3. **execute.message не сохраняется в историю** - Сервер возвращает `"execute": { "message": "What would you like me to do?" }`, но это не попадает в messages.json
-
-### Анализ данных:
-
-- `step 1/server-response.json` содержит `execute.message: "What would you like me to do?"`
-- `step 1/messages.json` содержит `[]` (пустой массив)
-- `step 1/client-result.json` содержит `{"result": {"message": "диалог"}}` (ввод пользователя)
-- При загрузке сессии пустые messages не добавляются в историю (sessionRoutes.js:130-141)
-
-### Возможные источники проблем (конкретные):
-
-1. **Server не создает assistant message из execute.message** - В первом шаге сервер отправляет текст приглашения, но не добавляет его как message в ответ
-2. **Client не генерирует message из execute.message** - При получении ответа с execute.message клиент не создает запись в истории
-3. **messages.json записывается пустым** - В `newSessions.js:73` `messages` по умолчанию `[]`, и сервер не передает правильные данные
-4. **Session merge логика игнорирует пустые массивы** - В `sessionRoutes.js:140-141` пустые messages не добавляются в итоговый массив
-
-### Наиболее вероятный источник:
-
-**ТОЧНАЯ ПРИЧИНА НАЙДЕНА!**
-
-В [`sessionRoutes.js:74-79`](a2a-client/vite-plugin-a2a/routes/sessionRoutes.js:74):
-```javascript
-saveNewStep(cwd, sessionId, 1, {
-    step: 1,
-    execute: session.execute,
-    messages: [],  // ← ПРОБЛЕМА! Передается пустой массив
-    context: session.context
-});
-```
-
-Сервер создает `session.messages` с приглашением (строки 50-56), но при сохранении шага передается **пустой массив** `messages: []` вместо `session.messages`!
-
-### Файлы для диагностики:
-
-1. [`a2a-server/src/services/invoke.service.ts`](a2a-server/src/services/ininvoke.service.ts) - как формируется ответ с execute.message
-2. [`a2a-client/vite-plugin-a2a/routes/stepRoutes.js:290-310`](a2a-client/vite-plugin-a2a/routes/stepRoutes.js:290) - как создаются messages при ответе сервера
-3. [`a2a-client/vite-plugin-a2a/storage/newSessions.js:73`](a2a-client/vite-plugin-a2a/storage/newSessions.js:73) - где записывается пустой messages
-
-### Исправление:
-
-В [`sessionRoutes.js:77`](a2a-client/vite-plugin-a2a/routes/sessionRoutes.js:77) исправлена строка:
-```javascript
-// Было:
-messages: [],
-// Стало:
-messages: session.messages || [],
-```
-
-Теперь при создании новой сессии приглашение "What would you like me to do?" будет сохраняться в messages.json.
-
-### Следующие шаги:
-
-- [ ] Перезапустить a2a-client для применения изменений
-- [ ] Создать новую сессию и проверить что messages.json содержит приглашение
+| Параметр | Значение |
+|----------|----------|
+| Порт | 5173 |
+| Storage | `a2a-client/storage/sessions/` |
+| Session Format | Пронумерованные папки (1/, 2/, 3/) |
 
 ---
 

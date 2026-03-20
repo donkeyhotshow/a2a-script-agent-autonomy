@@ -53,7 +53,10 @@
 
         try {
             const res = await window.fetchWithRetry(url, options);
-            const data = await res.json().catch(() => ({}));
+            const data = await res.json().catch(e => {
+                console.error('[TaskFlow] JSON parse error:', e);
+                throw e;
+            });
             if (!res.ok) {
                 // Try to extract error message
                 const errMsg = data?.error?.message || data?.error || data?.message || `HTTP ${res.status}`;

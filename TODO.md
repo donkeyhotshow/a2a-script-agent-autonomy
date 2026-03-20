@@ -1,22 +1,38 @@
-# Fix Session Window Errors - A2A Client Web UI
+# Per-Session Loaders Implementation Plan
+Status: ✅ Approved by user - Implementing...
 
-## Status: ✅ In Progress
+## 1. ✅ Per-session loaders in SessionStore (Map + methods)
+   - Add `this.sessionLoaders = new Map()` in SessionStore
+   - Methods: getLoader(sessionId), startLoader(sessionId), stopLoader(sessionId)
+   - Emits: 'loader:start/{sessionId}', 'loader:stop/{sessionId}'
 
-### Plan Breakdown:
-1. ✅ Read ProjectManager - getSelectedProjectId() confirmed
-2. ✅ Create detailed fix plan - Approved by user
-3. ✅ **Edited** a2a-client/web/js/app/windows/window-state.js 
-   - Added projectId param to getSession(sessionId, projectId)
-   - Added null checks: sessionData?.id, sessionData?.messages etc.
-   - Added warning log + proceed without crash for missing sessions
-4. **Test taskbar session toggle** - Click session → window opens without crash
-5. **Test message submit + promise polling** - No 404/500 errors
-6. **Minor cleanup** - Remove duplicate polling if needed
-7. **Run smoke tests** - Verify full flow
-8. **attempt_completion** - Mark task complete
-5. **Test message submit + promise polling** - No 404/500 errors
-6. **Minor cleanup** - Remove duplicate polling if needed
-7. **Run smoke tests** - Verify full flow
-8. **[DONE] attempt_completion** - Mark task complete
+## 2. ✅ Submit flow: startLoader on submit, inline loader w/sessionId
+   - submit/sendMessage: SessionStore.startLoader(sessionId)
+   - Hide form DOM (add .form-hidden class)
+   - DOM: showLoaderElement(sessionId)
 
-## Next Step: Edit window-state.js
+## 3. [ ] Update promise resolve flow
+   - On promiseResolved/setExecute: SessionStore.stopLoader(sessionId)
+   - Re-render based on new execute (form/loader)
+
+## 4. [ ] Handle page reload/init
+   - init(): show global loader until restoreAndReconnect()
+   - Post-restore: per-session loader if !execute.form
+
+## 5. [ ] DOM/CSS updates
+   - Per-session loader: <div id="loader-{sessionId}">
+   - CSS: .session-loader, .form-hidden { display: none }
+
+## 6. [ ] Test
+   - npm run dev
+   - Submit form → loader → new form
+   - Reload → loader until server form
+
+## Dependent files:
+- js/session-store.js
+- js/task-flow/render.js  
+- js/action-handler.js
+- index.html
+- css/components/task-flow.css
+
+Next step: Edit session-store.js

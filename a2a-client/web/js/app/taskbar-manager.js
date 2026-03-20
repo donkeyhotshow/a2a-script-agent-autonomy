@@ -168,10 +168,13 @@
             const g = (typeof window !== 'undefined' ? window : globalThis);
             // Use new API - no projectId required
             try {
-                const sessions = await g.apiIntegration?.getSessions?.() ?? [];
+                const sessions = await g.apiIntegration?.getSessions?.();
+                if (!sessions) {
+                    console.warn('[TaskbarManager] getSessions returned null/undefined');
+                }
                 return Array.isArray(sessions) ? sessions : [];
             } catch (error) {
-                console.warn('[TaskbarManager] Failed to fetch sessions:', error);
+                console.error('[TaskbarManager] Failed to fetch sessions:', error);
                 return [];
             }
         },

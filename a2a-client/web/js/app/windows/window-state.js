@@ -247,18 +247,16 @@
                     var StoreClass = window.SessionStoreClass || global.SessionStoreClass;
                     var store = null;
                     if (StoreClass) {
-                        store = new StoreClass();
-                    } else if (global.SessionStore && global.SessionStore.constructor) {
-                        // Fallback: clone global instance
-                        store = Object.create(Object.getPrototypeOf(global.SessionStore));
-                        Object.assign(store, global.SessionStore);
-                        store.reset();  // Reset state for new window
-                        console.log('[WindowState] Using SessionStore fallback');
+                        store = new StoreClass({sessionId}); // Pass sessionId
+                    } else {
+                        store = global.SessionStore;
+                        console.log('[WindowState] Using global SessionStore');
                     }
                     if (!store) {
                         console.error('[WindowState] Failed to create SessionStore instance');
                     } else {
-                        console.log('[WindowState] SessionStore instance created');
+                        console.log('[WindowState] SessionStore instance created for', sessionId);
+                        store.reset(sessionId); // Reset with sessionId
                     }
                     // Store reference on the panel for cleanup
                     panel._sessionStore = store;

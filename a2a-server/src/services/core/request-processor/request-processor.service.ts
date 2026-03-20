@@ -224,7 +224,8 @@ async function recoverProcessingRequests(): Promise<void> {
                     const data = (await lookupRes.json()) as {promiseId?: string};
                     llmPromiseId = data?.promiseId;
                 }
-            } catch {
+            } catch (err) {
+                logger.error('Failed to fetch session during recovery:', err);
                 continue;
             }
         }

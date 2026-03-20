@@ -1,14 +1,112 @@
-# DEV_STATE - a2a-server (2026-03-06)
+# DEV_STATE - a2a-server
 
-## A2A Server
+> Серверная часть: Request Processing, Storage, AI Integration
 
-### Проверка статуса сервисов
+## Подсистемы проекта
 
-| Сервис | Порт | Статус | URL проверки |
-|--------|------|--------|-------------|
-| a2a-server | 3000 | ✅ Работает | http://localhost:3000/health |
+| Подсистема | Описание |
+|------------|----------|
+| **a2a-client** | [DEV_STATE.md](../a2a-client/DEV_STATE.md) |
+| **a2a-server** | Серверная часть (этот файл) |
+| **ai-integration** | [DEV_STATE.md](../ai-integration/DEV_STATE.md) |
 
-### Конфигурация (переменные окружения в a2a-server/.env)
+---
+
+## Серверные проблемы
+
+### 1. Request Processing
+
+#### API Endpoints
+
+| Метод | Маршрут | Описание |
+|-------|---------|----------|
+| GET | `/health` | Liveness probe |
+| GET | `/api/v1/health` | Detailed health |
+| POST | `/api/v1/requests` | Создать запрос |
+| GET | `/api/v1/requests/:promiseId/status` | Статус запроса |
+| POST | `/api/v1/invoke` | Универсальный endpoint для invoke |
+| GET/POST/PUT/DELETE | `/api/v1/storage/:namespace/:key` | Storage API |
+| DELETE | `/api/v1/storage/:namespace` | Очистка namespace |
+| GET | `/api/v1/storage/:namespace/keys` | Список ключей |
+| GET | `/metrics` | Prometheus метрики |
+| GET | `/api/v1/queue/metrics` | Метрики очереди |
+
+#### Важные исправления
+
+1. **A2A Server endpoints:** `/invoke` → `/api/v1/invoke`
+2. **Invoke service:** Исправлен приоритет result в `invoke.service.ts`
+
+---
+
+### 2. Session Management
+
+#### Формат хранения
+
+```
+a2a-client/storage/sessions/{sessionId}/
+├── 1/
+│   ├── client-result.json      # Ввод пользователя
+│   ├── request-to-server.json # Запрос к A2A Server
+│   ├── server-response.json   # Ответ сервера
+│   ├── server-promise.json   # Статус промиса
+│   └── messages.json          # История сообщений
+├── 2/
+│   └── ...
+└── ...
+```
+
+#### Очистка сессий
+
+| Компонент | Место хранения | Очистка |
+|-----------|---------------|---------|
+| Сессии пользователей | PostgreSQL (таблица sessions) | Не реализована |
+| История запросов | PostgreSQL (таблица requests) | Не реализована |
+| Логи запросов | Файловая система | Не реализована |
+
+**Рекомендуемые действия:**
+- TTL для сессий (старше N дней)
+- Очистка истории (архивирование или удаление)
+- Ротация логов
+
+---
+
+### 3. AI Integration
+
+#### Интеграция с AI Hub
+
+| Параметр | Значение |
+|----------|----------|
+| AI_HUB_URL | http://localhost:11435 |
+| OLLAMA_MODEL | qwen3:8b |
+| LLM_PROVIDER | ollama |
+
+#### Потоки данных
+
+**Синхронный запрос (без LLM):**
+```
+Client → POST /api/v1/requests → a2a-server → (neuron processing) → response
+```
+
+**Асинхронный запрос (с LLM):**
+```
+Client → POST /api/v1/requests → a2a-server → AI_HUB_URL (proxy) → Ollama
+                                          ↓
+                               Создание promise
+                                          ↓
+                          a2a-server возвращает promiseId
+                                          ↓
+                             Proxy Daemon (polling every 4s)
+                                          ↓
+                          GET /promises/pending → Находит тикет
+                                          ↓
+                          POST /promise/<id>/execute → Ollama
+                                          ↓
+                          Результат сохраняется в файл
+```
+
+---
+
+## Конфигурация
 
 | Переменная | Описание | Значение |
 |------------|----------|----------|
@@ -21,307 +119,74 @@
 | LOG_LEVEL | Уровень логирования | info |
 | LOG_FORMAT | Формат логов | json |
 
-### API Endpoints
+---
 
-| Метод | Маршрут | Описание |
-|-------|---------|----------|
-| GET | /health | Liveness probe |
-| GET | /api/v1/health | Detailed health |
-| POST | /api/v1/requests | Создать запрос |
-| GET | /api/v1/requests/:promiseId/status | Статус запроса |
-| POST | /api/v1/invoke | Универсальный endpoint для invoke |
-| GET/POST/PUT/DELETE | /api/v1/storage/:namespace/:key | Storage API для файлового хранилища |
-| DELETE | /api/v1/storage/:namespace | Очистка namespace |
-| GET | /api/v1/storage/:namespace/keys | Список ключей в namespace |
-| GET | /metrics | Prometheus метрики |
-| GET | /api/v1/queue/metrics | Метрики очереди |
-| GET | /api/v1/polling/metrics | Метрики polling optimizer |
-| GET | /api/v1/pipeline/metrics | Метрики pipeline |
-| POST | /api/v1/tester/command | CLI команды для веб-клиента |
-| GET | /api/v1/tester/status | Статус tester API |
-| GET | /api/v1/tester/sessions | Активные сессии |
-| POST | /api/v1/tester/broadcast | Широковещательные команды |
+## Возможные будущие проблемы
 
-### Выполненные тесты
+### 1. Проблемы с базой данных
+
+| Проблема | Описание | Решение |
+|----------|----------|---------|
+| PostgreSQL недоступна | Запросы завершаются с ошибкой | Health check, retry |
+| Миграции БД | При обновлении возможны проблемы | Версионирование миграций |
+| Переполнение таблиц | Таблицы могут переполняться | Индексы, партиционирование |
+
+### 2. Проблемы с производительностью
+
+| Проблема | Описание | Решение |
+|----------|----------|---------|
+| Высокая нагрузка | Большое количество запросов | Rate limiting, queue |
+| Блокировка I/O | Синхронные операции | Async/await |
+| Утечки памяти | Увеличивается потребление | Регулярный перезапуск |
+
+### 3. Проблемы с аутентификацией
+
+| Проблема | Описание | Решение |
+|----------|----------|---------|
+| JWT истечение | Токены истекают | Auto-refresh token |
+| Skip Auth в продакшене | Опасен в production | Проверка окружения |
+| CORS проблемы | Ограничения браузеров | Правильная настройка CORS |
+
+---
+
+## Тестирование
+
+### Проверка сервисов
 
 ```bash
 # Тест 1: Проверка a2a-server
 curl -s http://localhost:3000/health
 # Результат: {"status":"ok","timestamp":"2026-03-06T12:10:00.897Z","version":"1.0.0"}
 
-# Тест 2: Создание запроса через a2a-server
+# Тест 2: Создание запроса
 curl -s -X POST http://localhost:3000/api/v1/requests \
   -H "Content-Type: application/json" \
   -H "x-skip-auth: true" \
   -d '{"message":"Hello","context":{},"sessionId":"test-session-1"}'
 
-# Результат:
-{"success":true,"data":{"promiseId":"cmmevccg90004ra5advcazuex","requestId":"req_1772799992072_kxtze08b3","status":"pending"}}
-
-# Тест 3: Проверка статуса запроса
-curl -s http://localhost:3000/api/v1/requests/cmmevccg90004ra5advcazuex/status -H "x-skip-auth: true"
-
-# Результат:
-{"success":true,"data":{"promiseId":"cmmevccg90004ra5advcazuex","status":"pending","createdAt":"2026-03-06T12:26:32.073Z"}}
-
-# Тест 4: Запрос через a2a-server (invoke)
+# Тест 3: Invoke
 curl -s -X POST http://localhost:3000/api/v1/invoke -H "Content-Type: application/json" \
   -d '{"task":"Привет, как дела?"}'
-# Результат: {"promiseId":"cmmeusr8z0002ra5antz1s3qg","status":"pending"}
 ```
 
 ---
 
-## Полная архитектура
+## Архитектура
 
 ```
 ┌─────────────┐     ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
 │   Client    │────▶│ a2a-server  │────▶│   Proxy     │────▶│   Ollama    │
 │  (HTTP/WS)  │     │  :3000     │     │  :11435    │     │   :11434    │
 └─────────────┘     └─────────────┘     └─────────────┘     └─────────────┘
-                           │                   │
-                           │                   │
-                    ┌──────┴──────┐    ┌──────┴──────┐
-                    │   Database  │    │   Daemon    │
-                    │ PostgreSQL  │    │ (built-in)  │
-                    │   :5433     │    │ polling     │
-                    └─────────────┘    └─────────────┘
-```
-
-### Потоки данных
-
-#### 1. Синхронный запрос (без LLM)
-```
-Client → POST /api/v1/requests → a2a-server → (neuron processing) → response
-```
-
-#### 2. Асинхронный запрос (с LLM)
-```
-Client → POST /api/v1/requests → a2a-server → AI_HUB_URL (proxy) → Ollama
-                                         ↓
-                              Создание promise
-                                         ↓
-                         a2a-server возвращает promiseId
-                                         ↓
-Client ← promiseId + status=pending
-                                         ↓
-                            Proxy Daemon (polling every 4s)
-                                         ↓
-                         GET /promises/pending → Находит тикет
-                                         ↓
-                         POST /promise/<id>/execute → Ollama
-                                         ↓
-                         Результат сохраняется в файл
-                                         ↓
-Client → GET /api/v1/requests/:promiseId/status → Возвращает результат
+                            │                   │
+                            │                   │
+                     ┌──────┴──────┐    ┌──────┴──────┐
+                     │   Database  │    │   Daemon    │
+                     │ PostgreSQL  │    │ (built-in)  │
+                     │   :5433     │    │ polling     │
+                     └─────────────┘    └─────────────┘
 ```
 
 ---
 
-## Тестирование нейронной обработки
-
-### Тест создания запроса (нейронная обработка без LLM)
-
-```bash
-curl -s -X POST http://localhost:3000/api/v1/requests \
-  -H "Content-Type: application/json" \
-  -d '{"message": "test", "context": {}}'
-# Ответ: {"success":true,"data":{"promiseId":"cmme7q5ap00005921pm7g3dj6","requestId":"req_1772760325198_ln3jl2ttx","status":"pending"}}
-
-# Проверка статуса:
-curl -s http://localhost:3000/api/v1/requests/cmme7q5ap00005921pm7g3dj6/status
-# Ответ: {"success":true,"data":{"promiseId":"...","status":"completed",...}}
-```
-
-### Выводы
-
-- ✅ a2a-server (3000) работает и обрабатывает запросы
-- ✅ Полная цепочка проверена: Client → a2a-server → neuron processing → response
-
----
-
-## Возможные будущие проблемы
-
-### 1. Проблемы с базой данных и персистентностью
-
-| Проблема | Описание | Решение |
-|----------|----------|--------|
-| **PostgreSQL недоступна** | При недоступности БД запросы завершаются с ошибкой | Health check, retry логика, graceful degradation |
-| **Миграции БД** | При обновлении схемы возможны проблемы | Версионирование миграций, rollback план |
-| **Переполнение таблиц** | При длительной работе таблицы могут переполняться | Индексы, партиционирование, TTL |
-| **Утечка соединений** | При ошибках соединения могут не закрываться | Connection pooling, cleanup on error |
-
-### 2. Проблемы с нейронами и обработкой
-
-| Проблема | Описание | Решение |
-|----------|----------|--------|
-| **Neuron not found** | При отсутствии нейрона запрос завершается ошибкой | Fallback нейроны, централизованный реестр |
-| **Длительная обработка** | Нейроны могут обрабатывать запросы слишком долго | Timeout механизм, progress updates |
-| **Конфликт нейронов** | Несколько нейронов могут конфликтовать при обработке | Приоритизация, mutex на уровне нейрона |
-| **Ошибки в нейронах** | Нейроны могут выбрасывать необработанные ошибки | try-catch обёртки, error boundaries |
-
-### 3. Проблемы с производительностью
-
-| Проблема | Описание | Решение |
-|----------|----------|--------|
-| **Высокая нагрузка** | Большое количество запросов может перегрузить сервер | Rate limiting, queue, autoscaling |
-| **Блокировка I/O** | Синхронные операции блокируют event loop | Async/await, worker threads |
-| **Медленные ответы** | При большой нагрузке время отклика увеличивается | Мониторинг метрик, оптимизация запросов |
-| **Утечки памяти** | При длительной работе увеличивается потребление памяти | Регулярный перезапуск, профилирование |
-
-### 4. Проблемы с прокси и LLM
-
-| Проблема | Описание | Решение |
-|----------|----------|--------|
-| **AI_HUB_URL недоступен** | При недоступности прокси LLM запросы не работают | Fallback на прямые провайдеры, retry |
-| **Таймауты LLM** | Долгие ответы от LLM могут превышать timeout | Настройка timeout, streaming responses |
-| **Невалидные ответы LLM** | LLM может вернуть невалидный JSON | Валидация ответов, error handling |
-| **Перегрузка LLM** | Большое количество запросов к LLM | Ограничение параллельных запросов, queue |
-
-### 5. Проблемы с аутентификацией и безопасностью
-
-| Проблема | Описание | Решение |
-|----------|----------|--------|
-| **JWT истечение** | Токены истекают, запросы отклоняются | Auto-refresh token, graceful re-auth |
-| **Skip Auth в продакшене** | SKIP_AUTH=1 опасен в production | Проверка окружения,强制 аутентификация |
-| **Инъекции** | Вредоносный input в запросах | Input validation, sanitization |
-| **CORS проблемы** | Ограничения при обращении с браузера | Правильная настройка CORS заголовков |
-
----
-
-## Очистка сессий
-
-### Текущее состояние
-
-| Компонент | Место хранения | Очистка |
-|-----------|---------------|---------|
-| Сессии пользователей | PostgreSQL (таблица sessions) | Не реализована автоматически |
-| История запросов | PostgreSQL (таблица requests) | Не реализована автоматически |
-| Логи запросов | Файловая система (storage/logs/) | Не реализована автоматически |
-| Временные файлы | storage/tmp/ | Не реализована автоматически |
-
-### Проблемы
-
-1. **Накопление сессий** - При длительной работе таблица sessions заполняется старыми данными
-2. **Рост истории запросов** - Таблица requests растёт без ограничений
-3. **Накопление логов** - Файлы логов могут занять много места на диске
-4. **Временные файлы** - Директория tmp/ не очищается автоматически
-
-### Рекомендуемые действия
-
-| Действие | Описание | Приоритет |
-|----------|----------|----------|
-| **TTL для сессий** | Автоматическое удаление сессий старше N дней | Высокий |
-| **Очистка истории** | Удаление старых запросов (archiving или удаление) | Высокий |
-| **Ротация логов** | Настроить ротацию логов (по размеру или времени) | Средний |
-| **Очистка tmp** | Удаление временных файлов старше 24 часов | Средний |
-| **Мониторинг** | Добавить метрики использования диска и размера БД | Низкий |
-
-### Пример SQL скрипта очистки
-
-```sql
--- Очистка старых сессий (старше 7 дней)
-DELETE FROM sessions 
-WHERE "createdAt" < NOW() - INTERVAL '7 days';
-
--- Очистка старых запросов (старше 30 дней)
-DELETE FROM requests 
-WHERE "createdAt" < NOW() - INTERVAL '30 days';
-
--- Очистка завершённых промисов (старше 14 дней)
-DELETE FROM promises 
-WHERE status = 'completed' 
-  AND "updatedAt" < NOW() - INTERVAL '14 days';
-```
-
-### Мониторинг размера данных
-
-```bash
-# Проверка размера таблиц в PostgreSQL
-docker exec -it a2a-server-postgres psql -U postgres -d a2a_server -c "\
-  SELECT 
-    tablename, 
-    pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename)) as size
-  FROM pg_tables 
-  WHERE schemaname = 'public'
-  ORDER BY pg_total_relation_size(schemaname||'.'||tablename) DESC;"
-
-# Подсчёт записей
-docker exec -it a2a-server-postgres psql -U postgres -d a2a_server -c "\
-  SELECT 'sessions' as table_name, COUNT(*) as count FROM sessions
-  UNION ALL
-  SELECT 'requests', COUNT(*) FROM requests
-  UNION ALL
-  SELECT 'promises', COUNT(*) FROM promises;"
-```
-
----
-
-## Тестирование
-
-### Уровень 1: AI Integration (включён)
-
-| Скрипт | Назначение | Статус |
-|--------|------------|--------|
-| `test-ai-integration.ps1` | Тестирование прокси и демона | ✅ Включён |
-
-### Уровень 2: A2A Server
-
-**Требование:** Тестирующий скрипт должен быть на этом уровне + предыдущий уровень.
-
-| Скрипт | Назначение | Статус |
-|--------|------------|--------|
-| `test-a2a-server.ps1` | Тестирование API и нейронов | 📝 Требуется |
-
-### Что должен проверять
-
-- a2a-server доступен на порту 3000
-- API endpoints отвечают корректно
-- Нейроны обрабатывают запросы
-- Интеграция с прокси (11435) работает
-- База данных доступна
-
----
-
-## Недавние улучшения (2026-03-06)
-
-### ✅ Storage API
-- **Новые endpoints**: CRUD операции для файлового хранилища
-- **Валидация**: Ограничения на размер (10MB), формат имен, проверка JSON
-- **Автоматическая очистка**: Удаление файлов старше 30 дней
-- **Безопасность**: Проверка прав доступа, обработка ошибок
-
-### ✅ Логирование и мониторинг
-- **Ротация логов**: Ежедневная ротация с архивацией (7-14 дней хранения)
-- **Типы логов**: error, combined, access логи отдельно
-- **Мониторинг производительности**: Отслеживание памяти, uptime, метрик
-- **Access логи**: Детальное логирование HTTP запросов
-
-### ✅ Производительность и безопасность
-- **Rate limiting**: Защита от перегрузки (200 запросов/минуту по умолчанию)
-- **Оптимизация**: Улучшенная обработка ошибок, валидация входных данных
-- **Метрики**: Расширенные метрики для Prometheus и внутреннего мониторинга
-- **CLI тестирование**: API для удалённого управления веб-клиентом
-
-### ✅ Исправления тестов
-- **Симуляции**: Исправлены тесты для поддержки step-based формата
-- **Совместимость**: Поддержка как legacy, так и новых форматов симуляций
-- **Надёжность**: Улучшенная обработка ошибок в тестах
-
-### Новые возможности тестирования
-
-```bash
-# Storage API тесты
-curl -X PUT http://localhost:3000/api/v1/storage/test/mykey \
-  -H "Content-Type: application/json" \
-  -d '{"value": {"test": "data"}, "timestamp": "2026-03-06T12:00:00Z"}'
-
-# CLI команды для веб-клиента
-curl -X POST http://localhost:3000/api/v1/tester/command \
-  -H "Content-Type: application/json" \
-  -d '{"type": "tester_command", "command": "run_test", "sessionId": "session-123"}'
-
-# Метрики производительности
-curl http://localhost:3000/metrics
-curl http://localhost:3000/api/v1/queue/metrics
-```
+*Обновлено: 2026-03-20*

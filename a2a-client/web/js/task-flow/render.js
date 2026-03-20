@@ -33,7 +33,11 @@
     function renderMessageHistory(contentEl, store) {
         store = store || global.SessionStore;
         const state = store?.getState?.() || {};
-        const messages = state.messages ?? store?.messages ?? [];
+        let messages = state.messages ?? store?.messages;
+        if (!messages) {
+            console.warn('[Render] No messages found, state:', !!state, 'store:', !!store);
+            messages = [];
+        }
 
         if (!messages || messages.length === 0) {
             return '<div class="task-flow-history-empty">No messages yet</div>';
@@ -41,7 +45,11 @@
 
         const historyHtml = messages.map((msg) => {
             const role = msg.role || 'assistant';
-            const content = msg.content || msg.message || msg.text || '';
+            let content = msg.content || msg.message || msg.text;
+            if (!content) {
+                console.warn('[Render] No content found in message:', msg);
+                content = '';
+            }
             const timestamp = msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString() : '';
 
             return `
@@ -203,8 +211,9 @@
                 console.log('[Render] doSubmit called, value:', inputEl.value?.trim());
                 const val = inputEl.value?.trim();
                 if (val) {
-                    // Show loader directly
-                    showInlineLoader();
+                    // Show per-session loader
+                    const sessionId = global.SessionStore?.sessionId || 'global';
+                    showInlineLoader(sessionId);
                     taskFlowRef.sendMessageResult(val, contentEl);
                 }
             };
@@ -216,17 +225,26 @@
     }
     
     // Helper function to show inline loader
-    function showInlineLoader() {
-        let loaderEl = document.getElementById('global-task-loader');
+    // FIXED: Now supports per-session loader
+    function showInlineLoader(sessionId = null) {
+        const targetSessionId = sessionId || 'global';
+        const loaderId = 'session-loader-' + targetSessionId;
+        let loaderEl = document.getElementById(loaderId);
         if (!loaderEl) {
             loaderEl = document.createElement('div');
-            loaderEl.id = 'global-task-loader';
+            loaderEl.id = loaderId;
             loaderEl.className = 'task-flow-inline-loader';
             loaderEl.innerHTML = '<div class="task-flow-spinner"></div><p>Processing...</p>';
-            document.body.appendChild(loaderEl);
+            // Try to append to session panel
+            const sessionPanel = document.getElementById('session-' + targetSessionId);
+            if (sessionPanel) {
+                sessionPanel.appendChild(loaderEl);
+            } else {
+                document.body.appendChild(loaderEl);
+            }
         }
         loaderEl.classList.add('active');
-        console.log('[Render] Loader shown');
+        console.log('[Render] Loader shown for session:', targetSessionId, 'loaderId:', loaderId);
     }
 
     /**

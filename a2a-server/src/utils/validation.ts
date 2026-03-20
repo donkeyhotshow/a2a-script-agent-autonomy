@@ -1,4 +1,5 @@
 import {z} from 'zod';
+import {logger} from './logger.js';
 
 /**
  * Validation Utilities
@@ -148,7 +149,8 @@ export function isValidJson(str: string): boolean {
     try {
         JSON.parse(str);
         return true;
-    } catch {
+    } catch (err) {
+        logger.warn('Validation error:', err);
         return false;
     }
 }

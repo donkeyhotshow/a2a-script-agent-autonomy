@@ -164,7 +164,13 @@ export class SessionManager extends EventEmitter {
         for (let attempt = 0; attempt <= this.retryConfig.maxRetries; attempt++) {
             try {
                 const response = await fetch(url, options as RequestInit);
-                const data = (await response.json().catch(() => ({}))) as Record<string, unknown>;
+                let data: Record<string, unknown>;
+                try {
+                    data = (await response.json()) as Record<string, unknown>;
+                } catch (parseErr) {
+                    console.error('[SessionManager] JSON parse error:', parseErr, 'Response:', response.status, response.statusText);
+                    data = {};
+                }
                 
                 if (!response.ok) {
                     const err = data?.error as { message?: string } | undefined;
@@ -271,7 +277,8 @@ export class SessionManager extends EventEmitter {
             try {
                 await this.request('DELETE', `/sessions/${sessionId}`);
                 deleted.push(sessionId);
-            } catch {
+            } catch (err) {
+                console.error('[SessionManager] Failed to delete session:', sessionId, err);
                 failed.push(sessionId);
             }
         }

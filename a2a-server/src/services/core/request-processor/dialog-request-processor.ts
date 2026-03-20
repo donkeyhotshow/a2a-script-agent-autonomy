@@ -306,8 +306,9 @@ export async function recoverDialogFromLlmPromise(
                 const llmExecute = llmJson.execute as Record<string, unknown> | undefined;
                 llmMessage = llmJson.message ?? llmJson.response ?? llmExecute?.message;
                 llmForm = llmExecute?.form as Record<string, unknown> | undefined;
-            } catch {
+            } catch (err) {
                 // JSON parse failed, try as plain text
+                logger.warn('Failed to parse JSON response, using raw text', err);
                 llmMessage = responseMd.trim();
             }
         } else {
@@ -355,7 +356,8 @@ export async function recoverDialogFromLlmPromise(
             context: { ...ctx, history: newHistory },
             execute: execute ?? {form: {input: [{name: 'message', type: 'text', label: 'Повідомлення', required: true}]}},
         } as ProcessResult;
-    } catch {
+    } catch (err) {
+        logger.error('Recovery function failed', err);
         return null;
     }
 }

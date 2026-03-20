@@ -55,7 +55,11 @@
                 if (!handlers) return;
                 handlers.forEach(handler => {
                     try { handler(payload); } 
-                    catch (err) { console.error('[EventEmitter] Handler failed:', event, err); }
+                    catch (err) { 
+                        console.error('[EventEmitter] Handler failed:', event, err);
+                        // FIX: Emit error event instead of silently suppressing it
+                        this.emit('error', { event, payload, error: err });
+                    }
                 });
             }
         };
@@ -76,10 +80,12 @@
                 if (active) return this;
                 active = true;
                 minEndTime = Date.now() + MINIMUM_LOADER_TIME;
+                console.log('[DialogLoader] START - active:', active, 'minEndTime:', minEndTime);
                 emitter.emit('loader', { active: true, minEndTime });
                 return this;
             },
             stop: function() {
+                console.log('[DialogLoader] STOP requested - active:', active, 'minEndTime:', minEndTime);
                 const now = Date.now();
                 const canHide = minEndTime === null || now >= minEndTime;
                 if (canHide || !active) {
@@ -147,7 +153,11 @@
                             this.setStatus('failed');
                             emitter.emit('rejected', { promiseId, error: result.error || 'Promise failed' });
                         }
-                    } catch (err) { console.error('[DialogPromise] Polling error:', err); }
+                    } catch (err) { 
+                        console.error('[DialogPromise] Polling error:', err);
+                        // Emit error event to notify listeners
+                        emitter.emit('error', { promiseId, error: err });
+                    }
                 }, PROMISE_POLL_INTERVAL);
                 return this;
             },
@@ -187,15 +197,15 @@
 
     const MAX_MESSAGES = 100;
 
-    // === SessionStoreCore (inline) ===
-    function createSessionStoreCore() {
+    // === SessionStoreCore (inline) - SINGLETON PER ACTIVE SESSION
+    function createSessionStoreCore(sessionId = null) {
         const state = {
-            sessionId: null,
+            sessionId,
             projectId: null,
             messages: [],
             execute: null,
             context: null,
-            status: 'idle',
+            status: sessionId ? 'created' : 'idle',
             pendingForm: null,
             lastError: null,
             promisePending: false,
@@ -203,30 +213,51 @@
         };
         const listeners = {};
         
-        const loader = createDialogLoader();
+        // Per-instance promise
         const promise = createDialogPromise();
         
-        // Forward events
-        loader.on('loader', (data) => emit('loader', data));
-        promise.on('promisePending', (p) => emit('promisePending', p));
-        promise.on('resolved', (data) => emit('promiseResolved', data));
-        promise.on('rejected', (data) => emit('promiseError', data));
-
+        // Per-instance loaders map - sessionId -> DialogLoader
+        const sessionLoaders = new Map();
+        
+        function getLoader(sid = null) {
+            const id = sid || sessionId;
+            if (!id) return null;
+            if (!sessionLoaders.has(id)) {
+                const loader = createDialogLoader();
+                // Forward per-session loader events
+                loader.on('loader', (data) => {
+                    if (data.active) {
+                        emit(`loader:start/${id}`, { sessionId: id, active: true });
+                    } else {
+                        emit(`loader:stop/${id}`, { sessionId: id, active: false });
+                    }
+                });
+                sessionLoaders.set(id, loader);
+            }
+            return sessionLoaders.get(id);
+        }
+        
         function emit(event, payload) {
             const handlers = listeners[event];
             if (!handlers) return;
             handlers.forEach(handler => {
                 try { handler(payload); }
-                catch (err) { console.error('[SessionStore] Handler failed:', event, err); }
+                catch (err) { 
+                    console.error('[SessionStore] Handler failed:', event, err);
+                    // FIX: Emit error event instead of silently suppressing it
+                    emit('error', { event, payload, error: err });
+                }
             });
         }
 
         return {
-            getState: function() { 
+            getState: function(sid = null) { 
+                const loaderActive = getLoader(sid)?.isActive || false;
                 return { 
                     ...state, 
-                    loaderActive: loader.isActive,
-                    promisePending: promise.isPending
+                    loaderActive,
+                    promisePending: promise.isPending,
+                    sessionLoaders: Array.from(sessionLoaders.keys())
                 }; 
             },
             
@@ -257,10 +288,21 @@
                        (state.execute && state.execute.form && (state.execute.form.choices?.length > 0 || state.execute.form.input));
             },
 
-            // Loader
-            startLoader: function() { loader.start(); return this; },
-            stopLoader: function() { loader.stop(); return this; },
-            getLoaderState: function() { return loader.getState(); },
+            // Loader - per-session
+            startLoader: function(sid = null) { 
+                const l = getLoader(sid);
+                if (l) l.start();
+                return this; 
+            },
+            stopLoader: function(sid = null) { 
+                const l = getLoader(sid);
+                if (l) l.stop();
+                return this; 
+            },
+            getLoaderState: function(sid = null) { 
+                const l = getLoader(sid);
+                return l ? l.getState() : { active: false }; 
+            },
 
             // Promise
             setPromisePending: function(pending) { promise.setPending(pending); return this; },
@@ -269,6 +311,9 @@
             stopPromisePolling: function() { promise.stopPolling(); return this; },
 
             reset: function(sessionId, projectId) {
+                // Clear loaders for previous session
+                sessionLoaders.clear();
+                
                 state.sessionId = sessionId || null;
                 state.projectId = projectId || null;
                 state.messages = [];
@@ -279,7 +324,6 @@
                 state.lastError = null;
                 state.promisePending = false;
                 state._waitIndicatorActive = false;
-                loader.reset();
                 promise.reset();
                 emit('reset', this.getState());
                 return this;
@@ -425,7 +469,13 @@
             configurable: true
         });
         Object.defineProperty(this, '_state', {
-            get: function() { return this.core ? this.core.getState() : {}; },
+            get: function() { 
+                if (!this.core) {
+                    console.warn('[SessionStore] _state: core not initialized, returning null');
+                    return null; 
+                }
+                return this.core.getState(); 
+            },
             configurable: true
         });
         Object.defineProperty(this, 'pendingForm', {

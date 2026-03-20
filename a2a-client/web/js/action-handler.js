@@ -71,7 +71,10 @@
             body: JSON.stringify({ result })
         });
         
-        const data = await res.json().catch(() => ({}));
+        const data = await res.json().catch((e) => {
+            console.error('[ActionHandler] JSON parse error:', e.message);
+            return {};
+        });
         if (!res.ok) {
             throw new Error(data?.error?.message || `Request failed: ${res.status}`);
         }
@@ -80,6 +83,12 @@
             // First set promise pending to block input
             if (data.promiseId) {
                 store.setPromisePending?.(true);
+                // Start per-session loader
+                if (typeof sessionId === 'string') {
+                    store.startLoader?.(sessionId);
+                } else {
+                    store.startLoader?.();
+                }
                 startPromisePolling(sessionId, data.promiseId);
                 // Force UI refresh to show waiting state BEFORE setting execute
                 if (global.WindowManager?.refreshAll) {
@@ -103,7 +112,10 @@
     async function checkPromise(sessionId, promiseId) {
         const store = resolveStore(sessionId);
         const base = getApiBase(store);
-        if (!base) return null;
+        if (!base) {
+            console.warn('[ActionHandler] API base not configured');
+            return null;
+        }
         
         // Use storage mode with default fallback
         const storageMode = store?.getStorageMode?.() || 'storage';
@@ -117,7 +129,10 @@
                 headers: { 'Content-Type': 'application/json' }
             });
             
-            if (!res.ok) return null;
+            if (!res.ok) {
+                console.warn('[ActionHandler] Promise check failed with status:', res.status);
+                return null;
+            }
             return await res.json();
         } catch (e) {
             console.error('[ActionHandler] Promise check failed:', e.message);
@@ -143,8 +158,16 @@
             // Subscribe to promise resolved event from SessionStore
             const onResolved = (data) => {
                 if (data.promiseId === promiseId) {
-                    const exec = data.execute ?? data.result?.execute;
-                    if (exec && store) store.setExecute?.(exec);
+                const exec = data.execute ?? data.result?.execute;
+                if (exec && store) {
+                    store.setExecute?.(exec);
+                    // Stop loader after new execute received
+                    if (typeof sessionId === 'string') {
+                        store.stopLoader?.(sessionId);
+                    } else {
+                        store.stopLoader?.();
+                    }
+                }
                     global.apiIntegration?.emit?.('promiseResolved', {
                         sessionId,
                         promiseId,
@@ -157,7 +180,13 @@
             // Subscribe to promise rejected event from SessionStore
             const onRejected = (data) => {
                 if (data.promiseId === promiseId) {
-                    if (store) store.setPromisePending?.(false);
+                    store.setPromisePending?.(false);
+                    // Stop loader on error
+                    if (typeof sessionId === 'string') {
+                        store.stopLoader?.(sessionId);
+                    } else {
+                        store.stopLoader?.();
+                    }
                     global.apiIntegration?.emit?.('promiseError', {
                         sessionId,
                         promiseId,

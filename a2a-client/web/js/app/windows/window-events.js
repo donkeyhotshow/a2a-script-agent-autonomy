@@ -26,8 +26,8 @@
                     sendMessageResult: async (text, el) => {
                         if (!text || !text.trim()) return;
                         
-                        // Show loader immediately - minimum 5 seconds
-                        _showGlobalLoader();
+                        // FIXED: Show loader for specific session
+                        _showGlobalLoader(sessionId);
                         
                         const msg = String(text).trim();
                         store.pushMessage?.({ content: msg }, 'user');
@@ -36,63 +36,92 @@
                         try {
                             await taskFlowRef.sendMessage(sessionId, msg);
                         } finally {
-                            // Hide loader - will respect minimum 5 second wait
-                            _hideGlobalLoader();
+                            // FIXED: Hide loader for specific session
+                            _hideGlobalLoader(sessionId);
                         }
                     },
                     sendChoice: async (choiceId, el) => {
-                        // Show loader immediately - minimum 5 seconds
-                        _showGlobalLoader();
+                        // FIXED: Show loader for specific session
+                        _showGlobalLoader(sessionId);
                         
                         store?.setPromisePending?.(true);
                         refreshContent();
                         try {
                             await this.sendChoice(sessionId, choiceId);
                         } finally {
-                            // Hide loader - will respect minimum 5 second wait
-                            _hideGlobalLoader();
+                            // FIXED: Hide loader for specific session
+                            _hideGlobalLoader(sessionId);
                         }
                     }
                 };
 
-                // Global loader helper functions
+                // Global loader helper functions - FIXED: Track active loaders per session
                 let _loaderMinEndTime = null;
-                function _showGlobalLoader() {
-                    let loaderEl = document.getElementById('global-task-loader');
+                const _activeLoaders = new Map(); // sessionId -> { minEndTime, element }
+                function _showGlobalLoader(sessionId = 'global') {
+                    // FIXED: Use session-specific loader ID instead of global
+                    console.log('[WindowEvents] _showGlobalLoader called for session:', sessionId, 'Active loaders:', _activeLoaders.size);
+                    
+                    const loaderId = 'session-loader-' + sessionId;
+                    let loaderEl = document.getElementById(loaderId);
                     if (!loaderEl) {
-                        // Create loader element if it doesn't exist
+                        // Create session-specific loader element
                         loaderEl = document.createElement('div');
-                        loaderEl.id = 'global-task-loader';
+                        loaderEl.id = loaderId;
                         loaderEl.className = 'task-flow-inline-loader';
                         loaderEl.innerHTML = `
                             <div class="task-flow-spinner"></div>
                             <p>Processing...</p>
                         `;
-                        document.body.appendChild(loaderEl);
-                        console.log('[WindowEvents] Created loader element');
+                        // Try to append to the session's panel
+                        const sessionPanel = document.getElementById('session-' + sessionId);
+                        if (sessionPanel) {
+                            sessionPanel.appendChild(loaderEl);
+                        } else {
+                            document.body.appendChild(loaderEl);
+                        }
+                        console.log('[WindowEvents] Created session-specific loader element:', loaderId);
                     }
                     
                     loaderEl.classList.add('active');
                     _loaderMinEndTime = Date.now() + 5000;
                     loaderEl.dataset.minEndTime = _loaderMinEndTime;
-                    console.log('[WindowEvents] Loader shown');
+                    // Track this loader for this session
+                    _activeLoaders.set(sessionId, { minEndTime: _loaderMinEndTime, element: loaderEl });
+                    console.log('[WindowEvents] Loader shown for session:', sessionId, 'loaderId:', loaderId);
                 }
-                function _hideGlobalLoader() {
-                    const loaderEl = document.getElementById('global-task-loader');
-                    if (!loaderEl) return;
+                function _hideGlobalLoader(sessionId = 'global') {
+                    // FIXED: Use session-specific loader ID
+                    console.log('[WindowEvents] _hideGlobalLoader called for session:', sessionId, 'Active loaders:', _activeLoaders.size);
+                    
+                    // Try session-specific loader first
+                    const loaderId = 'session-loader-' + sessionId;
+                    let loaderEl = document.getElementById(loaderId);
+                    
+                    // Fallback to global for backward compatibility
+                    if (!loaderEl) {
+                        loaderEl = document.getElementById('global-task-loader');
+                    }
+                    
+                    if (!loaderEl) {
+                        console.log('[WindowEvents] No loader element found for session:', sessionId);
+                        return;
+                    }
                     
                     const minEndTime = parseInt(loaderEl.dataset.minEndTime) || 0;
                     const now = Date.now();
                     
                     if (now >= minEndTime) {
                         loaderEl.classList.remove('active');
-                        console.log('[WindowEvents] Loader hidden (min time passed)');
+                        _activeLoaders.delete(sessionId);
+                        console.log('[WindowEvents] Loader hidden (min time passed) for session:', sessionId);
                     } else {
                         const remaining = minEndTime - now;
-                        console.log('[WindowEvents] Waiting', remaining, 'ms for min time');
+                        console.log('[WindowEvents] Waiting', remaining, 'ms for min time for session:', sessionId);
                         setTimeout(() => {
                             loaderEl.classList.remove('active');
-                            console.log('[WindowEvents] Loader hidden (after wait)');
+                            _activeLoaders.delete(sessionId);
+                            console.log('[WindowEvents] Loader hidden (after wait) for session:', sessionId);
                         }, remaining);
                     }
                 }
@@ -102,7 +131,11 @@
                 const refreshContent = () => {
                     // Get execute - use method if available for consistency
                     const execute = store.getExecute ? store.getExecute() : (store.execute || store._state?.execute);
-                    const context = store.context || store._state?.context || {};
+                    let context = store.context || store._state?.context;
+                    if (!context) {
+                        console.warn('[WindowEvents] No context found');
+                        context = {};
+                    }
 
                     const isWaiting = store.isInputBlocked?.() || false;
                     

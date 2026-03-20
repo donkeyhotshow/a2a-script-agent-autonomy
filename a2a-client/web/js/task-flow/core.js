@@ -141,11 +141,13 @@
 
         /**
          * Setup loader event listener - subscribes to SessionStore 'loader' events
-         * and shows/hides the global loader indicator
+         * and shows/hides the session-specific loader indicator
          * Uses SessionStore for unified loader management
+         * FIXED: Now passes sessionId to loader UI for per-session display
          */
         _setupLoaderListener(sessionId = null) {
-            const store = resolveStore(sessionId);
+            const targetSessionId = sessionId || this._sessionId;
+            const store = resolveStore(targetSessionId);
             if (!store || typeof store.on !== 'function') {
                 console.log('[TaskFlow] _setupLoaderListener: SessionStore not available');
                 return;
@@ -153,22 +155,27 @@
 
             // Subscribe to loader events from SessionStore
             // This ensures UI stays in sync with store state
+            // FIXED: Include sessionId in the data passed to _updateLoaderUI
             const unsubscribe = store.on('loader', (data) => {
-                console.log('[TaskFlow] Loader event from store:', data);
-                this._updateLoaderUI(data);
+                console.log('[TaskFlow] Loader event from store:', data, 'sessionId:', targetSessionId);
+                // Add sessionId to data for per-session loader
+                const dataWithSession = { ...data, sessionId: targetSessionId };
+                this._updateLoaderUI(dataWithSession);
             });
 
             // Store unsubscribe function for cleanup if needed
             this._loaderUnsubscribe = unsubscribe;
-            console.log('[TaskFlow] _setupLoaderListener: subscribed to loader events');
+            console.log('[TaskFlow] _setupLoaderListener: subscribed to loader events for session:', targetSessionId);
         },
 
         /**
          * Show loader immediately - called before any server request
          * Uses SessionStore for unified loader management
+         * FIXED: Now uses per-session loader element
          */
-        _showLoader() {
-            console.log('[TaskFlow] _showLoader called');
+        _showLoader(sessionId = null) {
+            const targetSessionId = sessionId || this._sessionId || 'global';
+            console.log('[TaskFlow] _showLoader called for session:', targetSessionId);
             
             // Try to use SessionStore for loader management
             const store = resolveStore(this._sessionId);
@@ -178,18 +185,25 @@
                 return;
             }
             
-            // Fallback: Create and show loader DOM element directly
-            // This handles cases when SessionStore is not available
-            let loaderEl = document.getElementById('global-task-loader');
+            // Fallback: Create and show session-specific loader DOM element directly
+            // FIXED: Use session-specific ID instead of global
+            const loaderId = 'session-loader-' + targetSessionId;
+            let loaderEl = document.getElementById(loaderId);
             if (!loaderEl) {
                 loaderEl = document.createElement('div');
-                loaderEl.id = 'global-task-loader';
+                loaderEl.id = loaderId;
                 loaderEl.className = 'task-flow-inline-loader';
                 loaderEl.innerHTML = `
                     <div class="task-flow-spinner"></div>
                     <p>Processing...</p>
                 `;
-                document.body.appendChild(loaderEl);
+                // Append to the session's panel if available, otherwise to body
+                const sessionPanel = document.getElementById('session-' + targetSessionId);
+                if (sessionPanel) {
+                    sessionPanel.appendChild(loaderEl);
+                } else {
+                    document.body.appendChild(loaderEl);
+                }
             }
             
             // Set minimum end time (5 seconds from now)
@@ -199,15 +213,17 @@
             
             // Store in component state for later use
             this._loaderMinEndTime = minEndTime;
-            console.log('[TaskFlow] Loader shown (fallback), minEndTime:', minEndTime);
+            console.log('[TaskFlow] Loader shown (fallback), minEndTime:', minEndTime, 'loaderId:', loaderId);
         },
 
         /**
          * Hide loader - called when server responds
          * Uses SessionStore for unified loader management
+         * FIXED: Now uses per-session loader element
          */
-        _hideLoader() {
-            console.log('[TaskFlow] _hideLoader called');
+        _hideLoader(sessionId = null) {
+            const targetSessionId = sessionId || this._sessionId || 'global';
+            console.log('[TaskFlow] _hideLoader called for session:', targetSessionId);
             
             // Try to use SessionStore for loader management
             const store = resolveStore(this._sessionId);
@@ -217,9 +233,19 @@
                 return;
             }
             
-            // Fallback: Handle hiding DOM element directly
-            const loaderEl = document.getElementById('global-task-loader');
-            if (!loaderEl) return;
+            // Fallback: Handle hiding session-specific DOM element
+            // FIXED: Use session-specific ID
+            const loaderId = 'session-loader-' + targetSessionId;
+            const loaderEl = document.getElementById(loaderId);
+            if (!loaderEl) {
+                // Try global fallback for backward compatibility
+                const globalLoaderEl = document.getElementById('global-task-loader');
+                if (globalLoaderEl) {
+                    globalLoaderEl.classList.remove('active');
+                    console.log('[TaskFlow] Loader hidden (global fallback)');
+                }
+                return;
+            }
             
             // Check if minimum time has passed
             const minEndTime = parseInt(loaderEl.dataset.minEndTime) || 0;
@@ -229,40 +255,51 @@
                 // Minimum time passed, hide immediately
                 loaderEl.classList.remove('active');
                 this._loaderMinEndTime = null;
-                console.log('[TaskFlow] Loader hidden (fallback - min time passed)');
+                console.log('[TaskFlow] Loader hidden (fallback - min time passed)', 'loaderId:', loaderId);
             } else {
                 // Wait for minimum time
                 const remaining = minEndTime - now;
-                console.log('[TaskFlow] Waiting', remaining, 'ms for minimum display time (fallback)');
+                console.log('[TaskFlow] Waiting', remaining, 'ms for minimum display time (fallback)', 'loaderId:', loaderId);
                 setTimeout(() => {
                     loaderEl.classList.remove('active');
                     this._loaderMinEndTime = null;
-                    console.log('[TaskFlow] Loader hidden (fallback - after min time wait)');
+                    console.log('[TaskFlow] Loader hidden (fallback - after min time wait)', 'loaderId:', loaderId);
                 }, remaining);
             }
         },
 
         /**
          * Update loader UI based on loader state
-         * @param {Object} data - { active: boolean, minEndTime?: number }
+         * FIXED: Now uses per-session loader element
+         * @param {Object} data - { active: boolean, minEndTime?: number, sessionId?: string }
          */
         _updateLoaderUI(data) {
             console.log('[TaskFlow] _updateLoaderUI called:', data);
             if (!data) return;
             
-            // Find or create global loader element
-            let loaderEl = document.getElementById('global-task-loader');
+            // Get session ID from data or use current session
+            const sessionId = data.sessionId || this._sessionId || 'global';
+            const loaderId = 'session-loader-' + sessionId;
+            
+            // Find or create session-specific loader element
+            let loaderEl = document.getElementById(loaderId);
             if (!loaderEl && data.active) {
-                console.log('[TaskFlow] Creating loader element');
+                console.log('[TaskFlow] Creating session-specific loader element:', loaderId);
                 // Create loader element if it doesn't exist
                 loaderEl = document.createElement('div');
-                loaderEl.id = 'global-task-loader';
+                loaderEl.id = loaderId;
                 loaderEl.className = 'task-flow-inline-loader';
                 loaderEl.innerHTML = `
                     <div class="task-flow-spinner"></div>
                     <p>Processing...</p>
                 `;
-                document.body.appendChild(loaderEl);
+                // Append to the session's panel if available, otherwise to body
+                const sessionPanel = document.getElementById('session-' + sessionId);
+                if (sessionPanel) {
+                    sessionPanel.appendChild(loaderEl);
+                } else {
+                    document.body.appendChild(loaderEl);
+                }
             }
             
             if (loaderEl) {
@@ -498,20 +535,46 @@
                     throw new Error('ActionHandler is not available for sending choice');
                 }
 
-                await handler.submit(sessionId, { choice: choiceId });
+                const submitResult = await handler.submit(sessionId, { choice: choiceId });
 
                 // Wait for response (promiseId polling in SDK)
                 const outcome = await outcomePromise;
+                
+                // Check if this is async (has promiseId) - don't hide loader yet!
+                const isAsync = submitResult?.promiseId || outcome?.promiseId;
+                
                 if (outcome.execute) {
                     setPanelContent(contentEl, 'execute', { execute: outcome.execute, sessionId, projectId }, this);
                     updateStatus(contentEl, 'Received response');
                 }
 
-                // Stop loader - server returned execute or async promise, minimum 5s enforced locally
-                this._hideLoader();
+                if (isAsync) {
+                    // For async flow: wait for promise to resolve before hiding loader
+                    console.log('[TaskFlow] Async flow detected, waiting for promise to resolve...');
+                    
+                    // Subscribe to promise resolved event
+                    if (store && typeof store.on === 'function') {
+                        const unsubscribe = store.on('promiseResolved', (data) => {
+                            console.log('[TaskFlow] Promise resolved, hiding loader:', data);
+                            unsubscribe();
+                            this._hideLoader();
+                            // Render the final execute result
+                            const exec = data.execute ?? data.result?.execute;
+                            if (exec) {
+                                setPanelContent(contentEl, 'execute', { execute: exec, sessionId, projectId }, this);
+                                updateStatus(contentEl, 'Processing complete');
+                            }
+                        });
+                    }
+                    // Loader will be hidden when promise resolves (minimum 5s already enforced)
+                } else {
+                    // Sync flow: hide loader immediately
+                    this._hideLoader();
+                }
 
             } catch (error) {
                 console.error('[TaskFlow] Error sending choice:', error);
+                this._hideLoader();
                 contentEl.innerHTML = `
                     <div class="task-flow-error">
                         <p>Error: ${escapeHtml(error.message)}</p>
@@ -565,20 +628,46 @@
                     throw new Error('ActionHandler is not available for sending message');
                 }
 
-                await handler.submit(sessionId, { message: messageText });
+                const submitResult = await handler.submit(sessionId, { message: messageText });
 
                 // Wait for response (promiseId polling in SDK)
                 const outcome = await outcomePromise;
+                
+                // Check if this is async (has promiseId) - don't hide loader yet!
+                const isAsync = submitResult?.promiseId || outcome?.promiseId;
+                
                 if (outcome.execute) {
                     setPanelContent(contentEl, 'execute', { execute: outcome.execute, sessionId, projectId }, this);
                     updateStatus(contentEl, 'Received response');
                 }
 
-                // Stop loader - server returned execute or async promise, minimum 5s enforced locally
-                this._hideLoader();
+                if (isAsync) {
+                    // For async flow: wait for promise to resolve before hiding loader
+                    console.log('[TaskFlow] Async flow detected, waiting for promise to resolve...');
+                    
+                    // Subscribe to promise resolved event
+                    if (store && typeof store.on === 'function') {
+                        const unsubscribe = store.on('promiseResolved', (data) => {
+                            console.log('[TaskFlow] Promise resolved, hiding loader:', data);
+                            unsubscribe();
+                            this._hideLoader();
+                            // Render the final execute result
+                            const exec = data.execute ?? data.result?.execute;
+                            if (exec) {
+                                setPanelContent(contentEl, 'execute', { execute: exec, sessionId, projectId }, this);
+                                updateStatus(contentEl, 'Processing complete');
+                            }
+                        });
+                    }
+                    // Loader will be hidden when promise resolves (minimum 5s already enforced)
+                } else {
+                    // Sync flow: hide loader immediately
+                    this._hideLoader();
+                }
 
             } catch (error) {
                 console.error('[TaskFlow] Error sending message:', error);
+                this._hideLoader();
                 contentEl.innerHTML = `
                     <div class="task-flow-error">
                         <p>Error: ${escapeHtml(error.message)}</p>

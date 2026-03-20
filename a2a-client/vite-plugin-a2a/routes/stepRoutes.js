@@ -3,7 +3,7 @@ import { mergeResponseContext, buildStepRecord } from './utils/builders.js';
 import * as stepHandlers from './handlers/step-handlers.js';
 import * as stepUtils from './utils/step-utils.js';
 import { proxyToA2AServer } from './proxy/a2a-proxy.js';
-import { getNewStepDir, loadNewSession, loadNewStep, loadServerPromise, loadServerResponse, saveClientResult, saveNewStep, saveNewSession, saveRequestToServer, saveServerPromise, saveServerResponse } from '../storage/newSessions.js';
+import { getNewStepDir, loadNewSession, loadNewStep, loadServerPromise, loadServerResponse, saveClientResult, saveNewStep, saveNewSession, saveRequestToServer, saveServerPromise, saveServerResponse, listNewSteps, getNewSessionLatestStep, loadStepFile } from '../storage/newSessions.js';
 
 import fs from 'fs';
 
@@ -107,6 +107,12 @@ export function createStepRoutes({ cwd }) {
             const session = loadNewSession(cwd, sessionId);
             if (!session) {
                 res.writeHead(404).end(JSON.stringify({ error: 'Session not found' }));
+                return;
+            }
+            console.log('[stepRoutes] history handler - cwd:', cwd, 'sessionId:', sessionId);
+            if (typeof listNewSteps !== 'function') {
+                console.error('[stepRoutes] listNewSteps not defined!');
+                res.writeHead(500).end(JSON.stringify({ error: 'listNewSteps unavailable' }));
                 return;
             }
             const allSteps = listNewSteps(cwd, sessionId);
@@ -225,7 +231,10 @@ export function createStepRoutes({ cwd }) {
                         xhrRes.on('end', async () => {
                             console.log('[VitePlugin] A2A response:', xhrRes.statusCode, 'data:', data.substring(0, 200));
                             try {
-                                const a2aData = JSON.parse(data || '{}');
+                                if (!data || data.trim() === '') {
+                                    throw new Error('Empty response from A2A server');
+                                }
+                                const a2aData = JSON.parse(data);
 
                                 if (a2aData.data?.promiseId) {
                                     console.log('[VitePlugin] Async response - promiseId:', a2aData.data.promiseId);
@@ -265,6 +274,11 @@ export function createStepRoutes({ cwd }) {
                                             break;
                                         } else if (isFailed) {
                                                 console.error('[VitePlugin] Promise failed:', pollData.data.error);
+                                                // Return error response to client
+                                                serverResponse = {
+                                                    error: pollData.data.error || 'Promise failed',
+                                                    status: 'failed'
+                                                };
                                                 break;
                                             }
                                         } catch (pollErr) {
@@ -373,15 +387,17 @@ export function createStepRoutes({ cwd }) {
                         session.updatedAt = new Date().toISOString();
                         saveNewSession(cwd, session);
 
+                        // FIX: Return error instead of success to avoid silent failures
                         const response = {
-                            success: true,
+                            success: false,
                             session,
                             execute: null,
                             promiseId: null,
-                            error: 'A2A server unavailable'
+                            error: 'A2A server unavailable: ' + e.message
                         };
 
                         res.setHeader('Content-Type', 'application/json');
+                        res.writeHead(503); // Service Unavailable
                         res.end(JSON.stringify(response));
                     });
 
@@ -415,6 +431,28 @@ export function createStepRoutes({ cwd }) {
                 return;
             }
 
+            // FIX: Find the step where the promise was created, not just session.currentStep
+            // The promise might be in a step that hasn't been saved as server-response.json yet
+            // Search through all steps to find the one with matching promiseId
+            console.log('[stepRoutes] promise handler - cwd:', cwd, 'sessionId:', sessionId);
+            if (typeof listNewSteps !== 'function') {
+                console.error('[stepRoutes] listNewSteps not defined in promise handler!');
+                res.writeHead(500).end(JSON.stringify({ error: 'listNewSteps unavailable' }));
+                return;
+            }
+            const allSteps = listNewSteps(cwd, sessionId);
+            let promiseStepNum = null;
+            for (const stepNum of allSteps) {
+                const promiseData = loadServerPromise(cwd, sessionId, stepNum);
+                if (promiseData?.promiseId === promiseId) {
+                    promiseStepNum = stepNum;
+                    break;
+                }
+            }
+            // If not found in existing steps, use currentStep (might be a new promise being created)
+            const currentStep = promiseStepNum || session.currentStep || 1;
+            console.log('[VitePlugin] Promise check - looking for promiseId:', promiseId, 'found at step:', currentStep);
+
             const a2aServerUrl = process.env.A2A_SERVER_URL || 'http://localhost:3000';
             const xhr = require('http');
             const urlObj = new URL(`${a2aServerUrl}/api/v1/requests/${promiseId}/result`);
@@ -433,12 +471,14 @@ export function createStepRoutes({ cwd }) {
                 xhrRes.on('end', () => {
                     console.log('[VitePlugin] Promise check - raw data:', data.substring(0, 500));
                     try {
-                        const rawResponse = JSON.parse(data || '{}');
+                        if (!data || data.trim() === '') {
+                            throw new Error('Empty response from A2A server');
+                        }
+                        const rawResponse = JSON.parse(data);
                         console.log('[VitePlugin] Promise check - parsed rawResponse:', JSON.stringify(rawResponse).substring(0, 500));
                         const promiseStatus = rawResponse.success ? rawResponse.data : rawResponse;
                         console.log('[VitePlugin] Promise check - promiseStatus:', JSON.stringify(promiseStatus).substring(0, 500));
 
-                        const currentStep = session.currentStep || 1;
                         const existingPromise = loadServerPromise(cwd, sessionId, currentStep);
                         const updatedPromise = {
                             ...existingPromise,
@@ -454,8 +494,12 @@ export function createStepRoutes({ cwd }) {
                                                  promiseStatus.execute != null;
                         
                         if (isPromiseCompleted) {
-                            // Add assistant message to session.messages
-                            const assistantMessage = promiseStatus?.result?.message;
+                            // FIX: Extract assistant message from execute.message (A2A Server returns it there)
+                            // Also check result.message for backward compatibility
+                            const assistantMessage = promiseStatus?.execute?.message || 
+                                                    promiseStatus?.result?.message ||
+                                                    promiseStatus?.message ||
+                                                    null;
                             if (assistantMessage) {
                                 session.messages = session.messages || [];
                                 session.messages.push({

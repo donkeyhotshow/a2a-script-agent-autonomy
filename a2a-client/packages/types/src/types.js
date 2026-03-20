@@ -17,19 +17,40 @@ export class Session {
         this.projectId = data.projectId;
         this.title = data.title;
         this.task = data.task;
+        // DEBUG: Log when fallback status is used - may indicate data issue
+        if (!data.status) {
+            console.warn('[Session] WARNING: Using default PENDING status - data.status was:', data.status, 'session id:', data.id);
+        }
         this.status = data.status || 'PENDING';
         this.selectedAction = data.selectedAction;
+        // DEBUG: Log when fallback context is used - may indicate missing context
+        if (!data.context) {
+            console.warn('[Session] WARNING: Using default {} context - data.context was:', data.context, 'session id:', data.id);
+        }
         this.context = data.context || {};
         this.lastPromiseId = data.lastPromiseId;
         this.createdAt = data.createdAt;
         this.updatedAt = data.updatedAt;
+        // DEBUG: Log when messages array fallback is used
+        if (!Array.isArray(data.messages)) {
+            console.warn('[Session] WARNING: Using default [] messages - data.messages was:', typeof data.messages, 'session id:', data.id);
+        }
         this.messages = Array.isArray(data.messages) ? data.messages : [];
         this.exchangeLog = Array.isArray(data.context?.exchangeLog) ? data.context.exchangeLog : [];
         this.messageCount = Array.isArray(data.messages) ? data.messages.length : 0;
         
-        // New protocol fields
+        // New protocol fields - DEBUG logging for fallbacks
+        if (!data.context?.execution) {
+            console.warn('[Session] DEBUG: execution using null fallback - data.context?.execution:', data.context?.execution);
+        }
         this.execution = data.context?.execution || null;
+        if (!data.context?.history) {
+            console.warn('[Session] DEBUG: history using [] fallback - data.context?.history:', data.context?.history);
+        }
         this.history = data.context?.history || [];
+        if (data.context?.docVirtual === undefined || data.context?.docVirtual === null) {
+            console.warn('[Session] DEBUG: docVirtual using empty string fallback');
+        }
         this.docVirtual = data.context?.docVirtual || '';
     }
 

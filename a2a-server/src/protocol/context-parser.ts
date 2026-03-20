@@ -11,6 +11,7 @@ import {
     TaskStatus,
     ProtocolError,
 } from '../types/index.js';
+import {logger} from '../utils/logger.js';
 
 const VALID_TASK_TYPES: TaskType[] = ['analyze', 'refactor', 'test', 'document', 'fix', 'create', 'delete'];
 const VALID_TASK_STATUSES: TaskStatus[] = ['pending', 'in_progress', 'completed', 'failed', 'cancelled'];
@@ -141,7 +142,8 @@ export function parseContextBlock(data: unknown): ContextBlock {
 export function parseContextBlockSafe(data: unknown): ContextBlock | null {
     try {
         return parseContextBlock(data);
-    } catch {
+    } catch (err) {
+        logger.error('Context parsing failed', err);
         return null;
     }
 }

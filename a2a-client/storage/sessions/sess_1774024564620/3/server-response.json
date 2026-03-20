@@ -1,0 +1,24 @@
+{
+  "timestamp": "2026-03-20T16:36:34.956Z",
+  "execute": {
+    "form": {
+      "input": [
+        {
+          "name": "message",
+          "type": "text",
+          "label": "Повідомлення",
+          "required": true
+        }
+      ]
+    }
+  },
+  "context": {
+    "execution": {
+      "action": "dialog",
+      "step": "request"
+    },
+    "session_id": "sess_1774024564620",
+    "task": "диалог",
+    "message": "диалог"
+  }
+}

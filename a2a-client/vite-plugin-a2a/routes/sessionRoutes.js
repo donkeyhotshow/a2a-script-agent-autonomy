@@ -7,7 +7,8 @@ import {
     saveNewStep,
     listNewSteps,
     loadNewStep,
-    loadStepFile
+    loadStepFile,
+    loadServerPromise
 } from '../storage/newSessions.js';
 import { getStorageMode, isValidSessionId } from '../utils/server.js';
 
@@ -37,7 +38,10 @@ export function createSessionRoutes({ cwd }) {
             req.on('data', (c) => (body += c));
             req.on('end', () => {
                 try {
-                    const d = JSON.parse(body || '{}');
+                    if (!body || body.trim() === '') {
+                        throw new Error('Empty request body');
+                    }
+                    const d = JSON.parse(body);
                     const title = d.title || 'New Session';
                     const sessionId = d.id || `sess_${Date.now()}`;
                     const session = {
@@ -110,8 +114,20 @@ export function createSessionRoutes({ cwd }) {
                     const allMessages = [];
                     const seenMessages = new Set(); // Track seen content to avoid duplicates
                     
+                    // Check for pending promise in the latest step
+                    const currentStep = session.currentStep || (steps.length > 0 ? steps[steps.length - 1] : 1);
+                    const serverPromise = loadServerPromise(cwd, sessionId, currentStep);
+                    if (serverPromise?.promiseId && (serverPromise.status === 'pending' || serverPromise.status === 'processing')) {
+                        session.promiseId = serverPromise.promiseId;
+                        session.promiseStatus = serverPromise.status;
+                        console.log('[SessionRoutes] Found pending promise:', serverPromise.promiseId, 'status:', serverPromise.status);
+                    }
+                    
                     for (const stepNum of steps) {
                         const stepData = loadNewStep(cwd, sessionId, stepNum);
+                        if (!stepData) {
+                            console.warn('[SessionRoutes] Failed to load step', stepNum, 'for session', sessionId);
+                        }
                         
                         // Only add execute.message if it's not already in stepData.messages
                         // This prevents duplication when messages are stored in both places
@@ -131,6 +147,9 @@ export function createSessionRoutes({ cwd }) {
                         }
 
                         const clientResult = loadStepFile(cwd, sessionId, stepNum, 'client-result.json');
+                        if (!clientResult) {
+                            console.warn('[SessionRoutes] Failed to load client-result for step', stepNum);
+                        }
                         if (clientResult?.result?.message) {
                             const msgContent = clientResult.result.message;
                             if (!seenMessages.has(msgContent)) {
@@ -169,7 +188,10 @@ export function createSessionRoutes({ cwd }) {
                 req.on('data', (c) => (body += c));
                 req.on('end', () => {
                     try {
-                        const d = JSON.parse(body || '{}');
+                        if (!body || body.trim() === '') {
+                            throw new Error('Empty request body');
+                        }
+                        const d = JSON.parse(body);
                         const projectPath = storageMode === 'project' ? getProjectPathForSessions(cwd) : null;
                         const existing = storageMode === 'project'
                             ? loadSession(projectPath, sessionId)

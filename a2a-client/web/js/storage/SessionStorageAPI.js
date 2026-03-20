@@ -72,6 +72,7 @@ export class SessionStorageAPI {
         });
         
         if (!response.ok) {
+            console.warn(`[SessionStorageAPI] checkLatestStep failed: ${response.status} for session ${sessionId}`);
             return null;
         }
         
@@ -84,6 +85,7 @@ export class SessionStorageAPI {
         });
         
         if (!response.ok) {
+            console.warn(`[SessionStorageAPI] getHistory failed: ${response.status} for session ${sessionId}`);
             return [];
         }
         
@@ -97,6 +99,7 @@ export class SessionStorageAPI {
         });
         
         if (!response.ok) {
+            console.warn(`[SessionStorageAPI] listSessions failed: ${response.status}`);
             return [];
         }
         
