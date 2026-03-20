@@ -92,6 +92,7 @@ async function runResponseTransform(
                 llmForm = llmExecute?.form as Record<string, unknown> | undefined;
             } catch (e) {
                 // JSON parse failed, try as plain text
+                logger.warn('[DialogRequestProcessor] Failed to parse JSON response at line 88, using raw text', e);
                 llmMessage = responseMd.trim();
             }
         } else {

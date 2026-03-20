@@ -106,7 +106,9 @@ export class SessionService {
     }
 
     private persistSession(session: SessionDetail): void {
-        saveSessionToStorage(session as unknown as PersistedSession).catch(() => {});
+        saveSessionToStorage(session as unknown as PersistedSession).catch((err) => {
+            console.error('[SESSION SERVICE] CRITICAL: Failed to persist session:', session.id, err);
+        });
     }
 
     /**

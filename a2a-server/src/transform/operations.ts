@@ -248,7 +248,11 @@ async function applyRenderMarkdown(
     // Try JSONPath
     templateData = query<Record<string, unknown>>(context.$out, data) 
       || query<Record<string, unknown>>(context.input, data)
-      || {};
+      || (() => {
+        // DEBUG: Log when fallback to empty object happens
+        console.log(`[DEBUG operations.ts] JSONPath fallback to {} for data: ${data}`);
+        return {};
+      })();
   }
   
   // Create a clean context for template resolution (without internal properties)

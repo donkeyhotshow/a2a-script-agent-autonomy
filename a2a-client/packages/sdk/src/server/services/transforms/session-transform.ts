@@ -42,7 +42,11 @@ export async function updateSessionWithServerResponse(
     // Update execute information from server response (new protocol)
     if (serverResponse?.execute) {
         // Store execute information in context for now
+        const hadExistingContext = !!updatedSession.context;
         updatedSession.context = updatedSession.context || {};
+        if (hadExistingContext) {
+            console.warn('[SESSION TRANSFORM] Context existed before execute update, keys:', Object.keys(updatedSession.context));
+        }
         updatedSession.context.execute = serverResponse.execute;
         
         // Check for form choices and extract them

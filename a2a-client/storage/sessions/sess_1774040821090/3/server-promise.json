@@ -1,0 +1,24 @@
+{
+  "promiseId": "prom_1774040869293_5u4h8njrt",
+  "status": "completed",
+  "submittedAt": "2026-03-20T21:07:49.292Z",
+  "execute": {
+    "form": {
+      "input": [
+        {
+          "name": "message",
+          "type": "text",
+          "label": "Повідомлення",
+          "required": true
+        }
+      ]
+    }
+  },
+  "context": {
+    "task": "диалог",
+    "execution": {
+      "action": "dialog",
+      "step": "request"
+    }
+  }
+}

@@ -1,7 +1,5 @@
 {
-  "promiseId": "prom_1774038697021_44asne6xa",
-  "status": "pending",
-  "submittedAt": "2026-03-20T20:31:37.025Z",
+  "timestamp": "2026-03-20T21:38:59.344Z",
   "execute": {
     "message": "1",
     "form": {
@@ -16,11 +14,13 @@
     }
   },
   "context": {
-    "task": "ответь одним символом \"1\"",
     "execution": {
       "action": "dialog",
       "step": "request"
     },
+    "session_id": "sess_1774040821090",
+    "task": "ответь одним символом \"1\"",
+    "message": "ответь одним символом \"1\"",
     "history": [
       {
         "role": "user",

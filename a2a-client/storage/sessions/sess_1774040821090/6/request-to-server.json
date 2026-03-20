@@ -1,24 +1,10 @@
 {
-  "timestamp": "2026-03-20T21:40:10.368Z",
-  "execute": {
-    "message": "1",
-    "form": {
-      "input": [
-        {
-          "name": "message",
-          "type": "text",
-          "label": "Повідомлення",
-          "required": true
-        }
-      ]
-    }
-  },
   "context": {
     "execution": {
       "action": "dialog",
       "step": "request"
     },
-    "session_id": "sess_1774024564620",
+    "session_id": "sess_1774040821090",
     "task": "ответь одним символом \"1\"",
     "message": "ответь одним символом \"1\"",
     "history": [
@@ -31,5 +17,8 @@
         "message": "1"
       }
     ]
+  },
+  "result": {
+    "message": "ответь одним символом \"1\""
   }
 }
