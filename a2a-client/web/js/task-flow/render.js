@@ -83,9 +83,10 @@
      * @param {HTMLElement} contentEl - элемент контента
      * @param {Object} execute - объект execute
      * @param {Object} data - данные
+     * @param {Object} store - хранилище (или null для fallback на global.SessionStore)
      * @param {Object} taskFlowRef - ссылка на TaskFlow
      */
-    function renderExecute(contentEl, execute, data, taskFlowRef, store) {
+    function renderExecute(contentEl, execute, data, store, taskFlowRef) {
         if (!contentEl || !execute) return;
 
         const context = data?.context;
@@ -147,7 +148,7 @@
         // execute.form.choices: choice buttons
         // execute.form.input only: text input
         // execute.message only: show message + generic input to continue
-        store = store || data?.store;
+        store = store || data?.store || global.SessionStore;
         if (execute.form) {
             return renderForm(contentEl, execute.form, executionStepHtml, progressBarHtml, finalResultHtml, taskFlowRef, store);
         } else if (execute.message) {
@@ -397,7 +398,7 @@
             case 'execute':
             case 'response':
                 if (data?.execute) {
-                    renderExecute(contentEl, data.execute, data, taskFlowRef);
+                    renderExecute(contentEl, data.execute, data, null, taskFlowRef);
                 }
                 break;
 

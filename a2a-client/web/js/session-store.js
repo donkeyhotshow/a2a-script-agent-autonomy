@@ -105,19 +105,7 @@
         this.storage = createSessionStorageAPI(options.storageBase, mode);
         this._storageMode = mode;
 
-        var coreDelegateMethods = [
-            'getState', 'setSession', 'reset', 'setExecute', 'pushMessage', 'setError', 'clearLastError',
-            'on', 'setPromisePending', 'isWaitingForInput', 'isInputBlocked',
-            'startLoader', 'stopLoader', 'getLoaderState',
-            'setPromiseId', 'startPromisePolling', 'stopPromisePolling'
-        ];
-        var self = this;
-        coreDelegateMethods.forEach(function (m) {
-            self[m] = function () {
-                var fn = self.core[m];
-                return fn.apply(self.core, arguments);
-            };
-        });
+        // Delegate methods defined on prototype for efficiency
 
         this.getStorageMode = function() {
             return this.storage.getStorageMode();
@@ -208,6 +196,21 @@
         return !!sessionId;
     };
 
+    // Delegate methods on prototype - defined once, shared across all instances
+    var coreDelegateMethods = [
+        'getState', 'setSession', 'reset', 'setExecute', 'pushMessage', 'setError', 'clearLastError',
+        'on', 'setPromisePending', 'isWaitingForInput', 'isInputBlocked',
+        'startLoader', 'stopLoader', 'getLoaderState',
+        'setPromiseId', 'startPromisePolling', 'stopPromisePolling'
+    ];
+
+    coreDelegateMethods.forEach(function (m) {
+        SessionStore.prototype[m] = function () {
+            var fn = this.core[m];
+            return fn.apply(this.core, arguments);
+        };
+    });
+
     SessionStore.prototype.restoreAndReconnect = async function() {
         var sessionId = await readSavedSessionId();
         if (!sessionId) {
@@ -261,14 +264,5 @@
         storageBase: WEB_SESSION_STORE_OPTIONS.storageBase,
         storageMode: WEB_SESSION_STORE_OPTIONS.storageMode
     });
-
-    // Add init method for compatibility with index.html
-    global.SessionStore.init = function() {
-        // Initialize storage connection
-        if (global.SessionStore._storage) {
-            global.SessionStore._storage.init && global.SessionStore._storage.init();
-        }
-        return global.SessionStore;
-    };
 
 })(typeof window !== 'undefined' ? window : globalThis);

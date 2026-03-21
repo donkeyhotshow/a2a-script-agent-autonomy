@@ -53,7 +53,6 @@
             },
             startPolling: function (checkFn, opts = {}) {
                 const sessionScoped = opts?.sessionScoped === true;
-                console.log('[DialogPromise] startPolling called, promiseId:', promiseId, 'sessionScoped:', sessionScoped);
                 // For session-scoped polling (no promiseId), we still need to poll
                 if (!promiseId && !sessionScoped) return this;
                 this._stopPolling();
@@ -61,10 +60,8 @@
                     try {
                         // For session-scoped, call checkFn without arguments
                         const result = sessionScoped ? await checkFn() : await checkFn(promiseId);
-                        console.log('[DialogPromise] tick result:', JSON.stringify(result));
                         if (!result) return;
                         if (result.completed || result.status === 'completed' || result.status === 'done' || result.status === 'idle' || result.execute != null) {
-                            console.log('[DialogPromise] Terminal state detected, stopping polling');
                             this._stopPolling();
                             this.setPending(false);
                             this.setStatus('completed');

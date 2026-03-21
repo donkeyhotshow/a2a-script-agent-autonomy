@@ -72,25 +72,18 @@
                 // Use renderExecute to render full panel (history + execute + input)
                 // renderExecute renders the complete content: history + execute block + input area
                 const refreshContent = () => {
-                    // Get execute - use method if available for consistency
-                    const execute = store.getExecute ? store.getExecute() : (store.execute || store._state?.execute);
-                    let context = store.context || store._state?.context;
-                    if (!context) {
-                        context = {};
-                    }
-
+                    // Get all store data in single call for efficiency
                     const st = store.getState?.() || {};
-                    const promisePending = st.promisePending || (store.core?.promise?.isPending) || (store.promise?.isPending);
+                    const execute = st.execute ?? store.getExecute?.() ?? store.execute ?? store._state?.execute;
+                    const context = st.context ?? store.context ?? store._state?.context ?? {};
+                    const promisePending = st.promisePending ?? store.core?.promise?.isPending ?? store.promise?.isPending ?? false;
                     const hasActionableForm = global.executeHasActionableForm?.(execute);
-                    const inputBlocked =
-                        typeof store.isInputBlocked === 'function' && store.isInputBlocked();
-                    const isWaiting =
-                        !!promisePending ||
-                        (!hasActionableForm && inputBlocked);
+                    const inputBlocked = typeof store.isInputBlocked === 'function' && store.isInputBlocked();
+                    const isWaiting = !!promisePending || (!hasActionableForm && inputBlocked);
 
                     // Task-flow UI (form/message/actions) only when server/store set execute; never synthetic { form: pendingForm }
                     if (execute && !isWaiting) {
-                        Render.renderExecute(contentEl, execute, { execute, context, store }, taskFlowRef);
+                        Render.renderExecute(contentEl, execute, { execute, context, store }, store, taskFlowRef);
                     } else {
                         const waitBlock = isWaiting
                             ? `<div class="task-flow-sending" style="margin-top:0.75rem">
@@ -194,46 +187,6 @@
             }
         },
 
-        /**
-         * Handle window blur event
-         */
-        handleWindowBlur(sessionId) {
-            // Optional: handle window blur (when user clicks outside window)
-        },
-
-        /**
-         * Handle window resize event
-         */
-        handleWindowResize(sessionId, newSize) {
-            const registry = global.WindowRegistry;
-            const positionModule = global.WindowPosition;
-            
-            if (!registry || !positionModule) return;
-            
-            const sessionWindows = registry.getSessionWindows();
-            const panel = sessionWindows?.get(sessionId);
-            
-            if (panel) {
-                positionModule.saveWindowState(sessionId, panel.position, panel.size);
-            }
-        },
-
-        /**
-         * Handle window drag event
-         */
-        handleWindowDrag(sessionId, newPosition) {
-            const registry = global.WindowRegistry;
-            const positionModule = global.WindowPosition;
-            
-            if (!registry || !positionModule) return;
-            
-            const sessionWindows = registry.getSessionWindows();
-            const panel = sessionWindows?.get(sessionId);
-            
-            if (panel) {
-                positionModule.saveWindowState(sessionId, newPosition, panel.size);
-            }
-        }
     };
 
     // Export

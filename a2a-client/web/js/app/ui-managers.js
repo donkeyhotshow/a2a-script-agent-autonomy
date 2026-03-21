@@ -44,13 +44,7 @@
             if (grid) await this._loadProjectsIntoGrid(grid);
         },
 
-        /**
-         * Populate header #projectSelect with projects (delegates to AppInitialization)
-         */
-        async _populateHeaderProjectSelect() {
-            // Delegate to AppInitialization
-            return global.AppInitialization?._populateHeaderProjectSelect?.();
-        },
+
 
         /**
          * Fetch projects from API and render into grid

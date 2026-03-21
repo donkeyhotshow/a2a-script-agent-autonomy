@@ -1,0 +1,13 @@
+{
+  "context": {
+    "execution": {
+      "action": "task",
+      "step": "router"
+    },
+    "task": "диалог",
+    "session_id": "sess_1774068933393"
+  },
+  "result": {
+    "choice": "dialog"
+  }
+}

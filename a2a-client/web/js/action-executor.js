@@ -26,7 +26,7 @@
      * @param {Object} store - хранилище сессии
      * @returns {string|null} базовый URL
      */
-    function getApiBase(store) {
+    function _getApiBase(store) {
         const api = global.apiIntegration;
         if (!store || typeof store.getStorageMode !== 'function') {
             throw new Error('[ActionExecutor] SessionStore with getStorageMode() required');
@@ -46,7 +46,7 @@
      * @param {Object} store - хранилище сессии
      * @returns {Object} заголовки запроса
      */
-    function createHeaders(store) {
+    function _createHeaders(store) {
         const headers = { 'Content-Type': 'application/json' };
         if (global.apiIntegration?.token) {
             headers['Authorization'] = `Bearer ${global.apiIntegration.token}`;
@@ -60,7 +60,7 @@
      * @param {Object} options - параметры fetch
      * @returns {Promise<Object>} данные ответа
      */
-    async function fetchJson(url, options) {
+    async function _fetchJson(url, options) {
         const res = await fetch(url, options);
         
         let data = {};
@@ -120,7 +120,7 @@
      */
     async function submit(sessionId, result, storeOverride) {
         const store = storeOverride || global.resolveStore(sessionId);
-        const base = getApiBase(store);
+        const base = _getApiBase(store);
         if (!base) {
             throw new Error('ActionExecutor: API base not configured. Set Client API URL in Settings.');
         }
@@ -133,9 +133,9 @@
         const apiPath = isStorageMode ? '' : '/api';
         const url = `${base}${apiPath}/sessions/${encodeURIComponent(sessionId)}/next`;
         
-        const headers = createHeaders(store);
+        const headers = _createHeaders(store);
         
-        const data = await fetchJson(url, {
+        const data = await _fetchJson(url, {
             method: 'POST',
             headers,
             body: JSON.stringify({ result })
@@ -143,10 +143,8 @@
         
         // POST /next ack: asyncPending (+ legacy promiseId) — hydrate via GET session; poll GET .../async
         const asyncPending = !!(data?.asyncPending ?? data?.promiseId);
-        console.log('[ActionExecutor] submit response:', JSON.stringify({success: data?.success, accepted: data?.accepted, asyncPending}));
         if (store && data?.success && data?.accepted) {
             if (asyncPending) {
-                console.log('[ActionExecutor] asyncPending is true, starting polling...');
                 store.setPromisePending?.(true);
                 if (typeof sessionId === 'string') {
                     store.startLoader?.(sessionId);
@@ -156,12 +154,42 @@
                 startPromisePolling(sessionId, isStorageMode ? null : data.promiseId || null);
                 await pullSessionSnapshot(sessionId, store, { skipExecuteWhenPending: true });
             } else {
-                console.log('[ActionExecutor] asyncPending is false, pulling snapshot directly');
                 await pullSessionSnapshot(sessionId, store);
             }
         }
         
         return data;
+    }
+
+    /**
+     * Приватная функция для выполнения fetch запроса к session endpoint
+     * @param {string} sessionId - ID сессии
+     * @param {string} path - путь относительно sessions/:id/
+     * @param {Object} store - хранилище сессии
+     * @returns {Promise<Object>} данные ответа
+     */
+    async function _fetchSessionEndpoint(sessionId, path, store) {
+        const base = _getApiBase(store);
+        if (!base) {
+            throw new Error('[ActionExecutor] API base not configured');
+        }
+
+        const storageMode = store.getStorageMode();
+        const isStorageMode = storageMode === 'storage';
+        const apiPath = isStorageMode ? '' : '/api';
+        const url = `${base}${apiPath}/sessions/${encodeURIComponent(sessionId)}/${path.replace(/^\//, '')}`;
+
+        const res = await fetch(url, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+        });
+
+        if (!res.ok) {
+            throw new Error(`[ActionExecutor] Session endpoint fetch failed: HTTP ${res.status}`);
+        }
+
+        const text = await res.text();
+        return text ? JSON.parse(text) : {};
     }
 
     /**
@@ -173,46 +201,13 @@
      */
     async function checkPromise(sessionId, promiseId) {
         const store = global.resolveStore(sessionId);
-        const base = getApiBase(store);
-        if (!base) {
-            throw new Error('[ActionExecutor] API base not configured');
-        }
-
-        const storageMode = store.getStorageMode();
-        const isStorageMode = storageMode === 'storage';
-        const apiPath = isStorageMode ? '' : '/api';
-        const url = `${base}${apiPath}/sessions/${encodeURIComponent(sessionId)}/promise/${encodeURIComponent(promiseId)}`;
-
-        const res = await fetch(url, {
-            method: 'GET',
-            headers: { 'Content-Type': 'application/json' },
-        });
-
-        if (!res.ok) {
-            throw new Error(`[ActionExecutor] Promise check failed: HTTP ${res.status}`);
-        }
-
-        const text = await res.text();
-        return text ? JSON.parse(text) : {};
+        return _fetchSessionEndpoint(sessionId, `promise/${encodeURIComponent(promiseId)}`, store);
     }
 
     /** Session-scoped async poll — Client API resolves transport id server-side */
     async function checkSessionAsync(sessionId) {
         const store = global.resolveStore(sessionId);
-        const base = getApiBase(store);
-        if (!base) {
-            throw new Error('[ActionExecutor] API base not configured');
-        }
-        const storageMode = store.getStorageMode();
-        const isStorageMode = storageMode === 'storage';
-        const apiPath = isStorageMode ? '' : '/api';
-        const url = `${base}${apiPath}/sessions/${encodeURIComponent(sessionId)}/async`;
-        const res = await fetch(url, { method: 'GET', headers: { 'Content-Type': 'application/json' } });
-        if (!res.ok) {
-            throw new Error(`[ActionExecutor] Session async check failed: HTTP ${res.status}`);
-        }
-        const text = await res.text();
-        return text ? JSON.parse(text) : {};
+        return _fetchSessionEndpoint(sessionId, 'async', store);
     }
 
     /**
@@ -223,13 +218,10 @@
      * @param {string} promiseId - ID промиса
      */
     function startPromisePolling(sessionId, promiseId) {
-        console.log('[ActionExecutor] startPromisePolling called:', {sessionId, promiseId});
         const store = global.resolveStore(sessionId);
-        console.log('[ActionExecutor] resolveStore result:', typeof store, store ? 'has startPromisePolling: ' + typeof store?.startPromisePolling : 'null');
         const sessionScoped = !promiseId;
 
         if (store?.startPromisePolling) {
-            console.log('[ActionExecutor] store.startPromisePolling exists, starting polling...');
             if (!sessionScoped && store.setPromiseId) {
                 store.setPromiseId(promiseId);
             }
@@ -280,8 +272,6 @@
 
             return;
         }
-        
-        console.warn('[ActionExecutor] startPromisePolling: store.startPromisePolling not available, store type:', typeof store);
         
     }
 
@@ -338,10 +328,6 @@
         startPromisePolling,
         stopPromisePolling,
         pullSessionSnapshot,
-        resolveStore: global.resolveStore,
-        getApiBase,
-        createHeaders,
-        fetchJson,
         POLL_INTERVAL
     };
 

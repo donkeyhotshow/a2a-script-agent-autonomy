@@ -40,62 +40,46 @@
             try {
                 // Check if using persistent storage mode
                 const usePersistentStorage = global.SessionStore?.isPersistentStorage?.() || false;
-                
+                let sessionId = null;
+
                 if (usePersistentStorage && global.SessionStore?.createSessionWithForm) {
                     try {
                         // Use new session storage API with numbered folders
                         const title = `Session ${new Date().toLocaleTimeString()}`;
                         const session = await global.SessionStore.createSessionWithForm(title);
-                        
-                        const sid = session?.id || session?.sessionId;
-                        if (sid) {
-                            // Set active session
-                            if (global.SessionManager?.setActiveSession) {
-                                global.SessionManager.setActiveSession(sid);
-                            }
-                            
-                            // Refresh taskbar
-                            const taskbarContent = global.SessionManager?.getTaskbarContentEl?.() || document.querySelector('.taskbar-content');
-                            if (taskbarContent && global.TaskbarManager) {
-                                await global.TaskbarManager.refreshTaskbar(taskbarContent);
-                            }
-                            
-                            scheduleOpenSessionWindow(sid);
-                            
-                            console.log('[AppTask] Created new persistent session:', sid);
-                            return;
-                        }
+                        sessionId = session?.id || session?.sessionId;
+                        console.log('[AppTask] Created new persistent session:', sessionId);
                     } catch (error) {
                         console.warn('[AppTask] Persistent storage failed, falling back to old API:', error);
-                        // Fall through to old API
                     }
                 }
-                
-                // Fallback to old API (memory mode or if new API fails)
-                const projectId = await global.ProjectManager?.getSelectedProjectId();
-                if (!global.apiIntegration?.createSession) throw new Error('API not available');
-                const session = await global.apiIntegration.createSession({
-                    projectId,
-                    title: `Session ${new Date().toLocaleTimeString()}`
-                });
-                const sessionId = session?.id || session?.sessionId;
+
+                // Fallback to old API if persistent storage didn't work
+                if (!sessionId) {
+                    const projectId = await global.ProjectManager?.getSelectedProjectId();
+                    if (!global.apiIntegration?.createSession) throw new Error('API not available');
+                    const session = await global.apiIntegration.createSession({
+                        projectId,
+                        title: `Session ${new Date().toLocaleTimeString()}`
+                    });
+                    sessionId = session?.id || session?.sessionId;
+                    console.log('[AppTask] Created new session:', sessionId);
+                }
+
+                // Common operations after getting sessionId
                 if (sessionId) {
-                    if (global.SessionStore?.createSession) global.SessionStore.createSession(session);
+                    if (global.SessionStore?.createSession) global.SessionStore.createSession(sessionId);
                     if (global.SessionManager?.setActiveSession) global.SessionManager.setActiveSession(sessionId);
-                }
 
-                // Refresh taskbar to show new session
-                const taskbarContent = global.SessionManager?.getTaskbarContentEl?.() || document.querySelector('.taskbar-content');
-                if (taskbarContent && global.TaskbarManager) {
-                    await global.TaskbarManager.refreshTaskbar(taskbarContent);
-                }
+                    // Refresh taskbar to show new session
+                    const taskbarContent = global.SessionManager?.getTaskbarContentEl?.() || document.querySelector('.taskbar-content');
+                    if (taskbarContent && global.TaskbarManager) {
+                        await global.TaskbarManager.refreshTaskbar(taskbarContent);
+                    }
 
-                // Auto-open the new session (use sessionId — API may return sessionId without .id)
-                if (sessionId) {
+                    // Auto-open the new session
                     scheduleOpenSessionWindow(sessionId);
                 }
-
-                console.log('[AppTask] Created new session:', sessionId);
             } catch (error) {
                 console.error('[AppTask] Failed to create session:', error);
                 window.ErrorHandler?.handle(new Error('Failed to create new session'), { action: 'createSession' });

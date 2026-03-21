@@ -125,50 +125,6 @@ class APIIntegration {
     }
 
     /**
-     * Generic request method - unified HTTP client with timeout and retry
-     * @param {string} method - HTTP method (GET, POST, PUT, DELETE)
-     * @param {string} resourcePath - API resource path (e.g. 'sessions/123/next')
-     * @param {Object} [body] - Request body (will be JSON stringified)
-     * @param {Object} [options] - Additional options: timeout, headers
-     * @returns {Promise<Object>} Parsed JSON response
-     */
-    async request(method, resourcePath, body = null, options = {}) {
-        const url = this._clientA2aUrl(resourcePath);
-        const fetchOptions = {
-            method: method.toUpperCase(),
-            headers: { ...this._getHeaders(), ...options.headers },
-            timeout: options.timeout
-        };
-        
-        if (body && method.toUpperCase() !== 'GET') {
-            fetchOptions.body = JSON.stringify(body);
-        }
-        
-        const response = await fetchWithRetry(url, fetchOptions);
-        
-        if (!response.ok) {
-            throw new Error(`API request failed: ${response.status} ${response.statusText}`);
-        }
-        
-        const contentType = response.headers.get('content-type');
-        if (contentType && contentType.includes('application/json')) {
-            return response.json();
-        }
-        return response.text();
-    }
-
-    /**
-     * Get headers for requests
-     */
-    _getHeaders() {
-        const headers = { 'Content-Type': 'application/json' };
-        if (this.token) {
-            headers['Authorization'] = `Bearer ${this.token}`;
-        }
-        return headers;
-    }
-
-    /**
      * Get projects list (uses Vite plugin at /api/a2a/projects)
      */
     async getProjects() {
@@ -210,11 +166,14 @@ class APIIntegration {
     }
 
     /**
-     * Delete project (not implemented in vite-plugin-a2a)
+     * Get base headers for API requests
      */
-    async deleteProject(projectId) {
-        console.warn('[API] deleteProject not implemented');
-        return { success: false };
+    _getHeaders() {
+        const headers = { 'Content-Type': 'application/json' };
+        if (this.token) {
+            headers['Authorization'] = `Bearer ${this.token}`;
+        }
+        return headers;
     }
 
     _getStorageHeaders() {
@@ -227,15 +186,33 @@ class APIIntegration {
     }
 
     /**
+     * Combined headers (base + storage mode)
+     */
+    _headers() {
+        return { ...this._getHeaders(), ...this._getStorageHeaders() };
+    }
+
+    /**
+     * Private fetch method that handles common fetch + headers + error handling pattern
+     * @param {string} path - Resource path relative to API base
+     * @param {Object} opts - Fetch options (method, body, etc.) - headers will be merged with _headers()
+     * @returns {Promise<Object>} Parsed JSON response
+     */
+    async _fetch(path, opts = {}) {
+        const url = this._clientA2aUrl(path);
+        const headers = { ...this._headers(), ...opts.headers };
+        const res = await fetch(url, { ...opts, headers });
+        if (!res.ok) {
+            throw new Error(`API request failed: ${res.status} ${res.statusText}`);
+        }
+        return res.json();
+    }
+
+    /**
      * Get sessions (uses Vite plugin)
      */
     async getSessions(projectId = null) {
-        const headers = { ...this._getHeaders(), ...this._getStorageHeaders() };
-        const res = await fetch(this._clientA2aUrl('sessions'), { headers });
-        if (!res.ok) {
-            throw new Error(`getSessions failed: ${res.status} ${res.statusText}`);
-        }
-        const raw = await res.json();
+        const raw = await this._fetch('sessions');
         let sessions = Array.isArray(raw) ? raw : (raw?.sessions ?? raw?.data);
         if (!Array.isArray(sessions)) {
             throw new Error('getSessions: response must be an array or contain sessions/data array');
@@ -251,14 +228,10 @@ class APIIntegration {
      * Create session (uses Vite plugin)
      */
     async createSession(params = {}) {
-        const headers = { 'Content-Type': 'application/json', ...this._getStorageHeaders() };
-        const res = await fetch(this._clientA2aUrl('sessions'), {
+        const raw = await this._fetch('sessions', {
             method: 'POST',
-            headers,
             body: JSON.stringify(params)
         });
-        if (!res.ok) throw new Error(`createSession failed: ${res.status}`);
-        const raw = await res.json();
         return raw?.session ?? raw?.data ?? raw;
     }
 
@@ -270,13 +243,8 @@ class APIIntegration {
             optionsOrLegacyProjectId && typeof optionsOrLegacyProjectId === 'object' && !Array.isArray(optionsOrLegacyProjectId)
                 ? optionsOrLegacyProjectId
                 : {};
-        const headers = { ...this._getHeaders(), ...this._getStorageHeaders() };
         const q = options.includeContext ? '?includeContext=1' : '';
-        const res = await fetch(this._clientA2aUrl(`sessions/${encodeURIComponent(sessionId)}${q}`), { headers });
-        if (!res.ok) {
-            throw new Error(`getSession failed: ${res.status} ${res.statusText}`);
-        }
-        const raw = await res.json();
+        const raw = await this._fetch(`sessions/${encodeURIComponent(sessionId)}${q}`);
         console.log('[API] getSession response:', sessionId, 'asyncPending:', raw?.asyncPending, 'status:', raw?.status);
         if (raw && typeof raw === 'object') {
             if (raw.success === true) {
@@ -293,48 +261,30 @@ class APIIntegration {
      * Highest step summary (promiseId / promiseStatus). Same route as storage “latest”.
      */
     async getSessionLatest(sessionId, options = {}) {
-        const headers = { ...this._getHeaders(), ...this._getStorageHeaders() };
         const q = options.includeContext ? '?includeContext=1' : '';
-        const res = await fetch(
-            this._clientA2aUrl(`sessions/${encodeURIComponent(sessionId)}/latest${q}`),
-            { headers }
-        );
-        if (!res.ok) {
-            throw new Error(`getSessionLatest failed: ${res.status} ${res.statusText}`);
-        }
-        return res.json();
+        return this._fetch(`sessions/${encodeURIComponent(sessionId)}/latest${q}`);
     }
 
     /**
      * Delta messages by monotonic seq (reduces full GET frequency). Optional execute via withExecute=1.
      */
     async getSessionMessages(sessionId, afterSeq = 0, limit = 50, withExecute = false) {
-        const headers = { ...this._getHeaders(), ...this._getStorageHeaders() };
         const params = new URLSearchParams({
             afterSeq: String(afterSeq),
             limit: String(limit),
         });
         if (withExecute) params.set('withExecute', '1');
-        const res = await fetch(
-            this._clientA2aUrl(`sessions/${encodeURIComponent(sessionId)}/messages?${params}`),
-            { headers }
-        );
-        if (!res.ok) {
-            throw new Error(`getSessionMessages failed: ${res.status} ${res.statusText}`);
-        }
-        return res.json();
+        return this._fetch(`sessions/${encodeURIComponent(sessionId)}/messages?${params}`);
     }
 
     /**
      * Delete session (uses Vite plugin)
      */
     async deleteSession(sessionId) {
-        const headers = { ...this._getStorageHeaders() };
-        const res = await fetch(this._clientA2aUrl(`sessions/${encodeURIComponent(sessionId)}`), {
-            method: 'DELETE',
-            headers
+        const res = await this._fetch(`sessions/${encodeURIComponent(sessionId)}`, {
+            method: 'DELETE'
         });
-        return { success: res.ok };
+        return { success: res != null };
     }
 
 
@@ -345,28 +295,12 @@ class APIIntegration {
      * Check promise status
      */
     async checkPromise(sessionId, promiseId) {
-        const headers = { ...this._getHeaders(), ...this._getStorageHeaders() };
-        const res = await fetch(this._clientA2aUrl(`sessions/${encodeURIComponent(sessionId)}/promise/${encodeURIComponent(promiseId)}`), {
-            method: 'GET',
-            headers
-        });
-        if (!res.ok) {
-            throw new Error(`checkPromise failed: ${res.status} ${res.statusText}`);
-        }
-        return res.json();
+        return this._fetch(`sessions/${encodeURIComponent(sessionId)}/promise/${encodeURIComponent(promiseId)}`);
     }
 
     /** Session-scoped async status (Vite Client API). */
     async checkSessionAsync(sessionId) {
-        const headers = { ...this._getHeaders(), ...this._getStorageHeaders() };
-        const res = await fetch(this._clientA2aUrl(`sessions/${encodeURIComponent(sessionId)}/async`), {
-            method: 'GET',
-            headers,
-        });
-        if (!res.ok) {
-            throw new Error(`checkSessionAsync failed: ${res.status} ${res.statusText}`);
-        }
-        return res.json();
+        return this._fetch(`sessions/${encodeURIComponent(sessionId)}/async`);
     }
 
 
@@ -392,8 +326,15 @@ class APIIntegration {
 
 const apiIntegration = new APIIntegration();
 
+// Global request wrapper (used by task-flow/init.js)
+async function request(method, path, options = {}) {
+    const url = path.startsWith('/') ? path.slice(1) : path;
+    return apiIntegration._fetch(url, { method, ...options });
+}
+
 if (typeof window !== 'undefined') {
     window.APIIntegration = APIIntegration;
+    window.request = request;
     window.apiIntegration = apiIntegration;
     if (!window.fetchWithRetry) {
         window.fetchWithRetry = fetchWithRetry;

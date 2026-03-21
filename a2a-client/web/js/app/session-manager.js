@@ -166,10 +166,8 @@
          * Rename session
          */
         renameSession(sessionId, newName) {
-            // Update button text
-            const sessionBtn = Array.from(document.querySelectorAll('.taskbar-session-btn')).find(
-                (b) => b.dataset.sessionId === String(sessionId)
-            );
+            // Update button text using findTaskbarBtnBySessionId
+            const sessionBtn = findTaskbarBtnBySessionId(sessionId);
             const titleEl = sessionBtn?.querySelector('.taskbar-session-title');
             if (titleEl) {
                 titleEl.textContent = newName;

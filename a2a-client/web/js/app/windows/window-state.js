@@ -47,7 +47,12 @@
                 state: 'visible',
                 _savedState: null,
                 getContentEl: () => content,
+                _cleanupDrag: () => {
+                    document.removeEventListener('mousemove', _onDragMove);
+                    document.removeEventListener('mouseup', _onDragEnd);
+                },
                 close: () => {
+                    panel._cleanupDrag();
                     if (panel._onClose) panel._onClose();
                     container.remove();
                 },
@@ -83,33 +88,37 @@
             // Close button
             header.querySelector('.pui-panel-close').addEventListener('click', () => panel.close());
 
-            // Drag functionality
+            // Drag functionality with cleanup support
             let isDragging = false;
             let dragOffset = { x: 0, y: 0 };
 
-            header.addEventListener('mousedown', (e) => {
+            const _onDragStart = (e) => {
                 if (e.target.classList.contains('pui-panel-close')) return;
                 isDragging = true;
                 dragOffset.x = e.clientX - container.offsetLeft;
                 dragOffset.y = e.clientY - container.offsetTop;
                 container.style.zIndex = '1001';
-            });
+            };
 
-            document.addEventListener('mousemove', (e) => {
+            const _onDragMove = (e) => {
                 if (!isDragging) return;
                 const newX = e.clientX - dragOffset.x;
                 const newY = e.clientY - dragOffset.y;
                 container.style.left = `${newX}px`;
                 container.style.top = `${newY}px`;
                 panel.position = { x: newX, y: newY };
-            });
+            };
 
-            document.addEventListener('mouseup', () => {
+            const _onDragEnd = () => {
                 if (isDragging) {
                     isDragging = false;
                     container.style.zIndex = '1000';
                 }
-            });
+            };
+
+            header.addEventListener('mousedown', _onDragStart);
+            document.addEventListener('mousemove', _onDragMove);
+            document.addEventListener('mouseup', _onDragEnd);
 
             return panel;
         },
@@ -225,9 +234,9 @@
                     });
 
                     // Create per-window SessionStore instance w/ fallback
-                    var StoreClass = window.SessionStoreClass || global.SessionStoreClass;
-                    var store = null;
-                    var storeOpts = global.SessionStoreWebDefaults;
+                    const StoreClass = window.SessionStoreClass || global.SessionStoreClass;
+                    let store = null;
+                    const storeOpts = global.SessionStoreWebDefaults;
                     if (StoreClass) {
                         if (!storeOpts) {
                             throw new Error('[WindowState] SessionStoreWebDefaults missing (load session-store.js)');
@@ -271,14 +280,11 @@
                         }
 
                         if (sessionData.asyncPending) {
-                            console.log('[WindowState] asyncPending is TRUE, setting promise pending and starting polling');
                             store.setPromisePending(true);
                             if (typeof store.startLoader === 'function') {
                                 store.startLoader(sessionId);
                             }
                             this._resumeSessionAsyncPolling(sessionId, store);
-                        } else {
-                            console.log('[WindowState] asyncPending is FALSE, session is complete');
                         }
                     }
 
@@ -372,17 +378,14 @@
          */
         _resumeSessionAsyncPolling(sessionId, store) {
             if (!sessionId || !store) return;
-            console.log('[WindowState] _resumeSessionAsyncPolling called for', sessionId);
             const Ex = global.ActionExecutor;
             if (!Ex?.checkSessionAsync || !Ex?.startPromisePolling || !Ex?.pullSessionSnapshot) {
                 console.warn('[WindowState] ActionExecutor missing; cannot attach async polling');
                 return;
             }
-            console.log('[WindowState] Starting async polling for', sessionId);
             (async () => {
                 try {
                     const chk = await Ex.checkSessionAsync(sessionId);
-                    console.log('[WindowState] checkSessionAsync result:', JSON.stringify(chk));
                     const terminalOk =
                         chk &&
                         (chk.completed === true ||
@@ -391,7 +394,6 @@
                             chk.status === 'idle' ||
                             chk.execute != null);
                     if (terminalOk) {
-                        console.log('[WindowState] Terminal state detected, pulling snapshot');
                         await Ex.pullSessionSnapshot(sessionId, store);
                         store.setPromisePending(false);
                         if (typeof store.stopLoader === 'function') {
@@ -406,44 +408,12 @@
                         }
                         return;
                     }
-                    console.log('[WindowState] Not in terminal state, starting polling for', sessionId);
                     Ex.startPromisePolling(sessionId, null);
                 } catch (e) {
                     console.error('[WindowState] Async bootstrap error:', e);
                     Ex.startPromisePolling(sessionId, null);
                 }
             })();
-        },
-
-        /**
-         * Minimize window
-         */
-        minimizeWindow(sessionId) {
-            const registry = global.WindowRegistry;
-            const sessionWindows = registry?.getSessionWindows();
-            
-            if (!sessionWindows) return;
-            
-            const panel = sessionWindows.get(sessionId);
-            if (panel && panel.minimize) {
-                panel.minimize();
-            }
-        },
-
-        /**
-         * Restore window
-         */
-        restoreWindow(sessionId) {
-            const registry = global.WindowRegistry;
-            const sessionWindows = registry?.getSessionWindows();
-            
-            if (!sessionWindows) return;
-            
-            const panel = sessionWindows.get(sessionId);
-            if (panel) {
-                panel.restore();
-                global.PanelManager?.bringToFront(panel.id);
-            }
         },
 
         /**

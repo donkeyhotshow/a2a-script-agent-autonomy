@@ -39,19 +39,15 @@
             'js/app/windows/window-registry.js',
             'js/app/windows/window-position.js',
             'js/app/windows/window-events.js',
-            'js/app/windows/window-state.js',
-            // Load app entry point that loads initialization, event-handlers, etc.
-            'js/app/app-task.js'
+            'js/app/windows/window-state.js'
         ];
 
-        // These modules are loaded by js/app/app-task.js:
-        // - js/app/initialization.js
-        // - js/app/event-handlers.js
-        // - js/app/ui-managers.js
-        // - js/app/state-managers.js
-        // Then initialization.js loads:
-        // - js/session-store.js, js/project-store.js, etc.
+        // App modules (initialization, event handlers, UI and state managers)
         const appModules = [
+            'js/app/initialization.js',
+            'js/app/event-handlers.js',
+            'js/app/ui-managers.js',
+            'js/app/state-managers.js',
             'js/app/project-manager.js',
             'js/app/session-manager.js',
             'js/app/taskbar-manager.js'
@@ -86,7 +82,14 @@
             console.log('[AppTask] After load - SessionManager:', typeof global.SessionManager);
             console.log('[AppTask] After load - TaskbarManager:', typeof global.TaskbarManager);
             console.log('[AppTask] After load - WindowState:', typeof global.WindowState);
-            console.log('[AppTask] After load - AppTask:', typeof global.AppTask);
+            
+            // Initialize the application after modules are loaded
+            console.log('[AppTask] Calling AppInitialization.init()...');
+            global.AppInitialization?.init?.().then(function() {
+                console.log('[AppTask] AppInitialization complete');
+            }).catch(function(err) {
+                console.error('[AppTask] AppInitialization failed:', err);
+            });
         });
     }
 

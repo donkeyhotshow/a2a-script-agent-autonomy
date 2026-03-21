@@ -37,9 +37,6 @@
 
     // Экспорт в глобальную область
     global.A2A_CONFIG = CONFIG;
-    global.A2A_CONFIG_LOADERS = CONFIG.LOADERS;
-    global.A2A_CONFIG_API = CONFIG.API;
-    global.A2A_CONFIG_POLL = CONFIG.POLL;
 
     // Для обратной совместимости с daemons
     global.__a2aDaemons = global.__a2aDaemons || {};

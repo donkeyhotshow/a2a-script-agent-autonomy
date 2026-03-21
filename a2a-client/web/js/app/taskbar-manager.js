@@ -5,11 +5,36 @@
     'use strict';
 
     const TaskbarManager = {
+        // Flag to prevent duplicate initialization
+        _isTaskbarInitialized: false,
+        // Debounce timer for resize handler
+        _resizeDebounceTimer: null,
+
+        /**
+         * Debounced resize handler for updateOffScreenIndicators
+         */
+        _handleResize() {
+            if (this._resizeDebounceTimer) {
+                clearTimeout(this._resizeDebounceTimer);
+            }
+            this._resizeDebounceTimer = setTimeout(() => {
+                this.updateOffScreenIndicators();
+            }, 150);
+        },
+
         /**
          * Load taskbar sessions
          */
         async loadTaskbarSessions(contentEl) {
             if (!contentEl) return;
+
+            // Prevent duplicate initialization
+            if (this._isTaskbarInitialized) {
+                console.log('[TaskbarManager] Already initialized, skipping');
+                await this.refreshTaskbar(contentEl);
+                return;
+            }
+            this._isTaskbarInitialized = true;
 
             if (global.SessionManager) {
                 global.SessionManager.setTaskbarContentEl(contentEl);
@@ -342,7 +367,12 @@
         /**
          * Initialize taskbar manager
          */
-        init() {}
+        init() {
+            // Setup debounced resize listener for offscreen indicators
+            if (typeof window !== 'undefined') {
+                window.addEventListener('resize', () => this._handleResize());
+            }
+        }
     };
 
     // Export

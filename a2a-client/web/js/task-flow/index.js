@@ -112,7 +112,6 @@
 
     // Export
     global.TaskFlow = TaskFlow;
-    global.getProjectId = global.getProjectId;
     global.waitForFirstResponse = global.waitForFirstResponse;
     global.applyExecuteResponse = global.applyExecuteResponse;
 
@@ -129,30 +128,5 @@
             checkAndInit();
         });
     }
-
-    // Convenience functions
-    global.startTask = function(task, projectId) {
-        if (global.TaskFlow) {
-            global.TaskFlow.run(task, projectId);
-        }
-    };
-
-    global.sendTaskChoice = function(choiceId) {
-        if (global.TaskFlow && global.TaskFlow.panel) {
-            const content = global.TaskFlow.panel.getContentEl();
-            if (content) {
-                global.TaskFlow.sendChoice(choiceId, content);
-            }
-        }
-    };
-
-    global.sendTaskMessage = function(message) {
-        if (global.TaskFlow && global.TaskFlow.panel) {
-            const content = global.TaskFlow.panel.getContentEl();
-            if (content) {
-                global.TaskFlow.sendMessageResult(message, content);
-            }
-        }
-    };
 
 })(typeof window !== 'undefined' ? window : globalThis);

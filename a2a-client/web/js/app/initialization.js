@@ -6,6 +6,49 @@
     'use strict';
 
     const AppInitialization = {
+        // Module readiness timeout
+        _moduleWaitTimeout: 5000,
+        _moduleWaitPollInterval: 50,
+
+        /**
+         * Wait for critical modules to be available (explicit check)
+         */
+        async _waitForModules() {
+            const requiredModules = [
+                'ProjectManager',
+                'SessionManager',
+                'TaskbarManager',
+                'WindowState',
+                'AppEventHandlers',
+                'AppUIManagers',
+                'AppStateManagers'
+            ];
+
+            const checkModules = () => {
+                return requiredModules.every(name => typeof global[name] !== 'undefined');
+            };
+
+            // If all modules are already available, return immediately
+            if (checkModules()) {
+                console.log('[AppInitialization] All modules already available');
+                return;
+            }
+
+            // Wait for modules with timeout
+            const startTime = Date.now();
+            console.log('[AppInitialization] Waiting for modules to load...');
+
+            while (Date.now() - startTime < this._moduleWaitTimeout) {
+                if (checkModules()) {
+                    console.log('[AppInitialization] All modules loaded');
+                    return;
+                }
+                await new Promise(r => setTimeout(r, this._moduleWaitPollInterval));
+            }
+
+            console.warn('[AppInitialization] Timeout waiting for modules, proceeding anyway');
+        },
+
         /**
          * Initialize application
          */
@@ -21,10 +64,10 @@
                 console.log('  - AppEventHandlers:', typeof global.AppEventHandlers);
                 console.log('  - AppUIManagers:', typeof global.AppUIManagers);
                 console.log('  - AppStateManagers:', typeof global.AppStateManagers);
-                
-                // Wait a bit to ensure all modules are initialized
-                await new Promise(r => setTimeout(r, 100));
-                
+
+                // Wait for critical modules to be available (explicit check instead of magic delay)
+                await this._waitForModules();
+
                 console.log('[AppInitialization] After wait - SessionStore:', typeof global.SessionStore);
                 console.log('[AppInitialization] After wait - SessionManager:', typeof global.SessionManager);
                 console.log('[AppInitialization] Proceeding with initialization...');

@@ -1,0 +1,14 @@
+{
+  "context": {
+    "execution": {
+      "action": "dialog",
+      "step": "request"
+    },
+    "task": "ответь одним символом \"1\"",
+    "session_id": "sess_1774078323554",
+    "message": "ответь одним символом \"1\""
+  },
+  "result": {
+    "message": "ответь одним символом \"1\""
+  }
+}

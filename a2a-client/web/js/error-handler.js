@@ -718,7 +718,9 @@
                     }
 
                     if (!isExpected404) {
-                        const errText = await response.text();
+                        // Clone response before reading body to preserve it for original caller
+                        const responseClone = response.clone();
+                        const errText = await responseClone.text();
                         let data = {};
                         try {
                             data = errText ? JSON.parse(errText) : {};
