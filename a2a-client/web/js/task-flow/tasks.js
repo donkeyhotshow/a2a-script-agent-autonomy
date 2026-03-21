@@ -31,13 +31,13 @@
 
             let resolved = false;
 
-            // Handler for execute received
+            // Handler for execute received (emit passes the execute object; callers expect { execute })
             const unsubscribe = store.on('execute', (execute) => {
                 if (resolved) return;
                 resolved = true;
                 unsubscribe();
                 errorUnsub();
-                resolve(execute);
+                resolve({ execute });
             });
 
             // Also listen for error

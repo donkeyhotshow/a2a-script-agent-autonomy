@@ -93,6 +93,27 @@
     }
 
     /**
+     * Hydrate store from GET /sessions/:id (authoritative after minimal POST /next ack).
+     * @param {{ skipExecuteWhenPending?: boolean }} [opts] — if true, skip setExecute while snap still has promiseId (setExecute clears promisePending).
+     */
+    async function pullSessionSnapshot(sessionId, store, opts = {}) {
+        const api = global.apiIntegration;
+        if (!api?.getSession || !store) return null;
+        const snap = await api.getSession(sessionId);
+        if (!snap) return null;
+        const sid = snap.id || snap.sessionId;
+        if (sid) store.setSession?.(sid, snap.projectId);
+        if (Array.isArray(snap.messages) && snap.messages.length > 0) {
+            store.applyServerMessages?.(snap.messages);
+        }
+        if (!(opts.skipExecuteWhenPending && snap.promiseId) && snap.execute != null) {
+            store.setExecute?.(snap.execute);
+        }
+        if (snap.context != null) store.setContext?.(snap.context);
+        return snap;
+    }
+
+    /**
      * Отправляет результат в сессию - запуск обработки шага
      * Сохраняет client-result.json и создает следующий шаг через API
      * 
@@ -124,29 +145,23 @@
             body: JSON.stringify({ result })
         });
         
-        // Обработка ответа и обновление хранилища
-        if (store && data) {
-            // First set promise pending to block input
+        // POST /next returns only { success, accepted, step, promiseId? } — hydrate via GET session
+        if (store && data?.success && data?.accepted) {
             if (data.promiseId) {
                 store.setPromisePending?.(true);
-                // Start per-session loader
                 if (typeof sessionId === 'string') {
                     store.startLoader?.(sessionId);
                 } else {
                     store.startLoader?.();
                 }
                 startPromisePolling(sessionId, data.promiseId);
-                // Force UI refresh to show waiting state BEFORE setting execute
                 if (global.WindowManager?.refreshAll) {
                     global.WindowManager.refreshAll();
                 }
+                await pullSessionSnapshot(sessionId, store, { skipExecuteWhenPending: true });
+            } else {
+                await pullSessionSnapshot(sessionId, store);
             }
-            // Then update execute/context (may trigger another refresh)
-            if (data.execute) store.setExecute?.(data.execute);
-            const ctx = data.context ?? data.session?.context;
-            if (ctx) store.setContext?.(ctx);
-            const sess = data.session;
-            if (sess) store.setSession?.(sess.id ?? sess.sessionId, sess.projectId);
         }
         
         return data;
@@ -217,21 +232,18 @@
             // Subscribe to promise resolved event from SessionStore
             const onResolved = (data) => {
                 if (data.promiseId === promiseId) {
-                    const exec = data.execute ?? data.result?.execute;
-                    if (exec && store) {
-                        store.setExecute?.(exec);
-                        // Stop loader after new execute received
+                    pullSessionSnapshot(sessionId, store).then(() => {
                         if (typeof sessionId === 'string') {
                             store.stopLoader?.(sessionId);
                         } else {
                             store.stopLoader?.();
                         }
-                    }
-                    global.apiIntegration?.emit?.('promiseResolved', {
-                        sessionId,
-                        promiseId,
-                        result: data.result,
-                        execute: data.execute
+                        global.apiIntegration?.emit?.('promiseResolved', {
+                            sessionId,
+                            promiseId,
+                            result: data.result,
+                            execute: data.execute
+                        });
                     });
                 }
             };
@@ -284,11 +296,9 @@
                 }
                 
                 if (store) {
-                    const exec = status.execute ?? status.result?.execute;
-                    if (exec) store.setExecute?.(exec);
+                    await pullSessionSnapshot(sessionId, store);
                 }
                 
-                // Emit event for UI to handle
                 global.apiIntegration?.emit?.('promiseResolved', {
                     sessionId,
                     promiseId,

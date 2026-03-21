@@ -5,12 +5,13 @@ import {
     saveNewSession,
     deleteNewSession,
     saveNewStep,
-    listNewSteps,
-    loadNewStep,
-    loadStepFile,
-    loadServerPromise
 } from '../storage/newSessions.js';
 import { getStorageMode, isValidSessionId } from '../utils/server.js';
+import {
+    collectSessionMessagesFlat,
+    attachPromiseMeta,
+    toPublicSession,
+} from './utils/web-session-dto.js';
 
 const API_PREFIX = '/api/a2a';
 
@@ -59,7 +60,7 @@ export function createSessionRoutes({ cwd }) {
                             }
                         ],
                         context: { execution: { action: 'task', step: 'new' } },
-                        // Initial execute drives the task form until /next returns server execute (sync contract)
+                        // Initial execute until user submits; after POST /next use GET /sessions/:id (ack-only /next)
                         execute: {
                             message: 'What would you like me to do?',
                             form: {
@@ -90,11 +91,52 @@ export function createSessionRoutes({ cwd }) {
                     }
 
                     res.setHeader('Content-Type', 'application/json');
-                    res.end(JSON.stringify({ success: true, session }));
+                    res.end(JSON.stringify({ success: true, session: toPublicSession(session, false) }));
                 } catch (e) {
                     res.writeHead(400).end(JSON.stringify({ error: String(e?.message || e) }));
                 }
             });
+            return;
+        }
+
+        const sessionMessagesMatch = p.match(/^\/sessions\/([^/]+)\/messages$/);
+        if (req.method === 'GET' && sessionMessagesMatch) {
+            const sessionId = sessionMessagesMatch[1];
+            if (!isValidSessionId(sessionId)) {
+                res.writeHead(400).end(JSON.stringify({ error: 'Invalid session ID' }));
+                return;
+            }
+            if (storageMode === 'project') {
+                res.writeHead(404).end(JSON.stringify({ error: 'messages delta not available in project storage mode' }));
+                return;
+            }
+            const session = loadNewSession(cwd, sessionId);
+            if (!session) {
+                res.writeHead(404).end(JSON.stringify({ error: 'Session not found' }));
+                return;
+            }
+            attachPromiseMeta(cwd, sessionId, session);
+            const afterSeq = Math.max(0, parseInt(url.searchParams.get('afterSeq') || '0', 10) || 0);
+            const limit = Math.min(200, Math.max(1, parseInt(url.searchParams.get('limit') || '50', 10) || 50));
+            const withExecute = url.searchParams.get('withExecute') === '1';
+            const { messages, lastSeq } = collectSessionMessagesFlat(cwd, sessionId);
+            const batch = messages.filter((m) => m.seq > afterSeq).slice(0, limit);
+            const publicSnap = toPublicSession(session, false);
+            const payload = {
+                sessionId,
+                afterSeq,
+                lastSeq,
+                hasMore: afterSeq + batch.length < lastSeq,
+                messages: batch,
+                promiseId: publicSnap.promiseId ?? null,
+                promiseStatus: publicSnap.promiseStatus ?? null,
+                currentStep: publicSnap.currentStep,
+            };
+            if (withExecute) {
+                payload.execute = publicSnap.execute ?? null;
+            }
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify(payload));
             return;
         }
 
@@ -107,6 +149,7 @@ export function createSessionRoutes({ cwd }) {
             }
 
             if (req.method === 'GET') {
+                const includeContext = url.searchParams.get('includeContext') === '1';
                 const session = storageMode === 'project'
                     ? loadSession(getProjectPathForSessions(cwd), sessionId)
                     : loadNewSession(cwd, sessionId);
@@ -116,92 +159,14 @@ export function createSessionRoutes({ cwd }) {
                 }
 
                 if (storageMode !== 'project') {
-                    const steps = listNewSteps(cwd, sessionId);
-                    const allMessages = [];
-                    // Dedupe only same step+role+content (avoids dropping repeated user text across steps)
-                    const seenSlots = new Set();
-                    const stepMessageSlotKey = (stepNum, role, content) => {
-                        const r = role || 'assistant';
-                        const c =
-                            typeof content === 'string'
-                                ? content
-                                : content == null
-                                  ? ''
-                                  : String(content);
-                        return `${stepNum}|${r}|${c}`;
-                    };
-                    
-                    // Check for pending promise in the latest step
-                    const currentStep = session.currentStep || (steps.length > 0 ? steps[steps.length - 1] : 1);
-                    const serverPromise = loadServerPromise(cwd, sessionId, currentStep);
-                    if (serverPromise?.promiseId && (serverPromise.status === 'pending' || serverPromise.status === 'processing')) {
-                        session.promiseId = serverPromise.promiseId;
-                        session.promiseStatus = serverPromise.status;
-                        console.log('[SessionRoutes] Found pending promise:', serverPromise.promiseId, 'status:', serverPromise.status);
-                    }
-                    
-                    for (const stepNum of steps) {
-                        const stepData = loadNewStep(cwd, sessionId, stepNum);
-                        if (!stepData) {
-                            console.warn('[SessionRoutes] Failed to load step', stepNum, 'for session', sessionId);
-                        }
-                        
-                        // Only add execute.message if it's not already in stepData.messages
-                        // This prevents duplication when messages are stored in both places
-                        if (stepData?.execute?.message && (!stepData?.messages || !stepData.messages.some(m => m.content === stepData.execute.message))) {
-                            const msgContent = typeof stepData.execute.message === 'string'
-                                ? stepData.execute.message
-                                : stepData.execute.message.content || stepData.execute.message.text || '';
-                            
-                            const slot = stepMessageSlotKey(stepNum, 'assistant', msgContent);
-                            if (!seenSlots.has(slot)) {
-                                allMessages.push({
-                                    role: 'assistant',
-                                    content: msgContent,
-                                    step: stepNum
-                                });
-                                seenSlots.add(slot);
-                            }
-                        }
-
-                        const clientResult = loadStepFile(cwd, sessionId, stepNum, 'client-result.json');
-                        if (!clientResult) {
-                            console.warn('[SessionRoutes] Failed to load client-result for step', stepNum);
-                        }
-                        if (clientResult?.result?.message) {
-                            const msgContent = clientResult.result.message;
-                            const slot = stepMessageSlotKey(stepNum, 'user', msgContent);
-                            if (!seenSlots.has(slot)) {
-                                allMessages.push({
-                                    role: 'user',
-                                    content: msgContent,
-                                    step: stepNum
-                                });
-                                seenSlots.add(slot);
-                            }
-                        }
-
-                        if (stepData?.messages && Array.isArray(stepData.messages) && stepData.messages.length > 0) {
-                            const stepMessages = stepData.messages.map((msg) => ({
-                                ...msg,
-                                step: stepNum
-                            }));
-                            const newMessages = stepMessages.filter((msg) => {
-                                const slot = stepMessageSlotKey(stepNum, msg.role, msg.content);
-                                if (seenSlots.has(slot)) return false;
-                                seenSlots.add(slot);
-                                return true;
-                            });
-                            allMessages.push(...newMessages);
-                        }
-                    }
-                    if (allMessages.length > 0) {
-                        session.messages = allMessages;
-                    }
+                    attachPromiseMeta(cwd, sessionId, session);
+                    const { messages, lastSeq } = collectSessionMessagesFlat(cwd, sessionId);
+                    session.messages = messages;
+                    session.lastMessageSeq = lastSeq;
                 }
 
                 res.setHeader('Content-Type', 'application/json');
-                res.end(JSON.stringify(session));
+                res.end(JSON.stringify(toPublicSession(session, includeContext)));
                 return;
             }
 
@@ -238,7 +203,7 @@ export function createSessionRoutes({ cwd }) {
                             saveNewSession(cwd, session);
                         }
                         res.setHeader('Content-Type', 'application/json');
-                        res.end(JSON.stringify({ success: true, session }));
+                        res.end(JSON.stringify({ success: true, session: toPublicSession(session, false) }));
                     } catch (e) {
                         res.writeHead(400).end(JSON.stringify({ error: String(e?.message || e) }));
                     }

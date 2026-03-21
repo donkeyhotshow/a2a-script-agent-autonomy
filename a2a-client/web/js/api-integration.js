@@ -147,11 +147,37 @@ class APIIntegration {
     /**
      * Get session by ID (uses Vite plugin)
      */
-    async getSession(sessionId) {
+    async getSession(sessionId, optionsOrLegacyProjectId = {}) {
+        const options =
+            optionsOrLegacyProjectId && typeof optionsOrLegacyProjectId === 'object' && !Array.isArray(optionsOrLegacyProjectId)
+                ? optionsOrLegacyProjectId
+                : {};
         const headers = { ...this._getHeaders(), ...this._getStorageHeaders() };
-        const res = await fetch(`/api/a2a/sessions/${encodeURIComponent(sessionId)}`, { headers });
+        const q = options.includeContext ? '?includeContext=1' : '';
+        const res = await fetch(`/api/a2a/sessions/${encodeURIComponent(sessionId)}${q}`, { headers });
         if (!res.ok) {
             console.warn('[API] getSession failed:', res.status, res.statusText);
+            return null;
+        }
+        return res.json();
+    }
+
+    /**
+     * Delta messages by monotonic seq (reduces full GET frequency). Optional execute via withExecute=1.
+     */
+    async getSessionMessages(sessionId, afterSeq = 0, limit = 50, withExecute = false) {
+        const headers = { ...this._getHeaders(), ...this._getStorageHeaders() };
+        const params = new URLSearchParams({
+            afterSeq: String(afterSeq),
+            limit: String(limit),
+        });
+        if (withExecute) params.set('withExecute', '1');
+        const res = await fetch(
+            `/api/a2a/sessions/${encodeURIComponent(sessionId)}/messages?${params}`,
+            { headers }
+        );
+        if (!res.ok) {
+            console.warn('[API] getSessionMessages failed:', res.status, res.statusText);
             return null;
         }
         return res.json();

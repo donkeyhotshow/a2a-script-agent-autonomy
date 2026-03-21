@@ -41,8 +41,14 @@
         };
         const listeners = {};
         
-        // Per-instance promise
+        // Per-instance promise (poll daemon) — forward to store so UI / ActionExecutor can subscribe
         const promise = createDialogPromise();
+        promise.on('resolved', function (data) {
+            emit('promiseResolved', data);
+        });
+        promise.on('rejected', function (data) {
+            emit('promiseError', data);
+        });
         
         // Per-instance loaders map - sessionId -> DialogLoader
         const sessionLoaders = new Map();
@@ -241,6 +247,19 @@
                 state.messages = state.messages.concat([normalized]).slice(-MAX_MESSAGES);
                 emit('messages', state.messages.slice());
                 emit('message', normalized);
+                return this;
+            },
+
+            /** Replace chat from `GET /sessions/:id` `messages` (source of truth). */
+            applyServerMessages: function(messages) {
+                if (!Array.isArray(messages) || messages.length === 0) return this;
+                var next = [];
+                for (var i = 0; i < messages.length; i++) {
+                    var msg = messages[i];
+                    next.push(normalizeMessage(msg, msg.role || 'user'));
+                }
+                state.messages = next.slice(-MAX_MESSAGES);
+                emit('messages', state.messages.slice());
                 return this;
             },
 

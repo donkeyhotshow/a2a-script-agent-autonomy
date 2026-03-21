@@ -183,11 +183,13 @@ if ((await ollamaResponse.status()) < 500) {
           promiseId 
         });
       } else {
-        // Sync flow - verify result directly
-        const syncData = responseData || stepData;
-        const hasResult = syncData && (syncData.execute || syncData.context || syncData.result || syncData.messages);
+        const sessionRes = await request.get(`http://localhost:5173/api/a2a/sessions/${sessionId}`);
+        expect(sessionRes.ok()).toBeTruthy();
+        const sess = await sessionRes.json();
+        const hasResult =
+          sess && (sess.execute || (Array.isArray(sess.messages) && sess.messages.length > 0));
         expect(hasResult).toBeTruthy();
-        console.log(`✓ Sync response contains result data`);
+        console.log(`✓ Sync state loaded via GET /sessions/:id`);
       }
 
       logger.logTest('End-to-end session execution', 'passed', Date.now() - startTime);

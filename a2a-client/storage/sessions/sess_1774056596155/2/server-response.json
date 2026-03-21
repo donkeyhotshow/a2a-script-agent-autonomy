@@ -1,0 +1,31 @@
+{
+  "timestamp": "2026-03-21T01:30:00.059Z",
+  "execute": {
+    "form": {
+      "title": "Оберіть спосіб виконання",
+      "choices": [
+        {
+          "id": "dialog",
+          "label": "AI діалог з користувачем"
+        },
+        {
+          "id": "auto-ai",
+          "label": "AI Action Generator — сгенерировать экшен с помощью LLM"
+        },
+        {
+          "id": "task-decomposition",
+          "label": "Декомпозиция задачи вручную"
+        }
+      ]
+    }
+  },
+  "context": {
+    "execution": {
+      "action": "task",
+      "step": "router"
+    },
+    "session_id": "sess_1774056596155",
+    "task": "диалог",
+    "message": "диалог"
+  }
+}

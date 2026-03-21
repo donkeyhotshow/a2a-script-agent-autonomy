@@ -427,7 +427,11 @@
          */
         async _pollPromise(promiseId, sessionId, store) {
             if (!promiseId || !sessionId || !store) return;
-            
+            const pollMs =
+                (typeof global !== 'undefined' && global.PROMISE_POLL_INTERVAL) ||
+                (typeof global !== 'undefined' && global.__a2aDaemons?.PROMISE_POLL_INTERVAL) ||
+                5000;
+
             const poll = async () => {
                 try {
                     const response = await fetch(`/api/a2a/sessions/${sessionId}/promise/${promiseId}`);
@@ -462,13 +466,11 @@
                             store.stopLoader(sessionId);
                         }
                     } else {
-                        // Still processing - continue polling
-                        setTimeout(poll, 2000);
+                        setTimeout(poll, pollMs);
                     }
                 } catch (err) {
                     console.error('[WindowState] Promise poll error:', err);
-                    // Retry on error
-                    setTimeout(poll, 5000);
+                    setTimeout(poll, pollMs);
                 }
             };
             

@@ -32,6 +32,15 @@ flowchart LR
 
 If the plugin answers `/api/a2a/*`, the proxy **never** reaches the SDK for those paths.
 
+## Web session JSON (Vite plugin)
+
+- **`POST /api/a2a/sessions/:id/next`** returns an **ack only**: `{ success, accepted, step, promiseId? }`. It does **not** return `session`, `execute`, or `messages`. The web client hydrates from **`GET /sessions/:id`** (and polls **`GET .../promise/:promiseId`** while async).
+- **`context` is omitted** on `GET /api/a2a/sessions/:id`, `POST /api/a2a/sessions`, `PUT ...`, and in public session snapshots. Internal step files still store full context for invoke.
+- **Debug only:** append `?includeContext=1` on `GET /sessions/:id`, `GET /sessions/:id/latest`, or `GET .../promise/:id` to receive `context` again.
+- **Message sequence:** `GET /api/a2a/sessions/:id` includes `messages[]` with monotonic **`seq`** (1…N) and **`lastMessageSeq`**.
+- **Delta polling (fewer full loads):** `GET /api/a2a/sessions/:id/messages?afterSeq=0&limit=50` returns only new messages with `seq > afterSeq`, plus `lastSeq`, `hasMore`, `currentStep`, `promiseId`. Add `&withExecute=1` to also receive current **`execute`** in the same response.
+- **`api-integration.js`:** `getSession(id, { includeContext: true })`, `getSessionMessages(id, afterSeq, limit, withExecute)`.
+
 ## What to change when debugging
 
 - UI/session bugs in dev → **`vite-plugin-a2a/`** (and `storage/` under `a2a-client`).

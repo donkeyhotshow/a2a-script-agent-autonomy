@@ -175,6 +175,11 @@
             }
         };
 
+        this.applyServerMessages = function(messages) {
+            if (!this.core) return this;
+            return this.core.applyServerMessages.apply(this.core, arguments);
+        };
+
         this.setContext = function(context) {
             if (this.core) {
                 this.core.context = context;

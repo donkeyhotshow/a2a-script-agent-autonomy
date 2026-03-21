@@ -1,9 +1,9 @@
 import { getStorageMode, isValidSessionId } from './middleware/validators.js';
 import { mergeResponseContext, buildStepRecord, extractA2aExecute, unwrapA2aResponse } from './utils/builders.js';
+import { toMinimalNextAck, toPublicSession } from './utils/web-session-dto.js';
 import * as stepHandlers from './handlers/step-handlers.js';
 import * as stepUtils from './utils/step-utils.js';
 import { proxyToA2AServer } from './proxy/a2a-proxy.js';
-import { pollA2ARequestResult } from '../daemon/a2a-result-poll.js';
 import { getNewStepDir, loadNewSession, loadNewStep, loadServerPromise, loadServerResponse, saveClientResult, saveNewStep, saveNewSession, saveRequestToServer, saveServerPromise, saveServerResponse, listNewSteps, getNewSessionLatestStep, loadStepFile } from '../storage/newSessions.js';
 
 import fs from 'fs';
@@ -88,11 +88,11 @@ export function createStepRoutes({ cwd }) {
                 return;
             }
             const latestStepNum = getNewSessionLatestStep(cwd, sessionId);
-            const latestStep = latestStepNum > 0 ? loadNewStep(cwd, sessionId, latestStepNum) : null;
+            const includeContext = url.searchParams.get('includeContext') === '1';
             res.setHeader('Content-Type', 'application/json');
             res.end(JSON.stringify({
-                session,
-                latestStep: latestStepNum
+                session: toPublicSession(session, includeContext),
+                latestStep: latestStepNum,
             }));
             return;
         }
@@ -226,11 +226,12 @@ export function createStepRoutes({ cwd }) {
                         headers: { 'Content-Type': 'application/json' }
                     };
 
-                    const xhrReq = xhr.request(reqOptions, async (xhrRes) => {
+                    const xhrReq = xhr.request(reqOptions, (xhrRes) => {
                         let data = '';
                         xhrRes.on('data', (chunk) => (data += chunk));
-                        xhrRes.on('end', async () => {
+                        xhrRes.on('end', () => {
                             console.log('[VitePlugin] A2A response:', xhrRes.statusCode, 'data:', data.substring(0, 200));
+                            let parseErrMsg = null;
                             try {
                                 if (!data || data.trim() === '') {
                                     throw new Error('Empty response from A2A server');
@@ -238,47 +239,57 @@ export function createStepRoutes({ cwd }) {
                                 const a2aData = JSON.parse(data);
 
                                 if (a2aData.data?.promiseId) {
-                                    console.log('[VitePlugin] Async response - promiseId:', a2aData.data.promiseId);
+                                    console.log(
+                                        '[VitePlugin] Async invoke — promiseId (daemon completes via GET /promise):',
+                                        a2aData.data.promiseId
+                                    );
                                     promiseData = {
                                         promiseId: a2aData.data.promiseId,
                                         status: 'pending',
                                         submittedAt: new Date().toISOString()
                                     };
                                     saveServerPromise(cwd, sessionId, nextStepNum, promiseData);
-
-                                    const pollR = await pollA2ARequestResult(promiseData.promiseId, {
-                                        baseUrl: a2aServerUrl,
-                                        maxPolls: 30,
-                                        intervalMs: 1000,
-                                        headers: {},
-                                        onProgress: (i, pollJson) => {
-                                            console.log('[VitePlugin] Poll result:', i, pollJson?.data?.status);
-                                        },
-                                    });
-                                    if (pollR.outcome === 'completed') {
-                                        serverResponse = pollR.data;
-                                        promiseData = {
-                                            ...promiseData,
-                                            ...pollR.data,
-                                            status: pollR.data.status || 'completed',
-                                            checkedAt: new Date().toISOString()
-                                        };
-                                        saveServerPromise(cwd, sessionId, nextStepNum, promiseData);
-                                    } else if (pollR.outcome === 'failed') {
-                                        console.error('[VitePlugin] Promise failed:', pollR.data?.error);
-                                        serverResponse = {
-                                            error: pollR.data?.error || 'Promise failed',
-                                            status: 'failed'
-                                        };
-                                    }
                                 } else if (xhrRes.statusCode >= 200 && xhrRes.statusCode < 300) {
-                                    console.log('[VitePlugin] Sync response saved');
+                                    console.log('[VitePlugin] Sync invoke response');
                                     serverResponse = a2aData;
                                 } else {
                                     console.error('[VitePlugin] A2A error status:', xhrRes.statusCode);
                                 }
                             } catch (parseErr) {
-                                console.error('[vite-plugin-a2a] Failed to parse A2A response:', parseErr.message);
+                                parseErrMsg = parseErr?.message || String(parseErr);
+                                console.error('[vite-plugin-a2a] Failed to parse A2A response:', parseErrMsg);
+                            }
+
+                            const hasPromise = !!(promiseData?.promiseId);
+                            const hasServer = !!serverResponse;
+
+                            // Async: ack immediately — no server-response.json until client polls GET /promise
+                            if (hasPromise && !hasServer) {
+                                session.currentStep = nextStepNum;
+                                session.updatedAt = new Date().toISOString();
+                                if (result?.message) {
+                                    session.messages = session.messages || [];
+                                    session.messages.push({
+                                        role: 'user',
+                                        content: result.message,
+                                        step: nextStepNum
+                                    });
+                                }
+                                session.promiseId = promiseData.promiseId;
+                                session.context = mergedContext;
+                                saveNewSession(cwd, session);
+
+                                res.setHeader('Content-Type', 'application/json');
+                                res.end(
+                                    JSON.stringify(
+                                        toMinimalNextAck({
+                                            success: true,
+                                            step: nextStepNum,
+                                            promiseId: promiseData.promiseId
+                                        })
+                                    )
+                                );
+                                return;
                             }
 
                             session.currentStep = nextStepNum;
@@ -310,7 +321,6 @@ export function createStepRoutes({ cwd }) {
                                 });
                             }
 
-                            // Messages now handled by session.messages array
                             if (assistantMessage) {
                                 session.messages = session.messages || [];
                                 session.messages.push({
@@ -323,17 +333,18 @@ export function createStepRoutes({ cwd }) {
                             session.messages = session.messages || [];
 
                             const serverExecute = extractA2aExecute(serverResponse);
-                            if (serverExecute) session.execute = serverExecute;
+                            if (serverExecute) {
+                                session.execute = serverExecute;
+                            }
                             const savedContext = serverResponse
                                 ? mergeResponseContext(sessionId, mergedContext, serverResponse)
                                 : mergedContext;
                             session.context = savedContext;
-                            const keepPromise = promiseData && promiseData.status && !['completed', 'done'].includes(promiseData.status);
-                            session.promiseId = keepPromise ? promiseData.promiseId : null;
+                            session.promiseId = null;
 
                             const hasRealData = serverResponse || result;
                             if (hasRealData) {
-                                console.log('[VitePlugin] Saving step after polling:', nextStepNum);
+                                console.log('[VitePlugin] Saving step:', nextStepNum);
                                 if (serverResponse) {
                                     const stepRecord = buildStepRecord({
                                         sessionId,
@@ -358,16 +369,28 @@ export function createStepRoutes({ cwd }) {
 
                             saveNewSession(cwd, session);
 
-                            const responseExecute = extractA2aExecute(serverResponse);
-                            const response = {
-                                success: true,
-                                session,
-                                execute: responseExecute,
-                                promiseId: session.promiseId || null
-                            };
-
                             res.setHeader('Content-Type', 'application/json');
-                            res.end(JSON.stringify(response));
+                            if (!hasServer) {
+                                const errBody = toMinimalNextAck({
+                                    success: false,
+                                    step: nextStepNum,
+                                    promiseId: null,
+                                    error: parseErrMsg || 'A2A invoke failed'
+                                });
+                                res.writeHead(xhrRes.statusCode >= 400 ? xhrRes.statusCode : 502);
+                                res.end(JSON.stringify(errBody));
+                                return;
+                            }
+
+                            res.end(
+                                JSON.stringify(
+                                    toMinimalNextAck({
+                                        success: true,
+                                        step: nextStepNum,
+                                        promiseId: null
+                                    })
+                                )
+                            );
                         });
                     });
 
@@ -377,18 +400,18 @@ export function createStepRoutes({ cwd }) {
                         session.updatedAt = new Date().toISOString();
                         saveNewSession(cwd, session);
 
-                        // FIX: Return error instead of success to avoid silent failures
-                        const response = {
-                            success: false,
-                            session,
-                            execute: null,
-                            promiseId: null,
-                            error: 'A2A server unavailable: ' + e.message
-                        };
-
                         res.setHeader('Content-Type', 'application/json');
-                        res.writeHead(503); // Service Unavailable
-                        res.end(JSON.stringify(response));
+                        res.writeHead(503);
+                        res.end(
+                            JSON.stringify(
+                                toMinimalNextAck({
+                                    success: false,
+                                    step: nextStepNum,
+                                    promiseId: null,
+                                    error: 'A2A server unavailable: ' + e.message
+                                })
+                            )
+                        );
                     });
 
                     const invokePayload = {
@@ -526,14 +549,19 @@ export function createStepRoutes({ cwd }) {
                         // Determine status: if execute is present, promise is completed
                         const isCompleted = !!(promiseStatus.execute || promiseStatus.status === 'completed' || promiseStatus.status === 'done');
                         
+                        const includeCtx = url.searchParams.get('includeContext') === '1';
+                        let safeResult = promiseStatus.result || null;
+                        if (!includeCtx && safeResult && typeof safeResult === 'object') {
+                            safeResult = { ...safeResult };
+                            delete safeResult.context;
+                        }
                         res.setHeader('Content-Type', 'application/json');
                         res.end(JSON.stringify({
                             promiseId,
                             status: promiseStatus.status || (isCompleted ? 'completed' : 'pending'),
-                            result: promiseStatus.result || null,
+                            result: safeResult,
                             execute: promiseStatus.execute || null,
                             completed: isCompleted
-                            // Note: messages are stored in step files and available via /history endpoint
                         }));
                     } catch (e) {
                         console.error('[VitePlugin] ERROR in promise check:', e.message, e.stack);
