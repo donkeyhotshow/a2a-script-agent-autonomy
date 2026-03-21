@@ -32,8 +32,13 @@
                 emitter.emit('loader', { active: true, minEndTime });
                 return this;
             },
-            stop: function () {
-                console.log('[DialogLoader] STOP requested - active:', active, 'minEndTime:', minEndTime);
+            /** @param {boolean} [force] — if true, hide immediately (e.g. server returned actionable form) */
+            stop: function (force) {
+                console.log('[DialogLoader] STOP requested - active:', active, 'minEndTime:', minEndTime, 'force:', !!force);
+                if (force === true) {
+                    this._forceStop();
+                    return this;
+                }
                 const now = Date.now();
                 const canHide = minEndTime === null || now >= minEndTime;
                 if (canHide || !active) {

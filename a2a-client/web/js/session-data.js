@@ -222,7 +222,10 @@
                 } else {
                     emit('wait', null);
                     
-                    hasForm = !!(execute && execute.form && ((execute.form.choices && execute.form.choices.length > 0) || execute.form.input));
+                    hasForm = !!(execute && execute.form && (
+                        (execute.form.choices && execute.form.choices.length > 0) ||
+                        (execute.form.input && (Array.isArray(execute.form.input) ? execute.form.input.length > 0 : true))
+                    ));
                     if (hasForm) {
                         state.pendingForm = execute.form;
                         state.status = 'waiting';
@@ -233,10 +236,13 @@
                     }
                 }
 
-                // Form replaces loader: user fills form first; loader only after submit (promisePending)
+                // Form replaces loader: user must see inputs immediately — bypass loader min-time delay
                 if (execute && !execute.wait && hasForm) {
                     var l = getLoader(state.sessionId);
-                    if (l) l.stop();
+                    if (l) l.stop(true);
+                    sessionLoaders.forEach(function (loader) {
+                        if (loader && typeof loader.stop === 'function') loader.stop(true);
+                    });
                 }
 
                 return this;

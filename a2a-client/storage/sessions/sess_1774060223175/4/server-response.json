@@ -1,0 +1,34 @@
+{
+  "timestamp": "2026-03-21T03:01:10.050Z",
+  "execute": {
+    "message": "1",
+    "form": {
+      "input": [
+        {
+          "name": "message",
+          "type": "text",
+          "label": "Повідомлення",
+          "required": true
+        }
+      ]
+    }
+  },
+  "context": {
+    "execution": {
+      "action": "dialog",
+      "step": "request"
+    },
+    "task": "ответь одним символом \"1\"",
+    "session_id": "sess_1774060223175",
+    "history": [
+      {
+        "role": "user",
+        "message": "ответь одним символом \"1\""
+      },
+      {
+        "role": "assistant",
+        "message": "1"
+      }
+    ]
+  }
+}

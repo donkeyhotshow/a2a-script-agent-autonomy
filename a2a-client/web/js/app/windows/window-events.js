@@ -11,6 +11,16 @@
             .replace(/</g, '&lt;');
     }
 
+    /** True when execute asks for user input (form) — show UI even if loader min-time still running */
+    function executeHasActionableForm(ex) {
+        if (!ex || !ex.form || ex.wait) return false;
+        const f = ex.form;
+        if (f.choices && f.choices.length > 0) return true;
+        if (f.input == null) return false;
+        if (Array.isArray(f.input)) return f.input.length > 0;
+        return true;
+    }
+
     const WindowEvents = {
         /**
          * Render session content in panel
@@ -150,10 +160,12 @@
                     // More reliable check for promise pending
                     const promisePending = st.promisePending || (store.core?.promise?.isPending) || (store.promise?.isPending);
                     const loaderActive = st.loaderActive || (store.core?.getLoader?.(storeSessionId)?.isActive);
+                    const hasActionableForm = executeHasActionableForm(execute);
+                    const inputBlocked =
+                        typeof store.isInputBlocked === 'function' && store.isInputBlocked();
                     const isWaiting =
-                        (typeof store.isInputBlocked === 'function' && store.isInputBlocked()) ||
                         !!promisePending ||
-                        !!loaderActive;
+                        (!hasActionableForm && inputBlocked);
 
                     // Debug log
                     console.log('[WindowEvents] refreshContent:', 

@@ -1,0 +1,23 @@
+{
+  "step": 1,
+  "title": "Session 05:04:54",
+  "execute": {
+    "message": "What would you like me to do?",
+    "form": {
+      "input": [
+        {
+          "name": "task",
+          "type": "text",
+          "label": "Enter your task",
+          "required": true
+        }
+      ]
+    }
+  },
+  "context": {
+    "execution": {
+      "action": "task",
+      "step": "new"
+    }
+  }
+}
