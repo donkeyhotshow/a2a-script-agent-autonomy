@@ -40,7 +40,12 @@
 
         function tryComplete() {
             if (loadedCount === modules.length) {
-                console.log('[AppTask] All app modules loaded');
+                var errs = global._appModuleLoadErrors;
+                if (errs && errs.length) {
+                    console.error('[AppTask] Module load finished with errors:', errs);
+                } else {
+                    console.log('[AppTask] All app modules loaded');
+                }
                 global._appModulesLoaded = true;
             }
         }
@@ -58,6 +63,10 @@
                 };
                 script.onerror = function () {
                     console.error('[AppTask] Failed to load module: ' + rel);
+                    loadedCount++;
+                    global._appModuleLoadErrors = global._appModuleLoadErrors || [];
+                    global._appModuleLoadErrors.push(rel);
+                    tryComplete();
                 };
                 document.head.appendChild(script);
             } else {
