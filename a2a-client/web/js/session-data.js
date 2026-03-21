@@ -7,7 +7,7 @@
  * Зависит от:
  * - global.__a2aDaemons (dialog-loader, dialog-promise)
  * - global.Normalizers (normalizeMessage)
- * - global.executeHasActionableForm (execute-form-utils.js)
+ * - global.executeHasActionableForm (html-utils.js)
  */
 
 (function (global) {
@@ -18,7 +18,7 @@
         throw new Error('[SessionData] Load js/daemons/emitter.js, dialog-loader.js, dialog-promise-poll.js before session-data.js');
     }
     if (typeof global.executeHasActionableForm !== 'function') {
-        throw new Error('[SessionData] Load js/execute-form-utils.js before session-data.js');
+        throw new Error('[SessionData] Load js/html-utils.js before session-data.js');
     }
     const createDialogLoader = D.createDialogLoader;
     const createDialogPromise = D.createDialogPromise;

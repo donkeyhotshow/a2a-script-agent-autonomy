@@ -6,10 +6,6 @@
 
     const MIN_LOADER_MS = global.__a2aDaemons?.MIN_LOADER_MS || 5000;
 
-    function escapeHtmlAttr(s) {
-        return global.escapeHtmlAttr(s);
-    }
-
     const WindowEvents = {
         /**
          * Render session content in panel
@@ -192,7 +188,7 @@
                 // Fallback to simple UI
                 contentEl.innerHTML = `
                     <div class="session-content">
-                        <div class="session-messages" id="messages-${escapeHtmlAttr(sessionId)}">
+                        <div class="session-messages" id="messages-${global.escapeHtmlAttr(sessionId)}">
                             <div class="message system">Session initialized</div>
                         </div>
                         <div class="session-input">

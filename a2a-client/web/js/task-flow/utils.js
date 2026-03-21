@@ -38,18 +38,10 @@
         return global.SessionStore;
     }
 
-    /**
-     * Escape HTML (see js/html-utils.js)
-     */
-    function escapeHtml(s) {
-        return global.escapeHtml(s);
-    }
-
     // Export
     global.TaskFlowUtils = {
         getProjectId,
-        resolveStore,
-        escapeHtml
+        resolveStore
     };
     global.getProjectId = getProjectId;
     global.resolveStore = resolveStore;

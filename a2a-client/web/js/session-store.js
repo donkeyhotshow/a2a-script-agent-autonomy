@@ -18,7 +18,7 @@
  * 1. js/daemons/emitter.js
  * 2. js/daemons/dialog-loader.js
  * 3. js/daemons/dialog-promise-poll.js
- * 4. js/execute-form-utils.js
+ * 4. js/html-utils.js (executeHasActionableForm)
  * 5. js/normalizers.js
  * 6. js/session-data.js
  * 7. js/session-storage.js

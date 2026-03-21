@@ -6,10 +6,7 @@
 (function (global) {
     'use strict';
 
-    function escapeHtml(s) {
-        if (s == null) return '';
-        return global.escapeHtml(typeof s === 'string' ? s : String(s));
-    }
+    var escapeHtml = global.escapeHtml;
 
     function formatLastError(err) {
         if (err == null) return '';

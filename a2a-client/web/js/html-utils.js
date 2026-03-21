@@ -1,8 +1,20 @@
 /**
- * Shared HTML escaping + session inline loader DOM (single implementation).
+ * Shared HTML escaping, session inline loader DOM, execute.form detection.
  */
 (function (global) {
     'use strict';
+
+    /**
+     * True when execute asks for user input (choices/input), excluding wait-only steps.
+     */
+    function executeHasActionableForm(ex) {
+        if (!ex || !ex.form || ex.wait) return false;
+        var f = ex.form;
+        if (f.choices && f.choices.length > 0) return true;
+        if (f.input == null) return false;
+        if (Array.isArray(f.input)) return f.input.length > 0;
+        return true;
+    }
 
     var SESSION_INLINE_LOADER_INNER = '<div class="task-flow-spinner"></div><p>Processing...</p>';
 
@@ -40,4 +52,5 @@
     global.escapeHtml = escapeHtml;
     global.escapeHtmlAttr = escapeHtmlAttr;
     global.ensureSessionInlineLoader = ensureSessionInlineLoader;
+    global.executeHasActionableForm = executeHasActionableForm;
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -10,10 +10,6 @@
 (function (global) {
     'use strict';
 
-    function escapeHtml(s) {
-        return global.escapeHtml(s);
-    }
-
     const ErrorHandler = {
         // Error storage
         errors: [],
@@ -199,15 +195,15 @@
             let html = `
                 <div class="error-notification-icon">⚠️</div>
                 <div class="error-notification-content">
-                    <div class="error-notification-message">${escapeHtml(error.message)}</div>
+                    <div class="error-notification-message">${global.escapeHtml(error.message)}</div>
             `;
 
             if (error.context?.action) {
-                html += `<div class="error-notification-action">Action: ${escapeHtml(error.context.action)}</div>`;
+                html += `<div class="error-notification-action">Action: ${global.escapeHtml(error.context.action)}</div>`;
             }
 
             if (this.config.showStackTrace && error.stack) {
-                html += `<pre class="error-notification-stack">${escapeHtml(error.stack)}</pre>`;
+                html += `<pre class="error-notification-stack">${global.escapeHtml(error.stack)}</pre>`;
             }
 
             if (this.config.showDetailsButton) {

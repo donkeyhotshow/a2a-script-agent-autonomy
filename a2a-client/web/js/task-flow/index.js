@@ -5,7 +5,7 @@
  * Модули:
  * - api.js - HTTP запросы и retry логика
  * - render.js - рендеринг UI компонентов
- * - utils.js - утилиты (getProjectId, resolveStore, escapeHtml)
+ * - utils.js - утилиты (getProjectId, resolveStore)
  * - loader.js - логика лоадера
  * - tasks.js - выполнение задач (run, _doRun)
  * - messages.js - отправка выборов и сообщений
