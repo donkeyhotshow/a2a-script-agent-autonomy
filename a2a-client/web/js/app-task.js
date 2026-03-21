@@ -52,8 +52,10 @@
 
         modules.forEach(function (rel) {
             var resolved = resolveWebScriptUrl(rel);
-            var key = rel;
-            if (!document.querySelector('script[src*="' + key + '"]')) {
+            // Match either relative path or full resolved URL (avoids duplicate injects under subpath base)
+            var already = document.querySelector('script[src*="' + rel.replace(/"/g, '') + '"]')
+                || document.querySelector('script[src="' + resolved.replace(/"/g, '') + '"]');
+            if (!already) {
                 const script = document.createElement('script');
                 script.src = resolved;
                 script.onload = function () {

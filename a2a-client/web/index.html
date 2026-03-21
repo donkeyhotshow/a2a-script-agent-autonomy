@@ -169,21 +169,25 @@
         console.log('[A2A] Unified architecture initialized');
     });
 
-    // Wait for dynamically loaded modules
+    // Wait for sync stack + dynamic app scripts (js/app-task.js chain) to avoid init before WindowManager
     function waitForModules() {
         return new Promise((resolve) => {
+            const started = Date.now();
+            const maxMs = 20000;
             const check = () => {
-                // Check for core modules that must be loaded
                 const hasSessionStore = typeof window.SessionStore !== 'undefined';
                 const hasTaskFlow = typeof window.TaskFlow !== 'undefined';
                 const hasPanelManager = typeof window.PanelManager !== 'undefined';
                 const hasPanel = typeof window.Panel !== 'undefined';
-                
-                // At minimum we need SessionStore and TaskFlow
-                const modulesReady = hasSessionStore && hasTaskFlow;
+                const appScriptsDone = window._appModulesLoaded === true;
+                const timedOut = Date.now() - started > maxMs;
+
+                const modulesReady = hasSessionStore && hasTaskFlow && (appScriptsDone || timedOut);
 
                 if (modulesReady) {
-                    // Mark panels as ready if PanelManager exists
+                    if (timedOut && !appScriptsDone) {
+                        console.warn('[A2A] Dynamic app modules not ready after ' + maxMs + 'ms; continuing');
+                    }
                     if (hasPanelManager && hasPanel) {
                         window._panelModulesLoaded = true;
                     }
