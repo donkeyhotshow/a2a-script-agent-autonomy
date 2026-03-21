@@ -23,23 +23,17 @@
         const targetSessionId = sessionId || TaskFlow._sessionId;
         const store = resolveStore(targetSessionId);
         if (!store || typeof store.on !== 'function') {
-            console.log('[TaskFlow] _setupLoaderListener: SessionStore not available');
             return;
         }
 
         // Subscribe to loader events from SessionStore
-        // This ensures UI stays in sync with store state
-        // FIXED: Include sessionId in the data passed to _updateLoaderUI
         const unsubscribe = store.on('loader', (data) => {
-            console.log('[TaskFlow] Loader event from store:', data, 'sessionId:', targetSessionId);
-            // Add sessionId to data for per-session loader
             const dataWithSession = { ...data, sessionId: targetSessionId };
             TaskFlow._updateLoaderUI(dataWithSession);
         });
 
         // Store unsubscribe function for cleanup if needed
         TaskFlow._loaderUnsubscribe = unsubscribe;
-        console.log('[TaskFlow] _setupLoaderListener: subscribed to loader events for session:', targetSessionId);
     }
 
     /**
@@ -51,13 +45,11 @@
      */
     function showLoader(TaskFlow, sessionId = null) {
         const targetSessionId = sessionId || TaskFlow._sessionId || 'global';
-        console.log('[TaskFlow] _showLoader called for session:', targetSessionId);
         
         // Try to use SessionStore for loader management
         const store = resolveStore(TaskFlow._sessionId);
         if (store && typeof store.startLoader === 'function') {
             store.startLoader();
-            console.log('[TaskFlow] Loader started via SessionStore');
             return;
         }
         
@@ -70,7 +62,6 @@
         
         // Store in component state for later use
         TaskFlow._loaderMinEndTime = minEndTime;
-        console.log('[TaskFlow] Loader shown (fallback), minEndTime:', minEndTime, 'loaderId:', loaderId);
     }
 
     /**
@@ -82,18 +73,15 @@
      */
     function hideLoader(TaskFlow, sessionId = null) {
         const targetSessionId = sessionId || TaskFlow._sessionId || 'global';
-        console.log('[TaskFlow] _hideLoader called for session:', targetSessionId);
         
         // Try to use SessionStore for loader management
         const store = resolveStore(TaskFlow._sessionId);
         if (store && typeof store.stopLoader === 'function') {
             store.stopLoader();
-            console.log('[TaskFlow] Loader stopped via SessionStore');
             return;
         }
         
         // Fallback: Handle hiding session-specific DOM element
-        // FIXED: Use session-specific ID
         const loaderId = 'session-loader-' + targetSessionId;
         const loaderEl = document.getElementById(loaderId);
         if (!loaderEl) {
@@ -101,7 +89,6 @@
             const globalLoaderEl = document.getElementById('global-task-loader');
             if (globalLoaderEl) {
                 globalLoaderEl.classList.remove('active');
-                console.log('[TaskFlow] Loader hidden (global fallback)');
             }
             return;
         }
@@ -114,15 +101,12 @@
             // Minimum time passed, hide immediately
             loaderEl.classList.remove('active');
             TaskFlow._loaderMinEndTime = null;
-            console.log('[TaskFlow] Loader hidden (fallback - min time passed)', 'loaderId:', loaderId);
         } else {
             // Wait for minimum time
             const remaining = minEndTime - now;
-            console.log('[TaskFlow] Waiting', remaining, 'ms for minimum display time (fallback)', 'loaderId:', loaderId);
             setTimeout(() => {
                 loaderEl.classList.remove('active');
                 TaskFlow._loaderMinEndTime = null;
-                console.log('[TaskFlow] Loader hidden (fallback - after min time wait)', 'loaderId:', loaderId);
             }, remaining);
         }
     }
@@ -134,7 +118,6 @@
      * @param {Object} data - { active: boolean, minEndTime?: number, sessionId?: string }
      */
     function updateLoaderUI(TaskFlow, data) {
-        console.log('[TaskFlow] _updateLoaderUI called:', data);
         if (!data) return;
         
         // Get session ID from data or use current session
@@ -143,7 +126,6 @@
         
         let loaderEl = document.getElementById(loaderId);
         if (!loaderEl && data.active) {
-            console.log('[TaskFlow] Creating session-specific loader element:', loaderId);
             loaderEl = global.ensureSessionInlineLoader(sessionId);
         }
         

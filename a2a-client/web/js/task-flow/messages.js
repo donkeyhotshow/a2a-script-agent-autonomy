@@ -78,15 +78,22 @@
 
             if (isAsync) {
                 // For async flow: wait for promise to resolve before hiding loader
-                console.log('[TaskFlow] Async flow detected, waiting for promise to resolve...');
-                
-                // Subscribe to promise resolved event
-                if (store && typeof store.on === 'function') {
-                    const unsubscribe = store.on('promiseResolved', (data) => {
-                        console.log('[TaskFlow] Promise resolved, hiding loader:', data);
-                        unsubscribe();
+                // Subscribe to promise resolved event (one-time)
+                if (store && typeof store.once === 'function') {
+                    store.once('promiseResolved', (data) => {
                         hideLoader?.(TaskFlow);
                         // Render the final execute result
+                        const exec = data.execute ?? data.result?.execute;
+                        if (exec) {
+                            setPanelContent(contentEl, 'execute', { execute: exec, sessionId, projectId }, TaskFlow);
+                            updateStatus(contentEl, 'Processing complete');
+                        }
+                    });
+                } else if (store && typeof store.on === 'function') {
+                    // Fallback для старых браузеров
+                    const unsubscribe = store.on('promiseResolved', (data) => {
+                        unsubscribe();
+                        hideLoader?.(TaskFlow);
                         const exec = data.execute ?? data.result?.execute;
                         if (exec) {
                             setPanelContent(contentEl, 'execute', { execute: exec, sessionId, projectId }, TaskFlow);
@@ -181,15 +188,21 @@
 
             if (isAsync) {
                 // For async flow: wait for promise to resolve before hiding loader
-                console.log('[TaskFlow] Async flow detected, waiting for promise to resolve...');
-                
-                // Subscribe to promise resolved event
-                if (store && typeof store.on === 'function') {
+                // Subscribe to promise resolved event (one-time)
+                if (store && typeof store.once === 'function') {
+                    store.once('promiseResolved', (data) => {
+                        hideLoader?.(TaskFlow);
+                        const exec = data.execute ?? data.result?.execute;
+                        if (exec) {
+                            setPanelContent(contentEl, 'execute', { execute: exec, sessionId, projectId }, TaskFlow);
+                            updateStatus(contentEl, 'Processing complete');
+                        }
+                    });
+                } else if (store && typeof store.on === 'function') {
+                    // Fallback для старых браузеров
                     const unsubscribe = store.on('promiseResolved', (data) => {
-                        console.log('[TaskFlow] Promise resolved, hiding loader:', data);
                         unsubscribe();
                         hideLoader?.(TaskFlow);
-                        // Render the final execute result
                         const exec = data.execute ?? data.result?.execute;
                         if (exec) {
                             setPanelContent(contentEl, 'execute', { execute: exec, sessionId, projectId }, TaskFlow);

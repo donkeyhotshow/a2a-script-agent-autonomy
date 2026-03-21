@@ -101,9 +101,7 @@
 
         // Use SessionStore instead of legacy SessionViewModel
         const store = resolveStore(TaskFlow._sessionId);
-        console.log('[TaskFlow] Before reset, store messages:', store?.messages?.length, store?.getState?.()?.messages?.length);
         store?.reset();
-        console.log('[TaskFlow] After reset, store messages:', store?.messages?.length, store?.getState?.()?.messages?.length);
 
         // Check if task panel already exists
         const pm = global.PanelManager;
@@ -178,9 +176,8 @@
             // Setup loader listener for this specific session store
             setupLoaderListener?.(TaskFlow, sessionId);
 
-            // Initialize SessionStore for this session and start loader immediately
+            // Initialize SessionStore for this session
             const store = resolveStore(sessionId);
-            console.log('[TaskFlow] _doRun: store:', !!store);
             if (store) {
                 store.setSession(sessionId, projectId);
             }
