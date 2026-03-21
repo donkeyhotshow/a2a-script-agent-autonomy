@@ -1,304 +1,275 @@
 /**
- * ActionHandler - Submits user input (message, choice) to Client API
- * POST /api/sessions/:sessionId/next with result
- * Updates SessionStore with response (execute, context, promiseId)
+ * ActionHandler - Главный модуль (делегатор) для обработки действий пользователя
+ * 
+ * Координирует работу трех подмодулей:
+ * - ActionParser - парсинг параметров действий
+ * - ActionValidator - валидация данных
+ * - ActionExecutor - выполнение действий (взаимодействие с API)
+ * 
+ * Паттерн: Фасад (Facade) - упрощенный интерфейс для клиентов
  * 
  * Step Flow:
- * 1. Submit result → save client-result.json → create next step
- * 2. Server sends request to A2A Server
- * 3. If async (promiseId) → poll for status
- * 4. If sync → return execute to client
+ * 1. Валидация результата (ActionValidator)
+ * 2. Отправка на сервер (ActionExecutor)
+ * 3. Парсинг ответа (ActionParser)
+ * 4. Если async (promiseId) → polling (ActionExecutor)
+ * 5. Если sync → возврат execute клиенту
+ * 
+ * Зависит от:
+ * - action-parser.js
+ * - action-validator.js
+ * - action-executor.js
  */
+
 (function (global) {
     'use strict';
 
-    // Use global PROMISE_POLL_INTERVAL from SessionStore (default 5000ms)
-    const POLL_INTERVAL = global.PROMISE_POLL_INTERVAL || 5000;
-
-    // Track local polling as fallback (when SessionStore is not available)
-    let localPollTimer = null;
-
-    function resolveStore(sessionId = null) {
-        const registry = global.WindowRegistry;
-        const resolvedSessionId = sessionId || global.SessionManager?.getActiveSessionId?.() || null;
-        if (resolvedSessionId && registry?.getSessionStore) {
-            const windowStore = registry.getSessionStore(resolvedSessionId);
-            if (windowStore) {
-                return windowStore;
-            }
-        }
-        return global.SessionStore;
-    }
-
-    function getApiBase(store) {
-        const api = global.apiIntegration;
-        // Check storage mode first - if using Vite (storage mode), use default
-        const storageMode = store?.getStorageMode?.() || 'storage';
-        if (storageMode === 'storage') {
-            // Use relative path for dev/prod compatibility - Vite proxies /api/*
-            return window.location.origin + '/api/a2a';
-        }
-        // For client-api mode, require explicit apiBase
-        if (!api?.apiBase) return null;
-        return String(api.apiBase).replace(/\/?$/, '');
-    }
+    // Референсы на подмодули
+    const Parser = global.ActionParser;
+    const Validator = global.ActionValidator;
+    const Executor = global.ActionExecutor;
 
     /**
-     * Submit result to session - triggers step processing
-     * Saves client-result.json and creates next step via API
+     * Проверяет доступность подмодулей
      */
-    async function submit(sessionId, result) {
-        const store = resolveStore(sessionId);
-        const base = getApiBase(store);
-        if (!base) {
-            throw new Error('ActionHandler: API base not configured. Set Client API URL in Settings.');
+    function checkModules() {
+        if (!Parser) {
+            console.warn('[ActionHandler] ActionParser not loaded - some features may not work');
         }
-        // Use storage mode with default fallback (same as getApiBase)
-        const storageMode = store?.getStorageMode?.() || 'storage';
-        const isStorageMode = storageMode === 'storage';
-        // For Vite (storage mode), base already includes /api/a2a
-        // For client-api, need to add /api
-        const apiPath = isStorageMode ? '' : '/api';
-        const url = `${base}${apiPath}/sessions/${encodeURIComponent(sessionId)}/next`;
-        const headers = { 'Content-Type': 'application/json' };
-        if (global.apiIntegration?.token) {
-            headers['Authorization'] = `Bearer ${global.apiIntegration.token}`;
+        if (!Validator) {
+            console.warn('[ActionHandler] ActionValidator not loaded - validation will be skipped');
         }
-        
-        const res = await fetch(url, {
-            method: 'POST',
-            headers,
-            body: JSON.stringify({ result })
-        });
-        
-        const data = await res.json().catch((e) => {
-            console.error('[ActionHandler] JSON parse error:', e.message);
-            return {};
-        });
-        if (!res.ok) {
-            throw new Error(data?.error?.message || `Request failed: ${res.status}`);
+        if (!Executor) {
+            throw new Error('[ActionHandler] ActionExecutor is required - cannot submit actions');
         }
-        
-        if (store && data) {
-            // First set promise pending to block input
-            if (data.promiseId) {
-                store.setPromisePending?.(true);
-                // Start per-session loader
-                if (typeof sessionId === 'string') {
-                    store.startLoader?.(sessionId);
-                } else {
-                    store.startLoader?.();
-                }
-                startPromisePolling(sessionId, data.promiseId);
-                // Force UI refresh to show waiting state BEFORE setting execute
-                if (global.WindowManager?.refreshAll) {
-                    global.WindowManager.refreshAll();
-                }
-            }
-            // Then update execute/context (may trigger another refresh)
-            if (data.execute) store.setExecute?.(data.execute);
-            const ctx = data.context ?? data.session?.context;
-            if (ctx) store.setContext?.(ctx);
-            const sess = data.session;
-            if (sess) store.setSession?.(sess.id ?? sess.sessionId, sess.projectId);
-        }
-        
-        return data;
     }
 
     /**
-     * Check promise status - polls A2A Server for async result
+     * Основная функция отправки результата
+     * Выполняет полный цикл: валидация → отправка → парсинг → обработка
+     * 
+     * @param {string} sessionId - ID сессии
+     * @param {Object} result - результат от пользователя { message?, choice? }
+     * @param {Object} options - дополнительные опции
+     * @param {Object} options.form - текущая форма для валидации choice
+     * @returns {Promise<Object>} обработанный ответ сервера
+     */
+    async function submit(sessionId, result, options = {}) {
+        // Проверяем доступность модулей
+        checkModules();
+        
+        // 1. Валидируем sessionId
+        if (Validator?.validateSessionId) {
+            const sessionValidation = Validator.validateSessionId(sessionId);
+            if (!sessionValidation.valid) {
+                throw new Error(sessionValidation.error);
+            }
+        }
+        
+        // 2. Валидируем result (опционально, если есть Validator)
+        let parsedResult = result;
+        if (Validator?.validateResult && options.form) {
+            const resultValidation = Validator.validateResult(result, options.form);
+            if (!resultValidation.valid) {
+                throw new Error(resultValidation.error);
+            }
+            parsedResult = resultValidation.parsed || result;
+        }
+        
+        // 3. Отправляем на сервер через Executor
+        const rawResponse = await Executor.submit(sessionId, parsedResult);
+        
+        // 4. Парсируем ответ (опционально, если есть Parser)
+        const response = Parser?.parseResponse 
+            ? Parser.parseResponse(rawResponse) 
+            : rawResponse;
+        
+        // 5. Возвращаем обработанный ответ
+        return response;
+    }
+
+    /**
+     * Отправляет текстовое сообщение
+     * 
+     * @param {string} sessionId - ID сессии
+     * @param {string|Object} message - текст сообщения или объект
+     * @returns {Promise<Object>} обработанный ответ сервера
+     */
+    async function sendMessage(sessionId, message) {
+        // Валидируем message если есть Validator
+        if (Validator?.validateMessage) {
+            const msgText = typeof message === 'string' ? message : (message?.content ?? String(message));
+            const msgValidation = Validator.validateMessage(msgText);
+            if (!msgValidation.valid) {
+                throw new Error(msgValidation.error);
+            }
+        }
+        
+        return Executor.sendMessage(sessionId, message);
+    }
+
+    /**
+     * Отправляет выбор пользователя
+     * 
+     * @param {string} sessionId - ID сессии
+     * @param {string} choiceId - ID выбора
+     * @param {Array} validChoices - допустимые выборы для валидации
+     * @returns {Promise<Object>} обработанный ответ сервера
+     */
+    async function sendChoice(sessionId, choiceId, validChoices = []) {
+        // Валидируем choice если есть Validator и допустимые выборы
+        if (Validator?.validateChoice && validChoices.length > 0) {
+            const choiceValidation = Validator.validateChoice(choiceId, validChoices);
+            if (!choiceValidation.valid) {
+                throw new Error(choiceValidation.error);
+            }
+        }
+        
+        return Executor.sendChoice(sessionId, choiceId);
+    }
+
+    /**
+     * Проверяет статус асинхронного запроса (promise)
+     * 
+     * @param {string} sessionId - ID сессии
+     * @param {string} promiseId - ID промиса
+     * @returns {Promise<Object|null>} статус промиса
      */
     async function checkPromise(sessionId, promiseId) {
-        const store = resolveStore(sessionId);
-        const base = getApiBase(store);
-        if (!base) {
-            console.warn('[ActionHandler] API base not configured');
-            return null;
-        }
-        
-        // Use storage mode with default fallback
-        const storageMode = store?.getStorageMode?.() || 'storage';
-        const isStorageMode = storageMode === 'storage';
-        const apiPath = isStorageMode ? '' : '/api';
-        const url = `${base}${apiPath}/sessions/${encodeURIComponent(sessionId)}/promise/${encodeURIComponent(promiseId)}`;
-        
-        try {
-            const res = await fetch(url, {
-                method: 'GET',
-                headers: { 'Content-Type': 'application/json' }
-            });
-            
-            if (!res.ok) {
-                console.warn('[ActionHandler] Promise check failed with status:', res.status);
-                return null;
+        // Валидируем promiseId если есть Validator
+        if (Validator?.validatePromiseId) {
+            const pidValidation = Validator.validatePromiseId(promiseId);
+            if (!pidValidation.valid) {
+                console.warn('[ActionHandler] Invalid promiseId:', pidValidation.error);
             }
-            return await res.json();
-        } catch (e) {
-            console.error('[ActionHandler] Promise check failed:', e.message);
-            return null;
         }
+        
+        return Executor.checkPromise(sessionId, promiseId);
     }
 
     /**
-     * Start polling for promise resolution
-     * Uses SessionStore if available, otherwise falls back to local polling
+     * Запускает polling для отслеживания выполнения асинхронного запроса
+     * 
+     * @param {string} sessionId - ID сессии
+     * @param {string} promiseId - ID промиса
      */
     function startPromisePolling(sessionId, promiseId) {
-        const store = resolveStore(sessionId);
-        
-        // Try to use SessionStore for unified promise management
-        if (store?.startPromisePolling && store?.setPromiseId) {
-            // Set promise ID in store
-            store.setPromiseId(promiseId);
-            
-            // Start polling via SessionStore with checkPromise function
-            store.startPromisePolling((pid) => checkPromise(sessionId, pid));
-            
-            // Subscribe to promise resolved event from SessionStore
-            const onResolved = (data) => {
-                if (data.promiseId === promiseId) {
-                const exec = data.execute ?? data.result?.execute;
-                if (exec && store) {
-                    store.setExecute?.(exec);
-                    // Stop loader after new execute received
-                    if (typeof sessionId === 'string') {
-                        store.stopLoader?.(sessionId);
-                    } else {
-                        store.stopLoader?.();
-                    }
-                }
-                    global.apiIntegration?.emit?.('promiseResolved', {
-                        sessionId,
-                        promiseId,
-                        result: data.result,
-                        execute: data.execute
-                    });
-                }
-            };
-            
-            // Subscribe to promise rejected event from SessionStore
-            const onRejected = (data) => {
-                if (data.promiseId === promiseId) {
-                    store.setPromisePending?.(false);
-                    // Stop loader on error
-                    if (typeof sessionId === 'string') {
-                        store.stopLoader?.(sessionId);
-                    } else {
-                        store.stopLoader?.();
-                    }
-                    global.apiIntegration?.emit?.('promiseError', {
-                        sessionId,
-                        promiseId,
-                        error: data.error || 'Promise failed'
-                    });
-                }
-            };
-            
-            // Listen to SessionStore events
-            store.on?.('promiseResolved', onResolved);
-            store.on?.('promiseError', onRejected);
-            
-            return;
-        }
-        
-        // Fallback: local polling implementation (backward compatibility)
-        // Clear any existing timer
-        if (localPollTimer) {
-            clearInterval(localPollTimer);
-            localPollTimer = null;
-        }
-        
-        localPollTimer = setInterval(async () => {
-            const status = await checkPromise(sessionId, promiseId);
-            
-            if (!status) {
-                // Network error - continue polling
-                return;
-            }
-            
-            if (status.completed || status.status === 'completed' || status.status === 'done') {
-                // Promise resolved - clear timer and update session
-                if (localPollTimer) {
-                    clearInterval(localPollTimer);
-                    localPollTimer = null;
-                }
-                
-                if (store) {
-                    const exec = status.execute ?? status.result?.execute;
-                    if (exec) store.setExecute?.(exec);
-                }
-                
-                // Emit event for UI to handle
-                global.apiIntegration?.emit?.('promiseResolved', {
-                    sessionId,
-                    promiseId,
-                    result: status.result,
-                    execute: status.execute ?? status.result?.execute
-                });
-            }
-            
-            if (status.status === 'failed' || status.status === 'error') {
-                // Promise failed - clear timer
-                if (localPollTimer) {
-                    clearInterval(localPollTimer);
-                    localPollTimer = null;
-                }
-                
-                if (store) {
-                    store.setPromisePending?.(false);
-                }
-                
-                global.apiIntegration?.emit?.('promiseError', {
-                    sessionId,
-                    promiseId,
-                    error: status.error || 'Promise failed'
-                });
-            }
-        }, POLL_INTERVAL);
+        Executor.startPromisePolling(sessionId, promiseId);
     }
 
     /**
-     * Stop polling for promises
-     * Uses SessionStore if available, otherwise falls back to local polling
+     * Останавливает polling для промисов
+     * 
+     * @param {string} sessionId - ID сессии
      */
     function stopPromisePolling(sessionId) {
-        const store = resolveStore(sessionId);
-        
-        // Try to use SessionStore for unified promise management
-        if (store?.stopPromisePolling) {
-            store.stopPromisePolling();
-            return;
+        Executor.stopPromisePolling(sessionId);
+    }
+
+    /**
+     * Парсирует execute объект от сервера
+     * Удобная обертка над ActionParser.parseExecute
+     * 
+     * @param {Object} execute - объект выполнения от сервера
+     * @returns {Object} нормализованный объект
+     */
+    function parseExecute(execute) {
+        if (!Parser?.parseExecute) {
+            return execute;
+        }
+        return Parser.parseExecute(execute);
+    }
+
+    /**
+     * Парсирует ответ сервера
+     * Удобная обертка над ActionParser.parseResponse
+     * 
+     * @param {Object} response - ответ от сервера
+     * @returns {Object} нормализованный ответ
+     */
+    function parseResponse(response) {
+        if (!Parser?.parseResponse) {
+            return response;
+        }
+        return Parser.parseResponse(response);
+    }
+
+    /**
+     * Парсирует результат пользователя
+     * Удобная обертка над ActionParser.parseResult
+     * 
+     * @param {Object} result - результат от пользователя
+     * @returns {Object} нормализованный результат
+     */
+    function parseResult(result) {
+        if (!Parser?.parseResult) {
+            return result;
+        }
+        return Parser.parseResult(result);
+    }
+
+    /**
+     * Валидирует данные с помощью подмодуля Validator
+     * 
+     * @param {string} type - тип валидации ('message'|'choice'|'sessionId'|'result'|'response')
+     * @param {any} value - значение для валидации
+     * @param {any} options - дополнительные опции
+     * @returns {Object} результат валидации
+     */
+    function validate(type, value, options = {}) {
+        if (!Validator) {
+            return { valid: true };
         }
         
-        // Fallback: local polling implementation (backward compatibility)
-        if (localPollTimer) {
-            clearInterval(localPollTimer);
-            localPollTimer = null;
+        switch (type) {
+            case 'message':
+                return Validator.validateMessage(value);
+            case 'choice':
+                return Validator.validateChoice(value, options.validChoices);
+            case 'sessionId':
+                return Validator.validateSessionId(value);
+            case 'result':
+                return Validator.validateResult(value, options.form);
+            case 'response':
+                return Validator.validateResponse(value);
+            case 'form':
+                return Validator.validateForm(value);
+            case 'context':
+                return Validator.validateContext(value);
+            case 'promiseId':
+                return Validator.validatePromiseId(value);
+            default:
+                return { valid: true };
         }
     }
 
-    async function sendMessage(sessionId, message) {
-        const messageText =
-            typeof message === 'string'
-                ? message
-                : (message?.content ?? String(message ?? ''));
-        return submit(sessionId, { message: messageText });
-    }
-
-    async function sendChoice(sessionId, choiceId) {
-        return submit(sessionId, { choice: choiceId });
-    }
-
-    const ActionHandler = { 
-        submit, 
-        sendMessage, 
+    // Главный объект ActionHandler - точка входа
+    const ActionHandler = {
+        // Основные функции
+        submit,
+        sendMessage,
         sendChoice,
+        
+        // Функции для работы с промисами
         checkPromise,
         startPromisePolling,
-        stopPromisePolling
+        stopPromisePolling,
+        
+        // Функции парсинга
+        parseExecute,
+        parseResponse,
+        parseResult,
+        
+        // Функция валидации
+        validate,
+        
+        // Версии подмодулей для совместимости
+        get Parser() { return Parser; },
+        get Validator() { return Validator; },
+        get Executor() { return Executor; }
     };
 
+    // Экспорт в глобальную область видимости
     if (typeof window !== 'undefined') {
         window.ActionHandler = ActionHandler;
     }

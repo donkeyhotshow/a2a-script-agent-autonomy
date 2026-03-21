@@ -1,18 +1,4 @@
 {
-  "timestamp": "2026-03-21T00:33:34.480Z",
-  "execute": {
-    "message": "1",
-    "form": {
-      "input": [
-        {
-          "name": "message",
-          "type": "text",
-          "label": "Повідомлення",
-          "required": true
-        }
-      ]
-    }
-  },
   "context": {
     "execution": {
       "action": "dialog",
@@ -31,5 +17,8 @@
         "message": "1"
       }
     ]
+  },
+  "result": {
+    "message": "ответь одним символом \"1\""
   }
 }

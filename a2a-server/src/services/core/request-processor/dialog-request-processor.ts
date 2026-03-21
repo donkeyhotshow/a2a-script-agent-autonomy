@@ -42,7 +42,7 @@ async function fetchLlmResponse(base: string, llmPromiseId: string): Promise<str
 }
 
 async function pollReadyThenFetch(base: string, llmPromiseId: string): Promise<string | null> {
-    const pollIntervalMs = 500;
+    const pollIntervalMs = 2000;
     const pollTimeoutMs = 200000;
     const started = Date.now();
     for (;;) {

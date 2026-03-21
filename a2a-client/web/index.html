@@ -93,7 +93,11 @@
 <script src="js/daemons/dialog-loader.js"></script>
 <script src="js/daemons/dialog-promise-poll.js"></script>
 
-<!-- 1. Core State - Using fixed classic script version -->
+<!-- SessionStore stack (session-store.js is the facade; requires the rest) -->
+<script src="js/normalizers.js"></script>
+<script src="js/session-data.js"></script>
+<!-- After storage.js: replaces global.SessionStorageAPI with { create } factory for SessionStore -->
+<script src="js/session-storage.js"></script>
 <script src="js/session-store.js"></script>
 
 <!-- Refactored version DISABLED (conflicted/broken _emit)
