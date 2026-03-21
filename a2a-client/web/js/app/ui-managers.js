@@ -12,30 +12,17 @@
         async refreshProjectsUI() {
             const sel = document.getElementById('projectSelect');
             if (sel) {
-                const saved = await global.ProjectManager?.getSelectedProjectId?.() || global.ProjectManager?.getLastSelectedProjectId?.();
+                const saved = await global.getCurrentProjectId();
                 sel.innerHTML = '<option value="">Select Project...</option>';
                 try {
-                    // Direct call to apiIntegration.getProjects()
                     const list = await global.apiIntegration.getProjects();
                     if (!Array.isArray(list)) {
                         throw new Error('[AppUIManagers] getProjects must return an array');
                     }
-                    list.forEach(p => {
-                        const opt = document.createElement('option');
-                        opt.value = p.id;
-                        opt.textContent = p.name || p.id;
-                        sel.appendChild(opt);
-                    });
-                    if (saved && Array.from(sel.options).some(o => o.value === saved)) sel.value = saved;
+                    global.AppInitialization._buildProjectOptions(sel, list, saved);
                 } catch (e) {
                     console.error('[AppTask] Could not load projects for header:', e);
-                    if (saved) {
-                        const opt = document.createElement('option');
-                        opt.value = saved;
-                        opt.textContent = saved;
-                        sel.appendChild(opt);
-                        sel.value = saved;
-                    }
+                    if (saved) global.AppInitialization._buildProjectOptions(sel, [], saved);
                 }
             }
             const taskbarContent = document.querySelector('.taskbar-content');
@@ -50,12 +37,6 @@
          * Fetch projects from API and render into grid
          */
         async _loadProjectsIntoGrid(gridEl) {
-            function escAttr(s) {
-                return String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
-            }
-            function escText(s) {
-                return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-            }
             // No loading indicator - show empty while fetching
             try {
                 // Direct call to apiIntegration.getProjects()
@@ -69,8 +50,8 @@
                     return;
                 }
                 gridEl.innerHTML = projects.map(p => {
-                    const id = escAttr(p.id || '');
-                    const name = escText(p.name || p.id || '');
+                    const id = global.escapeHtmlAttr(p.id || '');
+                    const name = global.escapeHtml(p.name || p.id || '');
                     return `<div class="project-card" data-project-id="${id}"><span class="project-name">${name}</span></div>`;
                 }).join('');
             } catch (e) {

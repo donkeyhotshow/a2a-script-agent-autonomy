@@ -6,6 +6,23 @@
     'use strict';
 
     /**
+     * Get current project ID with fallback to last selected.
+     * Unified function to avoid duplicating the pattern across files.
+     * @returns {Promise<string|null>} The current project ID or null.
+     */
+    async function getCurrentProjectId() {
+        // Try selected project first, then fall back to last selected
+        const selectedId = await global.ProjectManager?.getSelectedProjectId?.();
+        if (selectedId) return selectedId;
+        
+        // Fallback to last selected project
+        const lastSelectedId = global.ProjectManager?.getLastSelectedProjectId?.();
+        if (lastSelectedId) return lastSelectedId;
+        
+        return null;
+    }
+
+    /**
      * Let taskbar DOM paint after refresh, then open the session window.
      * Simplified: single rAF + single retry timeout
      */
@@ -56,7 +73,7 @@
 
                 // Fallback to old API if persistent storage didn't work
                 if (!sessionId) {
-                    const projectId = await global.ProjectManager?.getSelectedProjectId();
+                    const projectId = await global.getCurrentProjectId();
                     if (!global.apiIntegration?.createSession) throw new Error('API not available');
                     const session = await global.apiIntegration.createSession({
                         projectId,
@@ -99,5 +116,6 @@
 
     // Export
     global.AppStateManagers = AppStateManagers;
+    global.getCurrentProjectId = getCurrentProjectId;
 
 })(typeof window !== 'undefined' ? window : globalThis);

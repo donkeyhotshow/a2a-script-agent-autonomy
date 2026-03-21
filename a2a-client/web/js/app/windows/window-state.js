@@ -10,11 +10,7 @@
          */
         _createFloatingWindow(options) {
             const { id, title, x, y, width, height } = options;
-            const safeTitle = String(title ?? '')
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;');
+            const safeTitle = global.escapeHtml(title ?? '');
             
             // Create container
             const container = document.createElement('div');
@@ -157,6 +153,110 @@
         },
 
         /**
+         * Load session data from API
+         * @private
+         */
+        async _loadSessionData(sessionId) {
+            const projectId = await global.getCurrentProjectId() || global.SessionStore?.projectId || null;
+            const api = global.apiIntegration;
+            
+            if (!api?.getSession) {
+                return null;
+            }
+
+            try {
+                const sessionData = await api.getSession(sessionId, {
+                    projectId: projectId || undefined,
+                    includeContext: true
+                });
+                return sessionData;
+            } catch (err) {
+                console.warn('[WindowState] Failed to load session data:', err);
+                return null;
+            }
+        },
+
+        /**
+         * Hydrate store with session data
+         * @private
+         */
+        _hydrateStore(store, sessionData, sessionId) {
+            if (!store || !sessionData) {
+                return;
+            }
+
+            const dataSid = sessionData.id || sessionData.sessionId;
+            if (dataSid) {
+                store.setSession(dataSid, sessionData.projectId);
+            }
+
+            // Messages - try multiple sources
+            if (sessionData?.messages && Array.isArray(sessionData.messages) && sessionData.messages.length > 0) {
+                store.setMessages(sessionData.messages);
+            } else if (sessionData?.context?.messages && Array.isArray(sessionData.context.messages)) {
+                store.setMessages(sessionData.context.messages);
+            }
+
+            // Context
+            if (sessionData?.context) {
+                store.setContext(sessionData.context);
+            }
+
+            // Execute - try multiple sources
+            const execute = sessionData?.execute ?? sessionData?.context?.execute ?? sessionData?.currentExecute;
+            if (execute) {
+                store.setExecute(execute);
+            }
+
+            // Status
+            if (sessionData?.status) {
+                store.setStatus(sessionData.status);
+            }
+
+            // Async pending
+            if (sessionData.asyncPending) {
+                store.setPromisePending(true);
+                if (typeof store.startLoader === 'function') {
+                    store.startLoader(sessionId);
+                }
+                this._resumeSessionAsyncPolling(sessionId, store);
+            }
+        },
+
+        /**
+         * Attach event handlers to window panel
+         * @private
+         */
+        _attachWindowHandlers(panel, sessionId, registry, positionModule) {
+            const sessionWindows = registry.getSessionWindows();
+
+            // Set active session on focus
+            panel.container.addEventListener('mousedown', () => {
+                if (global.SessionManager) {
+                    global.SessionManager.setActiveSession(sessionId);
+                }
+            });
+
+            // Close button handler
+            panel._onClose = () => {
+                sessionWindows.delete(sessionId);
+                registry.saveSessionWindowsState();
+                const contentEl = panel.getContentEl();
+                if (contentEl?._cleanup) contentEl._cleanup();
+                positionModule.saveWindowState(sessionId, panel.position, panel.size);
+            };
+
+            // Save position on drag end (debounced)
+            let saveTimeout;
+            panel.container.addEventListener('mouseup', () => {
+                clearTimeout(saveTimeout);
+                saveTimeout = setTimeout(() => {
+                    positionModule.saveWindowState(sessionId, panel.position, panel.size);
+                }, 200);
+            });
+        },
+
+        /**
          * Create new session window
          */
         async createSessionWindow(sessionId, btnEl) {
@@ -174,27 +274,13 @@
                 const position = savedState?.position || positionModule.getDefaultWindowPosition(sessionId);
                 const size = savedState?.size || { width: 800, height: 600 };
 
-                let sessionData = null;
-                const projectId =
-                    (await global.ProjectManager?.getSelectedProjectId?.()) || global.SessionStore?.projectId || null;
-                const api = global.apiIntegration;
-                // Single request with includeContext: true
-                if (api?.getSession) {
-                    try {
-                        sessionData = await api.getSession(sessionId, {
-                            projectId: projectId || undefined,
-                            includeContext: true
-                        });
-                    } catch (err) {
-                        console.warn('[WindowState] Failed to load session data:', err);
-                    }
-                }
-
+                // Load session data
+                const sessionData = await this._loadSessionData(sessionId);
                 if (!sessionData) {
                     console.warn(`[WindowState] Session ${sessionId} not found - creating window with empty store`);
                 }
 
-                // Create floating window directly (no PanelManager dependency)
+                // Create floating window
                 const panel = this._createFloatingWindow({
                     id: `session-${sessionId}`,
                     title: sessionData?.title || `Session ${sessionId.slice(-8)}`,
@@ -208,88 +294,17 @@
                     const sessionWindows = registry.getSessionWindows();
                     sessionWindows.set(sessionId, panel);
 
-                    // Setup panel event handlers
-                    panel.container.addEventListener('mousedown', () => {
-                        if (global.SessionManager) {
-                            global.SessionManager.setActiveSession(sessionId);
-                        }
-                    });
+                    // Attach event handlers
+                    this._attachWindowHandlers(panel, sessionId, registry, positionModule);
 
-                    // Close button handler
-                    panel._onClose = () => {
-                        sessionWindows.delete(sessionId);
-                        registry.saveSessionWindowsState();
-                        const contentEl = panel.getContentEl();
-                        if (contentEl?._cleanup) contentEl._cleanup();
-                        positionModule.saveWindowState(sessionId, panel.position, panel.size);
-                    };
-
-                    // Save position on drag end (debounced)
-                    let saveTimeout;
-                    panel.container.addEventListener('mouseup', () => {
-                        clearTimeout(saveTimeout);
-                        saveTimeout = setTimeout(() => {
-                            positionModule.saveWindowState(sessionId, panel.position, panel.size);
-                        }, 200);
-                    });
-
-                    // Create per-window SessionStore instance w/ fallback
-                    const StoreClass = window.SessionStoreClass || global.SessionStoreClass;
-                    let store = null;
-                    const storeOpts = global.SessionStoreWebDefaults;
-                    if (StoreClass) {
-                        if (!storeOpts) {
-                            throw new Error('[WindowState] SessionStoreWebDefaults missing (load session-store.js)');
-                        }
-                        store = new StoreClass({
-                            storageBase: storeOpts.storageBase,
-                            storageMode: storeOpts.storageMode
-                        });
-                    } else {
-                        store = global.SessionStore;
-                        console.log('[WindowState] Using global SessionStore');
-                    }
-                    if (!store) {
-                        console.error('[WindowState] Failed to create SessionStore instance');
-                    } else {
-                        console.log('[WindowState] SessionStore instance created for', sessionId);
-                        store.reset(sessionId); // Reset with sessionId
-                    }
-                    // Store reference on the panel for cleanup
+                    // Create SessionStore instance
+                    const store = this._createSessionStore(sessionId);
                     panel._sessionStore = store;
 
-                    if (store && sessionData) {
-                        const dataSid = sessionData.id || sessionData.sessionId;
-                        if (dataSid) {
-                            store.setSession(dataSid, sessionData.projectId);
-                        }
-                        if (sessionData?.messages && Array.isArray(sessionData.messages) && sessionData.messages.length > 0) {
-                            store.setMessages(sessionData.messages);
-                        } else if (sessionData?.context?.messages && Array.isArray(sessionData.context.messages)) {
-                            store.setMessages(sessionData.context.messages);
-                        }
-                        if (sessionData?.context) {
-                            store.setContext(sessionData.context);
-                        }
-                        const execute = sessionData?.execute ?? sessionData?.context?.execute ?? sessionData?.currentExecute;
-                        if (execute) {
-                            store.setExecute(execute);
-                        }
-                        if (sessionData?.status) {
-                            store.setStatus(sessionData.status);
-                        }
+                    // Hydrate store with data
+                    this._hydrateStore(store, sessionData, sessionId);
 
-                        if (sessionData.asyncPending) {
-                            store.setPromisePending(true);
-                            if (typeof store.startLoader === 'function') {
-                                store.startLoader(sessionId);
-                            }
-                            this._resumeSessionAsyncPolling(sessionId, store);
-                        }
-                    }
-
-                    // Session data already loaded above with includeContext: true
-
+                    // Render content
                     const contentEl = panel.getContentEl();
                     if (global.WindowEvents && contentEl) {
                         global.WindowEvents.renderSessionContent(contentEl, sessionId, store);
@@ -301,6 +316,42 @@
             } catch (error) {
                 console.error('[WindowState] Failed to create session window:', error);
             }
+        },
+
+        /**
+         * Create session store instance
+         * @private
+         */
+        _createSessionStore(sessionId) {
+            const StoreClass = window.SessionStoreClass || global.SessionStoreClass;
+            const storeOpts = global.SessionStoreWebDefaults;
+
+            if (!StoreClass) {
+                const store = global.SessionStore;
+                console.log('[WindowState] Using global SessionStore');
+                if (store) {
+                    store.reset(sessionId);
+                }
+                return store;
+            }
+
+            if (!storeOpts) {
+                throw new Error('[WindowState] SessionStoreWebDefaults missing (load session-store.js)');
+            }
+
+            const store = new StoreClass({
+                storageBase: storeOpts.storageBase,
+                storageMode: storeOpts.storageMode
+            });
+
+            if (!store) {
+                console.error('[WindowState] Failed to create SessionStore instance');
+                return null;
+            }
+
+            console.log('[WindowState] SessionStore instance created for', sessionId);
+            store.reset(sessionId);
+            return store;
         },
 
         /**
@@ -362,7 +413,7 @@
         async checkSessionExists(sessionId) {
             if (!sessionId || !global.apiIntegration) return false;
             try {
-                const projectId = await global.ProjectManager?.getSelectedProjectId?.() || null;
+                const projectId = await global.getCurrentProjectId();
                 const session = await global.apiIntegration.getSession(
                     sessionId,
                     projectId ? { projectId } : {}

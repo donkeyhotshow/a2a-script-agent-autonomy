@@ -43,10 +43,9 @@
 
     /**
      * Создает заголовки для запроса
-     * @param {Object} store - хранилище сессии
      * @returns {Object} заголовки запроса
      */
-    function _createHeaders(store) {
+    function _createHeaders() {
         const headers = { 'Content-Type': 'application/json' };
         if (global.apiIntegration?.token) {
             headers['Authorization'] = `Bearer ${global.apiIntegration.token}`;
@@ -133,7 +132,7 @@
         const apiPath = isStorageMode ? '' : '/api';
         const url = `${base}${apiPath}/sessions/${encodeURIComponent(sessionId)}/next`;
         
-        const headers = _createHeaders(store);
+        const headers = _createHeaders();
         
         const data = await _fetchJson(url, {
             method: 'POST',
@@ -236,11 +235,7 @@
                 if (!(data.sessionScoped || data.promiseId === promiseId)) return;
                 pullSessionSnapshot(sessionId, store).then(() => {
                     store.setPromisePending?.(false);
-                    if (typeof sessionId === 'string') {
-                        store.stopLoader?.(sessionId);
-                    } else {
-                        store.stopLoader?.();
-                    }
+                    store.stopLoader?.(sessionId);
                     global.apiIntegration?.emit?.('promiseResolved', {
                         sessionId,
                         promiseId: data.promiseId ?? promiseId ?? null,
@@ -254,11 +249,7 @@
             const onRejected = (data) => {
                 if (!(data.sessionScoped || data.promiseId === promiseId)) return;
                 store.setPromisePending?.(false);
-                if (typeof sessionId === 'string') {
-                    store.stopLoader?.(sessionId);
-                } else {
-                    store.stopLoader?.();
-                }
+                store.stopLoader?.(sessionId);
                 global.apiIntegration?.emit?.('promiseError', {
                     sessionId,
                     promiseId: data.promiseId ?? promiseId ?? null,
@@ -270,23 +261,6 @@
             store.on?.('promiseResolved', onResolved);
             store.on?.('promiseError', onRejected);
 
-            return;
-        }
-        
-    }
-
-    /**
-     * Останавливает polling для промисов
-     * Использует SessionStore если доступно, иначе локальный polling
-     * 
-     * @param {string} sessionId - ID сессии
-     */
-    function stopPromisePolling(sessionId) {
-        const store = global.resolveStore(sessionId);
-        
-        // Try to use SessionStore for unified promise management
-        if (store?.stopPromisePolling) {
-            store.stopPromisePolling();
             return;
         }
         
@@ -326,7 +300,6 @@
         checkPromise,
         checkSessionAsync,
         startPromisePolling,
-        stopPromisePolling,
         pullSessionSnapshot,
         POLL_INTERVAL
     };

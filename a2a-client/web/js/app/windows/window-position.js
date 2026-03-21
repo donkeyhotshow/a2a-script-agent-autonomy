@@ -37,8 +37,7 @@
         _defaultSavedState(sessionId) {
             return {
                 position: this.getDefaultWindowPosition(sessionId),
-                size: { width: 800, height: 600 },
-                timestamp: Date.now()
+                size: { width: 800, height: 600 }
             };
         },
 

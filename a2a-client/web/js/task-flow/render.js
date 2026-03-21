@@ -312,7 +312,6 @@
                 ${progressBarHtml}
                 <div class="action-type">${escapeHtml(typeLabels[actionType] || actionType)}</div>
                 <pre class="action-data">${escapeHtml(JSON.stringify(actionData, null, 2))}</pre>
-                <div class="action-status">Executing...</div>
                 ${finalResultHtml}
             </div>
         `;

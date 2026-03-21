@@ -38,33 +38,16 @@
 
     async function readSavedSessionId() {
         var storage = global.StorageAPI?.sessions;
-        if (!storage) {
+        if (!storage || typeof storage.getItem !== 'function') {
             return null;
         }
 
         try {
-            if (typeof storage.getItem === 'function') {
-                var stored = await storage.getItem(ACTIVE_SESSION_KEY);
-                if (stored) {
-                    return stored;
-                }
-            }
+            return await storage.getItem(ACTIVE_SESSION_KEY);
         } catch (err) {
-            console.warn('[SessionStore] Failed to read saved session (async):', err);
+            console.warn('[SessionStore] Failed to read saved session:', err);
+            return null;
         }
-
-        try {
-            if (typeof storage.getItemSync === 'function') {
-                var syncValue = storage.getItemSync(ACTIVE_SESSION_KEY);
-                if (syncValue) {
-                    return syncValue;
-                }
-            }
-        } catch (err) {
-            console.warn('[SessionStore] Failed to read saved session (sync):', err);
-        }
-
-        return null;
     }
 
     // Проверка зависимостей

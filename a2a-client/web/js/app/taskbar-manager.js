@@ -9,6 +9,8 @@
         _isTaskbarInitialized: false,
         // Debounce timer for resize handler
         _resizeDebounceTimer: null,
+        // Previous indicators state for comparison
+        _previousIndicators: null,
 
         /**
          * Debounced resize handler for updateOffScreenIndicators
@@ -243,20 +245,19 @@
         },
 
         /**
-         * Update off-screen indicators
+         * Build current indicators state from DOM
          */
-        updateOffScreenIndicators() {
+        _getCurrentIndicatorsState() {
             const taskbar = document.querySelector('.taskbar-content');
-            if (!taskbar) return;
-
-            // Remove existing indicators
-            document.querySelectorAll('.offscreen-indicator').forEach(ind => ind.remove());
+            if (!taskbar) return { left: new Map(), right: new Map() };
 
             const sessionsWrapper = taskbar.querySelector('.taskbar-sessions-wrapper');
-            if (!sessionsWrapper) return;
+            if (!sessionsWrapper) return { left: new Map(), right: new Map() };
 
             const buttons = sessionsWrapper.querySelectorAll('.taskbar-session-btn');
             const containerRect = sessionsWrapper.getBoundingClientRect();
+
+            const currentState = { left: new Map(), right: new Map() };
 
             buttons.forEach((btn, index) => {
                 const btnRect = btn.getBoundingClientRect();
@@ -264,12 +265,78 @@
 
                 if (btnRect.right < containerRect.left) {
                     // Off-screen to the left
-                    this.createOffScreenIndicator(sessionId, 'left', index, btn);
+                    currentState.left.set(sessionId, { index, btn });
                 } else if (btnRect.left > containerRect.right) {
                     // Off-screen to the right
-                    this.createOffScreenIndicator(sessionId, 'right', index, btn);
+                    currentState.right.set(sessionId, { index, btn });
                 }
             });
+
+            return currentState;
+        },
+
+        /**
+         * Update off-screen indicators with state comparison
+         */
+        updateOffScreenIndicators() {
+            const taskbar = document.querySelector('.taskbar-content');
+            if (!taskbar) return;
+
+            const sessionsWrapper = taskbar.querySelector('.taskbar-sessions-wrapper');
+            if (!sessionsWrapper) return;
+
+            // Build current state
+            const currentState = this._getCurrentIndicatorsState();
+
+            // Get existing indicators from DOM
+            const existingIndicators = {
+                left: new Map(),
+                right: new Map()
+            };
+            document.querySelectorAll('.offscreen-indicator').forEach(ind => {
+                const sessionId = ind.dataset.sessionId;
+                const direction = ind.classList.contains('offscreen-left') ? 'left' : 'right';
+                existingIndicators[direction].set(sessionId, ind);
+            });
+
+            // Compare with previous state
+            const prevState = this._previousIndicators || { left: new Map(), right: new Map() };
+
+            // Determine what to remove, keep, or add
+            const toRemove = new Set();
+
+            // Check left indicators
+            for (const [sessionId, indicator] of existingIndicators.left) {
+                if (!currentState.left.has(sessionId)) {
+                    toRemove.add(indicator);
+                }
+            }
+
+            // Check right indicators
+            for (const [sessionId, indicator] of existingIndicators.right) {
+                if (!currentState.right.has(sessionId)) {
+                    toRemove.add(indicator);
+                }
+            }
+
+            // Remove indicators that are no longer needed
+            toRemove.forEach(ind => ind.remove());
+
+            // Create new indicators only for new off-screen sessions
+            for (const [sessionId, data] of currentState.left) {
+                if (!existingIndicators.left.has(sessionId)) {
+                    this.createOffScreenIndicator(sessionId, 'left', data.index, data.btn);
+                }
+            }
+
+            for (const [sessionId, data] of currentState.right) {
+                if (!existingIndicators.right.has(sessionId)) {
+                    this.createOffScreenIndicator(sessionId, 'right', data.index, data.btn);
+                }
+            }
+
+            // Save current state for next comparison
+            this._previousIndicators = currentState;
         },
 
         /**

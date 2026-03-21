@@ -112,20 +112,18 @@
 
     // Export
     global.TaskFlow = TaskFlow;
-    global.waitForFirstResponse = global.waitForFirstResponse;
-    global.applyExecuteResponse = global.applyExecuteResponse;
 
     // Auto-initialize when DOM is ready
     if (typeof document !== 'undefined') {
         document.addEventListener('DOMContentLoaded', function() {
-            const checkAndInit = () => {
+            const tryInit = () => {
                 if (global.TaskFlow && typeof global.TaskFlow.init === 'function') {
                     global.TaskFlow.init();
                 } else {
-                    setTimeout(checkAndInit, 100);
+                    requestAnimationFrame(tryInit);
                 }
             };
-            checkAndInit();
+            requestAnimationFrame(tryInit);
         });
     }
 

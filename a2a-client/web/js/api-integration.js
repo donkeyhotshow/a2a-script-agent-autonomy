@@ -13,11 +13,13 @@
  */
 
 // Fetch with timeout and retry logic (shared across web client)
-const DEFAULT_TIMEOUT = 15000;
-const MAX_RETRIES = 3;
-const BASE_DELAY = 2000; // 2 seconds per PROTOCOLS specification
-
+// Uses A2A_CONFIG.API.* from config.js
 async function fetchWithRetry(url, options = {}, retryCount = 0) {
+    const config = (typeof A2A_CONFIG !== 'undefined' && A2A_CONFIG.API) || {};
+    const DEFAULT_TIMEOUT = config.DEFAULT_TIMEOUT || 15000;
+    const MAX_RETRIES = config.MAX_RETRIES || 3;
+    const BASE_DELAY = config.BASE_DELAY || 2000;
+
     const controller = new AbortController();
     const timeout = options.timeout || DEFAULT_TIMEOUT;
     const timeoutId = setTimeout(() => controller.abort(), timeout);

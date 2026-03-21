@@ -92,8 +92,34 @@
          * Reusable context menu element (created once, hidden/shown)
          */
         _contextMenu: null,
-        _contextMenuSessionId: null,
-        _contextMenuBtnEl: null,
+        _contextMenuCloseItem: null,
+        _contextMenuRenameItem: null,
+
+        /**
+         * Create context menu markup once
+         */
+        _createContextMenuMarkup() {
+            const menu = document.createElement('div');
+            menu.className = 'session-context-menu';
+
+            // Create Close item
+            const closeItem = document.createElement('div');
+            closeItem.className = 'context-menu-item';
+            closeItem.innerHTML = '✕ Close';
+            menu.appendChild(closeItem);
+
+            // Create Rename item
+            const renameItem = document.createElement('div');
+            renameItem.className = 'context-menu-item';
+            renameItem.innerHTML = '✏️ Rename';
+            menu.appendChild(renameItem);
+
+            document.body.appendChild(menu);
+
+            this._contextMenu = menu;
+            this._contextMenuCloseItem = closeItem;
+            this._contextMenuRenameItem = renameItem;
+        },
 
         /**
          * Show context menu for session (reuses DOM element)
@@ -101,41 +127,35 @@
         showContextMenu(e, sessionId, btnEl) {
             e.preventDefault();
 
-            // Create menu once if not exists
+            // Create menu markup once if not exists
             if (!this._contextMenu) {
-                this._contextMenu = document.createElement('div');
-                this._contextMenu.className = 'session-context-menu';
-                document.body.appendChild(this._contextMenu);
+                this._createContextMenuMarkup();
             }
 
             const menu = this._contextMenu;
-            menu.innerHTML = '';
             menu.classList.add('visible');
             menu.style.left = `${e.clientX}px`;
             menu.style.top = `${e.clientY}px`;
 
-            this._contextMenuSessionId = sessionId;
-            this._contextMenuBtnEl = btnEl;
+            // Update click handlers with current sessionId and btnEl
+            this._contextMenuCloseItem.onclick = () => {
+                menu.classList.remove('visible');
+                if (confirm('Close this session?')) {
+                    global.WindowState?.closeSessionWindow(sessionId);
+                }
+            };
 
-            const actions = [
-                { label: 'Close', action: 'close', icon: '✕' },
-                { label: 'Rename', action: 'rename', icon: '✏️' }
-            ];
-
-            actions.forEach(({ label, action, icon }) => {
-                const item = document.createElement('div');
-                item.className = 'context-menu-item';
-                item.innerHTML = `${icon} ${label}`;
-                item.addEventListener('click', () => {
-                    this.handleContextMenuAction(action, sessionId, btnEl);
-                    menu.classList.remove('visible');
-                });
-                menu.appendChild(item);
-            });
+            this._contextMenuRenameItem.onclick = () => {
+                menu.classList.remove('visible');
+                const newName = prompt('Enter new session name:');
+                if (newName?.trim()) {
+                    this.renameSession(sessionId, newName.trim());
+                }
+            };
 
             // Close menu when clicking elsewhere
-            const closeHandler = (e) => {
-                if (!menu.contains(e.target)) {
+            const closeHandler = (ev) => {
+                if (!menu.contains(ev.target)) {
                     menu.classList.remove('visible');
                     document.removeEventListener('click', closeHandler);
                 }

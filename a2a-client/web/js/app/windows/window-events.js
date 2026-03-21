@@ -4,8 +4,6 @@
 (function (global) {
     'use strict';
 
-    const MIN_LOADER_MS = global.__a2aDaemons.timingMs('MIN_LOADER_MS');
-
     const WindowEvents = {
         /**
          * Render session content in panel
@@ -25,60 +23,29 @@
                     sendMessageResult: async (text, el) => {
                         if (!text || !text.trim()) return;
                         
-                        // FIXED: Show loader for specific session
-                        _showGlobalLoader(sessionId);
-                        
                         const msg = String(text).trim();
                         store.pushMessage?.({ content: msg }, 'user');
                         store?.setPromisePending?.(true);
                         refreshContent();
-                        try {
-                            await WindowEvents.sendMessage(sessionId, msg, store);
-                        } finally {
-                            // FIXED: Hide loader for specific session
-                            _hideGlobalLoader(sessionId);
-                        }
+                        await WindowEvents.sendMessage(sessionId, msg, store);
                     },
                     sendChoice: async (choiceId, el) => {
-                        // FIXED: Show loader for specific session
-                        _showGlobalLoader(sessionId);
-                        
                         store?.setPromisePending?.(true);
                         refreshContent();
-                        try {
-                            await WindowEvents.sendChoice(sessionId, choiceId, store);
-                        } finally {
-                            // FIXED: Hide loader for specific session
-                            _hideGlobalLoader(sessionId);
-                        }
+                        await WindowEvents.sendChoice(sessionId, choiceId, store);
                     }
                 };
-
-                // Global loader helper functions - FIXED: Track active loaders per session
-                let _loaderMinEndTime = null;
-                const _activeLoaders = new Map(); // sessionId -> { minEndTime, element }
-                function _showGlobalLoader(sessionId = 'global') {
-                    // No inline loader - just track min end time
-                    _loaderMinEndTime = Date.now() + MIN_LOADER_MS;
-                    // Track this loader for this session
-                    _activeLoaders.set(sessionId, { minEndTime: _loaderMinEndTime });
-                }
-                function _hideGlobalLoader(sessionId = 'global') {
-                    // No inline loader to hide
-                    // Just clear from active loaders
-                    _activeLoaders.delete(sessionId);
-                }
 
                 // Use renderExecute to render full panel (history + execute + input)
                 // renderExecute renders the complete content: history + execute block + input area
                 const refreshContent = () => {
                     // Get all store data in single call for efficiency
                     const st = store.getState?.() || {};
-                    const execute = st.execute ?? store.getExecute?.() ?? store.execute ?? store._state?.execute;
-                    const context = st.context ?? store.context ?? store._state?.context ?? {};
-                    const promisePending = st.promisePending ?? store.core?.promise?.isPending ?? store.promise?.isPending ?? false;
+                    const execute = st.execute ?? st._state?.execute;
+                    const context = st.context ?? st._state?.context ?? {};
+                    const promisePending = st.promisePending ?? st.core?.promise?.isPending ?? st.promise?.isPending ?? false;
                     const hasActionableForm = global.executeHasActionableForm?.(execute);
-                    const inputBlocked = typeof store.isInputBlocked === 'function' && store.isInputBlocked();
+                    const inputBlocked = typeof st.isInputBlocked === 'function' && st.isInputBlocked();
                     const isWaiting = !!promisePending || (!hasActionableForm && inputBlocked);
 
                     // Task-flow UI (form/message/actions) only when server/store set execute; never synthetic { form: pendingForm }

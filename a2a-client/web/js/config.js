@@ -51,10 +51,4 @@
         }
     };
 
-    console.log('[Config] A2A конфигурация загружена:', {
-        loader: CONFIG.LOADERS.MIN_DISPLAY_MS + 'ms',
-        apiTimeout: CONFIG.API.DEFAULT_TIMEOUT + 'ms',
-        pollInterval: CONFIG.POLL.INTERVAL + 'ms'
-    });
-
 })(typeof window !== 'undefined' ? window : globalThis);

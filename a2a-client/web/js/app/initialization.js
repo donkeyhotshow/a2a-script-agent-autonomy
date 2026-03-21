@@ -56,16 +56,7 @@
             console.log('[AppInitialization] Starting init...');
 
             try {
-                console.log('[AppInitialization] Checking modules...');
-                console.log('  - ProjectManager:', typeof global.ProjectManager);
-                console.log('  - SessionManager:', typeof global.SessionManager);
-                console.log('  - TaskbarManager:', typeof global.TaskbarManager);
-                console.log('  - WindowState:', typeof global.WindowState);
-                console.log('  - AppEventHandlers:', typeof global.AppEventHandlers);
-                console.log('  - AppUIManagers:', typeof global.AppUIManagers);
-                console.log('  - AppStateManagers:', typeof global.AppStateManagers);
-
-                // Wait for critical modules to be available (explicit check instead of magic delay)
+                // Wait for critical modules to be available
                 await this._waitForModules();
 
                 console.log('[AppInitialization] After wait - SessionStore:', typeof global.SessionStore);
@@ -110,27 +101,7 @@
          * Load required modules
          */
         async loadModules() {
-            if (typeof global.appendWebScriptOnce !== 'function') {
-                await new Promise(function (resolve, reject) {
-                    var rel = 'js/resolve-web-script-url.js';
-                    var baseEl = document.getElementById('app-base');
-                    var baseHref = (baseEl && baseEl.href) ? baseEl.href : document.baseURI;
-                    var path = rel.replace(/^\//, '');
-                    var href;
-                    try {
-                        href = new URL(path, baseHref).href;
-                    } catch (e) {
-                        href = '/' + path;
-                    }
-                    var script = document.createElement('script');
-                    script.src = href;
-                    script.onload = function () { resolve(); };
-                    script.onerror = function () {
-                        reject(new Error('Failed to load ' + rel));
-                    };
-                    document.head.appendChild(script);
-                });
-            }
+            // resolve-web-script-url.js is loaded via HTML (index.html line 136)
 
             // Normalizers module - load if available
             if (typeof global.appendWebModuleOnce === 'function') {
@@ -141,16 +112,6 @@
                 console.warn('[AppTask] appendWebModuleOnce missing; Normalizers may be unavailable');
             }
 
-            // Core modules (already loaded by app-task.js):
-            // - js/app/project-manager.js
-            // - js/app/session-manager.js
-            // - js/app/taskbar-manager.js
-            // Skip loading these to avoid duplicate loading
-            
-            // Check if already loaded before loading again
-            const alreadyLoaded = global.ProjectManager && global.SessionManager && global.TaskbarManager;
-            console.log('[AppInitialization] Core app modules already loaded:', alreadyLoaded);
-            
             // Check if session-store is available (loaded via HTML defer)
             const sessionStoreReady = typeof global.SessionStore !== 'undefined';
             console.log('[AppInitialization] SessionStore available:', sessionStoreReady);
@@ -196,13 +157,37 @@
         },
 
         /**
+         * Build <option> elements for project select
+         * @param {HTMLSelectElement} sel - Select element
+         * @param {Array} list - Array of project objects {id, name}
+         * @param {string} [savedId] - Previously selected project ID
+         */
+        _buildProjectOptions(sel, list, savedId) {
+            list.forEach(p => {
+                const opt = document.createElement('option');
+                opt.value = p.id;
+                opt.textContent = p.name || p.id;
+                sel.appendChild(opt);
+            });
+            if (savedId) {
+                const hasOption = Array.from(sel.options).some(o => o.value === savedId);
+                if (!hasOption) {
+                    const opt = document.createElement('option');
+                    opt.value = savedId;
+                    opt.textContent = savedId;
+                    sel.appendChild(opt);
+                }
+                sel.value = savedId;
+            }
+        },
+
+        /**
          * Populate header #projectSelect with projects (called after init when header and API are ready)
          */
         async _populateHeaderProjectSelect() {
             const sel = document.getElementById('projectSelect');
             if (!sel || sel.options.length > 1) return;
-            let saved = await global.ProjectManager?.getSelectedProjectId?.();
-            if (!saved && global.ProjectManager?.getLastSelectedProjectId) saved = global.ProjectManager.getLastSelectedProjectId();
+            const saved = await global.getCurrentProjectId();
             try {
                 if (!global.apiIntegration || typeof global.apiIntegration.getProjects !== 'function') {
                     throw new Error('[AppInitialization] apiIntegration.getProjects required');
@@ -211,31 +196,10 @@
                 if (!Array.isArray(list)) {
                     throw new Error('[AppInitialization] getProjects must return an array');
                 }
-                list.forEach(p => {
-                    const opt = document.createElement('option');
-                    opt.value = p.id;
-                    opt.textContent = p.name || p.id;
-                    sel.appendChild(opt);
-                });
-                if (saved) {
-                    const hasOption = Array.from(sel.options).some(o => o.value === saved);
-                    if (!hasOption) {
-                        const opt = document.createElement('option');
-                        opt.value = saved;
-                        opt.textContent = saved;
-                        sel.appendChild(opt);
-                    }
-                    sel.value = saved;
-                }
+                this._buildProjectOptions(sel, list, saved);
             } catch (e) {
                 console.error('[AppTask] Could not load projects for header:', e);
-                if (saved) {
-                    const opt = document.createElement('option');
-                    opt.value = saved;
-                    opt.textContent = saved;
-                    sel.appendChild(opt);
-                    sel.value = saved;
-                }
+                if (saved) this._buildProjectOptions(sel, [], saved);
             }
         }
     };
