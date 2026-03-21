@@ -2,6 +2,8 @@
  * A2A Server proxy - Handles polling/fetch to A2A server
  */
 
+import { pollA2ARequestResult } from '../../daemon/a2a-result-poll.js';
+
 const A2A_URL = process.env.A2A_SERVER_URL || 'http://localhost:3000';
 
 export async function proxyToA2AServer(requestBody) {
@@ -18,8 +20,17 @@ export async function proxyToA2AServer(requestBody) {
         const data = await response.json();
 
         if (data.data?.promiseId) {
-            // Poll for async result
-            return await pollPromise(data.data.promiseId);
+            const r = await pollA2ARequestResult(data.data.promiseId, {
+                baseUrl: A2A_URL,
+                maxPolls: 30,
+                intervalMs: 1000,
+                headers: { 'x-skip-auth': 'true' },
+            });
+            if (r.outcome === 'completed') return r.data;
+            if (r.outcome === 'failed') {
+                console.error('[Proxy] Promise failed:', r.data?.error);
+            }
+            return null;
         }
 
         return data.data || data;
@@ -27,27 +38,6 @@ export async function proxyToA2AServer(requestBody) {
         console.error('[Proxy] A2A request failed:', e.message);
         return null;
     }
-}
-
-async function pollPromise(promiseId, maxPolls = 30) {
-    for (let i = 0; i < maxPolls; i++) {
-        await new Promise(r => setTimeout(r, 1000));
-        try {
-            const res = await fetch(`${A2A_URL}/api/v1/requests/${promiseId}/result`, {
-                headers: { 'x-skip-auth': 'true' }
-            });
-            const data = await res.json();
-            if (data.data?.status === 'completed') {
-                return data.data;
-            } else if (data.data?.status === 'failed') {
-                console.error('[Proxy] Promise failed:', data.data.error);
-                break;
-            }
-        } catch (e) {
-            console.error('[Proxy] Poll failed:', e.message);
-        }
-    }
-    return null;
 }
 
 export function useXHRProxy(requestOptions) {

@@ -137,8 +137,12 @@
                         context = {};
                     }
 
-                    const isWaiting = store.isInputBlocked?.() || false;
-                    
+                    const st = store.getState?.() || {};
+                    const isWaiting =
+                        (typeof store.isInputBlocked === 'function' && store.isInputBlocked()) ||
+                        !!st.promisePending ||
+                        !!st.loaderActive;
+
                     // Check for form in execute or in pendingForm
                     const hasForm = execute?.form || store.pendingForm || store._state?.pendingForm;
                     
@@ -157,11 +161,16 @@
                         // Let renderExecute handle the full layout (history + form/message)
                         Render.renderExecute(contentEl, executeToRender, { execute: executeToRender, context, store }, taskFlowRef);
                     } else {
-                        const statusText = isWaiting ? 'Waiting...' : 'Active';
+                        const waitBlock = isWaiting
+                            ? `<div class="task-flow-sending task-flow-inline-loader active" style="margin-top:0.75rem">
+                                    <div class="task-flow-spinner"></div>
+                                    <p class="task-flow-status">Waiting for server / LLM…</p>
+                               </div>`
+                            : '';
                         contentEl.innerHTML = `
                             <div class="session-content">
                                 ${Render.renderMessageHistory(contentEl, store)}
-                                ${isWaiting ? `<p>Waiting for response (${statusText})...</p>` : ''}
+                                ${waitBlock}
                             </div>
                         `;
                     }

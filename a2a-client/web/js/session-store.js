@@ -8,8 +8,7 @@
  * 
  * Использует:
  * - DialogState - управление состоянием диалога
- * - DialogLoader - управление loader state  
- * - DialogPromise - управление async promise
+ * - DialogLoader / DialogPromise — web/js/daemons/* (load before this script)
  * 
  * Обратная совместимость: window.SessionStore работает как раньше
  */
@@ -17,169 +16,12 @@
 (function (global) {
     'use strict';
 
-    // Импорт модулей (ES6 imports для Node/Vite совместимости)
-    // В браузере без сборщика модули будут недоступны - используем inline версии
-    let SessionStoreCore, EventEmitter, DialogState, DialogLoader, DialogPromise;
-
-    // ES6 imports disabled - using inline implementations
-    // try { ... import.meta block removed to fix SyntaxError in classic script }
-
-    // === INLINE DEFINITIONS (fallback) ===
-    
-    // EventEmitter (inline - если ES6 модули недоступны)
-    const createEventEmitter = function() {
-        const listeners = new Map();
-        
-        return {
-            on: function(event, callback) {
-                if (!listeners.has(event)) listeners.set(event, new Set());
-                listeners.get(event).add(callback);
-                return () => this.off(event, callback);
-            },
-            once: function(event, callback) {
-                const wrapper = (...args) => {
-                    this.off(event, wrapper);
-                    callback.apply(this, args);
-                };
-                return this.on(event, wrapper);
-            },
-            off: function(event, callback) {
-                const handlers = listeners.get(event);
-                if (handlers) {
-                    handlers.delete(callback);
-                    if (handlers.size === 0) listeners.delete(event);
-                }
-            },
-            emit: function(event, payload) {
-                const handlers = listeners.get(event);
-                if (!handlers) return;
-                handlers.forEach(handler => {
-                    try { handler(payload); } 
-                    catch (err) { 
-                        console.error('[EventEmitter] Handler failed:', event, err);
-                        // FIX: Emit error event instead of silently suppressing it
-                        this.emit('error', { event, payload, error: err });
-                    }
-                });
-            }
-        };
-    };
-
-    // DialogLoader (inline)
-    const MINIMUM_LOADER_TIME = 5000;
-    const createDialogLoader = function() {
-        let active = false;
-        let minEndTime = null;
-        let timeoutId = null;
-        const emitter = createEventEmitter();
-        
-        return {
-            getState: () => ({ active, minEndTime, canHide: minEndTime && Date.now() >= minEndTime }),
-            get isActive() { return active; },
-            start: function() {
-                if (active) return this;
-                active = true;
-                minEndTime = Date.now() + MINIMUM_LOADER_TIME;
-                console.log('[DialogLoader] START - active:', active, 'minEndTime:', minEndTime);
-                emitter.emit('loader', { active: true, minEndTime });
-                return this;
-            },
-            stop: function() {
-                console.log('[DialogLoader] STOP requested - active:', active, 'minEndTime:', minEndTime);
-                const now = Date.now();
-                const canHide = minEndTime === null || now >= minEndTime;
-                if (canHide || !active) {
-                    this._forceStop();
-                } else {
-                    if (timeoutId) clearTimeout(timeoutId);
-                    timeoutId = setTimeout(() => this._forceStop(), minEndTime - now);
-                }
-                return this;
-            },
-            _forceStop: function() {
-                if (timeoutId) { clearTimeout(timeoutId); timeoutId = null; }
-                if (active) {
-                    active = false;
-                    minEndTime = null;
-                    emitter.emit('loader', { active: false });
-                }
-            },
-            reset: function() { this._forceStop(); return this; },
-            on: (...args) => emitter.on(...args),
-            off: (...args) => emitter.off(...args),
-            destroy: function() { this._forceStop(); }
-        };
-    };
-
-    // DialogPromise (inline)
-    const PROMISE_POLL_INTERVAL = 5000;
-    const createDialogPromise = function() {
-        let promiseId = null;
-        let pending = false;
-        let status = null;
-        let pollTimer = null;
-        const emitter = createEventEmitter();
-        
-        return {
-            getState: () => ({ promiseId, pending, status }),
-            get isPending() { return pending; },
-            get promiseId() { return promiseId; },
-            setPending: function(p) { pending = p; emitter.emit('promisePending', p); return this; },
-            setPromiseId: function(pid) {
-                promiseId = pid;
-                if (pid) { pending = true; status = 'pending'; }
-                else { pending = false; status = null; }
-                emitter.emit('promiseId', pid);
-                emitter.emit('promisePending', pending);
-                return this;
-            },
-            setStatus: function(s) { status = s; emitter.emit('status', s); return this; },
-            startPolling: function(checkFn) {
-                if (!promiseId) return this;
-                this._stopPolling();
-                pollTimer = setInterval(async () => {
-                    try {
-                        const result = await checkFn(promiseId);
-                        if (!result) return;
-                        if (result.completed || result.status === 'completed' || result.status === 'done') {
-                            this._stopPolling();
-                            this.setPending(false);
-                            this.setStatus('completed');
-                            emitter.emit('resolved', { promiseId, result: result.result, execute: result.execute });
-                        }
-                        if (result.status === 'failed' || result.status === 'error') {
-                            this._stopPolling();
-                            this.setPending(false);
-                            this.setStatus('failed');
-                            emitter.emit('rejected', { promiseId, error: result.error || 'Promise failed' });
-                        }
-                    } catch (err) { 
-                        console.error('[DialogPromise] Polling error:', err);
-                        // Emit error event to notify listeners
-                        emitter.emit('error', { promiseId, error: err });
-                    }
-                }, PROMISE_POLL_INTERVAL);
-                return this;
-            },
-            _stopPolling: function() {
-                if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
-                return this;
-            },
-            stopPolling: function() { return this._stopPolling(); },
-            reset: function() {
-                this._stopPolling();
-                promiseId = null;
-                pending = false;
-                status = null;
-                emitter.emit('promisePending', false);
-                emitter.emit('reset');
-                return this;
-            },
-            on: (...args) => emitter.on(...args),
-            off: (...args) => emitter.off(...args),
-            destroy: function() { this._stopPolling(); }
-        };
-    };
+    const D = global.__a2aDaemons;
+    if (!D || typeof D.createDialogLoader !== 'function' || typeof D.createDialogPromise !== 'function') {
+        throw new Error('[SessionStore] Load js/daemons/emitter.js, dialog-loader.js, dialog-promise-poll.js before session-store.js');
+    }
+    const createDialogLoader = D.createDialogLoader;
+    const createDialogPromise = D.createDialogPromise;
 
     // normalizeMessage (inline)
     function normalizeMessage(msg, role) {
@@ -220,7 +62,7 @@
         const sessionLoaders = new Map();
         
         function getLoader(sid = null) {
-            const id = sid || sessionId;
+            const id = sid || state.sessionId;
             if (!id) return null;
             if (!sessionLoaders.has(id)) {
                 const loader = createDialogLoader();
@@ -288,6 +130,16 @@
                        (state.execute && state.execute.form && (state.execute.form.choices?.length > 0 || state.execute.form.input));
             },
 
+            /** True while async work blocks new input (LLM / promise / loader). */
+            isInputBlocked: function () {
+                return (
+                    promise.isPending ||
+                    state.promisePending ||
+                    state.status === 'processing' ||
+                    !!getLoader(null)?.isActive
+                );
+            },
+
             // Loader - per-session
             startLoader: function(sid = null) { 
                 const l = getLoader(sid);
@@ -304,8 +156,7 @@
                 return l ? l.getState() : { active: false }; 
             },
 
-            // Promise
-            setPromisePending: function(pending) { promise.setPending(pending); return this; },
+            // Promise (setPromisePending defined below with state + emit)
             setPromiseId: function(promiseId) { promise.setPromiseId(promiseId); return this; },
             startPromisePolling: function(checkFn) { promise.startPolling(checkFn); return this; },
             stopPromisePolling: function() { promise.stopPolling(); return this; },
@@ -452,6 +303,7 @@
         this.reset = function() { return this.core.reset.apply(this.core, arguments); };
         this.setPromisePending = function() { return this.core.setPromisePending.apply(this.core, arguments); };
         this.isWaitingForInput = function() { return this.core.isWaitingForInput(); };
+        this.isInputBlocked = function () { return this.core.isInputBlocked(); };
 
         // Loader management - proxy to core
         this.startLoader = function() { return this.core.startLoader(); };
@@ -529,8 +381,7 @@
         };
     }
 
-    // Export PROMISE_POLL_INTERVAL constant globally
-    global.PROMISE_POLL_INTERVAL = PROMISE_POLL_INTERVAL;
+    global.PROMISE_POLL_INTERVAL = global.__a2aDaemons?.PROMISE_POLL_INTERVAL || 5000;
 
     // Global exports - BACKWARD COMPATIBLE
     global.SessionStoreClass = SessionStore;

@@ -2,7 +2,7 @@ import http from 'http';
 import app from './app.js';
 import {config} from './config/index.js';
 import {logger} from './utils/logger.js';
-import {startRequestProcessor, stopRequestProcessor, processOneRequest} from './services/core/request-processor/request-processor.service.js';
+import {startRequestProcessor, stopRequestProcessor} from './daemon/request-processor-daemon.js';
 
 // Create HTTP server
 const server = http.createServer(app);

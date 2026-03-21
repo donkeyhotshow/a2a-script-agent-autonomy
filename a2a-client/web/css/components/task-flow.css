@@ -545,26 +545,22 @@
   font-weight: 500;
 }
 
-/* Inline loader - shown in panel instead of input */
+/* Inline loader — in document flow inside panel / task-flow content */
 .task-flow-inline-loader {
-  position: fixed !important;
-  bottom: 20px !important;
-  left: 50% !important;
-  transform: translateX(-50%) !important;
-  display: none !important;
-  align-items: center !important;
-  justify-content: center !important;
-  padding: 16px 32px !important;
-  gap: 12px !important;
-  background: #fff !important;
-  border: 1px solid #e0e0e0 !important;
-  border-radius: 8px !important;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
-  z-index: 99999 !important;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  flex-direction: row;
+  padding: 16px 32px;
+  gap: 12px;
+  background: var(--color-bg-primary, #fff);
+  border: 1px solid var(--color-border, #e0e0e0);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .task-flow-inline-loader.active {
-  display: flex !important;
+  display: flex;
 }
 
 .task-flow-inline-loader .task-flow-spinner {
@@ -650,4 +646,9 @@
 
 .task-flow-sending strong {
   color: var(--color-text-primary);
+}
+
+/* .task-flow-sending sets display:flex; must not show inline loader until .active */
+.task-flow-sending.task-flow-inline-loader:not(.active) {
+  display: none;
 }

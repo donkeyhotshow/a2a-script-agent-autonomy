@@ -1,7 +1,7 @@
 [
   {
-    "role": "user",
-    "content": "ответь одним символом \"1\"",
+    "role": "assistant",
+    "content": "1",
     "step": 6
   }
 ]

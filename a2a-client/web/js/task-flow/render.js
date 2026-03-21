@@ -207,16 +207,21 @@
         const inputEl = contentEl.querySelector('.task-flow-input-field');
         console.log('[Render] submitBtn:', !!submitBtn, 'inputEl:', !!inputEl, 'sendMessageResult:', !!(taskFlowRef && taskFlowRef.sendMessageResult));
         if (submitBtn && inputEl && taskFlowRef?.sendMessageResult) {
-            const doSubmit = () => {
-                console.log('[Render] doSubmit called, value:', inputEl.value?.trim());
-                const val = inputEl.value?.trim();
-                if (val) {
-                    // Show per-session loader
-                    const sessionId = global.SessionStore?.sessionId || 'global';
-                    showInlineLoader(sessionId);
-                    taskFlowRef.sendMessageResult(val, contentEl);
-                }
-            };
+                const doSubmit = () => {
+                    console.log('[Render] doSubmit called, value:', inputEl.value?.trim());
+                    const val = inputEl.value?.trim();
+                    if (val) {
+                        // HIDE FORM + show loader
+                        const formContainer = contentEl.querySelector('.task-flow-form-container');
+                        if (formContainer) {
+                            formContainer.style.display = 'none';
+                        }
+                        const sessionId = global.SessionStore?.sessionId || 'global';
+                        showInlineLoader(contentEl, sessionId); // Pass contentEl
+                        taskFlowRef.sendMessageResult(val, contentEl);
+                    }
+                };
+
             submitBtn.addEventListener('click', doSubmit);
             inputEl.addEventListener('keydown', (e) => {
                 if (e.key === 'Enter') { e.preventDefault(); doSubmit(); }
@@ -226,26 +231,17 @@
     
     // Helper function to show inline loader
     // FIXED: Now supports per-session loader
-    function showInlineLoader(sessionId = null) {
-        const targetSessionId = sessionId || 'global';
-        const loaderId = 'session-loader-' + targetSessionId;
-        let loaderEl = document.getElementById(loaderId);
-        if (!loaderEl) {
-            loaderEl = document.createElement('div');
-            loaderEl.id = loaderId;
-            loaderEl.className = 'task-flow-inline-loader';
-            loaderEl.innerHTML = '<div class="task-flow-spinner"></div><p>Processing...</p>';
-            // Try to append to session panel
-            const sessionPanel = document.getElementById('session-' + targetSessionId);
-            if (sessionPanel) {
-                sessionPanel.appendChild(loaderEl);
-            } else {
-                document.body.appendChild(loaderEl);
-            }
-        }
-        loaderEl.classList.add('active');
-        console.log('[Render] Loader shown for session:', targetSessionId, 'loaderId:', loaderId);
+    function showInlineLoader(contentEl, sessionId = null) {
+        // Clear and show loader INSIDE panel content
+        contentEl.innerHTML = `
+            <div class="task-flow-loading">
+                <div class="task-flow-spinner"></div>
+                <p>Обработка запроса...</p>
+            </div>
+        `;
+        console.log('[Render] Loader shown INSIDE panel for session:', sessionId);
     }
+
 
     /**
      * Рендеринг сообщения

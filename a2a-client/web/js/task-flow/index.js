@@ -5,13 +5,23 @@
  * Модули:
  * - api.js - HTTP запросы и retry логика
  * - render.js - рендеринг UI компонентов
- * - core.js - основной объект TaskFlow
+ * - utils.js - утилиты (getProjectId, resolveStore, escapeHtml)
+ * - loader.js - логика лоадера
+ * - tasks.js - выполнение задач (run, _doRun)
+ * - messages.js - отправка выборов и сообщений
+ * - init.js - инициализация
+ * - core.js - основной объект TaskFlow (обертка над модулями)
  * 
  * Загрузка модулей должна происходить в порядке:
  * 1. api.js
  * 2. render.js
- * 3. core.js
- * 4. index.js
+ * 3. utils.js
+ * 4. loader.js
+ * 5. tasks.js
+ * 6. messages.js
+ * 7. init.js
+ * 8. core.js
+ * 9. index.js
  */
 
 (function (global) {

@@ -4,6 +4,8 @@
  * Uses modern fetch + polling with configurable timeouts
  */
 
+import { pollA2ARequestResult } from '../../daemon/a2a-result-poll.js';
+
 const A2A_SERVER_URL = process.env.A2A_SERVER_URL || 'http://localhost:3000';
 
 /**
@@ -48,24 +50,13 @@ export class ServerProxyService {
      * @returns poll result or null
      */
     async pollPromise(promiseId, maxPolls = 10, pollInterval = 1000) {
-        for (let i = 0; i < maxPolls; i++) {
-            try {
-                await new Promise(resolve => setTimeout(resolve, pollInterval));
-                
-                const response = await fetch(`${this.baseUrl}/api/v1/requests/${promiseId}/result`, {
-                    headers: { 'x-skip-auth': 'true' }
-                });
-
-                const data = await response.json();
-                
-                if (data.data?.status === 'completed') {
-                    return data.data;
-                }
-            } catch (pollError) {
-                console.error('[ServerProxy] Poll error:', pollError.message);
-            }
-        }
-        
+        const r = await pollA2ARequestResult(promiseId, {
+            baseUrl: this.baseUrl,
+            maxPolls,
+            intervalMs: pollInterval,
+            headers: { 'x-skip-auth': 'true' },
+        });
+        if (r.outcome === 'completed') return r.data;
         return null;
     }
 

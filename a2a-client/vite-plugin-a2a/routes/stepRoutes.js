@@ -3,6 +3,7 @@ import { mergeResponseContext, buildStepRecord } from './utils/builders.js';
 import * as stepHandlers from './handlers/step-handlers.js';
 import * as stepUtils from './utils/step-utils.js';
 import { proxyToA2AServer } from './proxy/a2a-proxy.js';
+import { pollA2ARequestResult } from '../daemon/a2a-result-poll.js';
 import { getNewStepDir, loadNewSession, loadNewStep, loadServerPromise, loadServerResponse, saveClientResult, saveNewStep, saveNewSession, saveRequestToServer, saveServerPromise, saveServerResponse, listNewSteps, getNewSessionLatestStep, loadStepFile } from '../storage/newSessions.js';
 
 import fs from 'fs';
@@ -245,45 +246,30 @@ export function createStepRoutes({ cwd }) {
                                     };
                                     saveServerPromise(cwd, sessionId, nextStepNum, promiseData);
 
-                                    const maxPolls = 30;
-                                    for (let i = 0; i < maxPolls; i++) {
-                                        await new Promise((r) => setTimeout(r, 1000));
-                                        try {
-                                            const pollRes = await fetch(`${a2aServerUrl}/api/v1/requests/${promiseData.promiseId}/result`, {
-                                                method: 'GET'
-                                            });
-                                            const pollData = await pollRes.json();
-                                            console.log('[VitePlugin] Poll result:', i, pollData.data?.status);
-                                        // A2A Server returns status implicitly - if execute is present, promise is completed
-                                        // Also check explicit status for backward compatibility
-                                        const isCompleted = pollData.data?.status === 'completed' || 
-                                                           pollData.data?.status === 'done' ||
-                                                           pollData.data?.execute != null;
-                                        const isFailed = pollData.data?.status === 'failed' || 
-                                                       pollData.data?.status === 'error';
-                                        
-                                        if (isCompleted) {
-                                            serverResponse = pollData.data;
-                                            promiseData = {
-                                                ...promiseData,
-                                                ...pollData.data,
-                                                status: pollData.data.status || 'completed',
-                                                checkedAt: new Date().toISOString()
-                                            };
-                                            saveServerPromise(cwd, sessionId, nextStepNum, promiseData);
-                                            break;
-                                        } else if (isFailed) {
-                                                console.error('[VitePlugin] Promise failed:', pollData.data.error);
-                                                // Return error response to client
-                                                serverResponse = {
-                                                    error: pollData.data.error || 'Promise failed',
-                                                    status: 'failed'
-                                                };
-                                                break;
-                                            }
-                                        } catch (pollErr) {
-                                            console.error('[VitePlugin] Poll error:', pollErr.message);
-                                        }
+                                    const pollR = await pollA2ARequestResult(promiseData.promiseId, {
+                                        baseUrl: a2aServerUrl,
+                                        maxPolls: 30,
+                                        intervalMs: 1000,
+                                        headers: {},
+                                        onProgress: (i, pollJson) => {
+                                            console.log('[VitePlugin] Poll result:', i, pollJson?.data?.status);
+                                        },
+                                    });
+                                    if (pollR.outcome === 'completed') {
+                                        serverResponse = pollR.data;
+                                        promiseData = {
+                                            ...promiseData,
+                                            ...pollR.data,
+                                            status: pollR.data.status || 'completed',
+                                            checkedAt: new Date().toISOString()
+                                        };
+                                        saveServerPromise(cwd, sessionId, nextStepNum, promiseData);
+                                    } else if (pollR.outcome === 'failed') {
+                                        console.error('[VitePlugin] Promise failed:', pollR.data?.error);
+                                        serverResponse = {
+                                            error: pollR.data?.error || 'Promise failed',
+                                            status: 'failed'
+                                        };
                                     }
                                 } else if (xhrRes.statusCode >= 200 && xhrRes.statusCode < 300) {
                                     console.log('[VitePlugin] Sync response saved');

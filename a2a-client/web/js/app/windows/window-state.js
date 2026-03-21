@@ -297,9 +297,8 @@
                         if (sessionData.promiseId) {
                             console.log('[WindowState] Found pending promise:', sessionData.promiseId);
                             store.setPromisePending(true);
-                            // Start loader and polling
                             if (typeof store.startLoader === 'function') {
-                                store.startLoader();
+                                store.startLoader(sessionId);
                             }
                             // Start polling for promise result
                             this._pollPromise(sessionData.promiseId, sessionId, store);
@@ -434,28 +433,33 @@
                     const response = await fetch(`/api/a2a/sessions/${sessionId}/promise/${promiseId}`);
                     const data = await response.json();
                     
-                    if (data.status === 'completed' || data.status === 'done') {
-                        // Promise resolved - update store and stop loader
+                    const terminalOk =
+                        data.status === 'completed' ||
+                        data.status === 'done' ||
+                        data.completed === true ||
+                        data.execute != null;
+                    if (terminalOk) {
+                        // Promise resolved - update store and stop loader (execute may be top-level from plugin)
                         console.log('[WindowState] Promise completed:', promiseId);
-                        
-                        if (data.result?.execute) {
-                            store.setExecute(data.result.execute);
+                        const ex = data.execute || data.result?.execute;
+                        if (ex) {
+                            store.setExecute(ex);
+                        } else {
+                            store.setPromisePending(false);
                         }
                         if (data.result?.context) {
                             store.setContext(data.result.context);
                         }
-                        store.setPromisePending(false);
                         
-                        // Stop loader
                         if (typeof store.stopLoader === 'function') {
-                            store.stopLoader();
+                            store.stopLoader(sessionId);
                         }
                     } else if (data.status === 'failed' || data.status === 'error') {
                         // Promise failed
                         console.error('[WindowState] Promise failed:', promiseId);
                         store.setPromisePending(false);
                         if (typeof store.stopLoader === 'function') {
-                            store.stopLoader();
+                            store.stopLoader(sessionId);
                         }
                     } else {
                         // Still processing - continue polling

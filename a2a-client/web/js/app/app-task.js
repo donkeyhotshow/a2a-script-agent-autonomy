@@ -57,7 +57,10 @@
          */
         async loadModules() {
             const modules = [
-                '/js/session-store.js',  // Load FIRST for global.SessionStore
+                '/js/daemons/emitter.js',
+                '/js/daemons/dialog-loader.js',
+                '/js/daemons/dialog-promise-poll.js',
+                '/js/session-store.js',  // after daemons — global.SessionStore
                 '/js/app/project-manager.js',
                 '/js/app/session-manager.js',
                 '/js/app/window-manager.js',
