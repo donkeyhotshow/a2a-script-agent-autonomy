@@ -167,7 +167,7 @@
 
             // Promise (setPromisePending defined below with state + emit)
             setPromiseId: function(promiseId) { promise.setPromiseId(promiseId); return this; },
-            startPromisePolling: function(checkFn) { promise.startPolling(checkFn); return this; },
+            startPromisePolling: function(checkFn, opts) { promise.startPolling(checkFn, opts); return this; },
             stopPromisePolling: function() { promise.stopPolling(); return this; },
 
             reset: function(sessionId, projectId) {

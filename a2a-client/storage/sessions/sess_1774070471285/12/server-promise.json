@@ -1,0 +1,35 @@
+{
+  "promiseId": "prom_1774076281088_zoxkovddr",
+  "status": "completed",
+  "submittedAt": "2026-03-21T06:58:01.093Z",
+  "execute": {
+    "message": "Привіт!",
+    "form": {
+      "input": [
+        {
+          "name": "message",
+          "type": "text",
+          "label": "Повідомлення",
+          "required": true
+        }
+      ]
+    }
+  },
+  "context": {
+    "task": "привет",
+    "execution": {
+      "action": "dialog",
+      "step": "request"
+    },
+    "history": [
+      {
+        "role": "user",
+        "message": "привет"
+      },
+      {
+        "role": "assistant",
+        "message": "Привіт!"
+      }
+    ]
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "timestamp": "2026-03-21T06:59:36.468Z",
+  "execute": {
+    "message": "Привіт!",
+    "form": {
+      "input": [
+        {
+          "name": "message",
+          "type": "text",
+          "label": "Повідомлення",
+          "required": true
+        }
+      ]
+    }
+  },
+  "context": {
+    "execution": {
+      "action": "dialog",
+      "step": "request"
+    },
+    "task": "привет",
+    "session_id": "sess_1774070471285",
+    "history": [
+      {
+        "role": "user",
+        "message": "привет"
+      },
+      {
+        "role": "assistant",
+        "message": "Привіт!"
+      }
+    ]
+  }
+}

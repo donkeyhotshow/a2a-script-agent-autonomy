@@ -271,11 +271,14 @@
                         }
 
                         if (sessionData.asyncPending) {
+                            console.log('[WindowState] asyncPending is TRUE, setting promise pending and starting polling');
                             store.setPromisePending(true);
                             if (typeof store.startLoader === 'function') {
                                 store.startLoader(sessionId);
                             }
                             this._resumeSessionAsyncPolling(sessionId, store);
+                        } else {
+                            console.log('[WindowState] asyncPending is FALSE, session is complete');
                         }
                     }
 
@@ -369,14 +372,17 @@
          */
         _resumeSessionAsyncPolling(sessionId, store) {
             if (!sessionId || !store) return;
+            console.log('[WindowState] _resumeSessionAsyncPolling called for', sessionId);
             const Ex = global.ActionExecutor;
             if (!Ex?.checkSessionAsync || !Ex?.startPromisePolling || !Ex?.pullSessionSnapshot) {
                 console.warn('[WindowState] ActionExecutor missing; cannot attach async polling');
                 return;
             }
+            console.log('[WindowState] Starting async polling for', sessionId);
             (async () => {
                 try {
                     const chk = await Ex.checkSessionAsync(sessionId);
+                    console.log('[WindowState] checkSessionAsync result:', JSON.stringify(chk));
                     const terminalOk =
                         chk &&
                         (chk.completed === true ||
@@ -385,7 +391,9 @@
                             chk.status === 'idle' ||
                             chk.execute != null);
                     if (terminalOk) {
+                        console.log('[WindowState] Terminal state detected, pulling snapshot');
                         await Ex.pullSessionSnapshot(sessionId, store);
+                        store.setPromisePending(false);
                         if (typeof store.stopLoader === 'function') {
                             store.stopLoader(sessionId);
                         }
@@ -398,6 +406,7 @@
                         }
                         return;
                     }
+                    console.log('[WindowState] Not in terminal state, starting polling for', sessionId);
                     Ex.startPromisePolling(sessionId, null);
                 } catch (e) {
                     console.error('[WindowState] Async bootstrap error:', e);

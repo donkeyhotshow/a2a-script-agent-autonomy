@@ -143,8 +143,10 @@
         
         // POST /next ack: asyncPending (+ legacy promiseId) — hydrate via GET session; poll GET .../async
         const asyncPending = !!(data?.asyncPending ?? data?.promiseId);
+        console.log('[ActionExecutor] submit response:', JSON.stringify({success: data?.success, accepted: data?.accepted, asyncPending}));
         if (store && data?.success && data?.accepted) {
             if (asyncPending) {
+                console.log('[ActionExecutor] asyncPending is true, starting polling...');
                 store.setPromisePending?.(true);
                 if (typeof sessionId === 'string') {
                     store.startLoader?.(sessionId);
@@ -154,6 +156,7 @@
                 startPromisePolling(sessionId, isStorageMode ? null : data.promiseId || null);
                 await pullSessionSnapshot(sessionId, store, { skipExecuteWhenPending: true });
             } else {
+                console.log('[ActionExecutor] asyncPending is false, pulling snapshot directly');
                 await pullSessionSnapshot(sessionId, store);
             }
         }
@@ -220,10 +223,13 @@
      * @param {string} promiseId - ID промиса
      */
     function startPromisePolling(sessionId, promiseId) {
+        console.log('[ActionExecutor] startPromisePolling called:', {sessionId, promiseId});
         const store = global.resolveStore(sessionId);
+        console.log('[ActionExecutor] resolveStore result:', typeof store, store ? 'has startPromisePolling: ' + typeof store?.startPromisePolling : 'null');
         const sessionScoped = !promiseId;
 
         if (store?.startPromisePolling) {
+            console.log('[ActionExecutor] store.startPromisePolling exists, starting polling...');
             if (!sessionScoped && store.setPromiseId) {
                 store.setPromiseId(promiseId);
             }
@@ -237,6 +243,7 @@
             const onResolved = (data) => {
                 if (!(data.sessionScoped || data.promiseId === promiseId)) return;
                 pullSessionSnapshot(sessionId, store).then(() => {
+                    store.setPromisePending?.(false);
                     if (typeof sessionId === 'string') {
                         store.stopLoader?.(sessionId);
                     } else {
@@ -273,6 +280,8 @@
 
             return;
         }
+        
+        console.warn('[ActionExecutor] startPromisePolling: store.startPromisePolling not available, store type:', typeof store);
         
     }
 

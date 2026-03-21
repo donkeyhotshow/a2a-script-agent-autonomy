@@ -51,20 +51,27 @@
                 emitter.emit('status', s);
                 return this;
             },
-            startPolling: function (checkFn) {
-                if (!promiseId) return this;
+            startPolling: function (checkFn, opts = {}) {
+                const sessionScoped = opts?.sessionScoped === true;
+                console.log('[DialogPromise] startPolling called, promiseId:', promiseId, 'sessionScoped:', sessionScoped);
+                // For session-scoped polling (no promiseId), we still need to poll
+                if (!promiseId && !sessionScoped) return this;
                 this._stopPolling();
                 const tick = async () => {
                     try {
-                        const result = await checkFn(promiseId);
+                        // For session-scoped, call checkFn without arguments
+                        const result = sessionScoped ? await checkFn() : await checkFn(promiseId);
+                        console.log('[DialogPromise] tick result:', JSON.stringify(result));
                         if (!result) return;
-                        if (result.completed || result.status === 'completed' || result.status === 'done') {
+                        if (result.completed || result.status === 'completed' || result.status === 'done' || result.status === 'idle' || result.execute != null) {
+                            console.log('[DialogPromise] Terminal state detected, stopping polling');
                             this._stopPolling();
                             this.setPending(false);
                             this.setStatus('completed');
-                            emitter.emit('resolved', { promiseId, result: result.result, execute: result.execute });
+                            emitter.emit('resolved', { promiseId, sessionScoped, result: result.result, execute: result.execute });
                         }
                         if (result.status === 'failed' || result.status === 'error') {
+                            console.log('[DialogPromise] Failed state detected');
                             this._stopPolling();
                             this.setPending(false);
                             this.setStatus('failed');
