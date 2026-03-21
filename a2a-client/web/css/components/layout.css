@@ -14,12 +14,15 @@
 }
 
 .app-main-hint {
-  color: var(--color-text-muted);
+  color: var(--color-text-secondary);
   text-align: center;
-  font-size: 14px;
-  margin-top: 60px;
+  font-size: 13px;
+  line-height: 1.55;
+  max-width: 28rem;
+  margin: 48px auto 0;
   font-weight: 400;
-  letter-spacing: 0.3px;
+  letter-spacing: 0.02em;
+  opacity: 0.92;
 }
 
 /* Header - Glassmorphism */
