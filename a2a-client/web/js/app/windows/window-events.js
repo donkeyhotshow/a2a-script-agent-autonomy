@@ -73,11 +73,9 @@
                     loaderEl.dataset.minEndTime = _loaderMinEndTime;
                     // Track this loader for this session
                     _activeLoaders.set(sessionId, { minEndTime: _loaderMinEndTime, element: loaderEl });
-                    console.log('[WindowEvents] Loader shown for session:', sessionId, 'loaderId:', loaderId);
                 }
                 function _hideGlobalLoader(sessionId = 'global') {
-                    // FIXED: Use session-specific loader ID
-                    console.log('[WindowEvents] _hideGlobalLoader called for session:', sessionId, 'Active loaders:', _activeLoaders.size);
+                    // Use session-specific loader ID
                     
                     // Try session-specific loader first
                     const loaderId = 'session-loader-' + sessionId;
@@ -89,7 +87,6 @@
                     }
                     
                     if (!loaderEl) {
-                        console.log('[WindowEvents] No loader element found for session:', sessionId);
                         return;
                     }
                     
@@ -118,7 +115,6 @@
                     const execute = store.getExecute ? store.getExecute() : (store.execute || store._state?.execute);
                     let context = store.context || store._state?.context;
                     if (!context) {
-                        console.warn('[WindowEvents] No context found');
                         context = {};
                     }
 
@@ -234,7 +230,6 @@
                 throw new Error('ActionHandler is not available for sending message');
             }
 
-            console.log('[WindowEvents] Sent message:', sessionId, message);
         },
 
         /**
@@ -253,7 +248,6 @@
                 throw new Error('ActionHandler is not available for sending choice');
             }
 
-            console.log('[WindowEvents] Sent choice:', sessionId, choiceId);
         },
 
         /**

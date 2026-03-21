@@ -47,7 +47,6 @@
         const state = store?.getState?.() || {};
         let messages = state.messages ?? store?.messages;
         if (!messages) {
-            console.warn('[Render] No messages found, state:', !!state, 'store:', !!store);
             messages = [];
         }
 
@@ -63,7 +62,6 @@
             const role = msg.role || 'assistant';
             let content = msg.content || msg.message || msg.text;
             if (!content) {
-                console.warn('[Render] No content found in message:', msg);
                 content = '';
             }
             const timestamp = msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString() : '';
@@ -92,7 +90,6 @@
 
         const context = data?.context;
         const execution = context?.execution;
-        const passedStore = store || data?.store; // Use passed store or from data
 
         // Build execution step display
         let executionStepHtml = '';
@@ -172,14 +169,16 @@
      * @param {Object} taskFlowRef - ссылка на TaskFlow
      */
     function renderForm(contentEl, form, executionStepHtml, progressBarHtml, finalResultHtml, taskFlowRef, store) {
+        // Use explicitly passed store (fallback to global if not provided)
+        const effectiveStore = store || global.SessionStore;
+        
         // Check if promise is pending - if so, hide form and show loader instead
-        const storeState = store?.getState?.() || {};
+        const storeState = effectiveStore?.getState?.() || {};
         if (storeState.promisePending) {
-            console.log('[Render] Promise pending - hiding form, showing loader');
-            const historyHtml = renderMessageHistory(contentEl, store);
+            const historyHtml = renderMessageHistory(contentEl, effectiveStore);
             contentEl.innerHTML = historyHtml;
             // Show loader instead of form
-            const sessionId = taskFlowRef?._sessionId || store?.sessionId || 'global';
+            const sessionId = taskFlowRef?._sessionId || effectiveStore?.sessionId || 'global';
             showInlineLoader(contentEl, sessionId);
             return;
         }
@@ -209,7 +208,7 @@
             formContent += `<div class="task-flow-input-form">${inputsHtml}<button type="button" class="task-flow-submit-btn">Submit</button></div>`;
         }
 
-        const historyHtml = renderMessageHistory(contentEl, store);
+        const historyHtml = renderMessageHistory(contentEl, effectiveStore);
 
         contentEl.innerHTML = `
             ${historyHtml}
@@ -234,10 +233,8 @@
         // Bind input form submit
         const submitBtn = contentEl.querySelector('.task-flow-submit-btn');
         const inputEl = contentEl.querySelector('.task-flow-input-field');
-        console.log('[Render] submitBtn:', !!submitBtn, 'inputEl:', !!inputEl, 'sendMessageResult:', !!(taskFlowRef && taskFlowRef.sendMessageResult));
         if (submitBtn && inputEl && taskFlowRef?.sendMessageResult) {
                 const doSubmit = () => {
-                    console.log('[Render] doSubmit called, value:', inputEl.value?.trim());
                     const val = inputEl.value?.trim();
                     if (val) {
                         // HIDE FORM + show loader
@@ -259,7 +256,6 @@
     }
     
     // Helper function to show inline loader
-    // FIXED: Now supports per-session loader
     function showInlineLoader(contentEl, sessionId = null) {
         // Clear and show loader INSIDE panel content
         contentEl.innerHTML = `
@@ -268,7 +264,6 @@
                 <p>Обработка запроса...</p>
             </div>
         `;
-        console.log('[Render] Loader shown INSIDE panel for session:', sessionId);
     }
 
 
@@ -283,8 +278,8 @@
      */
     function renderMessage(contentEl, message, executionStepHtml, progressBarHtml, finalResultHtml, taskFlowRef, store) {
         const messageContent = typeof message === 'string' ? message : (message.content || message.text || '');
-
-        const historyHtml = renderMessageHistory(contentEl, store);
+        const effectiveStore = store || global.SessionStore;
+        const historyHtml = renderMessageHistory(contentEl, effectiveStore);
 
         contentEl.innerHTML = `
             ${historyHtml}
@@ -320,8 +315,8 @@
         };
 
         const actionData = data[actionType];
-        const passedStore = store || data?.store; // Use passed store or from data
-        const historyHtml = renderMessageHistory(contentEl, passedStore);
+        const effectiveStore = store || global.SessionStore;
+        const historyHtml = renderMessageHistory(contentEl, effectiveStore);
 
         contentEl.innerHTML = `
             ${historyHtml}
@@ -348,9 +343,9 @@
     function renderDebug(contentEl, data, executionStepHtml, progressBarHtml, finalResultHtml, taskFlowRef, store) {
         const ctx = data?.context ? JSON.stringify(data.context, null, 2) : '';
         const exec = data?.execute ? JSON.stringify(data.execute, null, 2) : '';
-        const passedStore = store || data?.store; // Use passed store or from data
+        const effectiveStore = store || global.SessionStore;
 
-        const historyHtml = renderMessageHistory(contentEl, passedStore);
+        const historyHtml = renderMessageHistory(contentEl, effectiveStore);
 
         contentEl.innerHTML = `
             ${historyHtml}
@@ -441,13 +436,11 @@
     function showWaitElement(_opaque, message) {
         const panel = document.querySelector('.pui-panel-content');
         if (!panel) {
-            console.log('[TaskFlowRender] No active panel found for wait element');
             return;
         }
         
         const historyEl = panel.querySelector('.task-flow-history');
         if (!historyEl) {
-            console.log('[TaskFlowRender] No history element found');
             return;
         }
         
@@ -464,7 +457,6 @@
         `;
         
         historyEl.after(waitElement);
-        console.log('[TaskFlowRender] Showing wait element (async pending)');
     }
 
     /**
@@ -476,7 +468,6 @@
         if (waitElement) {
             waitElement.remove();
         }
-        console.log('[TaskFlowRender] Hiding wait element');
     }
 
     // Export

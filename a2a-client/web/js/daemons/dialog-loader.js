@@ -28,13 +28,11 @@
                 if (active) return this;
                 active = true;
                 minEndTime = Date.now() + MINIMUM_LOADER_TIME;
-                console.log('[DialogLoader] START - active:', active, 'minEndTime:', minEndTime);
                 emitter.emit('loader', { active: true, minEndTime });
                 return this;
             },
             /** @param {boolean} [force] — if true, hide immediately (e.g. server returned actionable form) */
             stop: function (force) {
-                console.log('[DialogLoader] STOP requested - active:', active, 'minEndTime:', minEndTime, 'force:', !!force);
                 if (force === true) {
                     this._forceStop();
                     return this;

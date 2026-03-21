@@ -21,9 +21,6 @@
             ? global.PROMISE_POLL_INTERVAL
             : global.__a2aDaemons.timingMs('PROMISE_POLL_INTERVAL');
 
-    // Track local polling as fallback (when SessionStore is not available)
-    let localPollTimer = null;
-
     /**
      * Получает базовый API URL
      * @param {Object} store - хранилище сессии
@@ -280,61 +277,6 @@
             return;
         }
         
-        // Fallback: local polling implementation (backward compatibility)
-        // Clear any existing timer
-        if (localPollTimer) {
-            clearInterval(localPollTimer);
-            localPollTimer = null;
-        }
-        
-        localPollTimer = setInterval(async () => {
-            let status;
-            try {
-                status = sessionScoped
-                    ? await checkSessionAsync(sessionId)
-                    : await checkPromise(sessionId, promiseId);
-            } catch (e) {
-                console.error('[ActionExecutor] Local polling tick failed:', e);
-                return;
-            }
-
-            if (status.completed || status.status === 'completed' || status.status === 'done' || status.status === 'idle') {
-                if (localPollTimer) {
-                    clearInterval(localPollTimer);
-                    localPollTimer = null;
-                }
-
-                if (store) {
-                    await pullSessionSnapshot(sessionId, store);
-                }
-
-                global.apiIntegration?.emit?.('promiseResolved', {
-                    sessionId,
-                    promiseId: promiseId ?? null,
-                    sessionScoped,
-                    result: status.result,
-                    execute: status.execute ?? status.result?.execute,
-                });
-            }
-
-            if (status.status === 'failed' || status.status === 'error') {
-                if (localPollTimer) {
-                    clearInterval(localPollTimer);
-                    localPollTimer = null;
-                }
-
-                if (store) {
-                    store.setPromisePending?.(false);
-                }
-
-                global.apiIntegration?.emit?.('promiseError', {
-                    sessionId,
-                    promiseId: promiseId ?? null,
-                    sessionScoped,
-                    error: status.error || 'Promise failed',
-                });
-            }
-        }, POLL_INTERVAL);
     }
 
     /**
@@ -352,11 +294,6 @@
             return;
         }
         
-        // Fallback: local polling implementation (backward compatibility)
-        if (localPollTimer) {
-            clearInterval(localPollTimer);
-            localPollTimer = null;
-        }
     }
 
     /**
