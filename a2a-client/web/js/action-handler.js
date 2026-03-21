@@ -71,7 +71,16 @@
     // Главный объект ActionHandler - точка входа
     const ActionHandler = {
         // Основная функция - отправка результата пользователя
-        submit
+        submit,
+        
+        // Удобные методы-алиасы
+        sendMessage: async function(sessionId, message) {
+            return submit(sessionId, { message });
+        },
+        
+        sendChoice: async function(sessionId, choiceId) {
+            return submit(sessionId, { choice: choiceId });
+        }
     };
 
     // Экспорт в глобальную область видимости

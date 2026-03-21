@@ -1,11 +1,9 @@
 /**
  * SessionStorage - API для работы с хранилищем сессий
  * 
+ * Теперь использует apiIntegration вместо дублирующей логики fetch
  * Содержит:
- * - SessionStorageAPI - API для создания и управления сессиями
- * 
- * Использует:
- * - Fetch API для HTTP запросов
+ * - SessionStorageAPI - адаптер для совместимости с SessionStore
  */
 
 (function (global) {
@@ -13,26 +11,20 @@
 
     /**
      * Создать API для работы с хранилищем сессий
-     * @param {string} storageBase - Базовый URL API
+     * Делегирует в apiIntegration для избежания дублирования fetch логики
+     * @param {string} storageBase - Базовый URL API (игнорируется, используется apiIntegration)
      * @param {string} storageMode - Режим хранилища ('storage' или 'project')
      * @returns {Object} API для работы с сессиями
      */
     function createSessionStorageAPI(storageBase, storageMode) {
-        
-        /**
-         * Выполнить fetch запрос
-         * @param {string} url - URL
-         * @param {Object} options - Опции fetch
-         * @returns {Promise} Promise с результатом
-         */
-        function _fetch(url, options) {
-            return fetch(url, options).then(function(resp) {
-                if (!resp.ok) {
-                    throw new Error('Request failed: ' + resp.status);
-                }
-                return resp.json();
-            });
-        }
+        // Получаем apiIntegration (может быть ещё не загружен - будет позже)
+        const getApi = () => {
+            if (!global.apiIntegration) {
+                console.warn('[SessionStorageAPI] apiIntegration not yet available, using fallback');
+                return null;
+            }
+            return global.apiIntegration;
+        };
 
         return {
             /**
@@ -40,22 +32,12 @@
              * @param {string} title - Название сессии
              * @returns {Promise<Object>} Созданная сессия
              */
-            createSessionWithForm: function(title) {
-                if (title == null || String(title).trim() === '') {
-                    throw new Error('[SessionStorageAPI] createSessionWithForm requires non-empty title');
+            createSessionWithForm: async function(title) {
+                const api = getApi();
+                if (api?.createSession) {
+                    return api.createSession({ title });
                 }
-                var headers = { 
-                    'Content-Type': 'application/json', 
-                    'X-Storage-Mode': storageMode 
-                };
-                return _fetch(storageBase, {
-                    method: 'POST',
-                    headers: headers,
-                    body: JSON.stringify({ title: String(title) })
-                }).then(function(data) {
-                    if (!data.session) throw new Error('No session data');
-                    return data.session;
-                });
+                throw new Error('[SessionStorageAPI] apiIntegration.createSession not available');
             },
 
             /**
@@ -64,15 +46,12 @@
              * @param {string} [projectId] - ID проекта
              * @returns {Promise<Object>} Данные сессии
              */
-            getSession: function(sessionId, projectId) {
-                var url = storageBase + '/' + sessionId;
-                var headers = { 
-                    'X-Storage-Mode': storageMode 
-                };
-                if (projectId) {
-                    headers['X-Project-Id'] = projectId;
+            getSession: async function(sessionId, projectId) {
+                const api = getApi();
+                if (api?.getSession) {
+                    return api.getSession(sessionId, { projectId });
                 }
-                return _fetch(url, { headers: headers });
+                throw new Error('[SessionStorageAPI] apiIntegration.getSession not available');
             },
 
             /**
@@ -80,40 +59,20 @@
              * @param {string} [projectId] - ID проекта (опционально)
              * @returns {Promise<Array>} Массив сессий
              */
-            getSessions: function(projectId) {
-                var url = storageBase;
-                if (projectId) {
-                    url += '?projectId=' + encodeURIComponent(projectId);
+            getSessions: async function(projectId) {
+                const api = getApi();
+                if (api?.getSessions) {
+                    return api.getSessions(projectId);
                 }
-                var headers = { 
-                    'X-Storage-Mode': storageMode 
-                };
-                return _fetch(url, { headers: headers }).then(function(data) {
-                    var sessions = data.sessions !== undefined ? data.sessions : data.data;
-                    if (!Array.isArray(sessions)) {
-                        throw new Error('[SessionStorageAPI] getSessions: expected sessions or data array');
-                    }
-                    return sessions;
-                });
+                throw new Error('[SessionStorageAPI] apiIntegration.getSessions not available');
             },
 
             /**
-             * Обновить сессию
-             * @param {string} sessionId - ID сессии
-             * @param {Object} data - Данные для обновления
-             * @returns {Promise<Object>} Обновленная сессия
+             * Обновить сессию (не используется в текущей архитектуре)
              */
             updateSession: function(sessionId, data) {
-                var url = storageBase + '/' + sessionId;
-                var headers = { 
-                    'Content-Type': 'application/json',
-                    'X-Storage-Mode': storageMode 
-                };
-                return _fetch(url, {
-                    method: 'PUT',
-                    headers: headers,
-                    body: JSON.stringify(data)
-                });
+                console.warn('[SessionStorageAPI] updateSession not implemented - use SessionStore');
+                return Promise.resolve({ success: false });
             },
 
             /**
@@ -121,15 +80,12 @@
              * @param {string} sessionId - ID сессии
              * @returns {Promise<void>}
              */
-            deleteSession: function(sessionId) {
-                var url = storageBase + '/' + sessionId;
-                var headers = { 
-                    'X-Storage-Mode': storageMode 
-                };
-                return _fetch(url, {
-                    method: 'DELETE',
-                    headers: headers
-                });
+            deleteSession: async function(sessionId) {
+                const api = getApi();
+                if (api?.deleteSession) {
+                    return api.deleteSession(sessionId);
+                }
+                throw new Error('[SessionStorageAPI] apiIntegration.deleteSession not available');
             },
 
             /**
@@ -138,17 +94,21 @@
              * @param {Object} message - Сообщение
              * @returns {Promise<Object>} Ответ сервера
              */
-            sendNext: function(sessionId, message) {
-                var url = storageBase + '/' + sessionId + '/next';
-                var headers = { 
-                    'Content-Type': 'application/json',
-                    'X-Storage-Mode': storageMode 
-                };
-                return _fetch(url, {
+            sendNext: async function(sessionId, message) {
+                // Используем storage API напрямую через fetch
+                const url = '/api/a2a/sessions/' + encodeURIComponent(sessionId) + '/next';
+                const response = await fetch(url, {
                     method: 'POST',
-                    headers: headers,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Storage-Mode': storageMode
+                    },
                     body: JSON.stringify(message)
                 });
+                if (!response.ok) {
+                    throw new Error('sendNext failed: ' + response.status);
+                }
+                return response.json();
             },
 
             /**
@@ -177,7 +137,7 @@
         };
     }
 
-    // Экспорт
+    // Экспорт - фабрика для SessionStore
     global.SessionStorageAPI = {
         create: createSessionStorageAPI
     };

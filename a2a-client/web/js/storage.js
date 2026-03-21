@@ -364,6 +364,8 @@
     // Export
     global.CustomStorage = CustomStorage;
     global.StorageAPI = storage;
-    global.SessionStorageAPI = sessionStorage;
+    // Note: SessionStorageAPI is set by session-storage.js (factory pattern)
+    // This SessionStorage class is kept for legacy compatibility only
+    global.SessionStorageClass = SessionStorage;
 
 })(typeof window !== 'undefined' ? window : globalThis);

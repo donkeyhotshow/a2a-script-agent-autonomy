@@ -428,48 +428,6 @@
         }
     }
 
-    /**
-     * Show wait element while async work is in flight (no A2A transport id in the web layer).
-     * @param {unknown} _opaque - unused (legacy)
-     * @param {string} [message]
-     */
-    function showWaitElement(_opaque, message) {
-        const panel = document.querySelector('.pui-panel-content');
-        if (!panel) {
-            return;
-        }
-        
-        const historyEl = panel.querySelector('.task-flow-history');
-        if (!historyEl) {
-            return;
-        }
-        
-        // Check if already showing wait element
-        if (panel.querySelector('.task-flow-sending')) {
-            return;
-        }
-        
-        const waitElement = document.createElement('div');
-        waitElement.className = 'task-flow-sending';
-        waitElement.innerHTML = `
-            <p>Processing: <strong>${escapeHtml(message || 'Please wait...')}</strong></p>
-            <div class="task-flow-spinner"></div>
-        `;
-        
-        historyEl.after(waitElement);
-    }
-
-    /**
-     * Hide wait element when execute/result is received
-     */
-    function hideWaitElement() {
-        // Find and remove wait element from panel
-        const waitElement = document.querySelector('.task-flow-sending');
-        if (waitElement) {
-            waitElement.remove();
-        }
-    }
-
     // Export
     global.TaskFlowRender = {
         escapeHtml,
@@ -480,9 +438,7 @@
         renderMessage,
         renderClientAction,
         renderDebug,
-        setPanelContent,
-        showWaitElement,
-        hideWaitElement
+        setPanelContent
     };
 
 })(typeof window !== 'undefined' ? window : global);

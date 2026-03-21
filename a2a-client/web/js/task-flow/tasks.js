@@ -1,6 +1,7 @@
 /**
  * TaskFlow Tasks Module
  * Выполнение задач и управление сессиями
+ * Также содержит общие утилиты для messages.js
  */
 
 (function (global) {
@@ -16,6 +17,106 @@
     const showLoader = global.TaskFlowLoader?.showLoader;
     const hideLoader = global.TaskFlowLoader?.hideLoader;
     const setupLoaderListener = global.TaskFlowLoader?.setupLoaderListener;
+    const escapeHtml = global.escapeHtml;
+
+    /**
+     * Общая функция отправки и обработки результата
+     * Используется sendChoice и sendMessageResult
+     */
+    async function submitAndHandle(TaskFlow, result, contentEl, displayText) {
+        const sessionId = TaskFlow._sessionId;
+        const projectId = TaskFlow._projectId;
+        if (!sessionId || !projectId) {
+            console.warn('[TaskFlow] No active session');
+            return;
+        }
+
+        const store = resolveStore(sessionId);
+        
+        // Setup loader listener for this session
+        setupLoaderListener?.(TaskFlow, sessionId);
+
+        // Start loader immediately - minimum 5 second display time
+        showLoader?.(TaskFlow);
+
+        // Show sending state
+        contentEl.innerHTML = `
+            <div class="task-flow-sending">
+                <p>Sending: <strong>${escapeHtml(displayText)}</strong></p>
+                <div class="task-flow-spinner"></div>
+            </div>
+        `;
+
+        try {
+            // Start waiting for response BEFORE submitting (prevents race condition)
+            const outcomePromise = waitForFirstResponse(60000, store);
+
+            const handler = global.ActionHandler;
+            if (!handler?.submit) {
+                throw new Error('ActionHandler is not available for sending');
+            }
+
+            const submitResult = await handler.submit(sessionId, result);
+
+            // Wait for response
+            const outcome = await outcomePromise;
+            
+            // Check if this is async (has promiseId) - don't hide loader yet!
+            const isAsync =
+                submitResult?.asyncPending ||
+                outcome?.asyncPending ||
+                submitResult?.promiseId ||
+                outcome?.promiseId;
+            
+            if (outcome.execute) {
+                setPanelContent(contentEl, 'execute', { execute: outcome.execute, sessionId, projectId }, TaskFlow);
+                updateStatus(contentEl, 'Received response');
+            }
+
+            if (isAsync) {
+                // For async flow: wait for promise to resolve before hiding loader
+                if (store && typeof store.once === 'function') {
+                    store.once('promiseResolved', (data) => {
+                        hideLoader?.(TaskFlow);
+                        const exec = data.execute ?? data.result?.execute;
+                        if (exec) {
+                            setPanelContent(contentEl, 'execute', { execute: exec, sessionId, projectId }, TaskFlow);
+                            updateStatus(contentEl, 'Processing complete');
+                        }
+                    });
+                } else if (store && typeof store.on === 'function') {
+                    const unsubscribe = store.on('promiseResolved', (data) => {
+                        unsubscribe();
+                        hideLoader?.(TaskFlow);
+                        const exec = data.execute ?? data.result?.execute;
+                        if (exec) {
+                            setPanelContent(contentEl, 'execute', { execute: exec, sessionId, projectId }, TaskFlow);
+                            updateStatus(contentEl, 'Processing complete');
+                        }
+                    });
+                }
+            } else {
+                // Sync flow: hide loader immediately
+                hideLoader?.(TaskFlow);
+            }
+
+        } catch (error) {
+            console.error('[TaskFlow] Error sending:', error);
+            hideLoader?.(TaskFlow);
+            const errorMsg = error?.message || error?.error?.message || 'Unknown error';
+            contentEl.innerHTML = `
+                <div class="task-flow-error">
+                    <p>Error: ${escapeHtml(errorMsg)}</p>
+                </div>
+            `;
+            if (store?.setError) {
+                store.setError(errorMsg);
+            }
+        }
+    }
+
+    // Export for use by messages.js
+    global.TaskFlowSubmitAndHandle = submitAndHandle;
 
     /**
      * Ожидать первый ответ от сервера

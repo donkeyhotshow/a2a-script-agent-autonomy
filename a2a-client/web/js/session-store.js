@@ -34,6 +34,39 @@
         storageMode: 'storage'
     });
 
+    var ACTIVE_SESSION_KEY = 'active-session';
+
+    async function readSavedSessionId() {
+        var storage = global.StorageAPI?.sessions;
+        if (!storage) {
+            return null;
+        }
+
+        try {
+            if (typeof storage.getItem === 'function') {
+                var stored = await storage.getItem(ACTIVE_SESSION_KEY);
+                if (stored) {
+                    return stored;
+                }
+            }
+        } catch (err) {
+            console.warn('[SessionStore] Failed to read saved session (async):', err);
+        }
+
+        try {
+            if (typeof storage.getItemSync === 'function') {
+                var syncValue = storage.getItemSync(ACTIVE_SESSION_KEY);
+                if (syncValue) {
+                    return syncValue;
+                }
+            }
+        } catch (err) {
+            console.warn('[SessionStore] Failed to read saved session (sync):', err);
+        }
+
+        return null;
+    }
+
     // Проверка зависимостей
     const D = global.__a2aDaemons;
     if (!D || typeof D.createDialogLoader !== 'function' || typeof D.createDialogPromise !== 'function') {
@@ -242,6 +275,54 @@
             // Debug logging disabled
         };
     }
+
+    SessionStore.prototype.hasSavedSession = async function() {
+        var sessionId = await readSavedSessionId();
+        return !!sessionId;
+    };
+
+    SessionStore.prototype.restoreAndReconnect = async function() {
+        var sessionId = await readSavedSessionId();
+        if (!sessionId) {
+            return false;
+        }
+
+        var api = global.apiIntegration;
+        if (!api || typeof api.getSession !== 'function') {
+            console.warn('[SessionStore] apiIntegration unavailable, cannot restore session');
+            return false;
+        }
+
+        var sessionData;
+        try {
+            sessionData = await api.getSession(sessionId, { includeContext: true });
+        } catch (err) {
+            console.warn('[SessionStore] restoreAndReconnect failed to fetch session:', sessionId, err);
+            return false;
+        }
+
+        var sid = sessionData?.id || sessionData?.sessionId;
+        if (!sid) {
+            console.warn('[SessionStore] restoreAndReconnect: missing session id in response');
+            return false;
+        }
+
+        this.reset(sid, sessionData.projectId || null);
+        this.setSession(sid, sessionData.projectId || null);
+        if (sessionData.status) {
+            this.setStatus(sessionData.status);
+        }
+        if (sessionData.context) {
+            this.setContext(sessionData.context);
+        }
+        if (Array.isArray(sessionData.messages) && sessionData.messages.length) {
+            this.applyServerMessages(sessionData.messages);
+        }
+        if (sessionData.execute) {
+            this.setExecute(sessionData.execute);
+        }
+        return true;
+    };
 
     // Глобальная константа
     global.PROMISE_POLL_INTERVAL = global.__a2aDaemons.timingMs('PROMISE_POLL_INTERVAL');
