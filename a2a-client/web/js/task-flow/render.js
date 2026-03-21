@@ -434,12 +434,11 @@
     }
 
     /**
-     * Show wait element when promiseId is received (async operation started)
-     * Adds wait element inside the active dialog panel
-     * @param {string} promiseId - the promise ID from server response
-     * @param {string} message - optional message to display
+     * Show wait element while async work is in flight (no A2A transport id in the web layer).
+     * @param {unknown} _opaque - unused (legacy)
+     * @param {string} [message]
      */
-    function showWaitElement(promiseId, message) {
+    function showWaitElement(_opaque, message) {
         const panel = document.querySelector('.pui-panel-content');
         if (!panel) {
             console.log('[TaskFlowRender] No active panel found for wait element');
@@ -465,7 +464,7 @@
         `;
         
         historyEl.after(waitElement);
-        console.log('[TaskFlowRender] Showing wait element in panel for promise:', promiseId);
+        console.log('[TaskFlowRender] Showing wait element (async pending)');
     }
 
     /**

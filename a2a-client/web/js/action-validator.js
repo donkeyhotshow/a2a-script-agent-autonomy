@@ -155,13 +155,11 @@
             };
         }
         
-        // Проверяем наличие execute или promiseId (один из них должен быть)
         const hasExecute = response.execute && typeof response.execute === 'object';
-        const hasPromiseId = !isEmpty(response.promiseId);
-        
-        if (!hasExecute && !hasPromiseId) {
-            // Это не обязательно ошибка - может быть просто пустой ответ
-            console.warn('[ActionValidator] Response has no execute or promiseId');
+        const hasAsync = response.asyncPending === true || !isEmpty(response.promiseId);
+
+        if (!hasExecute && !hasAsync) {
+            console.warn('[ActionValidator] Response has no execute, asyncPending, or promiseId');
         }
         
         return { valid: true };

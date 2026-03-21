@@ -200,7 +200,7 @@
                     if (global.apiIntegration?.getSession) {
                         const projectId = await global.ProjectManager?.getSelectedProjectId?.() || global.SessionStore?.projectId || null;
                         sessionData = await global.apiIntegration.getSession(sessionId, projectId);
-                        console.log('[WindowState] Session loaded:', sessionId, 'promiseId:', sessionData?.promiseId, 'status:', sessionData?.status);
+                        console.log('[WindowState] Session loaded:', sessionId, 'asyncPending:', sessionData?.asyncPending, 'status:', sessionData?.status);
                     }
                     try {
                         let latestData = null;
@@ -212,14 +212,10 @@
                             );
                             if (latestResponse.ok) latestData = await latestResponse.json();
                         }
-                        if (latestData) {
-                            const st = latestData.promiseStatus;
-                            if (latestData.promiseId && (st === 'pending' || st === 'processing')) {
-                                sessionData = sessionData || {};
-                                sessionData.promiseId = latestData.promiseId;
-                                sessionData.promiseStatus = st;
-                                console.log('[WindowState] Found pending promise from /latest:', latestData.promiseId);
-                            }
+                        if (latestData?.session?.asyncPending && latestData.session) {
+                            sessionData = sessionData || {};
+                            sessionData.asyncPending = true;
+                            sessionData.promiseStatus = latestData.session.promiseStatus ?? sessionData.promiseStatus;
                         }
                     } catch (e) {
                         console.warn('[WindowState] Failed to check latest step:', e);
@@ -322,15 +318,13 @@
                             store.setStatus(sessionData.status);
                         }
 
-                        // Check for pending promise - restore loader if needed
-                        if (sessionData.promiseId) {
-                            console.log('[WindowState] Found pending promise:', sessionData.promiseId);
+                        if (sessionData.asyncPending) {
+                            console.log('[WindowState] Resuming async session (no transport id in UI)');
                             store.setPromisePending(true);
                             if (typeof store.startLoader === 'function') {
                                 store.startLoader(sessionId);
                             }
-                            // Start polling for promise result
-                            this._pollPromise(sessionData.promiseId, sessionId, store);
+                            this._resumeSessionAsyncPolling(sessionId, store);
                         }
                     }
 
@@ -454,23 +448,24 @@
         },
 
         /**
-         * Same path as POST /next: DialogPromise polling via ActionExecutor + GET session rehydrate (messages, execute).
+         * After reload: one-shot check then session-scoped polling (GET .../sessions/:id/async).
          */
-        _pollPromise(promiseId, sessionId, store) {
-            if (!promiseId || !sessionId || !store) return;
+        _resumeSessionAsyncPolling(sessionId, store) {
+            if (!sessionId || !store) return;
             const Ex = global.ActionExecutor;
-            if (!Ex?.checkPromise || !Ex?.startPromisePolling || !Ex?.pullSessionSnapshot) {
-                console.warn('[WindowState] ActionExecutor missing; cannot attach promise polling');
+            if (!Ex?.checkSessionAsync || !Ex?.startPromisePolling || !Ex?.pullSessionSnapshot) {
+                console.warn('[WindowState] ActionExecutor missing; cannot attach async polling');
                 return;
             }
             (async () => {
                 try {
-                    const chk = await Ex.checkPromise(sessionId, promiseId);
+                    const chk = await Ex.checkSessionAsync(sessionId);
                     const terminalOk =
                         chk &&
                         (chk.completed === true ||
                             chk.status === 'completed' ||
                             chk.status === 'done' ||
+                            chk.status === 'idle' ||
                             chk.execute != null);
                     if (terminalOk) {
                         await Ex.pullSessionSnapshot(sessionId, store);
@@ -486,10 +481,10 @@
                         }
                         return;
                     }
-                    Ex.startPromisePolling(sessionId, promiseId);
+                    Ex.startPromisePolling(sessionId, null);
                 } catch (e) {
-                    console.error('[WindowState] Promise bootstrap error:', e);
-                    Ex.startPromisePolling(sessionId, promiseId);
+                    console.error('[WindowState] Async bootstrap error:', e);
+                    Ex.startPromisePolling(sessionId, null);
                 }
             })();
         },

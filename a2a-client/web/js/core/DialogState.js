@@ -1,6 +1,6 @@
 /**
  * DialogState - Управление состоянием диалога (messages, execute, context)
- * Часть иерархии: EventEmitter → SessionStoreCore → SessionStore
+ * Часть иерархии: utils/normalizers (foundation) → DialogState → SessionStoreCore (ESM); рантайм UI: SessionData + daemons.
  */
 
 import { normalizeMessage, MAX_MESSAGES } from '../utils/normalizers.js';

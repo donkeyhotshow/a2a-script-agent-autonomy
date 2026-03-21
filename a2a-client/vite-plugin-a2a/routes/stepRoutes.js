@@ -1,6 +1,11 @@
 import { getStorageMode, isValidSessionId } from './middleware/validators.js';
 import { mergeResponseContext, buildStepRecord, extractA2aExecute, unwrapA2aResponse } from './utils/builders.js';
-import { toMinimalNextAck, toPublicSession } from './utils/web-session-dto.js';
+import {
+    toMinimalNextAck,
+    toPublicSession,
+    getActiveAsyncWork,
+    attachPromiseMeta,
+} from './utils/web-session-dto.js';
 import * as stepHandlers from './handlers/step-handlers.js';
 import * as stepUtils from './utils/step-utils.js';
 import { proxyToA2AServer } from './proxy/a2a-proxy.js';
@@ -9,6 +14,139 @@ import { getNewStepDir, loadNewSession, loadNewStep, loadServerPromise, loadServ
 import fs from 'fs';
 
 const API_PREFIX = '/api/a2a';
+
+/**
+ * Poll A2A Server for one promiseId, persist step files, optionally hide transport id from JSON (web UI).
+ */
+function runViteClientPromisePoll({
+    cwd,
+    sessionId,
+    promiseId,
+    currentStep,
+    requestUrl,
+    res,
+    includePromiseIdInBody,
+}) {
+    const session = loadNewSession(cwd, sessionId);
+    if (!session) {
+        res.writeHead(404).end(JSON.stringify({ error: 'Session not found' }));
+        return;
+    }
+
+    const a2aServerUrl = process.env.A2A_SERVER_URL || 'http://localhost:3000';
+    const xhr = require('http');
+    const urlObj = new URL(`${a2aServerUrl}/api/v1/requests/${promiseId}/result`);
+
+    const reqOptions = {
+        hostname: urlObj.hostname,
+        port: urlObj.port,
+        path: urlObj.pathname,
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+    };
+
+    const xhrReq = xhr.request(reqOptions, (xhrRes) => {
+        let data = '';
+        xhrRes.on('data', (chunk) => (data += chunk));
+        xhrRes.on('end', () => {
+            try {
+                if (!data || data.trim() === '') {
+                    throw new Error('Empty response from A2A server');
+                }
+                const rawResponse = JSON.parse(data);
+                const promiseStatus = rawResponse.success ? rawResponse.data : rawResponse;
+
+                const existingPromise = loadServerPromise(cwd, sessionId, currentStep);
+                const updatedPromise = {
+                    ...existingPromise,
+                    ...promiseStatus,
+                    checkedAt: new Date().toISOString(),
+                };
+                saveServerPromise(cwd, sessionId, currentStep, updatedPromise);
+
+                const isPromiseCompleted =
+                    promiseStatus.status === 'completed' ||
+                    promiseStatus.status === 'done' ||
+                    promiseStatus.execute != null;
+
+                if (isPromiseCompleted) {
+                    const assistantMessage =
+                        promiseStatus?.execute?.message ||
+                        promiseStatus?.result?.message ||
+                        promiseStatus?.message ||
+                        null;
+                    if (assistantMessage) {
+                        session.messages = session.messages || [];
+                        session.messages.push({
+                            role: 'assistant',
+                            content: assistantMessage,
+                            step: currentStep,
+                        });
+                    }
+
+                    const stepRecord = buildStepRecord({
+                        sessionId,
+                        stepNum: currentStep,
+                        serverResponse: promiseStatus,
+                        messages: session.messages || [],
+                        fallbackContext: session.context || {},
+                    });
+                    if (stepRecord) {
+                        saveServerResponse(cwd, sessionId, currentStep, stepRecord);
+                    }
+
+                    if (promiseStatus.execute) session.execute = promiseStatus.execute;
+                    session.context = stepRecord?.context || session.context;
+                    session.promiseId = null;
+                    session.status = 'completed';
+                    session.updatedAt = new Date().toISOString();
+                    saveNewSession(cwd, session);
+                }
+
+                const isCompleted = !!(
+                    promiseStatus.execute ||
+                    promiseStatus.status === 'completed' ||
+                    promiseStatus.status === 'done'
+                );
+                const failed = promiseStatus.status === 'failed' || promiseStatus.status === 'error';
+                const includeCtx = requestUrl.searchParams.get('includeContext') === '1';
+                let safeResult = promiseStatus.result || null;
+                if (!includeCtx && safeResult && typeof safeResult === 'object') {
+                    safeResult = { ...safeResult };
+                    delete safeResult.context;
+                }
+                res.setHeader('Content-Type', 'application/json');
+                const statusStr = promiseStatus.status || (isCompleted ? 'completed' : 'pending');
+                const asyncPending = !(isCompleted || failed);
+                const payload = includePromiseIdInBody
+                    ? {
+                          promiseId,
+                          status: statusStr,
+                          result: safeResult,
+                          execute: promiseStatus.execute || null,
+                          completed: isCompleted,
+                      }
+                    : {
+                          asyncPending,
+                          status: statusStr,
+                          result: safeResult,
+                          execute: promiseStatus.execute || null,
+                          completed: isCompleted,
+                      };
+                res.end(JSON.stringify(payload));
+            } catch (e) {
+                console.error('[VitePlugin] ERROR in promise check:', e.message, e.stack);
+                res.writeHead(500).end(JSON.stringify({ error: 'Failed to parse promise response: ' + e.message }));
+            }
+        });
+    });
+
+    xhrReq.on('error', (e) => {
+        res.writeHead(500).end(JSON.stringify({ error: 'Failed to check promise status: ' + e.message }));
+    });
+
+    xhrReq.end();
+}
 
 export function createStepRoutes({ cwd }) {
     return (req, res, next) => {
@@ -88,17 +226,12 @@ export function createStepRoutes({ cwd }) {
                 return;
             }
             const latestStepNum = getNewSessionLatestStep(cwd, sessionId);
-            // Get promise info for latest step
-            const serverPromise = loadServerPromise(cwd, sessionId, latestStepNum);
             const includeContext = url.searchParams.get('includeContext') === '1';
+            attachPromiseMeta(cwd, sessionId, session);
             const response = {
                 session: toPublicSession(session, includeContext),
                 latestStep: latestStepNum,
             };
-            if (serverPromise?.promiseId && (serverPromise.status === 'pending' || serverPromise.status === 'processing')) {
-                response.promiseId = serverPromise.promiseId;
-                response.promiseStatus = serverPromise.status;
-            }
             res.setHeader('Content-Type', 'application/json');
             res.end(JSON.stringify(response));
             return;
@@ -436,6 +569,43 @@ export function createStepRoutes({ cwd }) {
             return;
         }
 
+        const asyncMatch = p.match(/^\/sessions\/([^/]+)\/async$/);
+        if (req.method === 'GET' && asyncMatch) {
+            const sessionId = asyncMatch[1];
+            if (!isValidSessionId(sessionId)) {
+                res.writeHead(400).end(JSON.stringify({ error: 'Invalid session ID' }));
+                return;
+            }
+            if (!loadNewSession(cwd, sessionId)) {
+                res.writeHead(404).end(JSON.stringify({ error: 'Session not found' }));
+                return;
+            }
+            const hit = getActiveAsyncWork(cwd, sessionId);
+            if (!hit) {
+                res.setHeader('Content-Type', 'application/json');
+                res.end(
+                    JSON.stringify({
+                        asyncPending: false,
+                        completed: true,
+                        status: 'idle',
+                        execute: null,
+                        result: null,
+                    })
+                );
+                return;
+            }
+            runViteClientPromisePoll({
+                cwd,
+                sessionId,
+                promiseId: hit.promiseId,
+                currentStep: hit.stepNum,
+                requestUrl: url,
+                res,
+                includePromiseIdInBody: false,
+            });
+            return;
+        }
+
         const promiseMatch = p.match(/^\/sessions\/([^/]+)\/promise\/([^/]+)$/);
         if (req.method === 'GET' && promiseMatch) {
             const sessionId = promiseMatch[1];
@@ -451,10 +621,6 @@ export function createStepRoutes({ cwd }) {
                 return;
             }
 
-            // FIX: Find the step where the promise was created, not just session.currentStep
-            // The promise might be in a step that hasn't been saved as server-response.json yet
-            // Search through all steps to find the one with matching promiseId
-            console.log('[stepRoutes] promise handler - cwd:', cwd, 'sessionId:', sessionId);
             if (typeof listNewSteps !== 'function') {
                 console.error('[stepRoutes] listNewSteps not defined in promise handler!');
                 res.writeHead(500).end(JSON.stringify({ error: 'listNewSteps unavailable' }));
@@ -469,119 +635,18 @@ export function createStepRoutes({ cwd }) {
                     break;
                 }
             }
-            // If not found in existing steps, use currentStep (might be a new promise being created)
             const currentStep = promiseStepNum || session.currentStep || 1;
             console.log('[VitePlugin] Promise check - looking for promiseId:', promiseId, 'found at step:', currentStep);
 
-            const a2aServerUrl = process.env.A2A_SERVER_URL || 'http://localhost:3000';
-            const xhr = require('http');
-            const urlObj = new URL(`${a2aServerUrl}/api/v1/requests/${promiseId}/result`);
-
-            const reqOptions = {
-                hostname: urlObj.hostname,
-                port: urlObj.port,
-                path: urlObj.pathname,
-                method: 'GET',
-                headers: { 'Content-Type': 'application/json' }
-            };
-
-            const xhrReq = xhr.request(reqOptions, (xhrRes) => {
-                let data = '';
-                xhrRes.on('data', (chunk) => (data += chunk));
-                xhrRes.on('end', () => {
-                    console.log('[VitePlugin] Promise check - raw data:', data.substring(0, 500));
-                    try {
-                        if (!data || data.trim() === '') {
-                            throw new Error('Empty response from A2A server');
-                        }
-                        const rawResponse = JSON.parse(data);
-                        console.log('[VitePlugin] Promise check - parsed rawResponse:', JSON.stringify(rawResponse).substring(0, 500));
-                        const promiseStatus = rawResponse.success ? rawResponse.data : rawResponse;
-                        console.log('[VitePlugin] Promise check - promiseStatus:', JSON.stringify(promiseStatus).substring(0, 500));
-
-                        const existingPromise = loadServerPromise(cwd, sessionId, currentStep);
-                        const updatedPromise = {
-                            ...existingPromise,
-                            ...promiseStatus,
-                            checkedAt: new Date().toISOString()
-                        };
-                        saveServerPromise(cwd, sessionId, currentStep, updatedPromise);
-
-                        // A2A Server returns status implicitly - if execute is present, promise is completed
-                        // Also check explicit status for backward compatibility
-                        const isPromiseCompleted = promiseStatus.status === 'completed' || 
-                                                 promiseStatus.status === 'done' ||
-                                                 promiseStatus.execute != null;
-                        
-                        if (isPromiseCompleted) {
-                            // FIX: Extract assistant message from execute.message (A2A Server returns it there)
-                            // Also check result.message for backward compatibility
-                            const assistantMessage = promiseStatus?.execute?.message || 
-                                                    promiseStatus?.result?.message ||
-                                                    promiseStatus?.message ||
-                                                    null;
-                            if (assistantMessage) {
-                                session.messages = session.messages || [];
-                                session.messages.push({
-                                    role: 'assistant',
-                                    content: assistantMessage,
-                                    step: currentStep
-                                });
-                            }
-                            
-                            console.log('[VitePlugin] Promise completed, building step record for step:', currentStep);
-                            const stepRecord = buildStepRecord({
-                                sessionId,
-                                stepNum: currentStep,
-                                serverResponse: promiseStatus,
-                                messages: session.messages || [],
-                                fallbackContext: session.context || {}
-                            });
-                            console.log('[VitePlugin] Step record:', JSON.stringify(stepRecord, null, 2));
-                            if (stepRecord) {
-                                saveServerResponse(cwd, sessionId, currentStep, stepRecord);
-                                console.log('[VitePlugin] Saved server response for step:', currentStep);
-                            } else {
-                                console.log('[VitePlugin] ERROR: stepRecord is null, not saving');
-                            }
-
-                            if (promiseStatus.execute) session.execute = promiseStatus.execute;
-                            session.context = stepRecord?.context || session.context;
-                            session.promiseId = null;
-                            session.status = 'completed';
-                            session.updatedAt = new Date().toISOString();
-                            saveNewSession(cwd, session);
-                        }
-
-                        // Determine status: if execute is present, promise is completed
-                        const isCompleted = !!(promiseStatus.execute || promiseStatus.status === 'completed' || promiseStatus.status === 'done');
-                        
-                        const includeCtx = url.searchParams.get('includeContext') === '1';
-                        let safeResult = promiseStatus.result || null;
-                        if (!includeCtx && safeResult && typeof safeResult === 'object') {
-                            safeResult = { ...safeResult };
-                            delete safeResult.context;
-                        }
-                        res.setHeader('Content-Type', 'application/json');
-                        res.end(JSON.stringify({
-                            promiseId,
-                            status: promiseStatus.status || (isCompleted ? 'completed' : 'pending'),
-                            result: safeResult,
-                            execute: promiseStatus.execute || null,
-                            completed: isCompleted
-                        }));
-                    } catch (e) {
-                        console.error('[VitePlugin] ERROR in promise check:', e.message, e.stack);
-                        res.writeHead(500).end(JSON.stringify({ error: 'Failed to parse promise response: ' + e.message }));
-                    }
-                });
+            runViteClientPromisePoll({
+                cwd,
+                sessionId,
+                promiseId,
+                currentStep,
+                requestUrl: url,
+                res,
+                includePromiseIdInBody: true,
             });
-
-            xhrReq.on('error', (e) => {
-                res.writeHead(500).end(JSON.stringify({ error: 'Failed to check promise status: ' + e.message }));
-            });
-
-            xhrReq.end();
             return;
         }
 

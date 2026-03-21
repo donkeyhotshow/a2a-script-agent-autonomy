@@ -65,7 +65,11 @@
             const outcome = await outcomePromise;
             
             // Check if this is async (has promiseId) - don't hide loader yet!
-            const isAsync = submitResult?.promiseId || outcome?.promiseId;
+            const isAsync =
+                submitResult?.asyncPending ||
+                outcome?.asyncPending ||
+                submitResult?.promiseId ||
+                outcome?.promiseId;
             
             if (outcome.execute) {
                 setPanelContent(contentEl, 'execute', { execute: outcome.execute, sessionId, projectId }, TaskFlow);
@@ -164,7 +168,11 @@
             const outcome = await outcomePromise;
             
             // Check if this is async (has promiseId) - don't hide loader yet!
-            const isAsync = submitResult?.promiseId || outcome?.promiseId;
+            const isAsync =
+                submitResult?.asyncPending ||
+                outcome?.asyncPending ||
+                submitResult?.promiseId ||
+                outcome?.promiseId;
             
             if (outcome.execute) {
                 setPanelContent(contentEl, 'execute', { execute: outcome.execute, sessionId, projectId }, TaskFlow);

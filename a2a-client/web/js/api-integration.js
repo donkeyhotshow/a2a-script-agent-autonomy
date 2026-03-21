@@ -1,7 +1,7 @@
 /**
  * API Integration Module
  * Connects UI components with Client API (single apiBase, e.g. localhost:3001).
- * Uses HTTP with promiseId polling. SSE/WebSocket removed.
+ * Uses HTTP; async work via GET .../sessions/:id/async (no transport id in UI). SSE/WebSocket removed.
  * 
  * Step Files Structure (storage mode):
  * storage/sessions/{SESSION_ID}/{STEP}/
@@ -214,7 +214,7 @@ class APIIntegration {
             return null;
         }
         const raw = await res.json();
-        console.log('[API] getSession response:', sessionId, 'promiseId:', raw?.data?.promiseId, 'status:', raw?.data?.status);
+        console.log('[API] getSession response:', sessionId, 'asyncPending:', raw?.asyncPending, 'status:', raw?.status);
         if (raw && typeof raw === 'object' && raw.success === true) {
             const d = raw.data ?? raw.session;
             if (d && typeof d === 'object' && (d.id || d.sessionId)) return d;
@@ -277,6 +277,17 @@ class APIIntegration {
         const res = await fetch(this._clientA2aUrl(`sessions/${encodeURIComponent(sessionId)}/promise/${encodeURIComponent(promiseId)}`), {
             method: 'GET',
             headers
+        });
+        if (!res.ok) return null;
+        return res.json();
+    }
+
+    /** Session-scoped async status (Vite Client API). */
+    async checkSessionAsync(sessionId) {
+        const headers = { ...this._getHeaders(), ...this._getStorageHeaders() };
+        const res = await fetch(this._clientA2aUrl(`sessions/${encodeURIComponent(sessionId)}/async`), {
+            method: 'GET',
+            headers,
         });
         if (!res.ok) return null;
         return res.json();

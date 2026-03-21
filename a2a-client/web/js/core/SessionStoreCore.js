@@ -171,10 +171,11 @@ export class SessionStoreCore extends EventEmitter {
     /**
      * Запустить polling для promise
      * @param {Function} checkFn
+     * @param {{ sessionScoped?: boolean }} [opts]
      * @returns {SessionStoreCore}
      */
-    startPromisePolling(checkFn) {
-        this._promise.startPolling(checkFn);
+    startPromisePolling(checkFn, opts) {
+        this._promise.startPolling(checkFn, opts);
         return this;
     }
 

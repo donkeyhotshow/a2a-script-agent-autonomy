@@ -12,7 +12,7 @@
  * 1. Валидация результата (ActionValidator)
  * 2. Отправка на сервер (ActionExecutor)
  * 3. Парсинг ответа (ActionParser)
- * 4. Если async (promiseId) → polling (ActionExecutor)
+ * 4. Если async (asyncPending) → polling GET .../async (ActionExecutor)
  * 5. Если sync → возврат execute клиенту
  * 
  * Зависит от:

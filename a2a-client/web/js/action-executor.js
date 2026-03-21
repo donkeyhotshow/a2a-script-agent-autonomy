@@ -90,7 +90,7 @@
 
     /**
      * Hydrate store from GET /sessions/:id (authoritative after minimal POST /next ack).
-     * @param {{ skipExecuteWhenPending?: boolean }} [opts] — if true, skip setExecute while snap still has promiseId (setExecute clears promisePending).
+     * @param {{ skipExecuteWhenPending?: boolean }} [opts] — if true, skip setExecute while snap.asyncPending (setExecute clears promisePending).
      */
     async function pullSessionSnapshot(sessionId, store, opts = {}) {
         const api = global.apiIntegration;
@@ -102,7 +102,7 @@
         if (Array.isArray(snap.messages) && snap.messages.length > 0) {
             store.applyServerMessages?.(snap.messages);
         }
-        if (!(opts.skipExecuteWhenPending && snap.promiseId) && snap.execute != null) {
+        if (!(opts.skipExecuteWhenPending && snap.asyncPending) && snap.execute != null) {
             store.setExecute?.(snap.execute);
         }
         if (snap.context != null) store.setContext?.(snap.context);
@@ -141,16 +141,17 @@
             body: JSON.stringify({ result })
         });
         
-        // POST /next returns only { success, accepted, step, promiseId? } — hydrate via GET session
+        // POST /next ack: asyncPending (+ legacy promiseId) — hydrate via GET session; poll GET .../async
+        const asyncPending = !!(data?.asyncPending ?? data?.promiseId);
         if (store && data?.success && data?.accepted) {
-            if (data.promiseId) {
+            if (asyncPending) {
                 store.setPromisePending?.(true);
                 if (typeof sessionId === 'string') {
                     store.startLoader?.(sessionId);
                 } else {
                     store.startLoader?.();
                 }
-                startPromisePolling(sessionId, data.promiseId);
+                startPromisePolling(sessionId, isStorageMode ? null : data.promiseId || null);
                 if (global.WindowManager?.refreshAll) {
                     global.WindowManager.refreshAll();
                 }
@@ -177,24 +178,23 @@
             console.warn('[ActionExecutor] API base not configured');
             return null;
         }
-        
-        // Use storage mode with default fallback
+
         const storageMode = store?.getStorageMode?.() || 'storage';
         const isStorageMode = storageMode === 'storage';
         const apiPath = isStorageMode ? '' : '/api';
         const url = `${base}${apiPath}/sessions/${encodeURIComponent(sessionId)}/promise/${encodeURIComponent(promiseId)}`;
-        
+
         try {
             const res = await fetch(url, {
                 method: 'GET',
-                headers: { 'Content-Type': 'application/json' }
+                headers: { 'Content-Type': 'application/json' },
             });
-            
+
             if (!res.ok) {
                 console.warn('[ActionExecutor] Promise check failed with status:', res.status);
                 return null;
             }
-            
+
             let data = {};
             const text = await res.text();
             if (text) {
@@ -203,6 +203,29 @@
             return data;
         } catch (e) {
             console.error('[ActionExecutor] Promise check failed:', e.message);
+            return null;
+        }
+    }
+
+    /** Session-scoped async poll — Client API resolves transport id server-side */
+    async function checkSessionAsync(sessionId) {
+        const store = global.resolveStore(sessionId);
+        const base = getApiBase(store);
+        if (!base) return null;
+        const storageMode = store?.getStorageMode?.() || 'storage';
+        const isStorageMode = storageMode === 'storage';
+        const apiPath = isStorageMode ? '' : '/api';
+        const url = `${base}${apiPath}/sessions/${encodeURIComponent(sessionId)}/async`;
+        try {
+            const res = await fetch(url, { method: 'GET', headers: { 'Content-Type': 'application/json' } });
+            if (!res.ok) {
+                console.warn('[ActionExecutor] Session async check failed:', res.status);
+                return null;
+            }
+            const text = await res.text();
+            return text ? JSON.parse(text) : {};
+        } catch (e) {
+            console.error('[ActionExecutor] Session async check failed:', e.message);
             return null;
         }
     }
@@ -216,56 +239,56 @@
      */
     function startPromisePolling(sessionId, promiseId) {
         const store = global.resolveStore(sessionId);
-        
-        // Try to use SessionStore for unified promise management
-        if (store?.startPromisePolling && store?.setPromiseId) {
-            // Set promise ID in store
-            store.setPromiseId(promiseId);
-            
-            // Start polling via SessionStore with checkPromise function
-            store.startPromisePolling((pid) => checkPromise(sessionId, pid));
-            
-            // Subscribe to promise resolved event from SessionStore
+        const sessionScoped = !promiseId;
+
+        if (store?.startPromisePolling) {
+            if (!sessionScoped && store.setPromiseId) {
+                store.setPromiseId(promiseId);
+            }
+
+            const checkFn = sessionScoped
+                ? () => checkSessionAsync(sessionId)
+                : (pid) => checkPromise(sessionId, pid);
+
+            store.startPromisePolling(checkFn, { sessionScoped });
+
             const onResolved = (data) => {
-                if (data.promiseId === promiseId) {
-                    pullSessionSnapshot(sessionId, store).then(() => {
-                        if (typeof sessionId === 'string') {
-                            store.stopLoader?.(sessionId);
-                        } else {
-                            store.stopLoader?.();
-                        }
-                        global.apiIntegration?.emit?.('promiseResolved', {
-                            sessionId,
-                            promiseId,
-                            result: data.result,
-                            execute: data.execute
-                        });
-                    });
-                }
-            };
-            
-            // Subscribe to promise rejected event from SessionStore
-            const onRejected = (data) => {
-                if (data.promiseId === promiseId) {
-                    store.setPromisePending?.(false);
-                    // Stop loader on error
+                if (!(data.sessionScoped || data.promiseId === promiseId)) return;
+                pullSessionSnapshot(sessionId, store).then(() => {
                     if (typeof sessionId === 'string') {
                         store.stopLoader?.(sessionId);
                     } else {
                         store.stopLoader?.();
                     }
-                    global.apiIntegration?.emit?.('promiseError', {
+                    global.apiIntegration?.emit?.('promiseResolved', {
                         sessionId,
-                        promiseId,
-                        error: data.error || 'Promise failed'
+                        promiseId: data.promiseId ?? promiseId ?? null,
+                        sessionScoped: !!data.sessionScoped,
+                        result: data.result,
+                        execute: data.execute,
                     });
-                }
+                });
             };
-            
-            // Listen to SessionStore events
+
+            const onRejected = (data) => {
+                if (!(data.sessionScoped || data.promiseId === promiseId)) return;
+                store.setPromisePending?.(false);
+                if (typeof sessionId === 'string') {
+                    store.stopLoader?.(sessionId);
+                } else {
+                    store.stopLoader?.();
+                }
+                global.apiIntegration?.emit?.('promiseError', {
+                    sessionId,
+                    promiseId: data.promiseId ?? promiseId ?? null,
+                    sessionScoped: !!data.sessionScoped,
+                    error: data.error || 'Promise failed',
+                });
+            };
+
             store.on?.('promiseResolved', onResolved);
             store.on?.('promiseError', onRejected);
-            
+
             return;
         }
         
@@ -277,47 +300,48 @@
         }
         
         localPollTimer = setInterval(async () => {
-            const status = await checkPromise(sessionId, promiseId);
-            
+            const status = sessionScoped
+                ? await checkSessionAsync(sessionId)
+                : await checkPromise(sessionId, promiseId);
+
             if (!status) {
-                // Network error - continue polling
                 return;
             }
-            
-            if (status.completed || status.status === 'completed' || status.status === 'done') {
-                // Promise resolved - clear timer and update session
+
+            if (status.completed || status.status === 'completed' || status.status === 'done' || status.status === 'idle') {
                 if (localPollTimer) {
                     clearInterval(localPollTimer);
                     localPollTimer = null;
                 }
-                
+
                 if (store) {
                     await pullSessionSnapshot(sessionId, store);
                 }
-                
+
                 global.apiIntegration?.emit?.('promiseResolved', {
                     sessionId,
-                    promiseId,
+                    promiseId: promiseId ?? null,
+                    sessionScoped,
                     result: status.result,
-                    execute: status.execute ?? status.result?.execute
+                    execute: status.execute ?? status.result?.execute,
                 });
             }
-            
+
             if (status.status === 'failed' || status.status === 'error') {
-                // Promise failed - clear timer
                 if (localPollTimer) {
                     clearInterval(localPollTimer);
                     localPollTimer = null;
                 }
-                
+
                 if (store) {
                     store.setPromisePending?.(false);
                 }
-                
+
                 global.apiIntegration?.emit?.('promiseError', {
                     sessionId,
-                    promiseId,
-                    error: status.error || 'Promise failed'
+                    promiseId: promiseId ?? null,
+                    sessionScoped,
+                    error: status.error || 'Promise failed',
                 });
             }
         }, POLL_INTERVAL);
@@ -377,6 +401,7 @@
         sendMessage,
         sendChoice,
         checkPromise,
+        checkSessionAsync,
         startPromisePolling,
         stopPromisePolling,
         pullSessionSnapshot,

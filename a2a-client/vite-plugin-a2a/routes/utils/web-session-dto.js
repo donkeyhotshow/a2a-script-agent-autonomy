@@ -9,6 +9,23 @@ function isActivePromiseStatus(status) {
 }
 
 /**
+ * In-flight async work: first incomplete step with an active server-promise.json.
+ * @returns {{ stepNum: number, promiseId: string, serverPromise: object } | null}
+ */
+export function getActiveAsyncWork(cwd, sessionId) {
+    const steps = listNewSteps(cwd, sessionId);
+    for (const stepNum of steps) {
+        const completed = loadNewStep(cwd, sessionId, stepNum) != null;
+        if (completed) continue;
+        const serverPromise = loadServerPromise(cwd, sessionId, stepNum);
+        if (serverPromise?.promiseId && isActivePromiseStatus(serverPromise.status)) {
+            return { stepNum, promiseId: serverPromise.promiseId, serverPromise };
+        }
+    }
+    return null;
+}
+
+/**
  * Flatten step files into one message list (order per step: execute.message → messages.json → client-result).
  * Assistant replies for a step live in messages.json; client-result is the user input recorded in that folder,
  * which chronologically follows the assistant turn — so messages.json must come before client-result.
@@ -76,17 +93,14 @@ export function collectSessionMessagesFlat(cwd, sessionId) {
  * still points at the last step with server-response.json. Scan incomplete steps for server-promise.json.
  */
 export function attachPromiseMeta(cwd, sessionId, session) {
-    const steps = listNewSteps(cwd, sessionId);
-    for (const stepNum of steps) {
-        const completed = loadNewStep(cwd, sessionId, stepNum) != null;
-        if (completed) continue;
-        const serverPromise = loadServerPromise(cwd, sessionId, stepNum);
-        if (serverPromise?.promiseId && isActivePromiseStatus(serverPromise.status)) {
-            session.promiseId = serverPromise.promiseId;
-            session.promiseStatus = serverPromise.status;
-            return session;
-        }
+    const active = getActiveAsyncWork(cwd, sessionId);
+    if (active) {
+        session.promiseId = active.promiseId;
+        session.promiseStatus = active.serverPromise.status;
+        session.asyncPending = true;
+        return session;
     }
+    session.asyncPending = false;
     return session;
 }
 
@@ -96,22 +110,31 @@ export function attachPromiseMeta(cwd, sessionId, session) {
 export function toPublicSession(session, includeContext = false) {
     if (!session) return session;
     if (includeContext) return { ...session };
-    const { context: _c, ...rest } = session;
-    return rest;
+    const { context: _c, promiseId: _omitTransportId, ...rest } = session;
+    return {
+        ...rest,
+        asyncPending:
+            session.asyncPending ??
+            !!(session.promiseId && isActivePromiseStatus(session.promiseStatus)),
+        promiseStatus: session.promiseStatus ?? null,
+    };
 }
 
 /**
  * POST /next ack only — no session snapshot, execute, or messages (client daemon uses GET session / promise / messages).
+ * Note: promiseId is NOT returned to Web UI - Client API daemon handles polling internally via /async endpoint.
  */
 export function toMinimalNextAck({ success, step, promiseId, error }) {
     if (!success) {
         return { success: false, error: String(error || 'Request failed') };
     }
+    const asyncPending = !!promiseId;
     return {
         success: true,
         accepted: true,
         step,
-        promiseId: promiseId ?? null,
+        asyncPending,
+        // NOTE: promiseId intentionally NOT included - Web UI should poll via /async endpoint
     };
 }
 

@@ -2,11 +2,11 @@
  * SessionData - Управление данными сессий
  * 
  * Содержит:
- * - SessionStoreCore - ядро управления состоянием сессии
- * 
+ * - createSessionStoreCore() — ядро состояния сессии (рантайм; не класс из js/core/SessionStoreCore.js)
+ *
  * Зависит от:
  * - global.__a2aDaemons (dialog-loader, dialog-promise)
- * - global.Normalizers (normalizeMessage)
+ * - global.Normalizers (normalizeMessage, MAX_MESSAGES)
  * - global.executeHasActionableForm (html-utils.js)
  */
 
@@ -23,7 +23,10 @@
     const createDialogLoader = D.createDialogLoader;
     const createDialogPromise = D.createDialogPromise;
 
-    const MAX_MESSAGES = 100;
+    function maxMessagesFromNormalizers() {
+        const n = global.Normalizers && global.Normalizers.MAX_MESSAGES;
+        return typeof n === 'number' && n > 0 ? n : 200;
+    }
 
     /**
      * Создать ядро хранилища сессии
@@ -93,6 +96,7 @@
             );
         }
         const normalizeMessage = global.Normalizers.normalizeMessage;
+        const MAX_MESSAGES = maxMessagesFromNormalizers();
 
         return {
             getState: function(sid) { 
@@ -302,7 +306,9 @@
     // Экспорт
     global.SessionData = {
         createSessionStoreCore: createSessionStoreCore,
-        MAX_MESSAGES: MAX_MESSAGES
+        get MAX_MESSAGES() {
+            return maxMessagesFromNormalizers();
+        }
     };
 
 })(typeof window !== 'undefined' ? window : globalThis);

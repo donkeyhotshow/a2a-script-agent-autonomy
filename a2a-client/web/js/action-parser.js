@@ -209,6 +209,7 @@
                 execute: null,
                 context: null,
                 promiseId: null,
+                asyncPending: false,
                 session: null,
                 error: null
             };
@@ -218,6 +219,7 @@
             execute: response.execute ? parseExecute(response.execute) : null,
             context: response.context || null,
             promiseId: response.promiseId || null,
+            asyncPending: !!(response.asyncPending || response.promiseId),
             session: response.session || null,
             error: response.error || null,
             sync: response.sync || false,

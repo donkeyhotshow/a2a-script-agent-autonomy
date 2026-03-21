@@ -1,16 +1,15 @@
 /**
  * SessionStore - Главное хранилище состояния сессии
  * 
- * Иерархия модулей:
- * ├── install-normalizers.mjs + utils/normalizers.js — window.Normalizers
- * ├── session-data.js     - Ядро управления состоянием (SessionStoreCore)
- * ├── session-storage.js  - API для работы с хранилищем
- * ├── project-store.js   - Управление проектами
- * └── session-store.js    - Точка входа (делегатор)
- * 
- * Использует:
- * - DialogState - управление состоянием диалога
- * - DialogLoader / DialogPromise — web/js/daemons/* (load before this script)
+ * Иерархия модулей (снизу вверх):
+ * ├── utils/normalizers.js + install-normalizers.mjs — window.Normalizers (лимиты и normalizeMessage)
+ * ├── js/daemons/* — DialogLoader / DialogPromise (рантайм UI)
+ * ├── session-data.js — createSessionStoreCore() (плоское состояние + даемоны; не ESM core/*)
+ * ├── session-storage.js — API хранилища
+ * ├── project-store.js — проекты
+ * └── session-store.js — точка входа (делегатор)
+ *
+ * ESM в js/core/* (DialogState, SessionStoreCore, …) — для тестов/импорта; рантайм страницы идёт через SessionData + daemons.
  * 
  * Обратная совместимость: window.SessionStore работает как раньше
  * 

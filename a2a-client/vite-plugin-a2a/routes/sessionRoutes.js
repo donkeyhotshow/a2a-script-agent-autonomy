@@ -128,7 +128,7 @@ export function createSessionRoutes({ cwd }) {
                 lastSeq,
                 hasMore: afterSeq + batch.length < lastSeq,
                 messages: batch,
-                promiseId: publicSnap.promiseId ?? null,
+                asyncPending: publicSnap.asyncPending ?? false,
                 promiseStatus: publicSnap.promiseStatus ?? null,
                 currentStep: publicSnap.currentStep,
             };

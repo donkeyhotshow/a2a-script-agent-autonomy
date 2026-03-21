@@ -1,0 +1,31 @@
+{
+  "promiseId": "prom_1774065128777_3eawglqe4",
+  "status": "completed",
+  "submittedAt": "2026-03-21T03:52:08.793Z",
+  "execute": {
+    "form": {
+      "title": "Оберіть спосіб виконання",
+      "choices": [
+        {
+          "id": "dialog",
+          "label": "AI діалог з користувачем"
+        },
+        {
+          "id": "auto-ai",
+          "label": "AI Action Generator — сгенерировать экшен с помощью LLM"
+        },
+        {
+          "id": "task-decomposition",
+          "label": "Декомпозиция задачи вручную"
+        }
+      ]
+    }
+  },
+  "context": {
+    "task": "диалог",
+    "execution": {
+      "action": "task",
+      "step": "router"
+    }
+  }
+}

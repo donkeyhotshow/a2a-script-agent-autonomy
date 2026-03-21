@@ -195,9 +195,10 @@ request.json → server-transforms → request.md → [LLM] → response.md → 
 | PUT | `/api/a2a/sessions/{id}` | Update session |
 | POST | `/api/a2a/sessions/{id}/next` | Send next message |
 | POST | `/api/a2a/sessions/{id}/steps` | Save step data |
-| GET | `/api/a2a/sessions/{id}/promise/{promiseId}` | Poll promise status |
+| GET | `/api/a2a/sessions/{id}/async` | Poll in-flight async work for session (no `promiseId` in URL — preferred for web UI) |
+| GET | `/api/a2a/sessions/{id}/promise/{promiseId}` | Poll promise status (legacy / tooling) |
 
-**Contract:** `POST .../next` returns an **ack only** (`success`, `accepted`, `step`, `promiseId?`). Load UI state with **`GET .../sessions/{id}`** and, while async, poll **`GET .../promise/{promiseId}`**. The same routes are implemented by **`@a2a/sdk` Express** when mounted at `/api/a2a/sessions` (standalone Client API). **`a2a-server`** also exposes `POST /api/a2a/sessions/:id/next` for a different, action-processor flow—not the file-backed Client API above.
+**Contract:** `POST .../next` returns an **ack only** (`success`, `accepted`, `step`, `asyncPending`, optional legacy `promiseId`). Load UI state with **`GET .../sessions/{id}`** and, while async, poll **`GET .../async`** (web UI) or **`GET .../promise/{promiseId}`** (legacy). See [`a2a-client/docs/WEB_UI_PROTOCOL.md`](a2a-client/docs/WEB_UI_PROTOCOL.md). **`@a2a/sdk` Express** may not expose `/async` yet—use promise URL or align the SDK. **`a2a-server`** also exposes `POST /api/a2a/sessions/:id/next` for a different flow—not the file-backed Client API above.
 
 ### A2A Server - Port 3000
 

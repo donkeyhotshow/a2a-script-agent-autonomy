@@ -115,17 +115,20 @@ export class DialogPromise extends EventEmitter {
 
     /**
      * Начать polling для проверки promise
-     * @param {Function} checkFn - Функция проверки статуса
+     * @param {Function} checkFn - (promiseId?) => status; без id если opts.sessionScoped
+     * @param {{ sessionScoped?: boolean }} [opts]
      * @returns {DialogPromise}
      */
-    startPolling(checkFn) {
-        if (!this._promiseId) return this;
-        
+    startPolling(checkFn, opts = {}) {
+        const sessionScoped = opts.sessionScoped === true;
+        if (!sessionScoped && !this._promiseId) return this;
+        if (sessionScoped && !this._pending) return this;
+
         this._stopPolling();
-        
+
         this._pollTimer = setInterval(async () => {
             try {
-                const result = await checkFn(this._promiseId);
+                const result = sessionScoped ? await checkFn() : await checkFn(this._promiseId);
                 
                 if (!result) {
                     // Ошибка сети - продолжаем polling
@@ -137,22 +140,24 @@ export class DialogPromise extends EventEmitter {
                     this._stopPolling();
                     this.setPending(false);
                     this.setStatus('completed');
-                    
+                    const pid = sessionScoped ? null : this._promiseId;
                     this.emit('resolved', {
-                        promiseId: this._promiseId,
+                        promiseId: pid,
+                        sessionScoped,
                         result: result.result,
                         execute: result.execute
                     });
                 }
-                
+
                 if (result.status === 'failed' || result.status === 'error') {
                     // Promise не удался
                     this._stopPolling();
                     this.setPending(false);
                     this.setStatus('failed');
-                    
+                    const pid = sessionScoped ? null : this._promiseId;
                     this.emit('rejected', {
-                        promiseId: this._promiseId,
+                        promiseId: pid,
+                        sessionScoped,
                         error: result.error || 'Promise failed'
                     });
                 }

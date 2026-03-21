@@ -1,6 +1,6 @@
 # Web daemons (browser)
 
-**Scope:** UI-side background work only — poll the **Client API** (e.g. `GET /api/a2a/sessions/:id/promise/:promiseId`), not A2A Server directly. ES module [`../core/DialogPromise.js`](../core/DialogPromise.js) mirrors the same polling semantics for the refactored store.
+**Scope:** UI-side background work only — poll the **Client API** (`GET /api/a2a/sessions/:id/async` in storage mode; no transport id in the web layer). Legacy: `GET .../promise/:promiseId`. Not A2A Server directly. This folder is what the page loads; [`../core/DialogPromise.js`](../core/DialogPromise.js) is the ESM twin used in unit tests / imports, not bundled into the classic script stack.
 
 Scripts attach factories to `window.__a2aDaemons`:
 
