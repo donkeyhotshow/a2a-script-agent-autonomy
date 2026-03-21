@@ -317,14 +317,27 @@
 
                     const storeState = store?.getState?.() || {};
                     const storeHasMessages = store && (storeState.messages?.length > 0);
+                    // Load session data if not already available
                     if (!storeHasMessages && sessionData?.messages === undefined) {
                         try {
-                            const adapter = global.SessionManagerAdapter || global.SessionManager;
-                            if (adapter?.getConversation) {
-                                await adapter.getConversation(sessionId);
+                            const api = global.apiIntegration;
+                            if (api?.getSession) {
+                                const snap = await api.getSession(sessionId, { includeContext: true });
+                                if (snap?.messages?.length > 0) {
+                                    store.setMessages(snap.messages);
+                                }
+                                if (snap?.context) {
+                                    store.setContext(snap.context);
+                                }
+                                if (snap?.execute) {
+                                    store.setExecute(snap.execute);
+                                }
+                                if (snap?.status) {
+                                    store.setStatus(snap.status);
+                                }
                             }
                         } catch (err) {
-                            console.warn('[WindowState] Failed to load conversation:', err);
+                            console.warn('[WindowState] Failed to load session:', err);
                         }
                     }
 
