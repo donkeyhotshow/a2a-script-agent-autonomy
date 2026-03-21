@@ -38,7 +38,7 @@
     <div class="modal-content">
         <div class="modal-header">
             <h2>Settings</h2>
-            <button class="modal-close" id="closeSettingsModal">&times;</button>
+            <button type="button" class="modal-close" id="closeSettingsModal" aria-label="Close settings">&times;</button>
         </div>
         <div class="modal-body">
             <div class="form-group">
@@ -47,8 +47,8 @@
             </div>
         </div>
         <div class="modal-footer">
-            <button class="btn btn-secondary" id="cancelSettings">Cancel</button>
-            <button class="btn btn-primary" id="saveSettings">Save</button>
+            <button type="button" class="btn btn-secondary" id="cancelSettings">Cancel</button>
+            <button type="button" class="btn btn-primary" id="saveSettings">Save</button>
         </div>
     </div>
 </div>
@@ -58,18 +58,18 @@
     <div class="modal-content modal-large">
         <div class="modal-header">
             <h2>Projects</h2>
-            <button class="modal-close" id="closeProjectsModal">&times;</button>
+            <button type="button" class="modal-close" id="closeProjectsModal" aria-label="Close projects">&times;</button>
         </div>
         <div class="modal-body">
             <div class="projects-toolbar">
-                <button class="btn btn-primary" id="newProjectBtn">+ New Project</button>
+                <button type="button" class="btn btn-primary" id="newProjectBtn">+ New Project</button>
             </div>
             <div class="projects-grid" id="projectsGrid">
                 <div class="loading-indicator">Loading...</div>
             </div>
         </div>
         <div class="modal-footer">
-            <button class="btn btn-secondary" id="cancelProjects">Close</button>
+            <button type="button" class="btn btn-secondary" id="cancelProjects">Close</button>
         </div>
     </div>
 </div>
@@ -78,7 +78,7 @@
 <div id="notificationsPanel" class="notifications-panel" style="display: none;">
     <div class="notifications-header">
         <span>Notifications</span>
-        <button id="clearNotifications">&times;</button>
+        <button type="button" id="clearNotifications" aria-label="Clear notifications">&times;</button>
     </div>
     <div class="notifications-list" id="notificationsList"></div>
 </div>

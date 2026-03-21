@@ -20,9 +20,15 @@
   line-height: 1.55;
   max-width: 28rem;
   margin: 48px auto 0;
+  padding: var(--space-md) var(--space-lg);
   font-weight: 400;
   letter-spacing: 0.02em;
-  opacity: 0.92;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
 }
 
 /* Header - Glassmorphism */
