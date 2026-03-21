@@ -57,7 +57,39 @@
         });
     }
 
+    /**
+     * Inject an ES module script once; resolves when evaluated.
+     * @param {string} relativePath
+     * @param {{ onload?: () => void }} [hooks]
+     * @returns {Promise<void>}
+     */
+    function appendWebModuleOnce(relativePath, hooks) {
+        return new Promise(function (resolve, reject) {
+            var rel = String(relativePath || '');
+            var resolved = resolveWebScriptUrl(rel);
+            var safe = rel.replace(/"/g, '');
+            if (document.querySelector('script[type="module"][data-a2a-module="' + safe + '"]')) {
+                if (hooks && hooks.onload) hooks.onload();
+                resolve();
+                return;
+            }
+            var script = document.createElement('script');
+            script.type = 'module';
+            script.dataset.a2aModule = rel;
+            script.src = resolved;
+            script.onload = function () {
+                if (hooks && hooks.onload) hooks.onload();
+                resolve();
+            };
+            script.onerror = function () {
+                reject(new Error('Failed to load module ' + rel));
+            };
+            document.head.appendChild(script);
+        });
+    }
+
     global.resolveWebScriptUrl = resolveWebScriptUrl;
     global.isWebScriptInjected = isWebScriptInjected;
     global.appendWebScriptOnce = appendWebScriptOnce;
+    global.appendWebModuleOnce = appendWebModuleOnce;
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -87,19 +87,12 @@
             });
         }
 
-        // Используем нормализатор если доступен
-        const normalizeMessage = global.Normalizers?.normalizeMessage || function(msg, role) {
-            if (!msg || typeof msg !== 'object') {
-                return { content: String(msg || ''), role: role || 'user', timestamp: Date.now() };
-            }
-            return {
-                id: msg.id || 'msg_' + Date.now(),
-                content: msg.content || msg.text || String(msg),
-                role: msg.role || role || 'user',
-                metadata: msg.metadata || {},
-                timestamp: msg.timestamp || Date.now()
-            };
-        };
+        if (!global.Normalizers || typeof global.Normalizers.normalizeMessage !== 'function') {
+            throw new Error(
+                '[SessionData] global.Normalizers.normalizeMessage required (load js/install-normalizers.mjs before createSessionStoreCore)'
+            );
+        }
+        const normalizeMessage = global.Normalizers.normalizeMessage;
 
         return {
             getState: function(sid) { 
@@ -263,7 +256,8 @@
                 var next = [];
                 for (var i = 0; i < messages.length; i++) {
                     var msg = messages[i];
-                    next.push(normalizeMessage(msg, msg.role || 'user'));
+                    var n = normalizeMessage(msg, msg.role || 'user');
+                    if (n) next.push(n);
                 }
                 state.messages = next.slice(-MAX_MESSAGES);
                 emit('messages', state.messages.slice());

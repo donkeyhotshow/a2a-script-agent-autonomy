@@ -70,7 +70,7 @@ a2a-client/web/js/
 ├── storage/
 │   └── SessionStorageAPI.js
 ├── utils/
-│   └── normalizers.js      ← normalizeMessage (РЕКОМЕНДУЕТСЯ)
+│   └── normalizers.js      ← canonical normalizeMessage; install-normalizers.mjs → window.Normalizers
 ├── action-handler.js       ← Отправка message/choice
 ├── session-store-refactored.js  ← Wrapper (Composition) ✅
 ├── session-store.js        ← Legacy IIFE (fallback)
@@ -203,11 +203,7 @@ return window.location.origin + '/api/a2a';
 // Удалены из response: timestamp, session_id, version, result, choice_id
 ```
 
-**3. Документирование дубликата normalizeMessage**
-```javascript
-// session-store.js (legacy)
-// normalizers.js (рекомендуемая версия)
-```
+**3. normalizeMessage** — single implementation in `utils/normalizers.js`; legacy globals via `install-normalizers.mjs`.
 
 ---
 

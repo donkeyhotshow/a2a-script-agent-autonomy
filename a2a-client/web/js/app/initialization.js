@@ -73,12 +73,19 @@
                 });
             }
 
+            if (typeof global.appendWebModuleOnce === 'function') {
+                await global.appendWebModuleOnce('js/install-normalizers.mjs', {
+                    onload: () => console.log('[AppTask] Loaded module: js/install-normalizers.mjs')
+                });
+            } else {
+                console.error('[AppTask] appendWebModuleOnce missing; Normalizers may be unavailable');
+            }
+
             const modules = [
                 'js/html-utils.js',
                 'js/daemons/emitter.js',
                 'js/daemons/dialog-loader.js',
                 'js/daemons/dialog-promise-poll.js',
-                'js/normalizers.js',
                 'js/session-data.js',
                 'js/session-storage.js',
                 'js/project-store.js',

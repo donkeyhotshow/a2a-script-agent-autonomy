@@ -2,7 +2,7 @@
  * SessionStore - Главное хранилище состояния сессии
  * 
  * Иерархия модулей:
- * ├── normalizers.js      - Утилиты нормализации данных
+ * ├── install-normalizers.mjs + utils/normalizers.js — window.Normalizers
  * ├── session-data.js     - Ядро управления состоянием (SessionStoreCore)
  * ├── session-storage.js  - API для работы с хранилищем
  * ├── project-store.js   - Управление проектами
@@ -19,7 +19,7 @@
  * 2. js/daemons/dialog-loader.js
  * 3. js/daemons/dialog-promise-poll.js
  * 4. js/html-utils.js (executeHasActionableForm)
- * 5. js/normalizers.js
+ * 5. js/install-normalizers.mjs (module, before deferred session-store.js)
  * 6. js/session-data.js
  * 7. js/session-storage.js
  * 8. js/project-store.js

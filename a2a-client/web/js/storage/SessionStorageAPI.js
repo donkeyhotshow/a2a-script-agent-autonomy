@@ -3,8 +3,6 @@
  * Handles create/save/load/list/check for 'storage' mode
  */
 
-import { normalizeMessage } from '../utils/normalizers.js';
-
 export class SessionStorageAPI {
     constructor(storageBase = '/api/a2a/sessions', storageMode = 'storage') {
         this._storageBase = storageBase;

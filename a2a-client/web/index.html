@@ -105,14 +105,14 @@
 <script src="js/daemons/dialog-loader.js"></script>
 <script src="js/daemons/dialog-promise-poll.js"></script>
 
-<!-- SessionStore stack (session-store.js is the facade; requires the rest) -->
+<!-- SessionStore stack: classic deps first; module installs Normalizers; defer runs after so new SessionStore() sees Normalizers -->
 <script src="js/html-utils.js"></script>
-<script src="js/normalizers.js"></script>
 <script src="js/session-data.js"></script>
 <!-- After storage.js: replaces global.SessionStorageAPI with { create } factory for SessionStore -->
 <script src="js/session-storage.js"></script>
-<script src="js/session-store.js"></script>
-<script src="js/task-flow/utils.js"></script>
+<script type="module" src="js/install-normalizers.mjs"></script>
+<script defer src="js/session-store.js"></script>
+<script defer src="js/task-flow/utils.js"></script>
 
 <!-- 4. Simplified Panel System -->
 
@@ -120,24 +120,24 @@
 <!-- 6. CLI Command Handler -->
 
 <!-- ===== Application Modules ===== -->
-<script src="js/template-loader.js"></script>
-<script src="js/api-integration.js"></script>
-<script src="js/action-parser.js"></script>
-<script src="js/action-validator.js"></script>
-<script src="js/action-executor.js"></script>
-<script src="js/action-handler.js"></script>
-<script src="js/error-handler.js?v=3"></script>
+<script defer src="js/template-loader.js"></script>
+<script defer src="js/api-integration.js"></script>
+<script defer src="js/action-parser.js"></script>
+<script defer src="js/action-validator.js"></script>
+<script defer src="js/action-executor.js"></script>
+<script defer src="js/action-handler.js"></script>
+<script defer src="js/error-handler.js?v=3"></script>
 <!-- Modular TaskFlow -->
-<script src="js/task-flow/api.js"></script>
-<script src="js/task-flow/render.js"></script>
-<script src="js/task-flow/loader.js"></script>
-<script src="js/task-flow/tasks.js"></script>
-<script src="js/task-flow/messages.js"></script>
-<script src="js/task-flow/init.js"></script>
-<script src="js/task-flow/core.js"></script>
-<script src="js/task-flow/index.js"></script>
-<script src="js/resolve-web-script-url.js"></script>
-<script src="js/app-task.js"></script>
+<script defer src="js/task-flow/api.js"></script>
+<script defer src="js/task-flow/render.js"></script>
+<script defer src="js/task-flow/loader.js"></script>
+<script defer src="js/task-flow/tasks.js"></script>
+<script defer src="js/task-flow/messages.js"></script>
+<script defer src="js/task-flow/init.js"></script>
+<script defer src="js/task-flow/core.js"></script>
+<script defer src="js/task-flow/index.js"></script>
+<script defer src="js/resolve-web-script-url.js"></script>
+<script defer src="js/app-task.js"></script>
 
 <script>
     // Initialize new architecture on page load
