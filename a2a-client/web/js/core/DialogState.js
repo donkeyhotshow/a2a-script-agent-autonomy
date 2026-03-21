@@ -156,6 +156,12 @@ export class DialogState {
      * @returns {DialogState}
      */
     setExecute(execute) {
+        if (execute) {
+            this._state.lastError = null;
+            if (this._state.status === 'error') {
+                this._state.status = 'idle';
+            }
+        }
         this._state.execute = execute || null;
         
         // Поддержка формы с choices или input полями
@@ -245,10 +251,18 @@ export class DialogState {
     setError(error) {
         this._state.lastError = error;
         this._state.status = 'error';
-        
-        const content = error?.message || String(error);
-        this.pushMessage({ content, metadata: { type: 'error' } }, 'system');
-        
+        return this;
+    }
+
+    /**
+     * Clear dialog error banner (e.g. after a successful server step).
+     * @returns {DialogState}
+     */
+    clearLastError() {
+        this._state.lastError = null;
+        if (this._state.status === 'error') {
+            this._state.status = this.isWaitingForInput() ? 'waiting' : 'idle';
+        }
         return this;
     }
 

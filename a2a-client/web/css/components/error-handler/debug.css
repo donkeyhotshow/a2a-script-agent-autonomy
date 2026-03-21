@@ -1,0 +1,440 @@
+/* Debug Panel Styles - Стили для debug панелей */
+
+/* ==========================================================================
+   Debug Panel Container
+   ========================================================================== */
+
+.debug-panel {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  max-height: 50vh;
+  background: var(--glass-bg);
+  border-top: 2px solid var(--color-accent);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  animation: debug-panel-slide-up 0.3s ease;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.debug-panel.hiding {
+  animation: debug-panel-slide-down 0.3s ease forwards;
+}
+
+@keyframes debug-panel-slide-up {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes debug-panel-slide-down {
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+}
+
+/* ==========================================================================
+   Debug Panel Header
+   ========================================================================== */
+
+.debug-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-md) var(--space-lg);
+  background: rgba(99, 102, 241, 0.1);
+  border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
+}
+
+.debug-panel-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-accent);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.debug-panel-title::before {
+  content: '🔍';
+  font-size: 16px;
+}
+
+.debug-panel-controls {
+  display: flex;
+  gap: var(--space-sm);
+}
+
+/* ==========================================================================
+   Debug Panel Tabs
+   ========================================================================== */
+
+.debug-panel-tabs {
+  display: flex;
+  gap: 2px;
+  padding: 0 var(--space-lg);
+  background: var(--color-bg-secondary);
+  border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
+}
+
+.debug-tab {
+  padding: var(--space-sm) var(--space-md);
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  margin-bottom: -1px;
+}
+
+.debug-tab:hover {
+  color: var(--color-text-primary);
+  background: var(--color-bg-hover);
+}
+
+.debug-tab.active {
+  color: var(--color-accent);
+  border-bottom-color: var(--color-accent);
+  background: var(--glass-bg);
+}
+
+/* ==========================================================================
+   Debug Panel Body
+   ========================================================================== */
+
+.debug-panel-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-lg);
+}
+
+/* ==========================================================================
+   Debug Info Sections
+   ========================================================================== */
+
+.debug-section {
+  margin-bottom: var(--space-lg);
+}
+
+.debug-section:last-child {
+  margin-bottom: 0;
+}
+
+.debug-section-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: var(--space-sm);
+  padding-bottom: var(--space-xs);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.debug-section-content {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--color-text-primary);
+  background: var(--color-bg-primary);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  border: 1px solid var(--color-border);
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* ==========================================================================
+   Debug Logs
+   ========================================================================== */
+
+.debug-logs {
+  max-height: 300px;
+  overflow-y: auto;
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+.debug-log-entry {
+  display: flex;
+  gap: var(--space-sm);
+  padding: 4px var(--space-sm);
+  border-left: 2px solid transparent;
+  margin-left: -8px;
+  padding-left: var(--space-sm);
+}
+
+.debug-log-entry:nth-child(odd) {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.debug-log-entry.error {
+  border-left-color: var(--color-error);
+  background: var(--color-error-bg);
+}
+
+.debug-log-entry.warn {
+  border-left-color: var(--color-warning);
+  background: rgba(245, 158, 11, 0.05);
+}
+
+.debug-log-entry.info {
+  border-left-color: var(--color-info);
+  background: rgba(59, 130, 246, 0.05);
+}
+
+.debug-log-entry.debug {
+  border-left-color: var(--color-text-muted);
+}
+
+.debug-log-timestamp {
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+}
+
+.debug-log-level {
+  font-weight: 600;
+  flex-shrink: 0;
+  width: 50px;
+}
+
+.debug-log-level.error {
+  color: var(--color-error);
+}
+
+.debug-log-level.warn {
+  color: var(--color-warning);
+}
+
+.debug-log-level.info {
+  color: var(--color-info);
+}
+
+.debug-log-level.debug {
+  color: var(--color-text-muted);
+}
+
+.debug-log-message {
+  flex: 1;
+  color: var(--color-text-primary);
+}
+
+/* ==========================================================================
+   Debug Variables/State
+   ========================================================================== */
+
+.debug-variables {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--space-md);
+}
+
+.debug-variable {
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-sm) var(--space-md);
+}
+
+.debug-variable-name {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-accent);
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.debug-variable-value {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--color-text-primary);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* ==========================================================================
+   Debug Actions
+   ========================================================================== */
+
+.debug-actions {
+  display: flex;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+}
+
+.debug-action-btn {
+  padding: 6px 12px;
+  background: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.debug-action-btn:hover {
+  background: var(--color-bg-hover);
+  color: var(--color-text-primary);
+  border-color: var(--color-border-light);
+}
+
+.debug-action-btn:active {
+  transform: scale(0.98);
+}
+
+.debug-action-btn.danger {
+  color: var(--color-error);
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.debug-action-btn.danger:hover {
+  background: var(--color-error-bg);
+  border-color: var(--color-error);
+}
+
+.debug-action-btn.success {
+  color: var(--color-success);
+  border-color: rgba(34, 197, 94, 0.3);
+}
+
+.debug-action-btn.success:hover {
+  background: rgba(34, 197, 94, 0.1);
+  border-color: var(--color-success);
+}
+
+/* ==========================================================================
+   Debug Toggle Button (Floating)
+   ========================================================================== */
+
+.debug-toggle {
+  position: fixed;
+  bottom: var(--space-lg);
+  right: var(--space-lg);
+  width: 44px;
+  height: 44px;
+  background: var(--color-accent);
+  border: none;
+  border-radius: 50%;
+  color: #fff;
+  font-size: 18px;
+  cursor: pointer;
+  box-shadow: 0 2px 12px rgba(99, 102, 241, 0.4);
+  transition: all var(--transition-fast);
+  z-index: 9998;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.debug-toggle:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.5);
+}
+
+.debug-toggle:active {
+  transform: scale(1.05);
+}
+
+.debug-toggle.has-notifications::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 10px;
+  height: 10px;
+  background: var(--color-error);
+  border-radius: 50%;
+  border: 2px solid var(--glass-bg);
+}
+
+/* ==========================================================================
+   Debug Status Indicator
+   ========================================================================== */
+
+.debug-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 8px;
+  background: var(--color-bg-tertiary);
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.debug-status::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-text-muted);
+}
+
+.debug-status.active::before {
+  background: var(--color-success);
+  animation: pulse 1s infinite;
+}
+
+.debug-status.inactive::before {
+  background: var(--color-text-muted);
+}
+
+.debug-status.error::before {
+  background: var(--color-error);
+}
+
+/* ==========================================================================
+   Responsive Debug Panel
+   ========================================================================== */
+
+@media (max-width: 768px) {
+  .debug-panel {
+    max-height: 70vh;
+  }
+  
+  .debug-panel-header {
+    padding: var(--space-sm) var(--space-md);
+  }
+  
+  .debug-panel-body {
+    padding: var(--space-md);
+  }
+  
+  .debug-variables {
+    grid-template-columns: 1fr;
+  }
+  
+  .debug-toggle {
+    bottom: var(--space-md);
+    right: var(--space-md);
+    width: 40px;
+    height: 40px;
+  }
+}

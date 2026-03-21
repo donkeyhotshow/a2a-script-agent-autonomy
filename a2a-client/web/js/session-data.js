@@ -187,6 +187,13 @@
             },
 
             setExecute: function(execute) {
+                if (execute) {
+                    state.lastError = null;
+                    if (state.status === 'error') {
+                        state.status = 'idle';
+                    }
+                }
+
                 // Wait indicator
                 if (state._waitIndicatorActive && execute && !execute.wait) {
                     state._waitIndicatorActive = false;
@@ -248,7 +255,15 @@
                 state.lastError = error;
                 state.status = 'error';
                 emit('error', error);
-                this.pushMessage(error && error.message || String(error), 'system');
+                return this;
+            },
+
+            clearLastError: function() {
+                state.lastError = null;
+                if (state.status === 'error') {
+                    state.status = state.pendingForm ? 'waiting' : (state.execute ? 'active' : 'idle');
+                }
+                emit('error', null);
                 return this;
             },
 

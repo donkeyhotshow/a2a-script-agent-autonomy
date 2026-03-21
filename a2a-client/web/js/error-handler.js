@@ -2,7 +2,7 @@
  * Error Handler UI Module
  * Centralized error handling and display for the web interface.
  * API errors are routed via fetch wrapper below and handleApiError(); user messages
- * are shown in session panel (_pushSessionMessage) and global notification (addNotification).
+ * Session panel: lastError via store.setError (status banner, not SYSTEM chat). Global: addNotification.
  * 
  * @see docs/new-request-flow/PROTOCOLS/states/error.md - Состояние ошибки
  */
@@ -577,11 +577,6 @@
 
         _pushSessionMessage(message, meta = {}) {
             if (!message) return;
-            const severity = meta.code === 'API_ERROR' ? 'error' : 'warning';
-            const payload = {
-                content: message,
-                metadata: { ...meta, severity }
-            };
 
             const sessionId = meta?.sessionId
                 || meta?.context?.sessionId
@@ -592,14 +587,18 @@
                 ? global.WindowRegistry?.getSessionStore?.(sessionId) || global.SessionStore
                 : global.SessionStore;
 
-            if (store?.pushMessage) {
-                store.pushMessage(payload, 'system');
+            const err = new Error(message);
+            if (meta && typeof meta === 'object') {
+                Object.assign(err, meta);
+            }
+
+            if (store?.setError) {
+                store.setError(err);
                 return;
             }
 
             const vm = global.SessionViewModel;
-            if (!vm) return;
-            vm.pushMessage(payload, 'system');
+            if (vm?.setError) vm.setError(err);
         },
 
         /**

@@ -349,6 +349,15 @@ export class SessionStoreCore extends EventEmitter {
     }
 
     /**
+     * @returns {SessionStoreCore}
+     */
+    clearLastError() {
+        this._dialogState.clearLastError();
+        this.emit('error', null);
+        return this;
+    }
+
+    /**
      * Применить ответ сервера
      * @param {Object} data
      * @returns {SessionStoreCore}

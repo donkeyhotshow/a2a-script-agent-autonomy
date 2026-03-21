@@ -15,6 +15,25 @@
         return el.innerHTML;
     }
 
+    function formatLastError(err) {
+        if (err == null) return '';
+        if (typeof err === 'string') return err;
+        return err.message != null ? String(err.message) : String(err);
+    }
+
+    function renderDialogErrorBanner(lastError) {
+        const text = formatLastError(lastError);
+        if (!text) return '';
+        return `<div class="task-flow-dialog-error" role="status">${escapeHtml(text)}</div>`;
+    }
+
+    function isSystemErrorChatMessage(msg) {
+        const role = msg.role || 'assistant';
+        if (role !== 'system') return false;
+        const m = msg.metadata || {};
+        return m.type === 'error' || m.severity === 'error' || m.severity === 'warning';
+    }
+
     /**
      * Обновить статус
      * @param {HTMLElement} contentEl - элемент контента
@@ -39,11 +58,15 @@
             messages = [];
         }
 
-        if (!messages || messages.length === 0) {
-            return '<div class="task-flow-history-empty">No messages yet</div>';
+        const banner = renderDialogErrorBanner(state.lastError);
+        const visible = (messages || []).filter((msg) => !isSystemErrorChatMessage(msg));
+
+        if (!visible.length) {
+            const empty = '<div class="task-flow-history-empty">No messages yet</div>';
+            return banner ? `${banner}${empty}` : empty;
         }
 
-        const historyHtml = messages.map((msg) => {
+        const historyHtml = visible.map((msg) => {
             const role = msg.role || 'assistant';
             let content = msg.content || msg.message || msg.text;
             if (!content) {
@@ -61,7 +84,7 @@
             `;
         }).join('');
 
-        return `<div class="task-flow-history">${historyHtml}</div>`;
+        return `${banner}<div class="task-flow-history">${historyHtml}</div>`;
     }
 
     /**

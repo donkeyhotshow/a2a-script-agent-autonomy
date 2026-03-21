@@ -86,6 +86,14 @@
             return this.core.pushMessage.apply(this.core, arguments); 
         };
 
+        this.setError = function() {
+            return this.core.setError.apply(this.core, arguments);
+        };
+
+        this.clearLastError = function() {
+            return this.core.clearLastError.apply(this.core, arguments);
+        };
+
         // События
         this.on = function() { 
             return this.core.on.apply(this.core, arguments); 

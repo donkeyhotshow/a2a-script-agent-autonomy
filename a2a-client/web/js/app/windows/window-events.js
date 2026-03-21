@@ -202,6 +202,7 @@
                 const unsubMessage = store.on?.('message', () => refreshContent());
                 const unsubExecute = store.on?.('execute', () => refreshContent());
                 const unsubPromisePending = store.on?.('promisePending', () => refreshContent());
+                const unsubError = store.on?.('error', () => refreshContent());
 
                 // Cleanup on panel close
                 contentEl._cleanup = () => {
@@ -209,6 +210,7 @@
                     unsubMessage?.();
                     unsubExecute?.();
                     unsubPromisePending?.();
+                    unsubError?.();
                 };
             } else {
                 // Fallback to simple UI
