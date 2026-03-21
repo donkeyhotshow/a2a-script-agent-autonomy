@@ -25,8 +25,10 @@
   flex-direction: column;
   gap: 10px;
   padding: 12px 16px;
-  max-height: 300px;
+  max-height: min(42vh, 400px);
   overflow-y: auto;
+  scrollbar-gutter: stable;
+  scroll-behavior: smooth;
 }
 
 .task-flow-message {
@@ -36,6 +38,7 @@
   padding: 10px 14px;
   border-radius: var(--radius-md);
   max-width: 90%;
+  transition: box-shadow var(--transition-fast), transform var(--transition-fast);
 }
 
 .task-flow-message.user {
@@ -43,14 +46,21 @@
   color: #fff;
   align-self: flex-end;
   border-bottom-right-radius: 4px;
+  box-shadow: var(--shadow-sm);
 }
 
 .task-flow-message.assistant {
-  background: var(--color-bg-secondary);
-  border: 1px solid var(--color-border);
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border-light);
   color: var(--color-text-primary);
   align-self: flex-start;
   border-bottom-left-radius: 4px;
+  box-shadow: var(--shadow-sm);
+}
+
+.task-flow-message.user:hover,
+.task-flow-message.assistant:hover {
+  box-shadow: var(--shadow-md);
 }
 
 .task-flow-message.system {
@@ -100,7 +110,7 @@
   letter-spacing: 0.5px;
   color: var(--color-accent);
   padding: 2px 8px;
-  background: rgba(88, 166, 255, 0.15);
+  background: var(--color-bg-active);
   border-radius: var(--radius-sm);
 }
 
@@ -225,6 +235,12 @@
 .task-flow-choice-btn:hover {
   background: var(--color-bg-hover);
   border-color: var(--color-accent);
+}
+
+.task-flow-choice-btn:focus-visible {
+  outline: none;
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px var(--brand-glow);
 }
 
 .task-flow-inputs,
@@ -355,7 +371,7 @@
   color: var(--color-accent);
   margin-bottom: 10px;
   padding: 4px 8px;
-  background: rgba(88, 166, 255, 0.15);
+  background: var(--color-bg-active);
   border-radius: var(--radius-sm);
   display: inline-block;
 }
@@ -662,4 +678,24 @@
 /* .task-flow-sending sets display:flex; must not show inline loader until .active */
 .task-flow-sending.task-flow-inline-loader:not(.active) {
   display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .task-flow-history {
+    scroll-behavior: auto;
+  }
+
+  .task-flow-message {
+    transition: none;
+  }
+
+  .task-flow-spinner {
+    animation: none;
+    border-color: var(--color-border-light);
+    border-top-color: var(--color-accent);
+  }
+
+  .task-flow-progress-bar {
+    transition: none;
+  }
 }

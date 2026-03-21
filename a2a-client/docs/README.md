@@ -17,14 +17,14 @@ This directory contains comprehensive documentation for the A2A Script Agent web
 - **[Session Architecture Migration](./session-architecture-migration.md)** - Migration guide for unified session architecture
 - **[Context Synchronization Guide](./context-synchronization-guide.md)** - State synchronization across components
 
-### 🔍 Analysis & Decomposition
-- **[Actions & Events Decomposition](./actions-events-decomposition.md)** - Complete catalog of UI actions and events
-- **[Dialog Architecture Tasks](./tasks/dialog-architecture-tasks.md)** - Session/SSE stack flows and QA checkpoints
-- **[Testing SSE Tasks](./tasks/testing-sse-tasks.md)** - SSE reliability testing and automation
+### 🔍 API & dialog
+- **[Client API: Web UI vs `@a2a/sdk`](./CLIENT_API_WEB_SDK.md)** - Two implementations, contracts, and debugging
+- **[Dialog frontend](./DIALOG-FRONTEND.md)** - Dialog UI behavior
+- **[Session storage](./SESSION-STORAGE.md)** - On-disk step layout and Client API
 
 ### 📊 Development State
 - **[Web UI DEV_STATE](../DEV_STATE.md)** - Current development status and component overview
-- **[Upgrade Tasks](./UPGRADE_TASKS.md)** - Planned enhancements and improvement roadmap
+- **[Migration plan](./MIGRATION-PLAN.md)** - Planned structural changes
 
 ### 📁 Archive
 - **[AI Actions Integration Guide](./archive/ai-actions-integration-guide.md)** - Legacy AI actions implementation
@@ -35,11 +35,12 @@ This directory contains comprehensive documentation for the A2A Script Agent web
 | Need | Go To |
 |------|-------|
 | **Understand workflows** | [Workflows Overview](./workflows/) |
+| **Client API / Vite vs SDK** | [CLIENT_API_WEB_SDK.md](./CLIENT_API_WEB_SDK.md) |
 | **Implement session management** | [Session Lifecycle](./workflows/session-lifecycle/) + [Session Architecture Migration](./session-architecture-migration.md) |
-| **Handle task execution** | [Task Execution](./workflows/task-execution/) + [Actions & Events](./actions-events-decomposition.md) |
-| **Manage real-time communication** | [Communication](./workflows/communication/) + [Testing SSE Tasks](./tasks/testing-sse-tasks.md) |
+| **Handle task execution** | [Task Execution](./workflows/task-execution/) |
+| **Manage real-time communication** | [Communication](./workflows/communication/) |
 | **Build UI components** | [UI Interactions](./workflows/ui-interactions/) + [Context Synchronization](./context-synchronization-guide.md) |
-| **Test the system** | [Testing](./workflows/testing/) + [Dialog Architecture Tasks](./tasks/dialog-architecture-tasks.md) |
+| **Test the system** | [Testing](./workflows/testing/) |
 | **Check implementation status** | [Unified Architecture Complete](./UNIFIED_ARCHITECTURE_COMPLETE.md) |
 
 ## Key Components Overview
