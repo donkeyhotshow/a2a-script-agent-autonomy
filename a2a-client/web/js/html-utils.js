@@ -49,8 +49,24 @@
             .replace(/</g, '&lt;');
     }
 
+    /**
+     * Normalize value from getStoredClientApiUrl (string or mistaken object); strip trailing slash.
+     * @returns {string} empty if unusable
+     */
+    function normalizeStoredClientApiUrl(raw) {
+        if (raw == null) return '';
+        var v = raw;
+        if (typeof v === 'object') {
+            v = v.url || v.apiBase || (typeof v.toString === 'function' ? v.toString() : '') || '';
+        }
+        var s = String(v).trim();
+        if (!s || s === '[object Object]') return '';
+        return s.replace(/\/?$/, '');
+    }
+
     global.escapeHtml = escapeHtml;
     global.escapeHtmlAttr = escapeHtmlAttr;
     global.ensureSessionInlineLoader = ensureSessionInlineLoader;
     global.executeHasActionableForm = executeHasActionableForm;
+    global.normalizeStoredClientApiUrl = normalizeStoredClientApiUrl;
 })(typeof window !== 'undefined' ? window : globalThis);

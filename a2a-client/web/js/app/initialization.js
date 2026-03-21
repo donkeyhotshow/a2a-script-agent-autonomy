@@ -5,18 +5,6 @@
 (function (global) {
     'use strict';
 
-    function resolveWebScriptUrl(relativePath) {
-        if (typeof global.resolveWebScriptUrl === 'function') {
-            return global.resolveWebScriptUrl(relativePath);
-        }
-        var path = relativePath.replace(/^\//, '');
-        try {
-            return new URL(path, document.baseURI).href;
-        } catch (e) {
-            return '/' + path;
-        }
-    }
-
     const AppInitialization = {
         /**
          * Initialize application
@@ -36,15 +24,10 @@
                 // Initialize managers
                 await global.ProjectManager?.init();
                 // Apply stored Client API URL for operations requiring Client API server
-                let apiUrl = await global.ProjectManager?.getStoredClientApiUrl?.();
-                // Handle case where StorageAPI returns an object instead of string
-                if (apiUrl && typeof apiUrl === 'object') {
-                    apiUrl = apiUrl.url || apiUrl.apiBase || apiUrl.toString?.() || null;
-                }
-                if (apiUrl && String(apiUrl).trim() && String(apiUrl).trim() !== '[object Object]') {
-                    const base = String(apiUrl).trim().replace(/\/?$/, '');
-                    if (global.apiIntegration) global.apiIntegration.configure({ apiBase: base });
-                }
+                const base = global.normalizeStoredClientApiUrl?.(
+                    await global.ProjectManager?.getStoredClientApiUrl?.()
+                );
+                if (base && global.apiIntegration) global.apiIntegration.configure({ apiBase: base });
                 await global.SessionManager?.init();
                 await global.WindowManager?.init();
                 global.TaskbarManager?.init();
@@ -68,8 +51,29 @@
          * Load required modules
          */
         async loadModules() {
+            if (typeof global.appendWebScriptOnce !== 'function') {
+                await new Promise(function (resolve, reject) {
+                    var rel = 'js/resolve-web-script-url.js';
+                    var baseEl = document.getElementById('app-base');
+                    var baseHref = (baseEl && baseEl.href) ? baseEl.href : document.baseURI;
+                    var path = rel.replace(/^\//, '');
+                    var href;
+                    try {
+                        href = new URL(path, baseHref).href;
+                    } catch (e) {
+                        href = '/' + path;
+                    }
+                    var script = document.createElement('script');
+                    script.src = href;
+                    script.onload = function () { resolve(); };
+                    script.onerror = function () {
+                        reject(new Error('Failed to load ' + rel));
+                    };
+                    document.head.appendChild(script);
+                });
+            }
+
             const modules = [
-                'js/resolve-web-script-url.js',
                 'js/html-utils.js',
                 'js/daemons/emitter.js',
                 'js/daemons/dialog-loader.js',
@@ -85,20 +89,8 @@
             ];
 
             for (const rel of modules) {
-                await new Promise((resolve, reject) => {
-                    if (global.isWebScriptInjected?.(rel)) {
-                        resolve();
-                        return;
-                    }
-
-                    const script = document.createElement('script');
-                    script.src = resolveWebScriptUrl(rel);
-                    script.onload = () => {
-                        console.log(`[AppTask] Loaded module: ${rel}`);
-                        resolve();
-                    };
-                    script.onerror = () => reject(new Error(`Failed to load ${rel}`));
-                    document.head.appendChild(script);
+                await global.appendWebScriptOnce(rel, {
+                    onload: () => console.log(`[AppTask] Loaded module: ${rel}`)
                 });
             }
         },

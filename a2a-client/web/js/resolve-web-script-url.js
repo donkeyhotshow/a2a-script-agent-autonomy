@@ -29,6 +29,35 @@
         return false;
     }
 
+    /**
+     * Inject a classic script once; resolves when loaded (or immediately if already present).
+     * @param {string} relativePath
+     * @param {{ onload?: () => void }} [hooks]
+     * @returns {Promise<void>}
+     */
+    function appendWebScriptOnce(relativePath, hooks) {
+        return new Promise(function (resolve, reject) {
+            var rel = String(relativePath || '');
+            var resolved = resolveWebScriptUrl(rel);
+            if (isWebScriptInjected(rel, resolved)) {
+                if (hooks && hooks.onload) hooks.onload();
+                resolve();
+                return;
+            }
+            var script = document.createElement('script');
+            script.src = resolved;
+            script.onload = function () {
+                if (hooks && hooks.onload) hooks.onload();
+                resolve();
+            };
+            script.onerror = function () {
+                reject(new Error('Failed to load ' + rel));
+            };
+            document.head.appendChild(script);
+        });
+    }
+
     global.resolveWebScriptUrl = resolveWebScriptUrl;
     global.isWebScriptInjected = isWebScriptInjected;
+    global.appendWebScriptOnce = appendWebScriptOnce;
 })(typeof window !== 'undefined' ? window : globalThis);

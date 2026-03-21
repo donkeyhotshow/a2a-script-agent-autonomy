@@ -4,7 +4,7 @@
 (function (global) {
     'use strict';
 
-    const MIN_LOADER_MS = global.__a2aDaemons?.MIN_LOADER_MS || 5000;
+    const MIN_LOADER_MS = global.__a2aDaemons.timingMs('MIN_LOADER_MS');
 
     const WindowEvents = {
         /**

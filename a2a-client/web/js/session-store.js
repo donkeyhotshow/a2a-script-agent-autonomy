@@ -229,7 +229,7 @@
     }
 
     // Глобальная константа
-    global.PROMISE_POLL_INTERVAL = global.__a2aDaemons?.PROMISE_POLL_INTERVAL || 5000;
+    global.PROMISE_POLL_INTERVAL = global.__a2aDaemons.timingMs('PROMISE_POLL_INTERVAL');
 
     // === Global exports - BACKWARD COMPATIBLE ===
     global.SessionStoreClass = SessionStore;

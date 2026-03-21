@@ -12,28 +12,17 @@
 (function (global) {
     'use strict';
 
-    // Use global PROMISE_POLL_INTERVAL from SessionStore (default 5000ms)
-    const POLL_INTERVAL = global.PROMISE_POLL_INTERVAL || 5000;
+    if (typeof global.resolveStore !== 'function') {
+        throw new Error('[ActionExecutor] Load js/task-flow/utils.js before action-executor.js');
+    }
+
+    const POLL_INTERVAL =
+        typeof global.PROMISE_POLL_INTERVAL === 'number' && global.PROMISE_POLL_INTERVAL > 0
+            ? global.PROMISE_POLL_INTERVAL
+            : global.__a2aDaemons.timingMs('PROMISE_POLL_INTERVAL');
 
     // Track local polling as fallback (when SessionStore is not available)
     let localPollTimer = null;
-
-    /**
-     * Получает хранилище сессии
-     * @param {string|null} sessionId - ID сессии
-     * @returns {Object} хранилище сессии
-     */
-    function resolveStore(sessionId = null) {
-        const registry = global.WindowRegistry;
-        const resolvedSessionId = sessionId || global.SessionManager?.getActiveSessionId?.() || null;
-        if (resolvedSessionId && registry?.getSessionStore) {
-            const windowStore = registry.getSessionStore(resolvedSessionId);
-            if (windowStore) {
-                return windowStore;
-            }
-        }
-        return global.SessionStore;
-    }
 
     /**
      * Получает базовый API URL
@@ -129,7 +118,7 @@
      * @returns {Promise<Object>} ответ сервера
      */
     async function submit(sessionId, result) {
-        const store = resolveStore(sessionId);
+        const store = global.resolveStore(sessionId);
         const base = getApiBase(store);
         if (!base) {
             throw new Error('ActionExecutor: API base not configured. Set Client API URL in Settings.');
@@ -182,7 +171,7 @@
      * @returns {Promise<Object|null>} статус промиса или null при ошибке
      */
     async function checkPromise(sessionId, promiseId) {
-        const store = resolveStore(sessionId);
+        const store = global.resolveStore(sessionId);
         const base = getApiBase(store);
         if (!base) {
             console.warn('[ActionExecutor] API base not configured');
@@ -226,7 +215,7 @@
      * @param {string} promiseId - ID промиса
      */
     function startPromisePolling(sessionId, promiseId) {
-        const store = resolveStore(sessionId);
+        const store = global.resolveStore(sessionId);
         
         // Try to use SessionStore for unified promise management
         if (store?.startPromisePolling && store?.setPromiseId) {
@@ -341,7 +330,7 @@
      * @param {string} sessionId - ID сессии
      */
     function stopPromisePolling(sessionId) {
-        const store = resolveStore(sessionId);
+        const store = global.resolveStore(sessionId);
         
         // Try to use SessionStore for unified promise management
         if (store?.stopPromisePolling) {
@@ -391,7 +380,7 @@
         startPromisePolling,
         stopPromisePolling,
         pullSessionSnapshot,
-        resolveStore,
+        resolveStore: global.resolveStore,
         getApiBase,
         createHeaders,
         fetchJson,

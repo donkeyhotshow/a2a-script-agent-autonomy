@@ -9,10 +9,11 @@
 (function (global) {
     'use strict';
 
-    // Load app modules
     function loadAppModules() {
-        if (typeof global.resolveWebScriptUrl !== 'function') {
+        if (typeof global.appendWebScriptOnce !== 'function') {
             console.error('[AppTask] Expected js/resolve-web-script-url.js before js/app-task.js');
+            global._appModulesLoaded = true;
+            return;
         }
         const modules = [
             'js/app/project-manager.js',
@@ -26,45 +27,26 @@
             'js/app/taskbar-manager.js',
             'js/app/app-task.js'
         ];
-
-        let loadedCount = 0;
-
-        function tryComplete() {
-            if (loadedCount === modules.length) {
-                var errs = global._appModuleLoadErrors;
-                if (errs && errs.length) {
-                    console.error('[AppTask] Module load finished with errors:', errs);
-                } else {
-                    console.log('[AppTask] All app modules loaded');
-                }
-                global._appModulesLoaded = true;
-            }
-        }
-
-        modules.forEach(function (rel) {
-            var resolved = global.resolveWebScriptUrl(rel);
-            // Match either relative path or full resolved URL (avoids duplicate injects under subpath base)
-            var already = global.isWebScriptInjected(rel, resolved);
-            if (!already) {
-                const script = document.createElement('script');
-                script.src = resolved;
-                script.onload = function () {
-                    loadedCount++;
-                    console.log('[AppTask] Module loaded: ' + rel + ' (' + loadedCount + '/' + modules.length + ')');
-                    tryComplete();
-                };
-                script.onerror = function () {
+        const n = modules.length;
+        global._appModuleLoadErrors = [];
+        Promise.all(
+            modules.map(function (rel) {
+                return global.appendWebScriptOnce(rel, {
+                    onload: function () {
+                        console.log('[AppTask] Module loaded: ' + rel);
+                    }
+                }).catch(function () {
                     console.error('[AppTask] Failed to load module: ' + rel);
-                    loadedCount++;
-                    global._appModuleLoadErrors = global._appModuleLoadErrors || [];
                     global._appModuleLoadErrors.push(rel);
-                    tryComplete();
-                };
-                document.head.appendChild(script);
+                });
+            })
+        ).then(function () {
+            if (global._appModuleLoadErrors.length) {
+                console.error('[AppTask] Module load finished with errors:', global._appModuleLoadErrors);
             } else {
-                loadedCount++;
-                tryComplete();
+                console.log('[AppTask] All app modules loaded (' + n + ')');
             }
+            global._appModulesLoaded = true;
         });
     }
 

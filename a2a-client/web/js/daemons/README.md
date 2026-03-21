@@ -6,7 +6,7 @@ Scripts attach factories to `window.__a2aDaemons`:
 
 | Script | Exports |
 |--------|---------|
-| `emitter.js` | `createEventEmitter()`, `MIN_LOADER_MS`, `PROMISE_POLL_INTERVAL` (defaults, ms) |
+| `emitter.js` | `createEventEmitter()`, `DEFAULT_A2A_TIMING_MS`, `timingMs(key)`, `MIN_LOADER_MS`, `PROMISE_POLL_INTERVAL` |
 | `dialog-loader.js` | `createDialogLoader()` — minimum loader display time |
 | `dialog-promise-poll.js` | `createDialogPromise()` — interval poll via injected `checkFn` |
 

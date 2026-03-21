@@ -22,25 +22,16 @@
             'js/app/state-managers.js'
         ];
 
-        const loadPromises = modules.map((rel) => {
-            return new Promise((resolve, reject) => {
-                if (global.isWebScriptInjected?.(rel)) {
-                    resolve();
-                    return;
-                }
-
-                const script = document.createElement('script');
-                script.src = global.resolveWebScriptUrl(rel);
-                script.onload = () => {
-                    console.log(`[AppTask] Loaded module: ${rel}`);
-                    resolve();
-                };
-                script.onerror = () => reject(new Error(`Failed to load ${rel}`));
-                document.head.appendChild(script);
-            });
-        });
-
-        await Promise.all(loadPromises);
+        if (typeof global.appendWebScriptOnce !== 'function') {
+            throw new Error('[AppTask] Expected global.appendWebScriptOnce (js/resolve-web-script-url.js)');
+        }
+        await Promise.all(
+            modules.map((rel) =>
+                global.appendWebScriptOnce(rel, {
+                    onload: () => console.log(`[AppTask] Loaded module: ${rel}`)
+                })
+            )
+        );
     }
 
     /**

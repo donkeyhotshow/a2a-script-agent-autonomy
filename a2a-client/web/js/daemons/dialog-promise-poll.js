@@ -11,7 +11,7 @@
         return;
     }
 
-    const pollMs = root.PROMISE_POLL_INTERVAL || 5000;
+    const pollMs = root.timingMs('PROMISE_POLL_INTERVAL');
 
     root.createDialogPromise = function createDialogPromise() {
         let promiseId = null;

@@ -124,12 +124,9 @@
 
             if (type === 'settings') {
                 global.ProjectManager?.getStoredClientApiUrl?.().then((url) => {
-                    // Handle case where StorageAPI returns an object
-                    if (url && typeof url === 'object') {
-                        url = url.url || url.apiBase || '/api';
-                    }
+                    const normalized = global.normalizeStoredClientApiUrl?.(url) || '/api';
                     const input = content.querySelector('#settingsApiUrl');
-                    if (input) input.value = (typeof url === 'string' ? url : '/api');
+                    if (input) input.value = normalized;
                 });
                 content.querySelector('#cancelSettings')?.addEventListener('click', () => panel.close());
                 content.querySelector('#saveSettings')?.addEventListener('click', () => {

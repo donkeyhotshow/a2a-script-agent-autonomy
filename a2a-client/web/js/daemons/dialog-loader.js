@@ -11,7 +11,7 @@
         return;
     }
 
-    const MINIMUM_LOADER_TIME = root.MIN_LOADER_MS || 5000;
+    const MINIMUM_LOADER_TIME = root.timingMs('MIN_LOADER_MS');
 
     root.createDialogLoader = function createDialogLoader() {
         let active = false;
