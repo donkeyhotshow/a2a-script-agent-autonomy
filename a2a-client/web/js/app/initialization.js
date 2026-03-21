@@ -48,8 +48,8 @@
                 await global.WindowManager?.init();
                 global.TaskbarManager?.init();
 
-                // Setup UI
-                this.setupUI?.();
+                // Setup UI (handlers live on AppEventHandlers, not this object)
+                global.AppEventHandlers?.setupUI?.();
 
                 // Populate header project select (header is ready, API is set)
                 await this._populateHeaderProjectSelect?.();

@@ -183,10 +183,11 @@
          * Create session button
          */
         createSessionButton(session) {
+            const sessionId = session && (session.id || session.sessionId);
             const btn = document.createElement('button');
             btn.className = 'taskbar-session-btn';
-            btn.dataset.sessionId = session.id;
-            const sessionLabel = session.title || `Session ${(session.id || '').slice(-8)}`;
+            btn.dataset.sessionId = sessionId || '';
+            const sessionLabel = session.title || `Session ${(sessionId || '').slice(-8)}`;
             btn.title = `Session: ${sessionLabel}`;
 
             btn.innerHTML = `
@@ -197,22 +198,22 @@
 
             // Click handler
             btn.addEventListener('click', (e) => {
-                if (global.WindowManager) {
-                    global.WindowManager.toggleSessionWindow(session.id, btn);
+                if (global.WindowManager && sessionId) {
+                    global.WindowManager.toggleSessionWindow(sessionId, btn);
                 }
             });
 
             // Context menu
             btn.addEventListener('contextmenu', (e) => {
-                if (global.SessionManager) {
-                    global.SessionManager.showContextMenu(e, session.id, btn);
+                if (global.SessionManager && sessionId) {
+                    global.SessionManager.showContextMenu(e, sessionId, btn);
                 }
             });
 
             // Double-click to maximize
             btn.addEventListener('dblclick', (e) => {
-                if (global.WindowManager) {
-                    const panel = global.WindowManager.getSessionWindows().get(session.id);
+                if (global.WindowManager && sessionId) {
+                    const panel = global.WindowManager.getSessionWindows().get(sessionId);
                     if (panel) {
                         panel.maximize();
                     }

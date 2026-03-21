@@ -16,11 +16,11 @@
                     switch (e.key) {
                         case 'n':
                             e.preventDefault();
-                            this.createNewSession?.();
+                            global.AppTask?.createNewSession?.();
                             break;
                         case 'w':
                             e.preventDefault();
-                            this.closeActiveSession?.();
+                            global.AppTask?.closeActiveSession?.();
                             break;
                     }
                 }
@@ -70,7 +70,7 @@
 
             document.getElementById('settingsBtn')?.addEventListener('click', () => openModal('settings', 'settingsModal'));
             document.getElementById('projectsBtn')?.addEventListener('click', () => openModal('projects', 'projectsModal'));
-            document.getElementById('newTaskBtn')?.addEventListener('click', () => this.createNewSession?.());
+            document.getElementById('newTaskBtn')?.addEventListener('click', () => global.AppTask?.createNewSession?.());
         },
 
         /**
@@ -100,7 +100,7 @@
                     console.warn('[AppTask] SessionStore.setStorageMode not available on mode change');
                 }
                 // Refresh taskbar and projects UI
-                this.refreshProjectsUI?.();
+                global.AppTask?.refreshProjectsUI?.();
                 console.log('[AppTask] Storage mode changed to:', mode);
             });
         },
@@ -145,7 +145,7 @@
             if (type === 'projects') {
                 content.querySelector('#cancelProjects')?.addEventListener('click', () => panel.close());
                 const grid = content.querySelector('#projectsGrid');
-                if (grid) this._loadProjectsIntoGrid?.(grid);
+                if (grid) global.AppUIManagers?._loadProjectsIntoGrid?.(grid);
                 content.addEventListener('click', (e) => {
                     const card = e.target.closest('.project-card');
                     if (!card) return;
@@ -154,7 +154,7 @@
                     global.ProjectManager?.setSelectedProjectId(projectId);
                     const sel = document.getElementById('projectSelect');
                     if (sel) {
-                        if (!sel.querySelector(`option[value="${projectId}"]`)) {
+                        if (!Array.from(sel.options).some((o) => o.value === projectId)) {
                             const opt = document.createElement('option');
                             opt.value = projectId;
                             opt.textContent = card.querySelector('.project-name')?.textContent || projectId;

@@ -119,7 +119,8 @@
         // Build progress bar display
         let progressBarHtml = '';
         if (execution?.progress !== undefined) {
-            const progress = Math.max(0, Math.min(100, execution.progress));
+            const n = Number(execution.progress);
+            const progress = Number.isFinite(n) ? Math.max(0, Math.min(100, n)) : 0;
             progressBarHtml = `
                 <div class="task-flow-progress">
                     <div class="task-flow-progress-bar" style="width: ${progress}%"></div>

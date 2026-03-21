@@ -5,6 +5,13 @@
 (function (global) {
     'use strict';
 
+    function findTaskbarBtnBySessionId(sessionId) {
+        if (sessionId == null || sessionId === '') return null;
+        return Array.from(document.querySelectorAll('.taskbar-session-btn')).find(
+            (b) => b.dataset.sessionId === String(sessionId)
+        ) || null;
+    }
+
     const AppStateManagers = {
         /**
          * Create new session
@@ -20,10 +27,11 @@
                         const title = `Session ${new Date().toLocaleTimeString()}`;
                         const session = await global.SessionStore.createSessionWithForm(title);
                         
-                        if (session?.id) {
+                        const sid = session?.id || session?.sessionId;
+                        if (sid) {
                             // Set active session
                             if (global.SessionManager?.setActiveSession) {
-                                global.SessionManager.setActiveSession(session.id);
+                                global.SessionManager.setActiveSession(sid);
                             }
                             
                             // Refresh taskbar
@@ -34,13 +42,13 @@
                             
                             // Auto-open the new session
                             setTimeout(() => {
-                                const btn = document.querySelector(`[data-session-id="${session.id}"]`);
+                                const btn = findTaskbarBtnBySessionId(sid);
                                 if (btn && global.WindowManager) {
-                                    global.WindowManager.toggleSessionWindow(session.id, btn);
+                                    global.WindowManager.toggleSessionWindow(sid, btn);
                                 }
                             }, 100);
                             
-                            console.log('[AppTask] Created new persistent session:', session.id);
+                            console.log('[AppTask] Created new persistent session:', sid);
                             return;
                         }
                     } catch (error) {
@@ -68,15 +76,18 @@
                     await global.TaskbarManager.refreshTaskbar(taskbarContent);
                 }
 
-                // Auto-open the new session
-                setTimeout(() => {
-                    const btn = document.querySelector(`[data-session-id="${session.id}"]`);
-                    if (btn && global.WindowManager) {
-                        global.WindowManager.toggleSessionWindow(session.id, btn);
-                    }
-                }, 100);
+                // Auto-open the new session (use sessionId — API may return sessionId without .id)
+                if (sessionId) {
+                    const sid = sessionId;
+                    setTimeout(() => {
+                        const btn = findTaskbarBtnBySessionId(sid);
+                        if (btn && global.WindowManager) {
+                            global.WindowManager.toggleSessionWindow(sid, btn);
+                        }
+                    }, 100);
+                }
 
-                console.log('[AppTask] Created new session:', session.id);
+                console.log('[AppTask] Created new session:', sessionId);
             } catch (error) {
                 console.error('[AppTask] Failed to create session:', error);
                 window.ErrorHandler?.handle(new Error('Failed to create new session'), { action: 'createSession' });

@@ -88,6 +88,12 @@
          * Fetch projects from API and render into grid
          */
         async _loadProjectsIntoGrid(gridEl) {
+            function escAttr(s) {
+                return String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+            }
+            function escText(s) {
+                return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            }
             gridEl.innerHTML = '<div class="loading-indicator">Loading...</div>';
             try {
                 const list = await (global.apiIntegration?.getProjects?.() ?? Promise.resolve([]));
@@ -97,8 +103,8 @@
                     return;
                 }
                 gridEl.innerHTML = projects.map(p => {
-                    const id = (p.id || '').replace(/"/g, '"');
-                    const name = (p.name || p.id || '').replace(/</g, '<');
+                    const id = escAttr(p.id || '');
+                    const name = escText(p.name || p.id || '');
                     return `<div class="project-card" data-project-id="${id}"><span class="project-name">${name}</span></div>`;
                 }).join('');
             } catch (e) {

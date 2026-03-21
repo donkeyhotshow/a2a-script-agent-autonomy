@@ -10,6 +10,11 @@
          */
         _createFloatingWindow(options) {
             const { id, title, x, y, width, height } = options;
+            const safeTitle = String(title ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
             
             // Create container
             const container = document.createElement('div');
@@ -45,7 +50,7 @@
                 user-select: none;
             `;
             header.innerHTML = `
-                <span class="pui-panel-title" style="font-weight: 500; color: var(--text-primary, #fff);">${title}</span>
+                <span class="pui-panel-title" style="font-weight: 500; color: var(--text-primary, #fff);">${safeTitle}</span>
                 <button class="pui-panel-close" style="background: none; border: none; color: var(--text-secondary, #888); cursor: pointer; font-size: 18px; padding: 0 4px;">&times;</button>
             `;
 
@@ -297,10 +302,11 @@
                     let savedMessages = null;
 
                     if (store && sessionData) {
-                        // Set session info
-                    if (sessionData?.id) {
-                        store.setSession(sessionData.id, sessionData.projectId);
-                    }
+                        // Set session info (API may use id or sessionId)
+                        const dataSid = sessionData.id || sessionData.sessionId;
+                        if (dataSid) {
+                            store.setSession(dataSid, sessionData.projectId);
+                        }
                     // Load messages if available from session data
                     if (sessionData?.messages && Array.isArray(sessionData.messages) && sessionData.messages.length > 0) {
                         store.setMessages(sessionData.messages);

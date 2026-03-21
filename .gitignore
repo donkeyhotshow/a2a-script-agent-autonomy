@@ -15,3 +15,4 @@ dist/
 
 # Session/storage in project folder (legacy - now uses ~/.a2a-client)
 
+.pids.txt

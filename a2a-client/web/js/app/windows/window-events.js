@@ -4,6 +4,13 @@
 (function (global) {
     'use strict';
 
+    function escapeHtmlAttr(s) {
+        return String(s ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/"/g, '&quot;')
+            .replace(/</g, '&lt;');
+    }
+
     const WindowEvents = {
         /**
          * Render session content in panel
@@ -201,7 +208,7 @@
                 // Fallback to simple UI
                 contentEl.innerHTML = `
                     <div class="session-content">
-                        <div class="session-messages" id="messages-${sessionId}">
+                        <div class="session-messages" id="messages-${escapeHtmlAttr(sessionId)}">
                             <div class="message system">Session initialized</div>
                         </div>
                         <div class="session-input">

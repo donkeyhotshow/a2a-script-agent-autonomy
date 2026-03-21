@@ -201,7 +201,8 @@
         this.createSessionWithForm = function(title) {
             const self = this;
             return this.storage.createSessionWithForm(title).then(function(session) {
-                self.core.setSession(session.id, session.projectId);
+                var sid = session && (session.id || session.sessionId);
+                if (sid) self.core.setSession(sid, session.projectId);
                 self.core.setExecute(session.execute || null);
                 self.core.emit('sessionCreated', session);
                 return session;

@@ -4,6 +4,13 @@
 (function (global) {
     'use strict';
 
+    function findTaskbarSessionBtn(root, sessionId) {
+        if (!root || sessionId == null || sessionId === '') return null;
+        return Array.from(root.querySelectorAll('.taskbar-session-btn')).find(
+            (b) => b.dataset.sessionId === String(sessionId)
+        ) || null;
+    }
+
     const ACTIVE_SESSION_KEY = 'a2a_active_session';
 
     let activeSessionId = null;
@@ -49,7 +56,7 @@
 
             // Add active class to current session button
             if (sessionId) {
-                const activeBtn = taskbarContentEl.querySelector(`[data-session-id="${sessionId}"]`);
+                const activeBtn = findTaskbarSessionBtn(taskbarContentEl, sessionId);
                 if (activeBtn) {
                     activeBtn.classList.add('active');
                     // Scroll to center the active button
@@ -179,9 +186,12 @@
          */
         renameSession(sessionId, newName) {
             // Update button text
-            const btn = document.querySelector(`[data-session-id="${sessionId}"] .taskbar-session-title`);
-            if (btn) {
-                btn.textContent = newName;
+            const sessionBtn = Array.from(document.querySelectorAll('.taskbar-session-btn')).find(
+                (b) => b.dataset.sessionId === String(sessionId)
+            );
+            const titleEl = sessionBtn?.querySelector('.taskbar-session-title');
+            if (titleEl) {
+                titleEl.textContent = newName;
             }
 
             // Update session data
