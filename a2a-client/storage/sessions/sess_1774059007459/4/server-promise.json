@@ -1,9 +1,9 @@
 {
-  "promiseId": "prom_1774058627009_k8pm0wlhr",
+  "promiseId": "prom_1774059026330_5k9rnwxo9",
   "status": "completed",
-  "submittedAt": "2026-03-21T02:03:47.015Z",
+  "submittedAt": "2026-03-21T02:10:26.334Z",
   "execute": {
-    "message": "Привіт!",
+    "message": "1",
     "form": {
       "input": [
         {
@@ -16,7 +16,7 @@
     }
   },
   "context": {
-    "task": "привет",
+    "task": "ответь одним символом \"1\"",
     "execution": {
       "action": "dialog",
       "step": "request"
@@ -24,11 +24,11 @@
     "history": [
       {
         "role": "user",
-        "message": "привет"
+        "message": "ответь одним символом \"1\""
       },
       {
         "role": "assistant",
-        "message": "Привіт!"
+        "message": "1"
       }
     ]
   }

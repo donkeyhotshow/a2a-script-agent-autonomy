@@ -5,7 +5,9 @@
 import { listNewSteps, loadNewStep, loadStepFile, loadServerPromise } from '../../storage/newSessions.js';
 
 /**
- * Flatten step files into one message list (order: per step, execute.message → client user → step messages).
+ * Flatten step files into one message list (order per step: execute.message → messages.json → client-result).
+ * Assistant replies for a step live in messages.json; client-result is the user input recorded in that folder,
+ * which chronologically follows the assistant turn — so messages.json must come before client-result.
  */
 export function collectSessionMessagesFlat(cwd, sessionId) {
     const steps = listNewSteps(cwd, sessionId);
@@ -36,16 +38,6 @@ export function collectSessionMessagesFlat(cwd, sessionId) {
             }
         }
 
-        const clientResult = loadStepFile(cwd, sessionId, stepNum, 'client-result.json');
-        if (clientResult?.result?.message) {
-            const msgContent = clientResult.result.message;
-            const slot = stepMessageSlotKey(stepNum, 'user', msgContent);
-            if (!seenSlots.has(slot)) {
-                allMessages.push({ role: 'user', content: msgContent, step: stepNum });
-                seenSlots.add(slot);
-            }
-        }
-
         if (stepData?.messages && Array.isArray(stepData.messages) && stepData.messages.length > 0) {
             const stepMessages = stepData.messages.map((msg) => ({
                 ...msg,
@@ -56,6 +48,16 @@ export function collectSessionMessagesFlat(cwd, sessionId) {
                 if (seenSlots.has(slot)) continue;
                 seenSlots.add(slot);
                 allMessages.push(msg);
+            }
+        }
+
+        const clientResult = loadStepFile(cwd, sessionId, stepNum, 'client-result.json');
+        if (clientResult?.result?.message) {
+            const msgContent = clientResult.result.message;
+            const slot = stepMessageSlotKey(stepNum, 'user', msgContent);
+            if (!seenSlots.has(slot)) {
+                allMessages.push({ role: 'user', content: msgContent, step: stepNum });
+                seenSlots.add(slot);
             }
         }
     }

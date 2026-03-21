@@ -1,9 +1,7 @@
 {
-  "promiseId": "prom_1774058627009_k8pm0wlhr",
-  "status": "completed",
-  "submittedAt": "2026-03-21T02:03:47.015Z",
+  "timestamp": "2026-03-21T02:10:36.363Z",
   "execute": {
-    "message": "Привіт!",
+    "message": "1",
     "form": {
       "input": [
         {
@@ -16,19 +14,20 @@
     }
   },
   "context": {
-    "task": "привет",
     "execution": {
       "action": "dialog",
       "step": "request"
     },
+    "task": "ответь одним символом \"1\"",
+    "session_id": "sess_1774059007459",
     "history": [
       {
         "role": "user",
-        "message": "привет"
+        "message": "ответь одним символом \"1\""
       },
       {
         "role": "assistant",
-        "message": "Привіт!"
+        "message": "1"
       }
     ]
   }

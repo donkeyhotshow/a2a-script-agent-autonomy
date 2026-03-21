@@ -1,7 +1,5 @@
 {
-  "promiseId": "prom_1774058627009_k8pm0wlhr",
-  "status": "completed",
-  "submittedAt": "2026-03-21T02:03:47.015Z",
+  "timestamp": "2026-03-21T02:10:47.147Z",
   "execute": {
     "message": "Привіт!",
     "form": {
@@ -16,11 +14,12 @@
     }
   },
   "context": {
-    "task": "привет",
     "execution": {
       "action": "dialog",
       "step": "request"
     },
+    "task": "привет",
+    "session_id": "sess_1774059007459",
     "history": [
       {
         "role": "user",
