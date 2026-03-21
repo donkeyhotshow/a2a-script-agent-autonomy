@@ -38,8 +38,8 @@ Same router is mounted at multiple prefixes:
 
 | Метод | Путь (example) | Описание |
 |-------|----------------|----------|
-| POST | `.../sessions` | Создать сессию |
-| POST | `.../sessions/:id/next` | Следующий шаг (task / choice) |
+| POST | `.../sessions` | Создать сессию → **`201`** `{ success, session }` (`id`: body `id` or `sess_<timestamp>`) |
+| POST | `.../sessions/:id/next` | Следующий шаг (ack-only; hydrate via GET session + promise poll) |
 | GET | `.../sessions/:id` | Состояние сессии |
 | GET | `.../sessions` | Список |
 
@@ -68,7 +68,7 @@ Same router is mounted at multiple prefixes:
 **Форма выбора (execute.form.choices):**
 ```json
 {
-  "sessionId": "uuid",
+  "sessionId": "sess_1700000000000",
   "execute": {
     "form": {
       "title": "Выберите действие",
@@ -84,7 +84,7 @@ Same router is mounted at multiple prefixes:
 **Форма ввода (execute.form.input):**
 ```json
 {
-  "sessionId": "uuid",
+  "sessionId": "sess_1700000000000",
   "execute": {
     "form": {
       "input": [
@@ -98,7 +98,7 @@ Same router is mounted at multiple prefixes:
 **Сообщение (execute.message):**
 ```json
 {
-  "sessionId": "uuid",
+  "sessionId": "sess_1700000000000",
   "execute": {
     "message": "Ответ ассистента"
   }
