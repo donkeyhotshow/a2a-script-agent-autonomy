@@ -86,7 +86,14 @@
         }
         
         if (!res.ok) {
-            throw new Error(data?.error?.message || `Request failed: ${res.status}`);
+            const err = data?.error;
+            const msg =
+                typeof err === 'string'
+                    ? err
+                    : err && typeof err === 'object' && err.message
+                      ? String(err.message)
+                      : null;
+            throw new Error(msg || `Request failed: ${res.status}`);
         }
         
         return data;

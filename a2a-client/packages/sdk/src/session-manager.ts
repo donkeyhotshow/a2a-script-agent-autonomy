@@ -11,6 +11,7 @@ import type {
     ProgressInfo,
     ProgressCallbacks
 } from './types/session.js';
+import {unwrapEnvelope} from './client-api-envelope.js';
 
 /**
  * Lightweight EventEmitter implementation for browser/Node compatibility
@@ -231,7 +232,7 @@ export class SessionManager extends EventEmitter {
             title: options.title ?? 'New Session',
             task: options.task,
         });
-        const session = (res as { data?: Session }).data as Session;
+        const session = unwrapEnvelope<Session>(res) as Session;
         this.emit('sessionCreated', session);
         return session;
     }
@@ -241,7 +242,7 @@ export class SessionManager extends EventEmitter {
      */
     async getSessionDetails(sessionId: string): Promise<Session> {
         const res = await this.request('GET', `/sessions/${sessionId}`);
-        return (res as { data?: Session }).data as Session;
+        return unwrapEnvelope<Session>(res) as Session;
     }
 
     /**
@@ -263,7 +264,7 @@ export class SessionManager extends EventEmitter {
      */
     async updateSessionWithOptions(sessionId: string, update: SessionUpdate): Promise<Session> {
         const res = await this.request('PATCH', `/sessions/${sessionId}`, update as Record<string, unknown>);
-        return (res as { data?: Session }).data as Session;
+        return unwrapEnvelope<Session>(res) as Session;
     }
 
     /**
@@ -291,7 +292,7 @@ export class SessionManager extends EventEmitter {
      */
     async createSession(projectId: string, title?: string): Promise<unknown> {
         const res = await this.request('POST', '/sessions', {projectId, title});
-        const session = (res as { data?: unknown }).data;
+        const session = unwrapEnvelope(res);
         this.emit('sessionCreated', session);
         return session;
     }
@@ -301,7 +302,7 @@ export class SessionManager extends EventEmitter {
      */
     async getSession(sessionId: string): Promise<unknown> {
         const res = await this.request('GET', `/sessions/${sessionId}`);
-        return (res as { data?: unknown }).data;
+        return unwrapEnvelope(res);
     }
 
     /**
@@ -316,7 +317,7 @@ export class SessionManager extends EventEmitter {
         if (options.limit != null) params.append('limit', String(options.limit));
         if (options.offset != null) params.append('offset', String(options.offset));
         const res = await this.request('GET', `/sessions?${params}`);
-        return (res as { data?: unknown }).data;
+        return unwrapEnvelope(res);
     }
 
     /**
@@ -324,7 +325,7 @@ export class SessionManager extends EventEmitter {
      */
     async updateSession(sessionId: string, data: Record<string, unknown>): Promise<unknown> {
         const res = await this.request('PATCH', `/sessions/${sessionId}`, data);
-        return (res as { data?: unknown }).data;
+        return unwrapEnvelope(res);
     }
 
     /**
@@ -333,7 +334,7 @@ export class SessionManager extends EventEmitter {
     async deleteSession(sessionId: string): Promise<unknown> {
         const res = await this.request('DELETE', `/sessions/${sessionId}`);
         this.emit('sessionDeleted', sessionId);
-        return (res as { data?: unknown }).data;
+        return unwrapEnvelope(res);
     }
 
     /**
@@ -378,7 +379,7 @@ export class SessionManager extends EventEmitter {
         if (options.offset != null) params.append('offset', String(options.offset));
         const query = params.toString() ? `?${params}` : '';
         const res = await this.request('GET', `/sessions/${sessionId}/messages${query}`);
-        return (res as { data?: unknown }).data;
+        return unwrapEnvelope(res);
     }
 
     /**
@@ -386,7 +387,7 @@ export class SessionManager extends EventEmitter {
      */
     async addMessage(sessionId: string, message: Record<string, unknown>): Promise<unknown> {
         const res = await this.request('POST', `/sessions/${sessionId}/messages`, message);
-        return (res as { data?: unknown }).data;
+        return unwrapEnvelope(res);
     }
 
     // ==================== Request Management ====================

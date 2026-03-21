@@ -7,7 +7,7 @@
 | **Vite dev** | `vite-plugin-a2a.js` + `vite-plugin-a2a/routes/*.js` | `vite` / `dev:local`. Registers Connect middleware; handles `/api/a2a/*` **before** the proxy. |
 | **Standalone** | `packages/sdk` Express (`createApp`, `setupRoutes`) | `CLIENT_API_PORT` (e.g. 3001), or when the browser talks only to that process. |
 
-Both expose **`/api/a2a/sessions`** (SDK also mounts `/api/v1/sessions` and `/api/sessions` for the same router). They are **maintained separately** — behavior can diverge.
+Both can serve **`/api/a2a/sessions/*`** (SDK mounts the same `sessions` router there and at `/api/v1/sessions`, `/api/sessions`). **`POST .../next` and `POST .../action`** are kept aligned: **ack-only** body + **GET `/result`** behind **`GET .../promise/:id`**. Still verify edge cases when changing either side.
 
 ## What the browser actually uses
 
@@ -34,6 +34,7 @@ If the plugin answers `/api/a2a/*`, the proxy **never** reaches the SDK for thos
 
 ## Web session JSON (Vite plugin)
 
+- **`POST /api/a2a/sessions`** (create): **`{ success, session }`** (no duplicate `data` / `serverResponse` in SDK). Session id: optional body **`id`**, else **`sess_<timestamp>`** (same as Vite).
 - **`POST /api/a2a/sessions/:id/next`** returns an **ack only**: `{ success, accepted, step, promiseId? }`. It does **not** return `session`, `execute`, or `messages`. The web client hydrates from **`GET /sessions/:id`** (and polls **`GET .../promise/:promiseId`** while async).
 - **`context` is omitted** on `GET /api/a2a/sessions/:id`, `POST /api/a2a/sessions`, `PUT ...`, and in public session snapshots. Internal step files still store full context for invoke.
 - **Debug only:** append `?includeContext=1` on `GET /sessions/:id`, `GET /sessions/:id/latest`, or `GET .../promise/:id` to receive `context` again.

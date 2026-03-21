@@ -159,7 +159,12 @@ class APIIntegration {
             console.warn('[API] getSession failed:', res.status, res.statusText);
             return null;
         }
-        return res.json();
+        const raw = await res.json();
+        if (raw && typeof raw === 'object' && raw.success === true) {
+            const d = raw.data ?? raw.session;
+            if (d && typeof d === 'object' && (d.id || d.sessionId)) return d;
+        }
+        return raw;
     }
 
     /**

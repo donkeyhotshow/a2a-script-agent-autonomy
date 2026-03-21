@@ -16,14 +16,21 @@ export function getNewStepDir(cwd, sessionId, stepNum) {
 
 export function loadNewSession(cwd, sessionId) {
   // Reconstruct session from step files
-  // Session is defined by the highest step number with server-response.json
-  const steps = listNewSteps(cwd, sessionId);
-  if (steps.length === 0) return null;
+  // Session is defined by the highest step number WITH server-response.json (not just the highest step number)
+  const allSteps = listNewSteps(cwd, sessionId);
+  if (allSteps.length === 0) return null;
   
-  // Get the latest step with server-response.json
-  const latestStepNum = steps[steps.length - 1];
+  // Filter to only steps that have server-response.json (completed steps)
+  const completedSteps = allSteps.filter(stepNum => {
+    const step = loadNewStep(cwd, sessionId, stepNum);
+    return step !== null;
+  });
+  
+  if (completedSteps.length === 0) return null;
+  
+  // Get the latest completed step
+  const latestStepNum = completedSteps[completedSteps.length - 1];
   const latestStep = loadNewStep(cwd, sessionId, latestStepNum);
-  if (!latestStep) return null;
   
   // Reconstruct session metadata from step data
   const session = {

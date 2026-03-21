@@ -12,6 +12,7 @@ import {
 } from './protocol';
 import {AsyncApiClient, PromisePoller} from './async-client';
 import {handleActionResponse, handleExecuteAction, createExecuteScript} from './action-handler';
+import {unwrapEnvelope} from './client-api-envelope.js';
 
 export interface ApiClientConfig {
     serverUrl?: string;
@@ -84,7 +85,7 @@ export class ApiClient {
 
     async createSession(projectId: string): Promise<unknown> {
         const res = await this.request('POST', '/sessions', {project_id: projectId});
-        return (res as { data?: unknown }).data ?? res;
+        return unwrapEnvelope(res);
     }
 
     async createCard(card: {
@@ -126,7 +127,7 @@ export class ApiClient {
 
     async getSession(sessionId: string): Promise<unknown> {
         const res = await this.request('GET', `/sessions/${sessionId}`);
-        return (res as { data?: unknown }).data ?? res;
+        return unwrapEnvelope(res);
     }
 
     async sendMessage(
@@ -137,32 +138,32 @@ export class ApiClient {
         const context = buildNewTaskContext(sessionId, newTask, architecturalFeatures);
         const body = {context, new_task: newTask};
         const res = await this.request('POST', `/sessions/${sessionId}/message`, body);
-        return (res as { data?: unknown }).data ?? res;
+        return unwrapEnvelope(res);
     }
 
     async getSessionContext(sessionId: string): Promise<unknown> {
         const res = await this.request('GET', `/sessions/${sessionId}/context`);
-        return (res as { data?: unknown }).data ?? res;
+        return unwrapEnvelope(res);
     }
 
     async continueSession(sessionId: string): Promise<unknown> {
         const context = buildContinueContext(sessionId);
         const res = await this.request('POST', `/sessions/${sessionId}/continue`, {context});
-        return (res as { data?: unknown }).data ?? res;
+        return unwrapEnvelope(res);
     }
 
     async confirmSession(sessionId: string, files: FileBlockLike[] = []): Promise<unknown> {
         const context = buildConfirmContext(sessionId);
         const body = this._sendBody(context, files);
         const res = await this.request('POST', `/sessions/${sessionId}/confirm`, body);
-        return (res as { data?: unknown }).data ?? res;
+        return unwrapEnvelope(res);
     }
 
     async sendFiles(sessionId: string, files: FileBlockLike[]): Promise<unknown> {
         const context = buildFileResponseContext(sessionId);
         const body = this._sendBody(context, files);
         const res = await this.request('POST', `/sessions/${sessionId}/files`, body);
-        return (res as { data?: unknown }).data ?? res;
+        return unwrapEnvelope(res);
     }
 
     async deleteSession(sessionId: string): Promise<void> {
@@ -179,7 +180,7 @@ export class ApiClient {
             context: opts.context ?? {},
             files: opts.files ?? [],
         });
-        return (res as { data?: unknown }).data ?? res;
+        return unwrapEnvelope(res);
     }
 }
 

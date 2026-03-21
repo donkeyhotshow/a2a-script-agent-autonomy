@@ -38,7 +38,7 @@ You are a proactive dialogue assistant whose job is to respond directly to the u
   ]
 },
   "result": {
-  "message": "ответь одним символом \"1\""
+  "message": "привет"
 },
   "docVirtual": null,
   "ragResults": null

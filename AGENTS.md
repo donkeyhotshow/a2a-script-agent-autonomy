@@ -197,6 +197,8 @@ request.json → server-transforms → request.md → [LLM] → response.md → 
 | POST | `/api/a2a/sessions/{id}/steps` | Save step data |
 | GET | `/api/a2a/sessions/{id}/promise/{promiseId}` | Poll promise status |
 
+**Contract:** `POST .../next` returns an **ack only** (`success`, `accepted`, `step`, `promiseId?`). Load UI state with **`GET .../sessions/{id}`** and, while async, poll **`GET .../promise/{promiseId}`**. The same routes are implemented by **`@a2a/sdk` Express** when mounted at `/api/a2a/sessions` (standalone Client API). **`a2a-server`** also exposes `POST /api/a2a/sessions/:id/next` for a different, action-processor flow—not the file-backed Client API above.
+
 ### A2A Server - Port 3000
 
 | Method | Path | Description |

@@ -164,9 +164,9 @@
             // New protocol: send task directly in session creation
             const sessionRes = await request('POST', '/sessions', { projectId, task, title: task.slice(0, 50) });
 
-            // Extract session ID - handle both { session: {...}, serverResponse: {...} } and { id: ... }
-            const sessionData = sessionRes?.session || sessionRes;
-            const sessionId = sessionData?.id;
+            // Vite: { success, session }; SDK: { success, data }; legacy: flat
+            const sessionData = sessionRes?.session || sessionRes?.data || sessionRes;
+            const sessionId = sessionData?.id || sessionData?.sessionId;
             const serverResponse = sessionRes?.serverResponse;
 
             if (!sessionId) {
@@ -188,18 +188,19 @@
             // Start loader immediately - minimum 5 second display time enforced locally
             showLoader?.(TaskFlow);
 
-            // Handle sync response: serverResponse.data.execute
             const normalizedResponse = serverResponse?.data ?? serverResponse;
-            const syncExecute = normalizedResponse?.execute;
+            let syncExecute = normalizedResponse?.execute;
+
+            if (!syncExecute && global.apiIntegration?.getSession) {
+                const snap = await global.apiIntegration.getSession(sessionId);
+                syncExecute = snap?.execute;
+            }
 
             if (syncExecute) {
-                // Render sync response immediately
                 setPanelContent(contentEl, 'execute', { execute: syncExecute, context: normalizedResponse?.context, sessionId, projectId }, TaskFlow);
                 updateStatus(contentEl, 'Received response');
-                // Stop loader - server returned execute, minimum 5s already passed
                 hideLoader?.(TaskFlow);
             } else {
-                // Wait for async response (promiseId polling in SDK)
                 updateStatus(contentEl, 'Waiting for response...');
             }
 
