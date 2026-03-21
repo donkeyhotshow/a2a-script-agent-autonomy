@@ -1,46 +1,128 @@
 /**
  * TaskFlow - Main Entry Point
- * Объединяет все модули TaskFlow
- * 
- * Модули:
- * - api.js - HTTP запросы и retry логика
- * - render.js - рендеринг UI компонентов
- * - utils.js - утилиты (getProjectId, resolveStore)
- * - loader.js - логика лоадера
- * - tasks.js - выполнение задач (run, _doRun)
- * - messages.js - отправка выборов и сообщений
- * - init.js - инициализация
- * - core.js - основной объект TaskFlow (обертка над модулями)
- * 
- * Загрузка модулей должна происходить в порядке:
- * 1. api.js
- * 2. render.js
- * 3. utils.js
- * 4. loader.js
- * 5. tasks.js
- * 6. messages.js
- * 7. init.js
- * 8. core.js
- * 9. index.js
+ * Объединяет все модули TaskFlow в единый объект
  */
 
 (function (global) {
     'use strict';
 
-    // Modules are loaded globally as:
-    // - global.TaskFlowAPI (from api.js)
-    // - global.TaskFlowRender (from render.js)
-    // - global.TaskFlow (from core.js)
+    /**
+     * Единый объект TaskFlow
+     * Объединяет функциональность из init, loader, tasks, messages
+     */
+    const TaskFlow = {
+        panelId: null,
+        panel: null,
+        fixed: false,
+        _sessionId: null,
+        _projectId: null,
+        _lastResponse: null,
+
+        /**
+         * Инициализация
+         */
+        init() {
+            const TaskFlowInit = global.TaskFlowInit;
+            const sel = document.getElementById('projectSelect');
+            if (sel) {
+                this._ensureProjectSelect();
+                this._restoreProjectSelection();
+            }
+            this._setupPanelAutoOpen();
+            this._setupLoaderListener();
+        },
+
+        _setupLoaderListener(sessionId = null) {
+            const TaskFlowLoader = global.TaskFlowLoader;
+            if (TaskFlowLoader?.setupLoaderListener) {
+                TaskFlowLoader.setupLoaderListener(this, sessionId);
+            }
+        },
+
+        _showLoader(sessionId = null) {
+            const TaskFlowLoader = global.TaskFlowLoader;
+            if (TaskFlowLoader?.showLoader) {
+                TaskFlowLoader.showLoader(this, sessionId);
+            }
+        },
+
+        _hideLoader(sessionId = null) {
+            const TaskFlowLoader = global.TaskFlowLoader;
+            if (TaskFlowLoader?.hideLoader) {
+                TaskFlowLoader.hideLoader(this, sessionId);
+            }
+        },
+
+        _updateLoaderUI(data) {
+            const TaskFlowLoader = global.TaskFlowLoader;
+            if (TaskFlowLoader?.updateLoaderUI) {
+                TaskFlowLoader.updateLoaderUI(this, data);
+            }
+        },
+
+        async _ensureProjectSelect() {
+            const TaskFlowInit = global.TaskFlowInit;
+            if (TaskFlowInit?.ensureProjectSelect) {
+                await TaskFlowInit.ensureProjectSelect(this);
+            }
+        },
+
+        _restoreProjectSelection() {
+            const TaskFlowInit = global.TaskFlowInit;
+            if (TaskFlowInit?.restoreProjectSelection) {
+                TaskFlowInit.restoreProjectSelection(this);
+            }
+        },
+
+        async run(task, projectId) {
+            const TaskFlowTasks = global.TaskFlowTasks;
+            if (TaskFlowTasks?.run) {
+                await TaskFlowTasks.run(this, task, projectId);
+            }
+        },
+
+        async _doRun(task, projectId, contentEl) {
+            const TaskFlowTasks = global.TaskFlowTasks;
+            if (TaskFlowTasks?.doRun) {
+                await TaskFlowTasks.doRun(this, task, projectId, contentEl);
+            }
+        },
+
+        async sendChoice(choiceId, contentEl) {
+            const TaskFlowMessages = global.TaskFlowMessages;
+            if (TaskFlowMessages?.sendChoice) {
+                await TaskFlowMessages.sendChoice(this, choiceId, contentEl);
+            }
+        },
+
+        async sendMessageResult(messageText, contentEl) {
+            const TaskFlowMessages = global.TaskFlowMessages;
+            if (TaskFlowMessages?.sendMessageResult) {
+                await TaskFlowMessages.sendMessageResult(this, messageText, contentEl);
+            }
+        },
+
+        _setupPanelAutoOpen() {
+            const TaskFlowInit = global.TaskFlowInit;
+            if (TaskFlowInit?.setupPanelAutoOpen) {
+                TaskFlowInit.setupPanelAutoOpen(this);
+            }
+        }
+    };
+
+    // Export
+    global.TaskFlow = TaskFlow;
+    global.getProjectId = global.getProjectId;
+    global.waitForFirstResponse = global.waitForFirstResponse;
+    global.applyExecuteResponse = global.applyExecuteResponse;
 
     // Auto-initialize when DOM is ready
     if (typeof document !== 'undefined') {
         document.addEventListener('DOMContentLoaded', function() {
-            // Wait for modules to be loaded
             const checkAndInit = () => {
                 if (global.TaskFlow && typeof global.TaskFlow.init === 'function') {
                     global.TaskFlow.init();
                 } else {
-                    // Retry after short delay
                     setTimeout(checkAndInit, 100);
                 }
             };
@@ -48,7 +130,7 @@
         });
     }
 
-    // Export convenience functions
+    // Convenience functions
     global.startTask = function(task, projectId) {
         if (global.TaskFlow) {
             global.TaskFlow.run(task, projectId);
@@ -73,4 +155,4 @@
         }
     };
 
-})(typeof window !== 'undefined' ? window : global);
+})(typeof window !== 'undefined' ? window : globalThis);
