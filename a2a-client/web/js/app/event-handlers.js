@@ -120,11 +120,10 @@
         /**
          * Setup loader indicator for waiting server responses
          * Note: Global loader is disabled - wait is now shown in each dialog panel
+         * @deprecated Kept for backward compatibility - does nothing
          */
         setupLoaderIndicator() {
-            // Global loader indicator is disabled - wait is now shown in each dialog panel
-            // This function is kept for backward compatibility but does nothing
-            console.log('[AppTask] Global loader indicator disabled - using panel-based wait elements');
+            // No-op: global loader disabled, using panel-based wait elements
         },
 
         /**

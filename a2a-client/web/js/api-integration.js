@@ -136,14 +136,15 @@ class APIIntegration {
         const url = this._clientA2aUrl(resourcePath);
         const fetchOptions = {
             method: method.toUpperCase(),
-            headers: { ...this._getHeaders(), ...options.headers }
+            headers: { ...this._getHeaders(), ...options.headers },
+            timeout: options.timeout
         };
         
         if (body && method.toUpperCase() !== 'GET') {
             fetchOptions.body = JSON.stringify(body);
         }
         
-        const response = await fetchWithRetry(url, fetchOptions, options.timeout);
+        const response = await fetchWithRetry(url, fetchOptions);
         
         if (!response.ok) {
             throw new Error(`API request failed: ${response.status} ${response.statusText}`);
