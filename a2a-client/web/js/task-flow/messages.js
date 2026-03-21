@@ -99,12 +99,17 @@
         } catch (error) {
             console.error('[TaskFlow] Error sending choice:', error);
             hideLoader?.(TaskFlow);
+            const errorMsg = error?.message || error?.error?.message || 'Unknown error';
             contentEl.innerHTML = `
                 <div class="task-flow-error">
-                    <p>Error: ${escapeHtml(error.message)}</p>
+                    <p>Error: ${escapeHtml(errorMsg)}</p>
                     <button class="task-flow-retry-btn">Retry</button>
                 </div>
             `;
+            // Also show in session store
+            if (store?.setError) {
+                store.setError(errorMsg);
+            }
         }
     }
 

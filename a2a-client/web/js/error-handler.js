@@ -393,18 +393,35 @@
          * Normalize error to consistent format
          */
         _normalizeError(error) {
+            if (error == null) {
+                return {
+                    message: 'Unknown error',
+                    name: 'Error',
+                    code: 'UNKNOWN',
+                    stack: undefined,
+                    original: error
+                };
+            }
+
             if (typeof error === 'string') {
                 return {
                     message: error,
                     name: 'Error',
-                    code: 'STRING_ERROR'
+                    code: 'STRING_ERROR',
+                    stack: undefined,
+                    original: error
                 };
             }
 
+            // Handle various error object shapes
+            const message = error?.message ?? error?.error?.message ?? error?.msg ?? 'Unknown error';
+            const name = error?.name ?? 'Error';
+            const code = error?.code ?? error?.error?.code ?? 'UNKNOWN';
+
             return {
-                message: error?.message || error?.error?.message || 'Unknown error',
-                name: error?.name || 'Error',
-                code: error?.code || error?.error?.code || 'UNKNOWN',
+                message: String(message),
+                name: String(name),
+                code: String(code),
                 stack: error?.stack,
                 original: error
             };

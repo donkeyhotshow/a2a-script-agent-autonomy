@@ -198,14 +198,15 @@
             // Could add title to state if needed
         };
 
-        this.createSessionWithForm = function(title) { 
+        this.createSessionWithForm = function(title) {
+            const self = this;
             return this.storage.createSessionWithForm(title).then(function(session) {
-                this.core.setSession(session.id, session.projectId);
-                this.core.setExecute(session.execute || null);
-                this.core.emit('sessionCreated', session);
+                self.core.setSession(session.id, session.projectId);
+                self.core.setExecute(session.execute || null);
+                self.core.emit('sessionCreated', session);
                 return session;
-            }.bind(this));
-        }.bind(this);
+            });
+        };
 
         this.isPersistentStorage = function() {
             return this._storageMode === 'storage';

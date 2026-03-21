@@ -10,6 +10,8 @@
      * Экранировать HTML
      */
     function escapeHtml(s) {
+        if (s == null) return '';
+        if (typeof s !== 'string') s = String(s);
         const el = document.createElement('div');
         el.textContent = s;
         return el.innerHTML;
