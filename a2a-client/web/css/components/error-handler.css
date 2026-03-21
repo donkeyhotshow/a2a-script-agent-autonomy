@@ -9,10 +9,10 @@
  */
 
 /* Import all error-handler modules */
-@import url('./error-handler/error-utils.css');
-@import url('./error-handler/errors.css');
-@import url('./error-handler/alerts.css');
-@import url('./error-handler/debug.css');
+/* @import url('./error-handler/error-utils.css'); */
+/* @import url('./error-handler/errors.css'); */
+/* @import url('./error-handler/alerts.css'); */
+/* @import url('./error-handler/debug.css'); */
 
 /* Legacy compatibility - keep original class names working */
 /* These are now handled by individual module files above */

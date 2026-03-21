@@ -8,8 +8,6 @@
     'use strict';
 
     // Get modules
-    const API = global.TaskFlowAPI;
-    const getChoiceLabel = API?.getChoiceLabel;
     const submitAndHandle = global.TaskFlowSubmitAndHandle;
     const resolveStore = global.resolveStore;
 
@@ -20,7 +18,7 @@
      * @param {HTMLElement} contentEl - элемент контента
      */
     async function sendChoice(TaskFlow, choiceId, contentEl) {
-        const displayText = getChoiceLabel ? getChoiceLabel(choiceId) : choiceId;
+        const displayText = choiceId;
         
         // Add message to history
         const store = resolveStore(TaskFlow._sessionId);

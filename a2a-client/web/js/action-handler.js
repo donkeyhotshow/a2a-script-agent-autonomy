@@ -2,75 +2,30 @@
  * ActionHandler - Главный модуль для обработки действий пользователя
  * 
  * Упрощенная версия - только submit() для отправки результатов
- * 
- * Зависит от:
- * - action-executor.js
  */
 
 (function (global) {
     'use strict';
 
-    // Референс на подмодуль выполнения
-    const Executor = global.ActionExecutor;
-
-    /**
-     * Проверяет доступность Executor
-     */
-    function checkModules() {
-        if (!Executor) {
-            throw new Error('[ActionHandler] ActionExecutor is required - cannot submit actions');
-        }
-    }
-
     /**
      * Основная функция отправки результата
-     * Выполняет полный цикл: валидация → отправка → парсинг → обработка
+     * Выполняет отправку через ActionExecutor
      * 
      * @param {string} sessionId - ID сессии
      * @param {Object} result - результат от пользователя { message?, choice? }
-     * @param {Object} options - дополнительные опции
-     * @param {Object} options.form - текущая форма для валидации choice
-     * @returns {Promise<Object>} обработанный ответ сервера
+     * @returns {Promise<Object>} ответ сервера
      */
-    async function submit(sessionId, result, options = {}) {
-        // Проверяем доступность модулей
-        checkModules();
-        
-        // 1. Валидируем sessionId
-        const Validator = global.ActionValidator;
-        if (Validator?.validateSessionId) {
-            const sessionValidation = Validator.validateSessionId(sessionId);
-            if (!sessionValidation.valid) {
-                throw new Error(sessionValidation.error);
-            }
+    async function submit(sessionId, result) {
+        const Executor = global.ActionExecutor;
+        if (!Executor) {
+            throw new Error('[ActionHandler] ActionExecutor is required');
         }
         
-        // 2. Валидируем result (опционально)
-        let parsedResult = result;
-        if (Validator?.validateResult && options.form) {
-            const resultValidation = Validator.validateResult(result, options.form);
-            if (!resultValidation.valid) {
-                throw new Error(resultValidation.error);
-            }
-            parsedResult = resultValidation.parsed || result;
-        }
-        
-        // 3. Отправляем на сервер через Executor
-        const rawResponse = await Executor.submit(sessionId, parsedResult);
-        
-        // 4. Парсируем ответ (опционально)
-        const Parser = global.ActionParser;
-        const response = Parser?.parseResponse 
-            ? Parser.parseResponse(rawResponse) 
-            : rawResponse;
-        
-        // 5. Возвращаем обработанный ответ
-        return response;
+        return Executor.submit(sessionId, result);
     }
 
     // Главный объект ActionHandler - точка входа
     const ActionHandler = {
-        // Основная функция - отправка результата пользователя
         submit,
         
         // Удобные методы-алиасы

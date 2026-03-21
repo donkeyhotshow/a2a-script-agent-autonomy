@@ -7,9 +7,7 @@
     'use strict';
 
     // Get modules
-    const API = global.TaskFlowAPI;
     const Render = global.TaskFlowRender;
-    const request = API?.request;
     const resolveStore = global.resolveStore;
 
     /**

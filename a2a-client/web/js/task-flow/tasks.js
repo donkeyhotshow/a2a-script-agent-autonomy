@@ -8,9 +8,7 @@
     'use strict';
 
     // Get modules
-    const API = global.TaskFlowAPI;
     const Render = global.TaskFlowRender;
-    const request = API?.request;
     const setPanelContent = Render?.setPanelContent;
     const updateStatus = Render?.updateStatus;
     const resolveStore = global.resolveStore;
