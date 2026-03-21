@@ -9,19 +9,11 @@
 (function (global) {
     'use strict';
 
-    function resolveWebScriptUrl(relativePath) {
-        var baseEl = document.getElementById('app-base');
-        var baseHref = (baseEl && baseEl.href) ? baseEl.href : document.baseURI;
-        var path = relativePath.replace(/^\//, '');
-        try {
-            return new URL(path, baseHref).href;
-        } catch (e) {
-            return '/' + path;
-        }
-    }
-
     // Load app modules
     function loadAppModules() {
+        if (typeof global.resolveWebScriptUrl !== 'function') {
+            console.error('[AppTask] Expected js/resolve-web-script-url.js before js/app-task.js');
+        }
         const modules = [
             'js/app/project-manager.js',
             'js/app/session-manager.js',
@@ -31,7 +23,6 @@
             'js/app/windows/window-state.js',
             'js/app/windows/window-manager.js',
             'js/app/windows/index.js',
-            'js/app/window-manager.js',
             'js/app/taskbar-manager.js',
             'js/app/app-task.js'
         ];
@@ -51,10 +42,9 @@
         }
 
         modules.forEach(function (rel) {
-            var resolved = resolveWebScriptUrl(rel);
+            var resolved = global.resolveWebScriptUrl(rel);
             // Match either relative path or full resolved URL (avoids duplicate injects under subpath base)
-            var already = document.querySelector('script[src*="' + rel.replace(/"/g, '') + '"]')
-                || document.querySelector('script[src="' + resolved.replace(/"/g, '') + '"]');
+            var already = global.isWebScriptInjected(rel, resolved);
             if (!already) {
                 const script = document.createElement('script');
                 script.src = resolved;

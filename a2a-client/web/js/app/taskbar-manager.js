@@ -348,9 +348,7 @@
          * Escape HTML
          */
         escapeHtml(s) {
-            const el = document.createElement('div');
-            el.textContent = s;
-            return el.innerHTML;
+            return global.escapeHtml(s);
         },
 
         /**

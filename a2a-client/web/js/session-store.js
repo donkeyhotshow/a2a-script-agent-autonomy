@@ -18,11 +18,12 @@
  * 1. js/daemons/emitter.js
  * 2. js/daemons/dialog-loader.js
  * 3. js/daemons/dialog-promise-poll.js
- * 4. js/normalizers.js
- * 5. js/session-data.js
- * 6. js/session-storage.js
- * 7. js/project-store.js
- * 8. js/session-store.js (этот файл)
+ * 4. js/execute-form-utils.js
+ * 5. js/normalizers.js
+ * 6. js/session-data.js
+ * 7. js/session-storage.js
+ * 8. js/project-store.js
+ * 9. js/session-store.js (этот файл)
  */
 
 (function (global) {

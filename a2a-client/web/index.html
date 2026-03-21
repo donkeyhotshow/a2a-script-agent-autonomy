@@ -3,6 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>
+        (function () {
+            var CLIENT_API_KEY = 'a2a_clientApiUrl';
+            try {
+                var stored = localStorage.getItem(CLIENT_API_KEY);
+                if (stored === '[object Object]' || (typeof stored === 'string' && stored.indexOf('[object') !== -1)) {
+                    console.warn('[A2A] Corrupted API URL in localStorage, reset to /api');
+                    localStorage.setItem(CLIENT_API_KEY, '/api');
+                }
+            } catch (e) { /* private mode / blocked */ }
+        })();
+    </script>
     <title>A2A Script Agent - Task</title>
     <base id="app-base" href="/">
     <script>
@@ -94,6 +106,7 @@
 <script src="js/daemons/dialog-promise-poll.js"></script>
 
 <!-- SessionStore stack (session-store.js is the facade; requires the rest) -->
+<script src="js/execute-form-utils.js"></script>
 <script src="js/normalizers.js"></script>
 <script src="js/session-data.js"></script>
 <!-- After storage.js: replaces global.SessionStorageAPI with { create } factory for SessionStore -->
@@ -112,6 +125,7 @@
 
 <!-- ===== Application Modules ===== -->
 <script src="js/template-loader.js"></script>
+<script src="js/html-utils.js"></script>
 <script src="js/api-integration.js"></script>
 <script src="js/action-parser.js"></script>
 <script src="js/action-validator.js"></script>
@@ -128,19 +142,10 @@
 <script src="js/task-flow/init.js"></script>
 <script src="js/task-flow/core.js"></script>
 <script src="js/task-flow/index.js"></script>
+<script src="js/resolve-web-script-url.js"></script>
 <script src="js/app-task.js"></script>
 
 <script>
-    // Fix corrupted localStorage values before anything else loads
-    (function() {
-        const CLIENT_API_KEY = 'a2a_clientApiUrl';
-        const stored = localStorage.getItem(CLIENT_API_KEY);
-        if (stored === '[object Object]' || (typeof stored === 'string' && stored.includes('[object'))) {
-            console.warn('[A2A] Found corrupted API URL in localStorage, resetting to default');
-            localStorage.setItem(CLIENT_API_KEY, '/api');
-        }
-    })();
-
     // Initialize new architecture on page load
     document.addEventListener('DOMContentLoaded', async () => {
         // Force adapter installation (replaces legacy globals)
@@ -180,13 +185,21 @@
                 const hasPanelManager = typeof window.PanelManager !== 'undefined';
                 const hasPanel = typeof window.Panel !== 'undefined';
                 const appScriptsDone = window._appModulesLoaded === true;
+                const hasWindowManager =
+                    typeof window.WindowManager !== 'undefined' &&
+                    typeof window.WindowManager.toggleSessionWindow === 'function';
                 const timedOut = Date.now() - started > maxMs;
 
-                const modulesReady = hasSessionStore && hasTaskFlow && (appScriptsDone || timedOut);
+                const modulesReady =
+                    hasSessionStore &&
+                    hasTaskFlow &&
+                    (timedOut || (appScriptsDone && hasWindowManager));
 
                 if (modulesReady) {
                     if (timedOut && !appScriptsDone) {
                         console.warn('[A2A] Dynamic app modules not ready after ' + maxMs + 'ms; continuing');
+                    } else if (timedOut && appScriptsDone && !hasWindowManager) {
+                        console.warn('[A2A] WindowManager missing after ' + maxMs + 'ms; continuing');
                     }
                     if (hasPanelManager && hasPanel) {
                         window._panelModulesLoaded = true;

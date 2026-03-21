@@ -11,8 +11,7 @@
         return;
     }
 
-    const PROMISE_POLL_INTERVAL = 5000;
-    root.PROMISE_POLL_INTERVAL = PROMISE_POLL_INTERVAL;
+    const pollMs = root.PROMISE_POLL_INTERVAL || 5000;
 
     root.createDialogPromise = function createDialogPromise() {
         let promiseId = null;
@@ -55,7 +54,7 @@
             startPolling: function (checkFn) {
                 if (!promiseId) return this;
                 this._stopPolling();
-                pollTimer = setInterval(async () => {
+                const tick = async () => {
                     try {
                         const result = await checkFn(promiseId);
                         if (!result) return;
@@ -75,7 +74,9 @@
                         console.error('[DialogPromise] Polling error:', err);
                         emitter.emit('error', { promiseId, error: err });
                     }
-                }, PROMISE_POLL_INTERVAL);
+                };
+                void tick();
+                pollTimer = setInterval(tick, pollMs);
                 return this;
             },
             _stopPolling: function () {

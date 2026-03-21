@@ -3,6 +3,7 @@
  * Обрабатывает promiseId, polling и состояние ожидания
  */
 
+import { PROMISE_POLL_INTERVAL_MS } from './a2a-constants.js';
 import { EventEmitter } from './EventEmitter.js';
 
 /**
@@ -14,7 +15,7 @@ import { EventEmitter } from './EventEmitter.js';
 
 /**
  * @typedef {Object} DialogPromiseOptions
- * @property {number} [pollInterval=5000] - Интервал polling в мс
+ * @property {number} [pollInterval] - Интервал polling в мс (default PROMISE_POLL_INTERVAL_MS)
  */
 
 export class DialogPromise extends EventEmitter {
@@ -34,7 +35,7 @@ export class DialogPromise extends EventEmitter {
         this._status = null;
         
         /** @type {number} */
-        this._pollInterval = options.pollInterval || 5000;
+        this._pollInterval = options.pollInterval ?? PROMISE_POLL_INTERVAL_MS;
         
         /** @type {number|null} */
         this._pollTimer = null;

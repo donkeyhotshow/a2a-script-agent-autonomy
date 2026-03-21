@@ -8,6 +8,7 @@
 import {Router} from 'express';
 import {AuthenticatedRequest, authMiddleware, sessionMiddleware} from '../middleware/auth.js';
 import {configRoutes} from './config.js';
+import {createProjectsA2aRouter} from './projects-a2a.js';
 import sessionsRoutes from './sessions.js';
 import {storageRoutes} from './storage.js';
 
@@ -53,6 +54,7 @@ export function setupRoutes(options: RouteOptions = {}): Router {
     // Step file routes (bypasses auth for web client compatibility)
     // These need to be before auth middleware to allow anonymous access
     router.use('/api/a2a/sessions', sessionsRoutes);
+    router.use('/api/a2a', createProjectsA2aRouter());
 
     // Apply global middleware if enabled
     if (enableAuth) {

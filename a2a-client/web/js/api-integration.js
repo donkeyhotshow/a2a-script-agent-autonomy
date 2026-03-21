@@ -60,7 +60,44 @@ async function fetchWithRetry(url, options = {}, retryCount = 0) {
 class APIIntegration {
     constructor() {
         this.token = null;
+        /** @type {string|null} Client API prefix (e.g. /api or http://host:3001/api); null = same-origin /api/a2a/... */
+        this.apiBase = null;
         this._listeners = new Map();
+    }
+
+    /**
+     * Absolute Client API roots often omit /api (e.g. http://localhost:3001). Normalize to .../api.
+     */
+    _normalizeApiBase(raw) {
+        const s = String(raw).trim();
+        if (!s) return null;
+        if (s.startsWith('/')) {
+            return s.replace(/\/?$/, '') || '/api';
+        }
+        try {
+            const u = new URL(s);
+            let p = u.pathname.replace(/\/$/, '');
+            if (!p || p === '/') {
+                u.pathname = '/api';
+            }
+            const out = u.toString().replace(/\/$/, '');
+            return out || `${u.origin}/api`;
+        } catch {
+            return s.replace(/\/?$/, '');
+        }
+    }
+
+    /**
+     * Build URL for Client API routes mounted under .../api/a2a/ (same as Vite plugin).
+     * @param {string} resourcePath - e.g. "projects", "sessions", "sessions/id/messages?x=1"
+     */
+    _clientA2aUrl(resourcePath) {
+        const path = String(resourcePath || '').replace(/^\//, '');
+        if (!this.apiBase) {
+            return `/api/a2a/${path}`;
+        }
+        const base = String(this.apiBase).replace(/\/?$/, '');
+        return `${base}/a2a/${path}`;
     }
 
     /**
@@ -70,7 +107,11 @@ class APIIntegration {
         if (options.token) {
             this.token = options.token;
         }
-        console.log('[API] Configured with token:', !!this.token);
+        if ('apiBase' in options) {
+            const s = options.apiBase == null ? '' : String(options.apiBase).trim();
+            this.apiBase = s ? this._normalizeApiBase(s) : null;
+        }
+        console.log('[API] Configured token:', !!this.token, 'apiBase:', this.apiBase || '(default /api/a2a)');
         return this;
     }
 
@@ -89,7 +130,7 @@ class APIIntegration {
      * Get projects list (uses Vite plugin at /api/a2a/projects)
      */
     async getProjects() {
-        const res = await fetch('/api/a2a/projects');
+        const res = await fetch(this._clientA2aUrl('projects'));
         if (!res.ok) throw new Error(`getProjects failed: ${res.status}`);
         const raw = await res.json();
         return Array.isArray(raw) ? raw : (raw?.projects || raw?.data || []);
@@ -100,7 +141,7 @@ class APIIntegration {
      */
     async createProject(params) {
         const body = typeof params === 'string' ? { name: params } : (params || {});
-        const res = await fetch('/api/a2a/projects', {
+        const res = await fetch(this._clientA2aUrl('projects'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(body)
@@ -128,7 +169,7 @@ class APIIntegration {
      */
     async getSessions(projectId = null) {
         const headers = { ...this._getHeaders(), ...this._getStorageHeaders() };
-        const res = await fetch(`/api/a2a/sessions`, { headers });
+        const res = await fetch(this._clientA2aUrl('sessions'), { headers });
         if (!res.ok) {
             console.warn('[API] getSessions failed:', res.status, res.statusText);
             return [];
@@ -147,7 +188,7 @@ class APIIntegration {
      */
     async createSession(params = {}) {
         const headers = { 'Content-Type': 'application/json', ...this._getStorageHeaders() };
-        const res = await fetch(`/api/a2a/sessions`, {
+        const res = await fetch(this._clientA2aUrl('sessions'), {
             method: 'POST',
             headers,
             body: JSON.stringify(params)
@@ -167,7 +208,7 @@ class APIIntegration {
                 : {};
         const headers = { ...this._getHeaders(), ...this._getStorageHeaders() };
         const q = options.includeContext ? '?includeContext=1' : '';
-        const res = await fetch(`/api/a2a/sessions/${encodeURIComponent(sessionId)}${q}`, { headers });
+        const res = await fetch(this._clientA2aUrl(`sessions/${encodeURIComponent(sessionId)}${q}`), { headers });
         if (!res.ok) {
             console.warn('[API] getSession failed:', res.status, res.statusText);
             return null;
@@ -182,6 +223,16 @@ class APIIntegration {
     }
 
     /**
+     * Highest step summary (promiseId / promiseStatus). Same route as storage “latest”.
+     */
+    async getSessionLatest(sessionId) {
+        const headers = { ...this._getHeaders(), ...this._getStorageHeaders() };
+        const res = await fetch(this._clientA2aUrl(`sessions/${encodeURIComponent(sessionId)}/latest`), { headers });
+        if (!res.ok) return null;
+        return res.json();
+    }
+
+    /**
      * Delta messages by monotonic seq (reduces full GET frequency). Optional execute via withExecute=1.
      */
     async getSessionMessages(sessionId, afterSeq = 0, limit = 50, withExecute = false) {
@@ -192,7 +243,7 @@ class APIIntegration {
         });
         if (withExecute) params.set('withExecute', '1');
         const res = await fetch(
-            `/api/a2a/sessions/${encodeURIComponent(sessionId)}/messages?${params}`,
+            this._clientA2aUrl(`sessions/${encodeURIComponent(sessionId)}/messages?${params}`),
             { headers }
         );
         if (!res.ok) {
@@ -207,7 +258,7 @@ class APIIntegration {
      */
     async deleteSession(sessionId) {
         const headers = { ...this._getStorageHeaders() };
-        const res = await fetch(`/api/a2a/sessions/${encodeURIComponent(sessionId)}`, {
+        const res = await fetch(this._clientA2aUrl(`sessions/${encodeURIComponent(sessionId)}`), {
             method: 'DELETE',
             headers
         });
@@ -223,7 +274,7 @@ class APIIntegration {
      */
     async checkPromise(sessionId, promiseId) {
         const headers = { ...this._getHeaders(), ...this._getStorageHeaders() };
-        const res = await fetch(`/api/a2a/sessions/${encodeURIComponent(sessionId)}/promise/${encodeURIComponent(promiseId)}`, {
+        const res = await fetch(this._clientA2aUrl(`sessions/${encodeURIComponent(sessionId)}/promise/${encodeURIComponent(promiseId)}`), {
             method: 'GET',
             headers
         });

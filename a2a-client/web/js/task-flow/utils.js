@@ -39,14 +39,10 @@
     }
 
     /**
-     * Escape HTML special characters
-     * @param {string} s - строка для экранирования
-     * @returns {string} экранированная строка
+     * Escape HTML (see js/html-utils.js)
      */
     function escapeHtml(s) {
-        const el = document.createElement('div');
-        el.textContent = s;
-        return el.innerHTML;
+        return global.escapeHtml(s);
     }
 
     // Export
@@ -57,6 +53,5 @@
     };
     global.getProjectId = getProjectId;
     global.resolveStore = resolveStore;
-    global.escapeHtml = escapeHtml;
 
 })(typeof window !== 'undefined' ? window : global);

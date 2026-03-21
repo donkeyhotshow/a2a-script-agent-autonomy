@@ -12,6 +12,36 @@
         ) || null;
     }
 
+    /** Let taskbar DOM paint after refresh, then open the session window. */
+    function scheduleOpenSessionWindow(sessionId, delayMs) {
+        var sid = sessionId;
+        var ms = delayMs == null ? 120 : delayMs;
+        function tryOpen() {
+            var btn = findTaskbarBtnBySessionId(sid);
+            if (btn && global.WindowManager) {
+                global.WindowManager.toggleSessionWindow(sid, btn);
+                return true;
+            }
+            return false;
+        }
+        function afterPaint() {
+            if (typeof requestAnimationFrame === 'function') {
+                requestAnimationFrame(function () {
+                    requestAnimationFrame(function () {
+                        if (!tryOpen()) {
+                            setTimeout(tryOpen, ms);
+                        }
+                    });
+                });
+            } else {
+                setTimeout(function () {
+                    if (!tryOpen()) setTimeout(tryOpen, ms);
+                }, 0);
+            }
+        }
+        setTimeout(afterPaint, 0);
+    }
+
     const AppStateManagers = {
         /**
          * Create new session
@@ -40,13 +70,7 @@
                                 await global.TaskbarManager.refreshTaskbar(taskbarContent);
                             }
                             
-                            // Auto-open the new session
-                            setTimeout(() => {
-                                const btn = findTaskbarBtnBySessionId(sid);
-                                if (btn && global.WindowManager) {
-                                    global.WindowManager.toggleSessionWindow(sid, btn);
-                                }
-                            }, 100);
+                            scheduleOpenSessionWindow(sid);
                             
                             console.log('[AppTask] Created new persistent session:', sid);
                             return;
@@ -78,13 +102,7 @@
 
                 // Auto-open the new session (use sessionId — API may return sessionId without .id)
                 if (sessionId) {
-                    const sid = sessionId;
-                    setTimeout(() => {
-                        const btn = findTaskbarBtnBySessionId(sid);
-                        if (btn && global.WindowManager) {
-                            global.WindowManager.toggleSessionWindow(sid, btn);
-                        }
-                    }, 100);
+                    scheduleOpenSessionWindow(sessionId);
                 }
 
                 console.log('[AppTask] Created new session:', sessionId);

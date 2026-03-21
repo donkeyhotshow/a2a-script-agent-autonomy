@@ -10,6 +10,10 @@
 (function (global) {
     'use strict';
 
+    function escapeHtml(s) {
+        return global.escapeHtml(s);
+    }
+
     const ErrorHandler = {
         // Error storage
         errors: [],
@@ -674,14 +678,6 @@
             return this.errors.slice(0, count);
         }
     };
-
-    // Escape HTML helper
-    function escapeHtml(s) {
-        if (s == null) return '';
-        const el = document.createElement('div');
-        el.textContent = String(s);
-        return el.innerHTML;
-    }
 
     // Export
     global.ErrorHandler = ErrorHandler;

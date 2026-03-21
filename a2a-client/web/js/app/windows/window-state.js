@@ -202,35 +202,27 @@
                         sessionData = await global.apiIntegration.getSession(sessionId, projectId);
                         console.log('[WindowState] Session loaded:', sessionId, 'promiseId:', sessionData?.promiseId, 'status:', sessionData?.status);
                     }
-                    // Fallback: GET /latest (highest step dir) if GET session omitted promiseId
-                    // Always check /latest to detect pending promises in higher steps
-                    const latestResponse = await fetch(`/api/a2a/sessions/${encodeURIComponent(sessionId)}/latest`);
-                    if (latestResponse.ok) {
-                        const latestData = await latestResponse.json();
-                        const st = latestData?.promiseStatus;
-                        if (latestData?.promiseId && (st === 'pending' || st === 'processing')) {
-                            sessionData = sessionData || {};
-                            sessionData.promiseId = latestData.promiseId;
-                            sessionData.promiseStatus = st;
-                            console.log('[WindowState] Found pending promise from /latest:', latestData.promiseId);
+                    try {
+                        let latestData = null;
+                        if (global.apiIntegration?.getSessionLatest) {
+                            latestData = await global.apiIntegration.getSessionLatest(sessionId);
+                        } else {
+                            const latestResponse = await fetch(
+                                `/api/a2a/sessions/${encodeURIComponent(sessionId)}/latest`
+                            );
+                            if (latestResponse.ok) latestData = await latestResponse.json();
                         }
-                    }
-                    if (!sessionData?.promiseId) {
-                        try {
-                            const response = await fetch(`/api/a2a/sessions/${encodeURIComponent(sessionId)}/latest`);
-                            if (response.ok) {
-                                const latestData = await response.json();
-                                const st = latestData?.promiseStatus;
-                                if (latestData?.promiseId && (st === 'pending' || st === 'processing')) {
-                                    sessionData = sessionData || {};
-                                    sessionData.promiseId = latestData.promiseId;
-                                    sessionData.promiseStatus = st;
-                                    console.log('[WindowState] Found pending promise from /latest:', latestData.promiseId);
-                                }
+                        if (latestData) {
+                            const st = latestData.promiseStatus;
+                            if (latestData.promiseId && (st === 'pending' || st === 'processing')) {
+                                sessionData = sessionData || {};
+                                sessionData.promiseId = latestData.promiseId;
+                                sessionData.promiseStatus = st;
+                                console.log('[WindowState] Found pending promise from /latest:', latestData.promiseId);
                             }
-                        } catch (e) {
-                            console.warn('[WindowState] Failed to check latest step:', e);
                         }
+                    } catch (e) {
+                        console.warn('[WindowState] Failed to check latest step:', e);
                     }
                 } catch (err) {
                     console.warn('[WindowState] Failed to load session data:', err);

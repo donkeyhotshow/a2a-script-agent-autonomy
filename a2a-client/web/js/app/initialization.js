@@ -6,11 +6,12 @@
     'use strict';
 
     function resolveWebScriptUrl(relativePath) {
-        var baseEl = document.getElementById('app-base');
-        var baseHref = (baseEl && baseEl.href) ? baseEl.href : document.baseURI;
+        if (typeof global.resolveWebScriptUrl === 'function') {
+            return global.resolveWebScriptUrl(relativePath);
+        }
         var path = relativePath.replace(/^\//, '');
         try {
-            return new URL(path, baseHref).href;
+            return new URL(path, document.baseURI).href;
         } catch (e) {
             return '/' + path;
         }
@@ -68,9 +69,12 @@
          */
         async loadModules() {
             const modules = [
+                'js/resolve-web-script-url.js',
+                'js/html-utils.js',
                 'js/daemons/emitter.js',
                 'js/daemons/dialog-loader.js',
                 'js/daemons/dialog-promise-poll.js',
+                'js/execute-form-utils.js',
                 'js/normalizers.js',
                 'js/session-data.js',
                 'js/session-storage.js',
@@ -78,13 +82,12 @@
                 'js/session-store.js',
                 'js/app/project-manager.js',
                 'js/app/session-manager.js',
-                'js/app/window-manager.js',
                 'js/app/taskbar-manager.js'
             ];
 
             for (const rel of modules) {
                 await new Promise((resolve, reject) => {
-                    if (document.querySelector('script[src*="' + rel + '"]')) {
+                    if (global.isWebScriptInjected?.(rel)) {
                         resolve();
                         return;
                     }

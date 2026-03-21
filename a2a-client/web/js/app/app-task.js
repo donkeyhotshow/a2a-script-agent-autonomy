@@ -11,17 +11,6 @@
 (function (global) {
     'use strict';
 
-    function resolveWebScriptUrl(relativePath) {
-        var baseEl = document.getElementById('app-base');
-        var baseHref = (baseEl && baseEl.href) ? baseEl.href : document.baseURI;
-        var path = relativePath.replace(/^\//, '');
-        try {
-            return new URL(path, baseHref).href;
-        } catch (e) {
-            return '/' + path;
-        }
-    }
-
     /**
      * Load modular components dynamically
      */
@@ -35,13 +24,13 @@
 
         const loadPromises = modules.map((rel) => {
             return new Promise((resolve, reject) => {
-                if (document.querySelector('script[src*="' + rel + '"]')) {
+                if (global.isWebScriptInjected?.(rel)) {
                     resolve();
                     return;
                 }
 
                 const script = document.createElement('script');
-                script.src = resolveWebScriptUrl(rel);
+                script.src = global.resolveWebScriptUrl(rel);
                 script.onload = () => {
                     console.log(`[AppTask] Loaded module: ${rel}`);
                     resolve();

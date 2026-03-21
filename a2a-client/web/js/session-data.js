@@ -7,6 +7,7 @@
  * Зависит от:
  * - global.__a2aDaemons (dialog-loader, dialog-promise)
  * - global.Normalizers (normalizeMessage)
+ * - global.executeHasActionableForm (execute-form-utils.js)
  */
 
 (function (global) {
@@ -15,6 +16,9 @@
     const D = global.__a2aDaemons;
     if (!D || typeof D.createDialogLoader !== 'function' || typeof D.createDialogPromise !== 'function') {
         throw new Error('[SessionData] Load js/daemons/emitter.js, dialog-loader.js, dialog-promise-poll.js before session-data.js');
+    }
+    if (typeof global.executeHasActionableForm !== 'function') {
+        throw new Error('[SessionData] Load js/execute-form-utils.js before session-data.js');
     }
     const createDialogLoader = D.createDialogLoader;
     const createDialogPromise = D.createDialogPromise;
@@ -131,8 +135,8 @@
             get messages() { return state.messages.slice(); },
 
             isWaitingForInput: function() {
-                return state.status === 'waiting' || state.pendingForm || 
-                       (state.execute && state.execute.form && (state.execute.form.choices?.length > 0 || state.execute.form.input));
+                return state.status === 'waiting' || state.pendingForm ||
+                    global.executeHasActionableForm(state.execute);
             },
 
             /** True while async work blocks new input (LLM / promise / loader). */
@@ -222,10 +226,7 @@
                 } else {
                     emit('wait', null);
                     
-                    hasForm = !!(execute && execute.form && (
-                        (execute.form.choices && execute.form.choices.length > 0) ||
-                        (execute.form.input && (Array.isArray(execute.form.input) ? execute.form.input.length > 0 : true))
-                    ));
+                    hasForm = global.executeHasActionableForm(execute);
                     if (hasForm) {
                         state.pendingForm = execute.form;
                         state.status = 'waiting';

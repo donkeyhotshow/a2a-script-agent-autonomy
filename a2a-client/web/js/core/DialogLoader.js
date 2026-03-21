@@ -1,8 +1,9 @@
 /**
  * DialogLoader - Управление состоянием loader (загрузка с минимальным временем отображения)
- * Обеспечивает MINIMUM_LOADER_TIME = 5000ms
+ * Minimum loader display: see a2a-constants.js / __a2aDaemons.MIN_LOADER_MS.
  */
 
+import { MIN_LOADER_MS } from './a2a-constants.js';
 import { EventEmitter } from './EventEmitter.js';
 
 /**
@@ -14,7 +15,7 @@ import { EventEmitter } from './EventEmitter.js';
 
 /**
  * @typedef {Object} DialogLoaderOptions
- * @property {number} [minTime=5000] - Минимальное время показа loader в мс
+ * @property {number} [minTime] - Минимальное время показа loader в мс (default MIN_LOADER_MS)
  */
 
 export class DialogLoader extends EventEmitter {
@@ -25,7 +26,7 @@ export class DialogLoader extends EventEmitter {
         super();
         
         /** @type {number} */
-        this._minTime = options.minTime || 5000;
+        this._minTime = options.minTime ?? MIN_LOADER_MS;
         
         /** @type {boolean} */
         this._active = false;

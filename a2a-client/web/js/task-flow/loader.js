@@ -6,6 +6,8 @@
 (function (global) {
     'use strict';
 
+    const MIN_LOADER_MS = global.__a2aDaemons?.MIN_LOADER_MS || 5000;
+
     // Get modules
     const resolveStore = global.resolveStore;
 
@@ -59,29 +61,10 @@
             return;
         }
         
-        // Fallback: Create and show session-specific loader DOM element directly
-        // FIXED: Use session-specific ID instead of global
         const loaderId = 'session-loader-' + targetSessionId;
-        let loaderEl = document.getElementById(loaderId);
-        if (!loaderEl) {
-            loaderEl = document.createElement('div');
-            loaderEl.id = loaderId;
-            loaderEl.className = 'task-flow-inline-loader';
-            loaderEl.innerHTML = `
-                <div class="task-flow-spinner"></div>
-                <p>Processing...</p>
-            `;
-            // Append to the session's panel if available, otherwise to body
-            const sessionPanel = document.getElementById('session-' + targetSessionId);
-            if (sessionPanel) {
-                sessionPanel.appendChild(loaderEl);
-            } else {
-                document.body.appendChild(loaderEl);
-            }
-        }
-        
-        // Set minimum end time (5 seconds from now)
-        const minEndTime = Date.now() + 5000;
+        const loaderEl = global.ensureSessionInlineLoader(targetSessionId);
+
+        const minEndTime = Date.now() + MIN_LOADER_MS;
         loaderEl.classList.add('active');
         loaderEl.dataset.minEndTime = minEndTime;
         
@@ -158,25 +141,10 @@
         const sessionId = data.sessionId || TaskFlow._sessionId || 'global';
         const loaderId = 'session-loader-' + sessionId;
         
-        // Find or create session-specific loader element
         let loaderEl = document.getElementById(loaderId);
         if (!loaderEl && data.active) {
             console.log('[TaskFlow] Creating session-specific loader element:', loaderId);
-            // Create loader element if it doesn't exist
-            loaderEl = document.createElement('div');
-            loaderEl.id = loaderId;
-            loaderEl.className = 'task-flow-inline-loader';
-            loaderEl.innerHTML = `
-                <div class="task-flow-spinner"></div>
-                <p>Processing...</p>
-            `;
-            // Append to the session's panel if available, otherwise to body
-            const sessionPanel = document.getElementById('session-' + sessionId);
-            if (sessionPanel) {
-                sessionPanel.appendChild(loaderEl);
-            } else {
-                document.body.appendChild(loaderEl);
-            }
+            loaderEl = global.ensureSessionInlineLoader(sessionId);
         }
         
         if (loaderEl) {

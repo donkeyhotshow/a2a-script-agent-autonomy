@@ -150,6 +150,8 @@
         }
     };
 
+    WindowManager.SESSION_WINDOWS_KEY = 'a2a_session_windows';
+
     // Export
     global.WindowManager = WindowManager;
 

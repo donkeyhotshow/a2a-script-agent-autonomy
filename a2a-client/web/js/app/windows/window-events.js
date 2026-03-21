@@ -4,21 +4,10 @@
 (function (global) {
     'use strict';
 
-    function escapeHtmlAttr(s) {
-        return String(s ?? '')
-            .replace(/&/g, '&amp;')
-            .replace(/"/g, '&quot;')
-            .replace(/</g, '&lt;');
-    }
+    const MIN_LOADER_MS = global.__a2aDaemons?.MIN_LOADER_MS || 5000;
 
-    /** True when execute asks for user input (form) — show UI even if loader min-time still running */
-    function executeHasActionableForm(ex) {
-        if (!ex || !ex.form || ex.wait) return false;
-        const f = ex.form;
-        if (f.choices && f.choices.length > 0) return true;
-        if (f.input == null) return false;
-        if (Array.isArray(f.input)) return f.input.length > 0;
-        return true;
+    function escapeHtmlAttr(s) {
+        return global.escapeHtmlAttr(s);
     }
 
     const WindowEvents = {
@@ -80,28 +69,11 @@
                     console.log('[WindowEvents] _showGlobalLoader called for session:', sessionId, 'Active loaders:', _activeLoaders.size);
                     
                     const loaderId = 'session-loader-' + sessionId;
-                    let loaderEl = document.getElementById(loaderId);
-                    if (!loaderEl) {
-                        // Create session-specific loader element
-                        loaderEl = document.createElement('div');
-                        loaderEl.id = loaderId;
-                        loaderEl.className = 'task-flow-inline-loader';
-                        loaderEl.innerHTML = `
-                            <div class="task-flow-spinner"></div>
-                            <p>Processing...</p>
-                        `;
-                        // Try to append to the session's panel
-                        const sessionPanel = document.getElementById('session-' + sessionId);
-                        if (sessionPanel) {
-                            sessionPanel.appendChild(loaderEl);
-                        } else {
-                            document.body.appendChild(loaderEl);
-                        }
-                        console.log('[WindowEvents] Created session-specific loader element:', loaderId);
-                    }
-                    
+                    const loaderEl = global.ensureSessionInlineLoader(sessionId);
+                    console.log('[WindowEvents] Session inline loader:', loaderId);
+
                     loaderEl.classList.add('active');
-                    _loaderMinEndTime = Date.now() + 5000;
+                    _loaderMinEndTime = Date.now() + MIN_LOADER_MS;
                     loaderEl.dataset.minEndTime = _loaderMinEndTime;
                     // Track this loader for this session
                     _activeLoaders.set(sessionId, { minEndTime: _loaderMinEndTime, element: loaderEl });
@@ -160,7 +132,7 @@
                     // More reliable check for promise pending
                     const promisePending = st.promisePending || (store.core?.promise?.isPending) || (store.promise?.isPending);
                     const loaderActive = st.loaderActive || (store.core?.getLoader?.(storeSessionId)?.isActive);
-                    const hasActionableForm = executeHasActionableForm(execute);
+                    const hasActionableForm = global.executeHasActionableForm?.(execute);
                     const inputBlocked =
                         typeof store.isInputBlocked === 'function' && store.isInputBlocked();
                     const isWaiting =
