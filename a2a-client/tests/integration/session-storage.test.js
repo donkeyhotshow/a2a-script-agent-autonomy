@@ -37,18 +37,11 @@ describe('Session Storage - Numbered Folders', () => {
                 createdAt: new Date().toISOString(),
                 status: 'created',
                 currentStep: 1,
-                execute: {
-                    form: {
-                        input: {
-                            name: 'task',
-                            label: 'Enter your task',
-                        }
-                    }
-                }
+                execute: null
             };
             
             expect(expectedSession.currentStep).toBe(1);
-            expect(expectedSession.execute.form.input.name).toBe('task');
+            expect(expectedSession.execute).toBeNull();
         });
 
         it('should create numbered folder for session', async () => {

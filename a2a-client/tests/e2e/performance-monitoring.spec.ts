@@ -86,12 +86,13 @@ test.describe('Performance Monitoring', () => {
     // Create multiple sessions to stress memory
     const sessions = [];
     for (let i = 0; i < 3; i++) {
-      const sessionResponse = await page.request.post('http://localhost:3001/api/sessions', {
-        data: { name: `MemoryTest-${i}` }
+      const sessionResponse = await page.request.post('http://localhost:5173/api/a2a/sessions', {
+        data: { title: `MemoryTest-${i}` }
       });
       if (sessionResponse.ok()) {
         const sessionData = await sessionResponse.json();
-        sessions.push(sessionData.id);
+        const id = sessionData.session?.id ?? sessionData.data?.id;
+        if (id) sessions.push(id);
       }
     }
 

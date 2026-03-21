@@ -123,19 +123,30 @@ router.get('/:promiseId/result', async (req: Request, res: Response, next: NextF
             return;
         }
         
-        // Filter response to remove extra fields
-        let responseData: Record<string, unknown>;
-        
+        // Always expose request status so pollers see terminal failed/pending (not empty {}).
+        const responseData: Record<string, unknown> = {
+            status: fullResult.status,
+        };
+
         if (fullResult.result) {
-            // fullResult.result contains the ProcessResult from processor
-            responseData = filterResponse(fullResult.result as Record<string, unknown>);
-        } else if (fullResult.error) {
-            // Return error as-is
-            responseData = { error: fullResult.error };
-        } else {
-            responseData = {};
+            Object.assign(responseData, filterResponse(fullResult.result as Record<string, unknown>));
         }
-        
+
+        if (fullResult.error) {
+            responseData.error = fullResult.error;
+        }
+
+        if (
+            (fullResult.status === 'failed' || fullResult.status === 'cancelled') &&
+            responseData.error === undefined
+        ) {
+            const r = fullResult.result as Record<string, unknown> | null | undefined;
+            const msg = r?.error ?? r?.message;
+            if (msg !== undefined) {
+                responseData.error = typeof msg === 'string' ? {message: msg} : msg;
+            }
+        }
+
         res.json({success: true, data: responseData});
     } catch (error) {
         next(error);

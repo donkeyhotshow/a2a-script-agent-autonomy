@@ -22,6 +22,7 @@ import {
     getStepDir,
 } from '../../services/step-storage.js';
 import {getStorageDir} from '../../services/storage.js';
+import {serverFetch, getServerBaseUrl} from '../../services/index.js';
 
 function getStepNum(session: { metadata?: Record<string, unknown> }): number {
     const n = session.metadata?.stepNum;
@@ -92,7 +93,6 @@ router.post('/', async (req: Request, res: Response) => {
         // If task is provided, call a2a-server to get initial response
         if (body.task) {
             try {
-                const { serverFetch, getServerBaseUrl } = await import('../../index.js');
                 const serverBase = await getServerBaseUrl();
                 const requestBody = {
                     context: {
@@ -488,7 +488,6 @@ router.post('/:sessionId/action', async (req: Request, res: Response) => {
         let promiseId = null;
 
         try {
-            const { serverFetch, getServerBaseUrl } = await import('../../index.js');
             const serverBase = await getServerBaseUrl();
 
             const err = validateRequestToServer({ context: requestBody.context });
@@ -643,7 +642,6 @@ router.post('/:sessionId/next', async (req: Request, res: Response) => {
         let promiseId = null;
 
         try {
-            const { serverFetch, getServerBaseUrl } = await import('../../index.js');
             const serverBase = await getServerBaseUrl();
 
             const err = validateRequestToServer({ context: requestBody.context });
@@ -859,7 +857,6 @@ router.get('/:sessionId/promise/:promiseId', async (req: Request, res: Response)
         const { sessionId, promiseId } = req.params;
         
         // Call A2A Server to check promise status
-        const { serverFetch, getServerBaseUrl } = await import('../../index.js');
         const serverBase = await getServerBaseUrl();
         
         const upstream = await serverFetch('GET', serverBase, `/requests/${promiseId}/status`, null);

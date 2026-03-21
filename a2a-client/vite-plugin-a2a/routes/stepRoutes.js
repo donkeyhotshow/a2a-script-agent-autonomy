@@ -1,5 +1,5 @@
 import { getStorageMode, isValidSessionId } from './middleware/validators.js';
-import { mergeResponseContext, buildStepRecord } from './utils/builders.js';
+import { mergeResponseContext, buildStepRecord, extractA2aExecute, unwrapA2aResponse } from './utils/builders.js';
 import * as stepHandlers from './handlers/step-handlers.js';
 import * as stepUtils from './utils/step-utils.js';
 import { proxyToA2AServer } from './proxy/a2a-proxy.js';
@@ -284,14 +284,20 @@ export function createStepRoutes({ cwd }) {
                             session.currentStep = nextStepNum;
                             session.updatedAt = new Date().toISOString();
 
+                            const a2aPayload = unwrapA2aResponse(serverResponse) || serverResponse;
                             let assistantMessage =
+                                a2aPayload?.execute?.message ||
                                 serverResponse?.result?.execute?.message ||
+                                a2aPayload?.result?.execute?.message ||
                                 serverResponse?.result?.message ||
+                                a2aPayload?.message ||
                                 serverResponse?.message ||
                                 null;
 
-                            if (!assistantMessage && serverResponse?.result?.context?.history) {
-                                const historyMsg = serverResponse.result.context.history.find((h) => h.role === 'assistant');
+                            const history =
+                                a2aPayload?.context?.history || serverResponse?.result?.context?.history;
+                            if (!assistantMessage && Array.isArray(history)) {
+                                const historyMsg = history.find((h) => h.role === 'assistant');
                                 assistantMessage = historyMsg?.message || null;
                             }
 
@@ -316,8 +322,7 @@ export function createStepRoutes({ cwd }) {
 
                             session.messages = session.messages || [];
 
-                            // Execute is at root level after promise polling, not in result
-                            const serverExecute = serverResponse?.execute || serverResponse?.result?.execute;
+                            const serverExecute = extractA2aExecute(serverResponse);
                             if (serverExecute) session.execute = serverExecute;
                             const savedContext = serverResponse
                                 ? mergeResponseContext(sessionId, mergedContext, serverResponse)
@@ -353,8 +358,7 @@ export function createStepRoutes({ cwd }) {
 
                             saveNewSession(cwd, session);
 
-                            // Execute is at root level after promise polling, not in result
-                            const responseExecute = serverResponse?.execute || serverResponse?.result?.execute || null;
+                            const responseExecute = extractA2aExecute(serverResponse);
                             const response = {
                                 success: true,
                                 session,

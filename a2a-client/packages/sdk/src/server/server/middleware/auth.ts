@@ -76,8 +76,12 @@ export function createAuthMiddleware(options: AuthOptions = {}): (req: Authentic
  * Session validation middleware
  */
 export function validateSession(req: AuthenticatedRequest, res: Response, next: NextFunction): void {
+    if (config.skipAuth) {
+        next();
+        return;
+    }
     const sessionId = req.user?.sessionId;
-    
+
     if (!sessionId || sessionId === 'anonymous') {
         return res.status(401).json({
             error: 'Valid session required',

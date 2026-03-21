@@ -7,11 +7,13 @@
 
 import { test, expect, type Page } from '@playwright/test';
 import { fixtures } from './fixtures/index.js';
+import { installMockA2aClientApi } from './fixtures/mock-a2a-client-api.js';
 
 /**
  * Setup mock API handler for page
  */
 async function setupMockApi(page: Page, responseDelay = 0): Promise<void> {
+    await installMockA2aClientApi(page);
     // Mock POST /api/v1/invoke - create request
     await page.route('**/api/v1/invoke', async (route) => {
         if (responseDelay > 0) {
@@ -50,29 +52,6 @@ async function setupMockApi(page: Page, responseDelay = 0): Promise<void> {
         });
     });
 
-    // Mock GET /api/v1/sessions - list sessions
-    await page.route('**/api/v1/sessions', async (route) => {
-        return route.fulfill({
-            status: 200,
-            contentType: 'application/json',
-            body: JSON.stringify({
-                success: true,
-                data: [fixtures.session.data]
-            })
-        });
-    });
-
-    // Mock GET /api/v1/sessions/:id - get session
-    await page.route(/\/api\/v1\/sessions\/[^/]+$/, async (route) => {
-        return route.fulfill({
-            status: 200,
-            contentType: 'application/json',
-            body: JSON.stringify({
-                success: true,
-                data: fixtures.session.data
-            })
-        });
-    });
 }
 
 test.describe('A2A Client with Mocks', () => {
@@ -229,13 +208,23 @@ test.describe('A2A Client Session Management with Mocks', () => {
             { id: 'session_002', createdAt: new Date().toISOString(), messages: [] }
         ];
 
-        await page.route('**/api/v1/sessions', async (route) => {
+        await page.route('**/api/a2a/projects', async (route) => {
+            await route.fulfill({
+                status: 200,
+                contentType: 'application/json',
+                body: JSON.stringify({ projects: [{ id: 'proj-mock', name: 'Mock' }] })
+            });
+        });
+
+        await page.route('**/api/a2a/sessions', async (route) => {
+            if (route.request().method() !== 'GET') {
+                return route.continue();
+            }
             return route.fulfill({
                 status: 200,
                 contentType: 'application/json',
                 body: JSON.stringify({
-                    success: true,
-                    data: sessions
+                    sessions
                 })
             });
         });
@@ -249,30 +238,37 @@ test.describe('A2A Client Session Management with Mocks', () => {
 
     test('should create new session via mock API', async ({ page }) => {
         let createCalled = false;
+
+        await page.route('**/api/a2a/projects', async (route) => {
+            await route.fulfill({
+                status: 200,
+                contentType: 'application/json',
+                body: JSON.stringify({ projects: [{ id: 'proj-mock', name: 'Mock' }] })
+            });
+        });
         
-        await page.route('**/api/v1/sessions', async (route) => {
+        await page.route('**/api/a2a/sessions', async (route) => {
             if (route.request().method() === 'POST') {
                 createCalled = true;
                 return route.fulfill({
-                    status: 201,
+                    status: 200,
                     contentType: 'application/json',
                     body: JSON.stringify({
                         success: true,
-                        data: {
+                        session: {
                             id: 'session_new_001',
+                            title: 'New Session',
                             createdAt: new Date().toISOString(),
                             messages: []
                         }
                     })
                 });
             }
-            // GET
             return route.fulfill({
                 status: 200,
                 contentType: 'application/json',
                 body: JSON.stringify({
-                    success: true,
-                    data: []
+                    sessions: []
                 })
             });
         });

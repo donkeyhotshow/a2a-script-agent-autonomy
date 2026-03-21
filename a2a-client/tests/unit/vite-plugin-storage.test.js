@@ -53,6 +53,13 @@ describe('newSessions storage', () => {
   it('saveNewSession and loadNewSession round-trip', () => {
     const session = { id: sessionId, title: 'Test', createdAt: new Date().toISOString() };
     saveNewSession(cwd, session);
+    saveNewStep(cwd, sessionId, 1, {
+      step: 1,
+      title: 'Test',
+      execute: null,
+      messages: [],
+      context: {},
+    });
     const loaded = loadNewSession(cwd, sessionId);
     expect(loaded).not.toBeNull();
     expect(loaded.id).toBe(sessionId);
@@ -61,6 +68,8 @@ describe('newSessions storage', () => {
 
   it('saveNewStep and loadNewStep round-trip', () => {
     const stepData = {
+      step: 1,
+      title: 'Test',
       execute: { form: { input: { name: 'task' } } },
       messages: [{ role: 'user', content: 'hello' }],
       context: {},

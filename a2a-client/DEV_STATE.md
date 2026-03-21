@@ -2,6 +2,55 @@
 
 > Клиентская часть: Web UI, Client API, Session Management
 
+## Архитектура взаимодействия
+
+### Polling Flow
+
+```
+Browser                Client API              Daemon                  A2A Server
+   │                       │                      │                         │
+   │──POST /next──────────>│                      │                         │
+   │                       │──POST /invoke───────────────────────────────>│
+   │                       │<─────promiseId───────────────────────────────│
+   │                       │                      │                         │
+   │                       │──start polling──────>│                         │
+   │                       │                      │──GET /result──────────>│
+   │                       │                      │<─────pending───────────│
+   │                       │                      │                         │
+   │                       │                      │──GET /result──────────>│
+   │                       │                      │<─────pending───────────│
+   │                       │                      │                         │
+   │                       │                      │──GET /result──────────>│
+   │                       │                      │<─────execute───────────│
+   │                       │<─────result──────────│                         │
+   │<──response────────────│                      │                         │
+```
+
+### Daemon Components
+
+| Component | Location | Role |
+|-----------|----------|------|
+| DialogLoader | web/js/daemons/dialog-loader.js | Min 5s loader display |
+| DialogPromise | web/js/daemons/dialog-promise-poll.js | Browser → Client API poll |
+| PollingDaemon | vite-plugin-a2a/daemon/a2a-result-poll.js | Client API → A2A Server poll |
+| RequestProcessor | a2a-server/src/... | Queue processing, recovery |
+
+### Ports
+
+| Service | Port | Protocol |
+|---------|------|----------|
+| Web UI | 5173 | HTTP |
+| Client API | 5173/api/a2a | HTTP |
+| A2A Server | 3000 | HTTP |
+| AI Hub | 11435 | HTTP |
+| Ollama | 11434 | HTTP |
+
+---
+
+**Реализовано согласно:** [`ARCHITECTURE_UPGRADE_PLAN.md`](./ARCHITECTURE_UPGRADE_PLAN.md)
+
+---
+
 ## Подсистемы проекта
 
 | Подсистема | Описание |

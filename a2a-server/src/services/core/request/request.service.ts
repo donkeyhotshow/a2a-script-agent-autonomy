@@ -35,8 +35,24 @@ export interface RequestResult {
     retryAfter?: string;
 }
 
-const MAX_RETRIES = 5;
-const RETRY_DELAY_MS = 8000;
+function envInt(name: string, defaultVal: number, maxCap?: number): number {
+    const raw = process.env[name];
+    if (raw === undefined || raw === '') return defaultVal;
+    const n = parseInt(raw, 10);
+    if (!Number.isFinite(n)) return defaultVal;
+    if (maxCap !== undefined) return Math.min(Math.max(n, 0), maxCap);
+    return Math.max(n, 0);
+}
+
+/** Max automatic retries per request (queue + cooldown revivals). */
+export function getMaxRetries(): number {
+    return envInt('REQUEST_MAX_RETRIES', 15, 500);
+}
+
+/** Delay before a retried request becomes eligible for processing again. */
+export function getRetryDelayMs(): number {
+    return envInt('REQUEST_RETRY_DELAY_MS', 15_000, 3_600_000);
+}
 
 export function isRetryableError(err: string): boolean {
     const s = err.toLowerCase();
@@ -162,12 +178,13 @@ export class RequestService {
     /**
      * Schedule retry for a failed request (transient error)
      */
-    async scheduleRetry(promiseId: string, delayMs: number = RETRY_DELAY_MS): Promise<boolean> {
+    async scheduleRetry(promiseId: string, delayMs: number = getRetryDelayMs()): Promise<boolean> {
         const req = await storage.load(promiseId);
         if (!req) return false;
         const count = (req.retryCount ?? 0) + 1;
-        if (count > MAX_RETRIES) {
-            logger.warn('Max retries exceeded', {promiseId, count});
+        const maxR = getMaxRetries();
+        if (count > maxR) {
+            logger.warn('Max retries exceeded', {promiseId, count, maxR});
             return false;
         }
         req.status = 'pending';
@@ -196,11 +213,47 @@ export class RequestService {
             const err = errMsg || resultError;
             if (!isRetryableError(err)) continue;
             const count = (req.retryCount ?? 0);
-            if (count >= MAX_RETRIES) continue;
-            const ok = await this.scheduleRetry(id, RETRY_DELAY_MS);
+            if (count >= getMaxRetries()) continue;
+            const ok = await this.scheduleRetry(id, getRetryDelayMs());
             if (ok) revived++;
         }
         if (revived > 0) logger.info('Revived failed requests for retry', {count: revived});
+        return revived;
+    }
+
+    /**
+     * After cooldown, re-queue failed timeout-like requests (rate-limited) so the system can recover
+     * without staying stuck in `failed` forever. Disabled when AUTO_RETRY_FAILED_AFTER_MS=0.
+     */
+    async reviveFailedAfterCooldown(): Promise<number> {
+        const cooldownMs = envInt('AUTO_RETRY_FAILED_AFTER_MS', 600_000, 86_400_000);
+        const maxPerTick = envInt('AUTO_RETRY_FAILED_MAX_PER_TICK', 1, 50);
+        if (cooldownMs <= 0) return 0;
+
+        const ids = await storage.listFailed();
+        let revived = 0;
+        const now = Date.now();
+        const maxR = getMaxRetries();
+
+        for (const id of ids) {
+            if (revived >= maxPerTick) break;
+            const req = await storage.load(id);
+            if (!req?.completedAt) continue;
+            if (now - req.completedAt.getTime() < cooldownMs) continue;
+            if ((req.retryCount ?? 0) >= maxR) continue;
+
+            const blob =
+                JSON.stringify(req.result ?? {}) +
+                JSON.stringify(req.error ?? {}) +
+                (req.message ?? '');
+            if (!/timeout|timed out|llm promise|econnrefused|network|fetch failed/i.test(blob)) continue;
+
+            const ok = await this.scheduleRetry(id, getRetryDelayMs());
+            if (ok) revived++;
+        }
+        if (revived > 0) {
+            logger.info('Revived failed requests after cooldown', {count: revived, cooldownMs});
+        }
         return revived;
     }
 

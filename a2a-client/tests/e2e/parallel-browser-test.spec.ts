@@ -70,12 +70,13 @@ test.describe('Parallel Browser Testing', () => {
         screenshots.push(initialScreenshot);
 
         // Create session
-        const sessionResponse = await page.request.post('http://localhost:3001/api/sessions', {
-          data: { name: `ParallelTest-${browser}-${device}` }
+        const sessionResponse = await page.request.post('http://localhost:5173/api/a2a/sessions', {
+          data: { title: `ParallelTest-${browser}-${device}` }
         });
         expect(sessionResponse.ok()).toBeTruthy();
         const sessionData = await sessionResponse.json();
-        const sessionId = sessionData.id;
+        const sessionId = sessionData.session?.id ?? sessionData.data?.id;
+        expect(sessionId).toBeTruthy();
 
         // Wait for session panel to appear
         await page.waitForSelector('.session-panel, [data-testid="session-panel"]', { timeout: 15000 });

@@ -204,6 +204,7 @@ async function tick(): Promise<void> {
     // When idle, revive retryable failed requests (e.g. after ai-integration starts)
     if (!result) {
         await requestService.scheduleRetryForFailed();
+        await requestService.reviveFailedAfterCooldown();
     }
 }
 

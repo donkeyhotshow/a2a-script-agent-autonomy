@@ -17,7 +17,7 @@ This describes the “you-on-phone → web UI → local client → remote server
 
 - Web: `a2a-client/web/js/session-manager.js` — all remote requests happen here.
 - Local storage: `a2a-client/packages/history/src/history-manager.ts` + `session-storage/…` — keeps exchange log/history/docs before every server request.
-- SDK entry point: `a2a-client/packages/sdk/src/index.js` exports `@a2a/sdk` (which includes client and server); you can add `HistoryManager` exports when you need to expose CLI helpers.
+- SDK entry point: `a2a-client/packages/sdk/src/index.ts` exports `@a2a/sdk` (client + server); add `HistoryManager` exports when you need CLI helpers.
 - Protocol: `docs/new-request-flow/PROTOCOL.md` and any simulation folder under `simulations/` describe how `context.history` is packed into `request.json`/`request.md` and how `execute` flows back to the UI.
 
 ## API flow examples

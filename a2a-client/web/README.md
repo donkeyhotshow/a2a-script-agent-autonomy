@@ -54,22 +54,15 @@ web/
 ### Запуск
 
 ```bash
-# Убедитесь что API Server запущен
-cd a2a-client/packages/sdk
-npm start
-
-# Затем откройте web/index.html в браузере
-# Или используйте dev server
 cd a2a-client
-npm run dev
+npm run dev   # Vite + vite-plugin-a2a serves /api/a2a/* in-process (see docs/CLIENT_API_WEB_SDK.md)
 ```
+
+Optional: run `@a2a/sdk` on 3001 if you proxy `/api` there; not required for default dev.
 
 ### Конфигурация
 
-Настройка Client API URL через Storage API:
-```javascript
-await StorageAPI.config.setItem('clientApiUrl', 'http://localhost:3001/api');
-```
+Session/project calls use relative **`/api/a2a/...`** (`api-integration.js`). See [`docs/CLIENT_API_WEB_SDK.md`](../docs/CLIENT_API_WEB_SDK.md) before changing SDK vs plugin.
 
 ### Основные модули
 
@@ -111,17 +104,7 @@ const results = await RAGSearchUI.search('query');
 
 ## API интеграция
 
-Модули взаимодействуют с API Server (порт 3001):
-
-| Эндпоинт | Описание |
-|----------|----------|
-| `/api/projects` | Управление проектами через Client API |
-| `/api/sessions` | Управление сессиями через Client API |
-| `/api/terminal/execute` | Выполнение команд (через Client API) |
-| `/api/files/*` | Файловые операции |
-| `/api/rag/search` | RAG поиск |
-
-Все запросы веб-интерфейса идут в `/api/*` на Client API (порт 3001); прямых вызовов `/api/v1/*` из браузера нет.
+Primary paths used by this tree: **`/api/a2a/projects`**, **`/api/a2a/sessions`**, step files under same base. Vite dev handles these via **vite-plugin-a2a** (not necessarily port 3001). Full map: [`docs/CLIENT_API_WEB_SDK.md`](../docs/CLIENT_API_WEB_SDK.md).
 
 ## Требования
 

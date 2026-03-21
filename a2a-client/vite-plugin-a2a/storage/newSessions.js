@@ -40,7 +40,9 @@ export function loadNewSession(cwd, sessionId) {
   
   // Get title from step 1 if available
   const step1 = loadNewStep(cwd, sessionId, 1);
-  if (step1?.execute?.form?.input?.label) {
+  if (step1?.title) {
+    session.title = step1.title;
+  } else if (step1?.execute?.form?.input?.label) {
     session.title = step1.execute.form.input.label;
   } else if (step1?.execute?.form?.choices) {
     session.title = 'Selection Session';

@@ -2,29 +2,27 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Session panel quick integration smoke test', () => {
     test.beforeEach(async ({ page }) => {
-        await page.route('**/api/projects', async (route) => {
+        await page.route('**/api/a2a/projects', async (route) => {
             await route.fulfill({
                 status: 200,
                 contentType: 'application/json',
                 body: JSON.stringify({
-                    success: true,
-                    data: [{ id: 'proj-demo', name: 'Demo project' }]
+                    projects: [{ id: 'proj-demo', name: 'Demo project' }]
                 })
             });
         });
 
-        await page.route('**/api/sessions?*', async (route) => {
+        await page.route('**/api/a2a/sessions?*', async (route) => {
             await route.fulfill({
                 status: 200,
                 contentType: 'application/json',
                 body: JSON.stringify({
-                    success: true,
-                    data: [{ id: 'session-demo', projectId: 'proj-demo', status: 'READY' }]
+                    sessions: [{ id: 'session-demo', projectId: 'proj-demo', status: 'READY' }]
                 })
             });
         });
 
-        await page.route('**/api/sessions', async (route) => {
+        await page.route('**/api/a2a/sessions', async (route) => {
             if (route.request().method() === 'POST') {
                 const serverResponse = {
                     context: {

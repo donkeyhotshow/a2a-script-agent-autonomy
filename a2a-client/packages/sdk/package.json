@@ -3,11 +3,11 @@
   "version": "1.0.0",
   "description": "A2A SDK - объединенный пакет для клиента и сервера",
   "type": "module",
-  "main": "src/index.js",
+  "main": "./src/index.ts",
   "exports": {
-    ".": "./src/index.js",
-    "./client": "./src/client/index.js",
-    "./server": "./src/server/index.js"
+    ".": "./src/index.ts",
+    "./client": "./src/client/index.ts",
+    "./server": "./src/server/index.ts"
   },
   "scripts": {
     "dev": "..\\..\\..\\scripts\\start-client-api.bat",

@@ -20,25 +20,34 @@ export function createMockApiHandler(page) {
     // Request promise ID mapping
     const requestPromises = new Map();
 
-    // Route handlers
-    page.route('**/api/v1/sessions**', async (route) => {
-        const url = new URL(route.request().url());
-        const method = route.request().method();
+    page.route('**/api/a2a/projects', async (route) => {
+        return route.fulfill({
+            status: 200,
+            contentType: 'application/json',
+            body: JSON.stringify({
+                projects: [{id: 'proj-mock', name: 'Mock project', path: '/'}]
+            })
+        });
+    });
 
-        // GET /api/v1/sessions
-        if (method === 'GET') {
+    // Client API: /api/a2a/sessions (same shape as vite-plugin-a2a)
+    page.route('**/api/a2a/sessions**', async (route) => {
+        const method = route.request().method();
+        const pathname = new URL(route.request().url()).pathname;
+
+        if (method === 'GET' && pathname === '/api/a2a/sessions') {
             return route.fulfill({
                 status: 200,
                 contentType: 'application/json',
-                body: JSON.stringify({success: true, data: sessions})
+                body: JSON.stringify({sessions})
             });
         }
 
-        // POST /api/v1/sessions - create new session
-        if (method === 'POST') {
+        if (method === 'POST' && pathname === '/api/a2a/sessions') {
             const newSession = {
                 ...fixtures.createSession.data,
                 id: `session_${Date.now()}`,
+                title: 'New Session',
                 createdAt: new Date().toISOString(),
                 messages: []
             };
@@ -47,13 +56,17 @@ export function createMockApiHandler(page) {
             return route.fulfill({
                 status: 200,
                 contentType: 'application/json',
-                body: JSON.stringify({success: true, data: newSession})
+                body: JSON.stringify({success: true, session: newSession})
             });
         }
+
+        return route.continue();
     });
 
-    // Route for single session
-    page.route(/\/api\/v1\/sessions\/[^/]+$/, async (route) => {
+    page.route(/\/api\/a2a\/sessions\/[^/]+$/, async (route) => {
+        if (route.request().method() !== 'GET') {
+            return route.continue();
+        }
         const url = route.request().url();
         const sessionId = url.split('/').pop();
         const session = sessions.find(s => s.id === sessionId);
@@ -62,14 +75,14 @@ export function createMockApiHandler(page) {
             return route.fulfill({
                 status: 200,
                 contentType: 'application/json',
-                body: JSON.stringify({success: true, data: session})
+                body: JSON.stringify(session)
             });
         }
 
         return route.fulfill({
             status: 404,
             contentType: 'application/json',
-            body: JSON.stringify({success: false, error: {message: 'Session not found'}})
+            body: JSON.stringify({error: 'Session not found'})
         });
     });
 

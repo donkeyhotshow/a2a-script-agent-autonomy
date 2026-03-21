@@ -4,12 +4,12 @@
  */
 
 import {test, expect} from '@playwright/test';
-import {fixtures} from './fixtures/index.js';
+import {installMockA2aClientApi} from './fixtures/mock-a2a-client-api.js';
 
 test.describe('UI Controls', () => {
 
     test.beforeEach(async ({page}) => {
-        await setupMockApi(page);
+        await installMockA2aClientApi(page);
         await page.goto('/');
         await page.waitForLoadState('networkidle');
     });
@@ -173,42 +173,3 @@ test.describe('UI Controls', () => {
         });
     });
 });
-
-/**
- * Set up mock API handlers
- */
-async function setupMockApi(page) {
-    await page.route('**/api/v1/sessions**', async (route) => {
-        const method = route.request().method();
-
-        if (method === 'GET') {
-            return route.fulfill({
-                status: 200,
-                contentType: 'application/json',
-                body: JSON.stringify(fixtures.sessions)
-            });
-        }
-
-        if (method === 'POST') {
-            const newSession = {
-                ...fixtures.createSession.data,
-                id: `session_${Date.now()}`,
-                createdAt: new Date().toISOString(),
-                messages: []
-            };
-            return route.fulfill({
-                status: 200,
-                contentType: 'application/json',
-                body: JSON.stringify({success: true, data: newSession})
-            });
-        }
-    });
-
-    await page.route(/\/api\/v1\/sessions\/[^/]+$/, async (route) => {
-        return route.fulfill({
-            status: 200,
-            contentType: 'application/json',
-            body: JSON.stringify(fixtures.session)
-        });
-    });
-}

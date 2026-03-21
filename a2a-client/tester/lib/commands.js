@@ -144,59 +144,13 @@ export async function sendSessionCommand(action, sessionOptions = {}) {
 }
 
 /**
- * Wait for command response with timeout (using polling)
+ * Obsolete: Client API never exposed GET /api/sessions/:id/events.
+ * Poll `GET /api/a2a/sessions/:sessionId/promise/:promiseId` or talk to a2a-server directly.
  */
-export async function waitForResponse(commandId, options = {}) {
-  const {
-    apiUrl = 'http://localhost:3001',
-    sessionId = 'tester-session',
-    timeout = 10000,
-    pollInterval = 1000
-  } = options;
-
-  const startTime = Date.now();
-
-  const poll = async () => {
-    const elapsed = Date.now() - startTime;
-    if (elapsed >= timeout) {
-      throw new Error('Timeout waiting for response');
-    }
-
-    try {
-      // Poll the session status endpoint
-      const response = await fetch(`${apiUrl}/api/sessions/${sessionId}/events?since=${startTime}`, {
-        headers: {
-          'Accept': 'application/json',
-          'Cache-Control': 'no-cache'
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error(`Polling failed: ${response.status}`);
-      }
-
-      const events = await response.json();
-      
-      // Find matching event
-      for (const event of events) {
-        if (event.commandId === commandId ||
-            (event.type === 'tester_response' && event.originalCommandId === commandId)) {
-          return event;
-        }
-      }
-
-      // Continue polling
-      await new Promise(resolve => setTimeout(resolve, pollInterval));
-      return poll();
-
-    } catch (error) {
-      // Continue polling on error
-      await new Promise(resolve => setTimeout(resolve, pollInterval));
-      return poll();
-    }
-  };
-
-  return poll();
+export async function waitForResponse(_commandId, _options = {}) {
+  throw new Error(
+    '[tester] waitForResponse is removed: no session events endpoint. Use promise polling on Client API or a2a-server /api/v1/requests/:id/result.'
+  );
 }
 
 /**

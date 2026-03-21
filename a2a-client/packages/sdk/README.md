@@ -2,40 +2,46 @@
 
 ## Обзор
 
-SDK (пакет `a2a-client/packages/sdk`) выступает как:
-- **Сервер для Web** - предоставляет API для веб-клиента
-- **Клиент для A2A Server** - пересылает запросы на основной сервер
+SDK (`a2a-client/packages/sdk`) — Express API и логика сессий; клиент для A2A Server.
+
+**Important:** In Vite dev, the **browser usually hits `vite-plugin-a2a` first**, not this process, for `/api/a2a/*`. See [`docs/CLIENT_API_WEB_SDK.md`](../docs/CLIENT_API_WEB_SDK.md).
 
 ## Архитектура
 
 ```
 ┌─────────────┐      ┌─────────────┐      ┌─────────────┐
-│  Web UI     │ ───> │  SDK Server │ ───> │ A2A Server  │
-│ (port 5173) │      │ (port 3001)│      │ (port 3000) │
-└─────────────┘      └─────────────┘      └─────────────┘
+│  Web UI     │ ───> │ Client API  │ ───> │ A2A Server  │
+│ (port 5173) │      │ plugin :5173│      │ (port 3000) │
+└─────────────┘      │ or SDK :3001│      └─────────────┘
+                     └─────────────┘
 ```
 
-## Запуск SDK
+## Запуск SDK (standalone)
 
 ```bash
 cd a2a-client/packages/sdk
-npm start
-# или
-node src/server/index.ts
+npm run build   # produces dist/
+npm start       # node dist/server/index.js
 ```
 
-SDK сервер запускается на `http://localhost:3001`
+Default: `http://localhost:3001` (override with `PORT` / `CLIENT_API_PORT`).
 
-## API Endpoints
+## API Endpoints (sessions)
 
-### Сессии
+Same router is mounted at multiple prefixes:
 
-| Метод | Путь | Описание |
-|-------|------|----------|
-| POST | `/api/sessions` | Создать новую сессию |
-| POST | `/api/sessions/:sessionId/next` | Отправить запрос (task или choice) |
-| GET | `/api/sessions/:sessionId` | Получить состояние сессии |
-| GET | `/api/sessions` | Список сессий |
+| Prefix | Notes |
+|--------|--------|
+| `/api/a2a/sessions` | Matches what `web/` calls when using standalone API |
+| `/api/v1/sessions` | Versioned |
+| `/api/sessions` | Legacy alias |
+
+| Метод | Путь (example) | Описание |
+|-------|----------------|----------|
+| POST | `.../sessions` | Создать сессию |
+| POST | `.../sessions/:id/next` | Следующий шаг (task / choice) |
+| GET | `.../sessions/:id` | Состояние сессии |
+| GET | `.../sessions` | Список |
 
 ## Протокол
 
@@ -101,12 +107,7 @@ SDK сервер запускается на `http://localhost:3001`
 
 ## Web интеграция
 
-### Настройка URL
-
-В web установите API URL:
-```javascript
-localStorage.setItem('a2a_clientApiUrl', 'http://localhost:3001/api');
-```
+Текущий `web/` вызывает **`/api/a2a/...`** относительно origin (Vite plugin в dev). Для работы **только** через SDK на 3001 нужен прокси или смена базового URL в коде — см. [`docs/CLIENT_API_WEB_SDK.md`](../docs/CLIENT_API_WEB_SDK.md).
 
 ### Состояния UI
 

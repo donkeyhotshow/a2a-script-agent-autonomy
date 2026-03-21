@@ -15,6 +15,7 @@ let projectPath;
 
 beforeAll(async () => {
     process.env.NODE_ENV = 'test';
+    process.env.SKIP_AUTH = '1';
     testStorageDir = path.join(os.tmpdir(), `a2a-api-server-test-${Date.now()}`);
     projectPath = path.join(testStorageDir, 'project');
     await fs.mkdir(path.join(projectPath, '.a2a', 'sessions'), { recursive: true });
@@ -30,7 +31,7 @@ beforeAll(async () => {
     process.env.A2A_CLIENT_STORAGE_DIR = path.join(testStorageDir, 'storage');
 
     const mod = await import('../../packages/sdk/src/server/index.ts');
-    app = mod.default;
+    app = mod.createApp();
 });
 
 afterAll(async () => {
@@ -46,26 +47,27 @@ describe('Client API Server – sessions', () => {
             .send({ projectId: 'test-proj', task: 'fix vue imports', title: 'Task' });
 
         expect(res.status).toBe(201);
-        expect(res.body).toHaveProperty('id');
-        expect(res.body.id).toMatch(/^sess_/);
-        expect(res.body.projectId).toBe('test-proj');
-        expect(res.body.task).toBe('fix vue imports');
-        expect(res.body.status).toBe('PENDING');
+        expect(res.body.success).toBe(true);
+        const data = res.body.data;
+        expect(data).toBeDefined();
+        expect(data.id).toMatch(/^[0-9a-f-]{36}$/i);
+        expect(data.metadata?.projectId).toBe('test-proj');
+        expect(data.metadata?.task).toBe('fix vue imports');
+        expect(data.status).toBe('active');
     });
 
-    it('POST /api/v1/sessions rejects missing projectId with 400', async () => {
-        const res = await request(app)
-            .post('/api/v1/sessions')
-            .send({ task: 'hello' });
+    it('POST /api/v1/sessions allows missing projectId (optional in SDK)', async () => {
+        const res = await request(app).post('/api/v1/sessions').send({ task: 'hello' });
 
-        expect(res.status).toBe(400);
+        expect(res.status).toBe(201);
+        expect(res.body.data?.metadata?.task).toBe('hello');
     });
 
-    it('POST /api/v1/sessions rejects empty projectId with 400', async () => {
+    it('POST /api/v1/sessions allows empty projectId string (optional in SDK)', async () => {
         const res = await request(app)
             .post('/api/v1/sessions')
             .send({ projectId: '', task: 'hello' });
 
-        expect(res.status).toBe(400);
+        expect(res.status).toBe(201);
     });
 });

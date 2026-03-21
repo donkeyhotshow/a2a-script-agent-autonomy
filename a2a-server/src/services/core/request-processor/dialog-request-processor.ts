@@ -41,9 +41,21 @@ async function fetchLlmResponse(base: string, llmPromiseId: string): Promise<str
     return chatData?.message?.content ?? null;
 }
 
+function readEnvMs(name: string, fallback: number, maxCap: number): number {
+    const raw = process.env[name];
+    if (raw === undefined || raw === '') return Math.min(fallback, maxCap);
+    const n = parseInt(raw, 10);
+    if (!Number.isFinite(n)) return Math.min(fallback, maxCap);
+    return Math.min(Math.max(n, 1000), maxCap);
+}
+
 async function pollReadyThenFetch(base: string, llmPromiseId: string): Promise<string | null> {
-    const pollIntervalMs = 2000;
-    const pollTimeoutMs = 200000;
+    const pollIntervalMs = readEnvMs('LLM_POLL_INTERVAL_MS', parseInt(process.env.POLL_INTERVAL_MS || '2000', 10) || 2000, 120_000);
+    const pollTimeoutMs = readEnvMs(
+        'LLM_POLL_TIMEOUT_MS',
+        parseInt(process.env.POLL_TIMEOUT_MS || '3600000', 10) || 3_600_000,
+        86_400_000
+    );
     const started = Date.now();
     for (;;) {
         const res = await fetch(`${base}/promises/status`);

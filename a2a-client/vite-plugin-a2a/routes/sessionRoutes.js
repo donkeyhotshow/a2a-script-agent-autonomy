@@ -59,13 +59,18 @@ export function createSessionRoutes({ cwd }) {
                             }
                         ],
                         context: { execution: { action: 'task', step: 'new' } },
+                        // Initial execute drives the task form until /next returns server execute (sync contract)
                         execute: {
                             message: 'What would you like me to do?',
                             form: {
-                                input: {
-                                    name: 'task',
-                                    label: 'Enter your task'
-                                }
+                                input: [
+                                    {
+                                        name: 'task',
+                                        type: 'text',
+                                        label: 'Enter your task',
+                                        required: true
+                                    }
+                                ]
                             }
                         }
                     };
@@ -77,6 +82,7 @@ export function createSessionRoutes({ cwd }) {
                         saveNewSession(cwd, session);
                         saveNewStep(cwd, sessionId, 1, {
                             step: 1,
+                            title,
                             execute: session.execute,
                             messages: session.messages || [],
                             context: session.context
@@ -112,7 +118,18 @@ export function createSessionRoutes({ cwd }) {
                 if (storageMode !== 'project') {
                     const steps = listNewSteps(cwd, sessionId);
                     const allMessages = [];
-                    const seenMessages = new Set(); // Track seen content to avoid duplicates
+                    // Dedupe only same step+role+content (avoids dropping repeated user text across steps)
+                    const seenSlots = new Set();
+                    const stepMessageSlotKey = (stepNum, role, content) => {
+                        const r = role || 'assistant';
+                        const c =
+                            typeof content === 'string'
+                                ? content
+                                : content == null
+                                  ? ''
+                                  : String(content);
+                        return `${stepNum}|${r}|${c}`;
+                    };
                     
                     // Check for pending promise in the latest step
                     const currentStep = session.currentStep || (steps.length > 0 ? steps[steps.length - 1] : 1);
@@ -136,13 +153,14 @@ export function createSessionRoutes({ cwd }) {
                                 ? stepData.execute.message
                                 : stepData.execute.message.content || stepData.execute.message.text || '';
                             
-                            if (!seenMessages.has(msgContent)) {
+                            const slot = stepMessageSlotKey(stepNum, 'assistant', msgContent);
+                            if (!seenSlots.has(slot)) {
                                 allMessages.push({
                                     role: 'assistant',
                                     content: msgContent,
                                     step: stepNum
                                 });
-                                seenMessages.add(msgContent);
+                                seenSlots.add(slot);
                             }
                         }
 
@@ -152,13 +170,14 @@ export function createSessionRoutes({ cwd }) {
                         }
                         if (clientResult?.result?.message) {
                             const msgContent = clientResult.result.message;
-                            if (!seenMessages.has(msgContent)) {
+                            const slot = stepMessageSlotKey(stepNum, 'user', msgContent);
+                            if (!seenSlots.has(slot)) {
                                 allMessages.push({
                                     role: 'user',
                                     content: msgContent,
                                     step: stepNum
                                 });
-                                seenMessages.add(msgContent);
+                                seenSlots.add(slot);
                             }
                         }
 
@@ -167,9 +186,12 @@ export function createSessionRoutes({ cwd }) {
                                 ...msg,
                                 step: stepNum
                             }));
-                            // Filter out duplicates with existing messages
-                            const newMessages = stepMessages.filter(msg => !seenMessages.has(msg.content));
-                            newMessages.forEach(msg => seenMessages.add(msg.content));
+                            const newMessages = stepMessages.filter((msg) => {
+                                const slot = stepMessageSlotKey(stepNum, msg.role, msg.content);
+                                if (seenSlots.has(slot)) return false;
+                                seenSlots.add(slot);
+                                return true;
+                            });
                             allMessages.push(...newMessages);
                         }
                     }

@@ -144,6 +144,7 @@ request.json → server-transforms → request.md → [LLM] → response.md → 
 │                    Client API / Vite Plugin                     │
 │   a2a-client - Serves API, manages sessions, stores data        │
 │   - vite-plugin-a2a.js - Handles /api/a2a/* endpoints          │
+│   - packages/sdk also implements Client API (see a2a-client/docs/CLIENT_API_WEB_SDK.md) │
 │   - session-store.js - Client-side session management           │
 └─────────────────────────────┬───────────────────────────────────┘
                               │

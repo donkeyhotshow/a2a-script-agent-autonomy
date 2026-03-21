@@ -5,7 +5,11 @@ import { createProjectRoutes } from './vite-plugin-a2a/routes/projects.js';
 import { createSessionRoutes } from './vite-plugin-a2a/routes/sessionRoutes.js';
 import { createStepRoutes } from './vite-plugin-a2a/routes/stepRoutes.js';
 import { createKvRoutes } from './vite-plugin-a2a/routes/kvRoutes.js';
+import { createDaemonRoutes } from './vite-plugin-a2a/routes/daemonRoutes.js';
 
+/**
+ * Dev Client API for `/api/a2a/*`. Separate from `packages/sdk` Express — keep behavior in sync or share code; see docs/CLIENT_API_WEB_SDK.md
+ */
 export default function vitePluginA2a() {
     let basePath = process.cwd();
 
@@ -39,6 +43,7 @@ export default function vitePluginA2a() {
             server.middlewares.use(createSessionRoutes({ cwd }));
             server.middlewares.use(createStepRoutes({ cwd }));
             server.middlewares.use(createKvRoutes({ cwd }));
+            server.middlewares.use(createDaemonRoutes({ cwd }));
         }
     };
 }

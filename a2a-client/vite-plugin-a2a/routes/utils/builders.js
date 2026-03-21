@@ -4,6 +4,31 @@
  */
 
 /**
+ * A2A Server wraps payloads as { success: true, data: { execute, context, ... } }.
+ * Unwrap to the inner object when present.
+ */
+export function unwrapA2aResponse(serverResponse) {
+    if (!serverResponse || typeof serverResponse !== 'object') return null;
+    if (
+        serverResponse.success === true &&
+        serverResponse.data !== undefined &&
+        typeof serverResponse.data === 'object'
+    ) {
+        return serverResponse.data;
+    }
+    return serverResponse;
+}
+
+/**
+ * Resolve execute for Client API / UI — checks envelope .data.execute and legacy paths.
+ */
+export function extractA2aExecute(serverResponse) {
+    const inner = unwrapA2aResponse(serverResponse);
+    if (!inner) return null;
+    return inner.execute ?? inner.result?.execute ?? null;
+}
+
+/**
  * Merge response context from multiple sources
  * @param sessionId - session identifier (adds session_id if missing)
  * @param fallbackContext - base context object
@@ -12,19 +37,28 @@
  */
 export function mergeResponseContext(sessionId, fallbackContext = {}, serverResponse = null) {
     const base = { ...(fallbackContext || {}) };
-    
+    const inner = unwrapA2aResponse(serverResponse);
+
     if (serverResponse?.context) {
         Object.assign(base, serverResponse.context);
     }
-    
+
+    if (inner?.context) {
+        Object.assign(base, inner.context);
+    }
+
     if (serverResponse?.result?.context) {
         Object.assign(base, serverResponse.result.context);
     }
-    
+
+    if (inner?.result?.context) {
+        Object.assign(base, inner.result.context);
+    }
+
     if (sessionId && !base.session_id) {
         base.session_id = sessionId;
     }
-    
+
     return base;
 }
 
@@ -41,11 +75,8 @@ export function buildStepRecord({ sessionId, stepNum, serverResponse, messages =
     if (!serverResponse) return null;
     
     const context = mergeResponseContext(sessionId, fallbackContext, serverResponse);
-    
-    // Extract execute from result.execute, data.execute, or direct execute field
-    const execute = serverResponse?.result?.execute ?? 
-                   serverResponse?.data?.execute ?? 
-                   serverResponse?.execute;
+
+    const execute = extractA2aExecute(serverResponse);
     
     // Note: step number is derived from folder path, not stored in JSON
     const payload = {

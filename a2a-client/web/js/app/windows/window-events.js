@@ -128,12 +128,6 @@
 
                 // Use renderExecute to render full panel (history + execute + input)
                 // renderExecute renders the complete content: history + execute block + input area
-                function formNeedsUserInput(form) {
-                    if (!form) return false;
-                    if (Array.isArray(form.choices) && form.choices.length > 0) return true;
-                    return !!form.input;
-                }
-
                 const refreshContent = () => {
                     // Get execute - use method if available for consistency
                     const execute = store.getExecute ? store.getExecute() : (store.execute || store._state?.execute);
@@ -144,36 +138,21 @@
                     }
 
                     const st = store.getState?.() || {};
-                    const promisePending = !!st.promisePending;
                     const isWaiting =
                         (typeof store.isInputBlocked === 'function' && store.isInputBlocked()) ||
-                        promisePending ||
+                        !!st.promisePending ||
                         !!st.loaderActive;
-
-                    // Check for form in execute or in pendingForm
-                    const hasForm = execute?.form || store.pendingForm || store._state?.pendingForm;
-                    const formPayload = execute?.form || store.pendingForm || store._state?.pendingForm;
-                    const hasInteractiveForm = formNeedsUserInput(formPayload);
 
                     // Debug log
                     console.log('[WindowEvents] refreshContent:', 
                         'execute:', execute, 
-                        'hasForm:', hasForm, 
                         'isWaiting:', isWaiting,
                         'pendingForm:', store.pendingForm,
                         'store._state.pendingForm:', store._state?.pendingForm);
 
-                    // Interactive form: show until user submits; then promisePending shows loader
-                    if (hasInteractiveForm && !promisePending) {
-                        const executeToRender = execute?.form
-                            ? execute
-                            : { form: store.pendingForm || store._state?.pendingForm };
-                        Render.renderExecute(contentEl, executeToRender, { execute: executeToRender, context, store }, taskFlowRef);
-                    } else if ((execute || hasForm) && !isWaiting) {
-                        // Use execute with form if available from pendingForm
-                        const executeToRender = execute || { form: store.pendingForm || store._state?.pendingForm };
-                        // Let renderExecute handle the full layout (history + form/message)
-                        Render.renderExecute(contentEl, executeToRender, { execute: executeToRender, context, store }, taskFlowRef);
+                    // Task-flow UI (form/message/actions) only when server/store set execute; never synthetic { form: pendingForm }
+                    if (execute && !isWaiting) {
+                        Render.renderExecute(contentEl, execute, { execute, context, store }, taskFlowRef);
                     } else {
                         const waitBlock = isWaiting
                             ? `<div class="task-flow-sending task-flow-inline-loader active" style="margin-top:0.75rem">
