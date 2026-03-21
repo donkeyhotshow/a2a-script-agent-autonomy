@@ -4,6 +4,10 @@
 
 import { listNewSteps, loadNewStep, loadStepFile, loadServerPromise } from '../../storage/newSessions.js';
 
+function isActivePromiseStatus(status) {
+    return status === 'pending' || status === 'processing';
+}
+
 /**
  * Flatten step files into one message list (order per step: execute.message → messages.json → client-result).
  * Assistant replies for a step live in messages.json; client-result is the user input recorded in that folder,
@@ -67,16 +71,21 @@ export function collectSessionMessagesFlat(cwd, sessionId) {
     return { messages: withSeq, lastSeq };
 }
 
+/**
+ * Pending async work is stored under the in-flight step (often N+1) while session.currentStep
+ * still points at the last step with server-response.json. Scan incomplete steps for server-promise.json.
+ */
 export function attachPromiseMeta(cwd, sessionId, session) {
     const steps = listNewSteps(cwd, sessionId);
-    const currentStep = session.currentStep || (steps.length > 0 ? steps[steps.length - 1] : 1);
-    console.log('[attachPromiseMeta]', sessionId, 'steps:', steps, 'currentStep:', currentStep);
-    const serverPromise = loadServerPromise(cwd, sessionId, currentStep);
-    console.log('[attachPromiseMeta]', sessionId, 'serverPromise:', serverPromise);
-    if (serverPromise?.promiseId && (serverPromise.status === 'pending' || serverPromise.status === 'processing')) {
-        session.promiseId = serverPromise.promiseId;
-        session.promiseStatus = serverPromise.status;
-        console.log('[attachPromiseMeta]', sessionId, 'SET promiseId:', session.promiseId);
+    for (const stepNum of steps) {
+        const completed = loadNewStep(cwd, sessionId, stepNum) != null;
+        if (completed) continue;
+        const serverPromise = loadServerPromise(cwd, sessionId, stepNum);
+        if (serverPromise?.promiseId && isActivePromiseStatus(serverPromise.status)) {
+            session.promiseId = serverPromise.promiseId;
+            session.promiseStatus = serverPromise.status;
+            return session;
+        }
     }
     return session;
 }

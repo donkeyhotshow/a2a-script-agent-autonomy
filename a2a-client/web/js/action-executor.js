@@ -390,6 +390,7 @@
         checkPromise,
         startPromisePolling,
         stopPromisePolling,
+        pullSessionSnapshot,
         resolveStore,
         getApiBase,
         createHeaders,

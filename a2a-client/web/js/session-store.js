@@ -233,4 +233,13 @@
     global.SessionStoreClass = SessionStore;
     global.SessionStore = new SessionStore();
 
+    // Add init method for compatibility with index.html
+    global.SessionStore.init = function() {
+        // Initialize storage connection
+        if (global.SessionStore._storage) {
+            global.SessionStore._storage.init && global.SessionStore._storage.init();
+        }
+        return global.SessionStore;
+    };
+
 })(typeof window !== 'undefined' ? window : globalThis);

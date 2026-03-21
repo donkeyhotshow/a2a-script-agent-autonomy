@@ -191,28 +191,36 @@
 
                 // Fetch session data from server first (pass projectId so server finds the session)
                 let sessionData = null;
-                let hasPendingPromise = false;
-                let pendingPromiseId = null;
                 try {
                     if (global.apiIntegration?.getSession) {
                         const projectId = await global.ProjectManager?.getSelectedProjectId?.() || global.SessionStore?.projectId || null;
                         sessionData = await global.apiIntegration.getSession(sessionId, projectId);
                         console.log('[WindowState] Session loaded:', sessionId, 'promiseId:', sessionData?.promiseId, 'status:', sessionData?.status);
                     }
-                    // Check for pending promise directly via API (fallback if server doesn't return it)
-                    if (!sessionData?.promiseId && global.apiIntegration?.checkPromiseStatus) {
-                        // Try to get pending promise info
+                    // Fallback: GET /latest (highest step dir) if GET session omitted promiseId
+                    // Always check /latest to detect pending promises in higher steps
+                    const latestResponse = await fetch(`/api/a2a/sessions/${encodeURIComponent(sessionId)}/latest`);
+                    if (latestResponse.ok) {
+                        const latestData = await latestResponse.json();
+                        const st = latestData?.promiseStatus;
+                        if (latestData?.promiseId && (st === 'pending' || st === 'processing')) {
+                            sessionData = sessionData || {};
+                            sessionData.promiseId = latestData.promiseId;
+                            sessionData.promiseStatus = st;
+                            console.log('[WindowState] Found pending promise from /latest:', latestData.promiseId);
+                        }
+                    }
+                    if (!sessionData?.promiseId) {
                         try {
-                            const response = await fetch(`/api/a2a/sessions/${sessionId}/latest`);
+                            const response = await fetch(`/api/a2a/sessions/${encodeURIComponent(sessionId)}/latest`);
                             if (response.ok) {
                                 const latestData = await response.json();
-                                console.log('[WindowState] Latest step data:', latestData);
-                                if (latestData?.promiseId && latestData?.promiseStatus === 'pending') {
-                                    hasPendingPromise = true;
-                                    pendingPromiseId = latestData.promiseId;
+                                const st = latestData?.promiseStatus;
+                                if (latestData?.promiseId && (st === 'pending' || st === 'processing')) {
                                     sessionData = sessionData || {};
-                                    sessionData.promiseId = pendingPromiseId;
-                                    console.log('[WindowState] Found pending promise from latest:', pendingPromiseId);
+                                    sessionData.promiseId = latestData.promiseId;
+                                    sessionData.promiseStatus = st;
+                                    console.log('[WindowState] Found pending promise from /latest:', latestData.promiseId);
                                 }
                             }
                         } catch (e) {
@@ -436,69 +444,56 @@
         async checkSessionExists(sessionId) {
             if (!sessionId || !global.apiIntegration) return false;
             try {
-                const projectId = await global.ProjectManager?.getSelectedProjectId?.();
-                if (!projectId) return false;
-                const session = await global.apiIntegration.getSession(sessionId, projectId);
-                return !!session;
+                const projectId = await global.ProjectManager?.getSelectedProjectId?.() || null;
+                const session = await global.apiIntegration.getSession(
+                    sessionId,
+                    projectId ? { projectId } : {}
+                );
+                return !!(session && (session.id || session.sessionId));
             } catch (e) {
                 return false;
             }
         },
 
         /**
-         * Poll for promise result and restore UI when done
+         * Same path as POST /next: DialogPromise polling via ActionExecutor + GET session rehydrate (messages, execute).
          */
-        async _pollPromise(promiseId, sessionId, store) {
+        _pollPromise(promiseId, sessionId, store) {
             if (!promiseId || !sessionId || !store) return;
-            const pollMs =
-                (typeof global !== 'undefined' && global.PROMISE_POLL_INTERVAL) ||
-                (typeof global !== 'undefined' && global.__a2aDaemons?.PROMISE_POLL_INTERVAL) ||
-                5000;
-
-            const poll = async () => {
+            const Ex = global.ActionExecutor;
+            if (!Ex?.checkPromise || !Ex?.startPromisePolling || !Ex?.pullSessionSnapshot) {
+                console.warn('[WindowState] ActionExecutor missing; cannot attach promise polling');
+                return;
+            }
+            (async () => {
                 try {
-                    const response = await fetch(`/api/a2a/sessions/${sessionId}/promise/${promiseId}`);
-                    const data = await response.json();
-                    
+                    const chk = await Ex.checkPromise(sessionId, promiseId);
                     const terminalOk =
-                        data.status === 'completed' ||
-                        data.status === 'done' ||
-                        data.completed === true ||
-                        data.execute != null;
+                        chk &&
+                        (chk.completed === true ||
+                            chk.status === 'completed' ||
+                            chk.status === 'done' ||
+                            chk.execute != null);
                     if (terminalOk) {
-                        // Promise resolved - update store and stop loader (execute may be top-level from plugin)
-                        console.log('[WindowState] Promise completed:', promiseId);
-                        const ex = data.execute || data.result?.execute;
-                        if (ex) {
-                            store.setExecute(ex);
-                        } else {
-                            store.setPromisePending(false);
-                        }
-                        if (data.result?.context) {
-                            store.setContext(data.result.context);
-                        }
-                        
+                        await Ex.pullSessionSnapshot(sessionId, store);
                         if (typeof store.stopLoader === 'function') {
                             store.stopLoader(sessionId);
                         }
-                    } else if (data.status === 'failed' || data.status === 'error') {
-                        // Promise failed
-                        console.error('[WindowState] Promise failed:', promiseId);
+                        return;
+                    }
+                    if (chk && (chk.status === 'failed' || chk.status === 'error')) {
                         store.setPromisePending(false);
                         if (typeof store.stopLoader === 'function') {
                             store.stopLoader(sessionId);
                         }
-                    } else {
-                        setTimeout(poll, pollMs);
+                        return;
                     }
-                } catch (err) {
-                    console.error('[WindowState] Promise poll error:', err);
-                    setTimeout(poll, pollMs);
+                    Ex.startPromisePolling(sessionId, promiseId);
+                } catch (e) {
+                    console.error('[WindowState] Promise bootstrap error:', e);
+                    Ex.startPromisePolling(sessionId, promiseId);
                 }
-            };
-            
-            // Start polling
-            poll();
+            })();
         },
 
         /**

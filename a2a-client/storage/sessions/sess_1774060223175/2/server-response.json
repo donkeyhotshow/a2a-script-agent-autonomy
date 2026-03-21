@@ -1,7 +1,5 @@
 {
-  "promiseId": "prom_1774060226602_r3bqqeg0c",
-  "status": "completed",
-  "submittedAt": "2026-03-21T02:30:26.607Z",
+  "timestamp": "2026-03-21T02:52:57.535Z",
   "execute": {
     "form": {
       "title": "Оберіть спосіб виконання",
@@ -22,10 +20,11 @@
     }
   },
   "context": {
-    "task": "диалог",
     "execution": {
       "action": "task",
       "step": "router"
-    }
+    },
+    "task": "диалог",
+    "session_id": "sess_1774060223175"
   }
 }
