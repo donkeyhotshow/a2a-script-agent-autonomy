@@ -180,6 +180,18 @@
      * @param {Object} taskFlowRef - ссылка на TaskFlow
      */
     function renderForm(contentEl, form, executionStepHtml, progressBarHtml, finalResultHtml, taskFlowRef, store) {
+        // Check if promise is pending - if so, hide form and show loader instead
+        const storeState = store?.getState?.() || {};
+        if (storeState.promisePending) {
+            console.log('[Render] Promise pending - hiding form, showing loader');
+            const historyHtml = renderMessageHistory(contentEl, store);
+            contentEl.innerHTML = historyHtml;
+            // Show loader instead of form
+            const sessionId = taskFlowRef?._sessionId || store?.sessionId || 'global';
+            showInlineLoader(contentEl, sessionId);
+            return;
+        }
+
         const hasChoices = form?.choices?.length > 0;
         const inputField = form?.input && typeof form.input === 'object' && !Array.isArray(form.input) ? form.input : null;
         const inputFields = form?.input && Array.isArray(form.input) ? form.input : (inputField ? [inputField] : []);

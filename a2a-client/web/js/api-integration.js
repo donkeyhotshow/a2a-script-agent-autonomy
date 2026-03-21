@@ -28,6 +28,19 @@ async function fetchWithRetry(url, options = {}, retryCount = 0) {
             signal: controller.signal
         });
         clearTimeout(timeoutId);
+        
+        // Retry on server errors (5xx) and certain client errors (429 rate limit)
+        const shouldRetry = !response.ok && 
+            (response.status >= 500 || response.status === 429) && 
+            retryCount < MAX_RETRIES;
+        
+        if (shouldRetry) {
+            const delay = BASE_DELAY * Math.pow(2, retryCount);
+            console.warn(`[API] Retry ${retryCount + 1}/${MAX_RETRIES} after ${delay}ms (HTTP ${response.status}): ${url}`);
+            await new Promise(resolve => setTimeout(resolve, delay));
+            return fetchWithRetry(url, options, retryCount + 1);
+        }
+        
         return response;
     } catch (error) {
         clearTimeout(timeoutId);
@@ -160,6 +173,7 @@ class APIIntegration {
             return null;
         }
         const raw = await res.json();
+        console.log('[API] getSession response:', sessionId, 'promiseId:', raw?.data?.promiseId, 'status:', raw?.data?.status);
         if (raw && typeof raw === 'object' && raw.success === true) {
             const d = raw.data ?? raw.session;
             if (d && typeof d === 'object' && (d.id || d.sessionId)) return d;

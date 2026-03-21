@@ -158,8 +158,10 @@ export function createSessionRoutes({ cwd }) {
                     return;
                 }
 
+                console.log('[SessionRoutes] GET session:', sessionId, 'storageMode:', storageMode, 'currentStep:', session.currentStep);
                 if (storageMode !== 'project') {
                     attachPromiseMeta(cwd, sessionId, session);
+                    console.log('[SessionRoutes] After attachPromiseMeta:', sessionId, 'promiseId:', session.promiseId);
                     const { messages, lastSeq } = collectSessionMessagesFlat(cwd, sessionId);
                     session.messages = messages;
                     session.lastMessageSeq = lastSeq;

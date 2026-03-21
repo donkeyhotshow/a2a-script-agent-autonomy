@@ -191,10 +191,33 @@
 
                 // Fetch session data from server first (pass projectId so server finds the session)
                 let sessionData = null;
+                let hasPendingPromise = false;
+                let pendingPromiseId = null;
                 try {
                     if (global.apiIntegration?.getSession) {
                         const projectId = await global.ProjectManager?.getSelectedProjectId?.() || global.SessionStore?.projectId || null;
                         sessionData = await global.apiIntegration.getSession(sessionId, projectId);
+                        console.log('[WindowState] Session loaded:', sessionId, 'promiseId:', sessionData?.promiseId, 'status:', sessionData?.status);
+                    }
+                    // Check for pending promise directly via API (fallback if server doesn't return it)
+                    if (!sessionData?.promiseId && global.apiIntegration?.checkPromiseStatus) {
+                        // Try to get pending promise info
+                        try {
+                            const response = await fetch(`/api/a2a/sessions/${sessionId}/latest`);
+                            if (response.ok) {
+                                const latestData = await response.json();
+                                console.log('[WindowState] Latest step data:', latestData);
+                                if (latestData?.promiseId && latestData?.promiseStatus === 'pending') {
+                                    hasPendingPromise = true;
+                                    pendingPromiseId = latestData.promiseId;
+                                    sessionData = sessionData || {};
+                                    sessionData.promiseId = pendingPromiseId;
+                                    console.log('[WindowState] Found pending promise from latest:', pendingPromiseId);
+                                }
+                            }
+                        } catch (e) {
+                            console.warn('[WindowState] Failed to check latest step:', e);
+                        }
                     }
                 } catch (err) {
                     console.warn('[WindowState] Failed to load session data:', err);

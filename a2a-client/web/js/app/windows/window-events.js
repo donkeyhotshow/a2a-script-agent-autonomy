@@ -138,17 +138,23 @@
                     }
 
                     const st = store.getState?.() || {};
+                    // Use sessionId from multiple possible sources
+                    const storeSessionId = store.sessionId || st.sessionId || store.core?.state?.sessionId || sessionId;
+                    // More reliable check for promise pending
+                    const promisePending = st.promisePending || (store.core?.promise?.isPending) || (store.promise?.isPending);
+                    const loaderActive = st.loaderActive || (store.core?.getLoader?.(storeSessionId)?.isActive);
                     const isWaiting =
                         (typeof store.isInputBlocked === 'function' && store.isInputBlocked()) ||
-                        !!st.promisePending ||
-                        !!st.loaderActive;
+                        !!promisePending ||
+                        !!loaderActive;
 
                     // Debug log
                     console.log('[WindowEvents] refreshContent:', 
-                        'execute:', execute, 
+                        'execute:', !!execute, 
                         'isWaiting:', isWaiting,
-                        'pendingForm:', store.pendingForm,
-                        'store._state.pendingForm:', store._state?.pendingForm);
+                        'promisePending:', promisePending,
+                        'loaderActive:', loaderActive,
+                        'store.sessionId:', store.sessionId);
 
                     // Task-flow UI (form/message/actions) only when server/store set execute; never synthetic { form: pendingForm }
                     if (execute && !isWaiting) {

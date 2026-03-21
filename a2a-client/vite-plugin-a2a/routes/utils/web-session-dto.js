@@ -70,10 +70,13 @@ export function collectSessionMessagesFlat(cwd, sessionId) {
 export function attachPromiseMeta(cwd, sessionId, session) {
     const steps = listNewSteps(cwd, sessionId);
     const currentStep = session.currentStep || (steps.length > 0 ? steps[steps.length - 1] : 1);
+    console.log('[attachPromiseMeta]', sessionId, 'steps:', steps, 'currentStep:', currentStep);
     const serverPromise = loadServerPromise(cwd, sessionId, currentStep);
+    console.log('[attachPromiseMeta]', sessionId, 'serverPromise:', serverPromise);
     if (serverPromise?.promiseId && (serverPromise.status === 'pending' || serverPromise.status === 'processing')) {
         session.promiseId = serverPromise.promiseId;
         session.promiseStatus = serverPromise.status;
+        console.log('[attachPromiseMeta]', sessionId, 'SET promiseId:', session.promiseId);
     }
     return session;
 }

@@ -88,12 +88,19 @@ export function createStepRoutes({ cwd }) {
                 return;
             }
             const latestStepNum = getNewSessionLatestStep(cwd, sessionId);
+            // Get promise info for latest step
+            const serverPromise = loadServerPromise(cwd, sessionId, latestStepNum);
             const includeContext = url.searchParams.get('includeContext') === '1';
-            res.setHeader('Content-Type', 'application/json');
-            res.end(JSON.stringify({
+            const response = {
                 session: toPublicSession(session, includeContext),
                 latestStep: latestStepNum,
-            }));
+            };
+            if (serverPromise?.promiseId && (serverPromise.status === 'pending' || serverPromise.status === 'processing')) {
+                response.promiseId = serverPromise.promiseId;
+                response.promiseStatus = serverPromise.status;
+            }
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify(response));
             return;
         }
 

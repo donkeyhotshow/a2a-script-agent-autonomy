@@ -36,6 +36,19 @@
                 signal: controller.signal
             });
             clearTimeout(timeoutId);
+            
+            // Retry on server errors (5xx) and rate limit (429)
+            const shouldRetry = !response.ok && 
+                (response.status >= 500 || response.status === 429) && 
+                retryCount < MAX_RETRIES;
+            
+            if (shouldRetry) {
+                const delay = BASE_DELAY * Math.pow(2, retryCount);
+                console.warn(`[CustomStorage] Retry ${retryCount + 1}/${MAX_RETRIES} after ${delay}ms (HTTP ${response.status}): ${url}`);
+                await new Promise(resolve => setTimeout(resolve, delay));
+                return storageFetchWithRetry(url, options, retryCount + 1);
+            }
+            
             return response;
         } catch (error) {
             clearTimeout(timeoutId);
