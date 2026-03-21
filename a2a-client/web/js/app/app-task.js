@@ -11,31 +11,42 @@
 (function (global) {
     'use strict';
 
+    function resolveWebScriptUrl(relativePath) {
+        var baseEl = document.getElementById('app-base');
+        var baseHref = (baseEl && baseEl.href) ? baseEl.href : document.baseURI;
+        var path = relativePath.replace(/^\//, '');
+        try {
+            return new URL(path, baseHref).href;
+        } catch (e) {
+            return '/' + path;
+        }
+    }
+
     /**
      * Load modular components dynamically
      */
     async function loadModules() {
         const modules = [
-            '/js/app/initialization.js',
-            '/js/app/event-handlers.js',
-            '/js/app/ui-managers.js',
-            '/js/app/state-managers.js'
+            'js/app/initialization.js',
+            'js/app/event-handlers.js',
+            'js/app/ui-managers.js',
+            'js/app/state-managers.js'
         ];
 
-        const loadPromises = modules.map(src => {
+        const loadPromises = modules.map((rel) => {
             return new Promise((resolve, reject) => {
-                if (document.querySelector(`script[src*="${src}"]`)) {
+                if (document.querySelector('script[src*="' + rel + '"]')) {
                     resolve();
                     return;
                 }
 
                 const script = document.createElement('script');
-                script.src = src;
+                script.src = resolveWebScriptUrl(rel);
                 script.onload = () => {
-                    console.log(`[AppTask] Loaded module: ${src}`);
+                    console.log(`[AppTask] Loaded module: ${rel}`);
                     resolve();
                 };
-                script.onerror = () => reject(new Error(`Failed to load ${src}`));
+                script.onerror = () => reject(new Error(`Failed to load ${rel}`));
                 document.head.appendChild(script);
             });
         });

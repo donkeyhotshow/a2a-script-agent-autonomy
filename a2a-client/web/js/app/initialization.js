@@ -5,6 +5,17 @@
 (function (global) {
     'use strict';
 
+    function resolveWebScriptUrl(relativePath) {
+        var baseEl = document.getElementById('app-base');
+        var baseHref = (baseEl && baseEl.href) ? baseEl.href : document.baseURI;
+        var path = relativePath.replace(/^\//, '');
+        try {
+            return new URL(path, baseHref).href;
+        } catch (e) {
+            return '/' + path;
+        }
+    }
+
     const AppInitialization = {
         /**
          * Initialize application
@@ -57,37 +68,34 @@
          */
         async loadModules() {
             const modules = [
-                // Daemons (required by session-data)
-                '/js/daemons/emitter.js',
-                '/js/daemons/dialog-loader.js',
-                '/js/daemons/dialog-promise-poll.js',
-                // Session store modules (in dependency order)
-                '/js/normalizers.js',
-                '/js/session-data.js',
-                '/js/session-storage.js',
-                '/js/project-store.js',
-                '/js/session-store.js',  // after dependencies — global.SessionStore
-                // App managers
-                '/js/app/project-manager.js',
-                '/js/app/session-manager.js',
-                '/js/app/window-manager.js',
-                '/js/app/taskbar-manager.js'
+                'js/daemons/emitter.js',
+                'js/daemons/dialog-loader.js',
+                'js/daemons/dialog-promise-poll.js',
+                'js/normalizers.js',
+                'js/session-data.js',
+                'js/session-storage.js',
+                'js/project-store.js',
+                'js/session-store.js',
+                'js/app/project-manager.js',
+                'js/app/session-manager.js',
+                'js/app/window-manager.js',
+                'js/app/taskbar-manager.js'
             ];
 
-            for (const src of modules) {
+            for (const rel of modules) {
                 await new Promise((resolve, reject) => {
-                    if (document.querySelector(`script[src*="${src}"]`)) {
+                    if (document.querySelector('script[src*="' + rel + '"]')) {
                         resolve();
                         return;
                     }
 
                     const script = document.createElement('script');
-                    script.src = src;
+                    script.src = resolveWebScriptUrl(rel);
                     script.onload = () => {
-                        console.log(`[AppTask] Loaded module: ${src}`);
+                        console.log(`[AppTask] Loaded module: ${rel}`);
                         resolve();
                     };
-                    script.onerror = () => reject(new Error(`Failed to load ${src}`));
+                    script.onerror = () => reject(new Error(`Failed to load ${rel}`));
                     document.head.appendChild(script);
                 });
             }
