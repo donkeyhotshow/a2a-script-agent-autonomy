@@ -86,7 +86,7 @@
                     this.setSelectedProjectId(projectId);
                     console.log('[ProjectManager] Project changed:', projectId);
                     // Close active session and all session panels when switching project
-                    if (global.WindowManager) global.WindowManager.closeAllSessionWindows();
+                    if (global.WindowState) global.WindowState.closeAllSessionWindows();
                     if (global.PanelManager) global.PanelManager.close('task-flow-panel');
                     if (global.SessionStore?.reset) global.SessionStore.reset();
                     // Refresh taskbar for new project

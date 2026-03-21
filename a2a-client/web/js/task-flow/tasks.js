@@ -49,12 +49,12 @@
             // Start waiting for response BEFORE submitting (prevents race condition)
             const outcomePromise = waitForFirstResponse(60000, store);
 
-            const handler = global.ActionHandler;
-            if (!handler?.submit) {
-                throw new Error('ActionHandler is not available for sending');
+            const executor = global.ActionExecutor;
+            if (!executor?.submit) {
+                throw new Error('ActionExecutor is not available for sending');
             }
 
-            const submitResult = await handler.submit(sessionId, result);
+            const submitResult = await executor.submit(sessionId, result, store);
 
             // Wait for response
             const outcome = await outcomePromise;

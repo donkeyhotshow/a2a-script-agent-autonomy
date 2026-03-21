@@ -118,8 +118,8 @@
      * @param {Object} result - результат от пользователя
      * @returns {Promise<Object>} ответ сервера
      */
-    async function submit(sessionId, result) {
-        const store = global.resolveStore(sessionId);
+    async function submit(sessionId, result, storeOverride) {
+        const store = storeOverride || global.resolveStore(sessionId);
         const base = getApiBase(store);
         if (!base) {
             throw new Error('ActionExecutor: API base not configured. Set Client API URL in Settings.');
@@ -152,9 +152,6 @@
                     store.startLoader?.();
                 }
                 startPromisePolling(sessionId, isStorageMode ? null : data.promiseId || null);
-                if (global.WindowManager?.refreshAll) {
-                    global.WindowManager.refreshAll();
-                }
                 await pullSessionSnapshot(sessionId, store, { skipExecuteWhenPending: true });
             } else {
                 await pullSessionSnapshot(sessionId, store);
@@ -303,12 +300,12 @@
      * @param {string|Object} message - текст сообщения или объект
      * @returns {Promise<Object>} ответ сервера
      */
-    async function sendMessage(sessionId, message) {
+    async function sendMessage(sessionId, message, storeOverride) {
         const messageText =
             typeof message === 'string'
                 ? message
                 : (message?.content ?? String(message ?? ''));
-        return submit(sessionId, { message: messageText });
+        return submit(sessionId, { message: messageText }, storeOverride);
     }
 
     /**
@@ -318,8 +315,8 @@
      * @param {string} choiceId - ID выбора
      * @returns {Promise<Object>} ответ сервера
      */
-    async function sendChoice(sessionId, choiceId) {
-        return submit(sessionId, { choice: choiceId });
+    async function sendChoice(sessionId, choiceId, storeOverride) {
+        return submit(sessionId, { choice: choiceId }, storeOverride);
     }
 
     // Экспорт модуля

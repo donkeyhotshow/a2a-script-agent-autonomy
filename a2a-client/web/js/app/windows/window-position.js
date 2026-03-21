@@ -25,53 +25,36 @@
             try {
                 const key = `window_state_${sessionId}`;
                 const saved = await StorageAPI.ui.getItem(key);
-                
                 if (saved) {
                     return JSON.parse(saved);
                 }
-                
-                // Return default window state if not found
-                const defaultPosition = this.getDefaultWindowPosition(sessionId);
-                return {
-                    position: defaultPosition,
-                    size: { width: 800, height: 600 },
-                    timestamp: Date.now()
-                };
             } catch (e) {
                 console.warn('[WindowPosition] Failed to load window state:', e);
-                const defaultPosition = this.getDefaultWindowPosition(sessionId);
-                return {
-                    position: defaultPosition,
-                    size: { width: 800, height: 600 },
-                    timestamp: Date.now()
-                };
             }
+            return this._defaultSavedState(sessionId);
+        },
+
+        _defaultSavedState(sessionId) {
+            return {
+                position: this.getDefaultWindowPosition(sessionId),
+                size: { width: 800, height: 600 },
+                timestamp: Date.now()
+            };
         },
 
         /**
          * Get default window position
          */
         getDefaultWindowPosition(sessionId) {
-            // Get registry module for access to sessionWindows
             const registry = global.WindowRegistry;
             const sessionWindows = registry?.getSessionWindows();
-            
-            // Calculate position based on existing windows to avoid overlap
-            const existingPositions = sessionWindows 
-                ? Array.from(sessionWindows.values())
-                    .map(panel => panel.position)
-                : [];
-
-            let x = 50 + (existingPositions.length * 30);
-            let y = 50 + (existingPositions.length * 30);
-
-            // Ensure within viewport bounds
+            const n = sessionWindows ? sessionWindows.size : 0;
+            const pos = this.calculateCascadePosition(n);
             const maxX = window.innerWidth - 400;
             const maxY = window.innerHeight - 300;
-
             return {
-                x: Math.min(x, maxX),
-                y: Math.min(y, maxY)
+                x: Math.min(pos.x, maxX),
+                y: Math.min(pos.y, maxY)
             };
         },
 

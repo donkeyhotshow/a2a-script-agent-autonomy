@@ -35,9 +35,7 @@
             'js/app/windows/window-registry.js',
             'js/app/windows/window-position.js',
             'js/app/windows/window-events.js',
-            'js/app/windows/window-state.js',
-            'js/app/windows/window-manager.js',
-            'js/app/windows/index.js'
+            'js/app/windows/window-state.js'
         ];
 
         // App modules (project/session management, taskbar)

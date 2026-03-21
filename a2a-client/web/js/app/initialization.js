@@ -29,7 +29,6 @@
                 );
                 if (base && global.apiIntegration) global.apiIntegration.configure({ apiBase: base });
                 await global.SessionManager?.init();
-                await global.WindowManager?.init();
                 global.TaskbarManager?.init();
 
                 // Setup UI (handlers live on AppEventHandlers, not this object)
@@ -107,7 +106,7 @@
          */
         async restoreState() {
             // Restore session windows
-            await global.WindowManager?.restoreSessionWindows();
+            await global.WindowState?.restoreSessionWindows();
 
             // Restore pending promises if any
             await global.SessionStore?.restorePendingPromises?.();

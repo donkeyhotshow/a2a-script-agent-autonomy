@@ -18,8 +18,8 @@
         var ms = delayMs == null ? 120 : delayMs;
         function tryOpen() {
             var btn = findTaskbarBtnBySessionId(sid);
-            if (btn && global.WindowManager) {
-                global.WindowManager.toggleSessionWindow(sid, btn);
+            if (btn && global.WindowState) {
+                global.WindowState.toggleSessionWindow(sid, btn);
                 return true;
             }
             return false;
@@ -117,8 +117,8 @@
          */
         closeActiveSession() {
             const activeSessionId = global.SessionManager?.getActiveSessionId();
-            if (activeSessionId && global.WindowManager) {
-                global.WindowManager.closeSessionWindow(activeSessionId);
+            if (activeSessionId && global.WindowState) {
+                global.WindowState.closeSessionWindow(activeSessionId);
             }
         }
     };

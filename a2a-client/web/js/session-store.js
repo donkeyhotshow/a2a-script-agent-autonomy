@@ -105,84 +105,19 @@
         this.storage = createSessionStorageAPI(options.storageBase, mode);
         this._storageMode = mode;
 
-        // === Proxy методы ядра ===
-        
-        // Получение состояния
-        this.getState = function() { 
-            return this.core.getState(); 
-        };
-
-        // Управление сессией
-        this.setSession = function() { 
-            return this.core.setSession.apply(this.core, arguments); 
-        };
-        
-        this.reset = function() { 
-            return this.core.reset.apply(this.core, arguments); 
-        };
-
-        // Execute
-        this.setExecute = function() { 
-            return this.core.setExecute.apply(this.core, arguments); 
-        };
-
-        // Сообщения
-        this.pushMessage = function() { 
-            return this.core.pushMessage.apply(this.core, arguments); 
-        };
-
-        this.setError = function() {
-            return this.core.setError.apply(this.core, arguments);
-        };
-
-        this.clearLastError = function() {
-            return this.core.clearLastError.apply(this.core, arguments);
-        };
-
-        // События
-        this.on = function() { 
-            return this.core.on.apply(this.core, arguments); 
-        };
-
-        // Promise
-        this.setPromisePending = function() { 
-            return this.core.setPromisePending.apply(this.core, arguments); 
-        };
-
-        // Проверка состояния ввода
-        this.isWaitingForInput = function() { 
-            return this.core.isWaitingForInput(); 
-        };
-        
-        this.isInputBlocked = function() { 
-            return this.core.isInputBlocked(); 
-        };
-
-        // === Loader management - proxy to core ===
-        this.startLoader = function() { 
-            return this.core.startLoader.apply(this.core, arguments); 
-        };
-        
-        this.stopLoader = function() { 
-            return this.core.stopLoader.apply(this.core, arguments); 
-        };
-        
-        this.getLoaderState = function() { 
-            return this.core.getLoaderState(); 
-        };
-
-        // === Promise management - proxy to core ===
-        this.setPromiseId = function() { 
-            return this.core.setPromiseId.apply(this.core, arguments); 
-        };
-        
-        this.startPromisePolling = function() { 
-            return this.core.startPromisePolling.apply(this.core, arguments); 
-        };
-        
-        this.stopPromisePolling = function() { 
-            return this.core.stopPromisePolling.apply(this.core, arguments); 
-        };
+        var coreDelegateMethods = [
+            'getState', 'setSession', 'reset', 'setExecute', 'pushMessage', 'setError', 'clearLastError',
+            'on', 'setPromisePending', 'isWaitingForInput', 'isInputBlocked',
+            'startLoader', 'stopLoader', 'getLoaderState',
+            'setPromiseId', 'startPromisePolling', 'stopPromisePolling'
+        ];
+        var self = this;
+        coreDelegateMethods.forEach(function (m) {
+            self[m] = function () {
+                var fn = self.core[m];
+                return fn.apply(self.core, arguments);
+            };
+        });
 
         this.getStorageMode = function() {
             return this.storage.getStorageMode();

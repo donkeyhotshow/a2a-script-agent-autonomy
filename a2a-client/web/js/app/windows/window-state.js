@@ -194,34 +194,27 @@
                 const position = savedState?.position || positionModule.getDefaultWindowPosition(sessionId);
                 const size = savedState?.size || { width: 800, height: 600 };
 
-                // Fetch session data from server first (pass projectId so server finds the session)
                 let sessionData = null;
+                const projectId =
+                    (await global.ProjectManager?.getSelectedProjectId?.()) || global.SessionStore?.projectId || null;
+                const api = global.apiIntegration;
                 try {
-                    if (global.apiIntegration?.getSession) {
-                        const projectId = await global.ProjectManager?.getSelectedProjectId?.() || global.SessionStore?.projectId || null;
-                        sessionData = await global.apiIntegration.getSession(sessionId, projectId);
-                        console.log('[WindowState] Session loaded:', sessionId, 'asyncPending:', sessionData?.asyncPending, 'status:', sessionData?.status);
+                    if (api?.getSessionLatest) {
+                        const latest = await api.getSessionLatest(sessionId, { includeContext: true });
+                        sessionData = latest?.session ?? null;
                     }
+                } catch (e) {
+                    console.warn('[WindowState] getSessionLatest failed:', e);
+                }
+                if (!sessionData && api?.getSession) {
                     try {
-                        let latestData = null;
-                        if (global.apiIntegration?.getSessionLatest) {
-                            latestData = await global.apiIntegration.getSessionLatest(sessionId);
-                        } else {
-                            const latestResponse = await fetch(
-                                `/api/a2a/sessions/${encodeURIComponent(sessionId)}/latest`
-                            );
-                            if (latestResponse.ok) latestData = await latestResponse.json();
-                        }
-                        if (latestData?.session?.asyncPending && latestData.session) {
-                            sessionData = sessionData || {};
-                            sessionData.asyncPending = true;
-                            sessionData.promiseStatus = latestData.session.promiseStatus ?? sessionData.promiseStatus;
-                        }
-                    } catch (e) {
-                        console.warn('[WindowState] Failed to check latest step:', e);
+                        sessionData = await api.getSession(sessionId, {
+                            projectId: projectId || undefined,
+                            includeContext: true
+                        });
+                    } catch (err) {
+                        console.warn('[WindowState] Failed to load session data:', err);
                     }
-                } catch (err) {
-                    console.warn('[WindowState] Failed to load session data:', err);
                 }
 
                 if (!sessionData) {
@@ -292,41 +285,28 @@
                     // Store reference on the panel for cleanup
                     panel._sessionStore = store;
 
-                    // Save messages from session data BEFORE any TaskFlow initialization
-                    // (TaskFlow.reset() clears messages, so we need to restore them after)
-                    let savedMessages = null;
-
                     if (store && sessionData) {
-                        // Set session info (API may use id or sessionId)
                         const dataSid = sessionData.id || sessionData.sessionId;
                         if (dataSid) {
                             store.setSession(dataSid, sessionData.projectId);
                         }
-                    // Load messages if available from session data
-                    if (sessionData?.messages && Array.isArray(sessionData.messages) && sessionData.messages.length > 0) {
-                        store.setMessages(sessionData.messages);
-                        // Save messages for restore after TaskFlow reset
-                        savedMessages = sessionData.messages;
-                    } else if (sessionData?.context?.messages && Array.isArray(sessionData.context.messages)) {
-                        store.setMessages(sessionData.context.messages);
-                        savedMessages = sessionData.context.messages;
-                    }
-                        // Load context/execute if available
+                        if (sessionData?.messages && Array.isArray(sessionData.messages) && sessionData.messages.length > 0) {
+                            store.setMessages(sessionData.messages);
+                        } else if (sessionData?.context?.messages && Array.isArray(sessionData.context.messages)) {
+                            store.setMessages(sessionData.context.messages);
+                        }
                         if (sessionData?.context) {
                             store.setContext(sessionData.context);
                         }
                         const execute = sessionData?.execute ?? sessionData?.context?.execute ?? sessionData?.currentExecute;
-                        console.log('[WindowState] Setting execute:', execute);
                         if (execute) {
                             store.setExecute(execute);
                         }
-                        // Set status
                         if (sessionData?.status) {
                             store.setStatus(sessionData.status);
                         }
 
                         if (sessionData.asyncPending) {
-                            console.log('[WindowState] Resuming async session (no transport id in UI)');
                             store.setPromisePending(true);
                             if (typeof store.startLoader === 'function') {
                                 store.startLoader(sessionId);
@@ -335,8 +315,6 @@
                         }
                     }
 
-                    // If messages weren't in session data at all, load them separately via adapter
-                    // But only if we haven't already set messages above
                     const storeState = store?.getState?.() || {};
                     const storeHasMessages = store && (storeState.messages?.length > 0);
                     if (!storeHasMessages && sessionData?.messages === undefined) {
@@ -344,36 +322,15 @@
                             const adapter = global.SessionManagerAdapter || global.SessionManager;
                             if (adapter?.getConversation) {
                                 await adapter.getConversation(sessionId);
-                            console.log('[WindowState] Loaded conversation via adapter:', sessionId);
                             }
                         } catch (err) {
                             console.warn('[WindowState] Failed to load conversation:', err);
                         }
                     }
 
-                    // Restore session state
-                    // Skip restoreAndReconnect as we already loaded session data above
-                    // This prevents duplicate messages
-                    // if (store?.restoreAndReconnect) {
-                    //     await store.restoreAndReconnect(sessionId);
-                    // }
-
-                    // Render session content using window-events module
                     const contentEl = panel.getContentEl();
-                    console.log('[WindowState] renderSessionContent called, contentEl:', !!contentEl, 'sessionId:', sessionId);
-                    
-                    if (global.WindowEvents) {
+                    if (global.WindowEvents && contentEl) {
                         global.WindowEvents.renderSessionContent(contentEl, sessionId, store);
-                    }
-
-                    // Restore messages that were cleared by TaskFlow.reset()
-                    if (savedMessages && savedMessages.length > 0) {
-                        store.setMessages(savedMessages);
-                        // Messages restored after TaskFlow init
-                        // Force re-render to show restored messages
-                        if (global.WindowEvents && contentEl) {
-                            global.WindowEvents.renderSessionContent(contentEl, sessionId, store);
-                        }
                     }
 
                     // Save state

@@ -127,7 +127,6 @@
 <script defer src="js/action-parser.js"></script>
 <script defer src="js/action-validator.js"></script>
 <script defer src="js/action-executor.js"></script>
-<script defer src="js/action-handler.js"></script>
 <script defer src="js/error-handler.js?v=3"></script>
 <!-- Modular TaskFlow -->
 <script defer src="js/task-flow/render.js"></script>
@@ -168,7 +167,7 @@
         console.log('[A2A] Unified architecture initialized');
     });
 
-    // Wait for sync stack + dynamic app scripts (js/app-task.js chain) to avoid init before WindowManager
+    // Wait for sync stack + dynamic app scripts (js/app-task.js chain) to avoid init before WindowState
     function waitForModules() {
         return new Promise((resolve) => {
             const started = Date.now();
@@ -179,21 +178,21 @@
                 const hasPanelManager = typeof window.PanelManager !== 'undefined';
                 const hasPanel = typeof window.Panel !== 'undefined';
                 const appScriptsDone = window._appModulesLoaded === true;
-                const hasWindowManager =
-                    typeof window.WindowManager !== 'undefined' &&
-                    typeof window.WindowManager.toggleSessionWindow === 'function';
+                const hasWindowState =
+                    typeof window.WindowState !== 'undefined' &&
+                    typeof window.WindowState.toggleSessionWindow === 'function';
                 const timedOut = Date.now() - started > maxMs;
 
                 const modulesReady =
                     hasSessionStore &&
                     hasTaskFlow &&
-                    (timedOut || (appScriptsDone && hasWindowManager));
+                    (timedOut || (appScriptsDone && hasWindowState));
 
                 if (modulesReady) {
                     if (timedOut && !appScriptsDone) {
                         console.warn('[A2A] Dynamic app modules not ready after ' + maxMs + 'ms; continuing');
-                    } else if (timedOut && appScriptsDone && !hasWindowManager) {
-                        console.warn('[A2A] WindowManager missing after ' + maxMs + 'ms; continuing');
+                    } else if (timedOut && appScriptsDone && !hasWindowState) {
+                        console.warn('[A2A] WindowState missing after ' + maxMs + 'ms; continuing');
                     }
                     if (hasPanelManager && hasPanel) {
                         window._panelModulesLoaded = true;

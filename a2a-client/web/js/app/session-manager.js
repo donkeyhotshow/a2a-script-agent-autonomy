@@ -11,10 +11,26 @@
         ) || null;
     }
 
-    const ACTIVE_SESSION_KEY = 'a2a_active_session';
-
     let activeSessionId = null;
     let taskbarContentEl = null;
+
+    async function writeActiveSessionId(sessionId) {
+        try {
+            await StorageAPI.sessions.setItem('active-session', sessionId);
+        } catch (asyncError) {
+            console.warn('[SessionManager] Async storage failed, using sync fallback:', asyncError);
+            StorageAPI.sessions.setItemSync('active-session', sessionId);
+        }
+    }
+
+    async function readActiveSessionId() {
+        try {
+            return (await StorageAPI.sessions.getItem('active-session')) || null;
+        } catch (asyncError) {
+            console.warn('[SessionManager] Async storage failed, using sync fallback:', asyncError);
+            return StorageAPI.sessions.getItemSync('active-session') || null;
+        }
+    }
 
     const SessionManager = {
         /**
@@ -22,13 +38,7 @@
          */
         async setActiveSession(sessionId) {
             activeSessionId = sessionId;
-            try {
-                // Try async storage first, fallback to sync
-                await StorageAPI.sessions.setItem('active-session', sessionId);
-            } catch (asyncError) {
-                console.warn('[SessionManager] Async storage failed, using sync fallback:', asyncError);
-                StorageAPI.sessions.setItemSync('active-session', sessionId);
-            }
+            await writeActiveSessionId(sessionId);
 
             // Update UI indicators
             this.updateActiveSessionUI(sessionId);
@@ -161,7 +171,7 @@
             switch (action) {
                 case 'close':
                     if (confirm('Close this session?')) {
-                        global.WindowManager?.closeSessionWindow(sessionId);
+                        global.WindowState?.closeSessionWindow(sessionId);
                     }
                     break;
                 case 'duplicate':
@@ -220,16 +230,7 @@
          * Initialize session manager
          */
         async init() {
-            // Load active session from storage
-            try {
-                // Try async storage first, fallback to sync
-                const stored = await StorageAPI.sessions.getItem('active-session');
-                activeSessionId = stored || null;
-            } catch (asyncError) {
-                console.warn('[SessionManager] Async storage failed, using sync fallback:', asyncError);
-                activeSessionId = StorageAPI.sessions.getItemSync('active-session') || null;
-            }
-
+            activeSessionId = await readActiveSessionId();
             console.log('[SessionManager] Initialized, active session:', activeSessionId);
         }
     };

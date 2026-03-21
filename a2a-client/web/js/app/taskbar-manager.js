@@ -155,7 +155,7 @@
                     this.updateScrollButtons(sessionsWrapper, leftBtn, rightBtn);
                 }
 
-                console.log('[TaskbarManager] Refreshed taskbar with', sessions.length, 'sessions');
+                this.updateOffScreenIndicators();
             } catch (error) {
                 console.error('[TaskbarManager] Failed to refresh taskbar:', error);
             }
@@ -195,8 +195,8 @@
 
             // Click handler
             btn.addEventListener('click', (e) => {
-                if (global.WindowManager && sessionId) {
-                    global.WindowManager.toggleSessionWindow(sessionId, btn);
+                if (global.WindowState && sessionId) {
+                    global.WindowState.toggleSessionWindow(sessionId, btn);
                 }
             });
 
@@ -209,8 +209,8 @@
 
             // Double-click to maximize
             btn.addEventListener('dblclick', (e) => {
-                if (global.WindowManager && sessionId) {
-                    const panel = global.WindowManager.getSessionWindows().get(sessionId);
+                if (global.WindowRegistry && sessionId) {
+                    const panel = global.WindowRegistry.getSessionWindows().get(sessionId);
                     if (panel) {
                         panel.maximize();
                     }
@@ -299,9 +299,8 @@
                 sessionsWrapper.scrollTo({ left: scrollRight, behavior: 'smooth' });
             }
 
-            // Activate session
-            if (global.WindowManager) {
-                global.WindowManager.toggleSessionWindow(sessionId, btn);
+            if (global.WindowState) {
+                global.WindowState.toggleSessionWindow(sessionId, btn);
             }
         },
 
@@ -351,12 +350,7 @@
         /**
          * Initialize taskbar manager
          */
-        init() {
-            // Start off-screen indicators update
-            setInterval(() => this.updateOffScreenIndicators(), 1000);
-
-            console.log('[TaskbarManager] Initialized');
-        }
+        init() {}
     };
 
     // Export

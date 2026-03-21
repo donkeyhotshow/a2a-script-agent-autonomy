@@ -15,16 +15,13 @@
             const Render = global.TaskFlowRender;
             // Use provided store (per-window) or fall back to global
             store = store || global.SessionStore;
-            
-            // Save store reference for use in sendMessage/sendChoice
-            this._passedStore = store;
 
             if (Render && store) {
                 // Note: store should already be set up with session data from createSessionWindow
                 // Don't reset here as it would clear loaded messages
 
                 const taskFlowRef = {
-                    sendMessage: (sid, m) => WindowEvents.sendMessage(sid, m),
+                    sendMessage: (sid, m) => WindowEvents.sendMessage(sid, m, store),
                     sendMessageResult: async (text, el) => {
                         if (!text || !text.trim()) return;
                         
@@ -36,7 +33,7 @@
                         store?.setPromisePending?.(true);
                         refreshContent();
                         try {
-                            await taskFlowRef.sendMessage(sessionId, msg);
+                            await WindowEvents.sendMessage(sessionId, msg, store);
                         } finally {
                             // FIXED: Hide loader for specific session
                             _hideGlobalLoader(sessionId);
@@ -49,7 +46,7 @@
                         store?.setPromisePending?.(true);
                         refreshContent();
                         try {
-                            await this.sendChoice(sessionId, choiceId);
+                            await WindowEvents.sendChoice(sessionId, choiceId, store);
                         } finally {
                             // FIXED: Hide loader for specific session
                             _hideGlobalLoader(sessionId);
@@ -61,13 +58,7 @@
                 let _loaderMinEndTime = null;
                 const _activeLoaders = new Map(); // sessionId -> { minEndTime, element }
                 function _showGlobalLoader(sessionId = 'global') {
-                    // FIXED: Use session-specific loader ID instead of global
-                    console.log('[WindowEvents] _showGlobalLoader called for session:', sessionId, 'Active loaders:', _activeLoaders.size);
-                    
-                    const loaderId = 'session-loader-' + sessionId;
                     const loaderEl = global.ensureSessionInlineLoader(sessionId);
-                    console.log('[WindowEvents] Session inline loader:', loaderId);
-
                     loaderEl.classList.add('active');
                     _loaderMinEndTime = Date.now() + MIN_LOADER_MS;
                     loaderEl.dataset.minEndTime = _loaderMinEndTime;
@@ -96,14 +87,11 @@
                     if (now >= minEndTime) {
                         loaderEl.classList.remove('active');
                         _activeLoaders.delete(sessionId);
-                        console.log('[WindowEvents] Loader hidden (min time passed) for session:', sessionId);
                     } else {
                         const remaining = minEndTime - now;
-                        console.log('[WindowEvents] Waiting', remaining, 'ms for min time for session:', sessionId);
                         setTimeout(() => {
                             loaderEl.classList.remove('active');
                             _activeLoaders.delete(sessionId);
-                            console.log('[WindowEvents] Loader hidden (after wait) for session:', sessionId);
                         }, remaining);
                     }
                 }
@@ -119,25 +107,13 @@
                     }
 
                     const st = store.getState?.() || {};
-                    // Use sessionId from multiple possible sources
-                    const storeSessionId = store.sessionId || st.sessionId || store.core?.state?.sessionId || sessionId;
-                    // More reliable check for promise pending
                     const promisePending = st.promisePending || (store.core?.promise?.isPending) || (store.promise?.isPending);
-                    const loaderActive = st.loaderActive || (store.core?.getLoader?.(storeSessionId)?.isActive);
                     const hasActionableForm = global.executeHasActionableForm?.(execute);
                     const inputBlocked =
                         typeof store.isInputBlocked === 'function' && store.isInputBlocked();
                     const isWaiting =
                         !!promisePending ||
                         (!hasActionableForm && inputBlocked);
-
-                    // Debug log
-                    console.log('[WindowEvents] refreshContent:', 
-                        'execute:', !!execute, 
-                        'isWaiting:', isWaiting,
-                        'promisePending:', promisePending,
-                        'loaderActive:', loaderActive,
-                        'store.sessionId:', store.sessionId);
 
                     // Task-flow UI (form/message/actions) only when server/store set execute; never synthetic { form: pendingForm }
                     if (execute && !isWaiting) {
@@ -200,7 +176,7 @@
                 const sendMessage = () => {
                     const message = textarea.value.trim();
                     if (message) {
-                        this.sendMessage(sessionId, message);
+                        WindowEvents.sendMessage(sessionId, message, store);
                         textarea.value = '';
                     }
                 };
@@ -218,36 +194,23 @@
         /**
          * Send message to session
          */
-        async sendMessage(sessionId, message, usePassedStore = true) {
-            // Use the store that was passed to renderSessionContent, not global
-            let store = usePassedStore ? this._passedStore : global.SessionStore;
-
-            if (global.ActionHandler?.sendMessage) {
-                await global.ActionHandler.sendMessage(sessionId, message);
-            } else if (global.ActionHandler?.submit) {
-                await global.ActionHandler.submit(sessionId, { message });
-            } else {
-                throw new Error('ActionHandler is not available for sending message');
+        async sendMessage(sessionId, message, storeOverride) {
+            const Ex = global.ActionExecutor;
+            if (!Ex?.sendMessage) {
+                throw new Error('ActionExecutor is not available for sending message');
             }
-
+            await Ex.sendMessage(sessionId, message, storeOverride);
         },
 
         /**
          * Send choice result to session (for form.choices)
          */
-        async sendChoice(sessionId, choiceId, usePassedStore = true) {
-            // Use the store that was passed to renderSessionContent, not global
-            let store = usePassedStore ? this._passedStore : global.SessionStore;
-            const result = { choice: choiceId };
-
-            if (global.ActionHandler?.sendChoice) {
-                await global.ActionHandler.sendChoice(sessionId, choiceId);
-            } else if (global.ActionHandler?.submit) {
-                await global.ActionHandler.submit(sessionId, result);
-            } else {
-                throw new Error('ActionHandler is not available for sending choice');
+        async sendChoice(sessionId, choiceId, storeOverride) {
+            const Ex = global.ActionExecutor;
+            if (!Ex?.sendChoice) {
+                throw new Error('ActionExecutor is not available for sending choice');
             }
-
+            await Ex.sendChoice(sessionId, choiceId, storeOverride);
         },
 
         /**

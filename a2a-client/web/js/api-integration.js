@@ -259,9 +259,13 @@ class APIIntegration {
     /**
      * Highest step summary (promiseId / promiseStatus). Same route as storage “latest”.
      */
-    async getSessionLatest(sessionId) {
+    async getSessionLatest(sessionId, options = {}) {
         const headers = { ...this._getHeaders(), ...this._getStorageHeaders() };
-        const res = await fetch(this._clientA2aUrl(`sessions/${encodeURIComponent(sessionId)}/latest`), { headers });
+        const q = options.includeContext ? '?includeContext=1' : '';
+        const res = await fetch(
+            this._clientA2aUrl(`sessions/${encodeURIComponent(sessionId)}/latest${q}`),
+            { headers }
+        );
         if (!res.ok) {
             throw new Error(`getSessionLatest failed: ${res.status} ${res.statusText}`);
         }
