@@ -16,18 +16,7 @@
   display: none;
   flex-direction: column;
   overflow: hidden;
-  animation: panel-slide-in 0.3s ease;
-}
-
-@keyframes panel-slide-in {
-  from {
-    opacity: 0;
-    transform: translateX(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
+  animation: slide-in-right 0.3s ease;
 }
 
 .notifications-panel.active,
@@ -268,33 +257,11 @@
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
   z-index: 1000;
-  animation: toast-in 0.3s ease;
+  animation: slide-in-right 0.3s ease;
 }
 
 .toast-notification.hiding {
-  animation: toast-out 0.3s ease forwards;
-}
-
-@keyframes toast-in {
-  from {
-    opacity: 0;
-    transform: translateX(100%);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes toast-out {
-  from {
-    opacity: 1;
-    transform: translateX(0);
-  }
-  to {
-    opacity: 0;
-    transform: translateX(100%);
-  }
+  animation: slide-out-right 0.3s ease forwards;
 }
 
 .toast-icon {

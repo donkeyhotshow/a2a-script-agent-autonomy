@@ -1,91 +1,19 @@
-/* Error Handler Styles - Nebula Theme
- * Main entry point that imports all error-handler modules
- * 
- * Module Structure:
- * - error-handler/error-utils.css - Утилиты, миксины, анимации
- * - error-handler/errors.css - Контейнеры ошибок (toast, modal, inline)
- * - error-handler/alerts.css - Уведомления об ошибках
- * - error-handler/debug.css - Debug панели
- */
+/* Error Handler Styles */
 
-/* Import all error-handler modules */
-/* @import url('./error-handler/error-utils.css'); */
-/* @import url('./error-handler/errors.css'); */
-/* @import url('./error-handler/alerts.css'); */
-/* @import url('./error-handler/debug.css'); */
-
-/* Legacy compatibility - keep original class names working */
-/* These are now handled by individual module files above */
-
-/* 
- * DEPRECATED STYLES - Keeping for backward compatibility
- * These classes are now defined in their respective module files
- */
-
-/* Toast animations (now in error-handler/errors.css) */
-@keyframes error-toast-in {
-  from {
-    opacity: 0;
-    transform: translateX(100%);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
+.error-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 10, 15, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
 }
 
-@keyframes error-toast-out {
-  from {
-    opacity: 1;
-    transform: translateX(0);
-  }
-  to {
-    opacity: 0;
-    transform: translateX(100%);
-  }
-}
-
-/* Notification animations (now in error-handler/alerts.css) */
-@keyframes error-notification-in {
-  from {
-    opacity: 0;
-    transform: translateX(100%);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes error-notification-out {
-  from {
-    opacity: 1;
-    transform: translateX(0);
-  }
-  to {
-    opacity: 0;
-    transform: translateX(100%);
-  }
-}
-
-/* Modal animations (now in error-handler/errors.css) */
-@keyframes modal-scale-in {
-  from {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-/* Pulse animation (now in error-handler/alerts.css) */
-@keyframes pulse {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.7;
-  }
+.error-modal-overlay.active,
+.error-modal-overlay.show,
+.error-modal-overlay:not([style*="none"]) {
+  display: flex !important;
 }

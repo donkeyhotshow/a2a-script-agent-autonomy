@@ -11,7 +11,6 @@
 (function (global) {
     'use strict';
 
-    const PROJECTS_API_BASE = '/api/a2a/projects';
     const STORAGE_KEY = 'a2a_selected_project';
 
     /**
@@ -51,15 +50,13 @@
         var selectedProjectId = getStoredProjectId();
 
         /**
-         * Выполнить fetch запрос
+         * Get apiIntegration instance - unified HTTP client
          */
-        function _fetch(url, options) {
-            return fetch(url, options).then(function(resp) {
-                if (!resp.ok) {
-                    throw new Error('Request failed: ' + resp.status);
-                }
-                return resp.json();
-            });
+        function getApi() {
+            if (!global.apiIntegration) {
+                throw new Error('[ProjectStore] apiIntegration not loaded');
+            }
+            return global.apiIntegration;
         }
 
         return {
@@ -68,10 +65,7 @@
              * @returns {Promise<Array>} Массив проектов
              */
             getProjects: function() {
-                return _fetch(PROJECTS_API_BASE, {
-                    method: 'GET',
-                    headers: { 'Content-Type': 'application/json' }
-                }).then(function(data) {
+                return getApi().getProjects().then(function(data) {
                     if (Array.isArray(data)) return data;
                     var list = data.projects !== undefined ? data.projects : data.data;
                     if (!Array.isArray(list)) {
@@ -87,10 +81,7 @@
              * @returns {Promise<Object>} Данные проекта
              */
             getProject: function(projectId) {
-                return _fetch(PROJECTS_API_BASE + '/' + encodeURIComponent(projectId), {
-                    method: 'GET',
-                    headers: { 'Content-Type': 'application/json' }
-                });
+                return getApi().request('GET', 'projects/' + encodeURIComponent(projectId));
             },
 
             /**
@@ -111,11 +102,7 @@
                     }
                     body = params;
                 }
-                return _fetch(PROJECTS_API_BASE, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(body)
-                });
+                return getApi().request('POST', 'projects', body);
             },
 
             /**
@@ -124,10 +111,7 @@
              * @returns {Promise<void>}
              */
             deleteProject: function(projectId) {
-                return _fetch(PROJECTS_API_BASE + '/' + encodeURIComponent(projectId), {
-                    method: 'DELETE',
-                    headers: { 'Content-Type': 'application/json' }
-                });
+                return getApi().request('DELETE', 'projects/' + encodeURIComponent(projectId));
             },
 
             /**

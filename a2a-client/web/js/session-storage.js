@@ -95,20 +95,11 @@
              * @returns {Promise<Object>} Ответ сервера
              */
             sendNext: async function(sessionId, message) {
-                // Используем storage API напрямую через fetch
-                const url = '/api/a2a/sessions/' + encodeURIComponent(sessionId) + '/next';
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-Storage-Mode': storageMode
-                    },
-                    body: JSON.stringify(message)
+                // Use unified apiIntegration client with storage mode header
+                const api = getApi();
+                return api.request('POST', 'sessions/' + encodeURIComponent(sessionId) + '/next', message, {
+                    headers: { 'X-Storage-Mode': storageMode }
                 });
-                if (!response.ok) {
-                    throw new Error('sendNext failed: ' + response.status);
-                }
-                return response.json();
             },
 
             /**

@@ -125,6 +125,38 @@ class APIIntegration {
     }
 
     /**
+     * Generic request method - unified HTTP client with timeout and retry
+     * @param {string} method - HTTP method (GET, POST, PUT, DELETE)
+     * @param {string} resourcePath - API resource path (e.g. 'sessions/123/next')
+     * @param {Object} [body] - Request body (will be JSON stringified)
+     * @param {Object} [options] - Additional options: timeout, headers
+     * @returns {Promise<Object>} Parsed JSON response
+     */
+    async request(method, resourcePath, body = null, options = {}) {
+        const url = this._clientA2aUrl(resourcePath);
+        const fetchOptions = {
+            method: method.toUpperCase(),
+            headers: { ...this._getHeaders(), ...options.headers }
+        };
+        
+        if (body && method.toUpperCase() !== 'GET') {
+            fetchOptions.body = JSON.stringify(body);
+        }
+        
+        const response = await fetchWithRetry(url, fetchOptions, options.timeout);
+        
+        if (!response.ok) {
+            throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+        }
+        
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+            return response.json();
+        }
+        return response.text();
+    }
+
+    /**
      * Get headers for requests
      */
     _getHeaders() {

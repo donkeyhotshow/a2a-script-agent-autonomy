@@ -213,17 +213,6 @@
   box-shadow: 0 0 8px var(--color-error);
 }
 
-@keyframes pulse-glow {
-  0%, 100% {
-    opacity: 1;
-    box-shadow: 0 0 8px currentColor;
-  }
-  50% {
-    opacity: 0.6;
-    box-shadow: 0 0 4px currentColor;
-  }
-}
-
 /* Off-screen indicators */
 .offscreen-indicator {
   position: fixed;

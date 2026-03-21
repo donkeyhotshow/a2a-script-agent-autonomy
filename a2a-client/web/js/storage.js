@@ -15,13 +15,19 @@
     const SESSIONS_BASE = '/api/a2a/sessions';
 
     // Reuse shared fetchWithRetry from APIIntegration when available to keep behavior consistent
-    const sharedFetchWithRetry = global.fetchWithRetry;
+    // This avoids duplicating timeout/retry logic across modules
+    function getFetchWithRetry() {
+        return global.fetchWithRetry || null;
+    }
 
     async function storageFetchWithRetry(url, options = {}, retryCount = 0) {
-        if (typeof sharedFetchWithRetry === 'function') {
-            return sharedFetchWithRetry(url, options, retryCount);
+        const sharedFetch = getFetchWithRetry();
+        if (typeof sharedFetch === 'function') {
+            return sharedFetch(url, options, retryCount);
         }
 
+        // Fallback implementation only when global.fetchWithRetry is not available
+        // This handles the case where storage.js is loaded before api-integration.js
         const DEFAULT_TIMEOUT = 10000; // 10 seconds
         const MAX_RETRIES = 3;
         const BASE_DELAY = 2000; // 2 seconds per PROTOCOLS specification

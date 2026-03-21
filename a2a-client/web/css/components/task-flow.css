@@ -461,10 +461,6 @@
   animation: spin 0.8s linear infinite;
 }
 
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
 .task-flow-status {
   font-size: 13px;
   color: var(--color-text-secondary);
@@ -698,22 +694,3 @@
   display: none;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .task-flow-history {
-    scroll-behavior: auto;
-  }
-
-  .task-flow-message {
-    transition: none;
-  }
-
-  .task-flow-spinner {
-    animation: none;
-    border-color: var(--color-border-light);
-    border-top-color: var(--color-accent);
-  }
-
-  .task-flow-progress-bar {
-    transition: none;
-  }
-}
