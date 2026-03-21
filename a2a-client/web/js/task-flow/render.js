@@ -177,9 +177,7 @@
         if (storeState.promisePending) {
             const historyHtml = renderMessageHistory(contentEl, effectiveStore);
             contentEl.innerHTML = historyHtml;
-            // Show loader instead of form
-            const sessionId = taskFlowRef?._sessionId || effectiveStore?.sessionId || 'global';
-            showInlineLoader(contentEl, sessionId);
+            // Skip inline loader - use window-events.js spinner instead
             return;
         }
 
@@ -242,8 +240,7 @@
                         if (formContainer) {
                             formContainer.style.display = 'none';
                         }
-                        const sessionId = global.SessionStore?.sessionId || 'global';
-                        showInlineLoader(contentEl, sessionId); // Pass contentEl
+                        // Skip inline loader - use window-events.js spinner instead
                         taskFlowRef.sendMessageResult(val, contentEl);
                     }
                 };
@@ -255,17 +252,6 @@
         }
     }
     
-    // Helper function to show inline loader
-    function showInlineLoader(contentEl, sessionId = null) {
-        // Clear and show loader INSIDE panel content
-        contentEl.innerHTML = `
-            <div class="task-flow-loading">
-                <div class="task-flow-spinner"></div>
-                <p>Обработка запроса...</p>
-            </div>
-        `;
-    }
-
 
     /**
      * Рендеринг сообщения
@@ -382,12 +368,8 @@
 
         switch (state) {
             case 'loading':
-                contentEl.innerHTML = `
-                    <div class="task-flow-loading">
-                        <div class="task-flow-spinner"></div>
-                        <p class="task-flow-status">Loading...</p>
-                    </div>
-                `;
+                // Loading state - no preloader shown
+                contentEl.innerHTML = '';
                 break;
 
             case 'error':

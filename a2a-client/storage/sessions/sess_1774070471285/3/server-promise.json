@@ -1,0 +1,24 @@
+{
+  "promiseId": "prom_1774073658008_fi4dqozqc",
+  "status": "completed",
+  "submittedAt": "2026-03-21T06:14:18.011Z",
+  "execute": {
+    "form": {
+      "input": [
+        {
+          "name": "message",
+          "type": "text",
+          "label": "Повідомлення",
+          "required": true
+        }
+      ]
+    }
+  },
+  "context": {
+    "task": "dfsfds",
+    "execution": {
+      "action": "dialog",
+      "step": "request"
+    }
+  }
+}

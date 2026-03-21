@@ -21,7 +21,6 @@
                 // Create wrapper structure with scroll buttons
                 container = document.createElement('div');
                 container.className = 'taskbar-container';
-                container.style.cssText = 'display:flex;align-items:center;width:100%;height:100%;gap:4px;';
 
                 const leftBtn = document.createElement('button');
                 leftBtn.className = 'taskbar-scroll-btn taskbar-scroll-left';
@@ -35,7 +34,6 @@
 
                 const sessionsWrapper = document.createElement('div');
                 sessionsWrapper.className = 'taskbar-sessions-wrapper';
-                sessionsWrapper.style.cssText = 'flex:1;overflow:hidden;height:100%;';
 
                 // Move original content to wrapper
                 const originalContent = contentEl.innerHTML;
@@ -165,11 +163,10 @@
          * Fetch sessions from API for current project
          */
         async fetchSessions() {
-            const g = typeof window !== 'undefined' ? window : globalThis;
-            if (!g.apiIntegration || typeof g.apiIntegration.getSessions !== 'function') {
+            if (!global.apiIntegration || typeof global.apiIntegration.getSessions !== 'function') {
                 throw new Error('[TaskbarManager] apiIntegration.getSessions required');
             }
-            const sessions = await g.apiIntegration.getSessions();
+            const sessions = await global.apiIntegration.getSessions();
             if (!Array.isArray(sessions)) {
                 throw new Error('[TaskbarManager] getSessions must return an array');
             }
@@ -260,12 +257,7 @@
             indicator.innerHTML = '⋯';
             indicator.title = `Session ${sessionId.slice(-8)} (${direction})`;
 
-            // Position indicator
-            if (direction === 'left') {
-                indicator.style.left = '0px';
-            } else {
-                indicator.style.right = '0px';
-            }
+            // Position is handled by CSS classes
 
             // Click handler to bring into view
             indicator.addEventListener('click', () => {
@@ -324,8 +316,8 @@
                 const newTaskBtn = taskbar.querySelector('.taskbar-btn-new-task');
                 if (newTaskBtn) {
                     newTaskBtn.addEventListener('click', () => {
-                        if (global.AppTask?.createNewSession) {
-                            global.AppTask.createNewSession();
+                        if (global.AppStateManagers?.createNewSession) {
+                            global.AppStateManagers.createNewSession();
                         } else {
                             console.warn('[TaskbarManager] AppTask.createNewSession not available');
                         }

@@ -1,0 +1,23 @@
+{
+  "timestamp": "2026-03-21T06:15:31.481Z",
+  "execute": {
+    "form": {
+      "input": [
+        {
+          "name": "message",
+          "type": "text",
+          "label": "Повідомлення",
+          "required": true
+        }
+      ]
+    }
+  },
+  "context": {
+    "execution": {
+      "action": "dialog",
+      "step": "request"
+    },
+    "task": "dfsfds",
+    "session_id": "sess_1774070471285"
+  }
+}

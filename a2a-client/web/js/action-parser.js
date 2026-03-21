@@ -151,7 +151,7 @@
         
         const wait = execute.wait;
         if (typeof wait === 'boolean') {
-            return wait ? { message: 'Processing...', progress: null } : null;
+            return wait ? { message: '', progress: null } : null;
         }
         
         if (typeof wait === 'string') {
@@ -160,7 +160,7 @@
         
         if (typeof wait === 'object') {
             return {
-                message: wait.message || wait.msg || 'Processing...',
+                message: wait.message || wait.msg || '',
                 progress: wait.progress || wait.percent || null,
                 total: wait.total || null,
                 current: wait.current || null,

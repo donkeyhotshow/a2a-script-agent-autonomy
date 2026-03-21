@@ -5,41 +5,31 @@
 (function (global) {
     'use strict';
 
-    function findTaskbarBtnBySessionId(sessionId) {
-        if (sessionId == null || sessionId === '') return null;
-        return Array.from(document.querySelectorAll('.taskbar-session-btn')).find(
-            (b) => b.dataset.sessionId === String(sessionId)
-        ) || null;
-    }
-
-    /** Let taskbar DOM paint after refresh, then open the session window. */
+    /**
+     * Let taskbar DOM paint after refresh, then open the session window.
+     * Simplified: single rAF + single retry timeout
+     */
     function scheduleOpenSessionWindow(sessionId, delayMs) {
         var sid = sessionId;
         var ms = delayMs == null ? 120 : delayMs;
         function tryOpen() {
-            var btn = findTaskbarBtnBySessionId(sid);
+            var btn = global.findTaskbarBtnBySessionId?.(sid);
             if (btn && global.WindowState) {
                 global.WindowState.toggleSessionWindow(sid, btn);
                 return true;
             }
             return false;
         }
-        function afterPaint() {
-            if (typeof requestAnimationFrame === 'function') {
-                requestAnimationFrame(function () {
-                    requestAnimationFrame(function () {
-                        if (!tryOpen()) {
-                            setTimeout(tryOpen, ms);
-                        }
-                    });
-                });
-            } else {
-                setTimeout(function () {
-                    if (!tryOpen()) setTimeout(tryOpen, ms);
-                }, 0);
-            }
+        // Single rAF to wait for DOM paint, then try once with fallback
+        if (typeof requestAnimationFrame === 'function') {
+            requestAnimationFrame(function () {
+                if (!tryOpen()) {
+                    setTimeout(tryOpen, ms);
+                }
+            });
+        } else {
+            setTimeout(tryOpen, 0);
         }
-        setTimeout(afterPaint, 0);
     }
 
     const AppStateManagers = {

@@ -178,10 +178,6 @@
             }
         };
 
-        this.renameSession = function(sessionId, newName) {
-            // Could add title to state if needed
-        };
-
         this.createSessionWithForm = function(title) {
             const self = this;
             return this.storage.createSessionWithForm(title).then(function(session) {
@@ -205,10 +201,6 @@
             return this;
         };
 
-        // Debug
-        this.debug = function() {
-            // Debug logging disabled
-        };
     }
 
     SessionStore.prototype.hasSavedSession = async function() {

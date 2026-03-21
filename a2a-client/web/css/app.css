@@ -93,3 +93,111 @@
 .projects-toolbar {
   margin-bottom: var(--space-lg);
 }
+
+/* ── Session Context Menu ───────────────────────────────────── */
+.session-context-menu {
+  position: fixed;
+  background: var(--surface, #1e1e2e);
+  border: 1px solid var(--border, #313244);
+  border-radius: 4px;
+  padding: 4px 0;
+  z-index: 10000;
+  min-width: 120px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  display: none;
+}
+
+.session-context-menu.visible {
+  display: block;
+}
+
+.context-menu-item {
+  padding: 8px 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-primary, #cdd6f4);
+}
+
+.context-menu-item:hover {
+  background: var(--surface-light, #252536);
+}
+
+/* ── Taskbar ───────────────────────────────────────────────────── */
+.taskbar-container {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  gap: 4px;
+}
+
+.taskbar-sessions-wrapper {
+  flex: 1;
+  overflow: hidden;
+  height: 100%;
+}
+
+/* ── Floating Window (Panel) ─────────────────────────────────── */
+.pui-panel {
+  position: fixed;
+  background: var(--bg-primary, #1e1e1e);
+  border: 1px solid var(--border-color, #333);
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.pui-panel.expanded {
+  /* expanded state */
+}
+
+.pui-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: var(--bg-secondary, #252526);
+  border-bottom: 1px solid var(--border-color, #333);
+  cursor: move;
+  user-select: none;
+}
+
+.pui-panel-title {
+  font-weight: 500;
+  color: var(--text-primary, #fff);
+}
+
+.pui-panel-close {
+  background: none;
+  border: none;
+  color: var(--text-secondary, #888);
+  cursor: pointer;
+  font-size: 18px;
+  padding: 0 4px;
+}
+
+.pui-panel-content {
+  flex: 1;
+  overflow: auto;
+  padding: 12px;
+}
+
+/* ── Offscreen Indicator ─────────────────────────────────────── */
+.offscreen-indicator {
+  position: absolute;
+  z-index: 100;
+  cursor: pointer;
+}
+
+.offscreen-indicator.offscreen-left {
+  left: 0;
+}
+
+.offscreen-indicator.offscreen-right {
+  right: 0;
+}

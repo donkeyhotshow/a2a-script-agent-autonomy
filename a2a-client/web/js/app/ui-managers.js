@@ -5,14 +5,6 @@
 (function (global) {
     'use strict';
 
-    async function fetchProjectsList() {
-        const api = global.apiIntegration;
-        if (!api || typeof api.getProjects !== 'function') {
-            throw new Error('[AppUIManagers] apiIntegration.getProjects required');
-        }
-        return api.getProjects();
-    }
-
     const AppUIManagers = {
         /**
          * Refresh projects UI: header select, taskbar, and projects panel grid. Call after create/delete project.
@@ -23,7 +15,8 @@
                 const saved = await global.ProjectManager?.getSelectedProjectId?.() || global.ProjectManager?.getLastSelectedProjectId?.();
                 sel.innerHTML = '<option value="">Select Project...</option>';
                 try {
-                    const list = await fetchProjectsList();
+                    // Direct call to apiIntegration.getProjects()
+                    const list = await global.apiIntegration.getProjects();
                     if (!Array.isArray(list)) {
                         throw new Error('[AppUIManagers] getProjects must return an array');
                     }
@@ -52,50 +45,11 @@
         },
 
         /**
-         * Populate header #projectSelect with projects (called after init when header and API are ready)
-         * This is a duplicate-safe wrapper that calls the core implementation in AppInitialization
+         * Populate header #projectSelect with projects (delegates to AppInitialization)
          */
         async _populateHeaderProjectSelect() {
-            // Delegate to AppInitialization if available
-            if (global.AppInitialization?._populateHeaderProjectSelect) {
-                return global.AppInitialization._populateHeaderProjectSelect();
-            }
-            
-            const sel = document.getElementById('projectSelect');
-            if (!sel || sel.options.length > 1) return;
-            let saved = await global.ProjectManager?.getSelectedProjectId?.();
-            if (!saved && global.ProjectManager?.getLastSelectedProjectId) saved = global.ProjectManager.getLastSelectedProjectId();
-            try {
-                const list = await fetchProjectsList();
-                if (!Array.isArray(list)) {
-                    throw new Error('[AppUIManagers] getProjects must return an array');
-                }
-                list.forEach(p => {
-                    const opt = document.createElement('option');
-                    opt.value = p.id;
-                    opt.textContent = p.name || p.id;
-                    sel.appendChild(opt);
-                });
-                if (saved) {
-                    const hasOption = Array.from(sel.options).some(o => o.value === saved);
-                    if (!hasOption) {
-                        const opt = document.createElement('option');
-                        opt.value = saved;
-                        opt.textContent = saved;
-                        sel.appendChild(opt);
-                    }
-                    sel.value = saved;
-                }
-            } catch (e) {
-                console.error('[AppTask] Could not load projects for header:', e);
-                if (saved) {
-                    const opt = document.createElement('option');
-                    opt.value = saved;
-                    opt.textContent = saved;
-                    sel.appendChild(opt);
-                    sel.value = saved;
-                }
-            }
+            // Delegate to AppInitialization
+            return global.AppInitialization?._populateHeaderProjectSelect?.();
         },
 
         /**
@@ -108,9 +62,10 @@
             function escText(s) {
                 return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
             }
-            gridEl.innerHTML = '<div class="loading-indicator">Loading...</div>';
+            // No loading indicator - show empty while fetching
             try {
-                const list = await fetchProjectsList();
+                // Direct call to apiIntegration.getProjects()
+                const list = await global.apiIntegration.getProjects();
                 const projects = Array.isArray(list) ? list : null;
                 if (!projects) {
                     throw new Error('[AppUIManagers] getProjects must return an array');

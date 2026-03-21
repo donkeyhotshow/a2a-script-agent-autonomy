@@ -17,6 +17,8 @@
     const APP_CONFIG = global.APP_CONFIG || { loadAppModules: true };
 
     function loadAppModules() {
+        console.log('[AppTask] loadAppModules() starting...');
+        
         // Check if we should skip loading app modules (for minimal dialog version)
         if (APP_CONFIG.loadAppModules === false) {
             console.log('[AppTask] Skipping app modules loading (minimal mode)');
@@ -30,20 +32,29 @@
             return;
         }
         
+        console.log('[AppTask] appendWebScriptOnce available, loading core modules...');
+        
         // Core modules (needed for window management)
         const coreModules = [
             'js/app/windows/window-registry.js',
             'js/app/windows/window-position.js',
             'js/app/windows/window-events.js',
-            'js/app/windows/window-state.js'
+            'js/app/windows/window-state.js',
+            // Load app entry point that loads initialization, event-handlers, etc.
+            'js/app/app-task.js'
         ];
 
-        // App modules (project/session management, taskbar)
+        // These modules are loaded by js/app/app-task.js:
+        // - js/app/initialization.js
+        // - js/app/event-handlers.js
+        // - js/app/ui-managers.js
+        // - js/app/state-managers.js
+        // Then initialization.js loads:
+        // - js/session-store.js, js/project-store.js, etc.
         const appModules = [
             'js/app/project-manager.js',
             'js/app/session-manager.js',
-            'js/app/taskbar-manager.js',
-            'js/app/app-task.js'
+            'js/app/taskbar-manager.js'
         ];
 
         const allModules = [...coreModules, ...appModules];
@@ -69,6 +80,13 @@
                 console.log('[AppTask] All app modules loaded (' + n + ')');
             }
             global._appModulesLoaded = true;
+            
+            // Check what's loaded
+            console.log('[AppTask] After load - ProjectManager:', typeof global.ProjectManager);
+            console.log('[AppTask] After load - SessionManager:', typeof global.SessionManager);
+            console.log('[AppTask] After load - TaskbarManager:', typeof global.TaskbarManager);
+            console.log('[AppTask] After load - WindowState:', typeof global.WindowState);
+            console.log('[AppTask] After load - AppTask:', typeof global.AppTask);
         });
     }
 

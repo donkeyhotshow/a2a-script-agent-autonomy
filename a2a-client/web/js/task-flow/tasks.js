@@ -41,7 +41,7 @@
         contentEl.innerHTML = `
             <div class="task-flow-sending">
                 <p>Sending: <strong>${escapeHtml(displayText)}</strong></p>
-                <div class="task-flow-spinner"></div>
+                <!-- spinner removed -->
             </div>
         `;
 
@@ -215,8 +215,8 @@
                 }
             }
         } else {
-            // Create task panel using PanelManager
-            const contentHTML = '<div class="task-flow-preloader"><div class="task-flow-spinner"></div><p>Creating session…</p></div>';
+            // Create task panel - no preloader
+            const contentHTML = '';
             TaskFlow.panel = pm?.open('task', {
                 title: 'Task Flow',
                 content: contentHTML,

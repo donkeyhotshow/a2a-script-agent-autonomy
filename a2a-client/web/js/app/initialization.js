@@ -10,16 +10,33 @@
          * Initialize application
          */
         async init() {
-            console.log('[AppTask] Initializing...');
+            console.log('[AppInitialization] Starting init...');
 
             try {
+                console.log('[AppInitialization] Checking modules...');
+                console.log('  - ProjectManager:', typeof global.ProjectManager);
+                console.log('  - SessionManager:', typeof global.SessionManager);
+                console.log('  - TaskbarManager:', typeof global.TaskbarManager);
+                console.log('  - WindowState:', typeof global.WindowState);
+                console.log('  - AppEventHandlers:', typeof global.AppEventHandlers);
+                console.log('  - AppUIManagers:', typeof global.AppUIManagers);
+                console.log('  - AppStateManagers:', typeof global.AppStateManagers);
+                
+                // Wait a bit to ensure all modules are initialized
+                await new Promise(r => setTimeout(r, 100));
+                
+                console.log('[AppInitialization] After wait - SessionStore:', typeof global.SessionStore);
+                console.log('[AppInitialization] After wait - SessionManager:', typeof global.SessionManager);
+                console.log('[AppInitialization] Proceeding with initialization...');
                 // Ensure header template is loaded (for Settings/Projects buttons)
                 if (global.TemplateLoader && !document.getElementById('header-container')?.innerHTML?.trim()) {
                     await global.TemplateLoader.initTaskOnly();
                 }
 
                 // Load all modules first
+                console.log('[AppInitialization] Calling loadModules()...');
                 await this.loadModules();
+                console.log('[AppInitialization] loadModules() completed');
 
                 // Initialize managers
                 await global.ProjectManager?.init();
@@ -72,32 +89,55 @@
                 });
             }
 
+            // Normalizers module - load if available
             if (typeof global.appendWebModuleOnce === 'function') {
                 await global.appendWebModuleOnce('js/install-normalizers.mjs', {
                     onload: () => console.log('[AppTask] Loaded module: js/install-normalizers.mjs')
                 });
             } else {
-                console.error('[AppTask] appendWebModuleOnce missing; Normalizers may be unavailable');
+                console.warn('[AppTask] appendWebModuleOnce missing; Normalizers may be unavailable');
             }
 
-            const modules = [
-                'js/html-utils.js',
-                'js/daemons/emitter.js',
-                'js/daemons/dialog-loader.js',
-                'js/daemons/dialog-promise-poll.js',
-                'js/session-data.js',
-                'js/session-storage.js',
-                'js/project-store.js',
-                'js/session-store.js',
-                'js/app/project-manager.js',
-                'js/app/session-manager.js',
-                'js/app/taskbar-manager.js'
-            ];
+            // Core modules (already loaded by app-task.js):
+            // - js/app/project-manager.js
+            // - js/app/session-manager.js
+            // - js/app/taskbar-manager.js
+            // Skip loading these to avoid duplicate loading
+            
+            // Check if already loaded before loading again
+            const alreadyLoaded = global.ProjectManager && global.SessionManager && global.TaskbarManager;
+            console.log('[AppInitialization] Core app modules already loaded:', alreadyLoaded);
+            
+            // Check if session-store is available (loaded via HTML defer)
+            const sessionStoreReady = typeof global.SessionStore !== 'undefined';
+            console.log('[AppInitialization] SessionStore available:', sessionStoreReady);
+            
+            // Only load modules if they're not already available
+            // DAEMONS are critical - they must be loaded for SessionStore to work
+            const daemonsReady = global.__a2aDaemons && 
+                typeof global.__a2aDaemons.createDialogLoader === 'function' &&
+                typeof global.__a2aDaemons.createDialogPromise === 'function';
+            
+            if (!sessionStoreReady || !daemonsReady) {
+                console.log('[AppInitialization] Loading modules manually...');
+                const modulesToLoad = [
+                    'js/html-utils.js',
+                    'js/daemons/emitter.js',
+                    'js/daemons/dialog-loader.js',
+                    'js/daemons/dialog-promise-poll.js',
+                    'js/session-data.js',
+                    'js/session-storage.js',
+                    'js/project-store.js',
+                    'js/session-store.js'
+                ];
 
-            for (const rel of modules) {
-                await global.appendWebScriptOnce(rel, {
-                    onload: () => console.log(`[AppTask] Loaded module: ${rel}`)
-                });
+                for (const rel of modulesToLoad) {
+                    await global.appendWebScriptOnce(rel, {
+                        onload: () => console.log(`[AppTask] Loaded module: ${rel}`)
+                    });
+                }
+            } else {
+                console.log('[AppInitialization] Using pre-loaded modules from HTML');
             }
         },
 
@@ -107,9 +147,6 @@
         async restoreState() {
             // Restore session windows
             await global.WindowState?.restoreSessionWindows();
-
-            // Restore pending promises if any
-            await global.SessionStore?.restorePendingPromises?.();
 
             // Ensure taskbar is visible
             global.TaskbarManager?.ensureTaskbar();

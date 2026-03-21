@@ -16,11 +16,11 @@
                     switch (e.key) {
                         case 'n':
                             e.preventDefault();
-                            global.AppTask?.createNewSession?.();
+                            global.AppStateManagers?.createNewSession?.();
                             break;
                         case 'w':
                             e.preventDefault();
-                            global.AppTask?.closeActiveSession?.();
+                            global.AppStateManagers?.closeActiveSession?.();
                             break;
                     }
                 }
@@ -32,9 +32,8 @@
                 global.TaskbarManager?.updateOffScreenIndicators();
             });
 
-            // Setup storage mode toggle and loader
+            // Setup storage mode toggle
             this.setupStorageModeToggle?.();
-            this.setupLoaderIndicator?.();
 
             // Modals (Settings, Projects) via PanelManager – same hierarchy as panels
             this.setupModalButtons?.();
@@ -70,7 +69,7 @@
 
             document.getElementById('settingsBtn')?.addEventListener('click', () => openModal('settings', 'settingsModal'));
             document.getElementById('projectsBtn')?.addEventListener('click', () => openModal('projects', 'projectsModal'));
-            document.getElementById('newTaskBtn')?.addEventListener('click', () => global.AppTask?.createNewSession?.());
+            document.getElementById('newTaskBtn')?.addEventListener('click', () => global.AppStateManagers?.createNewSession?.());
         },
 
         /**
@@ -112,19 +111,12 @@
                     console.warn('[AppTask] SessionStore.setStorageMode not available on mode change');
                 }
                 // Refresh taskbar and projects UI
-                global.AppTask?.refreshProjectsUI?.();
+                global.AppUIManagers?.refreshProjectsUI?.();
                 console.log('[AppTask] Storage mode changed to:', mode);
             });
         },
 
-        /**
-         * Setup loader indicator for waiting server responses
-         * Note: Global loader is disabled - wait is now shown in each dialog panel
-         * @deprecated Kept for backward compatibility - does nothing
-         */
-        setupLoaderIndicator() {
-            // No-op: global loader disabled, using panel-based wait elements
-        },
+
 
         /**
          * Wire modal content with event handlers

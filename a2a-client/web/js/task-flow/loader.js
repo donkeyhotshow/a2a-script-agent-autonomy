@@ -53,12 +53,8 @@
             return;
         }
         
-        const loaderId = 'session-loader-' + targetSessionId;
-        const loaderEl = global.ensureSessionInlineLoader(targetSessionId);
-
+        // No inline loader - just store min end time in component state
         const minEndTime = Date.now() + MIN_LOADER_MS;
-        loaderEl.classList.add('active');
-        loaderEl.dataset.minEndTime = minEndTime;
         
         // Store in component state for later use
         TaskFlow._loaderMinEndTime = minEndTime;
@@ -124,23 +120,7 @@
         const sessionId = data.sessionId || TaskFlow._sessionId || 'global';
         const loaderId = 'session-loader-' + sessionId;
         
-        let loaderEl = document.getElementById(loaderId);
-        if (!loaderEl && data.active) {
-            loaderEl = global.ensureSessionInlineLoader(sessionId);
-        }
-        
-        if (loaderEl) {
-            if (data.active) {
-                loaderEl.classList.add('active');
-                // Calculate remaining time for minimum display
-                if (data.minEndTime) {
-                    const remaining = Math.max(0, data.minEndTime - Date.now());
-                    loaderEl.dataset.minRemaining = remaining;
-                }
-            } else {
-                loaderEl.classList.remove('active');
-            }
-        }
+        // No inline loader - update handled via component state
     }
 
     // Export

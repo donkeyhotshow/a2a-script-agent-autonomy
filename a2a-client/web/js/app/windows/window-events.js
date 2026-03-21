@@ -58,42 +58,15 @@
                 let _loaderMinEndTime = null;
                 const _activeLoaders = new Map(); // sessionId -> { minEndTime, element }
                 function _showGlobalLoader(sessionId = 'global') {
-                    const loaderEl = global.ensureSessionInlineLoader(sessionId);
-                    loaderEl.classList.add('active');
+                    // No inline loader - just track min end time
                     _loaderMinEndTime = Date.now() + MIN_LOADER_MS;
-                    loaderEl.dataset.minEndTime = _loaderMinEndTime;
                     // Track this loader for this session
-                    _activeLoaders.set(sessionId, { minEndTime: _loaderMinEndTime, element: loaderEl });
+                    _activeLoaders.set(sessionId, { minEndTime: _loaderMinEndTime });
                 }
                 function _hideGlobalLoader(sessionId = 'global') {
-                    // Use session-specific loader ID
-                    
-                    // Try session-specific loader first
-                    const loaderId = 'session-loader-' + sessionId;
-                    let loaderEl = document.getElementById(loaderId);
-                    
-                    // Fallback to global for backward compatibility
-                    if (!loaderEl) {
-                        loaderEl = document.getElementById('global-task-loader');
-                    }
-                    
-                    if (!loaderEl) {
-                        return;
-                    }
-                    
-                    const minEndTime = parseInt(loaderEl.dataset.minEndTime) || 0;
-                    const now = Date.now();
-                    
-                    if (now >= minEndTime) {
-                        loaderEl.classList.remove('active');
-                        _activeLoaders.delete(sessionId);
-                    } else {
-                        const remaining = minEndTime - now;
-                        setTimeout(() => {
-                            loaderEl.classList.remove('active');
-                            _activeLoaders.delete(sessionId);
-                        }, remaining);
-                    }
+                    // No inline loader to hide
+                    // Just clear from active loaders
+                    _activeLoaders.delete(sessionId);
                 }
 
                 // Use renderExecute to render full panel (history + execute + input)
@@ -120,8 +93,7 @@
                         Render.renderExecute(contentEl, execute, { execute, context, store }, taskFlowRef);
                     } else {
                         const waitBlock = isWaiting
-                            ? `<div class="task-flow-sending task-flow-inline-loader active" style="margin-top:0.75rem">
-                                    <div class="task-flow-spinner"></div>
+                            ? `<div class="task-flow-sending" style="margin-top:0.75rem">
                                     <p class="task-flow-status">Waiting for server / LLM…</p>
                                </div>`
                             : '';

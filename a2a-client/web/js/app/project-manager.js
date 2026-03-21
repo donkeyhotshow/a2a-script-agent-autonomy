@@ -89,13 +89,11 @@
                     if (global.WindowState) global.WindowState.closeAllSessionWindows();
                     if (global.PanelManager) global.PanelManager.close('task-flow-panel');
                     if (global.SessionStore?.reset) global.SessionStore.reset();
-                    // Refresh taskbar for new project
-                    setTimeout(() => {
-                        const taskbarContent = document.querySelector('.taskbar-content');
-                        if (taskbarContent && global.TaskbarManager) {
-                            global.TaskbarManager.refreshTaskbar(taskbarContent);
-                        }
-                    }, 100);
+                    // Refresh taskbar for new project (direct call after reset completes)
+                    const taskbarContent = document.querySelector('.taskbar-content');
+                    if (taskbarContent && global.TaskbarManager) {
+                        global.TaskbarManager.refreshTaskbar(taskbarContent);
+                    }
                 }
             });
 
@@ -117,16 +115,15 @@
             const projectName = prompt('Enter project name:');
             if (!projectName?.trim()) return;
 
-            const g = (typeof window !== 'undefined' ? window : globalThis);
             try {
-                const project = await g.apiIntegration?.createProject?.({ name: projectName.trim() });
+                const project = await global.apiIntegration?.createProject?.({ name: projectName.trim() });
                 if (project?.id) {
                     await this.setSelectedProjectId(project.id);
-                    await g.AppTask?.refreshProjectsUI?.();
+                    await global.AppUIManagers?.refreshProjectsUI?.();
                 }
             } catch (error) {
                 console.error('[ProjectManager] Failed to create project:', error);
-                g.ErrorHandler?.handle?.(error, { action: 'createProject' });
+                global.ErrorHandler?.handle?.(error, { action: 'createProject' });
             }
         },
 
@@ -136,15 +133,14 @@
         async handleDeleteProject(projectId) {
             if (!projectId || !confirm('Are you sure you want to delete this project?')) return;
 
-            const g = (typeof window !== 'undefined' ? window : globalThis);
             try {
-                await g.apiIntegration?.deleteProject?.(projectId);
+                await global.apiIntegration?.deleteProject?.(projectId);
                 const current = await this.getSelectedProjectId();
                 if (current === projectId) await this.setSelectedProjectId(null);
-                await g.AppTask?.refreshProjectsUI?.();
+                await global.AppUIManagers?.refreshProjectsUI?.();
             } catch (error) {
                 console.error('[ProjectManager] Failed to delete project:', error);
-                g.ErrorHandler?.handle?.(error, { action: 'deleteProject' });
+                global.ErrorHandler?.handle?.(error, { action: 'deleteProject' });
             }
         },
 

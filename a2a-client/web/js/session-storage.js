@@ -68,14 +68,6 @@
             },
 
             /**
-             * Обновить сессию (не используется в текущей архитектуре)
-             */
-            updateSession: function(sessionId, data) {
-                console.warn('[SessionStorageAPI] updateSession not implemented - use SessionStore');
-                return Promise.resolve({ success: false });
-            },
-
-            /**
              * Удалить сессию
              * @param {string} sessionId - ID сессии
              * @returns {Promise<void>}
@@ -116,14 +108,6 @@
              */
             setStorageMode: function(mode) {
                 storageMode = mode;
-            },
-
-            /**
-             * Получить базовый URL
-             * @returns {string} Базовый URL
-             */
-            getBaseUrl: function() {
-                return storageBase;
             }
         };
     }

@@ -1,0 +1,13 @@
+{
+  "context": {
+    "execution": {
+      "action": "task",
+      "step": "router"
+    },
+    "task": "dfsfds",
+    "session_id": "sess_1774070471285"
+  },
+  "result": {
+    "choice": "dialog"
+  }
+}

@@ -20,48 +20,19 @@
             const container = document.createElement('div');
             container.id = id;
             container.className = 'pui-panel expanded';
-            container.style.cssText = `
-                position: fixed;
-                left: ${x}px;
-                top: ${y}px;
-                width: ${width}px;
-                height: ${height}px;
-                background: var(--bg-primary, #1e1e1e);
-                border: 1px solid var(--border-color, #333);
-                border-radius: 8px;
-                box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-                z-index: 1000;
-                display: flex;
-                flex-direction: column;
-                overflow: hidden;
-            `;
+            container.style.cssText = `position: fixed; left: ${x}px; top: ${y}px; width: ${width}px; height: ${height}px;`;
 
             // Create header
             const header = document.createElement('div');
             header.className = 'pui-panel-header';
-            header.style.cssText = `
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                padding: 8px 12px;
-                background: var(--bg-secondary, #252526);
-                border-bottom: 1px solid var(--border-color, #333);
-                cursor: move;
-                user-select: none;
-            `;
             header.innerHTML = `
-                <span class="pui-panel-title" style="font-weight: 500; color: var(--text-primary, #fff);">${safeTitle}</span>
-                <button class="pui-panel-close" style="background: none; border: none; color: var(--text-secondary, #888); cursor: pointer; font-size: 18px; padding: 0 4px;">&times;</button>
+                <span class="pui-panel-title">${safeTitle}</span>
+                <button class="pui-panel-close">&times;</button>
             `;
 
             // Create content area
             const content = document.createElement('div');
             content.className = 'pui-panel-content';
-            content.style.cssText = `
-                flex: 1;
-                overflow: auto;
-                padding: 12px;
-            `;
 
             container.appendChild(header);
             container.appendChild(content);
@@ -198,15 +169,8 @@
                 const projectId =
                     (await global.ProjectManager?.getSelectedProjectId?.()) || global.SessionStore?.projectId || null;
                 const api = global.apiIntegration;
-                try {
-                    if (api?.getSessionLatest) {
-                        const latest = await api.getSessionLatest(sessionId, { includeContext: true });
-                        sessionData = latest?.session ?? null;
-                    }
-                } catch (e) {
-                    console.warn('[WindowState] getSessionLatest failed:', e);
-                }
-                if (!sessionData && api?.getSession) {
+                // Single request with includeContext: true
+                if (api?.getSession) {
                     try {
                         sessionData = await api.getSession(sessionId, {
                             projectId: projectId || undefined,
@@ -315,31 +279,7 @@
                         }
                     }
 
-                    const storeState = store?.getState?.() || {};
-                    const storeHasMessages = store && (storeState.messages?.length > 0);
-                    // Load session data if not already available
-                    if (!storeHasMessages && sessionData?.messages === undefined) {
-                        try {
-                            const api = global.apiIntegration;
-                            if (api?.getSession) {
-                                const snap = await api.getSession(sessionId, { includeContext: true });
-                                if (snap?.messages?.length > 0) {
-                                    store.setMessages(snap.messages);
-                                }
-                                if (snap?.context) {
-                                    store.setContext(snap.context);
-                                }
-                                if (snap?.execute) {
-                                    store.setExecute(snap.execute);
-                                }
-                                if (snap?.status) {
-                                    store.setStatus(snap.status);
-                                }
-                            }
-                        } catch (err) {
-                            console.warn('[WindowState] Failed to load session:', err);
-                        }
-                    }
+                    // Session data already loaded above with includeContext: true
 
                     const contentEl = panel.getContentEl();
                     if (global.WindowEvents && contentEl) {

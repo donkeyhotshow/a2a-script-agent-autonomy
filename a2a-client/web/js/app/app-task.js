@@ -25,6 +25,7 @@
         if (typeof global.appendWebScriptOnce !== 'function') {
             throw new Error('[AppTask] Expected global.appendWebScriptOnce (js/resolve-web-script-url.js)');
         }
+        console.log('[AppTask] Loading app modules...');
         await Promise.all(
             modules.map((rel) =>
                 global.appendWebScriptOnce(rel, {
@@ -32,6 +33,11 @@
                 })
             )
         );
+        console.log('[AppTask] App modules loaded, checking exports...');
+        console.log('  - AppInitialization:', typeof global.AppInitialization);
+        console.log('  - AppEventHandlers:', typeof global.AppEventHandlers);
+        console.log('  - AppUIManagers:', typeof global.AppUIManagers);
+        console.log('  - AppStateManagers:', typeof global.AppStateManagers);
     }
 
     /**
@@ -42,11 +48,12 @@
          * Initialize application
          */
         async init() {
-            console.log('[AppTask] Initializing...');
+            console.log('[AppTask] init() starting...');
 
             try {
                 // Load all module files
                 await loadModules();
+                console.log('[AppTask] Modules loaded, calling AppInitialization.init()...');
 
                 // Delegate to AppInitialization module
                 await global.AppInitialization?.init();
@@ -83,13 +90,6 @@
          */
         setupStorageModeToggle() {
             global.AppEventHandlers?.setupStorageModeToggle?.();
-        },
-
-        /**
-         * Setup loader indicator (delegates to AppEventHandlers)
-         */
-        setupLoaderIndicator() {
-            global.AppEventHandlers?.setupLoaderIndicator?.();
         },
 
         /**

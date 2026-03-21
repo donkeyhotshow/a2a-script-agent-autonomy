@@ -4,9 +4,10 @@
 (function (global) {
     'use strict';
 
-    function findTaskbarSessionBtn(root, sessionId) {
-        if (!root || sessionId == null || sessionId === '') return null;
-        return Array.from(root.querySelectorAll('.taskbar-session-btn')).find(
+    // Unified function for finding taskbar button by sessionId (also used in state-managers.js)
+    function findTaskbarBtnBySessionId(sessionId) {
+        if (sessionId == null || sessionId === '') return null;
+        return Array.from(document.querySelectorAll('.taskbar-session-btn')).find(
             (b) => b.dataset.sessionId === String(sessionId)
         ) || null;
     }
@@ -14,22 +15,13 @@
     let activeSessionId = null;
     let taskbarContentEl = null;
 
+    // Use async storage only
     async function writeActiveSessionId(sessionId) {
-        try {
-            await StorageAPI.sessions.setItem('active-session', sessionId);
-        } catch (asyncError) {
-            console.warn('[SessionManager] Async storage failed, using sync fallback:', asyncError);
-            StorageAPI.sessions.setItemSync('active-session', sessionId);
-        }
+        await StorageAPI.sessions.setItem('active-session', sessionId);
     }
 
     async function readActiveSessionId() {
-        try {
-            return (await StorageAPI.sessions.getItem('active-session')) || null;
-        } catch (asyncError) {
-            console.warn('[SessionManager] Async storage failed, using sync fallback:', asyncError);
-            return StorageAPI.sessions.getItemSync('active-session') || null;
-        }
+        return (await StorageAPI.sessions.getItem('active-session')) || null;
     }
 
     const SessionManager = {
@@ -66,7 +58,7 @@
 
             // Add active class to current session button
             if (sessionId) {
-                const activeBtn = findTaskbarSessionBtn(taskbarContentEl, sessionId);
+                const activeBtn = findTaskbarBtnBySessionId(sessionId);
                 if (activeBtn) {
                     activeBtn.classList.add('active');
                     // Scroll to center the active button
@@ -97,67 +89,54 @@
         },
 
         /**
-         * Show context menu for session
+         * Reusable context menu element (created once, hidden/shown)
+         */
+        _contextMenu: null,
+        _contextMenuSessionId: null,
+        _contextMenuBtnEl: null,
+
+        /**
+         * Show context menu for session (reuses DOM element)
          */
         showContextMenu(e, sessionId, btnEl) {
             e.preventDefault();
 
-            // Remove existing context menu
-            document.querySelectorAll('.session-context-menu').forEach(menu => menu.remove());
+            // Create menu once if not exists
+            if (!this._contextMenu) {
+                this._contextMenu = document.createElement('div');
+                this._contextMenu.className = 'session-context-menu';
+                document.body.appendChild(this._contextMenu);
+            }
 
-            const menu = document.createElement('div');
-            menu.className = 'session-context-menu';
-            menu.style.cssText = `
-                position: fixed;
-                left: ${e.clientX}px;
-                top: ${e.clientY}px;
-                background: var(--surface, #1e1e2e);
-                border: 1px solid var(--border, #313244);
-                border-radius: 4px;
-                padding: 4px 0;
-                z-index: 10000;
-                min-width: 120px;
-                box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-            `;
+            const menu = this._contextMenu;
+            menu.innerHTML = '';
+            menu.classList.add('visible');
+            menu.style.left = `${e.clientX}px`;
+            menu.style.top = `${e.clientY}px`;
+
+            this._contextMenuSessionId = sessionId;
+            this._contextMenuBtnEl = btnEl;
 
             const actions = [
                 { label: 'Close', action: 'close', icon: '✕' },
-                { label: 'Duplicate', action: 'duplicate', icon: '📋' },
-                { label: 'Rename', action: 'rename', icon: '✏️' },
-                { label: 'Export', action: 'export', icon: '📤' }
+                { label: 'Rename', action: 'rename', icon: '✏️' }
             ];
 
             actions.forEach(({ label, action, icon }) => {
                 const item = document.createElement('div');
                 item.className = 'context-menu-item';
-                item.style.cssText = `
-                    padding: 8px 12px;
-                    cursor: pointer;
-                    display: flex;
-                    align-items: center;
-                    gap: 8px;
-                    color: var(--text-primary, #cdd6f4);
-                `;
                 item.innerHTML = `${icon} ${label}`;
                 item.addEventListener('click', () => {
                     this.handleContextMenuAction(action, sessionId, btnEl);
-                    menu.remove();
-                });
-                item.addEventListener('mouseenter', () => {
-                    item.style.background = 'var(--surface-light, #252536)';
-                });
-                item.addEventListener('mouseleave', () => {
-                    item.style.background = 'transparent';
+                    menu.classList.remove('visible');
                 });
                 menu.appendChild(item);
             });
 
-            document.body.appendChild(menu);
-
             // Close menu when clicking elsewhere
             const closeHandler = (e) => {
                 if (!menu.contains(e.target)) {
-                    menu.remove();
+                    menu.classList.remove('visible');
                     document.removeEventListener('click', closeHandler);
                 }
             };
@@ -174,19 +153,11 @@
                         global.WindowState?.closeSessionWindow(sessionId);
                     }
                     break;
-                case 'duplicate':
-                    console.log('[SessionManager] Duplicating session:', sessionId);
-                    // Implementation would go here
-                    break;
                 case 'rename':
                     const newName = prompt('Enter new session name:');
                     if (newName?.trim()) {
                         this.renameSession(sessionId, newName.trim());
                     }
-                    break;
-                case 'export':
-                    console.log('[SessionManager] Exporting session:', sessionId);
-                    // Implementation would go here
                     break;
             }
         },
@@ -237,5 +208,6 @@
 
     // Export
     global.SessionManager = SessionManager;
+    global.findTaskbarBtnBySessionId = findTaskbarBtnBySessionId;
 
 })(typeof window !== 'undefined' ? window : globalThis);
