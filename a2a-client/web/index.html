@@ -173,9 +173,20 @@
     function waitForModules() {
         return new Promise((resolve) => {
             const check = () => {
-                const panelReady = window._panelModulesLoaded && typeof window.Panel !== 'undefined' && typeof window.PanelManager !== 'undefined';
+                // Check for core modules that must be loaded
+                const hasSessionStore = typeof window.SessionStore !== 'undefined';
+                const hasTaskFlow = typeof window.TaskFlow !== 'undefined';
+                const hasPanelManager = typeof window.PanelManager !== 'undefined';
+                const hasPanel = typeof window.Panel !== 'undefined';
+                
+                // At minimum we need SessionStore and TaskFlow
+                const modulesReady = hasSessionStore && hasTaskFlow;
 
-                if (panelReady) {
+                if (modulesReady) {
+                    // Mark panels as ready if PanelManager exists
+                    if (hasPanelManager && hasPanel) {
+                        window._panelModulesLoaded = true;
+                    }
                     resolve();
                 } else {
                     setTimeout(check, 50);

@@ -1,0 +1,35 @@
+{
+  "promiseId": "prom_1774060043485_bm021qm1g",
+  "status": "completed",
+  "submittedAt": "2026-03-21T02:27:23.488Z",
+  "execute": {
+    "message": "Привіт!",
+    "form": {
+      "input": [
+        {
+          "name": "message",
+          "type": "text",
+          "label": "Повідомлення",
+          "required": true
+        }
+      ]
+    }
+  },
+  "context": {
+    "task": "привет",
+    "execution": {
+      "action": "dialog",
+      "step": "request"
+    },
+    "history": [
+      {
+        "role": "user",
+        "message": "привет"
+      },
+      {
+        "role": "assistant",
+        "message": "Привіт!"
+      }
+    ]
+  }
+}

@@ -28,11 +28,19 @@ export function createProjectRoutes({ cwd }) {
             req.on('end', () => {
                 try {
                     const d = JSON.parse(body || '{}');
-                    const projects = d.projects ?? (Array.isArray(d) ? d : null);
-                    if (Array.isArray(projects)) {
-                        saveProjects(cwd, projects);
+                    const newProjects = d.projects ?? (Array.isArray(d) ? d : null);
+                    if (Array.isArray(newProjects)) {
+                        // Load existing projects and filter out duplicates by ID
+                        const existingProjects = loadProjects(cwd);
+                        const existingIds = new Set(existingProjects.map(p => p.id));
+                        
+                        // Add only new projects that don't already exist
+                        const uniqueNewProjects = newProjects.filter(p => !existingIds.has(p.id));
+                        const mergedProjects = [...existingProjects, ...uniqueNewProjects];
+                        
+                        saveProjects(cwd, mergedProjects);
                         res.setHeader('Content-Type', 'application/json');
-                        res.end(JSON.stringify({ success: true, projects }));
+                        res.end(JSON.stringify({ success: true, projects: mergedProjects }));
                     } else {
                         res.writeHead(400).end(JSON.stringify({ error: 'projects array required' }));
                     }
