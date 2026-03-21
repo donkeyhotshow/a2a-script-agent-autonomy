@@ -11,11 +11,17 @@
      */
     function getApiBase() {
         const store = (typeof window !== 'undefined' ? window : global).SessionStore;
-        const storageMode = store?.getStorageMode?.() || 'storage';
+        if (!store || typeof store.getStorageMode !== 'function') {
+            throw new Error('[TaskFlowAPI] SessionStore with getStorageMode() required');
+        }
+        const storageMode = store.getStorageMode();
         if (storageMode === 'storage') {
             return '/api/a2a';
         }
-        const base = global.apiIntegration?.apiBase || '/api';
+        const base = global.apiIntegration?.apiBase;
+        if (typeof base !== 'string' || base.length === 0) {
+            throw new Error('[TaskFlowAPI] apiIntegration.apiBase required when storageMode is not "storage"');
+        }
         return String(base).replace(/\/?$/, '');
     }
 

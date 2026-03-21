@@ -270,8 +270,15 @@
                     // Create per-window SessionStore instance w/ fallback
                     var StoreClass = window.SessionStoreClass || global.SessionStoreClass;
                     var store = null;
+                    var storeOpts = global.SessionStoreWebDefaults;
                     if (StoreClass) {
-                        store = new StoreClass({sessionId}); // Pass sessionId
+                        if (!storeOpts) {
+                            throw new Error('[WindowState] SessionStoreWebDefaults missing (load session-store.js)');
+                        }
+                        store = new StoreClass({
+                            storageBase: storeOpts.storageBase,
+                            storageMode: storeOpts.storageMode
+                        });
                     } else {
                         store = global.SessionStore;
                         console.log('[WindowState] Using global SessionStore');

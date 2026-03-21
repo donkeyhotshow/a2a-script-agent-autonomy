@@ -5,6 +5,14 @@
 (function (global) {
     'use strict';
 
+    async function fetchProjectsList() {
+        const api = global.apiIntegration;
+        if (!api || typeof api.getProjects !== 'function') {
+            throw new Error('[AppUIManagers] apiIntegration.getProjects required');
+        }
+        return api.getProjects();
+    }
+
     const AppUIManagers = {
         /**
          * Refresh projects UI: header select, taskbar, and projects panel grid. Call after create/delete project.
@@ -15,8 +23,11 @@
                 const saved = await global.ProjectManager?.getSelectedProjectId?.() || global.ProjectManager?.getLastSelectedProjectId?.();
                 sel.innerHTML = '<option value="">Select Project...</option>';
                 try {
-                    const list = await (global.apiIntegration?.getProjects?.() ?? Promise.resolve([]));
-                    (Array.isArray(list) ? list : []).forEach(p => {
+                    const list = await fetchProjectsList();
+                    if (!Array.isArray(list)) {
+                        throw new Error('[AppUIManagers] getProjects must return an array');
+                    }
+                    list.forEach(p => {
                         const opt = document.createElement('option');
                         opt.value = p.id;
                         opt.textContent = p.name || p.id;
@@ -24,7 +35,7 @@
                     });
                     if (saved && Array.from(sel.options).some(o => o.value === saved)) sel.value = saved;
                 } catch (e) {
-                    console.warn('[AppTask] Could not load projects for header:', e);
+                    console.error('[AppTask] Could not load projects for header:', e);
                     if (saved) {
                         const opt = document.createElement('option');
                         opt.value = saved;
@@ -55,8 +66,11 @@
             let saved = await global.ProjectManager?.getSelectedProjectId?.();
             if (!saved && global.ProjectManager?.getLastSelectedProjectId) saved = global.ProjectManager.getLastSelectedProjectId();
             try {
-                const list = await (global.apiIntegration?.getProjects?.() ?? Promise.resolve([]));
-                (Array.isArray(list) ? list : []).forEach(p => {
+                const list = await fetchProjectsList();
+                if (!Array.isArray(list)) {
+                    throw new Error('[AppUIManagers] getProjects must return an array');
+                }
+                list.forEach(p => {
                     const opt = document.createElement('option');
                     opt.value = p.id;
                     opt.textContent = p.name || p.id;
@@ -73,7 +87,7 @@
                     sel.value = saved;
                 }
             } catch (e) {
-                console.warn('[AppTask] Could not load projects for header:', e);
+                console.error('[AppTask] Could not load projects for header:', e);
                 if (saved) {
                     const opt = document.createElement('option');
                     opt.value = saved;
@@ -96,8 +110,11 @@
             }
             gridEl.innerHTML = '<div class="loading-indicator">Loading...</div>';
             try {
-                const list = await (global.apiIntegration?.getProjects?.() ?? Promise.resolve([]));
-                const projects = Array.isArray(list) ? list : [];
+                const list = await fetchProjectsList();
+                const projects = Array.isArray(list) ? list : null;
+                if (!projects) {
+                    throw new Error('[AppUIManagers] getProjects must return an array');
+                }
                 if (projects.length === 0) {
                     gridEl.innerHTML = '<p class="projects-empty">No projects yet.</p>';
                     return;
@@ -108,7 +125,7 @@
                     return `<div class="project-card" data-project-id="${id}"><span class="project-name">${name}</span></div>`;
                 }).join('');
             } catch (e) {
-                console.warn('[AppTask] Failed to load projects:', e);
+                console.error('[AppTask] Failed to load projects:', e);
                 gridEl.innerHTML = '<p class="projects-error">Could not load projects. Check API URL in Settings.</p>';
             }
         }

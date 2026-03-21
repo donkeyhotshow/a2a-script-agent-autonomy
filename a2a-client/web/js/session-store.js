@@ -28,6 +28,12 @@
 (function (global) {
     'use strict';
 
+    /** Same values must be used for `new SessionStoreClass(...)` in window-state.js */
+    var WEB_SESSION_STORE_OPTIONS = Object.freeze({
+        storageBase: '/api/a2a/sessions',
+        storageMode: 'storage'
+    });
+
     // Проверка зависимостей
     const D = global.__a2aDaemons;
     if (!D || typeof D.createDialogLoader !== 'function' || typeof D.createDialogPromise !== 'function') {
@@ -48,17 +54,23 @@
 
     // === Main SessionStore constructor ===
     function SessionStore(options) {
-        options = options || {};
-        
+        if (!options || typeof options !== 'object') {
+            throw new Error('[SessionStore] options object required (storageBase, storageMode)');
+        }
+        if (typeof options.storageBase !== 'string' || options.storageBase.length === 0) {
+            throw new Error('[SessionStore] options.storageBase must be a non-empty string');
+        }
+        var mode = options.storageMode;
+        if (mode !== 'storage' && mode !== 'project') {
+            throw new Error('[SessionStore] options.storageMode must be "storage" or "project"');
+        }
+
         // Инициализация ядра
         this.core = createSessionStoreCore();
         
         // Инициализация хранилища
-        this.storage = createSessionStorageAPI(
-            options.storageBase || '/api/a2a/sessions', 
-            options.storageMode || 'storage'
-        );
-        this._storageMode = options.storageMode || 'storage';
+        this.storage = createSessionStorageAPI(options.storageBase, mode);
+        this._storageMode = mode;
 
         // === Proxy методы ядра ===
         
@@ -137,6 +149,10 @@
         
         this.stopPromisePolling = function() { 
             return this.core.stopPromisePolling.apply(this.core, arguments); 
+        };
+
+        this.getStorageMode = function() {
+            return this.storage.getStorageMode();
         };
 
         // === Expose core properties for window-events.js compatibility ===
@@ -231,8 +247,12 @@
     global.PROMISE_POLL_INTERVAL = global.__a2aDaemons.timingMs('PROMISE_POLL_INTERVAL');
 
     // === Global exports - BACKWARD COMPATIBLE ===
+    global.SessionStoreWebDefaults = WEB_SESSION_STORE_OPTIONS;
     global.SessionStoreClass = SessionStore;
-    global.SessionStore = new SessionStore();
+    global.SessionStore = new SessionStore({
+        storageBase: WEB_SESSION_STORE_OPTIONS.storageBase,
+        storageMode: WEB_SESSION_STORE_OPTIONS.storageMode
+    });
 
     // Add init method for compatibility with index.html
     global.SessionStore.init = function() {

@@ -12,7 +12,9 @@
                     console.warn('[A2A] Corrupted API URL in localStorage, reset to /api');
                     localStorage.setItem(CLIENT_API_KEY, '/api');
                 }
-            } catch (e) { /* private mode / blocked */ }
+            } catch (e) {
+                console.warn('[A2A] localStorage unavailable (private mode or blocked):', e);
+            }
         })();
     </script>
     <title>A2A Script Agent - Task</title>

@@ -31,14 +31,16 @@
      */
     function getApiBase(store) {
         const api = global.apiIntegration;
-        // Check storage mode first - if using Vite (storage mode), use default
-        const storageMode = store?.getStorageMode?.() || 'storage';
+        if (!store || typeof store.getStorageMode !== 'function') {
+            throw new Error('[ActionExecutor] SessionStore with getStorageMode() required');
+        }
+        const storageMode = store.getStorageMode();
         if (storageMode === 'storage') {
-            // Use relative path for dev/prod compatibility - Vite proxies /api/*
             return window.location.origin + '/api/a2a';
         }
-        // For client-api mode, require explicit apiBase
-        if (!api?.apiBase) return null;
+        if (!api?.apiBase) {
+            throw new Error('[ActionExecutor] apiIntegration.apiBase required when storageMode is not "storage"');
+        }
         return String(api.apiBase).replace(/\/?$/, '');
     }
 
@@ -71,7 +73,8 @@
                 data = JSON.parse(text);
             }
         } catch (e) {
-            console.error('[ActionExecutor] JSON parse error:', e.message);
+            console.error('[ActionExecutor] JSON parse error:', e);
+            throw e;
         }
         
         if (!res.ok) {
@@ -94,9 +97,10 @@
      */
     async function pullSessionSnapshot(sessionId, store, opts = {}) {
         const api = global.apiIntegration;
-        if (!api?.getSession || !store) return null;
+        if (!api?.getSession || !store) {
+            throw new Error('[ActionExecutor] pullSessionSnapshot requires apiIntegration.getSession and store');
+        }
         const snap = await api.getSession(sessionId);
-        if (!snap) return null;
         const sid = snap.id || snap.sessionId;
         if (sid) store.setSession?.(sid, snap.projectId);
         if (Array.isArray(snap.messages) && snap.messages.length > 0) {
@@ -124,8 +128,7 @@
             throw new Error('ActionExecutor: API base not configured. Set Client API URL in Settings.');
         }
         
-        // Use storage mode with default fallback (same as getApiBase)
-        const storageMode = store?.getStorageMode?.() || 'storage';
+        const storageMode = store.getStorageMode();
         const isStorageMode = storageMode === 'storage';
         
         // For Vite (storage mode), base already includes /api/a2a
@@ -175,59 +178,44 @@
         const store = global.resolveStore(sessionId);
         const base = getApiBase(store);
         if (!base) {
-            console.warn('[ActionExecutor] API base not configured');
-            return null;
+            throw new Error('[ActionExecutor] API base not configured');
         }
 
-        const storageMode = store?.getStorageMode?.() || 'storage';
+        const storageMode = store.getStorageMode();
         const isStorageMode = storageMode === 'storage';
         const apiPath = isStorageMode ? '' : '/api';
         const url = `${base}${apiPath}/sessions/${encodeURIComponent(sessionId)}/promise/${encodeURIComponent(promiseId)}`;
 
-        try {
-            const res = await fetch(url, {
-                method: 'GET',
-                headers: { 'Content-Type': 'application/json' },
-            });
+        const res = await fetch(url, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+        });
 
-            if (!res.ok) {
-                console.warn('[ActionExecutor] Promise check failed with status:', res.status);
-                return null;
-            }
-
-            let data = {};
-            const text = await res.text();
-            if (text) {
-                data = JSON.parse(text);
-            }
-            return data;
-        } catch (e) {
-            console.error('[ActionExecutor] Promise check failed:', e.message);
-            return null;
+        if (!res.ok) {
+            throw new Error(`[ActionExecutor] Promise check failed: HTTP ${res.status}`);
         }
+
+        const text = await res.text();
+        return text ? JSON.parse(text) : {};
     }
 
     /** Session-scoped async poll — Client API resolves transport id server-side */
     async function checkSessionAsync(sessionId) {
         const store = global.resolveStore(sessionId);
         const base = getApiBase(store);
-        if (!base) return null;
-        const storageMode = store?.getStorageMode?.() || 'storage';
+        if (!base) {
+            throw new Error('[ActionExecutor] API base not configured');
+        }
+        const storageMode = store.getStorageMode();
         const isStorageMode = storageMode === 'storage';
         const apiPath = isStorageMode ? '' : '/api';
         const url = `${base}${apiPath}/sessions/${encodeURIComponent(sessionId)}/async`;
-        try {
-            const res = await fetch(url, { method: 'GET', headers: { 'Content-Type': 'application/json' } });
-            if (!res.ok) {
-                console.warn('[ActionExecutor] Session async check failed:', res.status);
-                return null;
-            }
-            const text = await res.text();
-            return text ? JSON.parse(text) : {};
-        } catch (e) {
-            console.error('[ActionExecutor] Session async check failed:', e.message);
-            return null;
+        const res = await fetch(url, { method: 'GET', headers: { 'Content-Type': 'application/json' } });
+        if (!res.ok) {
+            throw new Error(`[ActionExecutor] Session async check failed: HTTP ${res.status}`);
         }
+        const text = await res.text();
+        return text ? JSON.parse(text) : {};
     }
 
     /**
@@ -300,11 +288,13 @@
         }
         
         localPollTimer = setInterval(async () => {
-            const status = sessionScoped
-                ? await checkSessionAsync(sessionId)
-                : await checkPromise(sessionId, promiseId);
-
-            if (!status) {
+            let status;
+            try {
+                status = sessionScoped
+                    ? await checkSessionAsync(sessionId)
+                    : await checkPromise(sessionId, promiseId);
+            } catch (e) {
+                console.error('[ActionExecutor] Local polling tick failed:', e);
                 return;
             }
 

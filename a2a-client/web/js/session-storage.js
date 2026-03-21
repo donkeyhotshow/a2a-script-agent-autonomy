@@ -41,6 +41,9 @@
              * @returns {Promise<Object>} Созданная сессия
              */
             createSessionWithForm: function(title) {
+                if (title == null || String(title).trim() === '') {
+                    throw new Error('[SessionStorageAPI] createSessionWithForm requires non-empty title');
+                }
                 var headers = { 
                     'Content-Type': 'application/json', 
                     'X-Storage-Mode': storageMode 
@@ -48,7 +51,7 @@
                 return _fetch(storageBase, {
                     method: 'POST',
                     headers: headers,
-                    body: JSON.stringify({ title: title || 'New Session' })
+                    body: JSON.stringify({ title: String(title) })
                 }).then(function(data) {
                     if (!data.session) throw new Error('No session data');
                     return data.session;
@@ -86,7 +89,11 @@
                     'X-Storage-Mode': storageMode 
                 };
                 return _fetch(url, { headers: headers }).then(function(data) {
-                    return data.sessions || data.data || data || [];
+                    var sessions = data.sessions !== undefined ? data.sessions : data.data;
+                    if (!Array.isArray(sessions)) {
+                        throw new Error('[SessionStorageAPI] getSessions: expected sessions or data array');
+                    }
+                    return sessions;
                 });
             },
 

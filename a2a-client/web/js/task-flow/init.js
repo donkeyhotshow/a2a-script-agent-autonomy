@@ -21,7 +21,10 @@
         if (!sel || sel.options.length > 1) return;
         try {
             const list = await request('GET', '/projects');
-            const projects = Array.isArray(list) ? list : (list?.projects || []);
+            const projects = Array.isArray(list) ? list : (list?.projects ?? list?.data);
+            if (!Array.isArray(projects)) {
+                throw new Error('[TaskFlow] GET /projects: expected array or projects/data array');
+            }
             projects.forEach(p => {
                 const opt = document.createElement('option');
                 opt.value = p.id;
@@ -29,7 +32,7 @@
                 sel.appendChild(opt);
             });
         } catch (e) {
-            console.warn('[TaskFlow] Could not load projects:', e);
+            console.error('[TaskFlow] Could not load projects:', e);
         }
     }
 

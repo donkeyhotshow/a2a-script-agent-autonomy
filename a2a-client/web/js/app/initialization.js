@@ -125,8 +125,14 @@
             let saved = await global.ProjectManager?.getSelectedProjectId?.();
             if (!saved && global.ProjectManager?.getLastSelectedProjectId) saved = global.ProjectManager.getLastSelectedProjectId();
             try {
-                const list = await (global.apiIntegration?.getProjects?.() ?? Promise.resolve([]));
-                (Array.isArray(list) ? list : []).forEach(p => {
+                if (!global.apiIntegration || typeof global.apiIntegration.getProjects !== 'function') {
+                    throw new Error('[AppInitialization] apiIntegration.getProjects required');
+                }
+                const list = await global.apiIntegration.getProjects();
+                if (!Array.isArray(list)) {
+                    throw new Error('[AppInitialization] getProjects must return an array');
+                }
+                list.forEach(p => {
                     const opt = document.createElement('option');
                     opt.value = p.id;
                     opt.textContent = p.name || p.id;
@@ -143,7 +149,7 @@
                     sel.value = saved;
                 }
             } catch (e) {
-                console.warn('[AppTask] Could not load projects for header:', e);
+                console.error('[AppTask] Could not load projects for header:', e);
                 if (saved) {
                     const opt = document.createElement('option');
                     opt.value = saved;

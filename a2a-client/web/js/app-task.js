@@ -35,8 +35,8 @@
                     onload: function () {
                         console.log('[AppTask] Module loaded: ' + rel);
                     }
-                }).catch(function () {
-                    console.error('[AppTask] Failed to load module: ' + rel);
+                }).catch(function (err) {
+                    console.error('[AppTask] Failed to load module: ' + rel, err);
                     global._appModuleLoadErrors.push(rel);
                 });
             })

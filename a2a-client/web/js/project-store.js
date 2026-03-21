@@ -22,6 +22,7 @@
         try {
             return localStorage.getItem(STORAGE_KEY);
         } catch (e) {
+            console.warn('[ProjectStore] localStorage getItem failed:', e);
             return null;
         }
     }
@@ -71,7 +72,12 @@
                     method: 'GET',
                     headers: { 'Content-Type': 'application/json' }
                 }).then(function(data) {
-                    return Array.isArray(data) ? data : (data.projects || data.data || []);
+                    if (Array.isArray(data)) return data;
+                    var list = data.projects !== undefined ? data.projects : data.data;
+                    if (!Array.isArray(list)) {
+                        throw new Error('[ProjectStore] getProjects: expected array or projects/data array');
+                    }
+                    return list;
                 });
             },
 
@@ -93,7 +99,18 @@
              * @returns {Promise<Object>} Созданный проект
              */
             createProject: function(params) {
-                var body = typeof params === 'string' ? { name: params } : (params || {});
+                var body;
+                if (typeof params === 'string') {
+                    if (!String(params).trim()) {
+                        throw new Error('[ProjectStore] createProject: non-empty name string required');
+                    }
+                    body = { name: params };
+                } else {
+                    if (!params || typeof params !== 'object') {
+                        throw new Error('[ProjectStore] createProject: params object or name string required');
+                    }
+                    body = params;
+                }
                 return _fetch(PROJECTS_API_BASE, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },

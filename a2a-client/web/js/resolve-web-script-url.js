@@ -11,7 +11,8 @@
         try {
             return new URL(path, baseHref).href;
         } catch (e) {
-            return '/' + path;
+            console.error('[resolveWebScriptUrl] Invalid path:', relativePath, e);
+            throw e;
         }
     }
 

@@ -72,7 +72,7 @@
                 };
                 await StorageAPI.ui.setItem(SESSION_WINDOWS_KEY, JSON.stringify(state));
             } catch (e) {
-                console.warn('[WindowRegistry] Failed to save session windows state:', e);
+                console.error('[WindowRegistry] Failed to save session windows state:', e);
             }
         },
 
@@ -85,11 +85,15 @@
                 if (!saved) return [];
                 const state = typeof saved === 'string' ? JSON.parse(saved) : saved;
                 if (global.SessionManager) {
-                    global.SessionManager.setActiveSession(state.active || null);
+                    global.SessionManager.setActiveSession(state.active != null ? state.active : null);
                 }
-                return state.windows || [];
+                const windows = state.windows;
+                if (!Array.isArray(windows)) {
+                    throw new Error('[WindowRegistry] saved state missing windows array');
+                }
+                return windows;
             } catch (e) {
-                console.warn('[WindowRegistry] Failed to load session windows state:', e);
+                console.error('[WindowRegistry] Failed to load session windows state:', e);
                 return [];
             }
         },
@@ -101,7 +105,7 @@
             try {
                 await StorageAPI.ui.removeItem(SESSION_WINDOWS_KEY);
             } catch (e) {
-                console.warn('[WindowRegistry] Failed to clear session windows state:', e);
+                console.error('[WindowRegistry] Failed to clear session windows state:', e);
             }
         }
     };

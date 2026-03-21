@@ -4,7 +4,13 @@
  */
 
 export class SessionStorageAPI {
-    constructor(storageBase = '/api/a2a/sessions', storageMode = 'storage') {
+    constructor(storageBase, storageMode) {
+        if (typeof storageBase !== 'string' || !storageBase) {
+            throw new Error('[SessionStorageAPI] storageBase (non-empty string) required');
+        }
+        if (storageMode !== 'storage' && storageMode !== 'project') {
+            throw new Error('[SessionStorageAPI] storageMode must be "storage" or "project"');
+        }
         this._storageBase = storageBase;
         this._storageMode = storageMode;
     }
@@ -70,8 +76,7 @@ export class SessionStorageAPI {
         });
         
         if (!response.ok) {
-            console.warn(`[SessionStorageAPI] checkLatestStep failed: ${response.status} for session ${sessionId}`);
-            return null;
+            throw new Error(`[SessionStorageAPI] checkLatestStep failed: ${response.status} for session ${sessionId}`);
         }
         
         return await response.json();
@@ -83,12 +88,15 @@ export class SessionStorageAPI {
         });
         
         if (!response.ok) {
-            console.warn(`[SessionStorageAPI] getHistory failed: ${response.status} for session ${sessionId}`);
-            return [];
+            throw new Error(`[SessionStorageAPI] getHistory failed: ${response.status} for session ${sessionId}`);
         }
         
         const data = await response.json();
-        return data.history || [];
+        const history = data.history;
+        if (!Array.isArray(history)) {
+            throw new Error('[SessionStorageAPI] getHistory: response.history must be an array');
+        }
+        return history;
     }
 
     async listSessions() {
@@ -97,12 +105,15 @@ export class SessionStorageAPI {
         });
         
         if (!response.ok) {
-            console.warn(`[SessionStorageAPI] listSessions failed: ${response.status}`);
-            return [];
+            throw new Error(`[SessionStorageAPI] listSessions failed: ${response.status}`);
         }
         
         const data = await response.json();
-        return data.sessions || [];
+        const sessions = data.sessions;
+        if (!Array.isArray(sessions)) {
+            throw new Error('[SessionStorageAPI] listSessions: response.sessions must be an array');
+        }
+        return sessions;
     }
 }
 

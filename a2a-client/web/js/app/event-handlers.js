@@ -81,9 +81,21 @@
             if (!storageSelect) return;
 
             // Load saved storage mode: project (.a2a/sessions) vs storage (a2a-client/storage/sessions or A2A_CLIENT_STORAGE_DIR)
-            const savedMode = localStorage.getItem('a2a_storage_mode') || 'storage';
-            const valid = ['project', 'storage'].includes(savedMode);
-            storageSelect.value = valid ? savedMode : 'storage';
+            let savedMode = null;
+            try {
+                savedMode = localStorage.getItem('a2a_storage_mode');
+            } catch (e) {
+                console.warn('[AppTask] localStorage unavailable for storage mode:', e);
+            }
+            const validModes = ['project', 'storage'];
+            if (savedMode && validModes.includes(savedMode)) {
+                storageSelect.value = savedMode;
+            } else {
+                if (savedMode) {
+                    console.warn('[AppTask] Invalid stored storage mode, using storage:', savedMode);
+                }
+                storageSelect.value = 'storage';
+            }
 
             if (global.SessionStore && typeof global.SessionStore.setStorageMode === 'function') {
                 global.SessionStore.setStorageMode(storageSelect.value);
@@ -124,15 +136,23 @@
 
             if (type === 'settings') {
                 global.ProjectManager?.getStoredClientApiUrl?.().then((url) => {
-                    const normalized = global.normalizeStoredClientApiUrl?.(url) || '/api';
+                    const normalized = global.normalizeStoredClientApiUrl?.(url);
                     const input = content.querySelector('#settingsApiUrl');
-                    if (input) input.value = normalized;
+                    if (input) input.value = normalized != null && normalized !== '' ? String(normalized) : '';
                 });
                 content.querySelector('#cancelSettings')?.addEventListener('click', () => panel.close());
                 content.querySelector('#saveSettings')?.addEventListener('click', () => {
                     const input = content.querySelector('#settingsApiUrl');
-                    const url = input?.value?.trim() || '/api';
-                    const base = url ? String(url).replace(/\/?$/, '') : '/api';
+                    const url = input?.value?.trim();
+                    if (!url) {
+                        console.error('[AppTask] Settings: Client API URL is required');
+                        return;
+                    }
+                    const base = String(url).replace(/\/?$/, '');
+                    if (!base) {
+                        console.error('[AppTask] Settings: invalid Client API URL');
+                        return;
+                    }
                     global.ProjectManager?.setStoredClientApiUrl(url).then(() => {
                         if (global.apiIntegration) global.apiIntegration.configure({ apiBase: base });
                         panel.close();

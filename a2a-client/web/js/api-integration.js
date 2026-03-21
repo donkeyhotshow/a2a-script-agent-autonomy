@@ -72,7 +72,11 @@ class APIIntegration {
         const s = String(raw).trim();
         if (!s) return null;
         if (s.startsWith('/')) {
-            return s.replace(/\/?$/, '') || '/api';
+            const t = s.replace(/\/?$/, '');
+            if (!t) {
+                throw new Error('[API] _normalizeApiBase: relative apiBase cannot be empty');
+            }
+            return t;
         }
         try {
             const u = new URL(s);
@@ -82,8 +86,13 @@ class APIIntegration {
             }
             const out = u.toString().replace(/\/$/, '');
             return out || `${u.origin}/api`;
-        } catch {
-            return s.replace(/\/?$/, '');
+        } catch (err) {
+            console.error('[API] _normalizeApiBase URL parse failed:', err, raw);
+            const t = s.replace(/\/?$/, '');
+            if (!t) {
+                throw new Error('[API] _normalizeApiBase: invalid apiBase after parse failure');
+            }
+            return t;
         }
     }
 
@@ -133,14 +142,30 @@ class APIIntegration {
         const res = await fetch(this._clientA2aUrl('projects'));
         if (!res.ok) throw new Error(`getProjects failed: ${res.status}`);
         const raw = await res.json();
-        return Array.isArray(raw) ? raw : (raw?.projects || raw?.data || []);
+        if (Array.isArray(raw)) return raw;
+        const list = raw?.projects ?? raw?.data;
+        if (!Array.isArray(list)) {
+            throw new Error('getProjects: response must be an array or contain projects/data array');
+        }
+        return list;
     }
 
     /**
      * Create/update projects (POST /api/a2a/projects)
      */
     async createProject(params) {
-        const body = typeof params === 'string' ? { name: params } : (params || {});
+        let body;
+        if (typeof params === 'string') {
+            if (!String(params).trim()) {
+                throw new Error('createProject: non-empty name string required');
+            }
+            body = { name: params };
+        } else {
+            if (!params || typeof params !== 'object') {
+                throw new Error('createProject: params object or name string required');
+            }
+            body = params;
+        }
         const res = await fetch(this._clientA2aUrl('projects'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -160,8 +185,12 @@ class APIIntegration {
     }
 
     _getStorageHeaders() {
-        const mode = (typeof window !== 'undefined' ? window : globalThis).SessionStore?.getStorageMode?.() || 'storage';
-        return { 'X-Storage-Mode': mode };
+        const win = typeof window !== 'undefined' ? window : globalThis;
+        const store = win.SessionStore;
+        if (!store || typeof store.getStorageMode !== 'function') {
+            throw new Error('[API] SessionStore.getStorageMode() required for X-Storage-Mode');
+        }
+        return { 'X-Storage-Mode': store.getStorageMode() };
     }
 
     /**
@@ -171,11 +200,13 @@ class APIIntegration {
         const headers = { ...this._getHeaders(), ...this._getStorageHeaders() };
         const res = await fetch(this._clientA2aUrl('sessions'), { headers });
         if (!res.ok) {
-            console.warn('[API] getSessions failed:', res.status, res.statusText);
-            return [];
+            throw new Error(`getSessions failed: ${res.status} ${res.statusText}`);
         }
         const raw = await res.json();
-        let sessions = Array.isArray(raw) ? raw : (raw?.sessions || raw?.data || []);
+        let sessions = Array.isArray(raw) ? raw : (raw?.sessions ?? raw?.data);
+        if (!Array.isArray(sessions)) {
+            throw new Error('getSessions: response must be an array or contain sessions/data array');
+        }
         // Filter by projectId if provided
         if (projectId) {
             sessions = sessions.filter(s => s.projectId === projectId || s.projectId === undefined);
@@ -210,16 +241,19 @@ class APIIntegration {
         const q = options.includeContext ? '?includeContext=1' : '';
         const res = await fetch(this._clientA2aUrl(`sessions/${encodeURIComponent(sessionId)}${q}`), { headers });
         if (!res.ok) {
-            console.warn('[API] getSession failed:', res.status, res.statusText);
-            return null;
+            throw new Error(`getSession failed: ${res.status} ${res.statusText}`);
         }
         const raw = await res.json();
         console.log('[API] getSession response:', sessionId, 'asyncPending:', raw?.asyncPending, 'status:', raw?.status);
-        if (raw && typeof raw === 'object' && raw.success === true) {
-            const d = raw.data ?? raw.session;
-            if (d && typeof d === 'object' && (d.id || d.sessionId)) return d;
+        if (raw && typeof raw === 'object') {
+            if (raw.success === true) {
+                const d = raw.data ?? raw.session;
+                if (d && typeof d === 'object' && (d.id || d.sessionId)) return d;
+                throw new Error('getSession: success envelope without session id');
+            }
+            if (raw.id || raw.sessionId) return raw;
         }
-        return raw;
+        throw new Error('getSession: unexpected response shape');
     }
 
     /**
@@ -228,7 +262,9 @@ class APIIntegration {
     async getSessionLatest(sessionId) {
         const headers = { ...this._getHeaders(), ...this._getStorageHeaders() };
         const res = await fetch(this._clientA2aUrl(`sessions/${encodeURIComponent(sessionId)}/latest`), { headers });
-        if (!res.ok) return null;
+        if (!res.ok) {
+            throw new Error(`getSessionLatest failed: ${res.status} ${res.statusText}`);
+        }
         return res.json();
     }
 
@@ -247,8 +283,7 @@ class APIIntegration {
             { headers }
         );
         if (!res.ok) {
-            console.warn('[API] getSessionMessages failed:', res.status, res.statusText);
-            return null;
+            throw new Error(`getSessionMessages failed: ${res.status} ${res.statusText}`);
         }
         return res.json();
     }
@@ -278,7 +313,9 @@ class APIIntegration {
             method: 'GET',
             headers
         });
-        if (!res.ok) return null;
+        if (!res.ok) {
+            throw new Error(`checkPromise failed: ${res.status} ${res.statusText}`);
+        }
         return res.json();
     }
 
@@ -289,7 +326,9 @@ class APIIntegration {
             method: 'GET',
             headers,
         });
-        if (!res.ok) return null;
+        if (!res.ok) {
+            throw new Error(`checkSessionAsync failed: ${res.status} ${res.statusText}`);
+        }
         return res.json();
     }
 

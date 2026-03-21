@@ -27,7 +27,7 @@ export class DialogState {
      * @param {DialogStateOptions} [options]
      */
     constructor(options = {}) {
-        this._maxMessages = options.maxMessages || MAX_MESSAGES;
+        this._maxMessages = options.maxMessages ?? MAX_MESSAGES;
         
         /** @type {DialogStateSnapshot} */
         this._state = {

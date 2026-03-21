@@ -165,18 +165,15 @@
          * Fetch sessions from API for current project
          */
         async fetchSessions() {
-            const g = (typeof window !== 'undefined' ? window : globalThis);
-            // Use new API - no projectId required
-            try {
-                const sessions = await g.apiIntegration?.getSessions?.();
-                if (!sessions) {
-                    console.warn('[TaskbarManager] getSessions returned null/undefined');
-                }
-                return Array.isArray(sessions) ? sessions : [];
-            } catch (error) {
-                console.error('[TaskbarManager] Failed to fetch sessions:', error);
-                return [];
+            const g = typeof window !== 'undefined' ? window : globalThis;
+            if (!g.apiIntegration || typeof g.apiIntegration.getSessions !== 'function') {
+                throw new Error('[TaskbarManager] apiIntegration.getSessions required');
             }
+            const sessions = await g.apiIntegration.getSessions();
+            if (!Array.isArray(sessions)) {
+                throw new Error('[TaskbarManager] getSessions must return an array');
+            }
+            return sessions;
         },
 
         /**

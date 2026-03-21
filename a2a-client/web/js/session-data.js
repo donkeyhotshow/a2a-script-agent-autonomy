@@ -25,7 +25,10 @@
 
     function maxMessagesFromNormalizers() {
         const n = global.Normalizers && global.Normalizers.MAX_MESSAGES;
-        return typeof n === 'number' && n > 0 ? n : 200;
+        if (typeof n !== 'number' || n <= 0) {
+            throw new Error('[SessionData] Normalizers.MAX_MESSAGES must be a positive number');
+        }
+        return n;
     }
 
     /**

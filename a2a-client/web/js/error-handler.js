@@ -688,7 +688,8 @@
                 payload = typeof payload === 'object' && (payload instanceof FormData || payload instanceof URLSearchParams)
                     ? payload.toString()
                     : JSON.stringify(payload);
-            } catch (_) {
+            } catch (err) {
+                console.error('[ErrorHandler] Request payload JSON.stringify failed:', err);
                 payload = String(payload);
             }
         }
@@ -717,7 +718,14 @@
                     }
 
                     if (!isExpected404) {
-                        const data = await response.json().catch(() => ({}));
+                        const errText = await response.text();
+                        let data = {};
+                        try {
+                            data = errText ? JSON.parse(errText) : {};
+                        } catch (parseErr) {
+                            console.error('[ErrorHandler] Error response body is not JSON:', parseErr);
+                            if (errText) data = { _nonJsonBody: errText.slice(0, 2000) };
+                        }
                         ErrorHandler.handleApiError({
                             status: response.status,
                             data
