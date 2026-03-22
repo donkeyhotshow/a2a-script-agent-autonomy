@@ -5,7 +5,6 @@
  * ├── utils/normalizers.js + install-normalizers.mjs — window.Normalizers (лимиты и normalizeMessage)
  * ├── js/daemons/* — DialogLoader / DialogPromise (рантайм UI)
  * ├── session-data.js — createSessionStoreCore() (плоское состояние + даемоны; не ESM core/*)
- * ├── session-storage.js — API хранилища
  * ├── project-store.js — проекты
  * └── session-store.js — точка входа (делегатор)
  *
@@ -20,8 +19,7 @@
  * 4. js/html-utils.js (executeHasActionableForm)
  * 5. js/install-normalizers.mjs (module, before deferred session-store.js)
  * 6. js/session-data.js
- * 7. js/session-storage.js
- * 8. js/project-store.js
+ * 7. js/project-store.js
  * 9. js/session-store.js (этот файл)
  */
 
@@ -61,12 +59,11 @@
         throw new Error('[SessionStore] Load js/session-data.js before session-store.js');
     }
 
-    if (!global.SessionStorageAPI || !global.SessionStorageAPI.create) {
-        throw new Error('[SessionStore] Load js/session-storage.js before session-store.js');
-    }
+    // Note: apiIntegration is loaded later via defer script, not required at init time
 
     const createSessionStoreCore = global.SessionData.createSessionStoreCore;
-    const createSessionStorageAPI = global.SessionStorageAPI.create;
+    // Direct apiIntegration access - no intermediate SessionStorageAPI layer
+    const getApiIntegration = () => global.apiIntegration;
 
     // === Main SessionStore constructor ===
     function SessionStore(options) {
@@ -84,14 +81,14 @@
         // Инициализация ядра
         this.core = createSessionStoreCore();
         
-        // Инициализация хранилища
-        this.storage = createSessionStorageAPI(options.storageBase, mode);
+        // Direct apiIntegration - no intermediate storage layer
         this._storageMode = mode;
+        this._api = getApiIntegration();
 
         // Delegate methods defined on prototype for efficiency
 
         this.getStorageMode = function() {
-            return this.storage.getStorageMode();
+            return this._storageMode;
         };
 
         // === Expose core properties for window-events.js compatibility ===
@@ -151,7 +148,12 @@
 
         this.createSessionWithForm = function(title) {
             const self = this;
-            return this.storage.createSessionWithForm(title).then(function(session) {
+            // Use apiIntegration directly instead of storage layer
+            const api = this._api;
+            if (!api?.createSession) {
+                return Promise.reject(new Error('[SessionStore] apiIntegration.createSession not available'));
+            }
+            return api.createSession({ title }).then(function(session) {
                 var sid = session && (session.id || session.sessionId);
                 if (sid) self.core.setSession(sid, session.projectId);
                 self.core.setExecute(session.execute || null);
@@ -167,7 +169,6 @@
         // Storage mode
         this.setStorageMode = function(mode) {
             this._storageMode = mode;
-            this.storage.setStorageMode(mode);
             this.core?.emit?.('storageMode', mode);
             return this;
         };

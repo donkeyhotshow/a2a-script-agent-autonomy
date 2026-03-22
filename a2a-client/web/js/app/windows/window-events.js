@@ -73,15 +73,24 @@
                 // Initial render
                 refreshContent();
 
-                // Listen for message updates (messages=plural from setMessages, message=singular from pushMessage)
-                const unsubMessages = store.on?.('messages', () => refreshContent());
-                const unsubMessage = store.on?.('message', () => refreshContent());
-                const unsubExecute = store.on?.('execute', () => refreshContent());
-                const unsubPromisePending = store.on?.('promisePending', () => refreshContent());
-                const unsubError = store.on?.('error', () => refreshContent());
+                // Debounced refresh to avoid multiple re-renders
+                let refreshTimeout = null;
+                const debouncedRefresh = () => {
+                    if (refreshTimeout) clearTimeout(refreshTimeout);
+                    refreshTimeout = setTimeout(refreshContent, 10);
+                };
+
+                // Listen for all store changes with single debounced refresh
+                // Consolidated from 5 separate events into one handler
+                const unsubMessages = store.on?.('messages', debouncedRefresh);
+                const unsubMessage = store.on?.('message', debouncedRefresh);
+                const unsubExecute = store.on?.('execute', debouncedRefresh);
+                const unsubPromisePending = store.on?.('promisePending', debouncedRefresh);
+                const unsubError = store.on?.('error', debouncedRefresh);
 
                 // Cleanup on panel close
                 contentEl._cleanup = () => {
+                    if (refreshTimeout) clearTimeout(refreshTimeout);
                     unsubMessages?.();
                     unsubMessage?.();
                     unsubExecute?.();

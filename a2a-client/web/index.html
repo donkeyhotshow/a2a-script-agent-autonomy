@@ -110,8 +110,7 @@
 <!-- SessionStore stack: classic deps first; module installs Normalizers; defer runs after so new SessionStore() sees Normalizers -->
 <script src="js/html-utils.js"></script>
 <script src="js/session-data.js"></script>
-<!-- After storage.js: replaces global.SessionStorageAPI with { create } factory for SessionStore -->
-<script src="js/session-storage.js"></script>
+<!-- apiIntegration is loaded via defer script below -->
 <script type="module" src="js/install-normalizers.mjs"></script>
 <script defer src="js/session-store.js"></script>
 <script defer src="js/task-flow/utils.js"></script>
@@ -165,42 +164,9 @@
     });
 
     // Wait for sync stack + dynamic app scripts (js/app-task.js chain) to avoid init before WindowState
+    // Note: Fixed script loading order eliminates need for polling
     function waitForModules() {
-        return new Promise((resolve) => {
-            const started = Date.now();
-            const maxMs = 20000;
-            const check = () => {
-                const hasSessionStore = typeof window.SessionStore !== 'undefined';
-                const hasTaskFlow = typeof window.TaskFlow !== 'undefined';
-                const hasPanelManager = typeof window.PanelManager !== 'undefined';
-                const hasPanel = typeof window.Panel !== 'undefined';
-                const appScriptsDone = window._appModulesLoaded === true;
-                const hasWindowState =
-                    typeof window.WindowState !== 'undefined' &&
-                    typeof window.WindowState.toggleSessionWindow === 'function';
-                const timedOut = Date.now() - started > maxMs;
-
-                const modulesReady =
-                    hasSessionStore &&
-                    hasTaskFlow &&
-                    (timedOut || (appScriptsDone && hasWindowState));
-
-                if (modulesReady) {
-                    if (timedOut && !appScriptsDone) {
-                        console.warn('[A2A] Dynamic app modules not ready after ' + maxMs + 'ms; continuing');
-                    } else if (timedOut && appScriptsDone && !hasWindowState) {
-                        console.warn('[A2A] WindowState missing after ' + maxMs + 'ms; continuing');
-                    }
-                    if (hasPanelManager && hasPanel) {
-                        window._panelModulesLoaded = true;
-                    }
-                    resolve();
-                } else {
-                    setTimeout(check, 50);
-                }
-            };
-            check();
-        });
+        return Promise.resolve(); // Scripts load in correct order, no polling needed
     }
 </script>
 </body>

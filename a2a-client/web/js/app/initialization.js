@@ -12,8 +12,11 @@
 
         /**
          * Wait for critical modules to be available (explicit check)
+         * Note: Script loading order fixed in index.html, so no polling needed
          */
         async _waitForModules() {
+            // Modules should already be available due to fixed script loading order
+            // Keep method for backward compatibility but make it a no-op
             const requiredModules = [
                 'ProjectManager',
                 'SessionManager',
@@ -28,25 +31,12 @@
                 return requiredModules.every(name => typeof global[name] !== 'undefined');
             };
 
-            // If all modules are already available, return immediately
-            if (checkModules()) {
-                console.log('[AppInitialization] All modules already available');
-                return;
+            if (!checkModules()) {
+                console.warn('[AppInitialization] Some modules not available, but continuing due to fixed load order');
             }
-
-            // Wait for modules with timeout
-            const startTime = Date.now();
-            console.log('[AppInitialization] Waiting for modules to load...');
-
-            while (Date.now() - startTime < this._moduleWaitTimeout) {
-                if (checkModules()) {
-                    console.log('[AppInitialization] All modules loaded');
-                    return;
-                }
-                await new Promise(r => setTimeout(r, this._moduleWaitPollInterval));
-            }
-
-            console.warn('[AppInitialization] Timeout waiting for modules, proceeding anyway');
+            
+            // Resolve immediately - no polling needed
+            return Promise.resolve();
         },
 
         /**

@@ -12,53 +12,6 @@
  *   - messages.json - история сообщений
  */
 
-// Fetch with timeout and retry logic (shared across web client)
-// Uses A2A_CONFIG.API.* from config.js
-async function fetchWithRetry(url, options = {}, retryCount = 0) {
-    const config = (typeof A2A_CONFIG !== 'undefined' && A2A_CONFIG.API) || {};
-    const DEFAULT_TIMEOUT = config.DEFAULT_TIMEOUT || 15000;
-    const MAX_RETRIES = config.MAX_RETRIES || 3;
-    const BASE_DELAY = config.BASE_DELAY || 2000;
-
-    const controller = new AbortController();
-    const timeout = options.timeout || DEFAULT_TIMEOUT;
-    const timeoutId = setTimeout(() => controller.abort(), timeout);
-
-    try {
-        const response = await fetch(url, {
-            ...options,
-            signal: controller.signal
-        });
-        clearTimeout(timeoutId);
-        
-        // Retry on server errors (5xx) and certain client errors (429 rate limit)
-        const shouldRetry = !response.ok && 
-            (response.status >= 500 || response.status === 429) && 
-            retryCount < MAX_RETRIES;
-        
-        if (shouldRetry) {
-            const delay = BASE_DELAY * Math.pow(2, retryCount);
-            console.warn(`[API] Retry ${retryCount + 1}/${MAX_RETRIES} after ${delay}ms (HTTP ${response.status}): ${url}`);
-            await new Promise(resolve => setTimeout(resolve, delay));
-            return fetchWithRetry(url, options, retryCount + 1);
-        }
-        
-        return response;
-    } catch (error) {
-        clearTimeout(timeoutId);
-
-        if (error.name === 'AbortError' || retryCount >= MAX_RETRIES) {
-            throw error;
-        }
-
-        const delay = BASE_DELAY * Math.pow(2, retryCount);
-        console.warn(`[API] Retry ${retryCount + 1}/${MAX_RETRIES} after ${delay}ms: ${url}`);
-        await new Promise(resolve => setTimeout(resolve, delay));
-
-        return fetchWithRetry(url, options, retryCount + 1);
-    }
-}
-
 class APIIntegration {
     constructor() {
         this.token = null;
@@ -168,30 +121,20 @@ class APIIntegration {
     }
 
     /**
-     * Get base headers for API requests
+     * Get headers for API requests (combined: base + storage mode)
      */
-    _getHeaders() {
+    _headers() {
         const headers = { 'Content-Type': 'application/json' };
         if (this.token) {
             headers['Authorization'] = `Bearer ${this.token}`;
         }
-        return headers;
-    }
-
-    _getStorageHeaders() {
+        // Add storage mode if available
         const win = typeof window !== 'undefined' ? window : globalThis;
         const store = win.SessionStore;
-        if (!store || typeof store.getStorageMode !== 'function') {
-            throw new Error('[API] SessionStore.getStorageMode() required for X-Storage-Mode');
+        if (store && typeof store.getStorageMode === 'function') {
+            headers['X-Storage-Mode'] = store.getStorageMode();
         }
-        return { 'X-Storage-Mode': store.getStorageMode() };
-    }
-
-    /**
-     * Combined headers (base + storage mode)
-     */
-    _headers() {
-        return { ...this._getHeaders(), ...this._getStorageHeaders() };
+        return headers;
     }
 
     /**
@@ -238,6 +181,46 @@ class APIIntegration {
     }
 
     /**
+     * Normalize session response to consistent format
+     * Eliminates need for fallback chains in consumers
+     */
+    _normalizeSessionResponse(raw) {
+        if (!raw || typeof raw !== 'object') return null;
+
+        // Handle success envelope
+        let data = raw;
+        if (raw.success === true) {
+            data = raw.data ?? raw.session;
+        }
+        if (!data || typeof data !== 'object') return null;
+
+        // Ensure consistent structure
+        const sessionId = data.id || data.sessionId;
+        if (!sessionId) return null;
+
+        // Normalize messages (support multiple sources)
+        const messages = data.messages ?? data.context?.messages ?? [];
+
+        // Normalize execute (support multiple sources)
+        const execute = data.execute ?? data.context?.execute ?? data.currentExecute ?? null;
+
+        // Normalize context
+        const context = data.context ?? {};
+
+        return {
+            id: sessionId,
+            sessionId,
+            projectId: data.projectId,
+            title: data.title,
+            status: data.status,
+            asyncPending: data.asyncPending,
+            messages,
+            execute,
+            context
+        };
+    }
+
+    /**
      * Get session by ID (uses Vite plugin)
      */
     async getSession(sessionId, optionsOrLegacyProjectId = {}) {
@@ -248,15 +231,12 @@ class APIIntegration {
         const q = options.includeContext ? '?includeContext=1' : '';
         const raw = await this._fetch(`sessions/${encodeURIComponent(sessionId)}${q}`);
         console.log('[API] getSession response:', sessionId, 'asyncPending:', raw?.asyncPending, 'status:', raw?.status);
-        if (raw && typeof raw === 'object') {
-            if (raw.success === true) {
-                const d = raw.data ?? raw.session;
-                if (d && typeof d === 'object' && (d.id || d.sessionId)) return d;
-                throw new Error('getSession: success envelope without session id');
-            }
-            if (raw.id || raw.sessionId) return raw;
+        
+        const normalized = this._normalizeSessionResponse(raw);
+        if (!normalized) {
+            throw new Error('getSession: unexpected response shape');
         }
-        throw new Error('getSession: unexpected response shape');
+        return normalized;
     }
 
     /**
@@ -338,11 +318,4 @@ if (typeof window !== 'undefined') {
     window.APIIntegration = APIIntegration;
     window.request = request;
     window.apiIntegration = apiIntegration;
-    if (!window.fetchWithRetry) {
-        window.fetchWithRetry = fetchWithRetry;
-    }
-} else {
-    if (!globalThis.fetchWithRetry) {
-        globalThis.fetchWithRetry = fetchWithRetry;
-    }
 }

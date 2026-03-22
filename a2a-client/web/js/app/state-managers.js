@@ -55,48 +55,40 @@
          */
         async createNewSession() {
             try {
-                // Check if using persistent storage mode
-                const usePersistentStorage = global.SessionStore?.isPersistentStorage?.() || false;
-                let sessionId = null;
-
-                if (usePersistentStorage && global.SessionStore?.createSessionWithForm) {
-                    try {
-                        // Use new session storage API with numbered folders
-                        const title = `Session ${new Date().toLocaleTimeString()}`;
-                        const session = await global.SessionStore.createSessionWithForm(title);
-                        sessionId = session?.id || session?.sessionId;
-                        console.log('[AppTask] Created new persistent session:', sessionId);
-                    } catch (error) {
-                        console.warn('[AppTask] Persistent storage failed, falling back to old API:', error);
+                const projectId = await global.getCurrentProjectId();
+                const title = `Session ${new Date().toLocaleTimeString()}`;
+                
+                // Use SessionStore.createSessionWithForm if available (preferred path)
+                let session;
+                if (global.SessionStore?.createSessionWithForm) {
+                    session = await global.SessionStore.createSessionWithForm(title);
+                } else {
+                    // Fallback to apiIntegration
+                    if (!global.apiIntegration?.createSession) {
+                        throw new Error('API not available');
                     }
+                    session = await global.apiIntegration.createSession({ projectId, title });
+                }
+                
+                const sessionId = session?.id || session?.sessionId;
+                if (!sessionId) {
+                    throw new Error('Failed to get session ID from response');
                 }
 
-                // Fallback to old API if persistent storage didn't work
-                if (!sessionId) {
-                    const projectId = await global.getCurrentProjectId();
-                    if (!global.apiIntegration?.createSession) throw new Error('API not available');
-                    const session = await global.apiIntegration.createSession({
-                        projectId,
-                        title: `Session ${new Date().toLocaleTimeString()}`
-                    });
-                    sessionId = session?.id || session?.sessionId;
-                    console.log('[AppTask] Created new session:', sessionId);
-                }
+                console.log('[AppTask] Created new session:', sessionId);
 
                 // Common operations after getting sessionId
-                if (sessionId) {
-                    if (global.SessionStore?.createSession) global.SessionStore.createSession(sessionId);
-                    if (global.SessionManager?.setActiveSession) global.SessionManager.setActiveSession(sessionId);
+                if (global.SessionStore?.createSession) global.SessionStore.createSession(sessionId);
+                if (global.SessionManager?.setActiveSession) global.SessionManager.setActiveSession(sessionId);
 
-                    // Refresh taskbar to show new session
-                    const taskbarContent = global.SessionManager?.getTaskbarContentEl?.() || document.querySelector('.taskbar-content');
-                    if (taskbarContent && global.TaskbarManager) {
-                        await global.TaskbarManager.refreshTaskbar(taskbarContent);
-                    }
-
-                    // Auto-open the new session
-                    scheduleOpenSessionWindow(sessionId);
+                // Refresh taskbar to show new session
+                const taskbarContent = global.SessionManager?.getTaskbarContentEl?.() || document.querySelector('.taskbar-content');
+                if (taskbarContent && global.TaskbarManager) {
+                    await global.TaskbarManager.refreshTaskbar(taskbarContent);
                 }
+
+                // Auto-open the new session
+                scheduleOpenSessionWindow(sessionId);
             } catch (error) {
                 console.error('[AppTask] Failed to create session:', error);
                 window.ErrorHandler?.handle(new Error('Failed to create new session'), { action: 'createSession' });

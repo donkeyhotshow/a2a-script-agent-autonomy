@@ -177,7 +177,7 @@
         },
 
         /**
-         * Hydrate store with session data
+         * Hydrate store with session data (now uses normalized response from apiIntegration)
          * @private
          */
         _hydrateStore(store, sessionData, sessionId) {
@@ -190,30 +190,21 @@
                 store.setSession(dataSid, sessionData.projectId);
             }
 
-            // Messages - try multiple sources
-            if (sessionData?.messages && Array.isArray(sessionData.messages) && sessionData.messages.length > 0) {
-                store.setMessages(sessionData.messages);
-            } else if (sessionData?.context?.messages && Array.isArray(sessionData.context.messages)) {
-                store.setMessages(sessionData.context.messages);
-            }
+            // Messages - already normalized in apiIntegration.getSession (guaranteed to be array)
+            store.setMessages(sessionData.messages || []);
 
-            // Context
-            if (sessionData?.context) {
-                store.setContext(sessionData.context);
-            }
+            // Context - already normalized in apiIntegration.getSession (guaranteed to be object)
+            store.setContext(sessionData.context || {});
 
-            // Execute - try multiple sources
-            const execute = sessionData?.execute ?? sessionData?.context?.execute ?? sessionData?.currentExecute;
-            if (execute) {
-                store.setExecute(execute);
-            }
+            // Execute - already normalized in apiIntegration.getSession (can be null)
+            store.setExecute(sessionData.execute);
 
-            // Status
-            if (sessionData?.status) {
+            // Status - already normalized in apiIntegration.getSession
+            if (sessionData.status !== undefined) {
                 store.setStatus(sessionData.status);
             }
 
-            // Async pending
+            // Async pending - already normalized in apiIntegration.getSession
             if (sessionData.asyncPending) {
                 store.setPromisePending(true);
                 if (typeof store.startLoader === 'function') {
@@ -319,7 +310,7 @@
         },
 
         /**
-         * Create session store instance
+         * Create session store instance (SessionStoreClass is now required)
          * @private
          */
         _createSessionStore(sessionId) {
@@ -327,12 +318,7 @@
             const storeOpts = global.SessionStoreWebDefaults;
 
             if (!StoreClass) {
-                const store = global.SessionStore;
-                console.log('[WindowState] Using global SessionStore');
-                if (store) {
-                    store.reset(sessionId);
-                }
-                return store;
+                throw new Error('[WindowState] SessionStoreClass is required (load session-store.js)');
             }
 
             if (!storeOpts) {

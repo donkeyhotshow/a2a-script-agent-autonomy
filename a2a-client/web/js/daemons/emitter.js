@@ -6,19 +6,18 @@
 
     const root = global.__a2aDaemons || (global.__a2aDaemons = {});
 
-    /** Single source for loader min display + promise poll interval (ms). Match `js/core/a2a-constants.js`. */
-    root.DEFAULT_A2A_TIMING_MS = 5000;
-    root.MIN_LOADER_MS = root.DEFAULT_A2A_TIMING_MS;
-    root.PROMISE_POLL_INTERVAL = root.DEFAULT_A2A_TIMING_MS;
-
-    /**
-     * @param {'MIN_LOADER_MS'|'PROMISE_POLL_INTERVAL'} key
-     * @returns {number}
-     */
-    root.timingMs = function timingMs(key) {
-        var v = root[key];
-        return typeof v === 'number' && v > 0 ? v : root.DEFAULT_A2A_TIMING_MS;
-    };
+    // Use centralized timingMs from config.js (backward compatibility)
+    if (!root.timingMs) {
+        root.timingMs = global.__a2aDaemons?.timingMs || function(key) {
+            // Fallback defaults if config not available
+            const defaults = {
+                MIN_LOADER_MS: 5000,
+                PROMISE_POLL_INTERVAL: 5000
+            };
+            var v = defaults[key];
+            return typeof v === 'number' && v > 0 ? v : 5000;
+        };
+    }
 
     root.createEventEmitter = function createEventEmitter() {
         const listeners = new Map();

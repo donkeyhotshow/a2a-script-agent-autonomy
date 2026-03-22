@@ -14,7 +14,7 @@
     'use strict';
 
     const D = global.__a2aDaemons;
-    if (!D || typeof D.createDialogLoader !== 'function' || typeof D.createDialogPromise !== 'function') {
+    if (!D || typeof D.createDialogLoader !== 'function' || typeof D.createDialogPromise !== 'function' || typeof D.createEventEmitter !== 'function') {
         throw new Error('[SessionData] Load js/daemons/emitter.js, dialog-loader.js, dialog-promise-poll.js before session-data.js');
     }
     if (typeof global.executeHasActionableForm !== 'function') {
@@ -22,6 +22,7 @@
     }
     const createDialogLoader = D.createDialogLoader;
     const createDialogPromise = D.createDialogPromise;
+    const createEventEmitter = D.createEventEmitter;
 
     function maxMessagesFromNormalizers() {
         const n = global.Normalizers && global.Normalizers.MAX_MESSAGES;
@@ -49,20 +50,21 @@
             promisePending: false,
             _waitIndicatorActive: false
         };
-        const listeners = {};
-        
+        // Use centralized event emitter from daemons
+        const emitter = createEventEmitter();
+         
         // Per-instance promise (poll daemon) — forward to store so UI / ActionExecutor can subscribe
         const promise = createDialogPromise();
         promise.on('resolved', function (data) {
-            emit('promiseResolved', data);
+            emitter.emit('promiseResolved', data);
         });
         promise.on('rejected', function (data) {
-            emit('promiseError', data);
+            emitter.emit('promiseError', data);
         });
-        
+         
         // Per-instance loaders map - sessionId -> DialogLoader
         const sessionLoaders = new Map();
-        
+         
         function getLoader(sid) {
             const id = sid || state.sessionId;
             if (!id) return null;
@@ -71,26 +73,14 @@
                 // Forward per-session loader events
                 loader.on('loader', (data) => {
                     if (data.active) {
-                        emit('loader:start/' + id, { sessionId: id, active: true });
+                        emitter.emit('loader:start/' + id, { sessionId: id, active: true });
                     } else {
-                        emit('loader:stop/' + id, { sessionId: id, active: false });
+                        emitter.emit('loader:stop/' + id, { sessionId: id, active: false });
                     }
                 });
                 sessionLoaders.set(id, loader);
             }
             return sessionLoaders.get(id);
-        }
-        
-        function emit(event, payload) {
-            const handlers = listeners[event];
-            if (!handlers) return;
-            handlers.forEach(function(handler) {
-                try { handler(payload); }
-                catch (err) { 
-                    console.error('[SessionData] Handler failed:', event, err);
-                    emit('error', { event: event, payload: payload, error: err });
-                }
-            });
         }
 
         if (!global.Normalizers || typeof global.Normalizers.normalizeMessage !== 'function') {
@@ -101,16 +91,36 @@
         const normalizeMessage = global.Normalizers.normalizeMessage;
         const MAX_MESSAGES = maxMessagesFromNormalizers();
 
+        // Provide direct field access for efficiency (avoid creating new object on each call)
+        const getLoaderState = function(sid) {
+            return {
+                active: getLoader(sid)?.isActive || false,
+                promisePending: promise.isPending
+            };
+        };
+        
         return {
+            // Optimized: Returns new object only when called, but with direct field access pattern
             getState: function(sid) { 
-                const loaderActive = getLoader(sid)?.isActive || false;
+                const loaderState = getLoaderState(sid);
+                const nullLoader = getLoader(null);
                 return { 
-                    ...state, 
-                    loaderActive: loaderActive,
-                    promisePending: promise.isPending,
-                    sessionLoaders: Array.from(sessionLoaders.keys())
+                    sessionId: state.sessionId,
+                    projectId: state.projectId,
+                    messages: state.messages.slice(),
+                    execute: state.execute,
+                    context: state.context,
+                    status: state.status,
+                    pendingForm: state.pendingForm,
+                    lastError: state.lastError,
+                    promisePending: loaderState.promisePending,
+                    loaderActive: loaderState.active,
+                    isInputBlocked: state.promisePending || state.status === 'processing' || !!nullLoader?.isActive
                 }; 
             },
+            
+            // Direct access methods for efficiency
+            getLoaderState: getLoaderState,
             
             on: function(event, handler) {
                 if (!listeners[event]) listeners[event] = [];
