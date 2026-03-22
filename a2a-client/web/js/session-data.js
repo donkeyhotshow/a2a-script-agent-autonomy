@@ -122,19 +122,15 @@
             // Direct access methods for efficiency
             getLoaderState: getLoaderState,
             
-            on: function(event, handler) {
-                if (!listeners[event]) listeners[event] = [];
-                listeners[event].push(handler);
-                return function() { return this.off(event, handler); }.bind(this);
-            },
-            
-            off: function(event, handler) {
-                if (!listeners[event]) return;
-                const idx = listeners[event].indexOf(handler);
-                if (idx >= 0) listeners[event].splice(idx, 1);
-            },
+             on: function(event, handler) {
+                 return emitter.on(event, handler);
+             },
+             
+             off: function(event, handler) {
+                 return emitter.off(event, handler);
+             },
 
-            emit: emit,
+             emit: emitter.emit,
 
             get sessionId() { return state.sessionId; },
             get projectId() { return state.projectId; },
@@ -192,17 +188,17 @@
                 state.status = sessionId ? 'created' : 'idle';
                 state.pendingForm = null;
                 state.lastError = null;
-                state.promisePending = false;
-                state._waitIndicatorActive = false;
-                promise.reset();
-                emit('reset', this.getState());
-                return this;
-            },
+                 state.promisePending = false;
+                 state._waitIndicatorActive = false;
+                 promise.reset();
+                 emitter.emit('reset', this.getState());
+                 return this;
+             },
 
-            setSession: function(sessionId, projectId) {
+             setSession: function(sessionId, projectId) {
                 state.sessionId = sessionId;
                 if (projectId) state.projectId = projectId;
-                emit('session', sessionId);
+                emitter.emit('session', sessionId);
                 return this;
             },
 
@@ -223,27 +219,27 @@
                 state.promisePending = false;
                 promise.setPending(false);
                 
-                emit('execute', state.execute);
-                emit('promisePending', false);
+                emitter.emit('execute', state.execute);
+                emitter.emit('promisePending', false);
 
                 var hasForm = false;
                 if (execute && execute.wait) {
                     state._waitIndicatorActive = true;
                     state.status = 'processing';
                     state.pendingForm = null;
-                    emit('pendingForm', null);
-                    emit('wait', typeof execute.wait === 'object' ? execute.wait : { message: String(execute.wait) });
+                    emitter.emit('pendingForm', null);
+                    emitter.emit('wait', typeof execute.wait === 'object' ? execute.wait : { message: String(execute.wait) });
                 } else {
-                    emit('wait', null);
+                    emitter.emit('wait', null);
                     
                     hasForm = global.executeHasActionableForm(execute);
                     if (hasForm) {
                         state.pendingForm = execute.form;
                         state.status = 'waiting';
-                        emit('pendingForm', execute.form);
+                        emitter.emit('pendingForm', execute.form);
                     } else {
                         state.pendingForm = null;
-                        emit('pendingForm', null);
+                        emitter.emit('pendingForm', null);
                     }
                 }
 
@@ -262,8 +258,8 @@
             pushMessage: function(message, role) {
                 var normalized = normalizeMessage(message, role);
                 state.messages = state.messages.concat([normalized]).slice(-MAX_MESSAGES);
-                emit('messages', state.messages.slice());
-                emit('message', normalized);
+                emitter.emit('messages', state.messages.slice());
+                emitter.emit('message', normalized);
                 return this;
             },
 
@@ -277,21 +273,21 @@
                     if (n) next.push(n);
                 }
                 state.messages = next.slice(-MAX_MESSAGES);
-                emit('messages', state.messages.slice());
+                emitter.emit('messages', state.messages.slice());
                 return this;
             },
 
             setPromisePending: function(pending) {
                 state.promisePending = pending;
                 promise.setPending(pending);
-                emit('promisePending', pending);
+                emitter.emit('promisePending', pending);
                 return this;
             },
 
             setError: function(error) {
                 state.lastError = error;
                 state.status = 'error';
-                emit('error', error);
+                emitter.emit('error', error);
                 return this;
             },
 
@@ -300,7 +296,7 @@
                 if (state.status === 'error') {
                     state.status = state.pendingForm ? 'waiting' : (state.execute ? 'active' : 'idle');
                 }
-                emit('error', null);
+                emitter.emit('error', null);
                 return this;
             },
 
@@ -311,7 +307,7 @@
                     return;
                 }
                 this.reset(sid, session.projectId || null);
-                emit('sessionCreated', { id: sid });
+                emitter.emit('sessionCreated', { id: sid });
             }
         };
     }

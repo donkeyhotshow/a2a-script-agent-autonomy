@@ -80,56 +80,22 @@
                     refreshTimeout = setTimeout(refreshContent, 10);
                 };
 
-                // Listen for all store changes with single debounced refresh
-                // Consolidated from 5 separate events into one handler
-                const unsubMessages = store.on?.('messages', debouncedRefresh);
-                const unsubMessage = store.on?.('message', debouncedRefresh);
-                const unsubExecute = store.on?.('execute', debouncedRefresh);
-                const unsubPromisePending = store.on?.('promisePending', debouncedRefresh);
-                const unsubError = store.on?.('error', debouncedRefresh);
+                 // Listen for all store changes with single debounced refresh
+                 // Consolidated from 5 separate events into one handler
+                 const unsubscribers = [
+                     store.on?.('messages', debouncedRefresh),
+                     store.on?.('message', debouncedRefresh),
+                     store.on?.('execute', debouncedRefresh),
+                     store.on?.('promisePending', debouncedRefresh),
+                     store.on?.('error', debouncedRefresh)
+                 ].filter(Boolean);
 
-                // Cleanup on panel close
-                contentEl._cleanup = () => {
-                    if (refreshTimeout) clearTimeout(refreshTimeout);
-                    unsubMessages?.();
-                    unsubMessage?.();
-                    unsubExecute?.();
-                    unsubPromisePending?.();
-                    unsubError?.();
-                };
-            } else {
-                // Fallback to simple UI
-                contentEl.innerHTML = `
-                    <div class="session-content">
-                        <div class="session-messages" id="messages-${global.escapeHtmlAttr(sessionId)}">
-                            <div class="message system">Session initialized</div>
-                        </div>
-                        <div class="session-input">
-                            <textarea placeholder="Type your message..." rows="3"></textarea>
-                            <button class="send-btn">Send</button>
-                        </div>
-                    </div>
-                `;
-
-                const textarea = contentEl.querySelector('textarea');
-                const sendBtn = contentEl.querySelector('.send-btn');
-
-                const sendMessage = () => {
-                    const message = textarea.value.trim();
-                    if (message) {
-                        WindowEvents.sendMessage(sessionId, message, store);
-                        textarea.value = '';
-                    }
-                };
-
-                sendBtn.addEventListener('click', sendMessage);
-                textarea.addEventListener('keydown', (e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        sendMessage();
-                    }
-                });
-            }
+                 // Cleanup on panel close
+                 contentEl._cleanup = () => {
+                     if (refreshTimeout) clearTimeout(refreshTimeout);
+                     unsubscribers.forEach(unsub => unsub());
+                 };
+             }
         },
 
         /**
@@ -143,25 +109,16 @@
             await Ex.sendMessage(sessionId, message, storeOverride);
         },
 
-        /**
-         * Send choice result to session (for form.choices)
-         */
-        async sendChoice(sessionId, choiceId, storeOverride) {
-            const Ex = global.ActionExecutor;
-            if (!Ex?.sendChoice) {
-                throw new Error('ActionExecutor is not available for sending choice');
-            }
-            await Ex.sendChoice(sessionId, choiceId, storeOverride);
-        },
-
-        /**
-         * Handle window focus event
-         */
-        handleWindowFocus(sessionId) {
-            if (global.SessionManager) {
-                global.SessionManager.setActiveSession(sessionId);
-            }
-        },
+         /**
+          * Send choice result to session (for form.choices)
+          */
+         async sendChoice(sessionId, choiceId, storeOverride) {
+             const Ex = global.ActionExecutor;
+             if (!Ex?.sendChoice) {
+                 throw new Error('ActionExecutor is not available for sending choice');
+             }
+             await Ex.sendChoice(sessionId, choiceId, storeOverride);
+         },
 
     };
 

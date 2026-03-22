@@ -8,10 +8,31 @@
     function findTaskbarBtnBySessionId(sessionId) {
         if (sessionId == null || sessionId === '') return null;
         return Array.from(document.querySelectorAll('.taskbar-session-btn')).find(
-            (b) => b.dataset.sessionId === String(sessionId)
-        ) || null;
-    }
-
+                (b) => b.dataset.sessionId === String(sessionId)
+            ) || null;
+   }
+   
+        /**
+         * Center active button in taskbar
+         */
+        function centerActiveButton(container) {
+            if (!container) return;
+   
+            const activeBtn = container.querySelector('.taskbar-session-btn.active');
+            if (!activeBtn) return;
+   
+            const containerRect = container.getBoundingClientRect();
+            const btnRect = activeBtn.getBoundingClientRect();
+            const scrollLeft = container.scrollLeft;
+            const centerOffset = (containerRect.width - btnRect.width) / 2;
+            const targetScroll = scrollLeft + btnRect.left - containerRect.left - centerOffset;
+   
+            container.scrollTo({
+                left: Math.max(0, targetScroll),
+                behavior: 'smooth'
+            });
+        };
+   
     let activeSessionId = null;
     let taskbarContentEl = null;
 
@@ -62,7 +83,7 @@
                 if (activeBtn) {
                     activeBtn.classList.add('active');
                     // Scroll to center the active button
-                    this.centerActiveButton(activeBtn.parentElement);
+                    centerActiveButton(activeBtn.parentElement);
                 }
             }
         },
@@ -163,24 +184,7 @@
             setTimeout(() => document.addEventListener('click', closeHandler), 0);
         },
 
-        /**
-         * Handle context menu action
-         */
-        handleContextMenuAction(action, sessionId, btnEl) {
-            switch (action) {
-                case 'close':
-                    if (confirm('Close this session?')) {
-                        global.WindowState?.closeSessionWindow(sessionId);
-                    }
-                    break;
-                case 'rename':
-                    const newName = prompt('Enter new session name:');
-                    if (newName?.trim()) {
-                        this.renameSession(sessionId, newName.trim());
-                    }
-                    break;
-            }
-        },
+
 
         /**
          * Rename session
@@ -224,8 +228,9 @@
         }
     };
 
-    // Export
-    global.SessionManager = SessionManager;
-    global.findTaskbarBtnBySessionId = findTaskbarBtnBySessionId;
+     // Export
+     global.SessionManager = SessionManager;
+     global.findTaskbarBtnBySessionId = findTaskbarBtnBySessionId;
+     global.centerActiveButton = centerActiveButton;
 
 })(typeof window !== 'undefined' ? window : globalThis);

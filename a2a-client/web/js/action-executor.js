@@ -22,24 +22,24 @@
             : global.__a2aDaemons.timingMs('PROMISE_POLL_INTERVAL');
 
     /**
-     * Получает базовый API URL
-     * @param {Object} store - хранилище сессии
-     * @returns {string|null} базовый URL
-     */
-    function _getApiBase(store) {
-        const api = global.apiIntegration;
-        if (!store || typeof store.getStorageMode !== 'function') {
-            throw new Error('[ActionExecutor] SessionStore with getStorageMode() required');
-        }
-        const storageMode = store.getStorageMode();
-        if (storageMode === 'storage') {
-            return window.location.origin + '/api/a2a';
-        }
-        if (!api?.apiBase) {
-            throw new Error('[ActionExecutor] apiIntegration.apiBase required when storageMode is not "storage"');
-        }
-        return String(api.apiBase).replace(/\/?$/, '');
+ * Получает базовый API URL с учетом пути к API
+ * @param {Object} store - хранилище сессии
+ * @returns {string} базовый URL с учетом пути к API
+ */
+function _getApiBase(store) {
+    const api = global.apiIntegration;
+    if (!store || typeof store.getStorageMode !== 'function') {
+        throw new Error('[ActionExecutor] SessionStore with getStorageMode() required');
     }
+    const storageMode = store.getStorageMode();
+    if (storageMode === 'storage') {
+        return window.location.origin + '/api/a2a';
+    }
+    if (!api?.apiBase) {
+        throw new Error('[ActionExecutor] apiIntegration.apiBase required when storageMode is not "storage"');
+    }
+    return String(api.apiBase).replace(/\/?$/, '') + '/api';
+}
 
     /**
      * Создает заголовки для запроса
@@ -119,24 +119,9 @@
      */
     async function submit(sessionId, result, storeOverride) {
         const store = storeOverride || global.resolveStore(sessionId);
-        const base = _getApiBase(store);
-        if (!base) {
-            throw new Error('ActionExecutor: API base not configured. Set Client API URL in Settings.');
-        }
-        
-        const storageMode = store.getStorageMode();
-        const isStorageMode = storageMode === 'storage';
-        
-        // For Vite (storage mode), base already includes /api/a2a
-        // For client-api, need to add /api
-        const apiPath = isStorageMode ? '' : '/api';
-        const url = `${base}${apiPath}/sessions/${encodeURIComponent(sessionId)}/next`;
-        
-        const headers = _createHeaders();
-        
-        const data = await _fetchJson(url, {
+        // Use apiIntegration._fetch which handles URL building and headers
+        const data = await global.apiIntegration._fetch(`sessions/${encodeURIComponent(sessionId)}/next`, {
             method: 'POST',
-            headers,
             body: JSON.stringify({ result })
         });
         
@@ -150,7 +135,7 @@
                 } else {
                     store.startLoader?.();
                 }
-                startPromisePolling(sessionId, isStorageMode ? null : data.promiseId || null);
+                startPromisePolling(sessionId, null); // promiseId is handled by apiIntegration
                 await pullSessionSnapshot(sessionId, store, { skipExecuteWhenPending: true });
             } else {
                 await pullSessionSnapshot(sessionId, store);
@@ -160,36 +145,7 @@
         return data;
     }
 
-    /**
-     * Приватная функция для выполнения fetch запроса к session endpoint
-     * @param {string} sessionId - ID сессии
-     * @param {string} path - путь относительно sessions/:id/
-     * @param {Object} store - хранилище сессии
-     * @returns {Promise<Object>} данные ответа
-     */
-    async function _fetchSessionEndpoint(sessionId, path, store) {
-        const base = _getApiBase(store);
-        if (!base) {
-            throw new Error('[ActionExecutor] API base not configured');
-        }
 
-        const storageMode = store.getStorageMode();
-        const isStorageMode = storageMode === 'storage';
-        const apiPath = isStorageMode ? '' : '/api';
-        const url = `${base}${apiPath}/sessions/${encodeURIComponent(sessionId)}/${path.replace(/^\//, '')}`;
-
-        const res = await fetch(url, {
-            method: 'GET',
-            headers: { 'Content-Type': 'application/json' },
-        });
-
-        if (!res.ok) {
-            throw new Error(`[ActionExecutor] Session endpoint fetch failed: HTTP ${res.status}`);
-        }
-
-        const text = await res.text();
-        return text ? JSON.parse(text) : {};
-    }
 
     /**
      * Проверяет статус промиса - опрашивает A2A Server для асинхронного результата
@@ -199,14 +155,14 @@
      * @returns {Promise<Object|null>} статус промиса или null при ошибке
      */
     async function checkPromise(sessionId, promiseId) {
-        const store = global.resolveStore(sessionId);
-        return _fetchSessionEndpoint(sessionId, `promise/${encodeURIComponent(promiseId)}`, store);
+        // Use apiIntegration._fetch directly
+        return global.apiIntegration._fetch(`sessions/${encodeURIComponent(sessionId)}/promise/${encodeURIComponent(promiseId)}`);
     }
 
     /** Session-scoped async poll — Client API resolves transport id server-side */
     async function checkSessionAsync(sessionId) {
-        const store = global.resolveStore(sessionId);
-        return _fetchSessionEndpoint(sessionId, 'async', store);
+        // Use apiIntegration._fetch directly
+        return global.apiIntegration._fetch(`sessions/${encodeURIComponent(sessionId)}/async`);
     }
 
     /**

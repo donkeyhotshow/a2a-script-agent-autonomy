@@ -17,7 +17,6 @@ class APIIntegration {
         this.token = null;
         /** @type {string|null} Client API prefix (e.g. /api or http://host:3001/api); null = same-origin /api/a2a/... */
         this.apiBase = null;
-        this._listeners = new Map();
     }
 
     /**
@@ -287,23 +286,9 @@ class APIIntegration {
 
 
 
-    /**
-     * Subscribe to events
-     */
-    on(event, callback) {
-        if (!this._listeners.has(event)) {
-            this._listeners.set(event, new Set());
-        }
-        this._listeners.get(event).add(callback);
-        return () => this._listeners.get(event)?.delete(callback);
-    }
 
-    /**
-     * Emit event
-     */
-    emit(event, data) {
-        this._listeners.get(event)?.forEach(cb => cb(data));
-    }
+
+
 }
 
 const apiIntegration = new APIIntegration();

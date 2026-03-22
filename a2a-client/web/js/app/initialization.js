@@ -10,34 +10,6 @@
         _moduleWaitTimeout: 5000,
         _moduleWaitPollInterval: 50,
 
-        /**
-         * Wait for critical modules to be available (explicit check)
-         * Note: Script loading order fixed in index.html, so no polling needed
-         */
-        async _waitForModules() {
-            // Modules should already be available due to fixed script loading order
-            // Keep method for backward compatibility but make it a no-op
-            const requiredModules = [
-                'ProjectManager',
-                'SessionManager',
-                'TaskbarManager',
-                'WindowState',
-                'AppEventHandlers',
-                'AppUIManagers',
-                'AppStateManagers'
-            ];
-
-            const checkModules = () => {
-                return requiredModules.every(name => typeof global[name] !== 'undefined');
-            };
-
-            if (!checkModules()) {
-                console.warn('[AppInitialization] Some modules not available, but continuing due to fixed load order');
-            }
-            
-            // Resolve immediately - no polling needed
-            return Promise.resolve();
-        },
 
         /**
          * Initialize application
@@ -46,12 +18,6 @@
             console.log('[AppInitialization] Starting init...');
 
             try {
-                // Wait for critical modules to be available
-                await this._waitForModules();
-
-                console.log('[AppInitialization] After wait - SessionStore:', typeof global.SessionStore);
-                console.log('[AppInitialization] After wait - SessionManager:', typeof global.SessionManager);
-                console.log('[AppInitialization] Proceeding with initialization...');
                 // Ensure header template is loaded (for Settings/Projects buttons)
                 if (global.TemplateLoader && !document.getElementById('header-container')?.innerHTML?.trim()) {
                     await global.TemplateLoader.initTaskOnly();
@@ -100,38 +66,6 @@
                 });
             } else {
                 console.warn('[AppTask] appendWebModuleOnce missing; Normalizers may be unavailable');
-            }
-
-            // Check if session-store is available (loaded via HTML defer)
-            const sessionStoreReady = typeof global.SessionStore !== 'undefined';
-            console.log('[AppInitialization] SessionStore available:', sessionStoreReady);
-            
-            // Only load modules if they're not already available
-            // DAEMONS are critical - they must be loaded for SessionStore to work
-            const daemonsReady = global.__a2aDaemons && 
-                typeof global.__a2aDaemons.createDialogLoader === 'function' &&
-                typeof global.__a2aDaemons.createDialogPromise === 'function';
-            
-            if (!sessionStoreReady || !daemonsReady) {
-                console.log('[AppInitialization] Loading modules manually...');
-                const modulesToLoad = [
-                    'js/html-utils.js',
-                    'js/daemons/emitter.js',
-                    'js/daemons/dialog-loader.js',
-                    'js/daemons/dialog-promise-poll.js',
-                    'js/session-data.js',
-                    'js/session-storage.js',
-                    'js/project-store.js',
-                    'js/session-store.js'
-                ];
-
-                for (const rel of modulesToLoad) {
-                    await global.appendWebScriptOnce(rel, {
-                        onload: () => console.log(`[AppTask] Loaded module: ${rel}`)
-                    });
-                }
-            } else {
-                console.log('[AppInitialization] Using pre-loaded modules from HTML');
             }
         },
 

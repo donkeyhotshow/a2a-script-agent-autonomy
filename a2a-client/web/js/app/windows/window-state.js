@@ -352,8 +352,6 @@
             const panel = sessionWindows.get(sessionId);
             if (panel) {
                 panel.close();
-                sessionWindows.delete(sessionId);
-                registry.saveSessionWindowsState();
             }
         },
 
@@ -453,20 +451,7 @@
             })();
         },
 
-        /**
-         * Bring window to front
-         */
-        bringToFront(sessionId) {
-            const registry = global.WindowRegistry;
-            const sessionWindows = registry?.getSessionWindows();
-            
-            if (!sessionWindows) return;
-            
-            const panel = sessionWindows.get(sessionId);
-            if (panel) {
-                global.PanelManager?.bringToFront(panel.id);
-            }
-        }
+
     };
 
     // Export

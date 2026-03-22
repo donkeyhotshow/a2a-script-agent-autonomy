@@ -33,20 +33,6 @@
         },
 
         /**
-         * Register a window
-         */
-        registerWindow(sessionId, panel) {
-            sessionWindows.set(sessionId, panel);
-        },
-
-        /**
-         * Unregister a window
-         */
-        unregisterWindow(sessionId) {
-            sessionWindows.delete(sessionId);
-        },
-
-        /**
          * Check if window exists
          */
         hasWindow(sessionId) {
