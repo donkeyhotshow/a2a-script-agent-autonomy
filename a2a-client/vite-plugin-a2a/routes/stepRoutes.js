@@ -370,43 +370,89 @@ export function createStepRoutes({ cwd }) {
                         let data = '';
                         xhrRes.on('data', (chunk) => (data += chunk));
                         xhrRes.on('end', () => {
-                            console.log('[VitePlugin] A2A response:', xhrRes.statusCode, 'data:', data.substring(0, 200));
-                            let parseErrMsg = null;
                             try {
-                                if (!data || data.trim() === '') {
-                                    throw new Error('Empty response from A2A server');
-                                }
-                                const a2aData = JSON.parse(data);
+                                console.log('[VitePlugin] A2A response:', xhrRes.statusCode, 'data:', data.substring(0, 200));
+                                let parseErrMsg = null;
+                                try {
+                                    if (!data || data.trim() === '') {
+                                        throw new Error('Empty response from A2A server');
+                                    }
+                                    const a2aData = JSON.parse(data);
 
-                                if (a2aData.data?.promiseId) {
-                                    console.log(
-                                        '[VitePlugin] Async invoke — promiseId (daemon completes via GET /promise):',
-                                        a2aData.data.promiseId
+                                    if (a2aData.data?.promiseId) {
+                                        console.log(
+                                            '[VitePlugin] Async invoke — promiseId (daemon completes via GET /promise):',
+                                            a2aData.data.promiseId
+                                        );
+                                        promiseData = {
+                                            promiseId: a2aData.data.promiseId,
+                                            status: 'pending',
+                                            submittedAt: new Date().toISOString()
+                                        };
+                                        saveServerPromise(cwd, sessionId, nextStepNum, promiseData);
+                                    } else if (xhrRes.statusCode >= 200 && xhrRes.statusCode < 300) {
+                                        console.log('[VitePlugin] Sync invoke response');
+                                        serverResponse = a2aData;
+                                    } else {
+                                        console.error('[VitePlugin] A2A error status:', xhrRes.statusCode);
+                                    }
+                                } catch (parseErr) {
+                                    parseErrMsg = parseErr?.message || String(parseErr);
+                                    console.error('[vite-plugin-a2a] Failed to parse A2A response:', parseErrMsg);
+                                }
+
+                                const hasPromise = !!(promiseData?.promiseId);
+                                const hasServer = !!serverResponse;
+
+                                // Async: ack immediately — no server-response.json until client polls GET /promise
+                                if (hasPromise && !hasServer) {
+                                    session.currentStep = nextStepNum;
+                                    session.updatedAt = new Date().toISOString();
+                                    if (result?.message) {
+                                        session.messages = session.messages || [];
+                                        session.messages.push({
+                                            role: 'user',
+                                            content: result.message,
+                                            step: nextStepNum
+                                        });
+                                    }
+                                    session.promiseId = promiseData.promiseId;
+                                    session.context = mergedContext;
+                                    saveNewSession(cwd, session);
+
+                                    res.setHeader('Content-Type', 'application/json');
+                                    res.end(
+                                        JSON.stringify(
+                                            toMinimalNextAck({
+                                                success: true,
+                                                step: nextStepNum,
+                                                promiseId: promiseData.promiseId
+                                            })
+                                        )
                                     );
-                                    promiseData = {
-                                        promiseId: a2aData.data.promiseId,
-                                        status: 'pending',
-                                        submittedAt: new Date().toISOString()
-                                    };
-                                    saveServerPromise(cwd, sessionId, nextStepNum, promiseData);
-                                } else if (xhrRes.statusCode >= 200 && xhrRes.statusCode < 300) {
-                                    console.log('[VitePlugin] Sync invoke response');
-                                    serverResponse = a2aData;
-                                } else {
-                                    console.error('[VitePlugin] A2A error status:', xhrRes.statusCode);
+                                    return;
                                 }
-                            } catch (parseErr) {
-                                parseErrMsg = parseErr?.message || String(parseErr);
-                                console.error('[vite-plugin-a2a] Failed to parse A2A response:', parseErrMsg);
-                            }
 
-                            const hasPromise = !!(promiseData?.promiseId);
-                            const hasServer = !!serverResponse;
-
-                            // Async: ack immediately — no server-response.json until client polls GET /promise
-                            if (hasPromise && !hasServer) {
                                 session.currentStep = nextStepNum;
                                 session.updatedAt = new Date().toISOString();
+
+                                const a2aPayload = unwrapA2aResponse(serverResponse) || serverResponse;
+                                let assistantMessage =
+                                    a2aPayload?.execute?.message ||
+                                    serverResponse?.result?.execute?.message ||
+                                    a2aPayload?.result?.execute?.message ||
+                                    serverResponse?.result?.message ||
+                                    a2aPayload?.message ||
+                                    serverResponse?.message ||
+                                    null;
+
+                                const history =
+                                    a2aPayload?.context?.history || serverResponse?.result?.context?.history;
+                                if (!assistantMessage && Array.isArray(history)) {
+                                    const historyMsg = history.find((h) => h.role === 'assistant');
+                                    assistantMessage = historyMsg?.message || null;
+                                }
+
                                 if (result?.message) {
                                     session.messages = session.messages || [];
                                     session.messages.push({
@@ -415,143 +461,107 @@ export function createStepRoutes({ cwd }) {
                                         step: nextStepNum
                                     });
                                 }
-                                session.promiseId = promiseData.promiseId;
-                                session.context = mergedContext;
+
+                                if (assistantMessage) {
+                                    session.messages = session.messages || [];
+                                    session.messages.push({
+                                        role: 'assistant',
+                                        content: assistantMessage,
+                                        step: nextStepNum
+                                    });
+                                }
+
+                                session.messages = session.messages || [];
+
+                                const serverExecute = extractA2aExecute(serverResponse);
+                                if (serverExecute) {
+                                    session.execute = serverExecute;
+                                }
+                                const savedContext = serverResponse
+                                    ? mergeResponseContext(sessionId, mergedContext, serverResponse)
+                                    : mergedContext;
+                                session.context = savedContext;
+                                session.promiseId = null;
+
+                                const hasRealData = serverResponse || result;
+                                if (hasRealData) {
+                                    console.log('[VitePlugin] Saving step:', nextStepNum);
+                                    if (serverResponse) {
+                                        const stepRecord = buildStepRecord({
+                                            sessionId,
+                                            stepNum: nextStepNum,
+                                            serverResponse,
+                                            messages: session.messages || [],
+                                            fallbackContext: mergedContext
+                                        });
+                                        if (stepRecord) {
+                                            saveServerResponse(cwd, sessionId, nextStepNum, stepRecord);
+                                        }
+                                    } else {
+                                        saveNewStep(cwd, sessionId, nextStepNum, {
+                                            step: nextStepNum,
+                                            execute: null,
+                                            messages: session.messages || [],
+                                            context: mergedContext,
+                                            result
+                                        });
+                                    }
+                                }
+
                                 saveNewSession(cwd, session);
 
                                 res.setHeader('Content-Type', 'application/json');
+                                if (!hasServer) {
+                                    const errBody = toMinimalNextAck({
+                                        success: false,
+                                        step: nextStepNum,
+                                        promiseId: null,
+                                        error: parseErrMsg || 'A2A invoke failed'
+                                    });
+                                    res.writeHead(xhrRes.statusCode >= 400 ? xhrRes.statusCode : 502);
+                                    res.end(JSON.stringify(errBody));
+                                    return;
+                                }
+
                                 res.end(
                                     JSON.stringify(
                                         toMinimalNextAck({
                                             success: true,
                                             step: nextStepNum,
-                                            promiseId: promiseData.promiseId
+                                            promiseId: null
                                         })
                                     )
                                 );
-                                return;
+                            } catch (e) {
+                                console.error('[vite-plugin-a2a] Error in A2A response handler:', e.message);
+                                res.writeHead(500).end(JSON.stringify({ error: 'Internal server error' }));
                             }
-
-                            session.currentStep = nextStepNum;
-                            session.updatedAt = new Date().toISOString();
-
-                            const a2aPayload = unwrapA2aResponse(serverResponse) || serverResponse;
-                            let assistantMessage =
-                                a2aPayload?.execute?.message ||
-                                serverResponse?.result?.execute?.message ||
-                                a2aPayload?.result?.execute?.message ||
-                                serverResponse?.result?.message ||
-                                a2aPayload?.message ||
-                                serverResponse?.message ||
-                                null;
-
-                            const history =
-                                a2aPayload?.context?.history || serverResponse?.result?.context?.history;
-                            if (!assistantMessage && Array.isArray(history)) {
-                                const historyMsg = history.find((h) => h.role === 'assistant');
-                                assistantMessage = historyMsg?.message || null;
-                            }
-
-                            if (result?.message) {
-                                session.messages = session.messages || [];
-                                session.messages.push({
-                                    role: 'user',
-                                    content: result.message,
-                                    step: nextStepNum
-                                });
-                            }
-
-                            if (assistantMessage) {
-                                session.messages = session.messages || [];
-                                session.messages.push({
-                                    role: 'assistant',
-                                    content: assistantMessage,
-                                    step: nextStepNum
-                                });
-                            }
-
-                            session.messages = session.messages || [];
-
-                            const serverExecute = extractA2aExecute(serverResponse);
-                            if (serverExecute) {
-                                session.execute = serverExecute;
-                            }
-                            const savedContext = serverResponse
-                                ? mergeResponseContext(sessionId, mergedContext, serverResponse)
-                                : mergedContext;
-                            session.context = savedContext;
-                            session.promiseId = null;
-
-                            const hasRealData = serverResponse || result;
-                            if (hasRealData) {
-                                console.log('[VitePlugin] Saving step:', nextStepNum);
-                                if (serverResponse) {
-                                    const stepRecord = buildStepRecord({
-                                        sessionId,
-                                        stepNum: nextStepNum,
-                                        serverResponse,
-                                        messages: session.messages || [],
-                                        fallbackContext: mergedContext
-                                    });
-                                    if (stepRecord) {
-                                        saveServerResponse(cwd, sessionId, nextStepNum, stepRecord);
-                                    }
-                                } else {
-                                    saveNewStep(cwd, sessionId, nextStepNum, {
-                                        step: nextStepNum,
-                                        execute: null,
-                                        messages: session.messages || [],
-                                        context: mergedContext,
-                                        result
-                                    });
-                                }
-                            }
-
-                            saveNewSession(cwd, session);
-
-                            res.setHeader('Content-Type', 'application/json');
-                            if (!hasServer) {
-                                const errBody = toMinimalNextAck({
-                                    success: false,
-                                    step: nextStepNum,
-                                    promiseId: null,
-                                    error: parseErrMsg || 'A2A invoke failed'
-                                });
-                                res.writeHead(xhrRes.statusCode >= 400 ? xhrRes.statusCode : 502);
-                                res.end(JSON.stringify(errBody));
-                                return;
-                            }
-
-                            res.end(
-                                JSON.stringify(
-                                    toMinimalNextAck({
-                                        success: true,
-                                        step: nextStepNum,
-                                        promiseId: null
-                                    })
-                                )
-                            );
                         });
                     });
 
                     xhrReq.on('error', (e) => {
-                        console.error('[vite-plugin-a2a] A2A Server request failed:', e.message);
-                        session.currentStep = nextStepNum;
-                        session.updatedAt = new Date().toISOString();
-                        saveNewSession(cwd, session);
+                        try {
+                            console.error('[vite-plugin-a2a] A2A Server request failed:', e.message);
+                            session.currentStep = nextStepNum;
+                            session.updatedAt = new Date().toISOString();
+                            saveNewSession(cwd, session);
 
-                        res.setHeader('Content-Type', 'application/json');
-                        res.writeHead(503);
-                        res.end(
-                            JSON.stringify(
-                                toMinimalNextAck({
-                                    success: false,
-                                    step: nextStepNum,
-                                    promiseId: null,
-                                    error: 'A2A server unavailable: ' + e.message
-                                })
-                            )
-                        );
+                            res.setHeader('Content-Type', 'application/json');
+                            res.writeHead(503);
+                            res.end(
+                                JSON.stringify(
+                                    toMinimalNextAck({
+                                        success: false,
+                                        step: nextStepNum,
+                                        promiseId: null,
+                                        error: 'A2A server unavailable: ' + e.message
+                                    })
+                                )
+                            );
+                        } catch (err) {
+                            console.error('[vite-plugin-a2a] Error in A2A error handler:', err.message);
+                            res.writeHead(500).end(JSON.stringify({ error: 'Internal server error' }));
+                        }
                     });
 
                     const invokePayload = {
