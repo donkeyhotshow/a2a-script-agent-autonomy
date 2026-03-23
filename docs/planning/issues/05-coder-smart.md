@@ -17,7 +17,7 @@
 
 - Кожен крок визначається тільки через `server-transforms-*.json` файли
 - `execute` команда наступного кроку генерується LLM через transform, не хардкодиться
-- `docVirtual` — структурований контекст з обмеженням розміру секцій
+- `docVirtual` замінюється на `context.scratchpad` + `context.files` (стратегія ISSUE 6)
 - `rag-search` результати — пагіновані, клієнт передає `result.rag-search.page`
 
 ## Що потрібно зробити

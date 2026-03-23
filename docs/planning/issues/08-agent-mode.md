@@ -31,12 +31,12 @@ Web UI не показує tool calls і проміжні відповіді а�
 Dialog зараз: user → LLM → assistant text → відповідь.
 Потрібно: LLM викликає tool → сервер виконує → результат повертається в LLM → фінальна відповідь.
 
-Схема: `execute.tool-call` → клієнт виконує → `result.tool-result`
+**Важливо:** tool use не вводить новий тип `execute`. Tools = ті самі команди які вже є: `execute.read-file`, `execute.write-file`, `execute.rag-search`. Різниця тільки в тому хто виконує — сервер або клієнт.
 
 **Рішення:**
-- Server-side tools для file operations (не потребують клієнта)
-- Client-side tools тільки для того що сервер не може зробити (browser, UI interaction)
-- Web UI: мінімальна панель для відображення agent steps
+- Server-side: `read-file`, `write-file`, `grep-search`, `list-directory` — сервер виконує сам, не передає клієнту
+- Client-side: `rag-search`, `execute-command` — клієнт виконує і повертає результат
+- Схема не змінюється — той самий `execute.<action>` / `result.<action>`
 
 ## Дії
 

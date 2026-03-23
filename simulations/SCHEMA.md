@@ -12,8 +12,8 @@ Align all simulations to avoid redundant or conflicting values.
 
 Simulations describe the **sync request-response contract** (client.json → received.json). Runtime systems add promise handling on top; that logic is outside simulation scope.
 
-> **Примечание о context:** Поля внутри `context` курируются системой и имеют свободный формат. Не проверять и не
-> трогать. Сюда входят `history`, `execution`, `vite_config`, `aliases` и любые другие поля.
+> **Примечание о context:** Поля внутри `context` курируются системой. Стандартные поля: `execution`, `history`,
+> `files`, `scratchpad`, `scratchpad_ops`. Остальные (`vite_config`, `aliases` и т.д.) — свободный формат.
 
 ## File layout (per step)
 
@@ -23,10 +23,10 @@ Each step folder can contain up to **8** files, covering both **Web ↔ Client A
 |---------------------------------|----------------------|---------------------------------------------------------------------------------------------------------------------------|
 | `client.json`                   | Web → Client API     | What Web sends to Client API (e.g. `{ task, projectId }`, `{ sessionId, result }`).                                       |
 | `request.json`                  | Client API → Server  | Payload from Client API to Server (context + result), already без `projectId`/`sessionId`.                               |
-| `server-transforms-request.json`  | —                    | **DEPRECATED.** Transforms now live in `a2a-server/prompts/transforms/`. Kept for reference only.           |
+| `server-transforms-request.json`  | —                    | Transforms applied before LLM call. Per-step overrides live here; base transforms in `a2a-server/prompts/transforms/`.  |
 | `request.md`                    | Server → LLM         | Markdown sent to LLM (system prompt + current state).                                                                     |
 | `response.md`                   | LLM → Server         | Expected LLM output (e.g. JSON with `message`, `action`).                                                                 |
-| `server-transforms-response.json` | —                    | **DEPRECATED.** Transforms now live in `a2a-server/prompts/transforms/`. Kept for reference only. |
+| `server-transforms-response.json` | —                    | Transforms applied after LLM response. Per-step overrides live here; base transforms in `a2a-server/prompts/transforms/`. |
 | `response.json`                 | Server → Client API  | Payload sent to Client API (context + execute, etc.).                                                                     |
 | `received.json`                 | Client API → Web     | What Client API returns to Web (e.g. `{ projectId, sessionId, execute }`).                                                |
 
@@ -65,9 +65,9 @@ Not every step has all 8 files: steps without LLM обычно имеют `clien
 - **result for read-file**: use action-key shape so server has path + content. Good:
   `result: { "read-file": { "path": "src/auth.js", "content": "..." } }`. Bad: `result: { "content": "..." }` (path
   unknown).
-- **result for rag-search**: use action-key shape so server can pass results to LLM as `ragResults`. Good:
-  `result: { "rag-search": { "results": [ { "file": "...", "score": 0.95, "snippet": "..." } ], "files": ["path1", "path2"] } }`.
-  Optional: `"query": "..."` for traceability. Bad: `result: { "results": [...], "files": [...] }` (no action key).
+- **result for rag-search**: action-key shape with pagination. Good:
+  `result: { "rag-search": { "query": "...", "results": [...], "files": [...], "page": 1, "hasMore": false } }`.
+  Bad: `result: { "results": [...] }` (no action key, no pagination).
 
 ## Response (server)
 
@@ -206,6 +206,22 @@ default: `.carrier/reports/` (e.g. `architecture-report.md`).
 ## JSON
 
 - No trailing commas. Valid JSON only.
+
+## Context fields (canonical)
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `execution` | object | `{ action, step? }` — current action and optional step label |
+| `history` | array | `[{ role, message, action? }]` — стислі записи. `role`: `user`, `assistant`, `system`. Tool results → один `system` рядок, не повний вміст |
+| `files` | object | `{ "path": "<full content>" }` — working set прочитаних файлів. Не в history |
+| `scratchpad` | object | `{ "item_key": true/false }` — checklist стану задачі. Оновлюється через `scratchpad_ops` |
+| `scratchpad_ops` | array | Команди від LLM: `[{ "op": "check"|"add"|"remove", "item": "..." }]`. Сервер застосовує і видаляє поле |
+
+**Правило history:** великі дані (вміст файлів, stdout команд) не потрапляють в history. Тільки стислий `system` запис:
+```json
+{ "role": "system", "message": "Read src/app.js (142 lines)" }
+```
+Повний вміст — в `context.files[path]`.
 
 ## Reference sims
 

@@ -76,31 +76,28 @@
 
 ## Як додати нову симуляцію (step-by-step)
 
-1. **Обрати базову симуляцію як шаблон.**  
-   Візьми найближчу за змістом з `simulations/` (наприклад, `fix-vue-imports`, `coder-smart`, `auto-ai`).
+1. **Обрати базову симуляцію як шаблон.**
+   `auto-ai` — reference для ai-action з повним циклом. `fix-vue-imports` — для actions.
 
-2. **Створити директорію симуляції.**  
-   - `simulations/<name>/description.md` — короткий опис задачі та типу (`action` чи `ai-action`).  
-   - `simulations/<name>/1/`, `2/`, ... — піддиректорії кроків (step-N).
+2. **Створити директорію симуляції.**
+   `simulations/<name>/description.md` — опис задачі, тип (`action` чи `ai-action`), список кроків.
 
-3. **Заповнити файли кроку згідно з pipeline.**  
-   Для кожного step-N:
-   - `request.json` — payload від клієнта (Client API → Server).  
-   - `server-transforms-request.json` — як сервер перетворює `request.json` у внутрішній стан/LLM input.  
-   - `request.md` — Markdown-премпт до LLM (якщо є LLM на цьому кроці).  
-   - `response.md` — очікувана відповідь LLM (JSON/текст).  
-   - `server-transforms-response.json` — як сервер перетворює LLM-відповідь у клієнтський payload.  
-   - `response.json` — фінальний payload Server → Client для цього кроку.
+3. **Заповнити файли кроку згідно з pipeline.**
+   - `request.json` — payload від клієнта. `context` містить `files`, `scratchpad`, `history` (стислі system записи, не повні дані).
+   - `server-transforms-request.json` — пер-степ оверрайди transforms.
+   - `request.md` — prompt до LLM. Містить system role, history, тільки потрібні файли з `context.files`.
+   - `response.md` — очікувана відповідь LLM. Містить `execute` і `scratchpad_ops` (короткі команди, не перезапис).
+   - `server-transforms-response.json` — обробка відповіді LLM: `apply-scratchpad-ops`, додавання в `context.files`, стислий `system` в history.
+   - `response.json` — фінальний payload Server → Client.
 
-4. **Вирівняти структуру з протоколом.**  
-   - Дотримуватись **action-key shape** для `execute` та `result`.  
-   - Перший крок: або `actions[]`, або `execute.form.choices` (канон).  
-   - `context` не містить `sessionId` / `projectId`; сервер stateless.
+4. **Правила context між кроками.**
+   - Великі результати (read-file, execute-command) → `context.files` або відкидаються, не в history.
+   - History → тільки стислі `system` записи для tool results.
+   - LLM оновлює scratchpad через `scratchpad_ops`, не перезаписом.
+   - `execute.rag-search` містить `page` і `pageSize`; результат містить `hasMore`.
 
-5. **Перевірити симуляцію локально.**  
-   - Запустити скрипти типу `sim-validate`, `sim-run`, `sim-compare` (див. `a2a-server/scripts/`).  
-   - Переконатися, що фактичні `response.json` збігаються з еталонними після нормалізації (ids/timestamps/порядок).
+5. **Перевірити симуляцію локально.**
+   `node a2a-server/scripts/run-simulation.ts <name>` — порівняти output з `response.json` кожного кроку.
 
-6. **Використати симуляцію як golden-тест.**  
-   - Додати нову симуляцію до CI (run-all).  
-   - При змінах у протоколі/логіці спочатку оновлювати симуляцію, потім код до збігу з новими еталонами.
+6. **Додати до CI.**
+   При змінах в протоколі/логіці — спочатку оновити симуляцію, потім код.
