@@ -1,8 +1,8 @@
 {
   "success": true,
   "data": {
-    "id": "req_1773707682387_tge1qqeg1",
-    "promiseId": "prom_1773707682387_382asazsg",
+    "id": "req_1774295979248_spl3ophwe",
+    "promiseId": "prom_1774295979248_twzkh6gx8",
     "clientId": "simulation-client",
     "status": "completed",
     "priority": 0,
@@ -19,8 +19,6 @@
     "result": {
       "outcome": "action_proposal",
       "context": {
-        "session_id": "stateless",
-        "version": "1.0",
         "execution": {
           "action": "task",
           "step": "router"
@@ -37,19 +35,19 @@
             },
             {
               "id": "auto-ai",
-              "label": "AI Action Generator — сгенерировать экшен с помощью LLM"
+              "label": "AI Action Generator"
             },
             {
               "id": "task-decomposition",
-              "label": "Декомпозиция задачи вручную"
+              "label": "Декомпозиція задачі"
             }
           ]
         }
       }
     },
     "error": null,
-    "createdAt": "2026-03-17T00:34:42.387Z",
-    "startedAt": "2026-03-17T00:34:52.057Z",
-    "completedAt": "2026-03-17T00:34:52.060Z"
+    "createdAt": "2026-03-23T19:59:39.248Z",
+    "startedAt": "2026-03-23T19:59:42.568Z",
+    "completedAt": "2026-03-23T19:59:42.599Z"
   }
 }

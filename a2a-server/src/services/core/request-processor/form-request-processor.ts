@@ -452,21 +452,6 @@ export class FormRequestProcessor extends BaseRequestProcessor {
      * Register default forms
      */
     private registerDefaultForms(): void {
-        // Register action selection form
-        this.registerForm({
-            id: 'action_selection',
-            title: 'Оберіть спосіб виконання',
-            description: 'Select how you want to proceed with the task',
-            fields: [],
-            choices: [
-                {id: 'auto', label: 'Автоматично'},
-                {id: 'manual', label: 'Вручну'},
-                {id: 'ai', label: 'AI Action Generator'}
-            ],
-            submitLabel: 'Select',
-            cancelLabel: 'Cancel'
-        });
-
         // Register confirmation form
         this.registerForm({
             id: 'confirmation',

@@ -17,6 +17,13 @@ import type {
 } from '../request-processor.interfaces.js';
 import {BaseRequestProcessor, type RequestType} from './base-processor.js';
 
+/** Router step choices (aligned with simulations/dialog/1/response.json). */
+const ROUTER_CHOICES = [
+    {id: 'dialog', label: 'AI діалог з користувачем'},
+    {id: 'auto-ai', label: 'AI Action Generator'},
+    {id: 'task-decomposition', label: 'Декомпозиція задачі'},
+] as const;
+
 /**
  * Action request processor configuration
  */
@@ -243,14 +250,7 @@ export class ActionRequestProcessor extends BaseRequestProcessor {
                                 id: actionResult.message.action.id || actionResult.actionId,
                                 label: actionResult.message.action.title
                             }] : []),
-                            {
-                                id: 'auto-ai',
-                                label: 'AI Action Generator — сгенерировать экшен с помощью LLM'
-                            },
-                            {
-                                id: 'task-decomposition',
-                                label: 'Декомпозиция задачи вручную'
-                            }
+                            ...ROUTER_CHOICES,
                         ]
                     }
                 }
@@ -262,8 +262,6 @@ export class ActionRequestProcessor extends BaseRequestProcessor {
         return {
             outcome: 'action_proposal',
             context: {
-                session_id: sessionId,
-                version: '1.0',
                 execution: {
                     action: 'task',
                     step: 'router'
@@ -273,20 +271,7 @@ export class ActionRequestProcessor extends BaseRequestProcessor {
             execute: {
                 form: {
                     title: 'Оберіть спосіб виконання',
-                    choices: [
-                        {
-                            id: 'dialog',
-                            label: 'AI діалог з користувачем'
-                        },
-                        {
-                            id: 'auto-ai',
-                            label: 'AI Action Generator — сгенерировать экшен с помощью LLM'
-                        },
-                        {
-                            id: 'task-decomposition',
-                            label: 'Декомпозиция задачи вручную'
-                        }
-                    ]
+                    choices: [...ROUTER_CHOICES],
                 }
             }
         } as ProcessResult;
