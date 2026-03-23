@@ -1,0 +1,11 @@
+{
+  "type": "pipeline",
+  "steps": [
+    {
+      "op": "render-markdown",
+      "templateRef": "a2a-server/prompts/router-request.md",
+      "data": "$",
+      "outputFile": "request.md"
+    }
+  ]
+}

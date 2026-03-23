@@ -3,33 +3,44 @@
   "steps": [
     {
       "op": "copy",
-      "from": "$.context",
-      "to": "$.context"
+      "from": "$",
+      "to": "$out"
     },
     {
       "op": "set",
-      "path": "$.context.execution",
-      "value": {
-        "action": "dialog",
-        "step": "action-selection"
-      }
-    },
-    {
-      "op": "set",
-      "path": "$.execute",
-      "value": {
-        "form": {
-          "title": "Повідомлення",
-          "input": [
-            {
-              "name": "message",
-              "type": "text",
-              "label": "Ваше повідомлення",
-              "required": true
-            }
-          ]
+      "path": "$.context.availableActions",
+      "value": [
+        {
+          "id": "fix-vue-imports",
+          "title": "Fix Vue imports",
+          "description": "Fixes Vue 2 to Vue 3 import statements in components"
+        },
+        {
+          "id": "dialog",
+          "title": "AI діалог з користувачем",
+          "description": "Відкриває діалог з користувачем для уточнення деталей задачі"
+        },
+        {
+          "id": "auto-ai",
+          "title": "AI Action Generator",
+          "description": "Генерує нові дії на основі опису задачі"
+        },
+        {
+          "id": "task-decomposition",
+          "title": "Декомпозиція задачі",
+          "description": "Розбиває складну задачу на простіші підзадачі"
         }
-      }
+      ]
+    },
+    {
+      "op": "set",
+      "path": "$.context.task",
+      "value": "диалог"
+    },
+    {
+      "op": "set",
+      "path": "$.context.execution.step",
+      "value": "router"
     }
   ]
 }
