@@ -62,8 +62,6 @@
     // Note: apiIntegration is loaded later via defer script, not required at init time
 
     const createSessionStoreCore = global.SessionData.createSessionStoreCore;
-    // Direct apiIntegration access - no intermediate SessionStorageAPI layer
-    const getApiIntegration = () => global.apiIntegration;
 
     // === Main SessionStore constructor ===
     function SessionStore(options) {
@@ -78,12 +76,11 @@
             throw new Error('[SessionStore] options.storageMode must be "storage" or "project"');
         }
 
-     // Инициализация ядра
-         this.core = createSessionStoreCore();
-         
-         // Direct apiIntegration - no intermediate storage layer
-         this._storageMode = mode;
-         this._api = getApiIntegration();
+      // Инициализация ядра
+          this.core = createSessionStoreCore();
+          
+          // Direct apiIntegration - no intermediate storage layer
+          this._storageMode = mode;
 
          // Delegate methods defined on prototype for efficiency
 
@@ -143,21 +140,21 @@
          }
      };
 
-     SessionStore.prototype.createSessionWithForm = function(title) {
-         const self = this;
-         // Use apiIntegration directly instead of storage layer
-         const api = this._api;
-         if (!api?.createSession) {
-             return Promise.reject(new Error('[SessionStore] apiIntegration.createSession not available'));
-         }
-         return api.createSession({ title }).then(function(session) {
-             var sid = session && (session.id || session.sessionId);
-             if (sid) self.core.setSession(sid, session.projectId);
-             self.core.setExecute(session.execute || null);
-             self.core.emit('sessionCreated', session);
-             return session;
-         });
-     };
+      SessionStore.prototype.createSessionWithForm = function(title) {
+          const self = this;
+          // Use apiIntegration directly instead of storage layer
+          const api = typeof window !== 'undefined' ? window.apiIntegration : globalThis.apiIntegration;
+          if (!api?.createSession) {
+              return Promise.reject(new Error('[SessionStore] apiIntegration.createSession not available'));
+          }
+          return api.createSession({ title }).then(function(session) {
+              var sid = session && (session.id || session.sessionId);
+              if (sid) self.core.setSession(sid, session.projectId);
+              self.core.setExecute(session.execute || null);
+              self.core.emit('sessionCreated', session);
+              return session;
+          });
+      };
 
      SessionStore.prototype.isPersistentStorage = function() {
          return this._storageMode === 'storage';

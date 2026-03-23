@@ -346,65 +346,6 @@
         `;
     }
 
-    /**
-     * Привязать обработчики ввода
-     * @param {HTMLElement} contentEl - элемент контента
-     * @param {Object} taskFlowRef - ссылка на TaskFlow
-     */
-    /**
-     * Установить контент панели
-     * @param {HTMLElement} contentEl - элемент контента
-     * @param {string} state - состояние
-     * @param {Object} data - данные
-     * @param {Object} taskFlowRef - ссылка на TaskFlow
-     */
-    function setPanelContent(contentEl, state, data, taskFlowRef) {
-        if (!contentEl) return;
-
-        switch (state) {
-            case 'loading':
-                // Loading state - no preloader shown
-                contentEl.innerHTML = '';
-                break;
-
-            case 'error':
-                contentEl.innerHTML = `
-                    <div class="task-flow-error">
-                        <p class="task-flow-status">Error: ${escapeHtml(data?.error || 'Unknown error')}</p>
-                        <button class="task-flow-retry-btn">Retry</button>
-                    </div>
-                `;
-                contentEl.querySelector('.task-flow-retry-btn')?.addEventListener('click', () => {
-                    if (taskFlowRef?.run) {
-                        taskFlowRef.run(data?.task, data?.projectId);
-                    }
-                });
-                break;
-
-            case 'fixated':
-                contentEl.innerHTML = `
-                    <div class="task-flow-fixated">
-                        <p class="task-flow-status">Session: ${escapeHtml(data?.sessionId)}</p>
-                    </div>
-                `;
-                break;
-
-            case 'execute':
-            case 'response':
-                if (data?.execute) {
-                    renderExecute(contentEl, data.execute, data, null, taskFlowRef);
-                }
-                break;
-
-            default:
-                contentEl.innerHTML = `
-                    <div class="task-flow-empty">
-                        <p class="task-flow-status">Ready</p>
-                    </div>
-                `;
-        }
-    }
-
       // Export
       global.TaskFlowRender = {
           renderMessageHistory,

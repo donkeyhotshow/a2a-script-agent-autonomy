@@ -205,7 +205,7 @@
 
             btn.innerHTML = `
                 <div class="taskbar-session-icon">💬</div>
-                <div class="taskbar-session-title">${this.escapeHtml(sessionLabel)}</div>
+                <div class="taskbar-session-title">${global.escapeHtml(sessionLabel)}</div>
                 <div class="taskbar-session-status"></div>
             `;
 
@@ -236,67 +236,36 @@
             return btn;
         },
 
-        /**
-         * Build current indicators state from DOM
-         */
-        _getCurrentIndicatorsState() {
-            const taskbar = document.querySelector('.taskbar-content');
-            if (!taskbar) return { left: new Map(), right: new Map() };
+       /**
+        * Update off-screen indicators with state comparison
+        */
+       updateOffScreenIndicators() {
+           const taskbar = document.querySelector('.taskbar-content');
+           if (!taskbar) return;
 
-            const sessionsWrapper = taskbar.querySelector('.taskbar-sessions-wrapper');
-            if (!sessionsWrapper) return { left: new Map(), right: new Map() };
+           const sessionsWrapper = taskbar.querySelector('.taskbar-sessions-wrapper');
+           if (!sessionsWrapper) return;
 
-            const buttons = sessionsWrapper.querySelectorAll('.taskbar-session-btn');
-            const containerRect = sessionsWrapper.getBoundingClientRect();
+           // Remove all existing indicators
+           document.querySelectorAll('.offscreen-indicator').forEach(ind => ind.remove());
 
-            const currentState = { left: new Map(), right: new Map() };
+           // Build current state directly to avoid double DOM traversal
+           const buttons = sessionsWrapper.querySelectorAll('.taskbar-session-btn');
+           const containerRect = sessionsWrapper.getBoundingClientRect();
 
-            buttons.forEach((btn, index) => {
-                const btnRect = btn.getBoundingClientRect();
-                const sessionId = btn.dataset.sessionId;
+           buttons.forEach((btn, index) => {
+               const btnRect = btn.getBoundingClientRect();
+               const sessionId = btn.dataset.sessionId;
 
-                if (btnRect.right < containerRect.left) {
-                    // Off-screen to the left
-                    currentState.left.set(sessionId, { index, btn });
-                } else if (btnRect.left > containerRect.right) {
-                    // Off-screen to the right
-                    currentState.right.set(sessionId, { index, btn });
-                }
-            });
-
-            return currentState;
-        },
-
-        /**
-         * Update off-screen indicators with state comparison
-         */
-        updateOffScreenIndicators() {
-            const taskbar = document.querySelector('.taskbar-content');
-            if (!taskbar) return;
-
-            const sessionsWrapper = taskbar.querySelector('.taskbar-sessions-wrapper');
-            if (!sessionsWrapper) return;
-
-            // Remove all existing indicators
-            document.querySelectorAll('.offscreen-indicator').forEach(ind => ind.remove());
-
-            // Build current state directly to avoid double DOM traversal
-            const buttons = sessionsWrapper.querySelectorAll('.taskbar-session-btn');
-            const containerRect = sessionsWrapper.getBoundingClientRect();
-
-            buttons.forEach((btn, index) => {
-                const btnRect = btn.getBoundingClientRect();
-                const sessionId = btn.dataset.sessionId;
-
-                if (btnRect.right < containerRect.left) {
-                    // Off-screen to the left
-                    this.createOffScreenIndicator(sessionId, 'left', index, btn);
-                } else if (btnRect.left > containerRect.right) {
-                    // Off-screen to the right
-                    this.createOffScreenIndicator(sessionId, 'right', index, btn);
-                }
-            });
-        },
+               if (btnRect.right < containerRect.left) {
+                   // Off-screen to the left
+                   this.createOffScreenIndicator(sessionId, 'left', index, btn);
+               } else if (btnRect.left > containerRect.right) {
+                   // Off-screen to the right
+                   this.createOffScreenIndicator(sessionId, 'right', index, btn);
+               }
+           });
+       },
 
         /**
          * Create off-screen indicator
@@ -381,13 +350,6 @@
                 contentEl.dataset.loaded = 'true';
                 this.loadTaskbarSessions(contentEl);
             }
-        },
-
-        /**
-         * Escape HTML
-         */
-        escapeHtml(s) {
-            return global.escapeHtml(s);
         },
 
         /**

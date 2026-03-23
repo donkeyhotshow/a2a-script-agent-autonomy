@@ -38,15 +38,20 @@
 
                 // Use renderExecute to render full panel (history + execute + input)
                 // renderExecute renders the complete content: history + execute block + input area
-                const refreshContent = () => {
-                    // Get all store data in single call for efficiency
-                    const st = store.getState?.() || {};
-                    const execute = st.execute ?? st._state?.execute;
-                    const context = st.context ?? st._state?.context ?? {};
-                    const promisePending = st.promisePending ?? st.core?.promise?.isPending ?? st.promise?.isPending ?? false;
-                    const hasActionableForm = global.executeHasActionableForm?.(execute);
-                    const inputBlocked = typeof st.isInputBlocked === 'function' && st.isInputBlocked();
-                    const isWaiting = !!promisePending || (!hasActionableForm && inputBlocked);
+                 const refreshContent = () => {
+                     // Helper functions to extract state values with fallbacks
+                     const getExecute = (state) => state.execute ?? state._state?.execute;
+                     const getContext = (state) => state.context ?? state._state?.context ?? {};
+                     const getPromisePending = (state) => state.promisePending ?? state.core?.promise?.isPending ?? state.promise?.isPending ?? false;
+                     
+                     // Get all store data in single call for efficiency
+                     const st = store.getState?.() || {};
+                     const execute = getExecute(st);
+                     const context = getContext(st);
+                     const promisePending = getPromisePending(st);
+                     const hasActionableForm = global.executeHasActionableForm?.(execute);
+                     const inputBlocked = typeof st.isInputBlocked === 'function' && st.isInputBlocked();
+                     const isWaiting = !!promisePending || (!hasActionableForm && inputBlocked);
 
                     // Task-flow UI (form/message/actions) only when server/store set execute; never synthetic { form: pendingForm }
                     if (execute && !isWaiting) {

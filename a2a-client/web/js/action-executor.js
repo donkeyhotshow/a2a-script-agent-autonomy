@@ -159,13 +159,23 @@
 
     /**
      * Отправляет выбор в сессию
-     * 
+     *
      * @param {string} sessionId - ID сессии
      * @param {string} choiceId - ID выбора
      * @returns {Promise<Object>} ответ сервера
      */
     async function sendChoice(sessionId, choiceId, storeOverride) {
         return submit(sessionId, { choice: choiceId }, storeOverride);
+    }
+
+    /**
+     * Проверяет статус асинхронной сессии
+     *
+     * @param {string} sessionId - ID сессии
+     * @returns {Promise<Object>} статус сессии
+     */
+    async function checkSessionAsync(sessionId) {
+        return global.apiIntegration.checkSessionAsync(sessionId);
     }
 
      // Экспорт модуля
@@ -175,6 +185,7 @@
          sendChoice,
          startPromisePolling,
          pullSessionSnapshot,
+         checkSessionAsync,
          POLL_INTERVAL
      };
 
