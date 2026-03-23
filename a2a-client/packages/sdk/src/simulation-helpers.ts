@@ -203,7 +203,8 @@ export async function invokeFirstTask(
     const messageResponse = await client.request('POST', `/sessions/${sessionId}/message`, {
         context: {
             version: '2.0',
-            session_id: sessionId,
+            // session_id is a technical field, not part of protocol
+            // session_id: sessionId,
             new_task: [task]
         },
         new_task: [task]
@@ -259,11 +260,12 @@ export async function sendFormChoice(
     choiceId: string,
     extra?: Record<string, unknown>
 ): Promise<Record<string, unknown>> {
-    const sessionId = context.session_id as string;
+    // session_id is a technical field, not part of protocol
+    // const sessionId = context.session_id as string;
     
-    if (!sessionId) {
-        throw new Error('No session_id in context');
-    }
+    // if (!sessionId) {
+    //     throw new Error('No session_id in context');
+    // }
     
     // Build result with action-key shape
     const result: ActionResultPayload = {
@@ -293,11 +295,12 @@ export async function sendMessage(
     context: Record<string, unknown>,
     message: string
 ): Promise<Record<string, unknown>> {
-    const sessionId = context.session_id as string;
+    // session_id is a technical field, not part of protocol
+    // const sessionId = context.session_id as string;
     
-    if (!sessionId) {
-        throw new Error('No session_id in context');
-    }
+    // if (!sessionId) {
+    //     throw new Error('No session_id in context');
+    // }
     
     // Build result with action-key shape
     const result: ActionResultPayload = {
@@ -331,11 +334,12 @@ export async function sendClientActionResult<T extends keyof ActionResultPayload
     actionKey: T,
     actionResult: ActionResultPayload[T]
 ): Promise<Record<string, unknown>> {
-    const sessionId = context.session_id as string;
+    // session_id is a technical field, not part of protocol
+    // const sessionId = context.session_id as string;
     
-    if (!sessionId) {
-        throw new Error('No session_id in context');
-    }
+    // if (!sessionId) {
+    //     throw new Error('No session_id in context');
+    // }
     
     // Build result with action-key shape
     const result: ActionResultPayload = {

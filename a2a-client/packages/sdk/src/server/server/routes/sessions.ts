@@ -124,7 +124,8 @@ router.post('/', async (req: Request, res: Response) => {
                 const requestBody = {
                     context: {
                         version: '2.0',
-                        session_id: sessionId,
+                        // session_id is a technical field, not part of protocol
+                        // session_id: sessionId,
                         execution: { action: 'task', step: 'new' },
                         ...session.context,
                     },
@@ -138,7 +139,8 @@ router.post('/', async (req: Request, res: Response) => {
                 }
                 await saveRequestToServer(sessionId, 1, {
                     step: 1,
-                    timestamp: new Date().toISOString(),
+                    // timestamp is a technical field, not part of protocol
+                    // timestamp: new Date().toISOString(),
                     ...requestBody,
                 });
 
@@ -157,7 +159,8 @@ router.post('/', async (req: Request, res: Response) => {
                     } else if (unwrapped.data) {
                         await saveServerResponse(sessionId, 1, {
                             step: 1,
-                            timestamp: new Date().toISOString(),
+                            // timestamp is a technical field, not part of protocol
+                            // timestamp: new Date().toISOString(),
                             ...unwrapped.data,
                         });
                         setStepNum(sessionId, 1);
@@ -491,7 +494,8 @@ router.post('/:sessionId/action', async (req: Request, res: Response) => {
         const stepNum = getStepNum(session);
         await saveClientResult(sessionId, stepNum, {
             result: { choice: body.choice, input: body.input },
-            timestamp: new Date().toISOString(),
+            // timestamp is a technical field, not part of protocol
+            // timestamp: new Date().toISOString(),
         });
 
         sessionService.updateSession(sessionId, {
@@ -509,7 +513,8 @@ router.post('/:sessionId/action', async (req: Request, res: Response) => {
         const requestBody = {
             context: {
                 version: '2.0',
-                session_id: sessionId,
+                // session_id is a technical field, not part of protocol
+                // session_id: sessionId,
                 execution: { action: 'action', step: body.choice },
                 ...session.context,
             },
@@ -529,7 +534,8 @@ router.post('/:sessionId/action', async (req: Request, res: Response) => {
             }
             await saveRequestToServer(sessionId, nextStep, {
                 step: nextStep,
-                timestamp: new Date().toISOString(),
+                // timestamp is a technical field, not part of protocol
+                // timestamp: new Date().toISOString(),
                 ...requestBody,
             });
 
@@ -550,7 +556,8 @@ router.post('/:sessionId/action', async (req: Request, res: Response) => {
                 } else if (unwrapped.data) {
                     await saveServerResponse(sessionId, nextStep, {
                         step: nextStep,
-                        timestamp: new Date().toISOString(),
+                        // timestamp is a technical field, not part of protocol
+                        // timestamp: new Date().toISOString(),
                         ...unwrapped.data,
                     });
                     setStepNum(sessionId, nextStep);
@@ -661,7 +668,8 @@ router.post('/:sessionId/next', async (req: Request, res: Response) => {
         const stepNum = getStepNum(session);
         await saveClientResult(sessionId, stepNum, {
             result,
-            timestamp: new Date().toISOString(),
+            // timestamp is a technical field, not part of protocol
+            // timestamp: new Date().toISOString(),
         });
 
         sessionService.addMessage(
@@ -675,7 +683,8 @@ router.post('/:sessionId/next', async (req: Request, res: Response) => {
         const requestBody = {
             context: {
                 version: '2.0',
-                session_id: sessionId,
+                // session_id is a technical field, not part of protocol
+                // session_id: sessionId,
                 execution: { action: 'continue', step: 'next' },
                 ...session.context,
             },
@@ -695,7 +704,8 @@ router.post('/:sessionId/next', async (req: Request, res: Response) => {
             }
             await saveRequestToServer(sessionId, nextStep, {
                 step: nextStep,
-                timestamp: new Date().toISOString(),
+                // timestamp is a technical field, not part of protocol
+                // timestamp: new Date().toISOString(),
                 ...requestBody,
             });
 
@@ -716,7 +726,8 @@ router.post('/:sessionId/next', async (req: Request, res: Response) => {
                 } else if (unwrapped.data) {
                     await saveServerResponse(sessionId, nextStep, {
                         step: nextStep,
-                        timestamp: new Date().toISOString(),
+                        // timestamp is a technical field, not part of protocol
+                        // timestamp: new Date().toISOString(),
                         ...unwrapped.data,
                     });
                     setStepNum(sessionId, nextStep);

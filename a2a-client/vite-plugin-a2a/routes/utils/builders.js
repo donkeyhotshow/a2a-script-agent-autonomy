@@ -55,9 +55,10 @@ export function mergeResponseContext(sessionId, fallbackContext = {}, serverResp
         Object.assign(base, inner.result.context);
     }
 
-    if (sessionId && !base.session_id) {
-        base.session_id = sessionId;
-    }
+    // session_id is a technical field, not part of protocol
+    // if (sessionId && !base.session_id) {
+    //     base.session_id = sessionId;
+    // }
 
     return base;
 }
@@ -79,8 +80,8 @@ export function buildStepRecord({ sessionId, stepNum, serverResponse, messages =
     const execute = extractA2aExecute(serverResponse);
     
     // Note: step number is derived from folder path, not stored in JSON
+    // timestamp is a technical field, not part of protocol
     const payload = {
-        timestamp: new Date().toISOString(),
         execute: execute ?? null,
         context,
         messages

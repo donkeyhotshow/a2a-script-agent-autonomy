@@ -320,8 +320,8 @@ export function createStepRoutes({ cwd }) {
                         mergedContext = { ...mergedContext, ...filteredContext };
                     }
 
-                    // Add session_id to context (required by server)
-                    mergedContext.session_id = sessionId;
+                    // session_id is a technical field, not part of protocol
+                    // mergedContext.session_id = sessionId;
 
                     const sessionContext = session.context || {};
                     const previousExecution = sessionContext.execution || {};
@@ -334,10 +334,10 @@ export function createStepRoutes({ cwd }) {
                     console.log('[VitePlugin] Building request - effectiveTask:', effectiveTask, 'result:', finalResult);
                     console.log('[VitePlugin] Effective task sent to server:', effectiveTask);
 
-                    // Update context with user's choice (task/message from result)
+                    // Update context with user's choice (task from result)
+                    // message is duplicated in result.message, no need to add to context
                     if (effectiveTask) {
                         mergedContext.task = effectiveTask;
-                        mergedContext.message = effectiveTask;
                         console.log('[VitePlugin] Updated context.task to:', effectiveTask);
                     }
 

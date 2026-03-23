@@ -19,21 +19,25 @@ export function buildNewTaskContext(
     newTask: string[],
     architecturalFeatures?: string[]
 ): Record<string, unknown> {
-    const ctx: Record<string, unknown> = {version: VERSION, session_id: sessionId, new_task: newTask};
+    // session_id is a technical field, not part of protocol
+    const ctx: Record<string, unknown> = {version: VERSION, new_task: newTask};
     if (architecturalFeatures?.length) ctx.architectural_features = architecturalFeatures;
     return ctx;
 }
 
 export function buildContinueContext(sessionId: string): Record<string, unknown> {
-    return {version: VERSION, session_id: sessionId, continue: true};
+    // session_id is a technical field, not part of protocol
+    return {version: VERSION, continue: true};
 }
 
 export function buildConfirmContext(sessionId: string): Record<string, unknown> {
-    return {version: VERSION, session_id: sessionId, confirm: true};
+    // session_id is a technical field, not part of protocol
+    return {version: VERSION, confirm: true};
 }
 
 export function buildFileResponseContext(sessionId: string): Record<string, unknown> {
-    return {version: VERSION, session_id: sessionId};
+    // session_id is a technical field, not part of protocol
+    return {version: VERSION};
 }
 
 // ============================================
@@ -61,9 +65,9 @@ export function buildProtocolContext(
     }
 ): Record<string, unknown> {
     const NEW_VERSION = '2.0';
+    // session_id is a technical field, not part of protocol
     const ctx: Record<string, unknown> = {
         version: NEW_VERSION,
-        session_id: sessionId,
     };
     
     if (options?.execution) ctx.execution = options.execution;
