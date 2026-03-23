@@ -101,9 +101,9 @@
                 store.setPromiseId(promiseId);
             }
 
-            const checkFn = sessionScoped
-                ? () => checkSessionAsync(sessionId)
-                : (pid) => checkPromise(sessionId, pid);
+         const checkFn = sessionScoped
+             ? () => global?.apiIntegration?.checkSessionAsync?.(sessionId) ?? Promise.reject(new Error('checkSessionAsync is not a function on apiIntegration'))
+             : (pid) => global.apiIntegration.checkPromise(sessionId, pid);
 
             store.startPromisePolling(checkFn, { sessionScoped });
 

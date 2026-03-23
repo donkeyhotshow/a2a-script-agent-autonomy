@@ -286,3 +286,8 @@ if (typeof window !== 'undefined') {
     window.request = request;
     window.apiIntegration = apiIntegration;
 }
+if (typeof global !== 'undefined') {
+    global.APIIntegration = APIIntegration;
+    global.request = request;
+    global.apiIntegration = apiIntegration;
+}

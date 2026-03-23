@@ -1,0 +1,35 @@
+{
+  "promiseId": "prom_1774273015752_jmi7du82q",
+  "status": "completed",
+  "submittedAt": "2026-03-23T13:36:55.765Z",
+  "execute": {
+    "message": "1",
+    "form": {
+      "input": [
+        {
+          "name": "message",
+          "type": "text",
+          "label": "Повідомлення",
+          "required": true
+        }
+      ]
+    }
+  },
+  "context": {
+    "task": "ответь одним символом \"1\"",
+    "execution": {
+      "action": "dialog",
+      "step": "request"
+    },
+    "history": [
+      {
+        "role": "user",
+        "message": "ответь одним символом \"1\""
+      },
+      {
+        "role": "assistant",
+        "message": "1"
+      }
+    ]
+  }
+}

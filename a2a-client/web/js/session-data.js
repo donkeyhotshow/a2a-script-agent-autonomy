@@ -12,6 +12,7 @@
 
 (function (global) {
     'use strict';
+    let listeners = {};
 
     const D = global.__a2aDaemons;
     if (!D || typeof D.createDialogLoader !== 'function' || typeof D.createDialogPromise !== 'function' || typeof D.createEventEmitter !== 'function') {
