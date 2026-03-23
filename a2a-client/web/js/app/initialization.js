@@ -80,52 +80,61 @@
             global.TaskbarManager?.ensureTaskbar();
         },
 
-        /**
-         * Build <option> elements for project select
-         * @param {HTMLSelectElement} sel - Select element
-         * @param {Array} list - Array of project objects {id, name}
-         * @param {string} [savedId] - Previously selected project ID
-         */
-        _buildProjectOptions(sel, list, savedId) {
-            list.forEach(p => {
-                const opt = document.createElement('option');
-                opt.value = p.id;
-                opt.textContent = p.name || p.id;
-                sel.appendChild(opt);
-            });
-            if (savedId) {
-                const hasOption = Array.from(sel.options).some(o => o.value === savedId);
-                if (!hasOption) {
-                    const opt = document.createElement('option');
-                    opt.value = savedId;
-                    opt.textContent = savedId;
-                    sel.appendChild(opt);
-                }
-                sel.value = savedId;
-            }
-        },
+         /**
+          * Build <option> elements for project select
+          * @param {HTMLSelectElement} sel - Select element
+          * @param {Array} list - Array of project objects {id, name}
+          * @param {string} [savedId] - Previously selected project ID
+          */
+         _buildProjectOptions(sel, list, savedId) {
+             list.forEach(p => {
+                 const opt = document.createElement('option');
+                 opt.value = p.id;
+                 opt.textContent = p.name || p.id;
+                 sel.appendChild(opt);
+             });
+             if (savedId) {
+                 const hasOption = Array.from(sel.options).some(o => o.value === savedId);
+                 if (!hasOption) {
+                     const opt = document.createElement('option');
+                     opt.value = savedId;
+                     opt.textContent = savedId;
+                     sel.appendChild(opt);
+                 }
+                 sel.value = savedId;
+             }
+         },
 
-        /**
-         * Populate header #projectSelect with projects (called after init when header and API are ready)
-         */
-        async _populateHeaderProjectSelect() {
-            const sel = document.getElementById('projectSelect');
-            if (!sel || sel.options.length > 1) return;
-            const saved = await global.getCurrentProjectId();
-            try {
-                if (!global.apiIntegration || typeof global.apiIntegration.getProjects !== 'function') {
-                    throw new Error('[AppInitialization] apiIntegration.getProjects required');
-                }
-                const list = await global.apiIntegration.getProjects();
-                if (!Array.isArray(list)) {
-                    throw new Error('[AppInitialization] getProjects must return an array');
-                }
-                this._buildProjectOptions(sel, list, saved);
-            } catch (e) {
-                console.error('[AppTask] Could not load projects for header:', e);
-                if (saved) this._buildProjectOptions(sel, [], saved);
-            }
-        }
+         /**
+          * Populate project select element with options from API
+          * @param {HTMLSelectElement} sel - Select element to populate
+          * @param {string} [savedId] - Previously selected project ID
+          */
+         async _populateProjectSelect(sel, savedId) {
+             try {
+                 if (!global.apiIntegration || typeof global.apiIntegration.getProjects !== 'function') {
+                     throw new Error('[AppInitialization] apiIntegration.getProjects required');
+                 }
+                 const list = await global.apiIntegration.getProjects();
+                 if (!Array.isArray(list)) {
+                     throw new Error('[AppInitialization] getProjects must return an array');
+                 }
+                 this._buildProjectOptions(sel, list, savedId);
+             } catch (e) {
+                 console.error('[AppTask] Could not load projects for header:', e);
+                 if (savedId) this._buildProjectOptions(sel, [], savedId);
+             }
+         },
+
+         /**
+          * Populate header #projectSelect with projects (called after init when header and API are ready)
+          */
+         async _populateHeaderProjectSelect() {
+             const sel = document.getElementById('projectSelect');
+             if (!sel || sel.options.length > 1) return;
+             const saved = await global.getCurrentProjectId();
+             await this._populateProjectSelect(sel, saved);
+         }
     };
 
     // Export

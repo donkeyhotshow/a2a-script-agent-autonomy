@@ -4,13 +4,11 @@
 (function (global) {
     'use strict';
 
-    const TaskbarManager = {
-        // Flag to prevent duplicate initialization
-        _isTaskbarInitialized: false,
-        // Debounce timer for resize handler
-        _resizeDebounceTimer: null,
-        // Previous indicators state for comparison - no longer used in simplified version
-        _previousIndicators: null,
+     const TaskbarManager = {
+         // Flag to prevent duplicate initialization
+         _isTaskbarInitialized: false,
+         // Debounce timer for resize handler
+         _resizeDebounceTimer: null,
 
         /**
          * Debounced resize handler for updateOffScreenIndicators
@@ -24,19 +22,13 @@
             }, 150);
         },
 
-        /**
-         * Load taskbar sessions
-         */
-        async loadTaskbarSessions(contentEl) {
-            if (!contentEl) return;
+         /**
+          * Load taskbar sessions
+          */
+         async loadTaskbarSessions(contentEl) {
+             if (!contentEl) return;
 
-            // Prevent duplicate initialization
-            if (this._isTaskbarInitialized) {
-                console.log('[TaskbarManager] Already initialized, skipping');
-                await this.refreshTaskbar(contentEl);
-                return;
-            }
-            this._isTaskbarInitialized = true;
+             this._isTaskbarInitialized = true;
 
             if (global.SessionManager) {
                 global.SessionManager.setTaskbarContentEl(contentEl);
@@ -288,17 +280,22 @@
             // Remove all existing indicators
             document.querySelectorAll('.offscreen-indicator').forEach(ind => ind.remove());
 
-            // Build current state
-            const currentState = this._getCurrentIndicatorsState();
+            // Build current state directly to avoid double DOM traversal
+            const buttons = sessionsWrapper.querySelectorAll('.taskbar-session-btn');
+            const containerRect = sessionsWrapper.getBoundingClientRect();
 
-            // Create indicators for all off-screen sessions
-            for (const [sessionId, data] of currentState.left) {
-                this.createOffScreenIndicator(sessionId, 'left', data.index, data.btn);
-            }
+            buttons.forEach((btn, index) => {
+                const btnRect = btn.getBoundingClientRect();
+                const sessionId = btn.dataset.sessionId;
 
-            for (const [sessionId, data] of currentState.right) {
-                this.createOffScreenIndicator(sessionId, 'right', data.index, data.btn);
-            }
+                if (btnRect.right < containerRect.left) {
+                    // Off-screen to the left
+                    this.createOffScreenIndicator(sessionId, 'left', index, btn);
+                } else if (btnRect.left > containerRect.right) {
+                    // Off-screen to the right
+                    this.createOffScreenIndicator(sessionId, 'right', index, btn);
+                }
+            });
         },
 
         /**

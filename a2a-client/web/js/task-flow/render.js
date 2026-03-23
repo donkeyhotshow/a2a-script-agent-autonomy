@@ -3,10 +3,8 @@
  * Функции рендеринга UI компонентов
  */
 
-(function (global) {
-    'use strict';
-
-    var escapeHtml = global.escapeHtml;
+ (function (global) {
+     'use strict';
 
     function formatLastError(err) {
         if (err == null) return '';
@@ -32,10 +30,7 @@
      * @param {HTMLElement} contentEl - элемент контента
      * @param {string} text - текст статуса
      */
-    function updateStatus(contentEl, text) {
-        const status = contentEl?.querySelector('.task-flow-status');
-        if (status) status.textContent = text;
-    }
+
 
     /**
      * Рендеринг истории сообщений
@@ -410,17 +405,14 @@
         }
     }
 
-    // Export
-    global.TaskFlowRender = {
-        escapeHtml,
-        updateStatus,
-        renderMessageHistory,
-        renderExecute,
-        renderForm,
-        renderMessage,
-        renderClientAction,
-        renderDebug,
-        setPanelContent
-    };
+      // Export
+      global.TaskFlowRender = {
+          renderMessageHistory,
+          renderExecute,
+          renderForm,
+          renderMessage,
+          renderClientAction,
+          renderDebug
+      };
 
 })(typeof window !== 'undefined' ? window : global);

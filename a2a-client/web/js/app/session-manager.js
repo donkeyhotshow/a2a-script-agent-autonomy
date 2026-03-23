@@ -88,26 +88,7 @@
             }
         },
 
-        /**
-         * Center active button in taskbar
-         */
-        centerActiveButton(container) {
-            if (!container) return;
 
-            const activeBtn = container.querySelector('.taskbar-session-btn.active');
-            if (!activeBtn) return;
-
-            const containerRect = container.getBoundingClientRect();
-            const btnRect = activeBtn.getBoundingClientRect();
-            const scrollLeft = container.scrollLeft;
-            const centerOffset = (containerRect.width - btnRect.width) / 2;
-            const targetScroll = scrollLeft + btnRect.left - containerRect.left - centerOffset;
-
-            container.scrollTo({
-                left: Math.max(0, targetScroll),
-                behavior: 'smooth'
-            });
-        },
 
         /**
          * Reusable context menu element (created once, hidden/shown)

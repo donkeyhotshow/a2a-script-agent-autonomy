@@ -113,16 +113,16 @@
          return this._storageMode;
      };
 
-     SessionStore.prototype.setMessages = function(messages) {
-         if (!this.core) return;
-         var currentMessages = this.core.messages;
-         if (currentMessages && currentMessages.length > 0) return;
-         if (Array.isArray(messages)) {
-             messages.forEach(function(msg) {
-                 this.pushMessage(msg, msg.role || 'user');
-             }.bind(this));
-         }
-     };
+      SessionStore.prototype.initMessages = function(messages) {
+          if (!this.core) return;
+          var currentMessages = this.core.messages;
+          if (currentMessages && currentMessages.length > 0) return;
+          if (Array.isArray(messages)) {
+              messages.forEach(function(msg) {
+                  this.pushMessage(msg, msg.role || 'user');
+              }.bind(this));
+          }
+      };
 
      SessionStore.prototype.applyServerMessages = function(messages) {
          if (!this.core) return this;

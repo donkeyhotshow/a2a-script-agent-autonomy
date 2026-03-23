@@ -21,71 +21,7 @@
             ? global.PROMISE_POLL_INTERVAL
             : global.__a2aDaemons.timingMs('PROMISE_POLL_INTERVAL');
 
-    /**
- * Получает базовый API URL с учетом пути к API
- * @param {Object} store - хранилище сессии
- * @returns {string} базовый URL с учетом пути к API
- */
-function _getApiBase(store) {
-    const api = global.apiIntegration;
-    if (!store || typeof store.getStorageMode !== 'function') {
-        throw new Error('[ActionExecutor] SessionStore with getStorageMode() required');
-    }
-    const storageMode = store.getStorageMode();
-    if (storageMode === 'storage') {
-        return window.location.origin + '/api/a2a';
-    }
-    if (!api?.apiBase) {
-        throw new Error('[ActionExecutor] apiIntegration.apiBase required when storageMode is not "storage"');
-    }
-    return String(api.apiBase).replace(/\/?$/, '') + '/api';
-}
 
-    /**
-     * Создает заголовки для запроса
-     * @returns {Object} заголовки запроса
-     */
-    function _createHeaders() {
-        const headers = { 'Content-Type': 'application/json' };
-        if (global.apiIntegration?.token) {
-            headers['Authorization'] = `Bearer ${global.apiIntegration.token}`;
-        }
-        return headers;
-    }
-
-    /**
-     * Выполняет HTTP запрос
-     * @param {string} url - URL запроса
-     * @param {Object} options - параметры fetch
-     * @returns {Promise<Object>} данные ответа
-     */
-    async function _fetchJson(url, options) {
-        const res = await fetch(url, options);
-        
-        let data = {};
-        try {
-            const text = await res.text();
-            if (text) {
-                data = JSON.parse(text);
-            }
-        } catch (e) {
-            console.error('[ActionExecutor] JSON parse error:', e);
-            throw e;
-        }
-        
-        if (!res.ok) {
-            const err = data?.error;
-            const msg =
-                typeof err === 'string'
-                    ? err
-                    : err && typeof err === 'object' && err.message
-                      ? String(err.message)
-                      : null;
-            throw new Error(msg || `Request failed: ${res.status}`);
-        }
-        
-        return data;
-    }
 
     /**
      * Hydrate store from GET /sessions/:id (authoritative after minimal POST /next ack).
@@ -147,23 +83,7 @@ function _getApiBase(store) {
 
 
 
-    /**
-     * Проверяет статус промиса - опрашивает A2A Server для асинхронного результата
-     * 
-     * @param {string} sessionId - ID сессии
-     * @param {string} promiseId - ID промиса
-     * @returns {Promise<Object|null>} статус промиса или null при ошибке
-     */
-    async function checkPromise(sessionId, promiseId) {
-        // Use apiIntegration._fetch directly
-        return global.apiIntegration._fetch(`sessions/${encodeURIComponent(sessionId)}/promise/${encodeURIComponent(promiseId)}`);
-    }
-
-    /** Session-scoped async poll — Client API resolves transport id server-side */
-    async function checkSessionAsync(sessionId) {
-        // Use apiIntegration._fetch directly
-        return global.apiIntegration._fetch(`sessions/${encodeURIComponent(sessionId)}/async`);
-    }
+    
 
     /**
      * Запускает polling для разрешения промиса
@@ -248,17 +168,15 @@ function _getApiBase(store) {
         return submit(sessionId, { choice: choiceId }, storeOverride);
     }
 
-    // Экспорт модуля
-    const ActionExecutor = {
-        submit,
-        sendMessage,
-        sendChoice,
-        checkPromise,
-        checkSessionAsync,
-        startPromisePolling,
-        pullSessionSnapshot,
-        POLL_INTERVAL
-    };
+     // Экспорт модуля
+     const ActionExecutor = {
+         submit,
+         sendMessage,
+         sendChoice,
+         startPromisePolling,
+         pullSessionSnapshot,
+         POLL_INTERVAL
+     };
 
     if (typeof window !== 'undefined') {
         window.ActionExecutor = ActionExecutor;

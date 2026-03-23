@@ -9,22 +9,12 @@
         /**
          * Refresh projects UI: header select, taskbar, and projects panel grid. Call after create/delete project.
          */
-        async refreshProjectsUI() {
-            const sel = document.getElementById('projectSelect');
-            if (sel) {
-                const saved = await global.getCurrentProjectId();
-                sel.innerHTML = '<option value="">Select Project...</option>';
-                try {
-                    const list = await global.apiIntegration.getProjects();
-                    if (!Array.isArray(list)) {
-                        throw new Error('[AppUIManagers] getProjects must return an array');
-                    }
-                    global.AppInitialization._buildProjectOptions(sel, list, saved);
-                } catch (e) {
-                    console.error('[AppTask] Could not load projects for header:', e);
-                    if (saved) global.AppInitialization._buildProjectOptions(sel, [], saved);
-                }
-            }
+         async refreshProjectsUI() {
+             const sel = document.getElementById('projectSelect');
+             if (sel) {
+                 const saved = await global.getCurrentProjectId();
+                 await global.AppInitialization._populateProjectSelect(sel, saved);
+             }
             const taskbarContent = document.querySelector('.taskbar-content');
             if (taskbarContent && global.TaskbarManager) await global.TaskbarManager.refreshTaskbar(taskbarContent);
             const grid = document.getElementById('projectsGrid');

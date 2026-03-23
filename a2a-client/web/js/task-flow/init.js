@@ -70,11 +70,11 @@
         TaskFlow.panelId = 'task-flow-panel';
         TaskFlow.panel = panel;
 
-        // Render the execute state
-        const contentEl = panel.getContentEl();
-        if (contentEl && TaskFlow._lastResponse) {
-            Render.setPanelContent(contentEl, 'execute', TaskFlow._lastResponse, TaskFlow);
-        }
+         // Render the execute state
+         const contentEl = panel.getContentEl();
+         if (contentEl && TaskFlow._lastResponse) {
+             Render.renderExecute(contentEl, TaskFlow._lastResponse.execute, TaskFlow._lastResponse, null, TaskFlow);
+         }
 
         // Integrate with SessionStore events (replaces SessionManager events)
         const store = resolveStore(TaskFlow._sessionId);

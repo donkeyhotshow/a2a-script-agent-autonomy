@@ -7,15 +7,13 @@
 (function (global) {
     'use strict';
 
-    // Get modules
-    const Render = global.TaskFlowRender;
-    const setPanelContent = Render?.setPanelContent;
-    const updateStatus = Render?.updateStatus;
-    const resolveStore = global.resolveStore;
-    const showLoader = global.TaskFlowLoader?.showLoader;
-    const hideLoader = global.TaskFlowLoader?.hideLoader;
-    const setupLoaderListener = global.TaskFlowLoader?.setupLoaderListener;
-    const escapeHtml = global.escapeHtml;
+     // Get modules
+     const Render = global.TaskFlowRender;
+     const resolveStore = global.resolveStore;
+     const showLoader = global.TaskFlowLoader?.showLoader;
+     const hideLoader = global.TaskFlowLoader?.hideLoader;
+     const setupLoaderListener = global.TaskFlowLoader?.setupLoaderListener;
+     const escapeHtml = global.escapeHtml;
 
     /**
      * Общая функция отправки и обработки результата
@@ -66,33 +64,36 @@
                 submitResult?.promiseId ||
                 outcome?.promiseId;
             
-            if (outcome.execute) {
-                setPanelContent(contentEl, 'execute', { execute: outcome.execute, sessionId, projectId }, TaskFlow);
-                updateStatus(contentEl, 'Received response');
-            }
+             if (outcome.execute) {
+                 Render.renderExecute(contentEl, outcome.execute, { execute: outcome.execute, sessionId, projectId }, null, TaskFlow);
+                 const statusEl = contentEl?.querySelector('.task-flow-status');
+                 if (statusEl) statusEl.textContent = 'Received response';
+             }
 
             if (isAsync) {
                 // For async flow: wait for promise to resolve before hiding loader
-                if (store && typeof store.once === 'function') {
-                    store.once('promiseResolved', (data) => {
-                        hideLoader?.(TaskFlow);
-                        const exec = data.execute ?? data.result?.execute;
-                        if (exec) {
-                            setPanelContent(contentEl, 'execute', { execute: exec, sessionId, projectId }, TaskFlow);
-                            updateStatus(contentEl, 'Processing complete');
-                        }
-                    });
-                } else if (store && typeof store.on === 'function') {
-                    const unsubscribe = store.on('promiseResolved', (data) => {
-                        unsubscribe();
-                        hideLoader?.(TaskFlow);
-                        const exec = data.execute ?? data.result?.execute;
-                        if (exec) {
-                            setPanelContent(contentEl, 'execute', { execute: exec, sessionId, projectId }, TaskFlow);
-                            updateStatus(contentEl, 'Processing complete');
-                        }
-                    });
-                }
+                 if (store && typeof store.once === 'function') {
+                     store.once('promiseResolved', (data) => {
+                         hideLoader?.(TaskFlow);
+                         const exec = data.execute ?? data.result?.execute;
+                         if (exec) {
+                             Render.renderExecute(contentEl, exec, { execute: exec, sessionId, projectId }, null, TaskFlow);
+                             const statusEl = contentEl?.querySelector('.task-flow-status');
+                             if (statusEl) statusEl.textContent = 'Processing complete';
+                         }
+                     });
+                 } else if (store && typeof store.on === 'function') {
+                     const unsubscribe = store.on('promiseResolved', (data) => {
+                         unsubscribe();
+                         hideLoader?.(TaskFlow);
+                         const exec = data.execute ?? data.result?.execute;
+                         if (exec) {
+                             Render.renderExecute(contentEl, exec, { execute: exec, sessionId, projectId }, null, TaskFlow);
+                             const statusEl = contentEl?.querySelector('.task-flow-status');
+                             if (statusEl) statusEl.textContent = 'Processing complete';
+                         }
+                     });
+                 }
             } else {
                 // Sync flow: hide loader immediately
                 hideLoader?.(TaskFlow);
@@ -211,7 +212,7 @@
                 TaskFlow.panel = panel;
                 const content = panel.getContentEl();
                 if (content) {
-                    setPanelContent(content, 'loading', { task, projectId }, TaskFlow);
+                     content.innerHTML = '';
                 }
             }
         } else {
@@ -239,9 +240,9 @@
                     <div class="task-flow-content"></div>
                 `;
                 document.body.appendChild(el);
-                const content = el.querySelector('.task-flow-content');
-                setPanelContent(content, 'loading', null, TaskFlow);
-                el.querySelector('.task-flow-close')?.addEventListener('click', () => el.remove());
+                 const content = el.querySelector('.task-flow-content');
+                 content.innerHTML = '';
+                 el.querySelector('.task-flow-close')?.addEventListener('click', () => el.remove());
                 doRun(TaskFlow, task, projectId, content);
             }
         }
@@ -292,13 +293,15 @@
                 syncExecute = snap?.execute;
             }
 
-            if (syncExecute) {
-                setPanelContent(contentEl, 'execute', { execute: syncExecute, context: normalizedResponse?.context, sessionId, projectId }, TaskFlow);
-                updateStatus(contentEl, 'Received response');
-                hideLoader?.(TaskFlow);
-            } else {
-                updateStatus(contentEl, 'Waiting for response...');
-            }
+             if (syncExecute) {
+                 Render.renderExecute(contentEl, syncExecute, { execute: syncExecute, context: normalizedResponse?.context, sessionId, projectId }, null, TaskFlow);
+                 const statusEl = contentEl?.querySelector('.task-flow-status');
+                 if (statusEl) statusEl.textContent = 'Received response';
+                 hideLoader?.(TaskFlow);
+             } else {
+                 const statusEl = contentEl?.querySelector('.task-flow-status');
+                 if (statusEl) statusEl.textContent = 'Waiting for response...';
+             }
 
             // Listen for execute events from SessionStore
             if (store && typeof store.on === 'function') {

@@ -82,41 +82,43 @@
             };
 
             // Close button
-            header.querySelector('.pui-panel-close').addEventListener('click', () => panel.close());
-
-            // Drag functionality with cleanup support
-            let isDragging = false;
-            let dragOffset = { x: 0, y: 0 };
-
-            const _onDragStart = (e) => {
-                if (e.target.classList.contains('pui-panel-close')) return;
-                isDragging = true;
-                dragOffset.x = e.clientX - container.offsetLeft;
-                dragOffset.y = e.clientY - container.offsetTop;
-                container.style.zIndex = '1001';
-            };
-
-            const _onDragMove = (e) => {
-                if (!isDragging) return;
-                const newX = e.clientX - dragOffset.x;
-                const newY = e.clientY - dragOffset.y;
-                container.style.left = `${newX}px`;
-                container.style.top = `${newY}px`;
-                panel.position = { x: newX, y: newY };
-            };
-
-            const _onDragEnd = () => {
-                if (isDragging) {
-                    isDragging = false;
-                    container.style.zIndex = '1000';
-                }
-            };
-
-            header.addEventListener('mousedown', _onDragStart);
-            document.addEventListener('mousemove', _onDragMove);
-            document.addEventListener('mouseup', _onDragEnd);
-
-            return panel;
+             header.querySelector('.pui-panel-close').addEventListener('click', () => panel.close());
+ 
+             // Drag functionality with cleanup support
+             let isDragging = false;
+             let dragOffset = { x: 0, y: 0 };
+ 
+             const _onDragStart = (e) => {
+                 if (e.target.classList.contains('pui-panel-close')) return;
+                 isDragging = true;
+                 dragOffset.x = e.clientX - container.offsetLeft;
+                 dragOffset.y = e.clientY - container.offsetTop;
+                 container.style.zIndex = '1001';
+                 document.addEventListener('mousemove', _onDragMove);
+                 document.addEventListener('mouseup', _onDragEnd);
+             };
+ 
+             const _onDragMove = (e) => {
+                 if (!isDragging) return;
+                 const newX = e.clientX - dragOffset.x;
+                 const newY = e.clientY - dragOffset.y;
+                 container.style.left = `${newX}px`;
+                 container.style.top = `${newY}px`;
+                 panel.position = { x: newX, y: newY };
+             };
+ 
+             const _onDragEnd = () => {
+                 if (isDragging) {
+                     isDragging = false;
+                     container.style.zIndex = '1000';
+                 }
+                 document.removeEventListener('mousemove', _onDragMove);
+                 document.removeEventListener('mouseup', _onDragEnd);
+             };
+ 
+             header.addEventListener('mousedown', _onDragStart);
+ 
+             return panel;
         },
 
         /**
@@ -190,8 +192,8 @@
                 store.setSession(dataSid, sessionData.projectId);
             }
 
-            // Messages - already normalized in apiIntegration.getSession (guaranteed to be array)
-            store.setMessages(sessionData.messages || []);
+             // Messages - already normalized in apiIntegration.getSession (guaranteed to be array)
+             store.initMessages(sessionData.messages || []);
 
             // Context - already normalized in apiIntegration.getSession (guaranteed to be object)
             store.setContext(sessionData.context || {});

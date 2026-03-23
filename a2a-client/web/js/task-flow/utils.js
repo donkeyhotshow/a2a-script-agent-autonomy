@@ -6,18 +6,16 @@
 (function (global) {
     'use strict';
 
-    /**
-     * Получить ID проекта
-     */
-    function getProjectId() {
-        const sel = document.getElementById('projectSelect');
-        if (sel?.value) return sel.value;
-        const proj = window.appState?.get?.('project');
-        if (proj?.id) return proj.id;
-        const pm = window.ProjectManager;
-        if (pm?.getLastSelectedProjectId) return pm.getLastSelectedProjectId() || null;
-        return null;
-    }
+     /**
+      * Получить ID проекта
+      */
+     function getProjectId() {
+         const sel = document.getElementById('projectSelect');
+         if (sel?.value) return sel.value;
+         const pm = window.ProjectManager;
+         if (pm?.getLastSelectedProjectId) return pm.getLastSelectedProjectId() || null;
+         return null;
+     }
 
     /**
      * Resolve the SessionStore for a given session (falls back to active session or global store)

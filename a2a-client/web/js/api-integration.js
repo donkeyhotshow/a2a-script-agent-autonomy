@@ -238,25 +238,7 @@ class APIIntegration {
         return normalized;
     }
 
-    /**
-     * Highest step summary (promiseId / promiseStatus). Same route as storage “latest”.
-     */
-    async getSessionLatest(sessionId, options = {}) {
-        const q = options.includeContext ? '?includeContext=1' : '';
-        return this._fetch(`sessions/${encodeURIComponent(sessionId)}/latest${q}`);
-    }
 
-    /**
-     * Delta messages by monotonic seq (reduces full GET frequency). Optional execute via withExecute=1.
-     */
-    async getSessionMessages(sessionId, afterSeq = 0, limit = 50, withExecute = false) {
-        const params = new URLSearchParams({
-            afterSeq: String(afterSeq),
-            limit: String(limit),
-        });
-        if (withExecute) params.set('withExecute', '1');
-        return this._fetch(`sessions/${encodeURIComponent(sessionId)}/messages?${params}`);
-    }
 
     /**
      * Delete session (uses Vite plugin)
