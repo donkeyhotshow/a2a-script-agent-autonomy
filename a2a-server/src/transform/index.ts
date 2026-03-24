@@ -21,3 +21,8 @@ export * from './types.js';
 export * from './jsonpath.js';
 export * from './operations.js';
 export * from './pipeline.js';
+export {
+  prepareInvokePayloadForLlmPrompt,
+  materializeResultIntoHistoryForLlm,
+  formatToolResultForHistory
+} from './materialize-result-for-llm.js';

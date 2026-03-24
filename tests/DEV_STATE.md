@@ -11,6 +11,9 @@
 | a2a-client/packages | В каждом пакете | Unit, Functional | ✅ Активная разработка | - |
 | a2a-client/tester | [a2a-client/tester/tests/](a2a-client/tester/tests/) | CLI, Integration, Automation | ✅ Готово | ✅ CLI управление |
 
+### Общая архитектура системы
+Общая архитектура системы описана в [`DEV_STATE.md`](../DEV_STATE.md).
+
 ### Типы тестов
 
 #### Unit Tests (Модульные)

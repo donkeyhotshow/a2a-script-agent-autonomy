@@ -106,6 +106,8 @@ For each simulation and each step we test:
 - The canonical protocol and new request flow are described in `docs/new-request-flow/PROTOCOL.md`.
 - The simulation pipeline and per-step file semantics are described in `simulations/SCHEMA.md` and
   `docs/new-request-flow/SIMULATION-LLM-PROXY.md` (for async AI Hub flows).
+- Server-side preparation of the object used to render `request.md` (fold `result` into `context.history`, `flowControlHint`) is specified in [ADR-0026](ADR-0026-server-llm-request-prep.md) and `a2a-server/docs/LLM-REQUEST-PREP.md`; golden `request.md` must be regenerated when that prep changes.
+- Doc ownership / link-first rules: [ADR-0027](ADR-0027-documentation-canonical-sources.md).
 - When adding a new feature that spans layers, first add or extend a simulation (all necessary step files), then
   implement or adjust the layers until all stage comparisons pass.
 

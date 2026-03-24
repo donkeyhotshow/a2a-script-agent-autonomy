@@ -141,7 +141,7 @@ sequenceDiagram
     participant H as AI Hub
     
     W->>C: { task: "привет" }
-    C->>S: POST /invoke { task }
+    C->>S: POST /api/v1/invoke { task }
     
     S->>H: POST /chat + X-Promise: true
     H-->>S: { promiseId: "123", status: "pending" }

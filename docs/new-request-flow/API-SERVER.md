@@ -212,7 +212,7 @@ API Server (`a2a-client/packages/sdk`) — это REST API сервер, кот�
 
 #### POST /api/v1/invoke
 
-Проксирование вызова к A2A Server `/invoke`.
+Проксирование вызова к A2A Server **`POST /api/v1/invoke`**.
 
 **Тело запроса:**
 ```json

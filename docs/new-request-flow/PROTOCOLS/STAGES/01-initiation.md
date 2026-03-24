@@ -6,7 +6,7 @@
 
 ## Направление
 
-**Web UI → Client API (порт 3001)**
+**Web UI → Client API** (Vite **5173** `/api/a2a/*` или standalone SDK **3001**)
 
 ## Схема потока
 

@@ -7,14 +7,6 @@
       "to": "$out"
     },
     {
-      "op": "append-to-array",
-      "to": "$.context.history",
-      "value": {
-        "role": "user",
-        "message": "$.result.message"
-      }
-    },
-    {
       "op": "render-markdown",
       "templateRef": "simulations/task-decomposition/4/request.md",
       "data": "$out",

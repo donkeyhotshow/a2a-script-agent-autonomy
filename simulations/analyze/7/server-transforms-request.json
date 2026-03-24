@@ -7,14 +7,6 @@
       "to": "$out"
     },
     {
-      "op": "append-to-array",
-      "to": "$.context.history",
-      "value": {
-        "role": "user",
-        "message": "$.result.message"
-      }
-    },
-    {
       "op": "render-markdown",
       "templateRef": "a2a-server/prompts/analyze-request.md",
       "data": "$out",

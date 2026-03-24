@@ -19,7 +19,7 @@
 
 ## Overview
 
-The A2A Server is a **stateless** HTTP service that processes requests and returns results. It does not store sessions—session state is managed by the Client API (port 3001). The server focuses on:
+The A2A Server is a **stateless** HTTP service that processes requests and returns results. It does not store sessions—session state is managed by the Client API (Vite **5173** `/api/a2a/*` or standalone SDK **3001**). The server focuses on:
 
 - **Request processing**: Receiving task requests and returning appropriate responses
 - **Action execution**: Managing Actions (hardcoded steps) and AI-Actions (LLM-driven steps)
@@ -36,9 +36,9 @@ The A2A Server is a **stateless** HTTP service that processes requests and retur
                                       │
                                       ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                           CLIENT API (port 3001)                             │
+│                    CLIENT API (5173 /api/a2a/* or SDK :3001)                  │
 │  - Manages sessions (stateless from server perspective)                     │
-│  - API: POST /api/sessions, GET /api/sessions/:id, etc.                     │
+│  - API: e.g. POST /api/a2a/sessions, GET /api/a2a/sessions/:id               │
 └─────────────────────────────────────────────────────────────────────────────┘
                                       │
                                       ▼
@@ -68,7 +68,7 @@ The A2A Server is a **stateless** HTTP service that processes requests and retur
                                       ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │                       EXTERNAL AI HUB (ai-integration)                       │
-│  - Proxy service (port 11434 → 11435)                                       │
+│  - Proxy on **11435** → Ollama **11434**                                    │
 │  - Async promise support (promiseId)                                        │
 │  - ML simulation capabilities                                               │
 └─────────────────────────────────────────────────────────────────────────────┘
@@ -84,7 +84,7 @@ The A2A Server is a **stateless** HTTP service that processes requests and retur
 
 | Route File | Endpoints | Description |
 |------------|-----------|-------------|
-| `index.ts` | `POST /invoke`, `GET /metrics`, `GET /queue/metrics`, `GET /polling/metrics` | Main entrypoints and metrics |
+| `index.ts` | `POST /api/v1/invoke`, `GET /metrics`, … | Invoke + metrics (mounted under `/api/v1`) |
 | `requests.routes.ts` | `POST /api/v1/requests`, `GET /:id/status`, `GET /:id/result` | Request handling |
 | `actions.routes.ts` | `GET /api/v1/actions/:id` | Action definitions |
 | `sse.routes.ts` | `GET /api/v1/sse/:sessionId` | Server-Sent Events |
@@ -241,6 +241,8 @@ request.json → request.md (LLM prompt) → response.md (LLM output)
 
 ---
 
+<span id="external-ai-hub-integration"></span>
+
 ## External AI Hub Integration
 
 ### Architecture
@@ -268,52 +270,11 @@ request.json → request.md (LLM prompt) → response.md (LLM output)
 
 ### LLM Prompt Pipeline
 
-The server transforms requests through a strict pipeline:
-
-```
-request.json
-    │
-    ▼
-server-transforms-request.json  (server preprocessing)
-    │
-    ▼
-request.md  (ready for LLM)
-    │
-    ▼
-[LLM Processing]
-    │
-    ▼
-response.md  (LLM output)
-    │
-    ▼
-server-transforms-response.json  (server postprocessing)
-    │
-    ▼
-response.json
-```
+Transform chain (`request.json` → transforms → `request.md` → LLM → `response.md` → transforms → `response.json`): canonical file roles in [`simulations/SCHEMA.md`](../../simulations/SCHEMA.md). Server-side prep before `request.md` (history + `flowControlHint`): [`a2a-server/docs/LLM-REQUEST-PREP.md`](../../a2a-server/docs/LLM-REQUEST-PREP.md).
 
 ### Async Flow with promiseId
 
-For non-blocking LLM calls:
-
-```
-1. Server → AI Hub: POST /api/chat { model, messages }
-   Header: X-Promise: true
-
-2. AI Hub: Creates promise (pending)
-   Returns: { promiseId, status: "pending" }
-
-3. Server: Saves promiseId, continues workflow
-   Returns execute to client immediately
-
-4. Server (later): GET /promise/{id}/status
-   Response: { status: "pending" | "processing" | "done" }
-
-5. When done: GET /promise/{id}/response
-   Response: { response: "..." }
-
-6. Server: Uses result for next actions
-```
+Contract and Hub endpoints: [PROTOCOL.md → Async flow](PROTOCOL.md#async-flow-promiseid).
 
 ### Supported LLM Providers
 
@@ -349,29 +310,11 @@ For non-blocking LLM calls:
 
 ### Simulation Structure
 
-```
-simulations/{simulation-name}/
-├── request.json                    # Client → Server
-├── server-transforms-request.json  # Server preprocessing
-├── request.md                      # Server → LLM
-├── response.md                     # LLM → Server
-├── server-transforms-response.json # Server postprocessing
-└── response.json                   # Server → Client
-```
+Per-step artifacts and naming: [`simulations/SCHEMA.md`](../../simulations/SCHEMA.md).
 
 ### Action-Key Shape (Canonical Format)
 
-**Correct**:
-```json
-{ "result": { "read-file": { "path": "src/auth.js", "content": "..." } } }
-{ "execute": { "script": { "input": {}, "output": "...", "code": "..." } } }
-```
-
-**Incorrect** (legacy format):
-```json
-{ "result": { "content": "..." } }
-{ "execute": { "action": "read-file", "file": "..." } }
-```
+Normative rules and examples: [PROTOCOL.md → Action-key shape](PROTOCOL.md#action-key-shape).
 
 ### Simulation Types Mapping
 
@@ -413,8 +356,8 @@ REQUEST_PROCESSOR_INTERVAL_MS=5000
 
 **AI Hub (ai-integration)**:
 ```
-PROXY_PORT=11434
-OLLAMA_HOST=http://localhost:11435
+PROXY_PORT=11435
+OLLAMA_HOST=http://localhost:11434
 SIMULATION_ENABLED=false
 AI_HUB_CONFIG=path/to/config.json
 ```
@@ -424,10 +367,10 @@ AI_HUB_CONFIG=path/to/config.json
 | Component | Port | Description |
 |-----------|------|-------------|
 | Server | 3000 | HTTP API |
-| Client API | 3001 | HTTP API for web |
+| Client API | 5173 (`/api/a2a/*`) or 3001 (SDK) | HTTP API for web |
 | Web UI | 5173 | Vite dev server |
-| AI Hub Proxy | 11434 | Proxy for Ollama |
-| Ollama | 11435 | Local LLM |
+| AI Hub Proxy | 11435 | Proxy / promise flow → Ollama |
+| Ollama | 11434 | Local LLM |
 
 ### Startup
 

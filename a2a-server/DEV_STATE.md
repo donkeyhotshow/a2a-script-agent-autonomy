@@ -10,6 +10,9 @@
 | **a2a-server** | Серверная часть (этот файл) |
 | **ai-integration** | [DEV_STATE.md](../ai-integration/DEV_STATE.md) |
 
+### Общая архитектура системы
+Общая архитектура системы описана в [`DEV_STATE.md`](../DEV_STATE.md).
+
 ---
 
 ## Серверные проблемы

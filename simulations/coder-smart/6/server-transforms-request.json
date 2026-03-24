@@ -7,14 +7,6 @@
       "to": "$out"
     },
     {
-      "op": "append-to-array",
-      "to": "$.context.history",
-      "value": {
-        "role": "user",
-        "message": "$.result.message"
-      }
-    },
-    {
       "op": "truncate-section",
       "path": "context.docVirtual",
       "maxChars": 8000

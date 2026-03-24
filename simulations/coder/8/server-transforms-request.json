@@ -7,15 +7,6 @@
       "to": "$out"
     },
     {
-      "op": "append-to-array",
-      "to": "$.context.history",
-      "value": {
-        "role": "assistant",
-        "action": "write-file",
-        "result": "$.result"
-      }
-    },
-    {
       "op": "render-markdown",
       "templateRef": "a2a-server/prompts/coder-request.md",
       "data": "$out",

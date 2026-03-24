@@ -35,12 +35,18 @@ All AI-action prompts MUST require the LLM to respond with:
 
 ## Request Transform
 
+**Before** the pipeline runs, the server prepares the invoke payload (see **[LLM-REQUEST-PREP.md](./LLM-REQUEST-PREP.md)**):
+
+- `result` is merged into `context.history` (user + system lines), then cleared.
+- `flowControlHint` is set from `context.execution.action` + `step` for `${flowControlHint}` in templates.
+
+Canonical pipeline (no `append-to-array` for `result.message`):
+
 ```json
 {
   "type": "pipeline",
   "steps": [
     { "op": "copy", "from": "$", "to": "$out" },
-    { "op": "append-to-array", "to": "$.context.history", "value": { "role": "user", "message": "$.result.message" }},
     { "op": "render-markdown", "templateRef": "a2a-server/prompts/YOUR-PROMPT.md", "data": "$out", "outputFile": "request.md" }
   ]
 }
@@ -65,10 +71,11 @@ All AI-action prompts MUST require the LLM to respond with:
 ## How It Works
 
 1. **Client sends request** → server applies request transform
-2. **Request transform**: copies request, appends user message to history, renders markdown prompt
-3. **LLM processes** the prompt and returns JSON
-4. **Response transform**: parses JSON, updates `context.execution.step`, appends assistant message to history
-5. **Client receives response** with `execute` action
+2. **Request prep** ([LLM-REQUEST-PREP.md](./LLM-REQUEST-PREP.md)): materialize `result` → `history`, attach `flowControlHint`
+3. **Request transform**: copy → render markdown prompt (`request.md` / `system.md`)
+4. **LLM processes** the prompt and returns JSON
+5. **Response transform**: parses JSON, updates `context.execution.step`, appends assistant message to history
+6. **Client receives response** with `execute` action
 
 ## Context Fields
 
@@ -85,13 +92,13 @@ All AI-action prompts MUST require the LLM to respond with:
 |------------|--------|--------|
 | `auto-ai` | `a2a-server/prompts/auto-ai-request.md` | ✅ Canonical |
 | `coder-smart` | `a2a-server/prompts/coder-request.md` | ✅ Updated |
-| `analyze` | `a2a-server/prompts/analyze-request.md` | ⚠️ Needs update |
+| `analyze` | `a2a-server/prompts/analyze-request.md` | ✅ Canonical |
 
 ## Templates
 
 Location: `templates/ai-action-transforms/`
 
-- `server-transforms-request.json` — copy, append-to-history, render-markdown
+- `server-transforms-request.json` — copy, render-markdown (history + hints: see [LLM-REQUEST-PREP.md](./LLM-REQUEST-PREP.md))
 - `server-transforms-response.json` — parse-json, set-step, append-history, set-execute, set-completed
 - `README.md` — quick reference
 

@@ -6,7 +6,7 @@ This directory contains troubleshooting guides for common issues in the A2A Scri
 
 | Issue Category | Common Symptoms | Quick Fix |
 |----------------|-----------------|-----------|
-| **HTTP Requests** | No response from server | Check server is running on port 3001 |
+| **HTTP Requests** | No response from server | A2A Server **3000**; Client API **5173** (Vite `/api/a2a/*`) or SDK **3001** |
 | **Session State** | UI not updating, state corruption | Clear local storage, check synchronization |
 | **Panel Rendering** | Panels not showing, layout broken | Check CSS, clear panel state |
 | **Execute Processing** | Actions not working, malformed responses | Validate action-key shape, check server logs |

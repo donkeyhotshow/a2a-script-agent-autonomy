@@ -9,6 +9,7 @@
 - [WORKFLOW.md](WORKFLOW.md) — процес роботи над планом через агента (reasoning workflow)
 - [PRIORITIES.md](PRIORITIES.md) — таблиця пріоритетів виконання
 - [REFERENCE.md](REFERENCE.md) — канонічні симуляції: [`simulations/`](../../simulations/) у корені репозиторію
+- [LLM-REQUEST-PREP.md](LLM-REQUEST-PREP.md) — коротка планувальна нотатка з посиланням на канон [`a2a-server/docs/LLM-REQUEST-PREP.md`](../../a2a-server/docs/LLM-REQUEST-PREP.md)
 - [issues/](issues/) — окремий файл на кожен issue
 
 ## Пріоритети фокусів

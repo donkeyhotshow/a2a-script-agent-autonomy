@@ -15,10 +15,12 @@ doc:
 
 Протокол определяет формат запросов и ответов между компонентами системы:
 
-- **Web → Client API** (порт 3001)
-- **Client API → Server** (порт 3000)
+- **Web → Client API** — обычно Vite **5173**, префикс `/api/a2a/*`; отдельный Express SDK может слушать **3001** (см. [API-SERVER.md](API-SERVER.md), корневой `AGENTS.md`).
+- **Client API → Server** — `POST /api/v1/invoke`, порт **3000**
 
 **ВАЖНО:** Сервер полностью STATELESS - не хранит сессии, только обрабатывает запросы.
+
+<span id="action-key-shape"></span>
 
 ## Action-key shape (ОБЯЗАТЕЛЬНО)
 
@@ -577,6 +579,8 @@ interface SessionSummary {
 - **Прямые задачи:** dialog, chat → сразу input форма
 - Маршрутизация: общие задачи → роутер с вариантами
 
+<span id="async-flow-promiseid"></span>
+
 #### Асинхронный ответ (Async Flow с PromiseId)
 
 Когда сервер отправляет запрос к External AI Hub (прокси для Ollama) или выполняет сложную AI обработку, он использует `promiseId`:
@@ -600,7 +604,7 @@ interface SessionSummary {
 
 **Как работает promiseId:**
 
-1. Сервер отправляет запрос к External AI Hub (порт 11434) с заголовком `X-Promise: true`
+1. Сервер отправляет запрос к External AI Hub (порт **11435**, прокси к Ollama **11434**) с заголовком `X-Promise: true`
 2. Hub сразу возвращает `promiseId` (статус pending)
 3. Сервер продолжает workflow - отправляет execute клиенту
 4. Сервер периодически опрашивает `GET /promise/{id}` для проверки статуса

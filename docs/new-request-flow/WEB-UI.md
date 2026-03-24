@@ -20,7 +20,7 @@ doc:
 
 ## Обзор
 
-Web UI — это клиентское веб-приложение, работающее в браузере и взаимодействующее с API Server (порт 3001). Оно обеспечивает пользовательский интерфейс для:
+Web UI — клиентское приложение на Vite (**5173**), ходит в Client API по **`/api/a2a/*`** (same-origin). Отдельный SDK-сервер может быть на **3001** — см. [API-SERVER.md](API-SERVER.md). Обеспечивает:
 
 - Управления задачами и сессиями
 - Выполнения терминальных команд
@@ -82,7 +82,7 @@ a2a-client/web/
 
 ```javascript
 SessionManager.init({
-    apiBase: '/api',           // Базовый API URL (Client API на порту 3001)
+    apiBase: '/api/a2a',       // same-origin на Vite 5173; SDK — см. API-SERVER.md (:3001)
     projectId: 'p_1234567890'    // ID проекта
 });
 ```
@@ -405,7 +405,7 @@ FileTransfer.on('upload-complete', (data) => {
 
 ```javascript
 window.apiIntegration = {
-    serverUrl: 'http://localhost:3001/api',
+    serverUrl: '', // пусто = same-origin `/api/a2a` на 5173; иначе база Client API (напр. SDK http://localhost:3001/api)
     token: 'jwt-token'
 };
 ```
@@ -581,7 +581,7 @@ TerminalEmulator.on('output', (text) => {
 
 ## Требования
 
-- API Server должен быть запущен на порту 3001
+- Client API: в dev обычно встроен в Vite (**5173**, `/api/a2a/*`); отдельный SDK — порт **3001**
 - Для RAG поиска требуется Meilisearch на порту 7700
 
 > **Примечание:** Основной поток использует `promiseId` async polling. SSE/WebSocket опционально для realtime updates.

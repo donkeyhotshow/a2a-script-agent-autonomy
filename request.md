@@ -1,3 +1,7 @@
+## Flow for this turn
+
+**Coder.** One action-key in `execute` per turn (`rag-search`, `read-file`, `write-file`, …). Use `step` to show phase; advance when the current micro-goal is satisfied.
+
 ## Current State
 
 ```json
@@ -13,9 +17,6 @@
     }
   ],
   "task": "допоможи розібратись з кодом"
-},
-  "result": {
-  "message": "як працює система авторизації?"
 },
   "docVirtual": null,
   "ragResults": null

@@ -1,9 +1,12 @@
+## Flow for this turn
+
+${flowControlHint}
+
 ## Current State
 
 ```json
 {
   "context": ${context},
-  "result": ${result},
   "docVirtual": ${docVirtual},
   "ragResults": ${ragResults}
 }

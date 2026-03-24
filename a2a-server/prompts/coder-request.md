@@ -15,6 +15,10 @@ Steps:
 - `"execute-item"` — execute the next unchecked checklist item
 - `"completed"` — all items are done, task is complete
 
+## Flow for this turn
+
+${flowControlHint}
+
 ## Response Format
 
 ```json
@@ -43,7 +47,6 @@ Rules:
 ```json
 {
   "context": ${context},
-  "result": ${result},
   "docVirtual": ${docVirtual},
   "ragResults": ${ragResults}
 }

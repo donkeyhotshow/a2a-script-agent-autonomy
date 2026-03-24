@@ -310,8 +310,8 @@ interface NextStepResponse {
 
 | Schema File | Description | Used For |
 |-------------|-------------|----------|
-| [`web-client-api-request.schema.json`](json-schemas/web-client-api-request.schema.json) | Запрос от Web UI к Client API | Web → Client API (port 3001) |
-| [`web-client-api-response.schema.json`](json-schemas/web-client-api-response.schema.json) | Ответ от Client API к Web UI | Client API → Web (port 3001) |
+| [`web-client-api-request.schema.json`](json-schemas/web-client-api-request.schema.json) | Запрос от Web UI к Client API | Web → Client API (5173 `/api/a2a/*` или SDK :3001) |
+| [`web-client-api-response.schema.json`](json-schemas/web-client-api-response.schema.json) | Ответ от Client API к Web UI | Client API → Web (тот же origin/порт) |
 
 #### Request Types (web-client-api-request.schema.json)
 

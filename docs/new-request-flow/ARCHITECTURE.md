@@ -29,7 +29,7 @@ doc:
 │  - Пользовательский интерфейс                                     │
 │  - Управление сессиями через UI                                   │
 │  - НЕ знает адрес сервера                                        │
-│  - Общается ТОЛЬКО с CLIENT API (localhost:3001)                 │
+│  - Общается только с Client API (Vite 5173 `/api/a2a/*` или SDK :3001) │
 └─────────────────────────────────────────────────────────────────┘
                               │
                               ▼
@@ -38,7 +38,7 @@ doc:
 │  - Хранит конфигурацию (provider, projects)                      │
 │  - Управляет сессиями                                            │
 │  - Знает адрес сервера                                           │
-│  - API: localhost:3001                                           │
+│  - API: см. выше (не ходит на a2a-server напрямую)                │
 │  - Содержит пакеты:                                              │
 │    - sdk - Основной SDK                                           │
 │    - rag - RAG функциональность                                   │
@@ -95,7 +95,7 @@ doc:
 │  │  - provider                                                ││
 │  └─────────────────────────────────────────────────────────────┘│
 │          │                                                       │
-│          │ HTTP к CLIENT API (localhost:3001)                   │
+│          │ HTTP к Client API (5173 /api/a2a или SDK :3001)        │
 │          ▼                                                       │
 └──────────────────────────────────────────────────────────────────┘
                               │
@@ -103,17 +103,14 @@ doc:
 ┌──────────────────────────────────────────────────────────────────┐
 │  CLIENT API (a2a-client)                                         │
 │                                                                          │
-│  Эндпоинты (порт 3001):                                            │
+│  Эндпоинты (Web / Vite — префикс /api/a2a):                        │
 │  ┌─────────────────────────────────────────────────────────────┐│
-│  │ POST /api/sessions          - создать сессию                ││
-│  │ GET  /api/sessions          - получить список сессий         ││
-│  │ GET  /api/sessions/:id     - получить сессию                ││
-│  │ POST /api/sessions/:id/next - следующий шаг                  ││
-│  │ POST /api/sessions/:id/cancel - отменить сессию              ││
-│  │ GET  /api/projects          - получить список проектов       ││
-│  │ POST /api/projects          - создать проект                ││
-│  │ GET  /api/config            - получить конфигурацию         ││
-│  │ POST /api/config            - сохранить конфигурацию         ││
+│  │ POST /api/a2a/sessions        - создать сессию               ││
+│  │ GET  /api/a2a/sessions        - список сессий                 ││
+│  │ GET  /api/a2a/sessions/:id   - получить сессию               ││
+│  │ POST /api/a2a/sessions/:id/next - следующий шаг             ││
+│  │ GET  /api/a2a/sessions/:id/async - опрос async (web UI)       ││
+│  │ GET  /api/a2a/projects       - список проектов                 ││
 │  └─────────────────────────────────────────────────────────────┘│
 │                              │                                   │
 │                              ▼                                   │
@@ -145,252 +142,29 @@ doc:
 └──────────────────────────────────────────────────────────────────┘
 ```
 
-```
-
 ## External AI Hub
 
-External AI Hub - это прокси-сервис, который:
-
-1. Перенаправляет запросы к Ollama (порт 11434 → 11435)
-2. Поддерживает асинхронный режим через `promiseId`
-3. Может симулировать ответы LLM (для тестирования)
-4. Логирует все запросы
-
-### Как работает promiseId
-
-```
-
-1. Server отправляет запрос к External AI Hub с заголовком X-Promise: true
-2. Hub сразу возвращает promiseId (статус pending)
-3. Server продолжает работу, не дожидаясь ответа от LLM
-4. Server периодически опрашивает Hub: GET /promise/{id}
-5. Когда статус done → получает результат: GET /promise/{id}/response
-
-```
-
-### Endpoints External AI Hub
-
-| Endpoint | Описание |
-|----------|----------|
-| GET /health | Проверка здоровья |
-| GET /api/tags | Список моделей |
-| POST /api/chat | Чат с LLM |
-| POST /api/generate | Генерация |
-| GET /promise/<id> | Статус promise |
-| GET /promise/<id>/response | Результат promise |
-
-### Переменные окружения
-
-```
-
-PROXY_PORT=11434 # Порт прокси
-OLLAMA_HOST=http://localhost:11435  # Хост Ollama
-SIMULATION_ENABLED=false # Включить симуляцию
-
-```
+Прокси **ai-integration** (**:11435** → Ollama **:11434**), async через **`promiseId`**. Поток и таблица endpoint’ов: [PROTOCOL.md → Async flow](PROTOCOL.md#async-flow-promiseid); интеграция на стороне сервера: [SERVER-ARCHITECTURE.md → External AI Hub Integration](SERVER-ARCHITECTURE.md#external-ai-hub-integration).
 
 ## Потоки данных
 
-### 1. Создание новой задачи
-
-```
-
-1. USER: вводит задачу в web UI
-   │
-2. WEB: отправляет POST /api/sessions { projectId, task }
-   │
-3. CLIENT API:
-    - Создает сессию локально (в памяти/файле)
-    - Отправляет POST /api/v1/invoke на SERVER
-    - SERVER возвращает promiseId
-    - CLIENT API сохраняет сессию с **execute.form.choices** (router; формат `actions[]` считается legacy)
-
-   │
-4. CLIENT API: возвращает { sessionId, **execute.form.choices** } (router вместо `actions[]`)
-   │
-5. WEB: отображает панель сессии с **execute.form.choices** (ранее `actions[]`)
-
-```
-
-### 2. Выбор действия
-
-```
-
-1. USER: выбирает действие из **execute.form.choices** (router; `actions[]` — только для старых реализаций)
-   │
-2. WEB: отправляет POST /api/sessions/:id/action { action }
-   │
-3. CLIENT API: обновляет состояние сессии
-   │
-4. WEB: показывает steps[], кнопки "Далее" / "Авто"
-
-```
-
-### 3. Выполнение шагов
-
-```
-
-1. USER: нажимает "Далее"
-   │
-2. WEB: отправляет POST /api/sessions/:id/next
-   │
-3. CLIENT API:
-    - Отправляет POST /api/v1/invoke { context, result: { choice } } — выбирает опцию из `execute.form.choices`
-    - SERVER возвращает execute с script
-    - CLIENT API выполняет script
-    - CLIENT API сохраняет результаты в сессии
-      │
-4. CLIENT API: возвращает результат
-   │
-5. WEB: отображает результат, кнопка "Далее" / "Стоп"
-
-```
-
-### 4. AI запрос через External AI Hub
-
-```
-
-1. SERVER: решает отправить запрос к LLM
-   │
-2. SERVER → EXTERNAL AI HUB: POST /api/chat { model, messages }
-    - Заголовок X-Promise: true
-      │
-3. EXTERNAL AI HUB:
-    - Создает promise (pending)
-    - Возвращает promiseId сразу
-      │
-4. SERVER:
-    - Сохраняет promiseId в контексте
-    - Продолжает workflow (отправляет execute клиенту)
-      │
-5. SERVER: периодически опрашивает GET /promise/{id}
-   │
-6. EXTERNAL AI HUB: возвращает { status: "pending" | "done" }
-   │
-7. Когда done: SERVER → GET /promise/{id}/response
-   │
-8. SERVER: использует результат для следующих действий
-
-```
+Пошаговые сценарии сессии и контракты: [SESSION-FLOW.md](SESSION-FLOW.md), [PROTOCOL.md](PROTOCOL.md). Асинхронный вызов LLM через Hub: [PROTOCOL.md → Async flow](PROTOCOL.md#async-flow-promiseid).
 
 ## Файловая структура
 
-### a2a-client/packages/
-
-```
-
-a2a-client/packages/
-├── sdk/           # Основний SDK (API клієнт + API сервер)
-├── rag/           # RAG
-├── execution/     # виконання скриптів
-├── embedding/     # ембедінги
-├── history/       # історія
-├── json/          # JSON утиліти
-└── types/         # Спільні типи
-
-```
-
-### a2a-client/web/
-
-```
-
-a2a-client/web/
-├── js/
-│ ├── app/                    # Основные модули приложения
-│ │   ├── app-task.js         # Управление задачами
-│ │   ├── session-manager.js  # Управление сессиями
-│ │   ├── project-manager.js  # Управление проектами
-│ │   ├── taskbar-manager.js  # Управление таскбаром
-│ │   └── window-manager.js   # Управление окнами
-│ ├── storage.js             # Сховище даних
-│ ├── 
-│ ├── app/ # Основные модули
-│ ├── components/ # UI компоненты
-│ ├── transport/            # Транспортний рівень
-│ ├── web-api-client.js # API клиента (NEW!)
-│ └── ...
-├── css/
-│ └── ...
-└── index.html
-
-```
+Дерево каталогов и назначение модулей: [FILES.md](FILES.md).
 
 ## Порты
 
-| Компонент | Порт | Описание |
-|-----------|------|----------|
-| Server    | 3000 | HTTP API |
-| Client API| 3001 | HTTP API для web |
-| Web UI    | 5173 | Vite dev server |
-| External AI Hub | 11434 | Прокси для Ollama |
-| Ollama    | 11435 | Локальная LLM |
-
-## External AI Hub
-
-External AI Hub - это прокси-сервис, который:
-
-1. Перенаправляет запросы к Ollama (порт 11434 → 11435)
-2. Поддерживает асинхронный режим через `promiseId`
-3. Может симулировать ответы LLM (для тестирования)
-4. Логирует все запросы
-
-### Как работает promiseId
-
-```
-
-1. Server отправляет запрос к External AI Hub с заголовком X-Promise: true
-2. Hub сразу возвращает promiseId (статус pending)
-3. Server продолжает работу, не дожидаясь ответа от LLM
-4. Server периодически опрашивает Hub: GET /promise/{id}
-5. Когда статус done → получает результат: GET /promise/{id}/response
-
-```
-
-### Endpoints External AI Hub
-
-| Endpoint | Описание |
-|----------|----------|
-| GET /health | Проверка здоровья |
-| GET /api/tags | Список моделей |
-| POST /api/chat | Чат с LLM |
-| POST /api/generate | Генерация |
-| GET /promise/<id> | Статус promise |
-| GET /promise/<id>/response | Результат promise |
-
-### Переменные окружения
-
-```
-
-PROXY_PORT=11434 # Порт прокси
-OLLAMA_HOST=http://localhost:11435  # Хост Ollama
-SIMULATION_ENABLED=false # Включить симуляцию
-
-```
+Сводная таблица: [DATA-FLOW.md → компоненты и порты](DATA-FLOW.md#component-ports); краткий перечень: [AGENTS.md → Default Ports](../../AGENTS.md#default-ports).
 
 ## Переменные окружения
 
-### Server (.env)
-```
-
-PORT=3000
-JWT_SECRET=...
-ENCRYPTION_KEY=32-characters-key-here
-SKIP_AUTH=1
-
-```
-
-> **Примечание:** Сервер stateless - не требует базы данных. Все данные хранятся на Client API.
-
-### Client
-```
-
-CLIENT_API_URL=http://localhost:3001
-
-```
+Сервер, клиент, ключи, AI: [AGENTS.md → Environment Variables](../../AGENTS.md#environment-variables).
 
 ## Следующие шаги
 
-1. Создать Client API сервер (port 3001)
+1. Поднять Client API (Vite plugin на 5173 или SDK на 3001)
 2. Переписать web-api-client.js для обращения к Client API
 3. Добавить sessionId и projectId во все запросы
 4. Реализовать хранение сессий на стороне клиента

@@ -9,6 +9,8 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import { applyOperation, createDefaultFileSystem } from './operations.js';
 import { resolveTemplates } from './jsonpath.js';
+import { prepareInvokePayloadForLlmPrompt } from './materialize-result-for-llm.js';
+import { attachFlowControlHintToInvokePayload } from '../prompts/flow-control-hints.js';
 import type { 
   TransformPipeline, 
   TransformContext, 
@@ -286,6 +288,10 @@ export async function loadPromptsTransform(
  * @param input - Input document
  * @param type - 'request' or 'response'
  * @param options - Transform options; step, forceServerTransforms
+ *
+ * For `type === 'request'`, the input is cloned and `prepareInvokePayloadForLlmPrompt` runs first:
+ * `result.message` → `context.history` as user; each other `result` key → system line; then `result` is cleared.
+ * Then `attachFlowControlHintToInvokePayload` sets `flowControlHint` from `context.execution.action` + `step` for templates.
  */
 export async function runPromptsTransform(
   promptsTransformsDir: string,
@@ -305,7 +311,13 @@ export async function runPromptsTransform(
   }
 
   const baseDir = transformOptions.baseDir ?? path.resolve(promptsTransformsDir, '../../..');
-  return runTransformPipeline(pipeline, input, { ...transformOptions, baseDir });
+  let pipelineInput: Record<string, unknown> = input;
+  if (type === 'request') {
+    const clone = prepareInvokePayloadForLlmPrompt(JSON.parse(JSON.stringify(input)) as Record<string, unknown>);
+    attachFlowControlHintToInvokePayload(clone);
+    pipelineInput = clone;
+  }
+  return runTransformPipeline(pipeline, pipelineInput, { ...transformOptions, baseDir });
 }
 
 /**

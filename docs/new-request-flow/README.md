@@ -14,6 +14,7 @@
 |----------|----------|
 | [`simulations/SCHEMA.md`](../../simulations/SCHEMA.md) | **Каноничная схема** симуляций - основной источник истины |
 | [`simulations/REFERENCE.md`](../../simulations/REFERENCE.md) | Справочник: Actions vs AI-Actions |
+| [`a2a-server/docs/LLM-REQUEST-PREP.md`](../../a2a-server/docs/LLM-REQUEST-PREP.md) | Подготовка тела запроса к LLM на сервере (`result` → `history`, `flowControlHint`) |
 
 ## Текущая архитектура
 

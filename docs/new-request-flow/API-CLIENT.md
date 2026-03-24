@@ -179,7 +179,7 @@ await client.deleteSession(sessionId: string): Promise<void>;
 
 #### invoke()
 
-Общий метод для вызова с произвольным markdown. Основной метод для взаимодействия с сервером через `/invoke` endpoint.
+Общий метод для вызова с произвольным markdown. На сервер уходит **`POST /api/v1/invoke`** (SDK проксирует).
 
 ```typescript
 const result = await client.invoke({
@@ -544,7 +544,7 @@ API Client работает с форматами, определёнными в
 
 ### Server Invoke Request
 
-Запросы к `/invoke` соответствуют схеме [`server-invoke-request.schema.json`](json-schemas/server-invoke-request.schema.json):
+Тело запроса к **`POST /api/v1/invoke`** соответствует схеме [`server-invoke-request.schema.json`](json-schemas/server-invoke-request.schema.json):
 
 ```typescript
 // Первый запрос

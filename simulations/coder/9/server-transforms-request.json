@@ -7,15 +7,6 @@
       "to": "$out"
     },
     {
-      "op": "append-to-array",
-      "to": "$.context.history",
-      "value": {
-        "role": "assistant",
-        "action": "read-file",
-        "result": "$.result.read-file"
-      }
-    },
-    {
       "op": "inject-error",
       "to": "$.context.history",
       "errorType": "json-parse-error",

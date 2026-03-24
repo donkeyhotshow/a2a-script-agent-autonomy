@@ -26,7 +26,7 @@
                                        ▼
 ┌──────────────────────────────────────────────────────────────────────────────────────────────┐
 │                              CLIENT API SERVER                                                │
-│                              (localhost:3001)                                                 │
+│                    (Vite 5173 /api/a2a или SDK localhost:3001)                               │
 │                                                                                              │
 │   ┌─────────────────────────────────────────────────────────────────────────────────────┐   │
 │   │  Эндпоинты:                                                                        │   │
@@ -48,7 +48,7 @@
 │                                                                                              │
 │   ┌─────────────────────────────────────────────────────────────────────────────────────┐   │
 │   │  Эндпоинты (/api/v1):                                                             │   │
-│   │  - POST /invoke                                                                   │   │
+│   │  - POST /api/v1/invoke                                                            │   │
 │   │  - GET /sessions/*                                                               │   │
 │   │  - POST /sessions/:id/message                                                    │   │
 │   │  - POST /sessions/:id/continue                                                   │   │
@@ -239,7 +239,7 @@ ARCHITECTURE.md
 # 1. A2A Server (порт 3000)
 cd a2a-server && npm run dev
 
-# 2. Client API Server (порт 3001)
+# 2. Client API (Vite 5173 /api/a2a или SDK порт 3001)
 cd a2a-client/packages/sdk && npm run dev
 
 # 3. Web UI (порт 5173)

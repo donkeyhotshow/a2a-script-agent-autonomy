@@ -18,10 +18,10 @@
 ### 1.2 Требуемые порты
 | Порт | Компонент | Описание |
 |------|-----------|----------|
-| 11434 | AI Integration | LLM прокси |
-| 11435 | Ollama | LLM сервер |
+| 11434 | Ollama | Локальная LLM |
+| 11435 | AI Integration | Прокси / promise → Ollama :11434 |
 | 3000 | a2a-server | A2A API сервер (stateless) |
-| 3001 | a2a-client | Client API (хранит сессии) |
+| 3001 | a2a-client (SDK) | Client API (опционально; Web чаще Vite 5173 + `/api/a2a/*`) |
 | 5173 | Vite Dev | Web UI |
 
 > **Примечание:** Порты 5432 (PostgreSQL), 6379 (Redis), 5672 (RabbitMQ) больше не используются.
@@ -34,13 +34,13 @@
 
 ```bash
 # Запуск Ollama
-docker run -d -v ollama_data:/root/.ollama -p 11435:11434 --name ollama ollama/ollama:latest
+docker run -d -v ollama_data:/root/.ollama -p 11434:11434 --name ollama ollama/ollama:latest
 
 # Установка модели (обязательно)
 docker exec ollama ollama pull qwen3:8b
 
 # Проверка
-curl http://localhost:11435/api/tags
+curl http://localhost:11434/api/tags
 ```
 
 **Ожидаемый ответ:**
@@ -70,13 +70,13 @@ python -m proxy
 
 ```bash
 # Основные переменные (stateless - нет database/redis)
-export OLLAMA_URL="http://localhost:11435"
+export OLLAMA_URL="http://localhost:11434"
 export OLLAMA_MODEL="qwen3:8b"
 export SKIP_AUTH="1"  # Только для dev!
 export ENCRYPTION_KEY="12345678901234567890123456789012"  # 32 символа
 
 # AI Integration (если запущен)
-export AI_HUB_URL="http://localhost:11434"
+export AI_HUB_URL="http://localhost:11435"
 ```
 
 > **Примечание:** `DATABASE_URL` и `REDIS_URL` больше не требуются!
@@ -111,7 +111,7 @@ cd a2a-client
 # Установка зависимостей
 npm install
 
-# Запуск Client API (port 3001) - хранит сессии в JSON
+# Client API / dev-сервер пакета (часто порт 3001); Web UI в dev обычно 5173 + `/api/a2a/*`
 npm run dev
 ```
 
@@ -133,7 +133,7 @@ npm run dev
 
 ```bash
 # 1. Только Ollama нужен
-docker run -d -v ollama_data:/root/.ollama -p 11435:11434 --name ollama ollama/ollama:latest
+docker run -d -v ollama_data:/root/.ollama -p 11434:11434 --name ollama ollama/ollama:latest
 docker exec ollama ollama pull qwen3:8b
 
 # 2. Запуск всех компонентов Node.js
@@ -158,21 +158,21 @@ curl http://localhost:3001/api/health
 # {"status": "ok"}
 
 # AI Integration (если запущен)
-curl http://localhost:11434/health
-# {"status": "ready"}
+curl http://localhost:11435/health
 
 # Ollama
-curl http://localhost:11435/api/tags
+curl http://localhost:11434/api/tags
 # {"models": [...]}
 ```
 
 ### 4.2 Проверка потока
 
 ```bash
-# Создание сессии через Client API
+# Создание сессии (standalone SDK на 3001)
 curl -X POST http://localhost:3001/api/sessions \
   -H "Content-Type: application/json" \
   -d '{"task": "test", "projectId": "default"}'
+# Web dev: POST http://localhost:5173/api/a2a/sessions (см. AGENTS.md)
 ```
 
 ---
@@ -203,7 +203,7 @@ npm run dev  # смотреть ошибки в консоли
 
 ```bash
 # Проверка Ollama
-curl http://localhost:11435/api/tags
+curl http://localhost:11434/api/tags
 # Должен вернуть список моделей
 
 # Если не работает - перезапуск
@@ -226,8 +226,8 @@ ls -la storage/
 
 ```
 ┌─────────────┐     ┌──────────────┐     ┌─────────────┐     ┌─────────────────┐
-│   Web UI    │────▶│  Client API  │────▶│ a2a-server  │────▶│   AI/Ollama     │
-│  (port 5173)│     │ (port 3001)  │     │ (port 3000) │     │  (port 11435)   │
+│   Web UI    │────▶│ Client API   │────▶│ a2a-server  │────▶│ AI Hub → Ollama │
+│    :5173    │     │5173 or :3001 │     │    :3000    │     │ :11435 → :11434 │
 └─────────────┘     └──────┬───────┘     └─────────────┘     └─────────────────┘
                            │
                            │ JSON files

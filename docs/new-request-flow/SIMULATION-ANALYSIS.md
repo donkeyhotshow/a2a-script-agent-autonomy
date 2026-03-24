@@ -8,7 +8,7 @@
 
 `simulations/fix-vue-imports/`
 
-> **ВАЖНО:** Эта симуляция показывает **Client → Server** взаимодействие (через `/invoke`).
+> **ВАЖНО:** Эта симуляция показывает **Client → Server** взаимодействие (через **`POST /api/v1/invoke`**).
 >
 > Ключевое правило: **Сервер полностью STATELESS** - НЕ хранит sessionId/projectId!
 

@@ -14,6 +14,10 @@ Steps:
 - `"save"` — write the analysis report to a file
 - `"completed"` — all analysis is done
 
+## Flow for this turn
+
+${flowControlHint}
+
 ## Response Format
 
 ```json
@@ -42,7 +46,6 @@ Rules:
 ```json
 {
   "context": ${context},
-  "result": ${result},
   "docVirtual": ${docVirtual},
   "ragResults": ${ragResults}
 }

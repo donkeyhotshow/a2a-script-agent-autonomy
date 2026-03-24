@@ -27,14 +27,14 @@
 │  │                                       ▼                                       │   │
 │  │  ┌─────────────────────────────────────────────────────────────────┐      │   │
 │  │  │                    web-api-client.js                             │      │   │
-│  │  │            HTTP клиент → Client API (localhost:3001)             │      │   │
+│  │  │            HTTP → Client API (Vite `5173` `/api/a2a/*` or SDK `3001`)          │      │   │
 │  │  └─────────────────────────────────────────────────────────────────┘      │   │
 │  └─────────────────────────────────┬───────────────────────────────────────┘   │
 │────                                        │ HTTP API                                     │
 │                                        ▼                                             │
 │  ┌───────────────────────────────────────────────────────────────────────────────┐  │
-│  │                     CLIENT API2a-client) SERVER (a                            │  │
-│  │                             localhost:3001                                     │  │
+│  │                     CLIENT API (a2a-client)                                    │  │
+│  │                   Vite 5173 or standalone SDK 3001                               │  │
 │  │                                                                               │  │
 │  │  ┌─────────────────────────────────────────────────────────────────────────┐  │  │
 │  │  │                           Роутинг                                        │  │  │
@@ -62,7 +62,7 @@
 │  │  ┌────────────────────────────────────────────────────────────────────────────────┐  │ │
 │  │  │                              Endpoints                                         │  │ │
 │  │  │  ┌────────────┐  ┌────────────┐  ┌────────────┐             │  │ │
-│  │  │  │POST/invoke │  │POST/requests│  │GET/health  │             │  │ │
+│  │  │  │POST /api/v1/invoke│  │GET /api/v1/requests/*│  │GET /health │             │  │ │
 │  │  │  └─────┬──────┘  └─────┬──────┘  └────────────┘             │  │ │
 │  │  └────────│───────────────│────────────────────────────────────────┘  │ │
 │  │           │               │               │                                          │ │
@@ -91,8 +91,8 @@
 │                                              │ HTTP (X-Promise header)                    │
 │                                              ▼                                            │
 │  ┌───────────────────────────────────────────────────────────────────────────────────────┐ │
-│  │                      EXTERNAL AI HUB (ollama proxy)                                  │ │
-│  │                              localhost:11434                                         │ │
+│  │                      EXTERNAL AI HUB (proxy)                                         │ │
+│  │                              localhost:11435 → Ollama :11434                         │ │
 │  │                                                                                       │ │
 │  │  ┌──────────────────────────────────────────────────────────────────────────────┐   │ │
 │  │  │                    Promise-based Async Flow                                    │   │ │
@@ -123,57 +123,21 @@
 
 ## Где Simulations вписываются в Flow
 
-Симуляции используются как **golden traces** для тестирования и верификации:
+Симуляции — **golden traces**: каталог шага, `request.json` → transforms → `request.md` → LLM → `response.md` → transforms → `response.json`. Полная схема файлов и pipeline: [`simulations/SCHEMA.md`](../../simulations/SCHEMA.md), формат и правила: [SIMULATION-FORMAT.md](SIMULATION-FORMAT.md).
 
-```
-┌─────────────────────────────────────────────────────────────────────────────────────┐
-│                         SIMULATION PIPELINE                                         │
-│                                                                                     │
-│  ┌─────────────────────────────────────────────────────────────────────────────┐    │
-│  │                         STEP N DIRECTORY                                    │    │
-│  │  simulations/<name>/step-N/                                                │    │
-│  │                                                                             │    │
-│  │  ┌──────────────┐      ┌───────────────────────┐      ┌────────────────┐  │    │
-│  │  │ request.json │ ───▶ │ server-transforms     │ ───▶ │  request.md    │  │    │
-│  │  │              │      │   -request.json        │      │  (LLM input)   │  │    │
-│  │  └──────────────┘      └───────────────────────┘      └───────┬────────┘  │    │
-│  │                                                              │              │    │
-│  │                                                              ▼              │    │
-│  │  response.json ◀────────── server-transforms         response.md       │    │
-│  │  (expected)          -response.json                  (LLM output)       │    │
-│  │                                                                      │    │
-│  │  ┌─────────────────────────────────────────────────────────────────┐    │    │
-│  │  │                      VERIFICATION                               │    │    │
-│  │  │  Compare: actual response.json vs expected response.json       │    │    │
-│  │  └─────────────────────────────────────────────────────────────────┘    │    │
-│  └─────────────────────────────────────────────────────────────────────────────┘    │
-│                                                                                     │
-│  Pipeline: request.json → server-transforms-request.json → request.md →          │
-│            response.md → server-transforms-response.json → response.json           │
-└─────────────────────────────────────────────────────────────────────────────────────┘
-```
+Перед сборкой `request.md` сервер готовит invoke (fold `result` → `history`, `flowControlHint`): [`a2a-server/docs/LLM-REQUEST-PREP.md`](../../a2a-server/docs/LLM-REQUEST-PREP.md).
 
-### Файлы симуляции (per step)
-
-| Файл | Направление | Описание |
-|------|-------------|----------|
-| `request.json` | Client → Server | Payload от клиента |
-| `server-transforms-request.json` | — | Как сервер обрабатывает request и строит LLM input |
-| `request.md` | Server → LLM | Markdown для LLM (system prompt + state) |
-| `response.md` | LLM → Server | Ожидаемый LLM output |
-| `server-transforms-response.json` | — | Как сервер обрабатывает response и строит client payload |
-| `response.json` | Server → Client | Payload для клиента |
-
-**См.:** [simulations/SCHEMA.md](../../simulations/SCHEMA.md), [SIMULATION-FORMAT.md](SIMULATION-FORMAT.md)
+<span id="component-ports"></span>
 
 ## Таблица компонентов и портов
 
 | Компонент | Порт | Назначение | Связь |
 |-----------|------|------------|-------|
-| Web UI | 5173 | Пользовательский интерфейс | → Client API (3001) |
-| Client API Server | 3001 | Локальный сервер для Web | → A2a-server (3000) |
-| A2A Server | 3000 | Обработка задач | → External AI Hub (11434) |
-| External AI Hub | 11434 | Ollama proxy | → Ollama (11435) |
+| Web UI | 5173 | Пользовательский интерфейс | → Client API на том же Vite (`/api/a2a/*`) или SDK :3001 |
+| Client API | 5173 (vite-plugin) или 3001 (SDK) | Сессии, прокси на сервер | → A2A Server (3000) |
+| A2A Server | 3000 | Обработка задач | → AI Hub (11435) |
+| AI Hub (ai-integration) | 11435 | Прокси / promise flow | → Ollama (11434) |
+| Ollama | 11434 | Локальная LLM | — |
 
 ## Перекрёстные ссылки
 

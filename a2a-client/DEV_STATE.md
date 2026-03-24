@@ -20,6 +20,10 @@
 
 См. полную документацию: [`docs/architecture/COMPONENT_ROLES.md`](docs/architecture/COMPONENT_ROLES.md)
 
+### Общая архитектура системы
+
+Общая архитектура системы описана в [`DEV_STATE.md`](../DEV_STATE.md).
+
 ### Polling Flow
 
 ```

@@ -26,7 +26,7 @@ Recommended sections:
 
 ## Index
 
-- `ADR-0001-simulations-as-golden-standard.md` - simulations are the golden standard for comparing behavior across layers
+- `ADR-0001-simulations-as-golden-standard.md` - simulations are the golden standard for comparing behavior across layers (see also ADR-0020)
 - `ADR-0012-session-state-unification.md` - Unified SessionStore as single source of truth vs distributed state
 - `ADR-0013-unified-transport-layer.md` - Unified transport layer with synchronous HTTP requests and fallback handling
 - `ADR-0014-transport-fallback-mechanisms.md` - Automatic failover logic and reconnection strategies
@@ -40,3 +40,15 @@ Recommended sections:
 - `ADR-0022-error-recovery-patterns.md` - Comprehensive error handling and recovery strategies
 - `ADR-0023-connection-resilience.md` - Handling network failures and reconnections
 - `ADR-0024-graceful-degradation.md` - System behavior when components fail
+- `ADR-0025-decouple-promise-from-ui.md` - Reduce Web UI coupling to promiseId; session-scoped async polling
+- `ADR-0026-server-llm-request-prep.md` - Fold `result` into `context.history` and attach `flowControlHint` before LLM `request.md`
+- `ADR-0027-documentation-canonical-sources.md` - Single source of truth per topic; link-first docs; stable anchors
+- `ADR-0028-client-api-deployment-modes.md` - Vite `/api/a2a` on 5173 vs standalone SDK Client API (e.g. 3001); same server contract
+
+## Adding a new ADR
+
+1. Use the next free number: **`ADR-0029-...md`** (keep zero-padding).
+2. Set **Status** (`proposed` → `accepted`) and **Date**.
+3. Include **Context**, **Decision**, **Consequences** (and **Related** / **Notes** if useful).
+4. Add one line to the **Index** above with a short description.
+5. If the decision moves normative detail out of [`AGENTS.md`](../../AGENTS.md) or [`docs/new-request-flow/PROTOCOL.md`](../new-request-flow/PROTOCOL.md), update those files in the same change set.

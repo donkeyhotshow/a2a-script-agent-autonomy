@@ -13,6 +13,7 @@ This file provides guidance to agents when working with code in this repository.
 7. [Debugging Tips](#debugging-tips)
 8. [Running Tests](#running-tests)
 9. [Common Issues and Solutions](#common-issues-and-solutions)
+10. [Architecture decision records (ADRs)](#architecture-decision-records-adrs)
 
 ---
 
@@ -103,6 +104,8 @@ LLM controls `context.execution.step`, server persists via transforms. Prompt fo
 request.json → server-transforms → request.md → [LLM] → response.md → server-transforms → response.json
 ```
 
+**Server-side LLM request prep** (before `request.md` is built): `result` is folded into `context.history`; `flowControlHint` is chosen from `context.execution.action` + `step`. See [`a2a-server/docs/LLM-REQUEST-PREP.md`](a2a-server/docs/LLM-REQUEST-PREP.md).
+
 ---
 
 ## Environment Variables
@@ -130,6 +133,8 @@ request.json → server-transforms → request.md → [LLM] → response.md → 
 ---
 
 ## System Architecture
+
+Cross-cutting decisions (LLM request prep, documentation canonical map, Client API deployment modes, etc.): [`docs/adr/README.md`](docs/adr/README.md).
 
 ### Components
 
@@ -518,6 +523,12 @@ curl -X POST http://localhost:3000/api/v1/invoke -d '{}'
 2. Check each message has `role`, `content`, `step` fields
 3. The client API merges messages from all step folders when loading the session
 3. Verify API returns messages in `/sessions/{id}` response
+
+---
+
+## Architecture decision records (ADRs)
+
+Indexed in [`docs/adr/README.md`](docs/adr/README.md). Recent examples: **ADR-0026** (server LLM request prep: `result` → `history`, `flowControlHint`), **ADR-0027** (canonical docs map), **ADR-0028** (Vite `/api/a2a` vs standalone SDK Client API).
 
 ---
 

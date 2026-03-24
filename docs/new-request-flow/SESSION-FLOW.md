@@ -6,7 +6,7 @@
 > **См.:** [PROTOCOL.md](PROTOCOL.md), [SCHEMA.md](SCHEMA.md)
 
 > **ВАЖНО:** Сервер (a2a-server) STATELESS — не хранит сессии!
-> Все сессии хранятся на Client API. Сервер только обрабатывает запросы через `/invoke`.
+> Все сессии хранятся на Client API. Сервер только обрабатывает запросы через **`POST /api/v1/invoke`**.
 >
 > **Транспорт:** Web ↔ Client API ↔ Server — **async flow с `promiseId`**. Server возвращает `promiseId`,
 > Client API опрашивает статус до `completed`.

@@ -14,7 +14,7 @@ c:/workspace/org-carrier/a2a-script-agent/
 │   ├── packages/        # npm пакети (sdk, rag, execution, embedding, history, json, types)
 │   └── web/             # Web UI (порт 5173)
 ├── a2a-server/          # Серверна частина (порт 3000)
-├── ai-integration/    # Проксі для Ollama (порт 11434)
+├── ai-integration/    # AI Hub proxy → Ollama (див. порти нижче)
 └── docs/new-request-flow/    # Документація та плани
 ```
 
@@ -73,68 +73,9 @@ NPM пакети всередині monorepo:
 
 ---
 
-## External AI Hub
+## External AI Hub (`ai-integration/`)
 
-Проксі-сервіс для Ollama з підтримкою promiseId. Працює на порту 11434.
-
-### Структура
-
-```
-ai-integration/
-├── proxy/                      # Flask додаток
-│   ├── __init__.py            # Flask app
-│   ├── __main__.py            # Точка входу
-│   ├── config.py              # Конфігурація
-│   ├── routes.py              # API маршрути
-│   ├── proxy_handler.py       # Обробка запитів
-│   ├── ollama_manager.py      # Управління Ollama
-│   ├── promises.py            # Promise система
-│   ├── ai_hub_config.py      # AI Hub конфіг
-│   └── views.py               # Додаткові view
-│
-├── simulation/                 # ML симуляція
-│   ├── config.py              # Конфігурація
-│   ├── storage.py             # Зберігання даних
-│   ├── learner.py             # Навчання ембедінгів
-│   ├── engine.py              # Двигун симуляції
-│   └── prompt_manager.py      # Управління промптами
-│
-├── scripts/                    # Утиліти
-│   ├── train.py               # Навчання
-│   └── benchmark.py           # Бенчмарки
-│
-├── docs/                       # Документація
-│   └── promise-viewer-plan.md # План UI для promise viewer
-│
-└── plans/                      # Плани розробки
-    └── promise-queue-plan.md   # План черги promise
-```
-
-### Ключові endpoints
-
-| Endpoint                 | Метод | Опис               |
-|--------------------------|-------|--------------------|
-| `/health`                | GET   | Перевірка здоров'я |
-| `/api/tags`              | GET   | Список моделей     |
-| `/api/chat`              | POST  | Чат з LLM          |
-| `/api/generate`          | POST  | Генерація тексту   |
-| `/promise/<id>`          | GET   | Статус promise     |
-| `/promise/<id>/response` | GET   | Результат promise  |
-| `/ollama/status`         | GET   | Статус Ollama      |
-| `/ollama/start`          | POST  | Запустити Ollama   |
-| `/ollama/stop`           | POST  | Зупинити Ollama    |
-
-### Promise Flow
-
-```
-1. Client → Proxy: POST /api/chat { model, messages } + X-Promise: true
-2. Proxy → Client: { promiseId: "abc123", status: "pending" } (202)
-3. Client → Proxy: GET /promise/abc123
-4. Proxy → Client: { promiseId: "abc123", status: "pending" }
-   (повторювати поки не done)
-5. Client → Proxy: GET /promise/abc123/response
-6. Proxy → Client: { response from Ollama }
-```
+Проксі до Ollama: **Hub :11435** → **Ollama :11434**, async `promiseId`. Дерево каталогів і інтеграція з сервером: [SERVER-ARCHITECTURE.md](SERVER-ARCHITECTURE.md#external-ai-hub-integration); контракт promise / endpoints: [PROTOCOL.md](PROTOCOL.md#async-flow-promiseid).
 
 ---
 
@@ -178,10 +119,10 @@ simulations/
 | Компонент       | Порт  | Опис                                    |
 |-----------------|-------|-----------------------------------------|
 | Server          | 3000  | A2A Server HTTP API                     |
-| Client API      | 3001  | HTTP API для web (ПОТРІБНО ВПРОВАДДИТИ) |
+| Client API      | 5173 (`/api/a2a/*` на Vite) або 3001 (standalone SDK) | Сесії, проксі на сервер |
 | Web UI          | 5173  | Vite dev server                         |
-| External AI Hub | 11434 | Проксі для Ollama                       |
-| Ollama          | 11435 | Локальна LLM                            |
+| AI Hub (ai-integration) | 11435 | Проксі / async promise до Ollama |
+| Ollama          | 11434 | Локальна LLM                            |
 
 ---
 
@@ -201,8 +142,8 @@ SKIP_AUTH=1
 ### External AI Hub
 
 ```
-PROXY_PORT=11434
-OLLAMA_HOST=http://localhost:11435
+PROXY_PORT=11435
+OLLAMA_HOST=http://localhost:11434
 SIMULATION_ENABLED=false
 OLLAMA_AUTO_START=true
 OLLAMA_IDLE_TIMEOUT=300
@@ -224,3 +165,4 @@ OLLAMA_IDLE_TIMEOUT=300
 - [ARCHITECTURE.md](ARCHITECTURE.md) - Архітектура системи
 - [PROTOCOL.md](PROTOCOL.md) - Протокол взаємодії
 - [simulations/SCHEMA.md](../../simulations/SCHEMA.md) - Канонічна схема симуляцій
+- [a2a-server/docs/LLM-REQUEST-PREP.md](../../a2a-server/docs/LLM-REQUEST-PREP.md) - підготовка invoke перед `request.md` (history + `flowControlHint`)
