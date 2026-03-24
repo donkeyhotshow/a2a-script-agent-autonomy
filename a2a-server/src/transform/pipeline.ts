@@ -231,7 +231,7 @@ export function getPromptsTransformsPath(): string {
  * 1. {schema}-{step}-{type}.json
  * 2. {schema}-{type}.json
  * 3. server-transforms-{type}.json
- * When forceServerTransforms: true, use only server-transforms-{type}.json (for LLM pipeline).
+ * When forceServerTransforms: true, use server-transforms-{type}.json; **dialog** response also tries **dialog-llm-response.json** first (workbench + same parse/execute as generic).
  */
 async function resolveTransformFile(
   dir: string,

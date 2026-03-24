@@ -73,6 +73,7 @@ Returns a complete copy of the current state.
   messages: Array<Message>,
   execute: Object | null,
   context: Object | null,
+  workbench: { sections: Object } | null,
   status: string,
   pendingForm: Object | null,
   lastError: Error | null
@@ -389,7 +390,7 @@ store.on('pendingForm', (form) => {
 
 // When user makes choice
 const result = store.buildChoiceResult('option_1');
-await actionHandler.submit(sessionId, projectId, { choice: result.choice });
+await actionHandler.submit(sessionId, projectId, result);
 ```
 
 ### Error Handling

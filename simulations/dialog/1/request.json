@@ -7,8 +7,6 @@
     }
   },
   "result": {
-    "dialog": {
-      "message": "диалог"
-    }
+    "message": "диалог"
   }
 }

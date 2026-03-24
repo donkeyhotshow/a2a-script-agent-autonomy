@@ -4,9 +4,6 @@
     "execution": {
       "action": "task",
       "step": "new"
-    },
-    "workbench": {
-      "sections": {}
     }
   },
   "result": {

@@ -22,7 +22,7 @@
 - **Накопление контекста** — история в `context.history` и структурированное рабочее состояние в `context.workbench.sections`
 - **Интерактивность** — сервер ожидает ввод (message или choice) с обязательным **action-key shape** для результатов
 - **Два режима** — синхронный (sync) и асинхронный (promiseId)
-- **Трансформы** — `dialog-request.json` и `dialog-response.json`
+- **Трансформы** — для шагов без LLM: `dialog-request.json` / `dialog-response.json`. Для LLM-диалога на сервере: `server-transforms-request.json` → `dialog-request.md`, ответ → **`dialog-llm-response.json`** (парсинг JSON, `execute`, опционально `workbench`), см. [`AGENTS.md`](../../AGENTS.md) § Dialog mode.
 
 ---
 

@@ -4,9 +4,6 @@
     "execution": {
       "action": "fix-vue-imports",
       "step": "vue-import-resolve"
-    },
-    "workbench": {
-      "sections": {}
     }
   },
   "result": {

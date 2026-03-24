@@ -5,9 +5,6 @@
       "action": "task",
       "step": "router"
     },
-    "workbench": {
-      "sections": {}
-    },
     "unresolved_imports": [
       {
         "file": "resources/js/Pages/Dash/Widget.vue",

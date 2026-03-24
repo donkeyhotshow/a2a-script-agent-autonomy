@@ -5,9 +5,6 @@
       "action": "fix-vue-imports",
       "step": "vue-import-escalate"
     },
-    "workbench": {
-      "sections": {}
-    },
     "unresolved_imports": [
       {
         "file": "resources/js/Pages/Dash/Widget.vue",

@@ -7,6 +7,7 @@ Align all simulations to avoid redundant or conflicting values.
 Simulations are the **contract tests** for the Web + Client API: `received.json` is what the UI should render; `response.json` is what the SDK merges into session state.
 
 - **Ideal shapes** (forms, execute keys, `context.files` / `scratchpad`, SDK gaps): [`CLIENT-SDK-IDEAL.md`](CLIENT-SDK-IDEAL.md).  
+- **Evolving LLM actions / tools / RAG:** [`a2a-server/docs/EXTENDING-LLM-ACTIONS.md`](../a2a-server/docs/EXTENDING-LLM-ACTIONS.md).  
 - **SDK merge logic:** `a2a-client/packages/sdk/src/server/services/transforms/session-transform.ts`  
 - **Action dispatch:** `a2a-client/packages/sdk/src/action-handler.ts` (single execute key; not all auto-ai tools wired yet).
 

@@ -109,6 +109,7 @@ Full operations reference: **[`TRANSFORM-OPS.md`](./TRANSFORM-OPS.md)**
 | `auto-ai` | `a2a-server/prompts/auto-ai-request.md` | ✅ Canonical |
 | `coder-smart` | `a2a-server/prompts/coder-request.md` | ✅ Updated |
 | `analyze` | `a2a-server/prompts/analyze-request.md` | ✅ Canonical |
+| `dialog` | `a2a-server/prompts/dialog-request.md` | ✅ Chat + optional single tool (`rag-search`, `read-file`, …); response: `dialog-llm-response.json` |
 
 ## Transform JSON (canonical on server)
 
@@ -116,9 +117,14 @@ Location: **`a2a-server/prompts/transforms/`** (per-action `*-request.json` / `*
 
 - Request pipeline — typically `copy`, `append-to-array` (history), `render-markdown` (hints: [LLM-REQUEST-PREP.md](./LLM-REQUEST-PREP.md))
 - Response pipeline — `parse-json-from-md`, set step, append history, set `execute` / `completed`, optional `merge-workbench-sections` + `apply-workbench-section-ops`, optional `apply-scratchpad-ops`
+- **`dialog`** (LLM path): `resolveTransformFile` prefers **`dialog-llm-response.json`** over generic `server-transforms-response.json` when `forceServerTransforms` is set.
 - Golden examples: **`simulations/<task>/<step>/server-transforms-*.json`**
 
 ## Adding New AI-Action
+
+Full playbook (RAG modes, dialog tools, transforms vs processors): **[`EXTENDING-LLM-ACTIONS.md`](./EXTENDING-LLM-ACTIONS.md)**.
+
+Checklist:
 
 1. Create prompt in `a2a-server/prompts/<name>-request.md`
 2. Define step names in the prompt

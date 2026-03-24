@@ -17,8 +17,6 @@
     ]
   },
   "result": {
-    "dialog": {
-      "message": "Дякую!"
-    }
+    "message": "Дякую!"
   }
 }

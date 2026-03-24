@@ -7,8 +7,6 @@
     }
   },
   "result": {
-    "router": {
-      "choice": "dialog"
-    }
+    "choice": "dialog"
   }
 }

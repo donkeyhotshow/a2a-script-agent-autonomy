@@ -15,6 +15,7 @@ This file provides guidance to agents when working with code in this repository.
 9. [Common Issues and Solutions](#common-issues-and-solutions)
 10. [Architecture decision records (ADRs)](#architecture-decision-records-adrs)
 11. [Server interrupt loop](#server-interrupt-loop)
+12. [Extending LLM actions](#extending-llm-actions)
 
 ---
 
@@ -135,9 +136,17 @@ request.json → server-transforms → request.md → [LLM] → response.md → 
 
 **Server-side LLM request prep** (before `request.md` is built): `result` is folded into `context.history`; `flowControlHint` is chosen from `context.execution.action` + `step`; `workbench` is normalized (see LLM-REQUEST-PREP). **After** the model turn, response transforms may merge **`workbench.sections`** and apply **`workbench_ops`** into `context.workbench`. See [`a2a-server/docs/LLM-REQUEST-PREP.md`](a2a-server/docs/LLM-REQUEST-PREP.md).
 
+### Dialog mode and repository tools
+
+[`a2a-server/prompts/dialog-request.md`](a2a-server/prompts/dialog-request.md) — default is chat (`message` + `form`); the model may emit **one** tool key per turn (`rag-search`, `read-file`, `write-file`, etc.) when the user needs codebase facts. Response pipeline: [`dialog-llm-response.json`](a2a-server/prompts/transforms/dialog-llm-response.json). The processor passes tool `execute` payloads through to the client (not folded into `message`+`form`).
+
 ### Server interrupt loop
 
 After the response transform, if transform output includes **`interrupt`**, the dialog processor may run **extra** LLM work (compress history, `thinking` slot, another full request→LLM→response cycle) before responding. The client only receives the **final** `execute` / context. Full spec: [`a2a-server/docs/SERVER-INTERRUPT-LOOP.md`](a2a-server/docs/SERVER-INTERRUPT-LOOP.md). ADR: [`docs/adr/ADR-0029-server-interrupt-loop.md`](docs/adr/ADR-0029-server-interrupt-loop.md). Example sim notes: [`simulations/auto-ai-v2/6/interrupt.md`](simulations/auto-ai-v2/6/interrupt.md).
+
+### Extending LLM actions
+
+Playbook for new tools, RAG variants, transforms, simulations, and when to write an ADR: [`a2a-server/docs/EXTENDING-LLM-ACTIONS.md`](a2a-server/docs/EXTENDING-LLM-ACTIONS.md).
 
 ---
 
@@ -582,6 +591,7 @@ Indexed in [`docs/adr/README.md`](docs/adr/README.md). Recent examples: **ADR-00
 
 | File | Purpose |
 |------|---------|
+| [`a2a-server/docs/EXTENDING-LLM-ACTIONS.md`](a2a-server/docs/EXTENDING-LLM-ACTIONS.md) | How to add or evolve LLM actions, tools, RAG modes, goldens |
 | [`a2a-server/src/app.ts`](a2a-server/src/app.ts) | Express app setup, routes |
 | [`a2a-server/src/services/invoke.service.ts`](a2a-server/src/services/invoke.service.ts) | Request invocation logic |
 | [`a2a-server/src/routes/sessions.ts`](a2a-server/src/routes/sessions.ts) | Session management routes |

@@ -7,8 +7,6 @@
     }
   },
   "result": {
-    "router": {
-      "choice": "auto-ai-v2"
-    }
+    "choice": "auto-ai-v2"
   }
 }

@@ -83,7 +83,7 @@ After `response.md` is parsed into `$llm`, base pipelines for **auto-ai**, **cod
 1. **`merge-workbench-sections`** — `$.llm.workbench.sections` shallow-merged into `$.context.workbench.sections` (optional bulk update).
 2. **`apply-workbench-section-ops`** — `$.llm.workbench_ops` applied in order (`set` / `append` / `remove`, with short aliases `o` / `k` / `v` / `t`). Runs **after** merge so ops win on the same key.
 
-Prompt contract and examples: [`prompts/auto-ai-request.md`](../prompts/auto-ai-request.md) (Auto-AI), [`prompts/coder-request.md`](../prompts/coder-request.md) (Coder). Full op reference: [`TRANSFORM-OPS.md`](./TRANSFORM-OPS.md).
+Prompt contract and examples: [`prompts/auto-ai-request.md`](../prompts/auto-ai-request.md) (Auto-AI), [`prompts/coder-request.md`](../prompts/coder-request.md) (Coder). **Dialog** LLM responses use [`prompts/transforms/dialog-llm-response.json`](../prompts/transforms/dialog-llm-response.json) (before the generic `server-transforms-response.json` fallback) so `workbench` merges apply; see [`prompts/dialog-request.md`](../prompts/dialog-request.md) for optional RAG / file tools. Full op reference: [`TRANSFORM-OPS.md`](./TRANSFORM-OPS.md).
 
 ---
 
@@ -137,6 +137,7 @@ The old **`append-to-array`** step that pushed `result.message` into history is 
 
 ## 5. Related docs
 
+- **[`EXTENDING-LLM-ACTIONS.md`](./EXTENDING-LLM-ACTIONS.md)** — playbook for new tools, RAG modes, transforms, and goldens.
 - **[`TRANSFORM-OPS.md`](./TRANSFORM-OPS.md)** — full operations reference with context optimization matrix.
 - [`ADR-0026-server-llm-request-prep.md`](../../docs/adr/ADR-0026-server-llm-request-prep.md) — architecture decision.
 - [`AI-ACTION-TRANSFORM-PATTERN.md`](./AI-ACTION-TRANSFORM-PATTERN.md) — LLM JSON shape, response transforms, simulations.

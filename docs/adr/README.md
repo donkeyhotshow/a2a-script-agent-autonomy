@@ -46,6 +46,10 @@ Recommended sections:
 - `ADR-0028-client-api-deployment-modes.md` - Vite `/api/a2a` on 5173 vs standalone SDK Client API (e.g. 3001); same server contract
 - `ADR-0029-server-interrupt-loop.md` - Optional extra LLM turns after response transform (`interrupt` on `$out`); client sees final result only
 
+## Related (not ADRs)
+
+- **[`a2a-server/docs/EXTENDING-LLM-ACTIONS.md`](../../a2a-server/docs/EXTENDING-LLM-ACTIONS.md)** — operational playbook for prompts, transforms, and simulations (use before filing an ADR when the change is routine).
+
 ## Adding a new ADR
 
 1. Use the next free number: **`ADR-0030-...md`** (keep zero-padding).

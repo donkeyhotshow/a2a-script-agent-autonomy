@@ -281,4 +281,4 @@ npm run sim:validate
 
 ## Contributing
 
-Contributions are welcome. Please check the documentation for guidelines.
+Contributions are welcome. For **LLM prompts, transform pipelines, simulations, or new `execute` types**, follow **[`a2a-server/docs/EXTENDING-LLM-ACTIONS.md`](a2a-server/docs/EXTENDING-LLM-ACTIONS.md)** and repo **[`AGENTS.md`](AGENTS.md)** (golden rules, `sim:lint`).

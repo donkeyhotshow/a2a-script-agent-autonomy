@@ -28,7 +28,7 @@ export const DIALOG_TOOL_EXECUTE_KEYS = [
     'script',
 ] as const;
 
-function isDialogToolExecutePayload(execute: Record<string, unknown> | undefined): boolean {
+export function isDialogToolExecutePayload(execute: Record<string, unknown> | undefined): boolean {
     if (!execute || typeof execute !== 'object') return false;
     const keys = Object.keys(execute).filter((k) => {
         const v = execute[k];

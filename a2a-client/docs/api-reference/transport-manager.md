@@ -1,12 +1,13 @@
 # TransportManager API Reference
 
-The TransportManager handles communication between client and server using synchronous HTTP requests.
+The TransportManager handles unified communication between client and server, providing automated transport selection (SSE → WebSocket fallback).
 
 ## Overview
 
 ```javascript
 const transport = TransportManager.init({
-  apiBase: '/api'
+  apiBase: '/api',
+  heartbeatInterval: 30000
 });
 ```
 
@@ -29,43 +30,30 @@ const transport = TransportManager.init({
 });
 ```
 
-## Request Methods
+## Connection Methods
 
-### `TransportManager.request(method, path, body)`
+### `TransportManager.connect(sessionId)`
 
-Makes a synchronous HTTP request to the server.
+Establishes a connection to the session using the primary transport (SSE).
 
 **Parameters:**
-- `method` (string): HTTP method ('GET', 'POST', 'PUT', 'DELETE')
-- `path` (string): API path
-- `body` (Object, optional): Request body
+- `sessionId` (string): Target session ID
 
-**Returns:** Promise<Object> - Server response with execute.ui
+**Returns:** Promise<boolean> - True if connected
 
-**Example:**
-```javascript
-// Send result and get execute.ui in response
-const response = await transport.request('POST', '/sessions/sess_123/result', {
-  projectId: 'proj_1',
-  result: { message: 'user input' },
-  sync: true
-});
+### `TransportManager.disconnect()`
 
-// Response contains execute.ui directly
-if (response.execute?.ui) {
-  handleUiCommand(response.execute.ui);
-}
-```
+Closes the active connection and cleans up listeners.
 
-### `TransportManager.sendMessage(sessionId, data)`
+### `TransportManager.sendMessage(sessionId, result)`
 
-Sends a message to a session.
+Sends a result object to the server.
 
 **Parameters:**
 - `sessionId` (string): Session ID
-- `data` (Object): Message data
+- `result` (Object): Action-key shaped result (e.g., `{ choice: id }` or `{ result: { action: data } }`)
 
-**Returns:** Promise<Object> - Server response
+**Returns:** Promise<Object> - Acknowledgement
 
 ## Connection State
 
@@ -73,19 +61,20 @@ Sends a message to a session.
 
 | Property | Type | Description |
 |----------|------|-------------|
-| `connectionState` | string | 'disconnected', 'connecting', 'connected' |
+| `connectionState` | string | 'disconnected', 'connecting', 'connected', 'reconnecting' |
+| `activeTransport` | string | 'sse' \| 'ws' \| 'none' |
 | `sessionId` | string\|null | Current session ID |
 
-### State Methods
+### Connection Methods
 
 | Method | Description |
 |--------|-------------|
-| `isConnected()` | Returns true if session is active |
-| `getState()` | Returns current connection state |
+| `isConnected()` | Returns true if any transport is active |
+| `getState()` | Returns full connection state object |
 
 ## Key Differences from SSE/WebSocket
 
-- **No real-time connections**: All communication via HTTP request/response
-- **Synchronous responses**: Server returns `execute.ui` in HTTP body
-- **No heartbeat needed**: Connection state managed per-request
-- **No reconnection logic**: Each request is independent
+- **Primary Transport (SSE)**: Standard for real-time updates from server.
+- **Auto-fallback (WebSocket)**: Seamlessly switches to WebSocket if SSE is blocked or fails.
+- **Unified Interface**: Same API regardless of the underlying transport.
+- **Heartbeat & Recovery**: Automatic reconnection with exponential backoff.

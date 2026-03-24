@@ -66,13 +66,13 @@ const BY_ACTION_STEP: Record<string, string> = {
   // --- dialog ---
   'dialog:request':
     'Read `context.history` to avoid repeating information already given.'
-    + ' Answer in `message`. Include `execute.form` for follow-up input unless the task is done.',
+    + ' Default: `message` + `execute.form`. If the user needs repo facts not already in history/`ragResults`, use **one** tool in `execute` (`rag-search`, `read-file`, `write-file`, `list-directory`, `grep-search`, `execute-command`, or `script`) and a short `message`.',
 
   'dialog:response':
-    'Ground answer in `context.history` only; no tool keys unless the flow explicitly allows them. Stay concise.',
+    'Ground answers in `context.history`. Prefer chat + form; use a single tool key in `execute` only when the codebase must be consulted. Stay concise.',
 
   'dialog:*':
-    'Reply in the user\'s language. Ground answers in `context.history`. Output only the JSON block.',
+    'Reply in the user\'s language. Optional RAG/tools when necessary — see system prompt patterns A/B. Output only the JSON block.',
 
   // --- coder ---
   'coder:clarify':

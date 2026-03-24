@@ -14,11 +14,9 @@ Other core names (ActionHandler, TaskFlow, WebAPIClient, ErrorHandler) may be co
 
 - **Initialization**: `Component.init(options)`
 - **Events**: `component.on(event, callback)`
-- **Action-key shape** for `result` / `execute`: see [PROTOCOL.md](../../../docs/new-request-flow/PROTOCOL.md#action-key-shape-обязательно)
+- **Action-key shape** for `result` / `execute`: see [`AGENTS.md`](../../../AGENTS.md)
 
 ## Cross-references
 
-- [Glossary](../../../docs/glossary.md)
-- [New request flow](../../../docs/new-request-flow/)
-- [Web UI troubleshooting](../web/docs/troubleshooting/)
-- [Repo troubleshooting (scripts)](../../../docs/troubleshooting/)
+- [Web Client Documentation](../README.md)
+- [Unified Architecture Complete](../workflows/UNIFIED_ARCHITECTURE_COMPLETE.md)

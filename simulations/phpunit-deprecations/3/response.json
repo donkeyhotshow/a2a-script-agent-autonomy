@@ -10,10 +10,7 @@
       "history": [
         {
           "step": "scan-phpunit",
-          "status": "completed",
-          "result": {
-            "total": 45
-          }
+          "status": "completed"
         }
       ]
     }
