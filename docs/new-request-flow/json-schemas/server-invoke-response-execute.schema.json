@@ -58,8 +58,10 @@
         "form": {
           "type": "object",
           "description": "Form to be rendered in Web UI (input fields and/or choices).",
+          "additionalProperties": true,
           "properties": {
             "title": { "type": "string" },
+            "description": { "type": "string", "description": "Optional subtitle / help for the whole form (SDK + Web)." },
             "choices": {
               "type": "array",
               "items": {
@@ -67,8 +69,10 @@
                 "required": ["id", "label"],
                 "properties": {
                   "id": { "type": "string" },
-                  "label": { "type": "string" }
-                }
+                  "label": { "type": "string" },
+                  "description": { "type": "string", "description": "Per-choice help text for router / forms." }
+                },
+                "additionalProperties": true
               }
             },
             "input": {

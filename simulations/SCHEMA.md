@@ -2,6 +2,16 @@
 
 Align all simulations to avoid redundant or conflicting values.
 
+## SDK / client golden (`@a2a/sdk`)
+
+Simulations are the **contract tests** for the Web + Client API: `received.json` is what the UI should render; `response.json` is what the SDK merges into session state.
+
+- **Ideal shapes** (forms, execute keys, `context.files` / `scratchpad`, SDK gaps): [`CLIENT-SDK-IDEAL.md`](CLIENT-SDK-IDEAL.md).  
+- **SDK merge logic:** `a2a-client/packages/sdk/src/server/services/transforms/session-transform.ts`  
+- **Action dispatch:** `a2a-client/packages/sdk/src/action-handler.ts` (single execute key; not all auto-ai tools wired yet).
+
+When improving the client, upgrade the matching `received.json` / `response.json` first, then align code.
+
 ## Scope: simulations vs runtime
 
 **Simulations do NOT cover** promise-related flows and async infrastructure:

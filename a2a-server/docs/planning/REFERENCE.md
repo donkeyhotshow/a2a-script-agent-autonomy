@@ -2,7 +2,7 @@
 
 ## Simulation as the golden standard
 
-Canonical simulations live at the **repository root**: [`simulations/`](../../../simulations/) (for example [`dialog`](../../../simulations/dialog/description.md), [`fix-vue-imports`](../../../simulations/fix-vue-imports/description.md), [`auto-ai`](../../../simulations/auto-ai/description.md)). They are the authoritative source describing how the system must behave.
+Canonical simulations live at the **repository root**: [`simulations/`](../../../simulations/) (for example [`dialog`](../../../simulations/dialog/description.md), [`fix-vue-imports`](../../../simulations/fix-vue-imports/description.md), [`auto-ai-v2`](../../../simulations/auto-ai-v2/description.md)). Superseded full fixtures live under [`archive/simulations/`](../../../archive/simulations/).
 
 **Do not** duplicate simulation fixtures under `docs/`; always link to `simulations/` at the repo root.
 

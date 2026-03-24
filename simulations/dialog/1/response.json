@@ -9,14 +9,21 @@
   "execute": {
     "form": {
       "title": "Оберіть спосіб виконання",
+      "description": "LLM modes and scripted actions; pick one to continue.",
       "choices": [
         {
           "id": "dialog",
-          "label": "AI діалог з користувачем"
+          "label": "AI діалог з користувачем",
+          "description": "Free-form chat; follow-up forms in later steps."
         },
         {
           "id": "auto-ai",
           "label": "AI Action Generator"
+        },
+        {
+          "id": "auto-ai-v2",
+          "label": "Auto-AI v2",
+          "description": "Agent loop with optimized context (files, scratchpad, system history)."
         },
         {
           "id": "task-decomposition",
@@ -40,7 +47,8 @@
         },
         {
           "id": "fix-vue-imports",
-          "label": "Виправлення Vue imports"
+          "label": "Виправлення Vue imports",
+          "description": "Scripted Vue 2→3 import fixes (no LLM)."
         }
       ]
     }
