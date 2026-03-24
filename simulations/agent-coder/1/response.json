@@ -1,18 +1,15 @@
 {
   "context": {
-    "task": "допоможи з кодом",
+    "task": "допоможи розібратись з кодом",
     "execution": {
       "action": "task",
       "step": "router"
-    },
-    "workbench": {
-      "sections": {}
     }
   },
   "execute": {
     "form": {
       "title": "Оберіть спосіб виконання",
-      "description": "LLM modes and scripted actions; pick one to continue.",
+      "description": "LLM адаптується до вашої задачі.",
       "choices": [
         {
           "id": "dialog",
@@ -22,17 +19,12 @@
         {
           "id": "agent",
           "label": "Agent",
-          "description": "Universal agent: analyze, code, review — LLM decides the next action."
+          "description": "Універсальний режим - LLM адаптує поведінку до задачі."
         },
         {
           "id": "task-decomposition",
           "label": "Декомпозиція задачі",
           "description": "Split a goal into ordered subtasks and track progress."
-        },
-        {
-          "id": "fix-vue-imports",
-          "label": "Виправлення Vue imports",
-          "description": "Scripted Vue 2→3 import fixes (no LLM)."
         }
       ]
     }

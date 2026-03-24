@@ -1,0 +1,27 @@
+{
+  "context": {
+    "task": "аналіз",
+    "execution": {
+      "action": "agent"
+    },
+    "history": [
+      {
+        "role": "user",
+        "message": "опиши поточну архітектуру бекенду"
+      },
+      {
+        "role": "assistant",
+        "message": "Шукаю документи по архітектурі бекенду.",
+        "action": "rag-search"
+      }
+    ],
+    "workbench": {
+      "sections": {}
+    }
+  },
+  "execute": {
+    "rag-search": {
+      "query": "архітектура бекенд сервіси API слої компоненти"
+    }
+  }
+}

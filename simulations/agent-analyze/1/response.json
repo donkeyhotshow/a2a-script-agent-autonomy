@@ -1,0 +1,35 @@
+{
+  "context": {
+    "task": "аналіз",
+    "execution": {
+      "action": "task",
+      "step": "router"
+    },
+    "workbench": {
+      "sections": {}
+    }
+  },
+  "execute": {
+    "form": {
+      "title": "Оберіть спосіб виконання",
+      "description": "LLM адаптується до вашої задачі.",
+      "choices": [
+        {
+          "id": "dialog",
+          "label": "AI діалог з користувачем",
+          "description": "Free-form chat; follow-up forms in later steps."
+        },
+        {
+          "id": "agent",
+          "label": "Agent",
+          "description": "Універсальний режим - LLM адаптує поведінку до задачі."
+        },
+        {
+          "id": "task-decomposition",
+          "label": "Декомпозиція задачі",
+          "description": "Split a goal into ordered subtasks and track progress."
+        }
+      ]
+    }
+  }
+}

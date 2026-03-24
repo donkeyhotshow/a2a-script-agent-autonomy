@@ -1,0 +1,24 @@
+{
+  "type": "pipeline",
+  "steps": [
+    {
+      "op": "copy",
+      "from": "$",
+      "to": "$out"
+    },
+    {
+      "op": "pick-context",
+      "include": ["execution", "task", "history:5", "scratchpad", "files"]
+    },
+    {
+      "op": "summarize-files",
+      "maxLines": 120
+    },
+    {
+      "op": "render-markdown",
+      "templateRef": "a2a-server/prompts/auto-ai-request.md",
+      "data": "$out",
+      "outputFile": "request.md"
+    }
+  ]
+}

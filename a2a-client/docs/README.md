@@ -16,10 +16,12 @@ This directory contains comprehensive documentation for the A2A Script Agent web
 - **[Unified Architecture Complete](./workflows/UNIFIED_ARCHITECTURE_COMPLETE.md)** - Implementation status of major refactoring steps
 - **[Session Architecture Migration](./workflows/session-architecture-migration.md)** - Migration guide for unified session architecture
 - **[Context Synchronization Guide](./workflows/context-synchronization-guide.md)** - State synchronization across components
+- **[Web UI Design System](./WEB-UI-DESIGN-SYSTEM.md)** - Colors, glassmorphism, and tokens
+- **[Web UI Component Catalog](./WEB-UI-COMPONENT-CATALOG.md)** - Panels, Cubes, and Modals documentation
 
-### 🔍 API & dialog
+### 🔍 API & Agent Protocol
 - **[Client API: Web UI vs `@a2a/sdk`](./CLIENT_API_WEB_SDK.md)** - Two implementations, contracts, and debugging
-- **[Dialog frontend](./DIALOG-FRONTEND.md)** - Dialog UI behavior
+- **[Agent UI](./DIALOG-FRONTEND.md)** - Agent UI behavior and component hierarchy
 - **[Session storage](./SESSION-STORAGE.md)** - On-disk step layout and Client API
 
 ### 📊 Development State

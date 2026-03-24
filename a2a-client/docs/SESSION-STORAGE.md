@@ -2,7 +2,7 @@
 
 ## Overview
 
-The session storage system provides numbered folders that mirror each dialog step. Client API (e.g. port 3001 when running the SDK standalone) persists step files via `step-storage.ts`; see [api-client-server-logic.md](./api-client-server-logic.md). By default the storage directory is `a2a-client/storage/sessions/{sessionId}` (relative to the repo root), but the environment variable `A2A_CLIENT_STORAGE_DIR` can point to another directory (for example `<storageDir>/sessions/`). Persistent storage keeps track of `context`, `execute`, `messages`, step files, and async `promiseId` metadata.
+The session storage system provides numbered folders that mirror each agent step. Client API (e.g. port 3001 when running the SDK standalone) persists step files via `step-storage.ts`; see [api-client-server-logic.md](./api-client-server-logic.md). By default the storage directory is `a2a-client/storage/sessions/{sessionId}` (relative to the repo root), but the environment variable `A2A_CLIENT_STORAGE_DIR` can point to another directory (for example `<storageDir>/sessions/`). Persistent storage keeps track of `context`, `execute`, `messages`, step files, and async `promiseId` metadata.
 
 ## Storage Structure
 
@@ -40,7 +40,7 @@ Sessions are stored under `<storageDir>/sessions/{sessionId}/`, where `<storageD
 
 ### Step-centric metadata
 
-Since there is no `session.json`, session metadata is reconstructed from the highest-numbered step that already contains `server-response.json`. That file provides the latest `execute`, `context` (including `workbench.sections`), `status`, `result`, and the assistant messages that led to that state. The Client API scans from step `1` up to the current step, appends the `messages` array embedded in each `server-response.json`, merges the recorded user inputs from `client-result.json`, and treats the final `server-response.json` as the source of truth for the dialogue state. This organization ensures that even if a root metadata file is missing, the numbered folders alone carry the full session history.
+Since there is no `session.json`, session metadata is reconstructed from the highest-numbered step that already contains `server-response.json`. That file provides the latest `execute`, `context` (including `workbench.sections`), `status`, `result`, and the assistant messages that led to that state. The Client API scans from step `1` up to the current step, appends the `messages` array embedded in each `server-response.json`, merges the recorded user inputs from `client-result.json`, and treats the final `server-response.json` as the source of truth for the agent state. This organization ensures that even if a root metadata file is missing, the numbered folders alone carry the full session history.
 
 ### server-response.json Format
 
@@ -72,7 +72,7 @@ Each `server-response.json` now stores an ordered `messages` array that mirrors 
 }
 ```
 
-The history assembler (`collectSessionMessagesFlat` in the Vite plugin) walks these arrays, dedups the texts, and then appends every user turn from the matching `client-result.json`. Even though there is no standalone `messages.json` anymore in the final state, the folders carry the full dialogue.
+The history assembler (`collectSessionMessagesFlat` in the Vite plugin) walks these arrays, dedups the texts, and then appends every user turn from the matching `client-result.json`. Even though there is no standalone `messages.json` anymore in the final state, the folders carry the full agent conversation history.
 
 **Step flow:** Once a server response lands in step `N`, the client writes `client-result.json` (either from Web UI or an auto script). The upcoming step (`N+1`) receives `request-to-server.json` before the A2A Server call. Synchronous responses land immediately in `{N+1}/server-response.json`; asynchronous responses first record `server-promise.json` in `{N+1}/`, then the completed `server-response.json` in that same folder once the promise finishes. Refer to [api-client-server-logic.md](./api-client-server-logic.md#поток-обработки-шагов-step-flow) for the detailed diagram.
 

@@ -1,0 +1,16 @@
+{
+  "projectId": "123",
+  "sessionId": "456",
+  "execute": {
+    "form": {
+      "title": "Health маршрути готові",
+      "description": "Файл `src/routes/health.js` створено, трохи доопрацюйте `src/app.js`, щоб змонтувати роутер за потреби.",
+      "choices": [
+        {
+          "id": "done",
+          "label": "OK"
+        }
+      ]
+    }
+  }
+}

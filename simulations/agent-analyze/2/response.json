@@ -1,0 +1,21 @@
+{
+  "context": {
+    "task": "аналіз",
+    "execution": {
+      "action": "agent"
+    },
+    "history": [],
+    "workbench": {
+      "sections": {}
+    }
+  },
+  "execute": {
+    "form": {
+      "textarea": {
+        "name": "message",
+        "label": "Повідомлення",
+        "required": true
+      }
+    }
+  }
+}

@@ -1,16 +1,10 @@
 {
-  "step": "analyze",
-  "message": "Зрозумів, потрібно додати роут /health. Спочатку знайду де знаходиться Express app.",
-  "workbench": {
-    "sections": {
-      "task_digest": "додати роут /health"
-    }
-  },
+  "step": "rag-search",
+  "message": "Щоб відповісти на це питання, мені потрібно спочатку пошукати в коді про авторизацію.",
   "execute": {
     "rag-search": {
-      "query": "express app routes entry point"
+      "query": "система авторизації JWT токени login register"
     }
   },
   "completed": false
 }
-```

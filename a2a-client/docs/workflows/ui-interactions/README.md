@@ -26,6 +26,12 @@ This directory documents all user interface interaction workflows, panel managem
 | **alerts** | header | true | false | System alerts and notifications |
 | **graph** | left | false | false | Graph visualization |
 
+### Visual Language (Premium Interface)
+
+- **Glow & Depth**: Active panels have a `0 0 20px rgba(99, 102, 241, 0.15)` indigo glow.
+- **Glassmorphism**: Components use 85% opacity backgrounds with 16px backdrop blurs.
+- **Shadows**: Large, soft shadows (`shadow-lg`) provide depth and floating effects.
+
 ### Panel Lifecycle States
 
 ```mermaid
@@ -114,6 +120,9 @@ sequenceDiagram
 | chat | Purple | Communication |
 | debug | Orange | Development |
 | settings | Gray | Configuration |
+
+> [!NOTE]
+> Cubes are **16x16px glowing squares** located in the taskbar. They provide immediate visual feedback on the number of active background tasks.
 
 ### Cube Interactions
 - **Left click**: Restore panel to previous position

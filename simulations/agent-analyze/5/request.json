@@ -1,0 +1,32 @@
+{
+  "context": {
+    "task": "аналіз",
+    "execution": {
+      "action": "agent"
+    },
+    "history": [
+      {
+        "role": "user",
+        "message": "опиши поточну архітектуру бекенду"
+      },
+      {
+        "role": "assistant",
+        "message": "Шукаю документи по архітектурі бекенду.",
+        "action": "rag-search"
+      },
+      {
+        "role": "system",
+        "message": "RAG знайшов: docs/ARCHITECTURE.md (0.92), README.md (0.88)"
+      },
+      {
+        "role": "assistant",
+        "message": "**Підтверджені факти:**\n- Документ ARCHITECTURE.md описує три шари: API (Express), сервісний шар, БД (Postgres).\n- README згадує сервіси auth та request-processor, порт 3000.\n\n**Розбіжності:**\n- В ARCHITECTURE не згадано клієнтський API (порт 3001) та web UI (5173).\n- README не описує workflow request-processor (таймер 5 с).",
+        "action": "continue"
+      }
+    ]
+  },
+  "result": {
+    "choice": "continue_search",
+    "message": "пошукай ще про клієнтський API та web UI"
+  }
+}

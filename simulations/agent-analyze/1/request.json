@@ -1,12 +1,12 @@
 {
   "context": {
-    "task": "проаналізуй архітектуру",
+    "task": "аналіз",
     "execution": {
       "action": "task",
       "step": "new"
     }
   },
   "result": {
-    "message": "проаналізуй архітектуру"
+    "message": "аналіз"
   }
 }

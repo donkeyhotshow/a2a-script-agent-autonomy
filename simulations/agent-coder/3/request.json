@@ -1,21 +1,12 @@
 {
   "context": {
-    "task": "додай роут /health",
+    "task": "допоможи розібратись з кодом",
     "execution": {
-      "action": "agent",
-      "step": "request"
+      "action": "agent"
     },
-    "history": [
-      {
-        "role": "user",
-        "message": "додай роут /health"
-      }
-    ],
-    "workbench": {
-      "sections": {}
-    }
+    "history": []
   },
   "result": {
-    "message": "додай роут /health"
+    "message": "як працює система авторизації?"
   }
 }

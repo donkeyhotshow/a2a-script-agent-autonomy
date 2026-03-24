@@ -1,0 +1,11 @@
+{
+  "context": {
+    "task": "аналіз",
+    "execution": {
+      "action": "agent"
+    }
+  },
+  "result": {
+    "message": "опиши поточну архітектуру бекенду"
+  }
+}

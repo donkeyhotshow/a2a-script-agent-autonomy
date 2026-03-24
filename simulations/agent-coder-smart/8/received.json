@@ -1,0 +1,10 @@
+{
+  "projectId": "123",
+  "sessionId": "456",
+  "execute": {
+    "message": "Updating files…",
+    "attachments": {
+      "writtenFiles": [{ "path": ".carrier/tasks/task-1.md" }]
+    }
+  }
+}

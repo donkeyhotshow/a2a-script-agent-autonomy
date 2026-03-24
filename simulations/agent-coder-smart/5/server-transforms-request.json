@@ -1,0 +1,30 @@
+{
+  "type": "pipeline",
+  "steps": [
+    {
+      "op": "copy",
+      "from": "$",
+      "to": "$out"
+    },
+    {
+      "op": "pick-context",
+      "include": ["execution", "task", "history:3", "workbench", "scratchpad"]
+    },
+    {
+      "op": "truncate-section",
+      "path": "context.workbench.sections",
+      "maxChars": 8000
+    },
+    {
+      "op": "set",
+      "path": "$.ragResults",
+      "valueFrom": "$.result.rag-search.results"
+    },
+    {
+      "op": "render-markdown",
+      "templateRef": "a2a-server/prompts/coder-request.md",
+      "data": "$out",
+      "outputFile": "request.md"
+    }
+  ]
+}

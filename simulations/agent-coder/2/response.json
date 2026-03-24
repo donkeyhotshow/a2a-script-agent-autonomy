@@ -1,22 +1,23 @@
 {
   "context": {
-    "task": "допомоги з кодом",
+    "task": "допоможи розібратись з кодом",
     "execution": {
-      "action": "agent",
-      "step": "request"
+      "action": "agent"
     },
-    "workbench": {
-      "sections": {}
-    }
+    "history": []
   },
   "execute": {
     "form": {
-      "title": "Опишіть вашу задачу",
-      "description": "Що ви хочете зробити?",
-      "input": {
-        "type": "text",
-        "placeholder": "наприклад: додай роут /health"
-      }
+      "title": "Ваш запит",
+      "description": "Опишіть питання або зміни в коді; далі Coder використає RAG і роботу з файлами.",
+      "input": [
+        {
+          "name": "message",
+          "type": "text",
+          "label": "Повідомлення",
+          "required": true
+        }
+      ]
     }
   }
 }

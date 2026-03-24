@@ -1,8 +1,10 @@
 {
+  "projectId": "123",
+  "sessionId": "456",
   "execute": {
-    "rag-search": {
-      "query": "express app routes entry point"
+    "message": "Searching the codebase…",
+    "attachments": {
+      "ragQuery": "система авторизації JWT токени login register"
     }
-  },
-  "message": "Зрозумів, потрібно додати роут /health. Спочатку знайду де знаходиться Express app."
+  }
 }

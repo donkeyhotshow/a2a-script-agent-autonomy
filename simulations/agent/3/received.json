@@ -1,8 +1,0 @@
-{
-  "execute": {
-    "rag-search": {
-      "query": "express app routes entry point"
-    }
-  },
-  "message": "Зрозумів, потрібно додати роут /health. Спочатку знайду де знаходиться Express app."
-}

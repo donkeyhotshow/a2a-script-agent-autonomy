@@ -11,26 +11,25 @@ This directory documents all real-time communication workflows, transport mechan
 
 ## Transport Hierarchy
 
-### Primary Transport: SSE (Server-Sent Events)
+### Unified Transport Hierarchy
 ```mermaid
 graph TD
-    A[Session Created] --> B[TransportManager.connect()]
-    B --> C[Try SSE First]
+    A[Invoke Submitted] --> B[TransportManager.monitor()]
+    B --> C[Try WebUI SSE First]
     C --> D{SSE Success?}
     D -->|Yes| E[SSE Active - /api/sse/:sessionId]
     D -->|No| F[WebSocket Fallback]
     F --> G{WS Success?}
     G -->|Yes| H[WebSocket Active - /api/ws/:sessionId]
-    G -->|No| I[HTTP Polling Fallback]
+    G -->|No| I[Stateless Async Polling]
+    I --> J[Poll /api/a2a/sessions/:id/async]
 ```
-
-### Transport Specifications
-
 | Transport | Protocol | Endpoint | Reliability | Use Case |
 |-----------|----------|----------|-------------|----------|
-| **SSE** | HTTP/1.1 + EventSource | `/api/sse/:sessionId` | High (auto-reconnect) | Primary real-time channel |
-| **WebSocket** | WS/WSS | `/api/ws/:sessionId` | High (bidirectional) | SSE fallback, bidirectional |
-| **HTTP Polling** | HTTP/1.1 | `/api/requests/:id/status` | Medium (manual) | Complete failure fallback |
+| **SSE** | HTTP/1.1 + EventSource | `/api/sse/:sessionId` | High | Primary real-time updates |
+| **WebSocket** | WS/WSS | `/api/ws/:sessionId` | High | Fallback for complex environments |
+| **Async Polling** | HTTP/1.1 | `/api/a2a/sessions/:id/async` | Critical | Web UI stateless fallback |
+| **Legacy Result**| HTTP/1.1 | `/api/v1/requests/:id/result`| Tooling | Testing and external SDKs |
 
 ## SSE Communication Flow
 
@@ -60,6 +59,7 @@ sequenceDiagram
 | **session_update** | Context change | `{context, execute}` | Update session data |
 | **progress** | Step progress | `{progress, action, step}` | Update progress UI |
 | **status** | Status change | `{context, execute}` | Update execution status |
+| **interrupt** | Recursive LLM loop | `{context, interrupt: true}` | Show "Thinking" state / Wait |
 | **complete** | Task completion | `{context, execute, result}` | Show completion |
 | **error** | Processing error | `{message, error}` | Display error |
 | **heartbeat** | Keepalive | `{type: "ping", timestamp}` | Reset watchdog timer |
@@ -119,25 +119,30 @@ sequenceDiagram
 
 ## HTTP Polling Fallback
 
-### Polling Sequence
+### Stateless Async Polling (/async)
 ```mermaid
 stateDiagram-v2
-    [*] --> RequestSubmitted
-    RequestSubmitted --> PollingStart: Start 5s interval
-    PollingStart --> StatusCheck: GET /api/requests/:id/status
-    StatusCheck --> Pending: Still processing
-    StatusCheck --> Complete: Result available
-    Pending --> PollingStart: Wait 5s
-    Complete --> ResultFetch: GET /api/requests/:id/result
-    ResultFetch --> [*]: Process result
+    [*] --> Submitted
+    Submitted --> Polling: Start 2s interval
+    Polling --> CheckStatus: GET /api/a2a/sessions/:id/async
+    CheckStatus --> StillPending: HTTP 202 / Processing
+    CheckStatus --> Completed: HTTP 200 / Done
+    StillPending --> Polling: Wait 2s
+    Completed --> RestoreState: SM.restore(sessionId)
+    RestoreState --> [*]: UI Refreshed from Disk
 ```
 
 ### Polling Specifications
-- **Interval**: 5 seconds (configurable)
-- **Timeout**: 30 seconds per request
-- **Retry**: 3 attempts per poll
-- **Backoff**: Exponential (5s → 10s → 20s)
-- **Max duration**: 5 minutes before manual retry
+- **Optimized Route**: `/api/a2a/sessions/:id/async` is the preferred route for Web UI. It is stateless and checks the backend promise registry.
+- **Interval**: 2.5 seconds (aggressive for UI responsiveness).
+- **Graceful Recovery**: If polling detects a completed promise, it triggers a full session reload from the file system (N+1).
+
+### Server Interrupt Loop
+The server may trigger an internal recursive loop (see `docs/adr/ADR-0029-server-interrupt-loop.md`) for complex reasoning.
+
+- **Client Feedback**: The server sends a status update with `interrupt: true`.
+- **UI Action**: The client should maintain the "Processing" state and display a "Thinking..." indicator or progress update.
+- **Completion**: The final response arrives via a standard `complete` or `task_response` event once the interrupt loop finishes.
 
 ## Reconnection Scenarios
 

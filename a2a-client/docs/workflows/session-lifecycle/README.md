@@ -12,27 +12,24 @@ This directory documents all session lifecycle workflows from creation to comple
 
 ## Session Creation Flow
 
-### Happy Path Scenario
+### Stateless Creation Flow (N+1 Folder)
 ```mermaid
 sequenceDiagram
     participant U as User
     participant TF as TaskFlow
     participant SM as SessionManager
-    participant TM as TransportManager
-    participant SS as SessionStore
-    participant UI as UI Panels
+    participant FS as File System (Storage)
+    participant API as A2A Server API
 
     U->>TF: Submit task form
-    TF->>SM: createSession(task, projectId)
-    SM->>API: POST /sessions
-    API-->>SM: {sessionId, projectId}
-    SM->>SS: reset(sessionId, projectId)
-    SM->>TM: connect(sessionId)
-    TM->>SSE: /api/sse/:sessionId
-    SSE-->>TM: connection established
-    TM->>SS: connection events
-    SM->>UI: open task panel
-    UI-->>U: Show loading state
+    TF->>SM: runTask(task, projectId)
+    SM->>SM: Generate sessionId (UUID)
+    SM->>FS: Create folder /sessions/:id/1/
+    SM->>FS: Write request-to-server.json
+    SM->>API: POST /api/v1/invoke { task, context, ... }
+    API-->>SM: HTTP 202 Accepted { promiseId }
+    SM->>FS: Write server-promise.json in folder /1/
+    SM->>UI: Show progress indicators
 ```
 
 ### Error Scenarios
@@ -60,18 +57,16 @@ sequenceDiagram
     participant U as User
     participant SP as Session Panel
     participant SM as SessionManager
-    participant TM as TransportManager
+    participant FS as File System (Storage)
     participant SS as SessionStore
 
     U->>SP: Click different session
     SP->>SM: switchToSession(sessionId)
-    SM->>TM: disconnect current
-    TM->>SSE: close connection
-    SM->>SS: setSession(sessionId)
-    SM->>TM: connect(newSessionId)
-    TM->>SSE: /api/sse/:newSessionId
-    SSE-->>TM: new connection
-    TM->>UI: update active session
+    SM->>FS: Read /1/.. /N/ folders
+    SM->>FS: Find highest N with server-response.json
+    FS-->>SM: Load latest state
+    SM->>SS: Update(context, execute)
+    SM->>UI: Render latest panel state
 ```
 
 ### Project Context Switch
@@ -83,21 +78,21 @@ User selects project → Filter sessions → Auto-switch to first session in pro
 
 | State | Description | Entry Conditions | Exit Conditions | UI Display |
 |-------|-------------|------------------|-----------------|------------|
-| **Created** | Session initialized but not active | POST /sessions success | Transport connected | Loading spinner |
-| **Active** | Connected and receiving updates | SSE/WebSocket connected | User switches or deletes | Full panel UI |
-| **Waiting** | Awaiting user input (form/message) | Execute received | User submits choice/message | Choice buttons / Continue button |
-| **Processing** | Server processing user input | Choice/message submitted | New execute received | Progress indicator |
-| **Completed** | Task finished successfully | Final result received | N/A | Completion summary |
-| **Error** | Processing failed | Error response received | User retries or deletes | Error message + retry option |
-| **Deleted** | Removed by user | User delete action | N/A | Panel removed, cleanup |
+| **New** | Session folder created, no response yet | `/invoke` sent | `server-response.json` written | Indeterminate spinner |
+| **In-Transit** | Async promise pending | `server-promise.json` exists | Promise resolves to result | Step-specific progress |
+| **Ready** | Response received, awaiting user | `server-response.json` written | User submits next input | Interactive form/message |
+| **Processing** | Executing auto-AI or tool | Result submitted | Next response folder created | Activity feedback / Attachment info |
+| **Completed** | Task finished | Final result in latest step | N/A | Completion summary |
+| **Error** | Execution failed | Result with `error` written | User retries | Error overlay |
+| **Deleted** | Folder removed from disk | User delete action | N/A | Panel removed |
 
 ## Session Persistence
 
-### Browser Session Persistence
-- Active session ID stored in memory
-- Panel layouts saved to localStorage
-- Session context cached in SessionStore
-- Automatic restoration on page reload
+### File-Based Persistence (N+1)
+- All session history is stored in numbered step folders (`/1/`, `/2/`, etc.)
+- **State Recovery**: Client reads the highest step folder to rebuild the current UI context.
+- **Message Merging**: Conversation history is assembled by concatenating `messages.json` from all steps.
+- **Offline Reliability**: Even if the tab is closed, the next launch restores the exact state from the last synchronized step.
 
 ### Cross-Session State
 - Project context maintained
@@ -113,17 +108,14 @@ sequenceDiagram
     participant U as User
     participant UI as Panel UI
     participant SM as SessionManager
-    participant TM as TransportManager
-    participant API as Server API
+    participant FS as File System (Storage)
 
     U->>UI: Click delete button
     UI->>SM: deleteSession(sessionId)
-    SM->>TM: disconnect(sessionId)
-    TM->>SSE: close connection
-    SM->>API: DELETE /sessions/:id
-    API-->>SM: success
-    SM->>UI: remove panel
-    UI->>U: Panel disappears
+    SM->>FS: rm -rf /sessions/:id
+    FS-->>SM: success
+    SM->>UI: remove panel from UI
+    UI->>U: Session vanishes
 ```
 
 ### Browser Tab Close

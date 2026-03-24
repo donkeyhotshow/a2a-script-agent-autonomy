@@ -1,6 +1,6 @@
-# Web UI ↔ Client API protocol (dialog)
+# Web UI ↔ Client API protocol (agent)
 
-Checkpoint: dialog in `a2a-client/web` against the Vite **storage-mode** Client API (`/api/a2a/*`).
+Checkpoint: agent mode in `a2a-client/web` against the Vite **storage-mode** Client API (`/api/a2a/*`).
 
 ## Principles
 
@@ -45,7 +45,7 @@ The **server protocol** and simulation **`response.json`** still use a **single 
 ## Browser modules
 
 - **`action-executor.js`** — `submit` → if `asyncPending`, starts polling via `GET .../async` (storage mode). Non-storage mode may still poll by `promiseId` if the Client API has no `/async` route.
-- **`DialogPromise` + `SessionStoreCore`** — `startPolling(checkFn, { sessionScoped: true })` when no id is held in the UI.
+- **`AgentPromise` + `SessionStoreCore`** — `startPolling(checkFn, { sessionScoped: true })` when no id is held in the UI.
 - **`window-state.js`** — On window open, if `asyncPending`, resumes polling without reading a promise id from the API payload.
 
 ## Loader
