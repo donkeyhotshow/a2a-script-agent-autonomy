@@ -50,6 +50,7 @@ If two `VARIANTS.md` files **contradict** (e.g. different async models), stop us
 - **Hybrid** — multiple `[x]` if the repo honestly uses more than one mode (e.g. dev vs CI); spell out **where** each applies.
 - **Planned** — “Implementation backlog” with `[ ]` and one-line scope.
 - **Rejected** — `**Status:** rejected` + one-line reason (keeps future readers from reviving dead options blindly).
+- **Under consideration (folder)** — listed in [Under consideration (active review)](#under-consideration-active-review); add `**Review status:** …` at the top of that folder’s `VARIANTS.md` until resolved.
 
 ---
 
@@ -70,52 +71,72 @@ If two `VARIANTS.md` files **contradict** (e.g. different async models), stop us
 
 ---
 
+## Under consideration (active review)
+
+These decision surfaces are on the shortlist for explicit review. Each linked `VARIANTS.md` states the same at the top. When you lock a choice, check **Current selection** there (and promote to an ADR if normative).
+
+| Folder | Topic |
+|--------|--------|
+| `session-storage-layout` | Filesystem step dirs vs DB vs multi-root |
+| `golden-simulations` | `sim:lint` / `sim:validate` / `sim:run` / tiered CI |
+| `client-filesystem-root` | `A2A_CLIENT_STORAGE_DIR` vs home vs repo storage |
+| `server-prompt-transforms` | Bundled transforms vs `PROMPTS_TRANSFORMS_PATH` |
+| `upstream-service-urls` | `A2A_SERVER_URL`, `AI_HUB_URL`, Ollama / Meili ports |
+| `workspace-rag-packaging` | `file:` RAG vs registry vs git dependency |
+| `server-logging` | `LOG_LEVEL`, `LOG_FORMAT`; Winston log dir / boot wipe vs rotation |
+| `server-requests-storage` | `REQUESTS_STORAGE_PATH` vs default `storage/requests` |
+| `simulations-base-path` | `SIMULATIONS_PATH` vs repo `simulations/` |
+| `server-llm-hub-polling` | `LLM_POLL_*` / `POLL_*` in Node daemon |
+| `sdk-http-limits` | CORS, rate limit, file/FS caps on standalone SDK |
+| `agent-rag-chain-limits` | `A2A_AGENT_RAG_CHAIN_MAX`, `A2A_RAG_PROJECT_PATH`, `A2A_PROJECT_PATH` |
+| `server-action-registry-bootstrap` | Lenient start vs fail-fast if MD actions fail to load |
+| `ts-module-policy` | NodeNext + `.js` imports vs future bundler / dual package |
+| `server-error-detail-level` | Stack traces off in production (`NODE_ENV`) |
+| `server-filesystem-sandbox` | cwd/tmp/HOME path allowlists for file actions |
+| `server-background-processor` | `REQUEST_PROCESSOR_INTERVAL_MS` (daemon tick) |
+| `llm-pipeline-modes` | Which router modes ship (dialog, coder, auto-ai, …) |
+
+---
+
 ## Index (repo systems)
 
 | Folder | Topic |
 |--------|--------|
 | `_template` | Copy for new folders |
-| `client-api-deployment` | Vite `/api/a2a` vs standalone SDK (see ADR-0028) |
+| `client-api-deployment` | Vite `/api/a2a` vs SDK, dev routing, browser `a2a_clientApiUrl` (ADR-0028) |
 | `invoke-sync-async` | `DEFAULT_SYNC_MODE` / per-request `sync` |
 | `web-async-polling` | `GET .../async` vs `promiseId` URL vs SDK gap |
 | `server-auth-mode` | `SKIP_AUTH` vs JWT / split by env |
 | `server-test-mode` | Vitest `TEST_MODE`: mocked, replay, recording, real |
 | `session-storage-layout` | Filesystem step dirs vs DB vs multi-root |
 | `golden-simulations` | `sim:lint` / `sim:validate` / `sim:run` / tiered CI |
-| `rag-stack` | Meilisearch on vs local-fs-only vs hosted |
-| `llm-provider` | Ollama / AI Hub / remote API / mock |
+| `rag-stack` | Meilisearch on vs local-fs-only vs hosted; embedding provider (Ollama / OpenAI / Cohere / Voyage) |
+| `llm-provider` | Ollama / AI Hub / remote API / mock; default `OLLAMA_MODEL` vs `qwen3:8b` |
 | `monorepo-dev-launch` | `start-all` vs manual subset vs server-only |
-| `e2e-browser-testing` | Playwright: when to run, target URL, matrix / server lifecycle env |
+| `e2e-browser-testing` | Playwright: when to run, target URL, matrix, server lifecycle, CI vs local tuning |
 | `web-session-client-mode` | SessionStore `storage` vs `project` |
 | `client-filesystem-root` | `A2A_CLIENT_STORAGE_DIR` vs home vs repo storage |
-| `embedding-provider` | Ollama vs OpenAI / Cohere / Voyage embeddings |
 | `server-prompt-transforms` | Bundled transforms vs `PROMPTS_TRANSFORMS_PATH` |
 | `upstream-service-urls` | `A2A_SERVER_URL`, `AI_HUB_URL`, Ollama / Meili ports |
 | `ai-proxy-env-tuning` | Promise TTL, workers, Ollama auto-start, poll timeouts |
 | `workspace-rag-packaging` | `file:` RAG vs registry vs git dependency |
-| `js-test-runners-monorepo` | Vitest (server) vs Jest (`@a2a/rag`) convergence |
-| `server-logging` | `LOG_LEVEL`, `LOG_FORMAT` (json vs pretty) |
+| `js-test-runners-monorepo` | Vitest vs Jest (`@a2a/rag`); a2a-server Vitest bail / coverage policy |
+| `server-logging` | `LOG_LEVEL`, `LOG_FORMAT`; Winston log dir / boot wipe vs rotation |
 | `server-requests-storage` | `REQUESTS_STORAGE_PATH` vs default `storage/requests` |
 | `simulations-base-path` | `SIMULATIONS_PATH` vs repo `simulations/` |
 | `server-llm-hub-polling` | `LLM_POLL_*` / `POLL_*` in Node daemon |
 | `web-storage-localstorage` | Remember **a2a_storage_mode** vs force default |
-| `vite-dev-api-routing` | Plugin-only vs SDK alongside vs proxy-heavy dev |
 | `vite-vue-bundle-strategy` | External Vue/vue-flow vs full bundle vs prod config |
-| `llm-model-id` | `OLLAMA_MODEL` vs default `qwen3:8b` |
 | `sdk-http-limits` | CORS, rate limit, file/FS caps on standalone SDK |
 | `agent-rag-chain-limits` | `A2A_AGENT_RAG_CHAIN_MAX`, `A2A_RAG_PROJECT_PATH`, `A2A_PROJECT_PATH` |
 | `server-action-registry-bootstrap` | Lenient start vs fail-fast if MD actions fail to load |
 | `ts-module-policy` | NodeNext + `.js` imports vs future bundler / dual package |
 | `config-zod-package` | Root `config/` Zod as source of truth vs layered env |
 | `client-tester-cli` | `a2a-client/tester` CLI vs Playwright vs hybrid CI |
-| `playwright-ci-tuning` | `CI` env: retries, workers, video, slowMo |
 | `server-error-detail-level` | Stack traces off in production (`NODE_ENV`) |
 | `server-filesystem-sandbox` | cwd/tmp/HOME path allowlists for file actions |
 | `server-http-security-profile` | Helmet CSP off, permissive CORS, compression |
 | `server-background-processor` | `REQUEST_PROCESSOR_INTERVAL_MS` (daemon tick) |
-| `server-winston-log-files` | Startup wipe of `logs/*` except `a2a.log` vs rotation |
 | `llm-pipeline-modes` | Which router modes ship (dialog, coder, auto-ai, …) |
-| `web-client-api-base-url` | localStorage `a2a_clientApiUrl`: `/api` vs absolute SDK URL |
-| `vitest-server-policy` | `bail: 1`, coverage v8, optional coverage-only jobs |
 
 Copy `_template/VARIANTS.md` when adding a new system folder.

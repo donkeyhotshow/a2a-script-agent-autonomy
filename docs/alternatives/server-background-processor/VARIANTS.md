@@ -2,6 +2,8 @@
 
 **Last reviewed:** 2026-03-24
 
+**Review status:** [Active consideration](../README.md#under-consideration-active-review).
+
 ## Constraints (invariants)
 
 - **`startRequestProcessor`** uses **`REQUEST_PROCESSOR_INTERVAL_MS`** from **`a2a-server/src/config/index.ts`** (default **5000**, clamped 100–60000). Wired in **`src/index.ts`** at bootstrap.

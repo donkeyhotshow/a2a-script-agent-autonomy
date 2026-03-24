@@ -2,6 +2,8 @@
 
 **Last reviewed:** 2026-03-24
 
+**Review status:** [Active consideration](../README.md#under-consideration-active-review).
+
 ## Constraints (invariants)
 
 - **`REQUESTS_STORAGE_PATH`** overrides the default under **`storage/requests`** relative to server cwd (`a2a-server/src/services/core/request/request.service.ts`).

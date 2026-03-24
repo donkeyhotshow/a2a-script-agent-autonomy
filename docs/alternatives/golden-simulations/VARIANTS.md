@@ -2,6 +2,8 @@
 
 **Last reviewed:** 2026-03-24
 
+**Review status:** [Active consideration](../README.md#under-consideration-active-review).
+
 ## Constraints (invariants)
 
 - **`sim:lint`** and schema rules in `AGENTS.md` (legacy golden rules: single `execute` key, action-key `result`, `workbench.sections`, etc.).

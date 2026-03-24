@@ -5,10 +5,15 @@
       "action": "task-decomposition",
       "step": "write-doc"
     },
-    "history": []
+    "history": [
+    {
+      "role": "user",
+      "message": "add auth and refactor API"
+    }
+  ]
   },
   "result": {
-    "script": {
+    "write-file": {
       "path": ".carrier/tasks/task-1.md"
     }
   }

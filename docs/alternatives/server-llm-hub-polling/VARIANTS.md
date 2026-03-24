@@ -2,6 +2,8 @@
 
 **Last reviewed:** 2026-03-24
 
+**Review status:** [Active consideration](../README.md#under-consideration-active-review).
+
 ## Constraints (invariants)
 
 - `a2a-server/src/daemon/llm-hub-poll.ts` uses **`LLM_POLL_INTERVAL_MS`** / **`LLM_POLL_TIMEOUT_MS`**, falling back to **`POLL_INTERVAL_MS`** / **`POLL_TIMEOUT_MS`**. Values are clamped (interval max 120s cap in helper).

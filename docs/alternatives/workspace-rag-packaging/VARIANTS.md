@@ -2,6 +2,8 @@
 
 **Last reviewed:** 2026-03-24
 
+**Review status:** [Active consideration](../README.md#under-consideration-active-review).
+
 ## Constraints (invariants)
 
 - Today `a2a-server` depends on **`"@a2a/rag": "file:../a2a-client/packages/rag"`** (`a2a-server/package.json`) — monorepo-local wiring.

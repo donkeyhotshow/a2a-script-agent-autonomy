@@ -2,6 +2,8 @@
 
 **Last reviewed:** 2026-03-24
 
+**Review status:** [Active consideration](../README.md#under-consideration-active-review).
+
 ## Constraints (invariants)
 
 - **`A2A_AGENT_RAG_CHAIN_MAX`** caps chain depth when set (SDK `agent-rag-chain.ts` and Vite `agent-rag-chain.js`).

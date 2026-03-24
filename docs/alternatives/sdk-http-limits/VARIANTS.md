@@ -2,6 +2,8 @@
 
 **Last reviewed:** 2026-03-24
 
+**Review status:** [Active consideration](../README.md#under-consideration-active-review).
+
 ## Constraints (invariants)
 
 - **`a2a-client/packages/sdk/src/server/config/index.ts`** exposes toggles and numeric caps: **`ENABLE_CORS`**, **`ENABLE_RATE_LIMIT`**, **`RATE_LIMIT_*`**, **`MAX_FILE_SIZE`**, **`FS_MAX_READ_SIZE`**, **`FS_MAX_WRITE_SIZE`**, **`SESSION_TIMEOUT_MS`**, **`MAX_CONNECTIONS_PER_SESSION`**, terminal history limits, RAG chunk sizes, etc.

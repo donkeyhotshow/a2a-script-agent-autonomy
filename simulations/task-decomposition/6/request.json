@@ -5,7 +5,12 @@
       "action": "task-decomposition",
       "step": "decompose-actions"
     },
-    "history": [],
+    "history": [
+      {
+        "role": "user",
+        "message": "add auth and refactor API"
+      }
+    ],
     "workbench": {
       "sections": {
         "section1": "add auth and refactor API",

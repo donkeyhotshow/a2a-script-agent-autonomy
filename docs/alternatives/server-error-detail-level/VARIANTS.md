@@ -2,6 +2,8 @@
 
 **Last reviewed:** 2026-03-24
 
+**Review status:** [Active consideration](../README.md#under-consideration-active-review).
+
 ## Constraints (invariants)
 
 - **`a2a-server/src/middleware/error.middleware.ts`**: **`includeStack`** when **`NODE_ENV !== 'production'`**.

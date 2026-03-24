@@ -36,6 +36,7 @@ You choose **when** full browser E2E runs (local pre-push, CI, release) and **ag
 ## Implementation backlog
 
 - [ ] Document chosen target URL in one test README.
+- [ ] If using self-hosted runners, document CPU recommendation next to **workers** line in `playwright.config.ts`.
 
 ## Related
 
@@ -59,6 +60,34 @@ You choose **when** full browser E2E runs (local pre-push, CI, release) and **ag
 - [ ] `cross-browser-full`
 - [ ] `reuse-server-ci`
 - [ ] `fresh-server-dev`
+
+---
+
+## CI vs local tuning (`CI` env)
+
+### Constraints (invariants)
+
+- **`a2a-client/playwright.config.ts`** branches on **`process.env.CI`**: **fullyParallel**, **maxFailures**, **forbidOnly**, **retries**, **workers**, **junit** reporter, **video**, **slowMo**.
+
+### Context
+
+Local runs favor speed; CI favors **stability** (retries, slowMo, video on failure). Choose a **profile** that matches runner capacity.
+
+### Variants
+
+| ID | Variant | Summary | Fit notes |
+|----|---------|---------|-----------|
+| `upstream-defaults` | As in config today | CI retries 3, workers capped, video retain-on-failure. | Good baseline; tune if queue times hurt. |
+| `fast-ci` | Reduce retries / no slowMo | Risk flakiness; faster PRs. | Needs stable app under load. |
+| `strict-local` | Match CI locally | Same retries/workers as CI on laptop. | Reproduces CI flakes; painful. |
+
+### Current selection (CI profile)
+
+- [ ] `upstream-defaults`
+- [ ] `fast-ci`
+- [ ] `strict-local`
+
+**Notes:**
 
 ## Open questions
 

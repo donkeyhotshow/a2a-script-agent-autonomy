@@ -2,6 +2,8 @@
 
 **Last reviewed:** 2026-03-24
 
+**Review status:** [Active consideration](../README.md#under-consideration-active-review).
+
 ## Constraints (invariants)
 
 - **`LLM_PIPELINE_ACTIONS`** in **`request-processor.service.ts`** lists modes that count as **dialog** processing and accept **router** **`result.choice`**: **dialog**, **auto-ai**, **auto-ai-v2**, **coder**, **coder-smart**, **coder-smart-v2**, **analyze**, **task-decomposition**. Must stay aligned with **`ACTION_TO_SCHEMA`** in **dialog-request-processor.ts**.

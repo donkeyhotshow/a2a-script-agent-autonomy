@@ -2,6 +2,8 @@
 
 **Last reviewed:** 2026-03-24
 
+**Review status:** [Active consideration](../README.md#under-consideration-active-review).
+
 ## Constraints (invariants)
 
 - Transform JSON lives under a directory discovered via **`PROMPTS_TRANSFORMS_PATH`** or defaults next to server cwd (`a2a-server/src/transform/pipeline.ts`, `dialog-request-processor.ts`).

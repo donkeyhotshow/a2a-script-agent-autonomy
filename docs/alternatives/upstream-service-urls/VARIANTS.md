@@ -2,6 +2,8 @@
 
 **Last reviewed:** 2026-03-24
 
+**Review status:** [Active consideration](../README.md#under-consideration-active-review).
+
 ## Constraints (invariants)
 
 - **Client API → A2A Server:** `A2A_SERVER_URL` (default `http://localhost:3000`) in Vite proxy code (`a2a-client/vite-plugin-a2a/routes/proxy/a2a-proxy.js`, `stepRoutes.js`).

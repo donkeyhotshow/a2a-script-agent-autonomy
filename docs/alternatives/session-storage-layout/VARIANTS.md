@@ -2,6 +2,8 @@
 
 **Last reviewed:** 2026-03-24
 
+**Review status:** [Active consideration](../README.md#under-consideration-active-review).
+
 ## Constraints (invariants)
 
 - Authoritative session reconstruction uses **step folders** under `a2a-client/storage/...` with `server-response.json`, `messages.json`, etc., as in `AGENTS.md` (Session Storage Format).

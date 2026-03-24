@@ -2,6 +2,8 @@
 
 **Last reviewed:** 2026-03-24
 
+**Review status:** [Active consideration](../README.md#under-consideration-active-review).
+
 ## Constraints (invariants)
 
 - **a2a-server/tsconfig.json** uses **module** and **moduleResolution** **NodeNext**, target **ES2022**. **AGENTS.md** requires **.js** extensions on path-alias imports for NodeNext.

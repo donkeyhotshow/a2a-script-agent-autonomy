@@ -2,6 +2,8 @@
 
 **Last reviewed:** 2026-03-24
 
+**Review status:** [Active consideration](../README.md#under-consideration-active-review).
+
 ## Constraints (invariants)
 
 - On start, **`actionRegistry.loadFromDirectory()`** reads MD definitions from **`src/actions/definitions`** relative to **server cwd** (or ctor path). **`a2a-server/src/index.ts`** logs failure but **still starts** the HTTP server if load throws.

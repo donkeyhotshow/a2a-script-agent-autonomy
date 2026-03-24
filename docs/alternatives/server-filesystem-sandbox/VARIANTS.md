@@ -2,6 +2,8 @@
 
 **Last reviewed:** 2026-03-24
 
+**Review status:** [Active consideration](../README.md#under-consideration-active-review).
+
 ## Constraints (invariants)
 
 - Handlers (**read-file**, **grep**, **edit-patch**, **command-execution**, etc.) build **allowed path prefixes** from **cwd**, **`/tmp`**, **`/var/tmp`**, and **`HOME`** (see `file-operations.ts`, `grep-search.ts`, `edit-patch.ts`, `command-execution.ts`).

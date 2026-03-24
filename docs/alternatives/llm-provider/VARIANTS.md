@@ -38,6 +38,40 @@ The stack can route model calls through a local runtime (Ollama), a proxy (AI Hu
 - ADR: see AI / LLM touchpoints in `docs/adr/README.md` (e.g. ADR-0026 for request prep — orthogonal to provider choice).
 - Config: `AGENTS.md` (Environment Variables), `ai-integration/` proxy routes.
 
+---
+
+## Default model id (`OLLAMA_MODEL`)
+
+**Last reviewed:** 2026-03-24
+
+### Constraints (invariants)
+
+- Dialog pipeline uses **`process.env.OLLAMA_MODEL`** or falls back to **`qwen3:8b`** (`dialog-request-processor.ts`).
+
+### Context
+
+Model id must exist on **Ollama** (or whatever backend resolves names). Team and CI should agree on **one default** to avoid “model not found” drift.
+
+### Variants
+
+| ID | Variant | Summary | Fit notes |
+|----|---------|---------|-----------|
+| `qwen3-8b` | Repo default constant | Matches `AGENTS.md` examples. | Pull model before first run. |
+| `env-pinned` | `OLLAMA_MODEL` in `.env` | Explicit per environment (e.g. smaller model in CI). | Document in `upstream-service-urls` table. |
+| `multi-model-policy` | Per-action routing | Not only env — requires code/router changes. | Future; keep ADR if implemented. |
+
+### Current selection (model id)
+
+- [ ] `qwen3-8b`
+- [ ] `env-pinned`
+- [ ] `multi-model-policy`
+
+**Model string in use:**
+
+### Implementation backlog (model id)
+
+- [ ] Align `a2a-server/docs/production/PROD_TESTS.md` model check with chosen id.
+
 ## Open questions
 
 - …

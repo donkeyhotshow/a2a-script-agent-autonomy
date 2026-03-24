@@ -2,6 +2,8 @@
 
 **Last reviewed:** 2026-03-24
 
+**Review status:** [Active consideration](../README.md#under-consideration-active-review).
+
 ## Constraints (invariants)
 
 - **`SIMULATIONS_PATH`** defaults to **`./simulations`** when unset (`simulation-request-processor.ts`). Golden sims normally live in repo root `simulations/`.

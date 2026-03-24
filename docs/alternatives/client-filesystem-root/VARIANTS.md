@@ -2,6 +2,8 @@
 
 **Last reviewed:** 2026-03-24
 
+**Review status:** [Active consideration](../README.md#under-consideration-active-review).
+
 ## Constraints (invariants)
 
 - SDK uses **A2A_CLIENT_STORAGE_DIR** or falls back to user home under `.a2a-client` (`a2a-client/packages/sdk/src/server/services/session-storage.ts`). Vite uses `getStorageRoot()` in the plugin.
