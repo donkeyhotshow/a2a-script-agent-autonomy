@@ -29,6 +29,7 @@ let timerId: ReturnType<typeof setInterval> | null = null;
 const LLM_PIPELINE_ACTIONS = [
     'dialog',
     'auto-ai',
+    'auto-ai-v2',
     'coder',
     'coder-smart',
     'coder-smart-v2',
@@ -77,24 +78,23 @@ function determineRequestType(context: Record<string, unknown>): RequestType {
     const action = (exec?.action ?? context['action']) as string | undefined;
     const task = context['task'] as string | undefined;
     const message = context['message'] as string | undefined;
-    const hasMessage = result?.message ?? task ?? message;
-    
+    const hasMessage = Boolean(result?.message ?? task ?? message);
+    const llmChoice =
+        typeof result?.choice === 'string' && LLM_PIPELINE_ACTIONS.includes(result.choice as (typeof LLM_PIPELINE_ACTIONS)[number])
+            ? result.choice
+            : undefined;
+
     // Check for simulation requests first
     if (context['simulation'] || context['replay'] || context['simulation_name'] || context['simulation_step']) {
         return 'simulation';
     }
 
-    // Transform pipeline / LLM: transformSchema, action=dialog+message, or ai_action (auto-ai, coder, etc.)
-    const llmActions = [
-        'dialog',
-        'auto-ai',
-        'coder',
-        'coder-smart',
-        'coder-smart-v2',
-        'analyze',
-        'task-decomposition',
-    ];
-    if (transformSchema || (action && hasMessage && llmActions.includes(action))) {
+    // Transform pipeline / LLM: transformSchema, or execution.action in LLM modes + (message/task or router choice)
+    const llmActions = [...LLM_PIPELINE_ACTIONS] as string[];
+    if (
+        transformSchema ||
+        (action && llmActions.includes(action) && (hasMessage || llmChoice !== undefined))
+    ) {
         return 'dialog';
     }
 
@@ -126,7 +126,9 @@ async function routeRequest(request: RequestContext): Promise<ProcessResult> {
 
     logger.info('[RequestProcessor] Routing request', {
         promiseId,
-        requestType
+        requestType,
+        resultChoice: (context['result'] as Record<string, unknown> | undefined)?.choice,
+        executionAction: (context['execution'] as Record<string, unknown> | undefined)?.action,
     });
 
     const processor = processorRegistry.get(requestType);

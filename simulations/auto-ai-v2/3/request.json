@@ -1,0 +1,17 @@
+{
+  "context": {
+    "task": "Add GET /health returning JSON { ok: true }; wire the route in src/app.js.",
+    "execution": {
+      "action": "auto-ai-v2",
+      "step": "locate_code"
+    },
+    "scratchpad": {},
+    "files": {},
+    "history": [
+      {
+        "role": "user",
+        "message": "Add GET /health returning JSON { ok: true }; wire the route in src/app.js."
+      }
+    ]
+  }
+}

@@ -194,6 +194,7 @@ export const SIMULATION_TO_SCHEMA: Record<string, string> = {
   'coder-smart-v2': 'coder',
   analyze: 'analyze',
   'auto-ai': 'auto-ai',
+  'auto-ai-v2': 'auto-ai',
   'fix-vue-imports': 'fix-vue-imports',
   'fix-vue-imports-batched': 'fix-vue-imports',
   'task-decomposition': 'task-decomposition',

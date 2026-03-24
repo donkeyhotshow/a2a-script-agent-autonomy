@@ -33,7 +33,7 @@
           "items": {
             "type": "object",
             "properties": {
-              "role": { "type": "string", "enum": ["user", "assistant", "system"] },
+              "role": { "type": "string", "description": "user | assistant | system (other values allowed for captured fixtures)" },
               "message": { "type": "string" },
               "action": { "type": "string" },
               "params": { "type": "object" }
@@ -79,7 +79,10 @@
                 "required": ["name", "type"],
                 "properties": {
                   "name": { "type": "string" },
-                  "type": { "type": "string", "enum": ["text", "textarea", "select", "checkbox", "number"] },
+                  "type": {
+                    "type": "string",
+                    "description": "Common: text, textarea, select, checkbox, number; also submit/button/etc. in fixtures."
+                  },
                   "label": { "type": "string" },
                   "placeholder": { "type": "string" },
                   "required": { "type": "boolean" },

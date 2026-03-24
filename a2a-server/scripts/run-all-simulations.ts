@@ -16,7 +16,8 @@
  */
 
 import {readFileSync, writeFileSync, existsSync, readdirSync, statSync} from 'node:fs';
-import {join, dirname} from 'node:path';
+import {join} from 'node:path';
+import type {InvokeInput} from '../src/services/utils/invoke.service.js';
 
 const simBaseDir = process.argv[2];
 if (!simBaseDir) {
@@ -72,8 +73,15 @@ console.log('');
 
 // Вызываем серверный код напрямую
 async function runAllSimulations() {
-    const {invoke} = await import('../src/services/invoke.service.js');
-    const {requestService} = await import('../src/services/request.service.js');
+    const {invoke} = await import('../src/services/utils/invoke.service.js');
+    const {requestService} = await import('../src/services/core/request/request.service.js');
+    const {actionRegistry} = await import('../src/actions/action-registry.js');
+    try {
+        await actionRegistry.loadFromDirectory();
+        console.log(`[ActionRegistry] Loaded ${actionRegistry.count} actions\n`);
+    } catch (e) {
+        console.warn('[ActionRegistry] load failed — router may use static choices only\n', e);
+    }
 
     let successCount = 0;
     let failCount = 0;
@@ -116,11 +124,21 @@ async function runAllSimulations() {
         console.log(`   📝 Action: ${requestData.action || 'N/A'}`);
 
         try {
-            // Вызываем invoke
-            const {promiseId} = await invoke('simulation-client', {
-                context: context,
-                message: message,
-            });
+            const invokeInput: Record<string, unknown> = {context};
+            if (requestData.task) invokeInput.task = requestData.task;
+            else if (requestData.message) invokeInput.message = requestData.message;
+            if (requestData.action) invokeInput.action = requestData.action;
+            if (requestData.selectedAction) invokeInput.selectedAction = requestData.selectedAction;
+            if (requestData.result && typeof requestData.result === 'object') {
+                if (requestData.stepId) {
+                    invokeInput.stepId = requestData.stepId;
+                    invokeInput.stepResult = requestData.result;
+                } else {
+                    invokeInput.result = requestData.result;
+                }
+            }
+
+            const {promiseId} = await invoke('simulation-client', invokeInput as InvokeInput);
 
             console.log(`   🔄 Promise ID: ${promiseId}`);
 

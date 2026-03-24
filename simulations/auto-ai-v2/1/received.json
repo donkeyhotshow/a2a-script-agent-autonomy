@@ -1,0 +1,23 @@
+{
+  "projectId": "123",
+  "sessionId": "456",
+  "execute": {
+    "form": {
+      "title": "Choose how to run this task",
+      "choices": [
+        {
+          "id": "dialog",
+          "label": "Dialog"
+        },
+        {
+          "id": "auto-ai-v2",
+          "label": "Auto-AI v2 — optimized context (ISSUE 6/9)"
+        },
+        {
+          "id": "task-decomposition",
+          "label": "Task decomposition"
+        }
+      ]
+    }
+  }
+}

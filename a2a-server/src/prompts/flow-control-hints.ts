@@ -103,8 +103,14 @@ export function readExecutionRef(root: Record<string, unknown>): ExecutionRef {
   return { action: topAction, step };
 }
 
+/** Same phases as `auto-ai`; separate simulation id for context-v2 golden (ISSUE 9). */
+const FLOW_HINT_ACTION_ALIASES: Record<string, string> = {
+  'auto-ai-v2': 'auto-ai',
+};
+
 export function resolveFlowControlHintMarkdown(ref: ExecutionRef): string {
-  const { action, step } = ref;
+  const action = FLOW_HINT_ACTION_ALIASES[ref.action] ?? ref.action;
+  const step = ref.step;
   const keys = [`${action}:${step}`, `${action}:*`, `*:${step}`, '*:*'];
   for (const k of keys) {
     const h = BY_ACTION_STEP[k];

@@ -140,6 +140,12 @@ export class RequestService {
         if (status === 'completed' || status === 'failed') req.completedAt = now;
         if (result !== undefined) req.result = result;
         if (error !== undefined) req.error = error;
+        if (status === 'completed' && result !== undefined) {
+            const outCtx = result['context'] as Record<string, unknown> | undefined;
+            if (outCtx && typeof outCtx === 'object' && !Array.isArray(outCtx)) {
+                req.context = {...(req.context as Record<string, unknown>), ...outCtx};
+            }
+        }
 
         await storage.save(req);
         logger.info('Request status updated', {promiseId, status});

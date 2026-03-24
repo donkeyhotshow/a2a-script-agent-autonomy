@@ -1,5 +1,6 @@
 {
   "context": {
+    "task": "диалог",
     "execution": {
       "action": "task",
       "step": "new"

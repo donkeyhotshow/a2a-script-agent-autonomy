@@ -63,8 +63,15 @@ console.log(`   Request task: ${message}`);
 // Вызываем серверный код напрямую
 async function runSimulation() {
     try {
-        const {invoke} = await import('../src/services/invoke.service.js');
-        const {requestService} = await import('../src/services/request.service.js');
+        const {invoke} = await import('../src/services/utils/invoke.service.js');
+        const {requestService} = await import('../src/services/core/request/request.service.js');
+        const {actionRegistry} = await import('../src/actions/action-registry.js');
+        try {
+            await actionRegistry.loadFromDirectory();
+            console.log(`   [ActionRegistry] Loaded ${actionRegistry.count} actions`);
+        } catch (e) {
+            console.warn('   [ActionRegistry] load failed — router may use static choices only', e);
+        }
 
         console.log('\n⏳ Invoking server...');
 
@@ -91,10 +98,13 @@ async function runSimulation() {
             invokeInput.selectedAction = requestData.selectedAction;
         }
 
-        // Add step result for step_result
-        if (requestData.stepId) {
-            invokeInput.stepId = requestData.stepId;
-            invokeInput.stepResult = requestData.result;
+        if (requestData.result && typeof requestData.result === 'object') {
+            if (requestData.stepId) {
+                invokeInput.stepId = requestData.stepId;
+                invokeInput.stepResult = requestData.result;
+            } else {
+                invokeInput.result = requestData.result;
+            }
         }
 
         const {promiseId} = await invoke('simulation-client', invokeInput);

@@ -19,11 +19,20 @@ import type {
 } from '../request-processor.interfaces.js';
 import {BaseRequestProcessor, type RequestType} from './base-processor.js';
 
-/** Router step choices (aligned with simulations/dialog/1/response.json). */
+/**
+ * Router tail: LLM pipeline modes + common scripted action when registry is empty.
+ * Registry-backed actions are prepended when loaded; these stay as fallback (see ISSUE 01).
+ */
 const ROUTER_CHOICES = [
     {id: 'dialog', label: 'AI діалог з користувачем'},
     {id: 'auto-ai', label: 'AI Action Generator'},
+    {id: 'auto-ai-v2', label: 'Auto-AI v2 (context golden)'},
     {id: 'task-decomposition', label: 'Декомпозиція задачі'},
+    {id: 'coder', label: 'Робота з кодом (Coder)'},
+    {id: 'coder-smart', label: 'Coder smart'},
+    {id: 'coder-smart-v2', label: 'Coder smart v2'},
+    {id: 'analyze', label: 'Аналіз коду'},
+    {id: 'fix-vue-imports', label: 'Виправлення Vue imports'},
 ] as const;
 
 /**

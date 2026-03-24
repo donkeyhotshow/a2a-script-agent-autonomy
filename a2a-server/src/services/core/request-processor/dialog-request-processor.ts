@@ -35,6 +35,13 @@ function getDialogUserMessage(ctx: Record<string, unknown>): string | undefined 
     return undefined;
 }
 
+/** Completed dialog context must not carry llmPromiseId — next invoke would re-enter poll branch. */
+function dialogContextWithoutTransientIds(ctx: Record<string, unknown>): Record<string, unknown> {
+    const out = {...ctx};
+    delete out['llmPromiseId'];
+    return out;
+}
+
 function parseLlmResponseFields(responseMd: string): {
     llmMessage: string | undefined;
     llmForm: Record<string, unknown> | undefined;
@@ -81,11 +88,12 @@ function buildDialogProcessResultFromContext(
         input: [{name: 'message', type: 'text', label: 'Повідомлення', required: true}],
     };
     const msg = recovered ? 'Dialog response (recovered)' : 'Dialog response';
+    const nextCtx = {...dialogContextWithoutTransientIds(ctx), history: newHistory};
     if (assistantMessage) {
         return {
             outcome: 'completed',
             message: msg,
-            context: {...ctx, history: newHistory},
+            context: nextCtx,
             execute: {
                 message: assistantMessage,
                 form: llmForm ?? (execute?.form as Record<string, unknown> | undefined) ?? defaultForm,
@@ -95,7 +103,7 @@ function buildDialogProcessResultFromContext(
     return {
         outcome: 'completed',
         message: msg,
-        context: {...ctx, history: newHistory},
+        context: nextCtx,
         execute: execute ?? {form: defaultForm},
     } as ProcessResult;
 }
@@ -106,6 +114,7 @@ function buildDialogProcessResultFromContext(
 const ACTION_TO_SCHEMA: Record<string, string> = {
     dialog: 'dialog',
     'auto-ai': 'auto-ai',
+    'auto-ai-v2': 'auto-ai',
     coder: 'coder',
     'coder-smart': 'coder',
     'coder-smart-v2': 'coder',

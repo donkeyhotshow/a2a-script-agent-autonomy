@@ -336,6 +336,34 @@ export class FormRequestProcessor extends BaseRequestProcessor {
                     }
                 } as ProcessResult;
 
+            case 'auto-ai-v2':
+                logger.info('[FormRequestProcessor] Auto-AI v2 mode selected, routing to AI-Actions', {choiceId});
+                return {
+                    outcome: 'ai_action_ready',
+                    message: 'Auto-AI v2 mode selected',
+                    selection: { choiceId, formId, timestamp: new Date().toISOString() },
+                    context: {
+                        action: 'auto-ai-v2',
+                        execution: {
+                            step: 'request',
+                            progress: 0
+                        }
+                    },
+                    execute: {
+                        message: 'Auto-AI v2 (оптимізований контекст). Аналіз задачі через LLM...',
+                        finalResult: {
+                            action: 'auto-ai-v2',
+                            summary: { mode: 'auto-ai-v2', status: 'processing' }
+                        }
+                    },
+                    aiActions: {
+                        action: 'auto-ai-v2',
+                        mode: 'llm-driven',
+                        step: 'start',
+                        completed: false
+                    }
+                } as ProcessResult;
+
             case 'task-decomposition':
                 // Task decomposition mode
                 logger.info('[FormRequestProcessor] Task decomposition mode selected', {choiceId});

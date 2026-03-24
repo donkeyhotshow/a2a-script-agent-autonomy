@@ -1,0 +1,10 @@
+{
+  "projectId": "123",
+  "sessionId": "456",
+  "result": {
+    "read-file": {
+      "path": "src/app.js",
+      "content": "const express = require('express');\nconst app = express();\nmodule.exports = app;\n"
+    }
+  }
+}

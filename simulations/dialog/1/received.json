@@ -1,24 +1,43 @@
 {
-    "projectId": "123",
-    "sessionId": "456",
-    "execute": {
-      "form": {
-        "title": "Оберіть спосіб виконання",
-        "choices": [
-          {
-            "id": "dialog",
-            "label": "AI діалог з користувачем"
-          },
-          {
-            "id": "auto-ai",
-            "label": "AI Action Generator"
-          },
-          {
-            "id": "task-decomposition",
-            "label": "Декомпозиція задачі"
-          }
-        ]
-      }
+  "projectId": "123",
+  "sessionId": "456",
+  "execute": {
+    "form": {
+      "title": "Оберіть спосіб виконання",
+      "choices": [
+        {
+          "id": "dialog",
+          "label": "AI діалог з користувачем"
+        },
+        {
+          "id": "auto-ai",
+          "label": "AI Action Generator"
+        },
+        {
+          "id": "task-decomposition",
+          "label": "Декомпозиція задачі"
+        },
+        {
+          "id": "coder",
+          "label": "Робота з кодом (Coder)"
+        },
+        {
+          "id": "coder-smart",
+          "label": "Coder smart"
+        },
+        {
+          "id": "coder-smart-v2",
+          "label": "Coder smart v2"
+        },
+        {
+          "id": "analyze",
+          "label": "Аналіз коду"
+        },
+        {
+          "id": "fix-vue-imports",
+          "label": "Виправлення Vue imports"
+        }
+      ]
     }
   }
-  
+}

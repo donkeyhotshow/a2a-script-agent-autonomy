@@ -18,8 +18,8 @@
           "description": "ID of the current step inside the action."
         },
         "progress": {
-          "type": "number",
-          "description": "Optional progress percentage (0–100)."
+          "description": "Progress: scalar percent or structured object (batched / UI).",
+          "oneOf": [{ "type": "number" }, { "type": "object", "additionalProperties": true }]
         }
       },
       "additionalProperties": true
@@ -72,6 +72,25 @@
           "description": "Free text message from user (execute.form.input → result.message)."
         }
       }
+    },
+    "message": {
+      "type": "string",
+      "description": "Top-level user text (SDK/invoke.service); same role as result.message for some clients."
+    },
+    "code_blocks": {
+      "type": "array",
+      "description": "File attachments for invoke (snake_case API field)."
+    },
+    "stepId": {
+      "type": "string",
+      "description": "For action step_result flows."
+    },
+    "stepResult": {
+      "description": "Payload for step_result (action-key shape)."
+    },
+    "selectedAction": {
+      "type": "object",
+      "description": "approve_action / selection payload."
     }
   },
   "oneOf": [
