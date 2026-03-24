@@ -177,8 +177,8 @@ test.describe('Web UI Smoke Test - Enhanced Automation', () => {
         server: { port: 3000, health: 'http://localhost:3000/health' },
         clientApi: { port: 5173, health: 'http://localhost:5173' },
         webUi: { port: 5173, health: 'http://localhost:5173' },
-        aiHub: { port: 11435, health: 'http://localhost:11435/health' },
-        ollama: { port: 11434, health: 'http://localhost:11434/api/tags' }
+        aiHub: { port: 11434, health: 'http://localhost:11434/health' },
+        ollama: { port: 11435, health: 'http://localhost:11435/api/tags' }
     };
 
     // Infrastructure validation (mirrors PowerShell script Docker + service checks)
@@ -223,7 +223,7 @@ test.describe('Web UI Smoke Test - Enhanced Automation', () => {
             expect(healthChecks.every((healthy: boolean) => healthy)).toBeTruthy();
             infraStatus.serviceStartup = true;
 
-            // Check AI Hub health (localhost:11435) - optional check
+            // Check AI Hub health (localhost:11434) - optional check
             try {
                 const aiHubResponse = await request.get(SERVICES.aiHub.health);
                 if (aiHubResponse.status < 500) {
@@ -238,7 +238,7 @@ test.describe('Web UI Smoke Test - Enhanced Automation', () => {
             }
             // Don't fail test if AI Hub is not available
 
-            // Check Ollama API (localhost:11434) - optional check
+            // Check Ollama API (localhost:11435) - optional check
             try {
                 const ollamaResponse = await request.get(SERVICES.ollama.health);
                 if (ollamaResponse.status < 500) {

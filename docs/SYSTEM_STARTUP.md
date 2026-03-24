@@ -68,11 +68,11 @@ pkill -f "node"
 
 ```bash
 # Запуск Ollama
-set OLLAMA_HOST=0.0.0.0:11434
+set OLLAMA_HOST=0.0.0.0:11435
 ollama serve
 
 # Или через Docker
-docker run -d -v ollama:/root/.ollama -p 11434:11434 --name ollama ollama/ollama
+docker run -d -v ollama:/root/.ollama -p 11435:11435 --name ollama ollama/ollama
 ```
 
 ### 2. ai-integration (AI Proxy)

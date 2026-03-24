@@ -24,7 +24,7 @@ $performanceTests = @(
             $endpoints = @(
                 "http://localhost:3000/health",
                 "http://localhost:3001/health",
-                "http://localhost:11435/health"
+                "http://localhost:11434/health"
             )
 
             $results = @()

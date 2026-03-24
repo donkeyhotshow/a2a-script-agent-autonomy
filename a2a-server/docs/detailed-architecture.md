@@ -404,7 +404,7 @@ sequenceDiagram
 {
   provider: 'ollama',
   model: 'qwen3:8b',
-  url: 'http://localhost:11434',
+  url: 'http://localhost:11435',
   pollIntervalMs: 2000,
   pollTimeoutMs: 120000
 }
@@ -595,15 +595,15 @@ npm run dev:no-auth      # Без auth (SKIP_AUTH=1)
 services:
   ollama:
     image: ollama/ollama:latest
-    ports: ["11435:11434"]
+    ports: ["11438:11435"]
     volumes:
       - ollama_data:/root/.ollama
 
   ai-proxy:
     build: ./ai-integration
-    ports: ["11434:11434"]
+    ports: ["11434:11435"]
     environment:
-      - OLLAMA_HOST=http://ollama:11434
+      - OLLAMA_HOST=http://ollama:11435
 ```
 
 ### Health Checks

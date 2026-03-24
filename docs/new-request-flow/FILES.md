@@ -75,7 +75,7 @@ NPM пакети всередині monorepo:
 
 ## External AI Hub (`ai-integration/`)
 
-Проксі до Ollama: **Hub :11435** → **Ollama :11434**, async `promiseId`. Дерево каталогів і інтеграція з сервером: [SERVER-ARCHITECTURE.md](SERVER-ARCHITECTURE.md#external-ai-hub-integration); контракт promise / endpoints: [PROTOCOL.md](PROTOCOL.md#async-flow-promiseid).
+Проксі до Ollama: **Hub :11434** → **Ollama :11435**, async `promiseId`. Дерево каталогів і інтеграція з сервером: [SERVER-ARCHITECTURE.md](SERVER-ARCHITECTURE.md#external-ai-hub-integration); контракт promise / endpoints: [PROTOCOL.md](PROTOCOL.md#async-flow-promiseid).
 
 ---
 
@@ -122,8 +122,8 @@ simulations/
 | Server          | 3000  | A2A Server HTTP API                     |
 | Client API      | 5173 (`/api/a2a/*` на Vite) або 3001 (standalone SDK) | Сесії, проксі на сервер |
 | Web UI          | 5173  | Vite dev server                         |
-| AI Hub (ai-integration) | 11435 | Проксі / async promise до Ollama |
-| Ollama          | 11434 | Локальна LLM                            |
+| AI Hub (ai-integration) | 11434 | Проксі / async promise до Ollama |
+| Ollama          | 11435 | Локальна LLM                            |
 
 ---
 
@@ -143,8 +143,8 @@ SKIP_AUTH=1
 ### External AI Hub
 
 ```
-PROXY_PORT=11435
-OLLAMA_HOST=http://localhost:11434
+PROXY_PORT=11434
+OLLAMA_HOST=http://localhost:11435
 SIMULATION_ENABLED=false
 OLLAMA_AUTO_START=true
 OLLAMA_IDLE_TIMEOUT=300

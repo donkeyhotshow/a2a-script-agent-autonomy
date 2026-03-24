@@ -86,8 +86,8 @@ export const PORT_CONFIG: Record<ServiceKey, PortConfig> = {
   
   // AI services (optional)
   ollama: {
-    port: 11434,
-    range: [11434, 11444],
+    port: 11435,
+    range: [11435, 11445],
     priority: 4,
     name: 'Ollama',
     description: 'Local LLM server',
@@ -97,8 +97,8 @@ export const PORT_CONFIG: Record<ServiceKey, PortConfig> = {
     category: 'ai',
   },
   proxy: {
-    port: 11435,
-    range: [11435, 11445],
+    port: 11434,
+    range: [11434, 11444],
     priority: 5,
     name: 'AI Proxy',
     description: 'Python AI integration proxy',

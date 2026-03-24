@@ -23,7 +23,7 @@ const { createEmbeddingClient } = require('@a2a/embedding');
 // Using Ollama (local)
 const client = createEmbeddingClient({
   provider: 'ollama',
-  baseUrl: 'http://localhost:11434',
+  baseUrl: 'http://localhost:11435',
   model: 'nomic-embed-text',
 });
 
@@ -38,7 +38,7 @@ const embedding = await client.embed('Hello world');
 ```javascript
 const client = createEmbeddingClient({
   provider: 'ollama',
-  baseUrl: process.env.OLLAMA_BASE_URL || 'http://localhost:11434',
+  baseUrl: process.env.OLLAMA_BASE_URL || 'http://localhost:11435',
   model: 'nomic-embed-text', // or bge-m3, bge-small
 });
 ```
@@ -110,7 +110,7 @@ console.log(models); // ['nomic-embed-text', 'bge-m3', ...]
 
 ```bash
 # Ollama
-OLLAMA_BASE_URL=http://localhost:11434
+OLLAMA_BASE_URL=http://localhost:11435
 
 # OpenAI
 OPENAI_API_KEY=sk-...

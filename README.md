@@ -82,8 +82,8 @@ These scripts follow the pattern from `docs/troubleshooting/standardize-stop-scr
 │  5173* │ Web UI            │ Vite + Vue (5173-5183)        │
 │  5432* │ PostgreSQL        │ pgvector extension (5432-5442)│
 │  6379* │ Redis             │ Caching & queues (6379-6389)  │
-│ 11434* │ AI Proxy          │ Python Flask (11434-11444)   │
-│ 11435* │ Ollama            │ LLM inference (11435-11445)    │
+│ 11434* │ AI Hub Proxy        │ Python Flask (11434-11444)   │
+│ 11435* │ Ollama              │ LLM inference (11435-11445)    │
 └─────────────────────────────────────────────────────────────┘
 * Actual ports may differ if defaults are busy. Check `.env.local` after start.
 ```
@@ -116,11 +116,11 @@ node scripts/port-manager.js kill-batch <port>
 # Kill all cached PIDs across all ports
 node scripts/port-manager.js kill-all
 
-# Check port conflicts
-node scripts/port-manager.js conflicts
+# Check port status
+node scripts/port-manager.js check
 
-# List reserved ports
-node scripts/port-manager.js list
+# Allocate a port
+node scripts/port-manager.js allocate
 ```
 
 The orchestrator also runs the `kill-all` cleanup automatically every time it initializes ports, so leftover PID packs from previous sessions are removed before allocation.

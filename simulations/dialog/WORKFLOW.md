@@ -54,7 +54,8 @@ Per-step **documentation** for the [server interrupt loop](../a2a-server/docs/SE
 before returning to the client). Does **not** affect Web `received.json` or the eight-file pipeline. Canonical
 description: [`simulations/SCHEMA.md`](../SCHEMA.md#supplementary-server-interrupt-loop-optional). Example: [
 `agent-auto-ai/6/interrupt.md`](../agent-auto-ai/6/interrupt.md). **Substeps:** sister folders **`N-sub-M`** (`M` =
-1,2,…) next to step `N`, e.g. [`agent-auto-ai/6-sub-1/`](../agent-auto-ai/6-sub-1/).
+1,2,…) next to step `N`, e.g. [`agent-auto-ai/6-sub-1/`](../agent-auto-ai/6-sub-1/) — **server-internal** only (no Web
+`client.json` / `received.json`; see [`SCHEMA.md`](../SCHEMA.md)).
 
 ## Server Transform Pipeline Operations
 
@@ -381,7 +382,7 @@ function buildContext(input: Input): Context {
 
 ```typescript
 async function callLLM(messages: Message[]): Promise<LLMResponse> {
-  const response = await fetch('http://localhost:11434/api/chat', {
+  const response = await fetch('http://localhost:11435/api/chat', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

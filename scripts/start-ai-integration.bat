@@ -2,8 +2,8 @@
 chcp 65001 >nul
 REM Start ai-integration service only
 
-set PROXY_PORT=11435
-set OLLAMA_PORT=11434
+set PROXY_PORT=11434
+set OLLAMA_PORT=11435
 set OLLAMA_MODELS=C:\Users\dev\Desktop\.ollama
 set PID_FILE=.pids.txt
 

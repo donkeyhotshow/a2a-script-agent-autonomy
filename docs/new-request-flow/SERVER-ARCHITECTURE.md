@@ -68,7 +68,7 @@ The A2A Server is a **stateless** HTTP service that processes requests and retur
                                       ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │                       EXTERNAL AI HUB (ai-integration)                       │
-│  - Proxy on **11435** → Ollama **11434**                                    │
+│  - Proxy on **11434** → Ollama **11435**                                    │
 │  - Async promise support (promiseId)                                        │
 │  - ML simulation capabilities                                               │
 └─────────────────────────────────────────────────────────────────────────────┘
@@ -295,7 +295,7 @@ Contract and Hub endpoints: [PROTOCOL.md → Async flow](PROTOCOL.md#async-flow-
 {
   provider: 'ollama',
   model: 'qwen3:8b',
-  url: 'http://localhost:11434',
+  url: 'http://localhost:11435',
   pollIntervalMs: 2000,
   pollTimeoutMs: 120000
 }
@@ -360,8 +360,8 @@ REQUEST_PROCESSOR_INTERVAL_MS=5000
 
 **AI Hub (ai-integration)**:
 ```
-PROXY_PORT=11435
-OLLAMA_HOST=http://localhost:11434
+PROXY_PORT=11434
+OLLAMA_HOST=http://localhost:11435
 SIMULATION_ENABLED=false
 AI_HUB_CONFIG=path/to/config.json
 ```
@@ -373,8 +373,8 @@ AI_HUB_CONFIG=path/to/config.json
 | Server | 3000 | HTTP API |
 | Client API | 5173 (`/api/a2a/*`) or 3001 (SDK) | HTTP API for web |
 | Web UI | 5173 | Vite dev server |
-| AI Hub Proxy | 11435 | Proxy / promise flow → Ollama |
-| Ollama | 11434 | Local LLM |
+| AI Hub Proxy | 11434 | Proxy / promise flow → Ollama |
+| Ollama | 11435 | Local LLM |
 
 ### Startup
 

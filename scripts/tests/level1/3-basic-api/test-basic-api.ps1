@@ -73,7 +73,7 @@ $apiEndpoints = @(
     },
     @{
         Name = "AI Integration Health"
-        Url = "http://localhost:11435/health"
+        Url = "http://localhost:11434/health"
         Method = "GET"
         ExpectedStatus = 200
         Service = "AI Integration"
@@ -81,7 +81,7 @@ $apiEndpoints = @(
     },
     @{
         Name = "AI Integration Daemon Status"
-        Url = "http://localhost:11435/daemon/status"
+        Url = "http://localhost:11434/daemon/status"
         Method = "GET"
         ExpectedStatus = 200
         Service = "AI Integration"
@@ -89,7 +89,7 @@ $apiEndpoints = @(
     },
     @{
         Name = "Ollama API Tags"
-        Url = "http://localhost:11434/api/tags"
+        Url = "http://localhost:11435/api/tags"
         Method = "GET"
         ExpectedStatus = 200
         Service = "Ollama"
@@ -161,7 +161,7 @@ $basicTests = @(
     },
     @{
         Name = "AI Integration Cleanup Stats"
-        Url = "http://localhost:11435/cleanup/stats"
+        Url = "http://localhost:11434/cleanup/stats"
         Method = "GET"
         Service = "AI Integration"
         Optional = $true

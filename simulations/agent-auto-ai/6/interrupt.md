@@ -4,9 +4,11 @@ This folder’s **canonical goldens** (`response.md`, `response.json`) describe 
 `interrupt` in the LLM JSON. **Interrupt substeps** live in **sister folders** next to this step: [
 `../6-sub-1/`](../6-sub-1/) (primary only), [`../6-sub-2/`](../6-sub-2/) (`compress_history`), [
 `../6-sub-3/`](../6-sub-3/) (`thinking` + follow-up), [`../6-sub-4/`](../6-sub-4/) (`auto_rag_page` reenter). Each
-subfolder uses the same artifact set as a step (`request.json`, `request.md`, `response.json`, `response.md`, optional
-server-transforms); trace for UI is `context.workbench.slots.interruptTrace` in each **`response.json`**. Full spec: *
-*[`SERVER-INTERRUPT-LOOP.md`](../../../a2a-server/docs/SERVER-INTERRUPT-LOOP.md)**.
+subfolder holds **server-internal** artifacts (`request.*`, `response.*`, optional `request.md` / `response.md` /
+server-transforms) — **no** `client.json` / `received.json`, because the interrupt loop runs entirely on the server; the
+Web only gets the **final** payload for step **6** (this folder). Trace for UI is `context.workbench.slots.interruptTrace`
+in each substep **`response.json`**. Full spec: [
+`SERVER-INTERRUPT-LOOP.md`](../../../a2a-server/docs/SERVER-INTERRUPT-LOOP.md).
 
 ## Why this step
 

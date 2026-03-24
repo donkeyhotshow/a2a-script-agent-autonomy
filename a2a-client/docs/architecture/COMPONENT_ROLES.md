@@ -188,5 +188,5 @@
 | Browser (Web UI) | 5173 | Vite dev server |
 | Client API | 5173 | Vite Plugin endpoint |
 | A2A Server | 3000 | Main backend |
-| AI Hub | 11435 | AI proxy service |
-| Ollama | 11434 | Local LLM |
+| AI Hub | 11434 | AI proxy service |
+| Ollama | 11435 | Local LLM |

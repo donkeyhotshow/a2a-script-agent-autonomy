@@ -18,8 +18,8 @@
 ### 1.2 Требуемые порты
 | Порт | Компонент | Описание |
 |------|-----------|----------|
-| 11434 | Ollama | Локальная LLM |
-| 11435 | AI Integration | Прокси / promise → Ollama :11434 |
+| 11435 | Ollama | Локальная LLM |
+| 11434 | AI Integration | Прокси / promise → Ollama :11435 |
 | 3000 | a2a-server | A2A API сервер (stateless) |
 | 3001 | a2a-client (SDK) | Client API (опционально; Web чаще Vite 5173 + `/api/a2a/*`) |
 | 5173 | Vite Dev | Web UI |
@@ -34,13 +34,13 @@
 
 ```bash
 # Запуск Ollama
-docker run -d -v ollama_data:/root/.ollama -p 11434:11434 --name ollama ollama/ollama:latest
+docker run -d -v ollama_data:/root/.ollama -p 11435:11435 --name ollama ollama/ollama:latest
 
 # Установка модели (обязательно)
 docker exec ollama ollama pull qwen3:8b
 
 # Проверка
-curl http://localhost:11434/api/tags
+curl http://localhost:11435/api/tags
 ```
 
 **Ожидаемый ответ:**
@@ -70,13 +70,13 @@ python -m proxy
 
 ```bash
 # Основные переменные (stateless - нет database/redis)
-export OLLAMA_URL="http://localhost:11434"
+export OLLAMA_URL="http://localhost:11435"
 export OLLAMA_MODEL="qwen3:8b"
 export SKIP_AUTH="1"  # Только для dev!
 export ENCRYPTION_KEY="12345678901234567890123456789012"  # 32 символа
 
 # AI Integration (если запущен)
-export AI_HUB_URL="http://localhost:11435"
+export AI_HUB_URL="http://localhost:11434"
 ```
 
 > **Примечание:** `DATABASE_URL` и `REDIS_URL` больше не требуются!
@@ -133,7 +133,7 @@ npm run dev
 
 ```bash
 # 1. Только Ollama нужен
-docker run -d -v ollama_data:/root/.ollama -p 11434:11434 --name ollama ollama/ollama:latest
+docker run -d -v ollama_data:/root/.ollama -p 11435:11435 --name ollama ollama/ollama:latest
 docker exec ollama ollama pull qwen3:8b
 
 # 2. Запуск всех компонентов Node.js
@@ -158,10 +158,10 @@ curl http://localhost:3001/api/health
 # {"status": "ok"}
 
 # AI Integration (если запущен)
-curl http://localhost:11435/health
+curl http://localhost:11434/health
 
 # Ollama
-curl http://localhost:11434/api/tags
+curl http://localhost:11435/api/tags
 # {"models": [...]}
 ```
 
@@ -203,7 +203,7 @@ npm run dev  # смотреть ошибки в консоли
 
 ```bash
 # Проверка Ollama
-curl http://localhost:11434/api/tags
+curl http://localhost:11435/api/tags
 # Должен вернуть список моделей
 
 # Если не работает - перезапуск

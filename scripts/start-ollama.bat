@@ -2,7 +2,7 @@
 chcp 65001 >nul
 REM Start Ollama service only
 
-set OLLAMA_PORT=11434
+set OLLAMA_PORT=11435
 set OLLAMA_MODELS=C:\Users\dev\Desktop\.ollama
 set PID_FILE=.pids.txt
 

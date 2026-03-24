@@ -75,7 +75,7 @@ a2a-client/storage/sessions/{sessionId}/
 
 | Параметр | Значение |
 |----------|----------|
-| AI_HUB_URL | http://localhost:11435 |
+| AI_HUB_URL | http://localhost:11434 |
 | OLLAMA_MODEL | qwen3:8b |
 | LLM_PROVIDER | ollama |
 
@@ -110,7 +110,7 @@ Client → POST /api/v1/requests → a2a-server → AI_HUB_URL (proxy) → Ollam
 | Переменная | Описание | Значение |
 |------------|----------|----------|
 | LLM_PROVIDER | Провайдер LLM | ollama |
-| AI_HUB_URL | URL прокси | http://localhost:11435 |
+| AI_HUB_URL | URL прокси | http://localhost:11434 |
 | OLLAMA_MODEL | Модель Ollama | qwen3:8b |
 | SKIP_AUTH | Пропустить авторизацию | 1 |
 | RATE_LIMIT_WINDOW_MS | Окно rate limiting (мс) | 60000 |
@@ -175,7 +175,7 @@ curl -s -X POST http://localhost:3000/api/v1/invoke -H "Content-Type: applicatio
 ```
 ┌─────────────┐     ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
 │   Client    │────▶│ a2a-server  │────▶│   Proxy     │────▶│   Ollama    │
-│  (HTTP/WS)  │     │  :3000     │     │  :11435    │     │   :11434    │
+│  (HTTP/WS)  │     │  :3000     │     │  :11434    │     │   :11435    │
 └─────────────┘     └─────────────┘     └─────────────┘     └─────────────┘
                             │                   │
                             │                   │

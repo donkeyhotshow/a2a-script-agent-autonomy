@@ -7,7 +7,7 @@
 
 param(
     [string]$RetryRequest,
-    [string]$OllamaUrl = 'http://localhost:11434',
+    [string]$OllamaUrl = 'http://localhost:11435',
     [string]$ClientUrl = 'http://localhost:3001'
 )
 
@@ -38,8 +38,8 @@ try {
 # 2. Check ai-integration proxy
 Write-Host "`n[2] a2a-server config" -ForegroundColor Gray
 try {
-    Invoke-RestMethod -Uri "http://localhost:11435/health" -TimeoutSec 3 | Out-Null
-    Ok "ai-integration proxy (11435)"
+    Invoke-RestMethod -Uri "http://localhost:11434/health" -TimeoutSec 3 | Out-Null
+    Ok "ai-integration proxy (11434)"
 } catch {
     Warn "ai-integration not reachable. Start with: start-all.bat"
 }

@@ -79,7 +79,7 @@ $components = @(
                 Name = "Proxy Health"
                 Optional = $true
                 Test = {
-                    $response = Invoke-WebRequest -Uri "http://localhost:11435/health" -TimeoutSec 10
+                    $response = Invoke-WebRequest -Uri "http://localhost:11434/health" -TimeoutSec 10
                     if ($response.StatusCode -ne 200) { throw "Proxy health failed: $($response.StatusCode)" }
                 }
             },
@@ -87,7 +87,7 @@ $components = @(
                 Name = "Daemon Status"
                 Optional = $true
                 Test = {
-                    $response = Invoke-RestMethod -Uri "http://localhost:11435/daemon/status" -TimeoutSec 10
+                    $response = Invoke-RestMethod -Uri "http://localhost:11434/daemon/status" -TimeoutSec 10
                     if (-not $response.running) { throw "Daemon not running" }
                 }
             },
@@ -95,7 +95,7 @@ $components = @(
                 Name = "Ollama Connection"
                 Optional = $true
                 Test = {
-                    $response = Invoke-RestMethod -Uri "http://localhost:11434/api/tags" -TimeoutSec 10
+                    $response = Invoke-RestMethod -Uri "http://localhost:11435/api/tags" -TimeoutSec 10
                     if (-not $response.models -or $response.models.Count -eq 0) { throw "No Ollama models available" }
                 }
             }

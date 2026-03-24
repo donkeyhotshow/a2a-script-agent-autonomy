@@ -258,7 +258,7 @@ async function tick(): Promise<void> {
  * Recover processing requests that have llmPromiseId (e.g. after server restart during polling)
  */
 async function recoverProcessingRequests(): Promise<void> {
-    const base = (process.env.AI_HUB_URL || 'http://localhost:11435').replace(/\/$/, '');
+    const base = (process.env.AI_HUB_URL || 'http://localhost:11434').replace(/\/$/, '');
     const ids = await requestService.listProcessing();
     for (const promiseId of ids) {
         const req = await requestService.getResult(promiseId);

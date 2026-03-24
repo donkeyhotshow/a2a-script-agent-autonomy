@@ -9,8 +9,8 @@ echo === start-all.bat : Standardized service startup ===
 setlocal EnableDelayedExpansion
 
 set PID_FILE=.pids.txt
-set OLLAMA_PORT=11434
-set PROXY_PORT=11435
+set OLLAMA_PORT=11435
+set PROXY_PORT=11434
 set SERVER_PORT=3000
 set CLIENT_API_PORT=3001
 set WEB_UI_PORT=5173

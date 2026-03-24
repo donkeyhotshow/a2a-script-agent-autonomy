@@ -71,7 +71,7 @@ The **response** transform must place `interrupt` on the same object that carrie
 
 - The **first** main LLM call for an invoke still registers `llmPromiseId` on the request via `requestService.updateLlmPromiseId`.
 - **Interrupt** sub-calls use distinct `X-Server-Promise-Id` values (e.g. `${promiseId}-compress`, `${promiseId}-think`, `${promiseId}-intr-<n>`) and **do not** replace that mapping.
-- Model: `OLLAMA_MODEL` (default `qwen3:8b`); base URL: `AI_HUB_URL` (default `http://localhost:11435`).
+- Model: `OLLAMA_MODEL` (default `qwen3:8b`); base URL: `AI_HUB_URL` (default `http://localhost:11434`).
 
 ## Simulations
 

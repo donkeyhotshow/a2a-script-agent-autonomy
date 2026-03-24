@@ -15,8 +15,8 @@ param(
     [int]$ServerPort = 3000,
     [int]$ClientPort = 3001,
     [int]$WebPort = 5173,
-    [string]$OllamaUrl = 'http://localhost:11434',
-    [string]$AiProxyUrl = 'http://localhost:11435',
+    [string]$OllamaUrl = 'http://localhost:11435',
+    [string]$AiProxyUrl = 'http://localhost:11434',
     [int]$TimeoutSec = 10
 )
 

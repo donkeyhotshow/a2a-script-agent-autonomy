@@ -144,7 +144,7 @@ doc:
 
 ## External AI Hub
 
-Прокси **ai-integration** (**:11435** → Ollama **:11434**), async через **`promiseId`**. Поток и таблица endpoint’ов: [PROTOCOL.md → Async flow](PROTOCOL.md#async-flow-promiseid); интеграция на стороне сервера: [SERVER-ARCHITECTURE.md → External AI Hub Integration](SERVER-ARCHITECTURE.md#external-ai-hub-integration).
+Прокси **ai-integration** (**:11434** → Ollama **:11435**), async через **`promiseId`**. Поток и таблица endpoint’ов: [PROTOCOL.md → Async flow](PROTOCOL.md#async-flow-promiseid); интеграция на стороне сервера: [SERVER-ARCHITECTURE.md → External AI Hub Integration](SERVER-ARCHITECTURE.md#external-ai-hub-integration).
 
 ## Потоки данных
 

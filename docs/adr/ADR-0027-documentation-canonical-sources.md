@@ -14,7 +14,7 @@ Protocol, ports, AI Hub promise flow, simulation file layout, and server-side LL
    | Topic | Canonical doc | Anchors / notes |
    |-------|----------------|-----------------|
    | End-to-end protocol, action-key shape, sync/async | [`docs/new-request-flow/PROTOCOL.md`](../new-request-flow/PROTOCOL.md) | `#action-key-shape`, `#async-flow-promiseid` (`<span id>` for stable links) |
-   | Env vars + default ports (incl. Hub **11435**, Ollama **11434**) | Root [`AGENTS.md`](../../AGENTS.md) | `#environment-variables`, `### Default Ports` |
+   | Env vars + default ports (incl. Hub **11434**, Ollama **11435**) | Root [`AGENTS.md`](../../AGENTS.md) | `#environment-variables`, `### Default Ports` |
    | Port / component matrix (extended) | [`docs/new-request-flow/DATA-FLOW.md`](../new-request-flow/DATA-FLOW.md) | `#component-ports` |
    | Repo / module tree (`a2a-client`, `a2a-server`, …) | [`docs/new-request-flow/FILES.md`](../new-request-flow/FILES.md) | |
    | Server-centric behavior, AI Hub integration | [`docs/new-request-flow/SERVER-ARCHITECTURE.md`](../new-request-flow/SERVER-ARCHITECTURE.md) | `#external-ai-hub-integration` |

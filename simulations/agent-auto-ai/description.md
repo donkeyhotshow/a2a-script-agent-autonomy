@@ -12,7 +12,7 @@
 | `context.scratchpad`         | Boolean flags updated via **`scratchpad_ops`** in `response.md` → `apply-scratchpad-ops` in `server-transforms-response.json`. Includes **`remove`** (step 4 drops `pending_rag`).                                      |
 | RAG pagination               | `execute.rag-search` uses `page` / `pageSize`; `history` carries `RAG: … (page 1, pageSize 10, total 1, hasMore false)`.                                                                                                |
 | Tool summaries               | One `system` line per tool (RAG, list-directory, read-file, write-file).                                                                                                                                                |
-| Server interrupt loop        | Step **6** — [`6/interrupt.md`](6/interrupt.md); substeps **`6-sub-1`** … **`6-sub-4`** (`request.json` / `request.md` / `response.json` / `response.md` + server-transforms; `interruptTrace` in `response.json`).     |
+| Server interrupt loop        | Step **6** — [`6/interrupt.md`](6/interrupt.md); substeps **`6-sub-1`** … **`6-sub-4`** are **server-internal** snapshots (no `client.json` / `received.json`); see table below.                                                                                                                                        |
 
 ## Scenario
 
@@ -26,9 +26,22 @@ User task: **Add GET `/health` returning `{ ok: true }` and wire it in `src/app.
 4. **LLM** — After RAG folded into `history` (no `result` in `request.json`): `list-directory` + `remove`/`add`
    scratchpad ops.
 5. **LLM** — After listing folded: `read-file` `src/app.js`.
-6. **LLM** — With file in `context.files`: `write-file` `src/routes/health.js`. **`6/interrupt.md`** + *
-   *`6-sub-1`…`6-sub-4/`** document interrupt traces (numbered substeps next to step 6).
+6. **LLM** — With file in `context.files`: `write-file` `src/routes/health.js`. Canonical folder is [`6/`](6/); see [
+   `6/interrupt.md`](6/interrupt.md).
 7. **LLM** — After write folded: `completed: true`.
+
+### Step 6 — interrupt substeps (`6-sub-M/`)
+
+These folders document **one server-side interrupt loop** as if you could “pause” after each internal turn. The **Web
+↔ Client API** contract for the user step is still only **[`6/`](6/)** (`client.json` → … → `received.json`); substeps
+have **no** `client.json` / `received.json` because the client never receives intermediate payloads.
+
+| Folder                 | Scenario (trace highlights)                                                                  |
+|------------------------|----------------------------------------------------------------------------------------------|
+| [`6-sub-1/`](6-sub-1/) | Primary LLM only — trace ends after response transform (no handler).                         |
+| [`6-sub-2/`](6-sub-2/) | `compress_history` — sidecar LLM shortens history; same `execute` shape as baseline.       |
+| [`6-sub-3/`](6-sub-3/) | `thinking` — `workbench.slots.thinking` + `continueLoop`; still `write-file` health route.   |
+| [`6-sub-4/`](6-sub-4/) | `auto_rag_page` reenter — follow-up LLM; final `execute.write-file` **`src/app.js`** (mount). |
 
 ## Regenerate `request.md` (steps 3–7)
 
@@ -44,3 +57,5 @@ Uses `auto-ai-request.md` + materialize + flow hints (same pipeline as runtime).
 
 - **1–2:** `client.json`, `request.json`, `response.json`, `received.json` only.
 - **3–7:** full chain + `server-transforms-*.json` + `request.md` + `response.md`.
+- **`6-sub-1`…`6-sub-4`:** server-loop goldens only — `request.*`, `response.*`, transforms; **no** `client.json` /
+  `received.json` (see table above).

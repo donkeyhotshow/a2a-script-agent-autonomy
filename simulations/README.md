@@ -14,5 +14,6 @@ Golden fixtures for the Web ↔ Client API ↔ Server ↔ LLM contract.
   the [server interrupt loop](../a2a-server/docs/SERVER-INTERRUPT-LOOP.md). Example: [
   `agent-auto-ai/6/interrupt.md`](./agent-auto-ai/6/interrupt.md).
 - **`N-sub-M/`** (optional folder next to step `N/`, `M` = 1,2,…) — e.g. [
-  `agent-auto-ai/6-sub-1/`](./agent-auto-ai/6-sub-1/) … [`6-sub-4/`](./agent-auto-ai/6-sub-4/); trace in *
-  *`response.json`** → `interruptTrace`. See [`SCHEMA.md`](./SCHEMA.md#supplementary-server-interrupt-loop-optional).
+  `agent-auto-ai/6-sub-1/`](./agent-auto-ai/6-sub-1/) … [`6-sub-4/`](./agent-auto-ai/6-sub-4/); **server interrupt loop**
+  only (no `client.json` / `received.json`); trace in **`response.json`** → `interruptTrace`. See [
+  `SCHEMA.md`](./SCHEMA.md#supplementary-server-interrupt-loop-optional).

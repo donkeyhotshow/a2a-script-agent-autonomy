@@ -89,15 +89,15 @@ $workflowTests = @(
             Write-Info "Testing AI integration workflow..."
 
             # Test Ollama connectivity
-            $ollamaResponse = Invoke-RestMethod -Uri "http://localhost:11434/api/tags" -TimeoutSec 10
+            $ollamaResponse = Invoke-RestMethod -Uri "http://localhost:11435/api/tags" -TimeoutSec 10
             if ($ollamaResponse.models.Count -eq 0) { throw "No Ollama models available" }
 
             # Test proxy health
-            $proxyResponse = Invoke-WebRequest -Uri "http://localhost:11435/health" -TimeoutSec 10
+            $proxyResponse = Invoke-WebRequest -Uri "http://localhost:11434/health" -TimeoutSec 10
             if ($proxyResponse.StatusCode -ne 200) { throw "AI proxy not healthy" }
 
             # Test daemon status
-            $daemonResponse = Invoke-RestMethod -Uri "http://localhost:11435/daemon/status" -TimeoutSec 10
+            $daemonResponse = Invoke-RestMethod -Uri "http://localhost:11434/daemon/status" -TimeoutSec 10
             if (-not $daemonResponse.running) { throw "AI daemon not running" }
 
             Write-Success "AI integration workflow verified"

@@ -38,7 +38,7 @@ Deploy promise daemons as managed background processes with proper lifecycle man
 **Core Parameters:**
 ```javascript
 {
-  proxyUrl: 'http://localhost:11435',  // AI integration endpoint
+  proxyUrl: 'http://localhost:11434',  // AI integration endpoint
   interval: 4.0,                       // Poll interval (seconds)
   timeout: 15.0,                       // HTTP timeout (seconds)
   logLevel: 'INFO',                    // Logging verbosity

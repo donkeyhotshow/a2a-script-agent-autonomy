@@ -7,8 +7,8 @@ const SERVICES = {
   server: { health: 'http://localhost:3000/health' },
   clientApi: { health: 'http://localhost:5173/api/a2a/projects' },
   webUi: { health: 'http://localhost:5173' },
-  aiHub: { health: 'http://localhost:11435/health' },
-  ollama: { health: 'http://localhost:11434/api/tags' }
+  aiHub: { health: 'http://localhost:11434/health' },
+  ollama: { health: 'http://localhost:11435/api/tags' }
 };
 
 test.describe('Infrastructure Validation', () => {
@@ -52,7 +52,7 @@ test.describe('Infrastructure Validation', () => {
       expect(healthChecks.every((healthy) => healthy)).toBeTruthy();
       infraStatus.serviceStartup = true;
 
-      // Check AI Hub (localhost:11435) - optional check
+      // Check AI Hub (localhost:11434) - optional check
       try {
         const aiHubResponse = await request.get(SERVICES.aiHub.health);
         const status = await aiHubResponse.status();
@@ -66,7 +66,7 @@ test.describe('Infrastructure Validation', () => {
         console.log('⚠ AI Hub not available:', message);
       }
 
-      // Check Ollama API (localhost:11434) - optional check
+      // Check Ollama API (localhost:11435) - optional check
       try {
         const ollamaResponse = await request.get(SERVICES.ollama.health);
         const status = await ollamaResponse.status();

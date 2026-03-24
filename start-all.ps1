@@ -31,9 +31,9 @@ $Config = @{
     PidFile = '.pids.txt'
     OllamaModels = 'C:\Users\dev\Desktop\.ollama'
     Services = @(
-        @{ Name = 'Ollama'; Port = 11434; PidKey = 'OLLAMA_PID'; Enabled = -not $SkipOllama;
-           Command = { param($p) & ollama serve }; WorkingDir = $null; HealthUrl = 'http://localhost:11434/api/tags'; LogFile = $null }
-        @{ Name = 'ai-integration'; Port = 11435; PidKey = 'AI_INTEGRATION_PID'; Enabled = -not $SkipAiIntegration;
+        @{ Name = 'Ollama'; Port = 11435; PidKey = 'OLLAMA_PID'; Enabled = -not $SkipOllama;
+           Command = { param($p) & ollama serve }; WorkingDir = $null; HealthUrl = 'http://localhost:11435/api/tags'; LogFile = $null }
+        @{ Name = 'ai-integration'; Port = 11434; PidKey = 'AI_INTEGRATION_PID'; Enabled = -not $SkipAiIntegration;
            Command = { param($p) & python -m uvicorn proxy.asgi:application --host 0.0.0.0 --port $p }; WorkingDir = 'ai-integration'; HealthUrl = $null; LogFile = 'logs/ai.log' }
         @{ Name = 'a2a-server'; Port = 3000; PidKey = 'A2A_SERVER_PID'; Enabled = -not $SkipServer;
            Command = { param($p) & npm run dev }; WorkingDir = 'a2a-server'; HealthUrl = 'http://localhost:3000/health'; LogFile = 'logs/server.log' }

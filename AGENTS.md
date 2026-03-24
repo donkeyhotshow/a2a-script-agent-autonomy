@@ -47,7 +47,7 @@ import x from '@/services/x.js'
 - Prune `server-response.json` artifacts ? normalized simulations should only ship `response.json` + `received.json` (and optional `server-transforms-*.json`). Remove stray `server-response.json` files in step folders when you rewrite the golden fixtures so nothing lingers from the older sync contract.
 - Request.json should follow invoke schema ? the first step?s `request.json` needs to mirror the real invocation contract described in `SCHEMA.md`, including a `context.execution` object (router/invoke expectations, action/step info) rather than just `{ "task": "?" }`. This keeps the golden starting point consistent with how the backend builds requests.
 - Optional **`interrupt.md`** in a numbered step folder ? documents [server interrupt loop](a2a-server/docs/SERVER-INTERRUPT-LOOP.md) scenarios only; **not** part of the eight-file sync pipeline; `sim-lint` does not read it. See [`simulations/SCHEMA.md`](simulations/SCHEMA.md#supplementary-server-interrupt-loop-optional).
-- Optional **`N-sub-M/`** folders (next to step `N/`, `M` sequential) ? same artifacts as steps (`request.*`, `response.*`, transforms); `interruptTrace` in **`response.json`**. Pattern `^\d+-sub-\d+$`. Example: `simulations/agent-auto-ai/6-sub-1/` ? `6-sub-4/`.
+- Optional **`N-sub-M/`** folders (next to step `N/`, `M` sequential) ? **server interrupt loop** goldens: `request.*`, `response.*`, transforms; **`interruptTrace`** in **`response.json`**. **No** `client.json` / `received.json` (client sees one response per invoke after the loop). Pattern `^\d+-sub-\d+$`. Example: `simulations/agent-auto-ai/6-sub-1/` ? `6-sub-4/`.
 
 ### Quick grep helpers (when upgrading a sim)
 - `rg -n "docVirtual" -g '*.json' simulations` ? verify legacy docVirtual references are gone.
@@ -616,7 +616,7 @@ Indexed in [`docs/adr/README.md`](docs/adr/README.md). Recent examples: **ADR-00
 # Or manually:
 cd a2a-server && npm start  # Port 3000
 cd a2a-client && npx vite   # Port 5173
-python -m ai-integration    # Port 11435
+python -m ai-integration    # Port 11434
 ```
 
 ### Environment for development

@@ -166,7 +166,7 @@ try {
     # Test 9: AI Integration Health
     Write-Info "Test 9: AI Integration Health"
     try {
-        $response = Invoke-WebRequest -Uri "http://localhost:11435/health" -TimeoutSec 10
+        $response = Invoke-WebRequest -Uri "http://localhost:11434/health" -TimeoutSec 10
         if ($response.StatusCode -eq 200) {
             Write-Success "AI Integration proxy health check passed"
             $testResults["ai_integration"] = $true

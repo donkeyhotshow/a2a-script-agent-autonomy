@@ -11,8 +11,8 @@ Previously, start-all.* and kill-all.* used inconsistent termination methods: so
 
 | Service | Port | Processes | PID Key |
 |---------|------|-----------|---------|
-| Ollama | 11434 | `ollama.exe` / `ollama` | `OLLAMA_PID` |
-| ai-integration | 11435 | `python.exe`, `uvicorn.exe` / `python`, `uvicorn` | `AI_INTEGRATION_PID` |
+| Ollama | 11435 | `ollama.exe` / `ollama` | `OLLAMA_PID` |
+| ai-integration | 11434 | `python.exe`, `uvicorn.exe` / `python`, `uvicorn` | `AI_INTEGRATION_PID` |
 | a2a-server | 3000 | `node.exe` / `node` | `A2A_SERVER_PID` |
 | client-api | 3001 | `node.exe` / `node` | `CLIENT_API_PID` |
 | web-ui | 5173 | `node.exe` / `node` | `WEB_UI_PID` |
@@ -118,12 +118,12 @@ If a process cannot be terminated:
 
 ```
 [STEP] Phase 1: Kill by port (find and terminate port listeners)
-  [INFO] Processing Ollama (port 11434)...
-  [WARN] Port 11434 occupied by PID 1234 - terminating...
+  [INFO] Processing Ollama (port 11435)...
+  [WARN] Port 11435 occupied by PID 1234 - terminating...
   [OK] Killed PID 1234
-  [OK] Port 11434 already free
+  [OK] Port 11435 already free
 [STEP] Phase 2: Verify ports are free
-  [OK] Ollama port 11434 verified free
+  [OK] Ollama port 11435 verified free
 [STEP] Phase 3: Kill by PID from file and by process name
   [INFO] Killing Ollama by PID 1234 from file...
   [OK] Killed PID 1234

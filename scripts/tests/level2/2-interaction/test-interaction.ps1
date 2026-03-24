@@ -42,10 +42,10 @@ $interactionTests = @(
         Optional = $true
         Test = {
             # Test AI integration connectivity
-            $ollamaResponse = Invoke-RestMethod -Uri "http://localhost:11434/api/tags" -TimeoutSec 10
+            $ollamaResponse = Invoke-RestMethod -Uri "http://localhost:11435/api/tags" -TimeoutSec 10
             if ($ollamaResponse.models.Count -eq 0) { throw "No Ollama models available" }
 
-            $proxyResponse = Invoke-WebRequest -Uri "http://localhost:11435/health" -TimeoutSec 10
+            $proxyResponse = Invoke-WebRequest -Uri "http://localhost:11434/health" -TimeoutSec 10
             if ($proxyResponse.StatusCode -ne 200) { throw "AI proxy not healthy" }
 
             Write-Info "AI Integration components connected"

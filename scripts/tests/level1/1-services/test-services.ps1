@@ -28,15 +28,15 @@ $services = @(
     },
     @{
         Name = "AI Integration Proxy"
-        Port = 11435
-        Url = "http://localhost:11435/health"
+        Port = 11434
+        Url = "http://localhost:11434/health"
         Description = "LLM proxy service"
         Optional = $true
     },
     @{
         Name = "Ollama"
-        Port = 11434
-        Url = "http://localhost:11434/api/tags"
+        Port = 11435
+        Url = "http://localhost:11435/api/tags"
         Description = "LLM runtime"
     }
 )

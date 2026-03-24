@@ -198,7 +198,7 @@ const ACTION_TO_SCHEMA: Record<string, string> = {
     'task-decomposition': 'task-decomposition',
 };
 
-const DEFAULT_AI_HUB = 'http://localhost:11435';
+const DEFAULT_AI_HUB = 'http://localhost:11434';
 const DEFAULT_MODEL = 'qwen3:8b';
 
 function getPromptsTransformsPath(): string {

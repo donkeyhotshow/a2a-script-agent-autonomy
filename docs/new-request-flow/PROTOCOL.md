@@ -604,7 +604,7 @@ interface SessionSummary {
 
 **Как работает promiseId:**
 
-1. Сервер отправляет запрос к External AI Hub (порт **11435**, прокси к Ollama **11434**) с заголовком `X-Promise: true`
+1. Сервер отправляет запрос к External AI Hub (порт **11434**, прокси к Ollama **11435**) с заголовком `X-Promise: true`
 2. Hub сразу возвращает `promiseId` (статус pending)
 3. Сервер продолжает workflow - отправляет execute клиенту
 4. Сервер периодически опрашивает `GET /promise/{id}` для проверки статуса

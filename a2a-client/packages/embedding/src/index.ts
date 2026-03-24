@@ -75,7 +75,7 @@ export class EmbeddingClient {
     constructor(config: EmbeddingConfig = {}) {
         this.provider = config.provider ?? PROVIDERS.OLLAMA;
         this.apiKey = config.apiKey ?? process.env.EMBEDDING_API_KEY;
-        this.baseUrl = config.baseUrl ?? (this.provider === PROVIDERS.OLLAMA ? (process.env.OLLAMA_BASE_URL ?? 'http://localhost:11434') : undefined);
+        this.baseUrl = config.baseUrl ?? (this.provider === PROVIDERS.OLLAMA ? (process.env.OLLAMA_BASE_URL ?? 'http://localhost:11435') : undefined);
         this.model = config.model ?? DEFAULT_MODELS[this.provider] ?? 'nomic-embed-text';
         this.cacheFile = config.cacheFile ?? null;
         this.batchSize = config.batchSize ?? 100;
@@ -199,7 +199,7 @@ export class EmbeddingClient {
     }
 
     private getOllamaBaseUrl(): string {
-        return this.baseUrl ?? process.env.OLLAMA_BASE_URL ?? 'http://localhost:11434';
+        return this.baseUrl ?? process.env.OLLAMA_BASE_URL ?? 'http://localhost:11435';
     }
 
     private async _embedOllama(text: string): Promise<number[]> {
