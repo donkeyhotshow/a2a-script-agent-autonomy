@@ -118,6 +118,23 @@
             "additionalProperties": false
           },
           {
+            "title": "apply-scratchpad-ops",
+            "type": "object",
+            "properties": {
+              "op": { "const": "apply-scratchpad-ops" },
+              "from": {
+                "type": "string",
+                "description": "JSONPath to an array of { op: check|add|remove, item: string }."
+              },
+              "scratchpadPath": {
+                "type": "string",
+                "description": "JSONPath in $out for the scratchpad object (default: context.scratchpad)."
+              }
+            },
+            "required": ["op", "from"],
+            "additionalProperties": false
+          },
+          {
             "title": "switch",
             "type": "object",
             "properties": {

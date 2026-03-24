@@ -214,10 +214,18 @@ export class DialogRequestProcessor extends BaseRequestProcessor {
             if (!requestTransformResult.success) {
                 return {outcome: 'failed', error: requestTransformResult.error || 'Request transform failed'} as ProcessResult;
             }
-            const requestMd = (requestTransformResult.files as Record<string, string>)?.['request.md'];
+            const files = (requestTransformResult.files as Record<string, string>) || {};
+            const requestMd = files['request.md'];
             if (!requestMd) {
                 return {outcome: 'failed', error: 'Request transform did not produce request.md'} as ProcessResult;
             }
+
+            const systemMd = files['system.md'];
+            const messages: Array<{role: string; content: string}> = [];
+            if (typeof systemMd === 'string' && systemMd.trim().length > 0) {
+                messages.push({role: 'system', content: systemMd});
+            }
+            messages.push({role: 'user', content: requestMd});
 
             // 2. Call LLM via promise flow (ai-integration proxy)
             const chatRes = await fetch(`${base}/api/chat?promise=1`, {
@@ -228,7 +236,7 @@ export class DialogRequestProcessor extends BaseRequestProcessor {
                 },
                 body: JSON.stringify({
                     model,
-                    messages: [{role: 'user', content: requestMd}],
+                    messages,
                     stream: false,
                 }),
             });

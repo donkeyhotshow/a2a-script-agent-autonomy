@@ -25,6 +25,34 @@ import type {RequestType} from './request-processor.interfaces.js';
 const DEFAULT_INTERVAL_MS = 5000;
 let timerId: ReturnType<typeof setInterval> | null = null;
 
+/** Modes selectable from task/router UI; must match dialog-request-processor ACTION_TO_SCHEMA keys. */
+const LLM_PIPELINE_ACTIONS = ['dialog', 'auto-ai', 'coder', 'analyze', 'task-decomposition'] as const;
+
+/**
+ * Router follow-up: `result.choice` is the selected mode. Merge into `execution` when still on task/router.
+ */
+function normalizeLlmChoiceToExecution(context: Record<string, unknown>): void {
+    const result = context['result'] as Record<string, unknown> | undefined;
+    const choice = result?.choice;
+    if (typeof choice !== 'string' || !LLM_PIPELINE_ACTIONS.includes(choice as (typeof LLM_PIPELINE_ACTIONS)[number])) {
+        return;
+    }
+    const exec = context['execution'] as Record<string, unknown> | undefined;
+    const currentAction = exec?.action as string | undefined;
+    const step = exec?.step as string | undefined;
+    const isRouterHandoff =
+        currentAction === undefined ||
+        (currentAction === 'task' && (step === 'router' || step === 'new'));
+    if (!isRouterHandoff) {
+        return;
+    }
+    context['execution'] = {
+        ...(exec ?? {}),
+        action: choice,
+        step: 'request',
+    };
+}
+
 // Register processors
 processorRegistry.register('action', actionRequestProcessor);
 processorRegistry.register('simulation', simulationRequestProcessor);
@@ -108,9 +136,12 @@ export async function processOneRequest(): Promise<ProcessResult | null> {
     const {promiseId, context, codeBlocks, message} = request;
 
     try {
+        const ctx = context as Record<string, unknown>;
+        normalizeLlmChoiceToExecution(ctx);
+
         const requestContext: RequestContext = {
             promiseId,
-            context: context as Record<string, unknown>,
+            context: ctx,
             codeBlocks,
             message
         };
@@ -128,11 +159,11 @@ export async function processOneRequest(): Promise<ProcessResult | null> {
             const followUpRequest = await requestService.create({
                 clientId: promiseId, // Link to original
                 context: {
-                    ...context,
+                    ...ctx,
                     action: result.aiActions.action,
                     ai_action: true,
                     previousChoice: result.selection,
-                    task: message ?? context?.task ?? result.aiActions.action,
+                    task: message ?? (ctx['task'] as string | undefined) ?? result.aiActions.action,
                 },
                 message: message ?? `AI-Action: ${result.aiActions.action}`,
             });

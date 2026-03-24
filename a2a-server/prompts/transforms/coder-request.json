@@ -16,7 +16,13 @@
     },
     {
       "op": "render-markdown",
-      "templateRef": "a2a-server/prompts/{{TEMPLATE_NAME}}",
+      "templateRef": "a2a-server/prompts/coder-system.md",
+      "data": "$out",
+      "outputFile": "system.md"
+    },
+    {
+      "op": "render-markdown",
+      "templateRef": "a2a-server/prompts/coder-context.md",
       "data": "$out",
       "outputFile": "request.md"
     }

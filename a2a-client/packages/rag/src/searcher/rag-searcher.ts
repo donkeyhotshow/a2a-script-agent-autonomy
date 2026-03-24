@@ -804,6 +804,8 @@ export class RAGSearcher {
             allowedExtensions?: string[];
             maxResults?: number;
             snippetConfig?: import('../searcher/snippet-generator.js').SnippetConfig;
+            page?: number;
+            pageSize?: number;
         } = {}
     ): Promise<import('../protocol-rag-search.js').RagSearchProtocolResult> {
         const searchResults = await this.search(query, options);
@@ -826,7 +828,9 @@ export class RAGSearcher {
             allowedDirs: options.allowedDirs,
             allowedExtensions: options.allowedExtensions,
             maxResults: options.maxResults,
-            snippetConfig: options.snippetConfig
+            snippetConfig: options.snippetConfig,
+            page: options.page,
+            pageSize: options.pageSize
         });
     }
 }

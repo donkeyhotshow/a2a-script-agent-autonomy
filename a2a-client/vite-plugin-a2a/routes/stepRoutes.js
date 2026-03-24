@@ -308,14 +308,14 @@ export function createStepRoutes({ cwd }) {
 
                     let mergedContext = { ...previousContext };
                     if (previousStepData?.result?.context) {
-                        // Filter context to only keep essential fields for invoke request
-                        // Based on simulation: only task and execution are needed
+                        const src = previousStepData.result.context;
                         const filteredContext = {};
-                        if (previousStepData.result.context.task) {
-                            filteredContext.task = previousStepData.result.context.task;
-                        }
-                        if (previousStepData.result.context.execution) {
-                            filteredContext.execution = previousStepData.result.context.execution;
+                        if (src.task) filteredContext.task = src.task;
+                        if (src.execution) filteredContext.execution = src.execution;
+                        if (Array.isArray(src.history)) filteredContext.history = src.history;
+                        if (src.files && typeof src.files === 'object') filteredContext.files = src.files;
+                        if (src.scratchpad && typeof src.scratchpad === 'object') {
+                            filteredContext.scratchpad = src.scratchpad;
                         }
                         mergedContext = { ...mergedContext, ...filteredContext };
                     }

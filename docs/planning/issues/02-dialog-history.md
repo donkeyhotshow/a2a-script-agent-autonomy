@@ -1,66 +1,27 @@
-# ISSUE 2 — Dialog: зламаний context.history
+# ISSUE 2 — Dialog: збереження history/execute відповіді
 
-**Статус:** КРИТИЧНО — зламано, потребує фіксу
+**Статус:** КРИТИЧНО — треба впевнитися, що dialog history формуєтсья коректно
 
 ## Проблема
 
-Реальна проблема в `dialog-request-processor.ts`. Кешування на проксі (`caching.py`) не впливає — dialog завжди йде через promise (`?promise=1`).
+Симуляція `dialog` покаже, що повна історія (`context.history`) очевидно накопичується лише в `buildDialogProcessResultFromContext`. Якщо `runResponseTransform` і/або `recoverDialogFromLlmPromise` не передають актуальне `result.message`, то `history` залишатиметься порожнім у наступному запиті. Треба перевірити, що тут нема застарілих гіпотез про `ctx['context']` або дублювання user-рядків.
 
-## Баг 1: history береться з неправильного місця
+## Що перевірити
 
-```typescript
-// ЗАРАЗ (неправильно):
-const ctxContext = ctx['context'] as Record<string, unknown> | undefined;
-const existingHistory = (ctxContext?.history ?? []) as ...
-// ctx — це вже context, тому ctx['context'] = undefined завжди!
+- `buildDialogProcessResultFromContext` (обидва виклики: звичайний `runResponseTransform` + `recoverDialogFromLlmPromise`) — викликом `getExistingDialogHistory(ctx)` використовується `ctx['history']`, а не `ctx['context']`. Тож треба підтвердити, що `ctx.history` потрапляє з попереднього response.
+- У `doProcess` (рядки ~130-220) результат нормалізується: `result.message` доповнюється з `ctx.task`/`ctx.message` при потребі. Якщо `result` не передається, `history` не збагачується.
+- `recoverDialogFromLlmPromise` (рядки ~270-330) повторює ті самі виклики `runPromptsTransform` → має використовувати однакову `buildDialogProcessResultFromContext`.
+- У симуляції `simulations/dialog/3-4`, `server-transforms-request.json` не додає user message вручну — усе робить transform: треба переконатися, що після `runResponseTransform` user/assistant пара зберігається в `context.history`.
 
-// ПРАВИЛЬНО:
-const existingHistory = (ctx['history'] ?? []) as ...
-```
+## Кодова прив'язка
 
-## Баг 2: history не передається в наступний запит
+- `a2a-server/src/services/core/request-processor/dialog-request-processor.ts` — `buildDialogProcessResultFromContext` і `doProcess` формують `context.history` (лінії ~60-120, ~140-220); цим кодом фактично живе dialog flow.
+- `runResponseTransform` та `recoverDialogFromLlmPromise` (рядки ~150-220 та ~270-330) пишуть file `response.md` і викликають transform. Якщо `ctx.history` пустий → потрібно поглянути на `responseTransformResult.output.execute`.
+- `simulations/dialog/3/response.json`, `simulations/dialog/4/request.json` — golden standard, `/messages.json` у симуляції/клієнті повинні відповідати цим `context.history`.
 
-Симуляція `dialog/3/response.json` показує: відповідь містить `context.history` з user+assistant.
-`dialog/4/request.json`: наступний запит клієнта містить той самий `context.history` — клієнт передає context з попередньої відповіді, це правильно.
-Але сервер в `runResponseTransform` будує `newHistory` з `ctx` (поточний запит), а не з відповіді.
+## Додаткові кроки
 
-## Баг 3: подвійне додавання user message
-
-В `server-transforms-request.json` (step 3) є `append-to-array` для user message.
-В `runResponseTransform` також додається user message вручну → дублювання.
-
-## Правильна логіка (по симуляції)
-
-```
-dialog/3: request має context.history=[] + result.message="hello world"
-dialog/3: response має context.history=[{user,"hello world"},{assistant,"hello world"}]
-dialog/4: request має context.history=[{user},{assistant}] + result.message="Дякую!"
-dialog/4: response має context.history=[{user},{assistant},{user,"Дякую!"}]
-```
-
-Тобто: `newHistory = [...ctx.history, {user: result.message}, {assistant: llmMessage}]`
-
-## Фікс
-
-```typescript
-// В runResponseTransform:
-const existingHistory = (ctx['history'] ?? []) as Array<...>;  // НЕ ctx['context']
-```
-
-Довіряти тільки одному місцю для додавання user message. Прибрати дублювання.
-
-## Додаткові баги (знайдені в арці 3)
-
-**Баг 4: `result` не передається в `runResponseTransform`**
-
-`doProcess` викликає `runResponseTransform(path, schema, ctx, responseMd)` де `ctx = { ...context }` — без `result`. Тому `ctx['result']` в `runResponseTransform` завжди undefined → `userMessage` завжди undefined → user message ніколи не додається в history.
-
-Фікс: передавати `result` окремо або включати в `ctx`:
-```typescript
-const ctxWithResult = { ...context, result: request.result };
-await runResponseTransform(path, schema, ctxWithResult, responseMd);
-```
-
-**Баг 5: `recoverDialogFromLlmPromise` має ті самі баги 1+4**
-
-Та сама логіка history/message дублюється в `recoverDialogFromLlmPromise` (~рядок 230-310). Фіксувати обидва місця одночасно.
+1. Запустити `node a2a-server/scripts/run-simulation.ts dialog/3` і `dialog/4`, перевірити, що `server-response.json` містить `context.history` із останнім `user`/`assistant`.
+2. У логах `DialogRequestProcessor` повинні бути повідомлення `[DialogRequestProcessor] Processing` → `[DialogRequestProcessor] Response transform completed` (в тому числі під час `recoverDialogFromLlmPromise`). Якщо `history` пустий — подивитися, чи `ctx['result']` було заповнено з `request.message`.
+3. Перевірити `received.json` (simulations/dialog/2) та `response.json` (simulations/dialog/3)` — `context.history` має переходити в наступний `request`. Це і є референс.
+4. Якщо `history` оновлюється в двох місцях — використовуйте єдину допоміжну функцію `buildDialogProcessResultFromContext` і намагайтесь не додавати `user` вручну з `server-transforms-request.json`.

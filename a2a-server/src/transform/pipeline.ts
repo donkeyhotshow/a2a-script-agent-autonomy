@@ -233,6 +233,9 @@ async function resolveTransformFile(
 ): Promise<string> {
   const candidates: string[] = [];
   if (forceServerTransforms) {
+    if (schemaName === 'coder' && type === 'request') {
+      candidates.push(path.resolve(dir, 'coder-request.json'));
+    }
     candidates.push(path.resolve(dir, `server-transforms-${type}.json`));
   } else {
     if (step !== undefined && step > 0) {
@@ -375,6 +378,9 @@ export function validatePipeline(pipeline: unknown): string[] {
       case 'switch':
         if (!step.discriminator) errors.push(`Step ${i} (switch): Missing 'discriminator'`);
         if (!step.cases) errors.push(`Step ${i} (switch): Missing 'cases'`);
+        break;
+      case 'apply-scratchpad-ops':
+        if (!step.from) errors.push(`Step ${i} (apply-scratchpad-ops): Missing 'from'`);
         break;
     }
   }

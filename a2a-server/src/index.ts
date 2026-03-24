@@ -3,24 +3,37 @@ import app from './app.js';
 import {config} from './config/index.js';
 import {logger} from './utils/logger.js';
 import {startRequestProcessor, stopRequestProcessor} from './daemon/request-processor-daemon.js';
+import {actionRegistry} from './actions/action-registry.js';
 
 // Create HTTP server
 const server = http.createServer(app);
 
-// Start request processor timer loop
-startRequestProcessor(config.requestProcessorIntervalMs);
+async function bootstrap(): Promise<void> {
+    try {
+        await actionRegistry.loadFromDirectory();
+        logger.info('[Bootstrap] Action registry loaded', {count: actionRegistry.count});
+    } catch (err) {
+        logger.error('[Bootstrap] Action registry load failed — router will use empty registry / fallback', {
+            error: err instanceof Error ? err.message : String(err),
+        });
+    }
 
-// Start server
-server.listen(config.port, () => {
-    logger.info(`A2A Server started (Simulation Mode)`, {
-        port: config.port,
-        environment: config.nodeEnv,
-        pid: process.pid
+    startRequestProcessor(config.requestProcessorIntervalMs);
+
+    server.listen(config.port, () => {
+        logger.info(`A2A Server started (Simulation Mode)`, {
+            port: config.port,
+            environment: config.nodeEnv,
+            pid: process.pid,
+            actionsRegistered: actionRegistry.count,
+        });
+
+        logger.info(`Health check: http://localhost:${config.port}/health`);
+        logger.info(`API: http://localhost:${config.port}/api/v1/invoke`);
     });
+}
 
-    logger.info(`Health check: http://localhost:${config.port}/health`);
-    logger.info(`API: http://localhost:${config.port}/api/v1/invoke`);
-});
+void bootstrap();
 
 // Graceful shutdown
 const gracefulShutdown = async (signal: string) => {

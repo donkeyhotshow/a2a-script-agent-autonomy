@@ -2,7 +2,7 @@
  * Tests for toRagSearchResult function
  */
 
-import { toRagSearchResult, RagSearchProtocolResult } from './protocol-rag-search';
+import { toRagSearchResult } from './protocol-rag-search';
 
 describe('toRagSearchResult', () => {
     const mockResults = [
@@ -57,13 +57,36 @@ describe('toRagSearchResult', () => {
         expect(result.results).toHaveLength(3); // Grouped by file: auth.js, auth.ts, jwt.js
         expect(result.files).toHaveLength(3);
 
-        // Check first result (highest score)
-        expect(result.results[0]).toEqual({
-            file: 'src/auth.js',
-            path: 'src/auth.js',
-            score: 0.95,
-            snippet: 'async function login(email, password)'
+        expect(result.results[0].file).toBe('src/auth.js');
+        expect(result.results[0].path).toBe('src/auth.js');
+        expect(result.results[0].score).toBe(0.95);
+        expect(result.results[0].matches?.length).toBeGreaterThan(0);
+    });
+
+    it('should paginate with page, pageSize, total, hasMore', () => {
+        const result = toRagSearchResult(mockResults, {
+            query: 'q',
+            page: 1,
+            pageSize: 2,
+            maxResults: 10
         });
+
+        expect(result.results).toHaveLength(2);
+        expect(result.page).toBe(1);
+        expect(result.pageSize).toBe(2);
+        expect(result.total).toBe(3);
+        expect(result.hasMore).toBe(true);
+    });
+
+    it('should return hasMore false on last page', () => {
+        const result = toRagSearchResult(mockResults, {
+            page: 2,
+            pageSize: 2,
+            maxResults: 10
+        });
+
+        expect(result.results).toHaveLength(1);
+        expect(result.hasMore).toBe(false);
     });
 
     it('should limit number of results', () => {

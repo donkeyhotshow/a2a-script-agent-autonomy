@@ -171,6 +171,34 @@ describe('Transform Pipeline Runtime', () => {
         expect(result.output.result).toBeUndefined();
       }
     });
+
+    it('should apply scratchpad ops from input', async () => {
+      const pipeline = {
+        steps: [
+          { op: 'set', path: 'context', value: { scratchpad: { a: true } } },
+          {
+            op: 'apply-scratchpad-ops',
+            from: 'ops',
+            scratchpadPath: 'context.scratchpad'
+          }
+        ]
+      };
+
+      const input = {
+        ops: [
+          { op: 'add', item: 'read_app' },
+          { op: 'check', item: 'a' },
+          { op: 'remove', item: 'a' }
+        ]
+      };
+
+      const result = await runTransformPipeline(pipeline, input);
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.output.context.scratchpad).toEqual({ read_app: true });
+      }
+    });
   });
 
   describe('Integration coder/3 (prompts/transforms)', () => {

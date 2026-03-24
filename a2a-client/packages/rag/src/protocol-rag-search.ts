@@ -37,6 +37,12 @@ export interface RagSearchProtocolResult {
     results: RagSearchResultEntry[];
     files?: string[];
     query?: string;
+    /** Set when `page` or `pageSize` is passed in options (ISSUE 9). */
+    page?: number;
+    pageSize?: number;
+    /** Total rows in the capped pool (after maxResults, before paging). */
+    total?: number;
+    hasMore?: boolean;
 }
 
 /** 
@@ -62,6 +68,9 @@ export function toRagSearchResult(
         allowedExtensions?: string[];
         maxResults?: number;
         snippetConfig?: SnippetConfig;
+        /** 1-based page; enables pagination metadata when set with or without pageSize. */
+        page?: number;
+        pageSize?: number;
     }
 ): RagSearchProtocolResult {
     // Apply policy limits
@@ -102,14 +111,29 @@ export function toRagSearchResult(
         }
     }
 
-    // Convert to array and apply limits
     const fileResults = Array.from(fileMap.values());
+    const pool = fileResults.slice(0, maxResults);
 
-    // Apply result limit (after grouping)
-    const limitedResults = fileResults.slice(0, maxResults);
+    const usePagination = options?.page != null || options?.pageSize != null;
+    const page = Math.max(1, options?.page ?? 1);
+    const pageSize = options?.pageSize ?? maxResults;
 
-    // Apply file limit (should be same as result limit after grouping)
-    const finalResults = limitedResults.slice(0, maxFiles);
+    let windowed = pool;
+    let total: number | undefined;
+    let hasMore: boolean | undefined;
+    let outPage: number | undefined;
+    let outPageSize: number | undefined;
+
+    if (usePagination) {
+        total = pool.length;
+        outPage = page;
+        outPageSize = pageSize;
+        const start = (page - 1) * pageSize;
+        windowed = pool.slice(start, start + pageSize);
+        hasMore = start + windowed.length < total;
+    }
+
+    const finalResults = windowed.slice(0, maxFiles);
 
     // Transform to protocol format with improved snippets
     const query = options?.query ?? '';
@@ -154,14 +178,22 @@ export function toRagSearchResult(
         };
     });
 
-    // Extract unique file paths (limited to final results)
     const files = finalResults.map(result => result.chunk.filePath);
 
-    return {
+    const base: RagSearchProtocolResult = {
         results,
         files,
         query: options?.query
     };
+
+    if (usePagination) {
+        base.page = outPage;
+        base.pageSize = outPageSize;
+        base.total = total;
+        base.hasMore = hasMore;
+    }
+
+    return base;
 }
 
 /**

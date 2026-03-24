@@ -129,6 +129,10 @@ async function runSingleSimulation(simDir: string, baseDir: string): Promise<boo
             context: context,
         };
 
+        if (requestData.result && typeof requestData.result === 'object') {
+            invokeInput.result = requestData.result;
+        }
+
         // Handle task/message from various sources
         if (requestData.task) {
             invokeInput.task = requestData.task;

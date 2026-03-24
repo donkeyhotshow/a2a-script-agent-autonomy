@@ -25,7 +25,25 @@ export type TransformStep =
   | AppendToArrayOperation 
   | ParseJsonFromMdOperation 
   | RenderMarkdownOperation 
-  | SwitchOperation;
+  | SwitchOperation
+  | ApplyScratchpadOpsOperation;
+
+/** Single LLM-emitted scratchpad command (ISSUE 6) */
+export interface ScratchpadOpCommand {
+  op: 'check' | 'add' | 'remove';
+  item: string;
+}
+
+/**
+ * Apply scratchpad_ops array to context.scratchpad (object map).
+ * Reads commands from JSONPath `from`; mutates scratchpad at `scratchpadPath` in $out.
+ */
+export interface ApplyScratchpadOpsOperation {
+  op: 'apply-scratchpad-ops';
+  from: string;
+  /** JSONPath in $out (default: context.scratchpad) */
+  scratchpadPath?: string;
+}
 
 /**
  * Copy operation - copies data from one JSONPath to another

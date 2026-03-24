@@ -32,7 +32,9 @@ import type {
   AppendToArrayOperation,
   ParseJsonFromMdOperation,
   RenderMarkdownOperation,
-  SwitchOperation
+  SwitchOperation,
+  ApplyScratchpadOpsOperation,
+  ScratchpadOpCommand
 } from './types.js';
 
 /**
@@ -94,6 +96,9 @@ export async function applyOperation(
       break;
     case 'switch':
       await applySwitch(operation, context);
+      break;
+    case 'apply-scratchpad-ops':
+      await applyScratchpadOps(operation, context);
       break;
     default:
       throw new Error(`Unknown operation: ${(operation as TransformStep).op}`);
@@ -353,6 +358,53 @@ function sortKeys(value: unknown): unknown {
     return sorted;
   }
   return value;
+}
+
+function isScratchpadCommand(x: unknown): x is ScratchpadOpCommand {
+  if (!x || typeof x !== 'object') return false;
+  const o = x as Record<string, unknown>;
+  const op = o.op;
+  const item = o.item;
+  return (
+    (op === 'check' || op === 'add' || op === 'remove') &&
+    typeof item === 'string' &&
+    item.length > 0
+  );
+}
+
+/**
+ * Merge LLM scratchpad_ops into context.scratchpad (ISSUE 6).
+ */
+async function applyScratchpadOps(
+  operation: ApplyScratchpadOpsOperation,
+  context: TransformContext
+): Promise<void> {
+  const { from, scratchpadPath = 'context.scratchpad' } = operation;
+  let ops = query<unknown[]>(context.input, from);
+  if (!ops) {
+    ops = query<unknown[]>(context.$out, from);
+  }
+  if (!Array.isArray(ops) || ops.length === 0) {
+    return;
+  }
+
+  let pad = query<Record<string, unknown>>(context.$out, scratchpadPath);
+  if (!pad || typeof pad !== 'object' || Array.isArray(pad)) {
+    pad = {};
+  } else {
+    pad = { ...pad };
+  }
+
+  for (const raw of ops) {
+    if (!isScratchpadCommand(raw)) continue;
+    if (raw.op === 'remove') {
+      delete pad[raw.item];
+    } else {
+      pad[raw.item] = true;
+    }
+  }
+
+  jsonPathSet(context.$out, scratchpadPath, pad);
 }
 
 /**
