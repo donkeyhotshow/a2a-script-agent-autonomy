@@ -183,12 +183,18 @@
 
         let formContent = '';
 
+        const formIcon = hasChoices ? '☰' : (inputFields.length > 0 ? '✏️' : '⚙️');
+        const formTitle = form.title || (hasChoices ? 'Choose an option' : 'Enter details');
+
         if (hasChoices) {
-            const title = form.title ? `<p class="task-flow-form-title">${escapeHtml(form.title)}</p>` : '';
-            const buttons = form.choices.map((c) =>
-                `<button type="button" class="task-flow-choice-btn" data-choice-id="${escapeHtml(c.id)}">${escapeHtml(c.label || c.id)}</button>`
+            const buttons = form.choices.map((c, i) =>
+                `<button type="button" class="task-flow-choice-btn" data-choice-id="${escapeHtml(c.id)}">
+                    <span class="task-flow-choice-index">${i + 1}</span>
+                    <span class="task-flow-choice-label">${escapeHtml(c.label || c.id)}</span>
+                    <span class="task-flow-choice-arrow">›</span>
+                </button>`
             ).join('');
-            formContent += `${title}<div class="task-flow-choices">${buttons}</div>`;
+            formContent += `<div class="task-flow-choices">${buttons}</div>`;
         }
 
         if (inputFields.length > 0) {
@@ -197,19 +203,27 @@
                 const label = f.label ? `<label for="task-flow-input-${escapeHtml(name)}">${escapeHtml(f.label)}</label>` : '';
                 const placeholder = f.placeholder || '';
                 const required = f.required ? 'required' : '';
-                return `<div class="task-flow-input-group">${label}<input type="text" id="task-flow-input-${escapeHtml(name)}" name="${escapeHtml(name)}" placeholder="${escapeHtml(placeholder)}" ${required} class="task-flow-input-field"></div>`;
+                return `<div class="task-flow-input-group">${label}<input type="text" id="task-flow-input-${escapeHtml(name)}" name="${escapeHtml(name)}" placeholder="${escapeHtml(placeholder)}" ${required} class="task-flow-input-field" autocomplete="off"></div>`;
             }).join('');
-            formContent += `<div class="task-flow-input-form">${inputsHtml}<button type="button" class="task-flow-submit-btn">Submit</button></div>`;
+            formContent += `<div class="task-flow-inputs">${inputsHtml}</div><div class="task-flow-submit-row"><button type="button" class="task-flow-submit-btn">Send →</button></div>`;
         }
 
         const historyHtml = renderMessageHistory(contentEl, effectiveStore);
 
         contentEl.innerHTML = `
             ${historyHtml}
-            <div class="task-flow-form-container">
+            <div class="task-flow-execute-card">
                 ${executionStepHtml}
                 ${progressBarHtml}
-                ${formContent}
+                <div class="task-flow-form-container">
+                    <div class="task-flow-form-header">
+                        <span class="task-flow-form-icon">${formIcon}</span>
+                        <div>
+                            <div class="task-flow-form-title">${escapeHtml(formTitle)}</div>
+                        </div>
+                    </div>
+                    ${formContent}
+                </div>
                 ${finalResultHtml}
             </div>
         `;
@@ -231,12 +245,8 @@
                 const doSubmit = () => {
                     const val = inputEl.value?.trim();
                     if (val) {
-                        // HIDE FORM + show loader
-                        const formContainer = contentEl.querySelector('.task-flow-form-container');
-                        if (formContainer) {
-                            formContainer.style.display = 'none';
-                        }
-                        // Skip inline loader - use window-events.js spinner instead
+                        const card = contentEl.querySelector('.task-flow-execute-card');
+                        if (card) card.style.display = 'none';
                         taskFlowRef.sendMessageResult(val, contentEl);
                     }
                 };
@@ -245,6 +255,8 @@
             inputEl.addEventListener('keydown', (e) => {
                 if (e.key === 'Enter') { e.preventDefault(); doSubmit(); }
             });
+            // autofocus first input
+            setTimeout(() => inputEl.focus(), 50);
         }
     }
     
@@ -260,16 +272,23 @@
      */
     function renderMessage(contentEl, message, executionStepHtml, progressBarHtml, finalResultHtml, taskFlowRef, store) {
         const messageContent = typeof message === 'string' ? message : (message.content || message.text || '');
+        const messageType = typeof message === 'object' ? (message.type || 'info') : 'info';
+        const typeIcons = { success: '✓', error: '⚠', warning: '⚠', info: 'ℹ' };
+        const icon = typeIcons[messageType] || 'ℹ';
         const effectiveStore = store || global.SessionStore;
         const historyHtml = renderMessageHistory(contentEl, effectiveStore);
 
         contentEl.innerHTML = `
             ${historyHtml}
-            <div class="task-flow-message-container">
+            <div class="task-flow-execute-card">
                 ${executionStepHtml}
                 ${progressBarHtml}
-                <div class="task-flow-message-display">
-                    ${escapeHtml(messageContent)}
+                <div class="task-flow-message-container">
+                    <div class="task-flow-form-header">
+                        <span class="task-flow-form-icon">${icon}</span>
+                        <div class="task-flow-form-title">Message</div>
+                    </div>
+                    <div class="task-flow-message-display">${escapeHtml(messageContent)}</div>
                 </div>
                 ${finalResultHtml}
             </div>
@@ -287,7 +306,6 @@
      * @param {Object} taskFlowRef - ссылка на TaskFlow
      */
     function renderClientAction(contentEl, actionType, data, executionStepHtml, progressBarHtml, finalResultHtml, taskFlowRef, store) {
-        // Client-side actions (script, rag-search, file ops, commands)
         const typeLabels = {
             'script': 'Script Execution',
             'rag-search': 'RAG Search',
@@ -295,18 +313,29 @@
             'write-file': 'Write File',
             'execute-command': 'Execute Command'
         };
+        const typeIcons = {
+            'script': '⚡',
+            'rag-search': '🔍',
+            'read-file': '📄',
+            'write-file': '✏️',
+            'execute-command': '▶'
+        };
 
         const actionData = data[actionType];
         const effectiveStore = store || global.SessionStore;
         const historyHtml = renderMessageHistory(contentEl, effectiveStore);
+        const icon = typeIcons[actionType] || '⚙️';
+        const label = typeLabels[actionType] || actionType;
 
         contentEl.innerHTML = `
             ${historyHtml}
-            <div class="task-flow-client-action">
+            <div class="task-flow-execute-card">
                 ${executionStepHtml}
                 ${progressBarHtml}
-                <div class="action-type">${escapeHtml(typeLabels[actionType] || actionType)}</div>
-                <pre class="action-data">${escapeHtml(JSON.stringify(actionData, null, 2))}</pre>
+                <div class="task-flow-client-action">
+                    <div class="action-type"><span class="action-type-icon">${icon}</span>${escapeHtml(label)}</div>
+                    <pre class="action-data">${escapeHtml(JSON.stringify(actionData, null, 2))}</pre>
+                </div>
                 ${finalResultHtml}
             </div>
         `;
