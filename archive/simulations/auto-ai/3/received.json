@@ -1,9 +1,0 @@
-{
-  "projectId": "123",
-  "sessionId": "456",
-  "execute": {
-    "rag-search": {
-      "query": "express app API routes entry point"
-    }
-  }
-}

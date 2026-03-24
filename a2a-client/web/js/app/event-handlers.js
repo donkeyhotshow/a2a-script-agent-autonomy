@@ -287,7 +287,7 @@
                     panel.close();
                 });
             }
-        }
+        },
 
         _bindChainStatusControls(modal) {
             if (this._chainStatusControlsBound) return;
@@ -323,6 +323,7 @@
             container.innerHTML = CHAIN_STATUS_ITEMS.map(buildChainStatusItem).join('');
         }
 
+    };
     // Export
     global.AppEventHandlers = AppEventHandlers;
 

@@ -1,35 +1,35 @@
-﻿{
-   context: {
-    task: orchestrate ADR review,
-    execution: {
-      action: task,
-      step: router
+{
+  "context": {
+    "task": "orchestrate ADR review",
+    "execution": {
+      "action": "task",
+      "step": "router"
     }
   },
-  execute: {
-    form: {
-      title: Choose a workflow,
-      description: Select the mode that best fits the requested coordination work.,
-      choices: [
+  "execute": {
+    "form": {
+      "title": "Choose a workflow",
+      "description": "Select the mode that best fits the requested coordination work.",
+      "choices": [
         {
-          id: dialog,
-          label: AI dialog,
-          description: Free-form chat to explore the goal.
+          "id": "dialog",
+          "label": "AI dialog",
+          "description": "Free-form chat to explore the goal."
         },
         {
-          id: auto-ai,
-          label: Auto-AI,
-          description: Generate explicit actions from the model.
+          "id": "auto-ai",
+          "label": "Auto-AI",
+          "description": "Generate explicit actions from the model."
         },
         {
-          id: orchestrator-dialog,
-          label: Orchestrate ADR review,
-          description: Read canonical ADRs and plan the audit.
+          "id": "orchestrator-dialog",
+          "label": "Orchestrate ADR review",
+          "description": "Read canonical ADRs and plan the audit."
         },
         {
-          id: task-decomposition,
-          label: Task decomposition,
-          description: Split the request into subtasks before acting.
+          "id": "task-decomposition",
+          "label": "Task decomposition",
+          "description": "Split the request into subtasks before acting."
         }
       ]
     }

@@ -288,6 +288,22 @@
 .pui-panel-minimize:hover { color: var(--color-warning); }
 .pui-panel-maximize:hover { color: var(--color-success); }
 .pui-panel-close:hover    { color: var(--color-error); }
+.pui-panel-resize-toggle  { font-size: 11px; opacity: 0.7; }
+.pui-panel-resize-toggle:hover { color: var(--color-accent); opacity: 1; }
+.pui-panel-resize-toggle.active { color: var(--color-accent); opacity: 1; background: var(--color-bg-hover); }
+
+/* Resize mode: highlight edges */
+.pui-panel.resize-mode {
+  outline: 1px dashed var(--color-accent);
+  outline-offset: -1px;
+}
+
+.pui-resize-edge {
+  background: transparent;
+  transition: background var(--transition-fast);
+}
+
+.pui-resize-edge:hover { background: color-mix(in srgb, var(--color-accent) 30%, transparent); }
 
 /* Minimised cube */
 .pui-window-cube {

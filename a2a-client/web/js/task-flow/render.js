@@ -197,6 +197,23 @@
             formContent += `<div class="task-flow-choices">${buttons}</div>`;
         }
 
+        const routerMetaChoices = Array.isArray(form?.meta?.routerChoices) ? form.meta.routerChoices : [];
+        if (routerMetaChoices.length > 0) {
+            const routerTitle = typeof form?.meta?.routerTitle === 'string' ? form.meta.routerTitle : 'Режими';
+            const routerButtons = routerMetaChoices.map((c) =>
+                `<button type="button" class="task-flow-choice-btn" data-choice-id="${escapeHtml(c.id)}">
+                    <span class="task-flow-choice-label">${escapeHtml(c.label || c.id)}</span>
+                    <span class="task-flow-choice-arrow">›</span>
+                </button>`
+            ).join('');
+            formContent += `
+                <div class="task-flow-router-section">
+                    <div class="task-flow-router-title">${escapeHtml(routerTitle)}</div>
+                    <div class="task-flow-router-choices">${routerButtons}</div>
+                </div>
+            `;
+        }
+
         if (inputFields.length > 0) {
             const inputsHtml = inputFields.map((f) => {
                 const name = f.name || 'input';

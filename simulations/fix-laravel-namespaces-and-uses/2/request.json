@@ -1,6 +1,10 @@
 {
   "context": {
-    "task": "виправити namespace та use у Laravel PHP файлах"
+    "task": "виправити namespace та use у Laravel PHP файлах",
+    "execution": {
+      "action": "fix-laravel-namespaces-and-uses",
+      "step": "laravel-use-detect"
+    }
   },
   "result": {
     "choice": "fix-laravel-namespaces-and-uses"

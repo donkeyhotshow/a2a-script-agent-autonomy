@@ -1,3 +1,12 @@
 {
-  "task": "add auth and refactor API"
+  "context": {
+    "task": "add auth and refactor API",
+    "execution": {
+      "action": "task",
+      "step": "new"
+    }
+  },
+  "result": {
+    "message": "add auth and refactor API"
+  }
 }

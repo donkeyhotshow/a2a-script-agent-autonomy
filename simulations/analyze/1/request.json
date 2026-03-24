@@ -1,3 +1,12 @@
 {
-  "task": "аналіз"
+  "context": {
+    "task": "аналіз",
+    "execution": {
+      "action": "task",
+      "step": "new"
+    }
+  },
+  "result": {
+    "message": "аналіз"
+  }
 }

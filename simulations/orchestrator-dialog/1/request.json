@@ -1,11 +1,12 @@
-﻿{
-   context: {
-    execution: {
-      action: task,
-      step: new
+{
+  "context": {
+    "task": "orchestrate ADR review",
+    "execution": {
+      "action": "task",
+      "step": "new"
     }
   },
-  result: {
-    message: Orchestrate ADR review and plan the audit.
+  "result": {
+    "message": "Orchestrate ADR review and plan the audit."
   }
 }

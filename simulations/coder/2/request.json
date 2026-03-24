@@ -1,6 +1,10 @@
 {
   "context": {
-    "task": "допоможи розібратись з кодом"
+    "task": "допоможи розібратись з кодом",
+    "execution": {
+      "action": "task",
+      "step": "router"
+    }
   },
   "result": {
     "choice": "coder"

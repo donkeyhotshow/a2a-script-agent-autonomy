@@ -36,6 +36,22 @@ const ROUTER_CHOICES = [
     {id: 'fix-laravel-namespaces-and-uses', label: 'Laravel: namespace та use'},
 ] as const;
 
+const ROUTER_META_TITLE = 'Режими';
+
+function buildRouterForm(choices: Array<{id: string; label: string}>) {
+    const form: Record<string, unknown> = {
+        title: 'Оберіть спосіб виконання',
+        choices,
+    };
+    if (ROUTER_CHOICES.length > 0) {
+        form.meta = {
+            routerTitle: ROUTER_META_TITLE,
+            routerChoices: ROUTER_CHOICES,
+        };
+    }
+    return form;
+}
+
 /**
  * Action request processor configuration
  */
@@ -276,13 +292,7 @@ export class ActionRequestProcessor extends BaseRequestProcessor {
         //    if candidates.length === 0:
         //      return static ROUTER_CHOICES  // no registry, skip LLM
         const candidates = keywordMatches.filter(m => m.matchScore >= 0.3);
-        let actionsToUse: ActionDefinition[] = [];
-        
-        if (candidates.length > 0) {
-            actionsToUse = candidates.map(m => m.action);
-        } else {
-            actionsToUse = actionRegistry.getAllActions();
-        }
+        const actionsToUse: ActionDefinition[] = candidates.map(m => m.action);
         
         if (actionsToUse.length === 0) {
             logger.info('[ActionRequestProcessor] No actions in registry, returning static choices');
@@ -296,10 +306,7 @@ export class ActionRequestProcessor extends BaseRequestProcessor {
                     task: taskText
                 },
                 execute: {
-                    form: {
-                        title: 'Оберіть спосіб виконання',
-                        choices: [...ROUTER_CHOICES],
-                    }
+                    form: buildRouterForm([])
                 }
             } as ProcessResult;
         }
@@ -347,13 +354,7 @@ export class ActionRequestProcessor extends BaseRequestProcessor {
                         task: taskText
                     },
                     execute: {
-                        form: {
-                            title: 'Оберіть спосіб виконання',
-                            choices: [
-                                ...rankedChoices,
-                                ...ROUTER_CHOICES
-                            ]
-                        }
+                        form: buildRouterForm(rankedChoices)
                     }
                 };
             } else {
@@ -382,13 +383,7 @@ export class ActionRequestProcessor extends BaseRequestProcessor {
                         task: taskText
                     },
                     execute: {
-                        form: {
-                            title: 'Оберіть спосіб виконання',
-                            choices: [
-                                ...rankedChoices,
-                                ...ROUTER_CHOICES
-                            ]
-                        }
+                        form: buildRouterForm(rankedChoices)
                     }
                 };
             }
@@ -407,10 +402,7 @@ export class ActionRequestProcessor extends BaseRequestProcessor {
                     task: taskText
                 },
                 execute: {
-                    form: {
-                        title: 'Оберіть спосіб виконання',
-                        choices: [...ROUTER_CHOICES],
-                    }
+                    form: buildRouterForm([])
                 }
             } as ProcessResult;
         }

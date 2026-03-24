@@ -16,14 +16,12 @@ Sessions are stored under `<storageDir>/sessions/{sessionId}/`, where `<storageD
 │   ├── 1/
 │   │   ├── client-result.json
 │   │   ├── request-to-server.json
-│   │   ├── server-response.json
-│   │   └── messages.json
+│   │   └── server-response.json  # includes execute/context/messages
 │   ├── 2/
 │   │   ├── client-result.json
 │   │   ├── request-to-server.json
-│   │   ├── server-response.json
 │   │   ├── server-promise.json
-│   │   └── messages.json
+│   │   └── server-response.json  # includes execute/context/messages
 │   └── 3/
 │       └── ...
 └── sess_1234567891/
@@ -38,11 +36,11 @@ Sessions are stored under `<storageDir>/sessions/{sessionId}/`, where `<storageD
 | `server-promise.json` | `{N+2}/` | Saved when the previous request returned a promiseId |
 | `client-result.json` | `{N}/` | User result (message or choice) |
 | `server-response.json` | `{N+1}/` | Completed A2A Server response |
-| `messages.json` | `{N}/` | Chat history for step N (merged into responses) |
+| `server-response.json` | `{N+1}/` | Contains execute/context plus an array of assistant messages for step N |
 
 ### Step-centric metadata
 
-Since there is no `session.json`, session metadata is reconstructed from the highest-numbered step that already contains `server-response.json`. That file provides the latest `execute`, `context`, `status`, and `result`. The Client API scans from step `1` up to the current step, concatenates every `messages.json` slice, and treats the final `server-response.json` as the source of truth for the dialogue state. This organization ensures that even if a root metadata file is missing, the numbered folders alone carry the full session history.
+Since there is no `session.json`, session metadata is reconstructed from the highest-numbered step that already contains `server-response.json`. That file provides the latest `execute`, `context`, `status`, `result`, and the assistant messages that led to that state. The Client API scans from step `1` up to the current step, appends the `messages` array embedded in each `server-response.json`, merges the recorded user inputs from `client-result.json`, and treats the final `server-response.json` as the source of truth for the dialogue state. This organization ensures that even if a root metadata file is missing, the numbered folders alone carry the full session history.
 
 ### server-response.json Format
 
@@ -59,18 +57,22 @@ Since there is no `session.json`, session metadata is reconstructed from the hig
 
 `stepText` stores concatenated message content for requesting history from a specific message number.
 
-### messages.json Format
+### server-response.json carries assistant messages
 
-Messages are stored in a separate file for clarity and easier updates:
+Each `server-response.json` now stores an ordered `messages` array that mirrors what used to live in `messages.json`:
 
 ```json
-[
-  {"role": "user", "content": "Hello"},
-  {"role": "assistant", "content": "Hi there!"}
-]
+{
+  "execute": { ... },
+  "context": { ... },
+  "result": { ... },
+  "messages": [
+    { "role": "assistant", "content": "Hi there!" }
+  ]
+}
 ```
 
-When loading a step, the API merges `messages.json` into the step response.
+The history assembler (`collectSessionMessagesFlat` in the Vite plugin) walks these arrays, dedups the texts, and then appends every user turn from the matching `client-result.json`. Even though there is no standalone `messages.json` anymore, nothing is lost: the `messages` array in `server-response.json` now captures every assistant reply for that step.
 
 **Step flow:** Once a server response lands in step `N`, the client writes `client-result.json` (either from Web UI or an auto script). The next step (`N+1`) receives `request-to-server.json` before the A2A Server call. Synchronous responses land immediately in `{N+1}/server-response.json`; asynchronous responses first record `server-promise.json` in `{N+2}/`, then the completed `server-response.json` in that same folder once the promise finishes. Refer to [api-client-server-logic.md](./api-client-server-logic.md#поток-обработки-шагов-step-flow) for the detailed diagram.
 

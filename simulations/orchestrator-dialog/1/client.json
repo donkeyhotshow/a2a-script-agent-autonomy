@@ -1,5 +1,5 @@
-﻿{
-   task: orchestrate ADR review,
-  projectId: proj-orch-001,
-  sync: true
+{
+  "task": "orchestrate ADR review",
+  "projectId": "proj-orch-001",
+  "sync": true
 }

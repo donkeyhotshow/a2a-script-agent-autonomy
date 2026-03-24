@@ -266,7 +266,7 @@ a2a-client/storage/sessions/{sessionId}/
 │   ├── request-to-server.json  # Payload that was sent to /api/v1/invoke
 │   ├── server-response.json    # Completed execute/context/result for the step
 │   ├── server-promise.json     # Optional: pending promise metadata
-│   └── messages.json           # Per-step chat history fragment
+│   └── server-response.json    # Completed execute/context/result for the step (includes assistant messages)
 └── ...
 `
 

@@ -1,0 +1,266 @@
+/* ── Scene & Project Screen ─────────────────────────────────── */
+
+.app-scene {
+  position: fixed;
+  inset: 52px 0 52px 0; /* below header, above taskbar */
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse at 20% 50%, rgba(99,102,241,0.06) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 20%, rgba(139,92,246,0.05) 0%, transparent 55%),
+    var(--color-bg-primary);
+}
+
+/* subtle grid */
+.app-scene::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+}
+
+/* ── Project Screen ─────────────────────────────────────────── */
+.project-screen {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(860px, 90vw);
+  min-height: 320px;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-xl);
+  box-shadow:
+    var(--shadow-lg),
+    0 0 0 1px rgba(99,102,241,0.08),
+    inset 0 1px 0 rgba(255,255,255,0.04);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: opacity var(--transition-base);
+}
+
+.project-screen.hidden { opacity: 0; pointer-events: none; }
+
+.project-screen-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 20px;
+  background: var(--color-bg-tertiary);
+  border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
+}
+
+.project-screen-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  box-shadow: 0 0 8px var(--color-accent);
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+.project-screen-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  flex: 1;
+}
+
+.project-screen-badge {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  background: var(--color-bg-active);
+  color: var(--color-accent);
+  border: 1px solid rgba(99,102,241,0.2);
+}
+
+.project-screen-body {
+  flex: 1;
+  padding: 24px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.project-screen-empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: var(--color-text-muted);
+  font-size: 13px;
+  text-align: center;
+  padding: 40px;
+}
+
+.project-screen-empty-icon {
+  font-size: 32px;
+  opacity: 0.4;
+}
+
+/* ── Mini Dock Zones (appear on drag) ───────────────────────── */
+.pui-zones {
+  position: fixed;
+  inset: 52px 0 52px 0;
+  pointer-events: none;
+  z-index: 1500;
+  display: none;
+}
+
+.pui-zones.active {
+  display: block;
+}
+
+.pui-zone {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+  opacity: 0;
+  transition: opacity var(--transition-fast), background var(--transition-fast);
+  color: rgba(255,255,255,0.7);
+  font-size: 20px;
+}
+
+.pui-zones.active .pui-zone { opacity: 1; }
+
+.pui-zone-left {
+  left: 0; top: 0; bottom: 0;
+  width: 72px;
+  background: linear-gradient(90deg, rgba(99,102,241,0.18), transparent);
+  border-right: 2px solid rgba(99,102,241,0.0);
+}
+
+.pui-zone-right {
+  right: 0; top: 0; bottom: 0;
+  width: 72px;
+  background: linear-gradient(270deg, rgba(99,102,241,0.18), transparent);
+  border-left: 2px solid rgba(99,102,241,0.0);
+}
+
+.pui-zone-bottom {
+  left: 0; right: 0; bottom: 0;
+  height: 72px;
+  background: linear-gradient(180deg, transparent, rgba(99,102,241,0.18));
+  border-top: 2px solid rgba(99,102,241,0.0);
+}
+
+.pui-zone.drag-over {
+  opacity: 1 !important;
+  background: rgba(99,102,241,0.28) !important;
+  border-color: rgba(99,102,241,0.6) !important;
+}
+
+/* ── Docked Panels ──────────────────────────────────────────── */
+.pui-docked {
+  position: fixed;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border-light);
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  flex-direction: column;
+  z-index: 300;
+  transition: width var(--transition-base), height var(--transition-base);
+}
+
+.pui-docked.dock-left {
+  left: 0; top: 52px; bottom: 52px;
+  width: 320px;
+  border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
+  border-left: none;
+}
+
+.pui-docked.dock-right {
+  right: 0; top: 52px; bottom: 52px;
+  width: 320px;
+  border-radius: var(--radius-lg) 0 0 var(--radius-lg);
+  border-right: none;
+}
+
+.pui-docked.dock-bottom {
+  left: 0; right: 0; bottom: 52px;
+  height: 260px;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  border-bottom: none;
+}
+
+.pui-docked-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: var(--color-bg-tertiary);
+  border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
+  cursor: grab;
+  user-select: none;
+}
+
+.pui-docked-header:active { cursor: grabbing; }
+
+.pui-docked-drag-handle {
+  color: var(--color-text-muted);
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.pui-docked-title {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pui-docked-controls {
+  display: flex;
+  gap: 4px;
+}
+
+.pui-docked-btn {
+  background: none;
+  border: none;
+  color: var(--color-text-secondary);
+  padding: 2px 7px;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  line-height: 1.4;
+  transition: all var(--transition-fast);
+}
+
+.pui-docked-btn:hover { background: var(--color-bg-hover); color: var(--color-text-primary); }
+.pui-docked-btn.undock:hover { color: var(--color-warning); }
+.pui-docked-btn.close-btn:hover  { color: var(--color-error); }
+
+.pui-docked-content {
+  flex: 1;
+  overflow: auto;
+}
+
+/* resize strip for docked panels */
+.pui-docked-resize {
+  position: absolute;
+  background: transparent;
+  transition: background var(--transition-fast);
+  z-index: 1;
+}
+
+.pui-docked-resize:hover { background: rgba(99,102,241,0.25); }
+
+.dock-left   .pui-docked-resize { right: 0; top: 0; bottom: 0; width: 4px; cursor: ew-resize; }
+.dock-right  .pui-docked-resize { left: 0;  top: 0; bottom: 0; width: 4px; cursor: ew-resize; }
+.dock-bottom .pui-docked-resize { top: 0; left: 0; right: 0; height: 4px; cursor: ns-resize; }

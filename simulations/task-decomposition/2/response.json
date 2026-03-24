@@ -9,14 +9,11 @@
   },
   "execute": {
     "form": {
-      "input": [
-        {
-          "name": "message",
-          "type": "text",
-          "label": "Task description",
-          "required": true
-        }
-      ]
+      "textarea": {
+        "name": "message",
+        "label": "Task description",
+        "required": true
+      }
     }
   }
 }

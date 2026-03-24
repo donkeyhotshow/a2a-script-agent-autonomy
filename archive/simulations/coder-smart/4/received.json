@@ -1,9 +1,0 @@
-{
-  "projectId": "123",
-  "sessionId": "456",
-  "execute": {
-    "rag-search": {
-      "query": "JWT автентифікація API middleware захист ендпоінтів тести"
-    }
-  }
-}

@@ -1,6 +1,10 @@
 {
   "context": {
-    "task": "аналіз"
+    "task": "аналіз",
+    "execution": {
+      "action": "task",
+      "step": "router"
+    }
   },
   "result": {
     "choice": "analyze"

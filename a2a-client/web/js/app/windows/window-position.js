@@ -4,13 +4,18 @@
 (function (global) {
     'use strict';
 
+    // Per-device key: screen resolution + pixel ratio as fingerprint
+    function _deviceKey() {
+        return `${screen.width}x${screen.height}@${devicePixelRatio || 1}`;
+    }
+
     const WindowPosition = {
         /**
          * Save window state
          */
         async saveWindowState(sessionId, position, size) {
             try {
-                const key = `window_state_${sessionId}`;
+                const key = `window_state_${sessionId}_${_deviceKey()}`;
                 const state = { position, size, timestamp: Date.now() };
                 await StorageAPI.ui.setItem(key, JSON.stringify(state));
             } catch (e) {
@@ -23,7 +28,7 @@
          */
         async loadWindowState(sessionId) {
             try {
-                const key = `window_state_${sessionId}`;
+                const key = `window_state_${sessionId}_${_deviceKey()}`;
                 const saved = await StorageAPI.ui.getItem(key);
                 if (saved) {
                     return JSON.parse(saved);
@@ -69,15 +74,20 @@
         },
 
         /**
-         * Ensure position is within viewport
+         * Ensure position is within viewport.
+         * - Vertical: top of window (y) must stay >= 0 and <= innerHeight - HEADER_H
+         *   so the header is always reachable.
+         * - Horizontal: window can slide off-screen by at most half its width.
          */
         clampToViewport(position, size) {
-            const maxX = window.innerWidth - (size?.width || 400);
-            const maxY = window.innerHeight - (size?.height || 300);
-            
+            const HEADER_H = 44; // px — minimum visible header strip
+            const w = size?.width  || 400;
+            const h = size?.height || 300;
+            const halfW = Math.floor(w / 2);
+
             return {
-                x: Math.max(0, Math.min(position.x, maxX)),
-                y: Math.max(0, Math.min(position.y, maxY))
+                x: Math.max(-halfW, Math.min(position.x, window.innerWidth  - halfW)),
+                y: Math.max(0,      Math.min(position.y, window.innerHeight - HEADER_H))
             };
         }
     };

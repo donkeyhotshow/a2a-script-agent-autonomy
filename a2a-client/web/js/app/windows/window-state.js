@@ -35,6 +35,7 @@
             header.innerHTML = `
                 <span class="pui-panel-title">${safeTitle}</span>
                 <div class="pui-panel-controls">
+                    <button class="pui-panel-btn pui-panel-resize-toggle" title="Resize">&#8597;&#8596;</button>
                     <button class="pui-panel-btn pui-panel-minimize" title="Minimise">&#8211;</button>
                     <button class="pui-panel-btn pui-panel-maximize" title="Maximise">&#9633;</button>
                     <button class="pui-panel-btn pui-panel-close" title="Close">&times;</button>
@@ -161,12 +162,20 @@
             header.querySelector('.pui-panel-close').addEventListener('click', (e) => { e.stopPropagation(); panel.close(); });
             header.querySelector('.pui-panel-minimize').addEventListener('click', (e) => { e.stopPropagation(); panel.minimize(); });
             header.querySelector('.pui-panel-maximize').addEventListener('click', (e) => { e.stopPropagation(); panel.maximize(); });
+            header.querySelector('.pui-panel-resize-toggle').addEventListener('click', (e) => { e.stopPropagation(); _toggleResizeMode(); });
 
             // Drag
             let isDragging = false;
             let dragOffset = { x: 0, y: 0 };
 
             const _bringToFront = () => { container.style.zIndex = ++_zTop; };
+
+            const _clampPos = (x, y) => {
+                const pos = global.WindowPosition?.clampToViewport(
+                    { x, y }, panel.size
+                ) || { x, y };
+                return pos;
+            };
 
             const _onDragStart = (e) => {
                 if (e.target.closest('.pui-panel-controls')) return;
@@ -180,17 +189,103 @@
 
             const _onDragMove = (e) => {
                 if (!isDragging) return;
-                const newX = e.clientX - dragOffset.x;
-                const newY = e.clientY - dragOffset.y;
-                container.style.left = `${newX}px`;
-                container.style.top  = `${newY}px`;
-                panel.position = { x: newX, y: newY };
+                const clamped = _clampPos(
+                    e.clientX - dragOffset.x,
+                    e.clientY - dragOffset.y
+                );
+                container.style.left = `${clamped.x}px`;
+                container.style.top  = `${clamped.y}px`;
+                panel.position = { x: clamped.x, y: clamped.y };
             };
 
             const _onDragEnd = () => {
                 isDragging = false;
                 document.removeEventListener('mousemove', _onDragMove);
                 document.removeEventListener('mouseup', _onDragEnd);
+            };
+
+            // Resize via drag handles on edges
+            let _resizeMode = false;
+            let _resizing = false;
+            let _resizeDir = '';
+            let _resizeStart = {};
+
+            const _resizeHandles = {};
+
+            const _makeHandle = (dir, cursor, style) => {
+                const h = document.createElement('div');
+                h.className = `pui-resize-edge pui-resize-${dir}`;
+                h.style.cssText = `position:absolute;${style}cursor:${cursor};z-index:10;`;
+                h.dataset.dir = dir;
+                container.appendChild(h);
+                h.style.display = 'none';
+                _resizeHandles[dir] = h;
+
+                h.addEventListener('mousedown', (e) => {
+                    e.preventDefault(); e.stopPropagation();
+                    _resizing = true;
+                    _resizeDir = dir;
+                    _resizeStart = {
+                        mx: e.clientX, my: e.clientY,
+                        x: panel.position.x, y: panel.position.y,
+                        w: panel.size.width, h: panel.size.height
+                    };
+                    container.classList.add('resizing');
+                    document.addEventListener('mousemove', _onResizeMove);
+                    document.addEventListener('mouseup', _onResizeEnd);
+                });
+                return h;
+            };
+
+            const EDGE = 6; // px
+            _makeHandle('n',  'n-resize',  `top:0;left:${EDGE}px;right:${EDGE}px;height:${EDGE}px;`);
+            _makeHandle('s',  's-resize',  `bottom:0;left:${EDGE}px;right:${EDGE}px;height:${EDGE}px;`);
+            _makeHandle('e',  'e-resize',  `right:0;top:${EDGE}px;bottom:${EDGE}px;width:${EDGE}px;`);
+            _makeHandle('w',  'w-resize',  `left:0;top:${EDGE}px;bottom:${EDGE}px;width:${EDGE}px;`);
+            _makeHandle('ne', 'ne-resize', `top:0;right:0;width:${EDGE*2}px;height:${EDGE*2}px;`);
+            _makeHandle('nw', 'nw-resize', `top:0;left:0;width:${EDGE*2}px;height:${EDGE*2}px;`);
+            _makeHandle('se', 'se-resize', `bottom:0;right:0;width:${EDGE*2}px;height:${EDGE*2}px;`);
+            _makeHandle('sw', 'sw-resize', `bottom:0;left:0;width:${EDGE*2}px;height:${EDGE*2}px;`);
+
+            const MIN_W = 300, MIN_H = 200;
+
+            const _onResizeMove = (e) => {
+                if (!_resizing) return;
+                const dx = e.clientX - _resizeStart.mx;
+                const dy = e.clientY - _resizeStart.my;
+                const d = _resizeDir;
+                let { x, y, w, h } = _resizeStart;
+
+                if (d.includes('e')) w = Math.max(MIN_W, w + dx);
+                if (d.includes('s')) h = Math.max(MIN_H, h + dy);
+                if (d.includes('w')) { const nw = Math.max(MIN_W, w - dx); x += w - nw; w = nw; }
+                if (d.includes('n')) { const nh = Math.max(MIN_H, h - dy); y += h - nh; h = nh; }
+
+                // Clamp position after resize
+                const clamped = _clampPos(x, y);
+                container.style.left   = `${clamped.x}px`;
+                container.style.top    = `${clamped.y}px`;
+                container.style.width  = `${w}px`;
+                container.style.height = `${h}px`;
+                panel.position = { x: clamped.x, y: clamped.y };
+                panel.size = { width: w, height: h };
+            };
+
+            const _onResizeEnd = () => {
+                _resizing = false;
+                container.classList.remove('resizing');
+                document.removeEventListener('mousemove', _onResizeMove);
+                document.removeEventListener('mouseup', _onResizeEnd);
+            };
+
+            const _toggleResizeMode = () => {
+                _resizeMode = !_resizeMode;
+                const btn = header.querySelector('.pui-panel-resize-toggle');
+                Object.values(_resizeHandles).forEach(h => {
+                    h.style.display = _resizeMode ? 'block' : 'none';
+                });
+                container.classList.toggle('resize-mode', _resizeMode);
+                if (btn) btn.classList.toggle('active', _resizeMode);
             };
 
             container.addEventListener('mousedown', _bringToFront);

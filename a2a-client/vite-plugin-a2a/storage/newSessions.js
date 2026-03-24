@@ -79,15 +79,15 @@ export function saveNewStep(cwd, sessionId, stepNum, stepData) {
       fs.writeFileSync(path.join(stepDir, filename), content);
     });
   }
-  const messages = stepData.messages || [];
+  const messages = Array.isArray(stepData.messages) ? stepData.messages : [];
   const {messages: _m, ...rest} = stepData;
   const metaFile = path.join(stepDir, 'server-response.json');
+  const payload = {
+    ...rest,
+    messages,
+  };
   // Note: step number is derived from folder path, not stored in JSON
-  fs.writeFileSync(metaFile, JSON.stringify({
-    ...rest
-  }, null, 2));
-  const messagesFile = path.join(stepDir, 'messages.json');
-  fs.writeFileSync(messagesFile, JSON.stringify(messages, null, 2));
+  fs.writeFileSync(metaFile, JSON.stringify(payload, null, 2));
 }
 
 export function loadNewStep(cwd, sessionId, stepNum) {
@@ -98,12 +98,14 @@ export function loadNewStep(cwd, sessionId, stepNum) {
   if (!file) return null;
   try {
     const data = JSON.parse(fs.readFileSync(file, 'utf8'));
-    const messagesFile = path.join(stepDir, 'messages.json');
-    if (fs.existsSync(messagesFile)) {
-      try {
-        data.messages = JSON.parse(fs.readFileSync(messagesFile, 'utf8'));
-      } catch (e) {
-        console.error('[newSessions] Failed to parse messages.json:', e.message);
+    if (data.messages === undefined) {
+      const messagesFile = path.join(stepDir, 'messages.json');
+      if (fs.existsSync(messagesFile)) {
+        try {
+          data.messages = JSON.parse(fs.readFileSync(messagesFile, 'utf8'));
+        } catch (e) {
+          console.error('[newSessions] Failed to parse messages.json:', e.message);
+        }
       }
     }
     return data;
