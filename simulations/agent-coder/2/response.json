@@ -1,0 +1,22 @@
+{
+  "context": {
+    "task": "допомоги з кодом",
+    "execution": {
+      "action": "agent",
+      "step": "request"
+    },
+    "workbench": {
+      "sections": {}
+    }
+  },
+  "execute": {
+    "form": {
+      "title": "Опишіть вашу задачу",
+      "description": "Що ви хочете зробити?",
+      "input": {
+        "type": "text",
+        "placeholder": "наприклад: додай роут /health"
+      }
+    }
+  }
+}

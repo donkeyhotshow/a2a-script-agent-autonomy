@@ -1,0 +1,12 @@
+{
+  "context": {
+    "task": "проаналізуй архітектуру",
+    "execution": {
+      "action": "task",
+      "step": "new"
+    }
+  },
+  "result": {
+    "message": "проаналізуй архітектуру"
+  }
+}

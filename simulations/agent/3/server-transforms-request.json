@@ -1,0 +1,25 @@
+{
+  "type": "pipeline",
+  "steps": [
+    {
+      "op": "copy",
+      "from": "$",
+      "to": "$out"
+    },
+    {
+      "op": "pick-context",
+      "include": ["execution", "task", "history", "workbench"]
+    },
+    {
+      "op": "truncate-section",
+      "path": "context.workbench.sections",
+      "maxChars": 12000
+    },
+    {
+      "op": "render-markdown",
+      "templateRef": "a2a-server/prompts/{{TEMPLATE_NAME}}",
+      "data": "$out",
+      "outputFile": "request.md"
+    }
+  ]
+}

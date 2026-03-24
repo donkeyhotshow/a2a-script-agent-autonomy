@@ -28,12 +28,7 @@ let timerId: ReturnType<typeof setInterval> | null = null;
 /** Modes selectable from task/router UI; must match ACTION_TO_SCHEMA keys in dialog-request-processor. */
 export const LLM_PIPELINE_ACTIONS = [
     'dialog',
-    'auto-ai',
-    'auto-ai-v2',
-    'coder',
-    'coder-smart',
-    'coder-smart-v2',
-    'analyze',
+    'agent',
     'task-decomposition',
 ] as const;
 

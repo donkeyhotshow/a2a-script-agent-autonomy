@@ -1,0 +1,30 @@
+{
+  "execute": {
+    "form": {
+      "title": "Оберіть спосіб виконання",
+      "description": "LLM modes and scripted actions; pick one to continue.",
+      "choices": [
+        {
+          "id": "dialog",
+          "label": "AI діалог з користувачем",
+          "description": "Free-form chat; follow-up forms in later steps."
+        },
+        {
+          "id": "agent",
+          "label": "Agent",
+          "description": "Universal agent: analyze, code, review — LLM decides the next action."
+        },
+        {
+          "id": "task-decomposition",
+          "label": "Декомпозиція задачі",
+          "description": "Split a goal into ordered subtasks and track progress."
+        },
+        {
+          "id": "fix-vue-imports",
+          "label": "Виправлення Vue imports",
+          "description": "Scripted Vue 2→3 import fixes (no LLM)."
+        }
+      ]
+    }
+  }
+}

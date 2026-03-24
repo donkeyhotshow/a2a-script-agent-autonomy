@@ -194,12 +194,7 @@ function mergeTraceIntoResult(result: ProcessResult, trace: ServerInterruptTrace
 /** action → transformSchema. Keep in sync with LLM pipeline actions in request-processor.service. */
 const ACTION_TO_SCHEMA: Record<string, string> = {
     dialog: 'dialog',
-    'auto-ai': 'auto-ai',
-    'auto-ai-v2': 'auto-ai',
-    coder: 'coder',
-    'coder-smart': 'coder',
-    'coder-smart-v2': 'coder',
-    analyze: 'analyze',
+    agent: 'agent',
     'task-decomposition': 'task-decomposition',
 };
 
