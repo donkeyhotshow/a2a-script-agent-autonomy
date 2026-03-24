@@ -7,6 +7,67 @@
       "to": "$out"
     },
     {
+      "op": "switch",
+      "discriminator": "$.context.execution.step",
+      "cases": {
+        "clarify": {
+          "op": "pick-context",
+          "include": ["execution", "task", "history:3"]
+        },
+        "research-plan": {
+          "op": "pick-context",
+          "include": ["execution", "task", "history:3"]
+        },
+        "rag-clarify": {
+          "op": "pick-context",
+          "include": ["execution", "task", "history:3"]
+        },
+        "rag-research-plan": {
+          "op": "pick-context",
+          "include": ["execution", "task", "history:3", "workbench"]
+        },
+        "checklist": {
+          "op": "pick-context",
+          "include": ["execution", "task", "history:4", "workbench"]
+        },
+        "write-doc": {
+          "op": "pick-context",
+          "include": ["execution", "task", "history:3", "workbench"]
+        },
+        "execute-item": {
+          "op": "pick-context",
+          "include": ["execution", "task", "history:4", "workbench", "scratchpad", "files"]
+        },
+        "completed": {
+          "op": "pick-context",
+          "include": ["execution", "task", "history:3"]
+        }
+      },
+      "default": {
+        "op": "pick-context",
+        "include": ["execution", "task", "history:6", "workbench", "scratchpad"]
+      }
+    },
+    {
+      "op": "switch",
+      "discriminator": "$.context.execution.step",
+      "cases": {
+        "execute-item": {
+          "op": "summarize-files",
+          "maxLines": 80
+        }
+      },
+      "default": {
+        "op": "drop",
+        "path": "$.context.files"
+      }
+    },
+    {
+      "op": "truncate-section",
+      "path": "context.workbench.sections",
+      "maxChars": 12000
+    },
+    {
       "op": "render-markdown",
       "templateRef": "a2a-server/prompts/coder-system.md",
       "data": "$out",

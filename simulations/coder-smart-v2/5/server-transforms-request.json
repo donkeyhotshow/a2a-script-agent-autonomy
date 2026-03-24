@@ -7,14 +7,18 @@
       "to": "$out"
     },
     {
-      "op": "set",
-      "path": "$.context.ragResults",
-      "value": "$.result.rag-search.results"
+      "op": "pick-context",
+      "include": ["execution", "task", "history:3", "workbench", "scratchpad"]
     },
     {
       "op": "truncate-section",
       "path": "context.workbench.sections",
       "maxChars": 8000
+    },
+    {
+      "op": "set",
+      "path": "$.ragResults",
+      "valueFrom": "$.result.rag-search.results"
     },
     {
       "op": "render-markdown",

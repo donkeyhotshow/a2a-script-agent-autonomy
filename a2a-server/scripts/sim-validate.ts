@@ -567,13 +567,14 @@ function getAllSimulations(): {path: string; name: string}[] {
             const subDir = join(SIMULATIONS_DIR, entry.name);
             const subEntries = readdirSync(subDir, {withFileTypes: true});
 
+            const substepDirRe = /^\d+-sub-\d+$/;
             for (const subEntry of subEntries) {
-                if (subEntry.isDirectory()) {
-                    simulations.push({
-                        path: join(subDir, subEntry.name),
-                        name: `${entry.name}/${subEntry.name}`
-                    });
-                }
+                if (!subEntry.isDirectory()) continue;
+                if (substepDirRe.test(subEntry.name)) continue;
+                simulations.push({
+                    path: join(subDir, subEntry.name),
+                    name: `${entry.name}/${subEntry.name}`
+                });
             }
 
             // Также добавляем директории верхнего уровня если в них есть JSON файлы

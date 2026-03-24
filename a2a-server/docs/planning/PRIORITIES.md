@@ -1,18 +1,19 @@
 # Пріоритети виконання
 
-*Оновлено: 2026-01-27 (раунд 2, арка 2)*
+*Оновлено: 2026-03-06 (context optimization завершено)*
 
-| Пріоритет | Issue | Задача | Блокує | Складність |
-|-----------|-------|--------|--------|------------|
-| 🔴 1 | [02](issues/02-dialog-history.md) | Фікс dialog history | 03, 08, 09 | Low |
-| 🟡 2 | [01](issues/01-router.md) | Перевірка роутера / action registry | 03, 07 | Low |
-| 🟡 3 | [03](issues/03-coder-audit.md) | Аудит coder симуляції (логіка роутингу) | 08 | Medium |
-| 🟡 4 | [07](issues/07-simulations-golden-standard.md) | fix-vue-imports: перевірка актуальності | — | Low |
-| 🟢 5 | [04](issues/04-simulations-audit.md) | Аудит симуляцій — формат і fixtures (dialog, fix-vue-imports) | — | Medium |
-| 🟢 6 | [09](issues/09-auto-ai.md) | Auto-AI: переробка симуляції → визначає стратегію context | 06, 05, 08 | High |
-| 🟢 7 | [06](issues/06-context-optimization.md) | Context оптимізація — код (scratchpad + files) | 05, 08 | Medium |
-| 🟢 8 | [08](issues/08-agent-mode.md) | Agent mode: system role + client execute + Web UI | — | High |
-| 🟢 9 | [05](issues/05-coder-smart.md) | Coder-smart v2 симуляція | — | High |
+| Пріоритет | Issue | Задача | Блокує | Складність | Статус |
+|-----------|-------|--------|--------|------------|--------|
+| ✅ | [06](issues/06-context-optimization.md) | Context оптимізація — 9 нових ops, switch по step | 05, 08 | Medium | **Done** |
+| 🔴 1 | [02](issues/02-dialog-history.md) | Фікс dialog history | 03, 08, 09 | Low | Open |
+| 🟡 2 | [01](issues/01-router.md) | Перевірка роутера / action registry | 03, 07 | Low | Open |
+| 🟡 3 | [03](issues/03-coder-audit.md) | Аудит coder симуляції (логіка роутингу) | 08 | Medium | Open |
+| 🟡 4 | [07](issues/07-simulations-golden-standard.md) | fix-vue-imports: перевірка актуальності | — | Low | Open |
+| 🟢 5 | [04](issues/04-simulations-audit.md) | Аудит симуляцій — формат і fixtures | — | Medium | Open |
+| 🟢 6 | [09](issues/09-auto-ai.md) | Auto-AI: переробка симуляції → визначає стратегію context | 05, 08 | High | Open |
+| 🟢 7 | [08](issues/08-agent-mode.md) | Agent mode: system role + client execute + Web UI | — | High | Open |
+| 🟢 8 | [05](issues/05-coder-smart.md) | Coder-smart v2 симуляція | — | High | Open |
+| 🟢 9 | — | stepRoutes.js: передавати `history`, `files`, `scratchpad` через `previousContext` | — | Low | After 08 |
 
 ## Залежності (граф)
 

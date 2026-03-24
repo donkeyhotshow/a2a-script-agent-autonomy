@@ -5,12 +5,16 @@
       "action": "auto-ai-v2",
       "step": "read_code"
     },
-    "scratchpad": {
-      "locate_started": true,
-      "rag_ok": true,
-      "listed_src": true
+    "workbench": {
+      "sections": {
+        "scratchpad": {
+          "locate_started": true,
+          "rag_ok": true,
+          "listed_src": true
+        },
+        "files": {}
+      }
     },
-    "files": {},
     "history": [
       {
         "role": "user",

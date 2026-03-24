@@ -7,6 +7,14 @@
       "to": "$out"
     },
     {
+      "op": "pick-context",
+      "include": ["execution", "task", "history:6", "scratchpad", "files"]
+    },
+    {
+      "op": "summarize-files",
+      "maxLines": 60
+    },
+    {
       "op": "render-markdown",
       "templateRef": "a2a-server/prompts/auto-ai-request.md",
       "data": "$out",

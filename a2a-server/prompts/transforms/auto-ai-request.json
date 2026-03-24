@@ -7,6 +7,99 @@
       "to": "$out"
     },
     {
+      "op": "switch",
+      "discriminator": "$.context.execution.step",
+      "cases": {
+        "plan": {
+          "op": "pick-context",
+          "include": ["execution", "task", "history:3"]
+        },
+        "locate_code": {
+          "op": "pick-context",
+          "include": ["execution", "task", "history:4", "scratchpad"]
+        },
+        "inspect_structure": {
+          "op": "pick-context",
+          "include": ["execution", "task", "history:4", "scratchpad"]
+        },
+        "read_code": {
+          "op": "pick-context",
+          "include": ["execution", "task", "history:5", "scratchpad", "files"]
+        },
+        "edit_code": {
+          "op": "pick-context",
+          "include": ["execution", "task", "history:6", "scratchpad", "files"]
+        },
+        "locate_tests": {
+          "op": "pick-context",
+          "include": ["execution", "task", "history:4", "scratchpad"]
+        },
+        "read_tests": {
+          "op": "pick-context",
+          "include": ["execution", "task", "history:5", "scratchpad", "files"]
+        },
+        "edit_tests": {
+          "op": "pick-context",
+          "include": ["execution", "task", "history:6", "scratchpad", "files"]
+        },
+        "run_lint": {
+          "op": "pick-context",
+          "include": ["execution", "task", "history:4", "scratchpad"]
+        },
+        "run_tests": {
+          "op": "pick-context",
+          "include": ["execution", "task", "history:5", "scratchpad"]
+        },
+        "write_report": {
+          "op": "pick-context",
+          "include": ["execution", "task", "history:8", "workbench", "scratchpad"]
+        },
+        "final_review": {
+          "op": "pick-context",
+          "include": ["execution", "task", "history:8", "workbench", "scratchpad"]
+        },
+        "completed": {
+          "op": "pick-context",
+          "include": ["execution", "task", "history:3"]
+        }
+      },
+      "default": {
+        "op": "pick-context",
+        "include": ["execution", "task", "history:6", "workbench", "scratchpad"]
+      }
+    },
+    {
+      "op": "switch",
+      "discriminator": "$.context.execution.step",
+      "cases": {
+        "edit_code": {
+          "op": "summarize-files",
+          "maxLines": 60
+        },
+        "edit_tests": {
+          "op": "summarize-files",
+          "maxLines": 60
+        },
+        "read_code": {
+          "op": "summarize-files",
+          "maxLines": 120
+        },
+        "read_tests": {
+          "op": "summarize-files",
+          "maxLines": 120
+        }
+      },
+      "default": {
+        "op": "drop",
+        "path": "$.context.files"
+      }
+    },
+    {
+      "op": "truncate-section",
+      "path": "context.workbench.sections",
+      "maxChars": 12000
+    },
+    {
       "op": "render-markdown",
       "templateRef": "a2a-server/prompts/{{TEMPLATE_NAME}}",
       "data": "$out",

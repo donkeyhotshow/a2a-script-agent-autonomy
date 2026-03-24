@@ -36,6 +36,14 @@ import type {
   SwitchOperation,
   ApplyScratchpadOpsOperation,
   TruncateSectionOperation,
+  PickContextOperation,
+  DropOperation,
+  TruncateHistoryOperation,
+  IncludeIfOperation,
+  PickFilesOperation,
+  MergeFilesToContextOperation,
+  SummarizeFilesOperation,
+  ForEachOperation,
   ScratchpadOpCommand
 } from './types.js';
 
@@ -104,6 +112,30 @@ export async function applyOperation(
       break;
     case 'truncate-section':
       await applyTruncateSection(operation, context);
+      break;
+    case 'pick-context':
+      await applyPickContext(operation, context);
+      break;
+    case 'drop':
+      await applyDrop(operation, context);
+      break;
+    case 'truncate-history':
+      await applyTruncateHistory(operation, context);
+      break;
+    case 'include-if':
+      await applyIncludeIf(operation, context);
+      break;
+    case 'pick-files':
+      await applyPickFiles(operation, context);
+      break;
+    case 'merge-files-to-context':
+      await applyMergeFilesToContext(operation, context);
+      break;
+    case 'summarize-files':
+      await applySummarizeFiles(operation, context);
+      break;
+    case 'for-each':
+      await applyForEach(operation, context);
       break;
     default:
       throw new Error(`Unknown operation: ${(operation as TransformStep).op}`);
@@ -428,6 +460,209 @@ async function applyTruncateSection(
     }
     jsonPathSet(context.$out, pathStr, next);
   }
+}
+
+/**
+ * pick-context — keep only specified fields under context, drop the rest.
+ * Supports "history:N" shorthand.
+ */
+async function applyPickContext(
+  operation: PickContextOperation,
+  context: TransformContext
+): Promise<void> {
+  let ctx = query<Record<string, unknown>>(context.$out, 'context');
+  if (!ctx) {
+    ctx = query<Record<string, unknown>>(context.input, 'context');
+  }
+  if (!ctx || typeof ctx !== 'object') return;
+
+  const next: Record<string, unknown> = {};
+  for (const field of operation.include) {
+    const colonIdx = field.indexOf(':');
+    if (colonIdx !== -1) {
+      const key = field.slice(0, colonIdx);
+      const n = parseInt(field.slice(colonIdx + 1), 10);
+      const arr = ctx[key];
+      if (Array.isArray(arr)) {
+        next[key] = arr.slice(-n);
+      } else if (arr !== undefined) {
+        next[key] = arr;
+      }
+    } else if (ctx[field] !== undefined) {
+      next[field] = ctx[field];
+    }
+  }
+  jsonPathSet(context.$out, 'context', next);
+}
+
+/**
+ * drop — delete a JSONPath from $out.
+ */
+async function applyDrop(
+  operation: DropOperation,
+  context: TransformContext
+): Promise<void> {
+  const parts = operation.path.replace(/^\$\.?/, '').split('.').filter(Boolean);
+  if (parts.length === 0) return;
+
+  let obj: unknown = context.$out;
+  for (let i = 0; i < parts.length - 1; i++) {
+    if (!obj || typeof obj !== 'object') return;
+    obj = (obj as Record<string, unknown>)[parts[i]];
+  }
+  if (obj && typeof obj === 'object') {
+    delete (obj as Record<string, unknown>)[parts[parts.length - 1]];
+  }
+}
+
+/**
+ * truncate-history — keep only the last N entries of context.history.
+ */
+async function applyTruncateHistory(
+  operation: TruncateHistoryOperation,
+  context: TransformContext
+): Promise<void> {
+  let history = query<unknown[]>(context.$out, 'context.history');
+  if (!history) {
+    history = query<unknown[]>(context.input, 'context.history');
+  }
+  if (!Array.isArray(history)) return;
+  jsonPathSet(context.$out, 'context.history', history.slice(-operation.keep));
+}
+
+/**
+ * include-if — drop path from $out when condition is falsy.
+ */
+async function applyIncludeIf(
+  operation: IncludeIfOperation,
+  context: TransformContext
+): Promise<void> {
+  let condValue = query(context.$out, operation.condition);
+  if (condValue === undefined) {
+    condValue = query(context.input, operation.condition);
+  }
+  if (!condValue) {
+    await applyDrop({ op: 'drop', path: operation.path }, context);
+  }
+}
+
+/**
+ * pick-files — keep only specific paths in context.files.
+ * "$result" auto-detects files from the result action key.
+ */
+async function applyPickFiles(
+  operation: PickFilesOperation,
+  context: TransformContext
+): Promise<void> {
+  let files = query<Record<string, unknown>>(context.$out, 'context.files');
+  if (!files) {
+    files = query<Record<string, unknown>>(context.input, 'context.files');
+  }
+  if (!files || typeof files !== 'object') return;
+
+  let keepPaths: string[];
+  if (operation.paths === '$result') {
+    // Auto-pick: find files[] array in result action key
+    const result = query<Record<string, unknown>>(context.input, 'result');
+    keepPaths = [];
+    if (result && typeof result === 'object') {
+      for (const val of Object.values(result)) {
+        if (val && typeof val === 'object' && Array.isArray((val as Record<string, unknown>).files)) {
+          keepPaths.push(...((val as Record<string, unknown>).files as string[]));
+        }
+      }
+    }
+  } else {
+    keepPaths = operation.paths;
+  }
+
+  const next: Record<string, unknown> = {};
+  for (const p of keepPaths) {
+    if (files[p] !== undefined) next[p] = files[p];
+  }
+  jsonPathSet(context.$out, 'context.files', next);
+}
+
+/**
+ * merge-files-to-context — fold result["read-file"] / result["write-file"] into context.files.
+ */
+async function applyMergeFilesToContext(
+  operation: MergeFilesToContextOperation,
+  context: TransformContext
+): Promise<void> {
+  const keys = operation.from ?? ['read-file', 'write-file'];
+  const result = query<Record<string, unknown>>(context.input, 'result')
+    ?? query<Record<string, unknown>>(context.$out, 'result');
+  if (!result || typeof result !== 'object') return;
+
+  let files = query<Record<string, unknown>>(context.$out, 'context.files');
+  if (!files || typeof files !== 'object') files = {};
+  const next = { ...files };
+
+  for (const key of keys) {
+    const val = result[key];
+    if (!val || typeof val !== 'object' || Array.isArray(val)) continue;
+    const v = val as Record<string, unknown>;
+    const p = typeof v.path === 'string' ? v.path : null;
+    const c = typeof v.content === 'string' ? v.content : null;
+    if (p && c !== null) next[p] = c;
+  }
+
+  jsonPathSet(context.$out, 'context.files', next);
+}
+
+/**
+ * summarize-files — truncate context.files values to first maxLines lines.
+ */
+async function applySummarizeFiles(
+  operation: SummarizeFilesOperation,
+  context: TransformContext
+): Promise<void> {
+  const maxLines = operation.maxLines ?? 40;
+  const only = operation.only;
+
+  let files = query<Record<string, unknown>>(context.$out, 'context.files');
+  if (!files) files = query<Record<string, unknown>>(context.input, 'context.files');
+  if (!files || typeof files !== 'object') return;
+
+  const next: Record<string, unknown> = {};
+  for (const [p, content] of Object.entries(files)) {
+    if (only && !only.some((prefix) => p.startsWith(prefix))) {
+      next[p] = content;
+      continue;
+    }
+    if (typeof content === 'string') {
+      const lines = content.split('\n');
+      next[p] = lines.length > maxLines
+        ? lines.slice(0, maxLines).join('\n') + `\n// ... (${lines.length - maxLines} more lines)`
+        : content;
+    } else {
+      next[p] = content;
+    }
+  }
+  jsonPathSet(context.$out, 'context.files', next);
+}
+
+/**
+ * for-each — run sub-pipeline steps for each element of an array.
+ */
+async function applyForEach(
+  operation: ForEachOperation,
+  context: TransformContext
+): Promise<void> {
+  let arr = query<unknown[]>(context.$out, operation.arrayPath);
+  if (!arr) arr = query<unknown[]>(context.input, operation.arrayPath);
+  if (!Array.isArray(arr)) return;
+
+  for (const item of arr) {
+    // Inject $item into $out temporarily
+    (context.$out as Record<string, unknown>)[operation.as] = item;
+    for (const step of operation.steps) {
+      await applyOperation(step, context);
+    }
+  }
+  // Clean up injected variable
+  delete (context.$out as Record<string, unknown>)[operation.as];
 }
 
 function isScratchpadCommand(x: unknown): x is ScratchpadOpCommand {

@@ -10,18 +10,20 @@ Golden simulations under `simulations/` define what **Web** and **`@a2a/sdk`** s
 | `response.json` | **SDK session merge** — raw server → Client API payload (single action key under `execute` where applicable). |
 | `client.json` | Web → Client API (body the SDK route receives). |
 
+**Not a contract file:** optional **`interrupt.md`** in a step folder only documents the [server interrupt loop](../a2a-server/docs/SERVER-INTERRUPT-LOOP.md). It does not define Web or SDK payloads; goldens remain `response.json` / `received.json`. See [`SCHEMA.md`](./SCHEMA.md#supplementary-server-interrupt-loop-optional).
+
 `a2a-client/packages/sdk/src/server/services/transforms/session-transform.ts` merges `context`, `execute`, `messages`, `history`, `workbench`, `finalResult`. **`response.json`** keeps the protocol execute the server emitted. **`received.json`** matches what the browser gets: internal client actions are stripped and replaced with a user-facing DTO.
 
 ## Web execute DTO (`received.json` / GET session `execute`)
 
-Implemented in `a2a-client/vite-plugin-a2a/routes/utils/web-execute-dto.js` (and SDK `web-execute-dto.ts`). The Client API removes these keys from `execute` before responding to the Web UI: `rag-search`, `read-file`, `write-file`, `script`, `execute-command`, `debug`.
+Implemented in `a2a-client/vite-plugin-a2a/routes/utils/web-execute-dto.js` (and SDK `web-execute-dto.ts`). The Client API removes these keys from `execute` before responding to the Web UI: `rag-search`, `read-file`, `write-file`, `script`, `execute-command`, `list-directory`, `grep-search`, `file-exists`, `edit-patch`, `run-script`, `debug`.
 
 | Field | Meaning |
 |-------|---------|
 | `execute.message` | Status line for the UI (string or `{ content }`). If the server sent only a client action, a default is used (`Searching the codebase…`, `Reading files…`, `Updating files…`, `Running script…`, `Running command…`, or combined with ` · `). |
 | `execute.llmMessage` | Optional; pass-through when the server adds a separate model line. |
 | `execute.form` | Unchanged when present (router / input / choices). |
-| `execute.attachments` | Structured hints: `readFiles[]` (`{ path }`), `writtenFiles[]`, `ragQuery`, `shellCommand` (from `execute-command.command`), `pendingClientAction` (`script` \| `execute-command`). |
+| `execute.attachments` | Structured hints: `readFiles[]`, `writtenFiles[]`, `ragQuery`, `shellCommand`, `listDirectoryPath`, `grepPattern` / `grepPath` / `grepGlob`, `fileExistsPath`, `editPatchPath`, `runScriptId`, `pendingClientAction` (`script` \| `execute-command` \| `run-script`). |
 
 Golden **`received.json`** must use this DTO. **`response.json`** in the same step still carries the real **`execute.{action}`** single-key payload for the Client API → server loop.
 

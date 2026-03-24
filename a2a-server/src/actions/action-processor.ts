@@ -15,7 +15,7 @@
 
 import {ActionService, ActionResponseSimulation} from './action-service.js';
 import {ActionDefinition, SubAction} from './types.js';
-import type {ContextBlock, ServerMessage} from '../types/index.js';
+import type {ContextBlock, ServerMessage, Task, TaskStatus, TaskType} from '../types/index.js';
 
 const PROTOCOL_VERSION = '1.0.0';
 
@@ -68,20 +68,16 @@ export class ActionProcessor {
         // Ищем подходящий action
         const matches = this.actionService.findActions(taskDescription);
 
-        if (matches.length === 0) {
+        if (matches.length === 0 || !matches[0]) {
             return {
                 continue: false,
-                message: this.buildNoActionMessage(sessionId, taskDescription),
+                message: this.buildMessage(sessionId, 'completed', 100, `No suitable action found for task: ${taskDescription}`, {
+                    taskId: 'action-search',
+                }),
             };
         }
 
         const bestMatch = matches[0];
-        if (!bestMatch) {
-            return {
-                continue: false,
-                message: this.buildNoActionMessage(sessionId, taskDescription),
-            };
-        }
 
         // Начинаем выполнение
         const response = this.actionService.startExecution(sessionId, bestMatch.action.id);
@@ -115,23 +111,42 @@ export class ActionProcessor {
         if (!response || response.outcome === 'completed') {
             return {
                 continue: false,
-                message: this.buildSessionCompleteMessage(sessionId, response.message || 'Action completed'),
+                message: this.buildMessage(sessionId, 'completed', 100, response?.message || 'Action completed'),
             };
         }
 
         if (response.outcome === 'failed') {
             return {
                 continue: false,
-                message: this.buildErrorMessage(sessionId, response.error || 'Step failed'),
+                message: this.buildMessage(sessionId, 'failed', 0, response.error || 'Step failed'),
             };
         }
 
-        // Получаем текущий шаг
         const currentStep = response.executingAction;
+        const execAction = response.actionDefinition?.id || 'unknown';
+        const stepId = currentStep?.id || 'start';
+        const totalSteps = Math.max(response.actionDefinition?.subActions.length || 1, 1);
+        const progress = Math.round(((response.executionState?.currentStepIndex ?? 0) / totalSteps) * 100);
+        const executeCommand = currentStep?.code
+            ? {
+                script: {
+                    input: {},
+                    output: 'step_result',
+                    code: currentStep.code,
+                },
+            }
+            : undefined;
 
         return {
             continue: true,
-            message: this.buildStepMessage(sessionId, response),
+            message: this.buildMessage(sessionId, 'in_progress', progress, response.message ?? 'Step in progress', {
+                taskId: execAction,
+                execution: {
+                    action: execAction,
+                    step: stepId,
+                },
+                execute: executeCommand,
+            }),
             ...(currentStep ? {currentStep} : {}),
             ...(currentStep?.code ? {code: currentStep.code} : {}),
         };
@@ -152,7 +167,7 @@ export class ActionProcessor {
         if (!response || response.outcome === 'failed') {
             return {
                 continue: false,
-                message: this.buildErrorMessage(sessionId, response?.error || `Failed to start action: ${actionId}`),
+                message: this.buildMessage(sessionId, 'failed', 0, response?.error || `Failed to start action: ${actionId}`),
             };
         }
 
@@ -174,52 +189,40 @@ export class ActionProcessor {
         };
     }
 
-    /**
-     * Построить сообщение для action_executing ответа (approve_action)
-     */
-    /**
-     * @deprecated Используйте новый формат с execute.form и execute.script
-     */
+    /** action_executing ответ после approve_action — только canonical execute + context.execution */
     private buildActionExecutingMessage(
         sessionId: string,
         actionId: string,
         response: ActionResponseSimulation,
-        /** @deprecated Используйте `execute.script` */
         executingAction: SubAction | undefined,
-        /** @deprecated Используйте `execute.form.choices` */
-        nextSteps: Array<{ actionId: string; title: string }>
+        _nextSteps: Array<{ actionId: string; title: string }>
     ): ServerMessage {
+        const stepId = executingAction?.id ?? 'start';
         const context: ContextBlock = {
             version: PROTOCOL_VERSION,
             session_id: sessionId,
             execution: {
-                actionId,
-                currentActionId: executingAction?.id || '',
-                history: [],
+                action: actionId,
+                step: stepId,
             },
         };
 
-        /** @deprecated Используйте `execute.form.choices` */
-        const result: ServerMessage = {
+        const out: ServerMessage = {
             context,
             message: response.message,
-            nextSteps,
         };
 
-        // Add executingAction if available
-        if (executingAction) {
-            /** @deprecated Используйте `execute` с action-type ключами */
-            result.executingAction = {
-                actionId: executingAction.id,
-                title: executingAction.title,
-                description: executingAction.description,
-                priority: executingAction.priority,
-                dsl: executingAction.dsl as unknown as Record<string, unknown> | undefined,
-                dslScript: executingAction.code,
+        if (executingAction?.code) {
+            out.execute = {
+                script: {
+                    input: {},
+                    output: 'step_result',
+                    code: executingAction.code,
+                },
             };
         }
 
-        return result;
+        return out;
     }
 
     /**
@@ -234,26 +237,6 @@ export class ActionProcessor {
     // Message Builders
     // ============================================
 
-    private buildNoActionMessage(sessionId: string, task: string): ServerMessage {
-        const context: ContextBlock = {
-            version: PROTOCOL_VERSION,
-            session_id: sessionId,
-            tasks: [
-                {
-                    id: 'action-search',
-                    type: 'analyze',
-                    status: 'completed',
-                    progress: 100,
-                },
-            ],
-        };
-
-        return {
-            context,
-            message: `No suitable action found for task: ${task}`,
-        };
-    }
-
     private buildActionProposalMessage(
         sessionId: string,
         match: { action: ActionDefinition; matchScore: number },
@@ -267,101 +250,69 @@ export class ActionProcessor {
 
         const firstStep = match.action.subActions[0];
 
-        return {
-            context,
-            message: response.message,
-            // Добавляем данные для клиента в произвольные поля
-            // Клиент должен понимать этот формат
-            action: {
-                id: match.action.id,
-                title: match.action.title,
-                matchScore: match.matchScore,
-                currentStep: firstStep ? {
-                    id: firstStep.id,
-                    title: firstStep.title,
-                    ...(firstStep.code ? {code: firstStep.code} : {}),
-                } : null,
-                nextSteps: match.action.subActions.slice(1).map(s => ({
-                    id: s.id,
-                    title: s.title,
-                })),
+        const out: ServerMessage = {
+            context: {
+                ...context,
+                execution: {
+                    action: match.action.id,
+                    step: firstStep?.id ?? 'start',
+                },
             },
+            message: response.message,
         };
+
+        if (firstStep?.code) {
+            out.execute = {
+                script: {
+                    input: {},
+                    output: 'step_result',
+                    code: firstStep.code,
+                },
+            };
+        }
+
+        return out;
     }
 
-    private buildStepMessage(
+    private buildMessage(
         sessionId: string,
-        response: ActionResponseSimulation
+        status: TaskStatus,
+        progress: number,
+        message: string,
+        extra?: {
+            taskId?: string;
+            taskType?: TaskType;
+            execution?: ContextBlock['execution'];
+            execute?: ServerMessage['execute'];
+            tasks?: Task[];
+        }
     ): ServerMessage {
-        const context: ContextBlock = {
-            version: PROTOCOL_VERSION,
-            session_id: sessionId,
-            tasks: [
-                {
-                    id: response.actionDefinition?.id || 'unknown',
-                    type: 'analyze',
-                    status: 'in_progress',
-                    progress: Math.round((response.executionState?.currentStepIndex || 0) /
-                        ((response.actionDefinition?.subActions.length || 1)) * 100),
-                },
-            ],
-        };
-
-        return {
-            context,
-            message: response.message,
-            action: {
-                currentStep: response.executingAction ? {
-                    id: response.executingAction.id,
-                    title: response.executingAction.title,
-                    ...(response.executingAction.code ? {code: response.executingAction.code} : {}),
-                } : null,
-                nextSteps: response.nextSteps?.map(s => ({
-                    id: s.id,
-                    title: s.title,
-                })) || [],
+        const tasks = extra?.tasks ?? [
+            {
+                id: extra?.taskId ?? 'action',
+                type: extra?.taskType ?? 'analyze',
+                status,
+                progress,
             },
-        };
-    }
+        ];
 
-    private buildSessionCompleteMessage(sessionId: string, summary: string): ServerMessage {
         const context: ContextBlock = {
             version: PROTOCOL_VERSION,
             session_id: sessionId,
-            tasks: [
-                {
-                    id: 'action',
-                    type: 'analyze',
-                    status: 'completed',
-                    progress: 100,
-                },
-            ],
+            tasks,
+            ...(extra?.execution ? {execution: extra.execution} : {}),
         };
 
-        return {
+        const out: ServerMessage = {
             context,
-            message: summary,
-        };
-    }
-
-    private buildErrorMessage(sessionId: string, error: string): ServerMessage {
-        const context: ContextBlock = {
-            version: PROTOCOL_VERSION,
-            session_id: sessionId,
-            tasks: [
-                {
-                    id: 'action',
-                    type: 'analyze',
-                    status: 'failed',
-                    progress: 0,
-                },
-            ],
+            message,
         };
 
-        return {
-            context,
-            message: error,
-        };
+        if (extra?.execute) {
+            out.execute = extra.execute;
+        }
+
+        return out;
     }
 }
 

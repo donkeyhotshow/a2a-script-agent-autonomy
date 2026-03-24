@@ -14,6 +14,7 @@ This file provides guidance to agents when working with code in this repository.
 8. [Running Tests](#running-tests)
 9. [Common Issues and Solutions](#common-issues-and-solutions)
 10. [Architecture decision records (ADRs)](#architecture-decision-records-adrs)
+11. [Server interrupt loop](#server-interrupt-loop)
 
 ---
 
@@ -44,11 +45,13 @@ import x from '@/services/x.js'
 - Form metadata belongs in title/description – keep any long user-facing explanation in `form.title`/`form.description` instead of stuffing it into individual `input` entries. Use the `input[]` array for field definitions (labels, types, placeholders) only and reserve the descriptive text for the form-level fields.
 - Prune `server-response.json` artifacts – normalized simulations should only ship `response.json` + `received.json` (and optional `server-transforms-*.json`). Remove stray `server-response.json` files in step folders when you rewrite the golden fixtures so nothing lingers from the older sync contract.
 - Request.json should follow invoke schema – the first step’s `request.json` needs to mirror the real invocation contract described in `SCHEMA.md`, including a `context.execution` object (router/invoke expectations, action/step info) rather than just `{ "task": "…" }`. This keeps the golden starting point consistent with how the backend builds requests.
+- Optional **`interrupt.md`** in a numbered step folder — documents [server interrupt loop](a2a-server/docs/SERVER-INTERRUPT-LOOP.md) scenarios only; **not** part of the eight-file sync pipeline; `sim-lint` does not read it. See [`simulations/SCHEMA.md`](simulations/SCHEMA.md#supplementary-server-interrupt-loop-optional).
+- Optional **`N-sub-M/`** folders (next to step `N/`, `M` sequential) — `trace.json` for `context.workbench.slots.interruptTrace` variants; pattern `^\d+-sub-\d+$`. Example: `simulations/auto-ai-v2/6-sub-1/` … `6-sub-4/`. You may mirror a trace into golden **`response.json`** if needed (align `llm_output.chars` with `response.md` when relevant).
 
 ### Quick grep helpers (when upgrading a sim)
 - `rg -n "docVirtual" -g '*.json' simulations` – verify legacy docVirtual references are gone.
 - `rg -n '"execute":\\s*\\{[^}]*"(form|script|read-file|rag-search)"' -g '**/response.json' simulations` – confirm **server** `response.json` uses a single canonical action key under `execute`.
-- `rg -n '"rag-search"\s*:|"read-file"\s*:|"write-file"\s*:|"execute-command"\s*:|"script"\s*:\s*\{' -g '**/received.json' simulations` – hits should be **only** under top-level **`result`**, not under **`execute`** (Web DTO allows `result` action-key payloads; `execute` must stay sanitized).
+- `rg -n '"rag-search"\s*:|"read-file"\s*:|"write-file"\s*:|"execute-command"\s*:|"script"\s*:\s*\{|"list-directory"\s*:|"grep-search"\s*:|"file-exists"\s*:|"edit-patch"\s*:|"run-script"\s*:' -g '**/received.json' simulations` – hits should be **only** under top-level **`result`**, not under **`execute`** (Web DTO allows `result` action-key payloads; `execute` must stay sanitized).
 - `rg -n 'result"\\s*:\\s*{\\s*"content"' -g '*.json' simulations` – find bare result blobs that need action-key shaping.
 - `rg -n 'server-response\\.json' simulations` – locate stray server-response snapshots to delete.
 - `rg -n 'error-recovery' -g '*.json' simulations` – catch deprecated execute types before they slip in.
@@ -131,6 +134,10 @@ request.json → server-transforms → request.md → [LLM] → response.md → 
 ```
 
 **Server-side LLM request prep** (before `request.md` is built): `result` is folded into `context.history`; `flowControlHint` is chosen from `context.execution.action` + `step`. See [`a2a-server/docs/LLM-REQUEST-PREP.md`](a2a-server/docs/LLM-REQUEST-PREP.md).
+
+### Server interrupt loop
+
+After the response transform, if transform output includes **`interrupt`**, the dialog processor may run **extra** LLM work (compress history, `thinking` slot, another full request→LLM→response cycle) before responding. The client only receives the **final** `execute` / context. Full spec: [`a2a-server/docs/SERVER-INTERRUPT-LOOP.md`](a2a-server/docs/SERVER-INTERRUPT-LOOP.md). ADR: [`docs/adr/ADR-0029-server-interrupt-loop.md`](docs/adr/ADR-0029-server-interrupt-loop.md). Example sim notes: [`simulations/auto-ai-v2/6/interrupt.md`](simulations/auto-ai-v2/6/interrupt.md).
 
 ---
 
@@ -554,7 +561,7 @@ curl -X POST http://localhost:3000/api/v1/invoke -d '{}'
 
 ## Architecture decision records (ADRs)
 
-Indexed in [`docs/adr/README.md`](docs/adr/README.md). Recent examples: **ADR-0026** (server LLM request prep: `result` → `history`, `flowControlHint`), **ADR-0027** (canonical docs map), **ADR-0028** (Vite `/api/a2a` vs standalone SDK Client API).
+Indexed in [`docs/adr/README.md`](docs/adr/README.md). Recent examples: **ADR-0026** (server LLM request prep: `result` → `history`, `flowControlHint`), **ADR-0027** (canonical docs map), **ADR-0028** (Vite `/api/a2a` vs standalone SDK Client API), **ADR-0029** (server interrupt loop after response transform).
 
 ---
 

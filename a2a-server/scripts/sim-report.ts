@@ -47,7 +47,7 @@ const BaseResponseSchema = z.object({
 
 const ActionProposalResultSchema = z.object({
     context: z.record(z.unknown()),
-    proposedActions: z.array(ActionSchema),
+    proposedActions: z.array(ActionSchema).optional(),
 });
 
 const ActionExecutingResultSchema = z.object({

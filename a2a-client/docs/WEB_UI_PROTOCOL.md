@@ -8,6 +8,16 @@ Checkpoint: dialog in `a2a-client/web` against the Vite **storage-mode** Client 
 2. **Web state is semantic** — UI and `SessionStore` react to `asyncPending`, `promiseStatus`, `execute`, `messages`, and loader flags, not to opaque backend ids.
 3. **Ack + hydrate** — `POST .../next` returns a minimal ack; full state comes from `GET .../sessions/:id`.
 
+## `execute` shape for the browser (Web DTO)
+
+`GET /api/a2a/sessions/{id}` (and related routes that use the public session DTO) return **`execute` sanitized for the UI**: raw protocol actions such as `rag-search`, `read-file`, `write-file`, `script`, `execute-command`, `list-directory`, `grep-search`, `file-exists`, `edit-patch`, and `run-script` are **removed** and replaced with:
+
+- **`execute.message`** — status text (and optional **`execute.llmMessage`**).
+- **`execute.form`** — unchanged when the server sent a form.
+- **`execute.attachments`** — hints only (`readFiles`, `writtenFiles`, `ragQuery`, `shellCommand`, `listDirectoryPath`, `grepPattern`, …).
+
+The **server protocol** and simulation **`response.json`** still use a **single action key** under `execute`. Goldens for **`received.json`** match this Web DTO (see `simulations/SCHEMA.md`). With **`?includeContext=1`**, the session payload may include full internal `context` for debugging; prefer not to rely on raw `execute` keys in the UI.
+
 ## HTTP (storage mode)
 
 | Method | Path | Role |

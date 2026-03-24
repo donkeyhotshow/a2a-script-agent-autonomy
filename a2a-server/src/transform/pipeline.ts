@@ -365,7 +365,15 @@ export function validatePipeline(pipeline: unknown): string[] {
     'render-markdown',
     'switch',
     'apply-scratchpad-ops',
-    'truncate-section'
+    'truncate-section',
+    'pick-context',
+    'drop',
+    'truncate-history',
+    'include-if',
+    'pick-files',
+    'merge-files-to-context',
+    'summarize-files',
+    'for-each'
   ];
   
   for (let i = 0; i < p.steps.length; i++) {
@@ -416,6 +424,37 @@ export function validatePipeline(pipeline: unknown): string[] {
         if (!step.path) errors.push(`Step ${i} (truncate-section): Missing 'path'`);
         if (step.maxChars === undefined || typeof step.maxChars !== 'number') {
           errors.push(`Step ${i} (truncate-section): Missing or invalid 'maxChars'`);
+        }
+        break;
+      case 'pick-context':
+        if (!Array.isArray(step.include) || step.include.length === 0) {
+          errors.push(`Step ${i} (pick-context): Missing or empty 'include'`);
+        }
+        break;
+      case 'drop':
+        if (!step.path) errors.push(`Step ${i} (drop): Missing 'path'`);
+        break;
+      case 'truncate-history':
+        if (typeof step.keep !== 'number') errors.push(`Step ${i} (truncate-history): Missing 'keep'`);
+        break;
+      case 'include-if':
+        if (!step.path) errors.push(`Step ${i} (include-if): Missing 'path'`);
+        if (!step.condition) errors.push(`Step ${i} (include-if): Missing 'condition'`);
+        break;
+      case 'pick-files':
+        if (!step.paths) errors.push(`Step ${i} (pick-files): Missing 'paths'`);
+        break;
+      case 'merge-files-to-context':
+        // no required params
+        break;
+      case 'summarize-files':
+        // no required params
+        break;
+      case 'for-each':
+        if (!step.arrayPath) errors.push(`Step ${i} (for-each): Missing 'arrayPath'`);
+        if (!step.as) errors.push(`Step ${i} (for-each): Missing 'as'`);
+        if (!Array.isArray(step.steps) || step.steps.length === 0) {
+          errors.push(`Step ${i} (for-each): Missing or empty 'steps'`);
         }
         break;
     }

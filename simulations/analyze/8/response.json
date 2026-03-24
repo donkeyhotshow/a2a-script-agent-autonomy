@@ -55,7 +55,10 @@
         "role": "system",
         "message": "Файл .carrier/reports/architecture-report.md записано."
       }
-    ]
+    ],
+    "workbench": {
+      "sections": {}
+    }
   },
   "execute": {
     "form": {

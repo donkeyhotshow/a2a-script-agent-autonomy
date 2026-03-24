@@ -9,6 +9,11 @@ const INTERNAL_CLIENT_ACTION_KEYS = new Set([
     'write-file',
     'script',
     'execute-command',
+    'list-directory',
+    'grep-search',
+    'file-exists',
+    'edit-patch',
+    'run-script',
 ]);
 
 /**
@@ -41,6 +46,37 @@ export function buildWebExecute(execute) {
     const shellCommand =
         hadCmd && typeof cmdPayload.command === 'string' ? cmdPayload.command.trim() : '';
 
+    const listPayload = raw['list-directory'];
+    const hadListDir = Boolean(listPayload && typeof listPayload === 'object');
+    const listDirPath =
+        hadListDir && typeof listPayload.path === 'string' ? listPayload.path.trim() : '';
+
+    const grepPayload = raw['grep-search'];
+    const hadGrep = Boolean(grepPayload && typeof grepPayload === 'object');
+    const grepPattern =
+        hadGrep && typeof grepPayload.pattern === 'string' ? grepPayload.pattern.trim() : '';
+    const grepPath =
+        hadGrep && typeof grepPayload.path === 'string' ? grepPayload.path.trim() : '';
+    const grepGlob =
+        hadGrep && typeof grepPayload.glob === 'string' ? grepPayload.glob.trim() : '';
+
+    const fePayload = raw['file-exists'];
+    const hadFileExists = Boolean(fePayload && typeof fePayload === 'object');
+    const fileExistsPath =
+        hadFileExists && typeof fePayload.path === 'string' ? fePayload.path.trim() : '';
+
+    const patchPayload = raw['edit-patch'];
+    const hadEditPatch = Boolean(patchPayload && typeof patchPayload === 'object');
+    const editPatchPath =
+        hadEditPatch && typeof patchPayload.path === 'string' ? patchPayload.path.trim() : '';
+
+    const runScriptPayload = raw['run-script'];
+    const hadRunScript = Boolean(runScriptPayload && typeof runScriptPayload === 'object');
+    const runScriptId =
+        hadRunScript && typeof runScriptPayload.scriptId === 'string'
+            ? runScriptPayload.scriptId.trim()
+            : '';
+
     for (const k of INTERNAL_CLIENT_ACTION_KEYS) {
         delete ex[k];
     }
@@ -53,6 +89,14 @@ export function buildWebExecute(execute) {
     if (hadScript) attachments.pendingClientAction = 'script';
     if (hadCmd) attachments.pendingClientAction = 'execute-command';
     if (shellCommand) attachments.shellCommand = shellCommand;
+    if (listDirPath) attachments.listDirectoryPath = listDirPath;
+    if (grepPattern) attachments.grepPattern = grepPattern;
+    if (grepPath) attachments.grepPath = grepPath;
+    if (grepGlob) attachments.grepGlob = grepGlob;
+    if (fileExistsPath) attachments.fileExistsPath = fileExistsPath;
+    if (editPatchPath) attachments.editPatchPath = editPatchPath;
+    if (runScriptId) attachments.runScriptId = runScriptId;
+    if (hadRunScript) attachments.pendingClientAction = 'run-script';
 
     const priorAttach =
         raw.attachments && typeof raw.attachments === 'object' && !Array.isArray(raw.attachments)
@@ -77,8 +121,12 @@ export function buildWebExecute(execute) {
         if (hadRag) parts.push('Searching the codebase');
         if (readFiles.length) parts.push('Reading files');
         if (hadWrite) parts.push('Updating files');
-        if (hadScript) parts.push('Running script');
+        if (hadScript || hadRunScript) parts.push('Running script');
         if (hadCmd) parts.push('Running command');
+        if (hadListDir) parts.push('Listing directory');
+        if (hadGrep) parts.push('Searching in files');
+        if (hadFileExists) parts.push('Checking path');
+        if (hadEditPatch) parts.push('Applying patch');
         ex.message = parts.length ? `${parts.join(' · ')}…` : 'Working…';
     }
 

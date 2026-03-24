@@ -27,7 +27,9 @@ Simulations describe the **sync request-response contract** (client.json → rec
 
 ## File layout (per step)
 
-Each step folder can contain up to **8** files, covering both **Web ↔ Client API** и **Client API ↔ Server ↔ LLM**:
+Each step folder has up to **8 canonical** files (the sync pipeline below). You may add **`interrupt.md`** as **supplementary documentation** only — it is not part of that pipeline and is **not** required by `sim-lint` ([`sim-lint.ts`](../a2a-server/scripts/sim-lint.ts) only reads `*.json` in step dirs).
+
+Canonical files (Web ↔ Client API и Client API ↔ Server ↔ LLM):
 
 | File                            | Direction            | Description                                                                                                               |
 |---------------------------------|----------------------|---------------------------------------------------------------------------------------------------------------------------|
@@ -47,11 +49,22 @@ Each step folder can contain up to **8** files, covering both **Web ↔ Client A
 ### `received.json` vs `response.json` (`execute`)
 
 - **`response.json`** — Server → Client API: canonical **single action key** under `execute` (`rag-search`, `read-file`, `form`, …). Used for chaining, SDK merge, and RAG/script automation.
-- **`received.json`** — Client API → Web: **sanitized** `execute` for the UI. Client-only actions are removed; the Web layer exposes `message`, optional `llmMessage`, optional `attachments` (`readFiles`, `writtenFiles`, `ragQuery`, `shellCommand`, `pendingClientAction`), and keeps `form` when present. Implementation: `a2a-client/vite-plugin-a2a/routes/utils/web-execute-dto.js` (`buildWebExecute`), SDK `packages/sdk/src/server/lib/web-execute-dto.ts`. Debug: `GET /sessions/:id?includeContext=1` returns unsanitized session data.
+- **`received.json`** — Client API → Web: **sanitized** `execute` for the UI. Client-only actions are removed (including `list-directory`, `grep-search`, `file-exists`, `edit-patch`, `run-script`); the Web layer exposes `message`, optional `llmMessage`, optional `attachments` (`readFiles`, `writtenFiles`, `ragQuery`, `shellCommand`, `listDirectoryPath`, grep fields, `fileExistsPath`, `editPatchPath`, `runScriptId`, `pendingClientAction`), and keeps `form` when present. Implementation: `a2a-client/vite-plugin-a2a/routes/utils/web-execute-dto.js` (`buildWebExecute`), SDK `packages/sdk/src/server/lib/web-execute-dto.ts`. Debug: `GET /sessions/:id?includeContext=1` returns unsanitized session data.
 
 Not every step has all 8 files: steps without LLM обычно имеют `client.json`, `request.json`, `server-transforms-request.json`,
 `server-transforms-response.json`, `response.json`, `received.json`; steps with LLM add the `.md` files; transform docs
 описывают серверную логику даже когда LLM не используется.
+
+### Supplementary: server interrupt loop (optional)
+
+| File | Purpose |
+|------|--------|
+| `interrupt.md` | **Documentation only.** Describes how [`SERVER-INTERRUPT-LOOP.md`](../a2a-server/docs/SERVER-INTERRUPT-LOOP.md) could apply at this step: sample LLM JSON with `interrupt`, compress output, transform snippet. **Not** part of the client sync pipeline; `sim-lint` does not require it. |
+| **`N-sub-M/`** (folder) | **Sister folder next to step `N/`** (`M` = 1,2,3,…). Holds optional `trace.json` (+ `README.md`) for one variant of `context.workbench.slots.interruptTrace`. Pattern: `^\d+-sub-\d+$`. Not a full protocol step (no required `client.json` / `request.json`). `sim-lint` only checks JSON syntax inside. |
+
+Examples: [`auto-ai-v2/6/interrupt.md`](auto-ai-v2/6/interrupt.md); substeps of step 6: [`6-sub-1/`](auto-ai-v2/6-sub-1/) … [`6-sub-4/`](auto-ai-v2/6-sub-4/).
+
+You may copy a `trace.json` into golden **`response.json`** as **`context.workbench.slots.interruptTrace`** when you want the server → Client API fixture to show that chain; align `llm_output.chars` with the corresponding `response.md` when it matters.
 
 ## Примеры Web ↔ Client API
 
@@ -217,6 +230,41 @@ default: `.carrier/reports/` (e.g. `architecture-report.md`).
 
 - **AI-Actions**: AI явно указывает `completed` или следующий шаг
 - **Actions**: Конец алгоритма = конец задачи. Клиент определяет завершение по отсутствию следующего шага.
+
+## Transform operations (server-transforms-request.json)
+
+All operations run in pipeline order on `$out` (copy of input). The goal is to send only the data relevant to the current `action/step` to the LLM.
+
+| op | Purpose | Key params |
+|----|---------|------------|
+| `copy` | Copy full input to `$out` | `from`, `to` |
+| `set` | Set literal or JSONPath value | `path`, `value` / `valueFrom` |
+| `append-to-array` | Append entry to array | `to`, `value` |
+| `truncate-section` | Cap string length in field or object | `path`, `maxChars` |
+| `apply-scratchpad-ops` | Merge LLM `scratchpad_ops` into `context.scratchpad` | `from` |
+| `pick-context` | **Keep only listed fields** under `context`, drop the rest. Use `"history:N"` to keep last N entries. | `include: string[]` |
+| `drop` | Delete a JSONPath from `$out` | `path` |
+| `truncate-history` | Keep only last N history entries | `keep: number` |
+| `include-if` | Drop `path` when `condition` is falsy | `path`, `condition` |
+| `pick-files` | Keep only specific paths in `context.files`. Use `"$result"` to auto-pick from result action key. | `paths: string[] \| "$result"` |
+| `merge-files-to-context` | Fold `result["read-file"]` / `result["write-file"]` → `context.files[path]`. Merges into existing files. | `from?: string[]` |
+| `summarize-files` | Truncate `context.files` values to first N lines. `only` prefix filter. | `maxLines?`, `only?: string[]` |
+| `for-each` | Run sub-pipeline per element of an array. Injects element as `as` variable. | `arrayPath`, `as`, `steps` |
+| `render-markdown` | Render prompt template → `request.md` | `templateRef`, `data`, `outputFile` |
+| `parse-json-from-md` | Extract JSON from markdown file | `fromFile`, `to` |
+| `switch` | Conditional branch by discriminator value | `discriminator`, `cases` |
+
+### Context optimization patterns by step type
+
+| Step type | `pick-context` include | Extra ops |
+|-----------|----------------------|----------|
+| RAG search result | `execution`, `task`, `history:3` | `set ragResults from result` |
+| Read file result | `execution`, `task`, `history:3`, `files` | `pick-files: $result` |
+| Execute item (coder-smart) | `execution`, `task`, `history:2`, `workbench`, `scratchpad` | `truncate-section workbench.sections` |
+| Analyze / summarize | `execution`, `task`, `history:5`, `workbench` | `truncate-section workbench.sections` |
+| Dialog / form | `execution`, `task`, `history:5` | — |
+
+**Rule:** always start with `copy` then `pick-context`. Only add back what the LLM actually needs for this step.
 
 ## JSON
 

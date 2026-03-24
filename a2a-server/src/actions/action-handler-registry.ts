@@ -29,6 +29,22 @@ export type ActionHandler = (
     context: ActionHandlerContext
 ) => Promise<unknown>;
 
+const DEFAULT_HANDLERS: Record<ActionType, ActionHandler> = {
+    'read-file': async (input, _context) => handlers.executeReadFile(input as handlers.ReadFileActionInput),
+    'write-file': async (input, _context) => handlers.executeWriteFile(input as handlers.WriteFileActionInput),
+    'file-exists': async (input, _context) => {
+        const params = input as { path?: string; filePath?: string };
+        return handlers.executeFileExists({
+            path: params.path || params.filePath || '',
+        } as handlers.FileExistsActionInput);
+    },
+    'list-directory': async (input, _context) => handlers.executeListDirectory(input as { dirPath: string; recursive?: boolean }),
+    'execute-command': async (input, _context) => handlers.executeCommand(input as handlers.ExecuteCommandInput),
+    'grep-search': async (input, _context) => handlers.executeGrepSearch(input as handlers.GrepSearchInput),
+    'edit-patch': async (input, _context) => handlers.executeEditPatch(input as handlers.EditPatchInput),
+    'run-script': async (input, _context) => handlers.executeRunScript(input as handlers.RunScriptInput),
+};
+
 /**
  * Registry mapping action types to their handlers
  */
@@ -110,46 +126,9 @@ class ActionHandlerRegistry {
     private registerDefaultHandlers(): void {
         if (this.initialized) return;
 
-        // File Operations handlers
-        this.register('read-file', async (input) => {
-            return handlers.executeReadFile(input as handlers.ReadFileActionInput);
-        });
-
-        this.register('write-file', async (input) => {
-            return handlers.executeWriteFile(input as handlers.WriteFileActionInput);
-        });
-
-        this.register('file-exists', async (input) => {
-            // Support both 'path' and 'filePath' for backward compatibility
-            const params = input as { path?: string; filePath?: string };
-            return handlers.executeFileExists({
-                path: params.path || params.filePath || '',
-            } as handlers.FileExistsActionInput);
-        });
-
-        this.register('list-directory', async (input) => {
-            return handlers.executeListDirectory(input as { dirPath: string; recursive?: boolean });
-        });
-
-        // Command Execution handler
-        this.register('execute-command', async (input) => {
-            return handlers.executeCommand(input as handlers.ExecuteCommandInput);
-        });
-
-        // Grep Search handler
-        this.register('grep-search', async (input) => {
-            return handlers.executeGrepSearch(input as handlers.GrepSearchInput);
-        });
-
-        // Edit Patch handler
-        this.register('edit-patch', async (input) => {
-            return handlers.executeEditPatch(input as handlers.EditPatchInput);
-        });
-
-        // Run Script handler
-        this.register('run-script', async (input) => {
-            return handlers.executeRunScript(input as handlers.RunScriptInput);
-        });
+        for (const [type, handler] of Object.entries(DEFAULT_HANDLERS)) {
+            this.register(type as ActionType, handler);
+        }
 
         this.initialized = true;
         logger.info('[ActionHandlerRegistry] Default handlers registered');
@@ -161,8 +140,3 @@ export const actionHandlerRegistry = new ActionHandlerRegistry();
 
 // Export class for direct usage
 export { ActionHandlerRegistry };
-
-// Factory function for testing
-export function getActionHandlerRegistry(): ActionHandlerRegistry {
-    return actionHandlerRegistry;
-}

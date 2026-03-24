@@ -5,11 +5,15 @@
       "action": "auto-ai-v2",
       "step": "inspect_structure"
     },
-    "scratchpad": {
-      "locate_started": true,
-      "pending_rag": true
+    "workbench": {
+      "sections": {
+        "scratchpad": {
+          "locate_started": true,
+          "pending_rag": true
+        },
+        "files": {}
+      }
     },
-    "files": {},
     "history": [
       {
         "role": "user",

@@ -1,5 +1,4 @@
 import { ActionDefinition, ExecutionState, SubAction, StepHistory } from './types.js';
-import { logger } from '../utils/logger.js';
 
 export interface StepResult {
     stepId: string;
@@ -32,6 +31,7 @@ export class ActionExecutor {
     }
 
     getCurrentStep(action: ActionDefinition, state: ExecutionState): SubAction | null {
+        if (state.currentStepIndex >= action.subActions.length) return null;
         return action.subActions[state.currentStepIndex] ?? null;
     }
 
@@ -56,7 +56,8 @@ export class ActionExecutor {
         if (!state) return false;
         const nextIndex = state.currentStepIndex + 1;
         const hasMore = nextIndex < action.subActions.length;
-        if (hasMore) state.currentStepIndex = nextIndex;
+        // Move past end when finishing the last step so getCurrentStep() is null and completion runs.
+        state.currentStepIndex = hasMore ? nextIndex : action.subActions.length;
         return hasMore;
     }
 

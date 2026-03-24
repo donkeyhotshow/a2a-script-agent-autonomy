@@ -11,6 +11,7 @@
 | `context.scratchpad` | Boolean flags updated via **`scratchpad_ops`** in `response.md` → `apply-scratchpad-ops` in `server-transforms-response.json`. Includes **`remove`** (step 4 drops `pending_rag`). |
 | RAG pagination | `execute.rag-search` uses `page` / `pageSize`; `history` carries `RAG: … (page 1, pageSize 10, total 1, hasMore false)`. |
 | Tool summaries | One `system` line per tool (RAG, list-directory, read-file, write-file). |
+| Server interrupt loop | Step **6** — [`6/interrupt.md`](6/interrupt.md); substeps **`6-sub-1`** … **`6-sub-4`** (`request.json` / `request.md` / `response.json` / `response.md` + server-transforms; `interruptTrace` in `response.json`). |
 
 ## Scenario
 
@@ -23,7 +24,7 @@ User task: **Add GET `/health` returning `{ ok: true }` and wire it in `src/app.
 3. **LLM** — First model turn: `rag-search` + `scratchpad_ops` (`add` flags).
 4. **LLM** — After RAG folded into `history` (no `result` in `request.json`): `list-directory` + `remove`/`add` scratchpad ops.
 5. **LLM** — After listing folded: `read-file` `src/app.js`.
-6. **LLM** — With file in `context.files`: `write-file` `src/routes/health.js`.
+6. **LLM** — With file in `context.files`: `write-file` `src/routes/health.js`. **`6/interrupt.md`** + **`6-sub-1`…`6-sub-4/`** document interrupt traces (numbered substeps next to step 6).
 7. **LLM** — After write folded: `completed: true`.
 
 ## Regenerate `request.md` (steps 3–7)

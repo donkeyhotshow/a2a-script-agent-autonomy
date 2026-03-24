@@ -43,6 +43,10 @@ Each dialog step can contain up to 8 files, covering the complete Web ↔ Client
 
 Not every step has all 8 files: steps without LLM typically have `client.json`, `request.json`, `server-transforms-request.json`, `server-transforms-response.json`, `response.json`, `received.json`; steps with LLM add the `.md` files; transform docs describe server logic even when LLM is not used.
 
+### Supplementary: `interrupt.md` (optional)
+
+Per-step **documentation** for the [server interrupt loop](../a2a-server/docs/SERVER-INTERRUPT-LOOP.md) (extra LLM turns before returning to the client). Does **not** affect Web `received.json` or the eight-file pipeline. Canonical description: [`simulations/SCHEMA.md`](../SCHEMA.md#supplementary-server-interrupt-loop-optional). Example: [`auto-ai-v2/6/interrupt.md`](../auto-ai-v2/6/interrupt.md). **Substeps:** sister folders **`N-sub-M`** (`M` = 1,2,…) next to step `N`, e.g. [`auto-ai-v2/6-sub-1/`](../auto-ai-v2/6-sub-1/).
+
 ## Server Transform Pipeline Operations
 
 The `server-transforms-*.json` files define pipeline operations for processing data:

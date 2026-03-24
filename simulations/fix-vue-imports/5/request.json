@@ -25,6 +25,8 @@
     ]
   },
   "result": {
-    "choice": "coder"
+    "form": {
+      "choice": "coder"
+    }
   }
 }

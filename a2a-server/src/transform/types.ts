@@ -9,6 +9,34 @@
 import type { JSONValue } from 'jsonify';
 
 /**
+ * Interrupt directive — emitted by response transform to trigger a server-side
+ * additional LLM call before returning to the client.
+ */
+export interface InterruptDirective {
+  /** Type of interrupt — determines server behavior */
+  reason: 'compress_history' | 'auto_read_file' | 'auto_rag_page' | 'thinking' | 'clarify' | string;
+  /** Max additional LLM turns allowed (default: 5) */
+  maxTurns?: number;
+  /** Override transform schema for the interrupt turn */
+  schema?: string;
+  /** Extra context fields to merge before the interrupt turn */
+  context?: Record<string, unknown>;
+  /** Auxiliary data (e.g. file path for auto_read_file, RAG params for auto_rag_page) */
+  data?: Record<string, unknown>;
+}
+
+/**
+ * One row in `context.workbench.slots.interruptTrace` — server-only LLM / transform chain for UI/debug.
+ * Order in the array is chronological.
+ */
+export type ServerInterruptTraceEvent =
+  | { kind: 'llm_output'; phase: 'primary' | 'follow_up'; chars: number }
+  | { kind: 'response_transform'; interruptReason?: string }
+  | { kind: 'interrupt_handler'; reason: string; continueLoop: boolean; note?: string }
+  | { kind: 'request_rebuild' }
+  | { kind: 'sidecar_llm'; purpose: 'compress_history' | 'thinking'; ok: boolean; meta?: string };
+
+/**
  * Pipeline document type
  */
 export interface TransformPipeline {
@@ -27,7 +55,15 @@ export type TransformStep =
   | RenderMarkdownOperation 
   | SwitchOperation
   | ApplyScratchpadOpsOperation
-  | TruncateSectionOperation;
+  | TruncateSectionOperation
+  | PickContextOperation
+  | DropOperation
+  | TruncateHistoryOperation
+  | IncludeIfOperation
+  | PickFilesOperation
+  | MergeFilesToContextOperation
+  | SummarizeFilesOperation
+  | ForEachOperation;
 
 /** Single LLM-emitted scratchpad command (ISSUE 6) */
 export interface ScratchpadOpCommand {
@@ -58,6 +94,94 @@ export interface TruncateSectionOperation {
   maxChars: number;
   /** Appended when content is cut (default: "\\n...[truncated]"). */
   suffix?: string;
+}
+
+/**
+ * Merge result action-key payload into context.files.
+ * result["read-file"] → context.files[path] = content
+ * result["write-file"] → context.files[path] = content (if present)
+ * Clears the processed result key after merging.
+ */
+export interface MergeFilesToContextOperation {
+  op: 'merge-files-to-context';
+  /** Which result keys to process. Default: ["read-file", "write-file"] */
+  from?: string[];
+}
+
+/**
+ * Replace full file content in context.files with a truncated head.
+ * Useful for edit_code / run_tests steps where files are reference-only.
+ */
+export interface SummarizeFilesOperation {
+  op: 'summarize-files';
+  /** Max lines to keep per file. Default: 40 */
+  maxLines?: number;
+  /** Only summarize files matching these path prefixes. Default: all */
+  only?: string[];
+}
+
+/**
+ * Run a sub-pipeline for each element of an array.
+ * Useful for batch processing items in workbench.batch.items.
+ */
+export interface ForEachOperation {
+  op: 'for-each';
+  /** JSONPath to the array to iterate */
+  arrayPath: string;
+  /** Variable name injected as $item into sub-steps */
+  as: string;
+  /** Sub-pipeline steps executed per element */
+  steps: TransformStep[];
+}
+
+/**
+ * Pick only specified fields from context, dropping everything else.
+ * Supports "field:N" shorthand for history (e.g. "history:3" = last 3 entries).
+ */
+export interface PickContextOperation {
+  op: 'pick-context';
+  /** Fields to keep under `context`. Use "history:N" to keep last N entries. */
+  include: string[];
+}
+
+/**
+ * Drop a field from $out before sending to LLM.
+ */
+export interface DropOperation {
+  op: 'drop';
+  /** JSONPath in $out to delete (e.g. "$.context.files"). */
+  path: string;
+}
+
+/**
+ * Keep only the last N entries of context.history.
+ */
+export interface TruncateHistoryOperation {
+  op: 'truncate-history';
+  /** Number of most-recent history entries to keep. */
+  keep: number;
+}
+
+/**
+ * Include a field only when a condition is met.
+ * If condition is false, the field at `path` is dropped from $out.
+ */
+export interface IncludeIfOperation {
+  op: 'include-if';
+  /** JSONPath to the field to conditionally keep. */
+  path: string;
+  /** JSONPath whose value is evaluated as truthy/falsy. */
+  condition: string;
+}
+
+/**
+ * Keep only specific file paths from context.files.
+ * All other paths are dropped to reduce LLM token usage.
+ */
+export interface PickFilesOperation {
+  op: 'pick-files';
+  /** Exact paths to keep. Supports "$result" to auto-pick from result action key. */
+  paths: string[] | '$result';
 }
 
 /**

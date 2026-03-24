@@ -5,8 +5,12 @@
       "action": "auto-ai-v2",
       "step": "locate_code"
     },
-    "scratchpad": {},
-    "files": {},
+    "workbench": {
+      "sections": {
+        "scratchpad": {},
+        "files": {}
+      }
+    },
     "history": [
       {
         "role": "user",

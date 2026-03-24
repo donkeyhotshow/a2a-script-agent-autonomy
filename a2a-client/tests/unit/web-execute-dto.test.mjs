@@ -58,4 +58,34 @@ describe('buildWebExecute', () => {
         expect(out.form).toEqual(form);
         expect(out.message).toBeUndefined();
     });
+
+    it('maps list-directory and grep-search', () => {
+        const a = buildWebExecute({ 'list-directory': { path: 'src/' } });
+        expect(a['list-directory']).toBeUndefined();
+        expect(a.attachments.listDirectoryPath).toBe('src/');
+        expect(a.message).toBe('Listing directory…');
+
+        const b = buildWebExecute({
+            'grep-search': { pattern: 'foo', path: 'app', glob: '*.ts' },
+        });
+        expect(b.attachments).toMatchObject({
+            grepPattern: 'foo',
+            grepPath: 'app',
+            grepGlob: '*.ts',
+        });
+        expect(b.message).toBe('Searching in files…');
+    });
+
+    it('maps file-exists, edit-patch, run-script', () => {
+        expect(
+            buildWebExecute({ 'file-exists': { path: 'x.txt' } }).attachments.fileExistsPath
+        ).toBe('x.txt');
+        expect(
+            buildWebExecute({ 'edit-patch': { path: 'f.ts', operations: [] } }).attachments
+                .editPatchPath
+        ).toBe('f.ts');
+        const r = buildWebExecute({ 'run-script': { scriptId: 'lint' } });
+        expect(r.attachments.runScriptId).toBe('lint');
+        expect(r.attachments.pendingClientAction).toBe('run-script');
+    });
 });

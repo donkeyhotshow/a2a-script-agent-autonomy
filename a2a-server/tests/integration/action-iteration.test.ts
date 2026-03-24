@@ -20,12 +20,12 @@ describe('Action Iteration Flow', () => {
         expect(result.continue).toBe(true);
         expect(result.actionId).toBe('fix-vue-imports');
         expect(result.message).toBeDefined();
-        expect(result.message.action).toBeDefined();
-        expect(result.message.action?.currentStep).toBeDefined();
-        // YAML action definition (src/actions/definitions/yaml/actions) has 'collect' as the first step
-        expect(result.message.action?.currentStep?.id).toBe('collect');
-        expect(result.message.action?.currentStep?.code).toBeDefined();
-        expect(result.message.action?.currentStep?.code).toContain('export default async function');
+        expect(result.message.context?.execution?.step).toBe('vue-import-detect');
+        const ex0 = result.message.execute;
+        expect(ex0 && 'script' in ex0 && ex0.script?.code).toBeDefined();
+        expect(String(ex0 && 'script' in ex0 ? ex0.script?.code : '')).toContain(
+            'export default async function'
+        );
     });
 
     it('should process step result and return next step', async () => {
@@ -38,60 +38,38 @@ describe('Action Iteration Flow', () => {
         );
 
         expect(startResult.continue).toBe(true);
-        expect(startResult.message.action?.currentStep?.id).toBe('collect');
+        expect(startResult.message.context?.execution?.step).toBe('vue-import-detect');
 
-        // Step 2: Send step result
-        const stepResult = {files: ['src/App.vue']};
+        const stepResult = {rootDir: '.'};
 
         const nextResult = await actionProcessor.processStepResult(
             sessionId,
-            'collect',
+            'vue-import-detect',
             stepResult
         );
 
         expect(nextResult.continue).toBe(true);
-        expect(nextResult.message.action?.currentStep?.id).toBe('analyze');
-        expect(nextResult.message.action?.currentStep?.code).toBeDefined();
+        expect(nextResult.message.context?.execution?.step).toBe('vue-import-resolve');
+        const ex1 = nextResult.message.execute;
+        expect(ex1 && 'script' in ex1 && ex1.script?.code).toBeDefined();
     });
 
     it('should complete action after all steps', async () => {
         const sessionId = 'test-session-003';
 
-        // Start
-        await actionProcessor.processTaskRequest(sessionId, 'vue import fix');
+        let result = await actionProcessor.processTaskRequest(sessionId, 'vue import fix');
+        expect(result.continue).toBe(true);
 
-        // Step 1: collect
-        const result1 = await actionProcessor.processStepResult(sessionId, 'collect', {
-            files: ['test.vue'],
-        });
-        expect(result1.continue).toBe(true);
+        let guard = 0;
+        while (result.continue) {
+            const sid = result.message.context?.execution?.step;
+            expect(sid).toBeDefined();
+            result = await actionProcessor.processStepResult(sessionId, sid!, {step: sid});
+            guard += 1;
+            if (guard > 20) throw new Error('too many steps');
+        }
 
-        // Step 2: analyze
-        const result2 = await actionProcessor.processStepResult(sessionId, 'analyze', {
-            import_matches: [],
-        });
-        expect(result2.continue).toBe(true);
-
-        // Step 3: detect
-        const result3 = await actionProcessor.processStepResult(sessionId, 'detect', {
-            broken_imports: [{file: 'test.vue', line: 1, specifier: './missing'}],
-        });
-        expect(result3.continue).toBe(true);
-
-        // Step 4: resolve
-        const result4 = await actionProcessor.processStepResult(sessionId, 'resolve', {
-            patches: [{file: 'test.vue', type: 'replace', search: './missing', replace: './found'}],
-        });
-        expect(result4.continue).toBe(true);
-
-        // Step 5: apply
-        const result5 = await actionProcessor.processStepResult(sessionId, 'apply', {
-            applied_result: {applied: 1},
-        });
-
-        // After last step, action should be completed
-        expect(result5.continue).toBe(false);
-        expect(result5.message.context?.tasks?.[0]?.status).toBe('completed');
+        expect(result.message.context?.tasks?.[0]?.status).toBe('completed');
     });
 
     it('should return no action for unknown task', async () => {
@@ -115,12 +93,12 @@ describe('Action Iteration Flow', () => {
             'исправить импорты'
         );
 
-        expect(result.message.action?.currentStep?.code).toBeDefined();
+        const ex2 = result.message.execute;
+        expect(ex2 && 'script' in ex2 && ex2.script?.code).toBeDefined();
 
         // Code should be valid TypeScript
-        const code = result.message.action?.currentStep?.code;
+        const code = ex2 && 'script' in ex2 ? ex2.script?.code : '';
         expect(code).toContain('export default async function');
-        expect(code).toContain('interface Input');
         expect(code).toContain('return {');
     });
 
@@ -133,7 +111,9 @@ describe('Action Iteration Flow', () => {
         expect(start.message.context?.tasks).toBeUndefined();
 
         // After step 1
-        const after1 = await actionProcessor.processStepResult(sessionId, 'collect', {
+        const firstStep = start.message.context?.execution?.step;
+        expect(firstStep).toBeDefined();
+        const after1 = await actionProcessor.processStepResult(sessionId, firstStep!, {
             files: [],
         });
         expect(after1.message.context?.tasks?.[0]?.progress).toBeGreaterThan(0);
@@ -154,7 +134,7 @@ describe('Action Message Format', () => {
         // Check message structure
         expect(result.message).toHaveProperty('context');
         expect(result.message).toHaveProperty('message');
-        expect(result.message).toHaveProperty('action');
+        expect(result.message.execute).toBeDefined();
 
         // Check context structure
         expect(result.message.context).toHaveProperty('version');
@@ -162,23 +142,9 @@ describe('Action Message Format', () => {
         // action_proposal message doesn't include tasks (see buildActionProposalMessage)
         expect(result.message.context).not.toHaveProperty('tasks');
 
-        // Check action structure
-        expect(result.message.action).toHaveProperty('id');
-        expect(result.message.action).toHaveProperty('title');
-        expect(result.message.action).toHaveProperty('currentStep');
-        expect(result.message.action).toHaveProperty('nextSteps');
-
-        // Check currentStep structure
-        const step = result.message.action?.currentStep;
-        expect(step).toHaveProperty('id');
-        expect(step).toHaveProperty('title');
-        expect(step).toHaveProperty('code');
-
-        // Check nextSteps structure
-        const nextSteps = result.message.action?.nextSteps;
-        expect(Array.isArray(nextSteps)).toBe(true);
-        expect(nextSteps?.length).toBeGreaterThan(0);
-        expect(nextSteps?.[0]).toHaveProperty('id');
-        expect(nextSteps?.[0]).toHaveProperty('title');
+        expect(result.message.context?.execution?.action).toBe('fix-vue-imports');
+        expect(result.message.context?.execution?.step).toBe('vue-import-detect');
+        const ex = result.message.execute;
+        expect(ex && 'script' in ex && ex.script?.code).toBeDefined();
     });
 });

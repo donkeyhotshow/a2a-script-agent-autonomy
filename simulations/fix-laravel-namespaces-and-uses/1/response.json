@@ -4,6 +4,11 @@
     "execution": {
       "action": "task",
       "step": "router"
+    },
+    "workbench": {
+      "sections": {
+        "currentTask": "виправити namespace та use у Laravel PHP файлах"
+      }
     }
   },
   "execute": {

@@ -7,6 +7,8 @@
     }
   },
   "result": {
-    "message": "hello world"
+    "dialog": {
+      "message": "hello world"
+    }
   }
 }

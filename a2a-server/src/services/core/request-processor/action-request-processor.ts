@@ -10,13 +10,9 @@
 import {logger} from '../../../utils/logger.js';
 import {actionProcessor} from '../../../actions/action-processor.js';
 import {actionRegistry} from '../../../actions/action-registry.js';
+import type {ActionDefinition} from '../../../actions/types.js';
 import {dialogRequestProcessor} from './dialog-request-processor.js';
-import type {
-    RequestContext,
-    ProcessResult,
-    ProcessOutcome,
-    ExecuteCommand
-} from '../request-processor.interfaces.js';
+import type {RequestContext, ProcessResult, ProcessOutcome} from '../request-processor.interfaces.js';
 import {BaseRequestProcessor, type RequestType} from './base-processor.js';
 
 /**
@@ -171,30 +167,32 @@ export class ActionRequestProcessor extends BaseRequestProcessor {
 
         if (result.continue) {
             const currentStep = result.currentStep;
+            const fromMessage = result.message.execute;
+            const fallbackScript =
+                currentStep?.code
+                    ? {
+                          script: {
+                              input: {},
+                              output: 'step_result',
+                              code: currentStep.code,
+                          },
+                      }
+                    : undefined;
             return {
                 outcome: 'completed',
                 context: result.message.context,
                 activated_neuron_ids: result.actionId ? [result.actionId] : undefined,
-                action: result.message.action,
-                execute: currentStep?.code ? {
-                    script: {
-                        input: {},
-                        output: 'step_result',
-                        code: currentStep.code
-                    }
-                } : undefined,
-            };
-        } else {
-            return {
-                outcome: 'completed',
-                context: result.message.context,
-                activated_neuron_ids: result.actionId ? [result.actionId] : undefined,
-                action: result.message.action,
-                execute: {
-                    message: result.message.message || 'Action completed'
-                },
+                execute: fromMessage ?? fallbackScript,
             };
         }
+        return {
+            outcome: 'completed',
+            context: result.message.context,
+            activated_neuron_ids: result.actionId ? [result.actionId] : undefined,
+            execute: result.message.execute ?? {
+                message: result.message.message || 'Action completed',
+            },
+        };
     }
 
     /**
@@ -219,18 +217,22 @@ export class ActionRequestProcessor extends BaseRequestProcessor {
         const actionResult = await actionProcessor.approveAction(sessionId, selectedAction?.actionId || '');
 
         const currentStep = actionResult.currentStep;
+        const fromMessage = actionResult.message.execute;
+        const fallbackScript =
+            currentStep?.code
+                ? {
+                      script: {
+                          input: {},
+                          output: 'step_result',
+                          code: currentStep.code,
+                      },
+                  }
+                : undefined;
         return {
             outcome: 'completed',
             context: actionResult.message.context,
             activated_neuron_ids: actionResult.actionId ? [actionResult.actionId] : undefined,
-            action: actionResult.message.action,
-            execute: currentStep?.code ? {
-                script: {
-                    input: {},
-                    output: 'step_result',
-                    code: currentStep.code
-                }
-            } : undefined,
+            execute: fromMessage ?? fallbackScript,
         };
     }
 

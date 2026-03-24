@@ -6,6 +6,7 @@
  */
 
 import type { Session, Project } from '../../models/session.model.js';
+import { buildWebExecute } from '../../lib/web-execute-dto.js';
 
 /**
  * Updates session with data from server response
@@ -47,7 +48,7 @@ export async function updateSessionWithServerResponse(
         if (hadExistingContext) {
             console.warn('[SESSION TRANSFORM] Context existed before execute update, keys:', Object.keys(updatedSession.context));
         }
-        updatedSession.context.execute = serverResponse.execute;
+        updatedSession.context.execute = buildWebExecute(serverResponse.execute) ?? undefined;
         
         // Check for form choices and extract them
         if (serverResponse.execute.form) {
@@ -136,7 +137,7 @@ export async function updateSessionWithStatusResponse(
     // Update execute information from status response
     if (statusResponse?.execute) {
         updatedSession.context = updatedSession.context || {};
-        updatedSession.context.execute = statusResponse.execute;
+        updatedSession.context.execute = buildWebExecute(statusResponse.execute) ?? undefined;
     }
     
     // Update messages from status response

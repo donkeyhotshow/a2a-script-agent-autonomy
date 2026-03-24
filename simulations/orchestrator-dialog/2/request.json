@@ -1,6 +1,7 @@
 {
   "context": {
     "task": "orchestrate ADR review",
+    "history": [],
     "execution": {
       "action": "task",
       "step": "router"

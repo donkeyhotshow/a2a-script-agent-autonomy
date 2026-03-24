@@ -19,6 +19,10 @@ const SIMULATIONS_DIR = join(__dirname, '..', '..', 'simulations');
 const REQUIRED_FILES = ['request.json', 'response.json', 'client.json', 'received.json'];
 const OPTIONAL_FILES = ['server-transforms-request.json', 'server-transforms-response.json'];
 
+/** Step-level Markdown docs ignored by this linter (no checks). See `simulations/SCHEMA.md` § supplementary interrupt. */
+const SUPPLEMENTARY_STEP_MARKDOWN = ['interrupt.md'] as const;
+void SUPPLEMENTARY_STEP_MARKDOWN;
+
 // Допустимые типы execute
 const VALID_EXECUTE_TYPES = [
     'form',
@@ -377,14 +381,15 @@ function lintSimulation(simPath: string, simName: string, fix: boolean): Simulat
     let foundSteps = false;
     if (existsSync(simPath)) {
         const entries = readdirSync(simPath, {withFileTypes: true});
-        
+        const substepDirRe = /^\d+-sub-\d+$/;
+
         for (const entry of entries) {
             // Check step directories (numeric like 1, 2, 3)
             if (entry.isDirectory() && /^\d+$/.test(entry.name)) {
                 foundSteps = true;
                 const stepPath = join(simPath, entry.name);
                 const stepNum = parseInt(entry.name);
-                
+
                 try {
                     const stepFiles = readdirSync(stepPath);
                     for (const stepFile of stepFiles) {
@@ -393,6 +398,20 @@ function lintSimulation(simPath: string, simName: string, fix: boolean): Simulat
                             const fileResult = lintFile(filePath, stepFile, simPath, stepNum, fix);
                             result.files.push(fileResult);
                         }
+                    }
+                } catch {
+                    // Skip if cannot read
+                }
+            } else if (entry.isDirectory() && substepDirRe.test(entry.name)) {
+                foundSteps = true;
+                const subPath = join(simPath, entry.name);
+                const parentStep = parseInt(entry.name.split('-')[0], 10);
+                try {
+                    for (const subFile of readdirSync(subPath)) {
+                        if (!subFile.endsWith('.json')) continue;
+                        const filePath = join(subPath, subFile);
+                        const fileResult = lintFile(filePath, subFile, simPath, parentStep, fix);
+                        result.files.push(fileResult);
                     }
                 } catch {
                     // Skip if cannot read
@@ -421,8 +440,11 @@ function lintSimulation(simPath: string, simName: string, fix: boolean): Simulat
         }
     } else {
         // Numbered steps: any folder with request.json must have the full step bundle
+        const substepDirReNum = /^\d+-sub-\d+$/;
         for (const entry of readdirSync(simPath, {withFileTypes: true})) {
-            if (!entry.isDirectory() || !/^\d+$/.test(entry.name)) continue;
+            if (!entry.isDirectory()) continue;
+            if (substepDirReNum.test(entry.name)) continue;
+            if (!/^\d+$/.test(entry.name)) continue;
             const stepPath = join(simPath, entry.name);
             if (!existsSync(join(stepPath, 'request.json'))) continue;
             for (const filename of REQUIRED_FILES) {
@@ -464,13 +486,14 @@ function getAllSimulations(): {path: string; name: string}[] {
                 try {
                     const subEntries = readdirSync(subDir, {withFileTypes: true});
 
+                    const substepDirRe = /^\d+-sub-\d+$/;
                     for (const subEntry of subEntries) {
-                        if (subEntry.isDirectory()) {
-                            simulations.push({
-                                path: join(subDir, subEntry.name),
-                                name: `${entry.name}/${subEntry.name}`
-                            });
-                        }
+                        if (!subEntry.isDirectory()) continue;
+                        if (substepDirRe.test(subEntry.name)) continue;
+                        simulations.push({
+                            path: join(subDir, subEntry.name),
+                            name: `${entry.name}/${subEntry.name}`
+                        });
                     }
 
                     const mainSimPath = join(SIMULATIONS_DIR, entry.name);

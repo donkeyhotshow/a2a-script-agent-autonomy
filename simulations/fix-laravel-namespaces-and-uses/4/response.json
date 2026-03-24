@@ -4,6 +4,11 @@
     "execution": {
       "action": "fix-laravel-namespaces-and-uses",
       "step": "laravel-use-apply"
+    },
+    "workbench": {
+      "sections": {
+        "currentTask": "виправити namespace та use у Laravel PHP файлах"
+      }
     }
   },
   "execute": {

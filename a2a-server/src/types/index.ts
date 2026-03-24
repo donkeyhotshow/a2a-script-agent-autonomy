@@ -89,53 +89,6 @@ export interface ServerMessage {
     message?: string;
     /** Execute commands for client (new protocol format - action-key shape) */
     execute?: ExecuteCommand;
-    /**
-     * Legacy: Action data for iterative execution
-     * @deprecated Use `execute.form` for first response instead
-     * @see docs/new-request-flow/PROTOCOL.md
-     */
-    action?: {
-        id?: string;
-        title?: string;
-        matchScore?: number;
-        currentStep?: {
-            id: string;
-            title: string;
-            code?: string;
-        } | null;
-        nextSteps?: Array<{
-            id: string;
-            title: string;
-        }>;
-    };
-    /**
-     * Legacy: Executing action for action_executing response (top-level)
-     * @deprecated Use `execute` with action-type keys instead (e.g., `execute: { script: {...} }`)
-     * @see docs/new-request-flow/PROTOCOL.md#action-key-shape-обязательно
-     */
-    executingAction?: {
-        actionId: string;
-        title: string;
-        description?: string;
-        priority?: number;
-        dsl?: Record<string, unknown>;
-        /** @deprecated Use `execute` with action-type keys */
-        dslScript?: string;
-    };
-    /**
-     * Legacy: Next steps for action_executing response
-     * @deprecated Use `execute.form.choices` to let user select next action
-     * @see docs/new-request-flow/PROTOCOL.md
-     */
-    nextSteps?: Array<{
-        actionId: string;
-        title: string;
-    }>;
-    /** Final result when action is completed */
-    finalResult?: {
-        action: string;
-        summary: Record<string, unknown>;
-    };
 }
 
 // ============================================

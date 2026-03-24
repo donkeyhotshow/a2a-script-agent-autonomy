@@ -37,6 +37,34 @@
      * @param {HTMLElement} contentEl - элемент контента
      * @param {Object} [store] - optional store (per-window); falls back to global.SessionStore
      */
+    /** Collapsible server-side LLM / interrupt chain (`context.workbench.slots.interruptTrace`). */
+    function buildInterruptTraceHtml(context) {
+        const slots = context?.workbench?.slots;
+        const events = slots?.interruptTrace;
+        if (!Array.isArray(events) || events.length === 0) return '';
+        const rows = events
+            .map((ev, i) => {
+                if (!ev || typeof ev !== 'object') return '';
+                const k = escapeHtml(String(ev.kind || '?'));
+                const parts = [k];
+                if (ev.phase) parts.push(escapeHtml(String(ev.phase)));
+                if (ev.chars != null) parts.push(`${escapeHtml(String(ev.chars))} chars`);
+                if (ev.interruptReason) parts.push('→ ' + escapeHtml(String(ev.interruptReason)));
+                if (ev.reason) parts.push(escapeHtml(String(ev.reason)));
+                if (ev.continueLoop != null) parts.push(ev.continueLoop ? 'reenter' : 'stop');
+                if (ev.purpose) parts.push(escapeHtml(String(ev.purpose)));
+                if (ev.ok != null) parts.push(ev.ok ? 'ok' : 'fail');
+                if (ev.meta) parts.push(escapeHtml(String(ev.meta)));
+                if (ev.note) parts.push(escapeHtml(String(ev.note)));
+                const line = parts.filter(Boolean).join(' · ');
+                return `<li class="task-flow-interrupt-trace-item"><span class="task-flow-interrupt-trace-idx">${i + 1}.</span> ${line}</li>`;
+            })
+            .filter(Boolean)
+            .join('');
+        if (!rows) return '';
+        return `<details class="task-flow-interrupt-trace"><summary class="task-flow-interrupt-trace-summary">Server LLM chain (${events.length} steps)</summary><ol class="task-flow-interrupt-trace-list">${rows}</ol></details>`;
+    }
+
     function renderMessageHistory(contentEl, store) {
         store = store || global.SessionStore;
         const state = store?.getState?.() || {};
@@ -113,6 +141,9 @@
             `;
         }
 
+        const interruptTraceHtml = buildInterruptTraceHtml(context);
+        executionStepHtml = executionStepHtml + interruptTraceHtml;
+
         // Build finalResult display
         let finalResultHtml = '';
         if (execution?.status === 'completed' || execute.finalResult) {
@@ -163,7 +194,18 @@
                 taskFlowRef,
                 store
             );
-        } else if (execute.script || execute['rag-search'] || execute['read-file'] || execute['write-file'] || execute['execute-command']) {
+        } else if (
+            execute.script ||
+            execute['rag-search'] ||
+            execute['read-file'] ||
+            execute['write-file'] ||
+            execute['execute-command'] ||
+            execute['list-directory'] ||
+            execute['grep-search'] ||
+            execute['file-exists'] ||
+            execute['edit-patch'] ||
+            execute['run-script']
+        ) {
             return renderClientAction(contentEl, Object.keys(execute)[0], execute, executionStepHtml, progressBarHtml, finalResultHtml, taskFlowRef);
         } else if (execute.debug) {
             return renderDebug(contentEl, data, executionStepHtml, progressBarHtml, finalResultHtml, taskFlowRef);
@@ -213,6 +255,52 @@
             parts.push(
                 `<div class="task-flow-attachments-cmd"><span class="task-flow-attachments-title">Command</span> <code>${escapeHtml(
                     attachments.shellCommand.trim()
+                )}</code></div>`
+            );
+        }
+        if (typeof attachments.listDirectoryPath === 'string' && attachments.listDirectoryPath.trim()) {
+            parts.push(
+                `<div class="task-flow-attachments-listdir"><span class="task-flow-attachments-title">Directory</span> <code>${escapeHtml(
+                    attachments.listDirectoryPath.trim()
+                )}</code></div>`
+            );
+        }
+        if (typeof attachments.grepPattern === 'string' && attachments.grepPattern.trim()) {
+            const gp = escapeHtml(attachments.grepPattern.trim());
+            const gpath =
+                typeof attachments.grepPath === 'string' && attachments.grepPath.trim()
+                    ? ` <span class="task-flow-attachments-meta">in <code>${escapeHtml(
+                          attachments.grepPath.trim()
+                      )}</code></span>`
+                    : '';
+            const gglob =
+                typeof attachments.grepGlob === 'string' && attachments.grepGlob.trim()
+                    ? ` <span class="task-flow-attachments-meta">glob <code>${escapeHtml(
+                          attachments.grepGlob.trim()
+                      )}</code></span>`
+                    : '';
+            parts.push(
+                `<div class="task-flow-attachments-grep"><span class="task-flow-attachments-title">Grep</span> <code>${gp}</code>${gpath}${gglob}</div>`
+            );
+        }
+        if (typeof attachments.fileExistsPath === 'string' && attachments.fileExistsPath.trim()) {
+            parts.push(
+                `<div class="task-flow-attachments-fileexists"><span class="task-flow-attachments-title">Check path</span> <code>${escapeHtml(
+                    attachments.fileExistsPath.trim()
+                )}</code></div>`
+            );
+        }
+        if (typeof attachments.editPatchPath === 'string' && attachments.editPatchPath.trim()) {
+            parts.push(
+                `<div class="task-flow-attachments-patch"><span class="task-flow-attachments-title">Patch target</span> <code>${escapeHtml(
+                    attachments.editPatchPath.trim()
+                )}</code></div>`
+            );
+        }
+        if (typeof attachments.runScriptId === 'string' && attachments.runScriptId.trim()) {
+            parts.push(
+                `<div class="task-flow-attachments-runscript"><span class="task-flow-attachments-title">Script</span> <code>${escapeHtml(
+                    attachments.runScriptId.trim()
                 )}</code></div>`
             );
         }
@@ -436,14 +524,24 @@
             'rag-search': 'RAG Search',
             'read-file': 'Read File',
             'write-file': 'Write File',
-            'execute-command': 'Execute Command'
+            'execute-command': 'Execute Command',
+            'list-directory': 'List Directory',
+            'grep-search': 'Grep Search',
+            'file-exists': 'File Exists',
+            'edit-patch': 'Edit Patch',
+            'run-script': 'Run Script'
         };
         const typeIcons = {
             'script': '⚡',
             'rag-search': '🔍',
             'read-file': '📄',
             'write-file': '✏️',
-            'execute-command': '▶'
+            'execute-command': '▶',
+            'list-directory': '📁',
+            'grep-search': '🔎',
+            'file-exists': '❓',
+            'edit-patch': '📋',
+            'run-script': '⚡'
         };
 
         const actionData = data[actionType];
@@ -500,6 +598,18 @@
         `;
     }
 
+    function setPanelContent(contentEl, kind, data, taskFlowRef) {
+        if (!contentEl) return;
+        if (kind === 'execute' && data?.execute) {
+            renderExecute(contentEl, data.execute, data, null, taskFlowRef);
+            return;
+        }
+        if (kind === 'error') {
+            const msg = escapeHtml(String(data?.error || 'Error'));
+            contentEl.innerHTML = `<div class="task-flow-error"><p>${msg}</p></div>`;
+        }
+    }
+
       // Export
       global.TaskFlowRender = {
           renderMessageHistory,
@@ -507,7 +617,8 @@
           renderForm,
           renderMessage,
           renderClientAction,
-          renderDebug
+          renderDebug,
+          setPanelContent
       };
 
 })(typeof window !== 'undefined' ? window : global);

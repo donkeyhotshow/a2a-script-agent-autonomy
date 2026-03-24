@@ -1,6 +1,9 @@
 {
   "context": {
     "task": "диалог",
+    "workbench": {
+      "sections": {}
+    },
     "execution": {
       "action": "dialog",
       "step": "request"

@@ -21,7 +21,6 @@ export interface ProcessResult {
     activated_neuron_ids?: string[];
     tasks?: Task[];
     taskAnalysis?: TaskAnalysis;
-    action?: ActionResult | null;
     execute?: ExecuteCommand;
     finalResult?: { action: string; summary: Record<string, unknown> };
     error?: string;
@@ -51,20 +50,6 @@ export interface TaskAnalysis {
     readyForAi: boolean;
 }
 
-export interface ActionStep {
-    id: string;
-    title: string;
-    code?: string;
-}
-
-export interface ActionResult {
-    id?: string;
-    title?: string;
-    matchScore?: number;
-    currentStep?: ActionStep;
-    nextSteps?: ActionStep[];
-}
-
 export interface ExecuteCommand {
     form?: {
         title?: string;
@@ -80,8 +65,6 @@ export interface ExecuteCommand {
 export interface ValidationResult {
     valid: boolean;
     errors: ValidationError[];
-    warnings: ValidationWarning[];
-    suggestions: ValidationSuggestion[];
 }
 
 export interface ValidationError {
@@ -90,19 +73,6 @@ export interface ValidationError {
     message: string;
     severity: 'error' | 'warning' | 'info';
     path?: string[];
-}
-
-export interface ValidationWarning {
-    field: string;
-    code: string;
-    message: string;
-    suggestion?: string;
-}
-
-export interface ValidationSuggestion {
-    field: string;
-    suggestion: string;
-    impact: 'low' | 'medium' | 'high';
 }
 
 // Legacy — kept for action-request-processor compatibility

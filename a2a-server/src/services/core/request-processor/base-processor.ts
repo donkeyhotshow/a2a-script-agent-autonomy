@@ -137,8 +137,6 @@ export abstract class BaseRequestProcessor {
         return {
             valid: errors.filter(e => e.severity === 'error').length === 0,
             errors,
-            warnings: [],
-            suggestions: []
         };
     }
 

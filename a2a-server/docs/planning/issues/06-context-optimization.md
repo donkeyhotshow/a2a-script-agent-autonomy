@@ -1,37 +1,61 @@
 # ISSUE 6 — Оптимізація context між запитами
 
-**Статус:** стратегія визначена, потребує реалізації в симуляціях
+**Статус:** ✅ реалізовано
 
-## Проблема
+## Реалізовано
 
-При довгих агентних циклах `context.history` і великі `result` (read-file, execute-command) переповнюють контекст → токени і вартість.
+### Операції в `a2a-server/src/transform/`
 
-## Обрана стратегія: scratchpad commands + working set
+| Операція | Файл | Призначення |
+|----------|------|-------------|
+| `apply-scratchpad-ops` | `operations.ts` | Merge LLM `scratchpad_ops` → `context.scratchpad` |
+| `pick-context` | `operations.ts` | Залишити тільки потрібні поля context |
+| `drop` | `operations.ts` | Видалити конкретний JSONPath з `$out` |
+| `truncate-history` | `operations.ts` | Залишити останні N записів history |
+| `include-if` | `operations.ts` | Умовне включення поля |
+| `pick-files` | `operations.ts` | Залишити тільки потрібні файли в `context.files` |
+| `merge-files-to-context` | `operations.ts` | `result["read-file"]` → `context.files[path]` |
+| `summarize-files` | `operations.ts` | Обрізати файли до N рядків |
+| `for-each` | `operations.ts` | Sub-pipeline для кожного елемента масиву |
+
+### Base transforms з `switch` по `execution.step`
+
+- `prompts/transforms/coder-request.json` — switch по step: `clarify/research-plan` (history:3, без files), `execute-item` (history:4, files 80 рядків), інші
+- `prompts/transforms/auto-ai-request.json` — switch по step: `plan/locate_code` (без files), `read_code` (files 120 рядків), `edit_code` (files 60 рядків), `write_report` (workbench), інші
+
+### Матриця context по шагах
+
+Детально: [`TRANSFORM-OPS.md`](../TRANSFORM-OPS.md#context-optimization-matrix-by-step)
+
+### Тести
+
+`tests/transform-runtime.test.ts` — 33 тести, всі операції покриті.
+
+## Стратегія (залишається актуальною)
 
 ### 6a. Context.scratchpad — command-driven checklist
 
-LLM не перезаписує scratchpad повністю — відправляє короткі команди в `context.scratchpad_ops`:
+LLM не перезаписує scratchpad повністю — відправляє короткі команди в `scratchpad_ops`:
 ```json
 { "op": "check", "item": "read_app_js" }
 { "op": "add", "item": "health route written" }
 { "op": "remove", "item": "pending: read routes" }
 ```
-Сервер застосовує команди до `context.scratchpad` через transform операцію `apply-scratchpad-ops`.
-Мінімум токенів на виході LLM — тільки команди, не перезапис.
+Сервер застосовує через `apply-scratchpad-ops`. Мінімум вихідних токенів.
 
 ### 6b. Context.files — working set
 
-Повний вміст прочитаних файлів зберігається в `context.files[path]`, не в history.
-В history тільки стислий `system` запис:
+Повний вміст файлів в `context.files[path]`, не в history. В history тільки стислий `system` запис:
 ```
 result.read-file → history: { role: "system", message: "Read src/app.js (142 lines)" }
 ```
-Transform вирішує які файли включити в prompt (не всі одразу).
+`merge-files-to-context` автоматично переносить `result["read-file"]` → `context.files`.
+`summarize-files` обрізає до N рядків перед відправкою в LLM.
 
-### 6c. History — стислі system записи для tool results
+### 6c. History — стислі system записи
 
-Кожен tool result (rag-search, list-directory, execute-command) → один `system` рядок в history.
-Повні дані не потрапляють в history — тільки в `context.files` або відкидаються після використання.
+Кожен tool result → один `system` рядок. Повні дані не в history.
+`pick-context` з `history:N` обмежує кількість записів по шагу.
 
 ## Що НЕ використовуємо
 
@@ -39,11 +63,7 @@ Transform вирішує які файли включити в prompt (не вс
 - LLM-компресія history — дорого (вихідні токени)
 - LLM-driven notes — збільшує вихідні токени
 
-## Де реалізувати
+## Залишилось
 
-1. `a2a-server/src/transform/operations.ts` — нова операція `apply-scratchpad-ops`
-2. `a2a-server/src/transform/types.ts` — новий тип `ApplyScratchpadOpsOperation`
-3. `a2a-client/vite-plugin-a2a/routes/stepRoutes.js` — оновити фільтрацію context (~рядок 230): передавати `history`, `files`, `scratchpad` разом з `task` і `execution`. **Уточнення:** history може проходити через `previousContext` (не фільтрується), але не через `result.context` (фільтрується). Перед фіксом перевірити де сервер кладе history у відповідь (`ProcessResult.context` vs `result.context`).
-4. Оновлення `server-transforms-*.json` в симуляціях
-
-**Залежить від:** ISSUE 9 (стратегія визначається в симуляції, потім реалізується тут). ISSUE 6 і ISSUE 8b обидва змінюють `stepRoutes.js` — виконувати послідовно: спочатку ISSUE 6 (фільтрація context), потім ISSUE 8b (автоцикл).
+- `a2a-client/vite-plugin-a2a/routes/stepRoutes.js` — перевірити що `history`, `files`, `scratchpad` передаються через `previousContext` (не фільтруються). Виконувати після ISSUE 8b (обидва змінюють `stepRoutes.js`).
+- Оновити response transforms симуляцій: додати `apply-scratchpad-ops` де є `scratchpad`.

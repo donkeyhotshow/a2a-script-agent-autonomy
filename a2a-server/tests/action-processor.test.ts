@@ -14,14 +14,12 @@ describe('ActionProcessor', () => {
             expect(typeof result.continue).toBe('boolean');
             expect(result.message).toBeDefined();
         });
-        it('returns action with currentStep when action matched', async () => {
+        it('returns execute.script and context.execution when action matched', async () => {
             const sessionId = `test-unit-2-${Date.now()}`;
             const result = await actionProcessor.processTaskRequest(sessionId, 'vue import fix');
-            expect(result.message?.action ?? null).toBeDefined();
-            if (result.message?.action?.currentStep) {
-                expect(result.message.action.currentStep.id).toBeDefined();
-                expect(typeof result.message.action.currentStep.code).toBe('string');
-            }
+            expect(result.message?.context?.execution?.step).toBeDefined();
+            const ex = result.message?.execute;
+            expect(ex && 'script' in ex && ex.script?.code).toBeDefined();
         });
     });
 
@@ -29,9 +27,9 @@ describe('ActionProcessor', () => {
         it('accepts stepId and stepResult and returns result', async () => {
             const sessionId = `test-unit-3-${Date.now()}`;
             const first = await actionProcessor.processTaskRequest(sessionId, 'fix vue imports');
-            const stepId = first.message?.action?.currentStep?.id;
+            const stepId = first.message?.context?.execution?.step;
             if (!stepId) {
-                expect(first.message?.action).toBeDefined();
+                expect(first.message?.context?.execution).toBeDefined();
                 return;
             }
             const result = await actionProcessor.processStepResult(sessionId, stepId, {

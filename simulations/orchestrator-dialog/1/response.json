@@ -1,6 +1,9 @@
 {
   "context": {
     "task": "orchestrate ADR review",
+    "workbench": {
+      "sections": {}
+    },
     "execution": {
       "action": "task",
       "step": "router"

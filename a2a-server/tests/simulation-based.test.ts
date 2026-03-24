@@ -347,15 +347,17 @@ describe('Simulation-based Server Tests', () => {
                     status: 'completed',
                     context: { version: '1.0' },
                     message: null,
-                    result: {
-                        proposedActions: [
-                            {
-                                id: 'fix-vue-imports',
-                                name: 'Fix Vue Imports',
-                                description: 'Fix Vue component imports'
-                            }
-                        ]
-                    }
+                    execute: {
+                        form: {
+                            choices: [
+                                {
+                                    id: 'fix-vue-imports',
+                                    label: 'Fix Vue Imports',
+                                    description: 'Fix Vue component imports',
+                                },
+                            ],
+                        },
+                    },
                 }
             };
             

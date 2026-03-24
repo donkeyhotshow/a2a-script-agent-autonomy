@@ -84,10 +84,11 @@
                     if (panel && TaskFlow._lastResponse) {
                         const content = panel.getContentEl();
                         if (content) {
-                            // Merge any finalResult from execute
+                            const st = store.getState?.();
                             const response = {
                                 ...TaskFlow._lastResponse,
-                                execute
+                                execute,
+                                ...(st?.context ? {context: st.context} : {})
                             };
                             TaskFlow._lastResponse = response;
                             Render.setPanelContent(content, 'execute', response, TaskFlow);

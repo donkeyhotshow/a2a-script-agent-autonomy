@@ -32,7 +32,10 @@
         "message": "Шукаю додаткові документи.",
         "action": "rag-search"
       }
-    ]
+    ],
+    "workbench": {
+      "sections": {}
+    }
   },
   "execute": {
     "rag-search": {

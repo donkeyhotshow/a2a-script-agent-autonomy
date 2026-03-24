@@ -5,6 +5,9 @@
       "action": "fix-vue-imports",
       "step": "vue-import-escalate",
       "status": "completed"
+    },
+    "workbench": {
+      "sections": {}
     }
   },
   "execute": {

@@ -53,6 +53,14 @@ describe('materialize-result-for-llm', () => {
         { file: 'tests/api.test.js', line: 2, text: 'y' }
       ]
     });
-    expect(s).toBe('Grep tests/*.test.js: tests/api.test.js (2 matches)');
+    expect(s).toBe('Grep tests/*.js: tests/api.test.js (2 matches)');
+  });
+
+  it('formats grep-search with explicit path', () => {
+    const s = formatToolResultForHistory('grep-search', {
+      path: 'src/',
+      matches: [{ file: 'src/auth.js', line: 1, text: 'x' }]
+    });
+    expect(s).toBe('Grep src/: src/auth.js (1 matches)');
   });
 });

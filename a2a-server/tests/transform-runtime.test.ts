@@ -278,6 +278,260 @@ describe('Transform Pipeline Runtime', () => {
         expect(result.output.context.scratchpad).toEqual({ read_app: true });
       }
     });
+
+    it('pick-context keeps only listed fields', async () => {
+      const pipeline = {
+        steps: [
+          { op: 'copy', from: '$', to: '$out' },
+          { op: 'pick-context', include: ['execution', 'task'] }
+        ]
+      };
+      const input = {
+        context: {
+          execution: { action: 'coder' },
+          task: 'do it',
+          files: { 'src/a.js': 'content' },
+          scratchpad: { done: true },
+          history: [{ role: 'user', message: 'hi' }]
+        }
+      };
+      const result = await runTransformPipeline(pipeline, input);
+      expect(result.success).toBe(true);
+      const ctx = result.output.context as Record<string, unknown>;
+      expect(ctx.execution).toBeDefined();
+      expect(ctx.task).toBe('do it');
+      expect(ctx.files).toBeUndefined();
+      expect(ctx.scratchpad).toBeUndefined();
+      expect(ctx.history).toBeUndefined();
+    });
+
+    it('pick-context history:N keeps last N entries', async () => {
+      const pipeline = {
+        steps: [
+          { op: 'copy', from: '$', to: '$out' },
+          { op: 'pick-context', include: ['history:2'] }
+        ]
+      };
+      const input = {
+        context: {
+          history: [
+            { role: 'user', message: '1' },
+            { role: 'user', message: '2' },
+            { role: 'user', message: '3' }
+          ]
+        }
+      };
+      const result = await runTransformPipeline(pipeline, input);
+      expect(result.success).toBe(true);
+      const ctx = result.output.context as Record<string, unknown>;
+      expect((ctx.history as unknown[]).length).toBe(2);
+      expect((ctx.history as Array<{ message: string }>)[0].message).toBe('2');
+    });
+
+    it('drop removes nested path from $out', async () => {
+      const pipeline = {
+        steps: [
+          { op: 'copy', from: '$', to: '$out' },
+          { op: 'drop', path: '$.context.files' }
+        ]
+      };
+      const input = {
+        context: { files: { 'a.js': 'x' }, task: 'ok' }
+      };
+      const result = await runTransformPipeline(pipeline, input);
+      expect(result.success).toBe(true);
+      const ctx = result.output.context as Record<string, unknown>;
+      expect(ctx.files).toBeUndefined();
+      expect(ctx.task).toBe('ok');
+    });
+
+    it('truncate-history keeps last N entries', async () => {
+      const pipeline = {
+        steps: [
+          { op: 'copy', from: '$', to: '$out' },
+          { op: 'truncate-history', keep: 2 }
+        ]
+      };
+      const input = {
+        context: {
+          history: [
+            { role: 'user', message: 'a' },
+            { role: 'user', message: 'b' },
+            { role: 'user', message: 'c' }
+          ]
+        }
+      };
+      const result = await runTransformPipeline(pipeline, input);
+      expect(result.success).toBe(true);
+      const h = (result.output.context as Record<string, unknown>).history as Array<{ message: string }>;
+      expect(h.length).toBe(2);
+      expect(h[0].message).toBe('b');
+      expect(h[1].message).toBe('c');
+    });
+
+    it('include-if drops path when condition is falsy', async () => {
+      const pipeline = {
+        steps: [
+          { op: 'copy', from: '$', to: '$out' },
+          { op: 'include-if', path: '$.context.workbench', condition: '$.context.hasWorkbench' }
+        ]
+      };
+      const input = {
+        context: { workbench: { sections: { a: 'text' } }, hasWorkbench: false }
+      };
+      const result = await runTransformPipeline(pipeline, input);
+      expect(result.success).toBe(true);
+      const ctx = result.output.context as Record<string, unknown>;
+      expect(ctx.workbench).toBeUndefined();
+    });
+
+    it('include-if keeps path when condition is truthy', async () => {
+      const pipeline = {
+        steps: [
+          { op: 'copy', from: '$', to: '$out' },
+          { op: 'include-if', path: '$.context.workbench', condition: '$.context.hasWorkbench' }
+        ]
+      };
+      const input = {
+        context: { workbench: { sections: { a: 'text' } }, hasWorkbench: true }
+      };
+      const result = await runTransformPipeline(pipeline, input);
+      expect(result.success).toBe(true);
+      const ctx = result.output.context as Record<string, unknown>;
+      expect(ctx.workbench).toBeDefined();
+    });
+
+    it('pick-files keeps only specified paths', async () => {
+      const pipeline = {
+        steps: [
+          { op: 'copy', from: '$', to: '$out' },
+          { op: 'pick-files', paths: ['src/auth.js'] }
+        ]
+      };
+      const input = {
+        context: {
+          files: {
+            'src/auth.js': 'content-a',
+            'src/app.js': 'content-b',
+            'src/utils.js': 'content-c'
+          }
+        }
+      };
+      const result = await runTransformPipeline(pipeline, input);
+      expect(result.success).toBe(true);
+      const files = (result.output.context as Record<string, unknown>).files as Record<string, unknown>;
+      expect(files['src/auth.js']).toBe('content-a');
+      expect(files['src/app.js']).toBeUndefined();
+      expect(files['src/utils.js']).toBeUndefined();
+    });
+
+    it('pick-files $result auto-picks from result action key', async () => {
+      const pipeline = {
+        steps: [
+          { op: 'copy', from: '$', to: '$out' },
+          { op: 'pick-files', paths: '$result' }
+        ]
+      };
+      const input = {
+        context: {
+          files: {
+            'src/auth.js': 'content-a',
+            'src/app.js': 'content-b'
+          }
+        },
+        result: {
+          'rag-search': {
+            files: ['src/auth.js'],
+            results: []
+          }
+        }
+      };
+      const result = await runTransformPipeline(pipeline, input);
+      expect(result.success).toBe(true);
+      const files = (result.output.context as Record<string, unknown>).files as Record<string, unknown>;
+      expect(files['src/auth.js']).toBe('content-a');
+      expect(files['src/app.js']).toBeUndefined();
+    });
+
+    it('merge-files-to-context folds read-file result into context.files', async () => {
+      const pipeline = {
+        steps: [
+          { op: 'copy', from: '$', to: '$out' },
+          { op: 'merge-files-to-context' }
+        ]
+      };
+      const input = {
+        context: { files: { 'src/app.js': 'old' } },
+        result: { 'read-file': { path: 'src/auth.js', content: 'new content' } }
+      };
+      const result = await runTransformPipeline(pipeline, input);
+      expect(result.success).toBe(true);
+      const files = (result.output.context as Record<string, unknown>).files as Record<string, unknown>;
+      expect(files['src/auth.js']).toBe('new content');
+      expect(files['src/app.js']).toBe('old');
+    });
+
+    it('summarize-files truncates to maxLines', async () => {
+      const lines = Array.from({ length: 100 }, (_, i) => `line ${i + 1}`);
+      const pipeline = {
+        steps: [
+          { op: 'copy', from: '$', to: '$out' },
+          { op: 'summarize-files', maxLines: 10 }
+        ]
+      };
+      const input = {
+        context: { files: { 'src/big.js': lines.join('\n') } }
+      };
+      const result = await runTransformPipeline(pipeline, input);
+      expect(result.success).toBe(true);
+      const files = (result.output.context as Record<string, unknown>).files as Record<string, unknown>;
+      const content = files['src/big.js'] as string;
+      expect(content.split('\n').length).toBe(11); // 10 lines + comment
+      expect(content).toContain('90 more lines');
+    });
+
+    it('summarize-files skips files not matching only prefix', async () => {
+      const pipeline = {
+        steps: [
+          { op: 'copy', from: '$', to: '$out' },
+          { op: 'summarize-files', maxLines: 2, only: ['src/'] }
+        ]
+      };
+      const lines5 = 'a\nb\nc\nd\ne';
+      const input = {
+        context: {
+          files: {
+            'src/auth.js': lines5,
+            'tests/auth.test.js': lines5
+          }
+        }
+      };
+      const result = await runTransformPipeline(pipeline, input);
+      expect(result.success).toBe(true);
+      const files = (result.output.context as Record<string, unknown>).files as Record<string, unknown>;
+      expect((files['src/auth.js'] as string).split('\n').length).toBe(3); // 2 + comment
+      expect(files['tests/auth.test.js']).toBe(lines5); // untouched
+    });
+
+    it('for-each runs sub-steps per item', async () => {
+      const pipeline = {
+        steps: [
+          { op: 'copy', from: '$', to: '$out' },
+          {
+            op: 'for-each',
+            arrayPath: '$.items',
+            as: '$item',
+            steps: [
+              { op: 'append-to-array', to: '$.processed', value: { done: '${$item}' } }
+            ]
+          }
+        ]
+      };
+      const input = { items: ['a', 'b', 'c'], processed: [] };
+      const result = await runTransformPipeline(pipeline, input);
+      expect(result.success).toBe(true);
+      expect((result.output.processed as unknown[]).length).toBe(3);
+    });
   });
 
   describe('Integration coder/3 (prompts/transforms)', () => {

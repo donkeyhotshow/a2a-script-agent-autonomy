@@ -44,10 +44,11 @@ Recommended sections:
 - `ADR-0026-server-llm-request-prep.md` - Fold `result` into `context.history` and attach `flowControlHint` before LLM `request.md`
 - `ADR-0027-documentation-canonical-sources.md` - Single source of truth per topic; link-first docs; stable anchors
 - `ADR-0028-client-api-deployment-modes.md` - Vite `/api/a2a` on 5173 vs standalone SDK Client API (e.g. 3001); same server contract
+- `ADR-0029-server-interrupt-loop.md` - Optional extra LLM turns after response transform (`interrupt` on `$out`); client sees final result only
 
 ## Adding a new ADR
 
-1. Use the next free number: **`ADR-0029-...md`** (keep zero-padding).
+1. Use the next free number: **`ADR-0030-...md`** (keep zero-padding).
 2. Set **Status** (`proposed` → `accepted`) and **Date**.
 3. Include **Context**, **Decision**, **Consequences** (and **Related** / **Notes** if useful).
 4. Add one line to the **Index** above with a short description.

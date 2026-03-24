@@ -45,7 +45,21 @@ const TOOL_FORMATTERS: Record<string, ToolFormatter> = {
     const matches = Array.isArray(o.matches) ? o.matches : [];
     const first = matches[0] as { file?: string } | undefined;
     const file = typeof first?.file === 'string' ? first.file : '';
-    const scope = typeof o.path === 'string' && o.path ? o.path : (typeof o.pattern === 'string' ? o.pattern : 'matches');
+    // Derive scope: explicit path/glob > infer glob from matched files > pattern
+    let scope: string;
+    if (typeof o.path === 'string' && o.path) {
+      scope = o.path;
+    } else if (typeof o.glob === 'string' && o.glob) {
+      scope = o.glob;
+    } else if (matches.length > 0) {
+      // Infer glob from common directory + extension of matched files
+      const files = matches.map((m) => (m as { file?: string }).file ?? '').filter(Boolean);
+      const dir = files[0].includes('/') ? files[0].split('/').slice(0, -1).join('/') : '';
+      const ext = files[0].includes('.') ? files[0].split('.').pop() : '';
+      scope = dir && ext ? `${dir}/*.${ext}` : (typeof o.pattern === 'string' ? o.pattern : 'matches');
+    } else {
+      scope = typeof o.pattern === 'string' ? o.pattern : 'matches';
+    }
     return `Grep ${scope}: ${file || 'results'} (${matches.length} matches)`;
   },
   'execute-command': (o) => {

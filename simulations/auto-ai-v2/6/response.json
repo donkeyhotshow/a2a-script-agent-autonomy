@@ -5,14 +5,18 @@
       "action": "auto-ai-v2",
       "step": "edit_code"
     },
-    "scratchpad": {
-      "locate_started": true,
-      "rag_ok": true,
-      "listed_src": true,
-      "read_app_js": true
-    },
-    "files": {
-      "src/app.js": "const express = require('express');\nconst app = express();\nmodule.exports = app;\n"
+    "workbench": {
+      "sections": {
+        "scratchpad": {
+          "locate_started": true,
+          "rag_ok": true,
+          "listed_src": true,
+          "read_app_js": true
+        },
+        "files": {
+          "src/app.js": "const express = require('express');\nconst app = express();\nmodule.exports = app;\n"
+        }
+      }
     },
     "history": [
       {

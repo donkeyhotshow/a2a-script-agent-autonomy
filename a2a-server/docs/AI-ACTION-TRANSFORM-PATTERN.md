@@ -40,17 +40,29 @@ All AI-action prompts MUST require the LLM to respond with:
 - `result` is merged into `context.history` (user + system lines), then cleared.
 - `flowControlHint` is set from `context.execution.action` + `step` for `${flowControlHint}` in templates.
 
-Canonical pipeline (no `append-to-array` for `result.message`):
+Base transforms (`prompts/transforms/coder-request.json`, `auto-ai-request.json`) now use `switch` on `execution.step` to apply the right context optimization profile automatically. Per-step `server-transforms-request.json` in simulations only need to override when the base profile is wrong.
+
+Canonical pipeline (minimal, no files needed):
 
 ```json
 {
   "type": "pipeline",
   "steps": [
     { "op": "copy", "from": "$", "to": "$out" },
+    { "op": "pick-context", "include": ["execution", "task", "history:5", "scratchpad"] },
     { "op": "render-markdown", "templateRef": "a2a-server/prompts/YOUR-PROMPT.md", "data": "$out", "outputFile": "request.md" }
   ]
 }
 ```
+
+With files (read_code / edit_code steps):
+
+```json
+{ "op": "pick-context", "include": ["execution", "task", "history:5", "scratchpad", "files"] },
+{ "op": "summarize-files", "maxLines": 80 }
+```
+
+Full operations reference: **[`TRANSFORM-OPS.md`](./TRANSFORM-OPS.md)**
 
 ## Response Transform
 
@@ -82,9 +94,13 @@ Canonical pipeline (no `append-to-array` for `result.message`):
 | Field | Managed By | Description |
 |-------|------------|-------------|
 | `context.execution.step` | Server (from LLM) | Current semantic step |
-| `context.history` | Server (transforms) | Array of `{role, step?, message}` |
+| `context.history` | Server (transforms) | Array of `{role, step?, message}` — short system lines for tool results |
+| `context.files` | Server (`merge-files-to-context`) | Working set of read file contents keyed by path |
 | `context.workbench` | Action-specific | Structured state: `sections`, optional `batch`, optional `slots` |
-| `context.ragResults` | Action-specific | RAG search results |
+| `context.scratchpad` | Server (`apply-scratchpad-ops`) | Checklist flags updated via LLM `scratchpad_ops` commands |
+| `context.ragResults` | Per-step transform (`set`) | RAG search results for current turn only — not persisted |
+
+**Rule:** large data (file contents, stdout) never goes into `history`. Only short `system` summary lines. Full content stays in `context.files`.
 
 ## Examples
 
@@ -106,5 +122,7 @@ Location: **`a2a-server/prompts/transforms/`** (per-action `*-request.json` / `*
 
 1. Create prompt in `a2a-server/prompts/<name>-request.md`
 2. Define step names in the prompt
-3. Add transforms under `a2a-server/prompts/transforms/` (copy patterns from an existing action or from `simulations/`)
-4. Point `templateRef` / pipeline `templateRef` at your prompt
+3. Add `<name>-request.json` under `a2a-server/prompts/transforms/` with `switch` on `execution.step` for context profiles
+4. Add `<name>-response.json` with `apply-scratchpad-ops` if the action uses `scratchpad`
+5. Point `SIMULATION_TO_SCHEMA` in `pipeline.ts` at the new schema name
+6. See **[`TRANSFORM-OPS.md`](./TRANSFORM-OPS.md)** for operation reference and optimization matrix

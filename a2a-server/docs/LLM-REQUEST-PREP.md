@@ -80,10 +80,35 @@ After flow hints, **`attachWorkbenchForLlmPrompt`** runs (see [`src/transform/wo
 
 ## 3. Request transform pipeline (after prep)
 
-Standard pipeline (e.g. [`prompts/transforms/server-transforms-request.json`](../prompts/transforms/server-transforms-request.json)):
+Standard pipeline now uses **context optimization operations** before rendering. Base transforms (`prompts/transforms/coder-request.json`, `auto-ai-request.json`) apply `switch` on `execution.step` to select the right `pick-context` profile automatically.
 
-1. **`copy`** `$` → `$out` (includes `context`, `flowControlHint`, empty `result`, etc.).
-2. **`render-markdown`** (and for coder, a second render for `system.md` + `request.md`).
+Full operations reference: **[`TRANSFORM-OPS.md`](./TRANSFORM-OPS.md)**
+
+### Optimization operations (request pipeline only)
+
+| op | When to use |
+|----|-------------|
+| `pick-context` | Always — first op after `copy`. Drops fields not needed for this step. |
+| `drop` | Targeted removal of a single path when `pick-context` is too broad. |
+| `truncate-history` | When history limit differs from `pick-context` shorthand. |
+| `include-if` | Optional fields (e.g. `workbench` only when non-empty). |
+| `pick-files` | After `pick-context` includes `files` — narrow to relevant paths only. |
+| `merge-files-to-context` | Before `pick-context` — fold `result["read-file"]` into `context.files`. |
+| `summarize-files` | After `pick-context` includes `files` — truncate to N lines per file. |
+| `for-each` | Batch processing of `workbench.batch.items`. |
+
+### Canonical per-step pattern
+
+```json
+{
+  "type": "pipeline",
+  "steps": [
+    { "op": "copy", "from": "$", "to": "$out" },
+    { "op": "pick-context", "include": ["execution", "task", "history:5", "scratchpad"] },
+    { "op": "render-markdown", "templateRef": "a2a-server/prompts/YOUR-PROMPT.md", "data": "$out", "outputFile": "request.md" }
+  ]
+}
+```
 
 The old **`append-to-array`** step that pushed `result.message` into history is **removed** from canonical transforms; materialization replaces it.
 
@@ -95,12 +120,13 @@ The old **`append-to-array`** step that pushed `result.message` into history is 
 |-----------|--------|
 | [`tests/unit/materialize-result-for-llm.test.ts`](../tests/unit/materialize-result-for-llm.test.ts) | User fold, dedupe, RAG/grep formatting |
 | [`tests/unit/flow-control-hints.test.ts`](../tests/unit/flow-control-hints.test.ts) | Resolution and `attachFlowControlHintToInvokePayload` |
-| [`tests/transform-runtime.test.ts`](../tests/transform-runtime.test.ts) | End-to-end transform pipelines |
+| [`tests/transform-runtime.test.ts`](../tests/transform-runtime.test.ts) | End-to-end transform pipelines, all 16 operations |
 
 ---
 
 ## 5. Related docs
 
-- [`ADR-0026-server-llm-request-prep.md`](../../docs/adr/ADR-0026-server-llm-request-prep.md) — architecture decision (this behavior).
+- **[`TRANSFORM-OPS.md`](./TRANSFORM-OPS.md)** — full operations reference with context optimization matrix.
+- [`ADR-0026-server-llm-request-prep.md`](../../docs/adr/ADR-0026-server-llm-request-prep.md) — architecture decision.
 - [`AI-ACTION-TRANSFORM-PATTERN.md`](./AI-ACTION-TRANSFORM-PATTERN.md) — LLM JSON shape, response transforms, simulations.
-- Planning mirror: [`planning/LLM-REQUEST-PREP.md`](./planning/LLM-REQUEST-PREP.md) — same topic for roadmap / simulations planning.
+- Planning mirror: [`planning/LLM-REQUEST-PREP.md`](./planning/LLM-REQUEST-PREP.md).

@@ -4,7 +4,10 @@
     "execution": {
       "action": "analyze"
     },
-    "history": []
+    "history": [],
+    "workbench": {
+      "sections": {}
+    }
   },
   "execute": {
     "form": {

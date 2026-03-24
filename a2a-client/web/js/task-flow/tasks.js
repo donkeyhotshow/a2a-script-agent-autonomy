@@ -325,7 +325,13 @@
                         if (panel) {
                             const content = panel.getContentEl();
                             if (content) {
-                                setPanelContent(content, 'execute', { execute, sessionId: TaskFlow._sessionId, projectId: TaskFlow._projectId }, TaskFlow);
+                                const st = store.getState?.();
+                                Render.setPanelContent(content, 'execute', {
+                                    execute,
+                                    context: st?.context,
+                                    sessionId: TaskFlow._sessionId,
+                                    projectId: TaskFlow._projectId
+                                }, TaskFlow);
                             }
                         }
                     }
@@ -336,7 +342,7 @@
 
         } catch (error) {
             console.error('[TaskFlow] Error:', error);
-            setPanelContent(contentEl, 'error', { error: error.message, task, projectId }, TaskFlow);
+            Render.setPanelContent(contentEl, 'error', { error: error.message, task, projectId }, TaskFlow);
         } finally {
             TaskFlow._doRunRunning = false;
         }

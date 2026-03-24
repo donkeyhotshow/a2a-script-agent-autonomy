@@ -43,8 +43,6 @@ export interface Action {
     description?: string;
     priority?: number;
     dsl?: Record<string, unknown>;
-    /** @deprecated Use `execute` with action-type keys */
-    dslScript?: string;
 }
 
 /**
@@ -57,14 +55,9 @@ export interface FallbackAction {
     reason?: string;
 }
 
-/**
- * Result block for action_proposal response
- * @deprecated Use canonical format with execute.form.choices
- */
+/** Result block for action_proposal response (unified JSON / tooling schemas) */
 export interface ActionProposalResult {
     context: ContextBlock;
-    /** @deprecated Use execute.form.choices in canonical format */
-    proposedActions?: Action[];
     fallbackActions?: FallbackAction[];
 }
 
@@ -81,8 +74,7 @@ export interface ActionProposalResponse extends BaseResponse {
 // ============================================
 
 /**
- * Executing action with current state
- * @deprecated Use `execute` with action-type keys
+ * Executing action with current state (unified JSON / tooling schemas)
  * @see docs/new-request-flow/PROTOCOL.md#action-key-shape-обязательно
  */
 export interface ExecutingAction {
@@ -91,8 +83,6 @@ export interface ExecutingAction {
     description?: string;
     priority?: number;
     dsl?: Record<string, unknown>;
-    /** @deprecated Use `execute` with action-type keys */
-    dslScript?: string;
 }
 
 /**
@@ -103,11 +93,7 @@ export interface NextStep {
     title: string;
 }
 
-/**
- * Result block for action_executing response
- * @deprecated Use `execute.form` for choices and `execute.script` for execution
- * @see docs/new-request-flow/PROTOCOL.md
- */
+/** Result block for action_executing response (unified JSON / tooling schemas) */
 export interface ActionExecutingResult {
     executingAction: Action;
     nextSteps: Action[];

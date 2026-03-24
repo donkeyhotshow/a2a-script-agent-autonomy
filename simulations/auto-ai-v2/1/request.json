@@ -7,6 +7,8 @@
     }
   },
   "result": {
-    "message": "Add GET /health returning JSON { ok: true }; wire the route in src/app.js."
+    "dialog": {
+      "message": "Add GET /health returning JSON { ok: true }; wire the route in src/app.js."
+    }
   }
 }

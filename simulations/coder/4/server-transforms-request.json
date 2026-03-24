@@ -7,9 +7,13 @@
       "to": "$out"
     },
     {
+      "op": "pick-context",
+      "include": ["execution", "task", "history:3"]
+    },
+    {
       "op": "set",
-      "path": "$.context.ragResults",
-      "value": "$.result.rag-search.results"
+      "path": "$.ragResults",
+      "valueFrom": "$.result.rag-search.results"
     },
     {
       "op": "render-markdown",

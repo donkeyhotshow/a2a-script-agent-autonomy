@@ -25,15 +25,9 @@ export interface ActionResponseSimulation {
         execution?: ExecutionState;
         [key: string]: unknown;
     };
-    /**
-     * Текущее выполняемое действие
-     * @deprecated Используйте `execute` с action-type ключами
-     */
+    /** Текущее выполняемое действие (внутренний формат симуляции action-service) */
     executingAction?: SubAction;
-    /**
-     * Следующие шаги
-     * @deprecated Используйте `execute.form.choices`
-     */
+    /** Следующие шаги (внутренний формат) */
     nextSteps?: SubAction[];
     /** Результат поиска (для action_proposal) */
     action?: ActionMatch;
@@ -107,8 +101,6 @@ export class ActionService {
      * @returns ответ с статусом action_executing
      */
     startExecution(sessionId: string, actionId: string): ActionResponseSimulation {
-        console.log(`[ActionService] Начало выполнения: sessionId=${sessionId}, actionId=${actionId}`);
-
         const action = this.registry.getAction(actionId);
         if (!action) {
             return createActionResponse({
@@ -132,9 +124,19 @@ export class ActionService {
             });
         }
 
-        console.log(`[ActionService] Начинаем выполнение: шаг ${currentStep.id} - ${currentStep.title}`);
+        const nextSteps = this.executor.getNextSteps(action, state);
 
-        return this.buildActionResponse(action, state, 'Экшен принят. Начинаем выполнение первого шага.');
+        return createActionResponse({
+            outcome: 'action_executing',
+            message: 'Экшен принят. Начинаем выполнение первого шага.',
+            ...(currentStep ? { executingAction: currentStep } : {}),
+            nextSteps,
+            actionDefinition: action,
+            executionState: state,
+            context: {
+                execution: state,
+            },
+        });
     }
 
     /**
@@ -147,8 +149,6 @@ export class ActionService {
         sessionId: string,
         input?: unknown
     ): Promise<ActionResponseSimulation> {
-        console.log(`[ActionService] Выполнение шага для sessionId=${sessionId}`);
-
         const state = this.executor.getExecutionState(sessionId);
         if (!state) {
             return createActionResponse({
@@ -205,7 +205,17 @@ export class ActionService {
             ? `Шаг выполнен. Переходим к следующему: ${currentStep.title}`
             : 'Шаг выполнен. Больше нет шагов.';
 
-        return this.buildActionResponse(action, updatedState, message);
+        return createActionResponse({
+            outcome: 'action_executing',
+            message,
+            ...(currentStep ? { executingAction: currentStep } : {}),
+            nextSteps,
+            actionDefinition: action,
+            executionState: updatedState,
+            context: {
+                execution: updatedState,
+            },
+        });
     }
 
     /**
@@ -244,33 +254,6 @@ export class ActionService {
         });
     }
 
-    /**
-     * Вспомогательный метод для формирования ответа
-     * @param action - определение действия
-     * @param state - состояние выполнения
-     * @param message - сообщение
-     * @returns сформированный ответ
-     */
-    buildActionResponse(
-        action: ActionDefinition,
-        state: ExecutionState,
-        message?: string
-    ): ActionResponseSimulation {
-        const currentStep = this.executor.getCurrentStep(action, state);
-        const nextSteps = this.executor.getNextSteps(action, state);
-
-        return createActionResponse({
-            outcome: 'action_executing',
-            message: message || 'Выполнение в процессе...',
-            ...(currentStep ? {executingAction: currentStep} : {}),
-            nextSteps,
-            actionDefinition: action,
-            executionState: state,
-            context: {
-                execution: state,
-            },
-        });
-    }
 }
 
 /**

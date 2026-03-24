@@ -8,6 +8,11 @@ const INTERNAL_CLIENT_ACTION_KEYS = new Set([
     'write-file',
     'script',
     'execute-command',
+    'list-directory',
+    'grep-search',
+    'file-exists',
+    'edit-patch',
+    'run-script',
 ]);
 
 function collectReadFileEntries(readFilePayload: unknown): Array<{ path: string }> {
@@ -61,6 +66,49 @@ export function buildWebExecute(execute: unknown): Record<string, unknown> | nul
             ? (cmdPayload as { command: string }).command.trim()
             : '';
 
+    const listPayload = raw['list-directory'];
+    const hadListDir = Boolean(listPayload && typeof listPayload === 'object');
+    const listDirPath =
+        hadListDir && typeof (listPayload as { path?: string }).path === 'string'
+            ? (listPayload as { path: string }).path.trim()
+            : '';
+
+    const grepPayload = raw['grep-search'];
+    const hadGrep = Boolean(grepPayload && typeof grepPayload === 'object');
+    const grepPattern =
+        hadGrep && typeof (grepPayload as { pattern?: string }).pattern === 'string'
+            ? (grepPayload as { pattern: string }).pattern.trim()
+            : '';
+    const grepPath =
+        hadGrep && typeof (grepPayload as { path?: string }).path === 'string'
+            ? (grepPayload as { path: string }).path.trim()
+            : '';
+    const grepGlob =
+        hadGrep && typeof (grepPayload as { glob?: string }).glob === 'string'
+            ? (grepPayload as { glob: string }).glob.trim()
+            : '';
+
+    const fePayload = raw['file-exists'];
+    const hadFileExists = Boolean(fePayload && typeof fePayload === 'object');
+    const fileExistsPath =
+        hadFileExists && typeof (fePayload as { path?: string }).path === 'string'
+            ? (fePayload as { path: string }).path.trim()
+            : '';
+
+    const patchPayload = raw['edit-patch'];
+    const hadEditPatch = Boolean(patchPayload && typeof patchPayload === 'object');
+    const editPatchPath =
+        hadEditPatch && typeof (patchPayload as { path?: string }).path === 'string'
+            ? (patchPayload as { path: string }).path.trim()
+            : '';
+
+    const runScriptPayload = raw['run-script'];
+    const hadRunScript = Boolean(runScriptPayload && typeof runScriptPayload === 'object');
+    const runScriptId =
+        hadRunScript && typeof (runScriptPayload as { scriptId?: string }).scriptId === 'string'
+            ? (runScriptPayload as { scriptId: string }).scriptId.trim()
+            : '';
+
     for (const k of INTERNAL_CLIENT_ACTION_KEYS) {
         delete ex[k];
     }
@@ -73,6 +121,14 @@ export function buildWebExecute(execute: unknown): Record<string, unknown> | nul
     if (hadScript) attachments.pendingClientAction = 'script';
     if (hadCmd) attachments.pendingClientAction = 'execute-command';
     if (shellCommand) attachments.shellCommand = shellCommand;
+    if (listDirPath) attachments.listDirectoryPath = listDirPath;
+    if (grepPattern) attachments.grepPattern = grepPattern;
+    if (grepPath) attachments.grepPath = grepPath;
+    if (grepGlob) attachments.grepGlob = grepGlob;
+    if (fileExistsPath) attachments.fileExistsPath = fileExistsPath;
+    if (editPatchPath) attachments.editPatchPath = editPatchPath;
+    if (runScriptId) attachments.runScriptId = runScriptId;
+    if (hadRunScript) attachments.pendingClientAction = 'run-script';
 
     const priorAttach =
         raw.attachments && typeof raw.attachments === 'object' && !Array.isArray(raw.attachments)
@@ -98,8 +154,12 @@ export function buildWebExecute(execute: unknown): Record<string, unknown> | nul
         if (hadRag) parts.push('Searching the codebase');
         if (readFiles.length) parts.push('Reading files');
         if (hadWrite) parts.push('Updating files');
-        if (hadScript) parts.push('Running script');
+        if (hadScript || hadRunScript) parts.push('Running script');
         if (hadCmd) parts.push('Running command');
+        if (hadListDir) parts.push('Listing directory');
+        if (hadGrep) parts.push('Searching in files');
+        if (hadFileExists) parts.push('Checking path');
+        if (hadEditPatch) parts.push('Applying patch');
         ex.message = parts.length ? `${parts.join(' · ')}…` : 'Working…';
     }
 

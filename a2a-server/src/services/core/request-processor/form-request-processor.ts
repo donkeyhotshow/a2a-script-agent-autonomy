@@ -238,11 +238,11 @@ export class FormRequestProcessor extends BaseRequestProcessor {
                     selection: { choiceId, formId, timestamp: new Date().toISOString() },
                     execute: {
                         message: 'Автоматичний режим вибрано. Очікуйте виконання...',
-                        finalResult: {
-                            action: 'auto_execute',
-                            summary: { mode: 'automatic', status: 'processing' }
-                        }
-                    }
+                    },
+                    finalResult: {
+                        action: 'auto_execute',
+                        summary: { mode: 'automatic', status: 'processing' },
+                    },
                 } as ProcessResult;
 
             case 'manual':
@@ -251,15 +251,14 @@ export class FormRequestProcessor extends BaseRequestProcessor {
                     message: 'Manual mode selected',
                     selection: { choiceId, formId, timestamp: new Date().toISOString() },
                     execute: {
-                        message: 'Ручний режим вибрано. Кроки будуть показані для підтвердження.',
                         form: {
-                            title: 'Підтвердьте дію',
+                            title: 'Ручний режим вибрано. Кроки будуть показані для підтвердження.',
                             choices: [
                                 { id: 'confirm', label: 'Підтвердити' },
-                                { id: 'cancel', label: 'Скасувати' }
-                            ]
-                        }
-                    }
+                                { id: 'cancel', label: 'Скасувати' },
+                            ],
+                        },
+                    },
                 } as ProcessResult;
 
             case 'ai':
@@ -268,15 +267,14 @@ export class FormRequestProcessor extends BaseRequestProcessor {
                     message: 'AI mode selected',
                     selection: { choiceId, formId, timestamp: new Date().toISOString() },
                     execute: {
-                        message: 'AI режим вибрано. Генерація дій через LLM...',
                         form: {
-                            title: 'AI генерація дій',
+                            title: 'AI режим вибрано. Генерація дій через LLM...',
                             choices: [
                                 { id: 'generate', label: 'Згенерувати дії' },
-                                { id: 'refine', label: 'Уточнити задачу' }
-                            ]
-                        }
-                    }
+                                { id: 'refine', label: 'Уточнити задачу' },
+                            ],
+                        },
+                    },
                 } as ProcessResult;
 
             case 'dialog':
@@ -323,10 +321,10 @@ export class FormRequestProcessor extends BaseRequestProcessor {
                     },
                     execute: {
                         message: 'Auto-AI генератор активовано. Аналіз задачі через LLM...',
-                        finalResult: {
-                            action: 'auto-ai',
-                            summary: { mode: 'auto-ai', status: 'processing' }
-                        }
+                    },
+                    finalResult: {
+                        action: 'auto-ai',
+                        summary: { mode: 'auto-ai', status: 'processing' },
                     },
                     aiActions: {
                         action: 'auto-ai',
@@ -351,10 +349,10 @@ export class FormRequestProcessor extends BaseRequestProcessor {
                     },
                     execute: {
                         message: 'Auto-AI v2 (оптимізований контекст). Аналіз задачі через LLM...',
-                        finalResult: {
-                            action: 'auto-ai-v2',
-                            summary: { mode: 'auto-ai-v2', status: 'processing' }
-                        }
+                    },
+                    finalResult: {
+                        action: 'auto-ai-v2',
+                        summary: { mode: 'auto-ai-v2', status: 'processing' },
                     },
                     aiActions: {
                         action: 'auto-ai-v2',
@@ -373,11 +371,11 @@ export class FormRequestProcessor extends BaseRequestProcessor {
                     selection: { choiceId, formId, timestamp: new Date().toISOString() },
                     execute: {
                         message: 'Декомпозиція задачі. Розбиття на підзадачі...',
-                        finalResult: {
-                            action: 'task-decomposition',
-                            summary: { mode: 'decomposition', status: 'processing' }
-                        }
-                    }
+                    },
+                    finalResult: {
+                        action: 'task-decomposition',
+                        summary: { mode: 'decomposition', status: 'processing' },
+                    },
                 } as ProcessResult;
 
             default:

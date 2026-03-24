@@ -50,7 +50,10 @@
         "message": "Зберігаю звіт у .carrier/reports/architecture-report.md.",
         "action": "write-file"
       }
-    ]
+    ],
+    "workbench": {
+      "sections": {}
+    }
   },
   "execute": {
     "write-file": {

@@ -22,20 +22,17 @@
         "specifier": "@/legacy/missing",
         "reason": "not_found"
       }
-    ]
+    ],
+    "workbench": {
+      "sections": {}
+    }
   },
   "execute": {
     "form": {
       "title": "Скрипт виправив 1 імпорт; 2 залишилися без однозначного рішення. Перейти в Coder (агент з файлами)?",
       "choices": [
-        {
-          "id": "coder",
-          "label": "Так, відкрити Coder"
-        },
-        {
-          "id": "fix-vue-imports-done-partial",
-          "label": "Ні, залишити як є (частковий результат)"
-        }
+        { "id": "proceed", "label": "Продовжити", "description": "Продовжити выполнение исправлений" },
+        { "id": "done", "label": "Завершити", "description": "Завершить выполнение" }
       ]
     }
   }
