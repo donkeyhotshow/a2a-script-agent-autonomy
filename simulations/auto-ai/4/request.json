@@ -5,15 +5,18 @@
       "action": "auto-ai",
       "step": "inspect_structure"
     },
+    "scratchpad": {
+      "locate_code_started": true
+    },
+    "files": {},
     "history": [
       {
         "role": "user",
         "message": "Refactor the API: add a logging middleware, add a health check endpoint, update the API tests, run lint and tests, and write a short report to .carrier/reports/."
       },
       {
-        "role": "assistant",
-        "message": "I will search the codebase for the API app and routes.",
-        "action": "rag-search"
+        "role": "system",
+        "message": "RAG: src/app.js, src/routes/index.js (page 1, pageSize 20, total 2, hasMore false)"
       }
     ]
   },
@@ -32,10 +35,11 @@
           "snippet": "const router = require('express').Router();"
         }
       ],
-      "files": [
-        "src/app.js",
-        "src/routes/index.js"
-      ]
+      "files": ["src/app.js", "src/routes/index.js"],
+      "page": 1,
+      "pageSize": 20,
+      "total": 2,
+      "hasMore": false
     }
   }
 }

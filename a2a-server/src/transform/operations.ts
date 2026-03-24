@@ -8,6 +8,7 @@
  * - parse-json-from-md: Parse JSON from markdown file
  * - render-markdown: Render a markdown template
  * - switch: Conditional transform based on discriminator value
+ * - truncate-section: Cap string length (or each string field on a plain object)
  * 
  * Pipeline usage:
  * - server-transforms-request.json: Transforms request.json to build request.md (LLM input)
@@ -34,6 +35,7 @@ import type {
   RenderMarkdownOperation,
   SwitchOperation,
   ApplyScratchpadOpsOperation,
+  TruncateSectionOperation,
   ScratchpadOpCommand
 } from './types.js';
 
@@ -99,6 +101,9 @@ export async function applyOperation(
       break;
     case 'apply-scratchpad-ops':
       await applyScratchpadOps(operation, context);
+      break;
+    case 'truncate-section':
+      await applyTruncateSection(operation, context);
       break;
     default:
       throw new Error(`Unknown operation: ${(operation as TransformStep).op}`);
@@ -358,6 +363,42 @@ function sortKeys(value: unknown): unknown {
     return sorted;
   }
   return value;
+}
+
+function truncateToMaxChars(text: string, maxChars: number, suffix: string): string {
+  if (text.length <= maxChars) return text;
+  const suf = suffix;
+  if (suf.length >= maxChars) return text.slice(0, maxChars);
+  return text.slice(0, maxChars - suf.length) + suf;
+}
+
+async function applyTruncateSection(
+  operation: TruncateSectionOperation,
+  context: TransformContext
+): Promise<void> {
+  const { path: pathStr, maxChars, suffix = '\n...[truncated]' } = operation;
+  if (typeof maxChars !== 'number' || !Number.isFinite(maxChars) || maxChars < 1) {
+    return;
+  }
+
+  let value = query(context.input, pathStr);
+  if (value === undefined) {
+    value = query(context.$out, pathStr);
+  }
+
+  if (typeof value === 'string') {
+    jsonPathSet(context.$out, pathStr, truncateToMaxChars(value, maxChars, suffix));
+    return;
+  }
+
+  if (value && typeof value === 'object' && !Array.isArray(value)) {
+    const src = value as Record<string, unknown>;
+    const next: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(src)) {
+      next[k] = typeof v === 'string' ? truncateToMaxChars(v, maxChars, suffix) : v;
+    }
+    jsonPathSet(context.$out, pathStr, next);
+  }
 }
 
 function isScratchpadCommand(x: unknown): x is ScratchpadOpCommand {

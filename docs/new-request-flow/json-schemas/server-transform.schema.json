@@ -45,8 +45,8 @@
                 "description": "JSONPath in $out to write to."
               },
               "value": {
-                "description": "Literal value to set.",
-                "type": ["object", "null"]
+                "description": "Literal or template string (e.g. $.llm.step) to set.",
+                "type": ["object", "null", "string", "number", "boolean", "array"]
               },
               "valueFrom": {
                 "type": "string",
@@ -132,6 +132,28 @@
               }
             },
             "required": ["op", "from"],
+            "additionalProperties": false
+          },
+          {
+            "title": "truncate-section",
+            "type": "object",
+            "properties": {
+              "op": { "const": "truncate-section" },
+              "path": {
+                "type": "string",
+                "description": "JSONPath to a string or a plain object whose string values are truncated (e.g. context.docVirtual)."
+              },
+              "maxChars": {
+                "type": "number",
+                "minimum": 1,
+                "description": "Maximum length of the resulting string (prefix + suffix when truncated)."
+              },
+              "suffix": {
+                "type": "string",
+                "description": "Suffix when truncated (default: newline + ...[truncated])."
+              }
+            },
+            "required": ["op", "path", "maxChars"],
             "additionalProperties": false
           },
           {

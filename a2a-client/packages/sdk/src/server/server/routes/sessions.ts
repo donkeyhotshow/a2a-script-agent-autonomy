@@ -22,6 +22,11 @@ import {
 } from '../../services/step-storage.js';
 import {getStorageDir} from '../../services/storage.js';
 import {serverFetch, getServerBaseUrl} from '../../services/index.js';
+import {
+    applyAgentRagChainAfterSyncInvoke,
+    extractExecuteFromEnvelope,
+} from '../../lib/agent-rag-chain.js';
+import { pickInvokeContextPatch } from '../../lib/context-invoke-patch.js';
 
 function getStepNum(session: { metadata?: Record<string, unknown> }): number {
     const n = session.metadata?.stepNum;
@@ -77,6 +82,35 @@ function validateRequestToServer(body: { task?: string; context?: Record<string,
         }
     }
     return null;
+}
+
+/** After context/execute updates from a sync invoke, run client rag-search chain (parity with Vite stepRoutes). */
+async function persistSyncThenRagChain(
+    sessionId: string,
+    startStep: number,
+    serverResponse: Record<string, unknown> | null,
+    promiseId: string | null
+): Promise<number> {
+    if (!serverResponse || promiseId) return startStep;
+    const sess = sessionService.getSession(sessionId);
+    const rawCtx = sess?.context;
+    if (!rawCtx || typeof rawCtx !== 'object') return startStep;
+    const ctx = rawCtx as Record<string, unknown>;
+    const out = await applyAgentRagChainAfterSyncInvoke({
+        sessionId,
+        startStepNum: startStep,
+        serverResponse,
+        context: ctx,
+    });
+    if (out.finalStep > startStep) {
+        setStepNum(sessionId, out.finalStep);
+        sessionService.updateSessionContext(sessionId, out.finalContext);
+        const fe = extractExecuteFromEnvelope(out.finalResponse);
+        if (fe) {
+            sessionService.updateSession(sessionId, {currentExecute: fe});
+        }
+    }
+    return out.finalStep;
 }
 
 const router = Router();
@@ -165,13 +199,22 @@ router.post('/', async (req: Request, res: Response) => {
                         setStepNum(sessionId, 1);
                     }
                     if (unwrapped.context && typeof unwrapped.context === 'object') {
-                        sessionService.updateSessionContext(sessionId, unwrapped.context as Record<string, unknown>);
+                        sessionService.updateSessionContext(
+                            sessionId,
+                            pickInvokeContextPatch(unwrapped.context)
+                        );
                     }
                     if (unwrapped.execute && typeof unwrapped.execute === 'object') {
                         sessionService.updateSession(sessionId, {
                             currentExecute: unwrapped.execute as Record<string, unknown>,
                         });
                     }
+                    await persistSyncThenRagChain(
+                        sessionId,
+                        1,
+                        serverResponse as Record<string, unknown>,
+                        unwrapped.promiseId
+                    );
                     console.log('[SESSIONS API] Got initial server response for task:', body.task);
                 } else {
                     console.warn('[SESSIONS API] Server call failed:', upstream.status, serverResponse);
@@ -509,6 +552,7 @@ router.post('/:sessionId/action', async (req: Request, res: Response) => {
         );
 
         const nextStep = stepNum + 1;
+        let ackStep = nextStep;
         const requestBody = {
             context: {
                 version: '2.0',
@@ -562,14 +606,20 @@ router.post('/:sessionId/action', async (req: Request, res: Response) => {
                 }
 
                 if (unwrapped.context && typeof unwrapped.context === 'object') {
-                    sessionService.updateSessionContext(sessionId, unwrapped.context as Record<string, unknown>);
+                    sessionService.updateSessionContext(sessionId, pickInvokeContextPatch(unwrapped.context));
                 }
                 if (unwrapped.execute && typeof unwrapped.execute === 'object') {
                     sessionService.updateSession(sessionId, {
                         currentExecute: unwrapped.execute as Record<string, unknown>,
                     });
                 }
-                console.log('[SESSIONS API] Got server response for action:', body.choice);
+                ackStep = await persistSyncThenRagChain(
+                    sessionId,
+                    nextStep,
+                    serverResponse as Record<string, unknown>,
+                    unwrapped.promiseId
+                );
+                console.log('[SESSIONS API] Got server response for action:', body.choice, 'step', ackStep);
             } else {
                 console.warn('[SESSIONS API] Server call failed:', upstream.status, serverResponse);
                 res.status(upstream.status >= 400 ? upstream.status : 502).json({
@@ -596,7 +646,7 @@ router.post('/:sessionId/action', async (req: Request, res: Response) => {
         res.json({
             success: true,
             accepted: true,
-            step: nextStep,
+            step: ackStep,
             promiseId: promiseId ?? null,
         });
     } catch (error) {
@@ -678,6 +728,7 @@ router.post('/:sessionId/next', async (req: Request, res: Response) => {
         );
 
         const nextStep = stepNum + 1;
+        let ackStepNext = nextStep;
         const requestBody = {
             context: {
                 version: '2.0',
@@ -731,14 +782,20 @@ router.post('/:sessionId/next', async (req: Request, res: Response) => {
                 }
 
                 if (unwrapped.context && typeof unwrapped.context === 'object') {
-                    sessionService.updateSessionContext(sessionId, unwrapped.context as Record<string, unknown>);
+                    sessionService.updateSessionContext(sessionId, pickInvokeContextPatch(unwrapped.context));
                 }
                 if (unwrapped.execute && typeof unwrapped.execute === 'object') {
                     sessionService.updateSession(sessionId, {
                         currentExecute: unwrapped.execute as Record<string, unknown>,
                     });
                 }
-                console.log('[SESSIONS API] Got server response for next step');
+                ackStepNext = await persistSyncThenRagChain(
+                    sessionId,
+                    nextStep,
+                    serverResponse as Record<string, unknown>,
+                    unwrapped.promiseId
+                );
+                console.log('[SESSIONS API] Got server response for next step', ackStepNext);
             } else {
                 console.warn('[SESSIONS API] Server call failed:', upstream.status, serverResponse);
                 res.status(upstream.status >= 400 ? upstream.status : 502).json({
@@ -765,7 +822,7 @@ router.post('/:sessionId/next', async (req: Request, res: Response) => {
         res.json({
             success: true,
             accepted: true,
-            step: nextStep,
+            step: ackStepNext,
             promiseId: promiseId ?? null,
         });
     } catch (error) {

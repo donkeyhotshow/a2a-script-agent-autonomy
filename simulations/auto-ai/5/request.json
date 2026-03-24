@@ -5,15 +5,23 @@
       "action": "auto-ai",
       "step": "read_code"
     },
+    "scratchpad": {
+      "locate_code_started": true,
+      "rag_searched": true
+    },
+    "files": {},
     "history": [
       {
         "role": "user",
         "message": "Refactor the API: add a logging middleware, add a health check endpoint, update the API tests, run lint and tests, and write a short report to .carrier/reports/."
       },
       {
-        "role": "assistant",
-        "message": "Listing src/ to see structure.",
-        "action": "list-directory"
+        "role": "system",
+        "message": "RAG: src/app.js, src/routes/index.js (page 1, pageSize 20, total 2, hasMore false)"
+      },
+      {
+        "role": "system",
+        "message": "Listed src/: app.js, routes/, middleware/"
       }
     ]
   },
@@ -21,18 +29,9 @@
     "list-directory": {
       "path": "src/",
       "entries": [
-        {
-          "name": "app.js",
-          "type": "file"
-        },
-        {
-          "name": "routes",
-          "type": "dir"
-        },
-        {
-          "name": "middleware",
-          "type": "dir"
-        }
+        { "name": "app.js", "type": "file" },
+        { "name": "routes", "type": "dir" },
+        { "name": "middleware", "type": "dir" }
       ]
     }
   }

@@ -13,6 +13,11 @@
       "to": "$.context"
     },
     {
+      "op": "apply-scratchpad-ops",
+      "from": "$.llm.scratchpad_ops",
+      "scratchpadPath": "context.scratchpad"
+    },
+    {
       "op": "set",
       "path": "$.context.execution.step",
       "value": "$.llm.step"

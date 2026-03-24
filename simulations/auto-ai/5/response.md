@@ -6,5 +6,6 @@
       "path": "src/app.js"
     }
   },
+  "scratchpad_ops": [{ "op": "check", "item": "src_listed" }],
   "completed": false
 }

@@ -6,5 +6,6 @@
       "command": "npm run lint"
     }
   },
+  "scratchpad_ops": [{ "op": "check", "item": "wrote_api_test" }],
   "completed": false
 }

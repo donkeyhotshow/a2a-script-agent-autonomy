@@ -26,7 +26,15 @@ const DEFAULT_INTERVAL_MS = 5000;
 let timerId: ReturnType<typeof setInterval> | null = null;
 
 /** Modes selectable from task/router UI; must match dialog-request-processor ACTION_TO_SCHEMA keys. */
-const LLM_PIPELINE_ACTIONS = ['dialog', 'auto-ai', 'coder', 'analyze', 'task-decomposition'] as const;
+const LLM_PIPELINE_ACTIONS = [
+    'dialog',
+    'auto-ai',
+    'coder',
+    'coder-smart',
+    'coder-smart-v2',
+    'analyze',
+    'task-decomposition',
+] as const;
 
 /**
  * Router follow-up: `result.choice` is the selected mode. Merge into `execution` when still on task/router.
@@ -77,7 +85,15 @@ function determineRequestType(context: Record<string, unknown>): RequestType {
     }
 
     // Transform pipeline / LLM: transformSchema, action=dialog+message, or ai_action (auto-ai, coder, etc.)
-    const llmActions = ['dialog', 'auto-ai', 'coder', 'analyze', 'task-decomposition'];
+    const llmActions = [
+        'dialog',
+        'auto-ai',
+        'coder',
+        'coder-smart',
+        'coder-smart-v2',
+        'analyze',
+        'task-decomposition',
+    ];
     if (transformSchema || (action && hasMessage && llmActions.includes(action))) {
         return 'dialog';
     }

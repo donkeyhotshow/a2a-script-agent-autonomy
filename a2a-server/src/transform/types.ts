@@ -26,7 +26,8 @@ export type TransformStep =
   | ParseJsonFromMdOperation 
   | RenderMarkdownOperation 
   | SwitchOperation
-  | ApplyScratchpadOpsOperation;
+  | ApplyScratchpadOpsOperation
+  | TruncateSectionOperation;
 
 /** Single LLM-emitted scratchpad command (ISSUE 6) */
 export interface ScratchpadOpCommand {
@@ -43,6 +44,19 @@ export interface ApplyScratchpadOpsOperation {
   from: string;
   /** JSONPath in $out (default: context.scratchpad) */
   scratchpadPath?: string;
+}
+
+/**
+ * Truncate long `docVirtual` strings or all string fields on a shallow object (ISSUE 5).
+ */
+export interface TruncateSectionOperation {
+  op: 'truncate-section';
+  /** JSONPath in input or $out (same resolution order as copy). Written back to $out. */
+  path: string;
+  /** Maximum length of the final string (prefix + suffix when truncated). */
+  maxChars: number;
+  /** Appended when content is cut (default: "\\n...[truncated]"). */
+  suffix?: string;
 }
 
 /**

@@ -1,0 +1,13 @@
+{
+  "context": {
+    "task": "створи задачу і виконай",
+    "execution": {
+      "action": "coder-smart-v2",
+      "step": "coder-smart-v2"
+    },
+    "history": []
+  },
+  "result": {
+    "message": "додати логінування в API та оновити тести"
+  }
+}

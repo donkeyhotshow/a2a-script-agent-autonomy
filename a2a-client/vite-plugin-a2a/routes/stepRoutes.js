@@ -1,5 +1,11 @@
 import { getStorageMode, isValidSessionId } from './middleware/validators.js';
-import { mergeResponseContext, buildStepRecord, extractA2aExecute, unwrapA2aResponse } from './utils/builders.js';
+import {
+    mergeResponseContext,
+    buildStepRecord,
+    extractA2aExecute,
+    unwrapA2aResponse,
+    pickInvokeContextPatch,
+} from './utils/builders.js';
 import {
     toMinimalNextAck,
     toPublicSession,
@@ -309,15 +315,7 @@ export function createStepRoutes({ cwd }) {
 
                     let mergedContext = { ...previousContext };
                     if (previousStepData?.result?.context) {
-                        const src = previousStepData.result.context;
-                        const filteredContext = {};
-                        if (src.task) filteredContext.task = src.task;
-                        if (src.execution) filteredContext.execution = src.execution;
-                        if (Array.isArray(src.history)) filteredContext.history = src.history;
-                        if (src.files && typeof src.files === 'object') filteredContext.files = src.files;
-                        if (src.scratchpad && typeof src.scratchpad === 'object') {
-                            filteredContext.scratchpad = src.scratchpad;
-                        }
+                        const filteredContext = pickInvokeContextPatch(previousStepData.result.context);
                         mergedContext = { ...mergedContext, ...filteredContext };
                     }
 

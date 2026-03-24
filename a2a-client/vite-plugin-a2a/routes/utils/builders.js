@@ -4,6 +4,51 @@
  */
 
 /**
+ * Whitelist context fields from invoke responses (keep in sync with
+ * packages/sdk/src/server/lib/context-invoke-patch.ts).
+ * @param {unknown} src
+ * @returns {Record<string, unknown>}
+ */
+export function pickInvokeContextPatch(src) {
+    if (!src || typeof src !== 'object' || Array.isArray(src)) {
+        return {};
+    }
+    const o = src;
+    const out = {};
+    if (typeof o.task === 'string' && o.task.length > 0) {
+        out.task = o.task;
+    }
+    if (o.execution && typeof o.execution === 'object' && !Array.isArray(o.execution)) {
+        out.execution = o.execution;
+    }
+    if (Array.isArray(o.history)) {
+        out.history = o.history;
+    }
+    if (o.files && typeof o.files === 'object' && !Array.isArray(o.files)) {
+        out.files = o.files;
+    }
+    if (o.scratchpad && typeof o.scratchpad === 'object' && !Array.isArray(o.scratchpad)) {
+        out.scratchpad = o.scratchpad;
+    }
+    if (o.docVirtual !== undefined) {
+        out.docVirtual = o.docVirtual;
+    }
+    if (o.ragResults !== undefined) {
+        out.ragResults = o.ragResults;
+    }
+    if (typeof o.version === 'string') {
+        out.version = o.version;
+    }
+    if (o.vite_config && typeof o.vite_config === 'object' && !Array.isArray(o.vite_config)) {
+        out.vite_config = o.vite_config;
+    }
+    if (o.aliases && typeof o.aliases === 'object' && !Array.isArray(o.aliases)) {
+        out.aliases = o.aliases;
+    }
+    return out;
+}
+
+/**
  * A2A Server wraps payloads as { success: true, data: { execute, context, ... } }.
  * Unwrap to the inner object when present.
  */
@@ -40,19 +85,19 @@ export function mergeResponseContext(sessionId, fallbackContext = {}, serverResp
     const inner = unwrapA2aResponse(serverResponse);
 
     if (serverResponse?.context) {
-        Object.assign(base, serverResponse.context);
+        Object.assign(base, pickInvokeContextPatch(serverResponse.context));
     }
 
     if (inner?.context) {
-        Object.assign(base, inner.context);
+        Object.assign(base, pickInvokeContextPatch(inner.context));
     }
 
     if (serverResponse?.result?.context) {
-        Object.assign(base, serverResponse.result.context);
+        Object.assign(base, pickInvokeContextPatch(serverResponse.result.context));
     }
 
     if (inner?.result?.context) {
-        Object.assign(base, inner.result.context);
+        Object.assign(base, pickInvokeContextPatch(inner.result.context));
     }
 
     if (sessionId && !base.session_id) {

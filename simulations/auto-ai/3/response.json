@@ -5,6 +5,10 @@
       "action": "auto-ai",
       "step": "locate_code"
     },
+    "scratchpad": {
+      "locate_code_started": true
+    },
+    "files": {},
     "history": [
       {
         "role": "user",

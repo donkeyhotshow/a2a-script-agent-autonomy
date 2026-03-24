@@ -189,6 +189,7 @@ export const SIMULATION_TO_SCHEMA: Record<string, string> = {
   dialog: 'dialog',
   coder: 'coder',
   'coder-smart': 'coder',
+  'coder-smart-v2': 'coder',
   analyze: 'analyze',
   'auto-ai': 'auto-ai',
   'fix-vue-imports': 'fix-vue-imports',
@@ -336,7 +337,16 @@ export function validatePipeline(pipeline: unknown): string[] {
     errors.push('Pipeline must have at least one step');
   }
   
-  const validOps = ['copy', 'set', 'append-to-array', 'parse-json-from-md', 'render-markdown', 'switch'];
+  const validOps = [
+    'copy',
+    'set',
+    'append-to-array',
+    'parse-json-from-md',
+    'render-markdown',
+    'switch',
+    'apply-scratchpad-ops',
+    'truncate-section'
+  ];
   
   for (let i = 0; i < p.steps.length; i++) {
     const step = p.steps[i] as Record<string, unknown>;
@@ -381,6 +391,12 @@ export function validatePipeline(pipeline: unknown): string[] {
         break;
       case 'apply-scratchpad-ops':
         if (!step.from) errors.push(`Step ${i} (apply-scratchpad-ops): Missing 'from'`);
+        break;
+      case 'truncate-section':
+        if (!step.path) errors.push(`Step ${i} (truncate-section): Missing 'path'`);
+        if (step.maxChars === undefined || typeof step.maxChars !== 'number') {
+          errors.push(`Step ${i} (truncate-section): Missing or invalid 'maxChars'`);
+        }
         break;
     }
   }

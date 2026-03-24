@@ -1,0 +1,24 @@
+{
+  "context": {
+    "task": "створи задачу і виконай"
+  },
+  "execute": {
+    "form": {
+      "title": "Оберіть спосіб виконання",
+      "choices": [
+        {
+          "id": "coder-smart-v2",
+          "label": "Smart Coder — задача через документ"
+        },
+        {
+          "id": "auto-ai",
+          "label": "AI Action Generator"
+        },
+        {
+          "id": "task-decomposition",
+          "label": "Декомпозиція задачі"
+        }
+      ]
+    }
+  }
+}

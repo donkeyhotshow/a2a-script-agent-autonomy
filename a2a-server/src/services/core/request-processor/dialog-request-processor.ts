@@ -107,6 +107,8 @@ const ACTION_TO_SCHEMA: Record<string, string> = {
     dialog: 'dialog',
     'auto-ai': 'auto-ai',
     coder: 'coder',
+    'coder-smart': 'coder',
+    'coder-smart-v2': 'coder',
     analyze: 'analyze',
     'task-decomposition': 'task-decomposition',
 };

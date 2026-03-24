@@ -7,5 +7,6 @@
       "content": "module.exports = (req, res, next) => { console.log(req.method, req.path); next(); };"
     }
   },
+  "scratchpad_ops": [{ "op": "check", "item": "wrote_health_route" }],
   "completed": false
 }

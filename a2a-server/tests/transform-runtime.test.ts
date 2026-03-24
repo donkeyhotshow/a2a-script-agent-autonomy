@@ -172,6 +172,56 @@ describe('Transform Pipeline Runtime', () => {
       }
     });
 
+    it('should truncate-section on string path', async () => {
+      const pipeline = {
+        steps: [
+          { op: 'set', path: 'context.docVirtual', value: 'abcdefghij' },
+          {
+            op: 'truncate-section',
+            path: 'context.docVirtual',
+            maxChars: 8,
+            suffix: '…'
+          }
+        ]
+      };
+
+      const result = await runTransformPipeline(pipeline, {});
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.output.context.docVirtual).toBe('abcdefg…');
+      }
+    });
+
+    it('should truncate-section shallow object string fields', async () => {
+      const pipeline = {
+        steps: [
+          {
+            op: 'set',
+            path: 'context.docVirtual',
+            value: { a: '12345', b: 2, c: '678901234' }
+          },
+          {
+            op: 'truncate-section',
+            path: 'context.docVirtual',
+            maxChars: 5,
+            suffix: ''
+          }
+        ]
+      };
+
+      const result = await runTransformPipeline(pipeline, {});
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.output.context.docVirtual).toEqual({
+          a: '12345',
+          b: 2,
+          c: '67890'
+        });
+      }
+    });
+
     it('should apply scratchpad ops from input', async () => {
       const pipeline = {
         steps: [

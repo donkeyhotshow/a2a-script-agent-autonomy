@@ -6,5 +6,6 @@
       "path": "tests/api.test.js"
     }
   },
+  "scratchpad_ops": [{ "op": "check", "item": "grep_tests" }],
   "completed": false
 }

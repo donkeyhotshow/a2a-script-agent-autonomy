@@ -6,5 +6,6 @@
       "command": "npm test"
     }
   },
+  "scratchpad_ops": [{ "op": "check", "item": "lint_ran" }],
   "completed": false
 }

@@ -8,5 +8,6 @@
       "glob": "*.test.js"
     }
   },
+  "scratchpad_ops": [{ "op": "check", "item": "wrote_logger_mw" }],
   "completed": false
 }

@@ -5,7 +5,14 @@
       "action": "auto-ai",
       "step": "locate_code"
     },
-    "history": []
+    "scratchpad": {},
+    "files": {},
+    "history": [
+      {
+        "role": "user",
+        "message": "Refactor the API: add a logging middleware, add a health check endpoint, update the API tests, run lint and tests, and write a short report to .carrier/reports/."
+      }
+    ]
   },
   "result": {
     "message": "Refactor the API: add a logging middleware, add a health check endpoint, update the API tests, run lint and tests, and write a short report to .carrier/reports/."

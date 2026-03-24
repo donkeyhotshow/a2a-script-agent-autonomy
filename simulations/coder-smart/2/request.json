@@ -1,6 +1,10 @@
 {
   "context": {
-    "task": "створи задачу і виконай"
+    "task": "створи задачу і виконай",
+    "execution": {
+      "action": "coder-smart",
+      "step": "user-request"
+    }
   },
   "result": {
     "choice": "coder-smart"

@@ -6,5 +6,6 @@
       "query": "express app API routes entry point"
     }
   },
+  "scratchpad_ops": [{ "op": "check", "item": "locate_code_started" }],
   "completed": false
 }
