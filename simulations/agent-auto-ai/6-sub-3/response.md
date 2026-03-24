@@ -1,3 +1,3 @@
 ```json
-{"step":"edit_code","message":"Mounting health route in src/app.js and verifying exports.","execute":{"edit-patch":{"path":"src/app.js","patch":"@@\n const express = require('express');\n const app = express();\n+const healthRouter = require('./routes/health');\n+app.use('/health', healthRouter);\n module.exports = app;\n"}},"completed":false}
+{"step":"edit_code","message":"Creating src/routes/health.js and will mount it next turn.","execute":{"write-file":{"path":"src/routes/health.js","content":"const express = require('express');\nconst router = express.Router();\nrouter.get('/health', (_req, res) => res.json({ ok: true }));\nmodule.exports = router;\n"}},"completed":false}
 ```
