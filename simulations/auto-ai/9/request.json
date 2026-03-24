@@ -11,7 +11,8 @@
       "src_listed": true,
       "read_src_app": true,
       "read_routes_index": true,
-      "wrote_health_route": true
+      "wrote_health_route": true,
+      "wrote_logger_mw": true
     },
     "files": {
       "src/app.js": "const express = require('express');\nconst apiRoutes = require('./routes');\nconst app = express();\napp.use(express.json());\napp.use('/api', apiRoutes);\nconst PORT = process.env.PORT || 3000;\napp.listen(PORT, () => console.log(`Listening on ${PORT}`));\nmodule.exports = app;",

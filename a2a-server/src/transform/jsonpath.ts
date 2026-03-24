@@ -181,9 +181,21 @@ export function resolveTemplates(
   context: Record<string, unknown>
 ): unknown {
   if (typeof value === 'string') {
-    // Handle template strings like "$.llm.message" using literal $ {
-    // We use String.fromCharCode to avoid encoding issues
     const str = value as string;
+    // Pipeline JSON often uses a whole-string JSONPath (e.g. "$.result.message") for append/set values.
+    if (str.startsWith('$.') && !str.includes('${')) {
+      const resolved = query(context, str);
+      if (resolved === undefined || resolved === null) {
+        return '';
+      }
+      if (typeof resolved === 'string') {
+        return resolved;
+      }
+      if (typeof resolved === 'number' || typeof resolved === 'boolean') {
+        return String(resolved);
+      }
+      return JSON.stringify(resolved);
+    }
     const parts: string[] = [];
     let lastIndex = 0;
     

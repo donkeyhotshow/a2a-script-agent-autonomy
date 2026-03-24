@@ -163,6 +163,22 @@ async function applySet(
   jsonPathSet(context.$out, pathStr, resolvedValue);
 }
 
+function shouldSkipDuplicateUserHistoryAppend(existing: unknown[] | undefined, entry: unknown): boolean {
+  if (!existing?.length || !entry || typeof entry !== 'object' || Array.isArray(entry)) {
+    return false;
+  }
+  const e = entry as Record<string, unknown>;
+  if (e.role !== 'user' || typeof e.message !== 'string') {
+    return false;
+  }
+  const last = existing[existing.length - 1];
+  if (!last || typeof last !== 'object' || Array.isArray(last)) {
+    return false;
+  }
+  const le = last as Record<string, unknown>;
+  return le.role === 'user' && le.message === e.message;
+}
+
 /**
  * Append to array operation - appends a value to an array
  */
@@ -174,6 +190,14 @@ async function applyAppendToArray(
   
   // Resolve templates in the value
   const resolvedValue = resolveTemplates(value, context.$out);
+  if (
+    resolvedValue &&
+    typeof resolvedValue === 'object' &&
+    !Array.isArray(resolvedValue) &&
+    (resolvedValue as Record<string, unknown>).message === ''
+  ) {
+    return;
+  }
   
   // First check if the array exists in input or $out
   let arr = query<unknown[]>(context.input, to);
@@ -188,11 +212,16 @@ async function applyAppendToArray(
     // Append to existing array - need to ensure it's in $out
     const outArr = query<unknown[]>(context.$out, to);
     if (outArr && Array.isArray(outArr)) {
-      outArr.push(resolvedValue);
+      if (!shouldSkipDuplicateUserHistoryAppend(outArr, resolvedValue)) {
+        outArr.push(resolvedValue);
+      }
     } else {
       // Array exists in input but not in $out - copy it first
-      const newArr = [...arr, resolvedValue];
-      jsonPathSet(context.$out, to, newArr);
+      if (shouldSkipDuplicateUserHistoryAppend(arr, resolvedValue)) {
+        jsonPathSet(context.$out, to, [...arr]);
+      } else {
+        jsonPathSet(context.$out, to, [...arr, resolvedValue]);
+      }
     }
   }
 }

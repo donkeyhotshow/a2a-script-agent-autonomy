@@ -8,7 +8,7 @@
   },
   "history": [
     {
-      "message": "$.result.message",
+      "message": "як працює система авторизації?",
       "role": "user"
     }
   ],
