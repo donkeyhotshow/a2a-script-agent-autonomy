@@ -38,11 +38,16 @@ Each step folder can contain up to **8** files, covering both **Web ↔ Client A
 | `response.md`                   | LLM → Server         | Expected LLM output (e.g. JSON with `message`, `action`).                                                                 |
 | `server-transforms-response.json` | —                    | Transforms applied after LLM response. Per-step overrides live here; base transforms in `a2a-server/prompts/transforms/`. |
 | `response.json`                 | Server → Client API  | Payload sent to Client API (context + execute, etc.).                                                                     |
-| `received.json`                 | Client API → Web     | What Client API returns to Web (e.g. `{ projectId, sessionId, execute }`).                                                |
+| `received.json`                 | Client API → Web     | **Web execute DTO** after sanitization (see below).                                                                         |
 
 **Order (полный pipeline):**
 
 `client.json → request.json → server-transforms-request.json → request.md → response.md → server-transforms-response.json → response.json → received.json`.
+
+### `received.json` vs `response.json` (`execute`)
+
+- **`response.json`** — Server → Client API: canonical **single action key** under `execute` (`rag-search`, `read-file`, `form`, …). Used for chaining, SDK merge, and RAG/script automation.
+- **`received.json`** — Client API → Web: **sanitized** `execute` for the UI. Client-only actions are removed; the Web layer exposes `message`, optional `llmMessage`, optional `attachments` (`readFiles`, `writtenFiles`, `ragQuery`, `shellCommand`, `pendingClientAction`), and keeps `form` when present. Implementation: `a2a-client/vite-plugin-a2a/routes/utils/web-execute-dto.js` (`buildWebExecute`), SDK `packages/sdk/src/server/lib/web-execute-dto.ts`. Debug: `GET /sessions/:id?includeContext=1` returns unsanitized session data.
 
 Not every step has all 8 files: steps without LLM обычно имеют `client.json`, `request.json`, `server-transforms-request.json`,
 `server-transforms-response.json`, `response.json`, `received.json`; steps with LLM add the `.md` files; transform docs

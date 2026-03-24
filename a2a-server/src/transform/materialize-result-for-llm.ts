@@ -8,6 +8,72 @@ const MAX_TOOL_SUMMARY = 4000;
 
 export type HistoryEntry = { role: string; message: string };
 
+type ToolFormatter = (o: Record<string, unknown>) => string | null;
+
+const TOOL_FORMATTERS: Record<string, ToolFormatter> = {
+  'rag-search': (o) => {
+    const files = Array.isArray(o.files) ? (o.files as string[]) : [];
+    const snippets = Array.isArray(o.results)
+      ? (o.results as Array<{ file?: string; snippet?: string }>)
+          .slice(0, 5)
+          .map((r) => {
+            const f = typeof r.file === 'string' ? r.file : '';
+            const s = typeof r.snippet === 'string' ? r.snippet.trim().slice(0, 300) : '';
+            return s ? `[${f}] ${s}` : f;
+          })
+          .filter(Boolean)
+      : [];
+    const header = `RAG (${files.length} files, page ${o.page ?? 1}, hasMore ${o.hasMore ?? false})`;
+    return snippets.length > 0 ? `${header}:\n${snippets.join('\n')}` : header;
+  },
+  'list-directory': (o) => {
+    const p = typeof o.path === 'string' ? o.path : '';
+    const names = (Array.isArray(o.entries) ? o.entries as Array<{ name?: string }> : [])
+      .map((e) => e.name).filter((n): n is string => typeof n === 'string').sort();
+    return `Listed ${p}: ${names.join(', ')}`;
+  },
+  'read-file': (o) => {
+    const p = typeof o.path === 'string' ? o.path : '';
+    const lines = typeof o.content === 'string' ? o.content.split('\n').length : 0;
+    return `Read ${p} (${lines} lines)`;
+  },
+  'write-file': (o) => {
+    const p = typeof o.path === 'string' ? o.path : '';
+    return o.success === false ? `Write failed: ${p}` : `Wrote ${p}`;
+  },
+  'grep-search': (o) => {
+    const matches = Array.isArray(o.matches) ? o.matches : [];
+    const first = matches[0] as { file?: string } | undefined;
+    const file = typeof first?.file === 'string' ? first.file : '';
+    const scope = typeof o.path === 'string' && o.path ? o.path : (typeof o.pattern === 'string' ? o.pattern : 'matches');
+    return `Grep ${scope}: ${file || 'results'} (${matches.length} matches)`;
+  },
+  'execute-command': (o) => {
+    const cmd = typeof o.command === 'string' ? o.command : '';
+    const exit = typeof o.exitCode === 'number' ? o.exitCode : '?';
+    const c = cmd.toLowerCase();
+    if (c.includes('lint') && exit === 0) return 'Lint passed (exit 0)';
+    if ((c.includes('test') || c === 'npm test') && exit === 0) return 'Tests passed (exit 0)';
+    return `Command finished: ${cmd} (exit ${exit})`;
+  },
+};
+
+/** One-line summary for a tool result key (action-key shape value). */
+export function formatToolResultForHistory(actionKey: string, value: unknown): string | null {
+  if (value === undefined) return null;
+  if (value === null) return `${actionKey}: null`;
+  if (typeof value === 'string') { const t = value.trim(); return t.length === 0 ? null : `${actionKey}: ${t}`; }
+  if (typeof value === 'number' || typeof value === 'boolean') return `${actionKey}: ${String(value)}`;
+  if (typeof value !== 'object' || Array.isArray(value)) return `${actionKey}: ${JSON.stringify(value)}`;
+
+  const formatter = TOOL_FORMATTERS[actionKey];
+  if (formatter) return formatter(value as Record<string, unknown>);
+
+  let json = JSON.stringify(value);
+  if (json.length > MAX_TOOL_SUMMARY) json = json.slice(0, MAX_TOOL_SUMMARY) + '…';
+  return `${actionKey}: ${json}`;
+}
+
 function getHistoryTarget(root: Record<string, unknown>): {
   parent: Record<string, unknown>;
   historyKey: string;
@@ -26,9 +92,10 @@ function getHistoryArray(root: Record<string, unknown>): HistoryEntry[] {
   return h.map((x) => {
     if (x && typeof x === 'object' && !Array.isArray(x)) {
       const o = x as Record<string, unknown>;
-      const role = typeof o.role === 'string' ? o.role : 'system';
-      const message = typeof o.message === 'string' ? o.message : JSON.stringify(o);
-      return { role, message };
+      return {
+        role: typeof o.role === 'string' ? o.role : 'system',
+        message: typeof o.message === 'string' ? o.message : JSON.stringify(o),
+      };
     }
     return { role: 'system', message: String(x) };
   });
@@ -41,104 +108,6 @@ function setHistoryArray(root: Record<string, unknown>, entries: HistoryEntry[])
 
 function historyHasLine(entries: HistoryEntry[], role: string, message: string): boolean {
   return entries.some((e) => e.role === role && e.message === message);
-}
-
-/** One-line summary for a tool result key (action-key shape value). */
-export function formatToolResultForHistory(actionKey: string, value: unknown): string | null {
-  if (value === undefined) return null;
-  if (value === null) return `${actionKey}: null`;
-
-  if (typeof value === 'string') {
-    const t = value.trim();
-    return t.length === 0 ? null : `${actionKey}: ${t}`;
-  }
-
-  if (typeof value === 'number' || typeof value === 'boolean') {
-    return `${actionKey}: ${String(value)}`;
-  }
-
-  if (typeof value !== 'object' || Array.isArray(value)) {
-    return `${actionKey}: ${JSON.stringify(value)}`;
-  }
-
-  const o = value as Record<string, unknown>;
-
-  switch (actionKey) {
-    case 'rag-search': {
-      const files = Array.isArray(o.files) ? (o.files as string[]) : [];
-      const snippets = Array.isArray(o.results)
-        ? (o.results as Array<{ file?: string; snippet?: string; score?: number }>)
-            .slice(0, 5)
-            .map((r) => {
-              const f = typeof r.file === 'string' ? r.file : '';
-              const s = typeof r.snippet === 'string' ? r.snippet.trim().slice(0, 300) : '';
-              return s ? `[${f}] ${s}` : f;
-            })
-            .filter(Boolean)
-        : [];
-      const header = `RAG (${files.length} files, page ${o.page ?? 1}, hasMore ${o.hasMore ?? false})`;
-      return snippets.length > 0 ? `${header}:\n${snippets.join('\n')}` : header;
-    }
-    case 'list-directory': {
-      const p = typeof o.path === 'string' ? o.path : '';
-      const entries = Array.isArray(o.entries)
-        ? (o.entries as Array<{ name?: string; type?: string }>)
-        : [];
-      const names = entries
-        .map((e) => e.name)
-        .filter((n): n is string => typeof n === 'string')
-        .sort();
-      const summary = names.join(', ');
-      return `Listed ${p}: ${summary}`;
-    }
-    case 'read-file': {
-      const pathStr = typeof o.path === 'string' ? o.path : '';
-      const content = typeof o.content === 'string' ? o.content : '';
-      const lines = content.length > 0 ? content.split('\n').length : 0;
-      return `Read ${pathStr} (${lines} lines)`;
-    }
-    case 'write-file': {
-      const pathStr = typeof o.path === 'string' ? o.path : '';
-      if (o.success === false) return `Write failed: ${pathStr}`;
-      return `Wrote ${pathStr}`;
-    }
-    case 'grep-search': {
-      let pathStr = typeof o.path === 'string' ? o.path : '';
-      let glob = typeof o.glob === 'string' ? o.glob : '';
-      const matches = Array.isArray(o.matches) ? o.matches : [];
-      const first = matches[0] as { file?: string } | undefined;
-      const file = typeof first?.file === 'string' ? first.file : '';
-      if ((!pathStr || !glob) && file) {
-        const slash = file.lastIndexOf('/');
-        if (slash >= 0) {
-          pathStr = pathStr || file.slice(0, slash);
-          const base = file.slice(slash + 1);
-          if (!glob && /\.test\.[jt]s$/i.test(base)) glob = '*.test.js';
-          else if (!glob && base) glob = base.replace(/^[^.]+/, '*');
-        }
-      }
-      const scope =
-        pathStr && glob ? `${pathStr}/${glob}` : pathStr || glob || (typeof o.pattern === 'string' ? o.pattern : '') || 'matches';
-      return `Grep ${scope}: ${file || 'results'} (${matches.length} matches)`;
-    }
-    case 'execute-command': {
-      const cmd = typeof o.command === 'string' ? o.command : '';
-      const code = o.exitCode;
-      const exit = typeof code === 'number' ? code : '?';
-      const c = cmd.toLowerCase();
-      if (c.includes('lint') && exit === 0) return 'Lint passed (exit 0)';
-      if ((c.includes('test') || c === 'npm test') && exit === 0) return 'Tests passed (exit 0)';
-      return `Command finished: ${cmd} (exit ${exit})`;
-    }
-    default:
-      break;
-  }
-
-  let json = JSON.stringify(o);
-  if (json.length > MAX_TOOL_SUMMARY) {
-    json = json.slice(0, MAX_TOOL_SUMMARY) + '…';
-  }
-  return `${actionKey}: ${json}`;
 }
 
 /**

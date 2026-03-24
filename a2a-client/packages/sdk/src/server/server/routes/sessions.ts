@@ -27,6 +27,7 @@ import {
     extractExecuteFromEnvelope,
 } from '../../lib/agent-rag-chain.js';
 import { pickInvokeContextPatch } from '../../lib/context-invoke-patch.js';
+import { buildWebExecute, sanitizeApiRecordExecuteFields } from '../../lib/web-execute-dto.js';
 
 function getStepNum(session: { metadata?: Record<string, unknown> }): number {
     const n = session.metadata?.stepNum;
@@ -67,6 +68,12 @@ function stripContextForWeb<T extends Record<string, unknown>>(obj: T | null | u
     if (!obj || typeof obj !== 'object') return null;
     const {context: _c, ...rest} = obj;
     return rest as Omit<T, 'context'>;
+}
+
+function toWebClientSessionPayload<T extends Record<string, unknown>>(obj: T | null | undefined) {
+    const stripped = stripContextForWeb(obj);
+    if (!stripped) return null;
+    return sanitizeApiRecordExecuteFields(stripped as Record<string, unknown>);
 }
 
 /** Validate request-to-server before sending to A2A: task|context required, context.execution valid when present */
@@ -225,7 +232,7 @@ router.post('/', async (req: Request, res: Response) => {
         }
 
         const detail = sessionService.getSession(sessionId);
-        const sessionPayload = stripContextForWeb((detail ?? session) as Record<string, unknown>);
+        const sessionPayload = toWebClientSessionPayload((detail ?? session) as Record<string, unknown>);
 
         res.status(201).json({
             success: true,
@@ -301,7 +308,7 @@ router.get('/:id', (req: Request, res: Response) => {
 
         res.json({
             success: true,
-            session: stripContextForWeb(session as Record<string, unknown>),
+            session: toWebClientSessionPayload(session as Record<string, unknown>),
         });
     } catch (error) {
         console.error('[SESSIONS API] Error getting session:', error);
@@ -1009,11 +1016,12 @@ router.get('/:sessionId/promise/:promiseId', async (req: Request, res: Response)
             delete (safeResult as Record<string, unknown>).context;
         }
 
+        const webExecute = promiseStatus.execute ? buildWebExecute(promiseStatus.execute) : null;
         res.json({
             promiseId,
             status: promiseStatus.status || (isCompleted ? 'completed' : 'pending'),
             result: safeResult,
-            execute: promiseStatus.execute || null,
+            execute: webExecute,
             completed: isCompleted,
         });
     } catch (error) {

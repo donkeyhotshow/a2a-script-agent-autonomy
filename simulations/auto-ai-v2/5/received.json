@@ -2,8 +2,9 @@
   "projectId": "123",
   "sessionId": "456",
   "execute": {
-    "read-file": {
-      "path": "src/app.js"
+    "message": "Reading files…",
+    "attachments": {
+      "readFiles": [{ "path": "src/app.js" }]
     }
   }
 }

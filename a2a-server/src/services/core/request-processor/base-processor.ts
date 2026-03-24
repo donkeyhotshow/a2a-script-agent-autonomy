@@ -205,35 +205,20 @@ export abstract class BaseRequestProcessor {
      * Parse task text from various context formats
      */
     protected parseTaskText(ctx: Record<string, unknown>): string {
-        // Check task (top-level field - PRIMARY for simulations)
-        const task = ctx['task'];
-        if (task) {
-            if (Array.isArray(task)) return task.join(' ');
-            if (typeof task === 'string') return task;
-        }
-
-        // Check new_task (standard field)
-        const nt = ctx['new_task'];
-        if (nt) {
-            if (Array.isArray(nt)) return nt.join(' ');
-            if (typeof nt === 'string') return nt;
-        }
-
-        // Check message (from invoke)
-        const msg = ctx['message'];
-        if (msg) {
-            if (Array.isArray(msg)) return msg.join(' ');
-            if (typeof msg === 'string') return msg;
-        }
-
-        // Check context.task (nested context)
+        const toStr = (v: unknown): string | null => {
+            if (!v) return null;
+            if (Array.isArray(v)) return v.join(' ');
+            if (typeof v === 'string') return v;
+            return null;
+        };
         const nestedCtx = ctx['context'] as Record<string, unknown> | undefined;
-        if (nestedCtx?.['task']) {
-            if (Array.isArray(nestedCtx['task'])) return (nestedCtx['task'] as string[]).join(' ');
-            if (typeof nestedCtx['task'] === 'string') return nestedCtx['task'] as string;
-        }
-
-        return '';
+        return (
+            toStr(ctx['task']) ??
+            toStr(ctx['new_task']) ??
+            toStr(ctx['message']) ??
+            toStr(nestedCtx?.['task']) ??
+            ''
+        );
     }
 
     /**

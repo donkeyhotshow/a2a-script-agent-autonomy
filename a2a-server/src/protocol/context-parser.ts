@@ -111,31 +111,20 @@ export function validateContextBlock(context: unknown): { valid: boolean; errors
     return { valid: errors.length === 0, errors };
 }
 
+const CONTEXT_PASSTHROUGH_KEYS = [
+    'version', 'action', 'new_task', 'architectural_features', 'continue',
+    'tasks', 'request_files', 'confirm', 'errors', 'task', 'execution',
+] as const;
+
 export function parseContextBlock(data: unknown): ContextBlock {
     const { valid, errors } = validateContextBlock(data);
-
-    if (!valid) {
-        throw new Error(`Invalid context block: ${errors.join(', ')}`);
-    }
+    if (!valid) throw new Error(`Invalid context block: ${errors.join(', ')}`);
 
     const ctx = data as Record<string, unknown>;
-
-    const result: ContextBlock = {
-        session_id: ctx['session_id'] as string,
-    };
-    if (ctx['version'] !== undefined) result.version = ctx['version'] as string;
-    if (ctx['action'] !== undefined) result.action = ctx['action'] as string;
-
-    if (ctx['new_task'] !== undefined) result.new_task = ctx['new_task'] as string[];
-    if (ctx['architectural_features'] !== undefined) result.architectural_features = ctx['architectural_features'] as string[];
-    if (ctx['continue'] !== undefined) result.continue = ctx['continue'] as boolean;
-    if (ctx['tasks'] !== undefined) result.tasks = ctx['tasks'] as Task[];
-    if (ctx['request_files'] !== undefined) result.request_files = ctx['request_files'] as string[];
-    if (ctx['confirm'] !== undefined) result.confirm = ctx['confirm'] as boolean;
-    if (ctx['errors'] !== undefined) result.errors = ctx['errors'] as ProtocolError[];
-    if (ctx['task'] !== undefined) result.task = ctx['task'] as string;
-    if (ctx['execution'] !== undefined) result.execution = ctx['execution'] as ContextBlock['execution'];
-
+    const result: ContextBlock = { session_id: ctx['session_id'] as string };
+    for (const key of CONTEXT_PASSTHROUGH_KEYS) {
+        if (ctx[key] !== undefined) (result as Record<string, unknown>)[key] = ctx[key];
+    }
     return result;
 }
 

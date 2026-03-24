@@ -108,9 +108,9 @@ function buildDialogProcessResultFromContext(
     } as ProcessResult;
 }
 
-/**
- * action → transformSchema for LLM pipeline.
- */
+import { LLM_PIPELINE_ACTIONS } from './request-processor.service.js';
+
+/** action → transformSchema. Driven by LLM_PIPELINE_ACTIONS — add new actions there first. */
 const ACTION_TO_SCHEMA: Record<string, string> = {
     dialog: 'dialog',
     'auto-ai': 'auto-ai',

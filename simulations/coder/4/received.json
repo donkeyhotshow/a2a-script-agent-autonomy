@@ -1,9 +1,10 @@
 {
-    "projectId": "123",
-    "sessionId": "456",
-    "execute": {
-      "read-file": {
-        "path": "src/auth.js"
-      }
+  "projectId": "123",
+  "sessionId": "456",
+  "execute": {
+    "message": "Reading files…",
+    "attachments": {
+      "readFiles": [{ "path": "src/auth.js" }]
     }
   }
+}

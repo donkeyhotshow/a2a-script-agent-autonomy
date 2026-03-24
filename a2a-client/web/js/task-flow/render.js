@@ -142,17 +142,125 @@
         // execute.form.input + execute.message: message shown via history (set by SessionStore), input stays open
         // execute.form.choices: choice buttons
         // execute.form.input only: text input
-        // execute.message only: show message + generic input to continue
+        // execute.message (+ optional llmMessage, attachments): Client API sanitizes rag-search/read-file into these
         store = store || data?.store || global.SessionStore;
         if (execute.form) {
             return renderForm(contentEl, execute.form, executionStepHtml, progressBarHtml, finalResultHtml, taskFlowRef, store);
-        } else if (execute.message) {
-            return renderMessage(contentEl, execute.message, executionStepHtml, progressBarHtml, finalResultHtml, taskFlowRef, store);
+        }
+        const attHtml = renderAttachmentsBlock(execute.attachments);
+        const mainText = messageBodyText(execute.message);
+        const llmText = messageBodyText(execute.llmMessage);
+        const hasMain = mainText.trim().length > 0;
+        const hasLlm = llmText.trim().length > 0;
+        if (hasMain || hasLlm || attHtml) {
+            return renderWebExecuteMessage(
+                contentEl,
+                execute,
+                { mainText, llmText, attHtml },
+                executionStepHtml,
+                progressBarHtml,
+                finalResultHtml,
+                taskFlowRef,
+                store
+            );
         } else if (execute.script || execute['rag-search'] || execute['read-file'] || execute['write-file'] || execute['execute-command']) {
             return renderClientAction(contentEl, Object.keys(execute)[0], execute, executionStepHtml, progressBarHtml, finalResultHtml, taskFlowRef);
         } else if (execute.debug) {
             return renderDebug(contentEl, data, executionStepHtml, progressBarHtml, finalResultHtml, taskFlowRef);
         }
+    }
+
+    function messageBodyText(message) {
+        if (message == null) return '';
+        if (typeof message === 'string') return message;
+        return message.content || message.text || '';
+    }
+
+    function renderAttachmentsBlock(attachments) {
+        if (!attachments || typeof attachments !== 'object') return '';
+        const parts = [];
+        const rf = attachments.readFiles;
+        if (Array.isArray(rf) && rf.length) {
+            const lines = rf
+                .map((f) => {
+                    const p = typeof f === 'string' ? f : f && f.path;
+                    return p ? `<li><code>${escapeHtml(String(p))}</code></li>` : '';
+                })
+                .filter(Boolean);
+            if (lines.length) {
+                parts.push(
+                    `<div class="task-flow-attachments-readfiles"><div class="task-flow-attachments-title">Read files</div><ul>${lines.join('')}</ul></div>`
+                );
+            }
+        }
+        if (typeof attachments.ragQuery === 'string' && attachments.ragQuery.trim()) {
+            parts.push(
+                `<div class="task-flow-attachments-rag"><span class="task-flow-attachments-title">Search</span> <code>${escapeHtml(attachments.ragQuery.trim())}</code></div>`
+            );
+        }
+        const wf = attachments.writtenFiles;
+        if (Array.isArray(wf) && wf.length) {
+            const lines = wf
+                .map((f) => (f && f.path ? `<li><code>${escapeHtml(String(f.path))}</code></li>` : ''))
+                .filter(Boolean);
+            if (lines.length) {
+                parts.push(
+                    `<div class="task-flow-attachments-written"><div class="task-flow-attachments-title">Written files</div><ul>${lines.join('')}</ul></div>`
+                );
+            }
+        }
+        if (typeof attachments.shellCommand === 'string' && attachments.shellCommand.trim()) {
+            parts.push(
+                `<div class="task-flow-attachments-cmd"><span class="task-flow-attachments-title">Command</span> <code>${escapeHtml(
+                    attachments.shellCommand.trim()
+                )}</code></div>`
+            );
+        }
+        return parts.length ? `<div class="task-flow-attachments">${parts.join('')}</div>` : '';
+    }
+
+    /**
+     * Primary message + optional LLM block + attachments (from Client API web execute DTO).
+     */
+    function renderWebExecuteMessage(
+        contentEl,
+        execute,
+        texts,
+        executionStepHtml,
+        progressBarHtml,
+        finalResultHtml,
+        taskFlowRef,
+        store
+    ) {
+        const effectiveStore = store || global.SessionStore;
+        const historyHtml = renderMessageHistory(contentEl, effectiveStore);
+        const mainBlock =
+            texts.mainText.trim().length > 0
+                ? `<div class="task-flow-message-display">${escapeHtml(texts.mainText)}</div>`
+                : '';
+        const llmBlock =
+            texts.llmText.trim().length > 0
+                ? `<div class="task-flow-llm-message"><div class="task-flow-form-title">Model</div><div class="task-flow-message-display">${escapeHtml(
+                      texts.llmText
+                  )}</div></div>`
+                : '';
+        contentEl.innerHTML = `
+            ${historyHtml}
+            <div class="task-flow-execute-card">
+                ${executionStepHtml}
+                ${progressBarHtml}
+                <div class="task-flow-message-container">
+                    <div class="task-flow-form-header">
+                        <span class="task-flow-form-icon">ℹ</span>
+                        <div class="task-flow-form-title">Message</div>
+                    </div>
+                    ${mainBlock}
+                    ${llmBlock}
+                    ${texts.attHtml || ''}
+                </div>
+                ${finalResultHtml}
+            </div>
+        `;
     }
 
     /**

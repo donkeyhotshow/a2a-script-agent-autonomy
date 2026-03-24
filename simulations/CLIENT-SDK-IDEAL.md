@@ -6,16 +6,29 @@ Golden simulations under `simulations/` define what **Web** and **`@a2a/sdk`** s
 
 | File | Consumer |
 |------|-----------|
-| `received.json` | **Web UI** — what the Client API returns after a step (shape the renderer and loaders expect). |
-| `response.json` | **SDK session merge** — same payload the server hands the Client API before envelope wrapping. |
+| `received.json` | **Web UI** — public shape after Client API sanitization (`buildWebExecute`); see **Web execute DTO** below. |
+| `response.json` | **SDK session merge** — raw server → Client API payload (single action key under `execute` where applicable). |
 | `client.json` | Web → Client API (body the SDK route receives). |
 
-`a2a-client/packages/sdk/src/server/services/transforms/session-transform.ts` merges `context`, `execute`, `messages`, `history`, `workbench`, `finalResult`. Ideal `response.json` / `received.json` should carry every field the UI or persistence layer needs.
+`a2a-client/packages/sdk/src/server/services/transforms/session-transform.ts` merges `context`, `execute`, `messages`, `history`, `workbench`, `finalResult`. **`response.json`** keeps the protocol execute the server emitted. **`received.json`** matches what the browser gets: internal client actions are stripped and replaced with a user-facing DTO.
 
-## Execute: action-key shape (mandatory)
+## Web execute DTO (`received.json` / GET session `execute`)
 
-- Exactly **one** top-level key under `execute` for the active command (`form`, `read-file`, `rag-search`, …).  
-- **SDK note:** `extractExecuteAction()` in `action-handler.ts` uses **`Object.keys(execute)[0]`**. Do not put a second key in golden fixtures; extra keys are non-deterministic across engines if someone parses naively.
+Implemented in `a2a-client/vite-plugin-a2a/routes/utils/web-execute-dto.js` (and SDK `web-execute-dto.ts`). The Client API removes these keys from `execute` before responding to the Web UI: `rag-search`, `read-file`, `write-file`, `script`, `execute-command`, `debug`.
+
+| Field | Meaning |
+|-------|---------|
+| `execute.message` | Status line for the UI (string or `{ content }`). If the server sent only a client action, a default is used (`Searching the codebase…`, `Reading files…`, `Updating files…`, `Running script…`, `Running command…`, or combined with ` · `). |
+| `execute.llmMessage` | Optional; pass-through when the server adds a separate model line. |
+| `execute.form` | Unchanged when present (router / input / choices). |
+| `execute.attachments` | Structured hints: `readFiles[]` (`{ path }`), `writtenFiles[]`, `ragQuery`, `shellCommand` (from `execute-command.command`), `pendingClientAction` (`script` \| `execute-command`). |
+
+Golden **`received.json`** must use this DTO. **`response.json`** in the same step still carries the real **`execute.{action}`** single-key payload for the Client API → server loop.
+
+## Execute: action-key shape (mandatory) — `response.json` / server contract
+
+- Exactly **one** top-level key under `execute` for the active command (`form`, `read-file`, `rag-search`, …) in **`response.json`** (and in persisted step records used for invoke chaining).  
+- **SDK note:** `extractExecuteAction()` in `action-handler.ts` uses **`Object.keys(execute)[0]`** on the **raw** execute. Do not put a second protocol action key in **`response.json`** golden fixtures.
 
 ## `execute.form` (ideal for `handleFormAction` / Web)
 
@@ -55,7 +68,7 @@ Per `SCHEMA.md`: `promiseId`, polling, `execute.wait` / loader timing. Document 
 
 ## How to “raise the bar” on a simulation
 
-1. **`received.json` = `response.json`** execute + context slice the Web needs (ids, labels, descriptions).  
+1. **`received.json`:** Web execute DTO (`message` / `form` / `attachments` / optional `llmMessage`) — not a copy-paste of **`response.json`** `execute` when the step asks for `rag-search`, `read-file`, etc.  
 2. **Action-key** payloads include **pagination** for `rag-search` where applicable.  
 3. **Form fields** use SDK-allowed `type` values only.  
 4. **Router steps** list the same `id`s the server exposes (`action-request-processor` `ROUTER_CHOICES`).  

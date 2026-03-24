@@ -2,8 +2,10 @@
   "projectId": "123",
   "sessionId": "456",
   "execute": {
-    "execute-command": {
-      "command": "composer dump-autoload -o"
+    "message": "Running command…",
+    "attachments": {
+      "pendingClientAction": "execute-command",
+      "shellCommand": "composer dump-autoload -o"
     }
   }
 }

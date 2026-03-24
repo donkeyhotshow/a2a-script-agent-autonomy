@@ -2,25 +2,9 @@
   "projectId": "123",
   "sessionId": "456",
   "execute": {
-    "script": {
-      "input": {
-        "deprecations": [
-          {
-            "method": "assertEquals",
-            "file": "tests/Unit/UserTest.php",
-            "line": 15,
-            "suggestion": "assertEqualsWithDelta"
-          },
-          {
-            "method": "assertInternalType",
-            "file": "tests/Feature/AuthTest.php",
-            "line": 22,
-            "suggestion": "assertIsArray"
-          }
-        ],
-        "format": "markdown"
-      },
-      "output": "deprecations_report"
+    "message": "Running script…",
+    "attachments": {
+      "pendingClientAction": "script"
     }
   }
 }

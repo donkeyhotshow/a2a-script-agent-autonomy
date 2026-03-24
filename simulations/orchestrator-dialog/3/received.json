@@ -2,8 +2,9 @@
   "projectId": "proj-orch-001",
   "sessionId": "sess-orch-001",
   "execute": {
-    "read-file": {
-      "path": "docs/adr/ADR-0027-documentation-canonical-sources.md"
+    "message": "Reading files…",
+    "attachments": {
+      "readFiles": [{ "path": "docs/adr/ADR-0027-documentation-canonical-sources.md" }]
     }
   }
 }

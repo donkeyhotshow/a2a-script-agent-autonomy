@@ -2,8 +2,9 @@
   "projectId": "123",
   "sessionId": "456",
   "execute": {
-    "rag-search": {
-      "query": "логінування API автентифікація тести"
+    "message": "Searching the codebase…",
+    "attachments": {
+      "ragQuery": "логінування API автентифікація тести"
     }
   }
 }

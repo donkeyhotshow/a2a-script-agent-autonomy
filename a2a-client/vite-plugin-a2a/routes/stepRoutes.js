@@ -12,6 +12,7 @@ import {
     getActiveAsyncWork,
     attachPromiseMeta,
 } from './utils/web-session-dto.js';
+import { buildWebExecute } from './utils/web-execute-dto.js';
 import * as stepHandlers from './handlers/step-handlers.js';
 import * as stepUtils from './utils/step-utils.js';
 import { proxyToA2AServer } from './proxy/a2a-proxy.js';
@@ -125,19 +126,22 @@ function runViteClientPromisePoll({
                 res.setHeader('Content-Type', 'application/json');
                 const statusStr = promiseStatus.status || (isCompleted ? 'completed' : 'pending');
                 const asyncPending = !(isCompleted || failed);
+                const webExecute = promiseStatus.execute
+                    ? buildWebExecute(promiseStatus.execute)
+                    : null;
                 const payload = includePromiseIdInBody
                     ? {
                           promiseId,
                           status: statusStr,
                           result: safeResult,
-                          execute: promiseStatus.execute || null,
+                          execute: webExecute,
                           completed: isCompleted,
                       }
                     : {
                           asyncPending,
                           status: statusStr,
                           result: safeResult,
-                          execute: promiseStatus.execute || null,
+                          execute: webExecute,
                           completed: isCompleted,
                       };
                 res.end(JSON.stringify(payload));
@@ -265,10 +269,14 @@ export function createStepRoutes({ cwd }) {
             }
             const allSteps = listNewSteps(cwd, sessionId);
             const stepsFrom = allSteps.filter((s) => s >= fromStep);
-            const history = stepsFrom.map((stepNum) => ({
-                step: stepNum,
-                data: loadNewStep(cwd, sessionId, stepNum)
-            }));
+            const history = stepsFrom.map((stepNum) => {
+                const data = loadNewStep(cwd, sessionId, stepNum);
+                if (!data?.execute) return { step: stepNum, data };
+                return {
+                    step: stepNum,
+                    data: { ...data, execute: buildWebExecute(data.execute) },
+                };
+            });
             res.setHeader('Content-Type', 'application/json');
             res.end(JSON.stringify({ history }));
             return;

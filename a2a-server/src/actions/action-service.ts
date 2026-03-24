@@ -5,15 +5,10 @@
  */
 
 import * as path from 'path';
-import {
-    ActionDefinition,
-    ActionMatch,
-    ActionOutcome,
-    ExecutionState,
-    SubAction,
-} from './types.js';
-import {ActionRegistry, actionRegistry} from './action-registry.js';
-import {ActionExecutor, StepResult} from './action-executor.js';
+import { ActionDefinition, ActionMatch, ActionOutcome, ExecutionState, SubAction } from './types.js';
+import { ActionRegistry, actionRegistry } from './action-registry.js';
+import { ActionExecutor, StepResult } from './action-executor.js';
+import { logger } from '../utils/logger.js';
 
 /**
  * Расширенный формат ответа для симуляции
@@ -69,31 +64,15 @@ export class ActionService {
     constructor(registry?: ActionRegistry, executor?: ActionExecutor) {
         this.registry = registry || actionRegistry;
         this.executor = executor || new ActionExecutor();
-        console.log('[ActionService] Создан новый экземпляр сервиса');
     }
 
-    /**
-     * Инициализирует сервис - загружает действия из директории
-     */
     async initialize(): Promise<void> {
-        if (this.initialized) {
-            console.log('[ActionService] Уже инициализирован, пропускаем');
-            return;
-        }
-
-        console.log('[ActionService] Начало инициализации...');
-
+        if (this.initialized) return;
         try {
-            // Определяем директорию с действиями
-            const actionsDirectory = path.resolve(process.cwd(), 'src/actions/definitions');
-
-            // Загружаем действия из директории
-            await this.registry.loadFromDirectory(actionsDirectory);
-
+            await this.registry.loadFromDirectory(path.resolve(process.cwd(), 'src/actions/definitions'));
             this.initialized = true;
-            console.log('[ActionService] Инициализация завершена успешно');
         } catch (error) {
-            console.error('[ActionService] Ошибка инициализации:', error);
+            logger.error('[ActionService] Init error:', error);
             throw error;
         }
     }
@@ -243,7 +222,6 @@ export class ActionService {
      * @param sessionId - идентификатор сессии
      */
     cancelExecution(sessionId: string): void {
-        console.log(`[ActionService] Отмена выполнения для sessionId=${sessionId}`);
         this.executor.cancelExecution(sessionId);
     }
 
@@ -253,29 +231,16 @@ export class ActionService {
      * @returns финальный ответ
      */
     completeExecution(sessionId: string): ActionResponseSimulation {
-        console.log(`[ActionService] Завершение выполнения для sessionId=${sessionId}`);
-
         const state = this.executor.getExecutionState(sessionId);
-        if (!state) {
-            return createActionResponse({
-                outcome: 'completed',
-                message: 'Выполнение уже завершено или не найдено',
-            });
-        }
-
+        if (!state) return createActionResponse({ outcome: 'completed', message: 'Already completed' });
         const action = this.registry.getAction(state.actionId);
         const result = this.executor.completeExecution(sessionId);
-
         return createActionResponse({
             outcome: 'completed',
-            message: `Выполнение завершено. Выполнено шагов: ${result.stepsCompleted}/${result.totalSteps}`,
-            ...(action ? {actionDefinition: action} : {}),
+            message: `Done: ${result.stepsCompleted}/${result.totalSteps} steps`,
+            ...(action ? { actionDefinition: action } : {}),
             executionState: state,
-            metadata: {
-                stepsCompleted: result.stepsCompleted,
-                totalSteps: result.totalSteps,
-                history: result.history,
-            },
+            metadata: { stepsCompleted: result.stepsCompleted, totalSteps: result.totalSteps, history: result.history },
         });
     }
 
@@ -319,51 +284,17 @@ export function createActionResponse(params: {
     action?: ActionMatch;
     actionDefinition?: ActionDefinition;
     executionState?: ExecutionState;
-    /** @deprecated Используйте `execute` с action-type ключами */
     executingAction?: SubAction;
-    /** @deprecated Используйте `execute.form.choices` */
     nextSteps?: SubAction[];
     context?: Record<string, unknown>;
     error?: string;
     metadata?: Record<string, unknown>;
 }): ActionResponseSimulation {
-    const response: ActionResponseSimulation = {
-        outcome: params.outcome,
-        message: params.message,
-    };
-
-    if (params.action) {
-        response.action = params.action;
+    const { outcome, message, ...rest } = params;
+    const response: ActionResponseSimulation = { outcome, message };
+    for (const [k, v] of Object.entries(rest)) {
+        if (v !== undefined) (response as Record<string, unknown>)[k] = v;
     }
-
-    if (params.actionDefinition) {
-        response.actionDefinition = params.actionDefinition;
-    }
-
-    if (params.executionState) {
-        response.executionState = params.executionState;
-    }
-
-    if (params.executingAction) {
-        response.executingAction = params.executingAction;
-    }
-
-    if (params.nextSteps) {
-        response.nextSteps = params.nextSteps;
-    }
-
-    if (params.context) {
-        response.context = params.context;
-    }
-
-    if (params.error) {
-        response.error = params.error;
-    }
-
-    if (params.metadata) {
-        response.metadata = params.metadata;
-    }
-
     return response;
 }
 
@@ -387,11 +318,5 @@ export const actionService = getActionService();
 // Автоматическая инициализация при импорте
 // Запускаем асинхронную инициализацию, не блокируя импорт
 if (typeof process !== 'undefined') {
-    actionService.initialize()
-        .then(() => {
-            console.log('[ActionService] Автоматическая инициализация завершена');
-        })
-        .catch((error) => {
-            console.error('[ActionService] Ошибка автоматической инициализации:', error);
-        });
+    actionService.initialize().catch((e) => logger.error('[ActionService] Auto-init failed', e));
 }

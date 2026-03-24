@@ -25,8 +25,8 @@ import type {RequestType} from './request-processor.interfaces.js';
 const DEFAULT_INTERVAL_MS = 5000;
 let timerId: ReturnType<typeof setInterval> | null = null;
 
-/** Modes selectable from task/router UI; must match dialog-request-processor ACTION_TO_SCHEMA keys. */
-const LLM_PIPELINE_ACTIONS = [
+/** Modes selectable from task/router UI; must match ACTION_TO_SCHEMA keys in dialog-request-processor. */
+export const LLM_PIPELINE_ACTIONS = [
     'dialog',
     'auto-ai',
     'auto-ai-v2',
@@ -36,6 +36,8 @@ const LLM_PIPELINE_ACTIONS = [
     'analyze',
     'task-decomposition',
 ] as const;
+
+export type LlmPipelineAction = (typeof LLM_PIPELINE_ACTIONS)[number];
 
 /**
  * Router follow-up: `result.choice` is the selected mode. Merge into `execution` when still on task/router.

@@ -7,6 +7,7 @@
 import * as path from 'path';
 import {ActionDefinition, ActionMatch} from './types.js';
 import {parseAllActionsFromDirectory} from './action-parser.js';
+import {logger} from '../utils/logger.js';
 
 /**
  * Minimum match score threshold for action matching.
@@ -25,28 +26,19 @@ export class ActionRegistry {
      */
     constructor(directoryPath?: string) {
         this.defaultDirectory = directoryPath || path.resolve(process.cwd(), 'src/actions/definitions');
-        console.log(`[ActionRegistry] Initialized with directory: ${this.defaultDirectory}`);
+        logger.info(`[ActionRegistry] Initialized with directory: ${this.defaultDirectory}`);
     }
 
-    /**
-     * Load all actions from MD directory
-     */
     async loadFromDirectory(dirPath?: string): Promise<void> {
         const directoryPath = dirPath || this.defaultDirectory;
-        console.log(`[ActionRegistry] Loading actions from: ${directoryPath}`);
-
+        logger.info(`[ActionRegistry] Loading actions from: ${directoryPath}`);
         try {
             this.actions.clear();
             const mdActions = await parseAllActionsFromDirectory(directoryPath);
-            console.log(`[ActionRegistry] Loaded ${mdActions.length} actions from MD`);
-
-            for (const action of mdActions) {
-                this.actions.set(action.id, action);
-            }
-
-            console.log(`[ActionRegistry] Total loaded: ${this.actions.size} actions`);
+            for (const action of mdActions) this.actions.set(action.id, action);
+            logger.info(`[ActionRegistry] Loaded ${this.actions.size} actions`);
         } catch (error) {
-            console.error(`[ActionRegistry] Error loading actions:`, error);
+            logger.error(`[ActionRegistry] Error loading actions:`, error);
             throw error;
         }
     }
@@ -109,15 +101,11 @@ export class ActionRegistry {
         }
 
         matches.sort((a, b) => b.matchScore - a.matchScore);
-        console.log(`[ActionRegistry] Found ${matches.length} matching actions for: "${taskDescription.substring(0, 50)}..."`);
         return matches;
     }
 
-    /**
-     * Reload all actions
-     */
     async reload(): Promise<void> {
-        console.log(`[ActionRegistry] Reloading actions from: ${this.defaultDirectory}`);
+        logger.info(`[ActionRegistry] Reloading`);
         await this.loadFromDirectory();
     }
 

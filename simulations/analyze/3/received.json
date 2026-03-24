@@ -2,8 +2,9 @@
   "projectId": "123",
   "sessionId": "456",
   "execute": {
-    "rag-search": {
-      "query": "архітектура бекенд сервіси API слої компоненти"
+    "message": "Searching the codebase…",
+    "attachments": {
+      "ragQuery": "архітектура бекенд сервіси API слої компоненти"
     }
   }
 }

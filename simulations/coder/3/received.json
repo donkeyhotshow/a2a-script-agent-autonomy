@@ -1,9 +1,10 @@
 {
-    "projectId": "123",
-    "sessionId": "456",
-    "execute": {
-      "rag-search": {
-        "query": "система авторизації JWT токени login register"
-      }
+  "projectId": "123",
+  "sessionId": "456",
+  "execute": {
+    "message": "Searching the codebase…",
+    "attachments": {
+      "ragQuery": "система авторизації JWT токени login register"
     }
   }
+}

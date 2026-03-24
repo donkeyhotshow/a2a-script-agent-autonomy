@@ -139,45 +139,31 @@ export function validateActionDefinition(definition: unknown): ValidationResult 
 }
 
 export function validateFormAction(action: unknown): ValidationResult {
-  const result = FormActionSchema.safeParse(action);
-  if (result.success) return { success: true };
-  return { success: false, errors: result.error.errors.map(e => `${e.path.join('.')}: ${e.message}`) };
+  return createActionValidator(FormActionSchema)(action);
 }
 
 export function validateScriptAction(action: unknown): ValidationResult {
-  const result = ScriptActionSchema.safeParse(action);
-  if (result.success) return { success: true };
-  return { success: false, errors: result.error.errors.map(e => `${e.path.join('.')}: ${e.message}`) };
+  return createActionValidator(ScriptActionSchema)(action);
 }
 
 export function validateReadFileAction(action: unknown): ValidationResult {
-  const result = ReadFileActionSchema.safeParse(action);
-  if (result.success) return { success: true };
-  return { success: false, errors: result.error.errors.map(e => `${e.path.join('.')}: ${e.message}`) };
+  return createActionValidator(ReadFileActionSchema)(action);
 }
 
 export function validateWriteFileAction(action: unknown): ValidationResult {
-  const result = WriteFileActionSchema.safeParse(action);
-  if (result.success) return { success: true };
-  return { success: false, errors: result.error.errors.map(e => `${e.path.join('.')}: ${e.message}`) };
+  return createActionValidator(WriteFileActionSchema)(action);
 }
 
 export function validateExecuteCommandAction(action: unknown): ValidationResult {
-  const result = ExecuteCommandActionSchema.safeParse(action);
-  if (result.success) return { success: true };
-  return { success: false, errors: result.error.errors.map(e => `${e.path.join('.')}: ${e.message}`) };
+  return createActionValidator(ExecuteCommandActionSchema)(action);
 }
 
 export function validateMessageAction(action: unknown): ValidationResult {
-  const result = MessageActionSchema.safeParse(action);
-  if (result.success) return { success: true };
-  return { success: false, errors: result.error.errors.map(e => `${e.path.join('.')}: ${e.message}`) };
+  return createActionValidator(MessageActionSchema)(action);
 }
 
 export function validateExecutePayload(payload: unknown): ValidationResult {
-  const result = ExecutePayloadSchema.safeParse(payload);
-  if (result.success) return { success: true };
-  return { success: false, errors: result.error.errors.map(e => `${e.path.join('.')}: ${e.message}`) };
+  return createActionValidator(ExecutePayloadSchema)(payload);
 }
 
 export function validateExecutePayloadDetailed(payload: unknown): ValidationResult {

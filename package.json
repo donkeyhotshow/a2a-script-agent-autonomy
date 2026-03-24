@@ -10,6 +10,9 @@
     ],
     "scripts":  {
                     "dev":  "start-all.bat",
+                    "sim:lint":  "npm --prefix a2a-server run sim:lint --",
+                    "sim:lint:all":  "npm --prefix a2a-server run sim:lint:all --",
+                    "sim:validate":  "npm --prefix a2a-server run sim:validate --",
                     "tester":  "cd a2a-client/tester && npm run start",
                     "tester:install":  "cd a2a-client/tester && npm install",
                     "tester:test":  "cd a2a-client/tester && npm test"

@@ -176,18 +176,20 @@ export async function runSimulationTransform(
   return runTransformPipelineFromFile(transformPath, input, options);
 }
 
-/** Schema name → template file for request transforms (e.g. dialog → dialog-request.md) */
-const SCHEMA_TO_TEMPLATE: Record<string, string> = {
-  dialog: 'dialog-request.md',
-  'auto-ai': 'auto-ai-request.md',
-  coder: 'coder-request.md',
-  analyze: 'analyze-request.md',
-  'fix-vue-imports': '',  // DSL script, no LLM; uses fix-vue-imports-*-request.json
+/**
+ * Schema name → template file override. Convention: `{schema}-request.md`.
+ * Only list schemas that deviate from the convention.
+ */
+const SCHEMA_TO_TEMPLATE_OVERRIDES: Record<string, string> = {
+  'fix-vue-imports': '',           // DSL, no LLM
   'fix-vue-imports-decline': '',
   'fix-laravel-namespaces-and-uses': '',
-  'task-decomposition': 'task-decomposition-request.md',
-  'test-action-flow': 'test-action-flow-request.md',
 };
+
+function schemaToTemplate(schema: string): string {
+  if (schema in SCHEMA_TO_TEMPLATE_OVERRIDES) return SCHEMA_TO_TEMPLATE_OVERRIDES[schema];
+  return `${schema}-request.md`;
+}
 
 /** Simulation name → schema name for prompts/transforms lookup */
 export const SIMULATION_TO_SCHEMA: Record<string, string> = {
@@ -311,7 +313,7 @@ export async function runPromptsTransform(
   let pipeline = JSON.parse(content) as TransformPipeline;
 
   if (type === 'request') {
-    const templateName = SCHEMA_TO_TEMPLATE[schemaName] ?? `${schemaName}-request.md`;
+    const templateName = schemaToTemplate(schemaName);
     pipeline = substitutePipelineVars(pipeline, { TEMPLATE_NAME: templateName });
   }
 

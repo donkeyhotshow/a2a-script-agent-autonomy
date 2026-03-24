@@ -98,45 +98,27 @@ These decision surfaces are on the shortlist for explicit review. Each linked `V
 
 ---
 
-## Index (repo systems)
+## Index (active review systems)
 
 | Folder | Topic |
 |--------|--------|
-| `_template` | Copy for new folders |
-| `client-api-deployment` | Vite `/api/a2a` vs SDK, dev routing, browser `a2a_clientApiUrl` (ADR-0028) |
-| `invoke-sync-async` | `DEFAULT_SYNC_MODE` / per-request `sync` |
-| `web-async-polling` | `GET .../async` vs `promiseId` URL vs SDK gap |
-| `server-auth-mode` | `SKIP_AUTH` vs JWT / split by env |
-| `server-test-mode` | Vitest `TEST_MODE`: mocked, replay, recording, real |
-| `session-storage-layout` | Filesystem step dirs vs DB vs multi-root |
-| `golden-simulations` | `sim:lint` / `sim:validate` / `sim:run` / tiered CI |
-| `rag-stack` | Meilisearch on vs local-fs-only vs hosted; embedding provider (Ollama / OpenAI / Cohere / Voyage) |
-| `llm-provider` | Ollama / AI Hub / remote API / mock; default `OLLAMA_MODEL` vs `qwen3:8b` |
-| `monorepo-dev-launch` | `start-all` vs manual subset vs server-only |
-| `e2e-browser-testing` | Playwright: when to run, target URL, matrix, server lifecycle, CI vs local tuning |
-| `web-session-client-mode` | SessionStore `storage` vs `project` |
-| `client-filesystem-root` | `A2A_CLIENT_STORAGE_DIR` vs home vs repo storage |
-| `server-prompt-transforms` | Bundled transforms vs `PROMPTS_TRANSFORMS_PATH` |
-| `upstream-service-urls` | `A2A_SERVER_URL`, `AI_HUB_URL`, Ollama / Meili ports |
-| `ai-proxy-env-tuning` | Promise TTL, workers, Ollama auto-start, poll timeouts |
-| `workspace-rag-packaging` | `file:` RAG vs registry vs git dependency |
-| `js-test-runners-monorepo` | Vitest vs Jest (`@a2a/rag`); a2a-server Vitest bail / coverage policy |
-| `server-logging` | `LOG_LEVEL`, `LOG_FORMAT`; Winston log dir / boot wipe vs rotation |
-| `server-requests-storage` | `REQUESTS_STORAGE_PATH` vs default `storage/requests` |
-| `simulations-base-path` | `SIMULATIONS_PATH` vs repo `simulations/` |
-| `server-llm-hub-polling` | `LLM_POLL_*` / `POLL_*` in Node daemon |
-| `web-storage-localstorage` | Remember **a2a_storage_mode** vs force default |
-| `vite-vue-bundle-strategy` | External Vue/vue-flow vs full bundle vs prod config |
-| `sdk-http-limits` | CORS, rate limit, file/FS caps on standalone SDK |
 | `agent-rag-chain-limits` | `A2A_AGENT_RAG_CHAIN_MAX`, `A2A_RAG_PROJECT_PATH`, `A2A_PROJECT_PATH` |
+| `golden-simulations` | `sim:lint` / `sim:validate` / `sim:run` / tiered CI |
+| `llm-pipeline-modes` | Which router modes ship (dialog, coder, auto-ai, …) |
+| `sdk-http-limits` | CORS, rate limit, file/FS caps on standalone SDK |
 | `server-action-registry-bootstrap` | Lenient start vs fail-fast if MD actions fail to load |
-| `ts-module-policy` | NodeNext + `.js` imports vs future bundler / dual package |
-| `config-zod-package` | Root `config/` Zod as source of truth vs layered env |
-| `client-tester-cli` | `a2a-client/tester` CLI vs Playwright vs hybrid CI |
+| `server-background-processor` | `REQUEST_PROCESSOR_INTERVAL_MS` (daemon tick) |
 | `server-error-detail-level` | Stack traces off in production (`NODE_ENV`) |
 | `server-filesystem-sandbox` | cwd/tmp/HOME path allowlists for file actions |
-| `server-http-security-profile` | Helmet CSP off, permissive CORS, compression |
-| `server-background-processor` | `REQUEST_PROCESSOR_INTERVAL_MS` (daemon tick) |
-| `llm-pipeline-modes` | Which router modes ship (dialog, coder, auto-ai, …) |
+| `server-llm-hub-polling` | `LLM_POLL_*` / `POLL_*` in Node daemon |
+| `server-logging` | `LOG_LEVEL`, `LOG_FORMAT`; Winston log dir / boot wipe vs rotation |
+| `server-prompt-transforms` | Bundled transforms vs `PROMPTS_TRANSFORMS_PATH` |
+| `server-requests-storage` | `REQUESTS_STORAGE_PATH` vs default `storage/requests` |
+| `simulations-base-path` | `SIMULATIONS_PATH` vs repo `simulations/` |
+| `ts-module-policy` | NodeNext + `.js` imports vs future bundler / dual package |
+| `upstream-service-urls` | `A2A_SERVER_URL`, `AI_HUB_URL`, Ollama / Meili ports |
+| `workspace-rag-packaging` | `file:` RAG vs registry vs git dependency |
+| `client-filesystem-root` | `A2A_CLIENT_STORAGE_DIR` vs home vs repo storage |
+| `session-storage-layout` | Filesystem step dirs vs DB vs multi-root |
 
 Copy `_template/VARIANTS.md` when adding a new system folder.

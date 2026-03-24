@@ -3,6 +3,7 @@
  */
 
 import { listNewSteps, loadNewStep, loadStepFile, loadServerPromise } from '../../storage/newSessions.js';
+import { buildWebExecute } from './web-execute-dto.js';
 
 function isActivePromiseStatus(status) {
     return status === 'pending' || status === 'processing';
@@ -111,13 +112,17 @@ export function toPublicSession(session, includeContext = false) {
     if (!session) return session;
     if (includeContext) return { ...session };
     const { context: _c, promiseId: _omitTransportId, ...rest } = session;
-    return {
+    const base = {
         ...rest,
         asyncPending:
             session.asyncPending ??
             !!(session.promiseId && isActivePromiseStatus(session.promiseStatus)),
         promiseStatus: session.promiseStatus ?? null,
     };
+    if (rest.execute !== undefined) {
+        base.execute = buildWebExecute(rest.execute);
+    }
+    return base;
 }
 
 /**

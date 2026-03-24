@@ -483,6 +483,38 @@
   word-wrap: break-word;
 }
 
+.task-flow-llm-message {
+  border-top: 1px solid var(--color-border);
+  padding-top: 10px;
+  margin-top: 6px;
+}
+
+.task-flow-attachments {
+  border-top: 1px solid var(--color-border);
+  margin-top: 10px;
+  padding: 10px 16px 14px;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.task-flow-attachments-title {
+  font-weight: 600;
+  color: var(--color-text-muted);
+  margin-bottom: 6px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.task-flow-attachments ul {
+  margin: 4px 0 0 1rem;
+  padding: 0;
+}
+
+.task-flow-attachments-rag code {
+  font-size: 12px;
+}
+
 /* Client Action */
 .task-flow-client-action {
   display: flex;

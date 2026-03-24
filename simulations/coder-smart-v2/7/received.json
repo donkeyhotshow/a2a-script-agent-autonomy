@@ -2,8 +2,9 @@
   "projectId": "123",
   "sessionId": "456",
   "execute": {
-    "read-file": {
-      "path": ".carrier/tasks/task-1.md"
+    "message": "Reading files…",
+    "attachments": {
+      "readFiles": [{ "path": ".carrier/tasks/task-1.md" }]
     }
   }
 }

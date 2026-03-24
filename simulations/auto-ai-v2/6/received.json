@@ -2,9 +2,9 @@
   "projectId": "123",
   "sessionId": "456",
   "execute": {
-    "write-file": {
-      "path": "src/routes/health.js",
-      "content": "const express = require('express');\nconst router = express.Router();\nrouter.get('/health', (_req, res) => res.json({ ok: true }));\nmodule.exports = router;\n"
+    "message": "Updating files…",
+    "attachments": {
+      "writtenFiles": [{ "path": "src/routes/health.js" }]
     }
   }
 }

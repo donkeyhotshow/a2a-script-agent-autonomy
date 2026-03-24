@@ -5,6 +5,23 @@
 
 import { isValidSessionId } from '../middleware/validators.js';
 import { buildStepRecord, mergeResponseContext } from '../utils/builders.js';
+import { buildWebExecute } from '../utils/web-execute-dto.js';
+import {
+    listNewSteps,
+    loadNewStep,
+    loadNewSession,
+    saveNewSession,
+    getNewStepDir,
+    saveNewStep,
+    saveServerResponse,
+    saveServerPromise,
+    saveClientResult,
+    saveRequestToServer,
+    loadServerResponse,
+    loadServerPromise,
+    loadStepFile,
+    getNewSessionLatestStep,
+} from '../../storage/newSessions.js';
 
 export function handleListSteps(sessionId, cwd) {
     if (!isValidSessionId(sessionId)) throw new Error('Invalid session ID');
@@ -15,7 +32,8 @@ export function handleStepDetail(sessionId, stepNum, cwd) {
     if (!isValidSessionId(sessionId)) throw new Error('Invalid session ID');
     const step = loadNewStep(cwd, sessionId, stepNum);
     if (!step) throw new Error('Step not found');
-    return step;
+    if (!step.execute) return step;
+    return { ...step, execute: buildWebExecute(step.execute) };
 }
 
 export function handlePostStep(sessionId, body, cwd) {
@@ -36,6 +54,21 @@ export function handlePostStep(sessionId, body, cwd) {
     return { success: true };
 }
 
-// Export all fs utils for stepUtils.js
-export { loadNewSession, saveNewSession, getNewStepDir, listNewSteps, loadNewStep, saveNewStep, saveServerResponse, saveServerPromise, saveClientResult, saveRequestToServer, loadServerResponse, loadServerPromise, loadStepFile, getNewSessionLatestStep } from '../../storage/newSessions.js';
+// Re-export fs utils for stepUtils.js
+export {
+    loadNewSession,
+    saveNewSession,
+    getNewStepDir,
+    listNewSteps,
+    loadNewStep,
+    saveNewStep,
+    saveServerResponse,
+    saveServerPromise,
+    saveClientResult,
+    saveRequestToServer,
+    loadServerResponse,
+    loadServerPromise,
+    loadStepFile,
+    getNewSessionLatestStep,
+} from '../../storage/newSessions.js';
 

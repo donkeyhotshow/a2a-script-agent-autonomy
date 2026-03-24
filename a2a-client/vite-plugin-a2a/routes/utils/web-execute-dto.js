@@ -1,0 +1,107 @@
+/**
+ * Web UI execute DTO: drop client-only action payloads (rag-search, read-file, …)
+ * and surface user-facing fields: message, optional llmMessage, attachments.
+ */
+
+const INTERNAL_CLIENT_ACTION_KEYS = new Set([
+    'rag-search',
+    'read-file',
+    'write-file',
+    'script',
+    'execute-command',
+]);
+
+/**
+ * @param {unknown} execute - raw execute from A2A / step record
+ * @returns {Record<string, unknown>|null}
+ */
+export function buildWebExecute(execute) {
+    if (execute == null) return null;
+    if (typeof execute !== 'object' || Array.isArray(execute)) {
+        return null;
+    }
+
+    const raw = execute;
+    const ex = { ...raw };
+
+    const hadRag = raw['rag-search'] && typeof raw['rag-search'] === 'object';
+    const ragQuery =
+        hadRag && typeof raw['rag-search'].query === 'string' ? raw['rag-search'].query.trim() : '';
+
+    const readFiles = collectReadFileEntries(raw['read-file']);
+    const writePayload = raw['write-file'];
+    const writePath =
+        writePayload && typeof writePayload === 'object' && typeof writePayload.path === 'string'
+            ? writePayload.path
+            : '';
+    const hadWrite = Boolean(writePath);
+    const hadScript = Boolean(raw.script);
+    const cmdPayload = raw['execute-command'];
+    const hadCmd = Boolean(cmdPayload && typeof cmdPayload === 'object');
+    const shellCommand =
+        hadCmd && typeof cmdPayload.command === 'string' ? cmdPayload.command.trim() : '';
+
+    for (const k of INTERNAL_CLIENT_ACTION_KEYS) {
+        delete ex[k];
+    }
+    delete ex.debug;
+
+    const attachments = {};
+    if (readFiles.length) attachments.readFiles = readFiles;
+    if (hadRag && ragQuery) attachments.ragQuery = ragQuery;
+    if (hadWrite) attachments.writtenFiles = [{ path: writePath }];
+    if (hadScript) attachments.pendingClientAction = 'script';
+    if (hadCmd) attachments.pendingClientAction = 'execute-command';
+    if (shellCommand) attachments.shellCommand = shellCommand;
+
+    const priorAttach =
+        raw.attachments && typeof raw.attachments === 'object' && !Array.isArray(raw.attachments)
+            ? raw.attachments
+            : {};
+    if (Object.keys(attachments).length) {
+        ex.attachments = { ...priorAttach, ...attachments };
+    } else if (Object.keys(priorAttach).length) {
+        ex.attachments = { ...priorAttach };
+    }
+
+    const hasForm = ex.form && typeof ex.form === 'object';
+    const hasMessage =
+        ex.message !== undefined &&
+        ex.message !== null &&
+        (typeof ex.message === 'string'
+            ? ex.message.trim().length > 0
+            : typeof ex.message === 'object');
+
+    if (!hasForm && !hasMessage) {
+        const parts = [];
+        if (hadRag) parts.push('Searching the codebase');
+        if (readFiles.length) parts.push('Reading files');
+        if (hadWrite) parts.push('Updating files');
+        if (hadScript) parts.push('Running script');
+        if (hadCmd) parts.push('Running command');
+        ex.message = parts.length ? `${parts.join(' · ')}…` : 'Working…';
+    }
+
+    return ex;
+}
+
+/**
+ * @param {unknown} readFilePayload
+ * @returns {{ path: string }[]}
+ */
+function collectReadFileEntries(readFilePayload) {
+    const out = [];
+    if (!readFilePayload || typeof readFilePayload !== 'object') return out;
+    const p = readFilePayload.path;
+    if (typeof p === 'string' && p.trim()) out.push({ path: p.trim() });
+    const paths = readFilePayload.paths;
+    if (Array.isArray(paths)) {
+        for (const x of paths) {
+            if (typeof x === 'string' && x.trim()) out.push({ path: x.trim() });
+            else if (x && typeof x === 'object' && typeof x.path === 'string' && x.path.trim()) {
+                out.push({ path: x.path.trim() });
+            }
+        }
+    }
+    return out;
+}
