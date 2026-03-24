@@ -88,8 +88,8 @@ These scripts follow the pattern from `docs/troubleshooting/standardize-stop-scr
 │  5173* │ Web UI            │ Vite + Vue (5173-5183)        │
 │  5432* │ PostgreSQL        │ pgvector extension (5432-5442)│
 │  6379* │ Redis             │ Caching & queues (6379-6389)  │
-│ 11434* │ AI Proxy          │ Python Flask (11434-11444)    │
-│ 11435* │ Ollama            │ LLM inference (11435-11445)   │
+│ 11434* │ Ollama            │ LLM inference (11434-11444)    │
+│ 11435* │ AI Proxy          │ Python Flask (11435-11445)   │
 └─────────────────────────────────────────────────────────────┘
 * Actual ports may differ if defaults are busy. Check `.env.local` after start.
 ```

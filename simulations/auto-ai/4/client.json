@@ -1,0 +1,25 @@
+{
+  "projectId": "123",
+  "sessionId": "456",
+  "result": {
+    "rag-search": {
+      "query": "express app API routes entry point",
+      "results": [
+        {
+          "file": "src/app.js",
+          "score": 0.92,
+          "snippet": "const express = require('express');\nconst app = express();\napp.use('/api', apiRoutes);"
+        },
+        {
+          "file": "src/routes/index.js",
+          "score": 0.88,
+          "snippet": "const router = require('express').Router();"
+        }
+      ],
+      "files": [
+        "src/app.js",
+        "src/routes/index.js"
+      ]
+    }
+  }
+}

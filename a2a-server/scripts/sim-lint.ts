@@ -16,7 +16,7 @@ const __dirname = join(__filename, '..');
 // ============================================
 
 const SIMULATIONS_DIR = join(__dirname, '..', '..', 'simulations');
-const REQUIRED_FILES = ['request.json', 'response.json'];
+const REQUIRED_FILES = ['request.json', 'response.json', 'client.json', 'received.json'];
 const OPTIONAL_FILES = ['server-transforms-request.json', 'server-transforms-response.json'];
 
 // Допустимые типы execute
@@ -412,22 +412,22 @@ function lintSimulation(simPath: string, simName: string, fix: boolean): Simulat
             }
         }
     } else {
-        // Has steps - check if step 1 has the required files
-        const step1Path = join(simPath, '1');
-        if (existsSync(step1Path)) {
-            const step1RequiredErrors: LintError[] = [];
+        // Numbered steps: any folder with request.json must have the full step bundle
+        for (const entry of readdirSync(simPath, {withFileTypes: true})) {
+            if (!entry.isDirectory() || !/^\d+$/.test(entry.name)) continue;
+            const stepPath = join(simPath, entry.name);
+            if (!existsSync(join(stepPath, 'request.json'))) continue;
             for (const filename of REQUIRED_FILES) {
-                const filePath = join(step1Path, filename);
+                const filePath = join(stepPath, filename);
                 if (!existsSync(filePath)) {
-                    step1RequiredErrors.push({
-                        path: `1/${filename}`,
-                        message: `Required file missing: 1/${filename}`,
+                    result.errors.push({
+                        path: `${entry.name}/${filename}`,
+                        message: `Required file missing: ${entry.name}/${filename}`,
                         severity: 'error',
                         fixable: false
                     });
                 }
             }
-            result.errors.push(...step1RequiredErrors);
         }
     }
 

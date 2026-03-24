@@ -1,0 +1,10 @@
+{
+  "projectId": "123",
+  "sessionId": "456",
+  "result": {
+    "read-file": {
+      "path": "src/app.js",
+      "content": "const express = require('express');\nconst apiRoutes = require('./routes');\nconst app = express();\napp.use(express.json());\napp.use('/api', apiRoutes);\nconst PORT = process.env.PORT || 3000;\napp.listen(PORT, () => console.log(`Listening on ${PORT}`));\nmodule.exports = app;"
+    }
+  }
+}

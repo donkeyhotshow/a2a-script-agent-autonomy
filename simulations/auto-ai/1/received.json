@@ -1,0 +1,23 @@
+{
+  "projectId": "123",
+  "sessionId": "456",
+  "execute": {
+    "form": {
+      "title": "Выберите действие",
+      "choices": [
+        {
+          "id": "auto-ai",
+          "label": "Auto-AI — full agent"
+        },
+        {
+          "id": "llm_generation",
+          "label": "AI Action Generator"
+        },
+        {
+          "id": "task_decomposition",
+          "label": "Task Decomposition"
+        }
+      ]
+    }
+  }
+}

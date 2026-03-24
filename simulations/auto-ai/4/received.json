@@ -1,0 +1,9 @@
+{
+  "projectId": "123",
+  "sessionId": "456",
+  "execute": {
+    "list-directory": {
+      "path": "src/"
+    }
+  }
+}

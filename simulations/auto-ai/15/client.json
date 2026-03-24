@@ -1,0 +1,11 @@
+{
+  "projectId": "123",
+  "sessionId": "456",
+  "result": {
+    "write-file": {
+      "path": ".carrier/reports/refactor-report.md",
+      "success": true,
+      "bytesWritten": 180
+    }
+  }
+}

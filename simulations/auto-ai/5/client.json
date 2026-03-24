@@ -1,0 +1,23 @@
+{
+  "projectId": "123",
+  "sessionId": "456",
+  "result": {
+    "list-directory": {
+      "path": "src/",
+      "entries": [
+        {
+          "name": "app.js",
+          "type": "file"
+        },
+        {
+          "name": "routes",
+          "type": "dir"
+        },
+        {
+          "name": "middleware",
+          "type": "dir"
+        }
+      ]
+    }
+  }
+}

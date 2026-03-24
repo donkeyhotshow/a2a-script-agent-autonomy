@@ -154,6 +154,8 @@ interface FileTypeConfig {
 const FILE_TYPE_CONFIGS: {[key: string]: FileTypeConfig} = {
     'request.json': {schema: 'server-invoke-request.schema.json', required: true},
     'response.json': {schema: 'server-invoke-response-execute.schema.json', required: true},
+    'client.json': {schema: null, required: true},
+    'received.json': {schema: null, required: true},
     'server-transforms-request.json': {schema: 'server-transform.schema.json', required: false},
     'server-transforms-response.json': {schema: 'server-transform.schema.json', required: false},
 };
@@ -207,11 +209,11 @@ function validateFile(filePath: string, filename: string): FileValidationResult 
 
     // Определение типа файла и валидация
     const fileConfig = detectFileType(filename);
-    if (fileConfig?.schema) {
+    if (typeof fileConfig?.schema === 'string' && fileConfig.schema.length > 0) {
         const validationResult = validateJsonAgainstSchema(data, fileConfig.schema);
         result.valid = validationResult.valid;
         result.errors = validationResult.errors;
-    } else {
+    } else if (!fileConfig) {
         result.warnings.push(`No schema defined for: ${filename}`);
     }
 
@@ -244,7 +246,7 @@ function validateSimulation(simPath: string, simName: string): SimulationValidat
     }
 
     // Валидация каждого файла
-    const requiredFiles = ['request.json', 'response.json'];
+    const requiredFiles = ['request.json', 'response.json', 'client.json', 'received.json'];
     const optionalFiles = ['server-transforms-request.json', 'server-transforms-response.json'];
     const allFiles = [...requiredFiles, ...optionalFiles];
 
@@ -360,6 +362,7 @@ function printHelp() {
 Валидируемые файлы:
   - request.json              → server-invoke-request.schema.json
   - response.json             → server-invoke-response-execute.schema.json
+  - client.json, received.json → только JSON (контракт Web ↔ Client API)
   - server-transforms-*.json  → server-transform.schema.json
 `);
 }

@@ -14,6 +14,92 @@ import {BaseRequestProcessor, type RequestType} from './base-processor.js';
 import {requestService} from '../request/request.service.js';
 import {fetchLlmResponse, pollReadyThenFetch} from '../../../daemon/llm-hub-poll.js';
 
+type DialogHistoryEntry = { role: string; message: string };
+
+/** Prior turns: flat `history` (invoke/client) or nested `context.history`. */
+function getExistingDialogHistory(ctx: Record<string, unknown>): DialogHistoryEntry[] {
+    const top = ctx['history'];
+    if (Array.isArray(top)) return top as DialogHistoryEntry[];
+    const nested = (ctx['context'] as Record<string, unknown> | undefined)?.['history'];
+    if (Array.isArray(nested)) return nested as DialogHistoryEntry[];
+    return [];
+}
+
+/** User line for this step — prefer result.message, then top-level message (not task/session label). */
+function getDialogUserMessage(ctx: Record<string, unknown>): string | undefined {
+    const r = ctx['result'] as Record<string, unknown> | undefined;
+    const fromResult = r?.['message'];
+    if (typeof fromResult === 'string' && fromResult.length > 0) return fromResult;
+    const msg = ctx['message'];
+    if (typeof msg === 'string' && msg.length > 0) return msg;
+    return undefined;
+}
+
+function parseLlmResponseFields(responseMd: string): {
+    llmMessage: string | undefined;
+    llmForm: Record<string, unknown> | undefined;
+} {
+    let llmMessage: string | undefined;
+    let llmForm: Record<string, unknown> | undefined;
+    if (responseMd.trim().startsWith('{')) {
+        try {
+            const llmJson = JSON.parse(responseMd.trim()) as Record<string, unknown>;
+            const llmExecute = llmJson.execute as Record<string, unknown> | undefined;
+            llmMessage = (llmJson.message ?? llmJson.response ?? llmExecute?.message) as string | undefined;
+            llmForm = llmExecute?.form as Record<string, unknown> | undefined;
+        } catch (e) {
+            logger.warn('[DialogRequestProcessor] Failed to parse JSON response, using raw text', e);
+            llmMessage = responseMd.trim();
+        }
+    } else {
+        llmMessage = responseMd.trim();
+    }
+    return {llmMessage, llmForm};
+}
+
+function buildDialogProcessResultFromContext(
+    ctx: Record<string, unknown>,
+    execute: Record<string, unknown> | undefined,
+    responseMd: string,
+    recovered: boolean
+): ProcessResult {
+    const {llmMessage, llmForm} = parseLlmResponseFields(responseMd);
+    const assistantMessage = llmMessage ?? (execute?.message as string | undefined);
+    const existingHistory = getExistingDialogHistory(ctx);
+    const userMessage = getDialogUserMessage(ctx);
+    const newHistory = [...existingHistory];
+    if (userMessage) {
+        const last = newHistory[newHistory.length - 1];
+        if (!last || last.role !== 'user' || last.message !== userMessage) {
+            newHistory.push({role: 'user', message: userMessage});
+        }
+    }
+    if (assistantMessage) {
+        newHistory.push({role: 'assistant', message: assistantMessage});
+    }
+    const defaultForm = {
+        input: [{name: 'message', type: 'text', label: 'Повідомлення', required: true}],
+    };
+    const msg = recovered ? 'Dialog response (recovered)' : 'Dialog response';
+    if (assistantMessage) {
+        return {
+            outcome: 'completed',
+            message: msg,
+            context: {...ctx, history: newHistory},
+            execute: {
+                message: assistantMessage,
+                form: llmForm ?? (execute?.form as Record<string, unknown> | undefined) ?? defaultForm,
+            },
+        } as ProcessResult;
+    }
+    return {
+        outcome: 'completed',
+        message: msg,
+        context: {...ctx, history: newHistory},
+        execute: execute ?? {form: defaultForm},
+    } as ProcessResult;
+}
+
 /**
  * action → transformSchema for LLM pipeline.
  */
@@ -52,71 +138,7 @@ async function runResponseTransform(
         );
         const output = responseTransformResult.success ? responseTransformResult.output : responseData;
         const execute = (output as Record<string, unknown>)?.execute as Record<string, unknown> | undefined;
-        const contextOut = (output as Record<string, unknown>)?.context as Record<string, unknown> | undefined;
-        
-        // Fallback: if execute.message is missing, try to extract from LLM response
-        // This works for both JSON and plain text responses from LLM
-        let llmMessage: string | undefined;
-        let llmForm: Record<string, unknown> | undefined;
-        
-        // Try to parse LLM response as JSON first
-        if (responseMd.trim().startsWith('{')) {
-            try {
-                const llmJson = JSON.parse(responseMd.trim());
-                const llmExecute = llmJson.execute as Record<string, unknown> | undefined;
-                // Try multiple paths: llmJson.message, llmJson.execute.message, llmJson.response
-                llmMessage = llmJson.message ?? llmJson.response ?? llmExecute?.message;
-                llmForm = llmExecute?.form as Record<string, unknown> | undefined;
-            } catch (e) {
-                // JSON parse failed, try as plain text
-                logger.warn('[DialogRequestProcessor] Failed to parse JSON response at line 88, using raw text', e);
-                llmMessage = responseMd.trim();
-            }
-        } else {
-            // Not JSON - treat as plain text response from LLM
-            llmMessage = responseMd.trim();
-        }
-        
-        // Get existing history from ctx.context
-        const ctxContext = ctx['context'] as Record<string, unknown> | undefined;
-        const existingHistory = (ctxContext?.history ?? []) as Array<{role: string; message: string}>;
-        
-        // Get user message from ctx.result
-        const ctxResult = ctx['result'] as Record<string, unknown> | undefined;
-        const userMessage = ctxResult?.message as string | undefined;
-        
-        // Get assistant message from LLM response (or from execute if already set)
-        const assistantMessage = llmMessage ?? (execute?.message as string | undefined);
-        
-        // Build new history by appending user and assistant messages
-        const newHistory = [...existingHistory];
-        if (userMessage) {
-            newHistory.push({ role: 'user', message: userMessage });
-        }
-        if (assistantMessage) {
-            newHistory.push({ role: 'assistant', message: assistantMessage });
-        }
-        
-        // If we have a message from LLM or execute, return with history
-        if (assistantMessage) {
-            return {
-                outcome: 'completed',
-                message: 'Dialog response',
-                context: { ...ctx, history: newHistory },
-                execute: {
-                    message: assistantMessage,
-                    form: llmForm ?? (execute?.form as Record<string, unknown> | undefined) ?? {input: [{name: 'message', type: 'text', label: 'Повідомлення', required: true}]},
-                },
-            } as ProcessResult;
-        }
-        
-        // Fallback: return with history even if no message (for initial dialog step)
-        return {
-            outcome: 'completed',
-            message: 'Dialog response',
-            context: { ...ctx, history: newHistory },
-            execute: execute ?? {form: {input: [{name: 'message', type: 'text', label: 'Повідомлення', required: true}]}},
-        } as ProcessResult;
+        return buildDialogProcessResultFromContext(ctx, execute, responseMd, false);
     } catch (err) {
         logger.error('[DialogRequestProcessor] Transform error', { error: err });
         return null;
@@ -152,12 +174,16 @@ export class DialogRequestProcessor extends BaseRequestProcessor {
     }
 
     protected async doProcess(request: RequestContext): Promise<ProcessResult> {
-        const {promiseId, context} = request;
-        const ctx = { ...context };
-        // Normalize: use task/message as result.message for LLM when result.message missing (e.g. ai_action follow-up)
-        const result = (ctx['result'] as Record<string, unknown>) ?? {};
+        const {promiseId, context, message: requestMessage} = request;
+        const ctx = {...context} as Record<string, unknown>;
+        let result = (ctx['result'] as Record<string, unknown>) ?? {};
+        if (!result.message && requestMessage) {
+            result = {...result, message: requestMessage};
+            ctx['result'] = result;
+        }
+        // Normalize: use task/message as result.message for LLM when result.message still missing (e.g. ai_action follow-up)
         if (!result.message && (ctx['task'] || ctx['message'])) {
-            ctx['result'] = { ...result, message: ctx['task'] ?? ctx['message'] };
+            ctx['result'] = {...result, message: ctx['task'] ?? ctx['message']};
         }
         const schema = resolveTransformSchema(ctx);
         if (!schema) {
@@ -271,69 +297,7 @@ export async function recoverDialogFromLlmPromise(
         );
         const output = responseTransformResult.success ? responseTransformResult.output : responseData;
         const execute = (output as Record<string, unknown>)?.execute as Record<string, unknown> | undefined;
-        
-        // Fallback: if execute.message is missing, try to extract from LLM response
-        // This mirrors the logic in runResponseTransform
-        let llmMessage: string | undefined;
-        let llmForm: Record<string, unknown> | undefined;
-        
-        // Try to parse LLM response as JSON first
-        if (responseMd.trim().startsWith('{')) {
-            try {
-                const llmJson = JSON.parse(responseMd.trim());
-                const llmExecute = llmJson.execute as Record<string, unknown> | undefined;
-                llmMessage = llmJson.message ?? llmJson.response ?? llmExecute?.message;
-                llmForm = llmExecute?.form as Record<string, unknown> | undefined;
-            } catch (err) {
-                // JSON parse failed, try as plain text
-                logger.warn('Failed to parse JSON response, using raw text', err);
-                llmMessage = responseMd.trim();
-            }
-        } else {
-            // Not JSON - treat as plain text response from LLM
-            llmMessage = responseMd.trim();
-        }
-        
-        // Get existing history from ctx.context
-        const ctxContext = ctx['context'] as Record<string, unknown> | undefined;
-        const existingHistory = (ctxContext?.history ?? []) as Array<{role: string; message: string}>;
-        
-        // Get user message from ctx.result
-        const ctxResult = ctx['result'] as Record<string, unknown> | undefined;
-        const userMessage = ctxResult?.message as string | undefined;
-        
-        // Get assistant message from LLM response (or from execute if already set)
-        const assistantMessage = llmMessage ?? (execute?.message as string | undefined);
-        
-        // Build new history by appending user and assistant messages
-        const newHistory = [...existingHistory];
-        if (userMessage) {
-            newHistory.push({ role: 'user', message: userMessage });
-        }
-        if (assistantMessage) {
-            newHistory.push({ role: 'assistant', message: assistantMessage });
-        }
-        
-        // Return with history and proper execute structure
-        if (assistantMessage) {
-            return {
-                outcome: 'completed',
-                message: 'Dialog response (recovered)',
-                context: { ...ctx, history: newHistory },
-                execute: {
-                    message: assistantMessage,
-                    form: llmForm ?? (execute?.form as Record<string, unknown> | undefined) ?? {input: [{name: 'message', type: 'text', label: 'Повідомлення', required: true}]},
-                },
-            } as ProcessResult;
-        }
-        
-        // Fallback: return with history even if no message
-        return {
-            outcome: 'completed',
-            message: 'Dialog response (recovered)',
-            context: { ...ctx, history: newHistory },
-            execute: execute ?? {form: {input: [{name: 'message', type: 'text', label: 'Повідомлення', required: true}]}},
-        } as ProcessResult;
+        return buildDialogProcessResultFromContext(ctx, execute, responseMd, true);
     } catch (err) {
         logger.error('Recovery function failed', err);
         return null;

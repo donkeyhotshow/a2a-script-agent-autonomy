@@ -12,6 +12,7 @@
 - Якщо `actionRegistry` порожній — LLM не викликається, повертається fallback
 - `fix-vue-imports` як action зареєстрований в реєстрі? → перевірити `action-registry.ts`
 - Відповідь роутера: `context.execution.step = "router"` + `execute.form.choices` — відповідає `dialog/1/response.json` ✓
+- `loadFromDirectory` ніколи не викликається (в `index.ts` і в процесі запуску `ActionRegistry`), тому ретельно перевірити, де реєстрація має відбуватися та чи потрібен lazy load.
 
 ## Дії
 

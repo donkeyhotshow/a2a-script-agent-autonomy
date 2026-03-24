@@ -27,10 +27,12 @@ ISSUE 9 визначає стратегію context через симуляці�
   "scratchpad": { "read_app_js": true, "health_route_written": true },
   "history": [
     { "role": "system", "message": "Read src/app.js (142 lines)" },
-    { "role": "assistant", "message": "Writing health route.", "action": "write-file" }
+    { "role": "system", "message": "Wrote health route (write-file)" }
   ]
 }
 ```
+
+History entries should stay short, system-level descriptions of tool results (see ISSUE 6). Assistant messages with full payloads should not be kept in history, only in `context.files` or other tool-specific fields.
 
 ## LLM команди для scratchpad (мінімум вихідних токенів)
 
@@ -44,6 +46,8 @@ ISSUE 9 визначає стратегію context через симуляці�
 ## RAG — прийняте рішення
 
 Пишемо симуляцію з припущеннями про RAG (пагінація є, базові фільтри є). Якщо після аудиту виявиться що щось не підтримується — коригуємо симуляцію. Аудит RAG не блокує переробку.
+
+Симуляція використовує ключ `execute["rag-search"]` (з дефісом), тож клієнт має перевіряти саме цей стиль ключа при реалізації автоматичного циклу (ISSUE 8b / ROUND3).
 
 ## Дії
 

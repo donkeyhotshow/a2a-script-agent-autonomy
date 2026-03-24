@@ -1,0 +1,10 @@
+{
+  "projectId": "123",
+  "sessionId": "456",
+  "result": {
+    "read-file": {
+      "path": "tests/api.test.js",
+      "content": "const request = require('supertest');\nconst app = require('../src/app');\ndescribe('API routes', () => {\n  it('GET /api/users', async () => { const r = await request(app).get('/api/users'); expect(r.status).toBe(200); });\n});"
+    }
+  }
+}

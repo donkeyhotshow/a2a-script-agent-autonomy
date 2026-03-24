@@ -1,4 +1,7 @@
 {
-    "task": "диалог",
-    "projectId": "123"
+    "projectId": "123",
+    "sessionId":"456",
+    "result":{
+        "message":"диалог"
+    }
 }

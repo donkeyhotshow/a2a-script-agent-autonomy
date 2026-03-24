@@ -282,6 +282,32 @@ function getTransformResponseTemplate(): string {
     }, null, 2);
 }
 
+/** Web → Client API — same envelope as `simulations/dialog/*` (projectId + sessionId + result). */
+function clientJsonFromInvokeRequest(req: Record<string, unknown>): string {
+    const out: Record<string, unknown> = {projectId: '123', sessionId: '456'};
+    if (typeof req.task === 'string') {
+        out.result = {message: req.task};
+    } else if (req.result !== undefined) {
+        out.result = req.result;
+    } else {
+        const ctx = req.context as Record<string, unknown> | undefined;
+        if (ctx?.result !== undefined) out.result = ctx.result;
+    }
+    return JSON.stringify(out, null, 2);
+}
+
+/** Client API → Web: `execute` mirrors server response (top-level or under context) */
+function receivedJsonFromServerResponse(resp: Record<string, unknown>): string {
+    const base: Record<string, unknown> = {projectId: '123', sessionId: '456'};
+    const ex =
+        resp.execute ??
+        (typeof resp.context === 'object' && resp.context !== null
+            ? (resp.context as Record<string, unknown>).execute
+            : undefined);
+    if (ex !== undefined && ex !== null) base.execute = ex;
+    return JSON.stringify(base, null, 2);
+}
+
 // ============================================
 // Утилиты
 // ============================================
@@ -443,40 +469,30 @@ function main() {
         const isLast = i === args.steps;
         const actionName = args.name;
         
+        let requestBody: string;
+        let responseBody: string;
+
         if (isFirst) {
-            // Первый шаг - только task
-            writeFile(
-                join(stepPath, 'request.json'),
-                getFirstRequestTemplate('описание задачи'),
-                args.force
-            );
+            requestBody = getFirstRequestTemplate('описание задачи');
+            responseBody = getFirstResponseTemplate(args.type, actionName);
         } else {
-            // Последующие шаги - context + result (action-key shape)
-            writeFile(
-                join(stepPath, 'request.json'),
-                getStepRequestTemplate(true, actionName),
-                args.force
-            );
+            requestBody = getStepRequestTemplate(true, actionName);
+            responseBody = getStepResponseTemplate(!isLast, actionName);
         }
 
-        // response.json
-        const hasMoreSteps = !isLast;
-        
-        if (isFirst) {
-            // Первый ответ - execute.form.choices
-            writeFile(
-                join(stepPath, 'response.json'),
-                getFirstResponseTemplate(args.type, actionName),
-                args.force
-            );
-        } else {
-            // Последующие ответы - execute с типом действия
-            writeFile(
-                join(stepPath, 'response.json'),
-                getStepResponseTemplate(hasMoreSteps, actionName),
-                args.force
-            );
-        }
+        writeFile(join(stepPath, 'request.json'), requestBody, args.force);
+        writeFile(join(stepPath, 'response.json'), responseBody, args.force);
+
+        writeFile(
+            join(stepPath, 'client.json'),
+            clientJsonFromInvokeRequest(JSON.parse(requestBody) as Record<string, unknown>),
+            args.force
+        );
+        writeFile(
+            join(stepPath, 'received.json'),
+            receivedJsonFromServerResponse(JSON.parse(responseBody) as Record<string, unknown>),
+            args.force
+        );
 
         // server-transforms файлы (опционально)
         if (args.withTransforms && isFirst) {

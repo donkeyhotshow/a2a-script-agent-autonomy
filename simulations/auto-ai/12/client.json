@@ -1,0 +1,11 @@
+{
+  "projectId": "123",
+  "sessionId": "456",
+  "result": {
+    "write-file": {
+      "path": "tests/api.test.js",
+      "success": true,
+      "bytesWritten": 280
+    }
+  }
+}

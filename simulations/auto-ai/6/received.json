@@ -1,0 +1,9 @@
+{
+  "projectId": "123",
+  "sessionId": "456",
+  "execute": {
+    "read-file": {
+      "path": "src/routes/index.js"
+    }
+  }
+}
