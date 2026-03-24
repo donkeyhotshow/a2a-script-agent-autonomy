@@ -14,7 +14,19 @@ Checkpoint: dialog in `a2a-client/web` against the Vite **storage-mode** Client 
 
 - **`execute.message`** — status text (and optional **`execute.llmMessage`**).
 - **`execute.form`** — unchanged when the server sent a form.
-- **`execute.attachments`** — hints only (`readFiles`, `writtenFiles`, `ragQuery`, `shellCommand`, `listDirectoryPath`, `grepPattern`, …).
+- **`execute.attachments`** — hints for the UI to reconstruct the activity log without raw protocol data.
+
+### `execute.attachments` Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `readFiles` | `Array<{path}>` | List of paths from `read-file` action |
+| `writtenFiles` | `Array<{path}>` | List of paths from `write-file` action |
+| `ragQuery` | `string` | The search query used in `rag-search` |
+| `shellCommand` | `string` | The command string from `execute-command` |
+| `listDirectoryPath`| `string` | The path from `list-directory` |
+| `grepPattern` | `string` | Search pattern from `grep-search` |
+| `pendingClientAction`| `string` | Label of the hidden action (`script`, `run-script`, etc.) |
 
 The **server protocol** and simulation **`response.json`** still use a **single action key** under `execute`, and any **`result`** (if present) must follow the **action-key shape** (e.g., `{ "read-file": { ... } }`). Goldens for **`received.json`** match this Web DTO (see `simulations/SCHEMA.md`). With **`?includeContext=1`**, the session payload may include full internal `context` (including **`workbench.sections`**) for debugging; prefer not to rely on raw `execute` keys in the UI.
 

@@ -72,6 +72,8 @@ A2A Server возвращает `{ data: { execute, context, result }, promiseId
 - `execute.finalResult` переводит сессию в `completed`.
 - `context` (включая `workbench.sections`) сливается в `session.context`.
 
+**Web DTO Sanitization:** Перед отправкой на фронтенд (маршруты `/sessions/:id`, `/async` и т.д.), Client API пропускает `execute` через `buildWebExecute`. Это удаляет клиентские действия (`read-file`, `rag-search`) и формирует объект `attachments`, оставляя только "порцию данных", необходимую для UI.
+
 **Server Interrupt Loop:** Если сервер возвращает инструкцию `interrupt`, диалоговый процессор может выполнить дополнительные циклы обработки (например, `compress_history` или `thinking`) перед отправкой финального ответа клиенту. См. [SERVER-INTERRUPT-LOOP.md](../../a2a-server/docs/SERVER-INTERRUPT-LOOP.md).
 
 При sync-ответе `server-response.json` фиксируется сразу. При async-ответе `server-promise.json` сохраняет `{ promiseId, status, submittedAt }`, Vite plugin делает polling, Web UI реагирует на события `wait` / `promisePending` от SessionStore.

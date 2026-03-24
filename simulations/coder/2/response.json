@@ -1,8 +1,12 @@
 {
   "context": {
     "task": "допоможи розібратись з кодом",
+    "workbench": {
+      "sections": {}
+    },
     "execution": {
-      "action": "coder"
+      "action": "coder",
+      "step": "request"
     },
     "history": []
   },

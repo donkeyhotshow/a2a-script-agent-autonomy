@@ -4,17 +4,21 @@
     "execution": {
       "action": "task",
       "step": "router"
+    },
+    "workbench": {
+      "sections": {}
     }
   },
   "execute": {
     "form": {
       "title": "Оберіть спосіб виконання",
       "description": "LLM modes and scripted actions; pick one to continue.",
-      "choices": [
-        {
-          "id": "fix-vue-imports-batched",
-          "label": "Виправити зламані імпорти у Vue файлах (пакетна обробка)"
-        },
+       "choices": [
+         {
+           "id": "fix-vue-imports-batched",
+           "label": "Виправити зламані імпорти у Vue файлах (пакетна обробка)",
+           "description": "Batch processing of Vue 2→3 import fixes across multiple files"
+         },
         {
           "id": "dialog",
           "label": "AI діалог з користувачем",

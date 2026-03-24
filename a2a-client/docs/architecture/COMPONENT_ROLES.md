@@ -105,7 +105,7 @@
 
 | Кто опрашивает | Кого опрашивают | Endpoint | Интервал |
 |----------------|----------------|----------|----------|
-| Browser (DialogPromise poll) | Client API | `/api/a2a/sessions/:id/promise/:promiseId` | ~1s |
+| Browser (Dialog polling) | Client API | `/api/a2a/sessions/:id/async` | ~1s |
 | Client API (Daemon) | A2A Server | `/api/v1/requests/:id/result` | 1s |
 | A2A Server (LLM-ready poll) | AI Hub | `/api/promise/:id/status` | ~1s |
 | AI Hub (Worker) | Ollama | `/api/generate` | — (синхронно) |
@@ -174,8 +174,8 @@
 ### Асинхронный поток (с Promise)
 
 1. A2A Server возвращает `promiseId` вместо немедленного результата
-2. Client API начинает polling A2A Server (`/api/v1/requests/:id/result`)
-3. Browser начинает polling Client API (`/api/a2a/sessions/:id/promise/:promiseId`)
+2. Client API начинает polling A2A Server (`/api/v1/requests/:id/result`) и сохраняет артефакты в `N+1/`.
+3. Browser начинает polling Client API (`/api/a2a/sessions/:id/async`)
 4. При завершении: AI Hub → A2A Server (status: completed)
 5. Polling обнаруживает завершение → возвращает результат
 
