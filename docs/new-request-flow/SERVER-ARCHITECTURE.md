@@ -416,7 +416,6 @@ GET /api/v1/health/ready             - Readiness probe
 | [DATA-FLOW.md](DATA-FLOW.md) | Complete data flow diagram |
 | [SESSION-FLOW.md](SESSION-FLOW.md) | Session flow details |
 | [SIMULATION-FORMAT.md](SIMULATION-FORMAT.md) | Simulation format |
-| [SIMULATION-LLM-PROXY.md](SIMULATION-LLM-PROXY.md) | Async flow with promiseId |
 
 ### Server-Specific Documentation
 

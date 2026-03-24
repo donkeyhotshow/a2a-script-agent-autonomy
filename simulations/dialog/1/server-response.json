@@ -1,0 +1,30 @@
+{
+  "success": false,
+  "data": {
+    "id": "req_1774366206076_hv3x2dfd9",
+    "promiseId": "prom_1774366206076_tncqjmhj3",
+    "clientId": "simulation-client",
+    "status": "pending",
+    "priority": 0,
+    "context": {
+      "session_id": "stateless",
+      "version": "1.0",
+      "task": "диалог",
+      "execution": {
+        "action": "task",
+        "step": "new"
+      },
+      "result": {
+        "message": "диалог"
+      },
+      "message": "диалог"
+    },
+    "message": "диалог",
+    "codeBlocks": null,
+    "result": null,
+    "error": null,
+    "createdAt": "2026-03-24T15:30:06.076Z",
+    "startedAt": null,
+    "completedAt": null
+  }
+}

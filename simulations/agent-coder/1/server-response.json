@@ -1,0 +1,30 @@
+{
+  "success": false,
+  "data": {
+    "id": "req_1774365865214_tbl63iont",
+    "promiseId": "prom_1774365865214_1sb9y482l",
+    "clientId": "simulation-client",
+    "status": "pending",
+    "priority": 0,
+    "context": {
+      "session_id": "stateless",
+      "version": "1.0",
+      "task": "допоможи розібратись з кодом",
+      "execution": {
+        "action": "task",
+        "step": "new"
+      },
+      "result": {
+        "message": "допоможи розібратись з кодом"
+      },
+      "message": "допоможи розібратись з кодом"
+    },
+    "message": "допоможи розібратись з кодом",
+    "codeBlocks": null,
+    "result": null,
+    "error": null,
+    "createdAt": "2026-03-24T15:24:25.214Z",
+    "startedAt": null,
+    "completedAt": null
+  }
+}

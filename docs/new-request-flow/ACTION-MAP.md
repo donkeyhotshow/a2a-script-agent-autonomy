@@ -275,13 +275,13 @@ response.json.
 
 | Файл                                                                    | Призначення        |
 |-------------------------------------------------------------------------|--------------------|
-| [`README.md`](docs/new-request-flow/README.md)                               | Бачення системи    |
-| [`ARCHITECTURE.md`](docs/new-request-flow/ARCHITECTURE.md)                   | Архітектура        |
-| [`PROTOCOL.md`](docs/new-request-flow/PROTOCOL.md)                           | Протокол взаємодії |
-| [`SCHEMAS.md`](docs/new-request-flow/SCHEMAS.md)                             | Схеми даних        |
-| [`SESSION-FLOW.md`](docs/new-request-flow/SESSION-FLOW.md)                  | Потік сесій        |
-| [`SIMULATION-FORMAT.md`](docs/new-request-flow/SIMULATION-FORMAT.md)        | Формат симуляцій   |
-| [`ACTION-MAP.md`](docs/new-request-flow/ACTION-MAP.md)                      | Цей документ       |
+| [`README.md`](README.md)                               | Бачення системи    |
+| [`ARCHITECTURE.md`](ARCHITECTURE.md)                   | Архітектура        |
+| [`PROTOCOL.md`](PROTOCOL.md)                           | Протокол взаємодії |
+| [`SCHEMAS.md`](SCHEMAS.md)                             | Схеми даних        |
+| [`SESSION-FLOW.md`](SESSION-FLOW.md)                  | Потік сесій        |
+| [`SIMULATION-FORMAT.md`](SIMULATION-FORMAT.md)        | Формат симуляцій   |
+| [`ACTION-MAP.md`](ACTION-MAP.md)                      | Цей документ       |
 
 ---
 

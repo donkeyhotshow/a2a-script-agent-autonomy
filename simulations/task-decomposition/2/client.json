@@ -1,7 +1,7 @@
 {
-    "projectId": "123",
-    "sessionId": "456",
-    "result": {
-      "choice": "task-decomposition"
-    }
+  "projectId": "123",
+  "sessionId": "456",
+  "result": {
+    "choice": "task-decomposition"
   }
+}

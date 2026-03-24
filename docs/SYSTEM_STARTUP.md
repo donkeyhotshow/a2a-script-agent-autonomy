@@ -25,13 +25,13 @@
         ┌─────────────▼─────────────┐
         │   ai-integration          │
         │   AI Proxy                │
-        │   Port: 8000              │
+        │   Port: 11434             │
         └─────────────┬─────────────┘
                       │
         ┌─────────────▼─────────────┐
         │   Ollama                  │
         │   LLM Service             │
-        │   Port: 11434            │
+        │   Port: 11435            │
         └───────────────────────────┘
 ```
 
@@ -84,8 +84,8 @@ cd ai-integration
 pip install -r requirements.txt
 
 # Запуск
-set OLLAMA_HOST=http://localhost:11434
-python -m uvicorn proxy.asgi:application --host 0.0.0.0 --port 8000
+set OLLAMA_HOST=http://localhost:11435
+python -m uvicorn proxy.asgi:application --host 0.0.0.0 --port 11434
 ```
 
 ### 3. a2a-server
@@ -136,7 +136,7 @@ npm run dev
 curl http://localhost:3000/health
 
 # ai-integration
-curl http://localhost:8000/health
+curl http://localhost:11434/health
 
 # a2a-client SDK
 curl http://localhost:3001/health
@@ -168,8 +168,8 @@ curl -X POST http://localhost:3001/api/v1/invoke \
 
 | Переменная | Описание | По умолчанию |
 |------------|----------|--------------|
-| `OLLAMA_HOST` | URL Ollama | http://localhost:11434 |
-| `AI_HUB_URL` | URL ai-integration | http://localhost:8000 |
+| `OLLAMA_HOST` | URL Ollama | http://localhost:11435 |
+| `AI_HUB_URL` | URL ai-integration | http://localhost:11434 |
 | `LLM_PROVIDER` | Провайдер LLM | ollama |
 | `ENCRYPTION_KEY` | Ключ шифрования (32 символа) | - |
 | `JWT_SECRET` | Секрет JWT (мин. 32 символа) | - |
@@ -179,8 +179,8 @@ curl -X POST http://localhost:3001/api/v1/invoke \
 
 | Сервис | Порт |
 |--------|------|
-| Ollama | 11434 |
-| ai-integration | 8000 |
+| Ollama | 11435 |
+| ai-integration | 11434 |
 | a2a-server | 3000 |
 | a2a-client SDK | 3001 |
 | Web UI (Vite) | 5173 |

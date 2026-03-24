@@ -8,16 +8,17 @@
 
 Симуляция показывает диалог с AI (action: dialog).
 
-> **Scope:** Симуляции не описывают работу с промисами (`execute.wait`, `promiseId`, polling). См. `simulations/SCHEMA.md` — "Scope: simulations vs runtime".
+> **Scope:** Симуляции не описывают работу с промисами (`execute.wait`, `promiseId`, polling). См.
+`simulations/SCHEMA.md` — "Scope: simulations vs runtime".
 
 ## Поток
 
-| Шаг | Request                                      | Response                                                                 |
-|-----|----------------------------------------------|--------------------------------------------------------------------------|
-| 1   | result.message: "диалог"                     | execute.form.choices (router: dialog / agent / task-decomposition)    |
-| 2   | result.choice: "dialog"                      | execute.form.input[message], execution.action = "dialog", step = "request" |
-| 3   | result.message: "hello world"                | LLM → history +1, execution.step = "request", execute.message + form.input |
-| 4   | result.message: "Дякую!"                     | execution.step = "completed", execute.message + form.input  |
+| Шаг | Request                       | Response                                                                   |
+|-----|-------------------------------|----------------------------------------------------------------------------|
+| 1   | result.message: "диалог"      | execute.form.choices (router: dialog / agent / task-decomposition)         |
+| 2   | result.choice: "dialog"       | execute.form.input[message], execution.action = "dialog", step = "request" |
+| 3   | result.message: "hello world" | LLM → history +1, execution.step = "request", execute.message + form.input |
+| 4   | result.message: "Дякую!"      | execution.step = "completed", execute.message + form.input                 |
 
 ## История диалога
 

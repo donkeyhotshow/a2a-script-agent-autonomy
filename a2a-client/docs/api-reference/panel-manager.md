@@ -1,5 +1,7 @@
 # PanelManager API Reference
 
+> **⚠️ Deprecated**: This module was planned but never implemented. UI panel lifecycle is now managed by **WindowRegistry** and window-state.js. See [window-registry.md](window-registry.md) for actual implementation.
+
 The PanelManager provides unified UI panel lifecycle management, consolidating panels, cubes, and modals into a single hierarchy.
 
 ## Overview

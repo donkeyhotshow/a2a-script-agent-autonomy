@@ -2,6 +2,8 @@
 
 How to add or evolve **AI-actions**, **dialog** tools, **RAG** variants, and related context — without breaking the protocol or goldens.
 
+**Normative fixture shapes:** treat [`simulations/SCHEMA.md`](../../simulations/SCHEMA.md) and [`simulations/CLIENT-SDK-IDEAL.md`](../../simulations/CLIENT-SDK-IDEAL.md) as the Web / Client API contract; update goldens before runtime code when changing payloads.
+
 ## 1. Contract first
 
 | Layer | What to change |
@@ -19,6 +21,7 @@ How to add or evolve **AI-actions**, **dialog** tools, **RAG** variants, and rel
 ## 3. Client-visible `execute` types
 
 - Add the key to [`a2a-server/scripts/sim-lint.ts`](../scripts/sim-lint.ts) **`VALID_EXECUTE_TYPES`**.
+- For tools the **SDK** runs locally, extend [`a2a-client/packages/sdk/src/action-handler.ts`](../../a2a-client/packages/sdk/src/action-handler.ts) and [`HandleActionOptions`](../../a2a-client/packages/sdk/src/types.js) (see `workspace-tool-handlers.ts` for list-dir / grep / file-exists / patch / run-script).
 - Ensure the **Web / Client API** can run that action (same key as protocol).
 - For **dialog** tool rounds, extend **`DIALOG_TOOL_EXECUTE_KEYS`** and **`isDialogToolExecutePayload`** so the server does not rewrite tool `execute` into `message`+`form`.
 

@@ -33,7 +33,10 @@ const VALID_EXECUTE_TYPES = [
     'write-file',
     'execute-command',
     'list-directory',
-    'grep-search'
+    'grep-search',
+    'file-exists',
+    'edit-patch',
+    'run-script'
 ];
 
 // ============================================

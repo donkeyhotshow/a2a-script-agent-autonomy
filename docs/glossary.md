@@ -35,7 +35,7 @@ Standardized format for all result and execute objects where the action type is 
 System-managed state object containing:
 - **History**: Array of all execution records and steps taken
 - **Execution**: Current execution state (`{ action, step, progress }`)
-- **DocVirtual**: Virtual document state for accumulating content across steps
+- **Workbench**: Structured working state (`sections`, optional `batch`, optional `slots`). LLM can update `workbench.sections` (merge) and `workbench_ops` (short set/append/remove commands)
 
 ## API Terminology
 
@@ -46,18 +46,18 @@ Singleton component providing unified session state management:
 - **Actions**: `reset()`, `setExecute()`, `pushMessage()`, `setContext()`
 - **Event System**: Emits events like `'messages'`, `'execute'`, `'status'`
 
-### TransportManager
-Handles communication between client and server using synchronous HTTP requests:
-- **Mode**: Synchronous (response in HTTP body)
-- **Connection States**: `disconnected`, `connecting`, `connected`
-- **No real-time streaming**: All data returned in HTTP response
+### APIIntegration
+Handles communication between client and server using HTTP:
+- **Base**: Client API endpoint (e.g., `/api/a2a/`)
+- **Methods**: GET projects, sessions; POST sessions, messages, choices
+- **Async Polling**: `GET /sessions/:id/async` for async results
+- Replaces planned **TransportManager** (deprecated, never implemented)
 
-### PanelManager
-Manages UI panels and their lifecycle:
-- **Panel Types**: `task`, `chat`, `logs`, `sessions`, `settings`, `projects`, `debug`
-- **Panel States**: `created`, `visible`, `minimized`, `docked`, `closed`
-- **Slots**: `floating`, `left`, `right`, `bottom`, `modal`
-- **Critical Panels**: Cannot be closed (marked with `critical: true`)
+### WindowRegistry
+Manages the registry of open session windows:
+- **State**: localStorage key `a2a_session_windows`
+- **Methods**: `getWindow()`, `hasWindow()`, `getAllSessionIds()`, `saveSessionWindowsState()`
+- Replaces planned **PanelManager** (deprecated, never implemented)
 
 ### ActionHandler
 Standardized interface for submitting all types of action results:

@@ -1,5 +1,9 @@
 # Communication Scenarios
 
+> **⚠️ Deprecated:** This document references `TransportManager` which was planned but never implemented.
+> Transport is now handled via `api-integration.js` with HTTP polling (no SSE/WebSocket).
+> See [api-integration.md](../../api-reference/api-integration.md) for current implementation.
+
 This directory documents all real-time communication workflows, transport mechanisms, and fallback scenarios.
 
 ## Related Documentation
@@ -14,21 +18,18 @@ This directory documents all real-time communication workflows, transport mechan
 ### Unified Transport Hierarchy
 ```mermaid
 graph TD
-    A[Invoke Submitted] --> B[TransportManager.monitor()]
-    B --> C[Try WebUI SSE First]
-    C --> D{SSE Success?}
-    D -->|Yes| E[SSE Active - /api/sse/:sessionId]
-    D -->|No| F[WebSocket Fallback]
-    F --> G{WS Success?}
-    G -->|Yes| H[WebSocket Active - /api/ws/:sessionId]
-    G -->|No| I[Stateless Async Polling]
-    I --> J[Poll /api/a2a/sessions/:id/async]
+    A[Invoke Submitted] --> B[APIIntegration.monitor()]
+    B --> C[HTTP Polling]
+    C --> D{Promise Complete?}
+    D -->|Yes| E[Fetch Result - /api/a2a/sessions/:id/async]
+    D -->|No| E
 ```
+
+> **Note:** SSE and WebSocket were removed. Current implementation uses simple HTTP polling.
+
 | Transport | Protocol | Endpoint | Reliability | Use Case |
 |-----------|----------|----------|-------------|----------|
-| **SSE** | HTTP/1.1 + EventSource | `/api/sse/:sessionId` | High | Primary real-time updates |
-| **WebSocket** | WS/WSS | `/api/ws/:sessionId` | High | Fallback for complex environments |
-| **Async Polling** | HTTP/1.1 | `/api/a2a/sessions/:id/async` | Critical | Web UI stateless fallback |
+| **HTTP Polling** | HTTP/1.1 | `/api/a2a/sessions/:id/async` | Critical | Primary (stateless, web-friendly) |
 | **Legacy Result**| HTTP/1.1 | `/api/v1/requests/:id/result`| Tooling | Testing and external SDKs |
 
 ## SSE Communication Flow
@@ -36,18 +37,15 @@ graph TD
 ### Connection Establishment
 ```mermaid
 sequenceDiagram
-    participant TM as TransportManager
-    participant SSE as SSE Client
+    participant AI as APIIntegration
     participant API as Server API
     participant SS as SessionStore
 
-    TM->>SSE: connect(sessionId)
-    SSE->>API: GET /api/sse/:sessionId
-    API-->>SSE: HTTP 200 + EventSource stream
-    SSE->>SSE: Setup event listeners
-    SSE->>TM: emit('connected', {transport: 'sse'})
-    TM->>SS: Update connection state
-    TM->>UI: Show connected status
+    AI->>API: GET /api/a2a/sessions/:id/async
+    API-->>AI: HTTP 200 + JSON response
+    AI->>AI: Check promise status
+    AI->>SS: Update session state
+    AI->>UI: Show response data
 ```
 
 ### SSE Event Types

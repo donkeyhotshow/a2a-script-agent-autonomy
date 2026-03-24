@@ -1,0 +1,30 @@
+{
+  "success": false,
+  "data": {
+    "id": "req_1774366331968_ep43gd1ov",
+    "promiseId": "prom_1774366331968_39x5kb8ok",
+    "clientId": "simulation-client",
+    "status": "pending",
+    "priority": 0,
+    "context": {
+      "session_id": "stateless",
+      "version": "1.0",
+      "task": "виправити namespace та use у Laravel PHP файлах",
+      "execution": {
+        "action": "task",
+        "step": "new"
+      },
+      "result": {
+        "message": "виправити namespace та use у Laravel PHP файлах"
+      },
+      "message": "виправити namespace та use у Laravel PHP файлах"
+    },
+    "message": "виправити namespace та use у Laravel PHP файлах",
+    "codeBlocks": null,
+    "result": null,
+    "error": null,
+    "createdAt": "2026-03-24T15:32:11.968Z",
+    "startedAt": null,
+    "completedAt": null
+  }
+}

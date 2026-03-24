@@ -5,7 +5,6 @@ Work-in-progress items: **[`active/`](active/)**.
 | Location | Role |
 |----------|------|
 | [`docs/plans/active/`](active/) | Open tasks (auto-ai simulation refresh, router search, prompts/transforms, …) |
-| [`a2a-server/docs/plans-archive/`](../../a2a-server/docs/plans-archive/) | Superseded server trackers and migration notes |
 | [`a2a-client/docs/`](../../a2a-client/docs/) | Client API behaviour docs (`api-client-server-logic.md`, `api-testing-plan.md`, …) |
 | [`a2a-client/docs/decisions/`](../../a2a-client/docs/decisions/) | Closed product decisions |
 | [`a2a-client/web/docs/`](../../a2a-client/web/docs/) | Web UI notes (Playwright, troubleshooting) |

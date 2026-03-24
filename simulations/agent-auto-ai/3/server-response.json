@@ -1,0 +1,26 @@
+{
+  "success": false,
+  "data": {
+    "id": "req_1774365310848_osxns474y",
+    "promiseId": "prom_1774365310848_mgixtyrm2",
+    "clientId": "simulation-client",
+    "status": "pending",
+    "priority": 0,
+    "context": {
+      "session_id": "stateless",
+      "version": "1.0",
+      "task": "Add GET /health returning JSON { ok: true }; wire the route in src/app.js.",
+      "execution": {
+        "action": "agent",
+        "step": "locate_code"
+      }
+    },
+    "message": null,
+    "codeBlocks": null,
+    "result": null,
+    "error": null,
+    "createdAt": "2026-03-24T15:15:10.848Z",
+    "startedAt": null,
+    "completedAt": null
+  }
+}

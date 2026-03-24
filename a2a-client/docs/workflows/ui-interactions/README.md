@@ -1,11 +1,16 @@
 # UI Interaction Scenarios
 
+> **⚠️ Deprecated:** This document references `PanelManager` which was planned but never implemented.
+> Panel management is now handled via `window-registry.js` and render functions in `task-flow/render.js`.
+> See [window-registry.md](../../api-reference/window-registry.md) for current implementation.
+
 This directory documents all user interface interaction workflows, panel management, and visual state transitions.
 
 ## Related Documentation
 
-- **[Panel Manager Reference](../../api-reference/panel-manager.md)** - Detailed PanelManager API
+- **[Window Registry Reference](../../api-reference/window-registry.md)** - Current window registry implementation
 - **[Session Store Reference](../../api-reference/session-store.md)** - UI-State synchronization
+- **[PanelManager (deprecated)](../../api-reference/panel-manager.md)** - Old planned module
 - **[UNIFIED_ARCHITECTURE_COMPLETE](../UNIFIED_ARCHITECTURE_COMPLETE.md)** - Simplified panels implementation and legacy removal
 - **[Context Synchronization Guide](../context-synchronization-guide.md)** - PlasticineUI panel lifecycle and behavior
 - **[Agent Architecture Tasks](../tasks/agent-architecture-tasks.md)** - Panel QA scenarios and lifecycle coverage

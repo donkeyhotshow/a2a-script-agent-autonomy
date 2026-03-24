@@ -8,7 +8,12 @@
     },
     {
       "op": "pick-context",
-      "include": ["execution", "task", "history:5", "scratchpad"]
+      "include": [
+        "execution",
+        "task",
+        "history:5",
+        "scratchpad"
+      ]
     },
     {
       "op": "render-markdown",

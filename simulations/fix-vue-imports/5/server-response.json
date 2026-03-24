@@ -1,0 +1,31 @@
+{
+  "success": false,
+  "data": {
+    "id": "req_1774367074345_2tcf42cpd",
+    "promiseId": "prom_1774367074345_4jt9fr9h8",
+    "clientId": "simulation-client",
+    "status": "pending",
+    "priority": 0,
+    "context": {
+      "session_id": "stateless",
+      "version": "1.0",
+      "task": "виправити імпорти у vue компонентах",
+      "execution": {
+        "action": "fix-vue-imports",
+        "step": "vue-import-escalate"
+      },
+      "result": {
+        "form": {
+          "choice": "coder"
+        }
+      }
+    },
+    "message": null,
+    "codeBlocks": null,
+    "result": null,
+    "error": null,
+    "createdAt": "2026-03-24T15:44:34.345Z",
+    "startedAt": null,
+    "completedAt": null
+  }
+}

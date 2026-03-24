@@ -1,0 +1,33 @@
+{
+  "success": false,
+  "data": {
+    "id": "req_1774365618654_1903jmk6f",
+    "promiseId": "prom_1774365618654_5jytkcn45",
+    "clientId": "simulation-client",
+    "status": "pending",
+    "priority": 0,
+    "context": {
+      "session_id": "stateless",
+      "version": "1.0",
+      "task": "створи задачу і виконай",
+      "execution": {
+        "action": "agent",
+        "step": "user-request"
+      },
+      "selectedAction": {
+        "actionId": "agent"
+      },
+      "result": {
+        "choice": "agent"
+      },
+      "choice_id": "agent"
+    },
+    "message": null,
+    "codeBlocks": null,
+    "result": null,
+    "error": null,
+    "createdAt": "2026-03-24T15:20:18.654Z",
+    "startedAt": null,
+    "completedAt": null
+  }
+}

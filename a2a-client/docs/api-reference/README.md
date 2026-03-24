@@ -5,8 +5,8 @@
 | Component | File |
 |-----------|------|
 | **SessionStore** | [session-store.md](session-store.md) |
-| **TransportManager** | [transport-manager.md](transport-manager.md) |
-| **PanelManager** | [panel-manager.md](panel-manager.md) |
+| **API Integration** | [api-integration.md](api-integration.md) |
+| **Window Registry** | [window-registry.md](window-registry.md) |
 
 Other core names (ActionHandler, TaskFlow, WebAPIClient, ErrorHandler) may be covered inline in source or added here as stubs when written up.
 

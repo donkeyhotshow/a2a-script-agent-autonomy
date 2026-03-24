@@ -1,5 +1,10 @@
 # Session State Problems
 
+> **⚠️ Deprecated:** This document references `PanelManager` and `TransportManager` which were planned but never implemented.
+> - Panel management: `window-registry.js` + `task-flow/render.js`
+> - Transport: `api-integration.js` (HTTP polling)
+> See [api-integration.md](../api-reference/api-integration.md) and [window-registry.md](../api-reference/window-registry.md)
+
 Common issues with session state management and synchronization.
 
 ## State Corruption Detection
@@ -62,22 +67,29 @@ function resyncComponents() {
   // 1. Get authoritative state
   const sessionState = SessionStore.getState();
 
-  // 2. Resync panels
-  PanelManager.closeAll();
+  // 2. Resync windows/panels
+  // Note: WindowRegistry manages session window registry
+  // Panel management is handled via render functions in task-flow
+  window.registry?.closeAll();
   if (sessionState.execute?.form) {
-    PanelManager.open('task'); // Will show form
+    window.registry?.open('task'); // Will show form
   }
 
-  // 3. Resync transport
-  if (TransportManager.isConnected()) {
-    TransportManager.disconnect();
+  // 3. Resync API connection
+  // Note: Uses HTTP polling via APIIntegration (not persistent connections)
+  if (apiIntegration?.isConnected()) {
+    apiIntegration.disconnect();
   }
-  TransportManager.connect(sessionState.sessionId);
+  apiIntegration.connect(sessionState.sessionId);
 
   // 4. Re-emit current state
   SessionStore._emit('reset', sessionState);
 }
 ```
+
+> **Note:** This document describes planned architecture. PanelManager and TransportManager were never implemented.
+> - Panel management uses `window-registry.js` + `task-flow/render.js` functions
+> - Transport uses `api-integration.js` with HTTP polling (no persistent connections)
 
 ### Event Handler Conflicts
 ```javascript

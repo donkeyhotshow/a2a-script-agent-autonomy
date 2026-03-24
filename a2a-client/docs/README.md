@@ -44,14 +44,14 @@ This directory contains comprehensive documentation for the A2A Script Agent web
 
 ### Core Architecture (Unified)
 - **SessionStore** - Single source of truth for session state
-- **TransportManager** - SSE primary → WebSocket auto-fallback
-- **PanelManager** - Unified panel system (panels/cubes/modals)
+- **APIIntegration** - HTTP client (replaces planned TransportManager)
+- **WindowRegistry** - Session window registry (replaces planned PanelManager)
 - **ActionHandler** - Standardized action-key shape submissions
 
 ### Communication
-- **SSE**: Primary transport (`/api/sse/:sessionId`) with 30s heartbeat
-- **WebSocket**: Fallback transport (`/api/ws/:sessionId`) for SSE failures
-- **HTTP Polling**: Standard for stateless / async updates via `/async`
+- **HTTP**: Primary transport via Client API (`/api/a2a/`)
+- **Async Polling**: `GET /sessions/:id/async` for promise results
+- **SSE/WebSocket**: Removed in favor of HTTP polling
 
 ### UI Patterns
 - **Execute Types**: `form`, `message`, `script`, `rag-search`, `read-file`, `write-file`, `execute-command`

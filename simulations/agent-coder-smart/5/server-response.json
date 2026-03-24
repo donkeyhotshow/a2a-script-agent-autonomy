@@ -1,0 +1,46 @@
+{
+  "success": false,
+  "data": {
+    "id": "req_1774365711155_9ivyj8yz6",
+    "promiseId": "prom_1774365711155_sh23qyvk5",
+    "clientId": "simulation-client",
+    "status": "pending",
+    "priority": 0,
+    "context": {
+      "session_id": "stateless",
+      "version": "1.0",
+      "task": "створи задачу і виконай",
+      "execution": {
+        "action": "agent",
+        "step": "rag-research-plan"
+      },
+      "result": {
+        "rag-search": {
+          "results": [
+            {
+              "file": "src/routes/api.js",
+              "score": 0.9,
+              "snippet": "router.use(authMiddleware);"
+            },
+            {
+              "file": "tests/api.test.js",
+              "score": 0.85,
+              "snippet": "describe('POST /login'"
+            }
+          ],
+          "files": [
+            "src/routes/api.js",
+            "tests/api.test.js"
+          ]
+        }
+      }
+    },
+    "message": null,
+    "codeBlocks": null,
+    "result": null,
+    "error": null,
+    "createdAt": "2026-03-24T15:21:51.155Z",
+    "startedAt": null,
+    "completedAt": null
+  }
+}

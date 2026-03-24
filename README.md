@@ -23,12 +23,6 @@ npm run dev
 | Command | Description |
 |---------|-------------|
 | `npm run dev` | Start all services (Server + Client + Infrastructure) |
-| `npm run dev:server` | Server + PostgreSQL + Redis only |
-| `npm run dev:client` | Client API + Web UI only |
-| `npm run dev:proxy` | AI Proxy + Ollama only |
-| `npm run dev:full` | Everything including AI services |
-| `npm run dev:status` | Show service status |
-| `npm run dev:stop` | Stop all services |
 
 ### Alternative: Standardized Start/Stop Scripts
 
@@ -37,7 +31,7 @@ For environments without npm orchestrator or when you need direct process contro
 **Windows:**
 ```powershell
 # Start all services with pre-flight cleanup
-.\start-all.ps1
+.\start-all.bat
 
 # Stop all services with dual verification
 .\kill-all.ps1
@@ -88,8 +82,8 @@ These scripts follow the pattern from `docs/troubleshooting/standardize-stop-scr
 │  5173* │ Web UI            │ Vite + Vue (5173-5183)        │
 │  5432* │ PostgreSQL        │ pgvector extension (5432-5442)│
 │  6379* │ Redis             │ Caching & queues (6379-6389)  │
-│ 11434* │ Ollama            │ LLM inference (11434-11444)    │
-│ 11435* │ AI Proxy          │ Python Flask (11435-11445)   │
+│ 11434* │ AI Proxy          │ Python Flask (11434-11444)   │
+│ 11435* │ Ollama            │ LLM inference (11435-11445)    │
 └─────────────────────────────────────────────────────────────┘
 * Actual ports may differ if defaults are busy. Check `.env.local` after start.
 ```
@@ -107,17 +101,29 @@ Each service waits for healthy dependencies before starting, with exponential ba
 ### Port Management
 
 ```bash
-# Check port conflicts before starting
+# Check if a port is free
+node scripts/port-manager.js check <port>
+
+# Allocate a port for a specific service
+node scripts/port-manager.js allocate <service>
+
+# Release a specific port
+node scripts/port-manager.js release <port>
+
+# Kill cached PIDs for a specific port
+node scripts/port-manager.js kill-batch <port>
+
+# Kill all cached PIDs across all ports
+node scripts/port-manager.js kill-all
+
+# Check port conflicts
 node scripts/port-manager.js conflicts
 
 # List reserved ports
 node scripts/port-manager.js list
-
-# Release a specific port
-node scripts/port-manager.js release 3000
 ```
 
-Use `node scripts/port-manager.js kill-batch <port>` to terminate the cached PID bundle for a specific port or `node scripts/port-manager.js kill-all` to clear every stored batch before retrying the stack. The orchestrator also runs the `kill-all` cleanup automatically every time it initializes ports, so leftover PID packs from previous sessions are removed before allocation.
+The orchestrator also runs the `kill-all` cleanup automatically every time it initializes ports, so leftover PID packs from previous sessions are removed before allocation.
 
 See [System Startup Documentation](docs/SYSTEM_STARTUP.md) for details.
 

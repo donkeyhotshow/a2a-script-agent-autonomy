@@ -1,5 +1,9 @@
 # Panel Rendering Issues
 
+> **⚠️ Deprecated:** This document references `PanelManager` which was planned but never implemented. 
+> Panel management is now handled via `window-registry.js` and render functions in `task-flow/render.js`.
+> See [window-registry.md](../api-reference/window-registry.md) for current implementation.
+
 Common problems with panel display, positioning, and lifecycle management.
 
 ## Layout Corruption

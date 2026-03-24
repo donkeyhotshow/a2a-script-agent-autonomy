@@ -1,4 +1,4 @@
-# DEV_STATE - simulations (2026-03-06)
+# DEV_STATE - simulations (2026-03-24)
 
 ## Симуляции проекта
 
@@ -6,18 +6,19 @@
 
 Симуляции организованы по типам задач и сценариям использования:
 
-| Категория | Примеры | Назначение |
-|-----------|---------|------------|
-| **AI Actions** | `agent-auto-ai/`, `agent-coder-smart/` | Тестирование AI-driven flows |
-| **Code Analysis** | `agent-analyze/`, `agent-coder/` | Анализ и генерация кода |
-| **Debugging** | `debug-dialog/` | Отладка диалогов |
-| **UI Fixes** | `fix-vue-imports/` | Исправление Vue.js проблем |
-| **Initialization** | `init/` | Инициализация системы |
-| **Orchestration** | `orchestrator-dialog/` | Оркестрация компонентов |
+| Категория          | Примеры                                | Назначение                   |
+|--------------------|----------------------------------------|------------------------------|
+| **AI Actions**     | `agent-auto-ai/`, `agent-coder-smart/` | Тестирование AI-driven flows |
+| **Code Analysis**  | `agent-analyze/`, `agent-coder/`       | Анализ и генерация кода      |
+| **Debugging**      | `debug-dialog/`                        | Отладка диалогов             |
+| **UI Fixes**       | `fix-vue-imports/`                     | Исправление Vue.js проблем   |
+| **Initialization** | `init/`                                | Инициализация системы        |
+| **Orchestration**  | `orchestrator-dialog/`                 | Оркестрация компонентов      |
 
 ### Формат симуляций
 
 Каждая симуляция содержит:
+
 - `request.json` - Входные данные
 - `request.md` - Человеко-читаемая версия запроса
 - `response.md` - Ответ от AI
@@ -26,11 +27,13 @@
 ### Ключевые симуляции
 
 #### AI Action симуляции
+
 - **auto-ai**: Базовый AI action flow
 - **agent-coder-smart**: Продвинутый кодогенератор (legacy: coder-smart)
 - **agent-analyze**: Анализ кода и архитектуры (legacy `analyze/` → `agent-analyze/`)
 
 #### Code симуляции
+
 - **coder**: Генерация кода
 - **fix-vue-imports**: Исправление импортов Vue
 - **fix-vue-imports-batched**: Пакетная обработка
@@ -38,9 +41,11 @@
 ### Статус и использование
 
 - **Количество симуляций:** 15+ активных
+- **Последнее обновление:** 2026-03-24
 - **Использование:** Golden standard тестирования
 - **Обновление:** Регулярно синхронизируются с кодом
 - **Приоритет:** Поддержание актуальности симуляций
 
 ### Общая архитектура системы
+
 Общая архитектура системы описана в [`DEV_STATE.md`](../DEV_STATE.md).

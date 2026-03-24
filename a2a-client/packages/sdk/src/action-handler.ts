@@ -7,6 +7,7 @@
  * - write-file: Write file contents
  * - rag-search: Perform RAG search
  * - execute-command: Execute shell commands
+ * - list-directory, grep-search, file-exists, edit-patch, run-script: workspace tools (optional callbacks)
  * - form: Handle form interactions
  * - message: Display messages
  * 
@@ -14,6 +15,8 @@
  */
 
 import type { HandleActionOptions, HandleActionResult } from './types.js';
+
+export type { HandleActionOptions, HandleActionResult } from './types.js';
 
 /**
  * Detect the type of response from server.
@@ -43,8 +46,18 @@ export function detectResponseType(response: {
         return firstKey;
     }
     
-    // Client execution types
-    const clientActionTypes = ['script', 'read-file', 'write-file', 'rag-search', 'execute-command'];
+    const clientActionTypes = [
+        'script',
+        'read-file',
+        'write-file',
+        'rag-search',
+        'execute-command',
+        'list-directory',
+        'grep-search',
+        'file-exists',
+        'edit-patch',
+        'run-script',
+    ];
     if (clientActionTypes.includes(firstKey)) {
         return 'action';
     }
@@ -71,14 +84,19 @@ function extractExecuteAction(response: {
 }
 
 // Import action handlers
-import { 
+import {
     handleScriptAction,
     handleReadFileAction,
     handleWriteFileAction,
     handleExecuteCommandAction,
     handleRagSearchAction,
     handleFormAction,
-    handleMessageAction
+    handleMessageAction,
+    handleListDirectoryAction,
+    handleGrepWorkspaceAction,
+    handleFileExistsAction,
+    handleEditPatchAction,
+    handleRunRegisteredScriptAction,
 } from './action-handlers/index.js';
 
 /**
@@ -116,6 +134,21 @@ export async function handleExecuteAction(
             break;
         case 'message':
             result = handleMessageAction(action.payload, options);
+            break;
+        case 'list-directory':
+            result = await handleListDirectoryAction(action.payload, options);
+            break;
+        case 'grep-search':
+            result = await handleGrepWorkspaceAction(action.payload, options);
+            break;
+        case 'file-exists':
+            result = await handleFileExistsAction(action.payload, options);
+            break;
+        case 'edit-patch':
+            result = await handleEditPatchAction(action.payload, options);
+            break;
+        case 'run-script':
+            result = await handleRunRegisteredScriptAction(action.payload, options);
             break;
         default:
             return { 

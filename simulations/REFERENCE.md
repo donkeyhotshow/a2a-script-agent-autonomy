@@ -77,27 +77,31 @@
 ## Як додати нову симуляцію (step-by-step)
 
 1. **Обрати базову симуляцію як шаблон.**
-   `agent-auto-ai` — reference для ai-action з повним циклом (раніше `auto-ai` / `auto-ai-v2`). `fix-vue-imports` — для actions.
+   `agent-auto-ai` — reference для ai-action з повним циклом (раніше `auto-ai` / `auto-ai-v2`). `fix-vue-imports` — для
+   actions.
 
 2. **Створити директорію симуляції.**
    `simulations/<name>/description.md` — опис задачі, тип (`action` чи `ai-action`), список кроків.
 
 3. **Заповнити файли кроку згідно з pipeline.**
-   - `request.json` — payload від клієнта. `context` містить `files`, `scratchpad`, `history` (стислі system записи, не повні дані).
-   - `server-transforms-request.json` — пер-степ оверрайди transforms.
-   - `request.md` — prompt до LLM. Містить system role, history, тільки потрібні файли з `context.files`.
-   - `response.md` — очікувана відповідь LLM. Містить `execute` і `scratchpad_ops` (короткі команди, не перезапис).
-   - `server-transforms-response.json` — обробка відповіді LLM: `apply-scratchpad-ops`, додавання в `context.files`, стислий `system` в history.
-   - `response.json` — фінальний payload Server → Client.
+    - `request.json` — payload від клієнта. `context` містить `files`, `scratchpad`, `history` (стислі system записи, не
+      повні дані).
+    - `server-transforms-request.json` — пер-степ оверрайди transforms.
+    - `request.md` — prompt до LLM. Містить system role, history, тільки потрібні файли з `context.files`.
+    - `response.md` — очікувана відповідь LLM. Містить `execute` і `scratchpad_ops` (короткі команди, не перезапис).
+    - `server-transforms-response.json` — обробка відповіді LLM: `apply-scratchpad-ops`, додавання в `context.files`,
+      стислий `system` в history.
+    - `response.json` — фінальний payload Server → Client.
 
 4. **Правила context між кроками.**
-   - Великі результати (read-file, execute-command) → `context.files` або відкидаються, не в history.
-   - History → тільки стислі `system` записи для tool results.
-   - LLM оновлює scratchpad через `scratchpad_ops`, не перезаписом.
-   - `execute.rag-search` містить `page` і `pageSize`; результат містить `hasMore`.
+    - Великі результати (read-file, execute-command) → `context.files` або відкидаються, не в history.
+    - History → тільки стислі `system` записи для tool results.
+    - LLM оновлює scratchpad через `scratchpad_ops`, не перезаписом.
+    - `execute.rag-search` містить `page` і `pageSize`; результат містить `hasMore`.
 
 5. **Перевірити симуляцію локально.**
-   `npx tsx a2a-server/scripts/run-simulation.ts simulations/<sim>/<step>` (з кореня репозиторію; аргумент — папка кроку з `request.json`) — порівняти output з `response.json` кожного кроку.
+   `npx tsx a2a-server/scripts/run-simulation.ts simulations/<sim>/<step>` (з кореня репозиторію; аргумент — папка кроку
+   з `request.json`) — порівняти output з `response.json` кожного кроку.
 
 6. **Додати до CI.**
    При змінах в протоколі/логіці — спочатку оновити симуляцію, потім код.

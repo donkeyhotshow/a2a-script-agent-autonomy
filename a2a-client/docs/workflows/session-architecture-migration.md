@@ -26,15 +26,15 @@ pollResult(promiseId);               // HTTP polling for async
 
 **After (unified)**:
 ```javascript
-// Single transport manager with auto-fallback
-await TransportManager.connect(sessionId);
-// → Tries SSE first
-// → Falls back to WebSocket or HTTP Polling (/async)
+// API integration with async polling
+await api.sendMessage(sessionId, message);
+// → Uses HTTP POST to /api/a2a/sessions/:id/next
+// → Polls /async endpoint for promise resolution
 ```
 
 **Files**:
-- New: `js/transport-manager.js`
-- Modified: `js/task-flow.js` (removed polling)
+- Modified: `js/api-integration.js` (unified HTTP client)
+- Modified: `js/session-store.js` (async state management)
 
 ### Step 2: State Management ✅
 
@@ -59,10 +59,9 @@ SessionStore._state = {
 
 **Files**:
 - New: `js/session-store.js`
-- New: `js/session-sync-v2.js` (SSE→Store bridge)
-- New: `js/session-store-adapters.js` (backward compatibility)
+- Modified: `js/session-data.js` (data handling)
 
-### Step 3: Panel System ✅
+### Step 3: Window/UI System ✅
 
 **Before (complex hierarchy)**:
 ```
@@ -77,15 +76,17 @@ Lifecycle: expanded → minimized → docked → status-tray → closed-via-cube
 
 **After (simplified)**:
 ```javascript
-PanelManager.open('task', { critical: true });
+// Window registry handles UI state
+WindowRegistry.open('task', { critical: true });
 // States: created → visible ↔ minimized → closed
 // Simplified indicator replaces "cube"
-// Panels + modals unified
+// Windows + modals unified via WindowState
 ```
 
 **Files**:
-- New: `js/panel-manager.js`
-- New: `css/components/panel-manager.css`
+- New: `js/app/windows/window-registry.js`
+- New: `js/app/windows/window-state.js`
+- New: `js/app/windows/window-position.js`
 
 ## Migration Path
 
@@ -132,24 +133,22 @@ SessionViewModel.pushMessage(msg, 'user');    // → delegates to SessionStore
 ```html
 <!-- 1. Core state -->
 <script src="js/session-store.js"></script>
+<script src="js/session-data.js"></script>
 
-<!-- 2. Transport -->
-<script src="js/transport-manager.js"></script>
-<script src="js/session-sync-v2.js"></script>
+<!-- 2. API integration (transport layer) -->
+<script src="js/api-integration.js"></script>
 
-<!-- 3. Adapters (for backward compatibility) -->
-<script src="js/session-store-adapters.js"></script>
+<!-- 3. Window/UI management -->
+<script src="js/app/windows/window-registry.js"></script>
+<script src="js/app/windows/window-state.js"></script>
+<script src="js/app/windows/window-position.js"></script>
 
 <!-- 4. Legacy files (can coexist) -->
 <script src="js/session-manager.js"></script>
 <script src="js/session-view-model.js"></script>
-<script src="js/sse-client.js"></script>
 
-<!-- 5. New panel system -->
-<script src="js/panel-manager.js"></script>
-
-<!-- 6. Application -->
-<script src="js/task-flow.js"></script>
+<!-- 5. Task flow -->
+<script src="js/task-flow/index.js"></script>
 <script src="js/app.js"></script>
 ```
 
@@ -190,55 +189,60 @@ store.on('execute' | 'messages' | 'message' | 'context' |
          'status' | 'reset' | 'error', handler)
 ```
 
-### TransportManager
+### API Integration (transport)
 
 ```typescript
-// Connection
-await connect(sessionId): boolean
-disconnect()
-isConnected(): boolean
-getState(): { connectionState, activeTransport, sessionId }
+// Sending messages
+await api.sendMessage(sessionId, message): Promise<Response>
+await api.sendChoice(sessionId, choiceId): Promise<Response>
+await api.sendFormResult(sessionId, formData): Promise<Response>
 
-// Events
-transport.on('connected', ({ transport }) => {})
-transport.on('message', ({ type, data }) => {})
-transport.on('execute', (data) => {})
-transport.on('error', (error) => {})
-transport.on('reconnecting', ({ attempt }) => {})
+// Session management
+await api.createSession(projectId): Promise<Session>
+await api.getSession(sessionId): Promise<SessionState>
+await api.listSessions(): Promise<Session[]>
+
+// Async polling
+await api.pollAsync(sessionId): Promise<AsyncResult>
 ```
 
-### PanelManager
+### Window Registry (UI)
 
 ```typescript
 // Core API
-PanelManager.open(type, options): Panel
-PanelManager.create(type, options): Panel
-PanelManager.close(id)
-PanelManager.remove(id)
+WindowRegistry.open(type, options): Window
+WindowRegistry.create(type, options): Window
+WindowRegistry.close(id)
+WindowRegistry.remove(id)
 
 // Query
-PanelManager.get(id): Panel | null
-PanelManager.getByType(type): Panel[]
-PanelManager.getVisible(): Panel[]
+WindowRegistry.get(id): Window | null
+WindowRegistry.getByType(type): Window[]
+WindowRegistry.getVisible(): Window[]
 
-// Panel instance
-panel.show()
-panel.minimize()
-panel.restore()
-panel.close()
-panel.setContent(html)
-panel.setStatus('active' | 'unread' | 'error')
+// Window instance
+window.show()
+window.minimize()
+window.restore()
+window.close()
+window.setContent(html)
+window.setStatus('active' | 'unread' | 'error')
+
+// Window events
+window.on('show', () => {})
+window.on('minimize', () => {})
+window.on('close', () => {})
 ```
 
 ## Benefits
 
 1. **Single source of truth**: No more state synchronization bugs
 2. **Simplified events**: Direct store→UI subscriptions
-3. **Auto-fallback transport**: SSE → WebSocket without manual handling
-4. **Unified panels**: One system instead of panels+cubes+modals
+3. **Direct HTTP transport**: Simple fetch-based communication
+4. **Window registry**: Unified window management system
 5. **Backward compatible**: Legacy code continues working
 
-- Three-level panel hierarchy (PlasticineUI complexity)
+- Three-level window hierarchy (PlasticineUI complexity)
 - Multiple event emitter chains
 - Duplicate state in SessionManager/ViewModel
 

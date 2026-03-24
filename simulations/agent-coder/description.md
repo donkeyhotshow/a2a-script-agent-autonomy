@@ -32,18 +32,18 @@
 
 ## Потік
 
-| Крок | Client (Web→Client)      | Server Response (Server→Client)            | Received (Client→Web) |
-|------|---------------------------|--------------------------------------------|-----------------------|
-| 1    | task: "допомоги з кодом"  | execute.form з вибором дій                 | execute.form          |
-| 2    | result.choice: "agent"    | execute.form запитує message               | execute.form          |
-| 3    | result.message            | LLM request → аналізує → виконує RAG пошук | execute + message     |
-| 4    | result["rag-search"]      | LLM request → читає файл                   | execute.read-file     |
-| 5    | result["read-file"]       | LLM відповідає + form                      | execute.form + message|
-| 6    | result.message            | "дякую!" → completed + form                | execute.form          |
-| 7    | result.message            | "запиши звіт" → write-file                 | execute.write-file    |
-| 8    | result["write-file"]      | Файл записано → completed                  | result.completed      |
-| 9    | result.message (новий)    | LLM відповідає                              | execute.form          |
-| 10   | result.message            | Кінець діалогу                             | result.completed      |
+| Крок | Client (Web→Client)      | Server Response (Server→Client)            | Received (Client→Web)  |
+|------|--------------------------|--------------------------------------------|------------------------|
+| 1    | task: "допомоги з кодом" | execute.form з вибором дій                 | execute.form           |
+| 2    | result.choice: "agent"   | execute.form запитує message               | execute.form           |
+| 3    | result.message           | LLM request → аналізує → виконує RAG пошук | execute + message      |
+| 4    | result["rag-search"]     | LLM request → читає файл                   | execute.read-file      |
+| 5    | result["read-file"]      | LLM відповідає + form                      | execute.form + message |
+| 6    | result.message           | "дякую!" → completed + form                | execute.form           |
+| 7    | result.message           | "запиши звіт" → write-file                 | execute.write-file     |
+| 8    | result["write-file"]     | Файл записано → completed                  | result.completed       |
+| 9    | result.message (новий)   | LLM відповідає                             | execute.form           |
+| 10   | result.message           | Кінець діалогу                             | result.completed       |
 
 ## Можливі дії
 

@@ -1,5 +1,10 @@
 # Execute Processing Errors
 
+> **⚠️ Deprecated:** This document references `PanelManager` and `TransportManager` which were planned but never implemented.
+> - Panel management: `window-registry.js` + `task-flow/render.js`
+> - Transport: `api-integration.js` (HTTP polling)
+> See [api-integration.md](../api-reference/api-integration.md) and [window-registry.md](../api-reference/window-registry.md)
+
 Issues with execute object handling, action processing, and result submissions.
 
 ## Malformed Execute Objects

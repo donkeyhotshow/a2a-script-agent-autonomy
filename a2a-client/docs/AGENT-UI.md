@@ -34,10 +34,8 @@
 ├─────────────────────────────────────────────────────────────────┤
 │  order  │  file                              │  type            │
 ├─────────┼────────────────────────────────────┼──────────────────┤
-│    1    │  js/storage.js                     │  Legacy IIFE     │
-│    2    │  js/session-store-refactored.js    │  ES6 Module ✅   │
-│    3    │  js/session-store-adapters.js      │  ES6 Module     │
-│    4    │  js/template-loader.js             │  Legacy IIFE     │
+│    1    │  js/session-store.js         │  Основной API     │
+│    2    │  js/session-data.js          │  Состояние сессии │
 │    5    │  js/api-integration.js            │  Legacy IIFE     │
 │    6    │  js/action-handler.js             │  Legacy IIFE     │
 │    7    │  js/error-handler.js              │  Legacy IIFE     │
@@ -49,7 +47,7 @@
 ### Слои системы:
 
 1. **Storage Layer** — `storage.js`, `SessionStorageAPI.js`
-2. **State Layer** — `SessionStoreCore.js`, `session-store-refactored.js`
+2. **State Layer** — `session-data.js` (createSessionStoreCore function)
 3. **API Layer** — `action-handler.js`, `api-integration.js`
 4. **UI Layer** — `task-flow/*`, `app/*`
 5. **Error Layer** — `error-handler.js`
@@ -65,25 +63,23 @@ a2a-client/web/js/
 │   ├── core.js             ← Координация run/sendMessage
 │   ├── index.js            ← Экспорты
 │   └── render.js           ← Рендеринг UI
-├── core/
-│   └── SessionStoreCore.js ← ES6 Module, EventEmitter ✅
 ├── storage/
 │   └── SessionStorageAPI.js
 ├── utils/
 │   └── normalizers.js      ← canonical normalizeMessage; install-normalizers.mjs → window.Normalizers
+├── session-data.js         ← createSessionStoreCore() - состояние сессии (не ESM core/*)
 ├── action-handler.js       ← Отправка message/choice
-├── session-store-refactored.js  ← Wrapper (Composition) ✅
-├── session-store.js        ← Legacy IIFE (fallback)
-├── session-store-adapters.js ← Backward Compatibility
-└── app/
+├── session-store.js        ← Основной интерфейс
+├── app/
     ├── app-task.js         ← Dynamic loader
     ├── project-manager.js
     ├── session-manager.js
     ├── taskbar-manager.js
     └── windows/
         ├── window-events.js
-        ├── window-state.js
-        └── window-manager.js
+        ├── window-position.js
+        ├── window-registry.js
+        └── window-state.js
 ```
 
 ---
@@ -96,26 +92,24 @@ a2a-client/web/js/
 <!-- 0. Storage API -->
 <script src="js/storage.js"></script>
 
-<!-- 1. Core State (Refactored - ES6 Modules) -->
-<script type="module" src="js/session-store-refactored.js"></script>
+<!-- 1. Core State (session-data.js + session-store.js) -->
+<script src="js/session-data.js"></script>
+<script src="js/session-store.js"></script>
 
-<!-- 1b. Legacy (deprecated - for fallback only) -->
-<!-- <script type="module" src="js/session-store.js"></script> -->
-
-<!-- 2. Adapters (Backward Compatibility Layer) -->
-<script type="module" src="js/session-store-adapters.js"></script>
-
-<!-- 3. UI Modules -->
+<!-- 2. UI Modules -->
 <script src="js/template-loader.js"></script>
 <script src="js/api-integration.js"></script>
 <script src="js/action-handler.js"></script>
 <script src="js/error-handler.js"></script>
 
-<!-- 4. TaskFlow -->
-<script src="js/task-flow/api.js"></script>
-<script src="js/task-flow/render.js"></script>
-<script src="js/task-flow/core.js"></script>
+<!-- 3. TaskFlow -->
 <script src="js/task-flow/index.js"></script>
+<script src="js/task-flow/init.js"></script>
+<script src="js/task-flow/loader.js"></script>
+<script src="js/task-flow/render.js"></script>
+<script src="js/task-flow/tasks.js"></script>
+<script src="js/task-flow/messages.js"></script>
+<script src="js/task-flow/utils.js"></script>
 <script src="js/app-task.js"></script>
 ```
 

@@ -1,0 +1,54 @@
+{
+  "success": false,
+  "data": {
+    "id": "req_1774365896051_hum9gl7a6",
+    "promiseId": "prom_1774365896051_f8nm0cal0",
+    "clientId": "simulation-client",
+    "status": "pending",
+    "priority": 0,
+    "context": {
+      "session_id": "stateless",
+      "version": "1.0",
+      "task": "проаналізуй код авторизації",
+      "execution": {
+        "action": "agent"
+      },
+      "result": {
+        "rag-search": {
+          "query": "authorization login JWT token auth",
+          "results": [
+            {
+              "file": "src/auth.js",
+              "score": 0.95,
+              "snippet": "const jwt = require('jsonwebtoken');\n\nfunction authenticate(req, res, next) {\n  const token = req.headers.authorization;\n  ..."
+            },
+            {
+              "file": "src/middleware/auth.js",
+              "score": 0.87,
+              "snippet": "module.exports = { authMiddleware: function(req, res, next) {\n  const token = req.headers['x-auth-token'];\n  ..."
+            },
+            {
+              "file": "src/utils/jwt.js",
+              "score": 0.82,
+              "snippet": "export function verifyToken(token) {\n  return jwt.verify(token, process.env.JWT_SECRET);\n}"
+            }
+          ],
+          "files": [
+            "src/auth.js",
+            "src/middleware/auth.js",
+            "src/utils/jwt.js"
+          ],
+          "page": 1,
+          "hasMore": false
+        }
+      }
+    },
+    "message": null,
+    "codeBlocks": null,
+    "result": null,
+    "error": null,
+    "createdAt": "2026-03-24T15:24:56.051Z",
+    "startedAt": null,
+    "completedAt": null
+  }
+}

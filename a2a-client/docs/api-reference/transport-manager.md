@@ -1,6 +1,6 @@
 # TransportManager API Reference
 
-The TransportManager handles unified communication between client and server, providing automated transport selection (SSE → WebSocket fallback).
+> **⚠️ Deprecated**: This module was planned but never implemented. Communication with server is now handled by **API Integration** (api-integration.js).
 
 ## Overview
 

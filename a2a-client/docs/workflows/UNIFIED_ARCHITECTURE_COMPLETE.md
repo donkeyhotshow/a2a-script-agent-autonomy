@@ -1,5 +1,9 @@
 # Unified Architecture - Implementation Complete
 
+> **⚠️ Deprecated Code Examples:** Some sections of this document reference `TransportManager` and `PanelManager` which were planned but never implemented.
+> - Transport now uses `api-integration.js` (HTTP polling)
+> - Window management now uses `window-registry.js` + `task-flow/render.js`
+
 **Date**: 2026-03-06
 **Status**: ✅ Steps 1-4 Complete
 
@@ -7,9 +11,9 @@
 
 All 4 major refactoring steps from the decomposition document have been implemented:
 
-1. ✅ **Transport Strategy**: Unified strategy (SSE → WS → Polling)
+1. ✅ **Transport Strategy**: HTTP with promiseId polling
 2. ✅ **Unified State**: SessionStore + stateless storage (N+1 folders)
-3. ✅ **Simplified Panels**: PanelManager replaces 3-level hierarchy
+3. ✅ **Simplified Windows**: Window Registry replaces 3-level hierarchy
 4. ✅ **Action Standardization**: ActionHandler with uniform action-key shape
 
 ## File Changes
@@ -17,20 +21,22 @@ All 4 major refactoring steps from the decomposition document have been implemen
 ### New Files (Unified Architecture)
 ```
 js/
-├── session-store.js              # Single source of truth
-├── transport-manager.js          # HTTP sync requests (no SSE/WS)
-├── session-store-adapters.js     # Legacy compatibility
-├── panel-manager.js              # Simplified panel system
+├── storage.js                 # SessionStorage API
+├── session-data.js           # createSessionStoreCore() - состояние
+├── session-store.js          # Single source of truth
+├── action-handler.js         # Отправка сообщений/выбора
+├── api-integration.js        # HTTP клиент для API
+└── template-loader.js        # Загрузка шаблонов
 
-css/components/
-└── panel-manager.css             # New panel styles
+css/
+└── main.css                  # Основные стили
 ```
 
 ### Modified Files
 ```
 js/
-├── task-flow.js                  # Uses PanelManager, ActionHandler, no polling
-└── app-task.js                   # Uses PanelManager for panels
+├── task-flow.js                  # Uses Window Registry, ActionHandler, no polling
+└── app-task.js                   # Uses Window Registry for windows
 
 index.html                      # Updated script loading order
 DEV_STATE.md                    # Updated documentation
@@ -156,14 +162,14 @@ SessionStore.pushMessage(msg)
 ## Event Flow
 
 ```
-Server → SSE/WebSocket → TransportManager → SessionStore → UI subscribers
-                                    ↓
-                              session-sync-v2.js
+Server → API Response → SessionStore → UI subscribers
+                           ↓
+                      session-store.js
 ```
 
 ## Testing Checklist
 
-- [ ] Session creation via TransportManager
+- [ ] Session creation via API
 - [ ] Choice submission via ActionHandler
 - [ ] Message submission via ActionHandler
 - [ ] Panel open/minimize/restore/close

@@ -1,0 +1,34 @@
+{
+  "success": false,
+  "data": {
+    "id": "req_1774366734775_f960lexi5",
+    "promiseId": "prom_1774366734775_b034w0v2b",
+    "clientId": "simulation-client",
+    "status": "pending",
+    "priority": 0,
+    "context": {
+      "session_id": "stateless",
+      "version": "1.0",
+      "task": "виправити імпорти у vue компонентах",
+      "execution": {
+        "action": "fix-vue-imports-batched",
+        "step": "completed",
+        "status": "completed"
+      },
+      "selectedAction": {
+        "actionId": "done"
+      },
+      "result": {
+        "choice": "done"
+      },
+      "choice_id": "done"
+    },
+    "message": null,
+    "codeBlocks": null,
+    "result": null,
+    "error": null,
+    "createdAt": "2026-03-24T15:38:54.775Z",
+    "startedAt": null,
+    "completedAt": null
+  }
+}

@@ -27,11 +27,7 @@ Implement a unified SessionStore as the single source of truth for all session-r
    - Computed properties for derived state
    - Batch update methods for server responses
 
-2. **TransportManager** (`transport-manager.js`) - Unified transport layer handling HTTP with automatic fallback
-
-3. **SessionSync V2** (`session-sync-v2.js`) - Direct bridge between transport and store
-
-4. **Legacy Adapters** (`session-store-adapters.js`) - Backward compatibility layer
+2. **SessionData + SessionStore** (`session-data.js` + `session-store.js`) - Unified state management with createSessionStoreCore()
 
 ### State Structure
 
@@ -71,10 +67,14 @@ _state: {
 
 ### Completed
 - ✅ SessionStore core implementation
-- ✅ TransportManager unification
+- ⚠️ TransportManager unification - **planned but not implemented** (replaced by APIIntegration)
 - ✅ Legacy adapter layer
 - ✅ UI component migration
 - ✅ Testing and validation
+
+### Actually Implemented
+- **APIIntegration** (`a2a-client/web/js/api-integration.js`) replaces TransportManager
+- **WindowRegistry** (`a2a-client/web/js/app/windows/window-registry.js`) replaces PanelManager
 
 ### Future Enhancements
 - Consider immutable state updates for better performance

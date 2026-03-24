@@ -5,7 +5,7 @@
  * ├── utils/normalizers.js + install-normalizers.mjs — window.Normalizers (лимиты и normalizeMessage)
  * ├── js/daemons/* — DialogLoader / DialogPromise (рантайм UI)
  * ├── session-data.js — createSessionStoreCore() (плоское состояние + даемоны; не ESM core/*)
- * ├── project-store.js — проекты
+ * ├── project-manager.js — проекты (в app/)
  * └── session-store.js — точка входа (делегатор)
  *
  * Рантажится через SessionData + daemons (js/core/ сейчас не используется).
@@ -19,7 +19,7 @@
  * 4. js/html-utils.js (executeHasActionableForm)
  * 5. js/install-normalizers.mjs (module, before deferred session-store.js)
  * 6. js/session-data.js
- * 7. js/project-store.js
+ * 7. js/app/project-manager.js
  * 9. js/session-store.js (этот файл)
  */
 

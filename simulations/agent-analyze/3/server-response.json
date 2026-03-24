@@ -1,0 +1,29 @@
+{
+  "success": false,
+  "data": {
+    "id": "req_1774365064102_dh3ern1su",
+    "promiseId": "prom_1774365064102_c12qwtvre",
+    "clientId": "simulation-client",
+    "status": "pending",
+    "priority": 0,
+    "context": {
+      "session_id": "stateless",
+      "version": "1.0",
+      "task": "опиши поточну архітектуру бекенду",
+      "execution": {
+        "action": "agent"
+      },
+      "result": {
+        "message": "опиши поточну архітектуру бекенду"
+      },
+      "message": "опиши поточну архітектуру бекенду"
+    },
+    "message": "опиши поточну архітектуру бекенду",
+    "codeBlocks": null,
+    "result": null,
+    "error": null,
+    "createdAt": "2026-03-24T15:11:04.102Z",
+    "startedAt": null,
+    "completedAt": null
+  }
+}

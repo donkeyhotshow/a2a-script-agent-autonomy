@@ -1,20 +1,35 @@
 # Server interrupt loop — step 6 example
 
-This folder’s **canonical goldens** (`response.md`, `response.json`) describe the **normal** single LLM turn: no `interrupt` in the LLM JSON. **Interrupt substeps** live in **sister folders** next to this step: [`../6-sub-1/`](../6-sub-1/) (primary only), [`../6-sub-2/`](../6-sub-2/) (`compress_history`), [`../6-sub-3/`](../6-sub-3/) (`thinking` + follow-up), [`../6-sub-4/`](../6-sub-4/) (`auto_rag_page` reenter). Each subfolder uses the same artifact set as a step (`request.json`, `request.md`, `response.json`, `response.md`, optional server-transforms); trace for UI is `context.workbench.slots.interruptTrace` in each **`response.json`**. Full spec: **[`SERVER-INTERRUPT-LOOP.md`](../../../a2a-server/docs/SERVER-INTERRUPT-LOOP.md)**.
+This folder’s **canonical goldens** (`response.md`, `response.json`) describe the **normal** single LLM turn: no
+`interrupt` in the LLM JSON. **Interrupt substeps** live in **sister folders** next to this step: [
+`../6-sub-1/`](../6-sub-1/) (primary only), [`../6-sub-2/`](../6-sub-2/) (`compress_history`), [
+`../6-sub-3/`](../6-sub-3/) (`thinking` + follow-up), [`../6-sub-4/`](../6-sub-4/) (`auto_rag_page` reenter). Each
+subfolder uses the same artifact set as a step (`request.json`, `request.md`, `response.json`, `response.md`, optional
+server-transforms); trace for UI is `context.workbench.slots.interruptTrace` in each **`response.json`**. Full spec: *
+*[`SERVER-INTERRUPT-LOOP.md`](../../../a2a-server/docs/SERVER-INTERRUPT-LOOP.md)**.
 
 ## Why this step
 
-- `context.history` is **long** (many `assistant` / `system` lines). A good candidate for **`compress_history`**: server runs an extra LLM call, replaces history with a short summary, then returns the same `execute` to the client.
-- Same schema (`auto-ai`) and transforms can stay; only the LLM payload and post-transform `$out` gain an `interrupt` field.
+- `context.history` is **long** (many `assistant` / `system` lines). A good candidate for **`compress_history`**: server
+  runs an extra LLM call, replaces history with a short summary, then returns the same `execute` to the client.
+- Same schema (`auto-ai`) and transforms can stay; only the LLM payload and post-transform `$out` gain an `interrupt`
+  field.
 
 ## Pipeline reminder
 
 1. Primary LLM → `response.md` (may include `interrupt` in JSON).
-2. `server-transforms-response.json` must copy LLM `interrupt` into **`$out.interrupt`** (e.g. `include-if` + `set`, same as the design doc).
-3. Server sees `interrupt` → runs **`applyInterrupt`** (e.g. compress) → may run **another** full request transform + LLM turn if `continueLoop` is true.
-4. **`response.json` / `received.json`** in the repo = **final** payload after the loop (what the client sees). Interrupt-only traffic is never sent to the Web DTO.
+2. `server-transforms-response.json` must copy LLM `interrupt` into **`$out.interrupt`** (e.g. `include-if` + `set`,
+   same as the design doc).
+3. Server sees `interrupt` → runs **`applyInterrupt`** (e.g. compress) → may run **another** full request transform +
+   LLM turn if `continueLoop` is true.
+4. **`response.json` / `received.json`** in the repo = **final** payload after the loop (what the client sees).
+   Interrupt-only traffic is never sent to the Web DTO.
 
-5. **Trace for UI** — same event shape as [`../6-sub-1/response.json`](../6-sub-1/response.json) `workbench.slots.interruptTrace` (extend in **`6-sub-2`…`6-sub-4`**). Server sends **`context.workbench.slots.interruptTrace`**: [`ServerInterruptTraceEvent`](../../../a2a-server/src/transform/types.ts). Web: collapsible **“Server LLM chain”** (no full prompts).
+5. **Trace for UI** — same event shape as [`../6-sub-1/response.json`](../6-sub-1/response.json)
+   `workbench.slots.interruptTrace` (extend in **`6-sub-2`…`6-sub-4`**). Server sends *
+   *`context.workbench.slots.interruptTrace`**: [
+   `ServerInterruptTraceEvent`](../../../a2a-server/src/transform/types.ts). Web: collapsible **“Server LLM chain”** (no
+   full prompts).
 
 ## Example: primary LLM JSON with `compress_history`
 
@@ -36,7 +51,8 @@ This folder’s **canonical goldens** (`response.md`, `response.json`) describe 
 
 ## Example: compress sub-call output (server-only)
 
-The compress handler expects **only** a JSON array of `{ "role", "message" }` entries (see `DialogRequestProcessor` / `applyInterrupt`). Illustrative result:
+The compress handler expects **only** a JSON array of `{ "role", "message" }` entries (see `DialogRequestProcessor` /
+`applyInterrupt`). Illustrative result:
 
 ```json
 [
@@ -55,16 +71,18 @@ The compress handler expects **only** a JSON array of `{ "role", "message" }` en
 ]
 ```
 
-After compress, the **client-visible** `response.json` would keep the same **`execute.write-file`** as today, but **`context.history`** would match the shortened array above (and optional `interrupt_truncated: true` if the global interrupt budget is exhausted).
+After compress, the **client-visible** `response.json` would keep the same **`execute.write-file`** as today, but *
+*`context.history`** would match the shortened array above (and optional `interrupt_truncated: true` if the global
+interrupt budget is exhausted).
 
 ## Other simulations where interrupts fit
 
-| Simulation / step | `reason` | Notes |
-|-------------------|----------|--------|
-| **agent / 6** (this) | `compress_history` | Long tool + assistant history. |
-| **agent / 3–5** | `thinking` or `compress_history` | Earlier turns; use `thinking` if you want `workbench.slots.thinking` before the main reply. |
-| **agent / 3+** (RAG) | `auto_rag_page` | Only if the server implements RAG fetch inside the loop; current stub mainly marks context and re-enters the main LLM. |
-| **dialog** (multi-turn) | `compress_history` | Any step where `history` length grows past the server threshold. |
+| Simulation / step       | `reason`                         | Notes                                                                                                                  |
+|-------------------------|----------------------------------|------------------------------------------------------------------------------------------------------------------------|
+| **agent / 6** (this)    | `compress_history`               | Long tool + assistant history.                                                                                         |
+| **agent / 3–5**         | `thinking` or `compress_history` | Earlier turns; use `thinking` if you want `workbench.slots.thinking` before the main reply.                            |
+| **agent / 3+** (RAG)    | `auto_rag_page`                  | Only if the server implements RAG fetch inside the loop; current stub mainly marks context and re-enters the main LLM. |
+| **dialog** (multi-turn) | `compress_history`               | Any step where `history` length grows past the server threshold.                                                       |
 
 ## Transform snippet (`server-transforms-response.json`)
 
@@ -78,4 +96,5 @@ Add only when you turn this step into an interrupt golden (not required for the 
 }
 ```
 
-Ensure `parse-json-from-md` already maps the full LLM object to `$llm` so `$.llm.interrupt` exists when the model emits it.
+Ensure `parse-json-from-md` already maps the full LLM object to `$llm` so `$.llm.interrupt` exists when the model emits
+it.

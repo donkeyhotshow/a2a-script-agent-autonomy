@@ -10,6 +10,8 @@ const {
     checkHistoryLimitCore
 } = require('./terminal-handler-core.cjs');
 
+const { analyzeCommand } = require('./command-analyze.cjs');
+
 // Импорт command-executor-wrapper (local), с fallback если файл удалён
 let CommandExecutor;
 try {
@@ -60,39 +62,6 @@ function getCurrentDirSync() {
 
 async function getCurrentDir() {
     return getCurrentDirSync();
-}
-
-// Простой анализатор команд для безопасности (без внешних зависимостей)
-function analyzeCommand(command) {
-    if (!command || typeof command !== 'string') {
-        return {blocked: false};
-    }
-
-    const cmd = command.toLowerCase().trim();
-
-    // Список потенциально опасных команд
-    const dangerousPatterns = [
-        'rm -rf /',
-        'format',
-        'del /f /s /q',
-        'rmdir /s /q',
-        'shutdown',
-        'taskkill',
-        'net user',
-        'reg delete',
-        'attrib -r -s -h'
-    ];
-
-    for (const pattern of dangerousPatterns) {
-        if (cmd.includes(pattern.toLowerCase())) {
-            return {
-                blocked: true,
-                reason: `Command contains potentially dangerous pattern: ${pattern}`
-            };
-        }
-    }
-
-    return {blocked: false};
 }
 
 // Валидация параметров выполнения

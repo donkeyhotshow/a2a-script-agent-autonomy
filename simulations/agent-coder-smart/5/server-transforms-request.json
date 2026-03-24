@@ -8,7 +8,13 @@
     },
     {
       "op": "pick-context",
-      "include": ["execution", "task", "history:3", "workbench", "scratchpad"]
+      "include": [
+        "execution",
+        "task",
+        "history:3",
+        "workbench",
+        "scratchpad"
+      ]
     },
     {
       "op": "truncate-section",

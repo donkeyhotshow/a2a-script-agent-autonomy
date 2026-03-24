@@ -20,28 +20,50 @@ import {spawn} from 'node:child_process';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const simulationsPath = join(__dirname);
 
-// Simulation roots under this folder (kebab-case dirs with numbered steps). Legacy entries like pilot/analyze-full removed.
-const simulationCategories = [
-    'dialog',
-    'agent',
-    'agent-analyze',
-    'agent-auto-ai',
-    'agent-coder',
-    'agent-coder-smart',
-    'fix-vue-imports',
-    'fix-vue-imports-batched',
-    'fix-vue-imports-decline',
-    'fix-laravel-namespaces-and-uses',
-    'orchestrator-dialog',
-    'phpunit-deprecations',
-    'task-decomposition'
-];
+/**
+ * Category dirs: any immediate child of simulations/ that has step folders with request.json or a root request.json.
+ */
+function discoverSimulationCategories(basePath) {
+    if (!existsSync(basePath)) {
+        return [];
+    }
+    return readdirSync(basePath)
+        .filter((name) => {
+            if (name.startsWith('.')) {
+                return false;
+            }
+            const categoryPath = join(basePath, name);
+            try {
+                if (!statSync(categoryPath).isDirectory()) {
+                    return false;
+                }
+            } catch {
+                return false;
+            }
+            const files = readdirSync(categoryPath);
+            const hasStepRequest = files.some((f) => {
+                try {
+                    const subPath = join(categoryPath, f);
+                    return (
+                        statSync(subPath).isDirectory() &&
+                        existsSync(join(subPath, 'request.json'))
+                    );
+                } catch {
+                    return false;
+                }
+            });
+            const rootRequest = existsSync(join(categoryPath, 'request.json'));
+            return hasStepRequest || rootRequest;
+        })
+        .sort();
+}
 
 /**
  * Find all simulations in directory
  */
 function findSimulations(basePath) {
     const simulations = [];
+    const simulationCategories = discoverSimulationCategories(basePath);
 
     for (const category of simulationCategories) {
         const categoryPath = join(basePath, category);

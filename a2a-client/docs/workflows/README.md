@@ -1,5 +1,9 @@
 # A2A Web Client Workflows & Scenarios
 
+> **⚠️ Deprecated:** Some documents in this directory reference `PanelManager` and `TransportManager` which were planned but never implemented.
+> - Panel management: `window-registry.js` + `task-flow/render.js`
+> - Transport: `api-integration.js` (HTTP polling)
+
 This directory contains comprehensive documentation of all user workflows and system scenarios in the A2A Script Agent web client.
 
 ## Directory Structure
@@ -25,8 +29,8 @@ This directory contains comprehensive documentation of all user workflows and sy
 ### 1. Session Management Scenarios
 | Scenario | Description | Entry Points | Key Components |
 |----------|-------------|--------------|----------------|
-| **Session Creation** | User submits task → session initialized | Task input form, API calls | SessionStore, TransportManager |
-| **Session Switching** | User switches between active sessions | Session panel, navigation | SessionManager, PanelManager |
+| **Session Creation** | User submits task → session initialized | Task input form, API calls | SessionStore, APIIntegration |
+| **Session Switching** | User switches between active sessions | Session panel, navigation | SessionManager, WindowRegistry |
 | **Session Deletion** | User removes completed/error sessions | Session controls, cleanup | SessionStore, UI cleanup |
 | **Project Context** | Sessions grouped by projects | Project selector, filtering | Project API, session grouping |
 

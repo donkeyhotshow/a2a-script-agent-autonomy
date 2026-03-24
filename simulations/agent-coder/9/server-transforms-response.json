@@ -9,7 +9,10 @@
     {
       "op": "validate-action-key",
       "from": "$parsed",
-      "validate": ["message", "execute"]
+      "validate": [
+        "message",
+        "execute"
+      ]
     },
     {
       "op": "copy",

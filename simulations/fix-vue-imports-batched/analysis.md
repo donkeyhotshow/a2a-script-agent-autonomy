@@ -35,7 +35,8 @@ N+2. Server → Client: { context, execute: { form } } - фінальна фор
 ## Internal Steps (server-side only)
 
 1. **request-files-to-fix** (internal) → executes `script` на клієнті
-2. **search-exporter** (internal) → executes `rag-search` на клієнті (в циклі для кожного файлу). Це осмислене використання `rag-search` для пошуку експортів у кодовій базі.
+2. **search-exporter** (internal) → executes `rag-search` на клієнті (в циклі для кожного файлу). Це осмислене
+   використання `rag-search` для пошуку експортів у кодовій базі.
 3. **vue-import-cleanup** (internal) → executes `script` на клієнті
 
 ## Правила Response структури

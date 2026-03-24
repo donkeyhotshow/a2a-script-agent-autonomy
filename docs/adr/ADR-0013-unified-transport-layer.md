@@ -14,16 +14,18 @@ Implement a unified TransportManager that consolidates multiple transport channe
 
 ### Architecture (Superseded)
 
-**TransportManager** (`transport-manager.js`) originally provided:
+**TransportManager** (planned but never implemented as `transport-manager.js`) originally provided:
 - Primary real-time channel with automatic fallback
 - HTTP polling as last resort for complete transport failure
 - Consistent reconnection logic with exponential backoff
 - Unified event interface for all transport types
 - Connection health monitoring and reporting
 
+*Note: This module was planned but never implemented. The actual implementation uses `api-integration.js` for HTTP communication.*
+
 ### Current Implementation
 
-**TransportManager** now uses async `promiseId` polling:
+**API Integration** (`api-integration.js`) provides:
 - Server returns `{ promiseId, status: "pending" }`
 - Client API polls `/requests/:promiseId/status` until `completed`
 - When completed, Client API returns `execute.*` to Web
@@ -62,13 +64,18 @@ enum ConnectionState {
 
 ## Notes / Follow-ups
 
-### Completed
-- ✅ TransportManager core implementation
-- ✅ Real-time channel integration
-- ✅ HTTP polling last resort
-- ✅ Connection health monitoring
-- ✅ Exponential backoff reconnection
-- ✅ Integration with SessionStore
+### Not Implemented
+- ❌ TransportManager core implementation - **planned but never implemented**
+- ❌ Real-time channel integration - SSE/WebSocket removed in favor of HTTP polling
+- ❌ HTTP polling last resort - replaced with `promiseId` polling pattern
+- ❌ Connection health monitoring - not implemented
+- ❌ Exponential backoff reconnection - simplified to direct HTTP calls
+- ❌ Integration with SessionStore - not needed in current architecture
+
+### Actually Implemented
+- ✅ **APIIntegration** (`a2a-client/web/js/api-integration.js`) - HTTP client for Client API
+- ✅ **Promise-based async flow** - Server returns `promiseId`, polls for completion
+- ✅ **Session state via SessionStore** - Client-side state management
 
 ### Future Enhancements
 - Add connection quality metrics (latency, packet loss)

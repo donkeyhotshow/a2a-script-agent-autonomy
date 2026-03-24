@@ -24,13 +24,13 @@
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                     AI Hub Proxy (11435)                        │
+│                     AI Hub Proxy (11434)                        │
 │   ai-integration - Routes to LLM providers                     │
 └─────────────────────────────┬───────────────────────────────────┘
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                      Ollama (11434)                             │
+│                      Ollama (11435)                             │
 │   Local LLM service (qwen3:8b, etc.)                           │
 └─────────────────────────────────────────────────────────────────┘
 ```
@@ -68,7 +68,6 @@
 
 **Файлы для проверки:**
 - [`a2a-client/vite-plugin-a2a/routes/stepRoutes.js`](a2a-client/vite-plugin-a2a/routes/stepRoutes.js:230-265) - логика polling и сохранения
-- [`a2a-client/web/js/action-handler.js`](a2a-client/web/js/action-handler.js:132-230) - клиентский polling
 - [`a2a-client/web/js/session-store.js`](a2a-client/web/js/session-store.js:330-337) - pushMessage
 
 ---
@@ -98,8 +97,8 @@
 | A2A Server | http://localhost:3000 |
 | Client API | http://localhost:5173/api/a2a |
 | Web UI | http://localhost:5173 |
-| AI Hub Proxy | http://localhost:11435 |
-| Ollama | http://localhost:11434 |
+| AI Hub Proxy | http://localhost:11434 |
+| Ollama | http://localhost:11435 |
 | Модель | qwen3:8b |
 
 ### Переменные окружения
@@ -121,4 +120,4 @@
 
 ---
 
-*Обновлено: 2026-03-20*
+*Обновлено: 2026-03-24*

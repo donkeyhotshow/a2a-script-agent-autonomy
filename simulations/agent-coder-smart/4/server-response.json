@@ -1,0 +1,46 @@
+{
+  "success": false,
+  "data": {
+    "id": "req_1774365680464_mb9lrne0a",
+    "promiseId": "prom_1774365680464_hgefdlwbz",
+    "clientId": "simulation-client",
+    "status": "pending",
+    "priority": 0,
+    "context": {
+      "session_id": "stateless",
+      "version": "1.0",
+      "task": "створи задачу і виконай",
+      "execution": {
+        "action": "agent",
+        "step": "rag-clarify"
+      },
+      "result": {
+        "rag-search": {
+          "results": [
+            {
+              "file": "src/auth.js",
+              "score": 0.92,
+              "snippet": "async function login(email, password) { ... }"
+            },
+            {
+              "file": "src/middleware/auth.ts",
+              "score": 0.88,
+              "snippet": "export function verifyToken(token: string) { ... }"
+            }
+          ],
+          "files": [
+            "src/auth.js",
+            "src/middleware/auth.ts"
+          ]
+        }
+      }
+    },
+    "message": null,
+    "codeBlocks": null,
+    "result": null,
+    "error": null,
+    "createdAt": "2026-03-24T15:21:20.464Z",
+    "startedAt": null,
+    "completedAt": null
+  }
+}

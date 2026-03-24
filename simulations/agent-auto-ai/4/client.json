@@ -11,7 +11,9 @@
           "snippet": "const app = express();"
         }
       ],
-      "files": ["src/app.js"],
+      "files": [
+        "src/app.js"
+      ],
       "page": 1,
       "pageSize": 10,
       "total": 1,

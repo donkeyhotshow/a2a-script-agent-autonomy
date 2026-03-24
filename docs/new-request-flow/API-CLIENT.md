@@ -667,7 +667,6 @@ try {
 - [PROTOCOL.md](PROTOCOL.md) — Протокол взаимодействия (action-key shape, типы действий)
 - [SESSION-FLOW.md](SESSION-FLOW.md) — Поток сессий (состояния, этапы)
 - [SCHEMAS.md](SCHEMAS.md) — JSON схемы
-- [SIMULATION-LLM-PROXY.md](SIMULATION-LLM-PROXY.md) — Асинхронный поток с promiseId
 - [SIMULATION-FORMAT.md](SIMULATION-FORMAT.md) — Формат симуляций
 - [simulations/SCHEMA.md](../../simulations/SCHEMA.md) — Схема симуляций (canonical)
 - [WEB-UI.md](WEB-UI.md) — Web UI

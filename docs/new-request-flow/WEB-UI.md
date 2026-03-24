@@ -57,15 +57,23 @@ a2a-client/web/
 │   ├── session-store.js          # Состояние сессии, события execute
 │   ├── app/                      # Основные модули
 │   │   ├── session-manager.js    # Управление сессиями
-│   │   ├── taskbar-manager.js    # Управление таскбаром
-│   │   └── window-manager.js     # Управление окнами
+│   │   ├── windows/               # Оконная подсистема
+│   │   │   ├── window-events.js    # События окон
+│   │   │   ├── window-position.js  # Позиционирование
+│   │   │   ├── window-registry.js  # Реестр окон
+│   │   │   └── window-state.js     # Состояние окон
 │   ├── components/               # UI компоненты
 │   ├── task-flow/                # Поток задач
-│   │   ├── api.js                # HTTP fetch + retry
+│   │   ├── index.js               # Точка входа
+│   │   ├── init.js               # Инициализация
 │   │   ├── core.js               # TaskFlow логика
-│   │   └── render.js             # Рендеринг execute
+│   │   ├── render.js             # Рендеринг execute
+│   │   ├── tasks.js             # Задачи
+│   │   ├── messages.js          # Сообщения
+│   │   ├── loader.js            # Загрузчик
+│   │   └── utils.js             # Утилиты
 │   ├── error-handler.js          # Обработка ошибок
-│   └── progress-indicators.js    # Индикаторы прогресса
+│   └── loader.js                # Индикаторы загрузки
 └── examples/
     └── advanced-features.html     # Примеры
 ```
@@ -200,11 +208,11 @@ ErrorHandler.handleApiError(response, { endpoint: '/api/sessions' });
 
 ---
 
-### ProgressIndicators
+### Loader
 
 Модуль визуального отображения прогресса длительных операций.
 
-**Файл:** [`progress-indicators.js`](../../a2a-client/web/js/progress-indicators.js)
+**Файл:** [`loader.js`](../../a2a-client/web/js/task-flow/loader.js)
 
 #### Конфигурация
 
@@ -296,11 +304,11 @@ TerminalEmulator.clear();
 
 ---
 
-### RAGSearchUI
+### TaskFlow (task-flow)
 
-Пользовательский интерфейс для RAG поиска.
+Модуль управления потоком задач.
 
-**Файл:** [`rag-search-ui.js`](../../a2a-client/web/js/rag-search-ui.js)
+**Файл:** [`task-flow/index.js`](../../a2a-client/web/js/task-flow/index.js)
 
 #### Конфигурация
 
@@ -334,11 +342,11 @@ console.log(results);
 
 ---
 
-### FileTransfer
+### TaskFlow Render
 
-Модуль передачи файлов. Обеспечивает загрузку и скачивание файлов.
+Модуль рендеринга execute-ответов.
 
-**Файл:** [`file-transfer.js`](../../a2a-client/web/js/file-transfer.js)
+**Файл:** [`task-flow/render.js`](../../a2a-client/web/js/task-flow/render.js)
 
 #### Конфигурация
 

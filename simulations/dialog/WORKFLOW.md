@@ -4,17 +4,20 @@
 
 The `received.json` files define what the web receives. The web must handle all these `execute` shapes:
 
-| Step | `received.json` execute shape | Web renders |
-|------|-------------------------------|-------------|
-| 1 | `{ form: { title, choices: [...] } }` | Choice buttons (router) |
-| 2 | `{ form: { input: [{ name, type, label }] } }` | Text input (begin dialog) |
-| 3+ | `{ message: "...", form: { input: [...] } }` | History (message added to store) + text input |
-| any | `{ finalResult: {...} }` | Completed state |
+| Step | `received.json` execute shape                  | Web renders                                   |
+|------|------------------------------------------------|-----------------------------------------------|
+| 1    | `{ form: { title, choices: [...] } }`          | Choice buttons (router)                       |
+| 2    | `{ form: { input: [{ name, type, label }] } }` | Text input (begin dialog)                     |
+| 3+   | `{ message: "...", form: { input: [...] } }`   | History (message added to store) + text input |
+| any  | `{ finalResult: {...} }`                       | Completed state                               |
 
 **Key rules:**
+
 - `execute.form.choices` → render choice buttons, NO text input at bottom
-- `execute.form.input` (no choices) → use `input[0].label` as placeholder for bottom text input; no separate labeled fields
-- `execute.message + execute.form.input` → message is pushed to history by `SessionStore.setExecute()` before render; bottom input stays open
+- `execute.form.input` (no choices) → use `input[0].label` as placeholder for bottom text input; no separate labeled
+  fields
+- `execute.message + execute.form.input` → message is pushed to history by `SessionStore.setExecute()` before render;
+  bottom input stays open
 - `execute.message` only (no form) → show message in container + bottom input to continue
 - Client sends: `{ result: { choice: "id" } }` for choices, `{ result: { message: "text" } }` for text input
 
@@ -26,26 +29,32 @@ The `received.json` files define what the web receives. The web must handle all 
 
 Each dialog step can contain up to 8 files, covering the complete Web ↔ Client API ↔ Server ↔ LLM pipeline:
 
-| File                            | Direction            | Description                                                                                                               |
-|---------------------------------|----------------------|---------------------------------------------------------------------------------------------------------------------------|
-| `client.json`                   | Web → Client API     | What Web sends to Client API (e.g. `{ task, projectId }`, `{ sessionId, result }`)                                         |
-| `request.json`                  | Client API → Server  | Payload from Client API to Server (context + result), already without `projectId`/`sessionId`                             |
-| `server-transforms-request.json`  | Server               | How the server processes `request.json` and builds the LLM input (transformation before calling LLM). Optional.           |
-| `request.md`                    | Server → LLM         | Markdown sent to LLM (system prompt + current state)                                                                      |
-| `response.md`                   | LLM → Server         | Expected LLM output (e.g. JSON with `message`, `action`)                                                                  |
-| `server-transforms-response.json` | Server               | How the server processes `response.md` and builds the client payload (transformation before sending to client). Optional. |
-| `response.json`                 | Server → Client API  | Payload sent to Client API (context + execute, etc.)                                                                      |
-| `received.json`                 | Client API → Web     | What Client API returns to Web (e.g. `{ projectId, sessionId, execute }`)                                                 |
+| File                              | Direction           | Description                                                                                                               |
+|-----------------------------------|---------------------|---------------------------------------------------------------------------------------------------------------------------|
+| `client.json`                     | Web → Client API    | What Web sends to Client API (e.g. `{ task, projectId }`, `{ sessionId, result }`)                                        |
+| `request.json`                    | Client API → Server | Payload from Client API to Server (context + result), already without `projectId`/`sessionId`                             |
+| `server-transforms-request.json`  | Server              | How the server processes `request.json` and builds the LLM input (transformation before calling LLM). Optional.           |
+| `request.md`                      | Server → LLM        | Markdown sent to LLM (system prompt + current state)                                                                      |
+| `response.md`                     | LLM → Server        | Expected LLM output (e.g. JSON with `message`, `action`)                                                                  |
+| `server-transforms-response.json` | Server              | How the server processes `response.md` and builds the client payload (transformation before sending to client). Optional. |
+| `response.json`                   | Server → Client API | Payload sent to Client API (context + execute, etc.)                                                                      |
+| `received.json`                   | Client API → Web    | What Client API returns to Web (e.g. `{ projectId, sessionId, execute }`)                                                 |
 
 **Order (полный pipeline):**
 
 `client.json → request.json → server-transforms-request.json → request.md → response.md → server-transforms-response.json → response.json → received.json`
 
-Not every step has all 8 files: steps without LLM typically have `client.json`, `request.json`, `server-transforms-request.json`, `server-transforms-response.json`, `response.json`, `received.json`; steps with LLM add the `.md` files; transform docs describe server logic even when LLM is not used.
+Not every step has all 8 files: steps without LLM typically have `client.json`, `request.json`,
+`server-transforms-request.json`, `server-transforms-response.json`, `response.json`, `received.json`; steps with LLM
+add the `.md` files; transform docs describe server logic even when LLM is not used.
 
 ### Supplementary: `interrupt.md` (optional)
 
-Per-step **documentation** for the [server interrupt loop](../a2a-server/docs/SERVER-INTERRUPT-LOOP.md) (extra LLM turns before returning to the client). Does **not** affect Web `received.json` or the eight-file pipeline. Canonical description: [`simulations/SCHEMA.md`](../SCHEMA.md#supplementary-server-interrupt-loop-optional). Example: [`agent-auto-ai/6/interrupt.md`](../agent-auto-ai/6/interrupt.md). **Substeps:** sister folders **`N-sub-M`** (`M` = 1,2,…) next to step `N`, e.g. [`agent-auto-ai/6-sub-1/`](../agent-auto-ai/6-sub-1/).
+Per-step **documentation** for the [server interrupt loop](../a2a-server/docs/SERVER-INTERRUPT-LOOP.md) (extra LLM turns
+before returning to the client). Does **not** affect Web `received.json` or the eight-file pipeline. Canonical
+description: [`simulations/SCHEMA.md`](../SCHEMA.md#supplementary-server-interrupt-loop-optional). Example: [
+`agent-auto-ai/6/interrupt.md`](../agent-auto-ai/6/interrupt.md). **Substeps:** sister folders **`N-sub-M`** (`M` =
+1,2,…) next to step `N`, e.g. [`agent-auto-ai/6-sub-1/`](../agent-auto-ai/6-sub-1/).
 
 ## Server Transform Pipeline Operations
 

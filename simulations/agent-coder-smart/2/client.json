@@ -1,7 +1,7 @@
 {
-    "projectId": "123",
-    "sessionId": "456",
-    "result": {
-      "choice": "agent"
-    }
+  "projectId": "123",
+  "sessionId": "456",
+  "result": {
+    "choice": "agent"
   }
+}

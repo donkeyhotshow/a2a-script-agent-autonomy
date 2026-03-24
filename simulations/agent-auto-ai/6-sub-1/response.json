@@ -19,8 +19,14 @@
       },
       "slots": {
         "interruptTrace": [
-          { "kind": "llm_output", "phase": "primary", "chars": 448 },
-          { "kind": "response_transform" }
+          {
+            "kind": "llm_output",
+            "phase": "primary",
+            "chars": 448
+          },
+          {
+            "kind": "response_transform"
+          }
         ]
       }
     },

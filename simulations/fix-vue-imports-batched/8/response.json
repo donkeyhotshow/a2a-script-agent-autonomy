@@ -11,13 +11,13 @@
     "form": {
       "title": "Виправлення імпортів завершено",
       "description": "Робочий процес завершено: 50 файлів оновлено згідно з правилами нової структури імпортів.",
-       "choices": [
-         {
-           "id": "done",
-           "label": "OK",
-           "description": "Confirm completion and close the flow"
-         }
-       ]
+      "choices": [
+        {
+          "id": "done",
+          "label": "OK",
+          "description": "Confirm completion and close the flow"
+        }
+      ]
     }
   }
 }

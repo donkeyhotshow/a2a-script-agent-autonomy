@@ -4,7 +4,7 @@
 
 **Priority:** 10
 
-**Планы:** [new request flow (архив)](../../../docs/plans-archive/a2a-server-new-request-flow.md) · [fix-vue-imports альтернативы](../../../docs/plans-archive/fix-vue-imports-alternatives-design.md) · [ai-integration docs](../../../../ai-integration/docs/README.md).
+**Планы:** [ai-integration docs](../../../../ai-integration/docs/README.md).
 
 ## Sub-actions (4 steps)
 

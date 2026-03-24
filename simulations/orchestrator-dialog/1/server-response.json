@@ -1,0 +1,30 @@
+{
+  "success": false,
+  "data": {
+    "id": "req_1774367105365_dey3mdf3m",
+    "promiseId": "prom_1774367105365_0kvc7be99",
+    "clientId": "simulation-client",
+    "status": "pending",
+    "priority": 0,
+    "context": {
+      "session_id": "stateless",
+      "version": "1.0",
+      "task": "Orchestrate ADR review and plan the audit.",
+      "execution": {
+        "action": "task",
+        "step": "new"
+      },
+      "result": {
+        "message": "Orchestrate ADR review and plan the audit."
+      },
+      "message": "Orchestrate ADR review and plan the audit."
+    },
+    "message": "Orchestrate ADR review and plan the audit.",
+    "codeBlocks": null,
+    "result": null,
+    "error": null,
+    "createdAt": "2026-03-24T15:45:05.365Z",
+    "startedAt": null,
+    "completedAt": null
+  }
+}

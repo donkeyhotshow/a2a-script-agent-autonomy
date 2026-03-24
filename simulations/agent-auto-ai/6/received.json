@@ -4,7 +4,11 @@
   "execute": {
     "message": "Updating files…",
     "attachments": {
-      "writtenFiles": [{ "path": "src/routes/health.js" }]
+      "writtenFiles": [
+        {
+          "path": "src/routes/health.js"
+        }
+      ]
     }
   }
 }

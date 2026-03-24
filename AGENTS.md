@@ -125,7 +125,7 @@ LLM controls `context.execution.step`, server persists via transforms. Prompt fo
 
 - `context.history` - Array of execution records
 - `context.execution` - Current state: `{ action, step, progress }`
-- `context.workbench` - Structured working state (`sections`, optional `batch`, optional `slots`). LLM can update **`workbench.sections`** (merge) and **`workbench_ops`** (short set/append/remove commands); see [`a2a-server/prompts/auto-ai-request.md`](a2a-server/prompts/auto-ai-request.md) and [`a2a-server/docs/LLM-REQUEST-PREP.md`](a2a-server/docs/LLM-REQUEST-PREP.md) §2c.
+- `context.workbench` - Structured working state (`sections`, optional `batch`, optional `slots`). LLM can update **`workbench.sections`** (merge) and **`workbench_ops`** (short set/append/remove commands); see [`a2a-server/prompts/auto-ai-request.md`](a2a-server/prompts/auto-ai-request.md) and [`a2a-server/docs/LLM-REQUEST-PREP.md`](a2a-server/docs/LLM-REQUEST-PREP.md) ï¿½2c.
 - `context.session_id` - Session identifier for tracking
 
 ### Simulation Pipeline
@@ -171,8 +171,8 @@ Playbook for new tools, RAG variants, transforms, simulations, and when to write
 | A2A Server | 3000 | Main backend server |
 | Client API | 3001 | Client API endpoint |
 | Web UI | 5173 | Vite dev server |
-| Ollama | 11434 | LLM API |
-| AI Hub | 11435 | AI proxy service |
+| AI Hub | 11434 | AI proxy service |
+| Ollama | 11435 | LLM API |
 
 ---
 
@@ -207,7 +207,7 @@ Cross-cutting decisions (LLM request prep, documentation canonical map, Client A
                               ?
                               ?
 ???????????????????????????????????????????????????????????????????
-?                     AI Hub Proxy (11435)                        ?
+?                     AI Hub Proxy (11434)                        ?
 ?   ai-integration - Routes to LLM providers                     ?
 ?   - promise_routes.py - Async promise handling                 ?
 ?   - ollama_manager.py - Ollama lifecycle management            ?
@@ -215,7 +215,7 @@ Cross-cutting decisions (LLM request prep, documentation canonical map, Client A
                               ?
                               ?
 ???????????????????????????????????????????????????????????????????
-?                      Ollama (11434)                             ?
+?                      Ollama (11435)                             ?
 ?   Local LLM service (qwen3:8b, etc.)                           ?
 ???????????????????????????????????????????????????????????????????
 ```
@@ -284,9 +284,9 @@ a2a-client/storage/sessions/{sessionId}/
 ??? {stepNumber}/
 ?   ??? client-result.json      # User input or choice captured before step
 ?   ??? request-to-server.json  # Payload that was sent to /api/v1/invoke
-?   ??? server-response.json    # Completed execute/context/result for the step
-?   ??? server-promise.json     # Optional: pending promise metadata
 ?   ??? server-response.json    # Completed execute/context/result for the step (includes assistant messages)
+?   ??? server-promise.json     # Optional: pending promise metadata
+?   ??? messages.json           # Step-scoped slice of the conversation
 ??? ...
 `
 
@@ -329,7 +329,7 @@ curl http://localhost:3000/health
 
 Expected response:
 ```json
-{"status":"ok","timestamp":"2026-03-12T10:00:00.000Z","version":"1.0.0"}
+{"status":"ok","timestamp":"<dynamic ISO timestamp>","version":"<package version or 1.0.0>"}
 ```
 
 ### 2. Test invoke endpoint
@@ -360,13 +360,13 @@ tail -f a2a-client/logs/web-ui.log
 ### 5. Check AI Hub status
 
 ```bash
-curl http://localhost:11435/health
+curl http://localhost:11434/health
 ```
 
 ### 6. Check Ollama availability
 
 ```bash
-curl http://localhost:11434/api/tags
+curl http://localhost:11435/api/tags
 ```
 
 ### 7. Debug promise status
@@ -537,8 +537,8 @@ curl -X POST http://localhost:3000/api/v1/invoke -d '{}'
 **Problem:** Async request never completes.
 
 **Solution:**
-1. Check Ollama is running: `curl http://localhost:11434/api/tags`
-2. Check AI Hub proxy: `curl http://localhost:11435/health`
+1. Check Ollama is running: `curl http://localhost:11435/api/tags`
+2. Check AI Hub proxy: `curl http://localhost:11434/health`
 3. Manually execute promise: `POST /promise/{promiseId}/execute`
 
 ### Issue: Session not found
@@ -554,7 +554,7 @@ curl -X POST http://localhost:3000/api/v1/invoke -d '{}'
 **Problem:** Agent mode doesn't get LLM response.
 
 **Solution:**
-1. Check Ollama has models: `curl http://localhost:11434/api/tags`
+1. Check Ollama has models: `curl http://localhost:11435/api/tags`
 2. Check model is loaded: `qwen3:8b` or similar
 3. Check AI Hub logs: `tail -f ai-integration/logs/ai.log`
 
@@ -632,5 +632,5 @@ DEFAULT_SYNC_MODE=1
 
 - **A2A Server:** http://localhost:3000
 - **Client API:** http://localhost:5173/api/a2a
-- **AI Hub:** http://localhost:11435
-- **Ollama:** http://localhost:11434
+- **AI Hub:** http://localhost:11434
+- **Ollama:** http://localhost:11435

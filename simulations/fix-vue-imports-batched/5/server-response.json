@@ -1,0 +1,44 @@
+{
+  "success": false,
+  "data": {
+    "id": "req_1774366641952_ydw3y7r9h",
+    "promiseId": "prom_1774366641952_4jevgapmm",
+    "clientId": "simulation-client",
+    "status": "pending",
+    "priority": 0,
+    "context": {
+      "session_id": "stateless",
+      "version": "1.0",
+      "task": "виправити імпорти у vue компонентах",
+      "execution": {
+        "action": "fix-vue-imports-batched",
+        "step": "search-exporter",
+        "progress": {
+          "totalFiles": 50,
+          "currentFile": 2
+        }
+      },
+      "result": {
+        "rag-search": {
+          "results": [
+            {
+              "file": "resources/js/utils/helpers.js",
+              "score": 0.92,
+              "snippet": "export { helper, formatDate }"
+            }
+          ],
+          "files": [
+            "resources/js/utils/helpers.js"
+          ]
+        }
+      }
+    },
+    "message": null,
+    "codeBlocks": null,
+    "result": null,
+    "error": null,
+    "createdAt": "2026-03-24T15:37:21.952Z",
+    "startedAt": null,
+    "completedAt": null
+  }
+}

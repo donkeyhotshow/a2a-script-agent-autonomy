@@ -33,18 +33,33 @@ web/
 │   ├── api-integration.js    # Интеграция с API
 │   ├── app-task.js          # Инициализация приложения
 │   ├── error-handler.js     # Обработка ошибок
-│   ├── file-transfer.js     # Передача файлов
-│   ├── rag-search-ui.js     # RAG поиск UI
-│   ├── terminal-emulator.js # Терминал
-│   ├── ui-components.js    # UI компоненты
-│   ├── web-api-client.js   # Web API клиент
-│   ├── components/         # Дополнительные компоненты
+│   ├── session-data.js      # Данные сессии
+│   ├── session-store.js     # Хранилище сессий
+│   ├── storage.js           # Универсальное хранилище
+│   ├── active-session-storage.js # Активная сессия
+│   ├── template-loader.js  # Загрузчик шаблонов
+│   ├── resolve-web-script-url.js # Разрешение URL скриптов
+│   ├── config.js           # Конфигурация
+│   ├── app/                # Основные модули приложения
+│   │   ├── project-manager.js   # Управление проектами
+│   │   ├── session-manager.js   # Управление сессиями
+│   │   ├── event-handlers.js    # Обработчики событий
+│   │   ├── initialization.js    # Инициализация
+│   │   ├── state-managers.js    # Управление состоянием
+│   │   ├── taskbar-manager.js   # Менеджер панели задач
+│   │   ├── ui-managers.js       # UI менеджеры
+│   │   └── windows/            # Оконная подсистема
 │   ├── task-flow/          # Модульный TaskFlow
-│   │   ├── api.js          # HTTP запросы
+│   │   ├── index.js        # Точка входа
+│   │   ├── init.js         # Инициализация
+│   │   ├── loader.js       # Загрузчик
 │   │   ├── render.js       # Рендеринг UI
-│   │   ├── core.js         # Основной объект TaskFlow
-│   │   └── index.js        # Точка входа
-│   └── archive/            # Архив устаревших файлов
+│   │   ├── tasks.js        # Задачи
+│   │   ├── messages.js     # Сообщения
+│   │   └── utils.js        # Утилиты
+│   ├── daemons/            # Фоновые процессы
+│   ├── utils/             # Утилиты нормализации
+│   └── core/              # Основные модули
 ├── templates/              # HTML шаблоны
 └── examples/              # Примеры
 ```
@@ -56,7 +71,7 @@ web/
 1. `js/html-utils.js` — регистрирует `escapeHtml`, `escapeHtmlAttr`, `executeHasActionableForm` и другие утилиты. Загружайте его до любого модуля, который вызывает эти функции через `global.*`.
 2. `js/install-normalizers.mjs` — предоставляет `global.Normalizers` до создания `SessionStore`.
 3. `js/daemons/*` (emitter, dialog-loader, dialog-promise-poll) — устанавливают `global.__a2aDaemons`.
-4. `js/session-data.js`, `js/project-store.js`, `js/session-store.js` — зависят от предыдущих шагов.
+4. `js/session-data.js`, `js/app/project-manager.js`, `js/session-store.js` — зависят от предыдущих шагов.
 5. `js/app/windows/window-events.js`, `js/app/windows/window-position.js` — подключаются до `js/app/windows/window-state.js`, т.к. последнему требуется registries/handlers.
 
 Если порядок нарушен, публичные объекты `WindowState`, `SessionStore` и другие вызовут исключение при инициализации.
@@ -86,11 +101,11 @@ const state = SessionStore.getState();
 await SessionStore.restoreAndReconnect();
 ```
 
-#### PanelManager
-Управление панелями UI (заменяет plasticine-ui.js и session-panel-manager.js).
+#### Window Registry
+Управление окнами UI (window-registry.js, window-state.js, window-position.js).
 ```javascript
-await PanelManager.init().syncWithSessionStore();
-PanelManager.open(config);
+await WindowRegistry.init().syncWithSessionStore();
+WindowRegistry.open(config);
 ```
 
 #### TaskFlow

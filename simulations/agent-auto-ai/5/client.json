@@ -5,8 +5,14 @@
     "list-directory": {
       "path": "src/",
       "entries": [
-        { "name": "app.js", "type": "file" },
-        { "name": "routes", "type": "dir" }
+        {
+          "name": "app.js",
+          "type": "file"
+        },
+        {
+          "name": "routes",
+          "type": "dir"
+        }
       ]
     }
   }

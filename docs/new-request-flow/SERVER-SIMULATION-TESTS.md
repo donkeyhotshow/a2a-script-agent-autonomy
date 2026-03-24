@@ -354,6 +354,5 @@ simulations/<new-simulation>/
 
 - [Схема симуляций](../../simulations/SCHEMA.md)
 - [Протокол взаимодействия](PROTOCOL.md)
-- [LLM Proxy Flow](SIMULATION-LLM-PROXY.md)
 - [JSON Схемы](json-schemas/)
 - [ADR: Simulations as Golden Standard](../../docs/adr/ADR-0001-simulations-as-golden-standard.md)

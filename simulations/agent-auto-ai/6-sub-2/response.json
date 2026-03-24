@@ -19,10 +19,26 @@
       },
       "slots": {
         "interruptTrace": [
-          { "kind": "llm_output", "phase": "primary", "chars": 448 },
-          { "kind": "response_transform", "interruptReason": "compress_history" },
-          { "kind": "sidecar_llm", "purpose": "compress_history", "ok": true, "meta": "from=7 to=3" },
-          { "kind": "interrupt_handler", "reason": "compress_history", "continueLoop": false }
+          {
+            "kind": "llm_output",
+            "phase": "primary",
+            "chars": 448
+          },
+          {
+            "kind": "response_transform",
+            "interruptReason": "compress_history"
+          },
+          {
+            "kind": "sidecar_llm",
+            "purpose": "compress_history",
+            "ok": true,
+            "meta": "from=7 to=3"
+          },
+          {
+            "kind": "interrupt_handler",
+            "reason": "compress_history",
+            "continueLoop": false
+          }
         ]
       }
     },

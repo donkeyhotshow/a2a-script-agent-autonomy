@@ -1,0 +1,32 @@
+{
+  "success": false,
+  "data": {
+    "id": "req_1774365803785_l18szcpjk",
+    "promiseId": "prom_1774365803785_ea5zqi23g",
+    "clientId": "simulation-client",
+    "status": "pending",
+    "priority": 0,
+    "context": {
+      "session_id": "stateless",
+      "version": "1.0",
+      "task": "створи задачу і виконай",
+      "execution": {
+        "action": "agent",
+        "step": "execute-item"
+      },
+      "result": {
+        "read-file": {
+          "path": ".carrier/tasks/task-1.md",
+          "content": "# 1. Запит користувача\n\nдодати логінування в API та оновити тести\n\n# 2. Уточнена формулювання\n\nРеалізувати автентифікацію (логінування) для API на основі JWT та оновити або додати інтеграційні тести для захищених ендпоінтів.\n\n# 3. План дослідження кодової бази\n\n1. Переглянути існуючі маршрути API та middleware.\n2. Визначити місце підключення auth (JWT).\n3. Перевірити наявні тести для API та додати сценарії для захищених ендпоінтів.\n\n# 4. Чеклист на виконання\n\n- [ ] Додати middleware або сервіс логінування (JWT)\n- [ ] Підключити auth до маршрутів API\n- [ ] Оновити або додати інтеграційні тести для захищених ендпоінтів"
+        }
+      }
+    },
+    "message": null,
+    "codeBlocks": null,
+    "result": null,
+    "error": null,
+    "createdAt": "2026-03-24T15:23:23.785Z",
+    "startedAt": null,
+    "completedAt": null
+  }
+}

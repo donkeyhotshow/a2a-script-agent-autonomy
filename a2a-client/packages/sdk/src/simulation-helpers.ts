@@ -75,6 +75,34 @@ export interface ExecuteCommandAction {
     timeout?: number;
 }
 
+export interface ListDirectoryAction {
+    path?: string;
+    dirPath?: string;
+    recursive?: boolean;
+    pattern?: string;
+}
+
+export interface GrepSearchToolAction {
+    pattern: string;
+    path?: string;
+    glob?: string;
+}
+
+export interface FileExistsAction {
+    path: string;
+}
+
+export interface EditPatchAction {
+    path: string;
+    patch?: string;
+    hunks?: unknown;
+}
+
+export interface RunScriptToolAction {
+    scriptId: string;
+    params?: Record<string, unknown>;
+}
+
 export interface MessageAction {
     content: string;
     role?: 'system' | 'user' | 'assistant';
@@ -143,6 +171,11 @@ export interface ActionResultPayload {
     'write-file'?: WriteFileResult;
     'rag-search'?: RagSearchResultPayload;
     'execute-command'?: ExecuteCommandResult;
+    'list-directory'?: Record<string, unknown>;
+    'grep-search'?: Record<string, unknown>;
+    'file-exists'?: Record<string, unknown>;
+    'edit-patch'?: Record<string, unknown>;
+    'run-script'?: Record<string, unknown>;
     form?: FormResult;
     choice?: string;
     message?: string;
@@ -160,6 +193,11 @@ export interface ExecutePayload {
     'read-file'?: ReadFileAction;
     'write-file'?: WriteFileAction;
     'execute-command'?: ExecuteCommandAction;
+    'list-directory'?: ListDirectoryAction;
+    'grep-search'?: GrepSearchToolAction;
+    'file-exists'?: FileExistsAction;
+    'edit-patch'?: EditPatchAction;
+    'run-script'?: RunScriptToolAction;
     message?: MessageAction;
 }
 

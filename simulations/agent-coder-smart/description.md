@@ -1,6 +1,8 @@
 # Agent Coder Smart v2 Simulation
 
-Fork of **coder-smart** with action id **`agent`**. Request transforms use **`truncate-section`** on `context.workbench.sections` where applicable (ISSUE 5). Step **2** `request.json` includes `context.execution` for `server-invoke-request.schema.json`.
+Fork of **coder-smart** with action id **`agent`**. Request transforms use **`truncate-section`** on
+`context.workbench.sections` where applicable (ISSUE 5). Step **2** `request.json` includes `context.execution` for
+`server-invoke-request.schema.json`.
 
 ## Тип: AI-Actions
 

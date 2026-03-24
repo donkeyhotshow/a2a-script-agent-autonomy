@@ -106,11 +106,58 @@ export interface HandleActionOptions {
         files?: string[];
         error?: string;
     }>;
-    executeCommand?: (command: string, options?: { cwd?: string; timeout?: number }) => Promise<{
+    executeCommand?: (command: string, options?: { cwd?: string; timeout?: number; env?: Record<string, string> }) => Promise<{
         success: boolean;
         exitCode?: number;
         stdout?: string;
         stderr?: string;
+        error?: string;
+    }>;
+    /** Workspace list-dir (execute key `list-directory`); map results to `entries` with at least `name`. */
+    listDirectory?: (
+        path: string,
+        options?: { recursive?: boolean; pattern?: string }
+    ) => Promise<{
+        success: boolean;
+        files?: Array<{
+            name: string;
+            path?: string;
+            isFile?: boolean;
+            isDirectory?: boolean;
+        }>;
+        error?: string;
+    }>;
+    /** Ripgrep-style search (execute key `grep-search`). */
+    grepWorkspace?: (params: {
+        pattern: string;
+        path?: string;
+        glob?: string;
+    }) => Promise<{
+        success: boolean;
+        matches?: unknown[];
+        error?: string;
+    }>;
+    fileExists?: (path: string) => Promise<{
+        success: boolean;
+        exists?: boolean;
+        error?: string;
+    }>;
+    editPatch?: (params: {
+        path: string;
+        patch?: string;
+        hunks?: unknown;
+    }) => Promise<{
+        success: boolean;
+        error?: string;
+    }>;
+    /** Predefined script id (execute key `run-script`); distinct from DSL `script`. */
+    runRegisteredScript?: (
+        scriptId: string,
+        params?: Record<string, unknown>
+    ) => Promise<{
+        success: boolean;
+        output?: string;
+        filesModified?: string[];
         error?: string;
     }>;
     sendContinue: (sessionId: string, result: Record<string, unknown>) => Promise<unknown>;

@@ -1,4 +1,4 @@
-# DEV_STATE - docs (2026-03-06)
+# DEV_STATE - docs (2026-03-24)
 
 ## Документация проекта
 
@@ -20,13 +20,8 @@
 - [AI Action Transform Pattern](../a2a-server/docs/AI-ACTION-TRANSFORM-PATTERN.md)
 - [System Startup Guide](SYSTEM_STARTUP.md)
 
-#### Протокол и API
-- [New Request Flow Architecture](new-request-flow/ARCHITECTURE.md)
-- [Protocol Documentation](new-request-flow/PROTOCOL.md)
-- [API Server](new-request-flow/API-SERVER.md)
-- [API Client](new-request-flow/API-CLIENT.md)
-- [CLI Tester API](../a2a-client/tester/docs/API.md)
-- [Web Client Integration](../a2a-client/tester/docs/INTEGRATION.md)
+#### Тестирование
+- [A2A Tester README](../a2a-client/tester/README.md)
 
 #### Продакшн
 - [Full Launch Plan](../a2a-server/docs/production/FULL_LAUNCH_PLAN.md)
@@ -35,7 +30,7 @@
 
 ### Статус обновлений
 
-- **Последнее обновление:** 2026-03-06
+- **Последнее обновление:** 2026-03-24
 - **Текущий фокус:** Синхронизация документации с кодом
 - **Приоритет:** Обновление proposals и reports разделов
 

@@ -188,4 +188,4 @@ curl -s -X POST http://localhost:3000/api/v1/invoke -H "Content-Type: applicatio
 
 ---
 
-*Обновлено: 2026-03-20*
+*Обновлено: 2026-03-24*

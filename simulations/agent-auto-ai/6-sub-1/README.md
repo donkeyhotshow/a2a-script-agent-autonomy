@@ -1,7 +1,9 @@
 # Step 6 — sub 1: single main LLM (no interrupt)
 
-Sister folder next to [`../6/`](../6/) (name = parent step + sequential index). Documents **`context.workbench.slots.interruptTrace`** after one primary LLM output + response transform.
+Sister folder next to [`../6/`](../6/) (name = parent step + sequential index). Documents *
+*`context.workbench.slots.interruptTrace`** after one primary LLM output + response transform.
 
-Trace events: [`response.json`](./response.json) → `context.workbench.slots.interruptTrace`. See [`SERVER-INTERRUPT-LOOP.md`](../../../a2a-server/docs/SERVER-INTERRUPT-LOOP.md).
+Trace events: [`response.json`](./response.json) → `context.workbench.slots.interruptTrace`. See [
+`SERVER-INTERRUPT-LOOP.md`](../../../a2a-server/docs/SERVER-INTERRUPT-LOOP.md).
 
 `chars` matches `../6/response.md` length (448).

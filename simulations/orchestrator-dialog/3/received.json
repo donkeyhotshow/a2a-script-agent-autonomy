@@ -4,7 +4,11 @@
   "execute": {
     "message": "Reading files…",
     "attachments": {
-      "readFiles": [{ "path": "docs/adr/ADR-0027-documentation-canonical-sources.md" }]
+      "readFiles": [
+        {
+          "path": "docs/adr/ADR-0027-documentation-canonical-sources.md"
+        }
+      ]
     }
   }
 }

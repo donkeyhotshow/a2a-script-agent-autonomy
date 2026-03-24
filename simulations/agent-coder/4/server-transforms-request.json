@@ -8,7 +8,11 @@
     },
     {
       "op": "pick-context",
-      "include": ["execution", "task", "history:3"]
+      "include": [
+        "execution",
+        "task",
+        "history:3"
+      ]
     },
     {
       "op": "set",

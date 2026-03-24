@@ -313,6 +313,3 @@ eventSource.addEventListener('tester_command', (event) => {
 - [Web Client Architecture](../web/README.md)
 - [API Server Documentation](../../../a2a-server/README.md)
 - [Testing Guide](../../docs/TESTING-MOCKING-GUIDE.md)
-- [CLI Integration Guide](docs/CLI-INTEGRATION.md)
-- [Tester API Documentation](docs/API.md)
-- [Web Client Integration](docs/INTEGRATION.md)

@@ -6,11 +6,11 @@
       "step": "execute-action"
     },
     "history": [
-    {
-      "role": "user",
-      "message": "add auth and refactor API"
-    }
-  ]
+      {
+        "role": "user",
+        "message": "add auth and refactor API"
+      }
+    ]
   },
   "result": {
     "write-file": {

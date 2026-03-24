@@ -56,4 +56,4 @@ Browser → Client API → A2A Server → AI Hub → Ollama
 
 ---
 
-Обновлено: 2026-03-21
+Обновлено: 2026-03-24

@@ -8,7 +8,11 @@
     ".": "./src/index.js",
     "./fs-utils": "./src/index.js",
     "./terminal": "./src/terminal/terminal-handler.cjs",
-    "./script-runner": "./src/script-runner/index.js"
+    "./script-runner": "./src/script-runner/index.js",
+    "./run-agent-command": "./src/run-agent-command.js",
+    "./path-sandbox": "./src/path-sandbox.js",
+    "./run-agent-edit-patch": "./src/run-agent-edit-patch.js",
+    "./run-agent-registered-script": "./src/run-agent-registered-script.js"
   },
   "scripts": {
     "build": "tsc",

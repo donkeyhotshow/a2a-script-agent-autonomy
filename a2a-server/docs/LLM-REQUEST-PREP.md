@@ -54,7 +54,6 @@ Templates inject it with **`${flowControlHint}`** (see `render-markdown` / `rend
 | `prompts/dialog-request.md` | “Flow for this turn” |
 | `prompts/coder-request.md` | “Flow for this turn” |
 | `prompts/analyze-request.md` | “Flow for this turn” |
-| `prompts/coder-context.md` | “Flow for this turn” (second markdown file in coder pipeline) |
 
 ### Extending hints
 

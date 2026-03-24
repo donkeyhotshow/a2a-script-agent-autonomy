@@ -150,5 +150,4 @@
 - [SESSION-FLOW.md](SESSION-FLOW.md) — Поток сессий
 - [SCHEMAS.md](SCHEMAS.md) — JSON схемы
 - [SIMULATION-FORMAT.md](SIMULATION-FORMAT.md) — Формат симуляций
-- [SIMULATION-LLM-PROXY.md](SIMULATION-LLM-PROXY.md) — Async flow с promiseId
 - [simulations/SCHEMA.md](../../simulations/SCHEMA.md) — Каноничная схема симуляций

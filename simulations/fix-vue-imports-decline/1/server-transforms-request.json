@@ -15,9 +15,18 @@
         "form": {
           "title": "Оберіть дію",
           "choices": [
-            { "id": "fix-vue-imports", "label": "Виправити Vue імпорти" },
-            { "id": "auto-ai", "label": "AI асистент" },
-            { "id": "task-decomposition", "label": "Декомпозиція задач" }
+            {
+              "id": "fix-vue-imports",
+              "label": "Виправити Vue імпорти"
+            },
+            {
+              "id": "auto-ai",
+              "label": "AI асистент"
+            },
+            {
+              "id": "task-decomposition",
+              "label": "Декомпозиція задач"
+            }
           ]
         }
       }

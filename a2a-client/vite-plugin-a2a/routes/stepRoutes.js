@@ -16,7 +16,7 @@ import { buildWebExecute } from './utils/web-execute-dto.js';
 import * as stepHandlers from './handlers/step-handlers.js';
 import * as stepUtils from './utils/step-utils.js';
 import { proxyToA2AServer } from './proxy/a2a-proxy.js';
-import { chainSyncInvokesForRagSearch } from './utils/agent-rag-chain.js';
+import { chainSyncInvokesForAgentTools } from './utils/agent-rag-chain.js';
 import { getNewStepDir, loadNewSession, loadNewStep, loadServerPromise, loadServerResponse, saveClientResult, saveNewStep, saveNewSession, saveRequestToServer, saveServerPromise, saveServerResponse, listNewSteps, getNewSessionLatestStep, loadStepFile } from '../storage/newSessions.js';
 
 import fs from 'fs';
@@ -516,7 +516,7 @@ export function createStepRoutes({ cwd }) {
 
                                 if (serverResponse && hasServer && !hasPromise) {
                                     try {
-                                        const out = await chainSyncInvokesForRagSearch({
+                                        const out = await chainSyncInvokesForAgentTools({
                                             cwd,
                                             sessionId,
                                             a2aServerUrl,
@@ -530,7 +530,7 @@ export function createStepRoutes({ cwd }) {
                                         finalSavedContext = out.savedContext;
                                     } catch (chainErr) {
                                         console.error(
-                                            '[VitePlugin] agent RAG chain:',
+                                            '[VitePlugin] agent tool chain:',
                                             chainErr?.message || chainErr
                                         );
                                     }

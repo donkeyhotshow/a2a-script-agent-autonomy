@@ -1,0 +1,30 @@
+{
+  "success": false,
+  "data": {
+    "id": "req_1774366174446_2br5ver5c",
+    "promiseId": "prom_1774366174446_hh3lr3vnh",
+    "clientId": "simulation-client",
+    "status": "pending",
+    "priority": 0,
+    "context": {
+      "session_id": "stateless",
+      "version": "1.0",
+      "task": "допоможи з кодом",
+      "execution": {
+        "action": "task",
+        "step": "new"
+      },
+      "result": {
+        "message": "допоможи з кодом"
+      },
+      "message": "допоможи з кодом"
+    },
+    "message": "допоможи з кодом",
+    "codeBlocks": null,
+    "result": null,
+    "error": null,
+    "createdAt": "2026-03-24T15:29:34.446Z",
+    "startedAt": null,
+    "completedAt": null
+  }
+}
