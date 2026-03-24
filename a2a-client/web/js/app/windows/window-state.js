@@ -4,6 +4,8 @@
 (function (global) {
     'use strict';
     const RESTORE_WINDOW_CONCURRENCY = 5;
+    let _zTop = 1000;
+    let _cubeIndex = 0;
 
     if (!global.WindowEvents) {
         throw new Error('[WindowState] Load js/app/windows/window-events.js before window-state.js');
@@ -20,22 +22,25 @@
         _createFloatingWindow(options) {
             const { id, title, x, y, width, height } = options;
             const safeTitle = global.escapeHtml(title ?? '');
-            
-            // Create container
+
+            // Container
             const container = document.createElement('div');
             container.id = id;
             container.className = 'pui-panel expanded';
-            container.style.cssText = `position: fixed; left: ${x}px; top: ${y}px; width: ${width}px; height: ${height}px;`;
+            container.style.cssText = `position:fixed;left:${x}px;top:${y}px;width:${width}px;height:${height}px;z-index:${++_zTop};`;
 
-            // Create header
+            // Header
             const header = document.createElement('div');
             header.className = 'pui-panel-header';
             header.innerHTML = `
                 <span class="pui-panel-title">${safeTitle}</span>
-                <button class="pui-panel-close">&times;</button>
+                <div class="pui-panel-controls">
+                    <button class="pui-panel-btn pui-panel-minimize" title="Minimise">&#8211;</button>
+                    <button class="pui-panel-btn pui-panel-maximize" title="Maximise">&#9633;</button>
+                    <button class="pui-panel-btn pui-panel-close" title="Close">&times;</button>
+                </div>
             `;
 
-            // Create content area
             const content = document.createElement('div');
             content.className = 'pui-panel-content';
 
@@ -43,14 +48,22 @@
             container.appendChild(content);
             document.body.appendChild(container);
 
-            // Panel object with API similar to old PanelManager panels
+            // Minimised cube (квадратик)
+            const cube = document.createElement('div');
+            cube.className = 'pui-window-cube';
+            cube.innerHTML = `<span class="pui-window-cube-title">${safeTitle}</span><span class="pui-window-cube-dot"></span>`;
+            cube.title = 'Drag to move · Double right-click to restore';
+            cube.style.cssText = `display:none;left:${12 + (_cubeIndex % 8) * 56}px;bottom:${60 + Math.floor(_cubeIndex / 8) * 48}px;`;
+            _cubeIndex++;
+            document.body.appendChild(cube);
+
             const panel = {
                 id,
                 container,
                 position: { x, y },
                 size: { width, height },
-                state: 'visible',
-                _savedState: null,
+                state: 'visible',   // 'visible' | 'minimized' | 'maximized'
+                _preMaximize: null,
                 getContentEl: () => content,
                 _cleanupDrag: () => {
                     document.removeEventListener('mousemove', _onDragMove);
@@ -60,74 +73,130 @@
                     panel._cleanupDrag();
                     if (panel._onClose) panel._onClose();
                     container.remove();
+                    cube.remove();
                 },
                 minimize: () => {
-                    panel._savedState = { display: container.style.display };
                     container.style.display = 'none';
+                    cube.style.display = 'flex';
                     panel.state = 'minimized';
+                    _updateCubeDot();
                 },
                 restore: () => {
-                    container.style.display = panel._savedState?.display || 'flex';
+                    container.style.display = 'flex';
+                    cube.style.display = 'none';
                     panel.state = 'visible';
+                    _bringToFront();
                 },
                 maximize: () => {
                     if (panel.state === 'maximized') {
-                        container.style.left = `${panel.position.x}px`;
-                        container.style.top = `${panel.position.y}px`;
-                        container.style.width = `${panel.size.width}px`;
-                        container.style.height = `${panel.size.height}px`;
+                        const s = panel._preMaximize;
+                        container.style.left   = `${s.x}px`;
+                        container.style.top    = `${s.y}px`;
+                        container.style.width  = `${s.width}px`;
+                        container.style.height = `${s.height}px`;
+                        header.querySelector('.pui-panel-maximize').innerHTML = '&#9633;';
                         panel.state = 'visible';
                     } else {
-                        panel.position = { x: parseInt(container.style.left), y: parseInt(container.style.top) };
-                        panel.size = { width: container.offsetWidth, height: container.offsetHeight };
-                        container.style.left = '0';
-                        container.style.top = '0';
-                        container.style.width = '100vw';
+                        panel._preMaximize = {
+                            x: panel.position.x, y: panel.position.y,
+                            width: panel.size.width, height: panel.size.height
+                        };
+                        container.style.left   = '0';
+                        container.style.top    = '0';
+                        container.style.width  = '100vw';
                         container.style.height = '100vh';
+                        header.querySelector('.pui-panel-maximize').innerHTML = '&#10064;';
                         panel.state = 'maximized';
                     }
+                    _bringToFront();
                 },
                 _onClose: null
             };
 
-            // Close button
-             header.querySelector('.pui-panel-close').addEventListener('click', () => panel.close());
- 
-             // Drag functionality with cleanup support
-             let isDragging = false;
-             let dragOffset = { x: 0, y: 0 };
- 
-             const _onDragStart = (e) => {
-                 if (e.target.classList.contains('pui-panel-close')) return;
-                 isDragging = true;
-                 dragOffset.x = e.clientX - container.offsetLeft;
-                 dragOffset.y = e.clientY - container.offsetTop;
-                 container.style.zIndex = '1001';
-                 document.addEventListener('mousemove', _onDragMove);
-                 document.addEventListener('mouseup', _onDragEnd);
-             };
- 
-             const _onDragMove = (e) => {
-                 if (!isDragging) return;
-                 const newX = e.clientX - dragOffset.x;
-                 const newY = e.clientY - dragOffset.y;
-                 container.style.left = `${newX}px`;
-                 container.style.top = `${newY}px`;
-                 panel.position = { x: newX, y: newY };
-             };
- 
-             const _onDragEnd = () => {
-                 if (isDragging) {
-                     isDragging = false;
-                     container.style.zIndex = '1000';
-                 }
-                 document.removeEventListener('mousemove', _onDragMove);
-                 document.removeEventListener('mouseup', _onDragEnd);
-             };
- 
-             header.addEventListener('mousedown', _onDragStart);
- 
-             return panel;
+            const _updateCubeDot = () => {
+                const store = panel._sessionStore;
+                const st = store?.getState?.() || {};
+                const pending = st.promisePending ?? false;
+                const status  = st.status ?? 'idle';
+                const dot = cube.querySelector('.pui-window-cube-dot');
+                if (!dot) return;
+                dot.className = 'pui-window-cube-dot' + (pending ? ' running' : status === 'error' ? ' error' : ' idle');
+            };
+
+            // Cube: drag
+            let _cubeDragging = false;
+            let _cubeDragOffset = { x: 0, y: 0 };
+            let _cubeLastRightClick = 0;
+
+            cube.addEventListener('mousedown', (e) => {
+                if (e.button !== 0) return;
+                _cubeDragging = false;
+                _cubeDragOffset.x = e.clientX - cube.offsetLeft;
+                _cubeDragOffset.y = e.clientY - cube.offsetTop;
+                const _onCubeMove = (ev) => {
+                    _cubeDragging = true;
+                    cube.style.left   = `${ev.clientX - _cubeDragOffset.x}px`;
+                    cube.style.bottom = 'auto';
+                    cube.style.top    = `${ev.clientY - _cubeDragOffset.y}px`;
+                };
+                const _onCubeUp = () => {
+                    document.removeEventListener('mousemove', _onCubeMove);
+                    document.removeEventListener('mouseup', _onCubeUp);
+                };
+                document.addEventListener('mousemove', _onCubeMove);
+                document.addEventListener('mouseup', _onCubeUp);
+            });
+
+            // Double right-click → restore
+            cube.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+                const now = Date.now();
+                if (now - _cubeLastRightClick < 400) {
+                    panel.restore();
+                }
+                _cubeLastRightClick = now;
+            });
+
+            // Header buttons
+            header.querySelector('.pui-panel-close').addEventListener('click', (e) => { e.stopPropagation(); panel.close(); });
+            header.querySelector('.pui-panel-minimize').addEventListener('click', (e) => { e.stopPropagation(); panel.minimize(); });
+            header.querySelector('.pui-panel-maximize').addEventListener('click', (e) => { e.stopPropagation(); panel.maximize(); });
+
+            // Drag
+            let isDragging = false;
+            let dragOffset = { x: 0, y: 0 };
+
+            const _bringToFront = () => { container.style.zIndex = ++_zTop; };
+
+            const _onDragStart = (e) => {
+                if (e.target.closest('.pui-panel-controls')) return;
+                if (panel.state === 'maximized') return;
+                isDragging = true;
+                dragOffset.x = e.clientX - container.offsetLeft;
+                dragOffset.y = e.clientY - container.offsetTop;
+                document.addEventListener('mousemove', _onDragMove);
+                document.addEventListener('mouseup', _onDragEnd);
+            };
+
+            const _onDragMove = (e) => {
+                if (!isDragging) return;
+                const newX = e.clientX - dragOffset.x;
+                const newY = e.clientY - dragOffset.y;
+                container.style.left = `${newX}px`;
+                container.style.top  = `${newY}px`;
+                panel.position = { x: newX, y: newY };
+            };
+
+            const _onDragEnd = () => {
+                isDragging = false;
+                document.removeEventListener('mousemove', _onDragMove);
+                document.removeEventListener('mouseup', _onDragEnd);
+            };
+
+            container.addEventListener('mousedown', _bringToFront);
+            header.addEventListener('mousedown', _onDragStart);
+
+            return panel;
         },
 
         /**

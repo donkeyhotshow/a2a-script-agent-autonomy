@@ -1,0 +1,18 @@
+﻿{
+   projectId: proj-orch-001,
+  sessionId: sess-orch-001,
+  execute: {
+    form: {
+      title: Describe the coordination job,
+      input: [
+        {
+          name: message,
+          type: textarea,
+          label: What exactly should I orchestrate?,
+          required: true,
+          placeholder: Read ADR-0027 and outline how to check documentation.
+        }
+      ]
+    }
+  }
+}

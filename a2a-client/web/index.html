@@ -67,23 +67,20 @@
     </div>
 </div>
 
-<!-- Projects Modal -->
-<div id="projectsModal" class="modal" style="display: none;">
+<!-- Chain Status Modal -->
+<div id="chainStatusModal" class="modal" style="display: none;">
     <div class="modal-content modal-large">
         <div class="modal-header">
-            <h2>Projects</h2>
-            <button type="button" class="modal-close" id="closeProjectsModal" aria-label="Close projects">&times;</button>
+            <h2>System Chain Status</h2>
+            <button type="button" class="modal-close" id="closeChainStatusModal" aria-label="Close system status">&times;</button>
         </div>
         <div class="modal-body">
-            <div class="projects-toolbar">
-                <button type="button" class="btn btn-primary" id="newProjectBtn">+ New Project</button>
-            </div>
-            <div class="projects-grid" id="projectsGrid">
-                <div class="loading-indicator">Loading...</div>
-            </div>
+            <p class="chain-status-intro">Snapshot of the critical subsystems that keep the agent chain responsive.</p>
+            <div class="chain-status-grid" id="chainStatusList" role="list"></div>
         </div>
         <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" id="cancelProjects">Close</button>
+            <button type="button" class="btn btn-secondary" id="refreshChainStatus">Refresh</button>
+            <button type="button" class="btn btn-secondary" id="cancelChainStatus">Close</button>
         </div>
     </div>
 </div>

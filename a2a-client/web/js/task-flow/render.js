@@ -203,7 +203,7 @@
                 const label = f.label ? `<label for="task-flow-input-${escapeHtml(name)}">${escapeHtml(f.label)}</label>` : '';
                 const placeholder = f.placeholder || '';
                 const required = f.required ? 'required' : '';
-                return `<div class="task-flow-input-group">${label}<input type="text" id="task-flow-input-${escapeHtml(name)}" name="${escapeHtml(name)}" placeholder="${escapeHtml(placeholder)}" ${required} class="task-flow-input-field" autocomplete="off"></div>`;
+                return `<div class="task-flow-input-group">${label}<textarea id="task-flow-input-${escapeHtml(name)}" name="${escapeHtml(name)}" placeholder="${escapeHtml(placeholder)}" ${required} class="task-flow-input-field" autocomplete="off" rows="4"></textarea></div>`;
             }).join('');
             formContent += `<div class="task-flow-inputs">${inputsHtml}</div><div class="task-flow-submit-row"><button type="button" class="task-flow-submit-btn">Send →</button></div>`;
         }
@@ -253,7 +253,7 @@
 
             submitBtn.addEventListener('click', doSubmit);
             inputEl.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') { e.preventDefault(); doSubmit(); }
+                if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); doSubmit(); }
             });
             // autofocus first input
             setTimeout(() => inputEl.focus(), 50);

@@ -1,0 +1,12 @@
+﻿{
+   context: {
+    task: orchestrate ADR review,
+    execution: {
+      action: task,
+      step: router
+    }
+  },
+  result: {
+    choice: orchestrator-dialog
+  }
+}
