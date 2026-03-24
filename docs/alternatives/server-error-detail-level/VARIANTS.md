@@ -22,11 +22,12 @@
 
 ## Current selection (this repo)
 
-- [ ] `standard-node-env`
+- [x] `standard-node-env`
 - [ ] `always-minimal`
 - [ ] `correlation-only`
 
 **Notes:**
+- `error.middleware` only includes stacks when `NODE_ENV !== 'production'`, matching the standard Node env policy.
 
 ## Implementation backlog
 

@@ -22,13 +22,14 @@ Product teams may **ship a subset** of modes in the UI, keep others for internal
 
 ## Current selection (this repo)
 
-- [ ] `full-catalog`
+- [x] `full-catalog`
 - [ ] `minimal-prod`
 - [ ] `staged-rollout`
 
-**Modes enabled in UI:**
+**Modes enabled in UI:** dialog, auto-ai, auto-ai-v2, coder, coder-smart, coder-smart-v2, analyze, task-decomposition
 
 **Notes:**
+- `LLM_PIPELINE_ACTIONS` in `request-processor.service.ts` enumerates every router mode, so the default is the full catalog today.
 
 ## Implementation backlog
 

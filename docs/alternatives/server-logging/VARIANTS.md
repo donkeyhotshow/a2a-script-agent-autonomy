@@ -22,11 +22,12 @@
 
 ## Current selection (this repo)
 
-- [ ] `json-info`
+- [x] `json-info`
 - [ ] `pretty-dev`
 - [ ] `json-warn`
 
 **Notes:**
+- `LOG_FORMAT` defaults to `json` in `a2a-server/src/config/index.ts`, so production logs follow the JSON/info combo.
 
 ## Implementation backlog
 
@@ -61,13 +62,16 @@ On **every server start**, non-**a2a.log** files in **`logs/`** are removed. Tha
 
 ### Current selection (log files)
 
-- [ ] `current-aggressive`
+- [x] `current-aggressive`
 - [ ] `dedicated-subdir`
 - [ ] `rotate-retain`
 
 ### Implementation backlog (log files)
 
 - [ ] If adopting `rotate-retain`, remove unlink loop or scope it to **a2a.log** only.
+
+**Notes:**
+- `prepareLogFile()` already deletes non-`a2a.log` siblings before truncating the active file, so the aggressive cleanup matches existing behavior.
 
 ## Open questions
 

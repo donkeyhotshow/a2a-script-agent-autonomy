@@ -22,11 +22,12 @@ You choose whether a **missing/broken action pack** should **block** deploy (str
 
 ## Current selection (this repo)
 
-- [ ] `lenient-start`
+- [x] `lenient-start`
 - [ ] `fail-fast`
 - [ ] `custom-definitions-dir`
 
 **Notes:**
+- The bootstrap catch block logs failures while keeping the HTTP server running, so loads of the action registry do not block start.
 
 ## Implementation backlog
 

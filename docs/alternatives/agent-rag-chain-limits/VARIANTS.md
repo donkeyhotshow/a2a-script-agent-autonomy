@@ -23,13 +23,14 @@ Long agent+RAG chains cost latency and tokens. Wrong project path indexes or sea
 
 ## Current selection (this repo)
 
-- [ ] `default-cap`
+- [x] `default-cap`
 - [ ] `strict-low`
 - [ ] `explicit-project`
 
 **Values:** `A2A_AGENT_RAG_CHAIN_MAX` = ___ | `A2A_RAG_PROJECT_PATH` = ___
 
 **Notes:**
+- `agent-rag-chain.ts` falls back to `8` steps when `A2A_AGENT_RAG_CHAIN_MAX` is missing, so the default-cap represents today’s behavior.
 
 ## Implementation backlog
 

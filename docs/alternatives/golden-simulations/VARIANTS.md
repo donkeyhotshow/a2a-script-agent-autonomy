@@ -50,11 +50,12 @@
 - [ ] `lint-only`
 - [ ] `validate-offline`
 - [ ] `run-against-server`
-- [ ] `tiered-ci`
+- [x] `tiered-ci`
 
-**Where it applies:** local / CI / release
+**Where it applies:** PR lint+validate, nightly/full `sim:run-all`
 
 **Notes:**
+- All three scripts (`sim:lint`, `sim:validate`, `sim:run`) are available under `a2a-server/package.json`, so we gate PRs with lint+validate and reserve `sim:run[--all]` for scheduled integration verification.
 
 ## Implementation backlog
 

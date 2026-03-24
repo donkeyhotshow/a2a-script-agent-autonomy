@@ -40,11 +40,12 @@ You may keep **workspace file links** for fast iteration, publish **`@a2a/rag` t
 
 ## Current selection (this repo)
 
-- [ ] `file-workspace`
+- [x] `file-workspace`
 - [ ] `registry-version`
 - [ ] `git-subpath`
 
 **Notes:**
+- `a2a-server` currently depends on `@a2a/rag` via the `file:../a2a-client/packages/rag` workspace link, so the server and client share the monorepo sources.
 
 ## Implementation backlog
 

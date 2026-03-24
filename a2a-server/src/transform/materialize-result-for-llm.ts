@@ -66,8 +66,18 @@ export function formatToolResultForHistory(actionKey: string, value: unknown): s
   switch (actionKey) {
     case 'rag-search': {
       const files = Array.isArray(o.files) ? (o.files as string[]) : [];
-      const filesStr = files.join(', ');
-      return `RAG: ${filesStr} (page ${o.page}, pageSize ${o.pageSize}, total ${o.total}, hasMore ${o.hasMore})`;
+      const snippets = Array.isArray(o.results)
+        ? (o.results as Array<{ file?: string; snippet?: string; score?: number }>)
+            .slice(0, 5)
+            .map((r) => {
+              const f = typeof r.file === 'string' ? r.file : '';
+              const s = typeof r.snippet === 'string' ? r.snippet.trim().slice(0, 300) : '';
+              return s ? `[${f}] ${s}` : f;
+            })
+            .filter(Boolean)
+        : [];
+      const header = `RAG (${files.length} files, page ${o.page ?? 1}, hasMore ${o.hasMore ?? false})`;
+      return snippets.length > 0 ? `${header}:\n${snippets.join('\n')}` : header;
     }
     case 'list-directory': {
       const p = typeof o.path === 'string' ? o.path : '';

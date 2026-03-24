@@ -22,11 +22,12 @@ Changing to bundler resolution or dropping **.js** suffixes breaks **tsx** / **n
 
 ## Current selection (this repo)
 
-- [ ] `nodenext`
+- [x] `nodenext`
 - [ ] `bundler`
 - [ ] `dual`
 
 **Notes:**
+- `a2a-server/tsconfig.json` sets `module`/`moduleResolution` to `NodeNext`, so the `.js` suffix convention in `AGENTS.md` is required.
 
 ## Implementation backlog
 

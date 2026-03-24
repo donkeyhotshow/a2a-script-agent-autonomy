@@ -22,11 +22,12 @@ Stateless invoke still may **write request artifacts** for debugging or recovery
 
 ## Current selection (this repo)
 
-- [ ] `cwd-default`
+- [x] `cwd-default`
 - [ ] `env-volume`
 - [ ] `ephemeral`
 
 **Notes:**
+- `REQUESTS_STORAGE_PATH` is unset, so `request.service` writes under `storage/requests` relative to the server cwd.
 
 ## Implementation backlog
 

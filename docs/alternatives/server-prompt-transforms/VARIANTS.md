@@ -40,11 +40,12 @@ You may ship **stock** transforms in-repo, point to a **fork**, or use a **read-
 
 ## Current selection (this repo)
 
-- [ ] `bundled-default`
+- [x] `bundled-default`
 - [ ] `env-override`
 - [ ] `multi-tenant`
 
 **Notes:**
+- `getPromptsTransformsPath()` resolves to `cwd/prompts/transforms` by default, so the in-repo pack lives right next to `a2a-server`.
 
 ## Implementation backlog
 

@@ -22,13 +22,14 @@ The daemon polls or ticks work on an interval. Shorter = more responsive queue d
 
 ## Current selection (this repo)
 
-- [ ] `default-5s`
+- [x] `default-5s`
 - [ ] `aggressive-1s`
 - [ ] `relaxed-30s`
 
 **REQUEST_PROCESSOR_INTERVAL_MS** value:
 
 **Notes:**
+- `configSchema` defaults `REQUEST_PROCESSOR_INTERVAL_MS` to 5000 ms, so the daemon ticks at 5 s intervals today.
 
 ## Implementation backlog
 

@@ -22,11 +22,12 @@ Forks, CI workspaces, or multi-product monorepos may point the server at a **dif
 
 ## Current selection (this repo)
 
-- [ ] `repo-root`
+- [x] `repo-root`
 - [ ] `env-override`
 - [ ] `submodule`
 
 **Notes:**
+- `SIMULATIONS_PATH` is unset, so the server loads goldens from the repo's `simulations/` directory by default.
 
 ## Implementation backlog
 

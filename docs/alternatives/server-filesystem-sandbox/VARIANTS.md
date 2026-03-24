@@ -22,11 +22,12 @@ This is a **soft sandbox**: anything that passes prefix checks can read/write un
 
 ## Current selection (this repo)
 
-- [ ] `single-project-cwd`
+- [x] `single-project-cwd`
 - [ ] `locked-workspace`
 - [ ] `hardening-review`
 
 **Notes:**
+- The handler helpers only allow prefixes under `process.cwd()` plus `/tmp`, `/var/tmp`, and `HOME`, so the sandbox assumes the server lives inside the repo workspace.
 
 ## Implementation backlog
 

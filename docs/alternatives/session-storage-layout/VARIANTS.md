@@ -40,13 +40,14 @@ The **file-backed** Client API layout is fixed in code today, but you may plan *
 
 ## Current selection (this repo)
 
-- [ ] `filesystem-steps`
+- [x] `filesystem-steps`
 - [ ] `single-db`
 - [ ] `multi-root`
 
-**Where it applies:**
+**Where it applies:** local dev / CLI sessions
 
 **Notes:**
+- The repository still writes numbered step folders under `a2a-client/storage/...` (see `a2a-client/docs/SESSION-STORAGE.md`).
 
 ## Implementation backlog
 

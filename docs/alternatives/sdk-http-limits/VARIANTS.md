@@ -22,11 +22,12 @@ Loose defaults help **local dev**; **production** Client API needs stricter file
 
 ## Current selection (this repo)
 
-- [ ] `dev-permissive`
+- [x] `dev-permissive`
 - [ ] `prod-strict`
 - [ ] `airgap-off`
 
 **Notes:**
+- The SDK server config keeps the generous defaults (10 MB uploads, rate-limiting enabled but permissive) defined in `a2a-client/packages/sdk/src/server/config/index.ts`.
 
 ## Implementation backlog
 

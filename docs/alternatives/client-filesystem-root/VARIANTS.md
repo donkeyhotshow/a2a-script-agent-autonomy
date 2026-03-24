@@ -40,13 +40,14 @@ Pick where session KV and artifacts live: OS home, explicit env path, or workspa
 
 ## Current selection (this repo)
 
-- [ ] `home-default`
-- [ ] `env-explicit`
-- [ ] `repo-bundled`
+- [x] `home-default`
+- [x] `env-explicit`
+- [x] `repo-bundled`
 
-**Where it applies:** SDK vs Vite (may differ)
+**Where it applies:** SDK (home/default + env overrides) vs Vite dev (repo storage)
 
 **Notes:**
+- The SDK falls back to `$HOME/.a2a-client` unless `A2A_CLIENT_STORAGE_DIR` is provided; tests already set that env for isolation, while the Vite plugin writes under `a2a-client/storage` for manual sessions.
 
 ## Implementation backlog
 

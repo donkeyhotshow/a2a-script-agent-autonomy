@@ -42,7 +42,7 @@
 
 ## Current selection (this repo)
 
-- [ ] `doc-defaults`
+- [x] `doc-defaults`
 - [ ] `docker-compose`
 - [ ] `tunnel-remote`
 
@@ -50,14 +50,15 @@
 
 | Role | URL |
 |------|-----|
-| A2A Server | |
-| Client API (web) | |
-| AI Hub | |
-| Ollama (generate) | |
-| Ollama (embeddings if local) | |
-| Meilisearch | |
+| A2A Server | http://localhost:3000 |
+| Client API (web) | http://localhost:5173/api/a2a |
+| AI Hub | http://localhost:11435 |
+| Ollama (generate) | http://localhost:11434 |
+| Ollama (embeddings if local) | http://localhost:11434 |
+| Meilisearch | http://localhost:7700 |
 
 **Notes:**
+- The doc/default ports in `AGENTS.md` already list these URLs, and `docs/new-request-flow/API-SERVER.md` drives the Meilisearch defaults.
 
 ## Implementation backlog
 

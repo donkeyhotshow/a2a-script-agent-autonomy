@@ -22,13 +22,14 @@ Separate from Python proxy tuning: this is **Node** polling AI Hub until a promi
 
 ## Current selection (this repo)
 
-- [ ] `defaults`
+- [x] `defaults`
 - [ ] `fast-dev`
 - [ ] `slow-stable`
 
 **Concrete values (optional):**
 
 **Notes:**
+- The daemon falls back to `LLM_POLL_INTERVAL_MS` / `POLL_INTERVAL_MS` defaults (2 s interval) before hitting the 120 s cap in `poll-ready-then-fetch`.
 
 ## Implementation backlog
 
