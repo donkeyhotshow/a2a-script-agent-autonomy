@@ -320,8 +320,7 @@ export function createStepRoutes({ cwd }) {
                         mergedContext = { ...mergedContext, ...filteredContext };
                     }
 
-                    // session_id is a technical field, not part of protocol
-                    // mergedContext.session_id = sessionId;
+                    mergedContext.session_id = sessionId;
 
                     const sessionContext = session.context || {};
                     const previousExecution = sessionContext.execution || {};

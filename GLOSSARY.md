@@ -12,4 +12,4 @@
 | **Step storage** | Номера шагов в `a2a-client/storage/sessions/{sessionId}/{step}/` с файлами `request-to-server.json`, `server-response.json`, `server-promise.json`, `messages.json`. |
 | **Auto mode** | Поведение, когда `execute` не требует пользовательского ввода (нет `form.input`/`form.choices`); UI создаёт системные сообщения и может продолжать автоматически. |
 
-Общие понятия уточняются в `plans/api-client-server-logic.md` и соответствующем API-тестировании.
+Общие понятия уточняются в `AGENTS.md` и соответствующем API-тестировании.

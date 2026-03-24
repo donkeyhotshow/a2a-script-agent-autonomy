@@ -55,10 +55,9 @@ export function mergeResponseContext(sessionId, fallbackContext = {}, serverResp
         Object.assign(base, inner.result.context);
     }
 
-    // session_id is a technical field, not part of protocol
-    // if (sessionId && !base.session_id) {
-    //     base.session_id = sessionId;
-    // }
+    if (sessionId && !base.session_id) {
+        base.session_id = sessionId;
+    }
 
     return base;
 }

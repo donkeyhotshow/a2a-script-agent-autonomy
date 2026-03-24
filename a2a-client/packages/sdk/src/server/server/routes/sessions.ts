@@ -124,8 +124,7 @@ router.post('/', async (req: Request, res: Response) => {
                 const requestBody = {
                     context: {
                         version: '2.0',
-                        // session_id is a technical field, not part of protocol
-                        // session_id: sessionId,
+                        session_id: sessionId,
                         execution: { action: 'task', step: 'new' },
                         ...session.context,
                     },
@@ -513,8 +512,7 @@ router.post('/:sessionId/action', async (req: Request, res: Response) => {
         const requestBody = {
             context: {
                 version: '2.0',
-                // session_id is a technical field, not part of protocol
-                // session_id: sessionId,
+                session_id: sessionId,
                 execution: { action: 'action', step: body.choice },
                 ...session.context,
             },
@@ -683,8 +681,7 @@ router.post('/:sessionId/next', async (req: Request, res: Response) => {
         const requestBody = {
             context: {
                 version: '2.0',
-                // session_id is a technical field, not part of protocol
-                // session_id: sessionId,
+                session_id: sessionId,
                 execution: { action: 'continue', step: 'next' },
                 ...session.context,
             },
