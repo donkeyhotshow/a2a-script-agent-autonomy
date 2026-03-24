@@ -76,6 +76,15 @@ After flow hints, **`attachWorkbenchForLlmPrompt`** runs (see [`src/transform/wo
 
 **`workbench`** may include **`sections`**, **`batch`**, **`slots`**. Do not send `docVirtual` in new integrations.
 
+### 2c. Persisting `workbench.sections` from the LLM (response transform)
+
+After `response.md` is parsed into `$llm`, base pipelines for **auto-ai**, **coder**, and **analyze** run:
+
+1. **`merge-workbench-sections`** — `$.llm.workbench.sections` shallow-merged into `$.context.workbench.sections` (optional bulk update).
+2. **`apply-workbench-section-ops`** — `$.llm.workbench_ops` applied in order (`set` / `append` / `remove`, with short aliases `o` / `k` / `v` / `t`). Runs **after** merge so ops win on the same key.
+
+Prompt contract and examples: [`prompts/auto-ai-request.md`](../prompts/auto-ai-request.md) (Auto-AI), [`prompts/coder-request.md`](../prompts/coder-request.md) (Coder). Full op reference: [`TRANSFORM-OPS.md`](./TRANSFORM-OPS.md).
+
 ---
 
 ## 3. Request transform pipeline (after prep)
@@ -97,6 +106,8 @@ Full operations reference: **[`TRANSFORM-OPS.md`](./TRANSFORM-OPS.md)**
 | `summarize-files` | After `pick-context` includes `files` — truncate to N lines per file. |
 | `for-each` | Batch processing of `workbench.batch.items`. |
 
+**Response pipeline (typical AI-action):** after `parse-json-from-md` → `set` step / `append-to-array` history / `set` execute → add **`merge-workbench-sections`** and **`apply-workbench-section-ops`** when the action uses `context.workbench` (see `auto-ai-response.json`, `coder-response.json`, `analyze-response.json`).
+
 ### Canonical per-step pattern
 
 ```json
@@ -104,7 +115,7 @@ Full operations reference: **[`TRANSFORM-OPS.md`](./TRANSFORM-OPS.md)**
   "type": "pipeline",
   "steps": [
     { "op": "copy", "from": "$", "to": "$out" },
-    { "op": "pick-context", "include": ["execution", "task", "history:5", "scratchpad"] },
+    { "op": "pick-context", "include": ["execution", "task", "history", "scratchpad"] },
     { "op": "render-markdown", "templateRef": "a2a-server/prompts/YOUR-PROMPT.md", "data": "$out", "outputFile": "request.md" }
   ]
 }
@@ -120,7 +131,7 @@ The old **`append-to-array`** step that pushed `result.message` into history is 
 |-----------|--------|
 | [`tests/unit/materialize-result-for-llm.test.ts`](../tests/unit/materialize-result-for-llm.test.ts) | User fold, dedupe, RAG/grep formatting |
 | [`tests/unit/flow-control-hints.test.ts`](../tests/unit/flow-control-hints.test.ts) | Resolution and `attachFlowControlHintToInvokePayload` |
-| [`tests/transform-runtime.test.ts`](../tests/transform-runtime.test.ts) | End-to-end transform pipelines, all 16 operations |
+| [`tests/transform-runtime.test.ts`](../tests/transform-runtime.test.ts) | End-to-end transform pipelines (all registered `op`s, including workbench merge + ops) |
 
 ---
 

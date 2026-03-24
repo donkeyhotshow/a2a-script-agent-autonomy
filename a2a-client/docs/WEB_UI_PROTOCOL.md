@@ -16,7 +16,7 @@ Checkpoint: dialog in `a2a-client/web` against the Vite **storage-mode** Client 
 - **`execute.form`** — unchanged when the server sent a form.
 - **`execute.attachments`** — hints only (`readFiles`, `writtenFiles`, `ragQuery`, `shellCommand`, `listDirectoryPath`, `grepPattern`, …).
 
-The **server protocol** and simulation **`response.json`** still use a **single action key** under `execute`. Goldens for **`received.json`** match this Web DTO (see `simulations/SCHEMA.md`). With **`?includeContext=1`**, the session payload may include full internal `context` for debugging; prefer not to rely on raw `execute` keys in the UI.
+The **server protocol** and simulation **`response.json`** still use a **single action key** under `execute`, and any **`result`** (if present) must follow the **action-key shape** (e.g., `{ "read-file": { ... } }`). Goldens for **`received.json`** match this Web DTO (see `simulations/SCHEMA.md`). With **`?includeContext=1`**, the session payload may include full internal `context` (including **`workbench.sections`**) for debugging; prefer not to rely on raw `execute` keys in the UI.
 
 ## HTTP (storage mode)
 

@@ -249,10 +249,9 @@ Complete user workflows and scenarios.
 
 ## Related Documentation
 
-- [A2A Protocol](../../docs/new-request-flow/PROTOCOL.md)
-- [Web Client Architecture](../web/README.md)
+- [Web Client Documentation](../README.md)
 - [API Server Documentation](../../../a2a-server/README.md)
-- [Testing Guide](../../docs/TESTING-MOCKING-GUIDE.md)
+- [Server Testing Mocking Guide](../../../a2a-server/docs/TESTING-MOCKING-GUIDE.md)
 
 ## Future Enhancements
 

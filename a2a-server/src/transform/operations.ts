@@ -9,6 +9,7 @@
  * - render-markdown: Render a markdown template
  * - switch: Conditional transform based on discriminator value
  * - truncate-section: Cap string length (or each string field on a plain object)
+ * - merge-workbench-sections / apply-workbench-section-ops: persist LLM workbench into context
  * 
  * Pipeline usage:
  * - server-transforms-request.json: Transforms request.json to build request.md (LLM input)
@@ -35,6 +36,7 @@ import type {
   RenderMarkdownOperation,
   SwitchOperation,
   ApplyScratchpadOpsOperation,
+  ApplyWorkbenchSectionOpsOperation,
   TruncateSectionOperation,
   PickContextOperation,
   DropOperation,
@@ -42,6 +44,7 @@ import type {
   IncludeIfOperation,
   PickFilesOperation,
   MergeFilesToContextOperation,
+  MergeWorkbenchSectionsOperation,
   SummarizeFilesOperation,
   ForEachOperation,
   ScratchpadOpCommand
@@ -110,6 +113,9 @@ export async function applyOperation(
     case 'apply-scratchpad-ops':
       await applyScratchpadOps(operation, context);
       break;
+    case 'apply-workbench-section-ops':
+      await applyWorkbenchSectionOps(operation, context);
+      break;
     case 'truncate-section':
       await applyTruncateSection(operation, context);
       break;
@@ -130,6 +136,9 @@ export async function applyOperation(
       break;
     case 'merge-files-to-context':
       await applyMergeFilesToContext(operation, context);
+      break;
+    case 'merge-workbench-sections':
+      await applyMergeWorkbenchSections(operation, context);
       break;
     case 'summarize-files':
       await applySummarizeFiles(operation, context);
@@ -481,10 +490,19 @@ async function applyPickContext(
     const colonIdx = field.indexOf(':');
     if (colonIdx !== -1) {
       const key = field.slice(0, colonIdx);
-      const n = parseInt(field.slice(colonIdx + 1), 10);
+      const spec = field.slice(colonIdx + 1).trim();
       const arr = ctx[key];
       if (Array.isArray(arr)) {
-        next[key] = arr.slice(-n);
+        if (spec === 'all' || spec === 'full') {
+          next[key] = arr;
+        } else {
+          const n = parseInt(spec, 10);
+          if (!Number.isFinite(n) || n <= 0) {
+            next[key] = arr;
+          } else {
+            next[key] = arr.slice(-n);
+          }
+        }
       } else if (arr !== undefined) {
         next[key] = arr;
       }
@@ -583,6 +601,26 @@ async function applyPickFiles(
   jsonPathSet(context.$out, 'context.files', next);
 }
 
+async function applyMergeWorkbenchSections(
+  operation: MergeWorkbenchSectionsOperation,
+  context: TransformContext
+): Promise<void> {
+  const { from, to } = operation;
+  const incoming = query<unknown>(context.$out, from);
+  if (!incoming || typeof incoming !== 'object' || Array.isArray(incoming)) return;
+
+  const existingRaw = query<unknown>(context.$out, to);
+  const base: Record<string, unknown> =
+    existingRaw && typeof existingRaw === 'object' && !Array.isArray(existingRaw)
+      ? JSON.parse(JSON.stringify(existingRaw))
+      : {};
+  const merged: Record<string, unknown> = {
+    ...base,
+    ...(incoming as Record<string, unknown>)
+  };
+  jsonPathSet(context.$out, to, merged);
+}
+
 /**
  * merge-files-to-context — fold result["read-file"] / result["write-file"] into context.files.
  */
@@ -677,6 +715,38 @@ function isScratchpadCommand(x: unknown): x is ScratchpadOpCommand {
   );
 }
 
+type NormalizedWorkbenchSectionOp =
+  | { kind: 'set'; key: string; value: string }
+  | { kind: 'append'; key: string; text: string; sep: string }
+  | { kind: 'remove'; key: string };
+
+/** Parse LLM workbench_ops entry; supports short keys `o`,`k`,`v`,`t` and aliases `+`/`rm`/`del`. */
+function normalizeWorkbenchSectionOp(raw: unknown): NormalizedWorkbenchSectionOp | null {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+  const o = raw as Record<string, unknown>;
+  const opRaw = String(o.op ?? o.o ?? '').toLowerCase();
+  const key =
+    (typeof o.key === 'string' && o.key.length > 0 ? o.key : null) ??
+    (typeof o.k === 'string' && o.k.length > 0 ? o.k : null);
+  if (!key) return null;
+
+  if (opRaw === 'set' || opRaw === 's') {
+    const v = o.value ?? o.v;
+    if (typeof v !== 'string') return null;
+    return { kind: 'set', key, value: v };
+  }
+  if (opRaw === 'append' || opRaw === 'a' || opRaw === '+') {
+    const t = o.text ?? o.t;
+    if (typeof t !== 'string') return null;
+    const sep = typeof o.sep === 'string' ? o.sep : '\n';
+    return { kind: 'append', key, text: t, sep };
+  }
+  if (opRaw === 'remove' || opRaw === 'r' || opRaw === 'rm' || opRaw === 'del') {
+    return { kind: 'remove', key };
+  }
+  return null;
+}
+
 /**
  * Merge LLM scratchpad_ops into context.scratchpad (ISSUE 6).
  */
@@ -710,6 +780,48 @@ async function applyScratchpadOps(
   }
 
   jsonPathSet(context.$out, scratchpadPath, pad);
+}
+
+/**
+ * Apply LLM `workbench_ops` to `context.workbench.sections` (incremental string edits).
+ */
+async function applyWorkbenchSectionOps(
+  operation: ApplyWorkbenchSectionOpsOperation,
+  context: TransformContext
+): Promise<void> {
+  const { from, sectionsPath = 'context.workbench.sections' } = operation;
+  let ops = query<unknown[]>(context.input, from);
+  if (!ops) {
+    ops = query<unknown[]>(context.$out, from);
+  }
+  if (!Array.isArray(ops) || ops.length === 0) {
+    return;
+  }
+
+  let sections = query<Record<string, unknown>>(context.$out, sectionsPath);
+  if (!sections || typeof sections !== 'object' || Array.isArray(sections)) {
+    sections = {};
+  } else {
+    sections = { ...sections };
+  }
+
+  for (const raw of ops) {
+    const cmd = normalizeWorkbenchSectionOp(raw);
+    if (!cmd) continue;
+    if (cmd.kind === 'remove') {
+      delete sections[cmd.key];
+      continue;
+    }
+    if (cmd.kind === 'set') {
+      sections[cmd.key] = cmd.value;
+      continue;
+    }
+    const cur = sections[cmd.key];
+    const base = typeof cur === 'string' ? cur : cur != null ? String(cur) : '';
+    sections[cmd.key] = base.length > 0 ? base + cmd.sep + cmd.text : cmd.text;
+  }
+
+  jsonPathSet(context.$out, sectionsPath, sections);
 }
 
 /**

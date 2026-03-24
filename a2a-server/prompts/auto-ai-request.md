@@ -28,15 +28,44 @@ ${flowControlHint}
 
 ## Response Format
 
+**Prefer `workbench_ops`** for small edits to `workbench.sections` so you do not resend full section text every turn. Use top-level `workbench.sections` only for a big first write or full replace of several keys at once.
+
+### `workbench_ops` (optional array)
+
+Each item is one command. **Verbose** and **short** forms are both accepted.
+
+| Intent | Verbose | Short (`o` = op, `k` = key, `v` = value, `t` = text) |
+|--------|---------|--------------------------------------------------------|
+| Replace section string | `{"op":"set","key":"findings","value":"full new text"}` | `{"o":"s","k":"findings","v":"full new text"}` |
+| Append one line (default separator `\n`) | `{"op":"append","key":"findings","text":"- src/app.ts: entry"}` | `{"o":"a","k":"findings","t":"- src/app.ts: entry"}` |
+| Optional custom separator | `{"op":"append","key":"findings","text":"x","sep":" "}` | `{"o":"+","k":"findings","t":"x","sep":" "}` |
+| Drop a section key | `{"op":"remove","key":"open_questions"}` | `{"o":"rm","k":"open_questions"}` |
+
+Aliases: `append` → `a` or `+`; `remove` → `r`, `rm`, `del`; `set` → `s`.
+
+Example (minimal tokens after a RAG hit):
+
 ```json
 {
-  "step": "locate_code",
-  "message": "your immediate response to the user",
-  "execute": {
-    "rag-search": {
-      "query": ""
-    }
-  },
+  "step": "read_code",
+  "message": "Found entrypoint; reading app next.",
+  "workbench_ops": [
+    { "o": "a", "k": "findings", "t": "RAG: src/app.ts (main express app)" }
+  ],
+  "execute": { "read-file": { "path": "src/app.ts" } },
+  "completed": false
+}
+```
+
+Bulk / bootstrap (optional, merged before `workbench_ops` are applied):
+
+```json
+{
+  "step": "plan",
+  "message": "…",
+  "workbench": { "sections": { "task_digest": "Add /health JSON", "findings": "" } },
+  "workbench_ops": [{ "o": "a", "k": "findings", "t": "User wants Express route" }],
+  "execute": { "rag-search": { "query": "express health" } },
   "completed": false
 }
 ```
@@ -44,12 +73,16 @@ ${flowControlHint}
 Rules:
 
 - `step`: MUST be a non-empty string from the list above. Repeat the same value to stay in the current phase; set a new value to advance.
+- `workbench_ops` (optional): incremental edits; applied **after** `workbench.sections` merge, so ops win on the same key.
+- `workbench.sections` (optional): shallow merge into context; omit when a few `workbench_ops` rows are enough.
 - `execute`: MUST follow **action-key shape** — exactly one key per turn. Allowed keys: `rag-search`, `list-directory`, `read-file`, `write-file`, `grep-search`, `execute-command`.
 - `completed`: Set `true` only when the task is fully finished. When `true`, omit or empty `execute`.
 
 ## Current State
 
 `workbench` is structured working memory: `sections` (named text chunks), optional `batch` (`items`, `cursor`, `label`), optional `slots` (named JSON blobs).
+
+**Token discipline:** default to **`workbench_ops`** (`a`/`s`/`rm`) for deltas. Suggested section keys: `task_digest`, `findings`, `open_questions`. Keep `message` short; put durable facts in sections via ops. `scratchpad` (flags) is separate from section prose.
 
 ```json
 {

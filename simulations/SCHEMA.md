@@ -60,11 +60,9 @@ Not every step has all 8 files: steps without LLM обычно имеют `clien
 | File | Purpose |
 |------|--------|
 | `interrupt.md` | **Documentation only.** Describes how [`SERVER-INTERRUPT-LOOP.md`](../a2a-server/docs/SERVER-INTERRUPT-LOOP.md) could apply at this step: sample LLM JSON with `interrupt`, compress output, transform snippet. **Not** part of the client sync pipeline; `sim-lint` does not require it. |
-| **`N-sub-M/`** (folder) | **Sister folder next to step `N/`** (`M` = 1,2,3,…). Holds optional `trace.json` (+ `README.md`) for one variant of `context.workbench.slots.interruptTrace`. Pattern: `^\d+-sub-\d+$`. Not a full protocol step (no required `client.json` / `request.json`). `sim-lint` only checks JSON syntax inside. |
+| **`N-sub-M/`** (folder) | **Sister folder next to step `N/`** (`M` = 1,2,3,…). Optional interrupt-loop goldens: same class of files as steps (`request.json`, `request.md`, `response.json`, `response.md`, server-transforms). Trace → **`response.json`** `context.workbench.slots.interruptTrace`. Pattern: `^\d+-sub-\d+$`. Not a full eight-file client step. `sim-lint` only checks JSON syntax inside. |
 
-Examples: [`auto-ai-v2/6/interrupt.md`](auto-ai-v2/6/interrupt.md); substeps of step 6: [`6-sub-1/`](auto-ai-v2/6-sub-1/) … [`6-sub-4/`](auto-ai-v2/6-sub-4/).
-
-You may copy a `trace.json` into golden **`response.json`** as **`context.workbench.slots.interruptTrace`** when you want the server → Client API fixture to show that chain; align `llm_output.chars` with the corresponding `response.md` when it matters.
+Examples: [`auto-ai-v2/6/interrupt.md`](auto-ai-v2/6/interrupt.md); substeps: [`6-sub-1/`](auto-ai-v2/6-sub-1/) … [`6-sub-4/`](auto-ai-v2/6-sub-4/).
 
 ## Примеры Web ↔ Client API
 
@@ -242,7 +240,9 @@ All operations run in pipeline order on `$out` (copy of input). The goal is to s
 | `append-to-array` | Append entry to array | `to`, `value` |
 | `truncate-section` | Cap string length in field or object | `path`, `maxChars` |
 | `apply-scratchpad-ops` | Merge LLM `scratchpad_ops` into `context.scratchpad` | `from` |
-| `pick-context` | **Keep only listed fields** under `context`, drop the rest. Use `"history:N"` to keep last N entries. | `include: string[]` |
+| `merge-workbench-sections` | Shallow-merge `llm.workbench.sections` → `context.workbench.sections` | `from`, `to` |
+| `apply-workbench-section-ops` | Apply LLM `workbench_ops` (set/append/remove; short `o`,`k`,`v`,`t`) | `from`, `sectionsPath?` |
+| `pick-context` | **Keep only listed fields** under `context`, drop the rest. Use `"history"` / `"history:all"` / `"history:0"` for full history, or `"history:N"` for last N. | `include: string[]` |
 | `drop` | Delete a JSONPath from `$out` | `path` |
 | `truncate-history` | Keep only last N history entries | `keep: number` |
 | `include-if` | Drop `path` when `condition` is falsy | `path`, `condition` |
@@ -279,7 +279,9 @@ All operations run in pipeline order on `$out` (copy of input). The goal is to s
 | `files` | object | `{ "path": "<full content>" }` — working set прочитаних файлів. Не в history |
 | `scratchpad` | object | `{ "item_key": true/false }` — checklist стану задачі. Оновлюється через `scratchpad_ops` |
 | `scratchpad_ops` | array | Команди від LLM: `[{ "op": "check"|"add"|"remove", "item": "..." }]`. Сервер застосовує і видаляє поле |
-| `workbench` | object | **`sections`** — named text chunks (draft doc / task spec); optional **`batch`** (`items`, `cursor`, `label`) for sequential work; optional **`slots`** — named JSON blobs. Canonical multi-step accumulator. |
+| `workbench` (in LLM JSON) | object | Optional top-level у відповіді моделі: **`sections`** — shallow-merge у `context.workbench.sections` (див. `merge-workbench-sections` у response transform). |
+| `workbench_ops` | array | Інкрементальні правки `sections`: `set`/`append`/`remove` (коротко `o`/`k`/`v`/`t`). Застосовуються **після** merge. Деталі: `a2a-server/prompts/auto-ai-request.md`. |
+| `workbench` (in context) | object | **`sections`** — named text chunks; optional **`batch`**, **`slots`**. Накопичувач багатокрокових flow. |
 
 **Правило history:** великі дані (вміст файлів, stdout команд) не потрапляють в history. Тільки стислий `system` запис:
 ```json
@@ -298,7 +300,7 @@ All operations run in pipeline order on `$out` (copy of input). The goal is to s
    - **`context.history`** — short `user` / `assistant` / `system` lines (no full file bodies in history).
    - **`context.files`** — read contents keyed by path; tool summaries as system lines + payloads here when needed.
    - **`context.scratchpad` / `scratchpad_ops`** — checklist and structured flags.
-   - **`context.workbench`** — structured state: `sections` (draft doc), optional `batch`, `slots`.
+   - **`context.workbench`** — structured state: `sections` (draft doc), optional `batch`, `slots`; оновлюється з LLM через `workbench.sections` merge + `workbench_ops` (див. base `*-response.json` для auto-ai / coder / analyze).
    - **Flow-specific fields** — e.g. `broken_uses`, `patches`, scan state; document them in the sim; prefer mapping into the canonical fields above when possible.
 3. **Mixed `execute` types** — a sequence may alternate **`script`**, **`rag-search`**, **`read-file`**, **`form`** (human confirmation), **`message`**, **`write-file`**, **`execute-command`**, and LLM-chosen steps. The contract is always: **one active `execute` key** → client runs → **`result`** → context update → next step.
 4. **LLM flows** — AI-Actions use the same accumulation idea: each round updates `history` / `execution` / `workbench`; “batch” can mean **many tool or LLM rounds**, not a single client script loop.

@@ -27,33 +27,33 @@ API Client Server (порт 3001) остаётся проксирующим сл
 
 | Файл | Папка | Назначение |
 |------|-------|-----------|
-| `request-to-server.json` | `{N}/` | Payload перед отправкой на A2A Server (context + result) |
+| `request-to-server.json` | `{N+1}/` | Payload перед отправкой на A2A Server (context + result) |
 | `client-result.json` | `{N}/` | Входные данные от Web клиента (message/choice) |
-| `server-response.json` | `{N}/` | Ответ A2A Server (execute/context/result) |
+| `server-response.json` | `{N+1}/` | Ответ A2A Server (execute/context/result) |
 | `server-promise.json` | `{N+1}/` | `promiseId` и статус после async-запроса |
-| `messages.json` | `{N}/` | История сообщений, используемая при сборе истории |
+| `messages.json` | `{N+1}/` | История сообщений, используемая при сборе истории |
 
 ## Поток обработки шага
 
 ```mermaid
 flowchart TD
-    A[Шаг N: пришёл client-result] --> B[Сохранить client-result.json]
-    B --> C[Сформировать request-to-server.json (context.execution += action)]
+    A[Шаг N: пришёл client-result] --> B[Сохранить client-result.json в N/]
+    B --> C[Сформировать request-to-server.json для N+1 (context.execution += action)]
     C --> D[Сохранить request-to-server.json и отправить POST /invoke]
     D --> E{Ответ содержит promiseId?}
-    E -->|Да| F[Сохранить server-promise.json в шаге N+1, stepNum := N+1 + 1]
+    E -->|Да| F[Сохранить server-promise.json в шаге N+1, stepNum := N+1]
     E -->|Нет| G[Сохранить server-response.json в шаге N+1, stepNum := N+1]
-    F --> H[Опросить GET /sessions/:id/promise/:promiseId → /requests/{promiseId}/status]
-    H --> I[при completed записать server-response.json, обновить execute/context]
+    F --> H[Опросить GET /sessions/:id/promise/:promiseId или /async]
+    H --> I[при completed записать server-response.json в N+1, обновить execute/context]
     G --> J[Обновить session.execute/context, вернуть execute клиенту]
 ```
 
 1. Web клиент отправляет `POST /api/sessions/:id/action` (выбор) или `POST /api/sessions/:id/next` (form.input/message). Сервис сохраняет `client-result.json` и фиксирует `selectedAction`/последний `input` в metadata.
 2. Формируется `request-to-server.json` для шага `N+1` с `context.execution` (action `'task'`, `'action'` или `'continue'`), `session_id`, `result` и optional `actionParams`. `validateRequestToServer` проверяет, что есть `task` либо `context`, а `context.execution.action` — строка.
 3. `serverFetch` отправляет `POST /invoke` к A2A Server, затем:
-   * если в ответе есть `promiseId`, создаётся `server-promise.json` в шаге `N+2`, `stepNum` обновляется на этот шаг, и фронт начинает опрос `GET /sessions/:id/promise/:promiseId`.
+   * если в ответе есть `promiseId`, создаётся `server-promise.json` в шаге `N+1`, `stepNum` обновляется на этот шаг, и фронт начинает опрос `GET /sessions/:id/async`.
    * если промиса нет, сохраняется `server-response.json` в шаге `N+1`, `stepNum` увеличивается на 1.
-4. В обоих случаях `sessionService.updateSessionContext`/`updateSession` сохраняют новый `context`, `currentExecute`, `messages`.
+4. В обоих случаях `sessionService.updateSessionContext`/`updateSession` сохраняют новый `context` (включая `workbench.sections`), `currentExecute`, `messages`.
 
 ## Формирование context.execution
 
@@ -70,7 +70,9 @@ A2A Server возвращает `{ data: { execute, context, result }, promiseId
 - `execute` содержит `form`, `message`, `wait`, `action`, `finalResult`.
 - если `execute.form` не содержит `input`/`choices`, UI генерирует `autoContinue` (system-сообщение типа `auto-action`, `auto-script`, `auto-result`) и может продолжить без пользователя.
 - `execute.finalResult` переводит сессию в `completed`.
-- `context` сливается в `session.context`.
+- `context` (включая `workbench.sections`) сливается в `session.context`.
+
+**Server Interrupt Loop:** Если сервер возвращает инструкцию `interrupt`, диалоговый процессор может выполнить дополнительные циклы обработки (например, `compress_history` или `thinking`) перед отправкой финального ответа клиенту. См. [SERVER-INTERRUPT-LOOP.md](../../a2a-server/docs/SERVER-INTERRUPT-LOOP.md).
 
 При sync-ответе `server-response.json` фиксируется сразу. При async-ответе `server-promise.json` сохраняет `{ promiseId, status, submittedAt }`, Vite plugin делает polling, Web UI реагирует на события `wait` / `promisePending` от SessionStore.
 

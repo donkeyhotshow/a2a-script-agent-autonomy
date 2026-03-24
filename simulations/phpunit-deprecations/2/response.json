@@ -1,6 +1,9 @@
 {
   "context": {
     "task": "знайти застарілі PHPUnit методи",
+    "workbench": {
+      "sections": {}
+    },
     "execution": {
       "action": "phpunit-deprecations",
       "step": "scan-phpunit"

@@ -60,7 +60,7 @@ css/archive/
 ### 1. SessionStore - State Management
 ```javascript
 // Access
-store.sessionId, store.messages, store.execute, store.context
+store.sessionId, store.messages, store.execute, store.context, store.workbench
 
 // Computed properties
 store.isWaitingForInput()   // boolean

@@ -148,7 +148,7 @@ sequenceDiagram
     UI->>UI: Attach click handlers
     User->>UI: Click choice button
     UI->>AH: sendChoice(choiceId)
-    AH->>API: Submit choice
+    AH->>API: Submit { result: { choice: choiceId } }
     UI->>UI: Show loading state
     API-->>AH: Success response
     AH-->>UI: Update with next execute

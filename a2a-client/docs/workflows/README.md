@@ -19,19 +19,15 @@ This directory contains comprehensive documentation of all user workflows and sy
 - **[Upgrade Tasks](../UPGRADE_TASKS.md)** - Planned enhancements and improvement roadmap
 
 ### Architecture & Implementation
-- **[Unified Architecture Complete](../UNIFIED_ARCHITECTURE_COMPLETE.md)** - Implementation status of major refactoring steps
-- **[Session Architecture Migration](../session-architecture-migration.md)** - Migration guide for unified session architecture
+- **[Unified Architecture Complete](./UNIFIED_ARCHITECTURE_COMPLETE.md)** - Implementation status of major refactoring steps
+- **[Session Architecture Migration](./session-architecture-migration.md)** - Migration guide for unified session architecture
 - **[Actions & Events Decomposition](../actions-events-decomposition.md)** - Detailed breakdown of all UI actions and events
-- **[Context Synchronization Guide](../context-synchronization-guide.md)** - How components handle state synchronization
+- **[Context Synchronization Guide](./context-synchronization-guide.md)** - How components handle state synchronization
 
 ### Development State
 - **[Web UI DEV_STATE](../../DEV_STATE.md)** - Current development status and component overview
 - **[Dialog Architecture Tasks](../tasks/dialog-architecture-tasks.md)** - Task breakdown for dialog stability
 - **[Testing SSE Tasks](../tasks/testing-sse-tasks.md)** - SSE reliability and testing task breakdown
-
-### Legacy & Archive
-- **[AI Actions Integration Guide](../archive/ai-actions-integration-guide.md)** - Legacy AI actions implementation
-- **[AI Actions Session Panel](../archive/ai-actions-session-panel.md)** - Legacy session panel documentation
 
 ## Key Scenarios Overview
 

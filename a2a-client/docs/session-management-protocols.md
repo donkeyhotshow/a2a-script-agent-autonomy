@@ -328,9 +328,8 @@ storage/sessions/{SESSION_ID}/
 │   └── request-to-server.json  # Payload для шага N+1
 ├── {N+1}/
 │   ├── server-response.json    # Ответ A2A Server для шага N+1
+│   ├── server-promise.json     # Promise metadata если ответ async
 │   └── messages.json
-├── {N+2}/
-│   └── server-promise.json     # Promise metadata если ответ async
 └── ...
 ```
 
@@ -340,7 +339,7 @@ storage/sessions/{SESSION_ID}/
 2. Когда Web UI присылает `client-result` (message/choice), оно сохраняется как `{N}/client-result.json`.
 3. Client API собирает `request-to-server.json` в `{N+1}/` и отправляет `POST /invoke`.
 4. Если ответ синхронный, `server-response.json` попадает в `{N+1}/` и `stepNum` увеличивается на 1.
-5. Если ответ вернул `promiseId`, `server-promise.json` создаётся в `{N+2}/`, `stepNum` переносится туда, а UI опрашивает `/sessions/:id/promise/:promiseId` до `completed`, после чего финальный `server-response.json` сохраняется в том же шаге.
+5. Если ответ вернул `promiseId`, `server-promise.json` создаётся в `{N+1}/`, `stepNum` переносится туда, а UI опрашивает `/sessions/:id/async` до `completed`, после чего финальный `server-response.json` сохраняется в том же шаге.
 
 ### Типы обработки
 

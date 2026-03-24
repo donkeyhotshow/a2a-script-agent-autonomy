@@ -50,19 +50,20 @@ The **response** transform must place `interrupt` on the same object that carrie
 | `schema` | string | Optional alternate transform schema for the next turn — **not yet read** by the loop. |
 | `context` | object | Shallow-merged over the current invoke context before the interrupt handler runs. |
 | `data` | object | Handler-specific payload (e.g. merged into context for `auto_rag_page`). |
+| `when` | object | Optional gates: **`historyMinLength`** / **`historyMaxLength`** vs current dialog history. If not satisfied, the server skips the interrupt (same as no `interrupt`); trace gets `interrupt_skipped`. |
 
 ## Implemented `reason` values
 
 | `reason` | Behavior | `continueLoop` |
 |----------|----------|----------------|
-| `compress_history` | If `getExistingDialogHistory` has **more than 4** entries, calls AI Hub with a compress prompt; on success replaces **top-level** `history` and `context.history`. Otherwise no-op. | `false` — server returns **one** `ProcessResult` built from **updated context** and the **same** primary LLM `execute` / message. |
+| `compress_history` | Calls AI Hub with a compress prompt when history is non-empty (optional skip: env **`A2A_COMPRESS_HISTORY_MIN_ENTRIES`** — if `> 0`, skip when `history.length <=` that value). On success replaces **top-level** `history` and `context.history`. | `false` — server returns **one** `ProcessResult` built from **updated context** and the **same** primary LLM `execute` / message. |
 | `thinking` | Calls AI Hub; parsed JSON stored under `context.workbench.slots.thinking`. | `true` — runs **request transform → main LLM → response transform** again with updated context. |
 | `auto_rag_page` | Merges `data` into `context` and sets `_interrupt_reason`. | `true` — same as `thinking` (main loop). **Does not** run RAG on the server yet. |
 | *(anything else)* | Logged; loop stops; client gets current result **without** `interrupt` consumption beyond that. | `false` |
 
 ## Loop limits and truncation
 
-- **`MAX_INTERRUPT_TURNS`** — Global cap (`10` in code). Each time an `interrupt` is present and handled, the budget decrements **once** before the next iteration.
+- **`A2A_MAX_INTERRUPT_TURNS`** — Global cap (default `10`). Each time an `interrupt` is present and handled, the budget decrements **once** before the next iteration.
 - **`interrupt.maxTurns`** — Part of the type for documentation / future use; **not** currently applied in `processDialogResponseWithInterruptLoop`.
 - When the budget hits **0** while an interrupt is still present, the server returns the current `ProcessResult` with **`context.interrupt_truncated: true`**.
 
@@ -76,7 +77,7 @@ The **response** transform must place `interrupt` on the same object that carrie
 
 - Default goldens often show a **single** LLM turn (`response.md` without `interrupt`). That stays the sync contract baseline.
 - Optional narrative: [`simulations/auto-ai-v2/6/interrupt.md`](../../simulations/auto-ai-v2/6/interrupt.md).
-- Trace fixtures in sister folders **`6-sub-1`** … **`6-sub-4`** next to step `6` (`trace.json`; naming pattern `N-sub-M` = step `N`, sequence `M`).
+- Substep goldens in **`6-sub-1`** … **`6-sub-4`** (`N-sub-M`); trace lives in each folder’s **`response.json`** → `workbench.slots.interruptTrace`.
 - [`simulations/SCHEMA.md`](../../simulations/SCHEMA.md) — `interrupt.md` and `N-sub-M/` folders (not full eight-file steps).
 - To add a **full** golden with interrupts: extend `response.md` + `server-transforms-response.json` to emit `interrupt`, then set `response.json` / `received.json` to the **final** post-loop state.
 

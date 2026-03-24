@@ -17,6 +17,37 @@ import type {InterruptDirective, ServerInterruptTraceEvent} from '../../../trans
 
 type DialogHistoryEntry = { role: string; message: string };
 
+/** Single-key `execute` payloads that must pass through to the client (tool rounds). */
+export const DIALOG_TOOL_EXECUTE_KEYS = [
+    'rag-search',
+    'read-file',
+    'write-file',
+    'execute-command',
+    'list-directory',
+    'grep-search',
+    'script',
+] as const;
+
+function isDialogToolExecutePayload(execute: Record<string, unknown> | undefined): boolean {
+    if (!execute || typeof execute !== 'object') return false;
+    const keys = Object.keys(execute).filter((k) => {
+        const v = execute[k];
+        return v !== undefined && v !== null;
+    });
+    if (keys.length !== 1) return false;
+    return (DIALOG_TOOL_EXECUTE_KEYS as readonly string[]).includes(keys[0]!);
+}
+
+function readEnvInt(name: string, defaultValue: number): number {
+    const v = process.env[name];
+    if (v === undefined || v === '') return defaultValue;
+    const n = parseInt(v, 10);
+    return Number.isFinite(n) ? n : defaultValue;
+}
+
+/** Cap on server-side interrupt iterations (compress / thinking / follow-up LLM). Env: `A2A_MAX_INTERRUPT_TURNS`. */
+const MAX_INTERRUPT_TURNS = readEnvInt('A2A_MAX_INTERRUPT_TURNS', 10);
+
 /** Prior turns: flat `history` (invoke/client) or nested `context.history`. */
 function getExistingDialogHistory(ctx: Record<string, unknown>): DialogHistoryEntry[] {
     const top = ctx['history'];
@@ -90,6 +121,15 @@ function buildDialogProcessResultFromContext(
     };
     const msg = recovered ? 'Dialog response (recovered)' : 'Dialog response';
     const nextCtx = {...dialogContextWithoutTransientIds(ctx), history: newHistory};
+    const ex = execute as Record<string, unknown> | undefined;
+    if (isDialogToolExecutePayload(ex)) {
+        return {
+            outcome: 'completed',
+            message: msg,
+            context: nextCtx,
+            execute: ex as ProcessResult['execute'],
+        } as ProcessResult;
+    }
     if (assistantMessage) {
         return {
             outcome: 'completed',
@@ -109,7 +149,19 @@ function buildDialogProcessResultFromContext(
     } as ProcessResult;
 }
 
-const MAX_INTERRUPT_TURNS = 10;
+function interruptWhenSatisfied(interrupt: InterruptDirective, ctx: Record<string, unknown>): boolean {
+    const w = interrupt.when;
+    if (!w) return true;
+    const len = getExistingDialogHistory(ctx).length;
+    if (w.historyMinLength != null && len < w.historyMinLength) return false;
+    if (w.historyMaxLength != null && len > w.historyMaxLength) return false;
+    return true;
+}
+
+/** Skip `compress_history` sidecar when history length ≤ this (0 = only skip empty). Env: `A2A_COMPRESS_HISTORY_MIN_ENTRIES`. */
+function compressHistorySkipMaxLength(): number {
+    return readEnvInt('A2A_COMPRESS_HISTORY_MIN_ENTRIES', 0);
+}
 
 /** Attach chronological interrupt / LLM sub-step trace for Web UI (`context.workbench.slots.interruptTrace`). */
 function attachInterruptTraceToContext(
@@ -224,19 +276,30 @@ async function applyInterrupt(
 
     if (reason === 'compress_history') {
         const history = getExistingDialogHistory(nextCtx);
-        if (!Array.isArray(history) || history.length <= 4) {
+        if (!Array.isArray(history) || history.length === 0) {
             trace.push({
                 kind: 'sidecar_llm',
                 purpose: 'compress_history',
                 ok: true,
-                meta: 'skipped_short_history',
+                meta: 'skipped_empty_history',
+            });
+            return { nextCtx, continueLoop: false };
+        }
+        const skipMax = compressHistorySkipMaxLength();
+        if (skipMax > 0 && history.length <= skipMax) {
+            trace.push({
+                kind: 'sidecar_llm',
+                purpose: 'compress_history',
+                ok: true,
+                meta: `skipped_short_history_<=${skipMax}`,
             });
             return { nextCtx, continueLoop: false };
         }
         const compressPrompt = [
-            'Compress the following conversation history into 3-5 key facts.',
-            'Return a JSON array of {"role": "system", "message": "..."} entries.',
-            'Keep: task goal, key decisions, current state. Drop: tool call details already in scratchpad/files.',
+            'Compress the following conversation history into 3–7 short entries (JSON array of {"role":"system"|"assistant"|"user","message":"..."}).',
+            'Preserve enough detail to continue the task: user goal, constraints, unresolved steps, file paths touched, last assistant intent.',
+            'Omit redundant tool chatter if the same facts live in scratchpad or context.files summaries.',
+            'Do not drop the user task or any requirement needed to finish the job.',
             'Respond with ONLY the JSON array, no prose.',
             '',
             'History:',
@@ -432,6 +495,15 @@ async function processDialogResponseWithInterruptLoop(
             interruptReason: interrupt?.reason,
         });
         if (!interrupt) {
+            return mergeTraceIntoResult(result, trace);
+        }
+
+        if (!interruptWhenSatisfied(interrupt, workingCtx)) {
+            trace.push({
+                kind: 'interrupt_skipped',
+                reason: interrupt.reason,
+                detail: 'when_clause_not_met',
+            });
             return mergeTraceIntoResult(result, trace);
         }
 

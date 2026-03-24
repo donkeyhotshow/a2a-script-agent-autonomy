@@ -28,6 +28,8 @@ ${flowControlHint}
 }
 ```
 
+Optional **`workbench_ops`** (incremental `workbench.sections` edits) and **`workbench.sections`** (bulk merge) — same contract as Auto-AI / Coder; see [`auto-ai-request.md`](auto-ai-request.md) § Response Format.
+
 Rules:
 - `step`: MUST be a non-empty string from the list above
 - `execute`: 

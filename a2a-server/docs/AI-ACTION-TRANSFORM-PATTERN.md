@@ -86,7 +86,7 @@ Full operations reference: **[`TRANSFORM-OPS.md`](./TRANSFORM-OPS.md)**
 2. **Request prep** ([LLM-REQUEST-PREP.md](./LLM-REQUEST-PREP.md)): materialize `result` → `history`, attach `flowControlHint`
 3. **Request transform**: copy → render markdown prompt (`request.md` / `system.md`)
 4. **LLM processes** the prompt and returns JSON
-5. **Response transform**: parses JSON, updates `context.execution.step`, appends assistant message to history
+5. **Response transform**: parses JSON, updates `context.execution.step`, appends assistant message to history, sets `execute` / `completed`, and (for actions that use workbench) **`merge-workbench-sections`** + **`apply-workbench-section-ops`**
 6. **Client receives response** with `execute` action
 
 ## Context Fields
@@ -96,7 +96,7 @@ Full operations reference: **[`TRANSFORM-OPS.md`](./TRANSFORM-OPS.md)**
 | `context.execution.step` | Server (from LLM) | Current semantic step |
 | `context.history` | Server (transforms) | Array of `{role, step?, message}` — short system lines for tool results |
 | `context.files` | Server (`merge-files-to-context`) | Working set of read file contents keyed by path |
-| `context.workbench` | Action-specific | Structured state: `sections`, optional `batch`, optional `slots` |
+| `context.workbench` | Server (`merge-workbench-sections`, `apply-workbench-section-ops`) | Structured state: `sections`, optional `batch`, optional `slots`. LLM may send **`workbench.sections`** (shallow merge) and/or **`workbench_ops`** (incremental set/append/remove — see [`auto-ai-request.md`](../prompts/auto-ai-request.md)). |
 | `context.scratchpad` | Server (`apply-scratchpad-ops`) | Checklist flags updated via LLM `scratchpad_ops` commands |
 | `context.ragResults` | Per-step transform (`set`) | RAG search results for current turn only — not persisted |
 
@@ -115,7 +115,7 @@ Full operations reference: **[`TRANSFORM-OPS.md`](./TRANSFORM-OPS.md)**
 Location: **`a2a-server/prompts/transforms/`** (per-action `*-request.json` / `*-response.json`). The repo-root `templates/` tree was removed.
 
 - Request pipeline — typically `copy`, `append-to-array` (history), `render-markdown` (hints: [LLM-REQUEST-PREP.md](./LLM-REQUEST-PREP.md))
-- Response pipeline — `parse-json-from-md`, set step, append history, set `execute` / `completed`
+- Response pipeline — `parse-json-from-md`, set step, append history, set `execute` / `completed`, optional `merge-workbench-sections` + `apply-workbench-section-ops`, optional `apply-scratchpad-ops`
 - Golden examples: **`simulations/<task>/<step>/server-transforms-*.json`**
 
 ## Adding New AI-Action
@@ -123,6 +123,6 @@ Location: **`a2a-server/prompts/transforms/`** (per-action `*-request.json` / `*
 1. Create prompt in `a2a-server/prompts/<name>-request.md`
 2. Define step names in the prompt
 3. Add `<name>-request.json` under `a2a-server/prompts/transforms/` with `switch` on `execution.step` for context profiles
-4. Add `<name>-response.json` with `apply-scratchpad-ops` if the action uses `scratchpad`
+4. Add `<name>-response.json` with `apply-scratchpad-ops` if the action uses `scratchpad`; add `merge-workbench-sections` + `apply-workbench-section-ops` if the prompt uses `context.workbench` / `${workbench}`
 5. Point `SIMULATION_TO_SCHEMA` in `pipeline.ts` at the new schema name
 6. See **[`TRANSFORM-OPS.md`](./TRANSFORM-OPS.md)** for operation reference and optimization matrix

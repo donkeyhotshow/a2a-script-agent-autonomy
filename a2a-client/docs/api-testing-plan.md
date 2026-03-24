@@ -14,9 +14,9 @@
 
 ### 0.1 После client-result → request-to-server
 
-1. `client-result.json` сохраняется в текущем шаге (`{N}/`) сразу после выборки/ввода пользователя (с `result.message` или `result.choice`).
-2. Формируется `request-to-server.json` для следующего шага `{N+1}/`: `context.execution` получает `action` (task/action/continue) и `result`, добавляется `session_id`.
-3. Перед отправкой на A2A Server сохраняется `request-to-server.json`.
+1. `client-result.json` сохраняется в текущем шаге (`{N}/`) сразу после выборки/ввода пользователя (с `result: { "message": "..." }` или `result: { "choice": "..." }`).
+2. Формируется `request-to-server.json` для следующего шага `{N+1}/`: `context.execution` получает `action` (task/action/continue) и `result` (в action-key формате), добавляется `session_id`.
+3. Перед отправкой на A2A Server сохраняется `request-to-server.json` в `{N+1}/`.
 4. Делается `POST $A2A_SERVER/api/v1/invoke` с подготовленным payload.
 
 ```
@@ -33,10 +33,10 @@
 
 ### 0.3 Асинхронный ответ (promiseId)
 
-1. Если A2A Server вернул `promiseId`, создаётся `server-promise.json` в `{N+2}/` (шаг ожидания).
-2. В `server-promise` хранятся `{ promiseId, status, submittedAt }`, `stepNum` переключается на `N+2`.
-3. Web UI поллит `GET /api/sessions/:id/promise/:promiseId` (proxy → `/requests/{promiseId}/status`) до `completed`.
-4. После завершения можно загрузить финальный `server-response.json` (через `latest` или `step/:file`) и отправить новый `result`.
+1. Если A2A Server вернул `promiseId`, создаётся `server-promise.json` в `{N+1}/` (тот же шаг, что и запрос).
+2. В `server-promise` хранятся `{ promiseId, status, submittedAt }`, `stepNum` остается `N+1`.
+3. Web UI поллит `GET /api/sessions/:id/async` или `GET /api/sessions/:id/promise/:promiseId` до `completed`.
+4. После завершения финальный `server-response.json` записывается в ту же папку `{N+1}/`.
 
 ### 0.4 Required files per step
 
@@ -45,8 +45,8 @@
 | `client-result.json` | После ввода пользователя | `{SESSION_ID}/{N}/` |
 | `request-to-server.json` | Перед запросом | `{SESSION_ID}/{N+1}/` |
 | `server-response.json` | При sync-ответе | `{SESSION_ID}/{N+1}/` |
-| `server-promise.json` | При async-ответе | `{SESSION_ID}/{N+2}/` |
-| `messages.json` | История сообщений | `{SESSION_ID}/{N}/` |
+| `server-promise.json` | При async-ответе | `{SESSION_ID}/{N+1}/` |
+| `messages.json` | История сообщений | `{SESSION_ID}/{N+1}/` |
 
 **Windows/PowerShell:** Use single-quoted JSON for `-d` (e.g. `-d '{"title":"x"}'`). Avoid escaped quotes.
 
@@ -224,7 +224,7 @@ curl -s -X POST "$WEB_UI_BASE/api/a2a/sessions" \
 2. Client API сохраняет `client-result.json` из Web (`result.message` или `result.choice`).
 3. Формирует `request-to-server.json` для шага `N+1` перемешивая context и result, адрес `execution.action`.
 4. POST `/api/v1/invoke` отправляется, ответ сохраняется синхронно (`server-response.json` в `N+1`) или содержит `promiseId`.
-5. При `promiseId` появляется `server-promise.json` в `N+2`; Web UI опрашивает `/promise/:promiseId` и после `completed` использует `latest`/`step` для обновления ответа.
+5. При `promiseId` появляется `server-promise.json` в `N+1`; Web UI опрашивает `/async` и после `completed` использует `latest`/`step` для обновления ответа.
 
 **Пример шага 1:**
 ```
@@ -235,7 +235,7 @@ curl -s -X POST "$WEB_UI_BASE/api/a2a/sessions" \
 └── request-to-server.json # payload для шага 2
 ```
 
-**Async-пример:** когда первый request возвращает `promiseId`, в папке `3/` появится `server-promise.json`, пока `server-response.json` (с результатом) ждёт завершения promise.
+**Async-пример:** когда первый request возвращает `promiseId`, в папке `2/` появится `server-promise.json`, пока `server-response.json` (с результатом) ждёт завершения promise.
 
 ---
 

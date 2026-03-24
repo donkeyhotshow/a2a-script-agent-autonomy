@@ -46,7 +46,7 @@ import x from '@/services/x.js'
 - Prune `server-response.json` artifacts – normalized simulations should only ship `response.json` + `received.json` (and optional `server-transforms-*.json`). Remove stray `server-response.json` files in step folders when you rewrite the golden fixtures so nothing lingers from the older sync contract.
 - Request.json should follow invoke schema – the first step’s `request.json` needs to mirror the real invocation contract described in `SCHEMA.md`, including a `context.execution` object (router/invoke expectations, action/step info) rather than just `{ "task": "…" }`. This keeps the golden starting point consistent with how the backend builds requests.
 - Optional **`interrupt.md`** in a numbered step folder — documents [server interrupt loop](a2a-server/docs/SERVER-INTERRUPT-LOOP.md) scenarios only; **not** part of the eight-file sync pipeline; `sim-lint` does not read it. See [`simulations/SCHEMA.md`](simulations/SCHEMA.md#supplementary-server-interrupt-loop-optional).
-- Optional **`N-sub-M/`** folders (next to step `N/`, `M` sequential) — `trace.json` for `context.workbench.slots.interruptTrace` variants; pattern `^\d+-sub-\d+$`. Example: `simulations/auto-ai-v2/6-sub-1/` … `6-sub-4/`. You may mirror a trace into golden **`response.json`** if needed (align `llm_output.chars` with `response.md` when relevant).
+- Optional **`N-sub-M/`** folders (next to step `N/`, `M` sequential) — same artifacts as steps (`request.*`, `response.*`, transforms); `interruptTrace` in **`response.json`**. Pattern `^\d+-sub-\d+$`. Example: `simulations/auto-ai-v2/6-sub-1/` … `6-sub-4/`.
 
 ### Quick grep helpers (when upgrading a sim)
 - `rg -n "docVirtual" -g '*.json' simulations` – verify legacy docVirtual references are gone.
@@ -124,7 +124,7 @@ LLM controls `context.execution.step`, server persists via transforms. Prompt fo
 
 - `context.history` - Array of execution records
 - `context.execution` - Current state: `{ action, step, progress }`
-- `context.workbench` - Structured working state (`sections`, optional `batch`, optional `slots`) for multi-step flows
+- `context.workbench` - Structured working state (`sections`, optional `batch`, optional `slots`). LLM can update **`workbench.sections`** (merge) and **`workbench_ops`** (short set/append/remove commands); see [`a2a-server/prompts/auto-ai-request.md`](a2a-server/prompts/auto-ai-request.md) and [`a2a-server/docs/LLM-REQUEST-PREP.md`](a2a-server/docs/LLM-REQUEST-PREP.md) §2c.
 - `context.session_id` - Session identifier for tracking
 
 ### Simulation Pipeline
@@ -133,7 +133,7 @@ LLM controls `context.execution.step`, server persists via transforms. Prompt fo
 request.json → server-transforms → request.md → [LLM] → response.md → server-transforms → response.json
 ```
 
-**Server-side LLM request prep** (before `request.md` is built): `result` is folded into `context.history`; `flowControlHint` is chosen from `context.execution.action` + `step`. See [`a2a-server/docs/LLM-REQUEST-PREP.md`](a2a-server/docs/LLM-REQUEST-PREP.md).
+**Server-side LLM request prep** (before `request.md` is built): `result` is folded into `context.history`; `flowControlHint` is chosen from `context.execution.action` + `step`; `workbench` is normalized (see LLM-REQUEST-PREP). **After** the model turn, response transforms may merge **`workbench.sections`** and apply **`workbench_ops`** into `context.workbench`. See [`a2a-server/docs/LLM-REQUEST-PREP.md`](a2a-server/docs/LLM-REQUEST-PREP.md).
 
 ### Server interrupt loop
 
@@ -152,6 +152,8 @@ After the response transform, if transform output includes **`interrupt`**, the 
 | `CLIENT_API_URL` | Client API endpoint | No |
 | `DEFAULT_SYNC_MODE` | Enable sync mode (set to 1) | No |
 | `A2A_SERVER_URL` | A2A Server URL (default: http://localhost:3000) | No |
+| `A2A_MAX_INTERRUPT_TURNS` | Server interrupt loop budget per invoke (default: 10) | No |
+| `A2A_COMPRESS_HISTORY_MIN_ENTRIES` | If `> 0`, skip `compress_history` sidecar when history length ≤ this (default: 0 = only skip empty) | No |
 
 ### Default Ports
 

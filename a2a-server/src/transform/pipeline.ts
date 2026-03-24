@@ -245,6 +245,9 @@ async function resolveTransformFile(
     if (schemaName === 'coder' && type === 'request') {
       candidates.push(path.resolve(dir, 'coder-request.json'));
     }
+    if (schemaName === 'dialog' && type === 'response') {
+      candidates.push(path.resolve(dir, 'dialog-llm-response.json'));
+    }
     candidates.push(path.resolve(dir, `server-transforms-${type}.json`));
   } else {
     if (step !== undefined && step > 0) {
@@ -365,6 +368,7 @@ export function validatePipeline(pipeline: unknown): string[] {
     'render-markdown',
     'switch',
     'apply-scratchpad-ops',
+    'apply-workbench-section-ops',
     'truncate-section',
     'pick-context',
     'drop',
@@ -372,6 +376,7 @@ export function validatePipeline(pipeline: unknown): string[] {
     'include-if',
     'pick-files',
     'merge-files-to-context',
+    'merge-workbench-sections',
     'summarize-files',
     'for-each'
   ];
@@ -420,6 +425,9 @@ export function validatePipeline(pipeline: unknown): string[] {
       case 'apply-scratchpad-ops':
         if (!step.from) errors.push(`Step ${i} (apply-scratchpad-ops): Missing 'from'`);
         break;
+      case 'apply-workbench-section-ops':
+        if (!step.from) errors.push(`Step ${i} (apply-workbench-section-ops): Missing 'from'`);
+        break;
       case 'truncate-section':
         if (!step.path) errors.push(`Step ${i} (truncate-section): Missing 'path'`);
         if (step.maxChars === undefined || typeof step.maxChars !== 'number') {
@@ -446,6 +454,10 @@ export function validatePipeline(pipeline: unknown): string[] {
         break;
       case 'merge-files-to-context':
         // no required params
+        break;
+      case 'merge-workbench-sections':
+        if (!step.from) errors.push(`Step ${i} (merge-workbench-sections): Missing 'from'`);
+        if (!step.to) errors.push(`Step ${i} (merge-workbench-sections): Missing 'to'`);
         break;
       case 'summarize-files':
         // no required params

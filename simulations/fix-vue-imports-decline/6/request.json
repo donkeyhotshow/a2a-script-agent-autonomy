@@ -5,6 +5,9 @@
       "action": "task",
       "step": "router"
     },
+    "workbench": {
+      "sections": {}
+    },
     "unresolved_imports": [
       {
         "file": "resources/js/Pages/Dash/Widget.vue",
@@ -26,5 +29,7 @@
     "vue_imports_partial_carryover": true,
     "previous_action_attempt": "fix-vue-imports"
   },
-  "task": "Доробити невирішені Vue-импорти вручну (після часткового скрипта)"
+  "result": {
+    "message": "Доробити невирішені Vue-импорти вручну (після часткового скрипта)"
+  }
 }

@@ -328,6 +328,78 @@ describe('Transform Pipeline Runtime', () => {
       expect((ctx.history as Array<{ message: string }>)[0].message).toBe('2');
     });
 
+    it('pick-context history:all and history:0 keep full history', async () => {
+      const hist = [
+        { role: 'user', message: '1' },
+        { role: 'user', message: '2' },
+        { role: 'user', message: '3' }
+      ];
+      for (const inc of ['history:all', 'history:0'] as const) {
+        const pipeline = {
+          steps: [
+            { op: 'copy', from: '$', to: '$out' },
+            { op: 'pick-context', include: [inc] }
+          ]
+        };
+        const result = await runTransformPipeline(pipeline, {
+          context: { history: [...hist] }
+        });
+        expect(result.success).toBe(true);
+        const ctx = result.output.context as Record<string, unknown>;
+        expect((ctx.history as unknown[]).length).toBe(3);
+      }
+    });
+
+    it('apply-workbench-section-ops runs set/append/remove and short aliases', async () => {
+      const pipeline = {
+        steps: [
+          { op: 'set', path: 'context.workbench.sections', value: { findings: 'a', dropme: 'x' } },
+          {
+            op: 'set',
+            path: 'llm.workbench_ops',
+            value: [
+              { o: 'a', k: 'findings', t: 'b' },
+              { op: 'set', key: 'task_digest', value: 'goal' },
+              { o: 'rm', k: 'dropme' }
+            ]
+          },
+          {
+            op: 'apply-workbench-section-ops',
+            from: 'llm.workbench_ops',
+            sectionsPath: 'context.workbench.sections'
+          }
+        ]
+      };
+      const result = await runTransformPipeline(pipeline, {});
+      expect(result.success).toBe(true);
+      const sec = (result.output.context as { workbench: { sections: Record<string, string> } }).workbench
+        .sections;
+      expect(sec.findings).toBe('a\nb');
+      expect(sec.task_digest).toBe('goal');
+      expect(sec.dropme).toBeUndefined();
+    });
+
+    it('merge-workbench-sections shallow-merges llm sections into context', async () => {
+      const pipeline = {
+        steps: [
+          { op: 'set', path: '$.llm.workbench.sections', value: { findings: 'from llm', onlyLlm: 'x' } },
+          { op: 'set', path: '$.context.workbench.sections', value: { findings: 'stale', preserved: 'keep' } },
+          {
+            op: 'merge-workbench-sections',
+            from: '$.llm.workbench.sections',
+            to: '$.context.workbench.sections'
+          }
+        ]
+      };
+      const result = await runTransformPipeline(pipeline, {});
+      expect(result.success).toBe(true);
+      const sections = (result.output.context as Record<string, unknown>).workbench as Record<string, unknown>;
+      const sec = sections.sections as Record<string, string>;
+      expect(sec.findings).toBe('from llm');
+      expect(sec.onlyLlm).toBe('x');
+      expect(sec.preserved).toBe('keep');
+    });
+
     it('drop removes nested path from $out', async () => {
       const pipeline = {
         steps: [

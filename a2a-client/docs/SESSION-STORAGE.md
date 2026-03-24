@@ -32,15 +32,15 @@ Sessions are stored under `<storageDir>/sessions/{sessionId}/`, where `<storageD
 
 | File | Folder | When |
 |------|--------|------|
-| `request-to-server.json` | `{N+1}/` | Payload sent to A2A Server after step N |
-| `server-promise.json` | `{N+2}/` | Saved when the previous request returned a promiseId |
-| `client-result.json` | `{N}/` | User result (message or choice) |
+| `request-to-server.json` | `{N+1}/` | Payload sent to A2A Server for next step |
+| `server-promise.json` | `{N+1}/` | Saved when the request returned a promiseId |
+| `client-result.json` | `{N}/` | User interaction result (recorded before next step) |
 | `server-response.json` | `{N+1}/` | Completed A2A Server response |
-| `server-response.json` | `{N+1}/` | Contains execute/context plus an array of assistant messages for step N |
+| `messages.json` | `{N+1}/` | Step-scoped dialogue slice |
 
 ### Step-centric metadata
 
-Since there is no `session.json`, session metadata is reconstructed from the highest-numbered step that already contains `server-response.json`. That file provides the latest `execute`, `context`, `status`, `result`, and the assistant messages that led to that state. The Client API scans from step `1` up to the current step, appends the `messages` array embedded in each `server-response.json`, merges the recorded user inputs from `client-result.json`, and treats the final `server-response.json` as the source of truth for the dialogue state. This organization ensures that even if a root metadata file is missing, the numbered folders alone carry the full session history.
+Since there is no `session.json`, session metadata is reconstructed from the highest-numbered step that already contains `server-response.json`. That file provides the latest `execute`, `context` (including `workbench.sections`), `status`, `result`, and the assistant messages that led to that state. The Client API scans from step `1` up to the current step, appends the `messages` array embedded in each `server-response.json`, merges the recorded user inputs from `client-result.json`, and treats the final `server-response.json` as the source of truth for the dialogue state. This organization ensures that even if a root metadata file is missing, the numbered folders alone carry the full session history.
 
 ### server-response.json Format
 
@@ -49,9 +49,9 @@ Since there is no `session.json`, session metadata is reconstructed from the hig
   "step": 1,
   "timestamp": "2024-01-15T10:30:00.000Z",
   "stepText": "Concatenated message content for history fetch",
-  "execute": { ... },
-  "context": { ... },
-  "result": { ... }
+  "execute": { "form": { ... } },
+  "context": { "workbench": { "sections": { ... } } },
+  "result": { "read-file": { "path": "src/utils.js", "content": "..." } }
 }
 ```
 
@@ -72,9 +72,11 @@ Each `server-response.json` now stores an ordered `messages` array that mirrors 
 }
 ```
 
-The history assembler (`collectSessionMessagesFlat` in the Vite plugin) walks these arrays, dedups the texts, and then appends every user turn from the matching `client-result.json`. Even though there is no standalone `messages.json` anymore, nothing is lost: the `messages` array in `server-response.json` now captures every assistant reply for that step.
+The history assembler (`collectSessionMessagesFlat` in the Vite plugin) walks these arrays, dedups the texts, and then appends every user turn from the matching `client-result.json`. Even though there is no standalone `messages.json` anymore in the final state, the folders carry the full dialogue.
 
-**Step flow:** Once a server response lands in step `N`, the client writes `client-result.json` (either from Web UI or an auto script). The next step (`N+1`) receives `request-to-server.json` before the A2A Server call. Synchronous responses land immediately in `{N+1}/server-response.json`; asynchronous responses first record `server-promise.json` in `{N+2}/`, then the completed `server-response.json` in that same folder once the promise finishes. Refer to [api-client-server-logic.md](./api-client-server-logic.md#поток-обработки-шагов-step-flow) for the detailed diagram.
+**Step flow:** Once a server response lands in step `N`, the client writes `client-result.json` (either from Web UI or an auto script). The upcoming step (`N+1`) receives `request-to-server.json` before the A2A Server call. Synchronous responses land immediately in `{N+1}/server-response.json`; asynchronous responses first record `server-promise.json` in `{N+1}/`, then the completed `server-response.json` in that same folder once the promise finishes. Refer to [api-client-server-logic.md](./api-client-server-logic.md#поток-обработки-шагов-step-flow) for the detailed diagram.
+
+**Simulation standards:** For "golden standard" simulations under `simulations/`, `server-response.json` artifacts are pruned. Instead, each step is defined by `request.json`, `response.json` (server output), and `received.json` (Web DTO).
 
 ## API Endpoints
 

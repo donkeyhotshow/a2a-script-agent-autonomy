@@ -72,26 +72,32 @@ graph TD
 All results sent to server use action-key shape:
 
 ```typescript
-// Result format sent to /api/sessions/:id/result
+// Result format sent to /api/sessions/:id/result (or /next)
 {
-  "choice": "selected_choice_id"  // for form choices
-}
-
-// or
-{
-  "script": {                     // for script execution
-    "output": "...",
-    "error": "...",
-    "executionTime": 123
+  "result": {
+    "choice": "selected_choice_id"  // for form choices
   }
 }
 
 // or
 {
-  "read-file": {                   // for file operations
-    "path": "/path/to/file",
-    "content": "...",
-    "encoding": "utf8"
+  "result": {
+    "script": {                     // for script execution
+      "output": "...",
+      "error": "...",
+      "executionTime": 123
+    }
+  }
+}
+
+// or
+{
+  "result": {
+    "read-file": {                   // for file operations
+      "path": "/path/to/file",
+      "content": "...",
+      "encoding": "utf8"
+    }
   }
 }
 ```
@@ -162,6 +168,11 @@ function applyContext(context) {
   // Sync execute state
   if (context.execute) {
     applyExecute(context.execute);
+  }
+
+  // Sync workbench sections
+  if (context.workbench?.sections) {
+    vm.setWorkbenchSections(context.workbench.sections);
   }
 
   // Sync execution progress

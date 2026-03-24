@@ -56,6 +56,7 @@
                 if (ev.ok != null) parts.push(ev.ok ? 'ok' : 'fail');
                 if (ev.meta) parts.push(escapeHtml(String(ev.meta)));
                 if (ev.note) parts.push(escapeHtml(String(ev.note)));
+                if (ev.detail) parts.push(escapeHtml(String(ev.detail)));
                 const line = parts.filter(Boolean).join(' · ');
                 return `<li class="task-flow-interrupt-trace-item"><span class="task-flow-interrupt-trace-idx">${i + 1}.</span> ${line}</li>`;
             })

@@ -12,6 +12,14 @@ import type { JSONValue } from 'jsonify';
  * Interrupt directive — emitted by response transform to trigger a server-side
  * additional LLM call before returning to the client.
  */
+/** Optional gates: all specified checks must pass or the server skips the interrupt (primary result unchanged). */
+export interface InterruptWhenClause {
+  /** Minimum `history` length (flat or `context.history`). */
+  historyMinLength?: number;
+  /** Maximum `history` length. */
+  historyMaxLength?: number;
+}
+
 export interface InterruptDirective {
   /** Type of interrupt — determines server behavior */
   reason: 'compress_history' | 'auto_read_file' | 'auto_rag_page' | 'thinking' | 'clarify' | string;
@@ -23,6 +31,8 @@ export interface InterruptDirective {
   context?: Record<string, unknown>;
   /** Auxiliary data (e.g. file path for auto_read_file, RAG params for auto_rag_page) */
   data?: Record<string, unknown>;
+  /** Emit from response transform / LLM JSON so triggers are data-driven, not server-hardcoded. */
+  when?: InterruptWhenClause;
 }
 
 /**
@@ -33,6 +43,7 @@ export type ServerInterruptTraceEvent =
   | { kind: 'llm_output'; phase: 'primary' | 'follow_up'; chars: number }
   | { kind: 'response_transform'; interruptReason?: string }
   | { kind: 'interrupt_handler'; reason: string; continueLoop: boolean; note?: string }
+  | { kind: 'interrupt_skipped'; reason: string; detail?: string }
   | { kind: 'request_rebuild' }
   | { kind: 'sidecar_llm'; purpose: 'compress_history' | 'thinking'; ok: boolean; meta?: string };
 
@@ -55,6 +66,7 @@ export type TransformStep =
   | RenderMarkdownOperation 
   | SwitchOperation
   | ApplyScratchpadOpsOperation
+  | ApplyWorkbenchSectionOpsOperation
   | TruncateSectionOperation
   | PickContextOperation
   | DropOperation
@@ -62,8 +74,20 @@ export type TransformStep =
   | IncludeIfOperation
   | PickFilesOperation
   | MergeFilesToContextOperation
+  | MergeWorkbenchSectionsOperation
   | SummarizeFilesOperation
   | ForEachOperation;
+
+/**
+ * Shallow-merge LLM `workbench.sections` into `context.workbench.sections` (preserves keys not sent).
+ */
+export interface MergeWorkbenchSectionsOperation {
+  op: 'merge-workbench-sections';
+  /** JSONPath on `$out` (e.g. `$.llm.workbench.sections`). */
+  from: string;
+  /** JSONPath on `$out` (e.g. `$.context.workbench.sections`). */
+  to: string;
+}
 
 /** Single LLM-emitted scratchpad command (ISSUE 6) */
 export interface ScratchpadOpCommand {
@@ -80,6 +104,18 @@ export interface ApplyScratchpadOpsOperation {
   from: string;
   /** JSONPath in $out (default: context.scratchpad) */
   scratchpadPath?: string;
+}
+
+/**
+ * Apply `workbench_ops` — short incremental edits to `context.workbench.sections` (string fields).
+ * LLM emits an array; each entry is a command (see `auto-ai-request.md`).
+ */
+export interface ApplyWorkbenchSectionOpsOperation {
+  op: 'apply-workbench-section-ops';
+  /** JSONPath on input or $out (e.g. `llm.workbench_ops`). */
+  from: string;
+  /** JSONPath under $out (default: `context.workbench.sections`). */
+  sectionsPath?: string;
 }
 
 /**
@@ -136,11 +172,12 @@ export interface ForEachOperation {
 
 /**
  * Pick only specified fields from context, dropping everything else.
- * Supports "field:N" shorthand for history (e.g. "history:3" = last 3 entries).
+ * Supports "field:N" for arrays (e.g. "history:3" = last 3). Use "history", "history:all",
+ * "history:full", or "history:0" for the full array (no tail slice).
  */
 export interface PickContextOperation {
   op: 'pick-context';
-  /** Fields to keep under `context`. Use "history:N" to keep last N entries. */
+  /** Fields to keep under `context`. Use "history:N" for last N, or plain "history" for all. */
   include: string[];
 }
 

@@ -346,7 +346,7 @@ Response from web client to API server.
   "commandId": "cmd_123",
   "response": {
     "success": true,
-    "result": {...}
+    "result": { "read-file": { ... } }
   },
   "timestamp": "2026-03-06T21:27:00.000Z"
 }

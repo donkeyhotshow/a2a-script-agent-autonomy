@@ -9,6 +9,8 @@
 | Операція | Файл | Призначення |
 |----------|------|-------------|
 | `apply-scratchpad-ops` | `operations.ts` | Merge LLM `scratchpad_ops` → `context.scratchpad` |
+| `merge-workbench-sections` | `operations.ts` | Shallow-merge `llm.workbench.sections` → `context.workbench.sections` |
+| `apply-workbench-section-ops` | `operations.ts` | Застосувати `workbench_ops` (set/append/remove) до `sections` |
 | `pick-context` | `operations.ts` | Залишити тільки потрібні поля context |
 | `drop` | `operations.ts` | Видалити конкретний JSONPath з `$out` |
 | `truncate-history` | `operations.ts` | Залишити останні N записів history |
@@ -20,8 +22,8 @@
 
 ### Base transforms з `switch` по `execution.step`
 
-- `prompts/transforms/coder-request.json` — switch по step: `clarify/research-plan` (history:3, без files), `execute-item` (history:4, files 80 рядків), інші
-- `prompts/transforms/auto-ai-request.json` — switch по step: `plan/locate_code` (без files), `read_code` (files 120 рядків), `edit_code` (files 60 рядків), `write_report` (workbench), інші
+- `prompts/transforms/coder-request.json` — switch по step; **`history`** (повна) + **`workbench`** у профілях; response: merge + `workbench_ops`
+- `prompts/transforms/auto-ai-request.json` — усі кроки включають **`workbench`** у `pick-context`; response: merge + `workbench_ops`
 
 ### Матриця context по шагах
 
@@ -29,7 +31,7 @@
 
 ### Тести
 
-`tests/transform-runtime.test.ts` — 33 тести, всі операції покриті.
+`tests/transform-runtime.test.ts` — усі зареєстровані `op`, включно з workbench merge/ops.
 
 ## Стратегія (залишається актуальною)
 

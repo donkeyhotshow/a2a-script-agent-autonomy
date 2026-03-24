@@ -12,40 +12,40 @@
       "cases": {
         "clarify": {
           "op": "pick-context",
-          "include": ["execution", "task", "history:3"]
+          "include": ["execution", "task", "history"]
         },
         "research-plan": {
           "op": "pick-context",
-          "include": ["execution", "task", "history:3"]
+          "include": ["execution", "task", "history"]
         },
         "rag-clarify": {
           "op": "pick-context",
-          "include": ["execution", "task", "history:3"]
+          "include": ["execution", "task", "history"]
         },
         "rag-research-plan": {
           "op": "pick-context",
-          "include": ["execution", "task", "history:3", "workbench"]
+          "include": ["execution", "task", "history", "workbench"]
         },
         "checklist": {
           "op": "pick-context",
-          "include": ["execution", "task", "history:4", "workbench"]
+          "include": ["execution", "task", "history", "workbench"]
         },
         "write-doc": {
           "op": "pick-context",
-          "include": ["execution", "task", "history:3", "workbench"]
+          "include": ["execution", "task", "history", "workbench"]
         },
         "execute-item": {
           "op": "pick-context",
-          "include": ["execution", "task", "history:4", "workbench", "scratchpad", "files"]
+          "include": ["execution", "task", "history", "workbench", "scratchpad", "files"]
         },
         "completed": {
           "op": "pick-context",
-          "include": ["execution", "task", "history:3"]
+          "include": ["execution", "task", "history"]
         }
       },
       "default": {
         "op": "pick-context",
-        "include": ["execution", "task", "history:6", "workbench", "scratchpad"]
+        "include": ["execution", "task", "history", "workbench", "scratchpad"]
       }
     },
     {

@@ -12,60 +12,60 @@
       "cases": {
         "plan": {
           "op": "pick-context",
-          "include": ["execution", "task", "history:3"]
+          "include": ["execution", "task", "history", "workbench"]
         },
         "locate_code": {
           "op": "pick-context",
-          "include": ["execution", "task", "history:4", "scratchpad"]
+          "include": ["execution", "task", "history", "scratchpad", "workbench"]
         },
         "inspect_structure": {
           "op": "pick-context",
-          "include": ["execution", "task", "history:4", "scratchpad"]
+          "include": ["execution", "task", "history", "scratchpad", "workbench"]
         },
         "read_code": {
           "op": "pick-context",
-          "include": ["execution", "task", "history:5", "scratchpad", "files"]
+          "include": ["execution", "task", "history", "scratchpad", "files", "workbench"]
         },
         "edit_code": {
           "op": "pick-context",
-          "include": ["execution", "task", "history:6", "scratchpad", "files"]
+          "include": ["execution", "task", "history", "scratchpad", "files", "workbench"]
         },
         "locate_tests": {
           "op": "pick-context",
-          "include": ["execution", "task", "history:4", "scratchpad"]
+          "include": ["execution", "task", "history", "scratchpad", "workbench"]
         },
         "read_tests": {
           "op": "pick-context",
-          "include": ["execution", "task", "history:5", "scratchpad", "files"]
+          "include": ["execution", "task", "history", "scratchpad", "files", "workbench"]
         },
         "edit_tests": {
           "op": "pick-context",
-          "include": ["execution", "task", "history:6", "scratchpad", "files"]
+          "include": ["execution", "task", "history", "scratchpad", "files", "workbench"]
         },
         "run_lint": {
           "op": "pick-context",
-          "include": ["execution", "task", "history:4", "scratchpad"]
+          "include": ["execution", "task", "history", "scratchpad", "workbench"]
         },
         "run_tests": {
           "op": "pick-context",
-          "include": ["execution", "task", "history:5", "scratchpad"]
+          "include": ["execution", "task", "history", "scratchpad", "workbench"]
         },
         "write_report": {
           "op": "pick-context",
-          "include": ["execution", "task", "history:8", "workbench", "scratchpad"]
+          "include": ["execution", "task", "history", "workbench", "scratchpad"]
         },
         "final_review": {
           "op": "pick-context",
-          "include": ["execution", "task", "history:8", "workbench", "scratchpad"]
+          "include": ["execution", "task", "history", "workbench", "scratchpad"]
         },
         "completed": {
           "op": "pick-context",
-          "include": ["execution", "task", "history:3"]
+          "include": ["execution", "task", "history", "workbench"]
         }
       },
       "default": {
         "op": "pick-context",
-        "include": ["execution", "task", "history:6", "workbench", "scratchpad"]
+        "include": ["execution", "task", "history", "workbench", "scratchpad"]
       }
     },
     {

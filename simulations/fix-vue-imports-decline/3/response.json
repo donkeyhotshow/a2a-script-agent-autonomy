@@ -4,6 +4,9 @@
     "execution": {
       "action": "fix-vue-imports",
       "step": "vue-import-resolve"
+    },
+    "workbench": {
+      "sections": {}
     }
   },
   "execute": {
@@ -34,5 +37,8 @@
       "output": "patches[]",
       "code": "const { readdirSync, readFileSync } = require('node:fs');\nconst { join, dirname, resolve, relative } = require('node:path');\n\nfunction collectFiles(dir, exts) {\n  const files = [];\n  function scan(d) {\n    readdirSync(d, { withFileTypes: true }).forEach(e => {\n      const p = join(d, e.name);\n      if (e.isDirectory() && !e.name.startsWith('.') && e.name !== 'node_modules') scan(p);\n      else if (e.isFile() && exts.some(ext => e.name.endsWith(ext))) files.push(p);\n    });\n  }\n  scan(dir);\n  return files;\n}\n\nfunction resolveAlias(spec, aliases) {\n  for (const [k, v] of Object.entries(aliases)) {\n      if (spec.startsWith(k)) return spec.replace(k, v);\n  }\n  return null;\n}\n\nfunction findExporter(name, root) {\n  for (const f of collectFiles(root, ['.ts', '.tsx', '.vue', '.js'])) {\n    const rx = new RegExp(`export\\s+(?:default\\s+)?(?:class|function|const|let|var)?\\s*${name}\\b|export\\s+{[^}]*\\b${name}\\b[^}]*}`, 'm');\n    if (rx.test(readFileSync(f, 'utf-8'))) return f;\n  }\n  return null;\n}\n\nfunction relPath(from, to) {\n  const r = relative(dirname(from), to).replace(/\\\\/g, '/').replace(/\\.[^./]+$/, '');\n  return r.startsWith('.') ? r : './' + r;\n}\n\nconst patches = [];\nconst root = resolve(input.rootDir || '.');\n\nfor (const imp of input.broken_imports) {\n  const aliased = resolveAlias(imp.specifier, input.aliases);\n  if (aliased) {\n    const name = aliased.split('/').pop();\n    const exporter = findExporter(name, root);\n    if (exporter) {\n      patches.push({ file: imp.file, line: imp.line, from: imp.specifier, to: relPath(imp.file, exporter) });\n    }\n  }\n}\n\nreturn { patches };"
     }
+  },
+  "result": {
+    "script": {}
   }
 }

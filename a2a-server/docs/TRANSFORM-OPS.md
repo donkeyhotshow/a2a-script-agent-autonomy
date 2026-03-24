@@ -15,6 +15,8 @@ Implementation: [`operations.ts`](../src/transform/operations.ts) · Types: [`ty
 | `append-to-array` | Append entry to array | `to`, `value` |
 | `truncate-section` | Cap string length in field or shallow object | `path`, `maxChars` |
 | `apply-scratchpad-ops` | Merge LLM `scratchpad_ops` into `context.scratchpad` | `from` |
+| `merge-workbench-sections` | Shallow-merge `llm.workbench.sections` → `context.workbench.sections` | `from`, `to` |
+| `apply-workbench-section-ops` | Apply LLM `workbench_ops` (set/append/remove; short keys `o`,`k`,`v`,`t`) | `from`, `sectionsPath?` |
 | `pick-context` | Keep only listed fields under `context`, drop the rest | `include: string[]` |
 | `drop` | Delete a JSONPath from `$out` | `path` |
 | `truncate-history` | Keep only last N history entries | `keep: number` |
@@ -38,7 +40,7 @@ These operations exist specifically to reduce tokens sent to the LLM.
 Keeps only listed fields under `context`, drops everything else. Supports `"field:N"` shorthand for arrays.
 
 ```json
-{ "op": "pick-context", "include": ["execution", "task", "history:5", "scratchpad"] }
+{ "op": "pick-context", "include": ["execution", "task", "history", "scratchpad"] }
 ```
 
 - `"history:N"` — keeps last N entries of `context.history`
@@ -157,7 +159,7 @@ The base transforms (`prompts/transforms/coder-request.json`, `auto-ai-request.j
   "type": "pipeline",
   "steps": [
     { "op": "copy", "from": "$", "to": "$out" },
-    { "op": "pick-context", "include": ["execution", "task", "history:5", "scratchpad", "files"] },
+    { "op": "pick-context", "include": ["execution", "task", "history", "scratchpad", "files"] },
     { "op": "summarize-files", "maxLines": 80 },
     { "op": "render-markdown", "templateRef": "a2a-server/prompts/YOUR-PROMPT.md", "data": "$out", "outputFile": "request.md" }
   ]
@@ -182,7 +184,7 @@ Steps that need to persist a read file into context:
 
 ```json
 { "op": "merge-files-to-context" },
-{ "op": "pick-context", "include": ["execution", "task", "history:5", "scratchpad", "files"] },
+{ "op": "pick-context", "include": ["execution", "task", "history", "scratchpad", "files"] },
 { "op": "summarize-files", "maxLines": 80 }
 ```
 
@@ -202,9 +204,13 @@ Response transforms use a different subset of operations:
     { "op": "apply-scratchpad-ops", "from": "$.llm.scratchpad_ops" },
     { "op": "append-to-array", "to": "$.context.history", "value": { "role": "assistant", "step": "${$.llm.step}", "message": "${$.llm.message}" } },
     { "op": "set", "path": "$.execute", "valueFrom": "$.llm.execute" },
+    { "op": "merge-workbench-sections", "from": "$.llm.workbench.sections", "to": "$.context.workbench.sections" },
+    { "op": "apply-workbench-section-ops", "from": "$.llm.workbench_ops", "sectionsPath": "context.workbench.sections" },
     { "op": "set", "path": "$.result.completed", "valueFrom": "$.llm.completed" }
   ]
 }
 ```
 
 `apply-scratchpad-ops` should be added to all AI-action response transforms that use `scratchpad`.
+
+`merge-workbench-sections` + `apply-workbench-section-ops` should be added when the prompt exposes `${workbench}` / `context.workbench` (auto-ai, coder, analyze base transforms).

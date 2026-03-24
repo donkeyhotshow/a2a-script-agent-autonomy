@@ -13,9 +13,9 @@ This directory contains comprehensive documentation for the A2A Script Agent web
   - [Testing](./workflows/testing/) - Test scenarios, validation workflows, and QA processes
 
 ### 🏗️ Architecture & Implementation
-- **[Unified Architecture Complete](./UNIFIED_ARCHITECTURE_COMPLETE.md)** - Implementation status of major refactoring steps
-- **[Session Architecture Migration](./session-architecture-migration.md)** - Migration guide for unified session architecture
-- **[Context Synchronization Guide](./context-synchronization-guide.md)** - State synchronization across components
+- **[Unified Architecture Complete](./workflows/UNIFIED_ARCHITECTURE_COMPLETE.md)** - Implementation status of major refactoring steps
+- **[Session Architecture Migration](./workflows/session-architecture-migration.md)** - Migration guide for unified session architecture
+- **[Context Synchronization Guide](./workflows/context-synchronization-guide.md)** - State synchronization across components
 
 ### 🔍 API & dialog
 - **[Client API: Web UI vs `@a2a/sdk`](./CLIENT_API_WEB_SDK.md)** - Two implementations, contracts, and debugging
@@ -24,11 +24,6 @@ This directory contains comprehensive documentation for the A2A Script Agent web
 
 ### 📊 Development State
 - **[Web UI DEV_STATE](../DEV_STATE.md)** - Current development status and component overview
-- **[Migration plan](./MIGRATION-PLAN.md)** - Planned structural changes
-
-### 📁 Archive
-- **[AI Actions Integration Guide](./archive/ai-actions-integration-guide.md)** - Legacy AI actions implementation
-- **[AI Actions Session Panel](./archive/ai-actions-session-panel.md)** - Legacy session panel documentation
 
 ## Quick Navigation
 
@@ -41,7 +36,7 @@ This directory contains comprehensive documentation for the A2A Script Agent web
 | **Manage real-time communication** | [Communication](./workflows/communication/) |
 | **Build UI components** | [UI Interactions](./workflows/ui-interactions/) + [Context Synchronization](./context-synchronization-guide.md) |
 | **Test the system** | [Testing](./workflows/testing/) |
-| **Check implementation status** | [Unified Architecture Complete](./UNIFIED_ARCHITECTURE_COMPLETE.md) |
+| **Check implementation status** | [Unified Architecture Complete](./workflows/UNIFIED_ARCHITECTURE_COMPLETE.md) |
 
 ## Key Components Overview
 
@@ -64,7 +59,7 @@ This directory contains comprehensive documentation for the A2A Script Agent web
 ## Development Workflow
 
 1. **Planning**: Check [Workflows](./workflows/) for user scenarios
-2. **Implementation**: Reference [Unified Architecture](./UNIFIED_ARCHITECTURE_COMPLETE.md) for patterns
+2. **Implementation**: Reference [Unified Architecture](./workflows/UNIFIED_ARCHITECTURE_COMPLETE.md) for patterns
 3. **Testing**: Use [Testing Scenarios](./workflows/testing/) for validation
 4. **Documentation**: Update relevant workflow docs for new features
 

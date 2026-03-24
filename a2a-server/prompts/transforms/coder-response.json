@@ -32,6 +32,16 @@
       "valueFrom": "$.llm.execute"
     },
     {
+      "op": "merge-workbench-sections",
+      "from": "$.llm.workbench.sections",
+      "to": "$.context.workbench.sections"
+    },
+    {
+      "op": "apply-workbench-section-ops",
+      "from": "$.llm.workbench_ops",
+      "sectionsPath": "context.workbench.sections"
+    },
+    {
       "op": "set",
       "path": "$.result.completed",
       "value": "${$.llm.completed}"

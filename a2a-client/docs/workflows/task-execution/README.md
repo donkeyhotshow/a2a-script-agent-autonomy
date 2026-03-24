@@ -36,13 +36,13 @@ sequenceDiagram
 
 | Execute Type | Description | User Interaction | Result Payload | Components |
 |--------------|-------------|------------------|----------------|------------|
-| **form** | Multiple choice selection | Click choice button | `{"form": {"choice": "id"}}` | Choice buttons, ActionHandler |
-| **message** | Continue confirmation | Click Continue button | `{"message": {"continue": true}}` | Message display, ActionHandler |
-| **script** | Client-side JavaScript | Auto-execution in sandbox | `{"script": {"result": "...", "error": "..."}}` | ScriptRunner, sandbox |
-| **rag-search** | RAG query execution | Auto-execution | `{"rag-search": {"results": [...], "query": "..."}}` | RagSearch, vector DB |
-| **read-file** | File content reading | File selection dialog | `{"read-file": {"content": "...", "path": "..."}}` | FileSelector, FS API |
-| **write-file** | File content writing | Save file dialog | `{"write-file": {"success": true, "path": "..."}}` | FileSaver, FS API |
-| **execute-command** | Shell command execution | Auto-execution | `{"execute-command": {"output": "...", "exitCode": 0}}` | Terminal, process execution |
+| **form** | Multiple choice selection | Click choice button | `{"result": {"choice": "id"}}` | Choice buttons, ActionHandler |
+| **message** | Continue confirmation | Click Continue button | `{"result": {"message": "text"}}` | Message display, ActionHandler |
+| **script** | Client-side JavaScript | Auto-execution in sandbox | `{"result": {"script": {...}}}` | ScriptRunner, sandbox |
+| **rag-search** | RAG query execution | Auto-execution | `{"result": {"rag-search": {...}}}` | RagSearch, vector DB |
+| **read-file** | File content reading | File selection dialog | `{"result": {"read-file": {...}}}` | FileSelector, FS API |
+| **write-file** | File content writing | Save file dialog | `{"result": {"write-file": {...}}}` | FileSaver, FS API |
+| **execute-command** | Shell command execution | Auto-execution | `{"result": {"execute-command": {...}}}` | Terminal, process execution |
 
 ## Form Choice Execution
 
@@ -57,7 +57,7 @@ sequenceDiagram
 
     U->>UI: Click choice button
     UI->>AH: sendChoice(sessionId, projectId, choiceId)
-    AH->>API: POST /sessions/:id/next {result: {form: {choice: choiceId}}}
+    AH->>API: POST /api/a2a/sessions/:id/next {result: {choice: choiceId}}
     API->>LLM: Process choice selection
     LLM->>API: Return next execute
     API-->>AH: New execute object
@@ -82,8 +82,8 @@ sequenceDiagram
     participant API as Server API
 
     U->>UI: Click Continue button
-    UI->>AH: sendMessageResult(sessionId, projectId, {continue: true})
-    AH->>API: POST /sessions/:id/next {result: {message: {continue: true}}}
+    UI->>AH: sendMessageResult(sessionId, projectId, text)
+    AH->>API: POST /api/a2a/sessions/:id/next {result: {message: text}}
     API-->>AH: Next execute or completion
     AH-->>UI: Update UI state
 ```

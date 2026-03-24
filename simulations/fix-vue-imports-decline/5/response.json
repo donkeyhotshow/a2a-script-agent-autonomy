@@ -5,6 +5,9 @@
       "action": "task",
       "step": "router"
     },
+    "workbench": {
+      "sections": {}
+    },
     "unresolved_imports": [
       {
         "file": "resources/js/Pages/Dash/Widget.vue",
@@ -75,6 +78,39 @@
           "id": "fix-vue-imports",
           "label": "Виправлення Vue imports",
           "description": "Scripted Vue 2→3 import fixes (no LLM)."
+        }
+      ]
+    }
+  },
+  "result": {
+    "form": {
+      "choices": [
+        {
+          "id": "dialog"
+        },
+        {
+          "id": "auto-ai"
+        },
+        {
+          "id": "auto-ai-v2"
+        },
+        {
+          "id": "task-decomposition"
+        },
+        {
+          "id": "coder"
+        },
+        {
+          "id": "coder-smart"
+        },
+        {
+          "id": "coder-smart-v2"
+        },
+        {
+          "id": "analyze"
+        },
+        {
+          "id": "fix-vue-imports"
         }
       ]
     }
