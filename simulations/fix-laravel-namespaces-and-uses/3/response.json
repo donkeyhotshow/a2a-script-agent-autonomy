@@ -1,0 +1,35 @@
+{
+  "context": {
+    "task": "виправити namespace та use у Laravel PHP файлах",
+    "execution": {
+      "action": "fix-laravel-namespaces-and-uses",
+      "step": "laravel-use-resolve"
+    }
+  },
+  "execute": {
+    "script": {
+      "input": {
+        "broken_uses": [
+          {
+            "file": "features/business/checkout/app/Http/Controllers/CheckoutApiController.php",
+            "line": 8,
+            "fqcn": "App\\Features\\Business\\Checkout\\Service\\CheckoutService"
+          },
+          {
+            "file": "features/business/profile/app/Http/Controllers/ProfileController.php",
+            "line": 14,
+            "fqcn": "App\\Models\\User"
+          },
+          {
+            "file": "features/business/payments/app/Http/Controllers/Api/PaymentController.php",
+            "line": 7,
+            "fqcn": "App\\Features\\Business\\Checkout\\Model\\Order"
+          }
+        ],
+        "rootDir": "."
+      },
+      "output": "patches[]",
+      "code": "const { readFileSync, existsSync, readdirSync } = require('node:fs');\nconst { join, resolve } = require('node:path');\n\nconst FALLBACK = {\n  'App\\\\Features\\\\Business\\\\Checkout\\\\Service\\\\CheckoutService': 'App\\\\Features\\\\Business\\\\Checkout\\\\Services\\\\CheckoutService',\n  'App\\\\Models\\\\User': 'App\\\\Features\\\\Business\\\\Users\\\\Models\\\\User',\n  'App\\\\Features\\\\Business\\\\Checkout\\\\Model\\\\Order': 'App\\\\Features\\\\Business\\\\Checkout\\\\Models\\\\Order'\n};\n\nfunction findByClass(root, className) {\n  const hits = [];\n  function walk(d) {\n    if (!existsSync(d)) return;\n    for (const e of readdirSync(d, { withFileTypes: true })) {\n      const p = join(d, e.name);\n      if (e.isDirectory()) {\n        if (['vendor', 'node_modules', '.git'].includes(e.name)) continue;\n        walk(p);\n      } else if (e.name === className + '.php') hits.push(p);\n    }\n  }\n  for (const b of ['app', 'features'].map((x) => join(root, x))) walk(b);\n  return hits;\n}\n\nfunction fqcnFromFile(filePath) {\n  const c = readFileSync(filePath, 'utf8');\n  const nm = c.match(/^\\s*namespace\\s+([^;]+);/m);\n  if (!nm) return null;\n  const base = filePath.replace(/\\\\/g, '/').split('/').pop().replace(/\\.php$/, '');\n  return nm[1].trim() + '\\\\' + base;\n}\n\nconst root = resolve(input.rootDir || '.');\nconst patches = [];\nfor (const b of input.broken_uses) {\n  let to = FALLBACK[b.fqcn];\n  if (!to) {\n    const short = b.fqcn.split('\\\\').pop();\n    const hits = findByClass(root, short);\n    if (hits.length === 1) to = fqcnFromFile(hits[0]);\n  }\n  if (to && to !== b.fqcn) patches.push({ file: b.file, line: b.line, from: b.fqcn, to });\n}\nreturn { patches };"
+    }
+  }
+}

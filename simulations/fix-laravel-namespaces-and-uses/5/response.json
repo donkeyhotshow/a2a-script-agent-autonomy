@@ -1,0 +1,14 @@
+{
+  "context": {
+    "task": "виправити namespace та use у Laravel PHP файлах",
+    "execution": {
+      "action": "fix-laravel-namespaces-and-uses",
+      "step": "laravel-composer-autoload"
+    }
+  },
+  "execute": {
+    "execute-command": {
+      "command": "composer dump-autoload -o"
+    }
+  }
+}

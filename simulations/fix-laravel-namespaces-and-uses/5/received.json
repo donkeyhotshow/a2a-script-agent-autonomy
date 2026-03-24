@@ -1,0 +1,9 @@
+{
+  "projectId": "123",
+  "sessionId": "456",
+  "execute": {
+    "execute-command": {
+      "command": "composer dump-autoload -o"
+    }
+  }
+}

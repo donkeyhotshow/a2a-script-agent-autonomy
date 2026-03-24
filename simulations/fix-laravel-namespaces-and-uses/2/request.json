@@ -1,0 +1,8 @@
+{
+  "context": {
+    "task": "виправити namespace та use у Laravel PHP файлах"
+  },
+  "result": {
+    "choice": "fix-laravel-namespaces-and-uses"
+  }
+}

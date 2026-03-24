@@ -3,6 +3,8 @@
   "message": "hello world",
   "execute": {
     "form": {
+      "title": "Діалог",
+      "description": "hello world",
       "input": [
         {
           "name": "message",

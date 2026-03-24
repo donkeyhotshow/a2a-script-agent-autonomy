@@ -9,6 +9,7 @@
   "execute": {
     "form": {
       "title": "Ваш запит",
+      "description": "Опишіть питання або зміни в коді; далі Coder використає RAG і роботу з файлами.",
       "input": [
         {
           "name": "message",

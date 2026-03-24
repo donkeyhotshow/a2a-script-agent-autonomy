@@ -10,4 +10,3 @@
   "completed": false
 }
 
-```

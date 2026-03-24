@@ -1,6 +1,5 @@
 {
   "type": "pipeline",
-  "description": "Трансформація RAG-результатів - має виправити неправильний формат",
   "steps": [
     {
       "op": "copy",
@@ -11,10 +10,6 @@
       "op": "set",
       "path": "$.context.ragResults",
       "value": "$.result.rag-search.results"
-    },
-    {
-      "op": "validate-rag-format",
-      "description": "Перевірка формату RAG-результатів"
     },
     {
       "op": "render-markdown",

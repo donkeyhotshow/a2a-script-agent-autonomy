@@ -17,11 +17,18 @@
         "params": {
           "query": "система авторизації JWT токени login register"
         }
+      },
+      {
+        "role": "system",
+        "message": "RAG знайшов: src/auth.js, src/middleware/auth.ts, src/utils/jwt.js"
+      },
+      {
+        "role": "assistant",
+        "message": "Знайшов файли авторизації. Зараз прочитаю основний файл."
       }
     ]
   },
   "execute": {
-    "message": "Знайшов файли авторизації. Зараз прочитаю основний файл.",
     "read-file": {
       "path": "src/auth.js"
     }

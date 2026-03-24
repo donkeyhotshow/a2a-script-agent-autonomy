@@ -2,9 +2,18 @@
   "projectId": "123",
   "sessionId": "456",
   "execute": {
-    "error-recovery": {
-      "issue": "json-parse-error",
-      "suggestion": "retry"
+    "form": {
+      "title": "src/auth.js",
+      "description": "Файл прочитано: модуль експортує register, login, verifyToken (JWT + bcrypt). Що розглянути далі?",
+      "input": [
+        {
+          "name": "message",
+          "type": "text",
+          "label": "Повідомлення",
+          "placeholder": "Наступне питання або команда",
+          "required": true
+        }
+      ]
     }
   }
 }

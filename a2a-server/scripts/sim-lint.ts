@@ -174,6 +174,14 @@ function lintExecuteStructure(data: any, filePath: string): LintError[] {
         }
 
         const executeKeys = Object.keys(data.execute);
+        if (executeKeys.length > 1) {
+            errors.push({
+                path: `${filePath}/execute`,
+                message: `execute must have at most one action key (CLIENT-SDK-IDEAL); found: ${executeKeys.join(', ')}`,
+                severity: 'error',
+                fixable: false
+            });
+        }
         for (const key of executeKeys) {
             if (!VALID_EXECUTE_TYPES.includes(key)) {
                 errors.push({

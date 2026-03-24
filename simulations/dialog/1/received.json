@@ -13,7 +13,8 @@
         },
         {
           "id": "auto-ai",
-          "label": "AI Action Generator"
+          "label": "AI Action Generator",
+          "description": "LLM proposes executable actions from session context."
         },
         {
           "id": "auto-ai-v2",
@@ -22,23 +23,28 @@
         },
         {
           "id": "task-decomposition",
-          "label": "Декомпозиція задачі"
+          "label": "Декомпозиція задачі",
+          "description": "Split a goal into ordered subtasks and track progress."
         },
         {
           "id": "coder",
-          "label": "Робота з кодом (Coder)"
+          "label": "Робота з кодом (Coder)",
+          "description": "RAG, read/write files, and forms for coding tasks."
         },
         {
           "id": "coder-smart",
-          "label": "Coder smart"
+          "label": "Coder smart",
+          "description": "Structured coder flow with clarifying steps."
         },
         {
           "id": "coder-smart-v2",
-          "label": "Coder smart v2"
+          "label": "Coder smart v2",
+          "description": "Virtual task doc, .carrier/tasks file, checklist execution."
         },
         {
           "id": "analyze",
-          "label": "Аналіз коду"
+          "label": "Аналіз коду",
+          "description": "Explain and inspect code without applying edits."
         },
         {
           "id": "fix-vue-imports",

@@ -182,6 +182,7 @@ const SCHEMA_TO_TEMPLATE: Record<string, string> = {
   coder: 'coder-request.md',
   analyze: 'analyze-request.md',
   'fix-vue-imports': '',  // DSL script, no LLM; uses fix-vue-imports-*-request.json
+  'fix-laravel-namespaces-and-uses': '',
   'task-decomposition': 'task-decomposition-request.md',
   'test-action-flow': 'test-action-flow-request.md',
 };
@@ -195,6 +196,7 @@ export const SIMULATION_TO_SCHEMA: Record<string, string> = {
   'auto-ai-v2': 'auto-ai',
   'fix-vue-imports': 'fix-vue-imports',
   'fix-vue-imports-batched': 'fix-vue-imports',
+  'fix-laravel-namespaces-and-uses': 'fix-laravel-namespaces-and-uses',
   'task-decomposition': 'task-decomposition',
   'test-action-flow': 'test-action-flow',
   'phpunit-deprecations': 'coder',

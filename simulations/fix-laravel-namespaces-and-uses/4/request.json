@@ -1,0 +1,33 @@
+{
+  "context": {
+    "task": "виправити namespace та use у Laravel PHP файлах",
+    "execution": {
+      "action": "fix-laravel-namespaces-and-uses",
+      "step": "laravel-use-resolve"
+    }
+  },
+  "result": {
+    "script": {
+      "patches": [
+        {
+          "file": "features/business/checkout/app/Http/Controllers/CheckoutApiController.php",
+          "line": 8,
+          "from": "App\\Features\\Business\\Checkout\\Service\\CheckoutService",
+          "to": "App\\Features\\Business\\Checkout\\Services\\CheckoutService"
+        },
+        {
+          "file": "features/business/profile/app/Http/Controllers/ProfileController.php",
+          "line": 14,
+          "from": "App\\Models\\User",
+          "to": "App\\Features\\Business\\Users\\Models\\User"
+        },
+        {
+          "file": "features/business/payments/app/Http/Controllers/Api/PaymentController.php",
+          "line": 7,
+          "from": "App\\Features\\Business\\Checkout\\Model\\Order",
+          "to": "App\\Features\\Business\\Checkout\\Models\\Order"
+        }
+      ]
+    }
+  }
+}

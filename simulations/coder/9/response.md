@@ -1,10 +1,20 @@
 {
-  "message": "Отримано неповний JSON у полі content. Дані обрізані: 'module.exports = { auth: function(tok'. Потрібно повторити запит.",
+  "step": "after-read-file",
+  "message": "Ось вміст src/auth.js у контексті запиту. Можеш задати наступне питання.",
   "execute": {
-    "error-recovery": {
-      "issue": "json-parse-error",
-      "suggestion": "retry"
+    "form": {
+      "title": "src/auth.js",
+      "description": "Файл прочитано: модуль експортує register, login, verifyToken (JWT + bcrypt). Що розглянути далі?",
+      "input": [
+        {
+          "name": "message",
+          "type": "text",
+          "label": "Повідомлення",
+          "placeholder": "Наступне питання або команда",
+          "required": true
+        }
+      ]
     }
-  }
+  },
+  "completed": false
 }
-```

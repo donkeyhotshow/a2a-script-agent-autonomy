@@ -46,6 +46,12 @@ const SIMULATIONS: SimulationConfig[] = [
         isAiAction: false
     },
     {
+        name: 'fix-laravel-namespaces-and-uses',
+        steps: 6,
+        responseType: 'action_executing',
+        isAiAction: false
+    },
+    {
         name: 'phpunit-deprecations',
         steps: 5,
         responseType: 'action_executing',

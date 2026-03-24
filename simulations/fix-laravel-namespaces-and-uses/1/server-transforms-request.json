@@ -1,0 +1,30 @@
+{
+  "type": "pipeline",
+  "steps": [
+    {
+      "op": "set",
+      "path": "$.context",
+      "value": {
+        "task": "$.task"
+      }
+    },
+    {
+      "op": "set",
+      "path": "$.execute",
+      "value": {
+        "form": {
+          "title": "Оберіть дію",
+          "choices": [
+            {
+              "id": "fix-laravel-namespaces-and-uses",
+              "label": "Laravel: namespace та use"
+            },
+            { "id": "fix-vue-imports", "label": "Виправити Vue імпорти" },
+            { "id": "auto-ai", "label": "AI асистент" },
+            { "id": "task-decomposition", "label": "Декомпозиція задач" }
+          ]
+        }
+      }
+    }
+  ]
+}

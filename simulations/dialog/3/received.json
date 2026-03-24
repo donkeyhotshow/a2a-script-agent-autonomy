@@ -2,8 +2,9 @@
   "projectId": "123",
   "sessionId": "456",
   "execute": {
-    "message": "hello world",
     "form": {
+      "title": "Діалог",
+      "description": "hello world",
       "input": [
         {
           "name": "message",

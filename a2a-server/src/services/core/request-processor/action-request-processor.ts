@@ -33,6 +33,7 @@ const ROUTER_CHOICES = [
     {id: 'coder-smart-v2', label: 'Coder smart v2'},
     {id: 'analyze', label: 'Аналіз коду'},
     {id: 'fix-vue-imports', label: 'Виправлення Vue imports'},
+    {id: 'fix-laravel-namespaces-and-uses', label: 'Laravel: namespace та use'},
 ] as const;
 
 /**

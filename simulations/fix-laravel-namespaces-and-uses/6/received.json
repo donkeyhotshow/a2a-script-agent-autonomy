@@ -1,0 +1,10 @@
+{
+  "projectId": "123",
+  "sessionId": "456",
+  "result": {
+    "script": {
+      "cleanup_count": 3,
+      "composer_exit_code": 0
+    }
+  }
+}

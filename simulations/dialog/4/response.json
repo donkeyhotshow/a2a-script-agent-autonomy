@@ -21,8 +21,9 @@
     ]
   },
   "execute": {
-    "message": "hello world",
     "form": {
+      "title": "Будь ласка!",
+      "description": "Звертайся ще, коли знадобиться допомога.",
       "input": [
         {
           "name": "message",

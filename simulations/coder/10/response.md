@@ -1,15 +1,11 @@
 {
-  "message": "Виявлено проблему з форматом RAG-результатів! Дані надійшли у неправильній структурі.",
+  "step": "read-file",
+  "message": "Знайшов файли авторизації. Зараз прочитаю основний файл src/auth.js.",
   "execute": {
-    "form": {
-      "message": "⚠️ ПОМИЛКА ФОРМАТУ ДАНИХ\n\nОтримані RAG-результати мають неправильну структуру:\n\n**Поточний формат (неправильний):**\n```json\n{\n  \"src/auth.js\": \"content...\",\n  \"src/middleware/auth.js\": \"content...\"\n}\n```\n\n**Очікуваний формат:**\n```json\n[\n  { \"file\": \"src/auth.js\", \"snippet\": \"...\", \"score\": 0.85 },\n  { \"file\": \"src/middleware/auth.js\", \"snippet\": \"...\", \"score\": 0.75 }\n]\n```\n\nБудь ласка, повторно надішліть RAG-результати у правильному форматі - масиві об'єктів з полями `file`, `snippet` та `score`.",
-      "choices": [
-        {
-          "id": "retry_rag",
-          "label": "Повторити RAG пошук"
-        }
-      ]
+    "read-file": {
+      "path": "src/auth.js"
     }
-  }
+  },
+  "completed": false
 }
-```
+
