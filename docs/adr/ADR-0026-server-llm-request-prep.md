@@ -35,7 +35,7 @@ For the **request** transform path (`runPromptsTransform` with `type === 'reques
 
 - **Simulations / golden `request.md`**: After changing materialize or hints, re-run transform replay and update recorded `request.md` when it is an artifact of `request.json` + transforms (see [ADR-0001](ADR-0001-simulations-as-golden-standard.md)).  
 - **Custom markdown under `simulations/`** only: if parity with server templates is required, authors must add **`${flowControlHint}`** themselves.  
-- **Planning note** (non-normative): [`docs/planning/LLM-REQUEST-PREP.md`](../planning/LLM-REQUEST-PREP.md) points here and to the server doc — no duplicate spec.
+- **Planning note** (non-normative): [`a2a-server/docs/planning/LLM-REQUEST-PREP.md`](../../a2a-server/docs/planning/LLM-REQUEST-PREP.md) points here and to the server doc — no duplicate spec.
 
 ## Notes
 

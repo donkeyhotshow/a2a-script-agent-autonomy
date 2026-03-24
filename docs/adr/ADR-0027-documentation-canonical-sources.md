@@ -20,11 +20,11 @@ Protocol, ports, AI Hub promise flow, simulation file layout, and server-side LL
    | Server-centric behavior, AI Hub integration | [`docs/new-request-flow/SERVER-ARCHITECTURE.md`](../new-request-flow/SERVER-ARCHITECTURE.md) | `#external-ai-hub-integration` |
    | Simulation step artifacts & pipeline | [`simulations/SCHEMA.md`](../../simulations/SCHEMA.md) | Complements [ADR-0001](ADR-0001-simulations-as-golden-standard.md) |
    | Fold `result` → `history`, `flowControlHint` before `request.md` | [`a2a-server/docs/LLM-REQUEST-PREP.md`](../../a2a-server/docs/LLM-REQUEST-PREP.md) | [ADR-0026](ADR-0026-server-llm-request-prep.md) |
-   | Planning / roadmap (non-normative) | [`docs/planning/`](../planning/README.md) | Must link to spec, not restate tables |
+   | Planning / roadmap (non-normative) | [`a2a-server/docs/planning/`](../../a2a-server/docs/planning/README.md) | Must link to spec, not restate tables |
 
 2. **`docs/new-request-flow/ARCHITECTURE.md`** stays a **diagram-first** overview: session/data flow in ASCII, then **pointers** to PROTOCOL, SESSION-FLOW, FILES, DATA-FLOW, AGENTS — not a second copy of Hub steps, env tables, or file trees.
 
-3. **Planning mirrors** (e.g. `docs/planning/LLM-REQUEST-PREP.md`) remain **short**; technical detail lives under `a2a-server/docs/` or `docs/new-request-flow/` as above.
+3. **Planning mirrors** (e.g. `a2a-server/docs/planning/LLM-REQUEST-PREP.md`) remain **short**; technical detail lives under `a2a-server/docs/` or `docs/new-request-flow/` as above.
 
 ## Consequences
 

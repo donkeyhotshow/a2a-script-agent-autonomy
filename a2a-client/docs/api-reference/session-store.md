@@ -403,5 +403,5 @@ store.on('error', (error) => {
 ## Related Components
 
 
-- **[TransportManager](../api-reference/transport-manager.md)** - Server communication
-- **[PanelManager](../api-reference/panel-manager.md)** - UI synchronization
+- **[TransportManager](./transport-manager.md)** - Server communication
+- **[PanelManager](./panel-manager.md)** - UI synchronization

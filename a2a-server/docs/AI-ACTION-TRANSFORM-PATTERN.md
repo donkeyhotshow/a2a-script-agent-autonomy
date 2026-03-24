@@ -94,17 +94,17 @@ Canonical pipeline (no `append-to-array` for `result.message`):
 | `coder-smart` | `a2a-server/prompts/coder-request.md` | ✅ Updated |
 | `analyze` | `a2a-server/prompts/analyze-request.md` | ✅ Canonical |
 
-## Templates
+## Transform JSON (canonical on server)
 
-Location: `templates/ai-action-transforms/`
+Location: **`a2a-server/prompts/transforms/`** (per-action `*-request.json` / `*-response.json`). The repo-root `templates/` tree was removed.
 
-- `server-transforms-request.json` — copy, render-markdown (history + hints: see [LLM-REQUEST-PREP.md](./LLM-REQUEST-PREP.md))
-- `server-transforms-response.json` — parse-json, set-step, append-history, set-execute, set-completed
-- `README.md` — quick reference
+- Request pipeline — typically `copy`, `append-to-array` (history), `render-markdown` (hints: [LLM-REQUEST-PREP.md](./LLM-REQUEST-PREP.md))
+- Response pipeline — `parse-json-from-md`, set step, append history, set `execute` / `completed`
+- Golden examples: **`simulations/<task>/<step>/server-transforms-*.json`**
 
 ## Adding New AI-Action
 
 1. Create prompt in `a2a-server/prompts/<name>-request.md`
 2. Define step names in the prompt
-3. Copy transforms from templates
-4. Update `templateRef` to point to your prompt
+3. Add transforms under `a2a-server/prompts/transforms/` (copy patterns from an existing action or from `simulations/`)
+4. Point `templateRef` / pipeline `templateRef` at your prompt

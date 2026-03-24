@@ -88,4 +88,4 @@ The old **`append-to-array`** step that pushed `result.message` into history is 
 
 - [`ADR-0026-server-llm-request-prep.md`](../../docs/adr/ADR-0026-server-llm-request-prep.md) — architecture decision (this behavior).
 - [`AI-ACTION-TRANSFORM-PATTERN.md`](./AI-ACTION-TRANSFORM-PATTERN.md) — LLM JSON shape, response transforms, simulations.
-- Planning mirror (repo root): [`docs/planning/LLM-REQUEST-PREP.md`](../../docs/planning/LLM-REQUEST-PREP.md) — same topic for roadmap / simulations planning.
+- Planning mirror: [`planning/LLM-REQUEST-PREP.md`](./planning/LLM-REQUEST-PREP.md) — same topic for roadmap / simulations planning.

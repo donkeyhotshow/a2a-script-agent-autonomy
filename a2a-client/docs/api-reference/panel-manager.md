@@ -516,5 +516,5 @@ PanelManager operations are generally safe:
 
 ## Related Components
 
-- **[SessionStore](../api-reference/session-store.md)** - State synchronization
-- **[TransportManager](../api-reference/transport-manager.md)** - Real-time updates
+- **[SessionStore](./session-store.md)** - State synchronization
+- **[TransportManager](./transport-manager.md)** - Real-time updates

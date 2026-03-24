@@ -202,5 +202,5 @@
 
 ## References
 
-- [session-management-protocols.md](../../plans/session-management-protocols.md)
+- [session-management-protocols.md](../../../a2a-client/docs/session-management-protocols.md)
 - [SCHEMAS.md](../SCHEMAS.md)

@@ -8,7 +8,7 @@ import {fileURLToPath} from 'node:url';
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(SCRIPT_DIR, '..');
 const DEFAULT_OUTPUT_ROOT = path.join(REPO_ROOT, 'tmp', 'prod-test-results');
-const TEST_REQUESTS_DIR = path.join(REPO_ROOT, 'docs', 'production', 'test-requests');
+const TEST_REQUESTS_DIR = path.join(REPO_ROOT, 'a2a-server', 'docs', 'production', 'test-requests');
 const DEFAULT_OLLAMA_MODEL = process.env['OLLAMA_MODEL'] || 'qwen3:8b';
 const OLLAMA_CLI = process.env['OLLAMA_CLI_PATH'] || 'ollama';
 const MODE_INFO = {

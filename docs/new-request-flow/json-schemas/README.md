@@ -21,5 +21,5 @@ Machine-readable shapes for `POST /api/v1/invoke` and related Client API payload
 **Related**
 
 - [`../PROTOCOLS/README.md`](../PROTOCOLS/README.md) — stages, actions, promise flow
-- [`../../planning/REFERENCE.md`](../../planning/REFERENCE.md) — simulations as golden standard (roadmap)
+- [`../../../a2a-server/docs/planning/REFERENCE.md`](../../../a2a-server/docs/planning/REFERENCE.md) — simulations as golden standard (roadmap)
 - [`../../../a2a-client/docs/WEB_UI_PROTOCOL.md`](../../../a2a-client/docs/WEB_UI_PROTOCOL.md) — file-backed Client API: `POST .../next` ack, `GET .../async` polling

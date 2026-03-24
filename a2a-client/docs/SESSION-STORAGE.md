@@ -2,7 +2,7 @@
 
 ## Overview
 
-The session storage system provides numbered folders that mirror each dialog step. Client API (e.g. port 3001 when running the SDK standalone) persists step files via `step-storage.ts`; see [api-client-server-logic.md](../../plans/archive/api-client-server-logic.md). By default the storage directory is `a2a-client/storage/sessions/{sessionId}` (relative to the repo root), but the environment variable `A2A_CLIENT_STORAGE_DIR` can point to another directory (for example `<storageDir>/sessions/`). Persistent storage keeps track of `context`, `execute`, `messages`, step files, and async `promiseId` metadata.
+The session storage system provides numbered folders that mirror each dialog step. Client API (e.g. port 3001 when running the SDK standalone) persists step files via `step-storage.ts`; see [api-client-server-logic.md](./api-client-server-logic.md). By default the storage directory is `a2a-client/storage/sessions/{sessionId}` (relative to the repo root), but the environment variable `A2A_CLIENT_STORAGE_DIR` can point to another directory (for example `<storageDir>/sessions/`). Persistent storage keeps track of `context`, `execute`, `messages`, step files, and async `promiseId` metadata.
 
 ## Storage Structure
 
@@ -72,7 +72,7 @@ Messages are stored in a separate file for clarity and easier updates:
 
 When loading a step, the API merges `messages.json` into the step response.
 
-**Step flow:** Once a server response lands in step `N`, the client writes `client-result.json` (either from Web UI or an auto script). The next step (`N+1`) receives `request-to-server.json` before the A2A Server call. Synchronous responses land immediately in `{N+1}/server-response.json`; asynchronous responses first record `server-promise.json` in `{N+2}/`, then the completed `server-response.json` in that same folder once the promise finishes. Refer to [api-client-server-logic.md](../../plans/archive/api-client-server-logic.md#поток-обработки-шагов-step-flow) for the detailed diagram.
+**Step flow:** Once a server response lands in step `N`, the client writes `client-result.json` (either from Web UI or an auto script). The next step (`N+1`) receives `request-to-server.json` before the A2A Server call. Synchronous responses land immediately in `{N+1}/server-response.json`; asynchronous responses first record `server-promise.json` in `{N+2}/`, then the completed `server-response.json` in that same folder once the promise finishes. Refer to [api-client-server-logic.md](./api-client-server-logic.md#поток-обработки-шагов-step-flow) for the detailed diagram.
 
 ## API Endpoints
 

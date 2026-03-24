@@ -7,7 +7,7 @@
 | Раздел | Описание | Статус |
 |--------|----------|--------|
 | `new-request-flow/` | Архитектура нового протокола запросов | ✅ Активная разработка |
-| `production/` | Продакшн документация и планы запуска | ✅ Готова к использованию |
+| `a2a-server/docs/production/` (stub: [`docs/production/README.md`](production/README.md)) | Продакшн и prod-test | ✅ Актуально |
 | `proposals/` | Предложения по улучшениям компонентов | 📝 Требует обновления |
 | `adr/` | Architecture Decision Records | ✅ Ведется |
 | `reports/` | Отчеты и аналитика | 📝 Требует обновления |
@@ -17,7 +17,7 @@
 
 #### Архитектурные решения
 - [ADR-0001: Simulations as Golden Standard](adr/ADR-0001-simulations-as-golden-standard.md)
-- [AI Action Transform Pattern](AI-ACTION-TRANSFORM-PATTERN.md)
+- [AI Action Transform Pattern](../a2a-server/docs/AI-ACTION-TRANSFORM-PATTERN.md)
 - [System Startup Guide](SYSTEM_STARTUP.md)
 
 #### Протокол и API
@@ -29,8 +29,9 @@
 - [Web Client Integration](../a2a-client/tester/docs/INTEGRATION.md)
 
 #### Продакшн
-- [Full Launch Plan](production/FULL_LAUNCH_PLAN.md)
-- [Production Tests](production/PROD_TESTS.md)
+- [Full Launch Plan](../a2a-server/docs/production/FULL_LAUNCH_PLAN.md)
+- [Production Tests](../a2a-server/docs/production/PROD_TESTS.md)
+- [Индекс (stub в `docs/production/`)](production/README.md)
 
 ### Статус обновлений
 
@@ -39,4 +40,6 @@
 - **Приоритет:** Обновление proposals и reports разделов
 
 ### Общая архитектура системы
-Общая архитектура системы описана в [`DEV_STATE.md`](../DEV_STATE.md).
+
+- Репозиторий и сервисы: [`AGENTS.md`](../AGENTS.md) (порты, эндпоинты, потоки).
+- Диаграммы протокола: [New request flow — ARCHITECTURE](new-request-flow/ARCHITECTURE.md).

@@ -234,7 +234,8 @@ The a2a-server component is now production-ready with:
 
 | Document | Purpose |
 |----------|---------|
-| [Workflows](workflows/README.md) | **Start here** - How to edit code at every level |
+| [AGENTS.md](AGENTS.md) | Agent and repo conventions; API and architecture pointers |
+| [New request flow](docs/new-request-flow/) | Protocol, data flow, server architecture (canonical) |
 | [System Startup](docs/SYSTEM_STARTUP.md) | Port allocation, conflict detection, health gating |
 | [Machine-Readable Docs](docs/DOCUMENTATION-MACHINE-READABLE.md) | Documentation requirements for parsing |
 | [Troubleshooting](docs/troubleshooting/standardize-stop-scripts.md) | Standardized stop scripts guide |
@@ -274,7 +275,7 @@ npm run sim:validate
 ├── tasks/               # Active tasks
 │   ├── client/
 │   └── server/
-├── plans/               # Implementation plans
+├── docs/plans/          # Active backlog (docs/plans/active/); archives under package docs
 └── docs/                # Documentation
 ```
 
