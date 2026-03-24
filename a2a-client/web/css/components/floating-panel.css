@@ -81,12 +81,16 @@
   padding: 14px;
 }
 
+.panel-resize-handle,
+.pui-panel-resize {
+  width: 24px;
+  height: 24px;
+}
+
 .panel-resize-handle {
   position: absolute;
   bottom: 0;
   right: 0;
-  width: 16px;
-  height: 16px;
   cursor: se-resize;
   background: linear-gradient(135deg, transparent 50%, var(--color-text-muted) 50%);
   opacity: 0.3;
@@ -290,7 +294,6 @@
 .pui-panel-resize {
   position: absolute;
   bottom: 0; right: 0;
-  width: 16px; height: 16px;
   cursor: se-resize;
   background: linear-gradient(135deg, transparent 50%, var(--color-text-muted) 50%);
   opacity: 0.3;

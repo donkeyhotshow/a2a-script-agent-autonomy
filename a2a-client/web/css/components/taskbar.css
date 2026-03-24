@@ -134,7 +134,7 @@
   transition: all var(--transition-fast);
   white-space: nowrap;
   flex-shrink: 0;
-  max-width: 200px;
+  max-width: 240px;
   position: relative;
 }
 

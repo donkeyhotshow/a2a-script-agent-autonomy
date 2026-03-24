@@ -703,41 +703,33 @@
             const input = args[0];
             const options = args[1] || {};
             const reqCtx = getRequestContext(input, options);
-            const url = reqCtx.url;
-            const isStorageApi = url.includes('/api/storage/');
+            const shouldHandleErrors = options?.silent !== true && options?.handleErrors !== false;
 
             try {
                 const response = await originalFetch.apply(this, args);
 
-                // Check for error status (skip storage API 404s - they are expected when key doesn't exist)
-                if (!response.ok) {
-                    const isExpected404 = isStorageApi && response.status === 404;
-
-                    if (isStorageApi && response.status === 404) {
-                        console.log('[ErrorHandler] Skipping expected storage 404 - returning response without error');
+                if (shouldHandleErrors && !response.ok) {
+                    const responseClone = response.clone();
+                    const errText = await responseClone.text();
+                    let data = {};
+                    try {
+                        data = errText ? JSON.parse(errText) : {};
+                    } catch (parseErr) {
+                        console.error('[ErrorHandler] Error response body is not JSON:', parseErr);
+                        if (errText) data = { _nonJsonBody: errText.slice(0, 2000) };
                     }
-
-                    if (!isExpected404) {
-                        // Clone response before reading body to preserve it for original caller
-                        const responseClone = response.clone();
-                        const errText = await responseClone.text();
-                        let data = {};
-                        try {
-                            data = errText ? JSON.parse(errText) : {};
-                        } catch (parseErr) {
-                            console.error('[ErrorHandler] Error response body is not JSON:', parseErr);
-                            if (errText) data = { _nonJsonBody: errText.slice(0, 2000) };
-                        }
-                        ErrorHandler.handleApiError({
+                    ErrorHandler.handleApiError(
+                        {
                             status: response.status,
                             data
-                        }, { ...reqCtx });
-                    }
+                        },
+                        { ...reqCtx }
+                    );
                 }
 
                 return response;
             } catch (error) {
-                if (!isStorageApi) {
+                if (shouldHandleErrors) {
                     ErrorHandler.handleNetworkError(error, { ...reqCtx });
                 }
                 throw error;

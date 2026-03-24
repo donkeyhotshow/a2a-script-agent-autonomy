@@ -19,13 +19,7 @@
 .notifications-panel.active,
 .notifications-panel.show,
 .error-modal-overlay.active,
-.error-modal-overlay.show,
-.modal:not([style*="none"]),
-.overlay:not([style*="none"]),
-.popup:not([style*="none"]),
-.dialog:not([style*="none"]),
-.notifications-panel:not([style*="none"]),
-.error-modal-overlay:not([style*="none"]) {
+.error-modal-overlay.show {
   display: flex !important;
 }
 

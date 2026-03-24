@@ -20,6 +20,27 @@
         typeof global.PROMISE_POLL_INTERVAL === 'number' && global.PROMISE_POLL_INTERVAL > 0
             ? global.PROMISE_POLL_INTERVAL
             : global.__a2aDaemons.timingMs('PROMISE_POLL_INTERVAL');
+    const promiseListenerRegistry = new Map();
+
+    function clearPromiseListeners(key) {
+        if (!key) return;
+        const existing = promiseListenerRegistry.get(key);
+        if (existing) {
+            existing.forEach((fn) => {
+                try {
+                    fn?.();
+                } catch (err) {
+                    console.error('[ActionExecutor] Failed to clear promise listener:', err);
+                }
+            });
+            promiseListenerRegistry.delete(key);
+        }
+    }
+
+    function registerPromiseListeners(key, unsubs) {
+        if (!key || !unsubs || !unsubs.length) return;
+        promiseListenerRegistry.set(key, unsubs);
+    }
 
 
 
@@ -101,14 +122,18 @@
                 store.setPromiseId(promiseId);
             }
 
-         const checkFn = sessionScoped
-             ? () => global?.apiIntegration?.checkSessionAsync?.(sessionId) ?? Promise.reject(new Error('checkSessionAsync is not a function on apiIntegration'))
-             : (pid) => global.apiIntegration.checkPromise(sessionId, pid);
+            const listenerKey = sessionScoped ? `session:${sessionId}` : `${sessionId}:${promiseId}`;
+            clearPromiseListeners(listenerKey);
+
+            const checkFn = sessionScoped
+                ? () => global?.apiIntegration?.checkSessionAsync?.(sessionId) ?? Promise.reject(new Error('checkSessionAsync is not a function on apiIntegration'))
+                : (pid) => global.apiIntegration.checkPromise(sessionId, pid);
 
             store.startPromisePolling(checkFn, { sessionScoped });
 
             const onResolved = (data) => {
                 if (!(data.sessionScoped || data.promiseId === promiseId)) return;
+                clearPromiseListeners(listenerKey);
                 pullSessionSnapshot(sessionId, store).then(() => {
                     store.setPromisePending?.(false);
                     store.stopLoader?.(sessionId);
@@ -124,6 +149,7 @@
 
             const onRejected = (data) => {
                 if (!(data.sessionScoped || data.promiseId === promiseId)) return;
+                clearPromiseListeners(listenerKey);
                 store.setPromisePending?.(false);
                 store.stopLoader?.(sessionId);
                 global.apiIntegration?.emit?.('promiseError', {
@@ -136,6 +162,7 @@
 
             store.on?.('promiseResolved', onResolved);
             store.on?.('promiseError', onRejected);
+            registerPromiseListeners(listenerKey, [() => store.off?.('promiseResolved', onResolved), () => store.off?.('promiseError', onRejected)]);
 
             return;
         }

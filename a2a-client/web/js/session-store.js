@@ -8,7 +8,7 @@
  * ├── project-store.js — проекты
  * └── session-store.js — точка входа (делегатор)
  *
- * ESM в js/core/* (DialogState, SessionStoreCore, …) — для тестов/импорта; рантайм страницы идёт через SessionData + daemons.
+ * Рантажится через SessionData + daemons (js/core/ сейчас не используется).
  * 
  * Обратная совместимость: window.SessionStore работает как раньше
  * 
@@ -32,18 +32,16 @@
         storageMode: 'storage'
     });
 
-    var ACTIVE_SESSION_KEY = 'active-session';
+    var ActiveSessionStorage = global.ActiveSessionStorage;
 
     async function readSavedSessionId() {
-        var storage = global.StorageAPI?.sessions;
-        if (!storage || typeof storage.getItem !== 'function') {
+        if (!ActiveSessionStorage?.readActiveSessionId) {
             return null;
         }
-
         try {
-            return await storage.getItem(ACTIVE_SESSION_KEY);
+            return await ActiveSessionStorage.readActiveSessionId();
         } catch (err) {
-            console.warn('[SessionStore] Failed to read saved session:', err);
+            console.warn('[SessionStore] Failed to read saved session via ActiveSessionStorage:', err);
             return null;
         }
     }

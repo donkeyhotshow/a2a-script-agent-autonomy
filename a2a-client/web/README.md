@@ -49,6 +49,18 @@ web/
 └── examples/              # Примеры
 ```
 
+## Порядок загрузки скриптов
+
+Некоторые скрипты проксируют глобальные зависимости (например, `window.escapeHtml`, `window.executeHasActionableForm`, `window.WindowEvents` и `window.WindowPosition`). Чтобы избежать ошибок при сборке UI, соблюдайте следующий порядок:
+
+1. `js/html-utils.js` — регистрирует `escapeHtml`, `escapeHtmlAttr`, `executeHasActionableForm` и другие утилиты. Загружайте его до любого модуля, который вызывает эти функции через `global.*`.
+2. `js/install-normalizers.mjs` — предоставляет `global.Normalizers` до создания `SessionStore`.
+3. `js/daemons/*` (emitter, dialog-loader, dialog-promise-poll) — устанавливают `global.__a2aDaemons`.
+4. `js/session-data.js`, `js/project-store.js`, `js/session-store.js` — зависят от предыдущих шагов.
+5. `js/app/windows/window-events.js`, `js/app/windows/window-position.js` — подключаются до `js/app/windows/window-state.js`, т.к. последнему требуется registries/handlers.
+
+Если порядок нарушен, публичные объекты `WindowState`, `SessionStore` и другие вызовут исключение при инициализации.
+
 ## Использование
 
 ### Запуск

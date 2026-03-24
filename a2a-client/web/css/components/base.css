@@ -162,6 +162,7 @@ body {
   flex: 1;
   overflow: hidden;
   position: relative;
+  padding-bottom: 52px;
 }
 
 .app-main-hint {
@@ -203,6 +204,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  min-width: 0;
 }
 
 .logo {

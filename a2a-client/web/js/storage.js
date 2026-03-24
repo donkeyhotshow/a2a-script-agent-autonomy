@@ -14,51 +14,20 @@
     const STORAGE_BASE = '/api/storage';
     const SESSIONS_BASE = '/api/a2a/sessions';
 
-    // Fallback implementation for fetch with retry logic
-// This handles the case where storage.js is loaded before api-integration.js
-async function storageFetchWithRetry(url, options = {}, retryCount = 0) {
-        const DEFAULT_TIMEOUT = 10000; // 10 seconds
-        const MAX_RETRIES = 3;
-        const BASE_DELAY = 2000; // 2 seconds per PROTOCOLS specification
+    const STORAGE_DEFAULT_TIMEOUT = 10000;
 
+    async function storageFetch(url, options = {}) {
         const controller = new AbortController();
-        const timeout = options.timeout || DEFAULT_TIMEOUT;
+        const { timeout = STORAGE_DEFAULT_TIMEOUT, ...rest } = options;
         const timeoutId = setTimeout(() => controller.abort(), timeout);
 
         try {
-            const response = await fetch(url, {
-                ...options,
+            return await fetch(url, {
+                ...rest,
                 signal: controller.signal
             });
+        } finally {
             clearTimeout(timeoutId);
-            
-            // Retry on server errors (5xx) and rate limit (429)
-            const shouldRetry = !response.ok && 
-                (response.status >= 500 || response.status === 429) && 
-                retryCount < MAX_RETRIES;
-            
-            if (shouldRetry) {
-                const delay = BASE_DELAY * Math.pow(2, retryCount);
-                console.warn(`[CustomStorage] Retry ${retryCount + 1}/${MAX_RETRIES} after ${delay}ms (HTTP ${response.status}): ${url}`);
-                await new Promise(resolve => setTimeout(resolve, delay));
-                return storageFetchWithRetry(url, options, retryCount + 1);
-            }
-            
-            return response;
-        } catch (error) {
-            clearTimeout(timeoutId);
-
-            // Don't retry if aborted or max retries reached
-            if (error.name === 'AbortError' || retryCount >= MAX_RETRIES) {
-                throw error;
-            }
-
-            // Exponential backoff: 1s, 2s, 4s
-            const delay = BASE_DELAY * Math.pow(2, retryCount);
-            console.warn(`[CustomStorage] Retry ${retryCount + 1}/${MAX_RETRIES} after ${delay}ms: ${url}`);
-            await new Promise(resolve => setTimeout(resolve, delay));
-
-            return storageFetchWithRetry(url, options, retryCount + 1);
         }
     }
 
@@ -72,7 +41,7 @@ async function storageFetchWithRetry(url, options = {}, retryCount = 0) {
          */
         async getItem(key) {
             try {
-                const response = await storageFetchWithRetry(`${STORAGE_BASE}/${this.namespace}/${key}`, {
+                const response = await storageFetch(`${STORAGE_BASE}/${this.namespace}/${key}`, {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json'
@@ -108,7 +77,7 @@ async function storageFetchWithRetry(url, options = {}, retryCount = 0) {
          */
         async setItem(key, value) {
             try {
-                const response = await storageFetchWithRetry(`${STORAGE_BASE}/${this.namespace}/${key}`, {
+                const response = await storageFetch(`${STORAGE_BASE}/${this.namespace}/${key}`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json'
@@ -133,7 +102,7 @@ async function storageFetchWithRetry(url, options = {}, retryCount = 0) {
          */
         async removeItem(key) {
             try {
-                const response = await storageFetchWithRetry(`${STORAGE_BASE}/${this.namespace}/${key}`, {
+                const response = await storageFetch(`${STORAGE_BASE}/${this.namespace}/${key}`, {
                     method: 'DELETE',
                     headers: {
                         'Content-Type': 'application/json'
@@ -154,7 +123,7 @@ async function storageFetchWithRetry(url, options = {}, retryCount = 0) {
          */
         async clear() {
             try {
-                const response = await storageFetchWithRetry(`${STORAGE_BASE}/${this.namespace}`, {
+                const response = await storageFetch(`${STORAGE_BASE}/${this.namespace}`, {
                     method: 'DELETE',
                     headers: {
                         'Content-Type': 'application/json'
@@ -175,7 +144,7 @@ async function storageFetchWithRetry(url, options = {}, retryCount = 0) {
          */
         async keys() {
             try {
-                const response = await storageFetchWithRetry(`${STORAGE_BASE}/${this.namespace}/keys`, {
+                const response = await storageFetch(`${STORAGE_BASE}/${this.namespace}/keys`, {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json'
@@ -247,120 +216,8 @@ async function storageFetchWithRetry(url, options = {}, retryCount = 0) {
         aiActions: new CustomStorage('ai-actions')
     };
 
-    // NEW: Session Storage with numbered folders
-    // Format: /api/a2a/sessions/{sessionId}/{stepNum}/server-response.json - step data (source of truth)
-    //         /api/a2a/sessions/{sessionId}/{stepNum}/client-result.json - user input
-    //         /api/a2a/sessions/{sessionId}/{stepNum}/messages.json - chat history slice
-    // NO session.json - session is reconstructed from step files
-    class SessionStorage {
-        constructor() {
-            this.baseUrl = SESSIONS_BASE;
-        }
-
-        async _request(method, path, body = null) {
-            const url = `${this.baseUrl}${path}`;
-            const options = {
-                method,
-                headers: { 'Content-Type': 'application/json' }
-            };
-            if (body) {
-                options.body = JSON.stringify(body);
-            }
-            try {
-                const response = await fetch(url, options);
-                if (!response.ok) {
-                    console.warn('[SessionStorage] Request failed:', method, url, response.status, response.statusText);
-                    throw new Error(`SessionStorage ${method} failed: ${response.status}`);
-                }
-                return response.json();
-            } catch (error) {
-                console.error('[SessionStorage] _request error:', method, url, error.message);
-                throw error;
-            }
-        }
-
-        /**
-         * List all sessions
-         */
-        async listSessions() {
-            const data = await this._request('GET', '');
-            return data.sessions || [];
-        }
-
-        /**
-         * Create new session with execute form input
-         */
-        async createSession(title = 'New Session') {
-            return this._request('POST', '', { title });
-        }
-
-        /**
-         * Get session metadata
-         */
-        async getSession(sessionId) {
-            return this._request('GET', `/${sessionId}`);
-        }
-
-        /**
-         * Update session
-         */
-        async updateSession(sessionId, data) {
-            return this._request('PUT', `/${sessionId}`, data);
-        }
-
-        /**
-         * Delete session
-         */
-        async deleteSession(sessionId) {
-            return this._request('DELETE', `/${sessionId}`);
-        }
-
-        /**
-         * List all steps in session
-         */
-        async listSteps(sessionId) {
-            const data = await this._request('GET', `/${sessionId}/steps`);
-            return data.steps || [];
-        }
-
-        /**
-         * Get specific step
-         */
-        async getStep(sessionId, stepNum) {
-            return this._request('GET', `/${sessionId}/steps/${stepNum}`);
-        }
-
-        /**
-         * Create new step
-         */
-        async createStep(sessionId, stepData) {
-            return this._request('POST', `/${sessionId}/steps`, stepData);
-        }
-
-        /**
-         * Get latest step (for polling/loader)
-         */
-        async getLatest(sessionId) {
-            return this._request('GET', `/${sessionId}/latest`);
-        }
-
-        /**
-         * Get history from specific step
-         */
-        async getHistory(sessionId, fromStep = 1) {
-            const data = await this._request('GET', `/${sessionId}/history/${fromStep}`);
-            return data.history || [];
-        }
-    }
-
-    // Add session storage to global object
-    const sessionStorage = new SessionStorage();
-
     // Export
     global.CustomStorage = CustomStorage;
     global.StorageAPI = storage;
-    // Note: SessionStorageAPI is set by session-storage.js (factory pattern)
-    // This SessionStorage class is kept for legacy compatibility only
-    global.SessionStorageClass = SessionStorage;
 
 })(typeof window !== 'undefined' ? window : globalThis);

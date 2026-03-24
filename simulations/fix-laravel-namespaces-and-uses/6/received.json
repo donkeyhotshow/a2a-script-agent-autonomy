@@ -1,6 +1,18 @@
 {
   "projectId": "123",
   "sessionId": "456",
+  "execute": {
+    "form": {
+      "title": "Composer autoload оновлено",
+      "description": "Очистили 3 артефакти, composer dump-autoload завершився кодом 0.",
+      "choices": [
+        {
+          "id": "ok",
+          "label": "OK"
+        }
+      ]
+    }
+  },
   "result": {
     "script": {
       "cleanup_count": 3,

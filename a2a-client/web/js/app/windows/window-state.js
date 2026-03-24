@@ -3,6 +3,15 @@
  */
 (function (global) {
     'use strict';
+    const RESTORE_WINDOW_CONCURRENCY = 5;
+
+    if (!global.WindowEvents) {
+        throw new Error('[WindowState] Load js/app/windows/window-events.js before window-state.js');
+    }
+
+    if (!global.WindowPosition) {
+        throw new Error('[WindowState] Load js/app/windows/window-position.js before window-state.js');
+    }
 
     const WindowState = {
         /**
@@ -377,19 +386,29 @@
         async restoreSessionWindows() {
             const registry = global.WindowRegistry;
             if (!registry) return;
-            
-            const savedWindows = await registry.loadSessionWindowsState();
 
-            for (const sessionId of savedWindows) {
-                try {
-                    // Check if session still exists
-                    const sessionExists = await this.checkSessionExists(sessionId);
-                    if (sessionExists) {
-                        await this.createSessionWindow(sessionId);
-                    }
-                } catch (error) {
-                    console.warn('[WindowState] Failed to restore window:', sessionId, error);
+            const savedWindows = await registry.loadSessionWindowsState();
+            if (!Array.isArray(savedWindows) || savedWindows.length === 0) {
+                return;
+            }
+
+            const queue = savedWindows.slice();
+            while (queue.length > 0) {
+                const batch = queue.splice(0, RESTORE_WINDOW_CONCURRENCY);
+                await Promise.allSettled(
+                    batch.map((sessionId) => this._restoreSavedWindow(sessionId))
+                );
+            }
+        },
+
+        async _restoreSavedWindow(sessionId) {
+            try {
+                const sessionExists = await this.checkSessionExists(sessionId);
+                if (sessionExists) {
+                    await this.createSessionWindow(sessionId);
                 }
+            } catch (error) {
+                console.warn('[WindowState] Failed to restore window:', sessionId, error);
             }
         },
 

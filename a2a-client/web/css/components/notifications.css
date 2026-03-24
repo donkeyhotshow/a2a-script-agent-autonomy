@@ -20,8 +20,7 @@
 }
 
 .notifications-panel.active,
-.notifications-panel.show,
-.notifications-panel:not([style*="none"]) {
+.notifications-panel.show {
   display: flex !important;
 }
 
@@ -214,7 +213,7 @@
   cursor: pointer;
   padding: 4px;
   line-height: 1;
-  opacity: 0;
+  opacity: 0.3;
   transition: all var(--transition-fast);
   width: 24px;
   height: 24px;

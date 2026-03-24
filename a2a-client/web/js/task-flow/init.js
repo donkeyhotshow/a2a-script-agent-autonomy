@@ -17,20 +17,18 @@
     async function ensureProjectSelect(TaskFlow) {
         const sel = document.getElementById('projectSelect');
         if (!sel || sel.options.length > 1) return;
+
+        const populator = global.AppInitialization?._populateProjectSelect;
+        if (typeof populator !== 'function') {
+            console.warn('[TaskFlow] AppInitialization._populateProjectSelect missing, skipping project list refresh');
+            return;
+        }
+
         try {
-            const list = await request('GET', '/projects');
-            const projects = Array.isArray(list) ? list : (list?.projects ?? list?.data);
-            if (!Array.isArray(projects)) {
-                throw new Error('[TaskFlow] GET /projects: expected array or projects/data array');
-            }
-            projects.forEach(p => {
-                const opt = document.createElement('option');
-                opt.value = p.id;
-                opt.textContent = p.name || p.id;
-                sel.appendChild(opt);
-            });
+            const saved = await global.getCurrentProjectId?.();
+            await populator.call(global.AppInitialization, sel, saved);
         } catch (e) {
-            console.error('[TaskFlow] Could not load projects:', e);
+            console.error('[TaskFlow] Could not load projects via AppInitialization:', e);
         }
     }
 

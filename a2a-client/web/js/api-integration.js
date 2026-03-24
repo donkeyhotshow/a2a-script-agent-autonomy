@@ -275,19 +275,11 @@ class APIIntegration {
 
 const apiIntegration = new APIIntegration();
 
-// Global request wrapper (used by task-flow/init.js)
-async function request(method, path, options = {}) {
-    const url = path.startsWith('/') ? path.slice(1) : path;
-    return apiIntegration._fetch(url, { method, ...options });
-}
-
 if (typeof window !== 'undefined') {
     window.APIIntegration = APIIntegration;
-    window.request = request;
     window.apiIntegration = apiIntegration;
 }
 if (typeof global !== 'undefined') {
     global.APIIntegration = APIIntegration;
-    global.request = request;
     global.apiIntegration = apiIntegration;
 }

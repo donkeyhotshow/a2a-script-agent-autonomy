@@ -32,6 +32,30 @@ import x from '@/services/x.js'
 - **ENCRYPTION_KEY** - Must be exactly 32 characters in tests ([`tests/setup.ts`](a2a-server/tests/setup.ts:16))
 - **Test database** - Uses `a2a_test`, not `a2a_server` ([`tests/setup.ts`](a2a-server/tests/setup.ts:13))
 
+### Legacy golden simulations
+- When you touch legacy snapshots/steps under `simulations/…`, treat `context.docVirtual` as retired: every golden request/response should store documented sections inside `context.workbench.sections` (the server still normalizes `docVirtual`, but our golden files must already match the fresh schema).
+- Replace either string or object `docVirtual` values with `"workbench": { "sections": { … } }` and point any transformation paths at `context.workbench.sections`.
+- Update `request.md`, prompt JSON, or other generator inputs so they already emit `workbench` instead of `docVirtual`; this keeps the golden fixture consistent even before any runtime normalization.
+- Single action per execute – For every `response.json`/`received.json` entry under `simulations/…`, keep `execute` limited to exactly one top-level action key (e.g., `form`, `read-file`, `rag-search`). Never batch multiple actions into a single step, and ensure the matching `received.execute` mirrors that single key.
+- Execute values must match `sim-lint` – only the action types listed in `simulations/sim-lint.ts`'s `VALID_EXECUTE_TYPES` are allowed; drop deprecated entries such as `execute.error-recovery` or any other removed types when normalizing a simulation.
+- Result must follow action-key shape – `result` payloads also require exactly one action key so that they follow the same `{ "read-file": {...} }`, `{ "rag-search": {...} }`, etc. pattern. Avoid bare blobs (`result: { "results": … }`, `result: { "content": "…" }`, etc.) in golden responses.
+- Router forms need choice metadata – when a step uses `execute.form.choices` for routing, populate each choice with a descriptive `description` and keep the `id` tied to the stable `ROUTER_CHOICES` values (see `simulations/CLIENT-SDK-IDEAL.md`). This makes the router prompts readable and consistent with the server’s dual form/choice expectations.
+- Form metadata belongs in title/description – keep any long user-facing explanation in `form.title`/`form.description` instead of stuffing it into individual `input` entries. Use the `input[]` array for field definitions (labels, types, placeholders) only and reserve the descriptive text for the form-level fields.
+- Prune `server-response.json` artifacts – normalized simulations should only ship `response.json` + `received.json` (and optional `server-transforms-*.json`). Remove stray `server-response.json` files in step folders when you rewrite the golden fixtures so nothing lingers from the older sync contract.
+- Request.json should follow invoke schema – the first step’s `request.json` needs to mirror the real invocation contract described in `SCHEMA.md`, including a `context.execution` object (router/invoke expectations, action/step info) rather than just `{ "task": "…" }`. This keeps the golden starting point consistent with how the backend builds requests.
+
+### Quick grep helpers (when upgrading a sim)
+- `rg -n "docVirtual" -g '*.json' simulations` – verify legacy docVirtual references are gone.
+- `rg -n '"execute":\\s*\\{[^}]*"(form|script|read-file|rag-search)"' -g '*.json' simulations` – confirm `execute` entries use canonical action keys.
+- `rg -n 'result"\\s*:\\s*{\\s*"content"' -g '*.json' simulations` – find bare result blobs that need action-key shaping.
+- `rg -n 'server-response\\.json' simulations` – locate stray server-response snapshots to delete.
+- `rg -n 'error-recovery' -g '*.json' simulations` – catch deprecated execute types before they slip in.
+
+### Verification
+- `npm run sim:lint -- --all --json`
+- `npm run sim:validate -- --sim <name> --json` (replace `<name>` with the specific simulation you touched)
+- Markdown fixtures must match transforms – when regenerating `request.md`/`response.md` (or other markdown fixtures), keep their embedded JSON aligned with the actual `request.json`/`response.json` outputs: switch to `context.workbench`, keep the single-action `execute` and action-key shaped `result`, and sort/object-serialize fields so the examples stay deterministic after running transforms.
+
 ---
 
 ## A2A Protocol (Critical)

@@ -35,14 +35,21 @@
    
     let activeSessionId = null;
     let taskbarContentEl = null;
+    const ActiveSessionStorage = global.ActiveSessionStorage;
 
     // Use async storage only
     async function writeActiveSessionId(sessionId) {
-        await StorageAPI.sessions.setItem('active-session', sessionId);
+        if (!ActiveSessionStorage?.writeActiveSessionId) {
+            return null;
+        }
+        await ActiveSessionStorage.writeActiveSessionId(sessionId);
     }
 
     async function readActiveSessionId() {
-        return (await StorageAPI.sessions.getItem('active-session')) || null;
+        if (!ActiveSessionStorage?.readActiveSessionId) {
+            return null;
+        }
+        return (await ActiveSessionStorage.readActiveSessionId()) || null;
     }
 
     const SessionManager = {

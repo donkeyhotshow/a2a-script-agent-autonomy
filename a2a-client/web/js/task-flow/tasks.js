@@ -257,10 +257,23 @@
      */
     async function doRun(TaskFlow, task, projectId, contentEl) {
         if (!contentEl) return;
+        if (TaskFlow._doRunRunning) {
+            console.warn('[TaskFlow] doRun already running, ignoring duplicate invocation');
+            return;
+        }
 
+        TaskFlow._doRunRunning = true;
         try {
             // New protocol: send task directly in session creation
-            const sessionRes = await request('POST', '/sessions', { projectId, task, title: task.slice(0, 50) });
+            const api = global.apiIntegration;
+            if (!api?._fetch) {
+                throw new Error('apiIntegration not available');
+            }
+            const payload = { projectId, task, title: task.slice(0, 50) };
+            const sessionRes = await api._fetch('sessions', {
+                method: 'POST',
+                body: JSON.stringify(payload)
+            });
 
             // Vite: { success, session }; SDK: { success, data }; legacy: flat
             const sessionData = sessionRes?.session || sessionRes?.data || sessionRes;
@@ -324,6 +337,8 @@
         } catch (error) {
             console.error('[TaskFlow] Error:', error);
             setPanelContent(contentEl, 'error', { error: error.message, task, projectId }, TaskFlow);
+        } finally {
+            TaskFlow._doRunRunning = false;
         }
     }
 

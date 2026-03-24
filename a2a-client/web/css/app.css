@@ -19,8 +19,7 @@
 }
 
 .modal.active,
-.modal.show,
-.modal:not([style*="none"]) {
+.modal.show {
   display: flex !important;
 }
 

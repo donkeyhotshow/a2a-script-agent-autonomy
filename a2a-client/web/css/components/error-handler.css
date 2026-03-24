@@ -13,7 +13,6 @@
 }
 
 .error-modal-overlay.active,
-.error-modal-overlay.show,
-.error-modal-overlay:not([style*="none"]) {
+.error-modal-overlay.show {
   display: flex !important;
 }
