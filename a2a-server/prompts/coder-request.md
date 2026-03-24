@@ -44,10 +44,12 @@ Rules:
 
 ## Current State
 
+`workbench.sections` holds the task document sections you are building (section1…). Use optional `workbench.batch` / `workbench.slots` when the flow needs a queue or named artifacts.
+
 ```json
 {
   "context": ${context},
-  "docVirtual": ${docVirtual},
+  "workbench": ${workbench},
   "ragResults": ${ragResults}
 }
 ```

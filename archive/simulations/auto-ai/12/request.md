@@ -132,7 +132,7 @@ Rules:
     "success": true
   }
 },
-  "docVirtual": null,
+  "workbench": null,
   "ragResults": null
 }
 ```

@@ -10,7 +10,7 @@ Each subtask should be one short sentence. Output only the list, no markdown.
   "context": {
     "task": "add auth and refactor API",
     "execution": { "action": "task-decomposition", "step": "decompose-subtasks" },
-    "docVirtual": { "section1": "add auth and refactor API" }
+    "workbench": { "sections": { "section1": "add auth and refactor API" } }
   }
 }
 ```

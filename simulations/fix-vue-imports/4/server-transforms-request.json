@@ -7,11 +7,30 @@
       "to": "$out"
     },
     {
-      "op": "set",
-      "path": "$.context.execution",
-      "value": {
-        "action": "fix-vue-imports",
-        "step": "vue-import-fix"
+      "op": "copy",
+      "from": "$.result.script.unresolved_imports",
+      "to": "$.context.unresolved_imports"
+    },
+    {
+      "op": "switch",
+      "discriminator": "$.result.script.partial_escalate",
+      "cases": {
+        "true": {
+          "op": "set",
+          "path": "$.context.execution",
+          "value": {
+            "action": "fix-vue-imports",
+            "step": "vue-import-escalate"
+          }
+        }
+      },
+      "default": {
+        "op": "set",
+        "path": "$.context.execution",
+        "value": {
+          "action": "fix-vue-imports",
+          "step": "vue-import-apply"
+        }
       }
     }
   ]

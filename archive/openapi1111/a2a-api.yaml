@@ -346,8 +346,9 @@ components:
           type: array
           items:
             type: object
-        docVirtual:
-          type: string
+        workbench:
+          type: object
+          additionalProperties: true
         aliases:
           type: object
           additionalProperties:

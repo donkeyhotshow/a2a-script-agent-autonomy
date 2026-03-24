@@ -109,7 +109,7 @@ a2a-server/prompts/transforms/
 {
   "context": {...},
   "result": {...},
-  "docVirtual": null,
+  "workbench": null,
   "ragResults": null
 }
 ```

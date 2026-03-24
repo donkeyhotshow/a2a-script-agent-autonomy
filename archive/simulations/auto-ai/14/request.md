@@ -143,7 +143,7 @@ Rules:
     "stdout": "PASS tests/api.test.js"
   }
 },
-  "docVirtual": null,
+  "workbench": null,
   "ragResults": null
 }
 ```

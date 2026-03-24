@@ -48,10 +48,10 @@ export class Session {
             console.warn('[Session] DEBUG: history using [] fallback - data.context?.history:', data.context?.history);
         }
         this.history = data.context?.history || [];
-        if (data.context?.docVirtual === undefined || data.context?.docVirtual === null) {
-            console.warn('[Session] DEBUG: docVirtual using empty string fallback');
+        this.workbench = data.context?.workbench ?? null;
+        if (!this.workbench) {
+            console.warn('[Session] DEBUG: workbench empty');
         }
-        this.docVirtual = data.context?.docVirtual || '';
     }
 
     /**
@@ -150,13 +150,21 @@ export class Session {
     }
 
     /**
-     * Update docVirtual (new protocol)
-     * @param {string} content - Virtual document content
-     * @see docs/new-request-flow/PROTOCOL.md#docvirtual
+     * Replace or merge context.workbench (sections / batch / slots).
+     * @param {Record<string, unknown>|string} patch - object merged into workbench, or string → sections.body
      */
-    updateDocVirtual(content) {
-        this.docVirtual = content;
-        this.context.docVirtual = content;
+    updateWorkbench(patch) {
+        const cur =
+            this.context.workbench && typeof this.context.workbench === 'object' && !Array.isArray(this.context.workbench)
+                ? { ...this.context.workbench }
+                : {};
+        if (typeof patch === 'string') {
+            cur.sections = { ...(cur.sections || {}), body: patch };
+        } else if (patch && typeof patch === 'object' && !Array.isArray(patch)) {
+            Object.assign(cur, patch);
+        }
+        this.workbench = cur;
+        this.context.workbench = cur;
         this.updatedAt = new Date().toISOString();
     }
 

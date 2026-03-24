@@ -9,6 +9,7 @@ import {join, dirname} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {prepareInvokePayloadForLlmPrompt} from '../src/transform/materialize-result-for-llm.js';
 import {attachFlowControlHintToInvokePayload} from '../src/prompts/flow-control-hints.js';
+import {attachWorkbenchForLlmPrompt} from '../src/transform/workbench-normalize.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = join(__dirname, '..', '..');
@@ -42,11 +43,12 @@ for (const stepDir of entries.sort()) {
     const input = JSON.parse(readFileSync(reqPath, 'utf8')) as Record<string, unknown>;
     const clone = prepareInvokePayloadForLlmPrompt(JSON.parse(JSON.stringify(input)) as Record<string, unknown>);
     attachFlowControlHintToInvokePayload(clone);
+    attachWorkbenchForLlmPrompt(clone);
     const ctx = clone.context;
     const md = renderTemplate(tpl, {
         flowControlHint: clone.flowControlHint,
         context: ctx,
-        docVirtual: clone.docVirtual ?? null,
+        workbench: clone.workbench ?? null,
         ragResults: clone.ragResults ?? null,
     });
     writeFileSync(join(stepDir, 'request.md'), md, 'utf8');

@@ -1,62 +1,33 @@
 # Simulation: fix-vue-imports
 
-## Опис
+## Workflow (golden)
 
-Тестуємо екшен "Виправити зламані імпорти у Vue файлах".
+1. Client → Server: початковий `task`
+2. Server → Client: `execute.form` (router)
+3. Client → Server: `result.choice: fix-vue-imports`
+4. Server → Client: `execute.script` (vue-import-detect)
+5. Client → Server: `result.script.broken_imports[]`
+6. Server → Client: `execute.script` (vue-import-resolve)
+7. Client → Server: `result.script` з `partial_escalate`, `patches[]`, `unresolved_imports[]`, лічильниками
+8. Server → Client: `execute.form` — **Coder** vs **fix-vue-imports-done-partial**
+9. Client → Server: `result.choice: coder`
+10. Server → Client: `execute.message` (handoff) + `result` з `handoff_mode: coder`
 
-## Workflow
+Трансформ гілки після resolve: `fix-vue-imports-4-request.json` (`switch` за `partial_escalate`).
 
-```
-1. Client → Server: { task: "виправити імпорти у vue компонентах" }
-              ↓
-2. Server → Client: { context, execute.form: choices [fix-vue-imports, auto-ai, task-decomposition] }  (no-LLM first, fallback merged)
-              ↓
-3. Client → Server: { context, result: { choice: "fix-vue-imports" } }
-              ↓
-4. Server → Client: { context, execute: { rag-search } } - internal step: vue-import-detect
-              ↓
-5. Client → Server: { context, result: { "rag-search": { results: [...] } } }
-              ↓
-6. Server → Client: { context, execute: { rag-search } } - internal step: vue-import-resolve
-              ↓
-7. Client → Server: { context, result: { "rag-search": { results: [...] } } }
-              ↓
-8. Server → Client: { context, execute: { write-file } } - internal step: vue-import-apply
-              ↓
-9. Client → Server: { context, result: { "write-file": { path: "...", success: true } } }
-              ↓
-10. Server → Client: { context, execute: { execute-command } } - internal step: vue-import-cleanup
-              ↓
-11. Client → Server: { context, result: { "execute-command": { exitCode: 0 } } }
-              ↓
-N. Server → Client: { context, finalResult }
-```
+## Internal steps
 
-## Internal Steps (server-side only)
-
-These are internal identifiers used by the server to track progress. The actual client actions are:
-
-1. **vue-import-detect** (internal) → executes `rag-search` on client
-2. **vue-import-resolve** (internal) → executes `rag-search` on client
-3. **vue-import-apply** (internal) → executes `write-file` on client
-4. **vue-import-cleanup** (internal) → executes `execute-command` on client
-
-## Actual Client Actions
-
-- `rag-search` - для пошуку файлів та битих імпортів
-- `write-file` - для запису виправлень
-- `execute-command` - для запуску команд (очищення)
-
-## Очікувані результати
-
-- Сервер пропонує форму вибору: fix-vue-imports (без LLM, пріоритет), auto-ai, task-decomposition (fallback злиті в
-  choices)
-- Кожен крок повертає execute з відповідною дією клієнта
-- Фінальний крок повертає finalResult
+1. **vue-import-detect** → `execute.script`
+2. **vue-import-resolve** → `execute.script`
+3. **vue-import-escalate** → `execute.form` (якщо скрипт не закрив усі імпорти)
+4. Handoff у **Coder** — фінальний крок симуляції
 
 ## Правила
 
-1. **Context**: Сервер повністю керує context. Клієнт НЕ додає нічого до context.
-2. **Result**: Результат клієнта завжди поза context.
-3. **Context propagation**: У кожному новому запиті context такий самий як у попередній відповіді.
-4. **Stateless server**: Сервер не зберігає sessionId/projectId - вони залишаються на боці клієнта.
+1. **Context**: сервер керує `context`; клієнт не додає полів до `context` без контракту.
+2. **Result**: результат клієнта поза `context`.
+3. **Перенесення в Coder**: у `context` лишаються `unresolved_imports` для наступного режиму.
+
+## Відмова від Coder + роутер
+
+Див. [`fix-vue-imports-decline/analysis.md`](../fix-vue-imports-decline/analysis.md).

@@ -23,7 +23,7 @@ When improving the client, upgrade the matching `received.json` / `response.json
 Simulations describe the **sync request-response contract** (client.json → received.json). Runtime systems add promise handling on top; that logic is outside simulation scope.
 
 > **Примечание о context:** Поля внутри `context` курируются системой. Стандартные поля: `execution`, `history`,
-> `files`, `scratchpad`, `scratchpad_ops`. Остальные (`vite_config`, `aliases` и т.д.) — свободный формат.
+> `files`, `scratchpad`, `scratchpad_ops`, `workbench`. Остальные (`vite_config`, `aliases` и т.д.) — свободный формат.
 
 ## File layout (per step)
 
@@ -226,12 +226,63 @@ default: `.carrier/reports/` (e.g. `architecture-report.md`).
 | `files` | object | `{ "path": "<full content>" }` — working set прочитаних файлів. Не в history |
 | `scratchpad` | object | `{ "item_key": true/false }` — checklist стану задачі. Оновлюється через `scratchpad_ops` |
 | `scratchpad_ops` | array | Команди від LLM: `[{ "op": "check"|"add"|"remove", "item": "..." }]`. Сервер застосовує і видаляє поле |
+| `workbench` | object | **`sections`** — named text chunks (draft doc / task spec); optional **`batch`** (`items`, `cursor`, `label`) for sequential work; optional **`slots`** — named JSON blobs. Canonical multi-step accumulator. |
 
 **Правило history:** великі дані (вміст файлів, stdout команд) не потрапляють в history. Тільки стислий `system` запис:
 ```json
 { "role": "system", "message": "Read src/app.js (142 lines)" }
 ```
 Повний вміст — в `context.files[path]`.
+
+## Sequential multi-step flows and accumulated context
+
+**“Batch” is not only `script` iterating a file list.** The same idea applies whenever the product must **process units in sequence** (files, RAG pages, checklist rows, subtasks, form gates) and **carry outcomes forward** for the next server decision.
+
+### Pattern (all modes)
+
+1. **Server-driven ordering** — `context.execution` (`action`, `step`, optional `progress`) selects the next unit of work. The client returns **`result`** in **action-key** shape; the server chooses the following `execute`.
+2. **Accumulation** — each `result` is merged into context (via server logic / transforms / session merge) so the next `request.json` is **not** stateless:
+   - **`context.history`** — short `user` / `assistant` / `system` lines (no full file bodies in history).
+   - **`context.files`** — read contents keyed by path; tool summaries as system lines + payloads here when needed.
+   - **`context.scratchpad` / `scratchpad_ops`** — checklist and structured flags.
+   - **`context.workbench`** — structured state: `sections` (draft doc), optional `batch`, `slots`.
+   - **Flow-specific fields** — e.g. `broken_uses`, `patches`, scan state; document them in the sim; prefer mapping into the canonical fields above when possible.
+3. **Mixed `execute` types** — a sequence may alternate **`script`**, **`rag-search`**, **`read-file`**, **`form`** (human confirmation), **`message`**, **`write-file`**, **`execute-command`**, and LLM-chosen steps. The contract is always: **one active `execute` key** → client runs → **`result`** → context update → next step.
+4. **LLM flows** — AI-Actions use the same accumulation idea: each round updates `history` / `execution` / `workbench`; “batch” can mean **many tool or LLM rounds**, not a single client script loop.
+
+### Golden simulations (by mechanism)
+
+| Simulation | What is “batched” / sequential | Where data accumulates |
+|------------|--------------------------------|-------------------------|
+| `fix-vue-imports-batched` | Many files: inventory → `rag-search` per file → apply `script` | `execution.progress`, `result` chains between steps |
+| `fix-laravel-namespaces-and-uses` | Pipeline of `script` steps | Structured `result` passed forward (detect → resolve → apply) |
+| `coder-smart-v2` | Checklist / execute-item loop | `workbench.sections`, task file on disk; history reset per item by design |
+| `coder` / `analyze` | RAG → read-file / forms | `history`, `files`, forms as gates |
+| `task-decomposition` | Progressive breakdown | `history`, execution step labels |
+
+### Planned batch-style flows (roadmap)
+
+Use this table to **prioritize simulations and server behavior** before implementation. Status: **golden** = has step-by-step `simulations/<name>/`; **partial** = one path only or undocumented accumulation; **gap** = design TBD.
+
+| Flow | Units in sequence | Accumulation target | Status | Notes |
+|------|-------------------|---------------------|--------|--------|
+| Vue imports (batched) | Files × (`script` → `rag-search` → …) | `execution.progress`, prior `result` | **golden** | `fix-vue-imports-batched` |
+| Laravel use/namespace fix | Stages (detect → resolve → apply) | Structured `result` between `script` steps | **golden** | `fix-laravel-namespaces-and-uses` |
+| Coder smart v2 checklist | Checklist items / execute-item | `workbench.sections`, task file; history reset per item | **golden** | By design |
+| RAG **paginated** drain | Pages until `hasMore: false` | Merge hits into `history` + optional `files` / summary object | **gap** | Contract: fold pages in transforms; sim for 2+ pages |
+| Multi **`read-file` queue** | Paths from plan or script | `context.files`, short system lines | **gap** | Same pattern as batched RAG; explicit `execution` cursor |
+| Large repo **chunked scan** | Chunks of paths (checkpoint/resume) | `scan_state` or equivalent in context | **gap** | See `a2a-server/docs/plans-archive/fix-vue-imports-alternatives-design.md` (batch2 sketch) |
+| **Auto-AI v2** tool loop | LLM turns + tools | `files`, `scratchpad`, history | **partial** | Formalize max steps, failure mid-batch, single `execute` per round |
+| **Human gate** every N units | Batch size N then `form` | User choice merges into `result` → server continues queue | **gap** | UI + sim: “approve next chunk” |
+| **Parallel** client work | Multiple paths in one `script` | Single `result` blob (array) vs sequential | **design** | Prefer sequential goldens first; parallel = one `execute` returning many results |
+
+**Planning order (suggested):** (1) **RAG pagination** sim — smallest extension to existing `rag-search` contract. (2) **read-file queue** — mirrors file batch without LLM. (3) **Chunked scan** — only when real repos exceed client timeouts. (4) **Human gate** — product/UX dependent.
+
+### Authoring checklist
+
+- State explicitly **where** each step’s `result` is folded (history vs `files` vs scratchpad vs custom).
+- Keep **one top-level key under `execute`** per step ([`CLIENT-SDK-IDEAL.md`](CLIENT-SDK-IDEAL.md)).
+- If the flow loops, define **termination** (last index, empty queue, `completed` in `execution`, or final `form`).
 
 ## Reference sims
 
@@ -241,7 +292,7 @@ default: `.carrier/reports/` (e.g. `architecture-report.md`).
 - **analyze**: анализ архитектуры проекта; AI ищет документацию и выявляет несоответствия
 - **task-decomposition**: декомпозиция задач; прогрессивное разбиение задачи на подзадачи/шаги/действия
 - **fix-vue-imports**: actions-based симуляция; исправление импортов в Vue файлах (алгоритмический подход)
-- **fix-vue-imports-batched**: пакетная обработка; исправление импортов в нескольких файлах
+- **fix-vue-imports-batched**: sequential multi-step flow (script → repeated rag-search → script); see **Sequential multi-step flows** above
 - **phpunit-deprecations**: поиск устаревших PHPUnit методов
 - **test-action-flow**: тест полного потока выбора действий
 - **auto-ai**: полные возможности системы; все типы execute команд в одном сценарии

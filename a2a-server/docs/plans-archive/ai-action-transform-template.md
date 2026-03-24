@@ -215,7 +215,7 @@ Rules:
 {
   "context": ${context},
   "result": ${result},
-  "docVirtual": ${docVirtual},
+  "workbench": ${workbench},
   "ragResults": ${ragResults}
 }
 ```

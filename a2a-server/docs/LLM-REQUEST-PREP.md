@@ -7,6 +7,7 @@ Relevant code:
 - [`runPromptsTransform`](../src/transform/pipeline.ts) — entry: clones request transforms input, runs prep, runs pipeline.
 - [`prepareInvokePayloadForLlmPrompt`](../src/transform/materialize-result-for-llm.ts) — folds `result` into `context.history`, clears `result`.
 - [`attachFlowControlHintToInvokePayload`](../src/prompts/flow-control-hints.ts) — sets `flowControlHint` from `execution.action` + `execution.step`.
+- [`attachWorkbenchForLlmPrompt`](../src/transform/workbench-normalize.ts) — canonical `context.workbench`, root `workbench` for templates; strips stray `docVirtual` after folding into `sections`.
 
 ---
 
@@ -60,6 +61,20 @@ Templates inject it with **`${flowControlHint}`** (see `render-markdown` / `rend
 Edit **`BY_ACTION_STEP`** in [`src/prompts/flow-control-hints.ts`](../src/prompts/flow-control-hints.ts). Use stable `action` / `step` values that your client and response transform actually persist in `context.execution`.
 
 Custom simulation-only markdown (e.g. under `simulations/.../request.md` templates) must include **`${flowControlHint}`** manually if you want the same behavior.
+
+---
+
+## 2b. `context.workbench` (structured working state)
+
+After flow hints, **`attachWorkbenchForLlmPrompt`** runs (see [`src/transform/workbench-normalize.ts`](../src/transform/workbench-normalize.ts)) on the same request clone.
+
+| Shape | Behavior |
+|-------|----------|
+| `context.workbench` | Copied through; merged with any stray `context.docVirtual` into `sections` if `sections` was missing. |
+| Only `context.docVirtual` (old clients) | Folded into `workbench.sections`, then **`docVirtual` is removed** from the clone so the model never sees both. |
+| Root for templates | **`workbench`** only (`${workbench}`). |
+
+**`workbench`** may include **`sections`**, **`batch`**, **`slots`**. Do not send `docVirtual` in new integrations.
 
 ---
 

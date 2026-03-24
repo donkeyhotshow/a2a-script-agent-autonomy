@@ -82,7 +82,7 @@
               "items": { "$ref": "#/definitions/HistoryEntry" }
             },
             "execution": { "$ref": "#/definitions/ExecutionContext" },
-            "docVirtual": { "type": "string" }
+            "workbench": { "type": "object", "additionalProperties": true }
           }
         },
         "result": { "$ref": "#/definitions/ActionKeyShape" }

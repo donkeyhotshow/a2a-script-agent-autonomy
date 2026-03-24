@@ -138,7 +138,7 @@ Rules:
     "stdout": ""
   }
 },
-  "docVirtual": null,
+  "workbench": null,
   "ragResults": null
 }
 ```

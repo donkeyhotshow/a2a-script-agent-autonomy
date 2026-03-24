@@ -31,7 +31,7 @@ export class Session {
         // New protocol fields
         this.execution = data.context?.execution || null;
         this.history = data.context?.history || [];
-        this.docVirtual = data.context?.docVirtual || '';
+        this.workbench = data.context?.workbench ?? null;
     }
 
     /**
@@ -130,13 +130,20 @@ export class Session {
     }
 
     /**
-     * Update docVirtual (new protocol)
-     * @param {string} content - Virtual document content
-     * @see docs/new-request-flow/PROTOCOL.md#docvirtual
+     * @param {Record<string, unknown>|string} patch - merged into context.workbench, or string → sections.body
      */
-    updateDocVirtual(content) {
-        this.docVirtual = content;
-        this.context.docVirtual = content;
+    updateWorkbench(patch) {
+        const cur =
+            this.context.workbench && typeof this.context.workbench === 'object' && !Array.isArray(this.context.workbench)
+                ? { ...this.context.workbench }
+                : {};
+        if (typeof patch === 'string') {
+            cur.sections = { ...(cur.sections || {}), body: patch };
+        } else if (patch && typeof patch === 'object' && !Array.isArray(patch)) {
+            Object.assign(cur, patch);
+        }
+        this.workbench = cur;
+        this.context.workbench = cur;
         this.updatedAt = new Date().toISOString();
     }
 

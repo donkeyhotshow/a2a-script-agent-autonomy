@@ -97,7 +97,7 @@ Rules:
     "path": "src/app.js"
   }
 },
-  "docVirtual": null,
+  "workbench": null,
   "ragResults": null
 }
 ```

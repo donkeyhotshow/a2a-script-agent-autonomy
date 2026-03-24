@@ -13,7 +13,7 @@
     },
     {
       "op": "truncate-section",
-      "path": "context.docVirtual",
+      "path": "context.workbench.sections",
       "maxChars": 8000
     },
     {

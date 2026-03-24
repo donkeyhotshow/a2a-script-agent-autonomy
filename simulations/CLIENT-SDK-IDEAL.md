@@ -10,7 +10,7 @@ Golden simulations under `simulations/` define what **Web** and **`@a2a/sdk`** s
 | `response.json` | **SDK session merge** — same payload the server hands the Client API before envelope wrapping. |
 | `client.json` | Web → Client API (body the SDK route receives). |
 
-`a2a-client/packages/sdk/src/server/services/transforms/session-transform.ts` merges `context`, `execute`, `messages`, `history`, `docVirtual`, `finalResult`. Ideal `response.json` / `received.json` should carry every field the UI or persistence layer needs.
+`a2a-client/packages/sdk/src/server/services/transforms/session-transform.ts` merges `context`, `execute`, `messages`, `history`, `workbench`, `finalResult`. Ideal `response.json` / `received.json` should carry every field the UI or persistence layer needs.
 
 ## Execute: action-key shape (mandatory)
 
@@ -45,7 +45,7 @@ SDK merges string or `{ content }` into session messages (`session-transform.ts`
 | `task` | Required by invoke response schema; shown in UI headers. |
 | `execution.action` / `execution.step` | Routing, flow hints, step labels. |
 | `history` | Chat / tool summary lines (`user` / `assistant` / `system`). |
-| `docVirtual` | Coder-style virtual doc (truncate-section, etc.). |
+| `workbench` | Structured flow state: `sections`, optional `batch`, optional `slots`. Use `truncate-section` on `context.workbench.sections` when trimming for the LLM. |
 | `files` | Working set (ISSUE 6) — SDK should persist when present. |
 | `scratchpad` | Checklist flags — persist when present. |
 
@@ -60,5 +60,9 @@ Per `SCHEMA.md`: `promiseId`, polling, `execute.wait` / loader timing. Document 
 3. **Form fields** use SDK-allowed `type` values only.  
 4. **Router steps** list the same `id`s the server exposes (`action-request-processor` `ROUTER_CHOICES`).  
 5. Add **`description`** on at least primary `choices` so the UI golden is non-ambiguous.
+
+## Sequential steps and accumulated context (any mode)
+
+“Batching” is **not** only `script` over many files. Any flow that runs **multiple rounds** (RAG, read-file, forms, LLM turns, checklist items) should document **where each `result` is merged** (`history`, `files`, `scratchpad`, `workbench`, or flow-specific fields) so the next request has deterministic state. See **`simulations/SCHEMA.md` → Sequential multi-step flows and accumulated context**.
 
 Reference upgraded step: **`simulations/dialog/1`**.

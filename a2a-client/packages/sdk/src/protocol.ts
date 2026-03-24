@@ -54,7 +54,7 @@ export function buildProtocolContext(
     options?: {
         execution?: { action: string; step: string; status?: string; progress?: number };
         history?: Array<{ action: string; step: string; result?: unknown; timestamp: string }>;
-        docVirtual?: string;
+        workbench?: unknown;
         newTask?: string[];
         architecturalFeatures?: string[];
         continue?: boolean;
@@ -72,7 +72,7 @@ export function buildProtocolContext(
     
     if (options?.execution) ctx.execution = options.execution;
     if (options?.history) ctx.history = options.history;
-    if (options?.docVirtual) ctx.docVirtual = options.docVirtual;
+    if (options?.workbench !== undefined) ctx.workbench = options.workbench;
     if (options?.newTask) ctx.new_task = options.newTask;
     if (options?.architecturalFeatures) ctx.architectural_features = options.architecturalFeatures;
     if (options?.continue) ctx.continue = options.continue;

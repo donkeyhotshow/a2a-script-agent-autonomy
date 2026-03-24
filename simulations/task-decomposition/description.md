@@ -49,7 +49,7 @@ File in **`.carrier/tasks/<id>.md`** (or equivalent):
 ## Rules
 
 - Dialog via **execute.form** (message) and **result.message**.
-- Before write, document lives in server context/state as `docVirtual`.
+- Before write, document sections live in `context.workbench.sections`.
 - After write, each iteration: history = [doc content], LLM returns result + updatedTaskDoc, client updates file.
 
 ## Simulation file structure

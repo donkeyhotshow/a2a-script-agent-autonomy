@@ -327,7 +327,7 @@ npm run sim:compare fix-vue-imports
 
 - `context.history` - массив выполненных шагов
 - `context.execution` - текущее состояние выполнения
-- `context.docVirtual` - виртуальный документ
+- `context.workbench` - структурированное рабочее состояние (`sections`, опционально `batch`, `slots`)
 
 ## CI/CD Интеграция
 

@@ -6,10 +6,12 @@
       "step": "decompose-actions"
     },
     "history": [],
-    "docVirtual": {
-      "section1": "add auth and refactor API",
-      "section2": "1. Add JWT auth middleware and login endpoint\n2. Protect existing API routes with auth\n3. Refactor API module structure and error handling\n4. Add integration tests for auth and protected routes",
-      "section3": "## Subtask 1\n- Create JWT sign/verify helpers\n- Add POST /login route and handler\n- Wire auth middleware into app\n## Subtask 2\n- Apply auth middleware to protected routes\n- Return 401 when token missing or invalid\n## Subtask 3\n- Split API into modules (auth, users, core)\n- Add centralized error handler and status codes\n## Subtask 4\n- Add tests for POST /login and token flow\n- Add tests for protected routes (401/200)"
+    "workbench": {
+      "sections": {
+        "section1": "add auth and refactor API",
+        "section2": "1. Add JWT auth middleware and login endpoint\n2. Protect existing API routes with auth\n3. Refactor API module structure and error handling\n4. Add integration tests for auth and protected routes",
+        "section3": "## Subtask 1\n- Create JWT sign/verify helpers\n- Add POST /login route and handler\n- Wire auth middleware into app\n## Subtask 2\n- Apply auth middleware to protected routes\n- Return 401 when token missing or invalid\n## Subtask 3\n- Split API into modules (auth, users, core)\n- Add centralized error handler and status codes\n## Subtask 4\n- Add tests for POST /login and token flow\n- Add tests for protected routes (401/200)"
+      }
     }
   },
   "result": {

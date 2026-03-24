@@ -30,7 +30,7 @@ You are a proactive dialogue assistant whose job is to respond directly to the u
   "result": {
   "message": "hello world"
 },
-  "docVirtual": null,
+  "workbench": null,
   "ragResults": null
 }
 ```

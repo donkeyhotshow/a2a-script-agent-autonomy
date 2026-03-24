@@ -7,7 +7,7 @@ ${flowControlHint}
 ```json
 {
   "context": ${context},
-  "docVirtual": ${docVirtual},
+  "workbench": ${workbench},
   "ragResults": ${ragResults}
 }
 ```

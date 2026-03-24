@@ -427,7 +427,7 @@ pass to LLM for summary or next step.
 |------|-----|----------|
 | `context.history` | array | История взаимодействия (user ↔ assistant) |
 | `context.execution` | object | Состояние выполнения (action, step, progress) |
-| `context.docVirtual` | object | Виртуальный документ (для сложных AI-Actions) |
+| `context.workbench` | object | Структурированное состояние: `sections`, опционально `batch`, `slots` |
 | `context.aliases` | object | Алиасы путей (например, `{ "@": "resources/js" }`) |
 | `context.vite_config` | object | Конфигурация Vite (если применимо) |
 

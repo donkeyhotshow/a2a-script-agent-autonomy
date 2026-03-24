@@ -103,7 +103,7 @@ Rules:
     "path": "src/"
   }
 },
-  "docVirtual": null,
+  "workbench": null,
   "ragResults": null
 }
 ```

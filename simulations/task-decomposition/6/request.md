@@ -17,4 +17,4 @@ Output only the actions, no extra text.
 
 ## Current state
 
-Task and steps are in docVirtual (section1, section2, section3); use them to generate section4 (actions).
+Task and steps are in `workbench.sections` (section1, section2, section3); use them to generate section4 (actions).

@@ -11,7 +11,7 @@ import type { Session, Project } from '../../models/session.model.js';
  * Updates session with data from server response
  * 
  * Extracts and applies:
- * - context (version, execution, history, docVirtual)
+ * - context (version, execution, history, workbench)
  * - execute (form, message)
  * - messages
  * - exchangeLog
@@ -101,10 +101,9 @@ export async function updateSessionWithServerResponse(
         updatedSession.context.history = serverResponse.context.history;
     }
     
-    // Update docVirtual (new protocol)
-    if (serverResponse?.context?.docVirtual) {
+    if (serverResponse?.context?.workbench !== undefined) {
         updatedSession.context = updatedSession.context || {};
-        updatedSession.context.docVirtual = serverResponse.context.docVirtual;
+        updatedSession.context.workbench = serverResponse.context.workbench;
     }
     
     updatedSession.updatedAt = new Date().toISOString();

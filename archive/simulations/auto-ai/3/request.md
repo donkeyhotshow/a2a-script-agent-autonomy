@@ -76,7 +76,7 @@ Rules:
   "result": {
   "message": "Refactor the API: add a logging middleware, add a health check endpoint, update the API tests, run lint and tests, and write a short report to .carrier/reports/."
 },
-  "docVirtual": null,
+  "workbench": null,
   "ragResults": null
 }
 ```

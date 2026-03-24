@@ -60,6 +60,8 @@ Rules:
 
 ## Current State
 
+`workbench` is structured working memory: `sections` (named text chunks), optional `batch` (`items`, `cursor`, `label`), optional `slots` (named JSON blobs).
+
 ```json
 {
   "context": {
@@ -107,7 +109,7 @@ Rules:
     }
   ]
 },
-  "docVirtual": null,
+  "workbench": null,
   "ragResults": null
 }
 ```

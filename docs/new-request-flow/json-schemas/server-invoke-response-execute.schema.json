@@ -42,9 +42,10 @@
             "additionalProperties": true
           }
         },
-        "docVirtual": {
+        "workbench": {
           "type": "object",
-          "description": "Virtual document state for accumulating content across steps."
+          "description": "Structured working state (sections, optional batch, optional slots).",
+          "additionalProperties": true
         }
       },
       "additionalProperties": true

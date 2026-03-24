@@ -11,6 +11,7 @@ import { applyOperation, createDefaultFileSystem } from './operations.js';
 import { resolveTemplates } from './jsonpath.js';
 import { prepareInvokePayloadForLlmPrompt } from './materialize-result-for-llm.js';
 import { attachFlowControlHintToInvokePayload } from '../prompts/flow-control-hints.js';
+import { attachWorkbenchForLlmPrompt } from './workbench-normalize.js';
 import type { 
   TransformPipeline, 
   TransformContext, 
@@ -182,6 +183,7 @@ const SCHEMA_TO_TEMPLATE: Record<string, string> = {
   coder: 'coder-request.md',
   analyze: 'analyze-request.md',
   'fix-vue-imports': '',  // DSL script, no LLM; uses fix-vue-imports-*-request.json
+  'fix-vue-imports-decline': '',
   'fix-laravel-namespaces-and-uses': '',
   'task-decomposition': 'task-decomposition-request.md',
   'test-action-flow': 'test-action-flow-request.md',
@@ -195,6 +197,7 @@ export const SIMULATION_TO_SCHEMA: Record<string, string> = {
   analyze: 'analyze',
   'auto-ai-v2': 'auto-ai',
   'fix-vue-imports': 'fix-vue-imports',
+  'fix-vue-imports-decline': 'fix-vue-imports-decline',
   'fix-vue-imports-batched': 'fix-vue-imports',
   'fix-laravel-namespaces-and-uses': 'fix-laravel-namespaces-and-uses',
   'task-decomposition': 'task-decomposition',
@@ -293,6 +296,7 @@ export async function loadPromptsTransform(
  * For `type === 'request'`, the input is cloned and `prepareInvokePayloadForLlmPrompt` runs first:
  * `result.message` → `context.history` as user; each other `result` key → system line; then `result` is cleared.
  * Then `attachFlowControlHintToInvokePayload` sets `flowControlHint` from `context.execution.action` + `step` for templates.
+ * Then `attachWorkbenchForLlmPrompt` sets `context.workbench` and root `workbench` for templates (see workbench-normalize.ts).
  */
 export async function runPromptsTransform(
   promptsTransformsDir: string,
@@ -316,6 +320,7 @@ export async function runPromptsTransform(
   if (type === 'request') {
     const clone = prepareInvokePayloadForLlmPrompt(JSON.parse(JSON.stringify(input)) as Record<string, unknown>);
     attachFlowControlHintToInvokePayload(clone);
+    attachWorkbenchForLlmPrompt(clone);
     pipelineInput = clone;
   }
   return runTransformPipeline(pipeline, pipelineInput, { ...transformOptions, baseDir });

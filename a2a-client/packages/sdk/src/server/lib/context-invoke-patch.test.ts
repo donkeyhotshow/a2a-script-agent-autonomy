@@ -17,7 +17,7 @@ describe('pickInvokeContextPatch', () => {
                 history: [{ role: 'user', message: 'hi' }],
                 files: { 'a.ts': 'code' },
                 scratchpad: { done: true },
-                docVirtual: { s1: 'x' },
+                workbench: { sections: { s1: 'y' } },
                 ragResults: [1],
                 version: '2.0',
                 junk: { nested: true },
@@ -29,7 +29,7 @@ describe('pickInvokeContextPatch', () => {
             history: [{ role: 'user', message: 'hi' }],
             files: { 'a.ts': 'code' },
             scratchpad: { done: true },
-            docVirtual: { s1: 'x' },
+            workbench: { sections: { s1: 'y' } },
             ragResults: [1],
             version: '2.0',
         });

@@ -95,7 +95,7 @@ LLM controls `context.execution.step`, server persists via transforms. Prompt fo
 
 - `context.history` - Array of execution records
 - `context.execution` - Current state: `{ action, step, progress }`
-- `context.docVirtual` - Virtual document state for accumulating content
+- `context.workbench` - Structured working state (`sections`, optional `batch`, optional `slots`) for multi-step flows
 - `context.session_id` - Session identifier for tracking
 
 ### Simulation Pipeline

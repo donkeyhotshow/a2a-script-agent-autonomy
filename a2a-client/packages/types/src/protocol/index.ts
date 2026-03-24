@@ -51,7 +51,7 @@ export interface ProtocolContextBlock {
   session_id: string;
   execution?: ExecutionContext;
   history?: HistoryEntry[];
-  docVirtual?: string;
+  workbench?: unknown;
   // Legacy fields (for backwards compatibility)
   new_task?: string[];
   architectural_features?: string[];

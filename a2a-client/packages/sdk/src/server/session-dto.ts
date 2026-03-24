@@ -132,7 +132,7 @@ export interface SessionContext {
         status?: string;
     };
     history?: unknown[];
-    docVirtual?: unknown;
+    workbench?: unknown;
     [key: string]: unknown;
 }
 
@@ -241,12 +241,12 @@ export function createExecuteInfo(
 export function createSessionContext(
     execution?: SessionContext['execution'],
     history?: unknown[],
-    docVirtual?: unknown
+    workbench?: unknown
 ): SessionContext {
     return {
         execution,
         history: history || [],
-        docVirtual,
+        workbench,
     };
 }
 

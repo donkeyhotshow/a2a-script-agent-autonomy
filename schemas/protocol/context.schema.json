@@ -66,9 +66,27 @@
         "additionalProperties": true
       }
     },
-    "docVirtual": {
-      "type": "string",
-      "description": "Virtual document state for accumulating content across steps"
+    "workbench": {
+      "type": "object",
+      "description": "Structured working state: sections (named text), optional batch (items/cursor/label), optional slots (named JSON).",
+      "additionalProperties": true,
+      "properties": {
+        "sections": {
+          "type": "object",
+          "additionalProperties": { "type": "string" },
+          "description": "Named draft chunks (e.g. task spec sections)."
+        },
+        "batch": {
+          "type": "object",
+          "description": "Sequential processing cursor + queue",
+          "additionalProperties": true
+        },
+        "slots": {
+          "type": "object",
+          "description": "Named payloads (patches, summaries, arbitrary JSON)",
+          "additionalProperties": true
+        }
+      }
     },
     "vite_config": {
       "type": "object",
@@ -92,7 +110,7 @@
         "step": "vue-import-detect"
       },
       "history": [],
-      "docVirtual": ""
+      "workbench": { "sections": {} }
     },
     {
       "task": "виправити імпорти у vue компонентах",

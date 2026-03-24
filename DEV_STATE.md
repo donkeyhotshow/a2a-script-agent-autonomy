@@ -42,6 +42,9 @@
 | **a2a-client** | Web UI, Client API, Session Management | [`a2a-client/DEV_STATE.md`](a2a-client/DEV_STATE.md) |
 | **a2a-server** | Request Processing, Neurons, Storage | [`a2a-server/DEV_STATE.md`](a2a-server/DEV_STATE.md) |
 | **ai-integration** | AI Proxy, Ollama, Promises | [`ai-integration/DEV_STATE.md`](ai-integration/DEV_STATE.md) |
+| **docs** | Project documentation | [`docs/DEV_STATE.md`](docs/DEV_STATE.md) |
+| **scripts** | Development and testing scripts | [`scripts/DEV_STATE.md`](scripts/DEV_STATE.md) |
+| **simulations** | Test simulations and scenarios | [`simulations/DEV_STATE.md`](simulations/DEV_STATE.md) |
 
 ---
 

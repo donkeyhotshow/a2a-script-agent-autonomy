@@ -104,7 +104,7 @@ Rules:
     "total": 2
   }
 },
-  "docVirtual": null,
+  "workbench": null,
   "ragResults": null
 }
 ```

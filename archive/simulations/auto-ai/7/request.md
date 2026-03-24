@@ -103,7 +103,7 @@ Rules:
     "path": "src/routes/index.js"
   }
 },
-  "docVirtual": null,
+  "workbench": null,
   "ragResults": null
 }
 ```

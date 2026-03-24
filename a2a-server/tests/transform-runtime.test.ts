@@ -175,10 +175,10 @@ describe('Transform Pipeline Runtime', () => {
     it('should truncate-section on string path', async () => {
       const pipeline = {
         steps: [
-          { op: 'set', path: 'context.docVirtual', value: 'abcdefghij' },
+          { op: 'set', path: 'context.workbench.sections', value: { note: 'abcdefghij' } },
           {
             op: 'truncate-section',
-            path: 'context.docVirtual',
+            path: 'context.workbench.sections',
             maxChars: 8,
             suffix: '…'
           }
@@ -189,7 +189,36 @@ describe('Transform Pipeline Runtime', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.output.context.docVirtual).toBe('abcdefg…');
+        expect(result.output.context.workbench.sections).toEqual({ note: 'abcdefg…' });
+      }
+    });
+
+    it('should truncate-section on context.workbench.sections', async () => {
+      const pipeline = {
+        steps: [
+          {
+            op: 'set',
+            path: 'context.workbench.sections',
+            value: { a: '12345', b: 2, c: '678901234' },
+          },
+          {
+            op: 'truncate-section',
+            path: 'context.workbench.sections',
+            maxChars: 5,
+            suffix: '',
+          },
+        ],
+      };
+
+      const result = await runTransformPipeline(pipeline, {});
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.output.context.workbench.sections).toEqual({
+          a: '12345',
+          b: 2,
+          c: '67890',
+        });
       }
     });
 
@@ -198,12 +227,12 @@ describe('Transform Pipeline Runtime', () => {
         steps: [
           {
             op: 'set',
-            path: 'context.docVirtual',
+            path: 'context.workbench.sections',
             value: { a: '12345', b: 2, c: '678901234' }
           },
           {
             op: 'truncate-section',
-            path: 'context.docVirtual',
+            path: 'context.workbench.sections',
             maxChars: 5,
             suffix: ''
           }
@@ -214,7 +243,7 @@ describe('Transform Pipeline Runtime', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.output.context.docVirtual).toEqual({
+        expect(result.output.context.workbench.sections).toEqual({
           a: '12345',
           b: 2,
           c: '67890'

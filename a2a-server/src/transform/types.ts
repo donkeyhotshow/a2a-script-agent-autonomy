@@ -47,7 +47,8 @@ export interface ApplyScratchpadOpsOperation {
 }
 
 /**
- * Truncate long `docVirtual` strings or all string fields on a shallow object (ISSUE 5).
+ * Truncate long strings or all string fields on a shallow object (ISSUE 5). Use paths such as
+ * `context.workbench.sections`.
  */
 export interface TruncateSectionOperation {
   op: 'truncate-section';

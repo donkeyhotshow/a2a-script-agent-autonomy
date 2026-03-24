@@ -141,7 +141,7 @@
               "op": { "const": "truncate-section" },
               "path": {
                 "type": "string",
-                "description": "JSONPath to a string or a plain object whose string values are truncated (e.g. context.docVirtual)."
+                "description": "JSONPath to a string or a plain object whose string values are truncated (e.g. context.workbench.sections)."
               },
               "maxChars": {
                 "type": "number",

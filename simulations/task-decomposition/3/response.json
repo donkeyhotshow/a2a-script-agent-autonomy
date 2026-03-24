@@ -11,8 +11,10 @@
         "message": "add auth and refactor API"
       }
     ],
-    "docVirtual": {
-      "section1": "add auth and refactor API"
+    "workbench": {
+      "sections": {
+        "section1": "add auth and refactor API"
+      }
     }
   },
   "execute": {

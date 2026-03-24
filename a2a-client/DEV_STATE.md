@@ -2,14 +2,9 @@
 
 ## Архитектура
 
-### Компоненты системы
+### Подсистемы проекта
 
-| Компонент | Описание | Документация |
-|----------|----------|--------------|
-| Web UI (Browser) | Пользовательский интерфейс | [`web/js/daemons/README.md`](web/js/daemons/README.md) |
-| Client API | REST API, session management | [`vite-plugin-a2a/daemon/README.md`](vite-plugin-a2a/daemon/README.md) |
-| A2A Server | Бизнес-логика, оркестрация | [`a2a-server/docs/`](a2a-server/docs/) |
-| AI Integration | LLM адаптер | [`ai-integration/docs/`](ai-integration/docs/) |
+Подсистемы проекта описаны в общем [`DEV_STATE.md`](../DEV_STATE.md).
 
 ### Daemons
 

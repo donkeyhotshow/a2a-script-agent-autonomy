@@ -34,7 +34,7 @@ Use exactly one tool per response. Populate only the action you intend to take a
   "result": {
   "message": "опиши поточну архітектуру бекенду"
 },
-  "docVirtual": null,
+  "workbench": null,
   "ragResults": null
 }
 ```

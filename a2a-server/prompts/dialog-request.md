@@ -31,10 +31,12 @@ ${flowControlHint}
 
 ## Current State
 
+`workbench` — see auto-ai / coder prompts: `sections`, optional `batch`, optional `slots`.
+
 ```json
 {
   "context": ${context},
-  "docVirtual": ${docVirtual},
+  "workbench": ${workbench},
   "ragResults": ${ragResults}
 }
 ```

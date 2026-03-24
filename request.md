@@ -18,7 +18,7 @@
   ],
   "task": "допоможи розібратись з кодом"
 },
-  "docVirtual": null,
+  "workbench": null,
   "ragResults": null
 }
 ```

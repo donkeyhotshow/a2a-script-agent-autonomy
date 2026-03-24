@@ -130,7 +130,7 @@ Rules:
     ]
   }
 },
-  "docVirtual": null,
+  "workbench": null,
   "ragResults": null
 }
 ```

@@ -37,7 +37,7 @@ Allowed actions: `continue`, `rag-search`, `read-file`, `execute-command`. Pick 
   "result": {
   "message": "як працює система авторизації?"
 },
-  "docVirtual": null,
+  "workbench": null,
   "ragResults": null
 }
 ```

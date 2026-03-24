@@ -25,8 +25,8 @@ export function pickInvokeContextPatch(src: unknown): Record<string, unknown> {
     if (o.scratchpad && typeof o.scratchpad === 'object' && !Array.isArray(o.scratchpad)) {
         out.scratchpad = o.scratchpad;
     }
-    if (o.docVirtual !== undefined) {
-        out.docVirtual = o.docVirtual;
+    if (o.workbench !== undefined) {
+        out.workbench = o.workbench;
     }
     if (o.ragResults !== undefined) {
         out.ragResults = o.ragResults;

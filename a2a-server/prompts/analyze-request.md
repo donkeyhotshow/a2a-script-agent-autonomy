@@ -43,10 +43,12 @@ Rules:
 
 ## Current State
 
+`workbench` — structured draft state (`sections`, optional `batch`, `slots`). Replaces the old virtual-document-only field.
+
 ```json
 {
   "context": ${context},
-  "docVirtual": ${docVirtual},
+  "workbench": ${workbench},
   "ragResults": ${ragResults}
 }
 ```

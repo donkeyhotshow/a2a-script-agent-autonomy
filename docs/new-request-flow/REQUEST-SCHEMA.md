@@ -11,13 +11,13 @@ This document describes the deterministic layout that every AI-Action prompt mus
    {
      "context": { ... },
      "result": { ... },
-     "docVirtual": ...,
+     "workbench": ...,
      "ragResults": ...
    }
    ```
    - `context` reproduces `context.task`, `context.execution`, and `context.history`.
    - `result` echoes the previous step, e.g. the latest assistant message or action.
-   - `docVirtual` and `ragResults` stay `null` when absent; the templates render them as stable JSON values.
+   - `workbench` and `ragResults` stay `null` when absent; the templates render them as stable JSON values. Stray `context.docVirtual` in old payloads is folded into `workbench` and stripped before render (see `attachWorkbenchForLlmPrompt`).
 4. **Constraints** – Bullet points that remind the model to emit well-formed JSON, follow the action-key shape, and honor the allowable toolset.
 
 ## Template usage
@@ -28,7 +28,7 @@ This document describes the deterministic layout that every AI-Action prompt mus
   - `auto-ai-request.md`
   - `analyze-request.md`
 - Every server transform pipeline that renders an AI-Action prompt now references the corresponding template via `templateRef`.
-- The rendering pipeline feeds the `context`, `result`, `docVirtual`, and `ragResults` objects (alongside any extra metadata) as the `data` parameter so that `${...}` placeholders can substitute the current state.
+- The rendering pipeline feeds the `context`, `result`, `workbench`, `flowControlHint`, and `ragResults` (alongside any extra metadata) as the `data` parameter so that `${...}` placeholders can substitute the current state.
 
 ## Normalization for replay
 

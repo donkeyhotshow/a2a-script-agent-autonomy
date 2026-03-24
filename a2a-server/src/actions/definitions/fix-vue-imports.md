@@ -245,6 +245,10 @@ function groupByFile(patches: ResolvedPatch[]): Record<string, ResolvedPatch[]> 
 
 Очистить временные файлы.
 
+### 5. vue-import-escalate (optional)
+
+Если после **vue-import-resolve** в `result.script` переданы `partial_escalate: true` и `unresolved_imports[]` (скрипт не смог однозначно сопоставить часть импортов), сервер не переходит к **vue-import-apply**, а отдаёт **`execute.form.choices`**: перейти в **Coder**, завершить с частичным результатом или (отдельный сценарий) вернуться к роутеру — см. `simulations/fix-vue-imports/` и `simulations/fix-vue-imports-decline/`.
+
 **Input:** none  
 **Output:** cleanup_count
 

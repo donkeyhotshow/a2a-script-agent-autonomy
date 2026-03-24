@@ -2,21 +2,6 @@
   "projectId": "123",
   "sessionId": "456",
   "result": {
-    "script": {
-      "fixed_files": [
-        {
-          "file": "resources/js/Pages/Auth/Login.vue",
-          "status": "fixed"
-        },
-        {
-          "file": "resources/js/Pages/Auth/Register.vue",
-          "status": "fixed"
-        },
-        {
-          "file": "resources/js/components/UserCard.vue",
-          "status": "fixed"
-        }
-      ]
-    }
+    "choice": "coder"
   }
 }

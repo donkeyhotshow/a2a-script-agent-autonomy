@@ -83,7 +83,7 @@ Canonical pipeline (no `append-to-array` for `result.message`):
 |-------|------------|-------------|
 | `context.execution.step` | Server (from LLM) | Current semantic step |
 | `context.history` | Server (transforms) | Array of `{role, step?, message}` |
-| `context.docVirtual` | Action-specific | Domain-specific state |
+| `context.workbench` | Action-specific | Structured state: `sections`, optional `batch`, optional `slots` |
 | `context.ragResults` | Action-specific | RAG search results |
 
 ## Examples

@@ -2,31 +2,18 @@
   "projectId": "123",
   "sessionId": "456",
   "execute": {
-    "script": {
-      "input": {
-        "patches": [
-          {
-            "file": "resources/js/Pages/Auth/Login.vue",
-            "line": 3,
-            "from": "../components/Header",
-            "to": "@/components/Header"
-          },
-          {
-            "file": "resources/js/Pages/Auth/Register.vue",
-            "line": 5,
-            "from": "../../utils/helpers",
-            "to": "@/utils/helpers"
-          },
-          {
-            "file": "resources/js/components/UserCard.vue",
-            "line": 2,
-            "from": "@/stores/user",
-            "to": "@/stores/userStore"
-          }
-        ]
-      },
-      "output": "fixed_files[]",
-      "code": "const { readFileSync, writeFileSync } = require('node:fs');\n\nconst byFile = new Map();\nfor (const p of input.patches) {\n  if (!byFile.has(p.file)) byFile.set(p.file, []);\n  byFile.get(p.file).push(p);\n}\n\nconst fixed = [];\nfor (const [file, patches] of byFile) {\n  const lines = readFileSync(file, 'utf-8').split('\\n');\n  let changes = 0;\n  for (const p of patches.sort((a, b) => b.line - a.line)) {\n    const i = p.line - 1;\n    if (i >= 0 && i < lines.length) {\n      const orig = lines[i];\n      const fix = orig.replace(p.from, p.to);\n      if (orig !== fix) { lines[i] = fix; changes++; }\n    }\n  }\n  if (changes > 0) {\n    writeFileSync(file, lines.join('\\n'), 'utf-8');\n    fixed.push({ file, changes });\n  }\n}\n\nreturn { fixed_files: fixed };"
+    "form": {
+      "title": "Скрипт виправив 1 імпорт; 2 залишилися без однозначного рішення. Перейти в Coder (агент з файлами)?",
+      "choices": [
+        {
+          "id": "coder",
+          "label": "Так, відкрити Coder"
+        },
+        {
+          "id": "fix-vue-imports-done-partial",
+          "label": "Ні, залишити як є (частковий результат)"
+        }
+      ]
     }
   }
 }
