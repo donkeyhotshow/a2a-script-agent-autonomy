@@ -18,12 +18,29 @@
 - Чи є `prompts/transforms/coder/` директорія з `request.json` і `response.json`
 - Чи відповідає формат transforms поточному `runPromptsTransform`
 
-## Потенційний баг
+## Потенційний баг (підтверджено в арці 3)
 
-`result.choice = "coder"` не обробляється як dialog step — немає `execution.action` в request, тому `determineRequestType` не розпізнає як `dialog`.
+`result.choice = "coder"` не обробляється як dialog step — підтверджено.
+
+`determineRequestType` для `coder/2/request.json`:
+- немає `execution.action` → не `dialog`
+- немає `form_submission`/`selected_choice` → не `form`
+- падає в default `return 'action'`
+
+`ActionRequestProcessor` отримує запит, але `result.choice` ігнорується → `handleTaskRequest` шукає `task` в context, не `result.choice`.
+
+**Конкретний фікс:** в `determineRequestType` додати перевірку:
+```typescript
+// result.choice → це вибір action з форми роутера
+if (result?.choice && llmActions.includes(result.choice as string)) {
+    return 'dialog';
+}
+```
+Або в `ActionRequestProcessor` обробляти `result.choice` як ініціалізацію action.
 
 ## Дії
 
-1. Перевірити `a2a-server/prompts/transforms/` структуру
-2. Порівняти `coder/2/response.json` з тим що реально повертає сервер при `result.choice="coder"`
-3. Крок `coder/2` — сервер повинен повернути форму, але зараз `determineRequestType` для `result.choice` → йде в `action` процесор, не в `dialog`
+1. Перевірити `a2a-server/prompts/transforms/` — чи є папка `coder/`
+2. Запустити `node a2a-server/scripts/run-simulation.ts coder` і порівняти output з `response.json`
+3. Якщо `determineRequestType` не розпізнає `result.choice` як dialog — додати перевірку: якщо `context.execution.action` вже встановлено в попередній відповіді — роутити в dialog процесор
+4. Якщо `prompts/transforms/coder/` немає — створити за зразком `dialog/` як базового

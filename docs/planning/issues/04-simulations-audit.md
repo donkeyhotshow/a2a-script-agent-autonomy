@@ -24,7 +24,9 @@
 
 ## Симуляції для аудиту
 
-`dialog`, `coder`, `fix-vue-imports` — перевірити формат і наявність fixtures.
+`dialog`, `fix-vue-imports` — перевірити формат і наявність fixtures.
+
+**Примітка:** `coder` симуляція — тільки формат файлів і fixtures. Логіка роутингу (`determineRequestType`, `prompts/transforms/coder/`) — це ISSUE 3, не тут.
 
 ## Дії
 

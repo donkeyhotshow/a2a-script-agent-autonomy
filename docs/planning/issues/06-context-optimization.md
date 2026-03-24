@@ -41,6 +41,9 @@ Transform вирішує які файли включити в prompt (не вс
 
 ## Де реалізувати
 
-Нова transform операція `apply-scratchpad-ops` + оновлення `server-transforms-*.json` в симуляціях.
+1. `a2a-server/src/transform/operations.ts` — нова операція `apply-scratchpad-ops`
+2. `a2a-server/src/transform/types.ts` — новий тип `ApplyScratchpadOpsOperation`
+3. `a2a-client/vite-plugin-a2a/routes/stepRoutes.js` — оновити фільтрацію context (~рядок 230): передавати `history`, `files`, `scratchpad` разом з `task` і `execution`. **Уточнення:** history може проходити через `previousContext` (не фільтрується), але не через `result.context` (фільтрується). Перед фіксом перевірити де сервер кладе history у відповідь (`ProcessResult.context` vs `result.context`).
+4. Оновлення `server-transforms-*.json` в симуляціях
 
-**Залежить від:** ISSUE 9 (auto-ai як reference симуляція для цієї стратегії).
+**Залежить від:** ISSUE 9 (стратегія визначається в симуляції, потім реалізується тут). ISSUE 6 і ISSUE 8b обидва змінюють `stepRoutes.js` — виконувати послідовно: спочатку ISSUE 6 (фільтрація context), потім ISSUE 8b (автоцикл).

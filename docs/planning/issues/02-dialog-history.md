@@ -48,3 +48,19 @@ const existingHistory = (ctx['history'] ?? []) as Array<...>;  // НЕ ctx['cont
 ```
 
 Довіряти тільки одному місцю для додавання user message. Прибрати дублювання.
+
+## Додаткові баги (знайдені в арці 3)
+
+**Баг 4: `result` не передається в `runResponseTransform`**
+
+`doProcess` викликає `runResponseTransform(path, schema, ctx, responseMd)` де `ctx = { ...context }` — без `result`. Тому `ctx['result']` в `runResponseTransform` завжди undefined → `userMessage` завжди undefined → user message ніколи не додається в history.
+
+Фікс: передавати `result` окремо або включати в `ctx`:
+```typescript
+const ctxWithResult = { ...context, result: request.result };
+await runResponseTransform(path, schema, ctxWithResult, responseMd);
+```
+
+**Баг 5: `recoverDialogFromLlmPromise` має ті самі баги 1+4**
+
+Та сама логіка history/message дублюється в `recoverDialogFromLlmPromise` (~рядок 230-310). Фіксувати обидва місця одночасно.
