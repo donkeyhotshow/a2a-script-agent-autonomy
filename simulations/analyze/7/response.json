@@ -11,8 +11,7 @@
       },
       {
         "role": "assistant",
-        "message": "Шукаю документи по архітектурі бекенду.",
-        "action": "rag-search"
+        "message": "Шукаю документи по архітектурі бекенду."
       },
       {
         "role": "system",
@@ -20,8 +19,7 @@
       },
       {
         "role": "assistant",
-        "message": "**Підтверджені факти:** ... **Розбіжності:** ...",
-        "action": "continue"
+        "message": "**Підтверджені факти:** ... **Розбіжності:** ..."
       },
       {
         "role": "user",
@@ -29,8 +27,7 @@
       },
       {
         "role": "assistant",
-        "message": "Шукаю додаткові документи.",
-        "action": "rag-search"
+        "message": "Шукаю додаткові документи."
       },
       {
         "role": "system",
@@ -38,8 +35,7 @@
       },
       {
         "role": "assistant",
-        "message": "**Підтверджені факти (оновлено):** ... **Розбіжності:** ...",
-        "action": "continue"
+        "message": "**Підтверджені факти (оновлено):** ... **Розбіжності:** ..."
       },
       {
         "role": "user",
@@ -47,8 +43,7 @@
       },
       {
         "role": "assistant",
-        "message": "Зберігаю звіт у .carrier/reports/architecture-report.md.",
-        "action": "write-file"
+        "message": "Зберігаю звіт у .carrier/reports/architecture-report.md."
       }
     ],
     "workbench": {

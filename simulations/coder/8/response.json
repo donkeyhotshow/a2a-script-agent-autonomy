@@ -20,8 +20,7 @@
       },
       {
         "role": "assistant",
-        "message": "Запишу детальний звіт про систему авторизації у файл docs/auth-report.md",
-        "action": "write-file"
+        "message": "Запишу детальний звіт про систему авторизації у файл docs/auth-report.md"
       },
       {
         "role": "system",
@@ -29,8 +28,7 @@
       },
       {
         "role": "assistant",
-        "message": "Звіт успішно записано! Файл docs/auth-report.md створено. Якщо потрібно щось ще - звертайся!",
-        "action": "completed"
+        "message": "Звіт успішно записано! Файл docs/auth-report.md створено. Якщо потрібно щось ще - звертайся!"
       }
     ]
   },

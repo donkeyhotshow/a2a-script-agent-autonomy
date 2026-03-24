@@ -4,7 +4,8 @@ This directory documents all task execution workflows and execute types in the A
 
 ## Related Documentation
 
-- **[Actions & Events Decomposition](../actions-events-decomposition.md)** - Detailed breakdown of execute types and UI interactions
+- **[Session Lifecycle Guide](../session-lifecycle/)** - Core lifecycle states and transitions
+- **[Communication Guide](../communication/)** - Transport layer details
 - **[Context Synchronization Guide](../context-synchronization-guide.md)** - Execute processing and context updates
 - **[Dialog Architecture Tasks](../tasks/dialog-architecture-tasks.md)** - Execute handling catalog and processing flows
 - **[UNIFIED_ARCHITECTURE_COMPLETE](../UNIFIED_ARCHITECTURE_COMPLETE.md)** - Action standardization and action-key shape
@@ -43,6 +44,8 @@ sequenceDiagram
 | **read-file** | File content reading | File selection dialog | `{"result": {"read-file": {...}}}` | FileSelector, FS API |
 | **write-file** | File content writing | Save file dialog | `{"result": {"write-file": {...}}}` | FileSaver, FS API |
 | **execute-command** | Shell command execution | Auto-execution | `{"result": {"execute-command": {...}}}` | Terminal, process execution |
+| **list-directory** | Directory listing | Auto-execution | `{"result": {"list-directory": {...}}}` | File system API |
+| **grep-search** | Text search in files | Auto-execution | `{"result": {"grep-search": {...}}}` | Ripgrep / search API |
 
 ## Form Choice Execution
 

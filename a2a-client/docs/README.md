@@ -31,10 +31,10 @@ This directory contains comprehensive documentation for the A2A Script Agent web
 |------|-------|
 | **Understand workflows** | [Workflows Overview](./workflows/) |
 | **Client API / Vite vs SDK** | [CLIENT_API_WEB_SDK.md](./CLIENT_API_WEB_SDK.md) |
-| **Implement session management** | [Session Lifecycle](./workflows/session-lifecycle/) + [Session Architecture Migration](./session-architecture-migration.md) |
+| **Implement session management** | [Session Lifecycle](./workflows/session-lifecycle/) + [Session Architecture Migration](./workflows/session-architecture-migration.md) |
 | **Handle task execution** | [Task Execution](./workflows/task-execution/) |
 | **Manage real-time communication** | [Communication](./workflows/communication/) |
-| **Build UI components** | [UI Interactions](./workflows/ui-interactions/) + [Context Synchronization](./context-synchronization-guide.md) |
+| **Build UI components** | [UI Interactions](./workflows/ui-interactions/) + [Context Synchronization](./workflows/context-synchronization-guide.md) |
 | **Test the system** | [Testing](./workflows/testing/) |
 | **Check implementation status** | [Unified Architecture Complete](./workflows/UNIFIED_ARCHITECTURE_COMPLETE.md) |
 
@@ -49,7 +49,7 @@ This directory contains comprehensive documentation for the A2A Script Agent web
 ### Communication
 - **SSE**: Primary transport (`/api/sse/:sessionId`) with 30s heartbeat
 - **WebSocket**: Fallback transport (`/api/ws/:sessionId`) for SSE failures
-- **HTTP Polling**: Last resort for complete transport failure
+- **HTTP Polling**: Standard for stateless / async updates via `/async`
 
 ### UI Patterns
 - **Execute Types**: `form`, `message`, `script`, `rag-search`, `read-file`, `write-file`, `execute-command`

@@ -124,96 +124,16 @@ Primary paths used by this tree: **`/api/a2a/projects`**, **`/api/a2a/sessions`*
 - Client API Server (порт 3001, проксирует запросы A2A Server на 3000)
 - Meilisearch на порту 7700 (для RAG)
 
-## Новый Протокол A2A
+## A2A Protocol & Implementation
 
-### Action-Key Shape
+The Web UI follows the mandatory A2A Protocol for all interactions. Core specifications are located in the centralized documentation directory to ensure consistency with the Client API and SDK:
 
-Новый протокол использует формат с ключом типа действия вместо generic `content` или `action` полей.
+- **[Action-Key Shape & Form Specs](../docs/DIALOG-FRONTEND.md)** - Mandatory result formats and form interaction details
+- **[Task Execution & Auto-Responses](../docs/workflows/task-execution/)** - Details on auto-executed actions (script, RAG) and system loops
+- **[Process Visualization](../docs/DIALOG-FRONTEND.md#визуализация-процесса-process-visualization)** - How `context.execution` and `attachments` are rendered in the UI
+- **[Session Storage](../docs/SESSION-STORAGE.md)** - Details on the `N+1` step storage pattern
 
-**Правильный формат:**
-```javascript
-// Execute с типом действия
-{ execute: { "script": { code: "...", input: {} } } }
-{ execute: { "read-file": { path: "..." } } }
-{ execute: { "write-file": { path: "...", content: "..." } } }
+## Documentation
 
-// Result с типом действия
-{ result: { "script": { output: "...", success: true } } }
-{ result: { "read-file": { path: "...", content: "..." } } }
-```
-
-**Устаревший формат (не рекомендуется):**
-```javascript
-// Неправильно: плоская структура
-{ result: { content: "..." } }
-
-// Неправильно: generic поле action
-{ execute: { action: "read-file", file: "..." } }
-```
-
-### execute.form.choices
-
-Интерактивные формы с вариантами выбора:
-```javascript
-{
-    execute: {
-        form: {
-            title: "Выберите действие",
-            choices: [
-                { id: "fix_imports", label: "Исправить импорты" },
-                { id: "skip", label: "Пропустить" }
-            ]
-        }
-    }
-}
-```
-
-### execute.form.input
-
-Формы с полями ввода:
-```javascript
-{
-    execute: {
-        form: {
-            title: "Введите данные",
-            input: [
-                { name: "filename", type: "text", label: "Имя файла" },
-                { name: "content", type: "textarea", label: "Содержимое" }
-            ]
-        }
-    }
-}
-```
-
-### execute.message
-
-Отображаемые сообщения пользователю:
-```javascript
-{
-    execute: {
-        message: {
-            content: "Операция завершена успешно",
-            type: "success"
-        }
-    }
-}
-```
-
-### Типы Execute действий
-
-| Тип | Описание | Пример |
-|-----|----------|--------|
-| `script` | Выполнение JavaScript | `{ script: { code: "...", input: {} } }` |
-| `read-file` | Чтение файла | `{ "read-file": { path: "/src/index.js" } }` |
-| `write-file` | Запись файла | `{ "write-file": { path: "...", content: "..." } }` |
-| `execute-command` | Выполнение команд | `{ "execute-command": { command: "npm install" } }` |
-| `rag-search` | RAG поиск | `{ "rag-search": { query: "...", topK: 5 } }` |
-| `form` | Интерактивная форма | `{ form: { title: "...", choices: [...] } }` |
-| `message` | Сообщение | `{ message: { content: "...", type: "info" } }` |
-
-## Документация
-
-Подробная документация:
-- [API Server](../docs/new-request-flow/API-SERVER.md)
-- [Web UI Components](../docs/new-request-flow/WEB-UI.md)
-- [API Client](../docs/new-request-flow/API-CLIENT.md)
+- **[Central Documentation Root](../docs/README.md)** - Entry point for all A2A Client specifications
+- **[Client API & Web SDK](../docs/CLIENT_API_WEB_SDK.md)** - Integration details and transport strategy

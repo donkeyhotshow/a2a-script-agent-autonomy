@@ -11,8 +11,7 @@
       },
       {
         "role": "assistant",
-        "message": "Шукаю документи по архітектурі бекенду.",
-        "action": "rag-search"
+        "message": "Шукаю документи по архітектурі бекенду."
       },
       {
         "role": "system",
@@ -20,8 +19,7 @@
       },
       {
         "role": "assistant",
-        "message": "**Підтверджені факти:** ... **Розбіжності:** ...",
-        "action": "continue"
+        "message": "**Підтверджені факти:** ... **Розбіжності:** ..."
       },
       {
         "role": "user",
@@ -29,8 +27,7 @@
       },
       {
         "role": "assistant",
-        "message": "Шукаю додаткові документи.",
-        "action": "rag-search"
+        "message": "Шукаю додаткові документи."
       },
       {
         "role": "system",
@@ -38,8 +35,7 @@
       },
       {
         "role": "assistant",
-        "message": "**Підтверджені факти (оновлено):**\n- ARCHITECTURE.md: три шари. README: auth, request-processor, порт 3000.\n- a2a-client/README та AGENTS.md: клієнтський API 3001, web UI 5173.\n\n**Розбіжності:**\n- В ARCHITECTURE.md не згадано клієнт (3001) та web UI (5173).\n- README не описує request-processor (таймер 5 с).",
-        "action": "continue"
+        "message": "**Підтверджені факти (оновлено):**\n- ARCHITECTURE.md: три шари. README: auth, request-processor, порт 3000.\n- a2a-client/README та AGENTS.md: клієнтський API 3001, web UI 5173.\n\n**Розбіжності:**\n- В ARCHITECTURE.md не згадано клієнт (3001) та web UI (5173).\n- README не описує request-processor (таймер 5 с)."
       }
     ],
     "workbench": {

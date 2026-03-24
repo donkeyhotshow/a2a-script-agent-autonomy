@@ -12,8 +12,7 @@
       },
       {
         "role": "assistant",
-        "message": "Щоб відповісти на це питання, мені потрібно спочатку пошукати в коді про авторизацію.",
-        "action": "rag-search"
+        "message": "Щоб відповісти на це питання, мені потрібно спочатку пошукати в коді про авторизацію."
       },
       {
         "role": "system",
@@ -37,8 +36,7 @@
       },
       {
         "role": "assistant",
-        "message": "Будь ласка!",
-        "action": "completed"
+        "message": "Будь ласка!"
       },
       {
         "role": "user",
@@ -46,12 +44,7 @@
       },
       {
         "role": "assistant",
-        "message": "Запишу детальний звіт про систему авторизації у файл docs/auth-report.md",
-        "action": "write-file",
-        "params": {
-          "path": "docs/auth-report.md",
-          "content": "..."
-        }
+        "message": "Запишу детальний звіт про систему авторизації у файл docs/auth-report.md"
       }
     ]
   },

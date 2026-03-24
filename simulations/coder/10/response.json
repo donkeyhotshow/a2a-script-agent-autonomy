@@ -12,11 +12,7 @@
       },
       {
         "role": "assistant",
-        "message": "Зроблю пошук по коду для знаходження файлів авторизації.",
-        "action": "rag-search",
-        "params": {
-          "query": "authorization login JWT token auth"
-        }
+        "message": "Зроблю пошук по коду для знаходження файлів авторизації."
       },
       {
         "role": "system",

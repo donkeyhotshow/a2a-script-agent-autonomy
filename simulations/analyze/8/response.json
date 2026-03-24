@@ -2,8 +2,7 @@
   "context": {
     "task": "проаналізуй архітектуру проекту",
     "execution": {
-      "action": "analyze",
-      "step": "completed"
+      "action": "analyze"
     },
     "history": [
       {
@@ -12,8 +11,7 @@
       },
       {
         "role": "assistant",
-        "message": "Шукаю документи...",
-        "action": "rag-search"
+        "message": "Шукаю документи по архітектурі бекенду."
       },
       {
         "role": "system",
@@ -21,8 +19,7 @@
       },
       {
         "role": "assistant",
-        "message": "**Підтверджені факти:** ... **Розбіжності:** ...",
-        "action": "continue"
+        "message": "**Підтверджені факти:** ... **Розбіжності:** ..."
       },
       {
         "role": "user",
@@ -30,8 +27,7 @@
       },
       {
         "role": "assistant",
-        "message": "Шукаю додаткові документи.",
-        "action": "rag-search"
+        "message": "Шукаю додаткові документи."
       },
       {
         "role": "system",
@@ -39,8 +35,7 @@
       },
       {
         "role": "assistant",
-        "message": "**Підтверджені факти (оновлено):** ... **Розбіжності:** ...",
-        "action": "continue"
+        "message": "**Підтверджені факти (оновлено):** ... **Розбіжності:** ..."
       },
       {
         "role": "user",
@@ -48,12 +43,15 @@
       },
       {
         "role": "assistant",
-        "message": "Зберігаю звіт.",
-        "action": "write-file"
+        "message": "Зберігаю звіт у .carrier/reports/architecture-report.md."
       },
       {
-        "role": "system",
-        "message": "Файл .carrier/reports/architecture-report.md записано."
+        "role": "user",
+        "message": "що збережено в звіті?"
+      },
+      {
+        "role": "assistant",
+        "message": "Збережено звіт з підтвердженими фактами та розбіжностями по архітектурі."
       }
     ],
     "workbench": {
@@ -62,33 +60,13 @@
   },
   "execute": {
     "form": {
-      "title": "Продовжити або зберегти звіт",
-      "description": "Уточніть запит для пошуку або закріпіть усі поточні факти у звіті.",
+      "title": "Аналіз завершено",
+      "description": "Звіт збережено у .carrier/reports/architecture-report.md.",
       "choices": [
         {
-          "id": "continue_search",
-          "label": "Продовжити пошук",
-          "description": "Додати нові ключові слова або уточнення, щоб знайти додаткові згадки."
-        },
-        {
-          "id": "save_report",
-          "label": "Зберегти звіт у .carrier/reports/",
-          "description": "Завершити аналіз і записати підтверджені факти у файл звіту."
-        }
-      ],
-      "input": [
-        {
-          "name": "message",
-          "type": "text",
-          "label": "Запит для пошуку (якщо продовжуєте)",
-          "required": false
-        },
-        {
-          "name": "path",
-          "type": "text",
-          "label": "Шлях (за замовч. .carrier/reports/architecture-report.md)",
-          "required": false,
-          "placeholder": ".carrier/reports/architecture-report.md"
+          "id": "new_task",
+          "label": "Нове завдання",
+          "description": "Почати новий аналіз іншої частини проекту."
         }
       ]
     }

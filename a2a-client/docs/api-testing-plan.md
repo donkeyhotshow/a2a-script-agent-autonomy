@@ -521,5 +521,5 @@ Write-Host "OK: Full chain verified"
 | CORS errors | Wrong origin | Use same origin (5173) for /api/a2a |
 | Dialog sim: no form.choices | a2a-server not running or wrong task | Run `npm run test:sim` in simulations/dialog |
 | Dialog sim: wrong execute shape | Server transform mismatch | Compare with simulations/dialog/*/received.json |
-| No server-promise.json | Promise not saved | Saved in N+2/ after the async request step; see [`api-client-server-logic.md`](api-client-server-logic.md) |
+| No server-promise.json | Promise not saved | Saved in N+1/ after the async request step; see [`api-client-server-logic.md`](api-client-server-logic.md) |
 | request-to-server.json missing | Client result not processed | Verify client-result.json exists before next step |

@@ -7,9 +7,9 @@
 
 All 4 major refactoring steps from the decomposition document have been implemented:
 
-1. ✅ **Transport Strategy**: Synchronous HTTP requests (sync mode)
-2. ✅ **Unified State**: SessionStore as single source of truth (replaced 3 state sources)
-3. ✅ **Simplified Panels**: PanelManager replaces 3-level hierarchy (panels→cubes→modals)
+1. ✅ **Transport Strategy**: Unified strategy (SSE → WS → Polling)
+2. ✅ **Unified State**: SessionStore + stateless storage (N+1 folders)
+3. ✅ **Simplified Panels**: PanelManager replaces 3-level hierarchy
 4. ✅ **Action Standardization**: ActionHandler with uniform action-key shape
 
 ## File Changes
@@ -133,11 +133,11 @@ const { type, data, isInput, isClientAction } = ActionHandler.processExecute(exe
 | Before | After |
 |--------|-------|
 | 3 state sources (Manager, ViewModel, Sync) | 1 (SessionStore) |
-| Manual SSE + WS + HTTP polling | Synchronous HTTP requests |
+| Manual SSE + WS + HTTP polling | Unified Manager (SSE/WS/Polling) |
 | 4-level panel hierarchy | 3 states (visible/minimized/closed) |
 | Multiple submission formats | Single action-key shape |
 | Event chains: Manager→TaskFlow→SSE→UI | Direct: Store→UI |
-| ~50 lines polling code | 0 (HTTP sync responses) |
+| Multiple storage files | Step-based storage (N+1Folders) |
 | 8 core JS files | 6 unified files |
 
 ## Backward Compatibility

@@ -1,6 +1,9 @@
 {
   "context": {
     "task": "add auth and refactor API",
+    "workbench": {
+      "sections": {}
+    },
     "execution": {
       "action": "task",
       "step": "router"

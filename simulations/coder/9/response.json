@@ -12,8 +12,7 @@
       },
       {
         "role": "assistant",
-        "message": "Читаю файл src/auth.js...",
-        "action": "read-file"
+        "message": "Читаю файл src/auth.js..."
       },
       {
         "role": "system",
@@ -21,8 +20,7 @@
       },
       {
         "role": "assistant",
-        "message": "Ось вміст src/auth.js у контексті запиту. Можеш задати наступне питання.",
-        "action": "continue"
+        "message": "Ось вміст src/auth.js у контексті запиту. Можеш задати наступне питання."
       }
     ]
   },

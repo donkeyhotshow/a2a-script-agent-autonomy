@@ -4,7 +4,8 @@ This directory documents all user interface interaction workflows, panel managem
 
 ## Related Documentation
 
-- **[Actions & Events Decomposition](../actions-events-decomposition.md)** - Complete UI buttons, controls, and panel interactions catalog
+- **[Panel Manager Reference](../../api-reference/panel-manager.md)** - Detailed PanelManager API
+- **[Session Store Reference](../../api-reference/session-store.md)** - UI-State synchronization
 - **[UNIFIED_ARCHITECTURE_COMPLETE](../UNIFIED_ARCHITECTURE_COMPLETE.md)** - Simplified panels implementation and legacy removal
 - **[Context Synchronization Guide](../context-synchronization-guide.md)** - PlasticineUI panel lifecycle and behavior
 - **[Dialog Architecture Tasks](../tasks/dialog-architecture-tasks.md)** - Panel QA scenarios and lifecycle coverage

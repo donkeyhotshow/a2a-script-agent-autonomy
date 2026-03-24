@@ -28,9 +28,8 @@ pollResult(promiseId);               // HTTP polling for async
 ```javascript
 // Single transport manager with auto-fallback
 await TransportManager.connect(sessionId);
-// → Tries SSE first (10s timeout)
-// → Falls back to WebSocket automatically
-// → No HTTP polling
+// → Tries SSE first
+// → Falls back to WebSocket or HTTP Polling (/async)
 ```
 
 **Files**:
@@ -239,9 +238,6 @@ panel.setStatus('active' | 'unread' | 'error')
 4. **Unified panels**: One system instead of panels+cubes+modals
 5. **Backward compatible**: Legacy code continues working
 
-## Removed Code
-
-- HTTP polling (`pollResult()` in `task-flow.js`)
 - Three-level panel hierarchy (PlasticineUI complexity)
 - Multiple event emitter chains
 - Duplicate state in SessionManager/ViewModel

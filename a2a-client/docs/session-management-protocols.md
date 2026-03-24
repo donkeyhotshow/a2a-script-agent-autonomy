@@ -255,8 +255,11 @@ flowchart TD
     
     A -->|POST /sessions/:id/result| B
     B -->|Выполнение действия| D[A2A Server]
-    D -->|Результат| B
     B -->|Response| A
+    
+    subgraph WebDTO[Web DTO Logic]
+        B -->|buildWebExecute| B
+    end
     
     A -->|POST /sessions/:id/cancel| B
     B -->|Отмена| C
@@ -354,8 +357,9 @@ storage/sessions/{SESSION_ID}/
 ## References
 
 - [API-CLIENT.md](../API-CLIENT.md)
-- [SCHEMAS.md](../SCHEMAS.md)
-- [DATA-FLOW.md](../DATA-FLOW.md)
+- [API-CLIENT.md](../API-CLIENT.md)
+- [SCHEMAS.md](../../docs/new-request-flow/SCHEMAS.md)
+- [DATA-FLOW.md](../../docs/new-request-flow/DATA-FLOW.md)
 - [api-client-server-logic.md](api-client-server-logic.md) - Логика работы API клиент сервера
 - [server/index.ts (SDK)](../../a2a-client/packages/sdk/src/server/index.ts)
 - [session-service.ts](../../a2a-client/packages/sdk/src/server/services/session-service.ts)

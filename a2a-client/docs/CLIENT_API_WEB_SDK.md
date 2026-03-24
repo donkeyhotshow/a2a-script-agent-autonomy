@@ -46,7 +46,7 @@ If the plugin answers `/api/a2a/*`, the proxy **never** reaches the SDK for thos
 
 - UI/session bugs in dev → **`vite-plugin-a2a/`** (and `storage/` under `a2a-client`).
 - Tests that `import` `packages/sdk/src/server/index.ts` → **SDK** code path.
-- Long-term: merge implementations or have the plugin delegate to one shared module (see [MIGRATION-PLAN.md](./MIGRATION-PLAN.md) and [session-architecture-migration.md](./workflows/session-architecture-migration.md)).
+- Long-term: merge implementations or have the plugin delegate to one shared module (see [session-architecture-migration.md](./workflows/session-architecture-migration.md)).
 
 ## Known gaps & notes (2026-03)
 

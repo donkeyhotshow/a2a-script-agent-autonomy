@@ -15,19 +15,10 @@ This directory contains comprehensive documentation of all user workflows and sy
 
 ## Related Documentation
 
-### Roadmap & Planning
-- **[Upgrade Tasks](../UPGRADE_TASKS.md)** - Planned enhancements and improvement roadmap
-
 ### Architecture & Implementation
-- **[Unified Architecture Complete](./UNIFIED_ARCHITECTURE_COMPLETE.md)** - Implementation status of major refactoring steps
+- **[Unified Architecture Complete](./UNIFIED_ARCHITECTURE_COMPLETE.md)** - Implementation status of major refactoring steps (Stateless + Unified Transport)
 - **[Session Architecture Migration](./session-architecture-migration.md)** - Migration guide for unified session architecture
-- **[Actions & Events Decomposition](../actions-events-decomposition.md)** - Detailed breakdown of all UI actions and events
 - **[Context Synchronization Guide](./context-synchronization-guide.md)** - How components handle state synchronization
-
-### Development State
-- **[Web UI DEV_STATE](../../DEV_STATE.md)** - Current development status and component overview
-- **[Dialog Architecture Tasks](../tasks/dialog-architecture-tasks.md)** - Task breakdown for dialog stability
-- **[Testing SSE Tasks](../tasks/testing-sse-tasks.md)** - SSE reliability and testing task breakdown
 
 ## Key Scenarios Overview
 
@@ -53,10 +44,12 @@ This directory contains comprehensive documentation of all user workflows and sy
 ### 3. Communication Scenarios
 | Transport | Trigger | Fallback | Reliability |
 |-----------|---------|----------|-------------|
-| **SSE Primary** | Session creation/connection | WebSocket fallback | Heartbeat every 30s |
-| **WebSocket Fallback** | SSE failure (CORS/network) | HTTP polling | Bidirectional messaging |
-| **HTTP Polling** | Complete transport failure | Manual retry | Async request polling |
-| **Reconnection** | Network interruption | Exponential backoff | Auto-recovery <5s |
+| Transport | Trigger | Fallback | Reliability |
+|-----------|---------|----------|-------------|
+| **SSE Primary** | Session connection | WebSocket | Heartbeat every 30s |
+| **WebSocket** | SSE failure | HTTP Polling | Bidirectional fallback |
+| **HTTP Polling** | Fallback / Stateless | Manual/Auto | Async polling via `/async` |
+| **Reconnection** | Network interruption | Exp. backoff | Auto-recovery <5s |
 
 ### 4. UI Interaction Scenarios
 | Component | States | Transitions | Persistence |
