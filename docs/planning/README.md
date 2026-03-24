@@ -2,11 +2,17 @@
 
 Робочі документи по плануванню розробки. Щоб не відходити від поточної архітектури та стандартизованих `execute`/`result` форматів, тут дотримуємося правил, описаних у [`AGENTS.md`](../AGENTS.md): action-type ключі, transform pipeline та прив’язки context. Перед будь-яким оновленням планів оновіть AGENTS.md або вказуйте, який розділ там змінюється.
 
+**Специфікація протоколу (не плутати з планом):** детальні контракти та JSON Schema — у [`docs/new-request-flow/`](../new-request-flow/README.md): [`PROTOCOL.md`](../new-request-flow/PROTOCOL.md), [`json-schemas/README.md`](../new-request-flow/json-schemas/README.md), [`PROTOCOLS/README.md`](../new-request-flow/PROTOCOLS/README.md). Після змін у коді оновлюйте симуляції в [`simulations/`](../../simulations/) і при потребі ці документи.
+
 ## Структура
 
 - [WORKFLOW.md](WORKFLOW.md) — процес роботи над планом через агента (reasoning workflow)
 - [PRIORITIES.md](PRIORITIES.md) — таблиця пріоритетів виконання
+- [REFERENCE.md](REFERENCE.md) — канонічні симуляції: [`simulations/`](../../simulations/) у корені репозиторію
 - [issues/](issues/) — окремий файл на кожен issue
+
+## Пріоритети фокусів
+Поряд із режимами на базі LLM, які описуються у відповідних issues (наприклад, [08](issues/08-agent-mode.md)), документ також фіксує, що в пріоритеті правильна робота скриптових алгоритмів на зразок `fix-vue-imports`. Поки агентські режими не готові, усі перевірки та одноразові симуляції орієнтовано на стабілізацію контексту й execute-флоу, а після їхнього запуску будемо переносити увагу на скрипти.
 
 ## Issues
 

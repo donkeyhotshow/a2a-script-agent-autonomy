@@ -437,8 +437,8 @@ flowchart TD
 
 ## References
 
-- [simulations/dialog/description.md](../../simulations/dialog/description.md)
-- [simulations/dialog/WORKFLOW.md](../../simulations/dialog/WORKFLOW.md)
+- [simulations/dialog/description.md](../../../../../simulations/dialog/description.md)
+- [simulations/dialog/WORKFLOW.md](../../../../../simulations/dialog/WORKFLOW.md)
 - [SCHEMAS.md](../SCHEMAS.md)
 - [PROTOCOL.md](../../PROTOCOL.md) — promiseId async flow
 - [ADR-0013](../../../adr/ADR-0013-unified-transport-layer.md) — Transport layer (superseded by promiseId)

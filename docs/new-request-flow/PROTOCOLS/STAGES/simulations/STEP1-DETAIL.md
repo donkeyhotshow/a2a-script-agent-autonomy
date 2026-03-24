@@ -315,9 +315,9 @@ sequenceDiagram
 
 ## References
 
-- [simulations/dialog/1/client.json](../../../simulations/dialog/1/client.json)
-- [simulations/dialog/1/request.json](../../../simulations/dialog/1/request.json)
-- [simulations/dialog/1/response.json](../../../simulations/dialog/1/response.json)
-- [simulations/dialog/1/received.json](../../../simulations/dialog/1/received.json)
+- [simulations/dialog/1/client.json](../../../../../simulations/dialog/1/client.json)
+- [simulations/dialog/1/request.json](../../../../../simulations/dialog/1/request.json)
+- [simulations/dialog/1/response.json](../../../../../simulations/dialog/1/response.json)
+- [simulations/dialog/1/received.json](../../../../../simulations/dialog/1/received.json)
 - [SCHEMAS.md](../../SCHEMAS.md)
 - [PROTOCOL.md](../../PROTOCOL.md)

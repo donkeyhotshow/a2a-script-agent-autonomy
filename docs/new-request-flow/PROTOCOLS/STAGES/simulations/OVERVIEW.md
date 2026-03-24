@@ -220,7 +220,7 @@ flowchart TD
 
 ## References
 
-- [simulations/dialog/description.md](../../simulations/dialog/description.md)
-- [simulations/coder/description.md](../../simulations/coder/description.md)
-- [simulations/auto-ai/description.md](../../simulations/auto-ai/description.md)
-- [simulations/SCHEMA.md](../../simulations/SCHEMA.md)
+- [simulations/dialog/description.md](../../../../../simulations/dialog/description.md)
+- [simulations/coder/description.md](../../../../../simulations/coder/description.md)
+- [simulations/auto-ai/description.md](../../../../../simulations/auto-ai/description.md)
+- [simulations/SCHEMA.md](../../../../../simulations/SCHEMA.md)

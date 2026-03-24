@@ -90,5 +90,9 @@ graph LR
 
 - [Этапы протокола](../STAGES/README.md)
 - [JSON Схемы](../json-schemas/README.md)
-- [Симуляции](../STAGES/simulations/OVERVIEW.md)
+- [Симуляции](../STAGES/simulations/OVERVIEW.md) → канонические фикстуры в [`simulations/`](../../../simulations/) (корень репозитория)
 - [PROTOCOL](../PROTOCOL.md)
+- [Планирование / roadmap](../../planning/README.md), [ревизия планов vs код](../../planning/PLAN_REVIEW.md)
+- [Web UI + Client API](../../../a2a-client/docs/WEB_UI_PROTOCOL.md) — `POST .../next`, опрос `GET .../async` (Vite plugin)
+
+> **Async:** здесь описан поток через `promiseId` и опрос **A2A Server** (`/api/v1/requests/...`). У file-backed Web UI преимущественно используется опрос **Client API** (`GET /api/a2a/sessions/:id/async`); см. `WEB_UI_PROTOCOL.md` и [`AGENTS.md`](../../../AGENTS.md).

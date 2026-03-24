@@ -9,6 +9,7 @@ import {
 import * as stepHandlers from './handlers/step-handlers.js';
 import * as stepUtils from './utils/step-utils.js';
 import { proxyToA2AServer } from './proxy/a2a-proxy.js';
+import { chainSyncInvokesForRagSearch } from './utils/agent-rag-chain.js';
 import { getNewStepDir, loadNewSession, loadNewStep, loadServerPromise, loadServerResponse, saveClientResult, saveNewStep, saveNewSession, saveRequestToServer, saveServerPromise, saveServerResponse, listNewSteps, getNewSessionLatestStep, loadStepFile } from '../storage/newSessions.js';
 
 import fs from 'fs';
@@ -368,7 +369,7 @@ export function createStepRoutes({ cwd }) {
                     const xhrReq = xhr.request(reqOptions, (xhrRes) => {
                         let data = '';
                         xhrRes.on('data', (chunk) => (data += chunk));
-                        xhrRes.on('end', () => {
+                        xhrRes.on('end', async () => {
                             try {
                                 console.log('[VitePlugin] A2A response:', xhrRes.statusCode, 'data:', data.substring(0, 200));
                                 let parseErrMsg = null;
@@ -472,15 +473,15 @@ export function createStepRoutes({ cwd }) {
 
                                 session.messages = session.messages || [];
 
-                                const serverExecute = extractA2aExecute(serverResponse);
-                                if (serverExecute) {
-                                    session.execute = serverExecute;
-                                }
                                 const savedContext = serverResponse
                                     ? mergeResponseContext(sessionId, mergedContext, serverResponse)
                                     : mergedContext;
                                 session.context = savedContext;
                                 session.promiseId = null;
+
+                                let finalStepNum = nextStepNum;
+                                let finalServerResponse = serverResponse;
+                                let finalSavedContext = savedContext;
 
                                 const hasRealData = serverResponse || result;
                                 if (hasRealData) {
@@ -507,6 +508,35 @@ export function createStepRoutes({ cwd }) {
                                     }
                                 }
 
+                                if (serverResponse && hasServer && !hasPromise) {
+                                    try {
+                                        const out = await chainSyncInvokesForRagSearch({
+                                            cwd,
+                                            sessionId,
+                                            a2aServerUrl,
+                                            startStepNum: nextStepNum,
+                                            serverResponse,
+                                            mergedContext,
+                                            messages: session.messages || [],
+                                        });
+                                        finalStepNum = out.stepNum;
+                                        finalServerResponse = out.serverResponse;
+                                        finalSavedContext = out.savedContext;
+                                    } catch (chainErr) {
+                                        console.error(
+                                            '[VitePlugin] agent RAG chain:',
+                                            chainErr?.message || chainErr
+                                        );
+                                    }
+                                }
+
+                                session.currentStep = finalStepNum;
+                                session.context = finalSavedContext;
+                                const finalExecute = extractA2aExecute(finalServerResponse);
+                                if (finalExecute) {
+                                    session.execute = finalExecute;
+                                }
+
                                 saveNewSession(cwd, session);
 
                                 res.setHeader('Content-Type', 'application/json');
@@ -526,7 +556,7 @@ export function createStepRoutes({ cwd }) {
                                     JSON.stringify(
                                         toMinimalNextAck({
                                             success: true,
-                                            step: nextStepNum,
+                                            step: finalStepNum,
                                             promiseId: null
                                         })
                                     )

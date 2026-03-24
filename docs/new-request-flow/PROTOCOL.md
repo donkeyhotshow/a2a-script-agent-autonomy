@@ -62,7 +62,7 @@ doc:
 - Кроки захардкожены в definition действия
 - Сервер сам переключает `execution.step` на основе `result`
 - Предсказуемый, алгоритмический поток
-- **Примеры:** [`fix-vue-imports`](simulations/fix-vue-imports/description.md), [`phpunit-deprecations`](simulations/phpunit-deprecations/analysis.md)
+- **Примеры:** [`fix-vue-imports`](../../simulations/fix-vue-imports/description.md), [`phpunit-deprecations`](../../simulations/phpunit-deprecations/analysis.md)
 
 **Структура execution:**
 ```json
@@ -93,7 +93,7 @@ request.json (result.script) → response.json (execute.script, step: "vue-impor
 - LLM **предлагает** следующий шаг и действие в своём ответе
 - Сервер интерпретирует/нормализует это предложение и выбирает фактический `execution.step` и `execute`
 - Возможны отдельные запросы на каждый шаг
-- **Примеры:** [`dialog`](simulations/dialog/description.md), [`coder`](simulations/coder/description.md), [`coder-smart`](simulations/coder-smart/description.md)
+- **Примеры:** [`dialog`](../../simulations/dialog/description.md), [`coder`](../../simulations/coder/description.md), [`coder-smart`](../../simulations/coder-smart/description.md)
 
 **Структура execution:**
 ```json
@@ -180,7 +180,7 @@ interface FirstResponseFormChoices {
 }
 ```
 
-**Пример (как в simulations/fix-vue-imports/1/response.json):**
+**Пример (как в [`simulations/fix-vue-imports/1/response.json`](../../simulations/fix-vue-imports/1/response.json)):**
 
 ```json
 {

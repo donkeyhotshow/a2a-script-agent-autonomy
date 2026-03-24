@@ -313,4 +313,4 @@ sequenceDiagram
 - [server-invoke-response-pending.schema.json](../../json-schemas/server-invoke-response-pending.schema.json)
 - [ARCHITECTURE.md](../../ARCHITECTURE.md)
 - [PROTOCOL.md](../../PROTOCOL.md)
-- [simulations/SCHEMA.md](../../../simulations/SCHEMA.md)
+- [simulations/SCHEMA.md](../../../../../simulations/SCHEMA.md)

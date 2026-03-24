@@ -21,7 +21,7 @@
 
 ## Додаткові кроки
 
-1. Запуск симуляції: `node a2a-server/scripts/run-simulation.ts fix-vue-imports` і порівняння кожного кроку з файлами `simulations/dialog/1/*`. У логах має бути `[ActionRequestProcessor] Processing task_request` → `[ActionRequestProcessor] Router transform completed`.
+1. Запуск симуляції роутера: `node a2a-server/scripts/run-simulation.ts dialog` і порівняння кроку 1 з файлами в [`simulations/dialog/1/`](../../../simulations/dialog/1/) (репозиторій: корінь `simulations/`). У логах має бути `[ActionRequestProcessor] Processing task_request` → `[ActionRequestProcessor] Router transform completed`. Окремо можна прогнати `fix-vue-imports` для регресії Actions.
 2. Перевірка логів реєстру: після старту `node a2a-server/src/app.ts` або з `actionService.initialize()` знайти рядок `[ActionRegistry] Loaded X actions` і підтвердити наявність `fix-vue-imports`, `coder`, `coder-smart`.
 3. Локальний тест: `node - <<'NODE' ... actionRegistry.loadFromDirectory()` (як описано у попередньому PLAN_REVIEW) — впевнитись, що `getAllActions().map(a => a.id)` містить потрібні action.
 4. Якщо реєстр порожній — додати `console.log` після `await this.registry.loadFromDirectory()` у `action-service.ts` та переконатися, що `ActionRequestProcessor` чекає завершення ініціалізації перед викликом `DialogRequestProcessor`.
