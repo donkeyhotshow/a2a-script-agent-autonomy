@@ -23,7 +23,7 @@ npm install ajv@^8.12.0 --save-dev
 
 ```bash
 # Валидация конкретной симуляции
-npm run sim:validate -- --sim coder/3
+npm run sim:validate -- --sim agent-coder/3
 
 # Валидация всех симуляций
 npm run sim:validate -- --all
@@ -33,7 +33,7 @@ npm run sim:validate -- --all
 
 | Опция | Описание |
 |-------|----------|
-| `--sim <name>` | Имя симуляции для валидации (например: `coder/3`, `fix-vue-imports`) |
+| `--sim <name>` | Имя симуляции для валидации (например: `agent-coder/3`, `fix-vue-imports`) |
 | `--all` | Валидировать все симуляции |
 | `--json, -j` | Вывод в формате JSON |
 | `--verbose, -v` | Подробный вывод (включая предупреждения и список файлов) |
@@ -43,13 +43,13 @@ npm run sim:validate -- --all
 
 ```bash
 # Простая валидация
-npm run sim:validate -- --sim coder/3
+npm run sim:validate -- --sim agent-coder/3
 
 # Подробный вывод
-npm run sim:validate -- --sim coder/3 --verbose
+npm run sim:validate -- --sim agent-coder/3 --verbose
 
 # JSON вывод для CI/CD
-npm run sim:validate -- --sim coder/3 --json
+npm run sim:validate -- --sim agent-coder/3 --json
 
 # Валидация всех симуляций
 npm run sim:validate -- --all --verbose
@@ -171,7 +171,7 @@ pipeline {
   "valid": true,
   "simulations": [
     {
-      "name": "coder/3",
+      "name": "agent-coder/3",
       "valid": true,
       "errors": [],
       "warnings": [],
@@ -208,7 +208,7 @@ npm install ajv@^8.12.0 --save-dev
 
 ### Ошибка "Simulation directory not found"
 
-Проверьте правильность пути к симуляции. Используйте формат `category/name` (например, `coder/3`).
+Проверьте правильность пути к симуляции. Используйте формат `category/name` (например, `agent-coder/3`).
 
 ## Разработка
 
@@ -221,7 +221,7 @@ npm install ajv@^8.12.0 --save-dev
 
 ```bash
 # Тестирование конкретной симуляции
-npm run sim:validate -- --sim coder/3 --verbose
+npm run sim:validate -- --sim agent-coder/3 --verbose
 
 # Тестирование всех симуляций
 npm run sim:validate -- --all --verbose

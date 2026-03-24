@@ -115,7 +115,7 @@ function lintJsonFormat(filePath: string, content: string): LintError[] {
 function lintDirectoryStructure(simPath: string, simName: string): LintError[] {
     const errors: LintError[] = [];
 
-    // Only check kebab-case for root directory name (not nested like coder/3)
+    // Only check kebab-case for root directory name (not nested like agent-coder/3)
     if (!simName.includes('/')) {
         if (!isKebabCase(simName)) {
             errors.push({
@@ -556,7 +556,7 @@ Options:
   --help, -h         Show help
 
 Examples:
-  npm run sim:lint -- --sim coder/3
+  npm run sim:lint -- --sim agent-coder/3
   npm run sim:lint -- --all --verbose
   npm run sim:lint -- --all --fix
 `);
@@ -644,7 +644,7 @@ function main() {
     if (!args.sim && !args.all) {
         console.error('❌ Error: specify simulation or use --all');
         console.error('   Usage: npm run sim:lint -- --sim <name>');
-        console.error('   Example: npm run sim:lint -- --sim coder/3');
+        console.error('   Example: npm run sim:lint -- --sim agent-coder/3');
         console.error('   Help: npm run sim:lint -- --help');
         process.exit(1);
     }

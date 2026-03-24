@@ -197,9 +197,9 @@ describe('API Client Simulation Tests', () => {
 
     test.each([
         'fix-vue-imports',
-        'coder',
-        'coder-smart',
-        'auto-ai',
+        'agent-coder',
+        'agent-coder-smart',
+        'agent-auto-ai',
         'task-decomposition',
     ])('should play simulation: %s', async (simulationName) => {
         const runner = new SimulationTestRunner(simulationName, serverUrl);

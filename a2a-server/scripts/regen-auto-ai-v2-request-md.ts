@@ -1,6 +1,6 @@
 /**
- * Regenerate simulations/auto-ai-v2 step folders' request.md from request.json
- * (LLM prep: materialize + flow hint + prompts/auto-ai-request.md).
+ * Regenerate simulations/agent-auto-ai step folders' request.md from request.json
+ * (LLM prep: materialize + flow hint + prompts/agent-request.md).
  *
  * Picks every step subfolder that has both request.json and server-transforms-request.json.
  */
@@ -13,8 +13,8 @@ import {attachWorkbenchForLlmPrompt} from '../src/transform/workbench-normalize.
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = join(__dirname, '..', '..');
-const simBase = join(repoRoot, 'simulations', 'auto-ai-v2');
-const tplPath = join(repoRoot, 'a2a-server', 'prompts', 'auto-ai-request.md');
+const simBase = join(repoRoot, 'simulations', 'agent-auto-ai');
+const tplPath = join(repoRoot, 'a2a-server', 'prompts', 'agent-request.md');
 const tpl = readFileSync(tplPath, 'utf8');
 
 function stringifyForSlot(value: unknown): string {

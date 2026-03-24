@@ -1,4 +1,4 @@
-# Диалоговая система на фронтенде (A2A Script Agent)
+# Система агента на фронтенде (A2A Script Agent)
 
 > **Дата обновления**: 2026-03-14
 > **Статус**: Актуальная документация
@@ -17,12 +17,12 @@
 
 ## Обзор
 
-Диалог — основной режим взаимодействия пользователя с системой A2A:
+Агентский режим — основной режим взаимодействия пользователя с системой A2A:
 
 - **Накопление контекста** — история в `context.history` и структурированное рабочее состояние в `context.workbench.sections`
 - **Интерактивность** — сервер ожидает ввод (message или choice) с обязательным **action-key shape** для результатов
 - **Два режима** — синхронный (sync) и асинхронный (promiseId)
-- **Трансформы** — для шагов без LLM: `dialog-request.json` / `dialog-response.json`. Для LLM-диалога на сервере: `server-transforms-request.json` → `dialog-request.md`, ответ → **`dialog-llm-response.json`** (парсинг JSON, `execute`, опционально `workbench`), см. [`AGENTS.md`](../../AGENTS.md) § Dialog mode.
+- **Трансформы** — для шагов без LLM: `agent-request.json` / `agent-response.json`. Для LLM-режима на сервере: `server-transforms-request.json` → `agent-request.md`, ответ → **`agent-llm-response.json`** (парсинг JSON, `execute`, опционально `workbench`), см. [`AGENTS.md`](../../AGENTS.md) § Agent mode.
 
 ---
 
@@ -135,7 +135,7 @@ const modules = [
 
 ## Поток данных
 
-### 1. Инициализация диалога
+### 1. Инициализация сеанса
 
 ```
 User clicks "+" button
@@ -270,6 +270,6 @@ return window.location.origin + '/api/a2a';
 
 ## Ссылки
 
-- [Симуляции протокола](../simulations/dialog/)
+- [Симуляции протокола](../../simulations/agent/) (роутер, шаг 1); полные цепочки — [`agent-coder`](../../simulations/agent-coder/), [`agent-auto-ai`](../../simulations/agent-auto-ai/)
 - [API Reference](./api-reference/)
 - [Workflows](./workflows/)

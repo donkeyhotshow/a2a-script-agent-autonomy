@@ -130,7 +130,7 @@ export async function runTransformPipelineFromFile(
  * Searches for server-transforms-request.json or server-transforms-response.json
  * in the simulation directory
  * 
- * @param simulationDir - Path to the simulation directory (e.g., simulations/coder/3)
+ * @param simulationDir - Path to the simulation directory (e.g., simulations/agent-coder/3)
  * @param type - Type of transform: 'request' or 'response'
  * @returns The loaded pipeline or null if not found
  */
@@ -194,10 +194,15 @@ function schemaToTemplate(schema: string): string {
 /** Simulation name → schema name for prompts/transforms lookup */
 export const SIMULATION_TO_SCHEMA: Record<string, string> = {
   dialog: 'dialog',
-  coder: 'coder',
-  'coder-smart-v2': 'coder',
-  analyze: 'analyze',
-  'auto-ai-v2': 'auto-ai',
+  'agent-analyze': 'agent',
+  'agent-coder': 'agent',
+  'agent-auto-ai': 'agent',
+  'agent-coder-smart': 'agent',
+  'coder-smart-v2': 'agent',
+  analyze: 'agent',
+  coder: 'agent',
+  'auto-ai-v2': 'agent',
+  'auto-ai': 'agent',
   'fix-vue-imports': 'fix-vue-imports',
   'fix-vue-imports-decline': 'fix-vue-imports-decline',
   'fix-vue-imports-batched': 'fix-vue-imports',

@@ -218,7 +218,7 @@ async function login(email, password) {
 
 ```
 
-simulations/coder/
+simulations/agent-coder/
 ├── description.md # Короткий опис
 ├── analysis.md # Детальний аналіз
 ├── 1/

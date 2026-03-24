@@ -107,6 +107,6 @@ response.json ← server-transforms-response.json
 
 - [PROTOCOL.md](../PROTOCOL.md)
 - [SCHEMAS.md](../SCHEMAS.md)
-- [simulations/SCHEMA.md](../../simulations/SCHEMA.md)
-- [simulations/auto-ai/ACTIONS-MAP.md](../../simulations/auto-ai/ACTIONS-MAP.md)
+- [simulations/SCHEMA.md](../../../../simulations/SCHEMA.md)
+- [simulations/agent-auto-ai/description.md](../../../../simulations/agent-auto-ai/description.md) — эталонный auto-ai / agent loop
 - [server-invoke-response-execute.schema.json](../json-schemas/server-invoke-response-execute.schema.json)

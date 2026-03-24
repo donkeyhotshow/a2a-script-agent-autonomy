@@ -6,7 +6,7 @@
 
 ## Constraints (invariants)
 
-- **`LLM_PIPELINE_ACTIONS`** in **`request-processor.service.ts`** lists modes that count as **dialog** processing and accept **router** **`result.choice`**: **dialog**, **auto-ai**, **auto-ai-v2**, **coder**, **coder-smart**, **coder-smart-v2**, **analyze**, **task-decomposition**. Must stay aligned with **`ACTION_TO_SCHEMA`** in **dialog-request-processor.ts**.
+- **`LLM_PIPELINE_ACTIONS`** in **`request-processor.service.ts`** lists modes that count as **dialog** processing and accept **router** **`result.choice`**: **dialog**, **agent**, **task-decomposition**. Must stay aligned with **`ACTION_TO_SCHEMA`** in **dialog-request-processor.ts**.
 
 ## Context
 
@@ -18,7 +18,7 @@ Product teams may **ship a subset** of modes in the UI, keep others for internal
 |----|---------|---------|-----------|
 | `full-catalog` | All listed actions | Maximum flexibility; more maintenance. | Current code allows full set. |
 | `minimal-prod` | dialog + one coder path | Smaller attack surface and doc load. | Trim router form choices accordingly. |
-| `staged-rollout` | Env/feature flags | Enable **auto-ai-v2** only in beta. | Needs wiring in UI + server gates. |
+| `staged-rollout` | Env/feature flags | Enable agent variants only in beta. | Enable specific agent-* variants in beta (agent-analyze, agent-coder, etc.). Needs wiring in UI + server gates. |
 
 ## Current selection (this repo)
 
@@ -26,7 +26,7 @@ Product teams may **ship a subset** of modes in the UI, keep others for internal
 - [ ] `minimal-prod`
 - [ ] `staged-rollout`
 
-**Modes enabled in UI:** dialog, auto-ai, auto-ai-v2, coder, coder-smart, coder-smart-v2, analyze, task-decomposition
+**Modes enabled in UI:** dialog, agent, task-decomposition
 
 **Notes:**
 - `LLM_PIPELINE_ACTIONS` in `request-processor.service.ts` enumerates every router mode, so the default is the full catalog today.

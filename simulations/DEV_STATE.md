@@ -8,8 +8,8 @@
 
 | Категория | Примеры | Назначение |
 |-----------|---------|------------|
-| **AI Actions** | `auto-ai/`, `coder-smart/` | Тестирование AI-driven flows |
-| **Code Analysis** | `analyze/`, `coder/` | Анализ и генерация кода |
+| **AI Actions** | `agent-auto-ai/`, `agent-coder-smart/` | Тестирование AI-driven flows |
+| **Code Analysis** | `agent-analyze/`, `agent-coder/` | Анализ и генерация кода |
 | **Debugging** | `debug-dialog/` | Отладка диалогов |
 | **UI Fixes** | `fix-vue-imports/` | Исправление Vue.js проблем |
 | **Initialization** | `init/` | Инициализация системы |
@@ -27,8 +27,8 @@
 
 #### AI Action симуляции
 - **auto-ai**: Базовый AI action flow
-- **coder-smart**: Продвинутый кодогенератор
-- **analyze**: Анализ кода и архитектуры
+- **agent-coder-smart**: Продвинутый кодогенератор (legacy: coder-smart)
+- **agent-analyze**: Анализ кода и архитектуры (legacy `analyze/` → `agent-analyze/`)
 
 #### Code симуляции
 - **coder**: Генерация кода

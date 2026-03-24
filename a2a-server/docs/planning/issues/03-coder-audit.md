@@ -10,7 +10,7 @@
 
 - `request-processor.service.ts` (`determineRequestType`, рядки ~30-80) — треба включити перевірку: якщо `result.choice` є і входить до `llmActions`, то типовий `dialog` шлях повинен зберігатися.
 - `ACTION_TO_SCHEMA` у `dialog-request-processor.ts` — `coder` має відповідну схему (рядки ~90-110). Якщо `result.choice` не прокситься до `ctx.execution.action`, `determineRequestType` нічого не бачить.
-- `simulations/coder/2/request.json` → `result.choice` має бути тією ж строкою, що `coder` action; `server-response.json` повинне містити `context.execution.action = "coder"`.
+- `simulations/agent-coder/2/request.json` → `result.choice` має бути тією ж строкою, що `agent` (unified agent / coder flow); `server-response.json` повинне містити очікуваний `context.execution.action` для кроку.
 - `prompts/transforms/coder/` — файли `request.json` / `response.json` повинні відповідати поточній `runPromptsTransform` (використовувати `context.execution`, `result`, `execute` як новий формат).
 
 ## Кодова прив'язка
@@ -21,7 +21,7 @@
 
 ## Додаткові кроки
 
-1. Запустити `node a2a-server/scripts/run-simulation.ts coder` і підтвердити, що `response.json` розбивається на `server-transforms-request/response` без `fallback action` (тобто `determineRequestType` повертає `'dialog'`).
+1. Запустити з кореня репозиторію: `npx tsx a2a-server/scripts/run-simulation.ts simulations/agent-coder/1` (потрібна папка кроку з `request.json`) і підтвердити, що `response.json` розбивається на `server-transforms-request/response` без `fallback action` (тобто `determineRequestType` повертає `'dialog'`).
 2. Додати unit-лог в `determineRequestType`, щоб логування включало `result.choice` і кінцевий `requestType`. Переконатися, що при симуляції `result.choice = "coder"` повертає `'dialog'`.
 3. Якщо логіка лишається в `action` потокі, розширити `ActionRequestProcessor.handleTaskRequest` або `handleTaskResult`, щоб при наявності `result.choice` з-переднього кроку створювати `transformSchema = 'coder'` у новому `ctx`.
 4. Перевірити `runPromptsTransform` (`prompts/transforms/coder/*`) — чи відповідає новому `context.execution`/`result` формату; якщо ні, оновити файли на зразок `dialog/` і переконатися, що `response.json` містить `execute.form`.

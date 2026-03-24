@@ -81,7 +81,7 @@ POST /api/sessions
         "title": "Оберіть спосіб виконання",
         "choices": [
           { "id": "fix-vue-imports", "label": "Виправити імпорти" },
-          { "id": "auto-ai", "label": "AI Assistant" }
+          { "id": "agent", "label": "AI Agent" }
         ]
       }
     }

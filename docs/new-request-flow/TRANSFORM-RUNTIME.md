@@ -79,7 +79,7 @@ Renders markdown from template file using data context.
 ```json
 {
   "op": "render-markdown",
-  "templateRef": "simulations/coder/3/request.md",
+  "templateRef": "simulations/agent-coder/3/request.md",
   "data": "$",
   "outputFile": "request.md"
 }
@@ -114,7 +114,7 @@ All operations include robust error handling with detailed messages. If any step
 {
   success: false,
   error: {
-    message: "Transformation failed: ENOENT: no such file or directory, open 'c:\\workspace\\simulations\\coder\\3\\response.md'",
+    message: "Transformation failed: ENOENT: no such file or directory, open '…\\simulations\\agent-coder\\3\\response.md'",
     details: ... // additional context
   }
 }
@@ -131,7 +131,7 @@ Test file covers:
 - Template resolution
 - File IO operations
 - Error handling
-- Integration with coder/3 simulation
+- Integration with `agent-coder/3` simulation
 
 ## Architecture
 

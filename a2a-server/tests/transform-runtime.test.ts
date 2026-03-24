@@ -4,7 +4,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 const PROJECT_ROOT = path.join(process.cwd(), '..');
-const SIM_DIR = path.join(PROJECT_ROOT, 'simulations', 'coder', '3');
+const SIM_DIR = path.join(PROJECT_ROOT, 'simulations', 'agent-coder', '3');
 const PROMPTS_TRANSFORMS = getPromptsTransformsPath();
 
 describe('Transform Pipeline Runtime', () => {
@@ -288,7 +288,7 @@ describe('Transform Pipeline Runtime', () => {
       };
       const input = {
         context: {
-          execution: { action: 'coder' },
+          execution: { action: 'agent' },
           task: 'do it',
           files: { 'src/a.js': 'content' },
           scratchpad: { done: true },
@@ -606,14 +606,14 @@ describe('Transform Pipeline Runtime', () => {
     });
   });
 
-  describe('Integration coder/3 (prompts/transforms)', () => {
+  describe('Integration agent-coder/3 (prompts/transforms)', () => {
     it('transform request.json via runPromptsTransform', async () => {
       const requestPath = path.join(SIM_DIR, 'request.json');
       const input = JSON.parse(fs.readFileSync(requestPath, 'utf-8'));
 
       const result = await runPromptsTransform(
         PROMPTS_TRANSFORMS,
-        'coder',
+        'agent',
         input,
         'request',
         { step: 3, baseDir: PROJECT_ROOT }
@@ -637,7 +637,7 @@ describe('Transform Pipeline Runtime', () => {
 
       const result = await runPromptsTransform(
         PROMPTS_TRANSFORMS,
-        'coder',
+        'agent',
         input,
         'response',
         { step: 3, baseDir: SIM_DIR }

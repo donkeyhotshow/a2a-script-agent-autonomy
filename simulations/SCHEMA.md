@@ -63,26 +63,26 @@ Not every step has all 8 files: steps without LLM обычно имеют `clien
 | `interrupt.md` | **Documentation only.** Describes how [`SERVER-INTERRUPT-LOOP.md`](../a2a-server/docs/SERVER-INTERRUPT-LOOP.md) could apply at this step: sample LLM JSON with `interrupt`, compress output, transform snippet. **Not** part of the client sync pipeline; `sim-lint` does not require it. |
 | **`N-sub-M/`** (folder) | **Sister folder next to step `N/`** (`M` = 1,2,3,…). Optional interrupt-loop goldens: same class of files as steps (`request.json`, `request.md`, `response.json`, `response.md`, server-transforms). Trace → **`response.json`** `context.workbench.slots.interruptTrace`. Pattern: `^\d+-sub-\d+$`. Not a full eight-file client step. `sim-lint` only checks JSON syntax inside. |
 
-Examples: [`auto-ai-v2/6/interrupt.md`](auto-ai-v2/6/interrupt.md); substeps: [`6-sub-1/`](auto-ai-v2/6-sub-1/) … [`6-sub-4/`](auto-ai-v2/6-sub-4/).
+Examples: [`agent-auto-ai/6/interrupt.md`](agent-auto-ai/6/interrupt.md); substeps: [`6-sub-1/`](agent-auto-ai/6-sub-1/) … [`6-sub-4/`](agent-auto-ai/6-sub-4/).
 
 ## Примеры Web ↔ Client API
 
 | Файл | Направление | Что показывает |
 |------|-------------|---------------|
-| `simulations/dialog/1/client.json` | Web → Client API | UI отправляет начальный `task` с `projectId`, чтобы создать сессию и показывать прогресс. |
-| `simulations/dialog/1/received.json` | Client API → Web | Клиент получает `execute.form` с выбором режимов (dialog, auto-ai, task-decomposition); это то, что рендерит интерфейс. |
-| `simulations/dialog/2/client.json` | Web → Client API | После выбора опции web отправляет `result.choice` вместе с идентификаторами сессии/проекта. |
-| `simulations/dialog/2/received.json` | Client API → Web | Клиент API отвечает формой с полем `message` для следующего шага диалога. |
-| `simulations/coder/1/client.json` | Web → Client API | Начальный запрос на помощь с кодом. |
-| `simulations/coder/1/received.json` | Client API → Web | Выбор типа действия (coder, auto-ai, task-decomposition). |
-| `simulations/analyze/3/client.json` | Web → Client API | Результат RAG-поиска для анализа архитектуры. |
-| `simulations/analyze/3/received.json` | Client API → Web | Форма с результатами анализа и вариантами продолжения. |
+| `simulations/agent/1/client.json` | Web → Client API | UI отправляет начальный `task` с `projectId`, чтобы создать сессию и показывать прогресс. |
+| `simulations/agent/1/received.json` | Client API → Web | Клиент получает `execute.form.choices` (роутер: dialog, agent, task-decomposition, fix-vue-imports и т.д.). |
+| `simulations/agent-coder/2/client.json` | Web → Client API | После выбора режима агента web отправляет `result.choice` / идентификаторы сессии. |
+| `simulations/agent-coder/2/received.json` | Client API → Web | Следующий шаг agent-coder (например форма `message`). |
+| `simulations/agent-coder/1/client.json` | Web → Client API | Начальный запрос на помощь с кодом (роутер). |
+| `simulations/agent-coder/1/received.json` | Client API → Web | Ответ роутера с выбором режимов. |
+| `simulations/agent-analyze/3/client.json` | Web → Client API | Результат RAG-поиска для анализа архитектуры. |
+| `simulations/agent-analyze/3/received.json` | Client API → Web | Форма с результатами анализа и вариантами продолжения. |
 
 ## Request
 
 - **First request (server‑level симуляция)**: роутер‑шаг `task/new`:
   `{"context":{"execution":{"action":"task","step":"new"}},"result":{"message":"<user task>"}}`
-  (как в `simulations/dialog/1/request.json`). На верхнем уровне системы этот шаг соответствует
+  (как в `simulations/agent/1/request.json`). На верхнем уровне системы этот шаг соответствует
   пользовательскому `{ "task": "..." }`.
 - **Router / client choice (новый стандарт)**: сервер присылает `execute.form.choices`; клиент отвечает
   `result.choice` (ID выбранной опции). Пример: `{ "context": {...}, "result": { "choice": "fix-vue-imports" } }`.
@@ -342,7 +342,7 @@ Use this table to **prioritize simulations and server behavior** before implemen
 
 ## Reference sims
 
-- **dialog**: базовый диалог с выбором типа действия; демонстрирует execute.form.choices
+- **agent**: базовый сеанс с выбором типа действия; демонстрирует execute.form.choices
 - **coder**: AI-асистент для работы с кодом; полный цикл от выбора действия до выполнения через LLM
 - **coder-smart**: продвинутый кодер с документированием; создает task-документ, затем выполняет пункты
 - **analyze**: анализ архитектуры проекта; AI ищет документацию и выявляет несоответствия

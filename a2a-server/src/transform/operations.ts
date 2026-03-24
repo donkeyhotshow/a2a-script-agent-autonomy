@@ -352,7 +352,7 @@ async function applyRenderMarkdown(
   
   // Check if templateRef is a file path or a special reference
   if (templateRef.includes('#')) {
-    // Handle template references like "simulations/coder/3/request.md"
+    // Handle template references like "simulations/agent-coder/3/request.md"
     const templatePath = templateRef.startsWith('/') 
       ? templateRef 
       : path.resolve(baseDir, templateRef);

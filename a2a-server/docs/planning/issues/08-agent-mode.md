@@ -41,7 +41,7 @@ Dialog зараз: user → LLM → assistant text → відповідь.
 
 ## Дії
 
-1. Додати `system` в `prompts/transforms/coder/request.json` і перевірити на симуляції `coder` (ISSUE 3 повинен бути закритий перед)
+1. Додати `system` в `prompts/transforms/coder/request.json` і перевірити на симуляції `agent-coder` (ISSUE 3 повинен бути закритий перед)
 2. `a2a-client/vite-plugin-a2a/routes/stepRoutes.js` — додати автоматичний цикл після отримання відповіді сервера: якщо `execute["rag-search"]` (ключ з дефісом) — виконати пошук і повернути результат без user input. **Виконувати ПІСЛЯ ISSUE 6** (обидва змінюють `stepRoutes.js`)
-3. Tool use схема визначається в `simulations/auto-ai/` (ISSUE 9) — цей issue реалізується після
+3. Tool use схема визначається в `simulations/agent-auto-ai/` (ISSUE 9) — цей issue реалізується після
 4. Web UI: мінімальний показ agent steps — не блокує основний flow

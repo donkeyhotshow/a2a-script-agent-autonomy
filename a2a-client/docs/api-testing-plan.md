@@ -4,7 +4,7 @@
 >
 > **For AI:** Execute sections in order. Use curl commands as-is; replace `{SESSION_ID}` with actual id. Assert expected JSON shapes. Run section 7 one-shot script for quick validation.
 >
-> **Reference:** Payloads aligned with `simulations/dialog/` — client.json (Web→Client API), request.json (Client API→Server), received.json (expected response). See also: [api-client-server-logic.md](api-client-server-logic.md) for detailed step flow.
+> **Reference:** Golden layout matches `simulations/*/<N>/` — `client.json` (Web→Client API), `request.json` (Client API→Server), `received.json` (expected Web DTO). Router-only fixture: `simulations/agent/1/`; full agent coding chain: `simulations/agent-coder/`. See [api-client-server-logic.md](api-client-server-logic.md).
 
 ---
 
@@ -246,10 +246,7 @@ Client API (3001) proxies to a2a-server (3000). Use Client API session endpoints
 ### 5.1 Create Session with Task (one-shot to a2a-server)
 
 ```bash
-curl -s -X POST "$CLIENT_API_BASE/api/sessions" \
-  -H "Content-Type: application/json" \
-  -H "X-Session-Id: test" \
-  -d '{"title": "Full Chain Test", "task": "диалог"}'
+  -d '{"title": "Full Chain Test", "task": "agent-task"}'
 ```
 
 **Expected:** `{"success": true, "data": {...}, "serverResponse": {"data": {"promiseId": "..."}}}`  
@@ -282,25 +279,25 @@ curl -s -X POST "$CLIENT_API_BASE/api/sessions/{SESSION_ID}/next" \
 
 ---
 
-## 5.5 Dialog Simulation Flow (simulations/dialog)
+## 5.5 Protocol simulation flow (golden fixtures)
 
-Mirrors `simulations/dialog/` step-by-step. Client API maps `client.json` → `request.json` → a2a-server → `received.json`.
+Client API maps each step’s `client.json` → `request.json` → a2a-server → `received.json`. **Router-only:** `simulations/agent/1`. **Dialog-style multi-step:** `simulations/dialog/N`. **Agent coding multi-step:** `simulations/agent-coder/N`.
 
-**File mapping:** `simulations/dialog/N/client.json` = Web payload; `N/request.json` = Server input; `N/received.json` = expected response.
+**File mapping:** `simulations/<sim-name>/<N>/client.json` = Web payload; same folder’s `request.json` / `received.json` = server chain and expected Web DTO.
 
-| Step | client.json (Web→Client API) | received.json (expected) |
-|------|------------------------------|--------------------------|
-| 1 | `result.message: "диалог"` | `execute.form.choices` (router) |
-| 2 | `result.choice: "dialog"` | `execute.form.input` (text input) |
-| 3 | `result.message: "hello world"` | `execute.message` + `form.input` |
-| 4 | `result.message: "Дякую!"` | `execute.message` + `form.input` or `finalResult` |
+| Step | Example | client.json (Web→Client API) | received.json (expected) |
+|------|---------|------------------------------|--------------------------|
+| 1 | `dialog/1` | `result.message: "диалог"` | `execute.form.choices` (router) |
+| 2 | `dialog/2` | `result.choice: "dialog"` | `execute.form.input` (text input) |
+| 3 | `agent-coder/3` | `result.message` (user text) | per golden `received.json` |
+| 4 | `agent-coder/6` | `result.message: "дякую!"` | per golden `received.json` |
 
 ### Step 1 — Task → Router
 
 ```bash
 RESP=$(curl -s -X POST "$CLIENT_API_BASE/api/sessions" \
   -H "Content-Type: application/json" -H "X-Session-Id: test" \
-  -d '{"title":"Dialog Test","task":"диалог"}')
+  -d '{"title":"Agent Test","task":"agent-task"}')
 SESSION_ID=$(echo "$RESP" | jq -r '.data.id')
 PROMISE_ID=$(echo "$RESP" | jq -r '.serverResponse.data.promiseId')
 # Poll until completed
@@ -325,7 +322,7 @@ curl -s "$A2A_SERVER_BASE/api/v1/requests/$PROM2/result" -H "x-skip-auth: true" 
 ### Step 3 — Message → LLM Response
 
 ```bash
-# Matches simulations/dialog/3/client.json
+# Matches simulations/agent-coder/3/client.json (user message step)
 curl -s -X POST "$CLIENT_API_BASE/api/sessions/$SESSION_ID/next" \
   -H "Content-Type: application/json" \
   -d '{"result":{"message":"hello world"}}'
@@ -335,14 +332,14 @@ curl -s -X POST "$CLIENT_API_BASE/api/sessions/$SESSION_ID/next" \
 ### Step 4 — Final Message
 
 ```bash
-# Matches simulations/dialog/4/client.json
+# Matches simulations/agent-coder/6/client.json (follow-up message; shape example)
 curl -s -X POST "$CLIENT_API_BASE/api/sessions/$SESSION_ID/next" \
   -H "Content-Type: application/json" \
   -d '{"result":{"message":"Дякую!"}}'
 # Expected: execute.message or finalResult
 ```
 
-### Full Dialog Script (no mocks)
+### Full Agent Script (no mocks)
 
 Each step returns `promiseId`; poll `GET $A2A_SERVER_BASE/api/v1/requests/{promiseId}/result` until `status: completed`.
 

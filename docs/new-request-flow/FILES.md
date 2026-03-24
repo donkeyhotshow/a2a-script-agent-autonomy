@@ -103,11 +103,12 @@ NPM пакети всередині monorepo:
 ```
 simulations/
 ├── dialog/                    # Діалог з LLM
-├── coder/              # Діалог + RAG + read/write файлів
-├── coder-smart/               # Контекст-документ (MD)
+├── agent-coder/               # Агент + RAG + файли (було coder/)
+├── agent-coder-smart/         # Контекст-документ (було coder-smart/)
+├── agent-auto-ai/             # Auto-AI loop
+├── agent-analyze/             # Analyze (було analyze/)
 ├── fix-vue-imports/           # Виправлення Vue імпортів
 ├── fix-vue-imports-batched/
-├── analyze/
 ├── phpunit-deprecations/
 └── ...
 ```

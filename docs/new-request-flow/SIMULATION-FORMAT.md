@@ -11,9 +11,11 @@
 ```
 simulations/
 ├── dialog/                    # Диалог с LLM
-├── coder/              # Диалог с RAG + запись файлов
+├── agent-coder/               # Агент + RAG + файлы (legacy: coder/)
+├── agent-coder-smart/
+├── agent-auto-ai/             # Auto-AI loop (legacy: auto-ai, auto-ai-v2)
+├── agent-analyze/             # Analyze flow (legacy: analyze/)
 ├── fix-vue-imports/           # Исправление Vue импортов
-├── analyze/
 └── ...
 ```
 
@@ -368,7 +370,7 @@ pass to LLM for summary or next step.
 
 - **kebab-case** для имён директорий
 - **Описательные**, отражающие суть сценария
-- **Примеры:** `fix-vue-imports`, `phpunit-deprecations`, `task-decomposition`, `coder-smart`
+- **Примеры:** `fix-vue-imports`, `phpunit-deprecations`, `task-decomposition`, `agent-coder-smart`
 
 ### Шаги (steps) внутри директорий
 
@@ -395,12 +397,12 @@ pass to LLM for summary or next step.
 
 | Файл | Паттерн | Пример |
 |------|---------|--------|
-| Request | `request.json` | `simulations/coder/3/request.json` |
-| Server transform (request) | `server-transforms-request.json` | `simulations/coder/3/server-transforms-request.json` |
-| LLM request | `request.md` | `simulations/coder/3/request.md` |
-| LLM response | `response.md` | `simulations/coder/3/response.md` |
-| Server transform (response) | `server-transforms-response.json` | `simulations/coder/3/server-transforms-response.json` |
-| Response | `response.json` | `simulations/coder/3/response.json` |
+| Request | `request.json` | `simulations/agent-coder/3/request.json` |
+| Server transform (request) | `server-transforms-request.json` | `simulations/agent-coder/3/server-transforms-request.json` |
+| LLM request | `request.md` | `simulations/agent-coder/3/request.md` |
+| LLM response | `response.md` | `simulations/agent-coder/3/response.md` |
+| Server transform (response) | `server-transforms-response.json` | `simulations/agent-coder/3/server-transforms-response.json` |
+| Response | `response.json` | `simulations/agent-coder/3/response.json` |
 
 ---
 

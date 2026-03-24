@@ -95,7 +95,7 @@ request.json (result.script) → response.json (execute.script, step: "vue-impor
 - LLM **предлагает** следующий шаг и действие в своём ответе
 - Сервер интерпретирует/нормализует это предложение и выбирает фактический `execution.step` и `execute`
 - Возможны отдельные запросы на каждый шаг
-- **Примеры:** [`dialog`](../../simulations/dialog/description.md), [`coder`](../../simulations/coder/description.md), [`coder-smart`](../../simulations/coder-smart/description.md)
+- **Примеры:** [`dialog`](../../simulations/dialog/description.md), [`agent-coder`](../../simulations/agent-coder/description.md), [`agent-coder-smart`](../../simulations/agent-coder-smart/description.md)
 
 **Структура execution:**
 ```json

@@ -78,13 +78,13 @@ const SIMULATIONS: SimulationConfig[] = [
         isAiAction: true
     },
     {
-        name: 'coder',
-        steps: 8,
+        name: 'agent-coder',
+        steps: 10,
         responseType: 'action_proposal',
         isAiAction: true
     },
     {
-        name: 'coder-smart-v2',
+        name: 'agent-coder-smart',
         steps: 9,
         responseType: 'action_proposal',
         isAiAction: true

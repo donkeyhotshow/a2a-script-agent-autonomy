@@ -305,57 +305,63 @@ export class FormRequestProcessor extends BaseRequestProcessor {
                     }
                 } as ProcessResult;
 
-            case 'auto-ai':
-                // Auto-AI Action Generator mode
-                logger.info('[FormRequestProcessor] Auto-AI mode selected, routing to AI-Actions', {choiceId});
+            case 'agent':
+                // Unified Agent mode - LLM adapts to task
+                logger.info('[FormRequestProcessor] Agent mode selected, routing to AI-Actions', {choiceId});
                 return {
                     outcome: 'ai_action_ready',
-                    message: 'Auto-AI mode selected',
+                    message: 'Agent mode selected',
                     selection: { choiceId, formId, timestamp: new Date().toISOString() },
                     context: {
-                        action: 'auto-ai',
+                        action: 'agent',
                         execution: {
                             step: 'request',
                             progress: 0
                         }
                     },
                     execute: {
-                        message: 'Auto-AI генератор активовано. Аналіз задачі через LLM...',
+                        message: 'Agent режим активовано. LLM адаптується до вашої задачі...',
                     },
                     finalResult: {
-                        action: 'auto-ai',
-                        summary: { mode: 'auto-ai', status: 'processing' },
+                        action: 'agent',
+                        summary: { mode: 'agent', status: 'processing' },
                     },
                     aiActions: {
-                        action: 'auto-ai',
+                        action: 'agent',
                         mode: 'llm-driven',
                         step: 'start',
                         completed: false
                     }
                 } as ProcessResult;
 
+            case 'auto-ai':
             case 'auto-ai-v2':
-                logger.info('[FormRequestProcessor] Auto-AI v2 mode selected, routing to AI-Actions', {choiceId});
+            case 'coder':
+            case 'coder-smart':
+            case 'coder-smart-v2':
+            case 'analyze':
+                // Legacy modes now redirect to unified agent
+                logger.info('[FormRequestProcessor] Legacy mode selected, redirecting to agent', {choiceId});
                 return {
                     outcome: 'ai_action_ready',
-                    message: 'Auto-AI v2 mode selected',
+                    message: `${choiceId} mode → agent`,
                     selection: { choiceId, formId, timestamp: new Date().toISOString() },
                     context: {
-                        action: 'auto-ai-v2',
+                        action: 'agent',
                         execution: {
                             step: 'request',
                             progress: 0
                         }
                     },
                     execute: {
-                        message: 'Auto-AI v2 (оптимізований контекст). Аналіз задачі через LLM...',
+                        message: 'Перенаправлення на Agent режим...',
                     },
                     finalResult: {
-                        action: 'auto-ai-v2',
-                        summary: { mode: 'auto-ai-v2', status: 'processing' },
+                        action: 'agent',
+                        summary: { mode: 'agent', status: 'processing' },
                     },
                     aiActions: {
-                        action: 'auto-ai-v2',
+                        action: 'agent',
                         mode: 'llm-driven',
                         step: 'start',
                         completed: false

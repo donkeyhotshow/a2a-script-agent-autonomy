@@ -46,5 +46,5 @@ flowchart TD
 - [PROTOCOL.md](../PROTOCOL.md) - Основной протокол
 - [SCHEMAS.md](../SCHEMAS.md) - JSON схемы
 - [DATA-FLOW.md](../DATA-FLOW.md) - Диаграмма потока данных
-- [simulations/SCHEMA.md](../../simulations/SCHEMA.md) - Схема симуляций
-- [simulations/auto-ai/ACTIONS-MAP.md](../../simulations/auto-ai/ACTIONS-MAP.md) - Карта действий
+- [simulations/SCHEMA.md](../../../../simulations/SCHEMA.md) - Схема симуляций
+- [simulations/agent-auto-ai/description.md](../../../../simulations/agent-auto-ai/description.md) — auto-ai / agent loop; [simulations/SCHEMA.md](../../../../simulations/SCHEMA.md)

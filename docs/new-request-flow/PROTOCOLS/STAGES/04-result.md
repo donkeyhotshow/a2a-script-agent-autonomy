@@ -122,6 +122,6 @@ Web UI (result) → Client API → request.json (with result) → Server
 
 - [PROTOCOL.md](../PROTOCOL.md)
 - [SCHEMAS.md](../SCHEMAS.md)
-- [simulations/SCHEMA.md](../../simulations/SCHEMA.md)
+- [simulations/SCHEMA.md](../../../../simulations/SCHEMA.md)
 - [server-invoke-request.schema.json](../json-schemas/server-invoke-request.schema.json)
 - [client-result.schema.json](../json-schemas/client-result.schema.json)

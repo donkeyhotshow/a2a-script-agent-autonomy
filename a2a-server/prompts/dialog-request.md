@@ -61,7 +61,7 @@ Always set **`message`** to a short user-facing line (what you are doing / what 
 }
 ```
 
-Optional: **`workbench_ops`** / **`workbench.sections`** to stash durable notes (same rules as Auto-AI — see `auto-ai-request.md`).
+Optional: **`workbench_ops`** / **`workbench.sections`** to stash durable notes (same rules as Agent — see `agent-request.md`).
 
 ## Current State
 

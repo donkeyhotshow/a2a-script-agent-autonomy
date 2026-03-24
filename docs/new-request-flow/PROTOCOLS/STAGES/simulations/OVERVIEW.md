@@ -5,9 +5,10 @@
 | Симуляция | Тип | Шагов | Описание |
 |-----------|-----|-------|----------|
 | dialog | AI-Action | 4 | Простой диалог с LLM |
-| coder | AI-Action | 10 | Диалог + файловые операции + RAG |
-| auto-ai | AI-Action | 16 | AI генерация действий |
-| analyze | AI-Action | - | Анализ проекта |
+| agent-analyze | Agent | - | Анализ кода (вариант agent) |
+| agent-coder | Agent | - | Генерация кода (вариант agent) |
+| agent-auto-ai | Agent | - | Полный цикл (базовый вариант agent) |
+| agent-coder-smart | Agent | - | Умное кодирование (вариант agent) |
 | fix-vue-imports | Action | - | Исправление Vue импортов |
 | phpunit-deprecations | Action | - | Анализ deprecations |
 | task-decomposition | AI-Action | - | Декомпозиция задачи |
@@ -15,6 +16,8 @@
 | orchestrator-dialog | AI-Action | - | Оркестратор диалогов |
 | init | Action | - | Инициализация |
 | test-action-flow | Action | - | Тестирование потока действий |
+
+> **Примечание:** Все AI-Action режимы (coder, auto-ai, analyze, coder-smart) теперь объединены в единый режим `agent`.
 
 ---
 
@@ -221,6 +224,6 @@ flowchart TD
 ## References
 
 - [simulations/dialog/description.md](../../../../../simulations/dialog/description.md)
-- [simulations/coder/description.md](../../../../../simulations/coder/description.md)
-- [simulations/auto-ai/description.md](../../../../../simulations/auto-ai/description.md)
+- [simulations/agent-coder/description.md](../../../../../simulations/agent-coder/description.md)
+- [simulations/agent-auto-ai/description.md](../../../../../simulations/agent-auto-ai/description.md)
 - [simulations/SCHEMA.md](../../../../../simulations/SCHEMA.md)

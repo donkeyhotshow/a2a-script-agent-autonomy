@@ -9,9 +9,9 @@ describe('flow-control-hints', () => {
   it('reads action and step from context.execution', () => {
     expect(
       readExecutionRef({
-        context: { execution: { action: 'auto-ai', step: 'locate_code' } }
+        context: { execution: { action: 'agent', step: 'plan' } }
       } as Record<string, unknown>)
-    ).toEqual({ action: 'auto-ai', step: 'locate_code' });
+    ).toEqual({ action: 'agent', step: 'plan' });
   });
 
   it('falls back to top-level action when execution.action missing', () => {
@@ -21,23 +21,37 @@ describe('flow-control-hints', () => {
     });
   });
 
-  it('resolves auto-ai locate_code', () => {
-    const h = resolveFlowControlHintMarkdown({ action: 'auto-ai', step: 'locate_code' });
-    expect(h).toContain('locate_code');
+  it('resolves agent:plan', () => {
+    const h = resolveFlowControlHintMarkdown({ action: 'agent', step: 'plan' });
+    expect(h).toContain('plan');
     expect(h).toContain('rag-search');
+  });
+
+  it('resolves agent:analyze', () => {
+    const h = resolveFlowControlHintMarkdown({ action: 'agent', step: 'analyze' });
+    expect(h).toContain('Gather information');
+    expect(h).toContain('ragResults');
   });
 
   it('resolves task:router', () => {
     const h = resolveFlowControlHintMarkdown({ action: 'task', step: 'router' });
-    expect(h).toContain('Router');
+    expect(h).toContain('ranked-choices');
   });
 
   it('attach sets flowControlHint on root', () => {
     const root = {
-      context: { execution: { action: 'analyze', step: 'search' } }
+      context: { execution: { action: 'agent', step: 'execute' } }
     } as Record<string, unknown>;
     attachFlowControlHintToInvokePayload(root);
     expect(typeof root['flowControlHint']).toBe('string');
-    expect(root['flowControlHint'] as string).toContain('search');
+    expect(root['flowControlHint'] as string).toContain('execute');
+  });
+
+  it('legacy analyze mode redirects to agent', () => {
+    // Old 'analyze' mode should now redirect to 'agent'
+    const h = resolveFlowControlHintMarkdown({ action: 'analyze', step: 'analyze' });
+    // Should resolve via FLOW_HINT_ACTION_ALIASES['analyze'] = 'agent', then find 'agent:analyze'
+    expect(h).toContain('Gather information');
+    expect(h).toContain('ragResults');
   });
 });

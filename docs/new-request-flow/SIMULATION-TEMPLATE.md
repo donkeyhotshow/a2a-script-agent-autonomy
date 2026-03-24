@@ -520,7 +520,7 @@ simulations/
 
 - **Actions:** [`fix-vue-imports`](../../simulations/fix-vue-imports/description.md) — hardcoded steps, сервер переключает
 - **AI-Actions:** [`dialog`](../../simulations/dialog/description.md) — LLM-driven диалог
-- **AI-Actions:** [`coder`](../../simulations/coder/description.md) — LLM + RAG + файлы
+- **AI-Actions:** [`agent-coder`](../../simulations/agent-coder/description.md) — LLM + RAG + файлы
 
 ---
 

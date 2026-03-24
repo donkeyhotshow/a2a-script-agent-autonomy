@@ -20,23 +20,21 @@ import {spawn} from 'node:child_process';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const simulationsPath = join(__dirname);
 
-// List of simulation categories (in execution order)
+// Simulation roots under this folder (kebab-case dirs with numbered steps). Legacy entries like pilot/analyze-full removed.
 const simulationCategories = [
-    'pilot',
-    'analyze-full',
-    'analyze',
-    'analyze-typescript',
-    'analyze-vue',
-    'analyze-laravel',
-    'generate-crud',
-    'generate-controller',
-    'generate-model',
-    'generate-migration',
-    'graph-build',
-    'graph-query',
-    'graph-impact',
-    'hybrid-fix',
-    'hybrid-refactor'
+    'dialog',
+    'agent',
+    'agent-analyze',
+    'agent-auto-ai',
+    'agent-coder',
+    'agent-coder-smart',
+    'fix-vue-imports',
+    'fix-vue-imports-batched',
+    'fix-vue-imports-decline',
+    'fix-laravel-namespaces-and-uses',
+    'orchestrator-dialog',
+    'phpunit-deprecations',
+    'task-decomposition'
 ];
 
 /**
@@ -55,7 +53,7 @@ function findSimulations(basePath) {
         const stat = statSync(categoryPath);
 
         if (stat.isDirectory()) {
-            // Check if category has subfolders (e.g. pilot/1, pilot/2)
+            // Check if category has subfolders (e.g. dialog/1, dialog/2)
             const files = readdirSync(categoryPath);
             const hasSubDirs = files.some(f => {
                 try {
@@ -66,7 +64,7 @@ function findSimulations(basePath) {
             });
 
             if (hasSubDirs) {
-                // Category with numbers (pilot/1, pilot/2)
+                // Category with numbers (dialog/1, dialog/2)
                 for (const file of files.sort()) {
                     const subPath = join(categoryPath, file);
                     if (statSync(subPath).isDirectory()) {

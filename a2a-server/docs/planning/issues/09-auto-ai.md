@@ -4,11 +4,11 @@
 
 ## Симуляція
 
-`simulations/auto-ai/` — 16 кроків, повний агентний цикл (rag-search, list-directory, read-file ×3, write-file ×4, grep-search, execute-command ×2, completed).
+`simulations/agent-auto-ai/` — золотий сценарій на кроках `1`…`7` плюс опційні `6-sub-1`…`6-sub-4` (interrupt); повний tool-цикл у фікстурах (rag-search, read-file, write-file, тощо). Старий план передбачав 16 кроків під `auto-ai/` — поточний репозиторій скорочений.
 
 ## Рішення
 
-ISSUE 9 визначає стратегію context через симуляцію. ISSUE 6 (код) і ISSUE 5 (симуляція coder-smart) залежать від ISSUE 9, не навпаки. Auto-ai стає reference симуляцією для нової стратегії контексту.
+ISSUE 9 визначає стратегію context через симуляцію. ISSUE 6 (код) і ISSUE 5 (симуляція `agent-coder-smart`) залежать від ISSUE 9, не навпаки. `agent-auto-ai` лишається reference-симуляцією для стратегії контексту.
 
 ## Поточні проблеми симуляції
 
@@ -53,6 +53,6 @@ History entries should stay short, system-level descriptions of tool results (se
 
 1. Реалізувати `apply-scratchpad-ops` в `a2a-server/src/transform/operations.ts` і `types.ts` — блокує всі симуляції з scratchpad
 2. Додати пагінацію в `a2a-client/packages/rag/src/protocol-rag-search.ts`: `page`, `pageSize`, `hasMore`, `total` в `RagSearchProtocolResult`. **ISSUE 5 залежить від цього кроку.**
-3. Переробити `simulations/auto-ai/` кроки 3-15: `context.files`, стислі `system` в history, `scratchpad_ops`
+3. Переробити `simulations/agent-auto-ai/` (кроки 3+ за потреби всі основні): `context.files`, стислі `system` в history, `scratchpad_ops`
 4. Визначити які файли з `context.files` передавати в prompt через transform (не всі одразу)
 5. Після фіналізації симуляції — оновити `stepRoutes.js`: фільтрація context повинна передавати `history`, `files`, `scratchpad`

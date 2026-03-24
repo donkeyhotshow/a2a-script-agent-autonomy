@@ -7,7 +7,7 @@
  *   npx tsx scripts/run-all-simulations.ts <simulations-dir>
  *
  * Пример:
- *   npx tsx scripts/run-all-simulations.ts ../simulations/pilot
+ *   npx tsx scripts/run-all-simulations.ts ../simulations/dialog
  *
  * Результат:
  *   - Находит все папки с request.json
@@ -22,7 +22,7 @@ import type {InvokeInput} from '../src/services/utils/invoke.service.js';
 const simBaseDir = process.argv[2];
 if (!simBaseDir) {
     console.error('Usage: npx tsx scripts/run-all-simulations.ts <simulations-dir>');
-    console.error('Example: npx tsx scripts/run-all-simulations.ts ../simulations/pilot');
+    console.error('Example: npx tsx scripts/run-all-simulations.ts ../simulations/dialog');
     process.exit(1);
 }
 

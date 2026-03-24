@@ -4,7 +4,8 @@ This directory documents all testing workflows, validation scenarios, and qualit
 
 ## Related Documentation
 
-- **[Dialog Architecture Tasks](../tasks/dialog-architecture-tasks.md)** - QA scenarios and testing matrix for panels
+- **[Agent Architecture Tasks](../tasks/agent-architecture-tasks.md)**
+ - QA scenarios and testing matrix for panels
 - **[UNIFIED_ARCHITECTURE_COMPLETE](../UNIFIED_ARCHITECTURE_COMPLETE.md)** - Testing checklist for unified architecture
 - **[Task Execution Testing](../task-execution/)** - Validating task execution flows
 - **[Communication Testing](../communication/)** - Transport and fallback validation

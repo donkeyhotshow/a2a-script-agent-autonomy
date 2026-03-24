@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://a2a-script-agent/new-request-flow/json-schemas/server-invoke-response-first-form.schema.json",
   "title": "Server Invoke Response - First (Form Choices)",
-  "description": "Canonical first response for POST /api/v1/invoke: context + execute.form.choices (see simulations/SCHEMA.md, fix-vue-imports/1, coder/1).",
+  "description": "Canonical first response for POST /api/v1/invoke: context + execute.form.choices (see simulations/SCHEMA.md, fix-vue-imports/1, agent-coder/1).",
   "type": "object",
   "additionalProperties": false,
   "properties": {

@@ -1,7 +1,7 @@
 # Specific Actions for Updating Auto-AI Simulation
 
 ## 1. Simulation Step Files Updates (steps 3-15)
-For each step directory (3/ through 15/) in simulations/auto-ai/:
+For each step directory (e.g. 3/ through 7/) in `simulations/agent-auto-ai/` (legacy layout used 16 steps under `auto-ai/`):
 - Update request.json:
   - Remove "result" field from the context
   - Add "files" object with previously read file contents

@@ -38,8 +38,8 @@
 - Сервер відображає доступні кроки; з відповіді LLM вирішує, який крок активувати — можливі окремі запити на кожен крок
 - Steps потрібні (для відображення), але не захардкоджені як послідовність
 
-**Приклади:** [`dialog/`](dialog/description.md), [`coder/`](coder/description.md), [
-`coder-smart/`](coder-smart/description.md), [`auto-ai/`](auto-ai/description.md)
+**Приклади:** [`dialog/`](dialog/description.md), [`agent-coder/`](agent-coder/description.md), [
+`agent-coder-smart/`](agent-coder-smart/description.md), [`agent-auto-ai/`](agent-auto-ai/description.md)
 
 **Структура:** `execute.form`, `execute.message`, `execute.llm` або `execute["read-file"]` тощо — за рішенням LLM.
 
@@ -77,7 +77,7 @@
 ## Як додати нову симуляцію (step-by-step)
 
 1. **Обрати базову симуляцію як шаблон.**
-   `auto-ai` — reference для ai-action з повним циклом. `fix-vue-imports` — для actions.
+   `agent-auto-ai` — reference для ai-action з повним циклом (раніше `auto-ai` / `auto-ai-v2`). `fix-vue-imports` — для actions.
 
 2. **Створити директорію симуляції.**
    `simulations/<name>/description.md` — опис задачі, тип (`action` чи `ai-action`), список кроків.
@@ -97,7 +97,7 @@
    - `execute.rag-search` містить `page` і `pageSize`; результат містить `hasMore`.
 
 5. **Перевірити симуляцію локально.**
-   `node a2a-server/scripts/run-simulation.ts <name>` — порівняти output з `response.json` кожного кроку.
+   `npx tsx a2a-server/scripts/run-simulation.ts simulations/<sim>/<step>` (з кореня репозиторію; аргумент — папка кроку з `request.json`) — порівняти output з `response.json` кожного кроку.
 
 6. **Додати до CI.**
    При змінах в протоколі/логіці — спочатку оновити симуляцію, потім код.

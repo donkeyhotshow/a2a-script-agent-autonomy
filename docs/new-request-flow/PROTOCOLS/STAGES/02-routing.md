@@ -102,5 +102,5 @@ interface FirstResponseFormChoices {
 
 - [PROTOCOL.md](../PROTOCOL.md)
 - [SCHEMAS.md](../SCHEMAS.md)
-- [simulations/SCHEMA.md](../../simulations/SCHEMA.md)
+- [simulations/SCHEMA.md](../../../../simulations/SCHEMA.md)
 - [server-invoke-response-first-form.schema.json](../json-schemas/server-invoke-response-first-form.schema.json)

@@ -30,7 +30,7 @@ Make `a2a-server/prompts/transforms/` the **single source of truth** for all ser
 
 1. **Runtime**: All processors load transforms from `prompts/transforms/`
 2. **simulations**: Keep `request.json`, `response.json`, `client.json`, `received.json`, `request.md`, `response.md` as golden fixtures; **remove** `server-transforms-*.json` (or keep as deprecated symlinks for tests)
-3. **Schema mapping**: `simulationName` + optional `step` → schema name (e.g. `dialog/3` → `dialog`, `coder/3` → `coder`)
+3. **Schema mapping**: `simulationName` + optional `step` → schema name (e.g. `dialog/3` → `dialog`, `agent-coder/3` → `coder` action schema)
 
 ---
 

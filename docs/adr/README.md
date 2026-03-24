@@ -45,7 +45,7 @@ Recommended sections:
 - `ADR-0027-documentation-canonical-sources.md` - Single source of truth per topic; link-first docs; stable anchors
 - `ADR-0028-client-api-deployment-modes.md` - Vite `/api/a2a` on 5173 vs standalone SDK Client API (e.g. 3001); same server contract
 - `ADR-0029-server-interrupt-loop.md` - Optional extra LLM turns after response transform (`interrupt` on `$out`); client sees final result only
-- `ADR-0030-unified-agent-mode.md` - Unified Agent mode replacing multiple LLM pipeline actions (analyze, coder, auto-ai-v2, etc.)
+- `ADR-0030-unified-agent-mode.md` - Unified Agent mode replacing multiple LLM pipeline actions (golden dirs: `agent-analyze`, `agent-coder`, `agent-auto-ai`, etc.)
 
 ## Related (not ADRs)
 

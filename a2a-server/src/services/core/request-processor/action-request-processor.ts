@@ -21,13 +21,8 @@ import {BaseRequestProcessor, type RequestType} from './base-processor.js';
  */
 const ROUTER_CHOICES = [
     {id: 'dialog', label: 'AI діалог з користувачем'},
-    {id: 'auto-ai', label: 'AI Action Generator'},
-    {id: 'auto-ai-v2', label: 'Auto-AI v2 (context golden)'},
+    {id: 'agent', label: 'Agent (універсальний режим)'},
     {id: 'task-decomposition', label: 'Декомпозиція задачі'},
-    {id: 'coder', label: 'Робота з кодом (Coder)'},
-    {id: 'coder-smart', label: 'Coder smart'},
-    {id: 'coder-smart-v2', label: 'Coder smart v2'},
-    {id: 'analyze', label: 'Аналіз коду'},
     {id: 'fix-vue-imports', label: 'Виправлення Vue imports'},
     {id: 'fix-laravel-namespaces-and-uses', label: 'Laravel: namespace та use'},
 ] as const;

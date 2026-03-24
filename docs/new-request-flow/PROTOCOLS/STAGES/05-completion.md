@@ -122,5 +122,5 @@ Server → response.json (status: completed) → Client API → Web UI
 
 - [PROTOCOL.md](../PROTOCOL.md)
 - [SCHEMAS.md](../SCHEMAS.md)
-- [simulations/SCHEMA.md](../../simulations/SCHEMA.md)
+- [simulations/SCHEMA.md](../../../../simulations/SCHEMA.md)
 - [server-invoke-response-execute.schema.json](../json-schemas/server-invoke-response-execute.schema.json)

@@ -219,25 +219,29 @@ request.json → request.md (LLM prompt) → response.md (LLM output)
                     (execute.message, execute.form, or client action)
 ```
 
-**Built-in AI-Actions**:
+**Unified Agent Mode**:
 
-| AI-Action | Purpose | Available Steps |
-|-----------|---------|-----------------|
-| `dialog` | Simple dialog | read-file, write-file, execute-command, ask-question |
-| `coder` | Code generation | plan, generate, review |
-| `coder-smart` | Smart code assistant | user-request → rag-clarify → research → write-doc → execute |
-| `auto-ai` | Full AI capabilities | All client actions + form |
+| Mode | Purpose | Description |
+|------|---------|-------------|
+| `dialog` | Simple dialog | Direct LLM conversation without tools |
+| `agent` | Unified AI agent | LLM-driven with dynamic tool selection (rag-search, read-file, write-file, execute-command, etc.) |
+
+All AI-driven modes now use the single `agent` mode, which dynamically determines:
+- **step**: plan, analyze, execute, review, completed
+- **tool**: rag-search, read-file, write-file, execute-command, dialog, form, script
+
+Variations exist only in simulations for testing different user scenarios (agent-analyze, agent-coder, agent-auto-ai, agent-coder-smart).
 
 ### Comparison
 
-| Aspect | Actions | AI-Actions |
-|--------|---------|-------------|
+| Aspect | Actions | Agent Mode |
+|--------|---------|------------|
 | Step Definition | Hardcoded in definition | Dynamic, from LLM |
 | Step Switching | Server automatic | LLM determines |
 | LLM Required | No (only for matching) | Yes, every step |
-| `execution.step` | Specific step name | Often `"request"` |
+| `execution.step` | Specific step name | plan/analyze/execute/review/completed |
 | Complexity | Simple, algorithmic | Complex, reasoning-based |
-| Examples | fix-vue-imports, phpunit-deprecations | dialog, coder, auto-ai |
+| Examples | fix-vue-imports, phpunit-deprecations | agent (any tool combination) |
 
 ---
 

@@ -196,7 +196,7 @@ export class ActionRegistry {
 | **Отдельные запросы** | Нет (один поток) | Возможны |
 | **Использует LLM** | Нет | Да |
 | **Execute формат** | `execute.script`, `execute["read-file"]` | `execute.form`, `execute.message`, произвольные |
-| **Примеры** | fix-vue-imports, phpunit-deprecations | dialog, coder, coder-smart, auto-ai |
+| **Примеры** | fix-vue-imports, phpunit-deprecations | dialog, agent-coder, agent-coder-smart, agent-auto-ai |
 
 ---
 
@@ -286,7 +286,7 @@ export const externalAiTriggerNeuron: Neuron = {
 
 Файл: [`protocol/context-parser.ts`](a2a-server/src/protocol/context-parser.ts)
 
-Формирует [`request.md`](simulations/auto-ai/3/request.md) для LLM:
+Формирует [`request.md`](../../../simulations/agent-auto-ai/3/request.md) для LLM:
 
 ```markdown
 # A2A Protocol Request
@@ -312,7 +312,7 @@ export const externalAiTriggerNeuron: Neuron = {
 
 Файл: [`protocol/message-builder.ts`](a2a-server/src/protocol/message-builder.ts)
 
-Обрабатывает [`response.md`](simulations/auto-ai/3/response.md) от LLM:
+Обрабатывает [`response.md`](../../../simulations/agent-auto-ai/3/response.md) от LLM:
 
 ```json
 {
@@ -322,7 +322,7 @@ export const externalAiTriggerNeuron: Neuron = {
 }
 ```
 
-Преобразует в [`response.json`](simulations/auto-ai/3/response.json):
+Преобразует в [`response.json`](../../../simulations/agent-auto-ai/3/response.json):
 
 ```json
 {
@@ -362,9 +362,9 @@ simulations/
 │   ├── description.md
 │   ├── analysis.md
 │   └── 1/, 2/, 3/, 4/, 5/ # Шаги
-├── auto-ai/              # AI-Actions пример
-│   ├── ACTIONS-MAP.md
-│   └── 1/, 2/, ... 16/
+├── agent-auto-ai/        # Auto-AI / agent loop (ex. auto-ai-v2)
+│   ├── description.md
+│   └── 1/, 2/, … 7/, 6-sub-*/
 └── ...
 ```
 
@@ -409,9 +409,9 @@ simulations/
 |-----------|-----|---------|----------|
 | `fix-vue-imports` | Actions | script, rag-search, write-file | Жесткие шаги для исправления импортов |
 | `fix-vue-imports-batched` | Actions | script (batched) | Пакетная обработка |
-| `auto-ai` | AI-Actions | form, rag-search, read-file, write-file, execute-command | Полный AI-driven flow |
-| `coder` | AI-Actions | form, message | Диалог с LLM |
-| `coder-smart` | AI-Actions | form, rag-search, write-file | Смарт-кодер с RAG |
+| `agent-auto-ai` | AI-Actions | form, rag-search, read-file, write-file, execute-command | Полный AI-driven flow (legacy имя папки: auto-ai / auto-ai-v2) |
+| `agent-coder` | AI-Actions | form, message | Диалог с LLM |
+| `agent-coder-smart` | AI-Actions | form, rag-search, write-file | Смарт-кодер с RAG |
 | `dialog` | AI-Actions | form, message | AI-диалог |
 | `task-decomposition` | AI-Actions | form, message | Декомпозиция задач |
 
@@ -429,7 +429,7 @@ simulations/
 
 ### 3.6 Actions Map
 
-Из [`simulations/auto-ai/ACTIONS-MAP.md`](simulations/auto-ai/ACTIONS-MAP.md):
+См. [`simulations/agent-auto-ai/description.md`](../../../simulations/agent-auto-ai/description.md) и [`simulations/SCHEMA.md`](../../../simulations/SCHEMA.md):
 
 | Action | Execute | Result | Статус |
 |--------|---------|--------|--------|

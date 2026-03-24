@@ -21,7 +21,7 @@
 
 ## Додаткові кроки
 
-1. Запустити `node a2a-server/scripts/run-simulation.ts dialog/3` і `dialog/4`, перевірити, що `server-response.json` містить `context.history` із останнім `user`/`assistant`.
+1. Запустити з кореня репозиторію `npx tsx a2a-server/scripts/run-simulation.ts simulations/dialog/3` та `npx tsx a2a-server/scripts/run-simulation.ts simulations/dialog/4`, перевірити, що `server-response.json` містить `context.history` із останнім `user`/`assistant`.
 2. У логах `DialogRequestProcessor` повинні бути повідомлення `[DialogRequestProcessor] Processing` → `[DialogRequestProcessor] Response transform completed` (в тому числі під час `recoverDialogFromLlmPromise`). Якщо `history` пустий — подивитися, чи `ctx['result']` було заповнено з `request.message`.
-3. Перевірити `received.json` (simulations/dialog/2) та `response.json` (simulations/dialog/3)` — `context.history` має переходити в наступний `request`. Це і є референс.
+3. Перевірити `received.json` (`simulations/dialog/2`) та `response.json` (`simulations/dialog/3`) — `context.history` має переходити в наступний `request`. Це і є референс.
 4. Якщо `history` оновлюється в двох місцях — використовуйте єдину допоміжну функцію `buildDialogProcessResultFromContext` і намагайтесь не додавати `user` вручну з `server-transforms-request.json`.

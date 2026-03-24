@@ -10,7 +10,7 @@
 
 ## Дії
 
-1. Запустити `node a2a-server/scripts/run-simulation.ts fix-vue-imports`
+1. Запустити з кореня репозиторію: `npx tsx a2a-server/scripts/run-simulation.ts simulations/fix-vue-imports/1` (далі — інші кроки за потреби)
 2. Порівняти output з `response.json` кожного кроку
 3. Якщо розходиться — визначити чи оновлюється симуляція або код
 4. Залежить від ISSUE 1 (роутер) — виконувати після

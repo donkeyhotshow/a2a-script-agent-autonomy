@@ -16,9 +16,9 @@
  *   --help, -h         Показать справку
  *
  * Примеры:
- *   npm run sim:validate -- --sim coder/3
+ *   npm run sim:validate -- --sim agent-coder/3
  *   npm run sim:validate -- --all --verbose
- *   npm run sim:validate -- --sim coder/3 --json
+ *   npm run sim:validate -- --sim agent-coder/3 --json
  */
 
 import {readFileSync, existsSync, readdirSync} from 'node:fs';
@@ -563,7 +563,7 @@ function getAllSimulations(): {path: string; name: string}[] {
 
     for (const entry of entries) {
         if (entry.isDirectory()) {
-            // Проверяем поддиректории (например, coder/3)
+            // Проверяем поддиректории (например, agent-coder/3)
             const subDir = join(SIMULATIONS_DIR, entry.name);
             const subEntries = readdirSync(subDir, {withFileTypes: true});
 
@@ -632,7 +632,7 @@ function printHelp() {
 Использование: npm run sim:validate [options]
 
 Опции:
-  --sim <name>       Имя симуляции для валидации (например: coder/3, fix-vue-imports)
+  --sim <name>       Имя симуляции для валидации (например: agent-coder/3, fix-vue-imports)
   --all              Валидировать все симуляции
   --json, -j         Вывод в формате JSON
   --verbose, -v      Подробный вывод
@@ -644,7 +644,7 @@ function printHelp() {
   Для server-transforms-*.json по умолчанию только JSON + fixtures; --strict включает AJV по server-transform.schema.json.
 
 Примеры:
-  npm run sim:validate -- --sim coder/3
+  npm run sim:validate -- --sim agent-coder/3
   npm run sim:validate -- --all --verbose
   npm run sim:validate -- --sim fix-vue-imports --json
 
@@ -761,7 +761,7 @@ function main() {
     if (!args.sim && !args.all) {
         console.error('❌ Ошибка: укажите симуляцию или используйте --all');
         console.error('   Использование: npm run sim:validate -- --sim <name>');
-        console.error('   Пример: npm run sim:validate -- --sim coder/3');
+        console.error('   Пример: npm run sim:validate -- --sim agent-coder/3');
         console.error('   Для справки: npm run sim:validate -- --help');
         process.exit(1);
     }

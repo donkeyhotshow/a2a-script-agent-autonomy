@@ -76,7 +76,7 @@ The **response** transform must place `interrupt` on the same object that carrie
 ## Simulations
 
 - Default goldens often show a **single** LLM turn (`response.md` without `interrupt`). That stays the sync contract baseline.
-- Optional narrative: [`simulations/auto-ai-v2/6/interrupt.md`](../../simulations/auto-ai-v2/6/interrupt.md).
+- Optional narrative: [`simulations/agent-auto-ai/6/interrupt.md`](../../simulations/agent-auto-ai/6/interrupt.md).
 - Substep goldens in **`6-sub-1`** … **`6-sub-4`** (`N-sub-M`); trace lives in each folder’s **`response.json`** → `workbench.slots.interruptTrace`.
 - [`simulations/SCHEMA.md`](../../simulations/SCHEMA.md) — `interrupt.md` and `N-sub-M/` folders (not full eight-file steps).
 - To add a **full** golden with interrupts: extend `response.md` + `server-transforms-response.json` to emit `interrupt`, then set `response.json` / `received.json` to the **final** post-loop state.

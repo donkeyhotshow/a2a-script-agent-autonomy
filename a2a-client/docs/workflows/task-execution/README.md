@@ -7,7 +7,7 @@ This directory documents all task execution workflows and execute types in the A
 - **[Session Lifecycle Guide](../session-lifecycle/)** - Core lifecycle states and transitions
 - **[Communication Guide](../communication/)** - Transport layer details
 - **[Context Synchronization Guide](../context-synchronization-guide.md)** - Execute processing and context updates
-- **[Dialog Architecture Tasks](../tasks/dialog-architecture-tasks.md)** - Execute handling catalog and processing flows
+- **[Agent Architecture Tasks](../tasks/agent-architecture-tasks.md)** - Execute handling catalog and processing flows
 - **[UNIFIED_ARCHITECTURE_COMPLETE](../UNIFIED_ARCHITECTURE_COMPLETE.md)** - Action standardization and action-key shape
 - **[Web UI DEV_STATE](../../DEV_STATE.md)** - Protocol overview and submission formats
 
@@ -26,7 +26,7 @@ sequenceDiagram
     U->>TF: Click Send button
     TF->>SM: createSession(task, projectId)
     SM->>API: POST /sessions {task, projectId}
-    API->>LLM: Process initial task
+    API->>LLM: Process initial agent task
     LLM->>API: Return execute object
     API-->>SM: Session created + first execute
     SM-->>TF: Execute received

@@ -15,7 +15,7 @@
 │                                                                              │
 │  simulations/                          a2a-server/scripts/                  │
 │  ├── dialog/                           ├── sim-run.ts         (запуск)       │
-│  ├── coder/                           ├── sim-validate.ts    (валидация)     │
+│  ├── agent-coder/                     ├── sim-validate.ts    (валидация)     │
 │  ├── fix-vue-imports/                 └── ...                                 │
 │  └── ...                                                                         │
 │                                                                              │
@@ -106,12 +106,13 @@ Actions - это симуляции с **hardcoded steps**, где сервер 
 
 AI-Actions - это симуляции где **LLM динамически выбирает следующий шаг**.
 
-| Симуляция | Описание | Особенности |
+| Каталог в `simulations/` | Описание | Особенности |
 |-----------|----------|-------------|
-| `dialog` | Диалог с AI-ассистентом | LLM управляет потоком |
-| `coder` | Помощник программиста | RAG + file operations |
-| `coder-smart` | Умный кодер | Расширенные возможности |
-| `orchestrator-dialog` | Диалог оркестратора | Сложные сценарии |
+| `dialog/` | Диалог с AI-ассистентом | LLM управляет потоком |
+| `agent-coder/` | Агент + код (было `coder/`) | RAG + file operations |
+| `agent-coder-smart/` | Умный кодер (было `coder-smart/`) | Расширенные возможности |
+| `agent-auto-ai/` | Auto-AI loop (было `auto-ai/`, `auto-ai-v2/`) | Полный tool-цикл |
+| `orchestrator-dialog/` | Диалог оркестратора | Сложные сценарии |
 
 **Характеристики:**
 - ⚠️ Асинхронный поток (promiseId)
@@ -224,7 +225,7 @@ describe('Invoke API', () => {
 | Тип | Симуляции | Покрытие |
 |-----|-----------|----------|
 | **Actions** | fix-vue-imports, phpunit-deprecations, task-decomposition | ✅ Синхронные, hardcoded steps |
-| **AI-Actions** | dialog, coder, coder-smart | ⚠️ Асинхронные, LLM-driven |
+| **AI-Actions** | `dialog/`, `agent-coder/`, `agent-coder-smart/`, `agent-auto-ai/`, … | ⚠️ Асинхронные, LLM-driven |
 
 ### По протоколу
 

@@ -17,7 +17,7 @@ Normative detail and the table of implemented `reason` values live in [`a2a-serv
 
 - **Positive:** History compression, internal thinking, and future server-side tool/RAG pagination can be added without protocol changes to the Web layer.
 - **Negative:** More LLM cost and latency per invoke when interrupts fire; operators must monitor budgets and AI Hub load.
-- **Simulations:** [`interrupt.md`](../../simulations/auto-ai-v2/6/interrupt.md) + numbered sister folders [`6-sub-1` … `6-sub-4`](../../simulations/auto-ai-v2/6-sub-1/) (`trace.json`, pattern `N-sub-M`).
+- **Simulations:** [`interrupt.md`](../../simulations/agent-auto-ai/6/interrupt.md) + numbered sister folders [`6-sub-1` … `6-sub-4`](../../simulations/agent-auto-ai/6-sub-1/) (`trace.json`, pattern `N-sub-M`).
 
 ## Related
 

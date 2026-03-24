@@ -7,7 +7,7 @@
  *   npx tsx scripts/run-simulation.ts <simulation-dir>
  *
  * Пример:
- *   npx tsx scripts/run-simulation.ts ../simulations/pilot/1
+ *   npx tsx scripts/run-simulation.ts ../simulations/dialog/1
  *
  * Результат:
  *   - Читает request.json
@@ -20,8 +20,8 @@ import {join} from 'node:path';
 
 const simDir = process.argv[2];
 if (!simDir) {
-    console.error('Usage: npx ts-node scripts/run-simulation.ts <simulation-dir>');
-    console.error('Example: npx ts-node scripts/run-simulation.ts ../simulations/pilot/1');
+    console.error('Usage: npx tsx scripts/run-simulation.ts <path-to-step-dir>');
+    console.error('Example: npx tsx scripts/run-simulation.ts ../simulations/dialog/1');
     process.exit(1);
 }
 

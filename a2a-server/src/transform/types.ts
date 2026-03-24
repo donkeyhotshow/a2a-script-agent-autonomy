@@ -108,7 +108,7 @@ export interface ApplyScratchpadOpsOperation {
 
 /**
  * Apply `workbench_ops` — short incremental edits to `context.workbench.sections` (string fields).
- * LLM emits an array; each entry is a command (see `auto-ai-request.md`).
+ * LLM emits an array; each entry is a command (see `agent-request.md`).
  */
 export interface ApplyWorkbenchSectionOpsOperation {
   op: 'apply-workbench-section-ops';

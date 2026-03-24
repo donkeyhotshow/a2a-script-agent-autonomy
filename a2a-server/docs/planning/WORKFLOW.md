@@ -56,7 +56,7 @@
 2. Визначити які transforms потрібні
 3. Перевірити чи transforms існують в prompts/transforms/
 4. Написати/виправити код
-5. Запустити: node a2a-server/scripts/run-simulation.ts <name>
+5. Запустити: `npx tsx a2a-server/scripts/run-simulation.ts simulations/<sim>/<step>` (корінь репо; `<step>` — папка з `request.json`)
 6. Порівняти output з response.json кожного кроку
 ```
 

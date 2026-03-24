@@ -7,7 +7,7 @@
  *   node run-simulation.js <simulation-dir>
  *
  * Пример:
- *   node run-simulation.js pilot/1
+ *   node run-simulation.js dialog/1
  *
  * Результат:
  *   - Читает request.json
@@ -25,7 +25,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const simDir = process.argv[2];
 if (!simDir) {
     console.error('Usage: node run-simulation.js <simulation-dir>');
-    console.error('Example: node run-simulation.js pilot/1');
+    console.error('Example: node run-simulation.js dialog/1');
     process.exit(1);
 }
 

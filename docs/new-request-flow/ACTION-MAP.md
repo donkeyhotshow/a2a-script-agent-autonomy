@@ -241,8 +241,8 @@ a2a-script-agent/
 | `fix-vue-imports/`         | Виправлення Vue імпортів         |
 | `fix-vue-imports-batched/` | Те саме, batched                 |
 | `dialog/`                  | Діалог з LLM                     |
-| `coder/`                   | Діалог + RAG + read/write файлів |
-| `coder-smart/`             | Контекст-документ                |
+| `agent-coder/`             | Діалог + RAG + read/write файлів |
+| `agent-coder-smart/`       | Контекст-документ                |
 
 ### Структура симуляції
 

@@ -2,7 +2,7 @@
 
 **Статус:** заплановано
 
-**Scope:** тільки симуляції які НЕ заплановані на переробку. `auto-ai` (ISSUE 9) і `coder-smart` (ISSUE 5) виключені.
+**Scope:** тільки симуляції які НЕ заплановані на переробку. `agent-auto-ai` (ISSUE 9) і `agent-coder-smart` (ISSUE 5) виключені.
 
 ## Проблема
 
@@ -26,7 +26,7 @@
 
 `dialog`, `fix-vue-imports` — перевірити формат і наявність fixtures.
 
-**Примітка:** `coder` симуляція — тільки формат файлів і fixtures. Логіка роутингу (`determineRequestType`, `prompts/transforms/coder/`) — це ISSUE 3, не тут.
+**Примітка:** симуляція `agent-coder` (каталог `simulations/agent-coder/`) — тільки формат файлів і fixtures. Логіка роутингу (`determineRequestType`, `prompts/transforms/coder/`) — це ISSUE 3, не тут.
 
 ## Дії
 

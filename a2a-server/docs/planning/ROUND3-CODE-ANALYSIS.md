@@ -2,7 +2,7 @@
 
 *Дата: 2026-01-27*
 
-Перевірка відповідності між реальним кодом і планами issues. Читались: `dialog-request-processor.ts`, `action-request-processor.ts`, `request-processor.service.ts`, `action-registry.ts`, `operations.ts`, `types.ts`, `stepRoutes.js`, `protocol-rag-search.ts`, `index.ts`, `app.ts`, симуляції `dialog/3-4`, `coder/2`, `auto-ai/3`.
+Перевірка відповідності між реальним кодом і планами issues. Читались: `dialog-request-processor.ts`, `action-request-processor.ts`, `request-processor.service.ts`, `action-registry.ts`, `operations.ts`, `types.ts`, `stepRoutes.js`, `protocol-rag-search.ts`, `index.ts`, `app.ts`, симуляції `dialog/3-4`, `agent-coder/2`, `agent-auto-ai/3`.
 
 ---
 
@@ -35,11 +35,11 @@ const existingHistory = (ctxContext?.history ?? []) as ...
 
 ---
 
-## Знахідка 3: ISSUE 3 — `coder/2` не обробляється жодним процесором
+## Знахідка 3: ISSUE 3 — `agent-coder/2` не обробляється жодним процесором
 
-**Файли:** `request-processor.service.ts` (`determineRequestType`), `simulations/coder/2/request.json`
+**Файли:** `request-processor.service.ts` (`determineRequestType`), `simulations/agent-coder/2/request.json`
 
-`coder/2/request.json`:
+`agent-coder/2/request.json`:
 ```json
 { "context": { "task": "..." }, "result": { "choice": "coder" } }
 ```
@@ -50,9 +50,9 @@ const existingHistory = (ctxContext?.history ?? []) as ...
 - немає `step_result`/`approve_action` → не `action` (явно)
 - падає в `return 'action'` (default)
 
-`ActionRequestProcessor.canProcess`: перевіряє `getActionType` — `result.choice` не є жодним з `step_result`/`task_request`/`approve_action`. Повертає `false` для явних типів, але `canProcess` повертає `true` для `actionType === undefined` (default). Тобто `coder/2` потрапляє в `handleTaskRequest` — але там `parseTaskText` шукає `task` в context, а не `result.choice`. Тобто `result.choice = "coder"` ігнорується повністю.
+`ActionRequestProcessor.canProcess`: перевіряє `getActionType` — `result.choice` не є жодним з `step_result`/`task_request`/`approve_action`. Повертає `false` для явних типів, але `canProcess` повертає `true` для `actionType === undefined` (default). Тобто `agent-coder/2` потрапляє в `handleTaskRequest` — але там `parseTaskText` шукає `task` в context, а не `result.choice`. Тобто `result.choice = "coder"` ігнорується повністю.
 
-**Підтверджено:** `coder/2` не обробляється правильно. Вибір `coder` з форми не призводить до ініціалізації coder action.
+**Підтверджено:** `agent-coder/2` не обробляється правильно. Вибір `coder` з форми не призводить до ініціалізації coder action.
 
 **Що треба додати в ISSUE 3:** конкретний фікс — в `determineRequestType` додати перевірку `result.choice` → роутити в `dialog` якщо `execution.action` вже встановлено в попередній відповіді, або додати окремий тип `choice` і обробник.
 
@@ -72,7 +72,7 @@ const existingHistory = (ctxContext?.history ?? []) as ...
 
 ## Знахідка 5: ISSUE 9 — формат `execute.rag-search` в симуляції
 
-**Файл:** `simulations/auto-ai/3/response.json`
+**Файл:** `simulations/agent-auto-ai/3/response.json`
 
 ```json
 "execute": { "rag-search": { "query": "express app API routes entry point" } }
@@ -104,7 +104,7 @@ const existingHistory = (ctxContext?.history ?? []) as ...
 |-------|-----------|
 | ISSUE 1 | `loadFromDirectory` не викликається при старті — реєстр порожній. Знайти де викликати (в `index.ts`) |
 | ISSUE 2 | `doProcess` не передає `result` в `runResponseTransform` → `userMessage` завжди undefined. `recoverDialogFromLlmPromise` має той самий баг — фіксувати обидва місця |
-| ISSUE 3 | `coder/2` (`result.choice`) не обробляється — підтверджено. Конкретний фікс: `determineRequestType` або новий обробник для `result.choice` |
+| ISSUE 3 | `agent-coder/2` (`result.choice`) не обробляється — підтверджено. Конкретний фікс: `determineRequestType` або новий обробник для `result.choice` |
 | ISSUE 6 | Уточнити: history може проходити через `previousContext` (не фільтрується), але не через `result.context`. Перевірити де сервер кладе history у відповідь |
 | ISSUE 8b | Ключ для перевірки в `stepRoutes.js`: `execute["rag-search"]`, не `execute.ragSearch` |
 | ISSUE 9 | Зафіксувати формат ключа: `execute["rag-search"]` (з дефісом) |

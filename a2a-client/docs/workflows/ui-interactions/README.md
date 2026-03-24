@@ -8,7 +8,7 @@ This directory documents all user interface interaction workflows, panel managem
 - **[Session Store Reference](../../api-reference/session-store.md)** - UI-State synchronization
 - **[UNIFIED_ARCHITECTURE_COMPLETE](../UNIFIED_ARCHITECTURE_COMPLETE.md)** - Simplified panels implementation and legacy removal
 - **[Context Synchronization Guide](../context-synchronization-guide.md)** - PlasticineUI panel lifecycle and behavior
-- **[Dialog Architecture Tasks](../tasks/dialog-architecture-tasks.md)** - Panel QA scenarios and lifecycle coverage
+- **[Agent Architecture Tasks](../tasks/agent-architecture-tasks.md)** - Panel QA scenarios and lifecycle coverage
 - **[Web UI DEV_STATE](../../DEV_STATE.md)** - Panel management overview and component structure
 
 ## Panel Management System

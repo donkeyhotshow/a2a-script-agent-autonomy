@@ -10,58 +10,28 @@ const DEFAULT_HINT =
 
 /** Directive per `action:step` — injected as `${flowControlHint}`. Keep each entry short and imperative. */
 const BY_ACTION_STEP: Record<string, string> = {
-  // --- auto-ai ---
-  'auto-ai:plan':
-    'Narrow scope in `message`. Check `context.history` for prior clarifications before asking again.'
-    + ' Use `rag-search` or `list-directory` only if grounding is needed. Advance `step` to `locate_code` when the plan is clear.',
+  // --- agent (unified mode) ---
+  'agent:plan':
+    'Understand the task. Ask clarifying questions if needed. Outline your approach in `message`.'
+    + ' If repo facts are needed, use `rag-search` or `list-directory`. Advance to `analyze` when plan is clear.',
 
-  'auto-ai:locate_code':
-    'Check `ragResults` — if relevant hits exist, use them instead of a new search.'
-    + ' Otherwise one `rag-search` (stable query) or `list-directory`. Do not read or edit files yet. Advance to `inspect_structure` or `read_code`.',
+  'agent:analyze':
+    'Gather information. Check `ragResults` and `context.history` for existing info.'
+    + ' Use `rag-search`, `read-file`, or `list-directory` as needed. Advance to `execute` when you have enough info.',
 
-  'auto-ai:inspect_structure':
-    'Check `workbench.sections` for any already-mapped layout before listing again.'
-    + ' One `list-directory` or a single `read-file` on an obvious entry file. Advance to `read_code`.',
+  'agent:execute':
+    'Perform the task. Use `write-file`, `execute-command`, or other tools as needed.'
+    + ' Check `workbench.sections` for checklist/plan. Advance to `review` when done.',
 
-  'auto-ai:read_code':
-    'Check `context.history` for files already read — do not re-read them.'
-    + ' One `read-file` per turn. When behavior is understood, advance `step` to `edit_code`.',
+  'agent:review':
+    'Verify the results. Check `context.history` for what was done.'
+    + ' Use `read-file` or `execute-command` to verify. If issues found, go back to `execute`. Otherwise advance.',
 
-  'auto-ai:edit_code':
-    'Read `workbench.sections` for the plan/checklist before writing.'
-    + ' One `write-file` (or the single matching tool). Keep the edit minimal and style-consistent. Advance to `run_lint` or `run_tests`.',
+  'agent:completed':
+    'Set `completed: true`. Summarize what was accomplished in `message`. Empty `execute`.',
 
-  'auto-ai:locate_tests':
-    'Check `context.history` for test paths already found.'
-    + ' One `grep-search` or `list-directory` under test roots. Advance to `read_tests`.',
-
-  'auto-ai:read_tests':
-    'Check `context.history` for test files already read — skip them.'
-    + ' One `read-file` per turn until expectations are clear. Advance to `edit_tests`.',
-
-  'auto-ai:edit_tests':
-    'Read `workbench.sections` for the checklist item being addressed.'
-    + ' One `write-file` per turn. Advance to `run_tests` when done.',
-
-  'auto-ai:run_lint':
-    'One `execute-command` for lint/format. Interpret output in `message`; go to `edit_code` if fixes needed, else advance.',
-
-  'auto-ai:run_tests':
-    'One `execute-command` for tests. On failure go to `read_code`/`edit_code`/`edit_tests`; on pass advance to `final_review`.',
-
-  'auto-ai:write_report':
-    'Use `workbench.slots.reportPath` or `context.task` for the target path.'
-    + ' One `write-file`. Advance to `final_review`.',
-
-  'auto-ai:final_review':
-    'Scan `context.history` for unresolved items before closing.'
-    + ' No new tools unless a blocking gap exists. Consolidate status in `message`; advance to `completed`.',
-
-  'auto-ai:completed':
-    'Set `completed: true`. Omit or empty `execute`. Short wrap-up in `message`.',
-
-  'auto-ai:*':
-    'Exactly one tool key in `execute`. Set `step` to the next phase from the system-prompt list.',
+  'agent:*':
+    'Use exactly one tool key in `execute`. Advance `step` when the current goal is satisfied.',
 
   // --- dialog ---
   'dialog:request':
@@ -73,53 +43,6 @@ const BY_ACTION_STEP: Record<string, string> = {
 
   'dialog:*':
     'Reply in the user\'s language. Optional RAG/tools when necessary — see system prompt patterns A/B. Output only the JSON block.',
-
-  // --- coder ---
-  'coder:clarify':
-    'Check `ragResults` for existing hits before issuing a new search.'
-    + ' One `rag-search` (focused query) or `read-file` if the path is known. Advance to `research-plan`.',
-
-  'coder:research-plan':
-    'Synthesize `ragResults` and `context.history` into `message`. At most one tool if facts are still missing. Advance to `checklist`.',
-
-  'coder:checklist':
-    'Write checklist items into `workbench.sections` (not only `message`) so `execute-item` can read them.'
-    + ' Use a tool only if evidence is needed. Advance to `write-doc`.',
-
-  'coder:write-doc':
-    'Read `workbench.sections` to compose the document. One `write-file` to `.carrier/tasks/`. Advance to `execute-item`.',
-
-  'coder:execute-item':
-    'Read `workbench.sections` to find the first unchecked item — do not re-execute completed ones.'
-    + ' One tool (`read-file`, `write-file`, or `execute-command`). Mark item done in `workbench.sections`. Advance to `completed` when all items are checked.',
-
-  'coder:completed':
-    'Set `completed: true`. Summarize outcomes from `workbench.sections` in `message`. Empty `execute`.',
-
-  'coder:*':
-    'One action-key in `execute` per turn. Advance `step` when the current micro-goal is satisfied.',
-
-  // --- analyze ---
-  'analyze:search':
-    'Check `ragResults` — if relevant hits already exist, skip the search and advance to `read`.'
-    + ' Otherwise one `rag-search` with an architecture-oriented query.',
-
-  'analyze:read':
-    'Check `context.history` for files already read — do not re-read them.'
-    + ' One `read-file` to verify a specific doc or source file. Advance to `continue` or `save`.',
-
-  'analyze:continue':
-    'Review `workbench.sections` for gaps. One more search/read if gaps remain; otherwise summarize in `message` and advance to `save`.',
-
-  'analyze:save':
-    'Use `workbench.slots.reportPath` or `context.task` for the target path.'
-    + ' One `write-file` for the analysis report. Advance to `completed`.',
-
-  'analyze:completed':
-    'Set `completed: true`. Wrap up findings from `workbench.sections` in `message`.',
-
-  'analyze:*':
-    'Prefer `rag-search` before `read-file`. One tool per turn; advance `step` when the sub-goal is met.',
 
   // --- router / task ---
   'task:router':
@@ -145,9 +68,12 @@ export function readExecutionRef(root: Record<string, unknown>): ExecutionRef {
 }
 
 const FLOW_HINT_ACTION_ALIASES: Record<string, string> = {
-  'auto-ai-v2': 'auto-ai',
-  'coder-smart': 'coder',
-  'coder-smart-v2': 'coder',
+  'auto-ai-v2': 'agent',
+  'coder-smart': 'agent',
+  'coder-smart-v2': 'agent',
+  'analyze': 'agent',
+  'coder': 'agent',
+  'auto-ai': 'agent',
 };
 
 export function resolveFlowControlHintMarkdown(ref: ExecutionRef): string {

@@ -9,7 +9,7 @@
  * import { runTransformPipelineFromFile } from './transform/index.js';
  * 
  * const result = await runTransformPipelineFromFile(
- *   'simulations/coder/3/server-transforms-response.json',
+ *   'simulations/agent-coder/3/server-transforms-response.json',
  *   { context: { task: 'test' } }
  * );
  * 
