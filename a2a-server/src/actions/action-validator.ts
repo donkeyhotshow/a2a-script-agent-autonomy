@@ -49,8 +49,32 @@ const ExecuteCommandActionSchema = z.object({
   })
 });
 
-const MessageActionSchema = z.object({
-  message: z.string()
+const MessageActionSchema = z.union([
+  z.string(),
+  z.object({
+    content: z.string(),
+    role: z.string().optional()
+  })
+]);
+
+const RagSearchActionSchema = z.object({
+  'rag-search': z.object({
+    query: z.string(),
+    results: z.array(z.object({
+      file: z.string(),
+      snippet: z.string()
+    })).optional()
+  })
+});
+
+const ListDirectoryActionSchema = z.object({
+  'list-directory': z.object({
+    path: z.string(),
+    entries: z.array(z.object({
+      name: z.string(),
+      type: z.string()
+    })).optional()
+  })
 });
 
 const GrepSearchActionSchema = z.object({
@@ -103,6 +127,8 @@ const ExecutePayloadSchema = z.union([
   WriteFileActionSchema,
   ExecuteCommandActionSchema,
   MessageActionSchema,
+  RagSearchActionSchema,
+  ListDirectoryActionSchema,
   GrepSearchActionSchema,
   FileExistsActionSchema,
   EditPatchActionSchema,
@@ -162,6 +188,14 @@ export function validateMessageAction(action: unknown): ValidationResult {
   return createActionValidator(MessageActionSchema)(action);
 }
 
+export function validateRagSearchAction(action: unknown): ValidationResult {
+  return createActionValidator(RagSearchActionSchema)(action);
+}
+
+export function validateListDirectoryAction(action: unknown): ValidationResult {
+  return createActionValidator(ListDirectoryActionSchema)(action);
+}
+
 export function validateExecutePayload(payload: unknown): ValidationResult {
   return createActionValidator(ExecutePayloadSchema)(payload);
 }
@@ -170,7 +204,7 @@ export function validateExecutePayloadDetailed(payload: unknown): ValidationResu
   const result = ExecutePayloadSchema.safeParse(payload);
   if (result.success) {
     const keys = Object.keys(payload as object);
-    const validKeys = ['form', 'script', 'read-file', 'write-file', 'execute-command', 'message', 'grep-search', 'file-exists', 'edit-patch', 'run-script'];
+    const validKeys = ['form', 'script', 'read-file', 'write-file', 'execute-command', 'message', 'rag-search', 'list-directory', 'grep-search', 'file-exists', 'edit-patch', 'run-script'];
     const hasValidKey = keys.some(k => validKeys.includes(k));
     if (!hasValidKey) {
       return { success: false, errors: [`Execute payload must contain at least one action key`] };
@@ -191,7 +225,7 @@ export function validateActionKeyShape(obj: unknown, context: 'execute' | 'resul
     return { success: false, errors: ['Must be an object'] };
   }
 
-  const validExecuteKeys = ['form', 'script', 'read-file', 'write-file', 'execute-command', 'message', 'grep-search', 'file-exists', 'edit-patch', 'run-script'];
+  const validExecuteKeys = ['form', 'script', 'read-file', 'write-file', 'execute-command', 'message', 'rag-search', 'list-directory', 'grep-search', 'file-exists', 'edit-patch', 'run-script'];
   const validResultKeys = [...validExecuteKeys, 'choice', 'completed'];
   const validKeys = context === 'execute' ? validExecuteKeys : validResultKeys;
 

@@ -1,5 +1,16 @@
 /**
  * Web-facing session DTO: strip server context, assign message seq, public /next payload.
+ *
+ * FILE NAMING MAPPING (golden vs runtime):
+ * +---------------------------+----------------------------+----------------------------------+
+ * | Golden Simulation File    | Runtime Step File          | Purpose                          |
+ * +---------------------------+----------------------------+----------------------------------+
+ * | request.json             | request-to-server.json    | Payload sent to A2A Server       |
+ * | response.json            | server-response.json       | Server execute/context/result   |
+ * | client.json              | client-result.json         | User input (message or choice)  |
+ * | received.json            | (derived from response)   | Sanitized execute for Web UI    |
+ * +---------------------------+----------------------------+----------------------------------+
+ * Note: runtime uses "-to-server" suffix to distinguish client→server from server→client.
  */
 
 import { listNewSteps, loadNewStep, loadStepFile, loadServerPromise } from '../../storage/newSessions.js';
@@ -107,6 +118,19 @@ export function attachPromiseMeta(cwd, sessionId, session) {
 
 /**
  * @param {boolean} includeContext - only when ?includeContext=1 (debug)
+ *
+ * API PARAMETER → EXECUTE SHAPE TABLE:
+ * +---------------------+---------------------------------------------------+
+ * | Parameter           | execute shape                                    |
+ * +---------------------+---------------------------------------------------+
+ * | default (no param)  | DTO-sanitized via buildWebExecute()             |
+ * |                     | - strips: rag-search, read-file, write-file,     |
+ * |                     |   script, execute-command, list-directory,      |
+ * |                     |   grep-search, file-exists, edit-patch, run-script, debug |
+ * |                     | - adds: message (if no form), attachments        |
+ * | ?includeContext=1   | Raw execute from server (all keys intact)       |
+ * |                     | - Use only for debugging / tooling              |
+ * +---------------------+---------------------------------------------------+
  */
 export function toPublicSession(session, includeContext = false) {
     if (!session) return session;
