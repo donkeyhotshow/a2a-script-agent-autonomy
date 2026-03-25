@@ -671,8 +671,26 @@
         
         // Support both form.choices and form.meta.routerChoices
         const choices = form?.choices || form?.meta?.routerChoices || [];
-        const inputField = form?.input && typeof form.input === 'object' && !Array.isArray(form.input) ? form.input : null;
-        const inputFields = form?.input && Array.isArray(form.input) ? form.input : (inputField ? [inputField] : []);
+        let inputFields = [];
+        if (form?.input) {
+            if (Array.isArray(form.input)) {
+                inputFields = form.input;
+            } else if (typeof form.input === 'object' && form.input !== null) {
+                inputFields = [form.input];
+            }
+        }
+        // If no input found in form.input, look for direct properties that are objects with a 'name'
+        if (inputFields.length === 0 && form && typeof form === 'object') {
+            for (const key in form) {
+                if (key === 'choices' || key === 'meta' || key === 'title' || key === 'description') {
+                    continue; // skip known non-input properties
+                }
+                const prop = form[key];
+                if (prop && typeof prop === 'object' && !Array.isArray(prop) && prop.name !== undefined) {
+                    inputFields.push(prop);
+                }
+            }
+        }
 
         let formContent = '';
 
