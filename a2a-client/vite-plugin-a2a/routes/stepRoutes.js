@@ -1,6 +1,7 @@
 import { getStorageMode, isValidSessionId } from './middleware/validators.js';
 import {
     mergeResponseContext,
+    mergeDialogHistoryForInvoke,
     buildStepRecord,
     extractA2aExecute,
     unwrapA2aResponse,
@@ -18,6 +19,7 @@ import * as stepUtils from './utils/step-utils.js';
 import { proxyToA2AServer } from './proxy/a2a-proxy.js';
 import { chainSyncInvokesForAgentTools } from './utils/agent-rag-chain.js';
 import { getNewStepDir, loadNewSession, loadNewStep, loadServerPromise, loadServerResponse, saveClientResult, saveNewStep, saveNewSession, saveRequestToServer, saveServerPromise, saveServerResponse, listNewSteps, getNewSessionLatestStep, loadStepFile } from '../storage/newSessions.js';
+import { isPromisePollComplete } from '../storage/promise-status.js';
 
 import fs from 'fs';
 
@@ -72,12 +74,7 @@ function runViteClientPromisePoll({
                 };
                 saveServerPromise(cwd, sessionId, currentStep, updatedPromise);
 
-                const isPromiseCompleted =
-                    promiseStatus.status === 'completed' ||
-                    promiseStatus.status === 'done' ||
-                    promiseStatus.execute != null;
-
-                if (isPromiseCompleted) {
+                if (isPromisePollComplete(promiseStatus)) {
                     const assistantMessage =
                         promiseStatus?.execute?.message ||
                         promiseStatus?.result?.message ||
@@ -111,11 +108,7 @@ function runViteClientPromisePoll({
                     saveNewSession(cwd, session);
                 }
 
-                const isCompleted = !!(
-                    promiseStatus.execute ||
-                    promiseStatus.status === 'completed' ||
-                    promiseStatus.status === 'done'
-                );
+                const isCompleted = isPromisePollComplete(promiseStatus);
                 const failed = promiseStatus.status === 'failed' || promiseStatus.status === 'error';
                 const includeCtx = requestUrl.searchParams.get('includeContext') === '1';
                 let safeResult = promiseStatus.result || null;
@@ -215,7 +208,14 @@ export function createStepRoutes({ cwd }) {
                     const d = JSON.parse(body || '{}');
                     const result = await stepHandlers.handlePostStep(sessionId, d, cwd);
                     res.setHeader('Content-Type', 'application/json');
-                    res.end(JSON.stringify(result));
+                    // Return proper response format
+                    res.end(JSON.stringify({
+                        success: true,
+                        step: result.step || (result.asyncPending ? 'pending' : 'completed'),
+                        asyncPending: result.asyncPending || false,
+                        promiseId: result.promiseId || null,
+                        execute: result.execute || null
+                    }));
                 } catch (e) {
                     res.writeHead(400).end(JSON.stringify({ error: String(e?.message || e) }));
                 }
@@ -345,6 +345,7 @@ export function createStepRoutes({ cwd }) {
                     // (avoids stale task in request-to-server.json; server invoke also maps result.message → task).
                     if (effectiveTask && execAction === 'dialog') {
                         mergedContext.task = effectiveTask;
+                        mergeDialogHistoryForInvoke(mergedContext, effectiveTask);
                     } else if (effectiveTask && !mergedContext.task) {
                         mergedContext.task = effectiveTask;
                         console.log('[VitePlugin] Set context.task to:', effectiveTask);

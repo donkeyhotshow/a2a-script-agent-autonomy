@@ -67,6 +67,34 @@ export function extractA2aExecute(serverResponse) {
     return inner.execute ?? inner.result?.execute ?? null;
 }
 
+function historyEntryUserText(entry) {
+    if (!entry || typeof entry !== 'object') return '';
+    if (typeof entry.message === 'string') return entry.message;
+    if (typeof entry.content === 'string') return entry.content;
+    return '';
+}
+
+/**
+ * Dialog invoke: align context.history with this user line (previous server history often ends with assistant).
+ * @param {Record<string, unknown>} mergedContext - mutable context (expects execution.action === 'dialog' from caller)
+ * @param {string} effectiveTask - user utterance from result.message
+ */
+export function mergeDialogHistoryForInvoke(mergedContext, effectiveTask) {
+    if (!mergedContext || typeof mergedContext !== 'object') return;
+    if (!effectiveTask || typeof effectiveTask !== 'string') return;
+    const h = Array.isArray(mergedContext.history) ? mergedContext.history.slice() : [];
+    const last = h[h.length - 1];
+    if (!last || last.role === 'assistant') {
+        h.push({ role: 'user', message: effectiveTask });
+        mergedContext.history = h;
+        return;
+    }
+    if (last.role === 'user' && historyEntryUserText(last) !== effectiveTask) {
+        h[h.length - 1] = { role: 'user', message: effectiveTask };
+        mergedContext.history = h;
+    }
+}
+
 /**
  * Merge response context from multiple sources
  * @param sessionId - session identifier (adds session_id if missing)

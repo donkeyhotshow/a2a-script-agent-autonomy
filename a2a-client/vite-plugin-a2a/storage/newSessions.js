@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { getStorageRoot, ensureDir } from './root.js';
+import { isActivePromiseStatus } from './promise-status.js';
 
 export function getNewSessionsDir(cwd) {
   return path.join(getStorageRoot(), 'sessions');
@@ -19,19 +20,18 @@ export function loadNewSession(cwd, sessionId) {
   // Session is defined by the highest step number WITH server-response.json (not just the highest step number)
   const allSteps = listNewSteps(cwd, sessionId);
   if (allSteps.length === 0) return null;
-  
-  // Filter to only steps that have server-response.json (completed steps)
-  const completedSteps = allSteps.filter(stepNum => {
+
+  let latestStepNum = null;
+  let latestStep = null;
+  for (const stepNum of allSteps) {
     const step = loadNewStep(cwd, sessionId, stepNum);
-    return step !== null;
-  });
-  
-  if (completedSteps.length === 0) return null;
-  
-  // Get the latest completed step
-  const latestStepNum = completedSteps[completedSteps.length - 1];
-  const latestStep = loadNewStep(cwd, sessionId, latestStepNum);
-  
+    if (step) {
+      latestStepNum = stepNum;
+      latestStep = step;
+    }
+  }
+  if (latestStepNum == null || !latestStep) return null;
+
   // Reconstruct session metadata from step data
   const session = {
     id: sessionId,
@@ -40,13 +40,13 @@ export function loadNewSession(cwd, sessionId) {
     updatedAt: latestStep.timestamp,
     status: 'active'
   };
-  
+
   // Add execute, context from latest step (result is not needed - stored in client-result.json)
   if (latestStep.execute) session.execute = latestStep.execute;
   if (latestStep.context) session.context = latestStep.context;
-  
-  // Get title from step 1 if available
-  const step1 = loadNewStep(cwd, sessionId, 1);
+
+  // Get title from step 1 if available (reuse latest when current step is 1 — avoids a second parse)
+  const step1 = latestStepNum === 1 ? latestStep : loadNewStep(cwd, sessionId, 1);
   if (step1?.title) {
     session.title = step1.title;
   } else if (step1?.execute?.form?.input?.label) {
@@ -116,6 +116,21 @@ export function loadNewStep(cwd, sessionId, stepNum) {
         }
       }
     }
+    const promiseFile = path.join(stepDir, 'server-promise.json');
+    if (fs.existsSync(promiseFile)) {
+      try {
+        const prom = JSON.parse(fs.readFileSync(promiseFile, 'utf8'));
+        if (!isActivePromiseStatus(prom?.status)) {
+          fs.unlinkSync(promiseFile);
+        }
+      } catch (e) {
+        try {
+          fs.unlinkSync(promiseFile);
+        } catch (e2) {
+          console.error('[newSessions] Failed to remove server-promise.json:', e2.message);
+        }
+      }
+    }
     return data;
   } catch (e) {
     console.error('[newSessions] Failed to parse step file:', e.message);
@@ -154,6 +169,10 @@ export function deleteNewSession(cwd, sessionId) {
   }
 }
 
+/**
+ * Highest numeric step directory (may include an in-flight folder with only server-promise.json).
+ * For the last completed step (server-response.json), use loadNewSession().currentStep instead.
+ */
 export function getNewSessionLatestStep(cwd, sessionId) {
   const steps = listNewSteps(cwd, sessionId);
   return steps.length > 0 ? steps[steps.length - 1] : 0;

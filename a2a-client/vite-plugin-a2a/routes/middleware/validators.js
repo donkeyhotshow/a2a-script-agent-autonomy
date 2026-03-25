@@ -44,8 +44,9 @@ export function validateStepPostBody(body) {
  * @returns true if session directory exists
  */
 export function sessionExists(cwd, sessionId) {
-  // Implementation: check if session dir exists
-  // Uses loadNewSession logic from storage
-  return true; // Stub - implement based on storage
+  // Check if session directory exists
+  const { loadNewSession } = require('../../storage/newSessions.js');
+  const session = loadNewSession(cwd, sessionId);
+  return session !== null;
 }
 

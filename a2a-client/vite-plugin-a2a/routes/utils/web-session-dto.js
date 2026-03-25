@@ -14,21 +14,18 @@
  */
 
 import { listNewSteps, loadNewStep, loadStepFile, loadServerPromise } from '../../storage/newSessions.js';
+import { isActivePromiseStatus } from '../../storage/promise-status.js';
 import { buildWebExecute } from './web-execute-dto.js';
 
-function isActivePromiseStatus(status) {
-    return status === 'pending' || status === 'processing';
-}
-
 /**
- * In-flight async work: first incomplete step with an active server-promise.json.
+ * In-flight async work: first step with an active server-promise.json (pending/processing).
+ * Promise is checked before skipping "completed" steps so a corrupt folder with both
+ * server-response.json and an active promise still polls.
  * @returns {{ stepNum: number, promiseId: string, serverPromise: object } | null}
  */
 export function getActiveAsyncWork(cwd, sessionId) {
     const steps = listNewSteps(cwd, sessionId);
     for (const stepNum of steps) {
-        const completed = loadNewStep(cwd, sessionId, stepNum) != null;
-        if (completed) continue;
         const serverPromise = loadServerPromise(cwd, sessionId, stepNum);
         if (serverPromise?.promiseId && isActivePromiseStatus(serverPromise.status)) {
             return { stepNum, promiseId: serverPromise.promiseId, serverPromise };
@@ -101,8 +98,8 @@ export function collectSessionMessagesFlat(cwd, sessionId) {
 }
 
 /**
- * Pending async work is stored under the in-flight step (often N+1) while session.currentStep
- * still points at the last step with server-response.json. Scan incomplete steps for server-promise.json.
+ * Pending async work: first step whose server-promise.json is pending/processing (see getActiveAsyncWork).
+ * loadNewSession().currentStep stays on the last step with server-response.json until that async completes.
  */
 export function attachPromiseMeta(cwd, sessionId, session) {
     const active = getActiveAsyncWork(cwd, sessionId);

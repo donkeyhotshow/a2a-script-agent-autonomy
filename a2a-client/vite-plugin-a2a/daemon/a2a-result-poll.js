@@ -6,6 +6,8 @@
  * with improved error handling, retry logic, and configurable options.
  */
 
+import { isPromisePollComplete } from '../storage/promise-status.js';
+
 function defaultBaseUrl() {
     return process.env.A2A_SERVER_URL || 'http://localhost:3000';
 }
@@ -14,7 +16,7 @@ function defaultBaseUrl() {
 export function isA2AResultCompleted(pollJson) {
     const d = pollJson?.data;
     if (!d) return false;
-    return d.status === 'completed' || d.status === 'done' || d.execute != null;
+    return isPromisePollComplete(d);
 }
 
 /** @param {{ data?: { status?: string, error?: unknown } }} pollJson */

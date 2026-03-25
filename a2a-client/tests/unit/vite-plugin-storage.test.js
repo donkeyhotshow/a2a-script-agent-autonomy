@@ -25,6 +25,7 @@ import {
   loadRequestToServer,
   loadStepFile,
 } from '../../vite-plugin-a2a/storage/newSessions.js';
+import { getActiveAsyncWork } from '../../vite-plugin-a2a/routes/utils/web-session-dto.js';
 
 let testDir;
 
@@ -118,6 +119,27 @@ describe('newSessions storage', () => {
   it('loadStepFile returns null for missing file', () => {
     const loaded = loadStepFile(cwd, sessionId, 99, 'nonexistent.json');
     expect(loaded).toBeNull();
+  });
+
+  it('getActiveAsyncWork returns first step with pending promise', () => {
+    const sid = 'sess_active_async_1';
+    saveNewStep(cwd, sid, 1, { execute: {}, messages: [], context: {} });
+    saveServerPromise(cwd, sid, 2, { promiseId: 'prom_x', status: 'pending' });
+    const hit = getActiveAsyncWork(cwd, sid);
+    expect(hit?.stepNum).toBe(2);
+    expect(hit?.promiseId).toBe('prom_x');
+    deleteNewSession(cwd, sid);
+  });
+
+  it('loadNewStep drops stale completed server-promise beside server-response', () => {
+    const sid = 'sess_stale_promise';
+    saveNewStep(cwd, sid, 1, { execute: {}, messages: [], context: {} });
+    const stepDir = getNewStepDir(cwd, sid, 1);
+    saveServerPromise(cwd, sid, 1, { promiseId: 'p_old', status: 'completed' });
+    expect(fs.existsSync(path.join(stepDir, 'server-promise.json'))).toBe(true);
+    loadNewStep(cwd, sid, 1);
+    expect(fs.existsSync(path.join(stepDir, 'server-promise.json'))).toBe(false);
+    deleteNewSession(cwd, sid);
   });
 
   it('listNewSessions returns session list', () => {
