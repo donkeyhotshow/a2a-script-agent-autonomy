@@ -44,6 +44,30 @@ export default function vitePluginA2a() {
             server.middlewares.use(createStepRoutes({ cwd }));
             server.middlewares.use(createKvRoutes({ cwd }));
             server.middlewares.use(createDaemonRoutes({ cwd }));
+            
+            // Serve shared files - first check local, then parent
+            let sharedPath = path.join(cwd, 'shared');
+            if (!fs.existsSync(sharedPath)) {
+                sharedPath = path.join(cwd, '..', 'shared');
+            }
+            if (fs.existsSync(sharedPath)) {
+                server.middlewares.use('/shared', (req, res, next) => {
+                    const filePath = path.join(sharedPath, req.url.split('?')[0]);
+                    if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
+                        const ext = path.extname(filePath);
+                        const contentTypes = {
+                            '.js': 'application/javascript',
+                            '.mjs': 'application/javascript',
+                            '.json': 'application/json',
+                            '.d.ts': 'application/typescript',
+                        };
+                        res.setHeader('Content-Type', contentTypes[ext] || 'text/plain');
+                        res.end(fs.readFileSync(filePath));
+                    } else {
+                        next();
+                    }
+                });
+            }
         }
     };
 }

@@ -3,6 +3,10 @@
  * When A2A returns a single client-executable execute key, run it under the session project path and POST /invoke again.
  * Supports: rag-search, read-file, list-directory, grep-search, file-exists, write-file,
  * execute-command, run-script, edit-patch. (execute.script is not auto-chained — use SDK / UI.)
+ *
+ * Architecture (T021): this is a **loop** of single-key `execute` responses — not a multi-key `execute`.
+ * Each iteration: server returns one tool key → client runs tool → client sends `result` → next `/invoke`.
+ * See `a2a-server/docs/EXTENDING-LLM-ACTIONS.md` for protocol limits (one action key per `response.json`).
  */
 
 import http from 'http';

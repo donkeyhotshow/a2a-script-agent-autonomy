@@ -277,6 +277,8 @@ export interface SwitchOperation {
   discriminator: string;  // JSONPath expression for value to match
   cases: Record<string, Record<string, unknown>>; // Map from discriminator value to operation
   default?: Record<string, unknown>; // Optional default operation
+  /** When true, only exact `cases[discriminator]` matches; no substring fallback. */
+  exactOnly?: boolean;
 }
 
 /**

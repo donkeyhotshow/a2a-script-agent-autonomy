@@ -30,6 +30,7 @@ export {
     validateExecutePayloadDetailed,
     validateActionKeyShape,
     validateActionResponse,
+    validateInvokeEnvelopeResponse,
     createActionValidator,
     validateReadFileResult,
     validateWriteFileResult,

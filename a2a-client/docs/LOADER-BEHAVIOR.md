@@ -372,6 +372,12 @@ a2a-client/tests/
 
 ---
 
+## `execute.wait` (runtime extension)
+
+`execute.wait` is a **runtime-only** Client API / UI hint: it is **not** part of sync golden `response.json` files (goldens model immediate `execute` or `promiseId`, not client-side delay semantics). The loader may stay visible while a `wait` step is active; see `simulations/SCHEMA.md` scope. Do not add `execute.wait` to simulation step `response.json` unless a dedicated contract test requires it.
+
+---
+
 ## История изменений
 
 | Версия | Дата | Автор | Изменения |

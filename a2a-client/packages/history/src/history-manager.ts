@@ -226,7 +226,7 @@ export class HistoryManager {
     return this.sessionStorage.reconstructMessagesFromLog(this.currentSessionId);
   }
 
-  // Session Summary
+  // Session Summary - delegates to sessionStorage.getSessionSummary
   async getSessionSummary(): Promise<any> {
     if (!this.currentSessionId) {
       throw new Error('No active session. Create or switch to a session first.');
@@ -269,33 +269,6 @@ export class HistoryManager {
       inProgress: plans.filter(p => p.status === 'in_progress').length,
       completed: plans.filter(p => p.status === 'completed').length,
       cancelled: plans.filter(p => p.status === 'cancelled').length
-    };
-  }
-
-  async getSessionSummary(): Promise<{
-    session: SessionData | null;
-    planStats: any;
-    taskStats: any;
-    recentActivity: ExecutionLogEntry[];
-  }> {
-    const session = await this.getActiveSession();
-    const planStats = await this.getPlanStats();
-    const taskStats = await this.getTaskStats();
-
-    // Get recent activity from all tasks
-    const recentActivity: ExecutionLogEntry[] = [];
-    if (session) {
-      for (const task of session.tasks) {
-        recentActivity.push(...task.executionLog);
-      }
-      recentActivity.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-    }
-
-    return {
-      session,
-      planStats,
-      taskStats,
-      recentActivity: recentActivity.slice(0, 20) // Last 20 activities
     };
   }
 

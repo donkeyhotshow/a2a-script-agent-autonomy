@@ -18,27 +18,26 @@ beforeAll(async () => {
 });
 
 describe('Web App integration', () => {
-    it('should have valid index.html structure with VueFlow', () => {
+    it('should have valid index.html structure with TaskFlow', () => {
         const htmlPath = path.resolve(__dirname, '../../web/index.html');
         const html = fs.readFileSync(htmlPath, 'utf8');
-        // Check for sessions page (main page after migration)
-        expect(html).toContain('id="page-sessions"');
-        // Check for VueFlow scripts
-        expect(html).toContain('js/flow/index.js');
-        expect(html).toContain('js/flow/nodes.js');
-        expect(html).toContain('js/flow/protocol.js');
-        // Check for sessions
-        expect(html).toContain('js/sessions.js');
-        // Check for flow container
-        expect(html).toContain('flow-container');
-        expect(html).toContain('vueflow-graph');
+        // Check for TaskFlow scripts (new architecture)
+        expect(html).toContain('js/task-flow/render.js');
+        expect(html).toContain('js/task-flow/loader.js');
+        expect(html).toContain('js/task-flow/tasks.js');
+        expect(html).toContain('js/task-flow/messages.js');
+        expect(html).toContain('js/task-flow/init.js');
+        expect(html).toContain('js/task-flow/index.js');
+        // Check for session store
+        expect(html).toContain('js/session-store.js');
     });
 
-    it('should have VueFlow flow files', () => {
-        const flowDir = path.resolve(__dirname, '../../web/js/flow');
-        expect(fs.existsSync(path.join(flowDir, 'index.js'))).toBe(true);
-        expect(fs.existsSync(path.join(flowDir, 'nodes.js'))).toBe(true);
-        expect(fs.existsSync(path.join(flowDir, 'protocol.js'))).toBe(true);
+    it('should have TaskFlow files', () => {
+        const flowDir = path.resolve(__dirname, '../../web/js/task-flow');
+        expect(fs.existsSync(path.join(flowDir, 'render.js'))).toBe(true);
+        expect(fs.existsSync(path.join(flowDir, 'loader.js'))).toBe(true);
+        expect(fs.existsSync(path.join(flowDir, 'tasks.js'))).toBe(true);
+        expect(fs.existsSync(path.join(flowDir, 'messages.js'))).toBe(true);
     });
 
     it('should have server API mounted at /api/v1', async () => {

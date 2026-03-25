@@ -14,34 +14,7 @@ import type {ActionDefinition} from '../../../actions/types.js';
 import {dialogRequestProcessor} from './dialog-request-processor.js';
 import type {RequestContext, ProcessResult, ProcessOutcome} from '../request-processor.interfaces.js';
 import {BaseRequestProcessor, type RequestType} from './base-processor.js';
-
-/**
- * Router tail: LLM pipeline modes + common scripted action when registry is empty.
- * Registry-backed actions are prepended when loaded; these stay as fallback (see ISSUE 01).
- */
-const ROUTER_CHOICES = [
-    {id: 'dialog', label: 'AI діалог з користувачем'},
-    {id: 'agent', label: 'Agent (універсальний режим)'},
-    {id: 'task-decomposition', label: 'Декомпозиція задачі'},
-    {id: 'fix-vue-imports', label: 'Виправлення Vue imports'},
-    {id: 'fix-laravel-namespaces-and-uses', label: 'Laravel: namespace та use'},
-] as const;
-
-const ROUTER_META_TITLE = 'Режими';
-
-function buildRouterForm(choices: Array<{id: string; label: string}>) {
-    const form: Record<string, unknown> = {
-        title: 'Оберіть спосіб виконання',
-        choices,
-    };
-    if (ROUTER_CHOICES.length > 0) {
-        form.meta = {
-            routerTitle: ROUTER_META_TITLE,
-            routerChoices: ROUTER_CHOICES,
-        };
-    }
-    return form;
-}
+import {buildRouterForm, routerStatic} from '../../../config/router-static.js';
 
 /**
  * Action request processor configuration
@@ -274,13 +247,16 @@ export class ActionRequestProcessor extends BaseRequestProcessor {
                     task: taskText
                 },
                 execute: {
-                    form: {
-                        title: 'Оберіть спосіб виконання',
-                        choices: [
-                            {id: action.id, label: action.title},
-                            ...ROUTER_CHOICES
-                        ]
-                    }
+                    form: buildRouterForm([
+                        {
+                            id: action.id,
+                            label: action.title,
+                            description:
+                                typeof action.description === 'string' && action.description.trim()
+                                    ? action.description
+                                    : action.title,
+                        },
+                    ]),
                 }
             };
         }
@@ -366,9 +342,16 @@ export class ActionRequestProcessor extends BaseRequestProcessor {
                     });
 
                 const rankedChoices = rankedIds
-                    .map(id => actionsToUse.find(action => action.id === id))
-                    .filter(Boolean)
-                    .map(action => ({id: action.id, label: action.title}));
+                    .map((id) => actionsToUse.find((a) => a.id === id))
+                    .filter((a): a is ActionDefinition => Boolean(a))
+                    .map((action) => ({
+                        id: action.id,
+                        label: action.title,
+                        description:
+                            typeof action.description === 'string' && action.description.trim()
+                                ? action.description
+                                : action.title,
+                    }));
 
                 return {
                     outcome: 'action_proposal',
@@ -386,7 +369,7 @@ export class ActionRequestProcessor extends BaseRequestProcessor {
             }
         } catch (error) {
             logger.error('[ActionRequestProcessor] LLM router failed, falling back to static choices', {
-                error: error.message
+                error: error instanceof Error ? error.message : String(error)
             });
             // If LLM is unavailable → graceful fallback to static ROUTER_CHOICES (no crash)
             return {

@@ -90,8 +90,8 @@ describe('SessionStore', () => {
         SessionStore.prototype.setExecute = function(execute) {
             this._state.execute = execute || null;
             
-            // Handle form with choices - waiting for user input
-            if (execute?.form?.choices) {
+            // Handle form with choices or input — waiting for user input
+            if (execute?.form?.choices || execute?.form?.input) {
                 this._state.pendingForm = execute.form;
                 this._state.status = 'waiting';
             } else {
@@ -112,17 +112,9 @@ describe('SessionStore', () => {
                 });
             }
             
-            // Handle auto-responses (no form required)
+            // Handle auto-responses (no form required) — protocol uses one action key under execute
             if (execute && !execute.form?.input && !execute.form?.choices) {
-                if (execute.action) {
-                    this._state.messages.push({
-                        id: `msg_${Date.now()}`,
-                        role: 'system',
-                        content: `Executing: ${execute.action}`,
-                        timestamp: new Date().toISOString(),
-                        metadata: { type: 'auto-action', action: execute.action }
-                    });
-                } else if (execute.script) {
+                if (execute.script) {
                     this._state.messages.push({
                         id: `msg_${Date.now()}`,
                         role: 'system',
@@ -130,17 +122,40 @@ describe('SessionStore', () => {
                         timestamp: new Date().toISOString(),
                         metadata: { type: 'auto-script' }
                     });
-                } else if (execute.result) {
-                    const resultMsg = typeof execute.result === 'string'
-                        ? execute.result
-                        : execute.result.summary || 'Task completed';
-                    this._state.messages.push({
-                        id: `msg_${Date.now()}`,
-                        role: 'system',
-                        content: resultMsg,
-                        timestamp: new Date().toISOString(),
-                        metadata: { type: 'auto-result' }
-                    });
+                } else {
+                    const toolKey = Object.keys(execute).find(
+                        (k) =>
+                            !['message', 'form', 'completed', 'wait', 'result', 'action'].includes(k)
+                    );
+                    if (toolKey) {
+                        this._state.messages.push({
+                            id: `msg_${Date.now()}`,
+                            role: 'system',
+                            content: `Executing: ${toolKey}`,
+                            timestamp: new Date().toISOString(),
+                            metadata: { type: 'auto-action', action: toolKey }
+                        });
+                    } else if (typeof (execute as Record<string, unknown>).action === 'string') {
+                        const legacy = (execute as Record<string, unknown>).action as string;
+                        this._state.messages.push({
+                            id: `msg_${Date.now()}`,
+                            role: 'system',
+                            content: `Executing: ${legacy}`,
+                            timestamp: new Date().toISOString(),
+                            metadata: { type: 'auto-action', action: legacy, deprecatedFlatExecute: true }
+                        });
+                    } else if (execute.result) {
+                        const resultMsg = typeof execute.result === 'string'
+                            ? execute.result
+                            : execute.result.summary || 'Task completed';
+                        this._state.messages.push({
+                            id: `msg_${Date.now()}`,
+                            role: 'system',
+                            content: resultMsg,
+                            timestamp: new Date().toISOString(),
+                            metadata: { type: 'auto-result' }
+                        });
+                    }
                 }
             }
             

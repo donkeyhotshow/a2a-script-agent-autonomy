@@ -21,43 +21,13 @@ import {
     recoverDialogFromLlmPromise,
 } from './index.js';
 import type {RequestType} from './request-processor.interfaces.js';
+import { normalizeLlmChoiceToExecution } from './normalize-llm-choice.js';
+import { LLM_PIPELINE_ACTIONS, type LlmPipelineAction } from '../../../config/router-static.js';
+
+export { LLM_PIPELINE_ACTIONS, type LlmPipelineAction };
 
 const DEFAULT_INTERVAL_MS = 5000;
 let timerId: ReturnType<typeof setInterval> | null = null;
-
-/** Modes selectable from task/router UI; must match ACTION_TO_SCHEMA keys in dialog-request-processor. */
-export const LLM_PIPELINE_ACTIONS = [
-    'dialog',
-    'agent',
-    'task-decomposition',
-] as const;
-
-export type LlmPipelineAction = (typeof LLM_PIPELINE_ACTIONS)[number];
-
-/**
- * Router follow-up: `result.choice` is the selected mode. Merge into `execution` when still on task/router.
- */
-function normalizeLlmChoiceToExecution(context: Record<string, unknown>): void {
-    const result = context['result'] as Record<string, unknown> | undefined;
-    const choice = result?.choice;
-    if (typeof choice !== 'string' || !LLM_PIPELINE_ACTIONS.includes(choice as (typeof LLM_PIPELINE_ACTIONS)[number])) {
-        return;
-    }
-    const exec = context['execution'] as Record<string, unknown> | undefined;
-    const currentAction = exec?.action as string | undefined;
-    const step = exec?.step as string | undefined;
-    const isRouterHandoff =
-        currentAction === undefined ||
-        (currentAction === 'task' && (step === 'router' || step === 'new'));
-    if (!isRouterHandoff) {
-        return;
-    }
-    context['execution'] = {
-        ...(exec ?? {}),
-        action: choice,
-        step: 'request',
-    };
-}
 
 // Register processors
 processorRegistry.register('action', actionRequestProcessor);
@@ -77,7 +47,7 @@ function determineRequestType(context: Record<string, unknown>): RequestType {
     const message = context['message'] as string | undefined;
     const hasMessage = Boolean(result?.message ?? task ?? message);
     const llmChoice =
-        typeof result?.choice === 'string' && LLM_PIPELINE_ACTIONS.includes(result.choice as (typeof LLM_PIPELINE_ACTIONS)[number])
+        typeof result?.choice === 'string' && LLM_PIPELINE_ACTIONS.includes(result.choice as LlmPipelineAction)
             ? result.choice
             : undefined;
 

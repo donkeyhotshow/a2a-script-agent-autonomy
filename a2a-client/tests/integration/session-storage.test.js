@@ -163,13 +163,12 @@ describe('SessionStore - Auto-Responses', () => {
 
         it('should auto-continue when no form is present', () => {
             const execute = {
-                action: 'read-file',
-                result: { summary: 'File read successfully' }
+                'read-file': { path: '/project/readme.md' }
             };
             
-            // No form means auto-continue
+            // No form means auto-continue; protocol uses one action key under execute
             expect(execute.form).toBeUndefined();
-            expect(execute.action).toBeDefined();
+            expect(Object.keys(execute)[0]).toBe('read-file');
         });
     });
 

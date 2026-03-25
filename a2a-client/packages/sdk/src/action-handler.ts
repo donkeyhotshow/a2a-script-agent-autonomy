@@ -68,7 +68,7 @@ export function detectResponseType(response: {
 /**
  * Extract execute action from response using action-key shape
  */
-function extractExecuteAction(response: {
+export function extractExecuteAction(response: {
     execute?: Record<string, unknown>;
 }): { type: string; payload: unknown } | null {
     if (!response?.execute) return null;

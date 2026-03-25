@@ -843,8 +843,8 @@ async function applySwitch(
   const discString = String(discValue);
   let matchedCase = cases[discString];
   
-  // If no exact match, try to find a case key that matches as a pattern
-  if (!matchedCase) {
+  // If no exact match, try substring / '*' fallback (skip when exactOnly — e.g. form-choice routing)
+  if (!matchedCase && !operation.exactOnly) {
     const caseKeys = Object.keys(cases);
     for (const key of caseKeys) {
       if (discString.includes(key) || key === '*') {

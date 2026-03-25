@@ -11,7 +11,7 @@ import {
     type FileBlockLike,
 } from './protocol';
 import {AsyncApiClient, PromisePoller} from './async-client';
-import {handleActionResponse, handleExecuteAction, createExecuteScript} from './action-handler';
+import {handleActionResponse, handleExecuteAction, createExecuteScript, extractExecuteAction} from './action-handler';
 import {unwrapEnvelope} from './client-api-envelope.js';
 
 export interface ApiClientConfig {
@@ -184,7 +184,7 @@ export class ApiClient {
     }
 }
 
-export {AsyncApiClient, PromisePoller, handleActionResponse, handleExecuteAction, createExecuteScript};
+export {AsyncApiClient, PromisePoller, handleActionResponse, handleExecuteAction, createExecuteScript, extractExecuteAction};
 export type {ExecuteScriptFn, HandleActionOptions, HandleActionResult} from './action-handler';
 export {
     buildNewTaskContext,

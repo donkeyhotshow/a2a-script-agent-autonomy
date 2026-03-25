@@ -105,8 +105,8 @@ export function requireProjectAccess(req: AuthenticatedRequest, res: Response, n
         });
     }
 
-    // TODO: Implement project access validation
-    // This would check if the user has access to the specified project
+    // Known gap: no project ACL yet. Standalone SDK matches Vite dev posture:
+    // use SKIP_AUTH=1 / config.skipAuth for local work; production should gate behind a real identity layer.
     next();
 }
 
@@ -285,8 +285,7 @@ export function createErrorHandlingMiddleware(options: {
 export function validateRequest(schema: any): (req: AuthenticatedRequest, res: Response, next: NextFunction) => void {
     return (req: AuthenticatedRequest, res: Response, next: NextFunction): void => {
         try {
-            // TODO: Implement request validation using schema
-            // This would use a validation library like Joi or Zod
+            // Optional: wire Zod/Joi when SDK exposes stable OpenAPI bodies; until then validate in route handlers.
             next();
         } catch (error) {
             return res.status(400).json({

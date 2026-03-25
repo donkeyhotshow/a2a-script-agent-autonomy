@@ -23,6 +23,11 @@ export default {
         __VUE_OPTIONS_API__: true,
         __VUE_PROD_HYDRATION_MISMATCH_DETAILS__: false,
     },
+    resolve: {
+        alias: {
+            '@shared': './shared'
+        }
+    },
     optimizeDeps: {
         exclude: ['vue', '@vue-flow/core', '@vue-flow/background', '@vue-flow/controls', '@vue-flow/minimap']
     },

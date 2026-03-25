@@ -1,6 +1,9 @@
 /**
  * @a2a/json - VueFlow Mapper
  * Converts UnifiedResponse to VueFlow nodes and edges
+ *
+ * `result.actionId` here is an internal VueFlow correlation id (progress/completed node wiring),
+ * not the A2A protocol `execute` action key nor `result.choice`. See packages/json/README.md.
  */
 
 import type {

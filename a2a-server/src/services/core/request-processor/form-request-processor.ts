@@ -15,6 +15,7 @@ import type {
     ProcessOutcome
 } from '../request-processor.interfaces.js';
 import {BaseRequestProcessor, type RequestType} from './base-processor.js';
+import {runFormChoicePipeline} from './form-choice-pipeline.js';
 
 /**
  * Form field definition
@@ -212,10 +213,9 @@ export class FormRequestProcessor extends BaseRequestProcessor {
     }
 
     /**
-     * Handle choice selection
+     * Handle choice selection — routed by prompts/transforms/form-choice-response.json
      */
     private async handleChoiceSelection(ctx: Record<string, unknown>): Promise<ProcessResult> {
-        // Support multiple ways to pass choice
         const resultChoice = (ctx['result'] as Record<string, unknown>)?.choice;
         const choiceId = (ctx['selected_choice'] || ctx['choice_id'] || resultChoice) as string;
         const formId = ctx['form_id'] as string || 'default';
@@ -229,155 +229,17 @@ export class FormRequestProcessor extends BaseRequestProcessor {
             } as ProcessResult;
         }
 
-        // Process the choice based on selection
-        switch (choiceId) {
-            case 'auto':
-                return {
-                    outcome: 'completed',
-                    message: 'Auto mode selected',
-                    selection: { choiceId, formId, timestamp: new Date().toISOString() },
-                    execute: {
-                        message: 'Автоматичний режим вибрано. Очікуйте виконання...',
-                    },
-                } as ProcessResult;
-
-            case 'manual':
-                return {
-                    outcome: 'completed',
-                    message: 'Manual mode selected',
-                    selection: { choiceId, formId, timestamp: new Date().toISOString() },
-                    execute: {
-                        form: {
-                            title: 'Ручний режим вибрано. Кроки будуть показані для підтвердження.',
-                            choices: [
-                                { id: 'confirm', label: 'Підтвердити' },
-                                { id: 'cancel', label: 'Скасувати' },
-                            ],
-                        },
-                    },
-                } as ProcessResult;
-
-            case 'ai':
-                return {
-                    outcome: 'completed',
-                    message: 'AI mode selected',
-                    selection: { choiceId, formId, timestamp: new Date().toISOString() },
-                    execute: {
-                        form: {
-                            title: 'AI режим вибрано. Генерація дій через LLM...',
-                            choices: [
-                                { id: 'generate', label: 'Згенерувати дії' },
-                                { id: 'refine', label: 'Уточнити задачу' },
-                            ],
-                        },
-                    },
-                } as ProcessResult;
-
-            case 'dialog':
-                // Dialog mode selected - return input form for user message
-                logger.info('[FormRequestProcessor] Dialog mode selected, returning input form', {choiceId});
-                return {
-                    outcome: 'completed',
-                    message: 'Dialog mode selected',
-                    selection: { choiceId, formId, timestamp: new Date().toISOString() },
-                    context: {
-                        task: (ctx['task'] as string) || 'диалог',
-                        execution: {
-                            action: 'dialog',
-                            step: 'request'
-                        }
-                    },
-                    execute: {
-                        form: {
-                            input: [
-                                {
-                                    name: 'message',
-                                    type: 'text',
-                                    label: 'Повідомлення',
-                                    required: true
-                                }
-                            ]
-                        }
-                    }
-                } as ProcessResult;
-
-            case 'agent':
-                // Unified Agent mode - LLM adapts to task
-                logger.info('[FormRequestProcessor] Agent mode selected, routing to AI-Actions', {choiceId});
-                return {
-                    outcome: 'ai_action_ready',
-                    message: 'Agent mode selected',
-                    selection: { choiceId, formId, timestamp: new Date().toISOString() },
-                    context: {
-                        action: 'agent',
-                        execution: {
-                            step: 'request',
-                            progress: 0
-                        }
-                    },
-                    execute: {
-                        message: 'Agent режим активовано. LLM адаптується до вашої задачі...',
-                    },
-                    aiActions: {
-                        action: 'agent',
-                        mode: 'llm-driven',
-                        step: 'start',
-                        completed: false
-                    }
-                } as ProcessResult;
-
-            case 'auto-ai':
-            case 'auto-ai-v2':
-            case 'coder':
-            case 'coder-smart':
-            case 'coder-smart-v2':
-            case 'analyze':
-                // Legacy modes now redirect to unified agent
-                logger.info('[FormRequestProcessor] Legacy mode selected, redirecting to agent', {choiceId});
-                return {
-                    outcome: 'ai_action_ready',
-                    message: `${choiceId} mode → agent`,
-                    selection: { choiceId, formId, timestamp: new Date().toISOString() },
-                    context: {
-                        action: 'agent',
-                        execution: {
-                            step: 'request',
-                            progress: 0
-                        }
-                    },
-                    execute: {
-                        message: 'Перенаправлення на Agent режим...',
-                    },
-                    aiActions: {
-                        action: 'agent',
-                        mode: 'llm-driven',
-                        step: 'start',
-                        completed: false
-                    }
-                } as ProcessResult;
-
-            case 'task-decomposition':
-                // Task decomposition mode
-                logger.info('[FormRequestProcessor] Task decomposition mode selected', {choiceId});
-                return {
-                    outcome: 'completed',
-                    message: 'Task decomposition mode selected',
-                    selection: { choiceId, formId, timestamp: new Date().toISOString() },
-                    execute: {
-                        message: 'Декомпозиція задачі. Розбиття на підзадачі...',
-                    },
-                } as ProcessResult;
-
-            default:
-                return {
-                    outcome: 'completed',
-                    message: 'Choice selected',
-                    selection: { choiceId, formId, timestamp: new Date().toISOString() },
-                    execute: {
-                        message: `Вибрано: ${choiceId}`
-                    }
-                } as ProcessResult;
+        const pipelineInput = {...ctx, choice_id: choiceId, form_id: formId};
+        const result = await runFormChoicePipeline(pipelineInput);
+        if (result) {
+            return result;
         }
+
+        logger.error('[FormRequestProcessor] Form choice pipeline produced no result', {choiceId});
+        return {
+            outcome: 'failed' as ProcessOutcome,
+            error: 'Form choice pipeline did not produce a result',
+        } as ProcessResult;
     }
 
     /**

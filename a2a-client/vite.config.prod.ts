@@ -1,12 +1,15 @@
 import { defineConfig } from 'vite';
-import { resolve } from 'path';
-import { visualizer } from 'rollup-plugin-visualizer';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 /**
  * Production Vite Configuration
  * Optimized for deployment with code splitting and lazy loading
  */
 export default defineConfig({
+  root: 'web',
   build: {
     target: 'es2020',
     minify: 'terser',
@@ -51,18 +54,11 @@ export default defineConfig({
       },
     },
   },
-  plugins: [
-    // Bundle analyzer (only in analyze mode)
-    process.env.ANALYZE === 'true' && visualizer({
-      open: true,
-      gzipSize: true,
-      brotliSize: true,
-      filename: 'dist/stats.html',
-    }),
-  ].filter(Boolean),
+  plugins: [],
   resolve: {
     alias: {
-      '@': resolve(__dirname, 'src'),
+      '@': path.resolve(__dirname, 'web/src'),
+      '@shared': path.resolve(__dirname, '../shared'),
     },
   },
   define: {

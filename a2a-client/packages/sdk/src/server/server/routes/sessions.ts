@@ -28,7 +28,7 @@ import {
 } from '../../lib/agent-rag-chain.js';
 import { pickInvokeContextPatch } from '../../lib/context-invoke-patch.js';
 import { buildWebExecute, sanitizeApiRecordExecuteFields } from '../../lib/web-execute-dto.js';
-import { buildInitialInvokeRequestBody } from '../../lib/first-invoke-payload.js';
+import { buildInitialInvokeRequestBody } from '../../../lib/first-invoke-payload.js';
 
 function getStepNum(session: { metadata?: Record<string, unknown> }): number {
     const n = session.metadata?.stepNum;
@@ -286,6 +286,11 @@ router.get('/', (req: Request, res: Response) => {
 /**
  * GET /api/sessions/:id
  * Get session by ID
+ *
+ * | Query | `execute` / context |
+ * |-------|------------------------|
+ * | (none) | Web DTO: `buildWebExecute` strips client-only tool keys; `context` omitted (see `toWebClientSessionPayload`). |
+ * | `?includeContext=1` | Raw session snapshot: full `execute` keys + `context` (debug / tooling only; parity with Vite `toPublicSession(..., true)`). |
  */
 router.get('/:id', (req: Request, res: Response) => {
     try {
@@ -299,6 +304,16 @@ router.get('/:id', (req: Request, res: Response) => {
                     code: 'SESSION_NOT_FOUND',
                     message: `Session ${id} not found`
                 }
+            });
+            return;
+        }
+
+        const includeContext =
+            req.query.includeContext === '1' || req.query.includeContext === 'true';
+        if (includeContext) {
+            res.json({
+                success: true,
+                session: session as Record<string, unknown>,
             });
             return;
         }

@@ -9,6 +9,7 @@ import * as path from 'path';
 import {fileURLToPath} from 'url';
 import {logger} from '../../../utils/logger.js';
 import {runPromptsTransform} from '../../../transform/index.js';
+import {ACTION_TO_SCHEMA} from '../../../config/router-static.js';
 import type {RequestContext, ProcessResult} from './request-processor.interfaces.js';
 import {BaseRequestProcessor, type RequestType} from './base-processor.js';
 import {requestService} from '../request/request.service.js';
@@ -190,13 +191,6 @@ function mergeTraceIntoResult(result: ProcessResult, trace: ServerInterruptTrace
         context: attachInterruptTraceToContext(result.context as Record<string, unknown>, trace) as ProcessResult['context'],
     };
 }
-
-/** action → transformSchema. Keep in sync with LLM pipeline actions in request-processor.service. */
-const ACTION_TO_SCHEMA: Record<string, string> = {
-    dialog: 'dialog',
-    agent: 'agent',
-    'task-decomposition': 'task-decomposition',
-};
 
 const DEFAULT_AI_HUB = 'http://localhost:11434';
 const DEFAULT_MODEL = 'qwen3:8b';

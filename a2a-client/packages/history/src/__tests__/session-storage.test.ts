@@ -258,7 +258,8 @@ describe('SessionStorage', () => {
       const session = await sessionStorage.createSession('Test Session');
       const context = await sessionStorage.getContext(session.id);
       
-      expect(context).toEqual({});
+      // Context returns empty arrays for new session, not empty object
+      expect(context).toEqual({ exchangeLog: [], messages: [] });
     });
   });
 });

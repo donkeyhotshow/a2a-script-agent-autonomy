@@ -16,7 +16,7 @@ import {readFileSync, writeFileSync, existsSync, readdirSync, statSync} from 'no
 import {join, dirname} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {describe, it, expect, beforeAll} from 'vitest';
-import {validateActionResponse} from '../src/actions/action-validator.js';
+import {validateInvokeEnvelopeResponse} from '../src/actions/action-validator.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -199,66 +199,10 @@ function readSimulationResponse(simDir: string): any {
     return null;
 }
 
-/**
- * Validate simulation response structure
- */
-function validateSimulationResponse(response: any): { valid: boolean; errors: string[] } {
-    const errors: string[] = [];
-    
-    // Check for valid response object
-    if (!response || typeof response !== 'object') {
-        errors.push('Response is not a valid object');
-        return { valid: false, errors };
-    }
-    
-    // Check for success field
-    if (typeof response.success !== 'boolean') {
-        errors.push('Missing or invalid success field');
-    }
-    
-    // Check for data field
-    if (!response.data) {
-        errors.push('Missing data field');
-    } else {
-        // Validate data structure
-        const data = response.data;
-        
-        if (data.status && !['pending', 'processing', 'completed', 'failed'].includes(data.status)) {
-            errors.push(`Invalid status: ${data.status}`);
-        }
-        
-        if (data.promiseId && typeof data.promiseId !== 'string') {
-            errors.push('Invalid promiseId');
-        }
-        
-        if (data.context && typeof data.context !== 'object') {
-            errors.push('Invalid context');
-        }
-
-        // Check for execute or result
-        if (!data.execute && !data.result) {
-            // This might be okay for pending status
-            if (data.status !== 'pending') {
-                errors.push('Missing both execute and result');
-            }
-        }
-
-        // Protocol body: reuse action-validator (envelope fields like promiseId stay test-only above)
-        if (data.execute || data.result) {
-            const inner = {
-                context: data.context,
-                execute: data.execute,
-                result: data.result,
-                message: data.message,
-            };
-            const av = validateActionResponse(inner);
-            if (!av.success) {
-                errors.push(...(av.errors || []));
-            }
-        }
-    }
-
-    return { valid: errors.length === 0, errors };
+/** Maps invoke envelope validation to legacy `{ valid, errors }` for tests (see validateInvokeEnvelopeResponse). */
+function validateSimulationResponse(response: unknown): { valid: boolean; errors: string[] } {
+    const v = validateInvokeEnvelopeResponse(response);
+    return { valid: v.success, errors: v.errors ?? [] };
 }
 
 /**

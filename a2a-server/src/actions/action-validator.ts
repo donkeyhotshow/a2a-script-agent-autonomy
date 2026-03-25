@@ -288,6 +288,67 @@ export function validateActionResponse(response: unknown): ValidationResult {
   return errors.length === 0 ? { success: true } : { success: false, errors };
 }
 
+/**
+ * HTTP-style invoke/poll envelope `{ success, data }` plus protocol fields on `data`.
+ * Reuses {@link validateActionResponse} for the inner body (single source of truth for sim tests + CI).
+ */
+export function validateInvokeEnvelopeResponse(response: unknown): ValidationResult {
+  const errors: string[] = [];
+
+  if (!response || typeof response !== 'object') {
+    return { success: false, errors: ['Response is not a valid object'] };
+  }
+
+  const outer = response as Record<string, unknown>;
+  if (typeof outer.success !== 'boolean') {
+    errors.push('Missing or invalid success field');
+  }
+
+  if (!outer.data) {
+    errors.push('Missing data field');
+    return { success: false, errors };
+  }
+
+  const data = outer.data as Record<string, unknown>;
+  if (typeof data !== 'object' || data === null) {
+    errors.push('data must be an object');
+    return { success: false, errors };
+  }
+
+  if (data.status && !['pending', 'processing', 'completed', 'failed'].includes(data.status as string)) {
+    errors.push(`Invalid status: ${String(data.status)}`);
+  }
+
+  if (data.promiseId && typeof data.promiseId !== 'string') {
+    errors.push('Invalid promiseId');
+  }
+
+  if (data.context && typeof data.context !== 'object') {
+    errors.push('Invalid context');
+  }
+
+  if (!data.execute && !data.result) {
+    if (data.status !== 'pending') {
+      errors.push('Missing both execute and result');
+    }
+  }
+
+  if (data.execute || data.result) {
+    const inner = {
+      context: data.context,
+      execute: data.execute,
+      result: data.result,
+      message: data.message,
+    };
+    const av = validateActionResponse(inner);
+    if (!av.success) {
+      errors.push(...(av.errors || []));
+    }
+  }
+
+  return errors.length === 0 ? { success: true } : { success: false, errors };
+}
+
 export function createActionValidator<T>(schema: z.ZodType<T>) {
   return (data: unknown): { success: boolean; data?: T; errors?: string[] } => {
     const result = schema.safeParse(data);
