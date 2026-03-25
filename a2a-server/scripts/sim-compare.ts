@@ -1,7 +1,7 @@
 #!/usr/bin/env tsx
 
 /**
- * Скрипт для сравнения server-response.json с response.json (gold standard)
+ * Скрипт для сравнения invoke-capture.json с response.json (gold standard)
  *
  * Использование:
  *   npm run sim:compare <sim-dir> [options]
@@ -13,7 +13,7 @@
  *   npm run sim:compare fix-vue-imports -- --threshold=80
  *
  * Результат:
- *   - Сравнивает server-response.json с response.json
+ *   - Сравнивает invoke-capture.json (или legacy server-response.json) с response.json
  *   - Выводит различия
  *   - Показывает процент совпадения (similarity score)
  *   - Использует Zod для структурной проверки
@@ -270,7 +270,8 @@ function main() {
     const baseDir = join(__dirname, '..', '..', 'simulations');
     const simDir = join(baseDir, cliArgs.simDir);
     const goldStandardPath = join(simDir, 'response.json');
-    const serverResponsePath = join(simDir, 'server-response.json');
+    const invokeCapturePath = join(simDir, 'invoke-capture.json');
+    const legacyCapturePath = join(simDir, 'server-response.json');
 
     if (!existsSync(simDir)) {
         const errorMsg = `❌ Симуляция не найдена: ${cliArgs.simDir}`;
@@ -293,8 +294,13 @@ function main() {
         process.exit(1);
     }
 
-    if (!existsSync(serverResponsePath)) {
-        const errorMsg = '❌ server-response.json не найден';
+    const capturePath = existsSync(invokeCapturePath)
+        ? invokeCapturePath
+        : existsSync(legacyCapturePath)
+          ? legacyCapturePath
+          : null;
+    if (!capturePath) {
+        const errorMsg = '❌ invoke-capture.json не найден (запустите npm run sim:run …)';
         if (cliArgs.json) {
             console.log(JSON.stringify({valid: false, error: errorMsg}, null, 2));
         } else {
@@ -320,7 +326,7 @@ function main() {
     }
 
     try {
-        serverResponse = JSON.parse(readFileSync(serverResponsePath, 'utf-8'));
+        serverResponse = JSON.parse(readFileSync(capturePath, 'utf-8'));
     } catch (err: any) {
         const errorMsg = `Ошибка чтения server-response: ${err.message}`;
         if (cliArgs.json) {

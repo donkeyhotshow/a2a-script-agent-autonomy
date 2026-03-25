@@ -35,9 +35,9 @@ import x from '@/services/x.js'
 - **Test database** - Uses `a2a_test`, not `a2a_server` ([`tests/setup.ts`](a2a-server/tests/setup.ts:13))
 
 ### Legacy golden simulations
-- When you touch legacy snapshots/steps under `simulations/?`, treat `context.docVirtual` as retired: every golden request/response should store documented sections inside `context.workbench.sections` (the server still normalizes `docVirtual`, but our golden files must already match the fresh schema).
-- Replace either string or object `docVirtual` values with `"workbench": { "sections": { ? } }` and point any transformation paths at `context.workbench.sections`.
-- Update `request.md`, prompt JSON, or other generator inputs so they already emit `workbench` instead of `docVirtual`; this keeps the golden fixture consistent even before any runtime normalization.
+- Every golden request/response should store documented sections inside `context.workbench.sections`.
+- Use `"workbench": { "sections": { ? } }` and point any transformation paths at `context.workbench.sections`.
+- Update `request.md`, prompt JSON, or other generator inputs to emit `workbench` directly; this keeps the golden fixture consistent.
 - Single action per **`response.json`** ? Under `simulations/?`, each step?s **`response.json`** `execute` must have exactly **one** protocol action key (`form`, `read-file`, `rag-search`, ?). Never batch multiple protocol actions in one server response.
 - **`received.json` (Web execute DTO)** ? Must **not** repeat raw client-only `execute` keys (`rag-search`, `read-file`, `write-file`, `script`, `execute-command`). Goldens use the shape produced by `buildWebExecute` (`message`, optional `llmMessage`, `attachments`, optional `form`). See [`simulations/SCHEMA.md`](simulations/SCHEMA.md) and [`a2a-client/vite-plugin-a2a/routes/utils/web-execute-dto.js`](a2a-client/vite-plugin-a2a/routes/utils/web-execute-dto.js).
 - Execute values must match `sim-lint` ? only the action types listed in [`a2a-server/scripts/sim-lint.ts`](a2a-server/scripts/sim-lint.ts)'s `VALID_EXECUTE_TYPES` are allowed; drop deprecated entries such as `execute.error-recovery` or any other removed types when normalizing a simulation.
@@ -50,7 +50,7 @@ import x from '@/services/x.js'
 - Optional **`N-sub-M/`** folders (next to step `N/`, `M` sequential) ? **server interrupt loop** goldens: `request.*`, `response.*`, transforms; **`interruptTrace`** in **`response.json`**. **No** `client.json` / `received.json` (client sees one response per invoke after the loop). Pattern `^\d+-sub-\d+$`. Example: `simulations/agent-auto-ai/6-sub-1/` ? `6-sub-4/`.
 
 ### Quick grep helpers (when upgrading a sim)
-- `rg -n "docVirtual" -g '*.json' simulations` ? verify legacy docVirtual references are gone.
+- `sim:lint` flags client-only tool keys under `received.json` `execute` (see [`sim-lint.ts`](a2a-server/scripts/sim-lint.ts)); the `rg` lines below are handy for spot checks.
 - `rg -n '"execute":\\s*\\{[^}]*"(form|script|read-file|rag-search)"' -g '**/response.json' simulations` ? confirm **server** `response.json` uses a single canonical action key under `execute`.
 - `rg -n '"rag-search"\s*:|"read-file"\s*:|"write-file"\s*:|"execute-command"\s*:|"script"\s*:\s*\{|"list-directory"\s*:|"grep-search"\s*:|"file-exists"\s*:|"edit-patch"\s*:|"run-script"\s*:' -g '**/received.json' simulations` ? hits should be **only** under top-level **`result`**, not under **`execute`** (Web DTO allows `result` action-key payloads; `execute` must stay sanitized).
 - `rg -n 'result"\\s*:\\s*{\\s*"content"' -g '*.json' simulations` ? find bare result blobs that need action-key shaping.
@@ -125,7 +125,7 @@ LLM controls `context.execution.step`, server persists via transforms. Prompt fo
 
 - `context.history` - Array of execution records
 - `context.execution` - Current state: `{ action, step, progress }`
-- `context.workbench` - Structured working state (`sections`, optional `batch`, optional `slots`). LLM can update **`workbench.sections`** (merge) and **`workbench_ops`** (short set/append/remove commands); see [`a2a-server/prompts/auto-ai-request.md`](a2a-server/prompts/auto-ai-request.md) and [`a2a-server/docs/LLM-REQUEST-PREP.md`](a2a-server/docs/LLM-REQUEST-PREP.md) ÔøΩ2c.
+- `context.workbench` - Structured working state (`sections`, optional `batch`, optional `slots`). LLM can update **`workbench.sections`** (merge) and **`workbench_ops`** (short set/append/remove commands); see [`a2a-server/prompts/auto-ai-request.md`](a2a-server/prompts/auto-ai-request.md) and [`a2a-server/docs/LLM-REQUEST-PREP.md`](a2a-server/docs/LLM-REQUEST-PREP.md) ù2c.
 - `context.session_id` - Session identifier for tracking
 
 ### Simulation Pipeline

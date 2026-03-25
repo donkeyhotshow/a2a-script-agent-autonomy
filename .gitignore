@@ -17,3 +17,6 @@ dist/
 
 .pids.txt
 a2a-client/storage/
+
+# Sim invoke capture (merge into response.json for goldens; see simulations/SCHEMA.md)
+simulations/**/invoke-capture.json

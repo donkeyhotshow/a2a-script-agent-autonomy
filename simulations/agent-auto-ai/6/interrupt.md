@@ -1,13 +1,7 @@
 # Server interrupt loop — step 6 example
 
 This folder’s **canonical goldens** (`response.md`, `response.json`) describe the **normal** single LLM turn: no
-`interrupt` in the LLM JSON. **Interrupt substeps** live in **sister folders** next to this step: [
-`../6-sub-1/`](../6-sub-1/) (primary only), [`../6-sub-2/`](../6-sub-2/) (`compress_history`), [
-`../6-sub-3/`](../6-sub-3/) (`thinking` + follow-up), [`../6-sub-4/`](../6-sub-4/) (`auto_rag_page` reenter). Each
-subfolder holds **server-internal** artifacts (`request.*`, `response.*`, optional `request.md` / `response.md` /
-server-transforms) — **no** `client.json` / `received.json`, because the interrupt loop runs entirely on the server; the
-Web only gets the **final** payload for step **6** (this folder). Trace for UI is `context.workbench.slots.interruptTrace`
-in each substep **`response.json`**. Full spec: [
+`interrupt` in the LLM JSON. For examples of interrupt substeps demonstrating the internal loop, see the `interrupt-thinking` simulation. Full spec: [
 `SERVER-INTERRUPT-LOOP.md`](../../../a2a-server/docs/SERVER-INTERRUPT-LOOP.md).
 
 ## Why this step
@@ -27,8 +21,7 @@ in each substep **`response.json`**. Full spec: [
 4. **`response.json` / `received.json`** in the repo = **final** payload after the loop (what the client sees).
    Interrupt-only traffic is never sent to the Web DTO.
 
-5. **Trace for UI** — same event shape as [`../6-sub-1/response.json`](../6-sub-1/response.json)
-   `workbench.slots.interruptTrace` (extend in **`6-sub-2`…`6-sub-4`**). Server sends *
+5. **Trace for UI** — `context.workbench.slots.interruptTrace` in the final response. Server sends *
    *`context.workbench.slots.interruptTrace`**: [
    `ServerInterruptTraceEvent`](../../../a2a-server/src/transform/types.ts). Web: collapsible **“Server LLM chain”** (no
    full prompts).

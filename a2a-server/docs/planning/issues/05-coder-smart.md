@@ -9,7 +9,7 @@
 ## Проблеми поточної симуляції
 
 1. Немає пагінації результатів `rag-search` — якщо результатів багато, контекст переповнюється
-2. `docVirtual` накопичується без обмежень → проблема токенів (перетинається з ISSUE 6)
+2. Великі блоки в `workbench` / scratchpad можуть накопичуватись без обмежень → проблема токенів (перетинається з ISSUE 6)
 3. Кроки 6-9 не перевірені на відповідність коду
 4. `execute.rag-search` не має схеми — клієнт не знає як обробляти
 
@@ -17,7 +17,7 @@
 
 - Кожен крок визначається тільки через `server-transforms-*.json` файли
 - `execute` команда наступного кроку генерується LLM через transform, не хардкодиться
-- `docVirtual` замінюється на `context.scratchpad` + `context.files` (стратегія ISSUE 6)
+- Нотатки та файли: `context.scratchpad` + `context.files` (стратегія ISSUE 6), узгоджено з `workbench`
 - `rag-search` результати — пагіновані, клієнт передає `result.rag-search.page`
 
 ## Що потрібно зробити
@@ -25,7 +25,7 @@
 1. Створити нову симуляцію `coder-smart-v2` з новими кроками по оптимізації контексту
 2. Додати пагінацію в `execute.rag-search`: `{ query, page, pageSize }` → `result.rag-search: { items, total, page, hasMore }`
 3. Визначити схему transforms для кожного кроку (без явного `execution.step` в коді)
-4. `docVirtual` секції — обмежити розмір через transform операцію `truncate-section`
+4. Великі секції `workbench` — обмежити розмір через transform операцію `truncate-section`
 5. Додати `coder-smart` в `ACTION_TO_SCHEMA` після фіналізації нової симуляції
 
 ## Порядок роботи

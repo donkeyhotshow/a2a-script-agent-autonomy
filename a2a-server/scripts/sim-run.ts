@@ -14,7 +14,7 @@
  * Результат:
  *   - Читает request.json
  *   - Вызывает invoke()
- *   - Сохраняет ответ в server-response.json
+ *   - Сохраняет сырой ответ invoke в invoke-capture.json (не golden; см. simulations/SCHEMA.md)
  */
 
 import {readFileSync, writeFileSync, existsSync, readdirSync, statSync} from 'node:fs';
@@ -83,7 +83,7 @@ function findSimulationDirs(baseDir: string): string[] {
 /** Run a single simulation; baseDir is used for display name (e.g. dialog/3). */
 async function runSingleSimulation(simDir: string, baseDir: string): Promise<boolean> {
     const requestPath = join(simDir, 'request.json');
-    const responsePath = join(simDir, 'server-response.json');
+    const responsePath = join(simDir, 'invoke-capture.json');
     const simName = simDisplayName(baseDir, simDir) || simDir.split(/[/\\]/).pop() || simDir;
 
     console.log(`\n📁 Simulation: ${simName}`);
@@ -213,7 +213,7 @@ async function runSingleSimulation(simDir: string, baseDir: string): Promise<boo
 
         // Сохраняем с отступами
         writeFileSync(responsePath, JSON.stringify(response, null, 2));
-        console.log(`\n✅ Response saved to: server-response.json`);
+        console.log(`\n✅ Response saved to: invoke-capture.json`);
         console.log(`   Outcome: ${result.result?.['outcome'] || 'N/A'}`);
 
         return true;

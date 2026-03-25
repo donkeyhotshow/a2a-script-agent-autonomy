@@ -12,7 +12,7 @@
  * Результат:
  *   - Находит все папки с request.json
  *   - Запускает каждую симуляцию
- *   - Сохраняет ответы в server-response.json
+ *   - Сохраняет ответы в invoke-capture.json (не golden)
  */
 
 import {readFileSync, writeFileSync, existsSync, readdirSync, statSync} from 'node:fs';
@@ -89,7 +89,7 @@ async function runAllSimulations() {
     for (let i = 0; i < simDirs.length; i++) {
         const simDir = simDirs[i];
         const requestPath = join(simDir, 'request.json');
-        const responsePath = join(simDir, 'server-response.json');
+        const responsePath = join(simDir, 'invoke-capture.json');
 
         console.log(`\n[${i + 1}/${simDirs.length}] 📁 ${simDir}`);
 

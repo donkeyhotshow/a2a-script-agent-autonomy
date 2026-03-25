@@ -12,7 +12,7 @@
  * Результат:
  *   - Читает request.json
  *   - Вызывает invoke() напрямую
- *   - Сохраняет ответ в server-response.json
+ *   - Сохраняет ответ в invoke-capture.json (не golden)
  */
 
 import {readFileSync, writeFileSync} from 'node:fs';
@@ -31,7 +31,7 @@ if (!simDir) {
 
 const basePath = join(__dirname, simDir);
 const requestPath = join(basePath, 'request.json');
-const responsePath = join(basePath, 'server-response.json');
+const responsePath = join(basePath, 'invoke-capture.json');
 
 console.log(`\n📁 Simulation: ${simDir}`);
 console.log(`   Request: ${requestPath}`);

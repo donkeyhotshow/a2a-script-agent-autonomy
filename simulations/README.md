@@ -3,6 +3,7 @@
 Golden fixtures for the Web ↔ Client API ↔ Server ↔ LLM contract.
 
 - **Layout and rules:** [`SCHEMA.md`](./SCHEMA.md) — canonical eight files per step, `sim-lint` / `sim:validate`.
+- **Audit sessions:** [`SIM-AUDIT-WORKBOOK.md`](./SIM-AUDIT-WORKBOOK.md) — save scan state, grep checklist, server redundancy notes.
 - **Evolving LLM flows / new tools:** [
   `../a2a-server/docs/EXTENDING-LLM-ACTIONS.md`](../a2a-server/docs/EXTENDING-LLM-ACTIONS.md).
 - **SDK / Web shapes:** [`CLIENT-SDK-IDEAL.md`](./CLIENT-SDK-IDEAL.md).

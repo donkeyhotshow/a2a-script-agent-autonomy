@@ -202,16 +202,25 @@ function compareData(serverData: any, goldData: any): { match: boolean; similari
     return {match: similarity === 100, similarity};
 }
 
+function resolveInvokeCapturePath(simDir: string): string | null {
+    const ic = join(simDir, 'invoke-capture.json');
+    const legacy = join(simDir, 'server-response.json');
+    if (existsSync(ic)) return ic;
+    if (existsSync(legacy)) return legacy;
+    return null;
+}
+
 /**
  * Валидация одной симуляции
  */
 function validateSimulation(simDir: string, name: string): SimulationInfo {
+    const capturePath = resolveInvokeCapturePath(simDir);
     const info: SimulationInfo = {
         name,
         path: simDir,
         hasRequest: existsSync(join(simDir, 'request.json')),
         hasResponse: existsSync(join(simDir, 'response.json')),
-        hasServerResponse: existsSync(join(simDir, 'server-response.json')),
+        hasServerResponse: capturePath !== null,
         hasNotes: existsSync(join(simDir, 'NOTES.md')),
         validationErrors: [],
         goldStandardMatch: false,
@@ -219,10 +228,10 @@ function validateSimulation(simDir: string, name: string): SimulationInfo {
         structuralValid: true,
     };
 
-    // Читаем server-response.json если есть
-    if (info.hasServerResponse) {
+    // Читаем invoke-capture.json (или legacy server-response.json) если есть
+    if (capturePath) {
         try {
-            const content = readFileSync(join(simDir, 'server-response.json'), 'utf-8');
+            const content = readFileSync(capturePath, 'utf-8');
             info.serverResponse = JSON.parse(content);
 
             // Извлекаем данные и тип

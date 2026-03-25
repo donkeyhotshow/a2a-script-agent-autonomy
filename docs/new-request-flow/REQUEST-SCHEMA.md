@@ -17,7 +17,7 @@ This document describes the deterministic layout that every AI-Action prompt mus
    ```
    - `context` reproduces `context.task`, `context.execution`, and `context.history`.
    - `result` echoes the previous step, e.g. the latest assistant message or action.
-   - `workbench` and `ragResults` stay `null` when absent; the templates render them as stable JSON values. Stray `context.docVirtual` in old payloads is folded into `workbench` and stripped before render (see `attachWorkbenchForLlmPrompt`).
+   - `workbench` and `ragResults` stay `null` when absent; the templates render them as stable JSON values.
 4. **Constraints** – Bullet points that remind the model to emit well-formed JSON, follow the action-key shape, and honor the allowable toolset.
 
 ## Template usage

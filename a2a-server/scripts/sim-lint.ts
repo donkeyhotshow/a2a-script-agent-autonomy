@@ -16,6 +16,9 @@ const __dirname = join(__filename, '..');
 // ============================================
 
 const SIMULATIONS_DIR = join(__dirname, '..', '..', 'simulations');
+/** Ephemeral capture from sim:run / invoke scripts — not a committed golden (see .gitignore). */
+const SIMULATION_INVOKE_CAPTURE = 'invoke-capture.json';
+const FORBIDDEN_STEP_JSON = new Set(['server-response.json']);
 const REQUIRED_FILES = ['request.json', 'response.json', 'client.json', 'received.json'];
 const OPTIONAL_FILES = ['server-transforms-request.json', 'server-transforms-response.json'];
 
@@ -38,6 +41,20 @@ const VALID_EXECUTE_TYPES = [
     'edit-patch',
     'run-script'
 ];
+
+/** Keys stripped from `execute` for Web DTO — must not appear under top-level `execute` in golden `received.json`. Align with `web-execute-dto.js` INTERNAL_CLIENT_ACTION_KEYS. */
+const RECEIVED_EXECUTE_CLIENT_ONLY_KEYS = [
+    'rag-search',
+    'read-file',
+    'write-file',
+    'script',
+    'execute-command',
+    'list-directory',
+    'grep-search',
+    'file-exists',
+    'edit-patch',
+    'run-script'
+] as const;
 
 // ============================================
 // Типы
@@ -159,6 +176,25 @@ function lintRequiredFiles(simPath: string): LintError[] {
         }
     }
 
+    return errors;
+}
+
+function lintReceivedJsonExecuteSanitized(data: any, filePath: string): LintError[] {
+    const errors: LintError[] = [];
+    const ex = data?.execute;
+    if (!ex || typeof ex !== 'object' || Array.isArray(ex)) {
+        return errors;
+    }
+    for (const key of RECEIVED_EXECUTE_CLIENT_ONLY_KEYS) {
+        if (Object.prototype.hasOwnProperty.call(ex, key)) {
+            errors.push({
+                path: `${filePath}/execute.${key}`,
+                message: `received.json execute must not contain client-only tool key "${key}" (Web DTO / buildWebExecute); keep tool payloads under result only`,
+                severity: 'error',
+                fixable: false
+            });
+        }
+    }
     return errors;
 }
 
@@ -336,6 +372,10 @@ function lintFile(filePath: string, filename: string, simPath: string, stepNumbe
         result.errors.push(...executeErrors);
     }
 
+    if (filename === 'received.json') {
+        result.errors.push(...lintReceivedJsonExecuteSanitized(data, filePath));
+    }
+
     if (stepNumber === 1) {
         if (filename === 'request.json') {
             result.errors.push(...lintFirstRequest(data, filePath));
@@ -396,11 +436,19 @@ function lintSimulation(simPath: string, simName: string, fix: boolean): Simulat
                 try {
                     const stepFiles = readdirSync(stepPath);
                     for (const stepFile of stepFiles) {
-                        if (stepFile.endsWith('.json')) {
-                            const filePath = join(stepPath, stepFile);
-                            const fileResult = lintFile(filePath, stepFile, simPath, stepNum, fix);
-                            result.files.push(fileResult);
+                        if (!stepFile.endsWith('.json')) continue;
+                        if (FORBIDDEN_STEP_JSON.has(stepFile)) {
+                            result.errors.push({
+                                path: `${entry.name}/${stepFile}`,
+                                message: `Forbidden artifact in golden step: ${stepFile}. Use response.json + received.json; capture runs write ${SIMULATION_INVOKE_CAPTURE} (gitignored). See AGENTS.md / simulations/SCHEMA.md.`,
+                                severity: 'error',
+                                fixable: false
+                            });
+                            continue;
                         }
+                        const filePath = join(stepPath, stepFile);
+                        const fileResult = lintFile(filePath, stepFile, simPath, stepNum, fix);
+                        result.files.push(fileResult);
                     }
                 } catch {
                     // Skip if cannot read
@@ -412,6 +460,15 @@ function lintSimulation(simPath: string, simName: string, fix: boolean): Simulat
                 try {
                     for (const subFile of readdirSync(subPath)) {
                         if (!subFile.endsWith('.json')) continue;
+                        if (FORBIDDEN_STEP_JSON.has(subFile)) {
+                            result.errors.push({
+                                path: `${entry.name}/${subFile}`,
+                                message: `Forbidden artifact in interrupt substep: ${subFile}. Use response.json; capture runs write ${SIMULATION_INVOKE_CAPTURE}.`,
+                                severity: 'error',
+                                fixable: false
+                            });
+                            continue;
+                        }
                         const filePath = join(subPath, subFile);
                         const fileResult = lintFile(filePath, subFile, simPath, parentStep, fix);
                         result.files.push(fileResult);

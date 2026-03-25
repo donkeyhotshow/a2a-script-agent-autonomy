@@ -1,0 +1,19 @@
+{
+  "type": "pipeline",
+  "steps": [
+    {
+      "op": "set",
+      "path": "$.context.history",
+      "valueFrom": "$.context.history + [{'role': 'system', 'message': 'Listed ' + $.result['list-directory'].path + '/: ' + $.result['list-directory'].items.join(', ')}]"
+    },
+    {
+      "op": "remove",
+      "path": "$.result"
+    },
+    {
+      "op": "set",
+      "path": "$.context.workbench.sections.scratchpad.listed_src",
+      "value": true
+    }
+  ]
+}

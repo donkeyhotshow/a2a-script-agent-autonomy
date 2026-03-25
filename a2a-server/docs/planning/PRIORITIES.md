@@ -31,7 +31,7 @@
 
 ## Ключові рішення зафіксовані
 
-- `docVirtual` замінено на `context.scratchpad` + `context.files`
+- Робочий стан у `context.workbench` (+ `scratchpad` / `files` за потреби), не в застарілих окремих полях під документи
 - Tool use = ті самі `execute.<action>`, не новий тип
 - ISSUE 4 не охоплює auto-ai і coder-smart (вони в окремих issues)
 - ISSUE 4 не перекривається з ISSUE 3: ISSUE 3 = логіка роутингу, ISSUE 4 = формат файлів і fixtures
