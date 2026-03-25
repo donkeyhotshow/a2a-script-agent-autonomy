@@ -273,10 +273,8 @@ interface ExecuteResponse {
       code: string;                // DSL код для выполнения
     };
   };
-  finalResult?: {                  // Присутствует только в последнем ответе
-    action: string;
-    summary: Record<string, any>;
-  };
+  /** Final step: completion signal (prefer action-key shape). */
+  result?: { completed?: boolean; [key: string]: unknown };
 }
 ```
 
@@ -402,13 +400,15 @@ interface StepResultRequest {
       "code": "// vue-import-cleanup.dsl\nconst result = await script.execute('vue-import-cleanup', {});"
     }
   },
-  "finalResult": {
-    "action": "fix-vue-imports",
-    "summary": {
-      "broken_imports_found": 3,
-      "patches_resolved": 3,
-      "files_fixed": 3,
-      "cleanup_count": 0
+  "result": {
+    "completed": true,
+    "fix-vue-imports": {
+      "summary": {
+        "broken_imports_found": 3,
+        "patches_resolved": 3,
+        "files_fixed": 3,
+        "cleanup_count": 0
+      }
     }
   }
 }
@@ -511,7 +511,7 @@ interface SessionSummary {
   status: 'in_progress' | 'completed' | 'waiting_confirmation';
   context: { task: string; execution: { action: string; step: string } };
   execute?: { script: { input: any; output: string; code: string } };
-  finalResult?: { action: string; summary: any };
+  result?: { completed?: boolean; [key: string]: unknown };
   canContinue: boolean;
   canStop: boolean;
 }
@@ -681,7 +681,7 @@ interface Step {
   context: { ... };
   actions?: Action[];              // Только в первом ответе
   execute?: { script: { input, output, code } };
-  finalResult?: { action: string; summary: any }
+  result?: { completed?: boolean; [key: string]: unknown };
 }
 
 // Ответ сервера (асинхронный - с LLM)

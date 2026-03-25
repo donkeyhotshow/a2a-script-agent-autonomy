@@ -113,7 +113,7 @@ typescript
 // One key = action type, value = params. Examples:
 // script: { input, output, code }; form: { input }; read-file: { path }; write-file: { path, content }; rag-search: { query }; execute-command: { command }; etc.
 type Execute = Record<string, unknown>;
-// Optional: promiseId, finalResult for async flows
+// Optional: promiseId for async flows
 ```
 
 **Good:** `execute: { "read-file": { "path": "src/auth.js" } }`,
@@ -195,7 +195,8 @@ interface ExecuteResponse {
 // Ответ завершения
 interface CompletedResponse {
   context: Context;
-  execute: Execute;              // с finalResult
+  execute: Execute;
+  result?: Record<string, unknown>; // e.g. { completed: true } or action-key payloads
 }
 
 // Асинхронный ответ

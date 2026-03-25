@@ -14,7 +14,8 @@ export interface ActionResult {
     stepsCompleted: number;
     totalSteps: number;
     history: StepHistory[];
-    finalResult: unknown;
+    /** Set when status is completed (e.g. timestamp). */
+    completion: unknown;
 }
 
 export class ActionExecutor {
@@ -63,7 +64,7 @@ export class ActionExecutor {
 
     completeExecution(sessionId: string): ActionResult {
         const state = this.getExecutionState(sessionId);
-        if (!state) return { actionId: '', status: 'failed', stepsCompleted: 0, totalSteps: 0, history: [], finalResult: { error: 'Execution state not found' } };
+        if (!state) return { actionId: '', status: 'failed', stepsCompleted: 0, totalSteps: 0, history: [], completion: { error: 'Execution state not found' } };
 
         const result: ActionResult = {
             actionId: state.actionId,
@@ -71,7 +72,7 @@ export class ActionExecutor {
             stepsCompleted: state.history.length,
             totalSteps: state.history.length,
             history: state.history,
-            finalResult: { completedAt: new Date().toISOString() },
+            completion: { completedAt: new Date().toISOString() },
         };
         this.executionStates.delete(sessionId);
         return result;

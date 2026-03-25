@@ -145,7 +145,7 @@ Client                          Server
   │                               │
   │  ... (повторить для всех шагов)
   │                               │
-  │  finalResult (completed)      │
+  │  result (completed)           │
   │ <─────────────────────────────│
 ```
 
@@ -287,7 +287,7 @@ const fixed_files = [
                                 ↓
 
 ```
-Сервер → Клиент: finalResult { status: "completed" }
+Сервер → Клиент: result { completed: true }
 ```
 
 ---

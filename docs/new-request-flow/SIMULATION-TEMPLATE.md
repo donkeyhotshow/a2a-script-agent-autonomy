@@ -380,12 +380,14 @@ simulations/
       ]
     }
   },
-  "finalResult": {
-    "action": "action-name",
-    "summary": {
-      "items_processed": 10,
-      "items_fixed": 8,
-      "errors": 0
+  "result": {
+    "completed": true,
+    "action-name": {
+      "summary": {
+        "items_processed": 10,
+        "items_fixed": 8,
+        "errors": 0
+      }
     }
   }
 }
@@ -511,7 +513,7 @@ simulations/
 ### Финализация
 
 - [ ] Финальный шаг имеет `"status": "completed"` в `execution`
-- [ ] Финальный `response.json` содержит `finalResult` (опционально)
+- [ ] Финальный `response.json` содержит `result.completed` и/или action-key `result` (опционально)
 - [ ] Создать `analysis.md` с анализом симуляции
 
 ---

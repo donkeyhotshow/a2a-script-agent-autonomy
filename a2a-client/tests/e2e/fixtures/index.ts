@@ -362,13 +362,12 @@ export const fixtures = {
                         ]
                     }
                 ],
-                finalResult: {
-                    actionId: 'fix-vue-imports',
-                    summary: {
-                        totalSteps: 3,
-                        duration: '45s',
-                        filesChanged: 5
-                    }
+                completed: true,
+                actionId: 'fix-vue-imports',
+                summary: {
+                    totalSteps: 3,
+                    duration: '45s',
+                    filesChanged: 5
                 },
                 context: {
                     execution: {

@@ -336,7 +336,7 @@ curl -s -X POST "$CLIENT_API_BASE/api/sessions/$SESSION_ID/next" \
 curl -s -X POST "$CLIENT_API_BASE/api/sessions/$SESSION_ID/next" \
   -H "Content-Type: application/json" \
   -d '{"result":{"message":"Дякую!"}}'
-# Expected: execute.message or finalResult
+# Expected: execute.message or top-level result (e.g. completed)
 ```
 
 ### Full Agent Script (no mocks)

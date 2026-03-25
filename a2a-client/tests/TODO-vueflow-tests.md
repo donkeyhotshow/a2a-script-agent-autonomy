@@ -77,7 +77,7 @@ describe('Protocol Mapping', () => {
   });
   
   it('should map action_complete to nodes', () => {
-    // Stub: Test outcome='action_complete' with finalResult
+    // Stub: Test outcome='action_complete' with completion result
   });
   
   it('should create edges between nodes', () => {

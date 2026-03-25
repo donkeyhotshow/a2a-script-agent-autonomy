@@ -133,9 +133,10 @@ export interface ExecuteResponse {
 export interface CompletedResponse {
   context: ProtocolContextBlock;
   execute: {
-    finalResult?: import('../action-types.js').ActionResult;
     completed: boolean;
   };
+  /** Completion payload (e.g. `{ completed: true }` or action-key result). */
+  result?: Record<string, unknown>;
 }
 
 /**

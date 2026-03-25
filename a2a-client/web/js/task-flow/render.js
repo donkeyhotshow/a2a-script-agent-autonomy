@@ -151,8 +151,8 @@
             execute?.completed === true ||
             (result && typeof result === 'object' && result.completed === true);
 
-        // Completion banner: use execution + top-level result only (not execute.finalResult)
-        let finalResultHtml = '';
+        // Completion banner: use execution + top-level result only
+        let completionBannerHtml = '';
         if (protocolCompleted) {
             const summary = {};
             if (result && typeof result === 'object') {
@@ -169,7 +169,7 @@
                     .join('');
             }
 
-            finalResultHtml = `
+            completionBannerHtml = `
                 <div class="task-flow-final-result">
                     <div class="result-header">
                         <span class="result-action">${escapeHtml(actionName)}</span>
@@ -193,7 +193,7 @@
         // execute.message (+ optional llmMessage, attachments): Client API sanitizes rag-search/read-file into these
         store = store || data?.store || global.SessionStore;
         if (execute.form) {
-            return renderForm(contentEl, execute.form, executionStepHtml, progressBarHtml, finalResultHtml, resultHtml, taskFlowRef, store);
+            return renderForm(contentEl, execute.form, executionStepHtml, progressBarHtml, completionBannerHtml, resultHtml, taskFlowRef, store);
         }
         const attHtml = renderAttachmentsBlock(execute.attachments);
         const mainText = messageBodyText(execute.message);
@@ -207,7 +207,7 @@
                 { mainText, llmText, attHtml },
                 executionStepHtml,
                 progressBarHtml,
-                finalResultHtml,
+                completionBannerHtml,
                 resultHtml,
                 taskFlowRef,
                 store
@@ -241,9 +241,9 @@
                     console.warn('[Render] Multiple action keys detected, using first:', selectedKey);
                 }
             }
-            return renderClientAction(contentEl, selectedKey, execute, executionStepHtml, progressBarHtml, finalResultHtml, resultHtml, taskFlowRef);
+            return renderClientAction(contentEl, selectedKey, execute, executionStepHtml, progressBarHtml, completionBannerHtml, resultHtml, taskFlowRef);
         } else if (execute.debug) {
-            return renderDebug(contentEl, data, executionStepHtml, progressBarHtml, finalResultHtml, resultHtml, taskFlowRef);
+            return renderDebug(contentEl, data, executionStepHtml, progressBarHtml, completionBannerHtml, resultHtml, taskFlowRef);
         }
     }
 
@@ -608,7 +608,7 @@
         texts,
         executionStepHtml,
         progressBarHtml,
-        finalResultHtml,
+        completionBannerHtml,
         resultHtml,
         taskFlowRef,
         store
@@ -639,7 +639,7 @@
                     ${llmBlock}
                     ${texts.attHtml || ''}
                 </div>
-                ${finalResultHtml}
+                ${completionBannerHtml}
                 ${resultHtml || ''}
             </div>
         `;
@@ -651,10 +651,10 @@
      * @param {Object} form - данные формы
      * @param {string} executionStepHtml - HTML шага выполнения
      * @param {string} progressBarHtml - HTML прогресс бара
-     * @param {string} finalResultHtml - HTML финального результата
+     * @param {string} completionBannerHtml - HTML финального результата
      * @param {Object} taskFlowRef - ссылка на TaskFlow
      */
-    function renderForm(contentEl, form, executionStepHtml, progressBarHtml, finalResultHtml, resultHtml, taskFlowRef, store) {
+    function renderForm(contentEl, form, executionStepHtml, progressBarHtml, completionBannerHtml, resultHtml, taskFlowRef, store) {
         // Use explicitly passed store (fallback to global if not provided)
         const effectiveStore = store || global.SessionStore;
         
@@ -760,7 +760,7 @@
                     </div>
                     ${formContent}
                 </div>
-                ${finalResultHtml}
+                ${completionBannerHtml}
                 ${resultHtml || ''}
             </div>
         `;
@@ -804,10 +804,10 @@
      * @param {Object} message - сообщение
      * @param {string} executionStepHtml - HTML шага выполнения
      * @param {string} progressBarHtml - HTML прогресс бара
-     * @param {string} finalResultHtml - HTML финального результата
+     * @param {string} completionBannerHtml - HTML финального результата
      * @param {Object} taskFlowRef - ссылка на TaskFlow
      */
-    function renderMessage(contentEl, message, executionStepHtml, progressBarHtml, finalResultHtml, taskFlowRef, store) {
+    function renderMessage(contentEl, message, executionStepHtml, progressBarHtml, completionBannerHtml, taskFlowRef, store) {
         const messageContent = typeof message === 'string' ? message : (message.content || message.text || '');
         const messageType = typeof message === 'object' ? (message.type || 'info') : 'info';
         const typeIcons = { success: '✓', error: '⚠', warning: '⚠', info: 'ℹ' };
@@ -827,7 +827,7 @@
                     </div>
                     <div class="task-flow-message-display">${escapeHtml(messageContent)}</div>
                 </div>
-                ${finalResultHtml}
+                ${completionBannerHtml}
             </div>
         `;
     }
@@ -839,10 +839,10 @@
      * @param {Object} data - данные
      * @param {string} executionStepHtml - HTML шага выполнения
      * @param {string} progressBarHtml - HTML прогресс бара
-     * @param {string} finalResultHtml - HTML финального результата
+     * @param {string} completionBannerHtml - HTML финального результата
      * @param {Object} taskFlowRef - ссылка на TaskFlow
      */
-    function renderClientAction(contentEl, actionType, data, executionStepHtml, progressBarHtml, finalResultHtml, resultHtml, taskFlowRef, store) {
+    function renderClientAction(contentEl, actionType, data, executionStepHtml, progressBarHtml, completionBannerHtml, resultHtml, taskFlowRef, store) {
         const typeLabels = {
             'script': 'Script Execution',
             'rag-search': 'RAG Search',
@@ -883,7 +883,7 @@
                     <div class="action-type"><span class="action-type-icon">${icon}</span>${escapeHtml(label)}</div>
                     <pre class="action-data">${escapeHtml(JSON.stringify(actionData, null, 2))}</pre>
                 </div>
-                ${finalResultHtml}
+                ${completionBannerHtml}
                 ${resultHtml || ''}
             </div>
         `;
@@ -895,10 +895,10 @@
      * @param {Object} data - данные
      * @param {string} executionStepHtml - HTML шага выполнения
      * @param {string} progressBarHtml - HTML прогресс бара
-     * @param {string} finalResultHtml - HTML финального результата
+     * @param {string} completionBannerHtml - HTML финального результата
      * @param {Object} taskFlowRef - ссылка на TaskFlow
      */
-    function renderDebug(contentEl, data, executionStepHtml, progressBarHtml, finalResultHtml, resultHtml, taskFlowRef, store) {
+    function renderDebug(contentEl, data, executionStepHtml, progressBarHtml, completionBannerHtml, resultHtml, taskFlowRef, store) {
         const ctx = data?.context ? JSON.stringify(data.context, null, 2) : '';
         const exec = data?.execute ? JSON.stringify(data.execute, null, 2) : '';
         const effectiveStore = store || global.SessionStore;
@@ -918,7 +918,7 @@
                     <summary>Execute</summary>
                     <pre>${escapeHtml(exec)}</pre>
                 </details>
-                ${finalResultHtml}
+                ${completionBannerHtml}
                 ${resultHtml || ''}
             </div>
         `;

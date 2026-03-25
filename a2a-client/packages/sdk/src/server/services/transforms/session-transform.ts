@@ -71,7 +71,7 @@ export async function updateSessionWithServerResponse(
         }
     }
     
-    // Completed status: protocol signals only (no duplicate execute.finalResult / top-level finalResult)
+    // Completed status: protocol signals only (result.completed / execution status)
     const isResultCompleted = serverResponse?.result?.completed === true;
     const isExecuteCompleted = serverResponse?.execute?.completed === true;
 

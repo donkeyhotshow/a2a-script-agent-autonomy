@@ -281,7 +281,7 @@ export const commonScenarios = {
         }
     }),
 
-    pendingThenComplete: (promiseId: string, finalResult?: any): ResponseScenario[] => [
+    pendingThenComplete: (promiseId: string, completedPayload?: any): ResponseScenario[] => [
         {
             match: (p: InvokeParams) => true,
             response: {
@@ -298,7 +298,7 @@ export const commonScenarios = {
             response: {
                 id: promiseId,
                 status: 'completed',
-                result: finalResult || { 'message': { text: 'Done' } }
+                result: completedPayload || { 'message': { text: 'Done' } }
             }
         }
     ],

@@ -187,7 +187,7 @@ as siblings.
 
 Для промежуточных шагов `result` передаётся только в `request.json` (от клиента к серверу).
 
-**Completion:** Use a single signal — `result.completed: true` on the final step (and/or `context.execution.status === "completed"` where applicable). Do **not** add parallel `finalResult` / `execute.finalResult` blobs for the same semantics; that path has been removed from product code.
+**Completion:** Use a single signal — `result.completed: true` on the final step (and/or `context.execution.status === "completed"` where applicable).
 
 **execute.form with choices:** optional `form.title`, `form.choices` = `[{ "id": "...", "label": "..." }]` (e.g.
 continue_search, save_report). Client sends `result.choice` + optional `result.message` / `result.path`. Save path

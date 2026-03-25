@@ -169,11 +169,13 @@
       "code": "// vue-import-cleanup.dsl\nconst result = await script.execute('vue-import-cleanup', {});"
     }
   },
-  "finalResult": {
-    "action": "fix-vue-imports",
-    "summary": {
-      "broken_imports_found": 3,
-      "files_fixed": 3
+  "result": {
+    "completed": true,
+    "fix-vue-imports": {
+      "summary": {
+        "broken_imports_found": 3,
+        "files_fixed": 3
+      }
     }
   }
 }
@@ -254,10 +256,7 @@ interface ExecuteBlock {
 interface ServerResponse {
   context: ExecutionContext;
   execute: ExecuteBlock;
-  finalResult?: {                  // Присутствует только в последнем ответе
-    action: string;
-    summary: Record<string, any>;
-  };
+  result?: Record<string, unknown>; // Final step: e.g. { completed: true } or action-key payloads
 }
 
 // ============================================
@@ -604,7 +603,7 @@ while (result.execute?.script) {
   });
 }
 
-console.log('Final result:', result.finalResult);
+console.log('Final result:', result.result);
 ```
 
 ### Интеграция с ScriptRunner

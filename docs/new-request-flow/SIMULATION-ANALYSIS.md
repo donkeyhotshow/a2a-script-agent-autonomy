@@ -162,11 +162,13 @@
   "execute": {
     "script": {...}
   },
-  "finalResult": {
-    "action": "fix-vue-imports",
-    "summary": {
-      "broken_imports_found": 3,
-      "files_fixed": 3
+  "result": {
+    "completed": true,
+    "fix-vue-imports": {
+      "summary": {
+        "broken_imports_found": 3,
+        "files_fixed": 3
+      }
     }
   }
 }
@@ -210,7 +212,7 @@
 | `execution`      | Текущее состояние выполнения                          |
 | `step`           | Текущий шаг в execution                               |
 | `execute.script` | Скрипт для выполнения на клиенте                      |
-| `finalResult`    | Итоговый результат (только в конце)                   |
+| `result` (top-level) | Итог / completion (только в конце; см. `result.completed`) |
 
 ---
 
@@ -227,7 +229,7 @@
 | `4/request.json`  | Результат второго шага      |
 | `4/response.json` | Следующий execute           |
 | `5/request.json`  | Результат третьего шага     |
-| `5/response.json` | finalResult                 |
+| `5/response.json` | top-level `result` (completion) |
 | `analysis.md`     | Этот файл                   |
 
 ---

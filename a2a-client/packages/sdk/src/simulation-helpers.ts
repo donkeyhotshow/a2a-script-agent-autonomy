@@ -451,7 +451,7 @@ export interface FinalResult {
 }
 
 /**
- * Optional metadata when the step is complete (from top-level `result`, not legacy `finalResult`).
+ * Optional metadata when the step is complete (from top-level `result`).
  */
 export function getFinalResult(response: {
     result?: Record<string, unknown>;

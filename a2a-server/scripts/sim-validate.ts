@@ -174,7 +174,6 @@ function unwrapInvokeEnvelope(raw: Record<string, unknown>): Record<string, unkn
         const r = innerResult as Record<string, unknown>;
         if (r.context && r.execute) {
             const out: Record<string, unknown> = {context: r.context, execute: r.execute};
-            if (r.finalResult !== undefined) out.finalResult = r.finalResult;
             if (r.result !== undefined) out.result = r.result;
             return out;
         }
@@ -238,7 +237,7 @@ function normalizeServerInvokeRequest(data: unknown): unknown {
     return o;
 }
 
-const RESPONSE_ROOT_ALLOW = new Set(['context', 'execute', 'finalResult', 'result']);
+const RESPONSE_ROOT_ALLOW = new Set(['context', 'execute', 'result']);
 
 function normalizeServerInvokeResponse(data: unknown): unknown {
     if (data === null || typeof data !== 'object' || Array.isArray(data)) return data;

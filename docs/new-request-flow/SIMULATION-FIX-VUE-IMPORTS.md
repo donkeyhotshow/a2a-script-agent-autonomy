@@ -41,7 +41,7 @@
 │  - Генерирует actions и steps                                       │
 │  - Отправляет DSL скрипты для выполнения                            │
 │  - Принимает результаты выполнения                                  │
-│  - Возвращает finalResult                                           │
+│  - Возвращает top-level result (completion)                         │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -297,13 +297,15 @@
       "code": "// vue-import-cleanup.dsl\n// Очищення тимчасових файлів\n\nconst result = await script.execute('vue-import-cleanup', {});"
     }
   },
-  "finalResult": {
-    "action": "fix-vue-imports",
-    "summary": {
-      "broken_imports_found": 3,
-      "patches_resolved": 3,
-      "files_fixed": 3,
-      "cleanup_count": 0
+  "result": {
+    "completed": true,
+    "fix-vue-imports": {
+      "summary": {
+        "broken_imports_found": 3,
+        "patches_resolved": 3,
+        "files_fixed": 3,
+        "cleanup_count": 0
+      }
     }
   }
 }
@@ -439,8 +441,8 @@ interface Execute {
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │                          CLIENT API (a2a-client)                             │
 │                                                                              │
-│ 16. После последнего шага: Client API получает finalResult                  │
-│ 17. Client API возвращает finalResult на Web                               │
+│ 16. После последнего шага: Client API получает итоговый result              │
+│ 17. Client API отдаёт его на Web                                          │
 └─────────────────────────────────────────────────────────────────────────────┘
                                     │
                                     ▼
@@ -462,7 +464,7 @@ interface Execute {
 | `execution`      | Текущее состояние выполнения           |
 | `execute.script` | DSL скрипт для выполнения на клиенте   |
 | `result`         | Результат выполнения скрипта           |
-| `finalResult`    | Итоговый результат (только в конце)    |
+| `result` (top-level) | Итог / completion (только в конце) |
 
 ---
 

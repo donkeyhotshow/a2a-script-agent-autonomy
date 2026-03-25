@@ -309,12 +309,12 @@ export function createStepRoutes({ cwd }) {
                     const hasChoices = prevStepData?.execute?.form?.choices && prevStepData.execute.form.choices.length > 0;
                     
                     // If previous step had choices, use { choice: value } format, otherwise use { message: value }
-                    const finalResult = result || (task ? { [hasChoices ? 'choice' : 'message']: task } : undefined);
-                    console.log('[VitePlugin] Request body parsed - task:', task, 'result:', result, 'finalResult:', finalResult, 'hasChoices:', hasChoices);
+                    const submitResult = result || (task ? { [hasChoices ? 'choice' : 'message']: task } : undefined);
+                    console.log('[VitePlugin] Request body parsed - task:', task, 'result:', result, 'submitResult:', submitResult, 'hasChoices:', hasChoices);
 
                     const currentStep = session.currentStep || 1;
                     console.log('[VitePlugin] Saving client-result for step:', currentStep);
-                    saveClientResult(cwd, sessionId, currentStep, { result: finalResult });
+                    saveClientResult(cwd, sessionId, currentStep, { result: submitResult });
 
                     const nextStepNum = currentStep + 1;
                     const previousStepData = loadServerResponse(cwd, sessionId, currentStep);
@@ -336,13 +336,16 @@ export function createStepRoutes({ cwd }) {
                         console.log('[VitePlugin] Preserving execution.action from session:', previousExecution.action);
                     }
 
-                    const effectiveTask = finalResult?.message;
-                    console.log('[VitePlugin] Building request - effectiveTask:', effectiveTask, 'result:', finalResult);
+                    const effectiveTask = submitResult?.message;
+                    console.log('[VitePlugin] Building request - effectiveTask:', effectiveTask, 'result:', submitResult);
                     console.log('[VitePlugin] Effective task sent to server:', effectiveTask);
 
-                    // Only set context.task if not already set in previous context
-                    // Task represents the overall session context, not individual user messages
-                    if (effectiveTask && !mergedContext.task) {
+                    const execAction = mergedContext.execution?.action;
+                    // Dialog: each user line is the active utterance; keep context.task in sync with result.message
+                    // (avoids stale task in request-to-server.json; server invoke also maps result.message → task).
+                    if (effectiveTask && execAction === 'dialog') {
+                        mergedContext.task = effectiveTask;
+                    } else if (effectiveTask && !mergedContext.task) {
                         mergedContext.task = effectiveTask;
                         console.log('[VitePlugin] Set context.task to:', effectiveTask);
                     } else if (mergedContext.task) {
@@ -351,7 +354,7 @@ export function createStepRoutes({ cwd }) {
 
                     const requestToServer = {
                         context: mergedContext,
-                        result: finalResult
+                        result: submitResult
                     };
 
                     saveRequestToServer(cwd, sessionId, nextStepNum, requestToServer);
@@ -603,7 +606,7 @@ export function createStepRoutes({ cwd }) {
 
                     const invokePayload = {
                         context: mergedContext,
-                        result: finalResult,
+                        result: submitResult,
                         ...(effectiveTask ? { task: effectiveTask } : {})
                     };
                     console.log('[VitePlugin] === SENDING TO A2A SERVER ===', Object.keys(invokePayload));

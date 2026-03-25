@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://a2a-script-agent/new-request-flow/json-schemas/server-invoke-response-execute.schema.json",
   "title": "Server Invoke Response - Execute Step",
-  "description": "Generic execute response for POST /api/v1/invoke: context + execute{...} (+ optional finalResult / top-level result for final step).",
+  "description": "Generic execute response for POST /api/v1/invoke: context + execute{...} (+ optional top-level result for final step).",
   "type": "object",
   "additionalProperties": false,
   "properties": {
@@ -183,22 +183,9 @@
         }
       }
     },
-    "finalResult": {
-      "type": "object",
-      "description": "Optional summary object for algorithmic Actions (e.g. fix-vue-imports) on the final step.",
-      "required": ["action", "summary"],
-      "properties": {
-        "action": { "type": "string" },
-        "summary": {
-          "type": "object",
-          "additionalProperties": true
-        }
-      },
-      "additionalProperties": false
-    },
     "result": {
       "type": "object",
-      "description": "Optional top-level result for final AI-Actions step (per simulations/SCHEMA.md).",
+      "description": "Optional top-level result for final step (per simulations/SCHEMA.md; e.g. completed + action-key summary).",
       "additionalProperties": true
     }
   },

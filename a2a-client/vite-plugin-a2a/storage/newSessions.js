@@ -88,6 +88,14 @@ export function saveNewStep(cwd, sessionId, stepNum, stepData) {
   };
   // Note: step number is derived from folder path, not stored in JSON
   fs.writeFileSync(metaFile, JSON.stringify(payload, null, 2));
+  const promiseFile = path.join(stepDir, 'server-promise.json');
+  if (fs.existsSync(promiseFile)) {
+    try {
+      fs.unlinkSync(promiseFile);
+    } catch (e) {
+      console.error('[newSessions] Failed to remove server-promise.json after response:', e.message);
+    }
+  }
 }
 
 export function loadNewStep(cwd, sessionId, stepNum) {

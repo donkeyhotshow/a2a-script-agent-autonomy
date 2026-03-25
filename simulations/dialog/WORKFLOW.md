@@ -9,7 +9,7 @@ The `received.json` files define what the web receives. The web must handle all 
 | 1    | `{ form: { title, choices: [...] } }`          | Choice buttons (router)                       |
 | 2    | `{ form: { input: [{ name, type, label }] } }` | Text input (begin dialog)                     |
 | 3+   | `{ message: "...", form: { input: [...] } }`   | History (message added to store) + text input |
-| any  | `{ finalResult: {...} }`                       | Completed state                               |
+| any  | `result.completed` / execution `completed`    | Completed state                               |
 
 **Key rules:**
 

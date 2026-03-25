@@ -159,17 +159,9 @@
         }
       }
     },
-    "finalResult": {
-      "type": "object",
-      "description": "Final result summary (present on completed status).",
-      "properties": {
-        "action": { "type": "string" },
-        "summary": { "type": "object" }
-      }
-    },
     "result": {
       "type": "object",
-      "description": "Optional top-level result for final step.",
+      "description": "Optional top-level result for final step (e.g. completed flag, action-key payloads).",
       "additionalProperties": true
     },
     "error": {

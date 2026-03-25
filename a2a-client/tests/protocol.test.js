@@ -97,7 +97,7 @@ describe('Protocol Mapping', () => {
             expect(result.nodes[0].data.dsl).toBe('import { Component } from "react";');
         });
 
-        it('should map action_complete outcome with finalResult', () => {
+        it('should map action_complete outcome with completion result', () => {
             const response = {
                 outcome: 'action_complete',
                 context: {
@@ -106,7 +106,8 @@ describe('Protocol Mapping', () => {
                     }
                 },
                 data: {
-                    finalResult: {
+                    result: {
+                        completed: true,
                         summary: {
                             totalSteps: 5,
                             duration: '15s',
