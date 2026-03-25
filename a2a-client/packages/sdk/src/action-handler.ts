@@ -76,6 +76,11 @@ function extractExecuteAction(response: {
     const executeKeys = Object.keys(response.execute);
     if (executeKeys.length === 0) return null;
     
+    // Guard: ensure exactly one action key in execute (golden simulation contract)
+    if (executeKeys.length !== 1) {
+        return { type: 'invalid', payload: { error: `Execute must contain exactly one action key, found ${executeKeys.length}: ${JSON.stringify(executeKeys)}` } };
+    }
+    
     // Get the first action key (action-key shape)
     const actionType = executeKeys[0];
     const payload = response.execute[actionType];
@@ -111,7 +116,24 @@ export async function handleExecuteAction(
         return { handled: false, error: 'No execute action found' };
     }
     
+    // Guard: ensure exactly one action key in execute (golden simulation contract)
+    if (response.execute && Object.keys(response.execute).length !== 1) {
+        const keys = Object.keys(response.execute);
+        return { 
+            handled: false, 
+            error: `Execute must contain exactly one action key, found ${keys.length}: ${JSON.stringify(keys)}` 
+        };
+    }
+    
     let result: HandleActionResult;
+    
+    // Handle invalid action type from guard in extractExecuteAction
+    if (action.type === 'invalid') {
+        return { 
+            handled: false, 
+            error: (action.payload as { error?: string })?.error || 'Invalid execute shape' 
+        };
+    }
     
     switch (action.type) {
         case 'script':

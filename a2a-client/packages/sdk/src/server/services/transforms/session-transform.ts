@@ -32,7 +32,23 @@ export async function updateSessionWithServerResponse(
     
     // Update context from server response
     if (serverResponse?.context) {
+        // Preserve canonical fields that must persist: files, scratchpad, scratchpad_ops
+        const existingFiles = session.context?.files;
+        const existingScratchpad = session.context?.scratchpad;
+        const existingScratchpadOps = session.context?.scratchpad_ops;
+        
         updatedSession.context = { ...session.context, ...serverResponse.context };
+        
+        // Restore preserved fields if not present in server response
+        if (existingFiles && !updatedSession.context.files) {
+            updatedSession.context.files = existingFiles;
+        }
+        if (existingScratchpad && !updatedSession.context.scratchpad) {
+            updatedSession.context.scratchpad = existingScratchpad;
+        }
+        if (existingScratchpadOps && !updatedSession.context.scratchpad_ops) {
+            updatedSession.context.scratchpad_ops = existingScratchpadOps;
+        }
         
         // Extract execution info from context
         if (serverResponse.context.execution) {
@@ -56,8 +72,14 @@ export async function updateSessionWithServerResponse(
         }
     }
     
-    // Handle completed status
-    if (serverResponse?.execute?.completed === true || serverResponse?.finalResult) {
+    // Handle completed status - check multiple signals for completion
+    // 1. result.completed (golden contract - preferred)
+    // 2. execute.completed (backward compatibility)
+    // 3. finalResult (legacy)
+    const isResultCompleted = serverResponse?.result?.completed === true;
+    const isExecuteCompleted = serverResponse?.execute?.completed === true;
+    
+    if (isResultCompleted || isExecuteCompleted || serverResponse?.finalResult) {
         updatedSession.status = 'COMPLETED';
         if (serverResponse.finalResult) {
             updatedSession.context = updatedSession.context || {};
@@ -96,15 +118,48 @@ export async function updateSessionWithServerResponse(
         ];
     }
     
-    // Update history (new protocol)
+    // Update history (new protocol) - context.history is canonical
     if (serverResponse?.context?.history && Array.isArray(serverResponse.context.history)) {
         updatedSession.context = updatedSession.context || {};
         updatedSession.context.history = serverResponse.context.history;
+        
+        // Also sync to messages if assistant entries exist in history but not in messages
+        // This ensures consistency between the two sources
+        const historyAssistants = serverResponse.context.history.filter((h: any) => h.role === 'assistant');
+        if (historyAssistants.length > 0 && updatedSession.messages) {
+            const messageContents = new Set(updatedSession.messages.map((m: any) => m.content));
+            historyAssistants.forEach((h: any) => {
+                if (h.content && !messageContents.has(h.content)) {
+                    updatedSession.messages = [...updatedSession.messages, { 
+                        role: 'assistant', 
+                        content: h.content, 
+                        timestamp: h.timestamp || new Date().toISOString() 
+                    }];
+                }
+            });
+        }
     }
     
+    // Update workbench - merge sections instead of clobbering
     if (serverResponse?.context?.workbench !== undefined) {
         updatedSession.context = updatedSession.context || {};
-        updatedSession.context.workbench = serverResponse.context.workbench;
+        const existingWorkbench = session.context?.workbench;
+        const newWorkbench = serverResponse.context.workbench;
+        
+        if (existingWorkbench && newWorkbench && typeof existingWorkbench === 'object' && typeof newWorkbench === 'object') {
+            // Merge sections: preserve existing sections, update/add new ones
+            updatedSession.context.workbench = {
+                ...existingWorkbench,
+                ...newWorkbench,
+                sections: {
+                    ...(existingWorkbench.sections || {}),
+                    ...(newWorkbench.sections || {})
+                }
+            };
+        } else {
+            // If either is missing, use new value (or existing if new is undefined)
+            updatedSession.context.workbench = newWorkbench ?? existingWorkbench;
+        }
     }
     
     updatedSession.updatedAt = new Date().toISOString();

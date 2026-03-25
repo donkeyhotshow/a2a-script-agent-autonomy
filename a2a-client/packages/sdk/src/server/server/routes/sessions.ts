@@ -1008,7 +1008,8 @@ router.get('/:sessionId/promise/:promiseId', async (req: Request, res: Response)
         const isCompleted = !!(
             promiseStatus.execute ||
             promiseStatus.status === 'completed' ||
-            promiseStatus.status === 'done'
+            promiseStatus.status === 'done' ||
+            promiseStatus.result?.completed === true
         );
         let safeResult = promiseStatus.result ?? null;
         if (safeResult && typeof safeResult === 'object') {

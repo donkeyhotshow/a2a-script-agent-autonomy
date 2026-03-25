@@ -215,7 +215,24 @@
             execute['edit-patch'] ||
             execute['run-script']
         ) {
-            return renderClientAction(contentEl, Object.keys(execute)[0], execute, executionStepHtml, progressBarHtml, finalResultHtml, resultHtml, taskFlowRef);
+            // Deterministic action-key selection based on priority list
+            const actionPriority = ['script', 'rag-search', 'read-file', 'write-file', 'execute-command', 'list-directory', 'grep-search', 'file-exists', 'edit-patch', 'run-script'];
+            let selectedKey = null;
+            for (const key of actionPriority) {
+                if (execute[key]) {
+                    selectedKey = key;
+                    break;
+                }
+            }
+            // Fallback to first key if not in priority list (shouldn't happen with proper sanitization)
+            if (!selectedKey) {
+                const keys = Object.keys(execute);
+                selectedKey = keys.length > 0 ? keys[0] : null;
+                if (keys.length > 1) {
+                    console.warn('[Render] Multiple action keys detected, using first:', selectedKey);
+                }
+            }
+            return renderClientAction(contentEl, selectedKey, execute, executionStepHtml, progressBarHtml, finalResultHtml, resultHtml, taskFlowRef);
         } else if (execute.debug) {
             return renderDebug(contentEl, data, executionStepHtml, progressBarHtml, finalResultHtml, resultHtml, taskFlowRef);
         }

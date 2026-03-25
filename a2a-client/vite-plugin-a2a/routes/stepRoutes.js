@@ -340,11 +340,13 @@ export function createStepRoutes({ cwd }) {
                     console.log('[VitePlugin] Building request - effectiveTask:', effectiveTask, 'result:', finalResult);
                     console.log('[VitePlugin] Effective task sent to server:', effectiveTask);
 
-                    // Update context with user's choice (task from result)
-                    // message is duplicated in result.message, no need to add to context
-                    if (effectiveTask) {
+                    // Only set context.task if not already set in previous context
+                    // Task represents the overall session context, not individual user messages
+                    if (effectiveTask && !mergedContext.task) {
                         mergedContext.task = effectiveTask;
-                        console.log('[VitePlugin] Updated context.task to:', effectiveTask);
+                        console.log('[VitePlugin] Set context.task to:', effectiveTask);
+                    } else if (mergedContext.task) {
+                        console.log('[VitePlugin] Preserved context.task from previous context:', mergedContext.task);
                     }
 
                     const requestToServer = {

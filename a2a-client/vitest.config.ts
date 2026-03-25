@@ -8,7 +8,7 @@ export default defineConfig({
       'packages/**/*.{test,spec}.{js,ts}',
       'tests/**/*.{test,spec}.{js,ts,mjs}',
       'web/js/tests/**/*.{test,spec}.js',
-      'tests/unit/**/*.{test,spec}.{js,ts}',
+      'tests/unit/**/*.{test,spec}.{js,ts,mjs}',
       'tests/integration/**/*.{test,spec}.{js,ts,mjs}'
     ],
     exclude: [

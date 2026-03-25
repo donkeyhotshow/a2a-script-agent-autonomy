@@ -133,14 +133,47 @@ export function isFormChoicesResponse(response: { execute?: Record<string, unkno
 /**
  * Check if response is completed response (new protocol)
  * @see docs/new-request-flow/PROTOCOL.md#completed-response
+ * 
+ * Checks multiple signals for completion:
+ * - response.result.completed === true (preferred, golden contract)
+ * - response.execute.completed === true (backward compatibility)
+ * - response.context.execution.status === 'completed' (optional compatibility)
  */
-export function isCompletedResponse(response: { execute?: Record<string, unknown> }): boolean {
-    return !!(
+export function isCompletedResponse(response: { execute?: Record<string, unknown>; result?: Record<string, unknown>; context?: Record<string, unknown> }): boolean {
+    // Preferred: check result.completed (golden contract)
+    if (
+        response?.result &&
+        typeof response.result === 'object' &&
+        'completed' in response.result &&
+        response.result.completed === true
+    ) {
+        return true;
+    }
+    
+    // Backward compatibility: check execute.completed
+    if (
         response?.execute &&
         typeof response.execute === 'object' &&
         'completed' in response.execute &&
         response.execute.completed === true
-    );
+    ) {
+        return true;
+    }
+    
+    // Optional: check context.execution.status
+    if (
+        response?.context &&
+        typeof response.context === 'object' &&
+        'execution' in response.context &&
+        response.context.execution &&
+        typeof response.context.execution === 'object' &&
+        'status' in response.context.execution &&
+        response.context.execution.status === 'completed'
+    ) {
+        return true;
+    }
+    
+    return false;
 }
 
 /**

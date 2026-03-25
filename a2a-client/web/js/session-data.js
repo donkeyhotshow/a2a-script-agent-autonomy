@@ -244,12 +244,14 @@
                     }
                 }
 
-                // Form replaces loader: user must see inputs immediately — bypass loader min-time delay
+                // Form replaces loader: show inputs immediately but respect min loader time
+                // Using stop() without force=true allows loader to hide only after MIN_LOADER_MS expires
+                // while inputs can render immediately (form display is independent of loader state)
                 if (execute && !execute.wait && hasForm) {
                     var l = getLoader(state.sessionId);
-                    if (l) l.stop(true);
+                    if (l) l.stop();
                     sessionLoaders.forEach(function (loader) {
-                        if (loader && typeof loader.stop === 'function') loader.stop(true);
+                        if (loader && typeof loader.stop === 'function') loader.stop();
                     });
                 }
 
