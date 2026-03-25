@@ -679,17 +679,48 @@
                 inputFields = [form.input];
             }
         }
-        // If no input found in form.input, look for direct properties that are objects with a 'name'
+        // Support form.input, form.textarea, or direct properties with 'name'
         if (inputFields.length === 0 && form && typeof form === 'object') {
-            for (const key in form) {
-                if (key === 'choices' || key === 'meta' || key === 'title' || key === 'description') {
-                    continue; // skip known non-input properties
-                }
-                const prop = form[key];
-                if (prop && typeof prop === 'object' && !Array.isArray(prop) && prop.name !== undefined) {
-                    inputFields.push(prop);
+            // First check form.textarea (common pattern)
+            if (form.textarea && typeof form.textarea === 'object' && form.textarea.name) {
+                inputFields = [form.textarea];
+            } else {
+                // Then check direct properties
+                for (const key in form) {
+                    if (key === 'choices' || key === 'meta' || key === 'title' || key === 'description' || key === 'textarea') {
+                        continue; // skip known non-input properties
+                    }
+                    const prop = form[key];
+                    if (prop && typeof prop === 'object' && !Array.isArray(prop) && prop.name !== undefined) {
+                        inputFields.push(prop);
+                    }
                 }
             }
+        }
+
+        // Render input field based on type
+        function renderInputField(f) {
+            const name = f.name || 'input';
+            const label = f.label ? `<label for="task-flow-input-${escapeHtml(name)}">${escapeHtml(f.label)}</label>` : '';
+            const placeholder = f.placeholder || '';
+            const required = f.required ? 'required' : '';
+            const type = f.type || 'text';
+            
+            // Use textarea for textarea type or when field name suggests multi-line
+            if (type === 'textarea' || name === 'message' || name === 'description' || name === 'content') {
+                return `<div class="task-flow-input-group">${label}<textarea id="task-flow-input-${escapeHtml(name)}" name="${escapeHtml(name)}" placeholder="${escapeHtml(placeholder)}" ${required} class="task-flow-input-field" autocomplete="off" rows="4"></textarea></div>`;
+            }
+            // Use select for select type
+            if (type === 'select' && f.options) {
+                const options = f.options.map(opt => {
+                    const optValue = typeof opt === 'string' ? opt : (opt.value || opt.id || '');
+                    const optLabel = typeof opt === 'string' ? opt : (opt.label || optValue);
+                    return `<option value="${escapeHtml(optValue)}">${escapeHtml(optLabel)}</option>`;
+                }).join('');
+                return `<div class="task-flow-input-group">${label}<select id="task-flow-input-${escapeHtml(name)}" name="${escapeHtml(name)}" ${required} class="task-flow-input-field">${options}</select></div>`;
+            }
+            // Default to text input
+            return `<div class="task-flow-input-group">${label}<input type="${escapeHtml(type)}" id="task-flow-input-${escapeHtml(name)}" name="${escapeHtml(name)}" placeholder="${escapeHtml(placeholder)}" ${required} class="task-flow-input-field" autocomplete="off"></div>`;
         }
 
         let formContent = '';
@@ -709,13 +740,7 @@
         }
 
         if (inputFields.length > 0) {
-            const inputsHtml = inputFields.map((f) => {
-                const name = f.name || 'input';
-                const label = f.label ? `<label for="task-flow-input-${escapeHtml(name)}">${escapeHtml(f.label)}</label>` : '';
-                const placeholder = f.placeholder || '';
-                const required = f.required ? 'required' : '';
-                return `<div class="task-flow-input-group">${label}<textarea id="task-flow-input-${escapeHtml(name)}" name="${escapeHtml(name)}" placeholder="${escapeHtml(placeholder)}" ${required} class="task-flow-input-field" autocomplete="off" rows="4"></textarea></div>`;
-            }).join('');
+            const inputsHtml = inputFields.map(renderInputField).join('');
             formContent += `<div class="task-flow-inputs">${inputsHtml}</div><div class="task-flow-submit-row"><button type="button" class="task-flow-submit-btn">Send →</button></div>`;
         }
 
