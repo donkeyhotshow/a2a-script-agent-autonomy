@@ -1,0 +1,27 @@
+{
+  "type": "pipeline",
+  "steps": [
+    {
+      "op": "copy",
+      "from": "$.context",
+      "to": "$.context"
+    },
+    {
+      "op": "set",
+      "path": "$.context.execution",
+      "value": {
+        "action": "agent",
+        "step": "execute-item"
+      }
+    },
+    {
+      "op": "set",
+      "path": "$.execute",
+      "value": {
+        "read-file": {
+          "path": ".carrier/tasks/task-1.md"
+        }
+      }
+    }
+  ]
+}

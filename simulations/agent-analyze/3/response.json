@@ -2,7 +2,8 @@
   "context": {
     "task": "аналіз",
     "execution": {
-      "action": "agent"
+      "action": "agent",
+      "step": "3"
     },
     "history": [
       {

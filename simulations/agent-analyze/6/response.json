@@ -2,7 +2,8 @@
   "context": {
     "task": "проаналізуй архітектуру проекту",
     "execution": {
-      "action": "agent"
+      "action": "agent",
+      "step": "6"
     },
     "history": [
       {

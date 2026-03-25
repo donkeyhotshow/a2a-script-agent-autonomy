@@ -2,27 +2,20 @@
   "type": "pipeline",
   "steps": [
     {
-      "op": "parse-response",
-      "from": "response.md",
-      "to": "$parsed"
-    },
-    {
-      "op": "validate-action-key",
-      "from": "$parsed",
-      "validate": [
-        "message",
-        "execute"
-      ]
+      "op": "parse-json-from-md",
+      "fromFile": "response.md",
+      "jsonPath": "$",
+      "to": "$llm"
     },
     {
       "op": "copy",
-      "from": "$.context",
-      "to": "$.result.context"
+      "from": "$llm.context",
+      "to": "$.context"
     },
     {
       "op": "copy",
-      "from": "$parsed",
-      "to": "$.result"
+      "from": "$llm.execute",
+      "to": "$.execute"
     }
   ]
 }

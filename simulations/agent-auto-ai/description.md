@@ -1,7 +1,20 @@
 # Agent Auto-AI v2 — hand-authored golden (ISSUE 6 / ISSUE 9)
 
-**Not a copy of `simulations/auto-ai`.** Short agent run built to document **context strategy** and **LLM-bound payloads
-**.
+**Not a copy of `simulations/auto-ai`.** Short agent run built to document **context strategy** and **LLM-bound payloads**.
+
+## Pipeline логіка
+
+### Кроки з LLM (3, 4, 5, 6, 7)
+```
+request.json → server-transforms-request.json → request.md → LLM → response.md → server-transforms-response.json → response.json
+```
+
+### Кроки без LLM (1, 2)
+```
+request.json → server-transforms-request.json → response.json
+```
+- Сервер трансформує запит у execute
+- `server-transforms-response.json` НЕ потрібен — сервер сам формує відповідь без LLM
 
 ## Contract
 
@@ -43,5 +56,10 @@ Uses `auto-ai-request.md` + materialize + flow hints (same pipeline as runtime).
 
 ## Files per step
 
-- **1–2:** `client.json`, `request.json`, `response.json`, `received.json` only.
-- **3–7:** full chain + `server-transforms-*.json` + `request.md` + `response.md`.
+- **1–2:** Без LLM — `client.json`, `request.json`, `server-transforms-request.json`, `response.json`, `received.json`
+- **3–7:** З LLM — full chain + `server-transforms-*.json` + `request.md` + `response.md`
+
+## Нотатки
+
+- Кроки 1, 2 — без LLM, мають тільки `server-transforms-request.json`
+- Кроки 3-7 — з LLM, мають повний пайпайн з request.md/response.md

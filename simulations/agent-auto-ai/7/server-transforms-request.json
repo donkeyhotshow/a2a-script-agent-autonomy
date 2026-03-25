@@ -7,16 +7,6 @@
       "to": "$out"
     },
     {
-      "op": "pick-context",
-      "include": [
-        "execution",
-        "task",
-        "history:6",
-        "scratchpad",
-        "files"
-      ]
-    },
-    {
       "op": "summarize-files",
       "maxLines": 60
     },

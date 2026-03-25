@@ -1,0 +1,44 @@
+{
+  "context": {
+    "task": "Golden: workspace tools chain (grep, exists, patch, run-script).",
+    "execution": {
+      "action": "agent",
+      "step": "workspace_chain"
+    },
+    "workbench": {
+      "sections": {}
+    },
+    "history": [
+      {
+        "role": "user",
+        "message": "Find usages of createApp under src/"
+      },
+      {
+        "role": "assistant",
+        "step": "workspace_chain",
+        "message": "Searching the repo for createApp under src/."
+      },
+      {
+        "role": "system",
+        "message": "grep-search: createApp — 1 match in src/main.ts"
+      }
+    ]
+  },
+  "result": {
+    "grep-search": {
+      "success": true,
+      "pattern": "createApp",
+      "matches": [
+        {
+          "file": "src/main.ts",
+          "line": 4,
+          "column": 17,
+          "content": "const app = createApp();",
+          "match": "createApp"
+        }
+      ],
+      "files": ["src/main.ts"],
+      "total": 1
+    }
+  }
+}

@@ -1,5 +1,19 @@
 # Analyze Architecture Simulation
 
+## Pipeline логіка
+
+### Кроки з LLM (3, 4, 6, 7)
+```
+request.json → server-transforms-request.json → request.md → LLM → response.md → server-transforms-response.json → response.json
+```
+
+### Кроки без LLM (1, 2, 5, 8)
+```
+request.json → server-transforms-request.json → response.json
+```
+- Сервер трансформує запит у execute
+- `server-transforms-response.json` НЕ потрібен — сервер сам формує відповідь без LLM
+
 ## Опис
 
 Симуляція діалогу з AI для аналізу архітектури проекту. AI:

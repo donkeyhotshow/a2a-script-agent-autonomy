@@ -1,0 +1,13 @@
+{
+  "context": {
+    "task": "Golden: SimulationRequestProcessor record mode.",
+    "execution": {
+      "action": "task",
+      "step": "sim_record"
+    },
+    "simulation_name": "invoke-simulation-record"
+  },
+  "execute": {
+    "message": "Started simulation: invoke-simulation-record"
+  }
+}

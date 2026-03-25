@@ -7,16 +7,6 @@
       "to": "$out"
     },
     {
-      "op": "pick-context",
-      "include": [
-        "execution",
-        "task",
-        "history:3",
-        "workbench",
-        "scratchpad"
-      ]
-    },
-    {
       "op": "truncate-section",
       "path": "context.workbench.sections",
       "maxChars": 8000

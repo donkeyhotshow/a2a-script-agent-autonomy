@@ -1,0 +1,35 @@
+{
+  "type": "pipeline",
+  "steps": [
+    {
+      "op": "copy",
+      "from": "$.context",
+      "to": "$.context"
+    },
+    {
+      "op": "set",
+      "path": "$.context.execution",
+      "value": {
+        "action": "agent",
+        "step": "rag-clarify"
+      }
+    },
+    {
+      "op": "append-to-array",
+      "to": "$.context.history",
+      "value": {
+        "role": "user",
+        "message": "$.result.message"
+      }
+    },
+    {
+      "op": "set",
+      "path": "$.execute",
+      "value": {
+        "rag-search": {
+          "query": "логінування API автентифікація тести"
+        }
+      }
+    }
+  ]
+}

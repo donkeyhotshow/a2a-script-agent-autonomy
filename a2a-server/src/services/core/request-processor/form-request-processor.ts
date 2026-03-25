@@ -173,7 +173,7 @@ export class FormRequestProcessor extends BaseRequestProcessor {
         }
 
         // Validate form data
-        const validationErrors = this.validateFormData(form, formData);
+        const validationErrors = await this.validateFormData(form, formData);
         if (validationErrors.length > 0) {
             return {
                 outcome: 'failed' as ProcessOutcome,

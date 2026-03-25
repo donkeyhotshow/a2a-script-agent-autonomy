@@ -10,6 +10,7 @@
     },
     "history": [
       {
+        "role": "system",
         "step": "scan-phpunit",
         "status": "completed",
         "result": {
@@ -17,6 +18,7 @@
         }
       },
       {
+        "role": "system",
         "step": "detect-deprecations",
         "status": "completed",
         "result": {
@@ -24,6 +26,7 @@
         }
       },
       {
+        "role": "system",
         "step": "generate-deprecations-report",
         "status": "completed",
         "result": {

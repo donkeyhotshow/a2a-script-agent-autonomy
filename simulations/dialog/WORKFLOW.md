@@ -44,9 +44,9 @@ Each dialog step can contain up to 8 files, covering the complete Web ↔ Client
 
 `client.json → request.json → server-transforms-request.json → request.md → response.md → server-transforms-response.json → response.json → received.json`
 
-Not every step has all 8 files: steps without LLM typically have `client.json`, `request.json`,
-`server-transforms-request.json`, `server-transforms-response.json`, `response.json`, `received.json`; steps with LLM
-add the `.md` files; transform docs describe server logic even when LLM is not used.
+Not every step has all 8 files: steps without LLM **always require** `server-transforms-request.json` (to transform request into execute); `server-transforms-response.json` is NOT needed because there's no LLM to parse. Steps with LLM add the `.md` files and require both transforms.
+
+> **Critical:** Server always transforms request first. Without LLM: `request.json → server-transforms-request.json → response.json` (server builds execute directly).
 
 ### Supplementary: `interrupt.md` (optional)
 

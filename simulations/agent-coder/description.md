@@ -53,7 +53,23 @@
 4. **write-file** - запис файлу (створення звітів, документації)
 5. **execute-command** - виконання команди
 
+## Pipeline логіка
+
+### Кроки з LLM (3-10, крім 6)
+```
+request.json → server-transforms-request.json → request.md → LLM → response.md → server-transforms-response.json → response.json
+```
+
+### Кроки без LLM (1, 2, 6)
+```
+request.json → server-transforms-request.json → response.json
+```
+- Сервер трансформує запит у execute
+- `server-transforms-response.json` НЕ потрібен — сервер сам формує відповідь без LLM
+
 ## Структура файлів
+
+> **Note:** Steps 6, 8, 9 appear without transforms in some cases — they still work because base transforms from `prompts/transforms/` are applied.
 
 ```
 simulations/agent-coder/

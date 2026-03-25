@@ -59,28 +59,48 @@ Fork of **coder-smart** with action id **`agent`**. Request transforms use **`tr
 - Після запису в `.carrier/tasks/` кожна ітерація виконання пункту: history = [контент документу], LLM повертає result +
   updatedTaskDoc, клієнт оновлює файл.
 
+## Pipeline логіка
+
+### Кроки з LLM (4, 5, 6, 8)
+```
+request.json → server-transforms-request.json → request.md → LLM → response.md → server-transforms-response.json → response.json
+```
+
+### Кроки без LLM (1, 2, 3, 7, 9)
+```
+request.json → server-transforms-request.json → response.json
+```
+- Сервер трансформує запит у execute
+- `server-transforms-response.json` НЕ потрібен — сервер сам формує відповідь без LLM
+
 ## Структура файлів симуляції
 
 ```
 simulations/agent-coder-smart/
 ├── description.md
 ├── analysis.md
-├── 1/
+├── 1/                          # Без LLM: router form
 │   ├── client.json
 │   ├── request.json
+│   ├── server-transforms-request.json
 │   ├── response.json
 │   └── received.json
-├── 2/
+├── 2/                          # З LLM
 │   ├── client.json
 │   ├── request.json
+│   ├── server-transforms-request.json
+│   ├── server-transforms-response.json
+│   ├── request.md
+│   ├── response.md
 │   ├── response.json
 │   └── received.json
-├── 3/
+├── 3/                          # Без LLM: rag-search
 │   ├── client.json
 │   ├── request.json
+│   ├── server-transforms-request.json
 │   ├── response.json
 │   └── received.json
-├── 4/
+├── 4/                          # З LLM
 │   ├── client.json
 │   ├── request.json
 │   ├── server-transforms-request.json
@@ -89,7 +109,7 @@ simulations/agent-coder-smart/
 │   ├── server-transforms-response.json
 │   ├── response.json
 │   └── received.json
-├── 5/
+├── 5/                          # З LLM
 │   ├── client.json
 │   ├── request.json
 │   ├── server-transforms-request.json
@@ -98,7 +118,7 @@ simulations/agent-coder-smart/
 │   ├── server-transforms-response.json
 │   ├── response.json
 │   └── received.json
-├── 6/
+├── 6/                          # З LLM
 │   ├── client.json
 │   ├── request.json
 │   ├── server-transforms-request.json
@@ -107,12 +127,13 @@ simulations/agent-coder-smart/
 │   ├── server-transforms-response.json
 │   ├── response.json
 │   └── received.json
-├── 7/
+├── 7/                          # Без LLM: read-file
 │   ├── client.json
 │   ├── request.json
+│   ├── server-transforms-request.json
 │   ├── response.json
 │   └── received.json
-├── 8/
+├── 8/                          # З LLM
 │   ├── client.json
 │   ├── request.json
 │   ├── server-transforms-request.json
@@ -121,9 +142,15 @@ simulations/agent-coder-smart/
 │   ├── server-transforms-response.json
 │   ├── response.json
 │   └── received.json
-└── 9/
+└── 9/                          # Без LLM: form input
     ├── client.json
     ├── request.json
+    ├── server-transforms-request.json
     ├── response.json
     └── received.json
+```
 
+## Нотатки
+
+- Кроки 1, 3, 7, 9 — без LLM, мають тільки `server-transforms-request.json`
+- Кроки 2, 4, 5, 6, 8 — з LLM, мають повний пайпайн з request.md/response.md

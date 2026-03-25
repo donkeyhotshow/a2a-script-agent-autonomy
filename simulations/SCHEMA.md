@@ -66,10 +66,18 @@ Canonical files (Web ↔ Client API и Client API ↔ Server ↔ LLM):
   `packages/sdk/src/server/lib/web-execute-dto.ts`. Debug: `GET /sessions/:id?includeContext=1` returns unsanitized
   session data.
 
-Not every step has all 8 files: steps without LLM обычно имеют `client.json`, `request.json`,
-`server-transforms-request.json`,
-`server-transforms-response.json`, `response.json`, `received.json`; steps with LLM add the `.md` files; transform docs
-описывают серверную логику даже когда LLM не используется.
+Not every step has all 8 files: steps without LLM **always require** `server-transforms-*.json` (or fallback to base transforms from `prompts/transforms/`); steps with LLM add the `.md` files; transform docs describe server logic even when LLM is not used.
+
+> **Critical:** Even when `response.md` is absent (no LLM call), the server **must** apply transforms. The pipeline is:
+> 
+> - With LLM: `request.json → transforms → request.md → LLM → response.md → transforms → response.json`
+> - Without LLM: `request.json → server-transforms-request.json → response.json`
+> 
+> **Important:** For steps without LLM:
+> - **Always require** `server-transforms-request.json` — server transforms the request to build execute
+> - **Never require** `server-transforms-response.json` — server builds response directly from transformed request (no LLM to parse)
+> 
+> This ensures simulation captures server logic deterministically, not just recorded results.
 
 ### Supplementary: server interrupt loop (optional)
 

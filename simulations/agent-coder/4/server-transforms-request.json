@@ -7,14 +7,6 @@
       "to": "$out"
     },
     {
-      "op": "pick-context",
-      "include": [
-        "execution",
-        "task",
-        "history:3"
-      ]
-    },
-    {
       "op": "set",
       "path": "$.ragResults",
       "valueFrom": "$.result.rag-search.results"

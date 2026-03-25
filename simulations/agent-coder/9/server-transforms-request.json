@@ -7,10 +7,12 @@
       "to": "$out"
     },
     {
-      "op": "inject-error",
+      "op": "append-to-array",
       "to": "$.context.history",
-      "errorType": "json-parse-error",
-      "errorMessage": "Не вдалося розпарсити JSON у полі content: Unexpected end of JSON input"
+      "value": {
+        "role": "system",
+        "message": "Не вдалося розпарсити JSON у полі content: Unexpected end of JSON input"
+      }
     },
     {
       "op": "render-markdown",

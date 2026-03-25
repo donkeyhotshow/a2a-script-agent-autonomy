@@ -2,7 +2,8 @@
   "context": {
     "task": "допоможи розібратись з кодом",
     "execution": {
-      "action": "agent"
+      "action": "agent",
+      "step": "2"
     },
     "history": []
   },

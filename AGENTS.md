@@ -125,14 +125,22 @@ LLM controls `context.execution.step`, server persists via transforms. Prompt fo
 
 - `context.history` - Array of execution records
 - `context.execution` - Current state: `{ action, step, progress }`
-- `context.workbench` - Structured working state (`sections`, optional `batch`, optional `slots`). LLM can update **`workbench.sections`** (merge) and **`workbench_ops`** (short set/append/remove commands); see [`a2a-server/prompts/auto-ai-request.md`](a2a-server/prompts/auto-ai-request.md) and [`a2a-server/docs/LLM-REQUEST-PREP.md`](a2a-server/docs/LLM-REQUEST-PREP.md) �2c.
+- `context.workbench` - Structured working state (`sections`, optional `batch`, optional `slots`). LLM can update **`workbench.sections`** (merge) and **`workbench_ops`** (short set/append/remove commands); see [`a2a-server/prompts/auto-ai-request.md`](a2a-server/prompts/auto-ai-request.md) and [`a2a-server/docs/LLM-REQUEST-PREP.md`](a2a-server/docs/LLM-REQUEST-PREP.md) �2c.
 - `context.session_id` - Session identifier for tracking
 
 ### Simulation Pipeline
 
 ```
-request.json ? server-transforms ? request.md ? [LLM] ? response.md ? server-transforms ? response.json
+# With LLM:
+request.json → server-transforms-request.json → request.md → [LLM] → response.md → server-transforms-response.json → response.json
+
+# Without LLM (server builds execute directly):
+request.json → server-transforms-request.json → response.json
 ```
+
+**Important:** Even when `response.md` is absent (no LLM call), the server **always** applies transforms:
+- `server-transforms-request.json` — required to transform request into execute
+- `server-transforms-response.json` — NOT needed (server builds response directly)
 
 **Server-side LLM request prep** (before `request.md` is built): `result` is folded into `context.history`; `flowControlHint` is chosen from `context.execution.action` + `step`; `workbench` is normalized (see LLM-REQUEST-PREP). **After** the model turn, response transforms may merge **`workbench.sections`** and apply **`workbench_ops`** into `context.workbench`. See [`a2a-server/docs/LLM-REQUEST-PREP.md`](a2a-server/docs/LLM-REQUEST-PREP.md).
 

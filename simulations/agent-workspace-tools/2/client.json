@@ -1,0 +1,21 @@
+{
+  "projectId": "golden-wt",
+  "sessionId": "sess-wt-1",
+  "result": {
+    "grep-search": {
+      "success": true,
+      "pattern": "createApp",
+      "matches": [
+        {
+          "file": "src/main.ts",
+          "line": 4,
+          "column": 17,
+          "content": "const app = createApp();",
+          "match": "createApp"
+        }
+      ],
+      "files": ["src/main.ts"],
+      "total": 1
+    }
+  }
+}

@@ -2,7 +2,8 @@
   "context": {
     "task": "проаналізуй код авторизації",
     "execution": {
-      "action": "agent"
+      "action": "agent",
+      "step": "10"
     },
     "history": [
       {

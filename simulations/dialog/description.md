@@ -11,6 +11,20 @@
 > **Scope:** Симуляции не описывают работу с промисами (`execute.wait`, `promiseId`, polling). См.
 `simulations/SCHEMA.md` — "Scope: simulations vs runtime".
 
+## Pipeline логіка
+
+### Кроки з LLM (3, 4)
+```
+request.json → server-transforms-request.json → request.md → LLM → response.md → server-transforms-response.json → response.json
+```
+
+### Кроки без LLM (1, 2)
+```
+request.json → server-transforms-request.json → response.json
+```
+- Сервер трансформує запит у execute
+- `server-transforms-response.json` НЕ потрібен — сервер сам формує відповідь без LLM
+
 ## Поток
 
 | Шаг | Request                       | Response                                                                   |
@@ -32,38 +46,42 @@ simulations/dialog/
 ├── description.md
 ├── WORKFLOW.md
 ├── analysis.md
-├── 1/
-│   ├── request.json
-│   ├── response.json
+├── 1/                          # Без LLM: router form
 │   ├── client.json
-│   ├── received.json
-│   ├── server-response.json
-│   └── server-transforms-request.json (опціонально)
-├── 2/
 │   ├── request.json
+│   ├── server-transforms-request.json
 │   ├── response.json
+│   └── received.json
+├── 2/                          # З LLM
 │   ├── client.json
-│   ├── received.json
-│   ├── server-response.json
-│   └── server-transforms-response.json (опціонально)
-├── 3/
 │   ├── request.json
-│   ├── response.json
+│   ├── server-transforms-request.json
 │   ├── request.md
 │   ├── response.md
-│   ├── server-response.json
-│   ├── server-transforms-request.json
-│   └── server-transforms-response.json
-├── 4/
-│   ├── request.json
+│   ├── server-transforms-response.json
 │   ├── response.json
+│   └── received.json
+├── 3/                          # З LLM
+│   ├── client.json
+│   ├── request.json
+│   ├── server-transforms-request.json
 │   ├── request.md
 │   ├── response.md
-│   ├── server-response.json
-│   ├── server-transforms-request.json
-│   └── server-transforms-response.json
+│   ├── server-transforms-response.json
+│   ├── response.json
+│   └── received.json
+└── 4/                          # З LLM
+    ├── client.json
+    ├── request.json
+    ├── server-transforms-request.json
+    ├── request.md
+    ├── response.md
+    ├── server-transforms-response.json
+    ├── response.json
+    └── received.json
 ```
 
-> **Примітка:** Файли `server-transforms-request.json` та `server-transforms-response.json` є опціональними і показують
-> трансформацію даних на сервері перед відправкою до LLM та після отримання відповіді відповідно. Деякі кроки можуть
-> містити ці файли для демонстрації серверної обробки.
+## Нотатки
+
+- Крок 1 — без LLM, має тільки `server-transforms-request.json`
+- Кроки 2, 3, 4 — з LLM, мають повний пайпайн з request.md/response.md
