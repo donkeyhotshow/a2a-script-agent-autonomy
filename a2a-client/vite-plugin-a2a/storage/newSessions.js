@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { getStorageRoot, ensureDir } from './root.js';
-import { isActivePromiseStatus } from './promise-status.js';
+import { isRemovablePromiseBesideResponse } from './promise-status.js';
 
 export function getNewSessionsDir(cwd) {
   return path.join(getStorageRoot(), 'sessions');
@@ -120,7 +120,7 @@ export function loadNewStep(cwd, sessionId, stepNum) {
     if (fs.existsSync(promiseFile)) {
       try {
         const prom = JSON.parse(fs.readFileSync(promiseFile, 'utf8'));
-        if (!isActivePromiseStatus(prom?.status)) {
+        if (isRemovablePromiseBesideResponse(prom)) {
           fs.unlinkSync(promiseFile);
         }
       } catch (e) {
