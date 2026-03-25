@@ -5,7 +5,7 @@
 import { TFIDFService } from '../tfidf.js';
 import { QueryUnderstandingEngine } from '../query-understanding.js';
 import { CodeSimilarityEngine } from '../code-similarity.js';
-import { SearchSuggestionsEngine, SuggestionItem } from '../suggestions.js';
+import { SearchSuggestionsEngine, SuggestionItem, QueryExpander } from '../suggestions.js';
 import { BM25Scorer } from '../bm25.js';
 import type { Chunk } from '../chunk-manager.js';
 import type { RAGIndexData, IndexFileInfo } from '../indexer.js';
@@ -26,6 +26,8 @@ export declare class RAGSearcher {
     private similarityIndexed;
     suggestions: SearchSuggestionsEngine;
     private suggestionsIndexed;
+    queryExpander: QueryExpander;
+    private relevanceFeedbackEnabled;
     private fileRelevanceModel?;
     private fileRelevanceCache;
     private queryCache;
@@ -118,6 +120,21 @@ export declare class RAGSearcher {
         limit?: number;
     }): SuggestionItem[];
     /**
+     * Report click feedback to improve future ranking
+     * Call this when user clicks/selects a search result
+     * @param query The original search query
+     * @param resultId The ID of the clicked result (file path or chunk ID)
+     */
+    reportClick(query: string, resultId: string): void;
+    /**
+     * Get expanded query terms based on learned relevance
+     */
+    expandQuery(query: string): string[];
+    /**
+     * Enable/disable relevance feedback learning
+     */
+    setRelevanceFeedback(enabled: boolean): void;
+    /**
      * Get suggestions by type (function, class, method, etc.)
      */
     getSuggestionsByType(type: string, limit?: number): SuggestionItem[];
@@ -132,5 +149,7 @@ export declare class RAGSearcher {
         allowedExtensions?: string[];
         maxResults?: number;
         snippetConfig?: import('../searcher/snippet-generator.js').SnippetConfig;
+        page?: number;
+        pageSize?: number;
     }): Promise<import('../protocol-rag-search.js').RagSearchProtocolResult>;
 }

@@ -9,7 +9,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.RAGIntegrator = void 0;
 const promises_1 = __importDefault(require("fs/promises"));
 const path_1 = __importDefault(require("path"));
-const fs_utils_1 = require("@a2a/fs-utils");
+const fs_utils_1 = require("@a2a/execution/fs-utils");
 const indexer_js_1 = require("./indexer.js");
 const chunk_manager_js_1 = require("./chunk-manager.js");
 const chokidar_1 = __importDefault(require("chokidar"));

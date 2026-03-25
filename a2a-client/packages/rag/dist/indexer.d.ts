@@ -1,7 +1,7 @@
 /**
  * RAG Indexer - Local project indexing
  */
-import { IgnoreDetector } from '@a2a/fs-utils';
+import { IgnoreDetector } from '@a2a/execution/fs-utils';
 import { type Chunk } from './chunk-manager.js';
 import type { FileRelevanceLabel } from './file-relevance';
 export interface RAGIndexerConfig {
@@ -46,6 +46,12 @@ export declare class RAGIndexer {
     private _initIgnoreDetector;
     private _ensureIgnoreDetector;
     indexProject(force?: boolean): Promise<RAGIndexData>;
+    /**
+     * Index project with parallel batch processing for faster indexing
+     * @param batchSize Number of files to process in parallel (default: 10)
+     * @param force Force full reindex
+     */
+    indexProjectParallel(batchSize?: number, force?: boolean): Promise<RAGIndexData>;
     /**
      * Get indexing status - returns info about current index state
      */

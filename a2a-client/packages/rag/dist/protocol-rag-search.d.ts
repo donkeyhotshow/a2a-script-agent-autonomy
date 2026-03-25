@@ -32,6 +32,12 @@ export interface RagSearchProtocolResult {
     results: RagSearchResultEntry[];
     files?: string[];
     query?: string;
+    /** Set when `page` or `pageSize` is passed in options (ISSUE 9). */
+    page?: number;
+    pageSize?: number;
+    /** Total rows in the capped pool (after maxResults, before paging). */
+    total?: number;
+    hasMore?: boolean;
 }
 /**
  * Transform RAG search output to result["rag-search"] shape for simulations.
@@ -54,4 +60,7 @@ export declare function toRagSearchResult(rawResults: Array<{
     allowedExtensions?: string[];
     maxResults?: number;
     snippetConfig?: SnippetConfig;
+    /** 1-based page; enables pagination metadata when set with or without pageSize. */
+    page?: number;
+    pageSize?: number;
 }): RagSearchProtocolResult;

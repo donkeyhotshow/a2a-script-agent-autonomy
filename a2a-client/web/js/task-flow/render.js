@@ -170,6 +170,13 @@
             `;
         }
 
+        // Build result display
+        let resultHtml = '';
+        const result = data?.result;
+        if (result && typeof result === 'object') {
+            resultHtml = renderResultBlock(result);
+        }
+
         // Route to specific renderer
         // execute.form.input + execute.message: message shown via history (set by SessionStore), input stays open
         // execute.form.choices: choice buttons
@@ -177,7 +184,7 @@
         // execute.message (+ optional llmMessage, attachments): Client API sanitizes rag-search/read-file into these
         store = store || data?.store || global.SessionStore;
         if (execute.form) {
-            return renderForm(contentEl, execute.form, executionStepHtml, progressBarHtml, finalResultHtml, taskFlowRef, store);
+            return renderForm(contentEl, execute.form, executionStepHtml, progressBarHtml, finalResultHtml, resultHtml, taskFlowRef, store);
         }
         const attHtml = renderAttachmentsBlock(execute.attachments);
         const mainText = messageBodyText(execute.message);
@@ -192,6 +199,7 @@
                 executionStepHtml,
                 progressBarHtml,
                 finalResultHtml,
+                resultHtml,
                 taskFlowRef,
                 store
             );
@@ -207,9 +215,9 @@
             execute['edit-patch'] ||
             execute['run-script']
         ) {
-            return renderClientAction(contentEl, Object.keys(execute)[0], execute, executionStepHtml, progressBarHtml, finalResultHtml, taskFlowRef);
+            return renderClientAction(contentEl, Object.keys(execute)[0], execute, executionStepHtml, progressBarHtml, finalResultHtml, resultHtml, taskFlowRef);
         } else if (execute.debug) {
-            return renderDebug(contentEl, data, executionStepHtml, progressBarHtml, finalResultHtml, taskFlowRef);
+            return renderDebug(contentEl, data, executionStepHtml, progressBarHtml, finalResultHtml, resultHtml, taskFlowRef);
         }
     }
 
@@ -309,6 +317,263 @@
     }
 
     /**
+     * Рендеринг блока результата
+     * @param {Object} result - объект result
+     * @returns {string} HTML для отображения результата
+     */
+    function renderResultBlock(result) {
+        if (!result || typeof result !== 'object') return '';
+
+        // Получаем первый ключ результата (должен быть только один согласно спецификации)
+        const resultKeys = Object.keys(result);
+        if (resultKeys.length === 0) return '';
+
+        const actionType = resultKeys[0];
+        const actionData = result[actionType];
+
+        // Определяем иконки и метки для разных типов результатов
+        const typeLabels = {
+            'read-file': 'Read File Result',
+            'grep-search': 'Grep Search Results',
+            'execute-command': 'Command Output',
+            'script': 'Script Output',
+            'list-directory': 'Directory Listing',
+            'file-exists': 'File Exists Check',
+            'write-file': 'Write File Result',
+            'edit-patch': 'Edit Patch Result',
+            'rag-search': 'RAG Search Results',
+            'run-script': 'Run Script Output'
+        };
+
+        const typeIcons = {
+            'read-file': '📄',
+            'grep-search': '🔎',
+            'execute-command': '▶',
+            'script': '⚡',
+            'list-directory': '📁',
+            'file-exists': '❓',
+            'write-file': '✏️',
+            'edit-patch': '📋',
+            'rag-search': '🔍',
+            'run-script': '⚡'
+        };
+
+        const icon = typeIcons[actionType] || '⚙️';
+        const label = typeLabels[actionType] || actionType;
+
+        let contentHtml = '';
+
+        // Специализированное отображение для разных типов результатов
+        switch (actionType) {
+            case 'read-file':
+                if (actionData && typeof actionData === 'object' && actionData.content !== undefined) {
+                    contentHtml = `<pre class="result-content">${escapeHtml(String(actionData.content))}</pre>`;
+                    if (actionData.path) {
+                        contentHtml = `<div><strong>File:</strong> ${escapeHtml(String(actionData.path))}</div>${contentHtml}`;
+                    }
+                } else {
+                    contentHtml = `<pre>${escapeHtml(JSON.stringify(actionData, null, 2))}</pre>`;
+                }
+                break;
+
+            case 'grep-search':
+                if (actionData && typeof actionData === 'object' && Array.isArray(actionData.results)) {
+                    const results = actionData.results;
+                    if (results.length === 0) {
+                        contentHtml = '<div>No matches found</div>';
+                    } else {
+                        const lines = results.map((match, index) => {
+                            // Поддерживаем разные форматы результатов grep
+                            if (typeof match === 'string') {
+                                return `<div class="grep-match">${escapeHtml(match)}</div>`;
+                            } else if (match && typeof match === 'object') {
+                                const lineNum = match.line !== undefined ? match.line : match.lineNumber !== undefined ? match.lineNumber : index + 1;
+                                const content = match.content !== undefined ? match.content : match.match !== undefined ? match.match : '';
+                                const file = match.file !== undefined ? match.file : '';
+                                let matchHtml = `<div class="grep-match">`;
+                                if (file) {
+                                    matchHtml += `<span class="grep-file">${escapeHtml(String(file))}</span>:`;
+                                }
+                                if (lineNum !== undefined) {
+                                    matchHtml += `<span class="grep-line">${escapeHtml(String(lineNum))}</span>:`;
+                                }
+                                matchHtml += `<span class="grep-content">${escapeHtml(String(content))}</span></div>`;
+                                return matchHtml;
+                            } else {
+                                return `<div class="grep-match">${escapeHtml(String(match))}</div>`;
+                            }
+                        }).join('');
+                        contentHtml = `
+                            <div><strong>Pattern:</strong> ${escapeHtml(String(actionData.pattern || ''))}</div>
+                            <div><strong>Matches:</strong> ${results.length}</div>
+                            <div class="grep-results">${lines}</div>
+                        `;
+                    }
+                } else {
+                    contentHtml = `<pre>${escapeHtml(JSON.stringify(actionData, null, 2))}</pre>`;
+                }
+                break;
+
+            case 'execute-command':
+                if (actionData && typeof actionData === 'object' && actionData.output !== undefined) {
+                    contentHtml = `<pre class="result-output">${escapeHtml(String(actionData.output))}</pre>`;
+                    if (actionData.command) {
+                        contentHtml = `<div><strong>Command:</strong> ${escapeHtml(String(actionData.command))}</div>${contentHtml}`;
+                    }
+                } else {
+                    contentHtml = `<pre>${escapeHtml(JSON.stringify(actionData, null, 2))}</pre>`;
+                }
+                break;
+
+            case 'script':
+                if (actionData && typeof actionData === 'object' && actionData.output !== undefined) {
+                    contentHtml = `<pre class="result-output">${escapeHtml(String(actionData.output))}</pre>`;
+                    if (actionData.code) {
+                        contentHtml = `<div><strong>Script:</strong></div><pre class="script-code">${escapeHtml(String(actionData.code))}</pre>${contentHtml}`;
+                    }
+                } else {
+                    contentHtml = `<pre>${escapeHtml(JSON.stringify(actionData, null, 2))}</pre>`;
+                }
+                break;
+
+            case 'list-directory':
+                if (actionData && typeof actionData === 'object' && Array.isArray(actionData.entries)) {
+                    const entries = actionData.entries;
+                    if (entries.length === 0) {
+                        contentHtml = '<div>Directory is empty</div>';
+                    } else {
+                        const lines = entries.map((entry) => {
+                            if (typeof entry === 'string') {
+                                return `<div class="dir-entry">${escapeHtml(entry)}</div>`;
+                            } else if (entry && typeof entry === 'object') {
+                                const name = entry.name !== undefined ? entry.name : entry.path !== undefined ? entry.path : '';
+                                const type = entry.type !== undefined ? entry.type : entry.isDirectory !== undefined ? (entry.isDirectory ? 'directory' : 'file') : 'unknown';
+                                const size = entry.size !== undefined ? entry.size : '';
+                                let entryHtml = `<div class="dir-entry">`;
+                                if (type === 'directory') {
+                                    entryHtml += `<span class="dir-type">📁 </span>`;
+                                } else {
+                                    entryHtml += `<span class="dir-type">📄 </span>`;
+                                }
+                                entryHtml += `${escapeHtml(String(name))}`;
+                                if (size !== '' && type !== 'directory') {
+                                    entryHtml += ` <span class="dir-size">(${escapeHtml(String(size))} bytes)</span>`;
+                                }
+                                entryHtml += '</div>';
+                                return entryHtml;
+                            } else {
+                                return `<div class="dir-entry">${escapeHtml(String(entry))}</div>`;
+                            }
+                        }).join('');
+                        contentHtml = `<div class="dir-entries">${lines}</div>`;
+                    }
+                } else {
+                    contentHtml = `<pre>${escapeHtml(JSON.stringify(actionData, null, 2))}</pre>`;
+                }
+                break;
+
+            case 'file-exists':
+                if (actionData && typeof actionData === 'object' && actionData.exists !== undefined) {
+                    const exists = actionData.exists;
+                    contentHtml = `
+                        <div><strong>Path:</strong> ${escapeHtml(String(actionData.path || ''))}</div>
+                        <div><strong>Exists:</strong> <span class="exists-status">${exists ? 'Yes' : 'No'}</span></div>
+                    `;
+                } else {
+                    contentHtml = `<pre>${escapeHtml(JSON.stringify(actionData, null, 2))}</pre>`;
+                }
+                break;
+
+            case 'write-file':
+                if (actionData && typeof actionData === 'object' && actionData.path !== undefined) {
+                    contentHtml = `
+                        <div><strong>Written to:</strong> ${escapeHtml(String(actionData.path))}</div>
+                        ${actionData.bytes !== undefined ? `<div><strong>Bytes written:</strong> ${escapeHtml(String(actionData.bytes))}</div>` : ''}
+                    `;
+                } else {
+                    contentHtml = `<pre>${escapeHtml(JSON.stringify(actionData, null, 2))}</pre>`;
+                }
+                break;
+
+            case 'edit-patch':
+                if (actionData && typeof actionData === 'object' && actionData.applied !== undefined) {
+                    const applied = actionData.applied;
+                    contentHtml = `
+                        <div><strong>Patch applied:</strong> <span class="patch-status">${applied ? 'Yes' : 'No'}</span></div>
+                        ${actionData.path ? `<div><strong>Target file:</strong> ${escapeHtml(String(actionData.path))}</div>` : ''}
+                        ${actionData.rejectedCount !== undefined ? `<div><strong>Rejected chunks:</strong> ${escapeHtml(String(actionData.rejectedCount))}</div>` : ''}
+                    `;
+                } else {
+                    contentHtml = `<pre>${escapeHtml(JSON.stringify(actionData, null, 2))}</pre>`;
+                }
+                break;
+
+            case 'rag-search':
+                if (actionData && typeof actionData === 'object' && Array.isArray(actionData.results)) {
+                    const results = actionData.results;
+                    if (results.length === 0) {
+                        contentHtml = '<div>No RAG results found</div>';
+                    } else {
+                        const lines = results.map((result, index) => {
+                            if (typeof result === 'string') {
+                                return `<div class="rag-result">${escapeHtml(result)}</div>`;
+                            } else if (result && typeof result === 'object') {
+                                const content = result.content !== undefined ? result.content : result.text !== undefined ? result.text : '';
+                                const score = result.score !== undefined ? result.score : result.relevance !== undefined ? result.relevance : '';
+                                const source = result.source !== undefined ? result.source : result.file !== undefined ? result.file : '';
+                                let resultHtml = `<div class="rag-result">`;
+                                if (source) {
+                                    resultHtml += `<span class="rag-source">[${escapeHtml(String(source))}]</span> `;
+                                }
+                                if (score !== '') {
+                                    resultHtml += `<span class="rag-score">(score: ${escapeHtml(String(score))})</span> `;
+                                }
+                                resultHtml += `${escapeHtml(String(content))}</div>`;
+                                return resultHtml;
+                            } else {
+                                return `<div class="rag-result">${escapeHtml(String(result))}</div>`;
+                            }
+                        }).join('');
+                        contentHtml = `
+                            <div><strong>Query:</strong> ${escapeHtml(String(actionData.query || ''))}</div>
+                            <div><strong>Results:</strong> ${results.length}</div>
+                            <div class="rag-results">${lines}</div>
+                        `;
+                    }
+                } else {
+                    contentHtml = `<pre>${escapeHtml(JSON.stringify(actionData, null, 2))}</pre>`;
+                }
+                break;
+
+            case 'run-script':
+                if (actionData && typeof actionData === 'object' && actionData.output !== undefined) {
+                    contentHtml = `<pre class="result-output">${escapeHtml(String(actionData.output))}</pre>`;
+                    if (actionData.scriptId) {
+                        contentHtml = `<div><strong>Script ID:</strong> ${escapeHtml(String(actionData.scriptId))}</div>${contentHtml}`;
+                    }
+                } else {
+                    contentHtml = `<pre>${escapeHtml(JSON.stringify(actionData, null, 2))}</pre>`;
+                }
+                break;
+
+            default:
+                // Для неизвестных типов результатов показываем JSON
+                contentHtml = `<pre>${escapeHtml(JSON.stringify(actionData, null, 2))}</pre>`;
+                break;
+        }
+
+        return `
+            <div class="task-flow-result-block">
+                <div class="result-header">
+                    <span class="result-type-icon">${icon}</span>
+                    <span class="result-type-label">${escapeHtml(label)}</span>
+                </div>
+                <div class="result-content">${contentHtml}</div>
+            </div>
+        `;
+    }
+
+    /**
      * Primary message + optional LLM block + attachments (from Client API web execute DTO).
      */
     function renderWebExecuteMessage(
@@ -318,6 +583,7 @@
         executionStepHtml,
         progressBarHtml,
         finalResultHtml,
+        resultHtml,
         taskFlowRef,
         store
     ) {
@@ -348,6 +614,7 @@
                     ${texts.attHtml || ''}
                 </div>
                 ${finalResultHtml}
+                ${resultHtml || ''}
             </div>
         `;
     }
@@ -361,7 +628,7 @@
      * @param {string} finalResultHtml - HTML финального результата
      * @param {Object} taskFlowRef - ссылка на TaskFlow
      */
-    function renderForm(contentEl, form, executionStepHtml, progressBarHtml, finalResultHtml, taskFlowRef, store) {
+    function renderForm(contentEl, form, executionStepHtml, progressBarHtml, finalResultHtml, resultHtml, taskFlowRef, store) {
         // Use explicitly passed store (fallback to global if not provided)
         const effectiveStore = store || global.SessionStore;
         
@@ -439,6 +706,7 @@
                     ${formContent}
                 </div>
                 ${finalResultHtml}
+                ${resultHtml || ''}
             </div>
         `;
 
@@ -519,7 +787,7 @@
      * @param {string} finalResultHtml - HTML финального результата
      * @param {Object} taskFlowRef - ссылка на TaskFlow
      */
-    function renderClientAction(contentEl, actionType, data, executionStepHtml, progressBarHtml, finalResultHtml, taskFlowRef, store) {
+    function renderClientAction(contentEl, actionType, data, executionStepHtml, progressBarHtml, finalResultHtml, resultHtml, taskFlowRef, store) {
         const typeLabels = {
             'script': 'Script Execution',
             'rag-search': 'RAG Search',
@@ -561,6 +829,7 @@
                     <pre class="action-data">${escapeHtml(JSON.stringify(actionData, null, 2))}</pre>
                 </div>
                 ${finalResultHtml}
+                ${resultHtml || ''}
             </div>
         `;
     }
@@ -574,7 +843,7 @@
      * @param {string} finalResultHtml - HTML финального результата
      * @param {Object} taskFlowRef - ссылка на TaskFlow
      */
-    function renderDebug(contentEl, data, executionStepHtml, progressBarHtml, finalResultHtml, taskFlowRef, store) {
+    function renderDebug(contentEl, data, executionStepHtml, progressBarHtml, finalResultHtml, resultHtml, taskFlowRef, store) {
         const ctx = data?.context ? JSON.stringify(data.context, null, 2) : '';
         const exec = data?.execute ? JSON.stringify(data.execute, null, 2) : '';
         const effectiveStore = store || global.SessionStore;
@@ -595,6 +864,7 @@
                     <pre>${escapeHtml(exec)}</pre>
                 </details>
                 ${finalResultHtml}
+                ${resultHtml || ''}
             </div>
         `;
     }
@@ -619,6 +889,7 @@
           renderMessage,
           renderClientAction,
           renderDebug,
+          renderResultBlock,
           setPanelContent
       };
 

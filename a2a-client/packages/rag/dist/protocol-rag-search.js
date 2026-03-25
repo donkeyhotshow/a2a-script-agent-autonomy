@@ -49,12 +49,25 @@ function toRagSearchResult(rawResults, options) {
             fileMap.set(filePath, result);
         }
     }
-    // Convert to array and apply limits
     const fileResults = Array.from(fileMap.values());
-    // Apply result limit (after grouping)
-    const limitedResults = fileResults.slice(0, maxResults);
-    // Apply file limit (should be same as result limit after grouping)
-    const finalResults = limitedResults.slice(0, maxFiles);
+    const pool = fileResults.slice(0, maxResults);
+    const usePagination = options?.page != null || options?.pageSize != null;
+    const page = Math.max(1, options?.page ?? 1);
+    const pageSize = options?.pageSize ?? maxResults;
+    let windowed = pool;
+    let total;
+    let hasMore;
+    let outPage;
+    let outPageSize;
+    if (usePagination) {
+        total = pool.length;
+        outPage = page;
+        outPageSize = pageSize;
+        const start = (page - 1) * pageSize;
+        windowed = pool.slice(start, start + pageSize);
+        hasMore = start + windowed.length < total;
+    }
+    const finalResults = windowed.slice(0, maxFiles);
     // Transform to protocol format with improved snippets
     const query = options?.query ?? '';
     const snippetConfig = options?.snippetConfig;
@@ -89,13 +102,19 @@ function toRagSearchResult(rawResults, options) {
             },
         };
     });
-    // Extract unique file paths (limited to final results)
     const files = finalResults.map(result => result.chunk.filePath);
-    return {
+    const base = {
         results,
         files,
         query: options?.query
     };
+    if (usePagination) {
+        base.page = outPage;
+        base.pageSize = outPageSize;
+        base.total = total;
+        base.hasMore = hasMore;
+    }
+    return base;
 }
 /**
  * Extract file extension from path

@@ -16,14 +16,11 @@
       "path": "$.execute",
       "value": {
         "form": {
-          "input": [
-            {
-              "name": "message",
-              "type": "text",
-              "label": "Повідомлення",
-              "required": true
-            }
-          ]
+          "textarea": {
+            "name": "message",
+            "label": "Повідомлення",
+            "required": true
+          }
         }
       }
     }

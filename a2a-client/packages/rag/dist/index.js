@@ -3,7 +3,7 @@
  * @a2a/rag - RAG Indexing and Search Module
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.createWatchManager = exports.RAGWatchManager = exports.createSimilarityEngine = exports.CodeSimilarityEngine = exports.createQueryExpander = exports.QueryExpander = exports.createSuggestionsEngine = exports.SearchSuggestionsEngine = exports.INTENT_TYPES = exports.createQueryUnderstandingEngine = exports.QueryUnderstandingEngine = exports.createASTChunker = exports.ASTChunker = exports.createMeilisearchClient = exports.MeilisearchClient = exports.createHybridSearcher = exports.HybridSearcher = exports.createReranker = exports.RerankerClient = exports.createBM25Scorer = exports.BM25Scorer = exports.SemanticSearcher = exports.RAGIntegrator = exports.TFIDFService = exports.ChunkManager = exports.RAGSearcher = exports.RAGIndexer = void 0;
+exports.createRAGClientService = exports.RAGClientService = exports.createWatchManager = exports.RAGWatchManager = exports.createSimilarityEngine = exports.CodeSimilarityEngine = exports.createQueryExpander = exports.QueryExpander = exports.createSuggestionsEngine = exports.SearchSuggestionsEngine = exports.INTENT_TYPES = exports.createQueryUnderstandingEngine = exports.QueryUnderstandingEngine = exports.createASTChunker = exports.ASTChunker = exports.createMeilisearchClient = exports.MeilisearchClient = exports.createHybridSearcher = exports.HybridSearcher = exports.createReranker = exports.RerankerClient = exports.createBM25Scorer = exports.BM25Scorer = exports.SemanticSearcher = exports.RAGIntegrator = exports.TFIDFService = exports.ChunkManager = exports.RAGSearcher = exports.RAGIndexer = void 0;
 exports.createRAG = createRAG;
 const indexer_1 = require("./indexer");
 Object.defineProperty(exports, "RAGIndexer", { enumerable: true, get: function () { return indexer_1.RAGIndexer; } });
@@ -48,11 +48,22 @@ function createRAG(config = {}) {
     const projectPath = config.projectPath ?? process.cwd();
     const indexerConfig = { ...config, projectPath };
     const indexer = new indexer_1.RAGIndexer(indexerConfig);
-    const searcher = new searcher_1.RAGSearcher({ ...config, projectPath });
-    const chunks = new chunk_manager_1.ChunkManager(config);
+    const searcher = new searcher_1.RAGSearcher({
+        projectPath,
+        fileRelevanceModel: config.fileRelevanceModel,
+        queryCacheTTL: config.queryCacheTTL,
+        relevanceFeedback: config.relevanceFeedback,
+    });
+    const chunks = new chunk_manager_1.ChunkManager({
+        useAST: config.useAST,
+        fallbackToRegex: config.fallbackToRegex,
+    });
     const tfidf = new tfidf_1.TFIDFService();
     return { indexer, searcher, chunks, tfidf };
 }
 var watch_manager_js_1 = require("./watch-manager.js");
 Object.defineProperty(exports, "RAGWatchManager", { enumerable: true, get: function () { return watch_manager_js_1.RAGWatchManager; } });
 Object.defineProperty(exports, "createWatchManager", { enumerable: true, get: function () { return watch_manager_js_1.createWatchManager; } });
+var protocol_integration_js_1 = require("./protocol-integration.js");
+Object.defineProperty(exports, "RAGClientService", { enumerable: true, get: function () { return protocol_integration_js_1.RAGClientService; } });
+Object.defineProperty(exports, "createRAGClientService", { enumerable: true, get: function () { return protocol_integration_js_1.createRAGClientService; } });

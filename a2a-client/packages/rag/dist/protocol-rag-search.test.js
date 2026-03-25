@@ -54,13 +54,32 @@ describe('toRagSearchResult', () => {
         expect(result).toHaveProperty('query', 'auth system');
         expect(result.results).toHaveLength(3); // Grouped by file: auth.js, auth.ts, jwt.js
         expect(result.files).toHaveLength(3);
-        // Check first result (highest score)
-        expect(result.results[0]).toEqual({
-            file: 'src/auth.js',
-            path: 'src/auth.js',
-            score: 0.95,
-            snippet: 'async function login(email, password)'
+        expect(result.results[0].file).toBe('src/auth.js');
+        expect(result.results[0].path).toBe('src/auth.js');
+        expect(result.results[0].score).toBe(0.95);
+        expect(result.results[0].matches?.length).toBeGreaterThan(0);
+    });
+    it('should paginate with page, pageSize, total, hasMore', () => {
+        const result = (0, protocol_rag_search_1.toRagSearchResult)(mockResults, {
+            query: 'q',
+            page: 1,
+            pageSize: 2,
+            maxResults: 10
         });
+        expect(result.results).toHaveLength(2);
+        expect(result.page).toBe(1);
+        expect(result.pageSize).toBe(2);
+        expect(result.total).toBe(3);
+        expect(result.hasMore).toBe(true);
+    });
+    it('should return hasMore false on last page', () => {
+        const result = (0, protocol_rag_search_1.toRagSearchResult)(mockResults, {
+            page: 2,
+            pageSize: 2,
+            maxResults: 10
+        });
+        expect(result.results).toHaveLength(1);
+        expect(result.hasMore).toBe(false);
     });
     it('should limit number of results', () => {
         const result = (0, protocol_rag_search_1.toRagSearchResult)(mockResults, { maxResults: 2 });

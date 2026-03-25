@@ -38,6 +38,8 @@ class RAGSearcher {
         this.queryCache = new Map();
         this.defaultCacheTTL = config.queryCacheTTL ?? 5 * 60 * 1000; // 5 minutes default
         this.suggestions = new suggestions_js_1.SearchSuggestionsEngine({ maxSuggestions: 10 });
+        this.queryExpander = new suggestions_js_1.QueryExpander();
+        this.relevanceFeedbackEnabled = config.relevanceFeedback !== false;
     }
     /**
      * Save search indexes to cache for fast loading
@@ -639,6 +641,31 @@ class RAGSearcher {
         return this.suggestions.getSuggestions(query, options);
     }
     /**
+     * Report click feedback to improve future ranking
+     * Call this when user clicks/selects a search result
+     * @param query The original search query
+     * @param resultId The ID of the clicked result (file path or chunk ID)
+     */
+    reportClick(query, resultId) {
+        if (!this.relevanceFeedbackEnabled)
+            return;
+        // Learn from this interaction - strengthens relationship between query terms and result
+        this.queryExpander.learn(query, resultId);
+        console.log(`[RAG] Feedback recorded: "${query.substring(0, 50)}" -> ${resultId}`);
+    }
+    /**
+     * Get expanded query terms based on learned relevance
+     */
+    expandQuery(query) {
+        return this.queryExpander.expand(query);
+    }
+    /**
+     * Enable/disable relevance feedback learning
+     */
+    setRelevanceFeedback(enabled) {
+        this.relevanceFeedbackEnabled = enabled;
+    }
+    /**
      * Get suggestions by type (function, class, method, etc.)
      */
     getSuggestionsByType(type, limit = 10) {
@@ -674,7 +701,9 @@ class RAGSearcher {
             allowedDirs: options.allowedDirs,
             allowedExtensions: options.allowedExtensions,
             maxResults: options.maxResults,
-            snippetConfig: options.snippetConfig
+            snippetConfig: options.snippetConfig,
+            page: options.page,
+            pageSize: options.pageSize
         });
     }
 }

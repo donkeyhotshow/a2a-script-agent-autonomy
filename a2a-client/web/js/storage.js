@@ -62,9 +62,11 @@
                 }
                 try {
                     const data = JSON.parse(text);
-                    return data.value;
+                    // Handle both { value: ... } format and direct string format
+                    return data.value !== undefined ? data.value : data;
                 } catch {
-                    return null;
+                    // If not JSON, return the text directly
+                    return text;
                 }
             } catch (error) {
                 console.error('[CustomStorage] Get failed:', error.message || error);
@@ -77,15 +79,18 @@
          */
         async setItem(key, value) {
             try {
+                // Always serialize as JSON
+                const body = JSON.stringify({
+                    value: typeof value === 'string' ? value : value,
+                    timestamp: new Date().toISOString()
+                });
+                
                 const response = await storageFetch(`${STORAGE_BASE}/${this.namespace}/${key}`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({
-                        value: value,
-                        timestamp: new Date().toISOString()
-                    })
+                    body: body
                 });
 
                 if (!response.ok) {

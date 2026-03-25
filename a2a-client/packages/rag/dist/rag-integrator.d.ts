@@ -1,7 +1,7 @@
 /**
  * RAG Integrator - Connects File Scanner with RAG System
  */
-import type { ScannedFile } from '@a2a/fs-utils';
+import type { ScannedFile } from '@a2a/execution/fs-utils';
 export interface RAGIntegratorConfig {
     projectPath?: string;
     includePatterns?: string[];
@@ -24,7 +24,7 @@ export declare class RAGIntegrator {
     isWatching: boolean;
     private fileCache;
     constructor(config?: RAGIntegratorConfig);
-    scanAndIndex(): Promise<import('@a2a/fs-utils').ScanResult>;
+    scanAndIndex(): Promise<import('@a2a/execution/fs-utils').ScanResult>;
     indexFile(file: ScannedFile | IndexFileInput): Promise<{
         success: boolean;
         file: ScannedFile | IndexFileInput;

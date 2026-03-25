@@ -4,8 +4,8 @@
 
 import fs from 'fs/promises';
 import path from 'path';
-import {FileScanner, GlobMatcher} from '@a2a/fs-utils';
-import type {ScannedFile} from '@a2a/fs-utils';
+import {FileScanner, GlobMatcher} from '@a2a/execution/fs-utils';
+import type {ScannedFile} from '@a2a/execution/fs-utils';
 import {RAGIndexer} from './indexer.js';
 import {ChunkManager} from './chunk-manager.js';
 import chokidar from 'chokidar';
@@ -48,7 +48,7 @@ export class RAGIntegrator {
         this.chunkManager = new ChunkManager(config as import('./chunk-manager.js').ChunkManagerConfig);
     }
 
-    async scanAndIndex(): Promise<import('@a2a/fs-utils').ScanResult> {
+    async scanAndIndex(): Promise<import('@a2a/execution/fs-utils').ScanResult> {
         const scanResult = await this.scanner.scan();
         for (const file of scanResult.files) {
             await this.indexFile(file);

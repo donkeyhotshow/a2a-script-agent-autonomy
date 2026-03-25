@@ -235,94 +235,145 @@
         /**
          * Wire modal content with event handlers
          */
-        _wireModalContent(type, panel) {
-            const content = panel.getContentEl();
-            if (!content) return;
-
-            if (type === 'settings') {
-                global.ProjectManager?.getStoredClientApiUrl?.().then((url) => {
-                    const normalized = global.normalizeStoredClientApiUrl?.(url);
-                    const input = content.querySelector('#settingsApiUrl');
-                    if (input) input.value = normalized != null && normalized !== '' ? String(normalized) : '';
-                });
-                content.querySelector('#cancelSettings')?.addEventListener('click', () => panel.close());
-                content.querySelector('#saveSettings')?.addEventListener('click', () => {
-                    const input = content.querySelector('#settingsApiUrl');
-                    const url = input?.value?.trim();
-                    if (!url) {
-                        console.error('[AppTask] Settings: Client API URL is required');
-                        return;
-                    }
-                    const base = String(url).replace(/\/?$/, '');
-                    if (!base) {
-                        console.error('[AppTask] Settings: invalid Client API URL');
-                        return;
-                    }
-                    global.ProjectManager?.setStoredClientApiUrl(url).then(() => {
-                        if (global.apiIntegration) global.apiIntegration.configure({ apiBase: base });
-                        panel.close();
-                    });
-                });
-            }
-            if (type === 'projects') {
-                content.querySelector('#cancelProjects')?.addEventListener('click', () => panel.close());
-                const grid = content.querySelector('#projectsGrid');
-                if (grid) global.AppUIManagers?._loadProjectsIntoGrid?.(grid);
-                content.addEventListener('click', (e) => {
-                    const card = e.target.closest('.project-card');
-                    if (!card) return;
-                    const projectId = card.dataset.projectId;
-                    if (!projectId) return;
-                    global.ProjectManager?.setSelectedProjectId(projectId);
-                    const sel = document.getElementById('projectSelect');
-                    if (sel) {
-                        if (!Array.from(sel.options).some((o) => o.value === projectId)) {
-                            const opt = document.createElement('option');
-                            opt.value = projectId;
-                            opt.textContent = card.querySelector('.project-name')?.textContent || projectId;
-                            sel.appendChild(opt);
-                        }
-                        sel.value = projectId;
-                    }
-                    panel.close();
-                });
-            }
-        },
-
-        _bindChainStatusControls(modal) {
-            if (this._chainStatusControlsBound) return;
-            if (!modal) return;
-            const closeButtons = modal.querySelectorAll('#closeChainStatusModal, #cancelChainStatus');
-            closeButtons.forEach((btn) => {
-                btn.addEventListener('click', () => this._closeChainStatusModal());
-            });
-            modal.querySelector('#refreshChainStatus')?.addEventListener('click', () => this._renderChainStatusPanel(modal));
-            modal.addEventListener('click', (event) => {
-                if (event.target === modal) this._closeChainStatusModal();
-            });
-            this._chainStatusControlsBound = true;
-        }
-
-        _openChainStatusModal() {
-            const modal = document.getElementById('chainStatusModal');
-            if (!modal) return;
-            this._bindChainStatusControls(modal);
-            this._renderChainStatusPanel(modal);
-            modal.classList.add('active');
-        }
-
-        _closeChainStatusModal() {
-            const modal = document.getElementById('chainStatusModal');
-            if (!modal) return;
-            modal.classList.remove('active');
-        }
-
+        _wireModalContent(type, panel) {
+
+            const content = panel.getContentEl();
+
+            if (!content) return;
+
+
+
+            if (type === 'settings') {
+
+                global.ProjectManager?.getStoredClientApiUrl?.().then((url) => {
+
+                    const normalized = global.normalizeStoredClientApiUrl?.(url);
+
+                    const input = content.querySelector('#settingsApiUrl');
+
+                    if (input) input.value = normalized != null && normalized !== '' ? String(normalized) : '';
+
+                });
+
+                content.querySelector('#cancelSettings')?.addEventListener('click', () => panel.close());
+
+                content.querySelector('#saveSettings')?.addEventListener('click', () => {
+
+                    const input = content.querySelector('#settingsApiUrl');
+
+                    const url = input?.value?.trim();
+
+                    if (!url) {
+
+                        console.error('[AppTask] Settings: Client API URL is required');
+
+                        return;
+
+                    }
+
+                    const base = String(url).replace(/\/?$/, '');
+
+                    if (!base) {
+
+                        console.error('[AppTask] Settings: invalid Client API URL');
+
+                        return;
+
+                    }
+
+                    global.ProjectManager?.setStoredClientApiUrl(url).then(() => {
+
+                        if (global.apiIntegration) global.apiIntegration.configure({ apiBase: base });
+
+                        panel.close();
+
+                    });
+
+                });
+
+            }
+
+            if (type === 'projects') {
+
+                content.querySelector('#cancelProjects')?.addEventListener('click', () => panel.close());
+
+                const grid = content.querySelector('#projectsGrid');
+
+                if (grid) global.AppUIManagers?._loadProjectsIntoGrid?.(grid);
+
+                content.addEventListener('click', (e) => {
+
+                    const card = e.target.closest('.project-card');
+
+                    if (!card) return;
+
+                    const projectId = card.dataset.projectId;
+
+                    if (!projectId) return;
+
+                    global.ProjectManager?.setSelectedProjectId(projectId);
+
+                    const sel = document.getElementById('projectSelect');
+
+                    if (sel) {
+
+                        if (!Array.from(sel.options).some((o) => o.value === projectId)) {
+
+                            const opt = document.createElement('option');
+
+                            opt.value = projectId;
+
+                            opt.textContent = card.querySelector('.project-name')?.textContent || projectId;
+
+                            sel.appendChild(opt);
+
+                        }
+
+                        sel.value = projectId;
+
+                    }
+
+                    panel.close();
+
+                });
+
+            }
+        },
+
+
+        _bindChainStatusControls(modal) {
+            if (this._chainStatusControlsBound) return;
+            if (!modal) return;
+            const closeButtons = modal.querySelectorAll('#closeChainStatusModal, #cancelChainStatus');
+            closeButtons.forEach((btn) => {
+                btn.addEventListener('click', () => this._closeChainStatusModal());
+            });
+            modal.querySelector('#refreshChainStatus')?.addEventListener('click', () => this._renderChainStatusPanel(modal));
+            modal.addEventListener('click', (event) => {
+                if (event.target === modal) this._closeChainStatusModal();
+            });
+            this._chainStatusControlsBound = true;
+        },
+
+        _openChainStatusModal() {
+            const modal = document.getElementById('chainStatusModal');
+            if (!modal) return;
+            this._bindChainStatusControls(modal);
+            this._renderChainStatusPanel(modal);
+            modal.classList.add('active');
+        },
+
+        _closeChainStatusModal() {
+            const modal = document.getElementById('chainStatusModal');
+            if (!modal) return;
+            modal.classList.remove('active');
+        },
+
         _renderChainStatusPanel(source) {
             const container = source?.getContentEl?.()?.querySelector('#chainStatusList') ?? source?.querySelector?.('#chainStatusList');
             if (!container) return;
             container.innerHTML = CHAIN_STATUS_ITEMS.map(buildChainStatusItem).join('');
         }
-
     };
     // Export
     global.AppEventHandlers = AppEventHandlers;

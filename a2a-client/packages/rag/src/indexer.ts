@@ -4,7 +4,7 @@
 
 import fs from 'fs/promises';
 import path from 'path';
-import {IgnoreDetector} from '@a2a/fs-utils';
+import {IgnoreDetector} from '@a2a/execution/fs-utils';
 import {ChunkManager, type Chunk, type ChunkManagerConfig} from './chunk-manager.js';
 import {scoreFileRelevance} from './file-relevance.js';
 import type {FileRelevanceLabel, FileRelevanceModel} from './file-relevance';

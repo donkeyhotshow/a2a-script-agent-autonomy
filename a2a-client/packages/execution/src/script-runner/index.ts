@@ -5,7 +5,9 @@
  * TODO(Task-04): integrate with api-client createExecuteCode; sandbox/config per Task 39
  */
 
-import {VM} from 'vm2';
+// NOTE: `vm2` is optional at runtime.
+// `client-api` startup should not fail just because `vm2` isn't installed.
+// We load it lazily inside `executeScript()` and fall back to Node's `vm`.
 
 export interface ScriptResult {
     success: boolean;
@@ -68,13 +70,40 @@ export async function executeScript(
             };
         }
 
-        const vm = new VM({
-            timeout: 30000,
-            sandbox,
-        });
+        // Try `vm2` first (preferred sandbox). If it's not installed, fall back to `vm`.
+        let result: unknown;
+        let duration: number;
 
-        const result = await vm.run(wrappedCode);
-        const duration = Date.now() - startTime;
+        const vm2 = (() => {
+            try {
+                // eslint-disable-next-line @typescript-eslint/no-var-requires
+                return require('vm2') as {VM: new (opts: any) => {run: (code: string) => unknown}};
+            } catch {
+                return null;
+            }
+        })();
+
+        if (vm2 && vm2.VM) {
+            const vm = new vm2.VM({
+                timeout: 30000,
+                sandbox,
+            });
+            result = await vm.run(wrappedCode);
+        } else {
+            // Minimal fallback: Node's `vm` module. This is less safe than `vm2`,
+            // but keeps the app booting and script runner usable.
+            // eslint-disable-next-line @typescript-eslint/no-var-requires
+            const nodeVm = require('vm') as typeof import('vm');
+            const script = new nodeVm.Script(wrappedCode);
+            const ctx = nodeVm.createContext(sandbox);
+            result = script.runInContext(ctx, {timeout: 30000});
+            // `wrappedCode` returns an async IIFE, so the result is usually a Promise.
+            if (result && typeof (result as any).then === 'function') {
+                result = await result;
+            }
+        }
+
+        duration = Date.now() - startTime;
         return {success: true, data: result, duration_ms: duration};
     } catch (error) {
         const duration = Date.now() - startTime;

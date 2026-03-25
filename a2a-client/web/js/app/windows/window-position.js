@@ -4,9 +4,9 @@
 (function (global) {
     'use strict';
 
-    // Per-device key: screen resolution + pixel ratio as fingerprint
+    // Per-device key: screen resolution + pixel ratio as fingerprint (safe characters only)
     function _deviceKey() {
-        return `${screen.width}x${screen.height}@${devicePixelRatio || 1}`;
+        return `${screen.width}x${screen.height}_${Math.round((devicePixelRatio || 1) * 100)}`;
     }
 
     const WindowPosition = {
@@ -31,7 +31,8 @@
                 const key = `window_state_${sessionId}_${_deviceKey()}`;
                 const saved = await StorageAPI.ui.getItem(key);
                 if (saved) {
-                    return JSON.parse(saved);
+                    // saved can be either a string (JSON) or already-parsed object
+                    return typeof saved === 'string' ? JSON.parse(saved) : saved;
                 }
             } catch (e) {
                 console.warn('[WindowPosition] Failed to load window state:', e);

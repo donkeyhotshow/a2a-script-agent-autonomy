@@ -9,7 +9,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.RAGIndexer = void 0;
 const promises_1 = __importDefault(require("fs/promises"));
 const path_1 = __importDefault(require("path"));
-const fs_utils_1 = require("@a2a/fs-utils");
+const fs_utils_1 = require("@a2a/execution/fs-utils");
 const chunk_manager_js_1 = require("./chunk-manager.js");
 const file_relevance_js_1 = require("./file-relevance.js");
 const DEFAULT_EXCLUDE = [
@@ -110,6 +110,115 @@ class RAGIndexer {
             }
         }
         console.log(`[RAG] Indexing complete: ${changedCount} changed, ${unchangedCount} unchanged, ${skippedCount} skipped`);
+        const indexFilePath = path_1.default.join(this.indexPath, 'rag-files.json');
+        try {
+            await promises_1.default.unlink(indexFilePath);
+        }
+        catch {
+            // ignore
+        }
+        await promises_1.default.writeFile(indexFilePath, JSON.stringify(index, null, 2));
+        this.index = index;
+        return index;
+    }
+    /**
+     * Index project with parallel batch processing for faster indexing
+     * @param batchSize Number of files to process in parallel (default: 10)
+     * @param force Force full reindex
+     */
+    async indexProjectParallel(batchSize = 10, force = false) {
+        await promises_1.default.mkdir(this.indexPath, { recursive: true });
+        await this._ensureIgnoreDetector();
+        // Try to load existing index for incremental indexing
+        let existingIndex = null;
+        if (!force) {
+            try {
+                const indexFilePath = path_1.default.join(this.indexPath, 'rag-files.json');
+                const existingIndexRaw = await promises_1.default.readFile(indexFilePath, 'utf-8');
+                existingIndex = JSON.parse(existingIndexRaw);
+                console.log('[RAG] Loaded existing index with', existingIndex.files.length, 'files');
+            }
+            catch {
+                console.log('[RAG] No existing index found, starting fresh');
+            }
+        }
+        // Build hash map of existing index for fast lookup
+        const existingHashes = new Map();
+        if (existingIndex) {
+            for (const file of existingIndex.files) {
+                existingHashes.set(file.path, file.hash);
+            }
+        }
+        const files = await this.walkDirectory(this.projectPath);
+        const index = {
+            version: '1.0',
+            timestamp: new Date().toISOString(),
+            projectPath: this.projectPath,
+            files: [],
+            chunks: [],
+        };
+        // Separate files into unchanged (can skip) and need processing
+        const unchangedFiles = [];
+        const filesToProcess = [];
+        for (const filePath of files) {
+            try {
+                const relativePath = path_1.default.relative(this.projectPath, filePath).replace(/\\/g, '/');
+                const content = await promises_1.default.readFile(filePath, 'utf-8');
+                const newHash = this.chunkManager.hashContent(content);
+                const existingHash = existingHashes.get(relativePath);
+                if (existingHash && existingHash === newHash && !force) {
+                    // File unchanged - use existing chunks
+                    const existingFile = existingIndex?.files.find(f => f.path === relativePath);
+                    const existingChunks = existingIndex?.chunks.filter(c => c.filePath === relativePath);
+                    if (existingFile && existingChunks && existingChunks.length > 0) {
+                        unchangedFiles.push({ file: existingFile, chunks: existingChunks });
+                    }
+                    else {
+                        filesToProcess.push(filePath);
+                    }
+                }
+                else {
+                    filesToProcess.push(filePath);
+                }
+            }
+            catch {
+                // Skip problematic files, will count them later
+            }
+        }
+        console.log(`[RAG] Parallel indexing: ${unchangedFiles.length} unchanged, ${filesToProcess.length} to process`);
+        // Process unchanged files immediately
+        for (const { file, chunks } of unchangedFiles) {
+            index.files.push(file);
+            index.chunks.push(...chunks);
+        }
+        // Process files in parallel batches
+        let processedCount = 0;
+        let skippedCount = 0;
+        for (let i = 0; i < filesToProcess.length; i += batchSize) {
+            const batch = filesToProcess.slice(i, i + batchSize);
+            const results = await Promise.all(batch.map(async (filePath) => {
+                try {
+                    return await this.indexFile(filePath);
+                }
+                catch {
+                    return null;
+                }
+            }));
+            for (const result of results) {
+                if (result) {
+                    index.files.push(result.file);
+                    index.chunks.push(...result.chunks);
+                    processedCount++;
+                }
+                else {
+                    skippedCount++;
+                }
+            }
+            if (i % (batchSize * 5) === 0) {
+                console.log(`[RAG] Progress: ${Math.min(i + batchSize, filesToProcess.length)}/${filesToProcess.length} files`);
+            }
+        }
+        console.log(`[RAG] Parallel indexing complete: ${processedCount} processed, ${unchangedFiles.length} unchanged, ${skippedCount} skipped`);
         const indexFilePath = path_1.default.join(this.indexPath, 'rag-files.json');
         try {
             await promises_1.default.unlink(indexFilePath);
@@ -279,7 +388,22 @@ class RAGIndexer {
      * Health check for the index - returns diagnostics
      */
     async health() {
-        const index = await this.loadIndex();
+        // Load index from disk
+        let index;
+        try {
+            const indexFilePath = path_1.default.join(this.indexPath, 'rag-files.json');
+            const content = await promises_1.default.readFile(indexFilePath, 'utf-8');
+            index = JSON.parse(content);
+        }
+        catch {
+            return {
+                staleFiles: [],
+                orphanedChunks: 0,
+                coverage: 0,
+                totalFiles: 0,
+                totalChunks: 0,
+            };
+        }
         const staleFiles = [];
         let orphanedChunks = 0;
         // Check for stale files (files that no longer exist)
@@ -293,14 +417,14 @@ class RAGIndexer {
             }
         }
         // Check for orphaned chunks (chunks without corresponding files)
-        const filePaths = new Set(index.files.map(f => f.path));
+        const filePaths = new Set(index.files.map((f) => f.path));
         for (const chunk of index.chunks) {
             if (!filePaths.has(chunk.filePath)) {
                 orphanedChunks++;
             }
         }
         // Calculate coverage (files with chunks / total files)
-        const filesWithChunks = new Set(index.chunks.map(c => c.filePath));
+        const filesWithChunks = new Set(index.chunks.map((c) => c.filePath));
         const coverage = index.files.length > 0
             ? filesWithChunks.size / index.files.length
             : 0;

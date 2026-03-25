@@ -32,6 +32,26 @@ export interface RAGConfig {
      * If not provided, only heuristics are used.
      */
     fileRelevanceModel?: FileRelevanceModel;
+    /**
+     * Enable AST-based chunking for supported languages
+     * @default true
+     */
+    useAST?: boolean;
+    /**
+     * Fallback to regex chunking if AST parsing fails
+     * @default true
+     */
+    fallbackToRegex?: boolean;
+    /**
+     * Default TTL for query cache in milliseconds
+     * @default undefined (caching disabled)
+     */
+    queryCacheTTL?: number;
+    /**
+     * Enable relevance feedback learning from clicks
+     * @default true
+     */
+    relevanceFeedback?: boolean;
 }
 export interface RAGInstance {
     indexer: RAGIndexer;
@@ -45,3 +65,4 @@ export type { SearchFilters } from './searcher/types.js';
 export type { SuggestionItem } from './suggestions.js';
 export { RAGIndexer, RAGSearcher, ChunkManager, TFIDFService, RAGIntegrator, SemanticSearcher, BM25Scorer, createBM25Scorer, RerankerClient, createReranker, HybridSearcher, createHybridSearcher, MeilisearchClient, createMeilisearchClient, ASTChunker, createASTChunker, QueryUnderstandingEngine, createQueryUnderstandingEngine, INTENT_TYPES, SearchSuggestionsEngine, createSuggestionsEngine, QueryExpander, createQueryExpander, CodeSimilarityEngine, createSimilarityEngine, };
 export { RAGWatchManager, createWatchManager } from './watch-manager.js';
+export { RAGClientService, createRAGClientService, type ProtocolRAGConfig, type ProtocolSearchInput, type ProtocolSearchOutput, type ProtocolIndexOutput, type ProtocolHealthOutput, } from './protocol-integration.js';

@@ -38,3 +38,8 @@
     }
   ]
 }
+/**
+ * NOTE: The prompt (dialog-request.md) should instruct LLM to return Pattern A (form with textarea).
+ * If LLM returns a tool (read-file, rag-search, etc.), it means the prompt wasn't followed.
+ * The transform simply passes through what the LLM returned.
+ */
