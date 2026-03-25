@@ -430,12 +430,14 @@ export function getExecuteActionType(response: { execute?: ExecutePayload }): ke
 /**
  * Check if response indicates completion
  */
-export function isCompleted(response: { result?: ActionResultPayload; context?: { execution?: { status?: string } } }): boolean {
-    // Check explicit completed flag
+export function isCompleted(response: {
+    result?: ActionResultPayload;
+    context?: { execution?: { status?: string } };
+    execute?: { completed?: boolean };
+}): boolean {
     if (response?.result?.completed) return true;
-    // Check execution.status = 'completed'
+    if (response?.execute?.completed) return true;
     if (response?.context?.execution?.status === 'completed') return true;
-    // Check empty result object (legacy)
     return !!(response?.result && Object.keys(response.result).length === 0);
 }
 
@@ -449,11 +451,20 @@ export interface FinalResult {
 }
 
 /**
- * Extract final result from response
+ * Optional metadata when the step is complete (from top-level `result`, not legacy `finalResult`).
  */
-export function getFinalResult(response: { finalResult?: unknown }): FinalResult | null {
-    if (!response?.finalResult) return null;
-    return response.finalResult as FinalResult;
+export function getFinalResult(response: {
+    result?: Record<string, unknown>;
+    context?: { execution?: { action?: string } };
+}): FinalResult | null {
+    const r = response?.result;
+    if (!r || typeof r !== 'object' || r.completed !== true) return null;
+    const { completed: _c, ...summary } = r;
+    if (Object.keys(summary).length === 0) return null;
+    return {
+        action: String(response.context?.execution?.action ?? 'task'),
+        summary: summary as Record<string, unknown>,
+    };
 }
 
 /**

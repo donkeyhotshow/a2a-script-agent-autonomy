@@ -145,15 +145,25 @@
         const interruptTraceHtml = buildInterruptTraceHtml(context);
         executionStepHtml = executionStepHtml + interruptTraceHtml;
 
-        // Build finalResult display
+        const result = data?.result;
+        const protocolCompleted =
+            execution?.status === 'completed' ||
+            execute?.completed === true ||
+            (result && typeof result === 'object' && result.completed === true);
+
+        // Completion banner: use execution + top-level result only (not execute.finalResult)
         let finalResultHtml = '';
-        if (execution?.status === 'completed' || execute.finalResult) {
-            const finalResult = execute.finalResult || {};
-            const summary = finalResult.summary || {};
-            const actionName = finalResult.action || execution?.action || 'unknown';
+        if (protocolCompleted) {
+            const summary = {};
+            if (result && typeof result === 'object') {
+                for (const [k, v] of Object.entries(result)) {
+                    if (k !== 'completed') summary[k] = v;
+                }
+            }
+            const actionName = execution?.action || 'task';
 
             let summaryHtml = '';
-            if (typeof summary === 'object' && summary !== null) {
+            if (typeof summary === 'object' && summary !== null && Object.keys(summary).length > 0) {
                 summaryHtml = Object.entries(summary)
                     .map(([key, value]) => `<div class="summary-item"><span class="summary-key">${escapeHtml(String(key))}:</span> <span class="summary-value">${escapeHtml(String(value))}</span></div>`)
                     .join('');
@@ -172,7 +182,6 @@
 
         // Build result display
         let resultHtml = '';
-        const result = data?.result;
         if (result && typeof result === 'object') {
             resultHtml = renderResultBlock(result);
         }

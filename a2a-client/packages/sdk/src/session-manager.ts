@@ -12,6 +12,11 @@ import type {
     ProgressCallbacks
 } from './types/session.js';
 import {unwrapEnvelope} from './client-api-envelope.js';
+import {
+    buildFetchHeaders,
+    normalizeSessionResponse,
+    normalizeSessionsList
+} from '../../../shared/api-helpers.js';
 
 /**
  * Lightweight EventEmitter implementation for browser/Node compatibility
@@ -153,8 +158,7 @@ export class SessionManager extends EventEmitter {
         body: Record<string, unknown> | null = null
     ): Promise<Record<string, unknown>> {
         const url = `${this.serverUrl}${path}`;
-        const headers: Record<string, string> = {'Content-Type': 'application/json'};
-        if (this.token) headers['Authorization'] = `Bearer ${this.token}`;
+        const headers: Record<string, string> = buildFetchHeaders({ token: this.token });
         if (this.clientId) headers['X-Client-ID'] = this.clientId;
         const options: RequestInit & { timeout?: number } = {method, headers, timeout: this.timeout};
         if (body) options.body = JSON.stringify(body);
@@ -242,7 +246,9 @@ export class SessionManager extends EventEmitter {
      */
     async getSessionDetails(sessionId: string): Promise<Session> {
         const res = await this.request('GET', `/sessions/${sessionId}`);
-        return unwrapEnvelope<Session>(res) as Session;
+        const payload = unwrapEnvelope<Session>(res) as Session;
+        const normalized = normalizeSessionResponse(payload);
+        return (normalized ?? payload) as Session;
     }
 
     /**
@@ -256,7 +262,7 @@ export class SessionManager extends EventEmitter {
         if (filter.offset != null) params.append('offset', String(filter.offset));
         
         const res = await this.request('GET', `/sessions?${params}`);
-        return (res as { data?: SessionMetadata[] }).data ?? [];
+        return normalizeSessionsList(res, filter.projectId) as SessionMetadata[];
     }
 
     /**

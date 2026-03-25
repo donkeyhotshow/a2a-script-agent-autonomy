@@ -4,6 +4,12 @@
 
 import type { AsyncClientOptions, AsyncOperationResult, AsyncOperationStatus } from './types/async-client.js';
 import { AsyncClientError } from './types/async-client.js';
+import {
+    DEFAULT_POLL_INTERVAL,
+    DEFAULT_POLL_TIMEOUT,
+    isPromiseResolved,
+    isPromiseFailed
+} from '../../../shared/api-helpers.js';
 
 /**
  * Async client for handling long-running operations
@@ -27,7 +33,7 @@ export class AsyncClient {
             onProgress?: (status: AsyncOperationStatus) => void;
         }
     ): Promise<AsyncOperationResult<T>> {
-        const { timeout = 300000, pollInterval = 1000, onProgress } = options || {};
+        const { timeout = DEFAULT_POLL_TIMEOUT, pollInterval = DEFAULT_POLL_INTERVAL, onProgress } = options || {};
 
         // Execute the operation to get promiseId
         const { promiseId } = await operation();
@@ -78,13 +84,13 @@ export class AsyncClient {
                     onProgress(status);
                 }
 
-                if (status.status === 'completed') {
+                if (isPromiseResolved(status)) {
                     return {
                         success: true,
                         data: status.data,
                         metadata: status.metadata
                     };
-                } else if (status.status === 'failed') {
+                } else if (isPromiseFailed(status)) {
                     return {
                         success: false,
                         error: status.error,

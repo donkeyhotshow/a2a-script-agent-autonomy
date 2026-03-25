@@ -3,18 +3,9 @@
  * and surface user-facing fields: message, optional llmMessage, attachments.
  */
 
-const INTERNAL_CLIENT_ACTION_KEYS = new Set([
-    'rag-search',
-    'read-file',
-    'write-file',
-    'script',
-    'execute-command',
-    'list-directory',
-    'grep-search',
-    'file-exists',
-    'edit-patch',
-    'run-script',
-]);
+import {INTERNAL_CLIENT_ACTION_KEYS} from '../../../../shared/internal-client-action-keys.mjs';
+
+const INTERNAL_CLIENT_ACTION_KEYS_SET = new Set(INTERNAL_CLIENT_ACTION_KEYS);
 
 /**
  * @param {unknown} execute - raw execute from A2A / step record
@@ -77,7 +68,7 @@ export function buildWebExecute(execute) {
             ? runScriptPayload.scriptId.trim()
             : '';
 
-    for (const k of INTERNAL_CLIENT_ACTION_KEYS) {
+    for (const k of INTERNAL_CLIENT_ACTION_KEYS_SET) {
         delete ex[k];
     }
     delete ex.debug;

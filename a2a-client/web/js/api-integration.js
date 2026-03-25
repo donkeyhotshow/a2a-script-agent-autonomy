@@ -12,55 +12,52 @@
  *   - messages.json - история сообщений
  */
 
+const globalScope = typeof window !== 'undefined' ? window : globalThis;
+const sharedApiHelpers = globalScope.__A2AApiHelpers || {};
+const {
+    normalizeApiBase: helperNormalizeApiBase,
+    buildClientA2aUrl: helperBuildClientA2aUrl,
+    buildFetchHeaders: helperBuildFetchHeaders,
+    normalizeSessionResponse: helperNormalizeSessionResponse,
+    normalizeSessionsList: helperNormalizeSessionsList
+} = sharedApiHelpers;
+
+const normalizeApiBaseHelper = helperNormalizeApiBase || function (raw) {
+    const str = String(raw || '').trim();
+    if (!str) return '/api';
+    return str.replace(/\/$/, '');
+};
+
+const buildA2aUrlHelper = function (apiBase, resourcePath) {
+    if (typeof helperBuildClientA2aUrl === 'function') {
+        return helperBuildClientA2aUrl(apiBase, resourcePath);
+    }
+    const path = String(resourcePath || '').replace(/^\//, '');
+    if (!apiBase) {
+        return `/api/a2a/${path}`;
+    }
+    const base = String(apiBase).replace(/\/?$/, '');
+    return `${base}/a2a/${path}`;
+};
+
+const buildFetchHeadersHelper = function (token, storageMode) {
+    if (typeof helperBuildFetchHeaders === 'function') {
+        return helperBuildFetchHeaders({ token, storageMode });
+    }
+    const headers = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    if (storageMode) headers['X-Storage-Mode'] = storageMode;
+    return headers;
+};
+
+const _normalizeSessionResponse = helperNormalizeSessionResponse;
+const _normalizeSessionsList = helperNormalizeSessionsList;
+
 class APIIntegration {
     constructor() {
         this.token = null;
         /** @type {string|null} Client API prefix (e.g. /api or http://host:3001/api); null = same-origin /api/a2a/... */
         this.apiBase = null;
-    }
-
-    /**
-     * Absolute Client API roots often omit /api (e.g. http://localhost:3001). Normalize to .../api.
-     */
-    _normalizeApiBase(raw) {
-        const s = String(raw).trim();
-        if (!s) return null;
-        if (s.startsWith('/')) {
-            const t = s.replace(/\/?$/, '');
-            if (!t) {
-                throw new Error('[API] _normalizeApiBase: relative apiBase cannot be empty');
-            }
-            return t;
-        }
-        try {
-            const u = new URL(s);
-            let p = u.pathname.replace(/\/$/, '');
-            if (!p || p === '/') {
-                u.pathname = '/api';
-            }
-            const out = u.toString().replace(/\/$/, '');
-            return out || `${u.origin}/api`;
-        } catch (err) {
-            console.error('[API] _normalizeApiBase URL parse failed:', err, raw);
-            const t = s.replace(/\/?$/, '');
-            if (!t) {
-                throw new Error('[API] _normalizeApiBase: invalid apiBase after parse failure');
-            }
-            return t;
-        }
-    }
-
-    /**
-     * Build URL for Client API routes mounted under .../api/a2a/ (same as Vite plugin).
-     * @param {string} resourcePath - e.g. "projects", "sessions", "sessions/id/messages?x=1"
-     */
-    _clientA2aUrl(resourcePath) {
-        const path = String(resourcePath || '').replace(/^\//, '');
-        if (!this.apiBase) {
-            return `/api/a2a/${path}`;
-        }
-        const base = String(this.apiBase).replace(/\/?$/, '');
-        return `${base}/a2a/${path}`;
     }
 
     /**
@@ -72,10 +69,14 @@ class APIIntegration {
         }
         if ('apiBase' in options) {
             const s = options.apiBase == null ? '' : String(options.apiBase).trim();
-            this.apiBase = s ? this._normalizeApiBase(s) : null;
+            this.apiBase = s ? normalizeApiBaseHelper(s) : null;
         }
         console.log('[API] Configured token:', !!this.token, 'apiBase:', this.apiBase || '(default /api/a2a)');
         return this;
+    }
+
+    _clientA2aUrl(resourcePath) {
+        return buildA2aUrlHelper(this.apiBase, resourcePath);
     }
 
     /**
@@ -123,17 +124,9 @@ class APIIntegration {
      * Get headers for API requests (combined: base + storage mode)
      */
     _headers() {
-        const headers = { 'Content-Type': 'application/json' };
-        if (this.token) {
-            headers['Authorization'] = `Bearer ${this.token}`;
-        }
-        // Add storage mode if available
-        const win = typeof window !== 'undefined' ? window : globalThis;
-        const store = win.SessionStore;
-        if (store && typeof store.getStorageMode === 'function') {
-            headers['X-Storage-Mode'] = store.getStorageMode();
-        }
-        return headers;
+        const store = globalScope.SessionStore;
+        const storageMode = store && typeof store.getStorageMode === 'function' ? store.getStorageMode() : undefined;
+        return buildFetchHeadersHelper(this.token, storageMode);
     }
 
     /**
@@ -143,7 +136,7 @@ class APIIntegration {
      * @returns {Promise<Object>} Parsed JSON response
      */
     async _fetch(path, opts = {}) {
-        const url = this._clientA2aUrl(path);
+        const url = buildA2aUrlHelper(this.apiBase, path);
         const headers = { ...this._headers(), ...opts.headers };
         const res = await fetch(url, { ...opts, headers });
         if (!res.ok) {
@@ -157,15 +150,11 @@ class APIIntegration {
      */
     async getSessions(projectId = null) {
         const raw = await this._fetch('sessions');
-        let sessions = Array.isArray(raw) ? raw : (raw?.sessions ?? raw?.data);
-        if (!Array.isArray(sessions)) {
+        const normalized = typeof _normalizeSessionsList === 'function' ? _normalizeSessionsList(raw, projectId) : [];
+        if (!Array.isArray(normalized)) {
             throw new Error('getSessions: response must be an array or contain sessions/data array');
         }
-        // Filter by projectId if provided
-        if (projectId) {
-            sessions = sessions.filter(s => s.projectId === projectId || s.projectId === undefined);
-        }
-        return sessions;
+        return normalized;
     }
 
     /**
@@ -179,45 +168,7 @@ class APIIntegration {
         return raw?.session ?? raw?.data ?? raw;
     }
 
-    /**
-     * Normalize session response to consistent format
-     * Eliminates need for fallback chains in consumers
-     */
-    _normalizeSessionResponse(raw) {
-        if (!raw || typeof raw !== 'object') return null;
-
-        // Handle success envelope
-        let data = raw;
-        if (raw.success === true) {
-            data = raw.data ?? raw.session;
-        }
-        if (!data || typeof data !== 'object') return null;
-
-        // Ensure consistent structure
-        const sessionId = data.id || data.sessionId;
-        if (!sessionId) return null;
-
-        // Normalize messages (support multiple sources)
-        const messages = data.messages ?? data.context?.messages ?? [];
-
-        // Normalize execute (support multiple sources)
-        const execute = data.execute ?? data.context?.execute ?? data.currentExecute ?? null;
-
-        // Normalize context
-        const context = data.context ?? {};
-
-        return {
-            id: sessionId,
-            sessionId,
-            projectId: data.projectId,
-            title: data.title,
-            status: data.status,
-            asyncPending: data.asyncPending,
-            messages,
-            execute,
-            context
-        };
-    }
+    // Normalization delegated to shared helper (_normalizeSessionResponse)
 
     /**
      * Get session by ID (uses Vite plugin)
@@ -231,7 +182,8 @@ class APIIntegration {
         const raw = await this._fetch(`sessions/${encodeURIComponent(sessionId)}${q}`);
         console.log('[API] getSession response:', sessionId, 'asyncPending:', raw?.asyncPending, 'status:', raw?.status);
         
-        const normalized = this._normalizeSessionResponse(raw);
+        const normalized =
+            typeof _normalizeSessionResponse === 'function' ? _normalizeSessionResponse(raw) : null;
         if (!normalized) {
             throw new Error('getSession: unexpected response shape');
         }

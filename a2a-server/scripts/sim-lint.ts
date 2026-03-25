@@ -7,6 +7,7 @@
 import {readFileSync, existsSync, readdirSync, writeFileSync} from 'node:fs';
 import {join} from 'node:path';
 import {fileURLToPath} from 'node:url';
+import {INTERNAL_CLIENT_ACTION_KEYS} from '../../shared/internal-client-action-keys.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = join(__filename, '..');
@@ -42,19 +43,8 @@ const VALID_EXECUTE_TYPES = [
     'run-script'
 ];
 
-/** Keys stripped from `execute` for Web DTO — must not appear under top-level `execute` in golden `received.json`. Align with `web-execute-dto.js` INTERNAL_CLIENT_ACTION_KEYS. */
-const RECEIVED_EXECUTE_CLIENT_ONLY_KEYS = [
-    'rag-search',
-    'read-file',
-    'write-file',
-    'script',
-    'execute-command',
-    'list-directory',
-    'grep-search',
-    'file-exists',
-    'edit-patch',
-    'run-script'
-] as const;
+/** Keys stripped from `execute` for Web DTO — must not appear under top-level `execute` in golden `received.json`. Source: `shared/internal-client-action-keys.mjs`. */
+const RECEIVED_EXECUTE_CLIENT_ONLY_KEYS = INTERNAL_CLIENT_ACTION_KEYS as readonly string[];
 
 // ============================================
 // Типы

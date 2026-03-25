@@ -22,7 +22,6 @@ export interface ProcessResult {
     tasks?: Task[];
     taskAnalysis?: TaskAnalysis;
     execute?: ExecuteCommand;
-    finalResult?: { action: string; summary: Record<string, unknown> };
     error?: string;
     validationErrors?: ValidationError[];
     // ai_action follow-up fields

@@ -3,6 +3,8 @@
  * Extracted pure functions from stepRoutes.js
  */
 
+import { unwrapA2aInvokeBody } from '../../../../shared/client-api-envelope.mjs';
+
 /**
  * Whitelist context fields from invoke responses (keep in sync with
  * packages/sdk/src/server/lib/context-invoke-patch.ts).
@@ -50,18 +52,10 @@ export function pickInvokeContextPatch(src) {
 
 /**
  * A2A Server wraps payloads as { success: true, data: { execute, context, ... } }.
- * Unwrap to the inner object when present.
+ * Unwrap to the inner object when present (shared with @a2a/sdk client-api-envelope).
  */
 export function unwrapA2aResponse(serverResponse) {
-    if (!serverResponse || typeof serverResponse !== 'object') return null;
-    if (
-        serverResponse.success === true &&
-        serverResponse.data !== undefined &&
-        typeof serverResponse.data === 'object'
-    ) {
-        return serverResponse.data;
-    }
-    return serverResponse;
+    return unwrapA2aInvokeBody(serverResponse);
 }
 
 /**

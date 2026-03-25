@@ -239,10 +239,6 @@ export class FormRequestProcessor extends BaseRequestProcessor {
                     execute: {
                         message: 'Автоматичний режим вибрано. Очікуйте виконання...',
                     },
-                    finalResult: {
-                        action: 'auto_execute',
-                        summary: { mode: 'automatic', status: 'processing' },
-                    },
                 } as ProcessResult;
 
             case 'manual':
@@ -322,10 +318,6 @@ export class FormRequestProcessor extends BaseRequestProcessor {
                     execute: {
                         message: 'Agent режим активовано. LLM адаптується до вашої задачі...',
                     },
-                    finalResult: {
-                        action: 'agent',
-                        summary: { mode: 'agent', status: 'processing' },
-                    },
                     aiActions: {
                         action: 'agent',
                         mode: 'llm-driven',
@@ -356,10 +348,6 @@ export class FormRequestProcessor extends BaseRequestProcessor {
                     execute: {
                         message: 'Перенаправлення на Agent режим...',
                     },
-                    finalResult: {
-                        action: 'agent',
-                        summary: { mode: 'agent', status: 'processing' },
-                    },
                     aiActions: {
                         action: 'agent',
                         mode: 'llm-driven',
@@ -377,10 +365,6 @@ export class FormRequestProcessor extends BaseRequestProcessor {
                     selection: { choiceId, formId, timestamp: new Date().toISOString() },
                     execute: {
                         message: 'Декомпозиція задачі. Розбиття на підзадачі...',
-                    },
-                    finalResult: {
-                        action: 'task-decomposition',
-                        summary: { mode: 'decomposition', status: 'processing' },
                     },
                 } as ProcessResult;
 

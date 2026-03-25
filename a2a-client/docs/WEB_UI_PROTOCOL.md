@@ -42,6 +42,14 @@ The **server protocol** and simulation **`response.json`** still use a **single 
 | GET | `/api/a2a/sessions/{id}/latest` | Step summary; nested `session` uses same public DTO as GET session |
 | GET | `/api/a2a/sessions/{id}/messages` | Delta messages; includes `asyncPending` (not `promiseId`) |
 
+### Async polling URL matrix (three families)
+
+| Consumer | Base URL | Poll / status route | Notes |
+|----------|----------|---------------------|--------|
+| **A2A Server** (invoke result) | `A2A_SERVER_URL` (e.g. `http://localhost:3000`) | `GET /api/v1/requests/:promiseId/result` and `/status` | Full protocol; `result` includes filtered `context` + `execute` (see server `requests.routes`). |
+| **Vite Client API / Web UI** | Origin + `/api/a2a` | `GET /api/a2a/sessions/:id/async` (preferred); legacy `GET .../promise/:promiseId` | Session-centric; no `promiseId` required in UI JSON; ADR-0028 Client API vs raw A2A. |
+| **SDK `AsyncClient`** | `httpClient` base (often Client API or custom) | `GET /async/status/:promiseId` (relative to base) | **Not** the same path as Vite `/async`; wire `httpClient` to the service that implements `/async/status/*` or map to A2A `/api/v1/requests/.../result` in integrations. |
+
 ## Browser modules
 
 - **`action-executor.js`** — `submit` → if `asyncPending`, starts polling via `GET .../async` (storage mode). Non-storage mode may still poll by `promiseId` if the Client API has no `/async` route.
@@ -54,5 +62,6 @@ See [LOADER-BEHAVIOR.md](./LOADER-BEHAVIOR.md). Loader follows server/session st
 
 ## Related
 
+- Golden vs runtime filenames: [SESSION-ARTIFACTS-MAP.md](./SESSION-ARTIFACTS-MAP.md).
 - Session file layout: [AGENTS.md](../../AGENTS.md) (Session Storage Format).
 - Vite plugin daemon (Node): `a2a-client/vite-plugin-a2a/daemon/README.md` (polls A2A Server for other callers).

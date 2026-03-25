@@ -144,8 +144,7 @@ describe('SessionStore', () => {
                 }
             }
             
-            // Handle finalResult - task completed
-            if (execute?.finalResult) {
+            if (execute?.completed === true) {
                 this._state.status = 'completed';
             }
             

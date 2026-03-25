@@ -11,7 +11,10 @@
         return;
     }
 
-    const pollMs = root.timingMs('PROMISE_POLL_INTERVAL');
+    const helpers = global.__A2AApiHelpers || {};
+    const pollMs = helpers.DEFAULT_POLL_INTERVAL ?? root.timingMs('PROMISE_POLL_INTERVAL');
+    const isResolved = helpers.isPromiseResolved;
+    const isFailed = helpers.isPromiseFailed;
 
     root.createDialogPromise = function createDialogPromise() {
         let promiseId = null;
@@ -61,13 +64,13 @@
                         // For session-scoped, call checkFn without arguments
                         const result = sessionScoped ? await checkFn() : await checkFn(promiseId);
                         if (!result) return;
-                        if (result.completed || result.status === 'completed' || result.status === 'done' || result.status === 'idle' || result.execute != null) {
+                        if (isResolved ? isResolved(result) : result && (result.completed || result.status === 'completed' || result.status === 'done' || result.status === 'idle' || result.execute != null)) {
                             this._stopPolling();
                             this.setPending(false);
                             this.setStatus('completed');
                             emitter.emit('resolved', { promiseId, sessionScoped, result: result.result, execute: result.execute });
                         }
-                        if (result.status === 'failed' || result.status === 'error') {
+                        if (isFailed ? isFailed(result) : result && (result.status === 'failed' || result.status === 'error')) {
                             console.log('[DialogPromise] Failed state detected');
                             this._stopPolling();
                             this.setPending(false);

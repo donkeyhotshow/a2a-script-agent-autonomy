@@ -16,7 +16,6 @@ import { buildWebExecute } from '../../lib/web-execute-dto.js';
  * - execute (form, message)
  * - messages
  * - exchangeLog
- * - finalResult
  */
 export async function updateSessionWithServerResponse(
     project: Project,
@@ -72,19 +71,12 @@ export async function updateSessionWithServerResponse(
         }
     }
     
-    // Handle completed status - check multiple signals for completion
-    // 1. result.completed (golden contract - preferred)
-    // 2. execute.completed (backward compatibility)
-    // 3. finalResult (legacy)
+    // Completed status: protocol signals only (no duplicate execute.finalResult / top-level finalResult)
     const isResultCompleted = serverResponse?.result?.completed === true;
     const isExecuteCompleted = serverResponse?.execute?.completed === true;
-    
-    if (isResultCompleted || isExecuteCompleted || serverResponse?.finalResult) {
+
+    if (isResultCompleted || isExecuteCompleted) {
         updatedSession.status = 'COMPLETED';
-        if (serverResponse.finalResult) {
-            updatedSession.context = updatedSession.context || {};
-            updatedSession.context.finalResult = serverResponse.finalResult;
-        }
     }
     
     // Update messages from server response

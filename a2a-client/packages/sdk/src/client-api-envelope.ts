@@ -1,10 +1,13 @@
 /**
  * Unwrap Client API JSON: legacy `{ success, data }` or `{ success, session }` (Vite-aligned).
+ * A2A invoke: `{ success, data }` → inner payload (same as Vite `unwrapA2aResponse`).
+ *
+ * Source: `shared/client-api-envelope.mjs` (single module for SDK + Vite).
  */
-export function unwrapEnvelope<T = unknown>(res: unknown): T | undefined {
-    if (res == null || typeof res !== 'object') return res as T | undefined;
-    const r = res as { data?: T; session?: T };
-    if (r.data !== undefined) return r.data;
-    if (r.session !== undefined) return r.session;
-    return res as T;
-}
+export {
+    unwrapEnvelope,
+    unwrapA2aInvokeBody,
+} from '../../../../shared/client-api-envelope.mjs';
+
+/** @deprecated Use unwrapA2aInvokeBody */
+export { unwrapA2aInvokeBody as unwrapA2aSuccessPayload } from '../../../../shared/client-api-envelope.mjs';

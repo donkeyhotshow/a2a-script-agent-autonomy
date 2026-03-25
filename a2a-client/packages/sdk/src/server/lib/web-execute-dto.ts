@@ -2,18 +2,9 @@
  * Web UI execute DTO (SDK parity with vite-plugin-a2a web-execute-dto.js).
  */
 
-const INTERNAL_CLIENT_ACTION_KEYS = new Set([
-    'rag-search',
-    'read-file',
-    'write-file',
-    'script',
-    'execute-command',
-    'list-directory',
-    'grep-search',
-    'file-exists',
-    'edit-patch',
-    'run-script',
-]);
+import {INTERNAL_CLIENT_ACTION_KEYS} from '../../../../../../shared/internal-client-action-keys.mjs';
+
+const INTERNAL_CLIENT_ACTION_KEYS_SET = new Set(INTERNAL_CLIENT_ACTION_KEYS);
 
 function collectReadFileEntries(readFilePayload: unknown): Array<{ path: string }> {
     const out: Array<{ path: string }> = [];
@@ -109,7 +100,7 @@ export function buildWebExecute(execute: unknown): Record<string, unknown> | nul
             ? (runScriptPayload as { scriptId: string }).scriptId.trim()
             : '';
 
-    for (const k of INTERNAL_CLIENT_ACTION_KEYS) {
+    for (const k of INTERNAL_CLIENT_ACTION_KEYS_SET) {
         delete ex[k];
     }
     delete ex.debug;

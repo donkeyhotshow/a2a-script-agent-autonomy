@@ -10,35 +10,40 @@ import {requestService} from '../services/core/request/request.service.js';
 
 const router = Router();
 
+/** Context fields preserved on GET /requests/:id/result (align with simulations/SCHEMA.md). */
+const POLL_CONTEXT_KEYS = [
+    'task',
+    'execution',
+    'history',
+    'workbench',
+    'files',
+    'scratchpad',
+    'scratchpad_ops',
+] as const;
+
 /**
- * Filter out extra fields from response before sending to client.
- * Keep only: execute.message, execute.form, context.task, context.execution, context.history
+ * Filter extra top-level noise but keep full protocol execute + canonical context
+ * (workbench, files, scratchpad) so pollers match Client API / goldens.
  */
-function filterResponse(result: Record<string, unknown>): Record<string, unknown> {
+export function filterResponse(result: Record<string, unknown>): Record<string, unknown> {
     const filtered: Record<string, unknown> = {};
-    
-    // Copy top-level fields (except timestamp)
+
     if (result.execute !== undefined) {
         filtered.execute = result.execute;
     }
     if (result.context !== undefined) {
         const ctx = result.context as Record<string, unknown>;
         const filteredContext: Record<string, unknown> = {};
-        
-        // Keep only allowed context fields
-        if (ctx.task !== undefined) {
-            filteredContext.task = ctx.task;
+
+        for (const key of POLL_CONTEXT_KEYS) {
+            if (ctx[key] !== undefined) {
+                filteredContext[key] = ctx[key];
+            }
         }
-        if (ctx.execution !== undefined) {
-            filteredContext.execution = ctx.execution;
-        }
-        if (ctx.history !== undefined) {
-            filteredContext.history = ctx.history;
-        }
-        
+
         filtered.context = filteredContext;
     }
-    
+
     return filtered;
 }
 

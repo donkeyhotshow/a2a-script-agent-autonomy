@@ -67,9 +67,9 @@ flowchart TD
 
 A2A Server возвращает `{ data: { execute, context, result }, promiseId?, status? }`. Response:
 
-- `execute` содержит `form`, `message`, `wait`, `action`, `finalResult`.
+- `execute` содержит `form`, `message`, `wait`, `action`, опционально `completed`.
 - если `execute.form` не содержит `input`/`choices`, UI генерирует `autoContinue` (system-сообщение типа `auto-action`, `auto-script`, `auto-result`) и может продолжить без пользователя.
-- `execute.finalResult` переводит сессию в `completed`.
+- завершение: `result.completed` и/или `execute.completed` / `context.execution.status` (без дублирующего `finalResult`).
 - `context` (включая `workbench.sections`) сливается в `session.context`.
 
 **Web DTO Sanitization:** Перед отправкой на фронтенд (маршруты `/sessions/:id`, `/async` и т.д.), Client API пропускает `execute` через `buildWebExecute`. Это удаляет клиентские действия (`read-file`, `rag-search`) и формирует объект `attachments`, оставляя только "порцию данных", необходимую для UI.

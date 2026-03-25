@@ -49,13 +49,17 @@ const ExecuteCommandActionSchema = z.object({
   })
 });
 
-const MessageActionSchema = z.union([
+const MessageBodySchema = z.union([
   z.string(),
   z.object({
     content: z.string(),
     role: z.string().optional()
   })
 ]);
+
+const MessageActionSchema = z.object({
+  message: MessageBodySchema
+});
 
 const RagSearchActionSchema = z.object({
   'rag-search': z.object({
@@ -185,7 +189,7 @@ export function validateExecuteCommandAction(action: unknown): ValidationResult 
 }
 
 export function validateMessageAction(action: unknown): ValidationResult {
-  return createActionValidator(MessageActionSchema)(action);
+  return createActionValidator(MessageBodySchema)(action);
 }
 
 export function validateRagSearchAction(action: unknown): ValidationResult {

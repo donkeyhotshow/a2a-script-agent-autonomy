@@ -28,6 +28,7 @@ import {
 } from '../../lib/agent-rag-chain.js';
 import { pickInvokeContextPatch } from '../../lib/context-invoke-patch.js';
 import { buildWebExecute, sanitizeApiRecordExecuteFields } from '../../lib/web-execute-dto.js';
+import { buildInitialInvokeRequestBody } from '../../lib/first-invoke-payload.js';
 
 function getStepNum(session: { metadata?: Record<string, unknown> }): number {
     const n = session.metadata?.stepNum;
@@ -162,15 +163,11 @@ router.post('/', async (req: Request, res: Response) => {
         if (body.task) {
             try {
                 const serverBase = await getServerBaseUrl();
-                const requestBody = {
-                    context: {
-                        version: '2.0',
-                        session_id: sessionId,
-                        execution: { action: 'task', step: 'new' },
-                        ...session.context,
-                    },
-                    result: { message: body.task },
-                };
+                const requestBody = buildInitialInvokeRequestBody({
+                    sessionId,
+                    task: body.task,
+                    extraContext: session.context && typeof session.context === 'object' ? session.context : {},
+                });
 
                 const err = validateRequestToServer({ task: body.task, context: requestBody.context });
                 if (err) {

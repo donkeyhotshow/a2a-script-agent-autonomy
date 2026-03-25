@@ -16,6 +16,7 @@ import {readFileSync, writeFileSync, existsSync, readdirSync, statSync} from 'no
 import {join, dirname} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {describe, it, expect, beforeAll} from 'vitest';
+import {validateActionResponse} from '../src/actions/action-validator.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -233,7 +234,7 @@ function validateSimulationResponse(response: any): { valid: boolean; errors: st
         if (data.context && typeof data.context !== 'object') {
             errors.push('Invalid context');
         }
-        
+
         // Check for execute or result
         if (!data.execute && !data.result) {
             // This might be okay for pending status
@@ -241,8 +242,22 @@ function validateSimulationResponse(response: any): { valid: boolean; errors: st
                 errors.push('Missing both execute and result');
             }
         }
+
+        // Protocol body: reuse action-validator (envelope fields like promiseId stay test-only above)
+        if (data.execute || data.result) {
+            const inner = {
+                context: data.context,
+                execute: data.execute,
+                result: data.result,
+                message: data.message,
+            };
+            const av = validateActionResponse(inner);
+            if (!av.success) {
+                errors.push(...(av.errors || []));
+            }
+        }
     }
-    
+
     return { valid: errors.length === 0, errors };
 }
 
@@ -377,7 +392,8 @@ describe('Simulation-based Server Tests', () => {
                     execute: {
                         script: {
                             input: { files: [] },
-                            output: 'Files processed'
+                            output: 'Files processed',
+                            code: 'export default async function() {}'
                         }
                     }
                 }

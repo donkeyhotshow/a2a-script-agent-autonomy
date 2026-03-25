@@ -17,7 +17,7 @@ goldens remain `response.json` / `received.json`. See [
 `SCHEMA.md`](./SCHEMA.md#supplementary-server-interrupt-loop-optional).
 
 `a2a-client/packages/sdk/src/server/services/transforms/session-transform.ts` merges `context`, `execute`, `messages`,
-`history`, `workbench`, `finalResult`. **`response.json`** keeps the protocol execute the server emitted. *
+`history`, `workbench` (and completion via `result.completed` / `execute.completed`, not a separate `finalResult` field). **`response.json`** keeps the protocol execute the server emitted. *
 *`received.json`** matches what the browser gets: internal client actions are stripped and replaced with a user-facing
 DTO.
 
