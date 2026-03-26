@@ -26,6 +26,11 @@
             return;
         }
 
+        if (typeof TaskFlow._loaderUnsubscribe === 'function') {
+            TaskFlow._loaderUnsubscribe();
+            TaskFlow._loaderUnsubscribe = null;
+        }
+
         // Subscribe to loader events from SessionStore
         const unsubscribe = store.on('loader', (data) => {
             const dataWithSession = { ...data, sessionId: targetSessionId };

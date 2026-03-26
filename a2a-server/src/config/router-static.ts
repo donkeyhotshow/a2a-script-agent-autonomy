@@ -1,6 +1,6 @@
 /**
  * Static router UI + LLM routing config (shared/router-static-choices.json).
- * Single source for action-request-processor, dialog schema map, and normalizeLlmChoiceToExecution.
+ * Single source for action-request-processor, dialog schema map.
  */
 
 import { readFileSync } from 'fs';

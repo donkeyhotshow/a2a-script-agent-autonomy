@@ -44,7 +44,19 @@ export interface InvokeResult {
 export async function invoke(clientId: string, input: InvokeInput): Promise<InvokeResult> {
     let context: ContextBlock;
     if (input.context) {
-        context = parseContextBlock(input.context);
+        // `server-invoke-request.schema.json` does not require `context.session_id` from clients/tests,
+        // but our internal `parseContextBlock` requires it. Default to stateless when missing.
+        const raw = input.context as unknown;
+        if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
+            const r = raw as Record<string, unknown>;
+            if (typeof r['session_id'] !== 'string' || r['session_id'].trim().length === 0) {
+                context = parseContextBlock({...r, session_id: 'stateless'});
+            } else {
+                context = parseContextBlock(r);
+            }
+        } else {
+            context = parseContextBlock(input.context);
+        }
     } else {
         context = {
             version: CURRENT_PROTOCOL_VERSION,

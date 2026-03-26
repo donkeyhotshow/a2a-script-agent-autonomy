@@ -79,7 +79,7 @@ describe('newSessions storage', () => {
     const loaded = loadNewStep(cwd, sessionId, 1);
     expect(loaded).not.toBeNull();
     expect(loaded.step).toBe(1);
-    expect(loaded.execute.form.input.name).toBe('task');
+    expect(loaded.execute.form.input[0].name).toBe('task');
     expect(loaded.messages).toHaveLength(1);
     expect(loaded.messages[0].content).toBe('hello');
   });

@@ -15,14 +15,11 @@ describe('form-choice pipeline', () => {
         expect(res?.aiActions?.action).toBe('agent');
     });
 
-    it('routes dialog and sets task default in buildProcessResultFromForm', async () => {
-        const raw = await runTransformPipelineFromFile(FORM_CHOICE, { choice_id: 'dialog', form_id: 'default' }, {});
-        expect(raw.success).toBe(true);
-        const fp = raw.output.formProcessResult as Record<string, unknown>;
-        const pr = buildProcessResultFromForm(fp, { choice_id: 'dialog', task: undefined });
-        expect(pr.context?.task).toBe('диалог');
-        const pr2 = buildProcessResultFromForm(fp, { choice_id: 'dialog', task: 'hello' });
-        expect(pr2.context?.task).toBe('hello');
+    it('routes dialog and sets task default', async () => {
+        const res1 = await runFormChoicePipeline({ choice_id: 'dialog', form_id: 'default' });
+        expect(res1?.context?.task).toBe('диалог');
+        const res2 = await runFormChoicePipeline({ choice_id: 'dialog', form_id: 'default', task: 'hello' });
+        expect(res2?.context?.task).toBe('hello');
     });
 
     it('default branch uses exact-only routing (unknown id)', async () => {

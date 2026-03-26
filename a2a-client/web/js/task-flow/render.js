@@ -18,6 +18,26 @@
         return `<div class="task-flow-dialog-error" role="status">${escapeHtml(text)}</div>`;
     }
 
+    function buildRenderErrorHtml(message) {
+        return `<div class="task-flow-history-error">${escapeHtml(message)}</div>`;
+    }
+
+    function handleRenderError(action, message, details) {
+        const errMsg = `[TaskFlowRender] ${message}`;
+        console.error(errMsg, details);
+        const err = new Error(errMsg);
+        global.ErrorHandler?.handle?.(err, { action, ...details });
+        return buildRenderErrorHtml(errMsg);
+    }
+
+    function requireRenderStore(action, storeCandidate, context = {}) {
+        const resolved = storeCandidate ?? context.store ?? global.SessionStore;
+        if (resolved) {
+            return { store: resolved };
+        }
+        return { error: handleRenderError(action, 'Session store is required', context) };
+    }
+
     function isSystemErrorChatMessage(msg) {
         const role = msg.role || 'assistant';
         if (role !== 'system') return false;
@@ -67,15 +87,29 @@
     }
 
     function renderMessageHistory(contentEl, store) {
-        store = store || global.SessionStore;
-        const state = store?.getState?.() || {};
-        let messages = state.messages ?? store?.messages;
-        if (!messages) {
-            messages = [];
+        const { store: sessionStore, error: storeError } = requireRenderStore('renderMessageHistory', store, { contentEl });
+        if (!sessionStore) {
+            return storeError;
+        }
+
+        const state = sessionStore.getState?.();
+        if (!state || typeof state !== 'object') {
+            return handleRenderError('renderMessageHistory', 'Session store state is invalid', {
+                store: sessionStore,
+                state
+            });
+        }
+
+        const messagesSource = state.messages ?? sessionStore.messages;
+        if (!Array.isArray(messagesSource)) {
+            return handleRenderError('renderMessageHistory', 'Session history payload is malformed', {
+                state,
+                rawMessages: messagesSource
+            });
         }
 
         const banner = renderDialogErrorBanner(state.lastError);
-        const visible = (messages || []).filter((msg) => !isSystemErrorChatMessage(msg));
+        const visible = messagesSource.filter((msg) => !isSystemErrorChatMessage(msg));
 
         if (!visible.length) {
             const empty = '<div class="task-flow-history-empty">No messages yet</div>';
@@ -112,6 +146,16 @@
      */
     function renderExecute(contentEl, execute, data, store, taskFlowRef) {
         if (!contentEl || !execute) return;
+
+        const storeResult = requireRenderStore('renderExecute', store ?? data?.store, {
+            data,
+            execute
+        });
+        if (!storeResult.store) {
+            contentEl.innerHTML = storeResult.error;
+            return;
+        }
+        store = storeResult.store;
 
         const context = data?.context;
         const execution = context?.execution;
@@ -187,11 +231,9 @@
         }
 
         // Route to specific renderer
-        // execute.form.input + execute.message: message shown via history (set by SessionStore), input stays open
+        // Canonical dialog contract: execute.form.textarea + execute.message (message shown via history, input stays open)
         // execute.form.choices: choice buttons
-        // execute.form.input only: text input
         // execute.message (+ optional llmMessage, attachments): Client API sanitizes rag-search/read-file into these
-        store = store || data?.store || global.SessionStore;
         if (execute.form) {
             return renderForm(contentEl, execute.form, executionStepHtml, progressBarHtml, completionBannerHtml, resultHtml, taskFlowRef, store);
         }
@@ -613,7 +655,15 @@
         taskFlowRef,
         store
     ) {
-        const effectiveStore = store || global.SessionStore;
+        const storeResult = requireRenderStore('renderWebExecuteMessage', store, {
+            execute,
+            texts
+        });
+        if (!storeResult.store) {
+            contentEl.innerHTML = storeResult.error;
+            return;
+        }
+        const effectiveStore = storeResult.store;
         const historyHtml = renderMessageHistory(contentEl, effectiveStore);
         const mainBlock =
             texts.mainText.trim().length > 0
@@ -655,11 +705,23 @@
      * @param {Object} taskFlowRef - ссылка на TaskFlow
      */
     function renderForm(contentEl, form, executionStepHtml, progressBarHtml, completionBannerHtml, resultHtml, taskFlowRef, store) {
-        // Use explicitly passed store (fallback to global if not provided)
-        const effectiveStore = store || global.SessionStore;
-        
+        const storeResult = requireRenderStore('renderForm', store, { form });
+        if (!storeResult.store) {
+            contentEl.innerHTML = storeResult.error;
+            return;
+        }
+        const effectiveStore = storeResult.store;
+
         // Check if promise is pending - if so, hide form and show loader instead
-        const storeState = effectiveStore?.getState?.() || {};
+        const storeState = effectiveStore.getState?.();
+        if (!storeState || typeof storeState !== 'object') {
+            const errMsg = '[TaskFlowRender] Invalid store state when rendering form';
+            console.error(errMsg, storeState);
+            const historyHtml = renderMessageHistory(contentEl, effectiveStore);
+            contentEl.innerHTML = `${historyHtml}<div class="task-flow-history-error">${escapeHtml(errMsg)}</div>`;
+            return;
+        }
+
         if (storeState.promisePending) {
             const historyHtml = renderMessageHistory(contentEl, effectiveStore);
             contentEl.innerHTML = historyHtml;
@@ -667,34 +729,32 @@
             return;
         }
 
-        const hasChoices = (form?.choices?.length > 0) || (form?.meta?.routerChoices?.length > 0);
-        
-        // Support both form.choices and form.meta.routerChoices
-        const choices = form?.choices || form?.meta?.routerChoices || [];
-        let inputFields = [];
-        if (form?.input) {
-            if (Array.isArray(form.input)) {
-                inputFields = form.input;
-            } else if (typeof form.input === 'object' && form.input !== null) {
-                inputFields = [form.input];
-            }
+        if (!form || typeof form !== 'object') {
+            const errMsg = '[TaskFlowRender] Form payload is missing or invalid';
+            console.error(errMsg, form);
+            const historyHtml = renderMessageHistory(contentEl, effectiveStore);
+            contentEl.innerHTML = `${historyHtml}<div class="task-flow-history-error">${escapeHtml(errMsg)}</div>`;
+            return;
         }
-        // Support form.input, form.textarea, or direct properties with 'name'
-        if (inputFields.length === 0 && form && typeof form === 'object') {
-            // First check form.textarea (common pattern)
+
+        const rawChoices = form?.choices ?? form?.meta?.routerChoices;
+        let choices = null;
+        if (rawChoices != null) {
+            if (!Array.isArray(rawChoices)) {
+                const errMsg = '[TaskFlowRender] Form choices must be an array';
+                console.error(errMsg, rawChoices);
+                const historyHtml = renderMessageHistory(contentEl, effectiveStore);
+                contentEl.innerHTML = `${historyHtml}<div class="task-flow-history-error">${escapeHtml(errMsg)}</div>`;
+                return;
+            }
+            choices = rawChoices;
+        }
+        const hasChoices = Boolean(choices && choices.length > 0);
+        // Canonical dialog schema: use form.textarea
+        let inputFields = [];
+        if (form && typeof form === 'object') {
             if (form.textarea && typeof form.textarea === 'object' && form.textarea.name) {
                 inputFields = [form.textarea];
-            } else {
-                // Then check direct properties
-                for (const key in form) {
-                    if (key === 'choices' || key === 'meta' || key === 'title' || key === 'description' || key === 'textarea') {
-                        continue; // skip known non-input properties
-                    }
-                    const prop = form[key];
-                    if (prop && typeof prop === 'object' && !Array.isArray(prop) && prop.name !== undefined) {
-                        inputFields.push(prop);
-                    }
-                }
             }
         }
 
@@ -812,7 +872,12 @@
         const messageType = typeof message === 'object' ? (message.type || 'info') : 'info';
         const typeIcons = { success: '✓', error: '⚠', warning: '⚠', info: 'ℹ' };
         const icon = typeIcons[messageType] || 'ℹ';
-        const effectiveStore = store || global.SessionStore;
+        const storeResult = requireRenderStore('renderMessage', store, { message });
+        if (!storeResult.store) {
+            contentEl.innerHTML = storeResult.error;
+            return;
+        }
+        const effectiveStore = storeResult.store;
         const historyHtml = renderMessageHistory(contentEl, effectiveStore);
 
         contentEl.innerHTML = `
@@ -869,7 +934,15 @@
         };
 
         const actionData = data[actionType];
-        const effectiveStore = store || global.SessionStore;
+        const storeResult = requireRenderStore('renderClientAction', store, {
+            actionType,
+            data
+        });
+        if (!storeResult.store) {
+            contentEl.innerHTML = storeResult.error;
+            return;
+        }
+        const effectiveStore = storeResult.store;
         const historyHtml = renderMessageHistory(contentEl, effectiveStore);
         const icon = typeIcons[actionType] || '⚙️';
         const label = typeLabels[actionType] || actionType;
@@ -901,7 +974,12 @@
     function renderDebug(contentEl, data, executionStepHtml, progressBarHtml, completionBannerHtml, resultHtml, taskFlowRef, store) {
         const ctx = data?.context ? JSON.stringify(data.context, null, 2) : '';
         const exec = data?.execute ? JSON.stringify(data.execute, null, 2) : '';
-        const effectiveStore = store || global.SessionStore;
+        const storeResult = requireRenderStore('renderDebug', store, { data });
+        if (!storeResult.store) {
+            contentEl.innerHTML = storeResult.error;
+            return;
+        }
+        const effectiveStore = storeResult.store;
 
         const historyHtml = renderMessageHistory(contentEl, effectiveStore);
 

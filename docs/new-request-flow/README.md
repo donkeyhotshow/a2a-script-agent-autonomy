@@ -32,13 +32,13 @@
 - **Ответ:** Немедленный объект `execute` с данными формы/ввода
 - **Пример использования:** UI взаимодействия, простые действия, автоматизированное тестирование
 - **Пример:**
-  - `task: "dialog"` → `execute.form.input` (прямой диалог)
+  - `task: "dialog"` → `execute.form.textarea` (прямой диалог)
   - `task: "analyze code"` → `execute.form.choices` (роутер с вариантами)
 - **Поток:**
   1. **Web:** поле ввода задачи + кнопка Send → панель с прелоадером
   2. **POST /api/a2a/sessions** (Web → Client API): `{ projectId, task }`
   3. **Client API** сохраняет сессию, проксирует на Server: `{ task }`
-  4. **Server** возвращает немедленный результат с `execute.form.input` или `execute.form.choices`
+  4. **Server** возвращает немедленный результат с `execute.form.textarea` или `execute.form.choices`
   5. **Client API** возвращает `execute.*` в Web
   6. **Прелоадер скрывается** после получения ответа (с учетом минимального времени показа 5000мс)
 
@@ -54,7 +54,7 @@
   4. **Server** возвращает `{ promiseId, status: "pending" }`
   5. **Client API** опрашивает статус через `GET /api/a2a/sessions/{id}/async` (предпочтительно для веб-UI) или `GET /api/a2a/sessions/{id}/promise/{promiseId}` (legacy)
   6. **После завершения** Server возвращает результат:
-     - Если задача содержит "dialog" — `execute.form.input` (прямой диалог)
+     - Если задача содержит "dialog" — `execute.form.textarea` (прямой диалог)
      - Иначе `execute.form.choices` (роутер с вариантами)
   7. **Client API** возвращает `execute.*` в Web
   8. **Прелоадер скрывается** после получения финального результата

@@ -61,9 +61,11 @@
               "execution": {
                 "action": "dialog",
                 "step": "request"
-              }
+              },
+              "task": "диалог"
             },
             "execute": {
+              "message": "Виберіть режим 'діалог' для спілкування з AI. Введіть ваше повідомлення нижче.",
               "form": {
                 "input": [
                   {
@@ -268,6 +270,11 @@
           }
         }
       }
+    },
+    {
+      "op": "copy",
+      "from": "$.task",
+      "to": "$.formProcessResult.context.task"
     }
   ]
 }

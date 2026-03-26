@@ -57,18 +57,11 @@
             try {
                 const projectId = await global.getCurrentProjectId();
                 const title = `Session ${new Date().toLocaleTimeString()}`;
-                
-                // Use SessionStore.createSessionWithForm if available (preferred path)
-                let session;
-                if (global.SessionStore?.createSessionWithForm) {
-                    session = await global.SessionStore.createSessionWithForm(title);
-                } else {
-                    // Fallback to apiIntegration
-                    if (!global.apiIntegration?.createSession) {
-                        throw new Error('API not available');
-                    }
-                    session = await global.apiIntegration.createSession({ projectId, title });
+                if (!global.apiIntegration?.createSession) {
+                    throw new Error('apiIntegration.createSession is required');
                 }
+                // Canonical session creation path.
+                const session = await global.apiIntegration.createSession({ projectId, title });
                 
                 const sessionId = session?.id || session?.sessionId;
                 if (!sessionId) {
@@ -78,7 +71,7 @@
                 console.log('[AppTask] Created new session:', sessionId);
 
                 // Common operations after getting sessionId
-                if (global.SessionStore?.createSession) global.SessionStore.createSession(sessionId);
+                if (global.SessionStore?.setSession) global.SessionStore.setSession(sessionId, projectId || null);
                 if (global.SessionManager?.setActiveSession) global.SessionManager.setActiveSession(sessionId);
 
                 // Refresh taskbar to show new session

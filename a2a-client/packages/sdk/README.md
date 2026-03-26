@@ -1,4 +1,4 @@
-# A2A Client SDK
+﻿# A2A Client SDK
 
 ## Обзор
 
@@ -81,7 +81,7 @@ Same router is mounted at multiple prefixes:
 }
 ```
 
-**Форма ввода (execute.form.input):**
+**Форма ввода (execute.form):**
 ```json
 {
   "sessionId": "sess_1700000000000",
@@ -129,3 +129,4 @@ Same router is mounted at multiple prefixes:
 - `status` - изменение статуса
 - `complete` - завершено
 - `error` - ошибка
+

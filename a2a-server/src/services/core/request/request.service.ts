@@ -61,8 +61,15 @@ export function isRetryableError(err: string): boolean {
     return /fetch failed|econnrefused|etimedout|network|timeout|socket hang up/.test(s);
 }
 
-const storageDir = process.env.REQUESTS_STORAGE_PATH ?? path.resolve(process.cwd(), 'storage', 'requests');
-const storage = new RequestFileStorage(storageDir);
+let storageSingleton: RequestFileStorage | null = null;
+function getRequestStorage(): RequestFileStorage {
+    if (!storageSingleton) {
+        const storageDir =
+            process.env.REQUESTS_STORAGE_PATH ?? path.resolve(process.cwd(), 'storage', 'requests');
+        storageSingleton = new RequestFileStorage(storageDir);
+    }
+    return storageSingleton;
+}
 
 export class RequestService {
     /**
@@ -88,7 +95,7 @@ export class RequestService {
             completedAt: null,
         };
 
-        await storage.save(req);
+        await getRequestStorage().save(req);
         logger.info('Request created', {requestId: id, promiseId, clientId: data.clientId});
         return {promiseId, id};
     }
@@ -103,7 +110,7 @@ export class RequestService {
         startedAt: Date | null;
         completedAt: Date | null;
     } | null> {
-        const req = await storage.load(promiseId);
+        const req = await getRequestStorage().load(promiseId);
         if (!req) return null;
 
         return {
@@ -119,7 +126,7 @@ export class RequestService {
      * Get full request result by promiseId
      */
     async getResult(promiseId: string): Promise<RequestResult | null> {
-        return storage.load(promiseId);
+        return getRequestStorage().load(promiseId);
     }
 
     /**
@@ -131,7 +138,7 @@ export class RequestService {
         result?: Record<string, unknown>,
         error?: Record<string, unknown>
     ): Promise<boolean> {
-        const req = await storage.load(promiseId);
+        const req = await getRequestStorage().load(promiseId);
         if (!req) return false;
 
         const now = new Date();
@@ -147,7 +154,7 @@ export class RequestService {
             }
         }
 
-        await storage.save(req);
+        await getRequestStorage().save(req);
         logger.info('Request status updated', {promiseId, status});
         return true;
     }
@@ -156,7 +163,7 @@ export class RequestService {
      * Cancel a pending request
      */
     async cancel(promiseId: string): Promise<boolean> {
-        const req = await storage.load(promiseId);
+        const req = await getRequestStorage().load(promiseId);
         if (!req) return false;
         if (req.status !== 'pending') {
             logger.warn('Cannot cancel request - not in pending state', {promiseId, currentStatus: req.status});
@@ -169,7 +176,7 @@ export class RequestService {
      * Cancel all pending requests
      */
     async cancelAllPending(): Promise<{ cancelledCount: number }> {
-        const ids = await storage.listPending();
+        const ids = await getRequestStorage().listPending();
         let count = 0;
         for (const promiseId of ids) {
             await this.updateStatus(promiseId, 'cancelled');
@@ -185,7 +192,7 @@ export class RequestService {
      * Schedule retry for a failed request (transient error)
      */
     async scheduleRetry(promiseId: string, delayMs: number = getRetryDelayMs()): Promise<boolean> {
-        const req = await storage.load(promiseId);
+        const req = await getRequestStorage().load(promiseId);
         if (!req) return false;
         const count = (req.retryCount ?? 0) + 1;
         const maxR = getMaxRetries();
@@ -200,7 +207,7 @@ export class RequestService {
         req.error = null;
         (req as RequestResult).retryCount = count;
         (req as RequestResult).retryAfter = new Date(Date.now() + delayMs).toISOString();
-        await storage.save(req);
+        await getRequestStorage().save(req);
         logger.info('Scheduled retry', {promiseId, retryCount: count, delayMs});
         return true;
     }
@@ -209,10 +216,10 @@ export class RequestService {
      * Revive retryable failed requests (e.g. after server restart)
      */
     async scheduleRetryForFailed(): Promise<number> {
-        const ids = await storage.listFailed();
+        const ids = await getRequestStorage().listFailed();
         let revived = 0;
         for (const id of ids) {
-            const req = await storage.load(id);
+            const req = await getRequestStorage().load(id);
             if (!req) continue;
             const errMsg = req.error ? String((req.error as Record<string, unknown>).message ?? (req.error as Record<string, unknown>).error ?? '') : '';
             const resultError = req.result ? String((req.result as Record<string, unknown>).error ?? '') : '';
@@ -236,14 +243,14 @@ export class RequestService {
         const maxPerTick = envInt('AUTO_RETRY_FAILED_MAX_PER_TICK', 1, 50);
         if (cooldownMs <= 0) return 0;
 
-        const ids = await storage.listFailed();
+        const ids = await getRequestStorage().listFailed();
         let revived = 0;
         const now = Date.now();
         const maxR = getMaxRetries();
 
         for (const id of ids) {
             if (revived >= maxPerTick) break;
-            const req = await storage.load(id);
+            const req = await getRequestStorage().load(id);
             if (!req?.completedAt) continue;
             if (now - req.completedAt.getTime() < cooldownMs) continue;
             if ((req.retryCount ?? 0) >= maxR) continue;
@@ -267,13 +274,16 @@ export class RequestService {
      * Get next pending request for processing
      */
     async getNextPending(): Promise<RequestResult | null> {
-        const ids = await storage.listPending();
+        const ids = await getRequestStorage().listPending();
         if (ids.length === 0) return null;
 
-        const all = await Promise.all(ids.map((id) => storage.load(id)));
+        const all = await Promise.all(ids.map((id) => getRequestStorage().load(id)));
         const withCreated = all
             .filter((r): r is RequestResult => r !== null)
-            .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+            .sort((a, b) => {
+                if (b.priority !== a.priority) return b.priority - a.priority;
+                return a.createdAt.getTime() - b.createdAt.getTime();
+            });
 
         const next = withCreated[0];
         if (!next) return null;
@@ -281,7 +291,7 @@ export class RequestService {
         next.status = 'processing';
         next.startedAt = new Date();
         (next as RequestResult).retryAfter = undefined; // clear when processing
-        await storage.save(next);
+        await getRequestStorage().save(next);
         logger.info('Processing request', {promiseId: next.promiseId, retryCount: next.retryCount});
         return next;
     }
@@ -290,7 +300,7 @@ export class RequestService {
      * Get queue length
      */
     async getQueueLength(): Promise<number> {
-        const ids = await storage.listPending();
+        const ids = await getRequestStorage().listPending();
         return ids.length;
     }
 
@@ -298,10 +308,10 @@ export class RequestService {
      * Persist llmPromiseId for recovery when server restarts during polling
      */
     async updateLlmPromiseId(promiseId: string, llmPromiseId: string): Promise<boolean> {
-        const req = await storage.load(promiseId);
+        const req = await getRequestStorage().load(promiseId);
         if (!req) return false;
         (req.context as Record<string, unknown>).llmPromiseId = llmPromiseId;
-        await storage.save(req);
+        await getRequestStorage().save(req);
         return true;
     }
 
@@ -309,10 +319,10 @@ export class RequestService {
      * List processing request promiseIds (for recovery)
      */
     async listProcessing(): Promise<string[]> {
-        const ids = await storage.listAll();
+        const ids = await getRequestStorage().listAll();
         const processing: string[] = [];
         for (const id of ids) {
-            const req = await storage.load(id);
+            const req = await getRequestStorage().load(id);
             if (req?.status === 'processing') processing.push(id);
         }
         return processing;

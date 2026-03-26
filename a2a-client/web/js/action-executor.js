@@ -6,7 +6,8 @@
  * - Проверку статуса промисов (checkPromise)
  * - Управление polling-ом для асинхронных операций
  * 
- * Использует ActionParser и ActionValidator для подготовки и проверки данных
+ * Примечание: Управление loader теперь явное (через server response),
+ * а не неявное через submit(). loader control в task-flow модулях.
  */
 
 (function (global) {
@@ -42,11 +43,10 @@
         promiseListenerRegistry.set(key, unsubs);
     }
 
-
-
     /**
-     * Hydrate store from GET /sessions/:id (authoritative after minimal POST /next ack).
-     * @param {{ skipExecuteWhenPending?: boolean }} [opts] — if true, skip setExecute while snap.asyncPending (setExecute clears promisePending).
+     * Hydrate store from GET /sessions/:id
+     * Использует каноничный формат ответа
+     * @param {{ skipExecuteWhenPending?: boolean }} [opts] — если true, пропустить setExecute пока asyncPending
      */
     async function pullSessionSnapshot(sessionId, store, opts = {}) {
         const api = global.apiIntegration;
@@ -54,12 +54,16 @@
             throw new Error('[ActionExecutor] pullSessionSnapshot requires apiIntegration.getSession and store');
         }
         const snap = await api.getSession(sessionId);
-        const sid = snap.id || snap.sessionId;
+        
+        // Каноничный формат: используем snap.id (новый формат)
+        const sid = snap.id;
         if (sid) store.setSession?.(sid, snap.projectId);
         if (Array.isArray(snap.messages) && snap.messages.length > 0) {
             store.applyServerMessages?.(snap.messages);
         }
-        if (!(opts.skipExecuteWhenPending && snap.asyncPending) && snap.execute != null) {
+        // Skip setExecute only when explicitly requested AND async pending
+        const shouldSkipExecute = opts.skipExecuteWhenPending && snap.asyncPending;
+        if (!shouldSkipExecute && snap.execute != null) {
             store.setExecute?.(snap.execute);
         }
         if (snap.context != null) store.setContext?.(snap.context);
@@ -70,29 +74,25 @@
      * Отправляет результат в сессию - запуск обработки шага
      * Сохраняет client-result.json и создает следующий шаг через API
      * 
+     * Примечание: loader control убран (теперь явное через task-flow)
+     * 
      * @param {string} sessionId - ID сессии
      * @param {Object} result - результат от пользователя
      * @returns {Promise<Object>} ответ сервера
      */
     async function submit(sessionId, result, storeOverride) {
         const store = storeOverride || global.resolveStore(sessionId);
-        // Use apiIntegration._fetch which handles URL building and headers
         const data = await global.apiIntegration._fetch(`sessions/${encodeURIComponent(sessionId)}/next`, {
             method: 'POST',
             body: JSON.stringify({ result })
         });
         
-        // POST /next ack: asyncPending (+ legacy promiseId) — hydrate via GET session; poll GET .../async
-        const asyncPending = !!(data?.asyncPending ?? data?.promiseId);
+        // Каноничный формат: только asyncPending (устарел promiseId)
+        const asyncPending = !!data?.asyncPending;
         if (store && data?.success && data?.accepted) {
             if (asyncPending) {
                 store.setPromisePending?.(true);
-                if (typeof sessionId === 'string') {
-                    store.startLoader?.(sessionId);
-                } else {
-                    store.startLoader?.();
-                }
-                startPromisePolling(sessionId, null); // promiseId is handled by apiIntegration
+                // startPromisePolling вызывается явно из task-flow
                 await pullSessionSnapshot(sessionId, store, { skipExecuteWhenPending: true });
             } else {
                 await pullSessionSnapshot(sessionId, store);
@@ -108,10 +108,10 @@
 
     /**
      * Запускает polling для разрешения промиса
-     * Использует SessionStore если доступно, иначе локальный polling
+     * Использует SessionStore для unified polling
      * 
      * @param {string} sessionId - ID сессии
-     * @param {string} promiseId - ID промиса
+     * @param {string|null} promiseId - ID промиса (nullable для session-scoped)
      */
     function startPromisePolling(sessionId, promiseId) {
         const store = global.resolveStore(sessionId);
@@ -131,12 +131,13 @@
 
             store.startPromisePolling(checkFn, { sessionScoped });
 
+            // При resolved - НЕ останавливаем loader явно (task-flow управляет)
             const onResolved = (data) => {
                 if (!(data.sessionScoped || data.promiseId === promiseId)) return;
                 clearPromiseListeners(listenerKey);
                 pullSessionSnapshot(sessionId, store).then(() => {
                     store.setPromisePending?.(false);
-                    store.stopLoader?.(sessionId);
+                    // stopLoader вызывается явным образом из task-flow модулей
                     global.apiIntegration?.emit?.('promiseResolved', {
                         sessionId,
                         promiseId: data.promiseId ?? promiseId ?? null,
@@ -151,7 +152,7 @@
                 if (!(data.sessionScoped || data.promiseId === promiseId)) return;
                 clearPromiseListeners(listenerKey);
                 store.setPromisePending?.(false);
-                store.stopLoader?.(sessionId);
+                // stopLoader вызывается явным образом из task-flow модулей
                 global.apiIntegration?.emit?.('promiseError', {
                     sessionId,
                     promiseId: data.promiseId ?? promiseId ?? null,
@@ -166,7 +167,12 @@
 
             return;
         }
-        
+
+        const error = new Error('[ActionExecutor] SessionStore.startPromisePolling is required');
+        if (store?.setError) {
+            store.setError(error);
+        }
+        throw error;
     }
 
     /**

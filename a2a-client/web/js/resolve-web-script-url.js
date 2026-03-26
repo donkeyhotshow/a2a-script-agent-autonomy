@@ -4,10 +4,21 @@
 (function (global) {
     'use strict';
 
+    function normalizeRelativePath(relativePath) {
+        var value = relativePath ?? '';
+        var normalized = String(value).trim();
+        if (!normalized) {
+            var errMsg = '[resolveWebScriptUrl] relativePath is required';
+            console.error(errMsg, relativePath);
+            throw new Error(errMsg);
+        }
+        return normalized;
+    }
+
     function resolveWebScriptUrl(relativePath) {
         var baseEl = document.getElementById('app-base');
         var baseHref = (baseEl && baseEl.href) ? baseEl.href : document.baseURI;
-        var path = relativePath.replace(/^\//, '');
+        var path = normalizeRelativePath(relativePath).replace(/^\//, '');
         try {
             return new URL(path, baseHref).href;
         } catch (e) {
@@ -21,7 +32,7 @@
      * @param {string} [resolvedAbsolute] from resolveWebScriptUrl(rel)
      */
     function isWebScriptInjected(relativePath, resolvedAbsolute) {
-        var rel = String(relativePath || '').replace(/"/g, '');
+        var rel = normalizeRelativePath(relativePath).replace(/"/g, '');
         if (document.querySelector('script[src*="' + rel + '"]')) return true;
         if (resolvedAbsolute) {
             var abs = String(resolvedAbsolute).replace(/"/g, '');
@@ -38,7 +49,7 @@
      */
     function appendWebScriptOnce(relativePath, hooks) {
         return new Promise(function (resolve, reject) {
-            var rel = String(relativePath || '');
+            var rel = normalizeRelativePath(relativePath);
             var resolved = resolveWebScriptUrl(rel);
             if (isWebScriptInjected(rel, resolved)) {
                 if (hooks && hooks.onload) hooks.onload();
@@ -66,7 +77,7 @@
      */
     function appendWebModuleOnce(relativePath, hooks) {
         return new Promise(function (resolve, reject) {
-            var rel = String(relativePath || '');
+            var rel = normalizeRelativePath(relativePath);
             var resolved = resolveWebScriptUrl(rel);
             var safe = rel.replace(/"/g, '');
             if (document.querySelector('script[type="module"][data-a2a-module="' + safe + '"]')) {

@@ -31,9 +31,17 @@ export function createKvRoutes({ cwd }) {
             }
 
             if (req.method === 'GET') {
-                const data = kvGet(cwd, ns, key);
-                res.setHeader('Content-Type', 'application/json');
-                res.end(JSON.stringify(data === null ? { value: null } : data));
+                try {
+                    const data = kvGet(cwd, ns, key);
+                    res.setHeader('Content-Type', 'application/json');
+                    res.end(JSON.stringify(data === null ? { value: null } : data));
+                } catch (e) {
+                    res.writeHead(500).end(JSON.stringify({
+                        error: 'KV read failed',
+                        code: e?.code || 'KV_READ_ERROR',
+                        message: String(e?.message || e),
+                    }));
+                }
                 return;
             }
 

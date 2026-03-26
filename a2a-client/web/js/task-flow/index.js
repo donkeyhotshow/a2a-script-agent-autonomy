@@ -22,13 +22,10 @@
          * Инициализация
          */
         init() {
-            const sel = document.getElementById('projectSelect');
-            if (sel) {
-                this._ensureProjectSelect();
-                this._restoreProjectSelection();
+            if (!global.TaskFlowInit?.init) {
+                throw new Error('[TaskFlow] TaskFlowInit.init is required');
             }
-            this._setupPanelAutoOpen();
-            this._setupLoaderListener();
+            global.TaskFlowInit.init(this);
         },
         
         _setupLoaderListener(sessionId = null) {
@@ -78,19 +75,5 @@
     
     // Export
     global.TaskFlow = TaskFlow;
-    
-    // Auto-initialize when DOM is ready
-    if (typeof document !== 'undefined') {
-        document.addEventListener('DOMContentLoaded', function() {
-            const tryInit = () => {
-                if (global.TaskFlow && typeof global.TaskFlow.init === 'function') {
-                    global.TaskFlow.init();
-                } else {
-                    requestAnimationFrame(tryInit);
-                }
-            };
-            requestAnimationFrame(tryInit);
-        });
-    }
     
 })(typeof window !== 'undefined' ? window : globalThis);

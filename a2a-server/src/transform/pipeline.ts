@@ -308,8 +308,7 @@ export async function loadPromptsTransform(
  * Then `attachFlowControlHintToInvokePayload` sets `flowControlHint` from `context.execution.action` + `step` for templates.
  * Then `attachWorkbenchForLlmPrompt` sets `context.workbench` and root `workbench` for templates (see workbench-normalize.ts).
  *
- * Router handoff (`result.choice` → `execution.action` + `step`) is **not** part of this JSON pipeline; it runs in
- * `normalizeLlmChoiceToExecution` (before routing) using `shared/router-static-choices.json` → `llmPipelineActions`.
+ * Router handoff (`result.choice` → `execution.action` + `step`) is handled via explicit transforms in the JSON pipeline.
  */
 export async function runPromptsTransform(
   promptsTransformsDir: string,

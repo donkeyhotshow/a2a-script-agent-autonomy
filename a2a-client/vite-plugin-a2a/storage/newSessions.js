@@ -30,7 +30,21 @@ export function loadNewSession(cwd, sessionId) {
       latestStep = step;
     }
   }
-  if (latestStepNum == null || !latestStep) return null;
+  if (latestStepNum == null || !latestStep) {
+    // Do not silently disappear corrupted sessions from API lists.
+    return {
+      id: sessionId,
+      currentStep: allSteps[allSteps.length - 1] || 0,
+      createdAt: null,
+      updatedAt: null,
+      status: 'corrupt',
+      title: `${sessionId} (corrupt)`,
+      error: {
+        code: 'SESSION_CORRUPT',
+        message: 'Session step files exist but no valid server-response.json could be parsed.',
+      },
+    };
+  }
 
   // Reconstruct session metadata from step data
   const session = {
@@ -49,8 +63,8 @@ export function loadNewSession(cwd, sessionId) {
   const step1 = latestStepNum === 1 ? latestStep : loadNewStep(cwd, sessionId, 1);
   if (step1?.title) {
     session.title = step1.title;
-  } else if (step1?.execute?.form?.input?.label) {
-    session.title = step1.execute.form.input.label;
+  } else if (step1?.execute?.form?.input?.[0]?.label) {
+    session.title = step1.execute.form.input[0].label;
   } else if (step1?.execute?.form?.choices) {
     session.title = 'Selection Session';
   } else {
@@ -189,7 +203,13 @@ export function loadStepFile(cwd, sessionId, stepNum, filename) {
     return JSON.parse(fs.readFileSync(filePath, 'utf8'));
   } catch (e) {
     console.error('[newSessions] Failed to parse step file', filename, ':', e.message);
-    return null;
+    return {
+      error: {
+        code: 'STEP_FILE_PARSE_ERROR',
+        file: filename,
+        message: e.message,
+      },
+    };
   }
 }
 

@@ -167,9 +167,9 @@ Neurons are auto-detection components that activate based on project context:
 
 **Life Cycle**:
 ```
-request.json → response.json (execute.script, step: "detect")
+request.json → response.json (execute."script", step: "detect")
      ↑________________↓
-request.json (result.script) → response.json (execute.script, step: "resolve")
+request.json (result.script) → response.json (execute."script", step: "resolve")
      ↑________________↓
 ...automatic step switching...
 ```

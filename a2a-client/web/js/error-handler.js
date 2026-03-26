@@ -49,12 +49,16 @@
         /**
          * Handle error from any source
          */
-        handle(error, context = {}) {
+        handle(error, context) {
             // Normalize error object
             const normalizedError = this._normalizeError(error);
-            
+            const resolvedContext = context ?? normalizedError.context;
+            if (!resolvedContext) {
+                console.warn('[ErrorHandler] Error context missing for', normalizedError);
+            }
+
             // Add context
-            normalizedError.context = context;
+            normalizedError.context = resolvedContext;
             normalizedError.timestamp = new Date().toISOString();
             
             // Determine if retryable
@@ -83,7 +87,7 @@
         /**
          * Handle API errors specifically
          */
-        handleApiError(response, context = {}) {
+        handleApiError(response, context) {
             // Skip storage API 404s - they are expected when key doesn't exist
             const url = context?.url || '';
             const isStorage404 = url.includes('/api/storage/') && response?.status === 404;
@@ -98,8 +102,11 @@
                 || response?.code
                 || 'API_ERROR';
 
+            if (!context) {
+                console.warn('[ErrorHandler] handleApiError called without context metadata');
+            }
             const normalized = this.handle(new Error(userMessage), {
-                ...context,
+                ...(context ?? {}),
                 code,
                 status: response?.status,
                 response
@@ -117,9 +124,12 @@
         /**
          * Handle network errors
          */
-        handleNetworkError(error, context = {}) {
+        handleNetworkError(error, context) {
+            if (!context) {
+                console.warn('[ErrorHandler] handleNetworkError called without context metadata');
+            }
             const normalized = this.handle(error, {
-                ...context,
+                ...(context ?? {}),
                 type: 'network',
                 code: 'NETWORK_ERROR'
             });
@@ -134,13 +144,16 @@
         /**
          * Handle validation errors
          */
-        handleValidationError(errors, context = {}) {
+        handleValidationError(errors, context) {
+            if (!context) {
+                console.warn('[ErrorHandler] handleValidationError called without context metadata');
+            }
             const message = Array.isArray(errors) 
                 ? errors.map(e => e.message || e).join(', ')
                 : 'Validation failed';
             
             return this.handle(new Error(message), {
-                ...context,
+                ...(context ?? {}),
                 type: 'validation',
                 code: 'VALIDATION_ERROR',
                 validationErrors: errors
@@ -450,7 +463,15 @@
          * @param {HTMLElement} element - The error notification element
          */
         _executeRetry(error, retryId, element) {
-            const context = error.context || {};
+            const context = error.context;
+            if (!context || typeof context !== 'object') {
+                const errMsg = '[ErrorHandler] Retry context is required';
+                console.error(errMsg, error);
+                if (element) {
+                    this._showRetryResult(element, retryId, false, 'Retry context unavailable');
+                }
+                return;
+            }
             const attemptNumber = context.retryAttempt || 0;
             const maxRetries = this.config.maxRetries;
             const retryDelay = this.config.retryDelay;
@@ -701,7 +722,7 @@
         const originalFetch = window.fetch;
         window.fetch = async function(...args) {
             const input = args[0];
-            const options = args[1] || {};
+            const options = args.length > 1 ? args[1] : undefined;
             const reqCtx = getRequestContext(input, options);
             const shouldHandleErrors = options?.silent !== true && options?.handleErrors !== false;
 

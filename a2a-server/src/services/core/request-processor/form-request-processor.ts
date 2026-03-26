@@ -231,15 +231,7 @@ export class FormRequestProcessor extends BaseRequestProcessor {
 
         const pipelineInput = {...ctx, choice_id: choiceId, form_id: formId};
         const result = await runFormChoicePipeline(pipelineInput);
-        if (result) {
-            return result;
-        }
-
-        logger.error('[FormRequestProcessor] Form choice pipeline produced no result', {choiceId});
-        return {
-            outcome: 'failed' as ProcessOutcome,
-            error: 'Form choice pipeline did not produce a result',
-        } as ProcessResult;
+        return result;
     }
 
     /**

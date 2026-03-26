@@ -14,7 +14,11 @@ import type {ActionDefinition} from '../../../actions/types.js';
 import {dialogRequestProcessor} from './dialog-request-processor.js';
 import type {RequestContext, ProcessResult, ProcessOutcome} from '../request-processor.interfaces.js';
 import {BaseRequestProcessor, type RequestType} from './base-processor.js';
-import {buildRouterForm, routerStatic} from '../../../config/router-static.js';
+import {buildRouterForm} from '../../../config/router-static.js';
+import {
+    shouldEnforceTransformStrictMode,
+    validateRouterResultShape,
+} from './validators/transform-execute-validator.js';
 
 /**
  * Action request processor configuration
@@ -134,23 +138,12 @@ export class ActionRequestProcessor extends BaseRequestProcessor {
         const result = await actionProcessor.processStepResult(sessionId, stepId, stepResult);
 
         if (result.continue) {
-            const currentStep = result.currentStep;
             const fromMessage = result.message.execute;
-            const fallbackScript =
-                currentStep?.code
-                    ? {
-                          script: {
-                              input: {},
-                              output: 'step_result',
-                              code: currentStep.code,
-                          },
-                      }
-                    : undefined;
             return {
                 outcome: 'completed',
                 context: result.message.context,
                 activated_neuron_ids: result.actionId ? [result.actionId] : undefined,
-                execute: fromMessage ?? fallbackScript,
+                execute: fromMessage,
             };
         }
         return {
@@ -184,23 +177,12 @@ export class ActionRequestProcessor extends BaseRequestProcessor {
         // Start action execution
         const actionResult = await actionProcessor.approveAction(sessionId, selectedAction?.actionId || '');
 
-        const currentStep = actionResult.currentStep;
         const fromMessage = actionResult.message.execute;
-        const fallbackScript =
-            currentStep?.code
-                ? {
-                      script: {
-                          input: {},
-                          output: 'step_result',
-                          code: currentStep.code,
-                      },
-                  }
-                : undefined;
         return {
             outcome: 'completed',
             context: actionResult.message.context,
             activated_neuron_ids: actionResult.actionId ? [actionResult.actionId] : undefined,
-            execute: fromMessage ?? fallbackScript,
+            execute: fromMessage,
         };
     }
 
@@ -226,67 +208,14 @@ export class ActionRequestProcessor extends BaseRequestProcessor {
             taskText: taskText.substring(0, 50)
         });
 
-        // 1. keywordMatches = actionRegistry.findActions(task)  // existing
+        // Use transform schema for routing - all requests go through router transform
+        // 1. candidates = actionRegistry.findActions(task) - collect for transform context
         const keywordMatches = actionRegistry.findAction(taskText);
-
-        // 2. if keywordMatches[0].matchScore >= 0.8:
-        //      return proposal with that action + ROUTER_CHOICES tail  // existing fast path
-        if (keywordMatches[0]?.matchScore >= 0.8) {
-            const action = keywordMatches[0].action;
-            logger.info('[ActionRequestProcessor] High confidence match, fast path', {
-                actionId: action.id,
-                matchScore: keywordMatches[0].matchScore
-            });
-            return {
-                outcome: 'action_proposal',
-                context: {
-                    execution: {
-                        action: 'task',
-                        step: 'router'
-                    },
-                    task: taskText
-                },
-                execute: {
-                    form: buildRouterForm([
-                        {
-                            id: action.id,
-                            label: action.title,
-                            description:
-                                typeof action.description === 'string' && action.description.trim()
-                                    ? action.description
-                                    : action.title,
-                        },
-                    ]),
-                }
-            };
-        }
-
-        // 3. candidates = keywordMatches (score >= 0.3) || getAllActions() if empty
-        //    if candidates.length === 0:
-        //      return static ROUTER_CHOICES  // no registry, skip LLM
         const candidates = keywordMatches.filter(m => m.matchScore >= 0.3);
         const actionsToUse: ActionDefinition[] = candidates.map(m => m.action);
-        
-        if (actionsToUse.length === 0) {
-            logger.info('[ActionRequestProcessor] No actions in registry, returning static choices');
-            return {
-                outcome: 'action_proposal',
-                context: {
-                    execution: {
-                        action: 'task',
-                        step: 'router'
-                    },
-                    task: taskText
-                },
-                execute: {
-                    form: buildRouterForm([])
-                }
-            } as ProcessResult;
-        }
 
-        // 4. ctx.availableActions = candidates.map(m => m.action)  // inject into context
-        //    run DialogRequestProcessor with schema = "router"
-        //    parse LLM response → rankedIds: string[]
+        // 2. ctx.availableActions = actionsToUse // inject into context for transform
+        //    run DialogRequestProcessor with transformSchema = 'router'
         const enrichedCtx = {
             ...ctx,
             availableActions: actionsToUse.map(action => ({
@@ -305,11 +234,22 @@ export class ActionRequestProcessor extends BaseRequestProcessor {
             
             const routerRequest = {
                 context: routerRequestContext,
+                codeBlocks: [],
                 promiseId: promiseId + '-router' // Generate a unique promiseId for the router step
             };
             
             // Process the router request through the dialog/request processor (which handles transforms)
             const routerResult = await dialogRequestProcessor.process(routerRequest);
+            const routerIssues = validateRouterResultShape(routerResult);
+            if (routerIssues.length > 0) {
+                if (shouldEnforceTransformStrictMode()) {
+                    const codes = routerIssues.map((i) => i.code).join(', ');
+                    throw new Error(`Router transform contract violation: ${codes}`);
+                }
+                logger.warn('[ActionRequestProcessor] Router transform validation warnings', {
+                    issues: routerIssues.map((i) => i.code),
+                });
+            }
             
             if (routerResult.outcome === 'completed' && routerResult.execute?.form?.choices) {
                 // Extract the ranked choices from the router result
@@ -330,64 +270,20 @@ export class ActionRequestProcessor extends BaseRequestProcessor {
                         form: buildRouterForm(rankedChoices)
                     }
                 };
-            } else {
-                // If router processing failed, fall back to simulating with candidates
-                logger.warn('[ActionRequestProcessor] Router transform failed, falling back to simulated ranking');
-                const rankedIds = actionsToUse
-                    .map(action => action.id)
-                    .sort((idA, idB) => {
-                        const matchA = candidates.find(m => m.action.id === idA)?.matchScore || 0;
-                        const matchB = candidates.find(m => m.action.id === idB)?.matchScore || 0;
-                        return matchB - matchA;
-                    });
-
-                const rankedChoices = rankedIds
-                    .map((id) => actionsToUse.find((a) => a.id === id))
-                    .filter((a): a is ActionDefinition => Boolean(a))
-                    .map((action) => ({
-                        id: action.id,
-                        label: action.title,
-                        description:
-                            typeof action.description === 'string' && action.description.trim()
-                                ? action.description
-                                : action.title,
-                    }));
-
-                return {
-                    outcome: 'action_proposal',
-                    context: {
-                        execution: {
-                            action: 'task',
-                            step: 'router'
-                        },
-                        task: taskText
-                    },
-                    execute: {
-                        form: buildRouterForm(rankedChoices)
-                    }
-                };
             }
+            
+            // Router transform failed - throw error, no fallback
+            logger.error('[ActionRequestProcessor] Router transform failed', {
+                outcome: routerResult.outcome,
+                hasFormChoices: !!routerResult.execute?.form?.choices
+            });
+            throw new Error(`Router transform failed: outcome=${routerResult.outcome}`);
         } catch (error) {
-            logger.error('[ActionRequestProcessor] LLM router failed, falling back to static choices', {
+            logger.error('[ActionRequestProcessor] Router transform threw error', {
                 error: error instanceof Error ? error.message : String(error)
             });
-            // If LLM is unavailable → graceful fallback to static ROUTER_CHOICES (no crash)
-            return {
-                outcome: 'action_proposal',
-                context: {
-                    execution: {
-                        action: 'task',
-                        step: 'router'
-                    },
-                    task: taskText
-                },
-                execute: {
-                    form: buildRouterForm([])
-                }
-            } as ProcessResult;
+            throw error;
         }
     }
 }
-
-// Singleton instance
 export const actionRequestProcessor = new ActionRequestProcessor();

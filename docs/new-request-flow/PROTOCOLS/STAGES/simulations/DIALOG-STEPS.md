@@ -303,7 +303,7 @@ hello world
 | context.execution.step | "request" | LLM обрабатывает запрос |
 | context.history | [...] | История диалога |
 | execute.message | "hello world" | Ответ LLM |
-| execute.form.input | [...] | Поле для следующего ввода |
+| execute.form.textarea | [...] | Поле для следующего ввода |
 
 ---
 
@@ -402,7 +402,7 @@ flowchart TD
     subgraph Step2 [Шаг 2: Выбор]
         A2[Web: choice="dialog"] --> B2[Client API]
         B2 --> C2[Server: action=dialog]
-        C2 --> D2[form.input]
+        C2 --> D2[form.textarea]
         D2 --> B2
         B2 --> A2
     end

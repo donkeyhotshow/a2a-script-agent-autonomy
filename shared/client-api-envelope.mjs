@@ -22,3 +22,39 @@ export function unwrapA2aInvokeBody(res) {
     }
     return res;
 }
+
+/**
+ * Validate `POST /sessions/:id/next` client result payload.
+ * Returns `null` when valid, otherwise an error message.
+ */
+export function validateClientResultPayload(result) {
+    if (!result || typeof result !== 'object' || Array.isArray(result)) {
+        return 'result is required';
+    }
+    const hasMessage = typeof result.message === 'string' && result.message.trim().length > 0;
+    const hasChoice = typeof result.choice === 'string' && result.choice.trim().length > 0;
+    if (!hasMessage && !hasChoice) {
+        return 'result.message or result.choice is required';
+    }
+    return null;
+}
+
+/**
+ * Normalize promise payload to common client DTO fields.
+ */
+export function normalizePromisePollStatus(promiseStatus) {
+    const status = promiseStatus?.status;
+    const completed = !!(
+        promiseStatus?.execute ||
+        status === 'completed' ||
+        status === 'done' ||
+        promiseStatus?.result?.completed === true
+    );
+    const failed = status === 'failed' || status === 'error';
+    return {
+        status: status || (completed ? 'completed' : 'pending'),
+        completed,
+        failed,
+        asyncPending: !(completed || failed),
+    };
+}

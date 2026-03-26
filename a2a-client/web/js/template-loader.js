@@ -34,8 +34,9 @@ const TemplateLoader = {
     async render(templateName, containerId, data = {}) {
         const container = document.getElementById(containerId);
         if (!container) {
-            console.error(`Container not found: ${containerId}`);
-            return;
+            const errMsg = `[TemplateLoader] Container not found: ${containerId}`;
+            console.error(errMsg);
+            throw new Error(errMsg);
         }
 
         let html = await this.load(templateName);
@@ -66,7 +67,7 @@ const TemplateLoader = {
             return true;
         } catch (error) {
             console.error('[Templates] Failed to load:', error);
-            return false;
+            throw error;
         }
     },
 
@@ -80,7 +81,7 @@ const TemplateLoader = {
             return true;
         } catch (error) {
             console.error('[Templates] Failed to load header:', error);
-            return false;
+            throw error;
         }
     }
 };

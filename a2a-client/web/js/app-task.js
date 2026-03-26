@@ -17,6 +17,12 @@
     const APP_CONFIG = global.APP_CONFIG || { loadAppModules: true };
 
     function loadAppModules() {
+        if (global.__A2A_APP_MODULES_BOOTSTRAPPED) {
+            console.warn('[AppTask] Duplicate app bootstrap skipped');
+            return;
+        }
+        global.__A2A_APP_MODULES_BOOTSTRAPPED = true;
+
         console.log('[AppTask] loadAppModules() starting...');
         
         // Check if we should skip loading app modules (for minimal dialog version)

@@ -56,7 +56,7 @@
 1. Користувач надсилає задачу
 2. Server через роутер повертає `execute.form.choices` (наприклад: `dialog`, `coder`, `auto-ai`, `task-decomposition`)
 3. Клієнт обирає екшен → надсилає `result.choice` з ID (`"coder"`)
-4. Server повертає форму для введення повідомлення (`execute.form.input[message]`, `execution.action = "coder"`)
+4. Server повертає форму для введення повідомлення (`execute.form.textarea[message]`, `execution.action = "coder"`)
 5. Користувач надсилає повідомлення (`result.message`)
 6. Server → LLM: system prompt + history + message
 7. LLM вирішує: продовжити діалог чи виконати дію (RAG пошук, читання/запис файлів)
@@ -103,7 +103,7 @@
 }
 ```
 
-Server повертає форму для введення повідомлення (`execute.form.input`).
+Server повертає форму для введення повідомлення (`execute.form.textarea`).
 
 ### Крок 3: Перше питання
 

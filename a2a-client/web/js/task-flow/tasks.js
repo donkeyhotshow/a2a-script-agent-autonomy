@@ -23,8 +23,16 @@
         const sessionId = TaskFlow._sessionId;
         const projectId = TaskFlow._projectId;
         if (!sessionId || !projectId) {
-            console.warn('[TaskFlow] No active session');
-            return;
+            const err = new Error('[TaskFlow] No active session or project');
+            console.error(err.message, { sessionId, projectId });
+            if (contentEl) {
+                contentEl.innerHTML = `
+                    <div class="task-flow-error">
+                        <p>Error: ${escapeHtml(err.message)}</p>
+                    </div>
+                `;
+            }
+            throw err;
         }
 
         const store = resolveStore(sessionId);
@@ -57,12 +65,10 @@
             // Wait for response
             const outcome = await outcomePromise;
             
-            // Check if this is async (has promiseId) - don't hide loader yet!
+            // Check if this is async (has asyncPending) - don't hide loader yet!
             const isAsync =
                 submitResult?.asyncPending ||
-                outcome?.asyncPending ||
-                submitResult?.promiseId ||
-                outcome?.promiseId;
+                outcome?.asyncPending;
             
              if (outcome.execute) {
                  Render.renderExecute(contentEl, outcome.execute, { execute: outcome.execute, sessionId, projectId }, null, TaskFlow);
@@ -109,7 +115,7 @@
                 </div>
             `;
             if (store?.setError) {
-                store.setError(errorMsg);
+                store.setError(error instanceof Error ? error : new Error(String(errorMsg)));
             }
         }
     }
@@ -199,7 +205,7 @@
             sel.value = projectId;
         }
 
-        // Use SessionStore instead of legacy SessionViewModel
+        // Use SessionStore for session management
         const store = resolveStore(TaskFlow._sessionId);
         store?.reset();
 
@@ -338,7 +344,7 @@
                 });
             }
 
-            // Removed legacy SessionViewModel update
+            // SessionViewModel removed - using SessionStore exclusively
 
         } catch (error) {
             console.error('[TaskFlow] Error:', error);

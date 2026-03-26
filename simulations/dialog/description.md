@@ -1,4 +1,4 @@
-# Dialog Simulation - AI-Actions
+﻿# Dialog Simulation - AI-Actions
 
 ## Тип: AI-Actions
 
@@ -30,7 +30,7 @@ request.json → server-transforms-request.json → response.json
 | Шаг | Request                       | Response                                                                   |
 |-----|-------------------------------|----------------------------------------------------------------------------|
 | 1   | result.message: "диалог"      | execute.form.choices (router: dialog / agent / task-decomposition)         |
-| 2   | result.choice: "dialog"       | execute.form.input[message], execution.action = "dialog", step = "request" |
+| 2   | result.choice: "dialog"       | execute.form[message], execution.action = "dialog", step = "request" |
 | 3   | result.message: "hello world" | LLM → history +1, execution.step = "request", execute.message + form.input |
 | 4   | result.message: "Дякую!"      | execution.step = "completed", execute.message + form.input                 |
 
@@ -85,3 +85,4 @@ simulations/dialog/
 
 - Крок 1 — без LLM, має тільки `server-transforms-request.json`
 - Кроки 2, 3, 4 — з LLM, мають повний пайпайн з request.md/response.md
+

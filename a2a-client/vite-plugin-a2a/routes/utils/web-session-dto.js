@@ -53,6 +53,19 @@ export function collectSessionMessagesFlat(cwd, sessionId) {
     for (const stepNum of steps) {
         const stepData = loadNewStep(cwd, sessionId, stepNum);
 
+        // First, extract messages from context.history (dialog mode stores messages here)
+        if (stepData?.context?.history && Array.isArray(stepData.context.history)) {
+            for (const histEntry of stepData.context.history) {
+                const msgContent = histEntry.message || histEntry.content || '';
+                if (!msgContent) continue;
+                const slot = stepMessageSlotKey(stepNum, histEntry.role, msgContent);
+                if (!seenSlots.has(slot)) {
+                    allMessages.push({ role: histEntry.role, content: msgContent, step: stepNum });
+                    seenSlots.add(slot);
+                }
+            }
+        }
+
         if (
             stepData?.execute?.message &&
             (!stepData?.messages || !stepData.messages.some((m) => m.content === stepData.execute.message))

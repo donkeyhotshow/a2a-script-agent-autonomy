@@ -1,21 +1,38 @@
 /**
  * Integration Test without Mocks (Stateless)
  *
- * These tests use real components but don't require database.
- * Server is stateless - all persistence is in-memory only.
- *
- * Set SKIP_AUTH=1 to bypass authentication.
- *
- * Run with: npm run test:integration
+ * Uses an isolated REQUESTS_STORAGE_PATH so tests are fast and do not scan dev storage/requests.
  */
 
-import {describe, it, expect, beforeAll, afterAll, beforeEach} from 'vitest';
-import {requestService} from '../../src/services/core/request/request.service.js';
+import {describe, it, expect, beforeAll, afterAll, beforeEach, vi} from 'vitest';
+import * as path from 'path';
+import * as os from 'os';
+import {mkdirSync, rmSync} from 'fs';
 import {messageService} from '../../src/services/core/messaging/message.service.js';
 
-const SKIP_AUTH = process.env.SKIP_AUTH === '1';
+let requestService: typeof import('../../src/services/core/request/request.service.js')['requestService'];
+
+let tmpReqDir: string;
 
 describe('Integration Tests (Real Components - Stateless)', () => {
+    beforeAll(async () => {
+        tmpReqDir = path.join(os.tmpdir(), `a2a-req-it-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+        mkdirSync(tmpReqDir, {recursive: true});
+        process.env.REQUESTS_STORAGE_PATH = tmpReqDir;
+        vi.resetModules();
+        const mod = await import('../../src/services/core/request/request.service.js');
+        requestService = mod.requestService;
+    });
+
+    afterAll(() => {
+        try {
+            rmSync(tmpReqDir, {recursive: true, force: true});
+        } catch {
+            /* ignore */
+        }
+        delete process.env.REQUESTS_STORAGE_PATH;
+    });
+
     beforeEach(() => {
         // State is reset between tests (in-memory only)
     });
@@ -81,7 +98,6 @@ describe('Integration Tests (Real Components - Stateless)', () => {
         });
 
         it('should get next pending request', async () => {
-            // Clear any existing requests
             await requestService.cancelAllPending();
 
             await requestService.create({
@@ -98,7 +114,6 @@ describe('Integration Tests (Real Components - Stateless)', () => {
 
             const next = await requestService.getNextPending();
             expect(next).toBeDefined();
-            // Higher priority should be processed first
             expect(next?.priority).toBe(2);
         });
 

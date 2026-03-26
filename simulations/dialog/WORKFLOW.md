@@ -1,4 +1,4 @@
-# Dialog Simulation Files Workflow
+﻿# Dialog Simulation Files Workflow
 
 ## Web Execute Variants (Web Rendering Contract)
 
@@ -14,9 +14,9 @@ The `received.json` files define what the web receives. The web must handle all 
 **Key rules:**
 
 - `execute.form.choices` → render choice buttons, NO text input at bottom
-- `execute.form.input` (no choices) → use `input[0].label` as placeholder for bottom text input; no separate labeled
+- `execute.form` (no choices) → use `input[0].label` as placeholder for bottom text input; no separate labeled
   fields
-- `execute.message + execute.form.input` → message is pushed to history by `SessionStore.setExecute()` before render;
+- `execute.message + execute.form` → message is pushed to history by `SessionStore.setExecute()` before render;
   bottom input stays open
 - `execute.message` only (no form) → show message in container + bottom input to continue
 - Client sends: `{ result: { choice: "id" } }` for choices, `{ result: { message: "text" } }` for text input
@@ -432,3 +432,4 @@ function buildResponse(llmResponse: LLMResponse, context: Context): ServerRespon
 3. **System prompt**: "продовжи діалог" for continuing dialog
 4. **History building**: Server adds roles when building messages
 5. **request.md format**: MARKDOWN with system prompt, NOT JSON with model/messages
+

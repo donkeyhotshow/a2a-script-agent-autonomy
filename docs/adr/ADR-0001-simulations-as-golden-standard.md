@@ -82,7 +82,7 @@ For each simulation and each step we test:
   - `response.md → server-transforms-response.json`
   - `server-transforms-response.json → response.json`
 - **LLM level:** `request.md ↔ response.md` — recorded prompts and completions are treated as fixtures; no live model is called in replay.
-- **End-to-end flow:** "first request" and "step" flows as described in `PROTOCOL.md`, including action selection (`execute.form.choices`) and subsequent `execute.script` / client results.
+- **End-to-end flow:** "first request" and "step" flows as described in `PROTOCOL.md`, including action selection (`execute.form.choices`) and subsequent `execute."script"` / client results.
 
 ## Consequences
 

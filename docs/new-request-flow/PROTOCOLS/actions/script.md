@@ -190,7 +190,7 @@ utils.format(fmt, ...args) // Форматирование
 ## Поток выполнения
 
 ```
-1. Server формирует execute.script
+1. Server формирует execute."script"
 2. Client API получает запрос
 3. Client API валидирует код
 4. Client API создает sandbox environment

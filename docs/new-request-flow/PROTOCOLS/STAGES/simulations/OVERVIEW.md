@@ -27,8 +27,8 @@
 
 ```
 1. task="диалог" → form.choices [dialog, auto-ai, task-decomposition]
-2. choice="dialog" → form.input [message]
-3. message="hello" → message + form.input (LLM)
+2. choice="dialog" → form.textarea [message]
+3. message="hello" → message + form.textarea (LLM)
 4. message="Дякую!" → completed
 ```
 
@@ -36,10 +36,10 @@
 
 ```
 1. task="допомоги з кодом" → form.choices
-2. choice="coder" → form.input [message]
+2. choice="coder" → form.textarea [message]
 3. message → rag-search
 4. rag-search result → read-file
-5. read-file result → message + form.input
+5. read-file result → message + form.textarea
 6. message="спасибо" → write-file
 7. write-file result → completed
 8. (опционально) новый ввод → повтор
@@ -65,23 +65,23 @@
 | Шаг | Action | Step | Execute | Result |
 |-----|--------|------|---------|--------|
 | 1 | task | new → router | form.choices | message: "диалог" |
-| 2 | task | router → request | form.input | choice: "dialog" |
-| 3 | dialog | request → request | message + form.input | message: "..." |
-| 4 | dialog | request → completed | message + form.input | message: "Дякую!" |
+| 2 | task | router → request | form.textarea | choice: "dialog" |
+| 3 | dialog | request → request | message + form.textarea | message: "..." |
+| 4 | dialog | request → completed | message + form.textarea | message: "Дякую!" |
 
 ### Этапы в coder
 
 | Шаг | Action | Step | Execute | Result |
 |-----|--------|------|---------|--------|
 | 1 | task | new → router | form.choices | message: "допоможи..." |
-| 2 | task | router → request | form.input | choice: "coder" |
+| 2 | task | router → request | form.textarea | choice: "coder" |
 | 3 | coder | request → request | rag-search | message: "шукаю..." |
 | 4 | coder | request | read-file | rag-search result |
-| 5 | coder | request | message + form.input | read-file result |
-| 6 | coder | request | message + form.input | message: "запишу..." |
-| 7 | coder | request | write-file | message + form.input |
-| 8 | coder | request | message + form.input | write-file result |
-| 9 | coder | request | message + form.input | message: "готово" |
+| 5 | coder | request | message + form.textarea | read-file result |
+| 6 | coder | request | message + form.textarea | message: "запишу..." |
+| 7 | coder | request | write-file | message + form.textarea |
+| 8 | coder | request | message + form.textarea | write-file result |
+| 9 | coder | request | message + form.textarea | message: "готово" |
 | 10 | coder | request → completed | - | completed |
 
 ### Этапы в auto-ai
@@ -89,8 +89,8 @@
 | Шаг | Action | Step | Execute | Result |
 |-----|--------|------|---------|--------|
 | 1 | task | new → router | form.choices | message: "..." |
-| 2 | task | router → request | form.input | choice: "auto-ai" |
-| 3-4 | auto-ai | request → llm-generate | form.input | message + action proposal |
+| 2 | task | router → request | form.textarea | choice: "auto-ai" |
+| 3-4 | auto-ai | request → llm-generate | form.textarea | message + action proposal |
 | 5-6 | auto-ai | llm-generate → execute | execute.action | action result |
 | ... | auto-ai | continue | - | - |
 | 15-16 | auto-ai | complete | completed | - |
@@ -125,12 +125,12 @@
 
 ### Pattern 1: Router Flow
 ```
-request (task) → response (form.choices) → request (choice) → response (form.input)
+request (task) → response (form.choices) → request (choice) → response (form.textarea)
 ```
 
 ### Pattern 2: AI Dialog Loop
 ```
-request (message) → LLM → response (message + form.input) → request (message) → ...
+request (message) → LLM → response (message + form.textarea) → request (message) → ...
 ```
 
 ### Pattern 3: Action Execution
@@ -163,7 +163,7 @@ flowchart TD
     end
     
     subgraph DialogFlow [Dialog Flow]
-        E --> E1[form.input]
+        E --> E1[form.textarea]
         E1 --> E2[LLM]
         E2 --> E3{Ещё сообщения?}
         E3 -->|Да| E2
@@ -171,7 +171,7 @@ flowchart TD
     end
     
     subgraph CoderFlow [Coder Flow]
-        F --> F1[form.input]
+        F --> F1[form.textarea]
         F1 --> F2[LLM]
         F2 --> F3{RAG?}
         F3 -->|Да| F4[rag-search]

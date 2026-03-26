@@ -42,11 +42,6 @@
 
         // Note: Project selection from app state only, no localStorage
         // Selection restored via app initialization, not browser storage
-
-        // Listen for changes - no persistence needed (server-side)
-        sel.addEventListener('change', () => {
-            // Project change handled via app state, not localStorage
-        });
     }
 
     /**

@@ -336,7 +336,7 @@
             const api = global.apiIntegration;
             
             if (!api?.getSession) {
-                return null;
+                throw new Error('[WindowState] apiIntegration.getSession is required');
             }
 
             try {
@@ -346,8 +346,9 @@
                 });
                 return sessionData;
             } catch (err) {
-                console.warn('[WindowState] Failed to load session data:', err);
-                return null;
+                const loadErr = new Error('[WindowState] Failed to load session data');
+                loadErr.cause = err;
+                throw loadErr;
             }
         },
 
@@ -366,10 +367,12 @@
             }
 
              // Messages - already normalized in apiIntegration.getSession (guaranteed to be array)
-             store.initMessages(sessionData.messages || []);
+             store.initMessages(Array.isArray(sessionData.messages) ? sessionData.messages : []);
 
             // Context - already normalized in apiIntegration.getSession (guaranteed to be object)
-            store.setContext(sessionData.context || {});
+            if (sessionData.context != null) {
+                store.setContext(sessionData.context);
+            }
 
             // Execute - already normalized in apiIntegration.getSession (can be null)
             store.setExecute(sessionData.execute);
@@ -443,7 +446,7 @@
                 // Load session data
                 const sessionData = await this._loadSessionData(sessionId);
                 if (!sessionData) {
-                    console.warn(`[WindowState] Session ${sessionId} not found - creating window with empty store`);
+                    throw new Error(`[WindowState] Session ${sessionId} not found`);
                 }
 
                 // Create floating window
@@ -481,6 +484,7 @@
                 }
             } catch (error) {
                 console.error('[WindowState] Failed to create session window:', error);
+                global.ErrorHandler?.handle(error, { action: 'createSessionWindow', sessionId });
             }
         },
 
@@ -506,8 +510,9 @@
             });
 
             if (!store) {
-                console.error('[WindowState] Failed to create SessionStore instance');
-                return null;
+                const errMsg = '[WindowState] Failed to create SessionStore instance';
+                console.error(errMsg, { sessionId });
+                throw new Error(errMsg);
             }
 
             console.log('[WindowState] SessionStore instance created for', sessionId);
@@ -551,16 +556,31 @@
             const registry = global.WindowRegistry;
             if (!registry) return;
 
-            const savedWindows = await registry.loadSessionWindowsState();
+            let savedWindows = [];
+            try {
+                savedWindows = await registry.loadSessionWindowsState();
+            } catch (error) {
+                console.error('[WindowState] Failed to load saved windows list:', error);
+                global.ErrorHandler?.handle(error, { action: 'restoreSessionWindows.loadState' });
+                return;
+            }
             if (!Array.isArray(savedWindows) || savedWindows.length === 0) {
                 return;
             }
 
             const queue = savedWindows.slice();
+            let restoreFailures = 0;
             while (queue.length > 0) {
                 const batch = queue.splice(0, RESTORE_WINDOW_CONCURRENCY);
-                await Promise.allSettled(
+                const results = await Promise.allSettled(
                     batch.map((sessionId) => this._restoreSavedWindow(sessionId))
+                );
+                restoreFailures += results.filter((r) => r.status === 'rejected').length;
+            }
+            if (restoreFailures > 0) {
+                global.ErrorHandler?.handle(
+                    new Error(`[WindowState] Failed to restore ${restoreFailures} window(s)`),
+                    { action: 'restoreSessionWindows.summary', restoreFailures }
                 );
             }
         },
@@ -572,7 +592,8 @@
                     await this.createSessionWindow(sessionId);
                 }
             } catch (error) {
-                console.warn('[WindowState] Failed to restore window:', sessionId, error);
+                console.error('[WindowState] Failed to restore window:', sessionId, error);
+                global.ErrorHandler?.handle(error, { action: 'restoreSavedWindow', sessionId });
             }
         },
 
@@ -580,7 +601,12 @@
          * Check if session exists via Client API
          */
         async checkSessionExists(sessionId) {
-            if (!sessionId || !global.apiIntegration) return false;
+            if (!sessionId) {
+                throw new Error('[WindowState] sessionId is required for checkSessionExists');
+            }
+            if (!global.apiIntegration) {
+                throw new Error('[WindowState] apiIntegration is required for checkSessionExists');
+            }
             try {
                 const projectId = await global.getCurrentProjectId();
                 const session = await global.apiIntegration.getSession(
@@ -589,7 +615,8 @@
                 );
                 return !!(session && (session.id || session.sessionId));
             } catch (e) {
-                return false;
+                global.ErrorHandler?.handle(e, { action: 'checkSessionExists', sessionId });
+                throw e;
             }
         },
 

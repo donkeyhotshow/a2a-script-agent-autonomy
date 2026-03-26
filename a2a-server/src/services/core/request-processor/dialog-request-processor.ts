@@ -15,6 +15,7 @@ import {BaseRequestProcessor, type RequestType} from './base-processor.js';
 import {requestService} from '../request/request.service.js';
 import {fetchLlmResponse, pollReadyThenFetch} from '../../../daemon/llm-hub-poll.js';
 import type {InterruptDirective, ServerInterruptTraceEvent} from '../../../transform/types.js';
+import {validateDialogExecuteShape, shouldEnforceTransformStrictMode} from './validators/transform-execute-validator.js';
 
 type DialogHistoryEntry = { role: string; message: string };
 
@@ -75,80 +76,9 @@ function dialogContextWithoutTransientIds(ctx: Record<string, unknown>): Record<
     return out;
 }
 
-function parseLlmResponseFields(responseMd: string): {
-    llmMessage: string | undefined;
-    llmForm: Record<string, unknown> | undefined;
-} {
-    let llmMessage: string | undefined;
-    let llmForm: Record<string, unknown> | undefined;
-    if (responseMd.trim().startsWith('{')) {
-        try {
-            const llmJson = JSON.parse(responseMd.trim()) as Record<string, unknown>;
-            const llmExecute = llmJson.execute as Record<string, unknown> | undefined;
-            llmMessage = (llmJson.message ?? llmJson.response ?? llmExecute?.message) as string | undefined;
-            llmForm = llmExecute?.form as Record<string, unknown> | undefined;
-        } catch (e) {
-            logger.warn('[DialogRequestProcessor] Failed to parse JSON response, using raw text', e);
-            llmMessage = responseMd.trim();
-        }
-    } else {
-        llmMessage = responseMd.trim();
-    }
-    return {llmMessage, llmForm};
-}
+// Removed parseLlmResponseFields - parsing now handled by transforms
 
-function buildDialogProcessResultFromContext(
-    ctx: Record<string, unknown>,
-    execute: Record<string, unknown> | undefined,
-    responseMd: string,
-    recovered: boolean
-): ProcessResult {
-    const {llmMessage, llmForm} = parseLlmResponseFields(responseMd);
-    const assistantMessage = llmMessage ?? (execute?.message as string | undefined);
-    const existingHistory = getExistingDialogHistory(ctx);
-    const userMessage = getDialogUserMessage(ctx);
-    const newHistory = [...existingHistory];
-    if (userMessage) {
-        const last = newHistory[newHistory.length - 1];
-        if (!last || last.role !== 'user' || last.message !== userMessage) {
-            newHistory.push({role: 'user', message: userMessage});
-        }
-    }
-    if (assistantMessage) {
-        newHistory.push({role: 'assistant', message: assistantMessage});
-    }
-    const defaultForm = {
-        input: [{name: 'message', type: 'text', label: 'Повідомлення', required: true}],
-    };
-    const msg = recovered ? 'Dialog response (recovered)' : 'Dialog response';
-    const nextCtx = {...dialogContextWithoutTransientIds(ctx), history: newHistory};
-    const ex = execute as Record<string, unknown> | undefined;
-    if (isDialogToolExecutePayload(ex)) {
-        return {
-            outcome: 'completed',
-            message: msg,
-            context: nextCtx,
-            execute: ex as ProcessResult['execute'],
-        } as ProcessResult;
-    }
-    if (assistantMessage) {
-        return {
-            outcome: 'completed',
-            message: msg,
-            context: nextCtx,
-            execute: {
-                message: assistantMessage,
-                form: llmForm ?? (execute?.form as Record<string, unknown> | undefined) ?? defaultForm,
-            },
-        } as ProcessResult;
-    }
-    return {
-        outcome: 'completed',
-        message: msg,
-        context: nextCtx,
-        execute: execute ?? {form: defaultForm},
-    } as ProcessResult;
-}
+// Removed buildDialogProcessResultFromContext - now using transforms only
 
 function interruptWhenSatisfied(interrupt: InterruptDirective, ctx: Record<string, unknown>): boolean {
     const w = interrupt.when;
@@ -202,6 +132,20 @@ function getPromptsTransformsPath(): string {
     return path.resolve(dir, '../../../../prompts/transforms');
 }
 
+
+function warnOnInvalidDialogExecute(execute: ProcessResult['execute'] | undefined, source: string): void {
+    const issues = validateDialogExecuteShape(execute);
+    if (issues.length === 0) return;
+    if (shouldEnforceTransformStrictMode()) {
+        const codes = issues.map((i) => i.code).join(', ');
+        throw new Error(`Dialog transform contract violation (${source}): ${codes}`);
+    }
+    logger.warn('[DialogRequestProcessor] Transform execute validation warnings', {
+        source,
+        issues: issues.map((i) => i.code),
+    });
+}
+
 async function runResponseTransformWithOutput(
     promptsPath: string,
     schemaName: string,
@@ -220,10 +164,19 @@ async function runResponseTransformWithOutput(
         );
         const output = responseTransformResult.success ? responseTransformResult.output : responseData;
         const rawOutput = output as Record<string, unknown>;
-        const execute = rawOutput?.execute as Record<string, unknown> | undefined;
+
+        // Use execute directly from transform output. Dialog chat turns must include `execute.message`.
+        const normalizedExecute = rawOutput.execute as ProcessResult['execute'] | undefined;
+        const result: ProcessResult = {
+            outcome: 'completed',
+            context: rawOutput.context as Record<string, unknown> | undefined ?? ctx,
+            execute: normalizedExecute,
+        };
+        warnOnInvalidDialogExecute(result.execute, 'runResponseTransformWithOutput');
+
         return {
             rawOutput,
-            result: buildDialogProcessResultFromContext(ctx, execute, responseMd, recovered),
+            result,
         };
     } catch (err) {
         logger.error('[DialogRequestProcessor] Transform error', { error: err });
@@ -264,6 +217,7 @@ async function applyInterrupt(
     let nextCtx = extraCtx ? { ...ctx, ...extraCtx } : { ...ctx };
 
     if (reason === 'compress_history') {
+        console.log('[DialogInterrupt] Processing compress_history interrupt');
         const history = getExistingDialogHistory(nextCtx);
         if (!Array.isArray(history) || history.length === 0) {
             trace.push({
@@ -470,9 +424,11 @@ async function processDialogResponseWithInterruptLoop(
             phase: turn === 0 ? 'primary' : 'follow_up',
             chars: md.length,
         });
+        logger.info('[Dialog] LLM responseMd', {md: md.substring(0, 500)});
         const pair = await runResponseTransformWithOutput(
             promptsPath, schemaName, workingCtx, md, isRecovered
         );
+        logger.info('[Dialog] Transform result', {execute: pair?.result?.execute});
         isRecovered = false;
         if (!pair) {
             return {outcome: 'failed', error: 'Response transform failed'} as ProcessResult;
@@ -516,8 +472,15 @@ async function processDialogResponseWithInterruptLoop(
         });
 
         if (!continueLoop) {
-            const execute = rawOutput.execute as Record<string, unknown> | undefined;
-            const res = buildDialogProcessResultFromContext(nextCtx, execute, md, false);
+            // Transform already processed the response; finalize using the same
+            // transform-owned execute shape. Dialog chat turns must include `execute.message`.
+            const normalizedExecute = rawOutput.execute as ProcessResult['execute'] | undefined;
+            const res: ProcessResult = {
+                outcome: 'completed',
+                context: rawOutput.context as Record<string, unknown> | undefined ?? nextCtx,
+                execute: normalizedExecute,
+            };
+            warnOnInvalidDialogExecute(res.execute, 'interruptLoop.finalize');
             return mergeTraceIntoResult(res, trace);
         }
 

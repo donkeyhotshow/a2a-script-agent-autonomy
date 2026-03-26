@@ -1,4 +1,4 @@
-# Agent Auto-AI v2 — hand-authored golden (ISSUE 6 / ISSUE 9)
+﻿# Agent Auto-AI v2 — hand-authored golden (ISSUE 6 / ISSUE 9)
 
 **Not a copy of `simulations/auto-ai`.** Short agent run built to document **context strategy** and **LLM-bound payloads**.
 
@@ -34,7 +34,7 @@ User task: **Add GET `/health` returning `{ ok: true }` and wire it in `src/app.
 ## Steps
 
 1. **Router** — `task` / `new` → `execute.form.choices` includes `agent`.
-2. **Choice** — `result.choice: agent` → `execute.form.input` (message).
+2. **Choice** — `result.choice: agent` → `execute.form` (message).
 3. **LLM** — First model turn: `rag-search` + `scratchpad_ops` (`add` flags).
 4. **LLM** — After RAG folded into `history` (no `result` in `request.json`): `list-directory` + `remove`/`add`
    scratchpad ops.
@@ -63,3 +63,4 @@ Uses `auto-ai-request.md` + materialize + flow hints (same pipeline as runtime).
 
 - Кроки 1, 2 — без LLM, мають тільки `server-transforms-request.json`
 - Кроки 3-7 — з LLM, мають повний пайпайн з request.md/response.md
+

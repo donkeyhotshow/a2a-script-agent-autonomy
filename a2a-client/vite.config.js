@@ -3,7 +3,9 @@ import vitePluginA2a from './vite-plugin-a2a.js';
 const devPort = Number(process.env.PORT) || 5173;
 const clientApiPort = Number(process.env.CLIENT_API_PORT) || 3001;
 const clientApiTarget = (process.env.CLIENT_API_URL || `http://localhost:${clientApiPort}`).replace(/\/$/, '');
-const apiProxyContext = '/api';
+// Keep `/api/a2a/*` on this Vite process (vite-plugin-a2a),
+// and proxy every other `/api/*` endpoint to external Client API.
+const nonA2aApiProxyContext = '^/api/(?!a2a/)';
 
 /** @type {import('vite').UserConfig} */
 export default {
@@ -11,7 +13,7 @@ export default {
     server: {
         port: devPort,
         proxy: {
-            [apiProxyContext]: {
+            [nonA2aApiProxyContext]: {
                 target: clientApiTarget,
                 changeOrigin: true,
                 ws: true,

@@ -89,6 +89,7 @@ if (-not $result2.execute.form.input) { Fail "No execute.form.input" }
 $inputField = $result2.execute.form.input
 if ($inputField -is [array]) {
     if ($inputField.Count -eq 0) { Fail "Form input array empty" }
+    $inputField = $inputField[0]
 } else {
     if (-not $inputField.name) { Fail "Form input missing name" }
 }

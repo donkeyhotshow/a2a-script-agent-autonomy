@@ -19,8 +19,10 @@
         try {
             return await storage.getItem(ACTIVE_SESSION_KEY);
         } catch (error) {
-            console.warn('[ActiveSessionStorage] Failed to read active session:', error);
-            return null;
+            const err = new Error('[ActiveSessionStorage] Failed to read active session');
+            err.code = 'ACTIVE_SESSION_READ_ERROR';
+            err.cause = error;
+            throw err;
         }
     }
 

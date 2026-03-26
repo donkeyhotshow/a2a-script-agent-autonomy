@@ -78,9 +78,9 @@ doc:
 
 **Поток выполнения:**
 ```
-request.json → response.json (execute.script, step: "vue-import-detect")
+request.json → response.json (execute."script", step: "vue-import-detect")
      ↑________________↓
-request.json (result.script) → response.json (execute.script, step: "vue-import-resolve")
+request.json (result.script) → response.json (execute."script", step: "vue-import-resolve")
      ↑________________↓
 ...автоматическое переключение шагов...
 ```

@@ -145,7 +145,7 @@ describe('SessionStore - Auto-Responses', () => {
             };
             
             // When form.input is present, client should NOT auto-continue
-            expect(execute.form.input).toBeDefined();
+            expect(execute.form.input[0]).toBeDefined();
             expect(execute.form.choices).toBeUndefined();
         });
 

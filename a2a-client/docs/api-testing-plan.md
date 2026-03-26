@@ -89,7 +89,7 @@ curl -s -X POST "$WEB_UI_BASE/api/a2a/sessions" \
 ```
 
 **Expected:** `{"success": true, "session": {...}}`  
-**Verify:** `session.id`, `session.execute.form.input`, `session.currentStep === 1`
+**Verify:** `session.id`, `session.execute.form.textarea` (or `form.input` for backwards compat), `session.currentStep === 1`
 
 ### 2.2 List Sessions
 
@@ -229,7 +229,7 @@ curl -s -X POST "$WEB_UI_BASE/api/a2a/sessions" \
 **Пример шага 1:**
 ```
 1/
-├── server-response.json   # execute.form.input (task prompt)
+├── server-response.json   # execute.form.textarea (task prompt)
 ├── messages.json          # Chat messages (role, content)
 ├── client-result.json     # {"result":{"message":"my task"}}
 └── request-to-server.json # payload для шага 2
@@ -288,7 +288,7 @@ Client API maps each step’s `client.json` → `request.json` → a2a-server �
 | Step | Example | client.json (Web→Client API) | received.json (expected) |
 |------|---------|------------------------------|--------------------------|
 | 1 | `dialog/1` | `result.message: "диалог"` | `execute.form.choices` (router) |
-| 2 | `dialog/2` | `result.choice: "dialog"` | `execute.form.input` (text input) |
+| 2 | `dialog/2` | `result.choice: "dialog"` | `execute.form.textarea` (text input) |
 | 3 | `agent-coder/3` | `result.message` (user text) | per golden `received.json` |
 | 4 | `agent-coder/6` | `result.message: "дякую!"` | per golden `received.json` |
 
@@ -315,8 +315,8 @@ R2=$(curl -s -X POST "$CLIENT_API_BASE/api/sessions/$SESSION_ID/action" \
 PROM2=$(echo "$R2" | jq -r '.promiseId')
 # Poll until completed
 until [ "$(curl -s "$A2A_SERVER_BASE/api/v1/requests/$PROM2/result" -H "x-skip-auth: true" | jq -r '.data.status')" = "completed" ]; do sleep 2; done
-# Expected: execute.form.input
-curl -s "$A2A_SERVER_BASE/api/v1/requests/$PROM2/result" -H "x-skip-auth: true" | jq '.data.result.execute.form.input'
+# Expected: execute.form.textarea
+curl -s "$A2A_SERVER_BASE/api/v1/requests/$PROM2/result" -H "x-skip-auth: true" | jq '.data.result.execute.form.textarea'
 ```
 
 ### Step 3 — Message → LLM Response
@@ -326,7 +326,7 @@ curl -s "$A2A_SERVER_BASE/api/v1/requests/$PROM2/result" -H "x-skip-auth: true" 
 curl -s -X POST "$CLIENT_API_BASE/api/sessions/$SESSION_ID/next" \
   -H "Content-Type: application/json" \
   -d '{"result":{"message":"hello world"}}'
-# Expected: execute.message + execute.form.input
+# Expected: execute.message + execute.form.textarea
 ```
 
 ### Step 4 — Final Message
@@ -485,7 +485,7 @@ Write-Host "OK: Full chain verified"
 | 1 | Health: a2a-server | `curl -sf $A2A_SERVER_BASE/health` | [ ] |
 | 2 | Health: Client API | `curl -sf $CLIENT_API_BASE/health` | [ ] |
 | 3 | Health: Web UI | `curl -sf -o /dev/null $WEB_UI_BASE` | [ ] |
-| 4 | POST /sessions (storage) | Returns session.id, execute.form.input | [ ] |
+| 4 | POST /sessions (storage) | Returns session.id, execute.form.textarea | [ ] |
 | 5 | GET /sessions | Returns sessions array | [ ] |
 | 6 | GET /sessions/:id | Returns session object | [ ] |
 | 7 | PUT /sessions/:id | Returns success | [ ] |
@@ -501,8 +501,8 @@ Write-Host "OK: Full chain verified"
 | 17 | Request files exist | N/request-to-server.json, N/client-result.json | [ ] |
 | 18 | Step file API works | `curl -s "$CLIENT_API_BASE/api/sessions/{SESSION_ID}/step/1/request-to-server.json"` (and `.../step/2/server-promise.json` when async) | [ ] |
 | 19 | Dialog sim step 1 (task→choices) | serverResponse.execute.form.choices | [ ] |
-| 20 | Dialog sim step 2 (choice→input) | execute.form.input | [ ] |
-| 21 | Dialog sim step 3 (message→LLM) | execute.message + form.input | [ ] |
+| 20 | Dialog sim step 2 (choice→input) | execute.form.textarea | [ ] |
+| 21 | Dialog sim step 3 (message→LLM) | execute.message + form.textarea | [ ] |
 | 22 | Promise status API | `curl -s "$CLIENT_API_BASE/api/sessions/{SESSION_ID}/promise/{PROMISE_ID}"` returns `status` | [ ] |
 
 ---

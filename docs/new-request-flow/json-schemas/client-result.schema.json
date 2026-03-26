@@ -122,7 +122,7 @@
     },
     "message": {
       "type": "string",
-      "description": "Free text message from user (execute.form.input → result.message)."
+      "description": "Free text message from user (execute.form.textarea → result.message)."
     },
     "action": {
       "type": "string",
@@ -130,3 +130,4 @@
     }
   }
 }
+

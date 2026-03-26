@@ -79,8 +79,10 @@
                 }
                 return windows;
             } catch (e) {
-                console.error('[WindowRegistry] Failed to load session windows state:', e);
-                return [];
+                const err = new Error('[WindowRegistry] Failed to load session windows state');
+                err.code = 'WINDOWS_STATE_LOAD_ERROR';
+                err.cause = e;
+                throw err;
             }
         },
 

@@ -1,11 +1,31 @@
 {
   "type": "pipeline",
+  "description": "Prepare prompt for LLM router - select action from user message",
   "steps": [
     {
-      "op": "render-markdown",
-      "templateRef": "a2a-server/prompts/router-request.md",
-      "data": "$",
-      "outputFile": "request.md"
+      "op": "set",
+      "path": "$.routerPrompt",
+      "value": {
+        "system": "Выбери режим работы на основе запроса пользователя. Верни JSON с полем 'action'.\nДоступные режимы:\n- dialog: для обычных вопросов и общения\n- agent: для работы с кодом (поиск, редактирование, выполнение команд)\n- task-decomposition: для сложных задач требующих планирования\n\nВерни только JSON: { \"action\": \"режим\" }",
+        "user": "{{message}}"
+      }
+    },
+    {
+      "op": "set",
+      "path": "$.staticChoices",
+      "value": {
+        "dialog": "AI діалог з користувачем",
+        "agent": "Agent (універсальний режим)",
+        "task-decomposition": "Декомпозиція задачі"
+      }
+    },
+    {
+      "op": "set",
+      "path": "$.contextSnapshot",
+      "value": {
+        "historyLength": "{{history.length}}",
+        "hasMessage": "{{message != null}}"
+      }
     }
   ]
 }

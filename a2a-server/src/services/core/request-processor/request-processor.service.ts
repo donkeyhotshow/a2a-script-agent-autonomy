@@ -21,7 +21,6 @@ import {
     recoverDialogFromLlmPromise,
 } from './index.js';
 import type {RequestType} from './request-processor.interfaces.js';
-import { normalizeLlmChoiceToExecution } from './normalize-llm-choice.js';
 import { LLM_PIPELINE_ACTIONS, type LlmPipelineAction } from '../../../config/router-static.js';
 
 export { LLM_PIPELINE_ACTIONS, type LlmPipelineAction };
@@ -121,12 +120,9 @@ export async function processOneRequest(): Promise<ProcessResult | null> {
     const {promiseId, context, codeBlocks, message} = request;
 
     try {
-        const ctx = context as Record<string, unknown>;
-        normalizeLlmChoiceToExecution(ctx);
-
         const requestContext: RequestContext = {
             promiseId,
-            context: ctx,
+            context,
             codeBlocks,
             message
         };
@@ -144,11 +140,11 @@ export async function processOneRequest(): Promise<ProcessResult | null> {
             const followUpRequest = await requestService.create({
                 clientId: promiseId, // Link to original
                 context: {
-                    ...ctx,
+                    ...context,
                     action: result.aiActions.action,
                     ai_action: true,
                     previousChoice: result.selection,
-                    task: message ?? (ctx['task'] as string | undefined) ?? result.aiActions.action,
+                    task: message ?? (context['task'] as string | undefined) ?? result.aiActions.action,
                 },
                 message: message ?? `AI-Action: ${result.aiActions.action}`,
             });

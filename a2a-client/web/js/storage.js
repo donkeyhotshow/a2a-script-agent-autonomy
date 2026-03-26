@@ -161,11 +161,17 @@
                 }
 
                 const data = await response.json();
-                return data.keys || [];
-        } catch (error) {
-            console.error('[CustomStorage] Keys failed:', error);
-            throw error;
-        }
+                if (!data || !Array.isArray(data.keys)) {
+                    const errMsg = '[CustomStorage] Unexpected keys response format';
+                    console.error(errMsg, data);
+                    throw new Error(errMsg);
+                }
+
+                return data.keys;
+            } catch (error) {
+                console.error('[CustomStorage] Keys failed:', error);
+                throw error;
+            }
         }
 
         /**

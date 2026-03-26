@@ -15,6 +15,11 @@
          * Initialize application
          */
         async init() {
+            if (global.__A2A_APP_INIT_DONE) {
+                console.warn('[AppInitialization] Duplicate init skipped');
+                return;
+            }
+            global.__A2A_APP_INIT_DONE = true;
             console.log('[AppInitialization] Starting init...');
 
             try {
@@ -22,11 +27,6 @@
                 if (global.TemplateLoader && !document.getElementById('header-container')?.innerHTML?.trim()) {
                     await global.TemplateLoader.initTaskOnly();
                 }
-
-                // Load all modules first
-                console.log('[AppInitialization] Calling loadModules()...');
-                await this.loadModules();
-                console.log('[AppInitialization] loadModules() completed');
 
                 // Initialize managers
                 await global.ProjectManager?.init();
@@ -44,6 +44,11 @@
                 // Populate header project select (header is ready, API is set)
                 await this._populateHeaderProjectSelect?.();
 
+                // Initialize TaskFlow once from canonical startup.
+                if (global.TaskFlow?.init) {
+                    global.TaskFlow.init();
+                }
+
                 // Restore previous state
                 await this.restoreState();
 
@@ -57,22 +62,25 @@
          * Load required modules
          */
         async loadModules() {
-            // resolve-web-script-url.js is loaded via HTML (index.html line 136)
-
-            // Normalizers module - load if available
-            if (typeof global.appendWebModuleOnce === 'function') {
-                await global.appendWebModuleOnce('js/install-normalizers.mjs', {
-                    onload: () => console.log('[AppTask] Loaded module: js/install-normalizers.mjs')
-                });
-            } else {
-                console.warn('[AppTask] appendWebModuleOnce missing; Normalizers may be unavailable');
-            }
+            // Kept for backward compatibility; no dynamic module loads.
+            return Promise.resolve();
         },
 
         /**
          * Restore application state
          */
         async restoreState() {
+            if (!global.SessionStore?.hasSavedSession || !global.SessionStore?.restoreAndReconnect) {
+                throw new Error('[AppInitialization] SessionStore restore methods are required');
+            }
+            const hasSaved = await global.SessionStore.hasSavedSession();
+            if (hasSaved) {
+                const restored = await global.SessionStore.restoreAndReconnect();
+                if (restored) {
+                    console.log('[AppInitialization] Session restored from storage');
+                }
+            }
+
             // Restore session windows
             await global.WindowState?.restoreSessionWindows();
 

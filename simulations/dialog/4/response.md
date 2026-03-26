@@ -2,17 +2,13 @@
 "step": "dialog-response",
 "message": "Будь ласка!",
 "execute": {
+"message": "Будь ласка!",
 "form": {
-"title": "Будь ласка!",
-"description": "Звертайся ще, коли знадобиться допомога.",
-"input": [
-{
+"textarea": {
 "name": "message",
-"type": "text",
 "label": "Повідомлення",
 "required": true
 }
-]
 }
 },
 "completed": false

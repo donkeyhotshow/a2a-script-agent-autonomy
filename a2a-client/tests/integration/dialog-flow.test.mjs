@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Integration Tests for Dialog Flow
  * Tests complete interaction: SessionStore ↔ API ↔ Storage
  * 
@@ -98,7 +98,7 @@ describe('Dialog Flow Integration', () => {
             
             expect(session.id).toBe('sess_test_001');
             expect(session.currentStep).toBe(1);
-            expect(session.execute.form.input.name).toBe('task');
+            expect(session.execute.form.input[0].name).toBe('task');
             
             // Step 2: Simulate user input (form submission)
             const userMessage = {
@@ -562,7 +562,7 @@ describe('End-to-End Integration Scenarios', () => {
                 }
             });
             
-            expect(session.execute.form.input.name).toBe('task');
+            expect(session.execute.form.input[0].name).toBe('task');
             
             // 2. Simulate user input
             const promiseId = 'promise_journey_001';
@@ -608,3 +608,4 @@ describe('End-to-End Integration Scenarios', () => {
         });
     });
 });
+

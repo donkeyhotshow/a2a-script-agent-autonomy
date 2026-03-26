@@ -7,7 +7,7 @@
 ## Когда используется
 
 - Требуется выбор пользователя (form.choices)
-- Требуется ввод данных (form.input)
+- Требуется ввод данных (form.textarea)
 - Длительная операция на стороне AI Hub (execute.wait)
 
 ## Формат
@@ -68,7 +68,7 @@ Client API добавляет ui state:
 
 ## Типы waiting
 
-### 1. Ожидание ввода пользователя (form.choices / form.input)
+### 1. Ожидание ввода пользователя (form.choices / form.textarea)
 
 Когда есть `execute.form` с `choices` или `input` - это ожидание пользователя:
 
@@ -103,12 +103,12 @@ Client API добавляет ui state:
 
 ## Client API поведение
 
-### Ожидание ввода пользователя (form.choices / form.input)
+### Ожидание ввода пользователя (form.choices / form.textarea)
 
 ```javascript
 async function handleWaiting(execute) {
   // Рендерим форму только если есть execute.form с choices или input
-  if (execute.form && (execute.form.choices?.length || execute.form.input)) {
+  if (execute.form && (execute.form.choices?.length || execute.form.textarea)) {
     renderForm(execute.form);
     const userInput = await waitForUserInput();
     return sendResult(userInput);

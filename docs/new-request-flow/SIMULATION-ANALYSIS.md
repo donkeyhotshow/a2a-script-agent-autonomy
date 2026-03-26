@@ -191,7 +191,7 @@
 
 ### 3. Server Sends Scripts
 
-- Сервер отправляет `execute.script` с `input`, `output`, `code`
+- Сервер отправляет `execute."script"` с `input`, `output`, `code`
 - Клиент выполняет скрипт локально
 - Клиент отправляет результат обратно
 
@@ -211,7 +211,7 @@
 | `action`         | ID действия/шага (было `actionId`)                    |
 | `execution`      | Текущее состояние выполнения                          |
 | `step`           | Текущий шаг в execution                               |
-| `execute.script` | Скрипт для выполнения на клиенте                      |
+| `execute."script"` | Скрипт для выполнения на клиенте                      |
 | `result` (top-level) | Итог / completion (только в конце; см. `result.completed`) |
 
 ---

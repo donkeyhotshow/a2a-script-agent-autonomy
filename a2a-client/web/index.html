@@ -135,38 +135,8 @@
 <script defer src="js/app-task.js"></script>
 
 <script>
-    // Initialize new architecture on page load
-    document.addEventListener('DOMContentLoaded', async () => {
-        // Force adapter installation (replaces legacy globals)
-        window.FORCE_SESSION_STORE = true;
-
-        // Wait for dynamically loaded modules to be available
-        await waitForModules();
-
-        // Initialize core systems
-        if (window.PanelManager) await PanelManager.init().syncWithSessionStore();
-
-        // Restore previous session if available
-        try {
-            const hasSaved = await SessionStore.hasSavedSession();
-            if (hasSaved) {
-                const restored = await SessionStore.restoreAndReconnect();
-                if (restored) {
-                    console.log('[A2A] Session restored from storage');
-                }
-            }
-        } catch (error) {
-            console.warn('[A2A] Failed to check/restore session:', error);
-        }
-
-        console.log('[A2A] Unified architecture initialized');
-    });
-
-    // Wait for sync stack + dynamic app scripts (js/app-task.js chain) to avoid init before WindowState
-    // Note: Fixed script loading order eliminates need for polling
-    function waitForModules() {
-        return Promise.resolve(); // Scripts load in correct order, no polling needed
-    }
+    // Canonical startup owner: js/app-task.js -> js/app/initialization.js
+    window.FORCE_SESSION_STORE = true;
 </script>
 </body>
 </html>

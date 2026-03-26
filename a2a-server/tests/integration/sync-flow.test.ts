@@ -9,6 +9,9 @@ import {describe, it, expect, beforeAll, afterAll} from 'vitest';
 
 describe('Sync Flow Integration', () => {
     const testProjectId = 'test-sync-flow-project';
+    let step1Context: any;
+    let step2Context: any;
+    let step3Context: any;
 
     beforeAll(async () => {
         // Setup test environment if needed
@@ -62,6 +65,28 @@ describe('Sync Flow Integration', () => {
             expect([200, 201, 400]).toContain(res.status); // Accept validation errors too
         });
 
+        it('Step 1: Initial dialog request should return form with choices', async () => {
+            const res = await request(app)
+                .post('/api/v1/invoke')
+                .send({
+                    task: 'dialog',
+                    sync: true
+                });
+
+            expect([200, 201]).toContain(res.status);
+
+            if (res.body.success && res.body.data?.execute?.form?.choices) {
+                expect(res.body.data.execute.form.choices).toBeDefined();
+                expect(Array.isArray(res.body.data.execute.form.choices)).toBe(true);
+                expect(res.body.data.context?.execution?.step).toBeDefined();
+                expect(res.body.data.sync).toBe(true);
+                step1Context = res.body.data.context; // Save context for step 2
+            } else if (res.body.success && res.body.data?.promiseId) {
+                // Async response acceptable
+                expect(res.body.data.promiseId).toBeDefined();
+            }
+        });
+
         it('Step 2: Submit choice selection should return sync input form', async () => {
             if (!step1Context) return; // Skip if step 1 failed
 
@@ -75,9 +100,9 @@ describe('Sync Flow Integration', () => {
 
             expect([200, 201]).toContain(res.status);
 
-            if (res.body.success && res.body.data?.execute?.form?.input) {
-                expect(res.body.data.execute.form.input).toBeDefined();
-                expect(Array.isArray(res.body.data.execute.form.input)).toBe(true);
+            if (res.body.success && res.body.data?.execute?.form?.textarea) {
+                expect(res.body.data.execute.form.textarea).toBeDefined();
+                expect(Array.isArray(res.body.data.execute.form.textarea)).toBe(true);
                 expect(res.body.data.context?.execution?.step).toBeDefined();
                 expect(res.body.data.context?.execution?.action).toBe('dialog');
                 expect(res.body.data.sync).toBe(true);
@@ -101,10 +126,10 @@ describe('Sync Flow Integration', () => {
 
             expect([200, 201]).toContain(res.status);
 
-            if (res.body.success && res.body.data?.execute?.message && res.body.data?.execute?.form?.input) {
+            if (res.body.success && res.body.data?.execute?.message && res.body.data?.execute?.form?.textarea) {
                 expect(res.body.data.execute.message).toBeDefined();
-                expect(res.body.data.execute.form.input).toBeDefined();
-                expect(Array.isArray(res.body.data.execute.form.input)).toBe(true);
+                expect(res.body.data.execute.form.textarea).toBeDefined();
+                expect(Array.isArray(res.body.data.execute.form.textarea)).toBe(true);
                 expect(res.body.data.context?.execution?.step).toBeDefined();
                 expect(res.body.data.context?.history).toBeDefined();
                 expect(Array.isArray(res.body.data.context.history)).toBe(true);

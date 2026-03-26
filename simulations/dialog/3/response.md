@@ -2,16 +2,13 @@
 "step": "dialog-response",
 "message": "hello world",
 "execute": {
+"message": "hello world",
 "form": {
-"title": "Діалог",
-"description": "hello world",
-"input": [
-{
+"textarea": {
 "name": "message",
-"type": "text",
-"label": "Ваше наступне повідомлення"
+"label": "Повідомлення",
+"required": true
 }
-]
 }
 },
 "completed": false

@@ -15,7 +15,11 @@ export function kvGet(cwd, namespace, key) {
     return JSON.parse(fs.readFileSync(file, 'utf8'));
   } catch (err) {
     console.error(`[kv] Failed to parse JSON from ${file}:`, err);
-    return null;
+    const parseError = new Error(`Failed to parse KV value for ${namespace}/${key}`);
+    parseError.code = 'KV_PARSE_ERROR';
+    parseError.namespace = namespace;
+    parseError.key = key;
+    throw parseError;
   }
 }
 

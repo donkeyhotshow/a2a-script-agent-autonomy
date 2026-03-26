@@ -24,6 +24,12 @@ import type {
     ProcessResult
 } from '../request-processor.interfaces.js';
 import {BaseRequestProcessor, type RequestType} from './base-processor.js';
+import {
+    validateAgentExecuteShape,
+    validateDialogExecuteShape,
+    validateResultShape,
+    shouldEnforceTransformStrictMode
+} from './validators/transform-execute-validator.js';
 
 /**
  * Simulation configuration
@@ -208,6 +214,12 @@ export class SimulationRequestProcessor extends BaseRequestProcessor {
                     step: simContext.stepNumber
                 });
                 responseData = responseTransformResult.output;
+                
+                // Validate execute shape based on schema type (agent or dialog)
+                this.validateTransformExecute(schemaName, responseData.execute, 'simulation.response');
+                
+                // Validate result shape (action-key format)
+                this.validateTransformResult(responseData.result, 'simulation.response');
             }
 
             return {
@@ -399,6 +411,62 @@ export class SimulationRequestProcessor extends BaseRequestProcessor {
     async validateSimulation(simulationName: string): Promise<boolean> {
         const simulationDir = path.join(this.config.simulationsBasePath, simulationName);
         return existsSync(simulationDir);
+    }
+
+    /**
+     * Validate transform execute shape based on schema type
+     * Agent schemas use agent-specific validation, dialog schemas use dialog validation
+     */
+    private validateTransformExecute(
+        schemaName: string,
+        execute: ProcessResult['execute'] | undefined,
+        source: string
+    ): void {
+        const isAgentSchema = schemaName === 'agent' || 
+            schemaName.startsWith('agent-') || 
+            schemaName === 'coder' || 
+            schemaName === 'analyze' ||
+            schemaName === 'auto-ai' ||
+            schemaName === 'fix-vue-imports' ||
+            schemaName === 'fix-laravel-namespaces-and-uses';
+        
+        const validator = isAgentSchema ? validateAgentExecuteShape : validateDialogExecuteShape;
+        const issues = validator(execute);
+        
+        if (issues.length > 0) {
+            if (shouldEnforceTransformStrictMode()) {
+                const codes = issues.map((i) => i.code).join(', ');
+                throw new Error(`${isAgentSchema ? 'Agent' : 'Dialog'} transform contract violation (${source}): ${codes}`);
+            }
+            logger.warn('[SimulationRequestProcessor] Transform execute validation warnings', {
+                source,
+                schema: schemaName,
+                issues: issues.map((i) => i.code),
+            });
+        }
+    }
+
+    /**
+     * Validate transform result shape (action-key format)
+     * Result must follow canonical format: { "<action-type>": { ... } }
+     * Cannot be bare blob like { "content": "..." } or { "results": [...] }
+     */
+    private validateTransformResult(
+        result: unknown,
+        source: string
+    ): void {
+        const issues = validateResultShape(result);
+        
+        if (issues.length > 0) {
+            if (shouldEnforceTransformStrictMode()) {
+                const codes = issues.map((i) => i.code).join(', ');
+                throw new Error(`Result shape violation (${source}): ${codes}`);
+            }
+            logger.warn('[SimulationRequestProcessor] Transform result validation warnings', {
+                source,
+                issues: issues.map((i) => i.code),
+            });
+        }
     }
 }
 

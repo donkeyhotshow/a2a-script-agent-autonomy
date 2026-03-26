@@ -317,7 +317,7 @@ await asyncClient.cancelRequest(promiseId: string): Promise<unknown>;
 
 #### executeAction()
 
-Выполнение действия с несколькими шагами. Поддерживает как новый формат (`execute.script`), так и устаревший (`action.currentStep`).
+Выполнение действия с несколькими шагами. Поддерживает как новый формат (`execute."script"`), так и устаревший (`action.currentStep`).
 
 ```typescript
 const result = await asyncClient.executeAction(
@@ -476,7 +476,7 @@ import {
 
 ### handleActionResponse()
 
-Обрабатывает ответ от действия. Поддерживает как новый формат (`execute.script`), так и устаревший (`action.currentStep`).
+Обрабатывает ответ от действия. Поддерживает как новый формат (`execute."script"`), так и устаревший (`action.currentStep`).
 
 ```typescript
 const result = await handleActionResponse(

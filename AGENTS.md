@@ -1,4 +1,4 @@
-# AGENTS.md
+﻿# AGENTS.md
 
 This file provides guidance to agents when working with code in this repository.
 
@@ -105,7 +105,7 @@ LLM controls `context.execution.step`, server persists via transforms. Prompt fo
 - **Response:** Immediate `execute` object with form/input data
 - **Use Case:** UI interactions, simple actions, automated testing
 - **Example:**
-  - `task: "dialog"` ? `execute.form.input` (?????? ??????)
+  - `task: "dialog"` ? `execute.form` (?????? ??????)
   - `task: "analyze code"` ? `execute.form.choices` (??????)
 - **Enable:** Set `DEFAULT_SYNC_MODE=1` in environment
 
@@ -642,3 +642,4 @@ DEFAULT_SYNC_MODE=1
 - **Client API:** http://localhost:5173/api/a2a
 - **AI Hub:** http://localhost:11434
 - **Ollama:** http://localhost:11435
+

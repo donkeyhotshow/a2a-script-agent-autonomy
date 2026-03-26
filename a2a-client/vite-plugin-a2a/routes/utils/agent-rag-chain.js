@@ -565,5 +565,3 @@ export async function chainSyncInvokesForAgentTools({
     return { serverResponse: lastResp, stepNum, savedContext: ctx };
 }
 
-/** @deprecated Use chainSyncInvokesForAgentTools */
-export const chainSyncInvokesForRagSearch = chainSyncInvokesForAgentTools;

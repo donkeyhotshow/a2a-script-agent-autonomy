@@ -18,6 +18,16 @@ export async function proxyToA2AServer(requestBody) {
         });
 
         const data = await response.json();
+        if (!response.ok) {
+            return {
+                success: false,
+                error: {
+                    code: 'A2A_UPSTREAM_HTTP',
+                    message: `A2A request failed: ${response.status}`,
+                    status: response.status,
+                },
+            };
+        }
 
         if (data.data?.promiseId) {
             const r = await pollA2ARequestResult(data.data.promiseId, {
@@ -29,33 +39,33 @@ export async function proxyToA2AServer(requestBody) {
             if (r.outcome === 'completed') return r.data;
             if (r.outcome === 'failed') {
                 console.error('[Proxy] Promise failed:', r.data?.error);
+                return {
+                    success: false,
+                    error: {
+                        code: 'A2A_PROMISE_FAILED',
+                        message: r.data?.error || 'A2A promise failed',
+                    },
+                };
             }
-            return null;
+            return {
+                success: false,
+                error: {
+                    code: 'A2A_PROMISE_TIMEOUT',
+                    message: 'A2A promise did not complete in polling window',
+                },
+            };
         }
 
         return data.data || data;
     } catch (e) {
         console.error('[Proxy] A2A request failed:', e.message);
-        return null;
+        return {
+            success: false,
+            error: {
+                code: 'A2A_TRANSPORT_ERROR',
+                message: e.message,
+            },
+        };
     }
-}
-
-export function useXHRProxy(requestOptions) {
-    const xhr = require('http');
-    return new Promise((resolve, reject) => {
-        const req = xhr.request(requestOptions, (res) => {
-            let data = '';
-            res.on('data', chunk => data += chunk);
-            res.on('end', () => {
-                try {
-                    resolve(JSON.parse(data));
-                } catch {
-                    resolve(data);
-                }
-            });
-        });
-        req.on('error', reject);
-        req.end();
-    });
 }
 

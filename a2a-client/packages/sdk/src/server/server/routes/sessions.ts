@@ -29,6 +29,10 @@ import {
 import { pickInvokeContextPatch } from '../../lib/context-invoke-patch.js';
 import { buildWebExecute, sanitizeApiRecordExecuteFields } from '../../lib/web-execute-dto.js';
 import { buildInitialInvokeRequestBody } from '../../../lib/first-invoke-payload.js';
+import {
+    normalizePromisePollStatus,
+    validateClientResultPayload,
+} from '../../../../../../../shared/client-api-envelope.mjs';
 
 function getStepNum(session: { metadata?: Record<string, unknown> }): number {
     const n = session.metadata?.stepNum;
@@ -90,6 +94,80 @@ function validateRequestToServer(body: { task?: string; context?: Record<string,
         }
     }
     return null;
+}
+
+async function invokeAndPersistContinuation(params: {
+    sessionId: string;
+    nextStep: number;
+    requestBody: Record<string, unknown>;
+    upstreamErrorCode: string;
+    res: Response;
+}): Promise<{ ackStep: number; promiseId: string | null } | null> {
+    const { sessionId, nextStep, requestBody, upstreamErrorCode, res } = params;
+    let serverResponse: Record<string, unknown> | null = null;
+    let promiseId: string | null = null;
+    let ackStep = nextStep;
+    try {
+        const serverBase = await getServerBaseUrl();
+        const err = validateRequestToServer({ context: requestBody.context as Record<string, unknown> });
+        if (err) {
+            res.status(400).json({ success: false, error: { code: 'INVALID_REQUEST', message: err } });
+            return null;
+        }
+        await saveRequestToServer(sessionId, nextStep, {
+            step: nextStep,
+            ...requestBody,
+        });
+        const upstream = await serverFetch('POST', serverBase, '/invoke', requestBody);
+        serverResponse = await upstream.json().catch(() => null);
+        if (!upstream.ok || !serverResponse) {
+            res.status(upstream.status >= 400 ? upstream.status : 502).json({
+                success: false,
+                error: { code: upstreamErrorCode, message: 'A2A invoke failed' },
+            });
+            return null;
+        }
+        const unwrapped = unwrapA2aInvokeBody(serverResponse as Record<string, unknown>);
+        promiseId = unwrapped.promiseId;
+        if (promiseId) {
+            await saveServerPromise(sessionId, nextStep, {
+                promiseId,
+                status: (unwrapped.data?.status as string) || 'pending',
+                submittedAt: new Date().toISOString(),
+            });
+            setStepNum(sessionId, nextStep);
+        } else if (unwrapped.data) {
+            await saveServerResponse(sessionId, nextStep, {
+                step: nextStep,
+                ...unwrapped.data,
+            });
+            setStepNum(sessionId, nextStep);
+        }
+        if (unwrapped.context && typeof unwrapped.context === 'object') {
+            sessionService.updateSessionContext(sessionId, pickInvokeContextPatch(unwrapped.context));
+        }
+        if (unwrapped.execute && typeof unwrapped.execute === 'object') {
+            sessionService.updateSession(sessionId, {
+                currentExecute: unwrapped.execute as Record<string, unknown>,
+            });
+        }
+        ackStep = await persistSyncThenRagChain(
+            sessionId,
+            nextStep,
+            serverResponse as Record<string, unknown>,
+            unwrapped.promiseId
+        );
+        return { ackStep, promiseId };
+    } catch (serverError) {
+        res.status(503).json({
+            success: false,
+            error: {
+                code: upstreamErrorCode,
+                message: serverError instanceof Error ? serverError.message : 'Upstream error',
+            },
+        });
+        return null;
+    }
 }
 
 /** After context/execute updates from a sync invoke, run client rag-search chain (parity with Vite stepRoutes). */
@@ -571,7 +649,6 @@ router.post('/:sessionId/action', async (req: Request, res: Response) => {
         );
 
         const nextStep = stepNum + 1;
-        let ackStep = nextStep;
         const requestBody = {
             context: {
                 version: '2.0',
@@ -581,92 +658,20 @@ router.post('/:sessionId/action', async (req: Request, res: Response) => {
             },
             result: { choice: body.choice, input: body.input },
         };
-
-        let serverResponse = null;
-        let promiseId = null;
-
-        try {
-            const serverBase = await getServerBaseUrl();
-
-            const err = validateRequestToServer({ context: requestBody.context });
-            if (err) {
-                res.status(400).json({ success: false, error: { code: 'INVALID_REQUEST', message: err } });
-                return;
-            }
-            await saveRequestToServer(sessionId, nextStep, {
-                step: nextStep,
-                // timestamp is a technical field, not part of protocol
-                // timestamp: new Date().toISOString(),
-                ...requestBody,
-            });
-
-            const upstream = await serverFetch('POST', serverBase, '/invoke', requestBody);
-            serverResponse = await upstream.json().catch(() => null);
-
-            if (upstream.ok && serverResponse) {
-                const unwrapped = unwrapA2aInvokeBody(serverResponse as Record<string, unknown>);
-                promiseId = unwrapped.promiseId;
-
-                if (promiseId) {
-                    await saveServerPromise(sessionId, nextStep, {
-                        promiseId,
-                        status: (unwrapped.data?.status as string) || 'pending',
-                        submittedAt: new Date().toISOString(),
-                    });
-                    setStepNum(sessionId, nextStep);
-                } else if (unwrapped.data) {
-                    await saveServerResponse(sessionId, nextStep, {
-                        step: nextStep,
-                        // timestamp is a technical field, not part of protocol
-                        // timestamp: new Date().toISOString(),
-                        ...unwrapped.data,
-                    });
-                    setStepNum(sessionId, nextStep);
-                }
-
-                if (unwrapped.context && typeof unwrapped.context === 'object') {
-                    sessionService.updateSessionContext(sessionId, pickInvokeContextPatch(unwrapped.context));
-                }
-                if (unwrapped.execute && typeof unwrapped.execute === 'object') {
-                    sessionService.updateSession(sessionId, {
-                        currentExecute: unwrapped.execute as Record<string, unknown>,
-                    });
-                }
-                ackStep = await persistSyncThenRagChain(
-                    sessionId,
-                    nextStep,
-                    serverResponse as Record<string, unknown>,
-                    unwrapped.promiseId
-                );
-                console.log('[SESSIONS API] Got server response for action:', body.choice, 'step', ackStep);
-            } else {
-                console.warn('[SESSIONS API] Server call failed:', upstream.status, serverResponse);
-                res.status(upstream.status >= 400 ? upstream.status : 502).json({
-                    success: false,
-                    error: {
-                        code: 'ACTION_UPSTREAM',
-                        message: 'A2A invoke failed',
-                    },
-                });
-                return;
-            }
-        } catch (serverError) {
-            console.warn('[SESSIONS API] Failed to call server for action:', serverError);
-            res.status(503).json({
-                success: false,
-                error: {
-                    code: 'ACTION_UPSTREAM',
-                    message: serverError instanceof Error ? serverError.message : 'Upstream error',
-                },
-            });
-            return;
-        }
+        const invokeResult = await invokeAndPersistContinuation({
+            sessionId,
+            nextStep,
+            requestBody,
+            upstreamErrorCode: 'ACTION_UPSTREAM',
+            res,
+        });
+        if (!invokeResult) return;
 
         res.json({
             success: true,
             accepted: true,
-            step: ackStep,
-            promiseId: promiseId ?? null,
+            step: invokeResult.ackStep,
+            promiseId: invokeResult.promiseId ?? null,
         });
     } catch (error) {
         console.error('[SESSIONS API] Error processing action:', error);
@@ -694,26 +699,14 @@ router.post('/:sessionId/next', async (req: Request, res: Response) => {
             result?: { message?: string; choice?: string; [k: string]: unknown };
         };
 
-        // Validate client-result: result required, result.message or result.choice at least one
         const result = body.result;
-        if (!result || typeof result !== 'object') {
+        const resultValidationError = validateClientResultPayload(result);
+        if (resultValidationError) {
             res.status(400).json({
                 success: false,
                 error: {
                     code: 'INVALID_CLIENT_RESULT',
-                    message: 'result is required'
-                }
-            });
-            return;
-        }
-        const hasMessage = typeof result.message === 'string' && result.message.length > 0;
-        const hasChoice = typeof result.choice === 'string' && result.choice.length > 0;
-        if (!hasMessage && !hasChoice) {
-            res.status(400).json({
-                success: false,
-                error: {
-                    code: 'INVALID_CLIENT_RESULT',
-                    message: 'result.message or result.choice is required'
+                    message: resultValidationError
                 }
             });
             return;
@@ -747,7 +740,6 @@ router.post('/:sessionId/next', async (req: Request, res: Response) => {
         );
 
         const nextStep = stepNum + 1;
-        let ackStepNext = nextStep;
         const requestBody = {
             context: {
                 version: '2.0',
@@ -757,92 +749,20 @@ router.post('/:sessionId/next', async (req: Request, res: Response) => {
             },
             result,
         };
-
-        let serverResponse = null;
-        let promiseId = null;
-
-        try {
-            const serverBase = await getServerBaseUrl();
-
-            const err = validateRequestToServer({ context: requestBody.context });
-            if (err) {
-                res.status(400).json({ success: false, error: { code: 'INVALID_REQUEST', message: err } });
-                return;
-            }
-            await saveRequestToServer(sessionId, nextStep, {
-                step: nextStep,
-                // timestamp is a technical field, not part of protocol
-                // timestamp: new Date().toISOString(),
-                ...requestBody,
-            });
-
-            const upstream = await serverFetch('POST', serverBase, '/invoke', requestBody);
-            serverResponse = await upstream.json().catch(() => null);
-
-            if (upstream.ok && serverResponse) {
-                const unwrapped = unwrapA2aInvokeBody(serverResponse as Record<string, unknown>);
-                promiseId = unwrapped.promiseId;
-
-                if (promiseId) {
-                    await saveServerPromise(sessionId, nextStep, {
-                        promiseId,
-                        status: (unwrapped.data?.status as string) || 'pending',
-                        submittedAt: new Date().toISOString(),
-                    });
-                    setStepNum(sessionId, nextStep);
-                } else if (unwrapped.data) {
-                    await saveServerResponse(sessionId, nextStep, {
-                        step: nextStep,
-                        // timestamp is a technical field, not part of protocol
-                        // timestamp: new Date().toISOString(),
-                        ...unwrapped.data,
-                    });
-                    setStepNum(sessionId, nextStep);
-                }
-
-                if (unwrapped.context && typeof unwrapped.context === 'object') {
-                    sessionService.updateSessionContext(sessionId, pickInvokeContextPatch(unwrapped.context));
-                }
-                if (unwrapped.execute && typeof unwrapped.execute === 'object') {
-                    sessionService.updateSession(sessionId, {
-                        currentExecute: unwrapped.execute as Record<string, unknown>,
-                    });
-                }
-                ackStepNext = await persistSyncThenRagChain(
-                    sessionId,
-                    nextStep,
-                    serverResponse as Record<string, unknown>,
-                    unwrapped.promiseId
-                );
-                console.log('[SESSIONS API] Got server response for next step', ackStepNext);
-            } else {
-                console.warn('[SESSIONS API] Server call failed:', upstream.status, serverResponse);
-                res.status(upstream.status >= 400 ? upstream.status : 502).json({
-                    success: false,
-                    error: {
-                        code: 'NEXT_UPSTREAM',
-                        message: 'A2A invoke failed',
-                    },
-                });
-                return;
-            }
-        } catch (serverError) {
-            console.warn('[SESSIONS API] Failed to call server for next:', serverError);
-            res.status(503).json({
-                success: false,
-                error: {
-                    code: 'NEXT_UPSTREAM',
-                    message: serverError instanceof Error ? serverError.message : 'Upstream error',
-                },
-            });
-            return;
-        }
+        const invokeResult = await invokeAndPersistContinuation({
+            sessionId,
+            nextStep,
+            requestBody,
+            upstreamErrorCode: 'NEXT_UPSTREAM',
+            res,
+        });
+        if (!invokeResult) return;
 
         res.json({
             success: true,
             accepted: true,
-            step: ackStepNext,
-            promiseId: promiseId ?? null,
+            step: invokeResult.ackStep,
+            promiseId: invokeResult.promiseId ?? null,
         });
     } catch (error) {
         console.error('[SESSIONS API] Error processing next:', error);
@@ -1017,12 +937,7 @@ router.get('/:sessionId/promise/:promiseId', async (req: Request, res: Response)
             return;
         }
 
-        const isCompleted = !!(
-            promiseStatus.execute ||
-            promiseStatus.status === 'completed' ||
-            promiseStatus.status === 'done' ||
-            promiseStatus.result?.completed === true
-        );
+        const normalizedStatus = normalizePromisePollStatus(promiseStatus);
         let safeResult = promiseStatus.result ?? null;
         if (safeResult && typeof safeResult === 'object') {
             safeResult = {...(safeResult as Record<string, unknown>)};
@@ -1032,10 +947,10 @@ router.get('/:sessionId/promise/:promiseId', async (req: Request, res: Response)
         const webExecute = promiseStatus.execute ? buildWebExecute(promiseStatus.execute) : null;
         res.json({
             promiseId,
-            status: promiseStatus.status || (isCompleted ? 'completed' : 'pending'),
+            status: normalizedStatus.status,
             result: safeResult,
             execute: webExecute,
-            completed: isCompleted,
+            completed: normalizedStatus.completed,
         });
     } catch (error) {
         console.error('[SESSIONS API] Error checking promise:', error);

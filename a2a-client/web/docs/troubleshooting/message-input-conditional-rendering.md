@@ -1,8 +1,8 @@
-# Message Input Conditional Rendering
+﻿# Message Input Conditional Rendering
 
 ## Problem
 
-The message input container was appearing automatically on every response, regardless of whether the server requested it. According to the A2A protocol, the input field should only appear when the server explicitly sends `execute.form.input`.
+The message input container was appearing automatically on every response, regardless of whether the server requested it. According to the A2A protocol, the input field should only appear when the server explicitly sends `execute.form`.
 
 ## Expected Flow
 
@@ -15,7 +15,7 @@ The message input container was appearing automatically on every response, regar
    ↓
 4. User selects choice
    ↓
-5. Server returns execute.form.input (text input requested)
+5. Server returns execute.form (text input requested)
    ↓
 6. UI shows input field for user message
 ```
@@ -75,3 +75,4 @@ From `simulations/SCHEMA.md`:
 
 - The old `ai-actions` panel and overlay have been deleted, so no extra container or CSS is loaded on the client side; only the simplified TaskFlow history/panel UI remains.
 - `message-input-section` (the standalone header input) has also been removed along with `message-input.css`, so any automation that previously worked through `#messageInput` should now interact via the TaskFlow panel instead.
+

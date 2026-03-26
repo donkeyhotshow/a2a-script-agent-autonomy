@@ -15,13 +15,12 @@ import {
 } from './utils/web-session-dto.js';
 import { buildWebExecute } from './utils/web-execute-dto.js';
 import * as stepHandlers from './handlers/step-handlers.js';
-import * as stepUtils from './utils/step-utils.js';
-import { proxyToA2AServer } from './proxy/a2a-proxy.js';
 import { chainSyncInvokesForAgentTools } from './utils/agent-rag-chain.js';
 import { getNewStepDir, loadNewSession, loadNewStep, loadServerPromise, loadServerResponse, saveClientResult, saveNewStep, saveNewSession, saveRequestToServer, saveServerPromise, saveServerResponse, listNewSteps, getNewSessionLatestStep, loadStepFile } from '../storage/newSessions.js';
 import { isPromisePollComplete } from '../storage/promise-status.js';
 
 import fs from 'fs';
+import { normalizePromisePollStatus, validateClientResultPayload } from '../../../shared/client-api-envelope.mjs';
 
 const API_PREFIX = '/api/a2a';
 
@@ -108,8 +107,7 @@ function runViteClientPromisePoll({
                     saveNewSession(cwd, session);
                 }
 
-                const isCompleted = isPromisePollComplete(promiseStatus);
-                const failed = promiseStatus.status === 'failed' || promiseStatus.status === 'error';
+                const normalizedStatus = normalizePromisePollStatus(promiseStatus);
                 const includeCtx = requestUrl.searchParams.get('includeContext') === '1';
                 let safeResult = promiseStatus.result || null;
                 if (!includeCtx && safeResult && typeof safeResult === 'object') {
@@ -117,8 +115,8 @@ function runViteClientPromisePoll({
                     delete safeResult.context;
                 }
                 res.setHeader('Content-Type', 'application/json');
-                const statusStr = promiseStatus.status || (isCompleted ? 'completed' : 'pending');
-                const asyncPending = !(isCompleted || failed);
+                const statusStr = normalizedStatus.status;
+                const asyncPending = normalizedStatus.asyncPending;
                 const webExecute = promiseStatus.execute
                     ? buildWebExecute(promiseStatus.execute)
                     : null;
@@ -128,14 +126,14 @@ function runViteClientPromisePoll({
                           status: statusStr,
                           result: safeResult,
                           execute: webExecute,
-                          completed: isCompleted,
+                          completed: normalizedStatus.completed,
                       }
                     : {
                           asyncPending,
                           status: statusStr,
                           result: safeResult,
                           execute: webExecute,
-                          completed: isCompleted,
+                          completed: normalizedStatus.completed,
                       };
                 res.end(JSON.stringify(payload));
             } catch (e) {
@@ -200,26 +198,12 @@ export function createStepRoutes({ cwd }) {
 
         if (req.method === 'POST' && stepsListMatch) {
             const sessionId = stepsListMatch[1];
-            console.log('[VitePlugin] POST /steps - sessionId:', sessionId, 'storageMode:', storageMode);
-            let body = '';
-            req.on('data', (c) => (body += c));
-            req.on('end', async () => {
-                try {
-                    const d = JSON.parse(body || '{}');
-                    const result = await stepHandlers.handlePostStep(sessionId, d, cwd);
-                    res.setHeader('Content-Type', 'application/json');
-                    // Return proper response format
-                    res.end(JSON.stringify({
-                        success: true,
-                        step: result.step || (result.asyncPending ? 'pending' : 'completed'),
-                        asyncPending: result.asyncPending || false,
-                        promiseId: result.promiseId || null,
-                        execute: result.execute || null
-                    }));
-                } catch (e) {
-                    res.writeHead(400).end(JSON.stringify({ error: String(e?.message || e) }));
-                }
-            });
+            void sessionId;
+            res.writeHead(410).end(
+                JSON.stringify({
+                    error: 'Deprecated endpoint. Use POST /api/a2a/sessions/:id/next.',
+                })
+            );
             return;
         }
 
@@ -308,15 +292,24 @@ export function createStepRoutes({ cwd }) {
                     const prevStepData = loadServerResponse(cwd, sessionId, session.currentStep || 1);
                     const hasChoices = prevStepData?.execute?.form?.choices && prevStepData.execute.form.choices.length > 0;
                     
-                    // If previous step had choices, use { choice: value } format, otherwise use { message: value }
+                    // If previous step had choices, use { choice: value } format, otherwise use { message: value }.
                     const submitResult = result || (task ? { [hasChoices ? 'choice' : 'message']: task } : undefined);
+                    const submitResultError = validateClientResultPayload(submitResult);
+                    if (submitResultError) {
+                        res.writeHead(400).end(
+                            JSON.stringify({
+                                error: submitResultError
+                            })
+                        );
+                        return;
+                    }
                     console.log('[VitePlugin] Request body parsed - task:', task, 'result:', result, 'submitResult:', submitResult, 'hasChoices:', hasChoices);
 
                     const currentStep = session.currentStep || 1;
-                    console.log('[VitePlugin] Saving client-result for step:', currentStep);
-                    saveClientResult(cwd, sessionId, currentStep, { result: submitResult });
-
                     const nextStepNum = currentStep + 1;
+                    console.log('[VitePlugin] Saving client-result for step:', nextStepNum, 'data:', { result: submitResult });
+                    saveClientResult(cwd, sessionId, nextStepNum, { result: submitResult });
+                    console.log('[VitePlugin] Successfully saved client-result for step:', nextStepNum);
                     const previousStepData = loadServerResponse(cwd, sessionId, currentStep);
                     const previousContext = previousStepData?.context || {};
                     console.log('[VitePlugin] Previous step context:', previousContext);
@@ -449,6 +442,9 @@ export function createStepRoutes({ cwd }) {
                                 session.updatedAt = new Date().toISOString();
 
                                 const a2aPayload = unwrapA2aResponse(serverResponse) || serverResponse;
+                                // For dialog mode, prefer context.history when execute.message is just a form label
+                                const history =
+                                    a2aPayload?.context?.history || serverResponse?.result?.context?.history;
                                 let assistantMessage =
                                     a2aPayload?.execute?.message ||
                                     serverResponse?.result?.execute?.message ||
@@ -457,12 +453,15 @@ export function createStepRoutes({ cwd }) {
                                     a2aPayload?.message ||
                                     serverResponse?.message ||
                                     null;
-
-                                const history =
-                                    a2aPayload?.context?.history || serverResponse?.result?.context?.history;
-                                if (!assistantMessage && Array.isArray(history)) {
-                                    const historyMsg = history.find((h) => h.role === 'assistant');
-                                    assistantMessage = historyMsg?.message || null;
+                                // If assistantMessage is short (likely form label), fallback to history
+                                if (assistantMessage && typeof assistantMessage === 'string' && 
+                                    (assistantMessage.length < 35 || !assistantMessage.match(/[.!?]$/))) {
+                                    if (Array.isArray(history)) {
+                                        const historyMsg = history.find((h) => h.role === 'assistant');
+                                        if (historyMsg?.message) {
+                                            assistantMessage = historyMsg.message;
+                                        }
+                                    }
                                 }
 
                                 if (result?.message) {

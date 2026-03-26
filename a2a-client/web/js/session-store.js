@@ -38,12 +38,7 @@
         if (!ActiveSessionStorage?.readActiveSessionId) {
             return null;
         }
-        try {
-            return await ActiveSessionStorage.readActiveSessionId();
-        } catch (err) {
-            console.warn('[SessionStore] Failed to read saved session via ActiveSessionStorage:', err);
-            return null;
-        }
+        return await ActiveSessionStorage.readActiveSessionId();
     }
 
     // Проверка зависимостей
@@ -188,22 +183,26 @@
 
         var api = global.apiIntegration;
         if (!api || typeof api.getSession !== 'function') {
-            console.warn('[SessionStore] apiIntegration unavailable, cannot restore session');
-            return false;
+            var apiErr = new Error('[SessionStore] apiIntegration.getSession unavailable, cannot restore session');
+            this.setError?.(apiErr);
+            throw apiErr;
         }
 
         var sessionData;
         try {
             sessionData = await api.getSession(sessionId, { includeContext: true });
         } catch (err) {
-            console.warn('[SessionStore] restoreAndReconnect failed to fetch session:', sessionId, err);
-            return false;
+            var fetchErr = new Error('[SessionStore] restoreAndReconnect failed to fetch saved session');
+            fetchErr.cause = err;
+            this.setError?.(fetchErr);
+            throw fetchErr;
         }
 
         var sid = sessionData?.id || sessionData?.sessionId;
         if (!sid) {
-            console.warn('[SessionStore] restoreAndReconnect: missing session id in response');
-            return false;
+            var sidErr = new Error('[SessionStore] restoreAndReconnect: missing session id in response');
+            this.setError?.(sidErr);
+            throw sidErr;
         }
 
         this.reset(sid, sessionData.projectId || null);

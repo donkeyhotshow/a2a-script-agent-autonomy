@@ -34,10 +34,13 @@
                     // saved can be either a string (JSON) or already-parsed object
                     return typeof saved === 'string' ? JSON.parse(saved) : saved;
                 }
+                return this._defaultSavedState(sessionId);
             } catch (e) {
-                console.warn('[WindowPosition] Failed to load window state:', e);
+                const err = new Error('[WindowPosition] Failed to load window state');
+                err.code = 'WINDOW_STATE_LOAD_ERROR';
+                err.cause = e;
+                throw err;
             }
-            return this._defaultSavedState(sessionId);
         },
 
         _defaultSavedState(sessionId) {
