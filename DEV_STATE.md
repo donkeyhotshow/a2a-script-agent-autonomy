@@ -201,6 +201,15 @@ cd a2a-client && npm test
 - [x] `list-directory`: Перейти на нативный `readdir({recursive: true})` (Node.js 20+).
 - [x] `list-directory`: Заменить самодельный regex на `picomatch` для полноценной поддержки glob.
 - [x] `list-directory`: Добавить параметры `maxDepth` и `limit` для предотвращения перегрузки.
+- [x] **R-01 legacy-bridge-cleanup (2026-03-27)**: удалены legacy-bridges из CDM-05:
+  - loadLegacySession в newSessions.js
+  - LEGACY_SESSION_STATUS enum в types.js
+  - POST /sessions/:id/steps endpoint
+  - deprecated функции в action-handler.ts
+- [x] **R-02 dead-export-cleanup (2026-03-27)**: удалены dead exports:
+  - router-static-choices.json (не импортировался)
+  - tester/ (неработающий функционал)
+- [x] **R-03 duplicate-adapter-cleanup (2026-03-27)**: консолидированы cleanup скрипты
 
 ### Simulation Contract & Docs (Complex)
 - [x] Зафиксировать единый cross-repo baseline: что считаем “clean” для симуляций на уровне репозитория (`valid + 0 warnings` vs `valid + warnings`) и вынести это в единое правило для всех `DEV_STATE.md`.
