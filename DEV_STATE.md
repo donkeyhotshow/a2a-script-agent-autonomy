@@ -271,5 +271,5 @@ cd a2a-client && npm test
 - [x] Completed client task `C-03 sdk-http-limits` in `a2a-client` with standalone SDK defaults and env-overridable profile (CORS, rate-limit, file-cap) plus contract tests.
 - [x] **CM-10**: Stabilize `session-index.json` and remove complex fallback in `newSessions.js` (Phase 2).
 - [x] **CM-11**: Implement common Gray Room Orchestrator and move it out of specific processor.
-- [ ] **CM-12**: Add retention policy scripts for sessions and requests.
+- [x] **CM-12**: Add retention policy scripts for sessions and requests.
 

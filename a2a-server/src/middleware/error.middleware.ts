@@ -28,11 +28,14 @@ export function errorHandler(
     res: Response,
     _next: NextFunction
 ): void {
+    const isProduction = process.env.NODE_ENV === 'production';
+
     if (err instanceof AppError) {
         logger.error('Application error', {
             code: err.code,
             message: err.message,
             statusCode: err.statusCode,
+            ...(isProduction ? {} : {stack: err.stack}),
         });
 
         const errorPayload: Record<string, unknown> = {
@@ -41,6 +44,9 @@ export function errorHandler(
         };
         if (err.details !== undefined) {
             errorPayload.details = err.details;
+        }
+        if (!isProduction && err.stack) {
+            errorPayload.stack = err.stack;
         }
 
         const response: ApiResponse<never> = {
@@ -64,9 +70,13 @@ export function errorHandler(
         success: false,
         error: {
             code: 'INTERNAL_ERROR',
-            message: 'An unexpected error occurred',
+            message: isProduction ? 'An unexpected error occurred' : err.message,
         },
     };
+
+    if (!isProduction && err.stack) {
+        (response.error as Record<string, unknown>).stack = err.stack;
+    }
 
     res.status(500).json(response);
 }
