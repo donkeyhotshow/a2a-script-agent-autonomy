@@ -9,6 +9,13 @@ import {ActionDefinition, ActionMatch} from './types.js';
 import {parseAllActionsFromDirectory} from './action-parser.js';
 import {logger} from '../utils/logger.js';
 
+export type ActionRegistryBootstrapPolicy = 'fail-fast' | 'lenient';
+
+function getBootstrapPolicy(): ActionRegistryBootstrapPolicy {
+    const mode = process.env.A2A_ACTION_REGISTRY_BOOTSTRAP_MODE?.toLowerCase();
+    return mode === 'fail-fast' ? 'fail-fast' : 'lenient';
+}
+
 /**
  * Minimum match score threshold for action matching.
  */
@@ -38,8 +45,18 @@ export class ActionRegistry {
             for (const action of mdActions) this.actions.set(action.id, action);
             logger.info(`[ActionRegistry] Loaded ${this.actions.size} actions`);
         } catch (error) {
+            const policy = getBootstrapPolicy();
             logger.error(`[ActionRegistry] Error loading actions:`, error);
-            throw error;
+
+            if (policy === 'fail-fast') {
+                throw error;
+            }
+
+            // Lenient mode: keep registry empty and allow server to continue working
+            this.actions.clear();
+            logger.warn(
+                `[ActionRegistry] Bootstrap in lenient mode - continuing with 0 actions (A2A_ACTION_REGISTRY_BOOTSTRAP_MODE!=fail-fast)`
+            );
         }
     }
 

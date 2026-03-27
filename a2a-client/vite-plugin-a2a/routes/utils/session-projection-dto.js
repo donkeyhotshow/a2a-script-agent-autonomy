@@ -6,6 +6,7 @@ import * as stepHandlers from '../handlers/step-handlers.js';
 import { isActivePromiseStatus } from '../../storage/promise-status.js';
 import { buildExecuteProjection } from './execute-projection-dto.js';
 import { collectSessionMessagesFlat } from './message-timeline.js';
+import { deriveSessionStage } from './session-stage-machine.js';
 
 /**
  * In-flight async work: first step with an active server-promise.json (pending/processing).
@@ -53,6 +54,13 @@ export function toPublicSession(session, includeContext = false) {
     if (rest.execute !== undefined) {
         base.execute = buildExecuteProjection(rest.execute);
     }
+    // Attach coarse-grained stage for Web UI / adapters.
+    base.stage = deriveSessionStage({
+        execute: base.execute ?? null,
+        context: session.context ?? null,
+        asyncPending: base.asyncPending,
+        status: base.status ?? null,
+    });
     return base;
 }
 

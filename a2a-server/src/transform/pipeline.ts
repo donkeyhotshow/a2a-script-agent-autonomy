@@ -7,6 +7,7 @@
 
 import * as fs from 'fs/promises';
 import * as path from 'path';
+import {fileURLToPath} from 'url';
 import { applyOperation, createDefaultFileSystem } from './operations.js';
 import { prepareInvokePayloadForLlmPrompt } from './materialize-result-for-llm.js';
 import { attachFlowControlHintToInvokePayload } from '../prompts/flow-control-hints.js';
@@ -221,12 +222,22 @@ function substitutePipelineVars(pipeline: TransformPipeline, vars: Record<string
 
 /**
  * Resolve path to prompts/transforms directory.
- * Uses PROMPTS_TRANSFORMS_PATH env or default: cwd/prompts/transforms
+ *
+ * Mode is "locked" to either:
+ * - explicit PROMPTS_TRANSFORMS_PATH env (env-override), or
+ * - bundled default relative to the compiled server sources (bundled-default).
  */
 export function getPromptsTransformsPath(): string {
   const envPath = process.env.PROMPTS_TRANSFORMS_PATH;
-  if (envPath) return path.resolve(envPath);
-  return path.resolve(process.cwd(), 'prompts', 'transforms');
+  if (envPath) {
+    return path.resolve(envPath);
+  }
+
+  const dir = typeof __dirname !== 'undefined'
+    ? __dirname
+    : path.dirname(fileURLToPath(import.meta.url));
+
+  return path.resolve(dir, '../../../../prompts/transforms');
 }
 
 /**

@@ -1,9 +1,12 @@
 import http from 'http';
+import {existsSync} from 'fs';
+import path from 'path';
 import app from './app.js';
 import {config} from './config/index.js';
 import {logger} from './utils/logger.js';
 import {startRequestProcessor, stopRequestProcessor} from './daemon/request-processor-daemon.js';
 import {actionRegistry} from './actions/action-registry.js';
+import {getPromptsTransformsPath} from './transform/index.js';
 
 // Create HTTP server
 const server = http.createServer(app);
@@ -15,6 +18,25 @@ async function bootstrap(): Promise<void> {
     } catch (err) {
         logger.error('[Bootstrap] Action registry load failed — router will use empty registry / fallback', {
             error: err instanceof Error ? err.message : String(err),
+        });
+    }
+
+    const envPromptsPath = process.env.PROMPTS_TRANSFORMS_PATH;
+    const resolvedPromptsPath = getPromptsTransformsPath();
+    const promptsPathExists = existsSync(resolvedPromptsPath);
+    const promptsMode = envPromptsPath ? 'env-override' : 'bundled-default';
+
+    logger.info('[Bootstrap] Prompts/transforms configuration', {
+        mode: promptsMode,
+        envPath: envPromptsPath ?? null,
+        resolvedPath: resolvedPromptsPath,
+        exists: promptsPathExists,
+    });
+
+    if (!promptsPathExists) {
+        logger.warn('[Bootstrap] Prompts/transforms directory does not exist', {
+            resolvedPath: resolvedPromptsPath,
+            cwd: process.cwd(),
         });
     }
 

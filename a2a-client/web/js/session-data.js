@@ -327,7 +327,8 @@
                 var next = [];
                 for (var i = 0; i < messages.length; i++) {
                     var msg = messages[i];
-                    var n = normalizeMessage(msg, msg.role || 'user');
+                    const defaultRole = msg.metadata?.source === 'system' ? 'system' : (msg.role || 'assistant');
+                    var n = normalizeMessage(msg, defaultRole);
                     if (n) next.push(n);
                 }
                 state.messages = next.slice(-MAX_MESSAGES);

@@ -1,7 +1,7 @@
 # S-02: Server Action Registry Bootstrap
 
 ## Status
-- [ ] Open
+- [x] Done
 
 ## Description
 Decide fail-fast vs lenient startup when action markdown loading fails; encode as policy + tests.

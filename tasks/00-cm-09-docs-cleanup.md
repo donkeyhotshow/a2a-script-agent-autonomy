@@ -1,7 +1,7 @@
 # CM-09: Run Docs Encoding/Terminology Cleanup Pass
 
 ## Status
-- [ ] Open
+- [x] Completed
 
 ## Description
 Run docs encoding/terminology cleanup pass (mixed glyph artifacts, mixed-language drift) in high-impact protocol docs (`AGENTS.md`, Web protocol docs, simulation workflow docs).

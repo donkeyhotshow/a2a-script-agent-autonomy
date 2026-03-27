@@ -9,6 +9,7 @@ This folder is now focused on:
 ## Read These First
 
 - [WEB_UI_PROTOCOL.md](./WEB_UI_PROTOCOL.md) - source of truth for Web UI contract
+- [GOLDEN-SIMULATIONS-CHECKLIST.md](./GOLDEN-SIMULATIONS-CHECKLIST.md) - client checklist for sanitized `received.json` Web DTO
 - [SESSION-STORAGE.md](./SESSION-STORAGE.md) - session file layout and step lifecycle
 - [RED-ROOM.md](./RED-ROOM.md) - auto-execute cycle contract
 - [GRAY-ROOM.md](./GRAY-ROOM.md) - server-only substeps (client view)

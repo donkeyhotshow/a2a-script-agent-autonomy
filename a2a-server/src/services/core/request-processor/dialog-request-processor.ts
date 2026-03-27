@@ -8,7 +8,7 @@
 import * as path from 'path';
 import {fileURLToPath} from 'url';
 import {logger} from '../../../utils/logger.js';
-import {runPromptsTransform} from '../../../transform/index.js';
+import {runPromptsTransform, getPromptsTransformsPath} from '../../../transform/index.js';
 import {ACTION_TO_SCHEMA} from '../../../config/router-static.js';
 import type {RequestContext, ProcessResult} from './request-processor.interfaces.js';
 import {BaseRequestProcessor, type RequestType} from './base-processor.js';
@@ -115,14 +115,6 @@ function mergeTraceIntoResult(result: ProcessResult, trace: ServerInterruptTrace
 
 const DEFAULT_AI_HUB = 'http://localhost:11434';
 const DEFAULT_MODEL = 'qwen3:8b';
-
-function getPromptsTransformsPath(): string {
-    const envPath = process.env.PROMPTS_TRANSFORMS_PATH;
-    if (envPath) return path.resolve(envPath);
-    const dir = typeof __dirname !== 'undefined' ? __dirname : path.dirname(fileURLToPath(import.meta.url));
-    return path.resolve(dir, '../../../../prompts/transforms');
-}
-
 
 function warnOnInvalidDialogExecute(execute: ProcessResult['execute'] | undefined, source: string): void {
     const issues = validateDialogExecuteShape(execute);

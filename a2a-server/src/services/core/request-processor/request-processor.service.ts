@@ -252,6 +252,10 @@ async function tick(): Promise<void> {
     if (!result) {
         await requestService.scheduleRetryForFailed();
         await requestService.reviveFailedAfterCooldown();
+        const cleanupStats = await requestService.cleanupStorage();
+        if (cleanupStats.removedByAge > 0 || cleanupStats.removedByLimit > 0) {
+            logger.info('[RequestProcessor] Cleaned up request storage', cleanupStats);
+        }
     }
 }
 

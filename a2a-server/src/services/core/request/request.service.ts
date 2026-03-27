@@ -305,6 +305,29 @@ export class RequestService {
     }
 
     /**
+     * Cleanup request storage according to retention and max-files policy.
+     *
+     * Environment:
+     * - REQUESTS_RETENTION_DAYS: how many days to keep completed/failed/cancelled requests (0 = keep forever).
+     * - REQUESTS_MAX_FILES: hard cap on total request files (0 = no cap).
+     */
+    async cleanupStorage(): Promise<{
+        removedByAge: number;
+        removedByLimit: number;
+        totalBefore: number;
+        totalAfter: number;
+    }> {
+        const retentionDays = envInt('REQUESTS_RETENTION_DAYS', 7, 365);
+        const maxFiles = envInt('REQUESTS_MAX_FILES', 10_000, 1_000_000);
+        const retentionMs = retentionDays > 0 ? retentionDays * 24 * 60 * 60 * 1000 : 0;
+
+        return getRequestStorage().cleanup({
+            retentionMs,
+            maxFiles: maxFiles > 0 ? maxFiles : undefined,
+        });
+    }
+
+    /**
      * Persist llmPromiseId for recovery when server restarts during polling
      */
     async updateLlmPromiseId(promiseId: string, llmPromiseId: string): Promise<boolean> {

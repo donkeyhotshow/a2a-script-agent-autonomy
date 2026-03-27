@@ -54,7 +54,7 @@ The **server protocol** and simulation **`response.json`** still use a **single 
 ## Browser modules
 
 - **`action-executor.js`** — `submit` → if `asyncPending`, starts polling via `GET .../async` (storage mode). Non-storage mode may still poll by `promiseId` if the Client API has no `/async` route.
-- **`session-data.js`** — `createSessionStoreCore()` функция в runtime state
+- **`session-data.js`** — `createSessionStoreCore()` function in runtime state
 - **`window-state.js`** — On window open, if `asyncPending`, resumes polling without reading a promise id from the API payload.
 
 Projection helpers are implemented in:
@@ -64,6 +64,17 @@ Projection helpers are implemented in:
 ## Loader
 
 See [LOADER-BEHAVIOR.md](./LOADER-BEHAVIOR.md). Loader follows server/session state and promise pending flags; minimum display time is enforced in the client daemon layer.
+
+## System messages (Red Room auto-responses)
+
+- **Tri-role contract**: Web UI and Client API treat `messages[].role` as authoritative and must support `user`, `assistant`, and `system`. `system` messages represent Red Room auto-responses and system prompts.
+- **Rendering policy**:
+  - `system` messages are rendered in the main timeline with a distinct neutral style (`task-flow-message system`) and `System` label in the role header.
+  - Telemetry-only system errors (e.g. `metadata.type === "error"` or `metadata.severity in {"error","warning"}`) may be hidden from the visible timeline but still stored for debugging.
+- **Ordering**: `GET /api/a2a/sessions/{id}` returns `messages` in a single, flattened, chronological sequence derived from step artifacts (see `message-timeline.js`); `system` entries keep their position relative to `user`/`assistant` messages.
+- **Persistence**:
+  - Each completed step writes a `messages.json` slice that includes all roles without rewriting or dropping `system` messages.
+  - The Client API rebuilds `messages` for the Web DTO by concatenating step slices; no additional filtering is applied beyond the telemetry rule above, so Red Room auto-responses remain non-lossy across refreshes and async polling.
 
 ## Related
 

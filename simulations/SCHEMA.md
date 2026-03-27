@@ -63,7 +63,8 @@ Canonical files (Web ↔ Client API и Client API ↔ Server ↔ LLM):
   `llmMessage`, optional `attachments` (`readFiles`, `writtenFiles`, `ragQuery`, `shellCommand`, `listDirectoryPath`,
   grep fields, `fileExistsPath`, `editPatchPath`, `runScriptId`, `pendingClientAction`), and keeps `form` when present.
   Implementation: `a2a-client/vite-plugin-a2a/routes/utils/execute-projection-dto.js` (`buildExecuteProjection`), SDK
-  `packages/sdk/src/server/lib/web-execute-dto.ts`. Debug: `GET /sessions/:id?includeContext=1` returns unsanitized
+  `packages/sdk/src/server/lib/web-execute-dto.ts`. Checklist for client fixture authoring:
+  `a2a-client/docs/GOLDEN-SIMULATIONS-CHECKLIST.md`. Debug: `GET /sessions/:id?includeContext=1` returns unsanitized
   session data.
 
 Not every step has all 8 files: steps without LLM **always require** `server-transforms-*.json` (or fallback to base transforms from `prompts/transforms/`); steps with LLM add the `.md` files; transform docs describe server logic even when LLM is not used.

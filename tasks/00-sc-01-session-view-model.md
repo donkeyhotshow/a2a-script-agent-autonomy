@@ -1,7 +1,7 @@
 # SC-01: Session View Model Adapter
 
 ## Status
-- [ ] Open
+- [x] Completed
 
 ## Description
 Introduce `session-view-model.js` as single adapter from `received.json` shapes to UI state (`choice-form`, `input-form`, `message+form`, `message-only`, `completed`).
@@ -18,6 +18,6 @@ Introduce `session-view-model.js` as single adapter from `received.json` shapes 
 a2a-client UI architecture
 
 ## Verification
-- Адаптер создан и работает
-- Все формы маппится корректно
-- UI state соответствует received.json
+- Адаптер `session-view-model.js` создан
+- Юнит-тесты покрывают режимы choice-form, input-form, message+form, message-only, completed
+- UI view model корректно следует за формой и статусом протокола в received.json

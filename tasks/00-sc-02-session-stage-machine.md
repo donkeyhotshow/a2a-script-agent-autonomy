@@ -1,7 +1,7 @@
 # SC-02: Session Stage Machine
 
 ## Status
-- [ ] Open
+- [x] Done
 
 ## Description
 Add explicit `session-stage-machine.js` (`routing`, `dialog-input`, `agent-tool-loop`, `awaiting-async`, `completed`) driven by `execute` + `context.execution`.

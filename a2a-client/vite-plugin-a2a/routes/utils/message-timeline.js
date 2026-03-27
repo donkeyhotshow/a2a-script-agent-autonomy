@@ -31,6 +31,17 @@ function sourcePriority(source) {
 }
 
 /**
+ * Detect system role based on item metadata.
+ * @param {Object} item - Message item with optional metadata
+ * @returns {string} - 'system' or 'assistant' (fallback)
+ */
+function detectSystemRole(item) {
+    if (item?.metadata?.source === 'system-prompt') return 'system';
+    if (item?.metadata?.type === 'system') return 'system';
+    return 'assistant';  // fallback
+}
+
+/**
  * Canonical timeline derived from persisted step artifacts.
  * Source precedence per step:
  * history -> execute -> step-messages -> client-result
@@ -50,7 +61,7 @@ export function collectCanonicalTimeline(cwd, sessionId) {
                 if (!content) continue;
                 entries.push({
                     source: 'history',
-                    role: item?.role || 'assistant',
+                    role: item?.role || detectSystemRole(item),
                     content,
                     step: stepNum,
                 });
@@ -73,7 +84,7 @@ export function collectCanonicalTimeline(cwd, sessionId) {
                 if (!content) continue;
                 entries.push({
                     source: 'step-messages',
-                    role: msg?.role || 'assistant',
+                    role: msg?.role || detectSystemRole(msg),
                     content,
                     step: stepNum,
                 });
@@ -85,7 +96,7 @@ export function collectCanonicalTimeline(cwd, sessionId) {
         if (clientMessage) {
             entries.push({
                 source: 'client-result',
-                role: 'user',
+                role: clientResult?.metadata?.source === 'system' ? 'system' : 'user',
                 content: clientMessage,
                 step: stepNum,
             });

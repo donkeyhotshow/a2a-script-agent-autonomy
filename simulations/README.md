@@ -10,6 +10,12 @@ Golden fixtures for the Web ↔ Client API ↔ Server ↔ LLM contract.
 - **SDK / Web shapes:** [`CLIENT-SDK-IDEAL.md`](./CLIENT-SDK-IDEAL.md).
 - **Dialog file workflow:** [`dialog/WORKFLOW.md`](./dialog/WORKFLOW.md).
 
+## Quality Gate (CI acceptance rule)
+
+- `valid` = structural pass (`sim:lint` + `sim:validate` are valid).
+- `clean` = `valid` + zero warnings across both tools.
+- CI acceptance rule: run `cd ../a2a-server && npm run sim:quality` and require exit code `0`.
+
 ## Supplementary files
 
 - **`interrupt.md`** (optional, any step) — Markdown-only notes for

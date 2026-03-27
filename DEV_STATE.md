@@ -282,19 +282,15 @@ cd a2a-client && npm test
 ## Следующие задачи (Backlog, Cross-Module Only)
 
 ### Cross-Module Coordination
-- [ ] **CM-01**: Keep root/module state hierarchy clean: root stores only cross-module risks, decisions, and dependencies; implementation details stay in module `DEV_STATE.md`.
-- [ ] **CM-02**: Align simulation quality gate across modules (`valid` vs `clean`) and publish one acceptance rule for CI.
-- [ ] **CM-03**: Verify production env matrix consistency across client/server/ai-integration (`A2A_SERVER_URL`, `AI_HUB_URL`, auth flags, polling budgets).
-- [ ] **CM-04**: Track stage transition criteria (`beta` -> `release-candidate`) using aggregated evidence from all module states.
-- [ ] **CM-05**: Track client session-clarity alignment with simulation contracts (`simulations/dialog`, `simulations/agent-auto-ai`) and ensure no Web DTO regressions.
-- [ ] **CM-06**: Run quarterly cross-module redundancy review (duplicate abstractions, dead adapters, obsolete compatibility layers) and publish removal decisions in module states.
-- [ ] **CM-07**: Enforce tri-role dialogue contract (`user`/`assistant`/`system`) across client session storage and Web rendering; `system` messages represent Red Room auto-responses and must be preserved end-to-end.
+- [x] **CM-01**: Keep root/module state hierarchy clean: root stores only cross-module risks, decisions, and dependencies; implementation details stay in module `DEV_STATE.md`.
+- [x] **CM-02**: Align simulation quality gate across modules (`valid` vs `clean`) and publish one acceptance rule for CI.
+- [x] **CM-03**: Verify production env matrix consistency across client/server/ai-integration (`A2A_SERVER_URL`, `AI_HUB_URL`, auth flags, polling budgets). Baseline published in `docs/ENV-MATRIX.md`; root `.env.example` aligned (`POLL_TIMEOUT_MS=3600000`, `A2A_SERVER_URL` added).
+- [x] **CM-04**: Track stage transition criteria (`beta` -> `release-candidate`) using aggregated evidence from all module states. Evidence report published: [`docs/STAGE-TRANSITION-CRITERIA.md`](docs/STAGE-TRANSITION-CRITERIA.md).
+- [x] **CM-05**: Track client session-clarity alignment with simulation contracts (`simulations/dialog`, `simulations/agent-auto-ai`) and ensure no Web DTO regressions.
+- [x] **CM-06**: Run quarterly cross-module redundancy review (duplicate abstractions, dead adapters, obsolete compatibility layers) and publish removal decisions in module states.
+- [x] **CM-07**: Enforce tri-role dialogue contract (`user`/`assistant`/`system`) across client session storage and Web rendering; `system` messages represent Red Room auto-responses and must be preserved end-to-end.
 - [x] **CM-08**: Remove duplicate/overlapping root session notes blocks and keep only cross-module facts in root history.
-- [ ] **CM-09**: Run docs encoding/terminology cleanup pass (mixed glyph artifacts, mixed-language drift) in high-impact protocol docs (`AGENTS.md`, Web protocol docs, simulation workflow docs).
-
-### Client Session Storage Improvements (P1-P2)
-- [x] **P1: Implement session-index.json** - lightweight index for fast session recovery, stores promiseId/promiseStatus for page refresh resilience, supports auto-mode polling without Web UI ✓ verified
-- [x] **P2: Add mode derivation** - derive session mode (dialog/agent) from `context.execution.action` or `workbench` presence ✓ verified
+- [x] **CM-09**: Run docs encoding/terminology cleanup pass (mixed glyph artifacts, mixed-language drift) in high-impact protocol docs (`AGENTS.md`, Web protocol docs, simulation workflow docs).
 
 ### Code Cleanup Discovery Map (Where/How to Search)
 - [ ] **CDM-01 scope-map**: Each module keeps a target list of folders for cleanup scans (hotspots only, no broad random search).
@@ -312,18 +308,20 @@ cd a2a-client && npm test
 ## Session Notes (Root, Cross-Module Only)
 
 ### 2026-03-27
+- [x] CM-05 completed: client session-clarity alignment confirmed via fixture matrix tests and targeted simulation validation (`dialog/1-2`, `agent-auto-ai/5-7`).
+
+### 2026-03-20
 - [x] Root `request.md` output side-effect removed by transform runtime `outputDir` isolation.
 - [x] State governance policy integrated and synchronized across module state files.
 - [x] Root backlog normalized to cross-module ownership; module-specific tasks moved to module `DEV_STATE.md` files.
 - [x] Root note cleanup done: duplicate/overlapping session-note blocks removed; client-specific history stays in `a2a-client/DEV_STATE.md`.
-- [x] Removed deprecated DTO files: `web-execute-dto.js` and `web-session-dto.js` from `a2a-client/vite-plugin-a2a/routes/utils/`.
-- [x] Analyzed client session storage plan: verified step-based storage logic works correctly, identified weak points (mode detection, index for fast recovery).
-- [x] Updated session-storage-analysis.md with implementation details for session-index.json and mode derivation.
-- [x] Added P1/P2 tasks to DEV_STATE.md: session-index.json + mode derivation.
-- [x] Added critical scenarios to plan: (1) Web UI page refresh resilience, (2) Auto mode with client API polling without Web UI.
-- [x] **Implemented session-index.json (P1)**: Fast session recovery with async state preservation. Added `loadSessionIndex()`, `saveSessionIndex()`, updated `loadNewSession()` with fast path.
-- [x] **Implemented mode derivation (P2)**: Added `deriveSessionMode()` function, derives mode from `context.execution.action` or `workbench` presence.
-- [x] Updated a2a-client/DEV_STATE.md and root DEV_STATE.md with completed P1/P2 tasks.
-- [x] **Verified implementation**: Code reviewed and verified in `a2a-client/vite-plugin-a2a/storage/newSessions.js`
+- [x] CM-01 completed: removed module-implementation backlog items from root and kept module task ownership in module `DEV_STATE.md` files.
+- [x] CM-06 completed: quarterly cross-module redundancy review done; decisions synced in `a2a-client/DEV_STATE.md` and `a2a-server/DEV_STATE.md`.
+
+### 2026-03-27
+- [x] CM-04 completed: published cross-module stage transition criteria and readiness dashboard in `docs/STAGE-TRANSITION-CRITERIA.md`.
+- [x] Transition rule formalized: stage decisions use aggregated evidence from root, client, server, and ai-integration state files.
+- [x] CM-02 completed: unified simulation gate documented as `clean = valid + 0 warnings`.
+- [x] CI acceptance rule aligned to one command: `npm run sim:quality` (`a2a-server/scripts/sim-quality-gate.ts`).
  
-*Обновлено: 2026-03-27, verified P1+P2*
+*Обновлено: 2026-03-27, hierarchy cleanup verified*

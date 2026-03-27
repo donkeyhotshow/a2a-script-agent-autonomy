@@ -1,7 +1,7 @@
 # SC-03: History Projection Boundary
 
 ## Status
-- [ ] Open
+- [x] Done
 
 ## Description
 Add `history-projection.js` that accepts only canonical server payload (`context.history`, `context.files`, `workbench`) and emits deterministic timeline records with mandatory support for `system` role entries.

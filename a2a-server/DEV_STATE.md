@@ -114,6 +114,9 @@ cd a2a-server && npm run sim:lint -- --all --json
 
 # Validate
 cd a2a-server && npm run sim:validate -- --all --json
+
+# Unified quality gate (CI acceptance rule)
+cd a2a-server && npm run sim:quality
 ```
 
 ---
@@ -166,11 +169,10 @@ curl -s -X POST http://localhost:3000/api/v1/invoke \
 ## Задачи (Next Tasks)
 
 ### Alternatives Migration Plan (server scope)
-- [ ] **S-01 server-prompt-transforms**: lock transform loading mode (bundled defaults vs `PROMPTS_TRANSFORMS_PATH`) and add startup diagnostics.
-- [ ] **S-02 server-action-registry-bootstrap**: decide fail-fast vs lenient startup when action markdown loading fails; encode as policy + tests.
-- [ ] **S-03 server-requests-storage**: define default/override storage path behavior (`REQUESTS_STORAGE_PATH`) and retention/cleanup policy.
-- [ ] **S-04 server-llm-hub-polling**: standardize `LLM_POLL_*`/`POLL_*` defaults and timeout budget for daemon processing.
-- [ ] **S-05 server-filesystem-sandbox**: freeze cwd/tmp/home allowlist policy for file actions and expose clear error messages.
+- [x] **S-01 server-prompt-transforms**: lock transform loading mode (bundled defaults vs `PROMPTS_TRANSFORMS_PATH`) and add startup diagnostics.
+- [x] **S-02 server-action-registry-bootstrap**: decide fail-fast vs lenient startup when action markdown loading fails; encode as policy + tests.
+- [x] **S-03 server-requests-storage**: define default/override storage path behavior (`REQUESTS_STORAGE_PATH`) and retention/cleanup policy.
+- [x] **S-04 server-llm-hub-polling**: standardize `LLM_POLL_*`/`POLL_*` defaults and timeout budget for daemon processing. Defaults documented in `.env.example`, implementation in `src/daemon/llm-hub-poll.ts` with 1h default / 24h cap aligned to ai-integration `PROMISE_TTL_SECONDS`.
 - [ ] **S-06 server-error-detail-level**: finalize production error redaction policy (`NODE_ENV`) and keep stack traces in dev only.
 - [ ] **S-07 server-background-processor**: set and verify `REQUEST_PROCESSOR_INTERVAL_MS` target based on queue latency SLO.
 - [ ] **S-08 server-logging**: unify `LOG_LEVEL`/`LOG_FORMAT` and Winston rotation/boot-clean strategy; add acceptance checks.
@@ -203,10 +205,15 @@ curl -s -X POST http://localhost:3000/api/v1/invoke \
 - [ ] **LF-S-06**: Decompose `src/actions/handlers/file-operations.ts` (~432) into read/list/write operation handlers with strict security wrappers.
 
 ### Redundant Functionality Detection & Cleanup
-- [ ] **RF-S-01 inventory**: Inventory overlapping server paths (transforms, action handlers, request processors) with duplicate responsibilities.
-- [ ] **RF-S-02 rule-of-one-owner**: For each responsibility, keep exactly one owner module and mark others as deprecation targets.
-- [ ] **RF-S-03 remove-dead-branches**: Remove unreachable/deprecated code paths after test + simulation confirmation.
+- [x] **RF-S-01 inventory**: Inventory overlapping server paths (transforms, action handlers, request processors) with duplicate responsibilities.
+- [x] **RF-S-02 rule-of-one-owner**: For each responsibility, keep exactly one owner module and mark others as deprecation targets.
+- [x] **RF-S-03 remove-dead-branches**: Remove unreachable/deprecated code paths after test + simulation confirmation.
 - [ ] **RF-S-04 cleanup-gate**: Cleanup accepted only when `sim:lint`, `sim:validate`, and unit tests remain green.
+
+### Redundancy Review Decisions (2026-03-27)
+- **Single-owner mapping confirmed (keep):** request processor selection stays in `request-processor.service.ts`; dialog orchestration remains in `dialog-request-processor.ts`; no duplicate active owner found for these responsibilities.
+- **No dead compatibility adapters found in runtime paths:** sampled candidates marked `legacy`/`deprecated` are docs/tests metadata or still referenced by active flows.
+- **Removal decision:** no runtime server file deletion in this pass; next removal candidate requires explicit proof of unreachable branch plus `sim:lint`/`sim:validate` gate.
 
 ### Unusual Findings Alignment (Server/Contracts)
 - [ ] **UA-S-01 interrupt-trace-contract**: Verify and document one canonical contract for interrupt trace placement (`context.workbench.slots.interruptTrace`) across server transforms and client projection.
@@ -229,15 +236,20 @@ curl -s -X POST http://localhost:3000/api/v1/invoke \
 - [ ] **GR-S-14 observability-and-ops**: Определить минимальный набор метрик/логов для gray room: счётчики сработавших interrupt по `reason`, доля invoke с gray room, средняя глубина цепочки, доля фейлов sidecar LLM/RAG; описать, как оператор включает/выключает gray room через env и что считается «здоровым» поведением.
 
 ### Code Cleanup Discovery Plan (Server: where/how)
-- [ ] **CCP-S-01 where-to-scan**: Primary folders: `src/transform/`, `src/services/core/request-processor/`, `src/actions/handlers/`, `scripts/`.
+- [x] **CCP-S-01 where-to-scan**: Primary folders for cleanup scans зафиксированы: `src/transform/`, `src/services/core/request-processor/`, `src/actions/handlers/`, `scripts/`.
 - [ ] **CCP-S-02 how-to-find**: Search for overlapping operations/validators/reporters and duplicate path-specific branches.
 - [ ] **CCP-S-03 deprecation-check**: Identify legacy branches still referenced by comments/docs but no longer used by runtime flow.
 - [ ] **CCP-S-04 safe-remove-gate**: Removal only after `npm run test`, `sim:lint`, `sim:validate` pass.
 
 ---
 
-*Обновлено: 2026-03-27*
+*Обновлено: 2026-03-20*
 
-### Session Notes (2026-03-27)
+### Session Notes (2026-03-20)
 - [x] Removed root-level `request.md` side-effect for dialog flow by routing render output to temp transform directory.
 - [x] Added transform runtime support for separate template `baseDir` and artifact `outputDir` to avoid workspace pollution.
+
+### Session Notes (2026-03-27)
+- [x] CM-06 redundancy review completed for server runtime paths.
+- [x] Single-owner mapping confirmed for request-processor selection/orchestration.
+- [x] No safe runtime deletions in this pass; next candidate requires explicit unreachable-branch evidence plus cleanup gate.

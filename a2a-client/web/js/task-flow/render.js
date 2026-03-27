@@ -136,54 +136,56 @@
     }
 
     function renderMessageHistory(contentEl, store) {
-        const { store: sessionStore, error: storeError } = requireRenderStore('renderMessageHistory', store, { contentEl });
-        if (!sessionStore) {
-            return storeError;
-        }
+         const { store: sessionStore, error: storeError } = requireRenderStore('renderMessageHistory', store, { contentEl });
+         if (!sessionStore) {
+             return storeError;
+         }
 
-        const state = sessionStore.getState?.();
-        if (!state || typeof state !== 'object') {
-            return handleRenderError('renderMessageHistory', 'Session store state is invalid', {
-                store: sessionStore,
-                state
-            });
-        }
+         const state = sessionStore.getState?.();
+         if (!state || typeof state !== 'object') {
+             return handleRenderError('renderMessageHistory', 'Session store state is invalid', {
+                 store: sessionStore,
+                 state
+             });
+         }
 
-        const messagesSource = state.messages ?? sessionStore.messages;
-        if (!Array.isArray(messagesSource)) {
-            return handleRenderError('renderMessageHistory', 'Session history payload is malformed', {
-                state,
-                rawMessages: messagesSource
-            });
-        }
+         const messagesSource = state.messages ?? sessionStore.messages;
+         if (!Array.isArray(messagesSource)) {
+             return handleRenderError('renderMessageHistory', 'Session history payload is malformed', {
+                 state,
+                 rawMessages: messagesSource
+             });
+         }
 
-        const banner = renderDialogErrorBanner(state.lastError);
-        const visible = messagesSource.filter((msg) => !isSystemErrorChatMessage(msg));
+         const banner = renderDialogErrorBanner(state.lastError);
+         const visible = messagesSource.filter((msg) => !isSystemErrorChatMessage(msg));
 
-        if (!visible.length) {
-            const empty = '<div class="task-flow-history-empty">No messages yet</div>';
-            return banner ? `${banner}${empty}` : empty;
-        }
+         if (!visible.length) {
+             const empty = '<div class="task-flow-history-empty">No messages yet</div>';
+             return banner ? `${banner}${empty}` : empty;
+         }
 
-        const historyHtml = visible.map((msg) => {
-            const role = msg.role || 'assistant';
-            let content = msg.content || msg.message || msg.text;
-            if (!content) {
-                content = '';
-            }
-            const timestamp = msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString() : '';
+         const historyHtml = visible.map((msg) => {
+             const role = msg.role || 'assistant';
+             // For display in the role div, we want to show "System" for system messages
+             const displayRole = role === 'system' ? 'System' : role;
+             let content = msg.content || msg.message || msg.text;
+             if (!content) {
+                 content = '';
+             }
+             const timestamp = msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString() : '';
 
-            return `
-                <div class="task-flow-message ${escapeHtml(role)}">
-                    <div class="task-flow-message-role">${escapeHtml(role)}</div>
-                    <div class="task-flow-message-content">${escapeHtml(String(content))}</div>
-                    ${timestamp ? `<div class="task-flow-message-time">${escapeHtml(timestamp)}</div>` : ''}
-                </div>
-            `;
-        }).join('');
+             return `
+                 <div class="task-flow-message ${escapeHtml(role)}">
+                     <div class="task-flow-message-role">${escapeHtml(displayRole)}</div>
+                     <div class="task-flow-message-content">${escapeHtml(String(content))}</div>
+                     ${timestamp ? `<div class="task-flow-message-time">${escapeHtml(timestamp)}</div>` : ''}
+                 </div>
+             `;
+         }).join('');
 
-        return `${banner}<div class="task-flow-history">${historyHtml}</div>`;
-    }
+         return `${banner}<div class="task-flow-history">${historyHtml}</div>`;
+     }
 
     /**
      * Рендеринг execute блока

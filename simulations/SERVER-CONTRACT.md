@@ -76,6 +76,9 @@ When server behavior changes, update **code and goldens together** so `sim:lint`
 ```bash
 cd a2a-server && npm run sim:lint -- --all --json
 cd a2a-server && npm run sim:validate -- --all --json
+cd a2a-server && npm run sim:quality
 ```
 
 Related: [`a2a-server/docs/EXTENDING-LLM-ACTIONS.md`](../a2a-server/docs/EXTENDING-LLM-ACTIONS.md), [`a2a-server/DEV_STATE.md`](../a2a-server/DEV_STATE.md) (operational notes).
+
+Acceptance rule for CI is `clean`: both tools must be `valid`, and combined warnings must be `0`.

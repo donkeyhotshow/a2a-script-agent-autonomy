@@ -1,7 +1,7 @@
 # S-01: Server Prompt Transforms Lock
 
 ## Status
-- [ ] Open
+- [x] Done
 
 ## Description
 Lock transform loading mode (bundled defaults vs `PROMPTS_TRANSFORMS_PATH`) and add startup diagnostics.

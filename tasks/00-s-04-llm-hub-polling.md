@@ -1,7 +1,7 @@
 # S-04: Server LLM Hub Polling
 
 ## Status
-- [ ] Open
+- [x] Done
 
 ## Description
 Standardize `LLM_POLL_*`/`POLL_*` defaults and timeout budget for daemon processing.
@@ -18,6 +18,6 @@ Standardize `LLM_POLL_*`/`POLL_*` defaults and timeout budget for daemon process
 a2a-server polling
 
 ## Verification
-- Defaults стандартизированы
-- Timeout budget определён
-- Daemon работает корректно
+- Defaults стандартизированы (`POLL_INTERVAL_MS`, `POLL_TIMEOUT_MS`, `LLM_POLL_INTERVAL_MS`, `LLM_POLL_TIMEOUT_MS`)
+- Timeout budget определён (1h default, capped 24h, aligned with ai-integration `PROMISE_TTL_SECONDS`)
+- Daemon работает корректно (poller respects env defaults and caps)

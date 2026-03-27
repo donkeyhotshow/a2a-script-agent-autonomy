@@ -1,7 +1,7 @@
 # CM-07: Enforce Tri-Role Dialogue Contract
 
 ## Status
-- [ ] Open
+- [x] Completed
 
 ## Description
 Enforce tri-role dialogue contract (`user`/`assistant`/`system`) across client session storage and Web rendering; `system` messages represent Red Room auto-responses and must be preserved end-to-end.

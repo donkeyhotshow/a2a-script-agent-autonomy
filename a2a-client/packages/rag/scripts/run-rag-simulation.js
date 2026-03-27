@@ -279,8 +279,9 @@ function extractQueriesFromSimulation(simPath) {
  */
 async function main() {
   const args = process.argv.slice(2);
-  
-  let sourceDir = args[0] || path.join(__dirname, '..', '..', 'simulations');
+
+  const defaultSimulationsDir = process.env.SIMULATIONS_PATH || path.join(__dirname, '..', '..', 'simulations');
+  let sourceDir = args[0] || defaultSimulationsDir;
   let outputDir = args[1] || path.join(__dirname, '..', 'rag-results');
   let queriesFile = null;
   

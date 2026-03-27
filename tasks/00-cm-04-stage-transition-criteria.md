@@ -1,7 +1,7 @@
 # CM-04: Track Stage Transition Criteria
 
 ## Status
-- [ ] Open
+- [x] Completed
 
 ## Description
 Track stage transition criteria (`beta` -> `release-candidate`) using aggregated evidence from all module states.
@@ -21,3 +21,4 @@ Stage governance
 - Критерии определены и документированы
 - Переходы отслеживаются по evidence из модулей
 - Dashboard или отчёт доступен
+- Отчёт опубликован: [`../docs/STAGE-TRANSITION-CRITERIA.md`](../docs/STAGE-TRANSITION-CRITERIA.md)

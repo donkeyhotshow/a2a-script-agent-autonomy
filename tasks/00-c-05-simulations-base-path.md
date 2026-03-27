@@ -1,7 +1,7 @@
 # C-05: Simulations Base Path Alignment
 
 ## Status
-- [ ] Open
+- [x] Open
 
 ## Description
 Align client test tooling with selected simulations path strategy (`SIMULATIONS_PATH` override support).

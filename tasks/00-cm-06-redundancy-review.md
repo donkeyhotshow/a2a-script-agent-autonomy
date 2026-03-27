@@ -1,7 +1,7 @@
 # CM-06: Run Quarterly Cross-Module Redundancy Review
 
 ## Status
-- [ ] Open
+- [x] Completed
 
 ## Description
 Run quarterly cross-module redundancy review (duplicate abstractions, dead adapters, obsolete compatibility layers) and publish removal decisions in module states.
@@ -18,6 +18,6 @@ Run quarterly cross-module redundancy review (duplicate abstractions, dead adapt
 Cross-module architecture
 
 ## Verification
-- Review проведён
-- Решения документированы
-- Мёртвый код удалён
+- Quarterly cross-module review completed
+- Removal/retention decisions published in module state files
+- Obsolete compatibility reference removed from client state notes

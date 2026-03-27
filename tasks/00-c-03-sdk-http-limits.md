@@ -1,7 +1,10 @@
 # C-03: SDK HTTP Limits Definition
 
 ## Status
-- [ ] Open
+- [ ] Blocked — Заблокирована до завершения всех остальных задач
+
+## Blocked Reason
+Задача заблокирована по запросу пользователя. Необходимо завершить все остальные задачи перед выполнением этой.
 
 ## Description
 Define default CORS/rate-limit/file-cap profile for standalone SDK mode and add contract tests.

@@ -1,7 +1,7 @@
 # RF-C-01: Redundant Functionality Inventory
 
 ## Status
-- [ ] Open
+- [x] Done (2026-03-27)
 
 ## Description
 Build inventory of session-related modules and mark overlap (same responsibility implemented in 2+ places).
@@ -21,3 +21,8 @@ a2a-client code cleanup
 - Инвентаризация создана
 - Overlap идентифицирован
 - Кандидаты помечены
+
+## Evidence
+- Inventory artifact: [`a2a-client/docs/SESSION-REDUNDANCY-INVENTORY.md`](../a2a-client/docs/SESSION-REDUNDANCY-INVENTORY.md)
+- Overlap categories documented: role normalization, async pending detection, stage/view-model classification, message projection
+- Removal/consolidation candidates marked with safe-action notes (extract helper, reuse canonical scanner, keep abstraction boundaries)

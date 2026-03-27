@@ -143,7 +143,7 @@ step/2/messages.json
   "execute": { ... },
   "messages": [ ... ],
   "workbench": { ... },  // only for agent mode
-  "lastUpdate": "2026-03-27T09:00:00Z"
+  "lastUpdate": "2026-03-20T09:00:00Z"
 }
 ```
 
@@ -209,8 +209,8 @@ step/2/messages.json
   "sessionId": "sess_123",
   "currentStep": 5,
   "mode": "agent",  // derived from: context.execution.action || (workbench ? 'agent' : 'dialog')
-  "createdAt": "2026-03-27T09:00:00Z",
-  "updatedAt": "2026-03-27T09:15:00Z",
+  "createdAt": "2026-03-20T09:00:00Z",
+  "updatedAt": "2026-03-20T09:15:00Z",
   "status": "active",  // "active" | "completed" | "corrupt"
   "promiseId": null,  // for async recovery on page refresh
   "promiseStatus": null,  // "pending" | "processing" | "completed" | "failed"

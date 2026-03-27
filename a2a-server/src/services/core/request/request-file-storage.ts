@@ -136,4 +136,73 @@ export class RequestFileStorage {
             throw err;
         }
     }
+
+    /**
+     * Cleanup old request files based on retention and max-files policy.
+     *
+     * - If retentionMs > 0: remove completed/failed/cancelled requests whose completedAt is older than now - retentionMs.
+     * - If maxFiles > 0: after age-based cleanup, keep only the newest `maxFiles` requests by createdAt (delete oldest first).
+     */
+    async cleanup(options: { retentionMs?: number; maxFiles?: number } = {}): Promise<{
+        removedByAge: number;
+        removedByLimit: number;
+        totalBefore: number;
+        totalAfter: number;
+    }> {
+        const {retentionMs, maxFiles} = options;
+
+        await this.ensureDir();
+        const allIds = await this.listAll();
+        const totalBefore = allIds.length;
+
+        let removedByAge = 0;
+        let removedByLimit = 0;
+
+        // Age-based cleanup
+        if (retentionMs && retentionMs > 0 && allIds.length > 0) {
+            const now = Date.now();
+            for (const id of allIds) {
+                const req = await this.load(id);
+                if (!req) continue;
+                const status = req.status;
+                const completedAt = req.completedAt;
+                if (
+                    (status === 'completed' || status === 'failed' || status === 'cancelled') &&
+                    completedAt &&
+                    now - completedAt.getTime() > retentionMs
+                ) {
+                    const deleted = await this.delete(id);
+                    if (deleted) removedByAge++;
+                }
+            }
+        }
+
+        // Reload ids after age-based cleanup
+        const remainingIds = await this.listAll();
+
+        // Max-files cleanup (keep newest by createdAt)
+        if (maxFiles && maxFiles > 0 && remainingIds.length > maxFiles) {
+            const withCreated: Array<{id: string; createdAt: Date}> = [];
+            for (const id of remainingIds) {
+                const req = await this.load(id);
+                if (!req) continue;
+                withCreated.push({id, createdAt: req.createdAt});
+            }
+            withCreated.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+            const toDelete = withCreated.slice(0, Math.max(0, withCreated.length - maxFiles));
+            for (const entry of toDelete) {
+                const deleted = await this.delete(entry.id);
+                if (deleted) removedByLimit++;
+            }
+        }
+
+        const totalAfter = (await this.listAll()).length;
+
+        return {
+            removedByAge,
+            removedByLimit,
+            totalBefore,
+            totalAfter,
+        };
+    }
 }

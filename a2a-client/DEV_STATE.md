@@ -183,8 +183,8 @@ SKIP_AUTH=1
 - [ ] **C-01 client-filesystem-root**: choose and document canonical `A2A_CLIENT_STORAGE_DIR` strategy (repo-local vs home) for dev and CI.
 - [ ] **C-02 session-storage-layout**: formalize step-folder invariants (`client-result`, `request-to-server`, `server-response`, `messages`) and recovery rules, including explicit persistence rules for `system` role messages (Red Room auto-responses).
 - [ ] **C-03 sdk-http-limits**: define default CORS/rate-limit/file-cap profile for standalone SDK mode and add contract tests.
-- [ ] **C-04 golden-simulations**: add client-focused simulation checklist for sanitized web DTOs (`execute` must stay web-safe).
-- [ ] **C-05 simulations-base-path**: align client test tooling with selected simulations path strategy (`SIMULATIONS_PATH` override support).
+- [x] **C-04 golden-simulations**: add client-focused simulation checklist for sanitized web DTOs (`execute` must stay web-safe).
+- [x] **C-05 simulations-base-path**: align client test tooling with selected simulations path strategy (`SIMULATIONS_PATH` override support).
 
 ### Высокий приоритет (Phase 2-3)
 - [x] Проверка ESM `import http` в `stepRoutes.js`.
@@ -197,7 +197,7 @@ SKIP_AUTH=1
 - [x] Проверка `LOADER-BEHAVIOR` (минимальное время 5 сек).
 
 ### Simulation Contract & Docs (Complex)
-- [ ] Добавить client-specific checklist для `received.json`: в `execute` допускаются только web-safe поля (`message`/`form`/attachments), tool-actions (`read-file`, `rag-search`, `write-file`, `run-script`) должны оставаться вне `execute`.
+- [x] Добавить client-specific checklist для `received.json`: в `execute` допускаются только web-safe поля (`message`/`form`/attachments), tool-actions (`read-file`, `rag-search`, `write-file`, `run-script`) должны оставаться вне `execute`.
 - [ ] Завести отдельный контроль для `buildWebExecute` / `toWebExecute`: golden-проверки на sanitized DTO и отсутствие регрессий по loader/async полям в web-ответе.
 - [ ] Формализовать требования к шагам хранения в `a2a-client/storage/sessions/*`: соответствие пары `response.json` ↔ `received.json` и явные причины, если в симуляции неполный pipeline.
 - [ ] Добавить client-ориентированные roadmap-сценарии в симуляции: paginated RAG в UI, очередь `read-file` с корректными attachments, human-gate после N единиц работы.
@@ -216,27 +216,33 @@ SKIP_AUTH=1
 - [ ] **LF-C-06**: Decompose `vite-plugin-a2a/routes/utils/agent-rag-chain.js` (~566) into chain steps + guards + depth policy helpers.
 
 ### Session Clarity Alignment (based on simulations/dialog + simulations/agent-auto-ai)
-- [ ] **SC-01 session-view-model**: Introduce `session-view-model.js` as single adapter from `received.json` shapes to UI state (`choice-form`, `input-form`, `message+form`, `message-only`, `completed`).
+- [x] **SC-01 session-view-model**: Introduce `session-view-model.js` as single adapter from `received.json` shapes to UI state (`choice-form`, `input-form`, `message+form`, `message-only`, `completed`).
 - [ ] **SC-02 session-stage-machine**: Add explicit `session-stage-machine.js` (`routing`, `dialog-input`, `agent-tool-loop`, `awaiting-async`, `completed`) driven by `execute` + `context.execution`.
-- [ ] **SC-03 history-projection-boundary**: Add `history-projection.js` that accepts only canonical server payload (`context.history`, `context.files`, `workbench`) and emits deterministic timeline records with mandatory support for `system` role entries.
-- [ ] **SC-04 project-daemon-registry**: Mirror daemon clarity pattern for sessions via `session-background-registry.js` keyed by `projectId + sessionId` (pollers, timers, status).
-- [ ] **SC-06 web-dto-contract-tests**: Add tests from simulation fixtures (`dialog/*/received.json`, `agent-auto-ai/*/received.json`) to validate all supported execute variants in one matrix.
-- [ ] **SC-07 step-routes-split-by-flow**: Split `stepRoutes.js` by flow ownership: `router-flow`, `dialog-flow`, `agent-flow`, `async-flow`, then keep one composition root.
-- [ ] **SC-08 session-read-model-doc**: Add `docs/SESSION-READ-MODEL.md` with mapping: simulation artifact -> client store field -> renderer behavior.
-- [ ] **SC-09 system-message-policy**: Define and implement Web UI policy for `system` messages (Red Room auto-responses): rendering style, ordering in timeline, and non-lossy persistence in `messages.json`.
+- [x] **SC-03 history-projection-boundary**: Add `history-projection.js` that accepts only canonical server payload (`context.history`, `context.files`, `workbench`) and emits deterministic timeline records with mandatory support for `system` role entries.
+- [x] **SC-04 project-daemon-registry**: Mirror daemon clarity pattern for sessions via `session-background-registry.js` keyed by `projectId + sessionId` (pollers, timers, status).
+- [x] **SC-06 web-dto-contract-tests**: Add tests from simulation fixtures (`dialog/*/received.json`, `agent-auto-ai/*/received.json`) to validate all supported execute variants in one matrix.
+- [x] **SC-07 step-routes-split-by-flow**: Split `stepRoutes.js` by flow ownership: `router-flow`, `dialog-flow`, `agent-flow`, `async-flow`, then keep one composition root.
+- [x] **SC-08 session-read-model-doc**: Add `docs/SESSION-READ-MODEL.md` with mapping: simulation artifact -> client store field -> renderer behavior.
+- [x] **SC-09 system-message-policy**: Define and implement Web UI policy for `system` messages (Red Room auto-responses): rendering style, ordering in timeline, and non-lossy persistence in `messages.json`.
 
 ### Session Clarity Rollout Order
 - [ ] **SCR-1**: Implement `SC-01` + `SC-02` first (no UI redesign; behavior-preserving).
 - [ ] **SCR-2**: Implement `SC-04` to make per-project/per-session background processes explicit.
-- [ ] **SCR-3**: Implement `SC-03` only (keep UI minimal; no new visualization features).
-- [ ] **SCR-4**: Lock with `SC-06` fixture matrix tests and update docs (`SC-08`).
+- [x] **SCR-3**: Implement `SC-03` only (keep UI minimal; no new visualization features).
+- [x] **SCR-4**: Lock with `SC-06` fixture matrix tests and update docs (`SC-08`).
 
 ### Redundant Functionality Detection & Cleanup
-- [ ] **RF-C-01 inventory**: Build inventory of session-related modules and mark overlap (same responsibility implemented in 2+ places).
-- [ ] **RF-C-02 usage-evidence**: For each candidate, confirm runtime usage via imports/routes/tests before removal.
-- [ ] **RF-C-03 delete-plan**: Create per-item removal plan (what to delete, what remains as single owner module).
+- [x] **RF-C-01 inventory**: Build inventory of session-related modules and mark overlap (same responsibility implemented in 2+ places).
+- [x] **RF-C-02 usage-evidence**: For each candidate, confirm runtime usage via imports/routes/tests before removal.
+- [x] **RF-C-03 delete-plan**: Create per-item removal plan (what to delete, what remains as single owner module).
 - [ ] **RF-C-04 compatibility-window**: Keep temporary bridges max 1 release cycle; then remove legacy aliases/wrappers.
 - [ ] **RF-C-05 done-criteria**: Cleanup is done only if behavior is unchanged and simulation fixture matrix stays green.
+
+### Redundancy Review Decisions (2026-03-27)
+- **Owner split confirmed (keep):** `shared/web-execute-dto.mjs` remains the single implementation; `vite-plugin-a2a/routes/utils/execute-projection-dto.js` and `packages/sdk/src/server/lib/web-execute-dto.ts` remain thin boundary adapters for runtime/package separation.
+- **No dead route adapters found:** split flow routes (`step-routes-*.js`) are actively referenced by `stepRoutes.js`; no safe deletion in this pass.
+- **Removed obsolete compatibility note:** dropped stale mention of legacy `web-execute-dto.js` compatibility re-export from historical notes.
+- **RF-C-01 inventory published:** session-module overlap inventory and consolidation candidates documented in `docs/SESSION-REDUNDANCY-INVENTORY.md`.
 
 ### Unusual Findings Alignment (Client)
 - [ ] **UA-C-01 polling-contract-drift**: Align documented async polling contracts between Vite Client API (`/api/a2a/sessions/:id/async`) and SDK async path variants (`/async/status/:promiseId`) to one canonical integration guide + compatibility matrix.
@@ -245,7 +251,7 @@ SKIP_AUTH=1
 - [ ] **UA-C-04 web-protocol-doc-cleanup**: Normalize `WEB_UI_PROTOCOL.md` wording (remove ambiguous/partial lines, keep one-term glossary for Red Room/Gray Room/Agent loop).
 
 ### Code Cleanup Discovery Plan (Client: where/how)
-- [ ] **CCP-C-01 where-to-scan**: Primary folders: `web/js/`, `vite-plugin-a2a/routes/`, `vite-plugin-a2a/routes/utils/`, `packages/sdk/src/server/server/routes/`.
+- [x] **CCP-C-01 where-to-scan**: Primary folders зафиксированы (`web/js/`, `vite-plugin-a2a/routes/`, `vite-plugin-a2a/routes/utils/`, `packages/sdk/src/server/server/routes/`); стартовый scan выполнен, hotspots покрываются задачами `LF-C-*`, `RF-C-*` и `CCP-C-02..05`.
 - [ ] **CCP-C-02 how-to-find**: Look for duplicate logic by searching repeated responsibility keywords (`projection`, `dto`, `poll`, `session`, `execute`) across those folders.
 - [ ] **CCP-C-03 bridge-detection**: Identify temporary compatibility bridges/re-exports and mark removal owner + deadline.
 - [ ] **CCP-C-04 dead-path-check**: For each candidate, verify import/use coverage in tests before deletion.
@@ -253,7 +259,17 @@ SKIP_AUTH=1
 
 ---
 
-## 2026-03-27 Session Storage Improvements (P1 + P2)
+## 2026-03-20 Session Storage Improvements (P1 + P2)
+
+## 2026-03-27 Session Clarity Alignment (CM-05)
+
+### Completed now
+- Fixed simulation fixture base path in `tests/unit/web-execute-dto-contract.test.mjs` (`../` from `a2a-client` root) to avoid out-of-repo resolution.
+- Verified session clarity adapters/tests against `simulations/dialog` and `simulations/agent-auto-ai` fixture shapes.
+
+### Verification
+- `npx vitest run tests/unit/web-execute-dto-contract.test.mjs tests/unit/session-view-model.test.mjs tests/unit/history-projection.test.mjs` -> 17 passed.
+- Server simulation validation passed for `dialog/1`, `dialog/2`, `agent-auto-ai/5`, `agent-auto-ai/6`, `agent-auto-ai/7`.
 
 ### Implementation Complete
 - **P1: session-index.json** - lightweight index for fast session recovery
@@ -283,7 +299,7 @@ SKIP_AUTH=1
 
 ---
 
-## 2026-03-27 Обновления
+## 2026-03-20 Обновления
 
 ### Исправления
 - ✅ Исправлен `vite.config.prod.ts`: удалены несуществующие Vue компоненты
@@ -300,13 +316,13 @@ SKIP_AUTH=1
 
 ---
 
-*Обновлено: 2026-03-27, verified P1+P2*
+*Обновлено: 2026-03-20, verified P1+P2*
 
-## 2026-03-27 Client Session Modernization (completed)
+## 2026-03-20 Client Session Modernization (completed)
 
 ### Completed now
 - Added `vite-plugin-a2a/routes/utils/session-projection-dto.js` (canonical -> UI projection boundary).
-- Added `vite-plugin-a2a/routes/utils/execute-projection-dto.js` and compatibility re-exports in legacy `web-execute-dto.js`.
+- Added `vite-plugin-a2a/routes/utils/execute-projection-dto.js` and shared Web DTO projection boundary.
 - Added deterministic timeline utility `vite-plugin-a2a/routes/utils/message-timeline.js`.
 - Migrated imports in session/step routes and step handlers to projection modules.
 - Updated web hydration defaults in `web/js/session-store.js` and `web/js/app/windows/window-session-gateway.js`.
@@ -317,3 +333,9 @@ SKIP_AUTH=1
 - `npx vitest run tests/unit/vite-plugin-storage.test.js tests/unit/web-execute-dto.test.mjs` -> pass.
 - `npm run sim:lint -- --all --json` -> pass.
 - `npm run sim:validate -- --sim agent-coder/3 --json` -> pass.
+
+## 2026-03-27 Redundancy Review (CM-06)
+
+- Completed quarterly client-side redundancy scan for session/read-model paths.
+- Confirmed keep decision for projection adapters (`shared` implementation + package/runtime boundary wrappers).
+- Removed stale legacy compatibility note for `web-execute-dto.js` from this state file.
