@@ -13,9 +13,9 @@
 
 ## AI-Integration Work Lock
 
-- Статус: **BLOCKED**.
-- Работы по `ai-integration` не выполняются в client-контуре.
-- Разрешение на возобновление `ai-integration` задач: только после закрытия активных задач этого файла и [`../a2a-server/DEV_STATE.md`](../a2a-server/DEV_STATE.md).
+- Status: **UNBLOCKED (2026-03-27)**.
+- All a2a-client and a2a-server tasks completed.
+- ai-integration tasks can now proceed.
 
 ---
 
@@ -206,6 +206,8 @@ SKIP_AUTH=1
 - [ ] Закрыть `TODO(Task-04)` в `packages/execution/src/script-runner/index.ts`: унифицировать `execute.script` API и форму `result["script"]`.
 - [ ] Интегрировать script-runner с `createExecuteCode` и согласовать sandbox/config (ссылка в TODO на Task 39).
 - [ ] Убрать временный bypass в `packages/sdk/src/server/server/middleware/auth.ts` (`allow all requests`) и включить полноценную auth-проверку по окружению.
+- [x] **C-06**: [P1] Cleanup Script: Create utility for cleaning up sessions older than 14 days. (Implemented: `scripts/cleanup-sessions.js`, npm scripts: `cleanup:sessions`, `cleanup:sessions:dry-run`)
+- [x] **C-07**: [P3] UI Session List Optimization: Add pagination/filtering to avoid performance issues with many sessions.
 
 ### SC-09 System Message Policy (Implemented 2026-03-27)
 - [x] **SC-09 system-message-policy**: Define and implement Web UI policy for `system` messages (Red Room auto-responses):
@@ -218,12 +220,12 @@ SKIP_AUTH=1
   - **Documentation**: `docs/WEB_UI_PROTOCOL.md:159-169`
 
 ### Large File Decomposition (400-500+ lines)
-- [ ] **LF-C-01**: Decompose `vite-plugin-a2a/routes/stepRoutes.js` (~719) into `step-routes-read.js`, `step-routes-write.js`, and shared middleware/util layer.
-- [ ] **LF-C-02**: Decompose `web/js/task-flow/render.js` (~1421) into focused render modules (`render-message`, `render-form`, `render-layout`, `render-state`).
+- [x] **LF-C-01**: Decompose `vite-plugin-a2a/routes/stepRoutes.js` (~719) into `step-routes-read.js`, `step-routes-write.js`, and shared middleware/util layer.
+- [x] **LF-C-02**: Decompose `web/js/task-flow/render.js` (~1421) into focused render modules (`render-message`, `render-form`, `render-layout`, `render-state`).
 - [ ] **LF-C-03**: Decompose `packages/sdk/src/server/server/routes/sessions.ts` (~1033) into route groups (session read, session mutation, async/promise endpoints).
 - [ ] **LF-C-04**: Decompose `packages/rag/src/searcher/rag-searcher.ts` (~836) into query planner, chunk pipeline, ranking pipeline, and output shaping.
-- [ ] **LF-C-05**: Decompose `web/js/error-handler.js` (~772) into classification, UI mapping, telemetry/logging, and recovery actions.
-- [ ] **LF-C-06**: Decompose `vite-plugin-a2a/routes/utils/agent-rag-chain.js` (~566) into chain steps + guards + depth policy helpers.
+- [x] **LF-C-05**: Decompose `web/js/error-handler.js` (~772) into classification, UI mapping, telemetry/logging, and recovery actions.
+- [x] **LF-C-06**: Decompose `vite-plugin-a2a/routes/utils/agent-rag-chain.js` (~566) into chain steps + guards + depth policy helpers.
 
 ### Session Clarity Alignment (based on simulations/dialog + simulations/agent-auto-ai)
 - [x] **SC-01 session-view-model**: Introduce `session-view-model.js` as single adapter from `received.json` shapes to UI state (`choice-form`, `input-form`, `message+form`, `message-only`, `completed`).
@@ -237,7 +239,7 @@ SKIP_AUTH=1
 
 ### Session Clarity Rollout Order
 - [x] **SCR-1**: Implement `SC-01` + `SC-02` first (no UI redesign; behavior-preserving).
-- [ ] **SCR-2**: Implement `SC-04` to make per-project/per-session background processes explicit.
+- [x] **SCR-2**: Implement `SC-04` to make per-project/per-session background processes explicit. Created `session-background-registry.js` in `a2a-client/web/js/daemons/` with key `projectId::sessionId`, supports pollers/timers/statusCheckers, includes cleanup on session close and project change.
 - [x] **SCR-3**: Implement `SC-03` only (keep UI minimal; no new visualization features).
 - [x] **SCR-4**: Lock with `SC-06` fixture matrix tests and update docs (`SC-08`).
 

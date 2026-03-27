@@ -32,6 +32,42 @@ Current system state for production work. Methodology: always write DEV_STATE, a
 
 ---
 
+## Code Refactoring (2026-03-27)
+
+### Consolidations Completed
+
+#### 1. Retry Utilities Unified
+- **Status:** ✅ Complete
+- **Changes:**
+  - Merged `a2a-server/src/utils/retry.utils.ts` into `retry.ts`
+  - Added `RetryOptions` interface and `backoffDelay()` function
+  - Simplified `withRetry()` for common retry patterns
+  - Deleted unused `retry.utils.ts` file
+  - Updated test imports to use `backoff.js` facade
+- **Impact:** Single source for retry logic, test coverage maintained
+- **Files Changed:** `retry.ts`, `backoff.ts`, `retry.utils.test.ts`
+
+#### 2. API Helpers Deduplicated
+- **Status:** ✅ Complete
+- **Changes:**
+  - Deleted duplicate `a2a-client/shared/api-helpers.js`
+  - Canonical source: `/shared/api-helpers.js`
+  - SDK imports (`session-manager.ts`, `async-client.ts`) use correct path
+- **Impact:** Single source of truth for API utilities
+- **Files Changed:** Removed duplicate file
+
+#### 3. Type Consolidation (Ongoing)
+- **Status:** ✅ Complete (Phase 1)
+- **Changes:**
+  - `@a2a/json` now imports `Task`, `TaskType`, `TaskStatus`, `ContextBlock`, `ProtocolError` from `@a2a/types`
+  - Added `@a2a/types` as dependency to `@a2a/json` (package.json)
+  - Eliminated type duplication across packages
+- **Impact:** Single source for shared types, avoided drift
+- **Files Changed:** `a2a-client/packages/json/package.json`, `a2a-client/packages/json/src/types.ts`
+- **Canonical Pattern:** All client packages import from `@a2a/types` (not duplicating)
+
+---
+
 ## System Architecture
 
 ```
@@ -88,8 +124,7 @@ cd ai-integration && docker-compose up -d
 
 | Lock | Status | Note |
 |------|--------|------|
-| ai-integration execution | BLOCKED | Tasks only in [ai-integration/DEV_STATE.md](ai-integration/DEV_STATE.md) |
-| Unblock when | — | a2a-client and a2a-server tasks completed |
+| ai-integration execution | UNBLOCKED (2026-03-27) | a2a-client and a2a-server tasks CM-10, CM-11, S-10, S-11 completed |
 
 ---
 
@@ -227,10 +262,14 @@ cd a2a-client && npm test
 - Client execution backlog: [`a2a-client/DEV_STATE.md`](a2a-client/DEV_STATE.md)
 - Server execution backlog: [`a2a-server/DEV_STATE.md`](a2a-server/DEV_STATE.md)
 - AI integration execution backlog: [`ai-integration/DEV_STATE.md`](ai-integration/DEV_STATE.md)
+- **Atomic tasks:** see [`tasks/`](tasks/) directory for executable single-task documents
 
 ---
 
 ## 2026-03-27 Updates
 
 - [x] Completed client task `C-03 sdk-http-limits` in `a2a-client` with standalone SDK defaults and env-overridable profile (CORS, rate-limit, file-cap) plus contract tests.
+- [x] **CM-10**: Stabilize `session-index.json` and remove complex fallback in `newSessions.js` (Phase 2).
+- [x] **CM-11**: Implement common Gray Room Orchestrator and move it out of specific processor.
+- [ ] **CM-12**: Add retention policy scripts for sessions and requests.
 

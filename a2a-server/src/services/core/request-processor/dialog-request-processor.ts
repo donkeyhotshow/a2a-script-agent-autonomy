@@ -14,163 +14,15 @@ import type {RequestContext, ProcessResult} from './request-processor.interfaces
 import {BaseRequestProcessor, type RequestType} from './base-processor.js';
 import {requestService} from '../request/request.service.js';
 import {fetchLlmResponse, pollReadyThenFetch} from '../../../daemon/llm-hub-poll.js';
-import type {InterruptDirective, ServerInterruptTraceEvent} from '../../../transform/types.js';
-import {validateDialogExecuteShape, shouldEnforceTransformStrictMode} from './validators/transform-execute-validator.js';
-import {executeReadFile} from '../../../actions/handlers/file-operations.js';
-import {mergeServerRagPageIntoContext} from '../../rag/auto-rag-page-server.js';
+import {GrayRoomOrchestrator} from './gray-room-orchestrator.js';
 
-type DialogHistoryEntry = { role: string; message: string };
+const DEFAULT_AI_HUB = 'http://localhost:11434';
+const DEFAULT_MODEL = 'qwen3:8b';
 
 async function createDialogTransformOutputDir(): Promise<string> {
     const {mkdtemp} = await import('fs/promises');
     const {tmpdir} = await import('os');
     return mkdtemp(path.join(tmpdir(), 'a2a-dialog-transform-'));
-}
-
-/** Single-key `execute` payloads that must pass through to the client (tool rounds). */
-export const DIALOG_TOOL_EXECUTE_KEYS = [
-    'rag-search',
-    'read-file',
-    'write-file',
-    'execute-command',
-    'list-directory',
-    'grep-search',
-    'script',
-] as const;
-
-export function isDialogToolExecutePayload(execute: Record<string, unknown> | undefined): boolean {
-    if (!execute || typeof execute !== 'object') return false;
-    const keys = Object.keys(execute).filter((k) => {
-        const v = execute[k];
-        return v !== undefined && v !== null;
-    });
-    if (keys.length !== 1) return false;
-    return (DIALOG_TOOL_EXECUTE_KEYS as readonly string[]).includes(keys[0]!);
-}
-
-function readEnvInt(name: string, defaultValue: number): number {
-    const v = process.env[name];
-    if (v === undefined || v === '') return defaultValue;
-    const n = parseInt(v, 10);
-    return Number.isFinite(n) ? n : defaultValue;
-}
-
-/** Cap on server-side interrupt iterations (compress / thinking / follow-up LLM). Env: `A2A_MAX_INTERRUPT_TURNS`. */
-const MAX_INTERRUPT_TURNS = readEnvInt('A2A_MAX_INTERRUPT_TURNS', 10);
-
-/** Prior turns: flat `history` (invoke/client) or nested `context.history`. */
-function getExistingDialogHistory(ctx: Record<string, unknown>): DialogHistoryEntry[] {
-    const top = ctx['history'];
-    if (Array.isArray(top)) return top as DialogHistoryEntry[];
-    const nested = (ctx['context'] as Record<string, unknown> | undefined)?.['history'];
-    if (Array.isArray(nested)) return nested as DialogHistoryEntry[];
-    return [];
-}
-
-// Removed parseLlmResponseFields - parsing now handled by transforms
-
-// Removed buildDialogProcessResultFromContext - now using transforms only
-
-function interruptWhenSatisfied(interrupt: InterruptDirective, ctx: Record<string, unknown>): boolean {
-    const w = interrupt.when;
-    if (!w) return true;
-    const len = getExistingDialogHistory(ctx).length;
-    if (w.historyMinLength != null && len < w.historyMinLength) return false;
-    if (w.historyMaxLength != null && len > w.historyMaxLength) return false;
-    return true;
-}
-
-/** Skip `compress_history` sidecar when history length ≤ this (0 = only skip empty). Env: `A2A_COMPRESS_HISTORY_MIN_ENTRIES`. */
-function compressHistorySkipMaxLength(): number {
-    return readEnvInt('A2A_COMPRESS_HISTORY_MIN_ENTRIES', 0);
-}
-
-/** Attach chronological interrupt / LLM sub-step trace for Web UI (`context.workbench.slots.interruptTrace`). */
-function attachInterruptTraceToContext(
-    ctx: Record<string, unknown>,
-    trace: ServerInterruptTraceEvent[]
-): Record<string, unknown> {
-    if (trace.length === 0) return ctx;
-    const wb = (ctx['workbench'] as Record<string, unknown>) ?? {};
-    const slots = (wb['slots'] as Record<string, unknown>) ?? {};
-    return {
-        ...ctx,
-        workbench: {
-            ...wb,
-            slots: {
-                ...slots,
-                interruptTrace: trace,
-            },
-        },
-    };
-}
-
-function mergeTraceIntoResult(result: ProcessResult, trace: ServerInterruptTraceEvent[]): ProcessResult {
-    if (trace.length === 0 || !result.context) return result;
-    return {
-        ...result,
-        context: attachInterruptTraceToContext(result.context as Record<string, unknown>, trace) as ProcessResult['context'],
-    };
-}
-
-const DEFAULT_AI_HUB = 'http://localhost:11434';
-const DEFAULT_MODEL = 'qwen3:8b';
-
-function warnOnInvalidDialogExecute(execute: ProcessResult['execute'] | undefined, source: string): void {
-    const issues = validateDialogExecuteShape(execute);
-    if (issues.length === 0) return;
-    if (shouldEnforceTransformStrictMode()) {
-        const codes = issues.map((i) => i.code).join(', ');
-        throw new Error(`Dialog transform contract violation (${source}): ${codes}`);
-    }
-    logger.warn('[DialogRequestProcessor] Transform execute validation warnings', {
-        source,
-        issues: issues.map((i) => i.code),
-    });
-}
-
-async function runResponseTransformWithOutput(
-    promptsPath: string,
-    schemaName: string,
-    ctx: Record<string, unknown>,
-    responseMd: string,
-    _recovered: boolean = false
-): Promise<{result: ProcessResult; rawOutput: Record<string, unknown>} | null> {
-    try {
-        const {writeFile, mkdtemp} = await import('fs/promises');
-        const {tmpdir} = await import('os');
-        const tempDir = await mkdtemp(path.join(tmpdir(), 'a2a-dialog-'));
-        await writeFile(path.join(tempDir, 'response.md'), responseMd, 'utf-8');
-        const responseData = {context: ctx, llm: {response: responseMd}};
-        const responseTransformResult = await runPromptsTransform(
-            promptsPath, schemaName, responseData, 'response', {baseDir: tempDir, forceServerTransforms: true}
-        );
-        if (!responseTransformResult.success) {
-            logger.error('[DialogRequestProcessor] Response transform pipeline failed', {
-                error: responseTransformResult.error ?? 'unknown',
-            });
-            return null;
-        }
-        const output = responseTransformResult.output;
-        const rawOutput = output as Record<string, unknown>;
-
-        // Use execute directly from transform output. Dialog chat turns must include `execute.message`.
-        const normalizedExecute = rawOutput.execute as ProcessResult['execute'] | undefined;
-        const result: ProcessResult = {
-            outcome: 'completed',
-            context: rawOutput.context as Record<string, unknown> | undefined ?? ctx,
-            execute: normalizedExecute,
-        };
-        warnOnInvalidDialogExecute(result.execute, 'runResponseTransformWithOutput');
-
-        return {
-            rawOutput,
-            result,
-        };
-    } catch (err) {
-        logger.error('[DialogRequestProcessor] Transform error', { error: err });
-        return null;
-    }
 }
 
 function resolveTransformSchema(ctx: Record<string, unknown>): string | null {
@@ -185,431 +37,16 @@ function resolveTransformSchema(ctx: Record<string, unknown>): string | null {
     return null;
 }
 
-function extractInterrupt(output: Record<string, unknown>): InterruptDirective | null {
-    const raw = output['interrupt'];
-    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
-    const d = raw as Record<string, unknown>;
-    if (typeof d.reason !== 'string') return null;
-    return d as unknown as InterruptDirective;
-}
-
-async function applyInterrupt(
-    interrupt: InterruptDirective,
-    ctx: Record<string, unknown>,
-    _promptsPath: string,
-    base: string,
-    model: string,
-    promiseId: string,
-    trace: ServerInterruptTraceEvent[]
-): Promise<{ nextCtx: Record<string, unknown>; continueLoop: boolean }> {
-    const { reason, context: extraCtx, data } = interrupt;
-    let nextCtx = extraCtx ? { ...ctx, ...extraCtx } : { ...ctx };
-
-    if (reason === 'compress_history') {
-        console.log('[DialogInterrupt] Processing compress_history interrupt');
-        const history = getExistingDialogHistory(nextCtx);
-        if (!Array.isArray(history) || history.length === 0) {
-            trace.push({
-                kind: 'sidecar_llm',
-                purpose: 'compress_history',
-                ok: true,
-                meta: 'skipped_empty_history',
-            });
-            return { nextCtx, continueLoop: false };
-        }
-        const skipMax = compressHistorySkipMaxLength();
-        if (skipMax > 0 && history.length <= skipMax) {
-            trace.push({
-                kind: 'sidecar_llm',
-                purpose: 'compress_history',
-                ok: true,
-                meta: `skipped_short_history_<=${skipMax}`,
-            });
-            return { nextCtx, continueLoop: false };
-        }
-        const compressPrompt = [
-            'Compress the following conversation history into 3–7 short entries (JSON array of {"role":"system"|"assistant"|"user","message":"..."}).',
-            'Preserve enough detail to continue the task: user goal, constraints, unresolved steps, file paths touched, last assistant intent.',
-            'Omit redundant tool chatter if the same facts live in scratchpad or context.files summaries.',
-            'Do not drop the user task or any requirement needed to finish the job.',
-            'Respond with ONLY the JSON array, no prose.',
-            '',
-            'History:',
-            JSON.stringify(history, null, 2)
-        ].join('\n');
-        try {
-            const chatRes = await fetch(`${base}/api/chat?promise=1`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-Server-Promise-Id': `${promiseId}-compress` },
-                body: JSON.stringify({ model, messages: [{ role: 'user', content: compressPrompt }], stream: false }),
-            });
-            if (chatRes.status === 202) {
-                const initData = (await chatRes.json()) as { promiseId?: string };
-                if (initData?.promiseId) {
-                    const compressed = await pollReadyThenFetch(base, initData.promiseId);
-                    if (compressed) {
-                        try {
-                            const parsed = JSON.parse(compressed.trim()) as unknown[];
-                            if (Array.isArray(parsed)) {
-                                const innerCtx = (nextCtx['context'] as Record<string, unknown>) ?? {};
-                                nextCtx = {
-                                    ...nextCtx,
-                                    history: parsed,
-                                    context: {...innerCtx, history: parsed},
-                                };
-                                logger.info('[Interrupt:compress_history] History compressed', {
-                                    from: history.length,
-                                    to: parsed.length,
-                                });
-                                trace.push({
-                                    kind: 'sidecar_llm',
-                                    purpose: 'compress_history',
-                                    ok: true,
-                                    meta: `from=${history.length} to=${parsed.length}`,
-                                });
-                            } else {
-                                trace.push({
-                                    kind: 'sidecar_llm',
-                                    purpose: 'compress_history',
-                                    ok: false,
-                                    meta: 'not_array',
-                                });
-                            }
-                        } catch {
-                            trace.push({
-                                kind: 'sidecar_llm',
-                                purpose: 'compress_history',
-                                ok: false,
-                                meta: 'parse_failed',
-                            });
-                        }
-                    } else {
-                        trace.push({
-                            kind: 'sidecar_llm',
-                            purpose: 'compress_history',
-                            ok: false,
-                            meta: 'empty_response',
-                        });
-                    }
-                }
-            }
-        } catch (err) {
-            logger.warn('[Interrupt:compress_history] Failed, keeping original history', { error: String(err) });
-            trace.push({
-                kind: 'sidecar_llm',
-                purpose: 'compress_history',
-                ok: false,
-                meta: 'fetch_error',
-            });
-        }
-        return { nextCtx, continueLoop: false };
-    }
-
-    if (reason === 'thinking') {
-        let thinkingTraced = false;
-        const thinkingPrompt = [
-            'Think step by step about the current task state. Be concise.',
-            'Return JSON: {"thinking": "your reasoning", "next_action": "what to do next"}',
-            '',
-            'Context:',
-            JSON.stringify(nextCtx['context'] ?? {}, null, 2)
-        ].join('\n');
-        try {
-            const chatRes = await fetch(`${base}/api/chat?promise=1`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-Server-Promise-Id': `${promiseId}-think` },
-                body: JSON.stringify({ model, messages: [{ role: 'user', content: thinkingPrompt }], stream: false }),
-            });
-            if (chatRes.status === 202) {
-                const initData = (await chatRes.json()) as { promiseId?: string };
-                if (initData?.promiseId) {
-                    const thinkMd = await pollReadyThenFetch(base, initData.promiseId);
-                    if (thinkMd) {
-                        try {
-                            const parsed = JSON.parse(thinkMd.trim()) as Record<string, unknown>;
-                            const innerCtx = nextCtx['context'] as Record<string, unknown>;
-                            const wb = (innerCtx['workbench'] as Record<string, unknown>) ?? {};
-                            const slots = (wb['slots'] as Record<string, unknown>) ?? {};
-                            nextCtx = {
-                                ...nextCtx,
-                                context: {
-                                    ...innerCtx,
-                                    workbench: { ...wb, slots: { ...slots, thinking: parsed } }
-                                }
-                            };
-                            trace.push({
-                                kind: 'sidecar_llm',
-                                purpose: 'thinking',
-                                ok: true,
-                                meta: 'workbench.slots.thinking',
-                            });
-                        } catch {
-                            trace.push({
-                                kind: 'sidecar_llm',
-                                purpose: 'thinking',
-                                ok: false,
-                                meta: 'parse_failed',
-                            });
-                        }
-                        thinkingTraced = true;
-                    } else {
-                        trace.push({
-                            kind: 'sidecar_llm',
-                            purpose: 'thinking',
-                            ok: false,
-                            meta: 'empty_response',
-                        });
-                        thinkingTraced = true;
-                    }
-                }
-            }
-        } catch (err) {
-            logger.warn('[Interrupt:thinking] Failed', { error: String(err) });
-            trace.push({kind: 'sidecar_llm', purpose: 'thinking', ok: false, meta: 'fetch_error'});
-            thinkingTraced = true;
-        }
-        if (!thinkingTraced) {
-            trace.push({kind: 'sidecar_llm', purpose: 'thinking', ok: false, meta: 'no_promise_init'});
-        }
-        return { nextCtx, continueLoop: true };
-    }
-
-    if (reason === 'auto_read_file') {
-        const fp =
-            typeof data?.filePath === 'string'
-                ? data.filePath
-                : typeof data?.path === 'string'
-                  ? data.path
-                  : '';
-        if (!fp) {
-            logger.warn('[Interrupt:auto_read_file] missing data.filePath or data.path');
-            trace.push({kind: 'sidecar_llm', purpose: 'auto_read_file', ok: false, meta: 'missing_path'});
-            return {nextCtx, continueLoop: false};
-        }
-        const out = await executeReadFile({filePath: fp});
-        if (!out.success || out.content === undefined) {
-            trace.push({
-                kind: 'sidecar_llm',
-                purpose: 'auto_read_file',
-                ok: false,
-                meta: out.error ?? 'read_failed',
-            });
-            return {nextCtx, continueLoop: false};
-        }
-        const innerCtx = (nextCtx['context'] as Record<string, unknown>) ?? {};
-        const prevFiles = (innerCtx['files'] as Record<string, string>) ?? {};
-        nextCtx = {
-            ...nextCtx,
-            context: {...innerCtx, files: {...prevFiles, [fp]: out.content}},
-        };
-        trace.push({kind: 'sidecar_llm', purpose: 'auto_read_file', ok: true, meta: fp});
-        return {nextCtx, continueLoop: false};
-    }
-
-    if (reason === 'clarify') {
-        const innerCtx = (nextCtx['context'] as Record<string, unknown>) ?? {};
-        const wb = (innerCtx['workbench'] as Record<string, unknown>) ?? {};
-        const slots = (wb['slots'] as Record<string, unknown>) ?? {};
-        nextCtx = {
-            ...nextCtx,
-            context: {
-                ...innerCtx,
-                workbench: {
-                    ...wb,
-                    slots: {
-                        ...slots,
-                        clarify: data ?? {},
-                    },
-                },
-            },
-        };
-        trace.push({kind: 'sidecar_llm', purpose: 'clarify', ok: true, meta: 'slots.clarify'});
-        return {nextCtx, continueLoop: false};
-    }
-
-    if (reason === 'auto_rag_page') {
-        const {nextCtx: afterRag, trace: ragTrace} = await mergeServerRagPageIntoContext(nextCtx, data);
-        nextCtx = afterRag;
-        if (ragTrace) trace.push(ragTrace);
-        const innerCtx = (nextCtx['context'] as Record<string, unknown>) ?? {};
-        nextCtx = {
-            ...nextCtx,
-            context: {...innerCtx, _interrupt_reason: reason, ...(data ?? {})},
-        };
-        return {nextCtx, continueLoop: true};
-    }
-
-    // Unknown reason — log and stop loop
-    logger.warn('[Interrupt] Unknown reason, stopping loop', { reason });
-    return { nextCtx, continueLoop: false };
-}
-
-/** After primary LLM response: response transform, optional interrupt chain (extra LLM turns server-side). */
-async function processDialogResponseWithInterruptLoop(
-    promptsPath: string,
-    schemaName: string,
-    ctx: Record<string, unknown>,
-    responseMd: string,
-    recovered: boolean,
-    promiseId: string,
-    base: string,
-    model: string
-): Promise<ProcessResult> {
-    let workingCtx = ctx;
-    let md = responseMd;
-    let isRecovered = recovered;
-    let interruptBudget = MAX_INTERRUPT_TURNS;
-    /** Follow-up turns may switch transform pack when `interrupt.schema` is set. */
-    let activeSchemaName = schemaName;
-    const trace: ServerInterruptTraceEvent[] = [];
-    let turn = 0;
-
-    for (;;) {
-        trace.push({
-            kind: 'llm_output',
-            phase: turn === 0 ? 'primary' : 'follow_up',
-            chars: md.length,
-        });
-        logger.info('[Dialog] LLM responseMd', {md: md.substring(0, 500)});
-        const pair = await runResponseTransformWithOutput(
-            promptsPath, activeSchemaName, workingCtx, md, isRecovered
-        );
-        logger.info('[Dialog] Transform result', {execute: pair?.result?.execute});
-        isRecovered = false;
-        if (!pair) {
-            return {outcome: 'failed', error: 'Response transform failed'} as ProcessResult;
-        }
-        const {result, rawOutput} = pair;
-        const interrupt = extractInterrupt(rawOutput);
-        trace.push({
-            kind: 'response_transform',
-            interruptReason: interrupt?.reason,
-        });
-        if (!interrupt) {
-            return mergeTraceIntoResult(result, trace);
-        }
-
-        if (!interruptWhenSatisfied(interrupt, workingCtx)) {
-            trace.push({
-                kind: 'interrupt_skipped',
-                reason: interrupt.reason,
-                detail: 'when_clause_not_met',
-            });
-            return mergeTraceIntoResult(result, trace);
-        }
-
-        if (typeof interrupt.maxTurns === 'number' && Number.isFinite(interrupt.maxTurns) && interrupt.maxTurns >= 0) {
-            interruptBudget = Math.min(interruptBudget, interrupt.maxTurns);
-        }
-
-        if (interruptBudget <= 0) {
-            const c = result.context as Record<string, unknown>;
-            return mergeTraceIntoResult(
-                {...result, context: {...c, interrupt_truncated: true}} as ProcessResult,
-                trace
-            );
-        }
-        interruptBudget--;
-
-        const {nextCtx, continueLoop} = await applyInterrupt(
-            interrupt, workingCtx, promptsPath, base, model, promiseId, trace
-        );
-        if (continueLoop && typeof interrupt.schema === 'string' && interrupt.schema.trim() !== '') {
-            activeSchemaName = interrupt.schema.trim();
-        }
-        trace.push({
-            kind: 'interrupt_handler',
-            reason: interrupt.reason,
-            continueLoop,
-            note: interrupt.reason === 'auto_rag_page' ? 'merge_context_reenter' : undefined,
-        });
-
-        if (!continueLoop) {
-            // Transform already processed the response; finalize using the same
-            // transform-owned execute shape. Dialog chat turns must include `execute.message`.
-            const normalizedExecute = rawOutput.execute as ProcessResult['execute'] | undefined;
-            const res: ProcessResult = {
-                outcome: 'completed',
-                context: rawOutput.context as Record<string, unknown> | undefined ?? nextCtx,
-                execute: normalizedExecute,
-            };
-            warnOnInvalidDialogExecute(res.execute, 'interruptLoop.finalize');
-            return mergeTraceIntoResult(res, trace);
-        }
-
-        workingCtx = nextCtx;
-
-        const outputDir = await createDialogTransformOutputDir();
-        const requestTransformResult = await runPromptsTransform(
-            promptsPath, activeSchemaName, workingCtx, 'request', {forceServerTransforms: true, outputDir}
-        );
-        if (!requestTransformResult.success) {
-            return {
-                outcome: 'failed',
-                error: requestTransformResult.error || 'Request transform failed (interrupt loop)',
-            } as ProcessResult;
-        }
-        trace.push({kind: 'request_rebuild'});
-        const files = (requestTransformResult.files as Record<string, string>) || {};
-        const requestMd = files['request.md'];
-        if (!requestMd) {
-            return {
-                outcome: 'failed',
-                error: 'Request transform did not produce request.md (interrupt loop)',
-            } as ProcessResult;
-        }
-
-        const systemMd = files['system.md'];
-        const messages: Array<{role: string; content: string}> = [];
-        if (typeof systemMd === 'string' && systemMd.trim().length > 0) {
-            messages.push({role: 'system', content: systemMd});
-        }
-        messages.push({role: 'user', content: requestMd});
-
-        const subHeader = `${promiseId}-intr-${interruptBudget}`;
-        const chatRes = await fetch(`${base}/api/chat?promise=1`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Server-Promise-Id': subHeader,
-            },
-            body: JSON.stringify({
-                model,
-                messages,
-                stream: false,
-            }),
-        });
-        if (chatRes.status !== 202) {
-            const errText = await chatRes.text();
-            logger.error('[DialogRequestProcessor] LLM promise init failed (interrupt loop)', {
-                status: chatRes.status,
-                error: errText,
-            });
-            return {
-                outcome: 'failed',
-                error: `LLM error (interrupt loop): ${chatRes.status} ${errText.slice(0, 200)}`,
-            } as ProcessResult;
-        }
-        const initData = (await chatRes.json()) as {promiseId?: string};
-        const subLlmId = initData?.promiseId;
-        if (!subLlmId) {
-            return {outcome: 'failed', error: 'No promiseId in LLM response (interrupt loop)'} as ProcessResult;
-        }
-        const nextMd = await pollReadyThenFetch(base, subLlmId);
-        if (!nextMd) {
-            return {outcome: 'failed', error: 'LLM response fetch failed (interrupt loop)'} as ProcessResult;
-        }
-        md = nextMd;
-        turn++;
-    }
-}
-
 export class DialogRequestProcessor extends BaseRequestProcessor {
+    private grayRoom: GrayRoomOrchestrator;
     private promptsTransformsPath: string;
 
     constructor(promptsTransformsPath?: string) {
         super('DialogRequestProcessor', {});
         this.promptsTransformsPath = promptsTransformsPath ?? getPromptsTransformsPath();
+        this.grayRoom = new GrayRoomOrchestrator({
+            promptsTransformsPath: this.promptsTransformsPath
+        });
     }
 
     canProcess(request: RequestContext): boolean {
@@ -649,19 +86,16 @@ export class DialogRequestProcessor extends BaseRequestProcessor {
             if (existingLlmId) {
                 const responseMd = await pollReadyThenFetch(base, existingLlmId);
                 if (!responseMd) return {outcome: 'failed', error: 'LLM poll/fetch failed'} as ProcessResult;
-                return processDialogResponseWithInterruptLoop(
-                    this.promptsTransformsPath,
-                    schemaName,
+                return this.grayRoom.runLoop(
                     ctx,
+                    schemaName,
                     responseMd,
-                    false,
                     promiseId,
-                    base,
-                    model
+                    false
                 );
             }
 
-            // 1. Request transforms → request.md (use server-transforms; dialog-request.json is form-only)
+            // 1. Request transforms → request.md
             const outputDir = await createDialogTransformOutputDir();
             const requestTransformResult = await runPromptsTransform(
                 this.promptsTransformsPath, schemaName, ctx, 'request', {forceServerTransforms: true, outputDir}
@@ -682,7 +116,7 @@ export class DialogRequestProcessor extends BaseRequestProcessor {
             }
             messages.push({role: 'user', content: requestMd});
 
-            // 2. Call LLM via promise flow (ai-integration proxy)
+            // 2. Call LLM via promise flow
             const chatRes = await fetch(`${base}/api/chat?promise=1`, {
                 method: 'POST',
                 headers: {
@@ -712,15 +146,12 @@ export class DialogRequestProcessor extends BaseRequestProcessor {
             if (!responseMd) {
                 return {outcome: 'failed', error: 'LLM response fetch failed'} as ProcessResult;
             }
-            return processDialogResponseWithInterruptLoop(
-                this.promptsTransformsPath,
-                schemaName,
+            return this.grayRoom.runLoop(
                 ctx,
+                schemaName,
                 responseMd,
-                false,
                 promiseId,
-                base,
-                model
+                false
             );
         } catch (err) {
             logger.error('[DialogRequestProcessor] Failed', {error: String(err)});
@@ -736,7 +167,6 @@ export const dialogRequestProcessor = new DialogRequestProcessor();
 
 /**
  * Recover a stuck dialog request that has llmPromiseId (e.g. after server restart during polling).
- * Fetches result from proxy and runs response transform.
  */
 export async function recoverDialogFromLlmPromise(
     promiseId: string,
@@ -756,15 +186,13 @@ export async function recoverDialogFromLlmPromise(
         if (!schema) return null;
         const schemaName = schema.split('/')[0] || 'dialog';
         const promptsPath = getPromptsTransformsPath();
-        return processDialogResponseWithInterruptLoop(
-            promptsPath,
-            schemaName,
+        const orchestrator = new GrayRoomOrchestrator({ promptsTransformsPath: promptsPath });
+        return orchestrator.runLoop(
             ctx,
+            schemaName,
             responseMd,
-            true,
             promiseId,
-            base,
-            model
+            true
         );
     } catch (err) {
         logger.error('Recovery function failed', err);

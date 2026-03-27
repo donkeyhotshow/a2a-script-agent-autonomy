@@ -1,45 +1,17 @@
 /**
  * @a2a/json - TypeScript types for Unified JSON Parser
  * Adapted from a2a-server/src/types/unified.ts
+ *
+ * NOTE: Task, TaskType, TaskStatus, ContextBlock, and ProtocolError are imported from
+ * @a2a/types (client canonical source) to avoid duplication.
  */
 
 // ============================================
-// Task Types (from @a2a/types)
+// Task/Context Types (from @a2a/types)
 // ============================================
 
-export type TaskType = 'analyze' | 'refactor' | 'test' | 'document' | 'fix' | 'create' | 'delete';
-export type TaskStatus = 'pending' | 'in_progress' | 'completed' | 'failed' | 'cancelled';
-
-export interface ProtocolError {
-    code: string;
-    message: string;
-    file?: string;
-    line?: number;
-}
-
-export interface Task {
-    id: string;
-    type: TaskType;
-    status: TaskStatus;
-    target?: string;
-    progress?: number;
-}
-
-// ============================================
-// Context Block Types
-// ============================================
-
-export interface ContextBlock {
-    version: '1.0';
-    session_id: string;
-    new_task?: string[];
-    architectural_features?: string[];
-    continue?: boolean;
-    tasks?: Task[];
-    request_files?: string[];
-    confirm?: boolean;
-    errors?: ProtocolError[];
-}
+export type { Task, TaskType, TaskStatus } from '@a2a/types';
+export type { ContextBlock, ProtocolError } from '@a2a/types';
 
 // ============================================
 // Response Type Union

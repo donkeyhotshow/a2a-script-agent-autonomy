@@ -24,6 +24,8 @@ export {
     sleep,
     RetryFunctionOptions,
     retryWithBackoff,
+    RetryOptions,
+    backoffDelay,
     withRetry
 } from './retry.js';
 

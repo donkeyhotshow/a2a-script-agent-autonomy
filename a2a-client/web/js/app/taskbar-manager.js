@@ -9,6 +9,8 @@
          _isTaskbarInitialized: false,
          // Debounce timer for resize handler
          _resizeDebounceTimer: null,
+         _allSessions: [],
+         _filterText: '',
 
         /**
          * Debounced resize handler for updateOffScreenIndicators
@@ -151,31 +153,57 @@
             try {
                 // Get sessions from API
                 const sessions = await this.fetchSessions();
-
-                const sessionsWrapper = contentEl.querySelector('.taskbar-sessions-wrapper');
-                if (!sessionsWrapper) return;
-
-                // Clear existing buttons
-                sessionsWrapper.innerHTML = '';
-
-                // Add session buttons
-                for (const session of sessions) {
-                    const btn = this.createSessionButton(session);
-                    sessionsWrapper.appendChild(btn);
-                }
-
-                // Update scroll buttons
-                const container = contentEl.querySelector('.taskbar-container');
-                if (container) {
-                    const leftBtn = container.querySelector('.taskbar-scroll-left');
-                    const rightBtn = container.querySelector('.taskbar-scroll-right');
-                    this.updateScrollButtons(sessionsWrapper, leftBtn, rightBtn);
-                }
-
-                this.updateOffScreenIndicators();
+                this._allSessions = sessions;
+                this.renderTaskbarSessions(contentEl);
             } catch (error) {
                 console.error('[TaskbarManager] Failed to refresh taskbar:', error);
             }
+        },
+
+        renderTaskbarSessions(contentEl) {
+            const sessionsWrapper = contentEl.querySelector('.taskbar-sessions-wrapper');
+            if (!sessionsWrapper) return;
+
+            // Clear existing buttons
+            sessionsWrapper.innerHTML = '';
+
+            let filtered = this._allSessions;
+            if (this._filterText) {
+                const ft = this._filterText.toLowerCase();
+                filtered = filtered.filter(s => {
+                    const id = global.resolveSessionIdFromPayload?.(s) || '';
+                    const title = s.title || '';
+                    return id.toLowerCase().includes(ft) || title.toLowerCase().includes(ft);
+                });
+            }
+
+            // Limit to top 50 matches
+            const max = 50;
+            const toRender = filtered.slice(0, max);
+
+            // Add session buttons
+            for (const session of toRender) {
+                const btn = this.createSessionButton(session);
+                sessionsWrapper.appendChild(btn);
+            }
+
+            if (filtered.length > max) {
+                const more = document.createElement('div');
+                more.className = 'taskbar-session-btn taskbar-session-more';
+                more.innerHTML = `<div class="taskbar-session-title" style="opacity: 0.6;">+${filtered.length - max} more...</div>`;
+                more.title = 'Use filter to find older sessions';
+                sessionsWrapper.appendChild(more);
+            }
+
+            // Update scroll buttons
+            const container = contentEl.querySelector('.taskbar-container');
+            if (container) {
+                const leftBtn = container.querySelector('.taskbar-scroll-left');
+                const rightBtn = container.querySelector('.taskbar-scroll-right');
+                this.updateScrollButtons(sessionsWrapper, leftBtn, rightBtn);
+            }
+
+            this.updateOffScreenIndicators();
         },
 
         /**
@@ -326,11 +354,24 @@
                 taskbar.className = 'taskbar';
                 taskbar.innerHTML = `
                     <div class="taskbar-right">
+                        <input type="text" class="taskbar-filter" placeholder="Filter sessions..." style="background: transparent; border: 1px solid var(--border-color); color: var(--text-base); border-radius: 4px; padding: 2px 8px; margin-right: 8px; font-size: 13px;" />
                         <button class="taskbar-btn-new-task" title="New Task (Ctrl+K)">+</button>
                     </div>
                     <div class="taskbar-content"></div>
                 `;
                 document.body.appendChild(taskbar);
+
+                // Bind Filter
+                const filterInput = taskbar.querySelector('.taskbar-filter');
+                if (filterInput) {
+                    filterInput.addEventListener('input', (e) => {
+                        this._filterText = e.target.value.trim();
+                        const contentEl = taskbar.querySelector('.taskbar-content');
+                        if (contentEl) {
+                            this.renderTaskbarSessions(contentEl);
+                        }
+                    });
+                }
 
                 // Bind New Task button
                 const newTaskBtn = taskbar.querySelector('.taskbar-btn-new-task');

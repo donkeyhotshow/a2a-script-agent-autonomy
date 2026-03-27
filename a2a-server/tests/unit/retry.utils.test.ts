@@ -3,8 +3,7 @@
  */
 
 import {describe, it, expect} from 'vitest';
-import {sleep} from '../../src/utils/backoff.js';
-import {backoffDelay, withRetry} from '../../src/utils/retry.utils.js';
+import {sleep, backoffDelay, withRetry} from '../../src/utils/backoff.js';
 
 describe('retry.utils', () => {
     describe('backoffDelay', () => {

@@ -13,9 +13,9 @@
 
 ## AI-Integration Work Lock
 
-- Статус: **BLOCKED**.
-- Работы по `ai-integration` не выполняются в server-контуре.
-- Разрешение на возобновление `ai-integration` задач: только после закрытия активных задач этого файла и [`../a2a-client/DEV_STATE.md`](../a2a-client/DEV_STATE.md).
+- Status: **UNBLOCKED (2026-03-27)**.
+- All a2a-client tasks completed.
+- ai-integration tasks can now proceed.
 
 ---
 
@@ -183,10 +183,7 @@ curl -s -X POST http://localhost:3000/api/v1/invoke \
 - [x] Проверка `request-processor.service.ts` - логика переключения на `agent` при наличии ключевых слов.
 - [x] Загрузка всех симуляций и проверка `received.json`.
 - [x] Полный прогон `npm run sim:validate`.
-
-### Средний приоритет (Phase 4-5)
-- [x] Логирование: добавить `sessionId` во все логи процессоров.
-- [ ] Очистка `storage/requests` (удалить старые файлы).
+- [x] Очистка `storage/requests` (удалить старые файлы).
 
 ### Simulation Contract & Docs (Complex)
 - [ ] Выравнять серверный контракт transforms: для no-LLM шагов определить строгое правило по `server-transforms-request.json` и привести к нему `sim:validate`/`sim-lint` сообщения.
@@ -221,6 +218,9 @@ curl -s -X POST http://localhost:3000/api/v1/invoke \
 
 ### Gray Room / Planned Sub-Requests (Server-Orchestrated)
 - [ ] **GR-S-01 concept-boundary**: Зафиксировать, что gray room = серия спланированных LLM-подзапросов, выполняемых *на сервере* после основного шага, без новых client steps; работают только через `context.workbench`/`context.history` и соблюдают Action-Key Shape. Уточнить, что это надстройка над уже реализованным interrupt loop в `DialogRequestProcessor`, а не параллельный механизм.
+- [ ] **GR-S-12 orchestrator-unification**: Выделить общий orchestrator (например `gray-room-orchestrator.ts`) и подключить его к dialog + agent flows, чтобы модель подзапросов была одинаковой и не зависела от одного процессора.
+- [x] **S-10**: [P2] Request Cleanup Script: utility for cleaning up `storage/requests` older than 14 days.
+- [x] **S-11**: [P1] Realize unified Gray Room Orchestrator by extracting logic from `dialog-request-processor.ts`.
 - [ ] **GR-S-02 trigger-contract**: Описать, откуда включается gray room: (a) явный флаг в `context.execution` (например `flowControlHint: "gray-room"` или `context.execution.grayRoomRequested`), (b) политика для типов запросов (agent, task-decomposition), (c) env-переключатели `A2A_GRAY_ROOM_ENABLED`, `A2A_GRAY_ROOM_MAX_TURNS`; по умолчанию выключено. Не ломать существующее поведение `interrupt` без флага (backwards compatible path).
 - [ ] **GR-S-03 schema-entry-points**: Определить, какими схемами и файлами описываются подзапросы: расширить `docs/GRAY-ROOM.md` разделом "server orchestration" и описать, как `interrupt.schema` переходит в `activeSchemaName` внутри существующего `ACTION_TO_SCHEMA`/`LLM_PIPELINE_ACTIONS`; отдельные `prompts/gray-room-*.md` и `prompts/transforms/gray-room-*.json` делать только как опциональные специализированные схемы, чтобы не плодить новый параллельный пайплайн.
 - [ ] **GR-S-04 orchestration-loop**: Зафиксировать цикл gray room: точка входа (вероятно `dialog-request-processor` / agent-процессор), ограничение по числу подшагов/времени, правила прерывания, и как финальный `workbench`/`history` мержится обратно в основной response до отправки клиенту. Уточнить поведение в ошибочных путях: что происходит при фейле sidecar LLM / RAG / read-file (fallback, trace, error mapping).

@@ -121,99 +121,77 @@ export function getNewStepDir(cwd, sessionId, stepNum) {
   return path.join(getNewSessionDir(cwd, sessionId), String(stepNum));
 }
 
-export function loadNewSession(cwd, sessionId) {
-  // Fast path: try to use session index first
-  const index = loadSessionIndex(cwd, sessionId);
-  if (index?.currentStep) {
-    const step = loadNewStep(cwd, sessionId, index.currentStep);
-    if (step) {
-      // Reconstruct session from indexed step
-      const session = {
-        id: sessionId,
-        currentStep: index.currentStep,
-        createdAt: index.createdAt || step.timestamp,
-        updatedAt: index.updatedAt || step.timestamp,
-        status: index.status || 'active'
-      };
-      
-      // Add execute, context from latest step
-      if (step.execute) session.execute = step.execute;
-      if (step.context) session.context = step.context;
-      
-      // Derive mode (P2)
-      session.mode = deriveSessionMode(session);
-      
-      // Get title from step 1
-      const step1 = index.currentStep === 1 ? step : loadNewStep(cwd, sessionId, 1);
-      if (step1?.title) {
-        session.title = step1.title;
-      } else if (step1?.execute?.form?.input?.[0]?.label) {
-        session.title = step1.execute.form.input[0].label;
-      } else if (step1?.execute?.form?.choices) {
-        session.title = 'Selection Session';
-      } else {
-        session.title = sessionId;
-      }
-      
-      // Restore async state for page refresh (P1)
-      if (index.promiseId && index.promiseStatus && index.promiseStatus !== 'completed') {
-        session.promiseId = index.promiseId;
-        session.promiseStatus = index.promiseStatus;
-        session.asyncPending = true;
-      }
-      
-      return session;
-    }
-  }
-  
-  // Fallback: reconstruct session from step files (original logic)
-  // Session is defined by the highest step number WITH server-response.json (not just the highest step number)
+/**
+ * Reconstruct session metadata from step files and save session-index.json.
+ * @param {string} cwd - Working directory
+ * @param {string} sessionId - Session ID
+ * @returns {Object|null} Reconstructed session object or null if no steps found
+ */
+export function rebuildSessionIndex(cwd, sessionId) {
   const allSteps = listNewSteps(cwd, sessionId);
   if (allSteps.length === 0) return null;
 
   let latestStepNum = null;
   let latestStep = null;
-  for (const stepNum of allSteps) {
+  for (const stepNum of allSteps.reverse()) {
     const step = loadNewStep(cwd, sessionId, stepNum);
     if (step) {
       latestStepNum = stepNum;
       latestStep = step;
+      break;
     }
   }
+
   if (latestStepNum == null || !latestStep) {
-    // Do not silently disappear corrupted sessions from API lists.
     return {
       id: sessionId,
-      currentStep: allSteps[allSteps.length - 1] || 0,
-      createdAt: null,
-      updatedAt: null,
+      currentStep: allSteps[0] || 0,
       status: 'corrupt',
       title: `${sessionId} (corrupt)`,
       error: {
         code: 'SESSION_CORRUPT',
-        message: 'Session step files exist but no valid server-response.json could be parsed.',
+        message: 'No valid server-response.json found in any step.',
       },
     };
   }
 
-  // Reconstruct session metadata from step data
+  // Save index for future fast loads
+  saveSessionIndex(cwd, sessionId, { step: latestStepNum, ...latestStep });
+  
+  // Return loaded index
+  return loadSessionIndex(cwd, sessionId);
+}
+
+export function loadNewSession(cwd, sessionId) {
+  // Try fast path (index)
+  let index = loadSessionIndex(cwd, sessionId);
+  
+  // Rebuild if missing
+  if (!index) {
+    index = rebuildSessionIndex(cwd, sessionId);
+  }
+  
+  if (!index) return null;
+  if (index.status === 'corrupt') return index;
+
+  const step = loadNewStep(cwd, sessionId, index.currentStep);
+  if (!step) return rebuildSessionIndex(cwd, sessionId); // Retry rebuild if indexed step is gone
+
+  // Reconstruct session from index + latest step
   const session = {
     id: sessionId,
-    currentStep: latestStepNum,
-    createdAt: latestStep.timestamp,
-    updatedAt: latestStep.timestamp,
-    status: 'active'
+    currentStep: index.currentStep,
+    createdAt: index.createdAt || step.timestamp,
+    updatedAt: index.updatedAt || step.timestamp,
+    status: index.status || 'active',
+    mode: index.mode || deriveSessionMode({ context: step.context })
   };
-
-  // Add execute, context from latest step (result is not needed - stored in client-result.json)
-  if (latestStep.execute) session.execute = latestStep.execute;
-  if (latestStep.context) session.context = latestStep.context;
-
-  // Derive mode (P2)
-  session.mode = deriveSessionMode(session);
-
-  // Get title from step 1 if available (reuse latest when current step is 1 — avoids a second parse)
-  const step1 = latestStepNum === 1 ? latestStep : loadNewStep(cwd, sessionId, 1);
+  
+  if (step.execute) session.execute = step.execute;
+  if (step.context) session.context = step.context;
+  
+  // Title resolution
+  const step1 = index.currentStep === 1 ? step : loadNewStep(cwd, sessionId, 1);
   if (step1?.title) {
     session.title = step1.title;
   } else if (step1?.execute?.form?.input?.[0]?.label) {
@@ -222,6 +200,13 @@ export function loadNewSession(cwd, sessionId) {
     session.title = 'Selection Session';
   } else {
     session.title = sessionId;
+  }
+  
+  // Async status
+  if (index.promiseId && index.promiseStatus && index.promiseStatus !== 'completed') {
+    session.promiseId = index.promiseId;
+    session.promiseStatus = index.promiseStatus;
+    session.asyncPending = true;
   }
   
   return session;

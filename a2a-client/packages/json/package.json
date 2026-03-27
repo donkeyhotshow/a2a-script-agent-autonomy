@@ -25,6 +25,7 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "@a2a/types": "*",
     "zod": "^3.22.4"
   },
   "devDependencies": {
