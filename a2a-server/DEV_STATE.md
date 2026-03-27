@@ -131,6 +131,7 @@ curl -s -X POST http://localhost:3000/api/v1/invoke \
 
 ## Ссылки
 
+- [DEV_STATE.md](../DEV_STATE.md) - Root state файл (кросс-модульные зависимости)
 - [AGENTS.md](../AGENTS.md) - Правила работы
 - [docs/new-request-flow/PROTOCOL.md](../docs/new-request-flow/PROTOCOL.md) - Протокол
 - [docs/GRAY-ROOM.md](docs/GRAY-ROOM.md) - Gray room спецификация

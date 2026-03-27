@@ -145,6 +145,7 @@ SKIP_AUTH=1
 
 ## Ссылки
 
+- [DEV_STATE.md](../DEV_STATE.md) - Root state файл (кросс-модульные зависимости)
 - [docs/new-request-flow/PROTOCOL.md](docs/new-request-flow/PROTOCOL.md) - Протокол
 - [AGENTS.md](AGENTS.md) - Правила работы
 - [docs/LOADER-BEHAVIOR.md](docs/LOADER-BEHAVIOR.md) - Поведение лоадера
