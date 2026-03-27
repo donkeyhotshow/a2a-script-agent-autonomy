@@ -67,5 +67,5 @@ Optional later: add the same link to a **PR template** (`.github/pull_request_te
 
 ## See also
 
-- [`SERVER-INTERRUPT-LOOP.md`](./SERVER-INTERRUPT-LOOP.md)
+- [`GRAY-ROOM.md`](./GRAY-ROOM.md) (legacy: [`SERVER-INTERRUPT-LOOP.md`](./SERVER-INTERRUPT-LOOP.md))
 - [`ADR-0026-server-llm-request-prep.md`](../../docs/adr/ADR-0026-server-llm-request-prep.md)

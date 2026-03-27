@@ -388,6 +388,6 @@ a2a-client/tests/
 
 ## Ссылки
 
-- [AGENT-UI.md](./AGENT-UI.md) — Общая документация агента
+- [RED-ROOM.md](./RED-ROOM.md) — Auto-execution cycle
 - [SESSION-STORAGE.md](./SESSION-STORAGE.md) — Хранение сессий
 - [AGENTS.md](../../AGENTS.md) — A2A Protocol

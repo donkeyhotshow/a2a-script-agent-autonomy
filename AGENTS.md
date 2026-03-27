@@ -1,4 +1,4 @@
-﻿# AGENTS.md
+# AGENTS.md
 
 This file provides guidance to agents when working with code in this repository.
 
@@ -14,7 +14,7 @@ This file provides guidance to agents when working with code in this repository.
 8. [Running Tests](#running-tests)
 9. [Common Issues and Solutions](#common-issues-and-solutions)
 10. [Architecture decision records (ADRs)](#architecture-decision-records-adrs)
-11. [Server interrupt loop](#server-interrupt-loop)
+11. [Gray room](#gray-room)
 12. [Router (Keyword-Based)](#router-keyword-based)
 13. [Extending LLM actions](#extending-llm-actions)
 
@@ -47,8 +47,8 @@ import x from '@/services/x.js'
 - Form metadata belongs in title/description ? keep any long user-facing explanation in `form.title`/`form.description` instead of stuffing it into individual `input` entries. Use the `input[]` array for field definitions (labels, types, placeholders) only and reserve the descriptive text for the form-level fields.
 - Prune `server-response.json` artifacts ? normalized simulations should only ship `response.json` + `received.json` (and optional `server-transforms-*.json`). Remove stray `server-response.json` files in step folders when you rewrite the golden fixtures so nothing lingers from the older sync contract.
 - Request.json should follow invoke schema ? the first step?s `request.json` needs to mirror the real invocation contract described in `SCHEMA.md`, including a `context.execution` object (router/invoke expectations, action/step info) rather than just `{ "task": "?" }`. This keeps the golden starting point consistent with how the backend builds requests.
-- Optional **`interrupt.md`** in a numbered step folder ? documents [server interrupt loop](a2a-server/docs/SERVER-INTERRUPT-LOOP.md) scenarios only; **not** part of the eight-file sync pipeline; `sim-lint` does not read it. See [`simulations/SCHEMA.md`](simulations/SCHEMA.md#supplementary-server-interrupt-loop-optional).
-- Optional **`N-sub-M/`** folders (next to step `N/`, `M` sequential) ? **server interrupt loop** goldens: `request.*`, `response.*`, transforms; **`interruptTrace`** in **`response.json`**. **No** `client.json` / `received.json` (client sees one response per invoke after the loop). Pattern `^\d+-sub-\d+$`. Example: `simulations/agent-auto-ai/6-sub-1/` ? `6-sub-4/`.
+- Optional **`interrupt.md`** in a numbered step folder ? documents [**gray room**](a2a-server/docs/GRAY-ROOM.md) (server-side `interrupt` chain) only; **not** part of the eight-file sync pipeline; `sim-lint` does not read it. See [`simulations/SCHEMA.md`](simulations/SCHEMA.md#supplementary-server-interrupt-loop-optional).
+- Optional **`N-sub-M/`** folders (next to step `N/`, `M` sequential) ? **gray room** goldens: `request.*`, `response.*`, transforms; **`interruptTrace`** in **`response.json`**. **No** `client.json` / `received.json` (client sees one response per invoke after the loop). Pattern `^\d+-sub-\d+$`. Example: `simulations/agent-auto-ai/6-sub-1/` ? `6-sub-4/`.
 
 ### Quick grep helpers (when upgrading a sim)
 - `sim:lint` flags client-only tool keys under `received.json` `execute` (see [`sim-lint.ts`](a2a-server/scripts/sim-lint.ts)); the `rg` lines below are handy for spot checks.
@@ -149,9 +149,9 @@ request.json → server-transforms-request.json → response.json
 
 [`a2a-server/prompts/agent-request.md`](a2a-server/prompts/agent-request.md) ? default is chat (`message` + `form`); the model may emit **one** tool key per turn (`rag-search`, `read-file`, `write-file`, etc.) when the user needs codebase facts. Response pipeline: [`agent-llm-response.json`](a2a-server/prompts/transforms/agent-llm-response.json). The processor passes tool `execute` payloads through to the client (not folded into `message`+`form`).
 
-### Server interrupt loop
+### Gray room
 
-After the response transform, if transform output includes **`interrupt`**, the agent processor may run **extra** LLM work (compress history, `thinking` slot, another full request?LLM?response cycle) before responding. The client only receives the **final** `execute` / context. Full spec: [`a2a-server/docs/SERVER-INTERRUPT-LOOP.md`](a2a-server/docs/SERVER-INTERRUPT-LOOP.md). ADR: [`docs/adr/ADR-0029-server-interrupt-loop.md`](docs/adr/ADR-0029-server-interrupt-loop.md). Example sim notes: [`simulations/agent-auto-ai/6/interrupt.md`](simulations/agent-auto-ai/6/interrupt.md).
+**Gray room** is the product name for **server-only** extra LLM/transform work after the response transform when output includes **`interrupt`** (internal code: interrupt loop). The client only receives the **final** `execute` / context. Full spec: [`a2a-server/docs/GRAY-ROOM.md`](a2a-server/docs/GRAY-ROOM.md). Legacy filename stub: [`SERVER-INTERRUPT-LOOP.md`](a2a-server/docs/SERVER-INTERRUPT-LOOP.md). ADR: [`docs/adr/ADR-0029-server-interrupt-loop.md`](docs/adr/ADR-0029-server-interrupt-loop.md). Example sim notes: [`simulations/agent-auto-ai/6/interrupt.md`](simulations/agent-auto-ai/6/interrupt.md). Client view: [`a2a-client/docs/GRAY-ROOM.md`](a2a-client/docs/GRAY-ROOM.md).
 
 ### Router (Keyword-Based)
 
@@ -193,7 +193,7 @@ Playbook for new tools, RAG variants, transforms, simulations, and when to write
 | `CLIENT_API_URL` | Client API endpoint | No |
 | `DEFAULT_SYNC_MODE` | Enable sync mode (set to 1) | No |
 | `A2A_SERVER_URL` | A2A Server URL (default: http://localhost:3000) | No |
-| `A2A_MAX_INTERRUPT_TURNS` | Server interrupt loop budget per invoke (default: 10) | No |
+| `A2A_MAX_INTERRUPT_TURNS` | Gray room (interrupt loop) budget per invoke (default: 10) | No |
 | `A2A_COMPRESS_HISTORY_MIN_ENTRIES` | If `> 0`, skip `compress_history` sidecar when history length ? this (default: 0 = only skip empty) | No |
 
 ### Default Ports

@@ -62,6 +62,5 @@ See [LOADER-BEHAVIOR.md](./LOADER-BEHAVIOR.md). Loader follows server/session st
 
 ## Related
 
-- Golden vs runtime filenames: [SESSION-ARTIFACTS-MAP.md](./SESSION-ARTIFACTS-MAP.md).
+- Red-room flow: [RED-ROOM.md](./RED-ROOM.md).
 - Session file layout: [AGENTS.md](../../AGENTS.md) (Session Storage Format).
-- Vite plugin daemon (Node): `a2a-client/vite-plugin-a2a/daemon/README.md` (polls A2A Server for other callers).

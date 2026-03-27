@@ -1,4 +1,4 @@
-﻿# Dialog Simulation Files Workflow
+# Dialog Simulation Files Workflow
 
 ## Web Execute Variants (Web Rendering Contract)
 
@@ -50,7 +50,7 @@ Not every step has all 8 files: steps without LLM **always require** `server-tra
 
 ### Supplementary: `interrupt.md` (optional)
 
-Per-step **documentation** for the [server interrupt loop](../a2a-server/docs/SERVER-INTERRUPT-LOOP.md) (extra LLM turns
+Per-step **documentation** for the [**gray room**](../a2a-server/docs/GRAY-ROOM.md) (extra LLM turns
 before returning to the client). Does **not** affect Web `received.json` or the eight-file pipeline. Canonical
 description: [`simulations/SCHEMA.md`](../SCHEMA.md#supplementary-server-interrupt-loop-optional). Example: [
 `agent-auto-ai/6/interrupt.md`](../agent-auto-ai/6/interrupt.md). **Substeps:** sister folders **`N-sub-M`** (`M` =

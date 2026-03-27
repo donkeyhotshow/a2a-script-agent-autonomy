@@ -16,7 +16,7 @@ interface Session {
   task: string;                  // Текст задачи пользователя
   status: SessionStatus;
   context: Context;
-  actions?: Action[];            // Предложенные действия (устарело, использовать execute.form.choices)
+  actions?: Action[];            // Предложенные действия
   fallbackActions?: FallbackAction[];
   selectedAction?: Action;       // Выбранное действие
   currentStepIndex: number;      // Текущий шаг
@@ -179,7 +179,6 @@ interface FormChoicesResponse {
   };
 }
 
-// Первый ответ (actions) - устарело, использовать execute.form.choices
 interface ActionsResponse {
   context: Context;
   actions: Action[];
@@ -444,9 +443,6 @@ json
 
 ## История изменений
 
-> **⚠️ Важно:** Старый формат (`actions[]`, `proposedActions`, `subActions`, `executingAction`, `dslScript`) устарел.
-> Используйте `execute.form.choices` для первого ответа и action-key shape.
-> 
 > **См.:** [PROTOCOL.md](PROTOCOL.md)
 
 - **2025-01**: Добавлен новый формат `execute.form.choices` для первого ответа сервера. Вместо `actions[]` и

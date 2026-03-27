@@ -42,13 +42,12 @@ Automatic response path for tool execution:
 
 ### Gray Room
 
-Server-only substep chain (`N-sub-M`) for extra transformations:
+Server-only substep chain (`N-sub-M` in simulations; **`interrupt`** in transforms) for extra LLM/transform work **before** the client sees the final answer:
 
-- Trigger: one logical step needs multiple internal operations.
-- Behavior: server runs extra transform/LLM substeps before client response.
-- Constraint: client response is blocked until all substeps are complete.
-- Meaning: split complex work into controlled internal phases instead of one large prompt.
-- Practical model: one step can contain an internal array of actions.
+- Trigger: response transform emits **`interrupt`** (see [`a2a-server/docs/GRAY-ROOM.md`](../a2a-server/docs/GRAY-ROOM.md)).
+- Behavior: server runs compress / thinking / re-LLM substeps; client gets **one** outward response when the chain ends.
+- Constraint: no extra client `/next` for gray substeps (unlike red room).
+- Former doc name: “server interrupt loop” — [redirect stub](../a2a-server/docs/SERVER-INTERRUPT-LOOP.md) points to the gray room spec.
 
 ### Black Room
 

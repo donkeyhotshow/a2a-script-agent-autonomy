@@ -1,8 +1,8 @@
-# Server interrupt loop — step 6 example
+# Gray room — step 6 example
 
 This folder’s **canonical goldens** (`response.md`, `response.json`) describe the **normal** single LLM turn: no
 `interrupt` in the LLM JSON. For examples of interrupt substeps demonstrating the internal loop, see the `interrupt-thinking` simulation. Full spec: [
-`SERVER-INTERRUPT-LOOP.md`](../../../a2a-server/docs/SERVER-INTERRUPT-LOOP.md).
+`GRAY-ROOM.md`](../../../a2a-server/docs/GRAY-ROOM.md).
 
 ## Why this step
 

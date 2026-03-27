@@ -1,13 +1,13 @@
-# Server interrupt loop — step 1 example
+# Gray room — step 1 example
 
 This folder’s **canonical goldens** (`response.md`, `response.json`) describe the **normal** single LLM turn: no
-`interrupt` in the LLM JSON. **Interrupt substeps** live in **sister folders** next to this step: [
+`interrupt` in the LLM JSON. **Gray-room substeps** live in **sister folders** next to this step: [
 `../1-sub-1/`](../1-sub-1/) (`thinking` + follow-up), [`../1-sub-2/`](../1-sub-2/) (`auto_rag_page` reenter). Each
 subfolder holds **server-internal** artifacts (`request.*`, `response.*`, optional `request.md` / `response.md` /
-server-transforms) — **no** `client.json` / `received.json`, because the interrupt loop runs entirely on the server; the
+server-transforms) — **no** `client.json` / `received.json`, because the gray room runs entirely on the server; the
 Web only gets the **final** payload for step **1** (this folder). Trace for UI is `context.workbench.slots.interruptTrace`
 in each substep **`response.json`**. Full spec: [
-`SERVER-INTERRUPT-LOOP.md`](../../../a2a-server/docs/SERVER-INTERRUPT-LOOP.md).
+`GRAY-ROOM.md`](../../../a2a-server/docs/GRAY-ROOM.md).
 
 ## Why this step
 

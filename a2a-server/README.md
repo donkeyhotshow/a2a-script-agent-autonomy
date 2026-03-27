@@ -138,7 +138,7 @@ npm run prisma:studio # Prisma Studio UI
 - [EXTENDING-LLM-ACTIONS.md](./docs/EXTENDING-LLM-ACTIONS.md) — новые AI-actions, инструменты, RAG, goldens
 - [LLM-REQUEST-PREP.md](./docs/LLM-REQUEST-PREP.md) — подготовка запроса к LLM, transforms
 - [TRANSFORM-OPS.md](./docs/TRANSFORM-OPS.md) — операции pipeline
-- [SERVER-INTERRUPT-LOOP.md](./docs/SERVER-INTERRUPT-LOOP.md) — interrupt после ответа модели
+- [GRAY-ROOM.md](./docs/GRAY-ROOM.md) — серая комната (server `interrupt` / extra LLM до ответа клиенту); [`SERVER-INTERRUPT-LOOP.md`](./docs/SERVER-INTERRUPT-LOOP.md) — редирект на то же
 - [SERVER-ARCHITECTURE.md](../docs/new-request-flow/SERVER-ARCHITECTURE.md) — Server-centric документация
 
 ## Лицензия

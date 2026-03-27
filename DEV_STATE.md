@@ -10,7 +10,7 @@
 ### 1. A2A Server - STATELESS (Убрано хранение сессий)
 
 Сервер **больше НЕ хранит сессии** - только обрабатывает запросы:
-- Удалён компонент `neurons` (устарел)
+- Удалён компонент `neurons`
 - Контекст сессии передаётся в каждом запросе
 - Session storage перенесён в Client API
 
@@ -159,11 +159,6 @@ a2a-client/storage/sessions/{sessionId}/
 | Neurons | Устарел | action-request-processor |
 | LLM Router Transform | Заменён | keyword-based routing |
 | Server-side session storage | Перенесён | Client API storage |
-| **scripts/prod-test.js** | Удалён | direct-tests/run-checks.ps1 |
-| **scripts/dev-launch.js** | Удалён | Ручной запуск сервисов |
-| **scripts/orchestrator.js** | Удалён | - |
-| **scripts/generate-*** | Удалён | - |
-| **scripts/inspect-dist-transform.ts** | Удалён | - |
 
 ---
 

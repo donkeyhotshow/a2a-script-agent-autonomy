@@ -1,8 +1,5 @@
 # Поток сессий (Session Flow)
 
-> **⚠️ Важно:** Старый формат (`actions[]`, `proposedActions`, `subActions`, `executingAction`, `dslScript`) устарел.
-> Используйте `execute.form.choices` для первого ответа.
-> 
 > **См.:** [PROTOCOL.md](PROTOCOL.md), [SCHEMA.md](SCHEMA.md)
 
 > **ВАЖНО:** Сервер (a2a-server) STATELESS — не хранит сессии!
@@ -235,7 +232,7 @@
 │       context: {                                                    │
 │         task: "виправити імпорти...",                               │
 │         execution: { action: "fix-vue-imports", step: "vue-import-detect" }\n│       },                                                              │
-│       result: { action: "fix-vue-imports" }  // Выбранное действие **[OUTDATED/LEGACY: в новом протоколе для выбора используйте `result.choice`, см. `server-invoke-request.schema.json`]**\n│     }                                                              │
+│       result: { choice: "fix-vue-imports" }  // Выбранное действие\n│     }                                                              │
 └─────────────────────────────────────────────────────────────────────┘
                                 │
                                 ▼
@@ -548,4 +545,4 @@
 | `executingAction`    | `execute`          |
 | `subActionResult`    | `result`           |
 | `currentSubAction`   | `currentStepIndex` |
-| `promiseId`          | (не используется) **[OUTDATED: `promiseId` используется для async AI-запросов, см. `PROTOCOL.md`]** |
+| `promiseId`          | Используется для async AI-запросов (см. `PROTOCOL.md`)

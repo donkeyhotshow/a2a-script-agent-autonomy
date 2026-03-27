@@ -10,7 +10,7 @@
 
 **Убрано:**
 - ❌ Хранение сессий на сервере
-- ❌ Компонент `neurons` (устарел)
+- ❌ Компонент `neurons`
 - ❌ Сложная система состояний
 
 **Добавлено:**
@@ -263,10 +263,6 @@ curl -s -X POST http://localhost:3000/api/v1/invoke -H "Content-Type: applicatio
 | Neurons | Устарел, сложная архитектура | action-request-processor |
 | LLM Router Transform | Медленный, дорогой | keyword-based routing |
 | Server session storage | Масштабируемость | Client API storage |
-| scripts/prod-test.js | Удалён | direct-tests/run-checks.ps1 |
-| scripts/dev-launch.js | Удалён | Ручной запуск сервисов |
-| scripts/orchestrator.js | Удалён | - |
-| scripts/generate-* | Удалён | - |
 
 ---
 

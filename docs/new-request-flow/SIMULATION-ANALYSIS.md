@@ -237,7 +237,7 @@
 ## Что НЕправильно (старые симуляции)
 
 ❌ `sessionId`/`projectId` в context - сервер stateless!  
-❌ `promiseId` - не используется, синхронное выполнение  
+❌ `promiseId` - сейчас используется для async AI-запросов  
 ❌ `proposedActions` - правильно `actions`  
 ❌ `subActions` - правильно `steps`  
 ❌ `actionId` - правильно `action`  

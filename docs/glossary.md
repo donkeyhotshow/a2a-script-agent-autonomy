@@ -51,13 +51,11 @@ Handles communication between client and server using HTTP:
 - **Base**: Client API endpoint (e.g., `/api/a2a/`)
 - **Methods**: GET projects, sessions; POST sessions, messages, choices
 - **Async Polling**: `GET /sessions/:id/async` for async results
-- Replaces planned **TransportManager** (deprecated, never implemented)
 
 ### WindowRegistry
 Manages the registry of open session windows:
 - **State**: localStorage key `a2a_session_windows`
 - **Methods**: `getWindow()`, `hasWindow()`, `getAllSessionIds()`, `saveSessionWindowsState()`
-- Replaces planned **PanelManager** (deprecated, never implemented)
 
 ### ActionHandler
 Standardized interface for submitting all types of action results:

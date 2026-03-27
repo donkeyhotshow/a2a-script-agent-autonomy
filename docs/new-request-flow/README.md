@@ -3,9 +3,6 @@
 Цель: стандартизировать ответы сервера и обработку ответов клиентом; описать полный поток Web → Client API → Server. 
 Термины: **web** — веб-интерфейс клиента (`a2a-client/web`), **клиент** — `a2a-client`, **Client API** — vite-plugin-a2a (порт 5173), **сервер** — `a2a-server` (порт 3000).
 
-> **⚠️ Важно:** Старый формат (`actions[]`, `proposedActions`, `subActions`, `executingAction`, `dslScript`) устарел. 
-> Используйте `execute.form.choices` для первого ответа и action-key shape. 
-> 
 > **См.:** [PROTOCOL.md](PROTOCOL.md), [SCHEMA.md](SCHEMA.md), [simulations/SCHEMA.md](../../simulations/SCHEMA.md)
 
 ## Каноничные источники

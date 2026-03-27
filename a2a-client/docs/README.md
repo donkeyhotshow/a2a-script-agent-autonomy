@@ -1,70 +1,29 @@
-# A2A Web Client Documentation
+# A2A Client Docs (Focused)
 
-This directory contains comprehensive documentation for the A2A Script Agent web client (port 5173).
+This folder is now focused on:
 
-## Documentation Structure
+1. Session correctness (step files, async flow, recovery)
+2. Red-room execution (client auto tool cycle)
+3. Gray-room behavior as seen from the Web client (server-side chain; see server doc for protocol)
 
-### 📋 Workflows & Scenarios
-- **[Workflows](./workflows/)** - Complete workflow documentation with scenarios, state machines, and validation criteria
-  - [Session Lifecycle](./workflows/session-lifecycle/) - Session creation, management, switching, and deletion
-  - [Task Execution](./workflows/task-execution/) - Execute types, action processing, and result submission
-  - [Communication](./workflows/communication/) - SSE/WebSocket transport and fallback mechanisms
-  - [UI Interactions](./workflows/ui-interactions/) - Panel management and user interface workflows
-  - [Testing](./workflows/testing/) - Test scenarios, validation workflows, and QA processes
+## Read These First
 
-### 🏗️ Architecture & Implementation
-- **[Unified Architecture Complete](./workflows/UNIFIED_ARCHITECTURE_COMPLETE.md)** - Implementation status of major refactoring steps
-- **[Session Architecture Migration](./workflows/session-architecture-migration.md)** - Migration guide for unified session architecture
-- **[Context Synchronization Guide](./workflows/context-synchronization-guide.md)** - State synchronization across components
-- **[Web UI Design System](./WEB-UI-DESIGN-SYSTEM.md)** - Colors, glassmorphism, and tokens
-- **[Web UI Component Catalog](./WEB-UI-COMPONENT-CATALOG.md)** - Panels, Cubes, and Modals documentation
+- [WEB_UI_PROTOCOL.md](./WEB_UI_PROTOCOL.md) - source of truth for Web UI contract
+- [SESSION-STORAGE.md](./SESSION-STORAGE.md) - session file layout and step lifecycle
+- [RED-ROOM.md](./RED-ROOM.md) - auto-execute cycle contract
+- [GRAY-ROOM.md](./GRAY-ROOM.md) - server-only substeps (client view)
+- [api-client-server-logic.md](./api-client-server-logic.md) - request/response flow per step
+- [api-testing-plan.md](./api-testing-plan.md) - practical verification checklist
+- [tester/API.md](./tester/API.md) - tester endpoints
+- [tester/INTEGRATION.md](./tester/INTEGRATION.md) - tester integration behavior
 
-### 🔍 API & Agent Protocol
-- **[Client API: Web UI vs `@a2a/sdk`](./CLIENT_API_WEB_SDK.md)** - Two implementations, contracts, and debugging
-- **[Agent UI](./DIALOG-FRONTEND.md)** - Agent UI behavior and component hierarchy
-- **[Session storage](./SESSION-STORAGE.md)** - On-disk step layout and Client API
+## Contract Guardrails
 
-### 📊 Development State
-- **[Web UI DEV_STATE](../DEV_STATE.md)** - Current development status and component overview
+- Use `/api/a2a/*` endpoints for Web UI flows.
+- `POST /sessions/:id/next` returns ack-first; load state via `GET /sessions/:id`.
+- Async state is polled via `GET /sessions/:id/async` (or legacy promise endpoint).
+- Step artifacts are the source of truth, not a root `session.json`.
 
-## Quick Navigation
+## Cleanup Scope
 
-| Need | Go To |
-|------|-------|
-| **Understand workflows** | [Workflows Overview](./workflows/) |
-| **Client API / Vite vs SDK** | [CLIENT_API_WEB_SDK.md](./CLIENT_API_WEB_SDK.md) |
-| **Implement session management** | [Session Lifecycle](./workflows/session-lifecycle/) + [Session Architecture Migration](./workflows/session-architecture-migration.md) |
-| **Handle task execution** | [Task Execution](./workflows/task-execution/) |
-| **Manage real-time communication** | [Communication](./workflows/communication/) |
-| **Build UI components** | [UI Interactions](./workflows/ui-interactions/) + [Context Synchronization](./workflows/context-synchronization-guide.md) |
-| **Test the system** | [Testing](./workflows/testing/) |
-| **Check implementation status** | [Unified Architecture Complete](./workflows/UNIFIED_ARCHITECTURE_COMPLETE.md) |
-
-## Key Components Overview
-
-### Core Architecture (Unified)
-- **SessionStore** - Single source of truth for session state
-- **APIIntegration** - HTTP client (replaces planned TransportManager)
-- **WindowRegistry** - Session window registry (replaces planned PanelManager)
-- **ActionHandler** - Standardized action-key shape submissions
-
-### Communication
-- **HTTP**: Primary transport via Client API (`/api/a2a/`)
-- **Async Polling**: `GET /sessions/:id/async` for promise results
-- **SSE/WebSocket**: Removed in favor of HTTP polling
-
-### UI Patterns
-- **Execute Types**: `form`, `message`, `script`, `rag-search`, `read-file`, `write-file`, `execute-command`
-- **Panel States**: visible ↔ minimized (cube) ↔ closed
-- **Action Shape**: `{ [actionType]: data }` for all submissions
-
-## Development Workflow
-
-1. **Planning**: Check [Workflows](./workflows/) for user scenarios
-2. **Implementation**: Reference [Unified Architecture](./workflows/UNIFIED_ARCHITECTURE_COMPLETE.md) for patterns
-3. **Testing**: Use [Testing Scenarios](./workflows/testing/) for validation
-4. **Documentation**: Update relevant workflow docs for new features
-
----
-
-*This documentation provides comprehensive coverage of the A2A web client architecture, workflows, and implementation patterns.*
+Legacy workflow/UI architecture docs outside this scope were removed. If any remaining document conflicts with the files listed in "Read These First", treat it as stale.

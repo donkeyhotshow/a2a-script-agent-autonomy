@@ -5,6 +5,6 @@ Sister folder next to [`../6/`](../6/) (name = parent step + sequential index). 
 *`context.workbench.slots.interruptTrace`** after one primary LLM output + response transform.
 
 Trace events: [`response.json`](./response.json) → `context.workbench.slots.interruptTrace`. See [
-`SERVER-INTERRUPT-LOOP.md`](../../../a2a-server/docs/SERVER-INTERRUPT-LOOP.md).
+`GRAY-ROOM.md`](../../../a2a-server/docs/GRAY-ROOM.md).
 
 `chars` matches `../6/response.md` length (448).

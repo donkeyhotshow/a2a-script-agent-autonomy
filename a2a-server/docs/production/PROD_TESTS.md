@@ -1,5 +1,7 @@
 # Production Test Harness
 
+> **⚠️ DEPRECATED**: Use `direct-tests/run-checks.ps1` instead.
+
 ## Overview
 
 The `scripts/prod-test.js` helper exercises the real production stack in three slices (client → server → Ollama, server-only, and Ollama-only) and saves every request/response pair to `tmp/prod-test-results/<timestamp>/`.

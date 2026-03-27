@@ -12,7 +12,7 @@ client (auto-replies, session merge, action routing) without guessing server beh
 | `client.json`   | Web → Client API (body the SDK route receives).                                                               |
 
 **Not a contract file:** optional **`interrupt.md`** in a step folder only documents
-the [server interrupt loop](../a2a-server/docs/SERVER-INTERRUPT-LOOP.md). It does not define Web or SDK payloads;
+the [**gray room**](../a2a-server/docs/GRAY-ROOM.md). It does not define Web or SDK payloads;
 goldens remain `response.json` / `received.json`. See [
 `SCHEMA.md`](./SCHEMA.md#supplementary-server-interrupt-loop-optional).
 

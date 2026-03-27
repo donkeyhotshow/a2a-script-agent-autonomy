@@ -445,7 +445,7 @@ simulations/
 { execute: { "script": { input: {}, output: "...", code: "..." } } }
 ```
 
-**Неправильно (устаревший формат):**
+**Неправильно:**
 ```typescript
 // Неверно: плоская структура
 { result: { content: "..." } }

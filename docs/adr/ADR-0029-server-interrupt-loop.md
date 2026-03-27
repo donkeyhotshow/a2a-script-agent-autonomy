@@ -1,4 +1,4 @@
-# ADR-0029: Server-side interrupt loop (dialog / transform processor)
+# ADR-0029: Gray room — server-side interrupt loop (dialog / transform processor)
 
 - **Status:** accepted
 - **Date:** 2026-03-24
@@ -11,7 +11,7 @@ Long `context.history` and multi-step reasoning benefit from **extra LLM work on
 
 After **response** transforms, if transform output contains **`interrupt`** (`InterruptDirective`), `DialogRequestProcessor` runs **`processDialogResponseWithInterruptLoop`**: handle the interrupt (`applyInterrupt`), optionally run another **request transform + main LLM + response transform** cycle, until there is no interrupt or a **global** turn budget is exhausted. The client receives only the **final** `ProcessResult`.
 
-Normative detail and the table of implemented `reason` values live in [`a2a-server/docs/SERVER-INTERRUPT-LOOP.md`](../../a2a-server/docs/SERVER-INTERRUPT-LOOP.md).
+Normative detail and the table of implemented `reason` values live in [`a2a-server/docs/GRAY-ROOM.md`](../../a2a-server/docs/GRAY-ROOM.md). The old filename [`SERVER-INTERRUPT-LOOP.md`](../../a2a-server/docs/SERVER-INTERRUPT-LOOP.md) redirects there.
 
 ## Consequences
 

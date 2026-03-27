@@ -15,9 +15,6 @@ doc:
 
 Система состоит из трёх основных компонентов:
 
-> **⚠️ Важно:** Старый формат (`actions[]`, `executingAction`, `actionId`) устарел.
-> Используйте `execute.form.choices` для первого ответа и action-key shape для execute/result.
-> 
 > **Транспорт:** Web ↔ Client API ↔ Server — **async flow с `promiseId`**. Server возвращает `promiseId`,
 > Client API опрашивает статус до `completed`, затем возвращает `execute.*` в Web.
 > 
