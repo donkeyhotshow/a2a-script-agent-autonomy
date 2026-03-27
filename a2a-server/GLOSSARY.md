@@ -17,23 +17,6 @@ Representational State Transfer API design pattern used for HTTP-based communica
 ### Async Protocol
 Asynchronous communication protocol using promise-based operations for non-blocking task execution.
 
-## Database & Storage
-
-### PostgreSQL
-Primary relational database system used for structured data storage and management.
-
-### pgvector
-PostgreSQL extension providing vector storage and similarity search capabilities for AI embeddings.
-
-### Redis
-In-memory data structure store used for caching, session management, and task queuing.
-
-### Prisma ORM
-Object-Relational Mapping tool providing type-safe database access and schema management.
-
-### BullMQ
-Redis-based queue system for managing background jobs and task processing.
-
 ## Processing Components
 
 ### Request Processor
@@ -45,14 +28,8 @@ System component managing available actions, their definitions, and execution pa
 ### Action Executor
 Component responsible for executing specific actions and managing their lifecycle.
 
-### Context Manager
-Service handling session state, context persistence, and state transitions during task execution.
-
-### Message Service
-Component managing communication between different system parts and external services.
-
-### Neurons
-Specialized processing units performing specific intelligent tasks (linting, validation, analysis).
+### Transform Pipeline
+Pipeline that prepares request/response payloads for prompts and protocol output.
 
 ## AI & Machine Learning
 
@@ -67,9 +44,6 @@ AI technique combining information retrieval with language generation for enhanc
 
 ### Embeddings
 Vector representations of text or code used for semantic search and similarity analysis.
-
-### Plexe Local CPU Solutions
-Local AI processing solutions optimized for CPU-based inference without requiring GPUs.
 
 ## Protocol & Communication
 
@@ -88,22 +62,16 @@ Identifier for asynchronous operations with External AI Hub, enabling non-blocki
 ### Context Propagation
 Mechanism ensuring context flows unchanged between Client and Server requests.
 
-### DSL (Domain Specific Language)
-Custom scripting language for defining complex operations and workflows executed by clients.
+### Workbench
+Structured context area (`context.workbench`) used for sectioned intermediate state between turns.
 
 ## Security & Authentication
 
 ### JWT (JSON Web Token)
 Standard for creating access tokens representing user identity and permissions.
 
-### RBAC (Role-Based Access Control)
-Security model controlling access based on user roles and permissions.
-
 ### API Keys
 Authentication mechanism for programmatic access to server APIs.
-
-### 2FA (Two-Factor Authentication)
-Security process requiring two different authentication methods for access.
 
 ### Audit Logging
 System for tracking and recording security events and user actions.
@@ -118,12 +86,6 @@ Web application framework providing the foundation for the server API.
 
 ### Node.js
 JavaScript runtime environment powering the server application.
-
-### Docker
-Containerization platform ensuring consistent deployment across environments.
-
-### Docker Compose
-Tool for defining and running multi-container Docker applications.
 
 ## Monitoring & Observability
 
@@ -170,12 +132,6 @@ Processing multiple items together for improved efficiency and throughput.
 ### Hybrid Processing
 Combination of sequential and batch processing strategies.
 
-### Emergency Processing
-High-priority processing mode for critical tasks requiring immediate attention.
-
-### Collaborative Processing
-Multi-agent processing where different components work together on complex tasks.
-
 ## Integration Points
 
 ### Git Integration
@@ -187,22 +143,13 @@ Server access to local file systems for reading and writing project files.
 ### External Services
 Integration capabilities with third-party services and APIs.
 
-### WebSockets
-Real-time communication protocol for live updates and interactive features.
-
 ## Performance & Scalability
-
-### Caching Strategies
-Techniques for storing and reusing computed results to improve response times.
 
 ### Load Balancing
 Distribution of workloads across multiple computing resources.
 
 ### Resource Management
 Optimization of system resources including memory, CPU, and storage.
-
-### Queue Management
-Efficient handling of task queues and background job processing.
 
 ## Development Practices
 
@@ -225,9 +172,3 @@ Configuration mechanism for managing application settings across different envir
 
 ### Configuration Management
 System for managing application configuration and feature flags.
-
-### Migration System
-Database schema evolution and data migration management.
-
-### Seed Data
-Initial data used for development, testing, and demonstration purposes.
