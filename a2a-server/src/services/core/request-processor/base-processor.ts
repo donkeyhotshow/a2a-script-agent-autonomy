@@ -9,10 +9,6 @@ import {logger} from '../../../utils/logger.js';
 import type {
     RequestContext,
     ProcessResult,
-    ProcessOutcome,
-    Task,
-    TaskAnalysis,
-    RequestState,
     ValidationResult
 } from './request-processor.interfaces.js';
 import type {CodeBlock} from '../../../types/entity.types.js';

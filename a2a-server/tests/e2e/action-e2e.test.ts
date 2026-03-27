@@ -7,7 +7,7 @@
  * - SKIP_AUTH=1 для тестов без аутентификации
  */
 
-import {describe, it, expect, beforeAll, afterAll, vi} from 'vitest';
+import {describe, it, expect, beforeAll} from 'vitest';
 import request from 'supertest';
 import app from '../../src/app.js';
 import {actionProcessor} from '../../src/actions/action-processor.js';
@@ -110,7 +110,6 @@ describe('Action E2E', () => {
             // Ждем завершения (с таймаутом)
             let attempts = 0;
             const maxAttempts = 10;
-            let result = null;
 
             while (attempts < maxAttempts) {
                 const statusRes = await request(app)
@@ -341,7 +340,7 @@ describe('ApiClient Mock Test', () => {
             };
         }
 
-        async processStepResult(stepId: string, result: Record<string, unknown>): Promise<MockActionResult> {
+        async processStepResult(stepId: string, _result: Record<string, unknown>): Promise<MockActionResult> {
             const currentStepIndex = this.steps.findIndex(s => s.id === stepId);
 
             if (currentStepIndex === -1) {

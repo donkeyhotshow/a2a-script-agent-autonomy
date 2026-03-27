@@ -126,6 +126,24 @@
          }
      };
 
+     /** Получить workbench.sections из контекста */
+     SessionStore.prototype.getWorkbenchSections = function() {
+         var ctx = this.core ? this.core.context : null;
+         return ctx && ctx.workbench ? ctx.workbench.sections : null;
+     };
+
+     /** Получить workbench.slots из контекста */
+     SessionStore.prototype.getWorkbenchSlots = function() {
+         var ctx = this.core ? this.core.context : null;
+         return ctx && ctx.workbench ? ctx.workbench.slots : null;
+     };
+
+     /** Получить workbench_ops из контекста */
+     SessionStore.prototype.getWorkbenchOps = function() {
+         var ctx = this.core ? this.core.context : null;
+         return ctx ? ctx.workbench_ops : null;
+     };
+
      SessionStore.prototype.setStatus = function(status) {
          if (this.core) {
              this.core.status = status;

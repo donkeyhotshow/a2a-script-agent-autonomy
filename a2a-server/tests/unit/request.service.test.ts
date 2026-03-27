@@ -3,8 +3,7 @@
  * Stateless - in-memory only
  */
 
-import {describe, it, expect, vi, beforeEach} from 'vitest';
-import {requestService} from '../../src/services/core/request/request.service.js';
+import {describe, it, expect, vi} from 'vitest';
 
 vi.mock('../../src/utils/logger.js', () => ({
     logger: {

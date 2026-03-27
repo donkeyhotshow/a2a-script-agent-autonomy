@@ -88,6 +88,53 @@
         return `<details class="task-flow-interrupt-trace"><summary class="task-flow-interrupt-trace-summary">Server LLM chain (${events.length} steps)</summary><ol class="task-flow-interrupt-trace-list">${rows}</ol></details>`;
     }
 
+    /** Рендеринг workbench.sections */
+    function buildWorkbenchSectionsHtml(context) {
+        const sections = context?.workbench?.sections;
+        if (!sections) return '';
+
+        // Отобразить секции как структурированные данные
+        let html = '<div class="task-flow-workbench-sections">';
+        
+        // Отображаем каждую секцию
+        for (const [sectionName, sectionData] of Object.entries(sections)) {
+            if (sectionData === null || sectionData === undefined) continue;
+            
+            let sectionHtml = '';
+            if (Array.isArray(sectionData)) {
+                // Для массивов показываем как список
+                sectionHtml = `<ul class="task-flow-section-list">${sectionData.map(item => {
+                    if (typeof item === 'object' && item !== null) {
+                        try {
+                            const content = JSON.stringify(item, null, 2);
+                            return `<li><details><summary>${escapeHtml(String(sectionName))} item</summary><pre class="task-flow-section-json">${escapeHtml(content)}</pre></details></li>`;
+                        } catch (e) {
+                            return `<li>${escapeHtml(String(sectionName))}: ${escapeHtml(String(item))}</li>`;
+                        }
+                    } else {
+                        return `<li>${escapeHtml(String(item))}</li>`;
+                    }
+                }).join('')}</ul>`;
+            } else if (typeof sectionData === 'object' && sectionData !== null) {
+                // Для объектов показываем как JSON
+                try {
+                    const content = JSON.stringify(sectionData, null, 2);
+                    sectionHtml = `<details><summary>${escapeHtml(String(sectionName))}</summary><pre class="task-flow-section-json">${escapeHtml(content)}</pre></details>`;
+                } catch (e) {
+                    sectionHtml = `<div>${escapeHtml(String(sectionName))}: ${escapeHtml(String(sectionData))}</div>`;
+                }
+            } else {
+                // Для примитивных значений
+                sectionHtml = `<div>${escapeHtml(String(sectionName))}: ${escapeHtml(String(sectionData))}</div>`;
+            }
+            
+            html += `<div class="task-flow-section">${sectionHtml}</div>`;
+        }
+        
+        html += '</div>';
+        return html;
+    }
+
     function renderMessageHistory(contentEl, store) {
         const { store: sessionStore, error: storeError } = requireRenderStore('renderMessageHistory', store, { contentEl });
         if (!sessionStore) {
@@ -189,7 +236,8 @@
         }
 
         const interruptTraceHtml = buildInterruptTraceHtml(context);
-        executionStepHtml = executionStepHtml + interruptTraceHtml;
+        const workbenchSectionsHtml = buildWorkbenchSectionsHtml(context);
+        executionStepHtml = executionStepHtml + interruptTraceHtml + workbenchSectionsHtml;
 
         const result = data?.result;
         const protocolCompleted =
@@ -297,9 +345,26 @@
         return message.content || message.text || '';
     }
 
+    /**
+     * Render attachments block with pending client action handling
+     * @param {Object} attachments - execute attachments
+     * @returns {string} HTML string
+     */
     function renderAttachmentsBlock(attachments) {
         if (!attachments || typeof attachments !== 'object') return '';
         const parts = [];
+        
+        // Проверяем pendingClientAction для выполнения на клиенте
+        const pendingAction = attachments.pendingClientAction;
+        if (pendingAction) {
+            parts.push(
+                `<div class="task-flow-attachments-client-action" data-action="${escapeHtml(pendingAction)}">` +
+                `<span class="task-flow-attachments-title">Client Action</span> ` +
+                `<span class="task-flow-attachments-value">${escapeHtml(pendingAction)}</span>` +
+                `</div>`
+            );
+        }
+
         const rf = attachments.readFiles;
         if (Array.isArray(rf) && rf.length) {
             const lines = rf
@@ -752,54 +817,183 @@
             choices = rawChoices;
         }
         const hasChoices = Boolean(choices && choices.length > 0);
-        // Canonical dialog schema: form.textarea; protocol also allows form.input[]
+        // Canonical dialog schema: form.textarea; protocol also allows form.input[] or form.inputs[]
         let inputFields = [];
         if (form && typeof form === 'object') {
+            // Support form.textarea (single textarea)
             if (form.textarea && typeof form.textarea === 'object' && form.textarea.name) {
                 inputFields = [form.textarea];
-            } else if (Array.isArray(form.input) && form.input.length > 0) {
+            } 
+            // Support form.input (array of inputs)
+            else if (Array.isArray(form.input) && form.input.length > 0) {
                 inputFields = form.input;
+            }
+            // Support form.inputs (array of inputs, alternative name)
+            else if (Array.isArray(form.inputs) && form.inputs.length > 0) {
+                inputFields = form.inputs;
             }
         }
 
         // Render input field based on type
         function renderInputField(f) {
             const name = f.name || 'input';
-            const label = f.label ? `<label for="task-flow-input-${escapeHtml(name)}">${escapeHtml(f.label)}</label>` : '';
+            const label = f.label ? `<label for="task-flow-input-${escapeHtml(name)}" class="task-flow-field-label">${escapeHtml(f.label)}</label>` : '';
             const placeholder = f.placeholder || '';
             const required = f.required ? 'required' : '';
+            const disabled = f.disabled ? 'disabled' : '';
+            const defaultValue = f.default !== undefined ? `value="${escapeHtml(String(f.default))}"` : '';
             const type = f.type || 'text';
+            const id = `task-flow-input-${escapeHtml(name)}`;
+            const cssClass = f.className ? ` ${f.className}` : '';
             
-            // Use textarea for textarea type or when field name suggests multi-line
+            // Handle dependencies - show/hide based on another field's value
+            const dependency = f.dependsOn ? `data-depends-on="${escapeHtml(f.dependsOn.field)}" data-depends-value="${escapeHtml(f.dependsOn.value)}" data-depends-action="${escapeHtml(f.dependsOn.action || 'show')}"` : '';
+            
+            // Handle textarea type
             if (type === 'textarea' || name === 'message' || name === 'description' || name === 'content') {
-                return `<div class="task-flow-input-group">${label}<textarea id="task-flow-input-${escapeHtml(name)}" name="${escapeHtml(name)}" placeholder="${escapeHtml(placeholder)}" ${required} class="task-flow-input-field" autocomplete="off" rows="4"></textarea></div>`;
+                const rows = f.rows || 4;
+                return `<div class="task-flow-input-group task-flow-input-group-${escapeHtml(type)}" ${dependency}>${label}<textarea id="${id}" name="${escapeHtml(name)}" placeholder="${escapeHtml(placeholder)}" ${required} ${disabled} class="task-flow-input-field task-flow-textarea${cssClass}" autocomplete="off" rows="${rows}">${defaultValue.replace(/value="(.+)"/, '$1')}</textarea></div>`;
             }
-            // Use select for select type
+            
+            // Handle select type
             if (type === 'select' && f.options) {
                 const options = f.options.map(opt => {
                     const optValue = typeof opt === 'string' ? opt : (opt.value || opt.id || '');
                     const optLabel = typeof opt === 'string' ? opt : (opt.label || optValue);
-                    return `<option value="${escapeHtml(optValue)}">${escapeHtml(optLabel)}</option>`;
+                    const selected = f.default !== undefined && String(f.default) === String(optValue) ? 'selected' : '';
+                    return `<option value="${escapeHtml(optValue)}" ${selected}>${escapeHtml(optLabel)}</option>`;
                 }).join('');
-                return `<div class="task-flow-input-group">${label}<select id="task-flow-input-${escapeHtml(name)}" name="${escapeHtml(name)}" ${required} class="task-flow-input-field">${options}</select></div>`;
+                return `<div class="task-flow-input-group task-flow-input-group-select" ${dependency}>${label}<select id="${id}" name="${escapeHtml(name)}" ${required} ${disabled} class="task-flow-input-field task-flow-select${cssClass}">${options}</select></div>`;
             }
+            
+            // Handle checkbox type
+            if (type === 'checkbox') {
+                const checked = f.default === true || f.default === 'true' || f.default === 'checked' ? 'checked' : '';
+                return `<div class="task-flow-input-group task-flow-input-group-checkbox" ${dependency}>
+                    <label class="task-flow-checkbox-label" for="${id}">
+                        <input type="checkbox" id="${id}" name="${escapeHtml(name)}" ${checked} ${disabled} class="task-flow-input-field task-flow-checkbox${cssClass}">
+                        <span class="task-flow-checkbox-text">${escapeHtml(f.label || '')}</span>
+                    </label>
+                </div>`;
+            }
+            
+            // Handle radio type
+            if (type === 'radio' && f.radioOptions) {
+                const radios = f.radioOptions.map(opt => {
+                    const optValue = typeof opt === 'string' ? opt : (opt.value || opt.id || '');
+                    const optLabel = typeof opt === 'string' ? opt : (opt.label || optValue);
+                    const checked = f.default !== undefined && String(f.default) === String(optValue) ? 'checked' : '';
+                    const radioId = `${id}-${escapeHtml(optValue)}`;
+                    return `<label class="task-flow-radio-label" for="${radioId}">
+                        <input type="radio" id="${radioId}" name="${escapeHtml(name)}" value="${escapeHtml(optValue)}" ${checked} ${disabled} class="task-flow-input-field task-flow-radio${cssClass}">
+                        <span class="task-flow-radio-text">${escapeHtml(optLabel)}</span>
+                    </label>`;
+                }).join('');
+                return `<div class="task-flow-input-group task-flow-input-group-radio" ${dependency}>${label}<div class="task-flow-radio-group">${radios}</div></div>`;
+            }
+            
+            // Handle number type with min/max/step
+            if (type === 'number') {
+                const min = f.min !== undefined ? `min="${f.min}"` : '';
+                const max = f.max !== undefined ? `max="${f.max}"` : '';
+                const step = f.step !== undefined ? `step="${f.step}"` : '';
+                return `<div class="task-flow-input-group task-flow-input-group-number" ${dependency}>${label}<input type="number" id="${id}" name="${escapeHtml(name)}" placeholder="${escapeHtml(placeholder)}" ${defaultValue} ${required} ${disabled} class="task-flow-input-field task-flow-number${cssClass}" ${min} ${max} ${step} autocomplete="off"></div>`;
+            }
+            
+            // Handle email type
+            if (type === 'email') {
+                return `<div class="task-flow-input-group task-flow-input-group-email" ${dependency}>${label}<input type="email" id="${id}" name="${escapeHtml(name)}" placeholder="${escapeHtml(placeholder)}" ${defaultValue} ${required} ${disabled} class="task-flow-input-field task-flow-email${cssClass}" autocomplete="off"></div>`;
+            }
+            
+            // Handle password type
+            if (type === 'password') {
+                return `<div class="task-flow-input-group task-flow-input-group-password" ${dependency}>${label}<input type="password" id="${id}" name="${escapeHtml(name)}" placeholder="${escapeHtml(placeholder)}" ${defaultValue} ${required} ${disabled} class="task-flow-input-field task-flow-password${cssClass}" autocomplete="off"></div>`;
+            }
+            
+            // Handle date type
+            if (type === 'date') {
+                return `<div class="task-flow-input-group task-flow-input-group-date" ${dependency}>${label}<input type="date" id="${id}" name="${escapeHtml(name)}" ${defaultValue} ${required} ${disabled} class="task-flow-input-field task-flow-date${cssClass}" autocomplete="off"></div>`;
+            }
+            
+            // Handle time type
+            if (type === 'time') {
+                return `<div class="task-flow-input-group task-flow-input-group-time" ${dependency}>${label}<input type="time" id="${id}" name="${escapeHtml(name)}" ${defaultValue} ${required} ${disabled} class="task-flow-input-field task-flow-time${cssClass}" autocomplete="off"></div>`;
+            }
+            
+            // Handle url type
+            if (type === 'url') {
+                return `<div class="task-flow-input-group task-flow-input-group-url" ${dependency}>${label}<input type="url" id="${id}" name="${escapeHtml(name)}" placeholder="${escapeHtml(placeholder)}" ${defaultValue} ${required} ${disabled} class="task-flow-input-field task-flow-url${cssClass}" autocomplete="off"></div>`;
+            }
+            
+            // Handle range type
+            if (type === 'range') {
+                const min = f.min !== undefined ? f.min : 0;
+                const max = f.max !== undefined ? f.max : 100;
+                const step = f.step !== undefined ? f.step : 1;
+                const displayValue = f.default !== undefined ? f.default : min;
+                return `<div class="task-flow-input-group task-flow-input-group-range" ${dependency}>${label}
+                    <input type="range" id="${id}" name="${escapeHtml(name)}" ${defaultValue} ${disabled} class="task-flow-input-field task-flow-range${cssClass}" min="${min}" max="${max}" step="${step}">
+                    <span class="task-flow-range-value">${displayValue}</span>
+                </div>`;
+            }
+            
             // Default to text input
-            return `<div class="task-flow-input-group">${label}<input type="${escapeHtml(type)}" id="task-flow-input-${escapeHtml(name)}" name="${escapeHtml(name)}" placeholder="${escapeHtml(placeholder)}" ${required} class="task-flow-input-field" autocomplete="off"></div>`;
+            return `<div class="task-flow-input-group task-flow-input-group-text" ${dependency}>${label}<input type="${escapeHtml(type)}" id="${id}" name="${escapeHtml(name)}" placeholder="${escapeHtml(placeholder)}" ${defaultValue} ${required} ${disabled} class="task-flow-input-field task-flow-text${cssClass}" autocomplete="off"></div>`;
         }
 
         let formContent = '';
 
         const formIcon = hasChoices ? '☰' : (inputFields.length > 0 ? '✏️' : '⚙️');
         const formTitle = form.title || (hasChoices ? 'Choose an option' : 'Enter details');
+        const formDescription = form.description ? `<div class="task-flow-form-description">${escapeHtml(form.description)}</div>` : '';
+        const formErrors = `<div class="task-flow-form-errors" style="display: none;"></div>`;
 
         if (hasChoices) {
-            const buttons = choices.map((c, i) =>
-                `<button type="button" class="task-flow-choice-btn" data-choice-id="${escapeHtml(c.id)}">
-                    <span class="task-flow-choice-index">${i + 1}</span>
-                    <span class="task-flow-choice-label">${escapeHtml(c.label || c.id)}</span>
+            // Group choices by type (category)
+            const choiceGroups = {};
+            choices.forEach(c => {
+                const type = c.type || 'default';
+                if (!choiceGroups[type]) {
+                    choiceGroups[type] = [];
+                }
+                choiceGroups[type].push(c);
+            });
+            
+            // Render grouped choices with category labels
+            const typeLabels = {
+                'dialog': '💬 Діалог',
+                'agent': '🔧 Агент',
+                'decomposition': '📋 Декомпозиція',
+                'yaml': '⚡ Скрипт',
+                'md': '📝 Документ',
+                'auto-ai': '🤖 Auto-AI',
+                'default': '📌 Інше'
+            };
+            
+            const groupKeys = Object.keys(choiceGroups);
+            const isGrouped = groupKeys.length > 1;
+            
+            const buttons = choices.map((c, i) => {
+                // Support metadata: description, icon, image, type
+                const description = c.description ? `<div class="task-flow-choice-description">${escapeHtml(c.description)}</div>` : '';
+                const icon = c.icon || c.image ? `<span class="task-flow-choice-media">${c.icon ? `<span class="task-flow-choice-icon">${c.icon}</span>` : c.image ? `<img class="task-flow-choice-image" src="${escapeHtml(c.image)}" alt="">` : ''}</span>` : '';
+                
+                // Show type badge for categorized choices
+                const typeBadge = c.type && typeLabels[c.type] 
+                    ? `<span class="task-flow-choice-type-badge">${typeLabels[c.type]}</span>` 
+                    : '';
+                
+                return `<button type="button" class="task-flow-choice-btn" data-choice-id="${escapeHtml(c.id)}">
+                    ${icon}
+                    <span class="task-flow-choice-content">
+                        <span class="task-flow-choice-index">${i + 1}</span>
+                        <span class="task-flow-choice-label">${escapeHtml(c.label || c.id)}</span>
+                        ${description}
+                        ${typeBadge}
+                    </span>
                     <span class="task-flow-choice-arrow">›</span>
-                </button>`
-            ).join('');
+                </button>`;
+            }).join('');
             formContent += `<div class="task-flow-choices">${buttons}</div>`;
         }
 
@@ -822,6 +1016,8 @@
                             <div class="task-flow-form-title">${escapeHtml(formTitle)}</div>
                         </div>
                     </div>
+                    ${formDescription}
+                    ${formErrors}
                     ${formContent}
                 </div>
                 ${completionBannerHtml}
@@ -842,23 +1038,197 @@
         // Bind input form submit
         const submitBtn = contentEl.querySelector('.task-flow-submit-btn');
         const inputEl = contentEl.querySelector('.task-flow-input-field');
-        if (submitBtn && inputEl && taskFlowRef?.sendMessageResult) {
-                const doSubmit = () => {
-                    const val = inputEl.value?.trim();
-                    if (val) {
-                        const card = contentEl.querySelector('.task-flow-execute-card');
-                        if (card) card.style.display = 'none';
-                        taskFlowRef.sendMessageResult(val, contentEl);
+        if (submitBtn && taskFlowRef?.sendMessageResult) {
+            const doSubmit = () => {
+                // Collect all form data
+                const formData = {};
+                let hasErrors = false;
+                const errorMessages = [];
+                
+                // Get all input fields in the form
+                const allInputs = contentEl.querySelectorAll('.task-flow-input-field');
+                allInputs.forEach(field => {
+                    const name = field.name;
+                    let value;
+                    
+                    // Handle different input types
+                    if (field.type === 'checkbox') {
+                        value = field.checked;
+                    } else if (field.type === 'radio') {
+                        if (field.checked) {
+                            value = field.value;
+                        }
+                    } else {
+                        value = field.value;
                     }
-                };
+                    
+                    // Validate required fields
+                    const fieldGroup = field.closest('.task-flow-input-group');
+                    const isRequired = fieldGroup?.querySelector('[required]') || field.hasAttribute('required');
+                    
+                    if (isRequired && !value && field.type !== 'radio') {
+                        hasErrors = true;
+                        fieldGroup?.classList.add('task-flow-input-error');
+                        errorMessages.push(`${field.name} is required`);
+                    } else {
+                        fieldGroup?.classList.remove('task-flow-input-error');
+                    }
+                    
+                    // Validate email
+                    if (field.type === 'email' && value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+                        hasErrors = true;
+                        fieldGroup?.classList.add('task-flow-input-error');
+                        errorMessages.push(`${field.name} must be a valid email`);
+                    }
+                    
+                    // Validate number
+                    if (field.type === 'number' && value) {
+                        const num = parseFloat(value);
+                        if (isNaN(num)) {
+                            hasErrors = true;
+                            fieldGroup?.classList.add('task-flow-input-error');
+                            errorMessages.push(`${field.name} must be a number`);
+                        }
+                        if (field.hasAttribute('min') && num < parseFloat(field.getAttribute('min'))) {
+                            hasErrors = true;
+                            fieldGroup?.classList.add('task-flow-input-error');
+                            errorMessages.push(`${field.name} must be at least ${field.getAttribute('min')}`);
+                        }
+                        if (field.hasAttribute('max') && num > parseFloat(field.getAttribute('max'))) {
+                            hasErrors = true;
+                            fieldGroup?.classList.add('task-flow-input-error');
+                            errorMessages.push(`${field.name} must be at most ${field.getAttribute('max')}`);
+                        }
+                    }
+                    
+                    if (name && value !== undefined) {
+                        formData[name] = value;
+                    }
+                });
+                
+                // Show validation errors
+                if (hasErrors) {
+                    const errorContainer = contentEl.querySelector('.task-flow-form-errors');
+                    if (errorContainer) {
+                        errorContainer.innerHTML = errorMessages.map(msg => `<div class="task-flow-error-message">${escapeHtml(msg)}</div>`).join('');
+                        errorContainer.style.display = 'block';
+                    }
+                    return;
+                }
+                
+                // Hide errors if validation passed
+                const errorContainer = contentEl.querySelector('.task-flow-form-errors');
+                if (errorContainer) {
+                    errorContainer.style.display = 'none';
+                }
+                
+                // For single input, use simple string; for multiple inputs, use object
+                const keys = Object.keys(formData);
+                let result;
+                if (keys.length === 1) {
+                    result = formData[keys[0]];
+                    if (typeof result === 'string') {
+                        result = result.trim();
+                    }
+                } else {
+                    // Trim string values
+                    keys.forEach(key => {
+                        if (typeof formData[key] === 'string') {
+                            formData[key] = formData[key].trim();
+                        }
+                    });
+                    result = formData;
+                }
+                
+                if (result) {
+                    const card = contentEl.querySelector('.task-flow-execute-card');
+                    if (card) card.style.display = 'none';
+                    taskFlowRef.sendMessageResult(result, contentEl);
+                }
+            };
 
             submitBtn.addEventListener('click', doSubmit);
-            inputEl.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); doSubmit(); }
+            
+            // Add enter key handling for text inputs (not textarea with shift+enter)
+            contentEl.querySelectorAll('.task-flow-input-field').forEach(field => {
+                field.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' && !e.shiftKey && field.type !== 'textarea') { 
+                        e.preventDefault(); 
+                        doSubmit(); 
+                    }
+                });
             });
+            
+            // Setup dependency handling for conditional fields
+            setupFieldDependencies(contentEl);
+            
             // autofocus first input
-            setTimeout(() => inputEl.focus(), 50);
+            if (inputEl) {
+                setTimeout(() => inputEl.focus(), 50);
+            }
         }
+        
+        // Handle range input display value
+        contentEl.querySelectorAll('.task-flow-range').forEach(range => {
+            range.addEventListener('input', (e) => {
+                const valueSpan = e.target.closest('.task-flow-input-group').querySelector('.task-flow-range-value');
+                if (valueSpan) {
+                    valueSpan.textContent = e.target.value;
+                }
+            });
+        });
+    }
+    
+    /**
+     * Setup field dependencies - show/hide based on other field values
+     */
+    function setupFieldDependencies(contentEl) {
+        const dependentFields = contentEl.querySelectorAll('[data-depends-on]');
+        
+        dependentFields.forEach(field => {
+            const dependsOnField = field.getAttribute('data-depends-on');
+            const dependsOnValue = field.getAttribute('data-depends-value');
+            const dependsOnAction = field.getAttribute('data-depends-action');
+            const triggerField = contentEl.querySelector(`[name="${dependsOnField}"]`);
+            
+            if (triggerField) {
+                const updateVisibility = () => {
+                    let shouldShow = false;
+                    
+                    if (triggerField.type === 'checkbox') {
+                        shouldShow = triggerField.checked === (dependsOnValue === 'true' || dependsOnValue === true);
+                    } else if (triggerField.type === 'radio') {
+                        shouldShow = triggerField.checked && triggerField.value === dependsOnValue;
+                    } else {
+                        shouldShow = triggerField.value === dependsOnValue;
+                    }
+                    
+                    if (dependsOnAction === 'hide') {
+                        shouldShow = !shouldShow;
+                    }
+                    
+                    const group = field.closest('.task-flow-input-group');
+                    if (group) {
+                        group.style.display = shouldShow ? '' : 'none';
+                        // Disable hidden fields to exclude from submission
+                        if (!shouldShow) {
+                            field.disabled = true;
+                        } else {
+                            field.disabled = field.hasAttribute('data-original-disabled') ? true : false;
+                        }
+                    }
+                };
+                
+                // Store original disabled state
+                if (field.hasAttribute('disabled')) {
+                    field.setAttribute('data-original-disabled', 'true');
+                }
+                
+                triggerField.addEventListener('change', updateVisibility);
+                triggerField.addEventListener('input', updateVisibility);
+                updateVisibility(); // Initial state
+            }
+        });
     }
     
 

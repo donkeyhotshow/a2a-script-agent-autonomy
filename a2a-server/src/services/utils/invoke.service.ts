@@ -13,13 +13,10 @@
  */
 
 import {parseContextBlock} from '../../protocol/context-parser.js';
-import type {ContextBlock, FileBlock, ResultCommand} from '../../types/index.js';
+import type {ContextBlock, FileBlock} from '../../types/index.js';
 import {CURRENT_PROTOCOL_VERSION} from '../../protocol/versioning/protocol-versions.js';
 import {requestService} from '../core/request/request.service.js';
 import {trackRequestStart} from './pipeline-observability.service.js';
-import {formRequestProcessor} from '../core/request-processor/form-request-processor.js';
-import {logger} from '../../utils/logger.js';
-import type {ProcessResult} from '../core/request-processor/request-processor.interfaces.js';
 
 export interface InvokeInput {
     context?: unknown;

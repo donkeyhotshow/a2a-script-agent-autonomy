@@ -2,6 +2,7 @@
 
 Golden fixtures for the Web ↔ Client API ↔ Server ↔ LLM contract.
 
+- **What goldens prove (system behavior vs server gaps):** [`SERVER-CONTRACT.md`](./SERVER-CONTRACT.md).
 - **Layout and rules:** [`SCHEMA.md`](./SCHEMA.md) — canonical eight files per step, `sim-lint` / `sim:validate`.
 - **Audit sessions:** [`SIM-AUDIT-WORKBOOK.md`](./SIM-AUDIT-WORKBOOK.md) — save scan state, grep checklist, server redundancy notes.
 - **Evolving LLM flows / new tools:** [

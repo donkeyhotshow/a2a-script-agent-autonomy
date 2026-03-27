@@ -1,5 +1,106 @@
 /* Task Flow Styles */
 
+/* DevTools Panel Styles */
+#devtools-panel {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 300px;
+    background: #1e1e1e;
+    color: #d4d4d4;
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 12px;
+    z-index: 99999;
+    display: none;
+    flex-direction: column;
+    border-top: 2px solid #007acc;
+}
+
+#devtools-panel > div:first-child {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: #252526;
+    border-bottom: 1px solid #3c3c3c;
+}
+
+#devtools-panel > div:first-child > span {
+    font-weight: bold;
+    color: #007acc;
+}
+
+#devtools-panel > div:first-child > div {
+    display: flex;
+    gap: 8px;
+}
+
+#devtools-panel > div:first-child > div > button {
+    background: #333;
+    color: #fff;
+    border: none;
+    padding: 4px 12px;
+    cursor: pointer;
+    border-radius: 2px;
+    font-size: 12px;
+}
+
+#devtools-panel > div:first-child > div > button:hover {
+    background: #404040;
+}
+
+#devtools-panel > div:first-child > div > button:last-child {
+    background: #c62828;
+}
+
+#devtools-panel > div:first-child > div > button:last-child:hover {
+    background: #e53935;
+}
+
+#devtools-content {
+    flex: 1;
+    overflow: auto;
+    padding: 12px;
+    background: #1e1e1e;
+}
+
+#devtools-content h3 {
+    color: #007acc;
+    margin: 0 0 12px 0;
+    font-size: 14px;
+    border-bottom: 1px solid #3c3c3c;
+    padding-bottom: 4px;
+}
+
+#devtools-content h4 {
+    color: #ce9178;
+    margin: 8px 0 4px 0;
+    font-size: 13px;
+}
+
+#devtools-content pre {
+    background: #2d2d2d;
+    padding: 12px;
+    border-radius: 4px;
+    overflow: auto;
+    margin: 0;
+    font-size: 11px;
+    line-height: 1.4;
+}
+
+#devtools-content div[style*="margin-bottom: 16px"] {
+    margin-bottom: 16px;
+}
+
+#devtools-content div[style*="color: #858585"] {
+    color: #858585;
+    text-align: center;
+    padding: 20px;
+}
+
+/* Task Flow Styles */
+
 /* Message History */
 .task-flow-interrupt-trace {
   margin: 6px 0 10px;
@@ -469,6 +570,273 @@
   box-shadow: 0 0 0 3px var(--brand-glow);
 }
 
+/* Form Description */
+.task-flow-form-description {
+  padding: 0 16px 10px;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+}
+
+/* Form Errors */
+.task-flow-form-errors {
+  padding: 10px 16px;
+  margin: 0 16px 10px;
+  background: color-mix(in srgb, var(--color-danger, #c62828) 12%, var(--color-bg-primary));
+  border: 1px solid var(--color-danger, #c62828);
+  border-radius: var(--radius-md);
+}
+
+.task-flow-error-message {
+  font-size: 12px;
+  color: var(--color-danger, #c62828);
+  padding: 2px 0;
+}
+
+.task-flow-error-message::before {
+  content: '⚠ ';
+}
+
+/* Field Error */
+.task-flow-input-group.task-flow-input-error .task-flow-input-field {
+  border-color: var(--color-danger, #c62828);
+}
+
+.task-flow-input-group.task-flow-input-error .task-flow-input-field:focus {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-danger, #c62828) 30%, var(--color-bg-primary));
+}
+
+.task-flow-field-error {
+  font-size: 11px;
+  color: var(--color-danger, #c62828);
+  margin-top: 4px;
+}
+
+/* ── Input Types ───────────────────────────────────────────────── */
+
+/* Text input */
+.task-flow-input-group-text .task-flow-input-field {
+  min-height: 40px;
+}
+
+/* Textarea */
+.task-flow-textarea {
+  min-height: 100px;
+}
+
+/* Select */
+.task-flow-select {
+  min-height: 40px;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M2 4l4 4 4-4'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 36px;
+}
+
+/* Checkbox */
+.task-flow-checkbox-label,
+.task-flow-radio-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--color-text-primary);
+  padding: 8px 12px;
+  border-radius: var(--radius-md);
+  transition: background var(--transition-fast);
+}
+
+.task-flow-checkbox-label:hover,
+.task-flow-radio-label:hover {
+  background: var(--color-bg-hover);
+}
+
+.task-flow-checkbox,
+.task-flow-radio {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: var(--color-accent);
+}
+
+.task-flow-checkbox-text,
+.task-flow-radio-text {
+  flex: 1;
+}
+
+.task-flow-radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* Number input */
+.task-flow-number {
+  min-height: 40px;
+}
+
+/* Range input */
+.task-flow-range {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 6px;
+  background: var(--color-bg-hover);
+  border-radius: 3px;
+  outline: none;
+  cursor: pointer;
+}
+
+.task-flow-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  background: var(--brand-gradient);
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(99, 102, 241, 0.4);
+}
+
+.task-flow-range::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  background: var(--brand-gradient);
+  border-radius: 50%;
+  cursor: pointer;
+  border: none;
+}
+
+.task-flow-range-value {
+  display: inline-block;
+  min-width: 32px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-accent);
+  margin-left: 8px;
+}
+
+.task-flow-input-group-range {
+  flex-direction: row;
+  align-items: center;
+}
+
+/* Disabled fields */
+.task-flow-input-field:disabled,
+.task-flow-input-group.task-flow-input-error:has(.task-flow-input-field:disabled) {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ── Choices with Metadata ─────────────────────────────────────── */
+
+.task-flow-choice-media {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+}
+
+.task-flow-choice-icon {
+  font-size: 20px;
+}
+
+.task-flow-choice-image {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+}
+
+.task-flow-choice-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  gap: 2px;
+}
+
+.task-flow-choice-description {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  font-weight: 400;
+  line-height: 1.4;
+}
+
+/* Choice Type Badge */
+.task-flow-choice-type-badge {
+  display: inline-block;
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  padding: 2px 6px;
+  border-radius: 3px;
+  margin-left: 6px;
+  background: var(--color-bg-elevated);
+  color: var(--color-text-secondary);
+  border: 1px solid var(--color-border-light);
+}
+
+/* Field Label */
+.task-flow-field-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Responsive styles for forms */
+@media (max-width: 480px) {
+  .task-flow-choice-btn {
+    padding: 10px 12px;
+  }
+  
+  .task-flow-choice-media {
+    width: 28px;
+    height: 28px;
+  }
+  
+  .task-flow-choice-icon {
+    font-size: 16px;
+  }
+  
+  .task-flow-choice-image {
+    width: 28px;
+    height: 28px;
+  }
+  
+  .task-flow-inputs,
+  .task-flow-input-form {
+    padding: 8px 12px 14px;
+  }
+  
+  .task-flow-form-container {
+    padding: 0;
+  }
+  
+  .task-flow-input-field {
+    padding: 8px 10px;
+    font-size: 14px;
+  }
+  
+  .task-flow-submit-row {
+    padding: 0 12px 14px;
+  }
+  
+  .task-flow-form-header {
+    padding: 12px;
+  }
+  
+  .task-flow-choices {
+    padding: 8px 12px 14px;
+  }
+}
+
 /* Message Display */
 .task-flow-message-container {
   display: flex;
@@ -519,6 +887,43 @@
 .task-flow-attachments-meta {
   font-size: 12px;
   color: var(--color-text-muted);
+}
+
+/* Client Action Attachment */
+.task-flow-attachments-client-action {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--color-bg-elevated);
+  border-radius: 6px;
+  margin-bottom: 8px;
+}
+
+.task-flow-attachments-client-action .task-flow-attachments-title {
+  color: var(--color-accent);
+}
+
+.task-flow-attachments-client-action .task-flow-attachments-value {
+  font-family: monospace;
+  font-size: 12px;
+  color: var(--color-text-primary);
+}
+
+.task-flow-client-action-result {
+  margin-top: 10px;
+  padding: 10px;
+  background: var(--color-bg-primary);
+  border-radius: 4px;
+  font-size: 11px;
+  overflow-x: auto;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.task-flow-loading {
+  color: var(--color-text-muted);
+  font-size: 12px;
 }
 
 /* Client Action */

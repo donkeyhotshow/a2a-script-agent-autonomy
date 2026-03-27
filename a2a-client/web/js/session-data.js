@@ -146,9 +146,48 @@
             get execute() { return state.execute; },
             get pendingForm() { return state.pendingForm; },
             get context() { return state.context; },
-            set context(value) { state.context = value; },
+            set context(value) {
+                // Применяем workbench_ops если они есть
+                if (value && value.workbench_ops) {
+                    this.applyWorkbenchOps(value);
+                }
+                state.context = value;
+            },
             get messages() { return state.messages.slice(); },
-
+            
+            /** Применяет workbench_ops к контексту (set/append/remove операции) */
+            applyWorkbenchOps: function(context) {
+                const ops = context?.workbench_ops;
+                if (!ops) return;
+                
+                // Инициализируем workbench если его нет
+                let workbench = context.workbench || {};
+                context.workbench = workbench;
+                
+                // Обрабатываем set операции
+                if (ops.set) {
+                    Object.assign(workbench, ops.set);
+                }
+                
+                // Обрабатываем append операции
+                if (ops.append) {
+                    for (const [key, valueToAppend] of Object.entries(ops.append)) {
+                        if (Array.isArray(workbench[key])) {
+                            workbench[key] = [...workbench[key], ...valueToAppend];
+                        } else {
+                            workbench[key] = valueToAppend;
+                        }
+                    }
+                }
+                
+                // Обрабатываем remove операции
+                if (ops.remove) {
+                    for (const key of ops.remove) {
+                        delete workbench[key];
+                    }
+                }
+            },
+            
             isWaitingForInput: function() {
                 return state.status === 'waiting' || state.pendingForm ||
                     global.executeHasActionableForm(state.execute);

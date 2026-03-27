@@ -239,6 +239,14 @@ class APIIntegration {
         return this._fetch(`sessions/${encodeURIComponent(sessionId)}/async`);
     }
 
+    // === Actions API ===
+
+    /** Get available actions from server */
+    async getActions() {
+        const raw = await this._fetch('actions');
+        return raw?.actions ?? raw?.data ?? [];
+    }
+
 
 
 
@@ -251,6 +259,7 @@ const apiIntegration = new APIIntegration();
 if (typeof window !== 'undefined') {
     window.APIIntegration = APIIntegration;
     window.apiIntegration = apiIntegration;
+    window.getActions = () => apiIntegration.getActions();
 }
 if (typeof global !== 'undefined') {
     global.APIIntegration = APIIntegration;

@@ -8,7 +8,6 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { applyOperation, createDefaultFileSystem } from './operations.js';
-import { resolveTemplates } from './jsonpath.js';
 import { prepareInvokePayloadForLlmPrompt } from './materialize-result-for-llm.js';
 import { attachFlowControlHintToInvokePayload } from '../prompts/flow-control-hints.js';
 import { attachWorkbenchForLlmPrompt } from './workbench-normalize.js';
@@ -16,9 +15,7 @@ import type {
   TransformPipeline, 
   TransformContext, 
   TransformResult, 
-  TransformOptions,
-  TransformStep,
-  TransformFileSystem
+  TransformOptions
 } from './types.js';
 
 /**

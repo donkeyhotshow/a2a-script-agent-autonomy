@@ -9,7 +9,6 @@ import {
     getPromiseResponse,
     waitForPromise,
     type OllamaRequest,
-    type PromiseStatus,
 } from '../src/services/ollama-adapter.js';
 
 describe('ollama-adapter', () => {
@@ -18,7 +17,7 @@ describe('ollama-adapter', () => {
     beforeEach(() => {
         vi.stubGlobal(
             'fetch',
-            vi.fn((url: string, init?: RequestInit) => {
+            vi.fn((url: string, _init?: RequestInit) => {
                 if (url.includes('/api/generate?promise=1')) {
                     return Promise.resolve(
                         new Response(JSON.stringify({promiseId: 'test-promise-123'}), {status: 200})

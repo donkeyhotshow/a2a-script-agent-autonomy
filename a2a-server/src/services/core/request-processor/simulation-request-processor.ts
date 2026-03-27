@@ -17,7 +17,6 @@ import {
     getPromptsTransformsPath,
     SIMULATION_TO_SCHEMA,
     loadPromptsTransform,
-    type TransformPipeline
 } from '../../../transform/index.js';
 import type {
     RequestContext,
@@ -55,8 +54,6 @@ export interface SimulationContext {
  * Handles simulation and replay scenarios
  */
 export class SimulationRequestProcessor extends BaseRequestProcessor {
-    private simConfig: SimulationConfig;
-
     constructor(config: Partial<SimulationConfig> = {}) {
         super('SimulationRequestProcessor', config);
         this.config = {

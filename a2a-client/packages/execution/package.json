@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "A2A Execution - unified package for fs-utils, terminal and script-runner",
   "type": "module",
-  "main": "src/index.js",
+  "main": "./src/index.js",
   "exports": {
     ".": "./src/index.js",
     "./fs-utils": "./src/index.js",

@@ -23,7 +23,7 @@ export interface InterruptWhenClause {
 export interface InterruptDirective {
   /** Type of interrupt — determines server behavior */
   reason: 'compress_history' | 'auto_read_file' | 'auto_rag_page' | 'thinking' | 'clarify' | string;
-  /** Max additional LLM turns allowed (default: 5) */
+  /** Tightens remaining interrupt budget with the global cap (see GRAY-ROOM). */
   maxTurns?: number;
   /** Override transform schema for the interrupt turn */
   schema?: string;
@@ -45,7 +45,7 @@ export type ServerInterruptTraceEvent =
   | { kind: 'interrupt_handler'; reason: string; continueLoop: boolean; note?: string }
   | { kind: 'interrupt_skipped'; reason: string; detail?: string }
   | { kind: 'request_rebuild' }
-  | { kind: 'sidecar_llm'; purpose: 'compress_history' | 'thinking'; ok: boolean; meta?: string };
+  | { kind: 'sidecar_llm'; purpose: 'compress_history' | 'thinking' | 'auto_read_file' | 'clarify' | 'auto_rag_page'; ok: boolean; meta?: string };
 
 /**
  * Pipeline document type

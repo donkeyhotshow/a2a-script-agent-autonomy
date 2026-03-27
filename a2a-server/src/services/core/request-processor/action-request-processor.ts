@@ -11,14 +11,9 @@ import {logger} from '../../../utils/logger.js';
 import {actionProcessor} from '../../../actions/action-processor.js';
 import {actionRegistry} from '../../../actions/action-registry.js';
 import type {ActionDefinition} from '../../../actions/types.js';
-import {dialogRequestProcessor} from './dialog-request-processor.js';
 import type {RequestContext, ProcessResult, ProcessOutcome} from '../request-processor.interfaces.js';
 import {BaseRequestProcessor, type RequestType} from './base-processor.js';
 import {buildRouterForm} from '../../../config/router-static.js';
-import {
-    shouldEnforceTransformStrictMode,
-    validateRouterResultShape,
-} from './validators/transform-execute-validator.js';
 
 /**
  * Action request processor configuration
@@ -123,7 +118,7 @@ export class ActionRequestProcessor extends BaseRequestProcessor {
      */
     private async handleStepResult(
         sessionId: string,
-        promiseId: string,
+        _promiseId: string,
         ctx: Record<string, unknown>
     ): Promise<ProcessResult> {
         const stepId = ctx['stepId'] as string || ctx['step_id'] as string;
@@ -161,7 +156,7 @@ export class ActionRequestProcessor extends BaseRequestProcessor {
      */
     private async handleApproveAction(
         sessionId: string,
-        promiseId: string,
+        _promiseId: string,
         ctx: Record<string, unknown>
     ): Promise<ProcessResult> {
         logger.info('[ActionRequestProcessor] Processing approve_action', {
@@ -190,8 +185,8 @@ export class ActionRequestProcessor extends BaseRequestProcessor {
      * Handle task_request - client sends new task, propose actions
      */
     private async handleTaskRequest(
-        sessionId: string,
-        promiseId: string,
+        _sessionId: string,
+        _promiseId: string,
         ctx: Record<string, unknown>
     ): Promise<ProcessResult> {
         const taskText = this.parseTaskText(ctx);

@@ -320,7 +320,7 @@ export async function executeListDirectory(
 
         const files: ListDirActionOutput['files'] = [];
 
-        async function readDir(dir: string, baseDir: string) {
+        const readDir = async (dir: string, baseDir: string): Promise<void> => {
             const entries = await fs.readdir(dir, {withFileTypes: true});
 
             for (const entry of entries) {
@@ -351,7 +351,7 @@ export async function executeListDirectory(
                     await readDir(entryPath, baseDir);
                 }
             }
-        }
+        };
 
         await readDir(fullPath, fullPath);
 

@@ -16,26 +16,16 @@ export type {
     ActionResponse,
 } from './types.js';
 
-// Validation functions
+// Validation (action-key shape + invoke envelope; see action-validator.ts)
 export {
-    validateExecutePayload,
-    validateActionResult,
-    validateActionDefinition,
-    validateFormAction,
-    validateScriptAction,
-    validateReadFileAction,
-    validateWriteFileAction,
-    validateExecuteCommandAction,
-    validateMessageAction,
-    validateExecutePayloadDetailed,
+    VALID_EXECUTE_KEYS,
+    VALID_RESULT_KEYS,
     validateActionKeyShape,
-    validateActionResponse,
+    validateExecutePayloadDetailed,
     validateInvokeEnvelopeResponse,
-    createActionValidator,
-    validateReadFileResult,
-    validateWriteFileResult,
-    validateExecuteCommandResult,
     type ValidationResult,
+    type ExecuteKey,
+    type ResultKey,
 } from './action-validator.js';
 
 // Parser functions from action-parser.ts

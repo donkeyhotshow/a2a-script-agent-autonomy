@@ -3,7 +3,6 @@
  */
 
 import type { Graph } from '../graph-store.service.js';
-import type { CodeBlock } from '../../types/entity.types.js';
 import type { RequestContextBlock } from '../../types/index.js';
 
 export interface RequestContext {

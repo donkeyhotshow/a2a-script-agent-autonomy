@@ -130,7 +130,7 @@ function historyHasLine(entries: HistoryEntry[], role: string, message: string):
  */
 export function materializeResultIntoHistoryForLlm(root: Record<string, unknown>): Record<string, unknown> {
   const resultRaw = root['result'];
-  let history = getHistoryArray(root);
+  const history = getHistoryArray(root);
 
   if (!resultRaw || typeof resultRaw !== 'object' || Array.isArray(resultRaw)) {
     root['result'] = {};

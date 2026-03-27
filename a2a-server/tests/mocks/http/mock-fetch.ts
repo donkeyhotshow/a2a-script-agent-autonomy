@@ -7,8 +7,6 @@
  * - Request recording
  */
 
-import { vi } from 'vitest';
-
 export interface MockFetchResponse {
     ok?: boolean;
     status?: number;
@@ -151,17 +149,15 @@ export class MockFetch {
      * Get the mock fetch function
      */
     getMock(): typeof fetch {
-        const self = this;
-        
         return async (url: string, options: RequestInit = {}): Promise<Response> => {
-            self.callCount++;
-            self.requests.push({ url, options });
+            this.callCount++;
+            this.requests.push({ url, options });
 
-            if (self.config.verbose) {
+            if (this.config.verbose) {
                 console.log('[MockFetch]', options.method || 'GET', url);
             }
 
-            const mock = self.findMatchingMock(url);
+            const mock = this.findMatchingMock(url);
 
             if (mock) {
                 if (mock.uses !== undefined && mock.uses > 0) {
@@ -172,12 +168,12 @@ export class MockFetch {
                     await new Promise(resolve => setTimeout(resolve, mock.delay));
                 }
 
-                return self.createResponse(mock.response);
+                return this.createResponse(mock.response);
             }
 
             // Return default response or throw
-            if (self.config.defaultResponse) {
-                return self.createResponse(self.config.defaultResponse);
+            if (this.config.defaultResponse) {
+                return this.createResponse(this.config.defaultResponse);
             }
 
             throw new Error(`[MockFetch] No mock found for URL: ${url}`);

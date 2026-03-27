@@ -2,7 +2,7 @@
  * Validation Utility Tests
  */
 
-import {describe, it, expect, vi, beforeEach} from 'vitest';
+import {describe, it, expect} from 'vitest';
 
 // Simple validation functions to test (simulating the validation logic)
 const validators = {

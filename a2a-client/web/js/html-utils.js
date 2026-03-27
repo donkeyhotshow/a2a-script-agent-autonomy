@@ -106,6 +106,168 @@
         return null;
     }
 
+    /**
+     * Validate a form field based on its type and rules
+     * @param {Object} field - field definition { name, type, required, min, max, pattern, customValidator }
+     * @param {*} value - the value to validate
+     * @returns {Object} { valid: boolean, error: string|null }
+     */
+    function validateField(field, value) {
+        const result = { valid: true, error: null };
+        
+        if (!field) return result;
+        
+        const fieldName = field.label || field.name || 'Field';
+        
+        // Required validation
+        if (field.required) {
+            if (value === undefined || value === null || value === '') {
+                return { valid: false, error: `${fieldName} is required` };
+            }
+        }
+        
+        // Skip other validations if empty and not required
+        if (value === undefined || value === null || value === '') {
+            return result;
+        }
+        
+        // Type-specific validations
+        switch (field.type) {
+            case 'email':
+                if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+                    return { valid: false, error: `${fieldName} must be a valid email address` };
+                }
+                break;
+            
+            case 'number':
+            case 'range':
+                const num = parseFloat(value);
+                if (isNaN(num)) {
+                    return { valid: false, error: `${fieldName} must be a number` };
+                }
+                if (field.min !== undefined && num < field.min) {
+                    return { valid: false, error: `${fieldName} must be at least ${field.min}` };
+                }
+                if (field.max !== undefined && num > field.max) {
+                    return { valid: false, error: `${fieldName} must be at most ${field.max}` };
+                }
+                break;
+            
+            case 'url':
+                try {
+                    new URL(value);
+                } catch {
+                    return { valid: false, error: `${fieldName} must be a valid URL` };
+                }
+                break;
+            
+            case 'checkbox':
+                if (field.required && !value) {
+                    return { valid: false, error: `${fieldName} must be checked` };
+                }
+                break;
+            
+            case 'text':
+            case 'textarea':
+                if (field.minLength !== undefined && value.length < field.minLength) {
+                    return { valid: false, error: `${fieldName} must be at least ${field.minLength} characters` };
+                }
+                if (field.maxLength !== undefined && value.length > field.maxLength) {
+                    return { valid: false, error: `${fieldName} must be at most ${field.maxLength} characters` };
+                }
+                break;
+        }
+        
+        // Pattern validation
+        if (field.pattern) {
+            const regex = new RegExp(field.pattern);
+            if (!regex.test(value)) {
+                return { valid: false, error: `${fieldName} has invalid format` };
+            }
+        }
+        
+        // Custom validator function
+        if (typeof field.customValidator === 'function') {
+            const customResult = field.customValidator(value, field);
+            if (customResult !== true) {
+                return { valid: false, error: customResult || `${fieldName} is invalid` };
+            }
+        }
+        
+        return result;
+    }
+
+    /**
+     * Validate an entire form
+     * @param {Array} fields - array of field definitions
+     * @param {Object} formData - object with form values
+     * @returns {Object} { valid: boolean, errors: Object, firstError: string|null }
+     */
+    function validateForm(fields, formData) {
+        const errors = {};
+        let firstError = null;
+        
+        if (!Array.isArray(fields)) {
+            return { valid: true, errors: {}, firstError: null };
+        }
+        
+        for (const field of fields) {
+            const value = formData[field.name];
+            const result = validateField(field, value);
+            
+            if (!result.valid) {
+                errors[field.name] = result.error;
+                if (!firstError) {
+                    firstError = result.error;
+                }
+            }
+        }
+        
+        return {
+            valid: Object.keys(errors).length === 0,
+            errors,
+            firstError
+        };
+    }
+
+    /**
+     * Show field validation error
+     * @param {HTMLElement} fieldGroup - the input group element
+     * @param {string} errorMessage - error message to display
+     */
+    function showFieldError(fieldGroup, errorMessage) {
+        if (!fieldGroup) return;
+        
+        fieldGroup.classList.add('task-flow-input-error');
+        
+        // Remove existing error message
+        const existingError = fieldGroup.querySelector('.task-flow-field-error');
+        if (existingError) {
+            existingError.remove();
+        }
+        
+        // Add error message
+        const errorEl = document.createElement('div');
+        errorEl.className = 'task-flow-field-error';
+        errorEl.textContent = errorMessage;
+        fieldGroup.appendChild(errorEl);
+    }
+
+    /**
+     * Clear field validation error
+     * @param {HTMLElement} fieldGroup - the input group element
+     */
+    function clearFieldError(fieldGroup) {
+        if (!fieldGroup) return;
+        
+        fieldGroup.classList.remove('task-flow-input-error');
+        
+        const existingError = fieldGroup.querySelector('.task-flow-field-error');
+        if (existingError) {
+            existingError.remove();
+        }
+    }
+
     /** Taskbar session strip: SessionManager ref or first `.taskbar-content`. */
     function resolveTaskbarContentEl() {
         return global.SessionManager?.getTaskbarContentEl?.() || document.querySelector('.taskbar-content');
@@ -122,4 +284,8 @@
     global.resolveSessionIdFromPayload = resolveSessionIdFromPayload;
     global.getProjectIdSync = getProjectIdSync;
     global.resolveTaskbarContentEl = resolveTaskbarContentEl;
+    global.validateField = validateField;
+    global.validateForm = validateForm;
+    global.showFieldError = showFieldError;
+    global.clearFieldError = clearFieldError;
 })(typeof window !== 'undefined' ? window : globalThis);

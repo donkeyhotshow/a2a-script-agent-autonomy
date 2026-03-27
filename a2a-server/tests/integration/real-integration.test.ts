@@ -10,7 +10,7 @@
  * Run with: SKIP_AUTH=1 npm run test:integration
  */
 
-import {describe, it, expect, beforeAll, afterAll, beforeEach, afterEach} from 'vitest';
+import {describe, it, expect, beforeAll, afterAll, beforeEach} from 'vitest';
 import fs from 'fs/promises';
 import path from 'path';
 import os from 'os';

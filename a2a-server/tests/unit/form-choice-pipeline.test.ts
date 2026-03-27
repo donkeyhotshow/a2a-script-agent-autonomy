@@ -1,11 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import { runTransformPipelineFromFile } from '../../src/transform/pipeline.js';
-import { buildProcessResultFromForm, runFormChoicePipeline } from '../../src/services/core/request-processor/form-choice-pipeline.js';
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const FORM_CHOICE = path.join(__dirname, '../../prompts/transforms/form-choice-response.json');
+import { runFormChoicePipeline } from '../../src/services/core/request-processor/form-choice-pipeline.js';
 
 describe('form-choice pipeline', () => {
     it('routes agent to ai_action_ready', async () => {

@@ -6,6 +6,7 @@ import { createSessionRoutes } from './vite-plugin-a2a/routes/sessionRoutes.js';
 import { createStepRoutes } from './vite-plugin-a2a/routes/stepRoutes.js';
 import { createKvRoutes } from './vite-plugin-a2a/routes/kvRoutes.js';
 import { createDaemonRoutes } from './vite-plugin-a2a/routes/daemonRoutes.js';
+import { createActionsRoutes } from './vite-plugin-a2a/routes/actions.js';
 
 /**
  * Dev Client API for `/api/a2a/*`. Separate from `packages/sdk` Express — keep behavior in sync or share code; see docs/CLIENT_API_WEB_SDK.md
@@ -13,18 +14,16 @@ import { createDaemonRoutes } from './vite-plugin-a2a/routes/daemonRoutes.js';
 export default function vitePluginA2a() {
     let basePath = process.cwd();
 
-    if (!fs.existsSync(path.join(basePath, 'a2a-client'))) {
-        if (!fs.existsSync(path.join(basePath, 'web')) && !fs.existsSync(path.join(basePath, 'packages'))) {
-            const parentPath = path.join(basePath, '..');
-            if (fs.existsSync(path.join(parentPath, 'a2a-client'))) {
-                basePath = parentPath;
-            }
+    // If not in a2a-client, check parent
+    if (!fs.existsSync(path.join(basePath, 'a2a-client')) && !fs.existsSync(path.join(basePath, 'web'))) {
+        const parentPath = path.join(basePath, '..');
+        if (fs.existsSync(path.join(parentPath, 'a2a-client')) || fs.existsSync(path.join(parentPath, 'web'))) {
+            basePath = parentPath;
         }
     }
 
-    const cwd = fs.existsSync(path.join(basePath, 'a2a-client'))
-        ? path.join(basePath, 'a2a-client')
-        : basePath;
+    // Use basePath directly (a2a-client is the project root, not a subfolder)
+    const cwd = basePath;
 
     const storageRoot = getStorageRoot();
     console.log('[vite-plugin-a2a] Project path:', cwd, '| Storage:', storageRoot);
@@ -44,6 +43,7 @@ export default function vitePluginA2a() {
             server.middlewares.use(createStepRoutes({ cwd }));
             server.middlewares.use(createKvRoutes({ cwd }));
             server.middlewares.use(createDaemonRoutes({ cwd }));
+            server.middlewares.use(createActionsRoutes({ cwd }));
             
             // Serve shared files - first check local, then parent
             let sharedPath = path.join(cwd, 'shared');

@@ -7,7 +7,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { 
     setupLLMMock, 
-    mockLLMResponse, 
     clearLLMResponses,
     mockLLMCanonicalResponse,
     createCanonicalResponse,

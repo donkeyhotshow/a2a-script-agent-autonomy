@@ -17,8 +17,8 @@
     "test:record": "cross-env TEST_MODE=recording vitest run",
     "test:replay": "cross-env TEST_MODE=replay vitest run",
     "test:real": "cross-env TEST_MODE=real vitest run",
-    "lint": "eslint src/**/*.ts",
-    "lint:fix": "eslint src/**/*.ts --fix",
+    "lint": "eslint \"src/**/*.ts\" \"tests/**/*.ts\"",
+    "lint:fix": "eslint \"src/**/*.ts\" \"tests/**/*.ts\" --fix",
     "format": "prettier --write \"src/**/*.ts\"",
     "sim:create": "tsx scripts/sim-scaffold.ts",
     "sim:run": "tsx scripts/sim-run.ts",
@@ -28,7 +28,8 @@
     "sim:validate": "tsx scripts/sim-validate.ts",
     "sim:validate:all": "tsx scripts/sim-validate.ts --all",
     "sim:compare": "tsx scripts/sim-compare.ts",
-    "sim:report": "tsx scripts/sim-report.ts"
+    "sim:report": "tsx scripts/sim-report.ts",
+    "sim:check-md": "node scripts/check-sim-md-json-drift.mjs"
   },
   "keywords": [
     "a2a",

@@ -12,11 +12,10 @@
  *   RECORD_HTTP=1 npm run test:integration (record mode)
  */
 
-import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 import nock from 'nock';
 import fs from 'fs/promises';
 import path from 'path';
-import os from 'os';
 
 // Note: nock should be installed - npm install nock @types/nock
 // If not available, these tests will be skipped
@@ -24,7 +23,6 @@ import os from 'os';
 // Configuration
 const REPLAY_DIR = process.env.LLM_REPLAY_DIR || path.join(process.cwd(), 'tests', 'fixtures', 'recordings');
 const RECORD_MODE = process.env.RECORD_HTTP === '1';
-const TEST_HOST = 'http://localhost:11434'; // Ollama default
 
 describe('Record/Replay Integration Tests', () => {
     let replayDir: string;
@@ -65,8 +63,6 @@ describe('Record/Replay Integration Tests', () => {
     });
 
     describe('Ollama API Recording/Replaying', () => {
-        const ollamaHost = process.env.OLLAMA_HOST || 'http://localhost:11435';
-        
         // Test recording data
         const testRecording = {
             url: '/api/generate',

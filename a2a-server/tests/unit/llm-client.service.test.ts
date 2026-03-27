@@ -2,7 +2,7 @@
  * LLM Client Service Unit Tests
  */
 
-import {describe, it, expect, vi, beforeEach, afterEach} from 'vitest';
+import {describe, it, expect, vi, beforeEach} from 'vitest';
 import {LLMClient, getDefaultModel, getLLMClient, type LLMMessage} from '../../src/services/llm-client.service.js';
 
 // Mock the AI adapters

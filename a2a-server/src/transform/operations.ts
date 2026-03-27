@@ -21,8 +21,6 @@ import * as fs from 'fs/promises';
 import { 
   query, 
   set as jsonPathSet, 
-  copy as jsonPathCopy, 
-  appendToArray as jsonPathAppend,
   resolveTemplates 
 } from './jsonpath.js';
 import type { 

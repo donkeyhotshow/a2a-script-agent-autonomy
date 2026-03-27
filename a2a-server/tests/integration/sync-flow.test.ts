@@ -8,7 +8,6 @@ import app from '../../src/app.js';
 import {describe, it, expect, beforeAll, afterAll} from 'vitest';
 
 describe('Sync Flow Integration', () => {
-    const testProjectId = 'test-sync-flow-project';
     let step1Context: any;
     let step2Context: any;
     let step3Context: any;

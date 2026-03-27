@@ -7,8 +7,6 @@
  * - File change tracking
  */
 
-import { vi } from 'vitest';
-
 export interface MockFile {
     content: string;
     isDirectory: boolean;

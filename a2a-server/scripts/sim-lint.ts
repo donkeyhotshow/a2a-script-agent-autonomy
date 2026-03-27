@@ -8,6 +8,7 @@ import {readFileSync, existsSync, readdirSync, writeFileSync} from 'node:fs';
 import {join} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {INTERNAL_CLIENT_ACTION_KEYS} from '../../shared/internal-client-action-keys.mjs';
+import {VALID_EXECUTE_KEYS} from '../src/actions/action-validator.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = join(__filename, '..');
@@ -27,21 +28,8 @@ const OPTIONAL_FILES = ['server-transforms-request.json', 'server-transforms-res
 const SUPPLEMENTARY_STEP_MARKDOWN = ['interrupt.md'] as const;
 void SUPPLEMENTARY_STEP_MARKDOWN;
 
-// Допустимые типы execute
-const VALID_EXECUTE_TYPES = [
-    'form',
-    'message',
-    'script',
-    'rag-search',
-    'read-file',
-    'write-file',
-    'execute-command',
-    'list-directory',
-    'grep-search',
-    'file-exists',
-    'edit-patch',
-    'run-script'
-];
+/** Canonical allowlist — shared with runtime validation (`src/actions/action-validator.ts`). */
+const VALID_EXECUTE_TYPES = [...VALID_EXECUTE_KEYS];
 
 /** Keys stripped from `execute` for Web DTO — must not appear under top-level `execute` in golden `received.json`. Source: `shared/internal-client-action-keys.mjs`. */
 const RECEIVED_EXECUTE_CLIENT_ONLY_KEYS = INTERNAL_CLIENT_ACTION_KEYS as readonly string[];

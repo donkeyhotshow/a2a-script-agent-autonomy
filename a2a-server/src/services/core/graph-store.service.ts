@@ -9,10 +9,8 @@
 import type {
     RecognizedEntity,
     RecognizedRelation,
-    EntityTypeName,
-    RelationTypeName
+    EntityTypeName
 } from '../types/entity.types.js';
-import {logger} from '../utils/logger.js';
 
 // ============================================
 // Types
@@ -146,7 +144,6 @@ export function isGraphComplete(
     // Check for common patterns
     const hasController = graph.entities.some(e => e.type === 'CONTROLLER');
     const hasModel = graph.entities.some(e => e.type === 'MODEL');
-    const hasVue = graph.entities.some(e => e.type === 'VUE_COMPONENT' || e.type === 'VUE_PAGE');
 
     // If task mentions CRUD, need both controller and model
     if (taskContext?.taskText?.toLowerCase().includes('crud')) {

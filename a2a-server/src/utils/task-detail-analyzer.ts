@@ -45,8 +45,8 @@ const TECHNICAL_TERMS = [
 const FILE_PATH_PATTERNS = [
     /\/[a-zA-Z0-9_\-.]+\.[a-zA-Z]{2,}/,  // /path/file.ext
     /[a-zA-Z]:\\[a-zA-Z0-9_\-.]+/,        // Windows: C:\path\file
-    /\.\/[a-zA-Z0-9_\-.\/]+/,             // ./path/file
-    /[a-zA-Z0-9_\-]+\/[a-zA-Z0-9_\-.\/]+/, // directory/file
+    /\.\/[a-zA-Z0-9_.\-/]+/,             // ./path/file
+    /[a-zA-Z0-9_-]+\/[a-zA-Z0-9_.\-/]+/, // directory/file
 ];
 
 // Keywords that indicate task type
@@ -87,7 +87,7 @@ export function analyzeTaskDetail(taskText: string): TaskAnalysisResult {
     const hasFilePaths = filePaths.length > 0;
 
     // Determine task type
-    const taskType = determineTaskType(lowerText, words);
+    const taskType = determineTaskType(words);
 
     // Calculate detail level
     const level = calculateDetailLevel({
@@ -113,7 +113,7 @@ export function analyzeTaskDetail(taskText: string): TaskAnalysisResult {
     };
 }
 
-function determineTaskType(lowerText: string, words: string[]): TaskAnalysisResult['taskType'] {
+function determineTaskType(words: string[]): TaskAnalysisResult['taskType'] {
     for (const word of words) {
         const lower = word.toLowerCase();
         if (TASK_TYPE_KEYWORDS.modification.some(k => lower.includes(k))) {

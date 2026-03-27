@@ -13,7 +13,6 @@ describe('Neuron Activator Service', () => {
             codeBlocks: [],
             architecturalFeatures: [],
         });
-        const pool = 'fix bug'.toLowerCase();
         expect(result.activatedNeurons.length).toBeGreaterThanOrEqual(0);
         if (result.activatedNeurons.length > 0) {
             const bootstrap = result.activatedNeurons.find((a) => a.neuron.id === 'neuron-bootstrap');

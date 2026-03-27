@@ -3,8 +3,6 @@
  * Provides dynamic polling interval adjustment based on activity
  */
 
-import { logger } from './logger.js';
-
 // ===========================================
 // Types
 // ===========================================

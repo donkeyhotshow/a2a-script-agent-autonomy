@@ -28,6 +28,83 @@
         );
     }
 
+    /**
+     * Выполнить client-side action и отправить результат
+     * @param {Object} TaskFlow - Main TaskFlow instance
+     * @param {Object} execute - execute объект с attachments
+     * @param {HTMLElement} contentEl - элемент контента для обновления
+     * @returns {Promise<boolean>} true если action был выполнен
+     */
+    async function executeClientActionAndSubmit(TaskFlow, execute, contentEl) {
+        const attachments = execute?.attachments;
+        const actionType = attachments?.pendingClientAction;
+        
+        if (!actionType) return false;
+        
+        // Проверяем возможность выполнения
+        if (!global.ActionExecutor?.canExecuteClientAction?.(actionType)) {
+            console.warn('[TaskFlow] Cannot execute client action:', actionType);
+            return false;
+        }
+        
+        // Показываем loading
+        if (contentEl) {
+            const loadingEl = contentEl.querySelector('.task-flow-attachments-client-action');
+            if (loadingEl) {
+                loadingEl.innerHTML += ' <span class="task-flow-loading">⟳ Executing...</span>';
+            }
+        }
+        
+        // Собираем параметры в зависимости от типа action
+        const params = {};
+        switch (actionType) {
+            case 'script':
+                params.code = '() => ({ note: "Script execution requires server to pass code via different mechanism" })';
+                break;
+            case 'execute-command':
+                params.command = attachments.shellCommand || '';
+                break;
+            case 'run-script':
+                params.scriptId = attachments.runScriptId || '';
+                break;
+            case 'rag-search':
+                params.query = attachments.ragQuery || '';
+                break;
+        }
+        
+        try {
+            const result = await global.ActionExecutor.executeClientAction(actionType, params);
+            console.log('[TaskFlow] Client action result:', result);
+            
+            // Обновляем UI с результатом
+            if (contentEl) {
+                const actionBlock = contentEl.querySelector('.task-flow-attachments-client-action');
+                if (actionBlock) {
+                    const resultHtml = `<pre class="task-flow-client-action-result">${escapeHtml(JSON.stringify(result, null, 2))}</pre>`;
+                    actionBlock.innerHTML = resultHtml;
+                }
+            }
+            
+            // Автоматически отправляем результат обратно на сервер
+            const sessionId = TaskFlow._sessionId;
+            if (sessionId && global.ActionExecutor?.submit) {
+                const submitResult = { message: `Client action executed: ${actionType}`, clientActionResult: result };
+                await global.ActionExecutor.submit(sessionId, submitResult);
+            }
+            
+            return true;
+        } catch (err) {
+            console.error('[TaskFlow] Client action error:', err);
+            if (contentEl) {
+                const actionBlock = contentEl.querySelector('.task-flow-attachments-client-action');
+                if (actionBlock) {
+                    actionBlock.innerHTML = `<div class="task-flow-error">Error: ${escapeHtml(err.message)}</div>`;
+                }
+            }
+            return false;
+        }
+    }
+
     function getPanelsGateway() {
         return global.TaskFlowPanelGateway || null;
     }
@@ -103,6 +180,14 @@
                 (global.executeHasActionableForm?.(execute) || hasPendingClientAction(execute));
             if (!waiting || forceRenderPendingExecute) {
                 Render.renderExecute(contentEl, TaskFlow._lastResponse.execute, TaskFlow._lastResponse, null, TaskFlow);
+                
+                // Автоматически выполняем client-side actions
+                const execute = TaskFlow._lastResponse.execute;
+                if (execute?.attachments?.pendingClientAction) {
+                    executeClientActionAndSubmit(TaskFlow, execute, contentEl).catch(err => {
+                        console.error('[TaskFlow] Auto client action failed:', err);
+                    });
+                }
             } else {
                 contentEl.innerHTML = `
                     <div class="session-content">
@@ -129,6 +214,13 @@
                             };
                             TaskFlow._lastResponse = response;
                             Render.setPanelContent(content, 'execute', response, TaskFlow);
+                            
+                            // Автоматически выполняем client-side actions при обновлении
+                            if (execute?.attachments?.pendingClientAction) {
+                                executeClientActionAndSubmit(TaskFlow, execute, content).catch(err => {
+                                    console.error('[TaskFlow] Auto client action on execute update failed:', err);
+                                });
+                            }
                         }
                     }
                 }
@@ -148,6 +240,9 @@
         }
         TaskFlow._setupPanelAutoOpen();
         TaskFlow._setupLoaderListener();
+        
+        // Preload actions for router choices
+        global.TaskFlowPanelGateway?.preloadActions?.();
     }
 
     // Export
@@ -155,7 +250,8 @@
         ensureProjectSelect,
         restoreProjectSelection,
         setupPanelAutoOpen,
-        init
+        init,
+        executeClientActionAndSubmit
     };
 
 })(typeof window !== 'undefined' ? window : global);

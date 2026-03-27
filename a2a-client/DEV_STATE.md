@@ -1,58 +1,42 @@
-# DEV_STATE - A2A Client (2026-03-27)
+# DEV_STATE - a2a-client (2026-03-27)
 
-## ⚠️ КРИТИЧЕСКИЕ ИЗМЕНЕНИЯ
-
-### Переход на STATELESS + Новый формат
-
-**Изменения:**
-- ✅ Хранение сессий перенесено в Client API (step storage)
-- ✅ Контекст передаётся в каждом запросе
-- ✅ Новые поля контекста: execution, history, workbench
-- ✅ Action-key shape для execute/result
-- ✅ Step-based storage (нумерованные папки)
+Текущее состояние подсистемы a2a-client (Web UI + Client API).
 
 ---
 
 ## Архитектура
 
-### Подсистемы проекта
-
-Подсистемы проекта описаны в общем [`DEV_STATE.md`](../DEV_STATE.md).
-
-### Daemons
-
-- **Web**: DialogLoader (min 5s), DialogPromise poll → Client API
-- **Client API**: PollingDaemon → A2A Server
-- **A2A Server**: Request processor tick (STATELESS)
-- **AI Integration**: Promise completion worker
-
-### Общая архитектура системы
-Общая архитектура системы описана в [`DEV_STATE.md`](../DEV_STATE.md).
-
-### Polling Flow
-
-```
-Browser → Client API → A2A Server → AI Hub → Ollama
-              ↑
-         PollingDaemon
-```
+**Client API** - хранит сессии и управляет состоянием:
+- Step-based storage (нумерованные папки)
+- Vite plugin для `/api/a2a/*` endpoints
 
 ---
 
-## Компоненты
+## Ports
 
-### Vite Plugin (Client API)
+| Порт | Компонент |
+|------|-----------|
+| 5173 | Vite Dev Server + Web UI |
+| 3001 | Standalone Client API (опционально) |
 
-| Компонент | Файл | Назначение |
-|-----------|------|------------|
-| **vite-plugin-a2a** | [vite-plugin-a2a.js](../vite-plugin-a2a.js) | Главный plugin |
-| **projectRoutes** | [routes/projects.js](vite-plugin-a2a/routes/projects.js) | Управление проектами |
-| **sessionRoutes** | [routes/sessionRoutes.js](vite-plugin-a2a/routes/sessionRoutes.js) | Управление сессиями |
-| **stepRoutes** | [routes/stepRoutes.js](vite-plugin-a2a/routes/stepRoutes.js) | Управление шагами |
-| **kvRoutes** | [routes/kvRoutes.js](vite-plugin-a2a/routes/kvRoutes.js) | KV хранилище |
-| **daemonRoutes** | [routes/daemonRoutes.js](vite-plugin-a2a/routes/daemonRoutes.js) | Daemon monitoring |
+---
 
-### Session Storage (НОВОЕ)
+## API Endpoints
+
+| Method | Route | Description |
+|--------|-------|-------------|
+| GET | `/api/a2a/projects` | Список проектов |
+| POST | `/api/a2a/projects` | Создать проект |
+| GET | `/api/a2a/sessions` | Список сессий |
+| POST | `/api/a2a/sessions` | Создать сессию |
+| GET | `/api/a2a/sessions/:id` | Получить сессию |
+| POST | `/api/a2a/sessions/:id/next` | Отправить сообщение |
+| GET | `/api/a2a/sessions/:id/async` | Polling async результата |
+| GET | `/api/a2a/daemon/stats` | Статистика daemon |
+
+---
+
+## Session Storage
 
 ```
 a2a-client/storage/sessions/{sessionId}/
@@ -60,130 +44,113 @@ a2a-client/storage/sessions/{sessionId}/
 │   ├── client-result.json      # Ввод пользователя
 │   ├── request-to-server.json # Запрос к A2A Server
 │   ├── server-response.json   # Ответ сервера
-│   ├── server-promise.json     # Статус промиса
+│   ├── server-promise.json    # Статус промиса
 │   └── messages.json           # История сообщений
 ├── 2/
 │   └── ...
 └── ...
 ```
 
-**Важно**: Нет root `session.json` - состояние определяется последним заполненным шагом.
-
-### Session Types
-
-| Поле | Тип | Описание |
-|------|-----|----------|
-| `id` | string | ID сессии |
-| `status` | string | Статус (PENDING, READY, IN_PROGRESS, COMPLETED, ERROR) |
-| `context` | object | Контекст с новыми полями |
-| `messages` | array | История сообщений |
-| `execution` | object | Текущее выполнение (NEW) |
-| `history` | array | История действий (NEW) |
-| `workbench` | object | Рабочее состояние (NEW) |
+**Важно:** Нет root `session.json` - состояние определяется последним шагом.
 
 ---
 
-## API Endpoints (Client API)
+## Components
 
-| Метод | Маршрут | Описание |
-|-------|---------|----------|
-| GET | `/api/a2a/projects` | Список проектов |
-| POST | `/api/a2a/projects` | Создать проект |
-| GET | `/api/a2a/sessions` | Список сессий |
-| POST | `/api/a2a/sessions` | Создать сессию |
-| GET | `/api/a2a/sessions/:id` | Получить сессию |
-| PUT | `/api/a2a/sessions/:id` | Обновить сессию |
-| POST | `/api/a2a/sessions/:id/next` | Отправить следующее сообщение |
-| GET | `/api/a2a/sessions/:id/async` | Polling async результата |
-| GET | `/api/a2a/sessions/:id/promise/:promiseId` | Polling promise (legacy) |
-| GET | `/api/a2a/daemon/stats` | Статистика daemon |
+| Component | File | Purpose |
+|-----------|------|---------|
+| **vite-plugin-a2a** | [vite-plugin-a2a.js](vite-plugin-a2a.js) | Main plugin |
+| **stepRoutes** | [vite-plugin-a2a/routes/stepRoutes.js](vite-plugin-a2a/routes/stepRoutes.js) | Управление шагами |
+| **sessionRoutes** | [vite-plugin-a2a/routes/sessionRoutes.js](vite-plugin-a2a/routes/sessionRoutes.js) | Управление сессиями |
 
 ---
 
-## Документация
+## Context Fields (новые)
 
-### Основная
-- [docs/new-request-flow/PROTOCOL.md](../docs/new-request-flow/PROTOCOL.md) - Протокол
-- [docs/new-request-flow/ARCHITECTURE.md](../docs/new-request-flow/ARCHITECTURE.md) - Архитектура
-- [docs/new-request-flow/SESSION-FLOW.md](../docs/new-request-flow/SESSION-FLOW.md) - Поток сессий
-
-### ADR (Architecture Decision Records)
-- [docs/adr/README.md](../docs/adr/README.md) - Индекс ADR
-
-### API
-- [docs/CLIENT_API_WEB_SDK.md](../docs/CLIENT_API_WEB_SDK.md) - Web SDK
-- [docs/SESSION-STORAGE.md](../docs/SESSION-STORAGE.md) - Хранение сессий
-
-### Поведение
-- [docs/LOADER-BEHAVIOR.md](../docs/LOADER-BEHAVIOR.md) - Поведение лоадера
-- [docs/DIALOG-FRONTEND.md](../docs/DIALOG-FRONTEND.md) - Диалоговый фронтенд
-
----
-
-## Мониторинг
-
-### Daemon Stats
-- `GET /api/a2a/daemon/stats` - Статистика PollingDaemon
-
----
-
-## Известные проблемы
-
-### 1. Promise Polling не завершается
-
-**Симптомы:**
-- Promise остается в статусе "pending" в `server-promise.json`
-- A2A Server уже вернул результат, но Client API не видит завершения
-
-**Файлы для проверки:**
-- [vite-plugin-a2a/routes/stepRoutes.js](vite-plugin-a2a/routes/stepRoutes.js) - логика polling
+| Field | Type | Description |
+|-------|------|-------------|
+| `context.execution` | object | Текущее выполнение |
+| `context.history` | array | История действий |
+| `context.workbench` | object | Рабочее состояние |
 
 ---
 
 ## Тестирование
 
-```bash
-# Тест 1: Проверка Client API
-curl -s http://localhost:5173/api/a2a/projects
+### Без запуска серверов
 
-# Тест 2: Создание сессии
+```bash
+# Client API (mocked)
+cd a2a-client && npm run test:client-api
+
+# Full Vitest
+cd a2a-client && npm test
+```
+
+### С запуском серверов
+
+```bash
+# 1. A2A Server (port 3000)
+cd a2a-server && npm run dev:local
+
+# 2. Vite (port 5173)
+cd a2a-client && npx vite
+
+# 3. Smoke tests
+cd a2a-client && npm run smoke:client
+```
+
+### Manual curl
+
+```bash
+curl -s http://localhost:5173/api/a2a/projects
 curl -s -X POST http://localhost:5173/api/a2a/sessions \
   -H "Content-Type: application/json" \
-  -d '{"title":"Test Session","task":"Hello"}'
+  -d '{"task":"Hello"}'
+```
 
-# Тест 3: Отправка сообщения
-curl -s -X POST http://localhost:5173/api/a2a/sessions/:id/next \
-  -H "Content-Type: application/json" \
-  -d '{"message":"Привет"}'
+---
+
+## Simulations
+
+**Contract tests** - golden fixtures для sync потока:
+- `client.json` → transforms → `response.json` → `received.json`
+- [`simulations/SCHEMA.md`](simulations/SCHEMA.md)
+
+**Verify:**
+```bash
+npm run sim:lint -- --all --json
+npm run sim:validate -- --sim <name> --json
 ```
 
 ---
 
 ## Конфигурация
 
-| Переменная | Описание | Значение |
-|------------|----------|----------|
-| PORT | Порт Vite | 3001 (или 5173) |
-| WS_PORT | WebSocket порт | 3002 |
-| DEFAULT_SYNC_MODE | Синхронный режим | 1 |
-| SKIP_AUTH | Пропустить авторизацию | 1 |
+```bash
+PORT=5173           # Vite port
+WS_PORT=3002        # WebSocket
+DEFAULT_SYNC_MODE=1
+SKIP_AUTH=1
+```
 
 ---
 
-## Что было убрано
+## Известные проблемы
 
-| Компонент | Причина |
-|-----------|---------|
-| Root session.json | Заменён step-based storage |
-| Server-side sessions | A2A Server теперь stateless |
+### Promise Polling не завершается
+
+**Файлы для проверки:**
+- [vite-plugin-a2a/routes/stepRoutes.js](vite-plugin-a2a/routes/stepRoutes.js)
 
 ---
 
 ## Ссылки
 
-- [Спецификация протокола](../docs/new-request-flow/PROTOCOL.md)
-- [AGENTS.md](../AGENTS.md)
+- [docs/new-request-flow/PROTOCOL.md](docs/new-request-flow/PROTOCOL.md) - Протокол
+- [AGENTS.md](AGENTS.md) - Правила работы
+- [docs/LOADER-BEHAVIOR.md](docs/LOADER-BEHAVIOR.md) - Поведение лоадера
 
 ---
 
-Обновлено: 2026-03-27
+*Обновлено: 2026-03-27*

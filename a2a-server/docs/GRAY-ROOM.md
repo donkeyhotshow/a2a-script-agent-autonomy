@@ -30,8 +30,8 @@ Client → Server
 
 - **History compression** — Summarize long `history` with an LLM instead of hard truncation.
 - **Thinking step** — Store structured reasoning in `context.workbench.slots.thinking`, then run the main LLM again with that context.
-- **RAG pagination (planned wiring)** — `auto_rag_page` re-enters the main loop; server-side RAG execution can be added later (today mainly merges `interrupt.data` into context and sets `_interrupt_reason`).
-- **Future:** `auto_read_file`, `clarify`, and `interrupt.schema` are reserved in the type; implement in `applyInterrupt` and the loop when needed.
+- **RAG pagination** — `auto_rag_page` re-enters the main loop; optional **`@a2a/rag`** search when `data.query` and `A2A_RAG_PROJECT_PATH` / `data.projectPath` are set (see § Implemented `reason` values).
+- **`auto_read_file` / `clarify` / `interrupt.schema`** — implemented in `applyInterrupt` / the loop (`maxTurns` clamping applies per § Loop limits).
 
 ## Protocol: `interrupt` on transform output
 
@@ -54,8 +54,8 @@ The **response** transform must place `interrupt` on the same object that carrie
 | Field | Type | Purpose |
 |--------|------|---------|
 | `reason` | string | **Required.** Selects handler in `applyInterrupt`. |
-| `maxTurns` | number | Declared on the directive for future per-interrupt limits; **not yet enforced** (see limits below). |
-| `schema` | string | Optional alternate transform schema for the next turn — **not yet read** by the loop. |
+| `maxTurns` | number | Per-interrupt cap merged with the global budget: before each handled interrupt, `interruptBudget = min(remaining global budget, maxTurns)` when `maxTurns` is a non‑negative number. |
+| `schema` | string | Optional alternate transform folder name for the **next** follow-up turn (`request.md` rebuild + next `response.md` transform) when `continueLoop` is true. |
 | `context` | object | Shallow-merged over the current invoke context before the interrupt handler runs. |
 | `data` | object | Handler-specific payload (e.g. merged into context for `auto_rag_page`). |
 | `when` | object | Optional gates: **`historyMinLength`** / **`historyMaxLength`** vs current dialog history. If not satisfied, the server skips the interrupt (same as no `interrupt`); trace gets `interrupt_skipped`. |
@@ -66,13 +66,15 @@ The **response** transform must place `interrupt` on the same object that carrie
 |----------|----------|----------------|
 | `compress_history` | Calls AI Hub with a compress prompt when history is non-empty (optional skip: env **`A2A_COMPRESS_HISTORY_MIN_ENTRIES`** — if `> 0`, skip when `history.length <=` that value). On success replaces **top-level** `history` and `context.history`. | `false` — server returns **one** `ProcessResult` built from **updated context** and the **same** primary LLM `execute` / message. |
 | `thinking` | Calls AI Hub; parsed JSON stored under `context.workbench.slots.thinking`. | `true` — runs **request transform → main LLM → response transform** again with updated context. |
-| `auto_rag_page` | Merges `data` into `context` and sets `_interrupt_reason`. | `true` — same as `thinking` (main loop). **Does not** run RAG on the server yet. |
+| `auto_rag_page` | Merges `data`, sets `_interrupt_reason`, then **re-enters** the main loop (`continueLoop: true`). If **`data.query`** is non-empty and **`data.projectPath`** or env **`A2A_RAG_PROJECT_PATH`** is set, the server runs **`@a2a/rag`** (`createRAGClientService` → `initialize` → `search`), appends hits to **`context.ragResults`**, and adds **`context._server_rag_page`**. If query or path is missing, behavior is merge-only (no server search). | `true` |
+| `auto_read_file` | Reads `data.filePath` or `data.path` via the workspace `read-file` handler; merges into `context.files`. | `false` — returns with updated context and the same primary `execute`. |
+| `clarify` | Stores `data` under `context.workbench.slots.clarify`. | `false` — same as `auto_read_file` for loop semantics. |
 | *(anything else)* | Logged; loop stops; client gets current result **without** `interrupt` consumption beyond that. | `false` |
 
 ## Loop limits and truncation
 
-- **`A2A_MAX_INTERRUPT_TURNS`** — Global cap (default `10`). Each time an `interrupt` is present and handled, the budget decrements **once** before the next iteration.
-- **`interrupt.maxTurns`** — Part of the type for documentation / future use; **not** currently applied in `processDialogResponseWithInterruptLoop`.
+- **`A2A_MAX_INTERRUPT_TURNS`** — Global cap (default `10`). Each time an `interrupt` is present and handled, the budget decrements **once** after `maxTurns` clamping (see above).
+- **`interrupt.maxTurns`** — When set, tightens the remaining budget for that interrupt: `interruptBudget = min(interruptBudget, maxTurns)` before the usual decrement.
 - When the budget hits **0** while an interrupt is still present, the server returns the current `ProcessResult` with **`context.interrupt_truncated: true`**.
 
 ## AI Hub / promises
@@ -109,21 +111,8 @@ Each completed dialog invoke may include **`context.workbench.slots.interruptTra
 ## Limitations (current code)
 
 - Intermediate interrupt LLM text is **not** sent to the client — only structured trace rows and the final `execute` / context.
-- **`auto_read_file`** and **`clarify`** are listed on `InterruptDirective` but **not** implemented in `applyInterrupt`.
-- **`interrupt.schema`** is not consumed by the interrupt loop.
+- **`interrupt.schema`** is applied only when the handler returns **`continueLoop: true`** (next rebuild uses the named transform pack).
 - There is **no** separate guard that forbids repeating the same `reason`; only the global budget applies.
-
-## Roadmap (within current architecture)
-
-Short-term (fits existing gray room + transforms):
-
-- Wire **`auto_rag_page`** to real server-side RAG when `data` indicates next page.
-- Enforce or document **`interrupt.maxTurns`** per directive vs global budget.
-
-Medium-term:
-
-- Implement **`auto_read_file`** / **`clarify`** in `applyInterrupt` with trace rows.
-- Consume **`interrupt.schema`** for alternate transform paths if product needs it.
 
 ## See also
 

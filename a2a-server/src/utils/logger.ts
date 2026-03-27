@@ -32,6 +32,20 @@ async function ensureLogsDir(): Promise<void> {
     }
 }
 
+/** Windows/other: skip if another process holds the file (tail, IDE, second server). */
+async function safeUnlink(filePath: string): Promise<boolean> {
+    try {
+        await fs.unlink(filePath);
+        return true;
+    } catch (err: unknown) {
+        const code = (err as NodeJS.ErrnoException)?.code;
+        if (code === 'EBUSY' || code === 'EPERM' || code === 'ENOENT') {
+            return false;
+        }
+        throw err;
+    }
+}
+
 async function prepareLogFile(): Promise<void> {
     await ensureLogsDir();
     const files = await fs.readdir(logsDir, {withFileTypes: true});
@@ -39,7 +53,7 @@ async function prepareLogFile(): Promise<void> {
     for (const file of files) {
         if (file.isDirectory()) continue;
         if (file.name === LOG_FILE_NAME) continue;
-        await fs.unlink(path.join(logsDir, file.name));
+        await safeUnlink(path.join(logsDir, file.name));
     }
 
     await fs.writeFile(logFilePath, '', {encoding: 'utf8'});
@@ -109,8 +123,9 @@ export async function cleanupOldLogs(): Promise<void> {
             const stats = await fs.stat(filePath);
 
             if (now - stats.mtime.getTime() > maxAge) {
-                await fs.unlink(filePath);
-                cleanedCount++;
+                if (await safeUnlink(filePath)) {
+                    cleanedCount++;
+                }
             }
         }
 

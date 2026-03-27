@@ -185,7 +185,7 @@ export class MockA2AClient {
     /**
      * Subscribe to task updates
      */
-    async subscribe(promiseId: string, callback?: (update: any) => void): Promise<SubscribeResponse> {
+    async subscribe(promiseId: string, _callback?: (update: any) => void): Promise<SubscribeResponse> {
         this.recordRequest('subscribe', { promiseId });
 
         const scenarioResponse = this.findScenario({ promiseId, subscribe: true });
@@ -283,7 +283,7 @@ export const commonScenarios = {
 
     pendingThenComplete: (promiseId: string, completedPayload?: any): ResponseScenario[] => [
         {
-            match: (p: InvokeParams) => true,
+            match: (_p: InvokeParams) => true,
             response: {
                 success: true,
                 data: {

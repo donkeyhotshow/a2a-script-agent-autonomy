@@ -5,6 +5,7 @@
  * - Отправку результатов на сервер (submit)
  * - Проверку статуса промисов (checkPromise)
  * - Управление polling-ом для асинхронных операций
+ * - Логирование execute payloads для отладки (в режиме разработки)
  * 
  * Примечание: Управление loader теперь явное (через server response),
  * а не неявное через submit(). loader control в task-flow модулях.
@@ -86,7 +87,30 @@
         if (typeof submitFn !== 'function') {
             throw new Error('[ActionExecutor] apiIntegration.submitSessionResult is required');
         }
+        
+        // Логируем входящий результат для отладки
+        if (typeof window !== 'undefined' && window.DEV_MODE) {
+            console.log('[ActionExecutor] submit called:', {
+                sessionId,
+                result: JSON.parse(JSON.stringify(result)) // Клонируем для безопасности
+            });
+            if (window.__devToolsLogAction) {
+                window.__devToolsLogAction('submit', { sessionId, result });
+            }
+        }
+        
         const data = await submitFn.call(global.apiIntegration, sessionId, result);
+        
+        // Логируем ответ сервера
+        if (typeof window !== 'undefined' && window.DEV_MODE) {
+            console.log('[ActionExecutor] submit response:', {
+                sessionId,
+                data: JSON.parse(JSON.stringify(data))
+            });
+            if (window.__devToolsLogAction) {
+                window.__devToolsLogAction('submit-response', { sessionId, data });
+            }
+        }
         
         // Каноничный формат: только asyncPending (устарел promiseId)
         const asyncPending = !!data?.asyncPending;
@@ -115,6 +139,18 @@
      * @param {string|null} promiseId - ID промиса (nullable для session-scoped)
      */
     function startPromisePolling(sessionId, promiseId) {
+        // Логируем запуск polling
+        if (typeof window !== 'undefined' && window.DEV_MODE) {
+            console.log('[ActionExecutor] startPromisePolling called:', {
+                sessionId,
+                promiseId,
+                sessionScoped: !promiseId
+            });
+            if (window.__devToolsLogAction) {
+                window.__devToolsLogAction('startPromisePolling', { sessionId, promiseId });
+            }
+        }
+        
         const store = global.resolveSessionStore(sessionId);
         const sessionScoped = !promiseId;
 
@@ -140,6 +176,18 @@
                     store.setPromisePending?.(false);
                     // stopLoader вызывается явным образом из task-flow модулей
                 });
+                
+                // Логируем resolved промис
+                if (typeof window !== 'undefined' && window.DEV_MODE) {
+                    console.log('[ActionExecutor] promise resolved:', {
+                        sessionId,
+                        promiseId,
+                        data
+                    });
+                    if (window.__devToolsLogAction) {
+                        window.__devToolsLogAction('promiseResolved', { sessionId, promiseId, data });
+                    }
+                }
             };
 
             const onRejected = (data) => {
@@ -147,6 +195,18 @@
                 clearPromiseListeners(listenerKey);
                 store.setPromisePending?.(false);
                 // stopLoader вызывается явным образом из task-flow модулей
+                
+                // Логируем rejected промис
+                if (typeof window !== 'undefined' && window.DEV_MODE) {
+                    console.log('[ActionExecutor] promise rejected:', {
+                        sessionId,
+                        promiseId,
+                        data
+                    });
+                    if (window.__devToolsLogAction) {
+                        window.__devToolsLogAction('promiseError', { sessionId, promiseId, data });
+                    }
+                }
             };
 
             store.on?.('promiseResolved', onResolved);
@@ -175,6 +235,18 @@
             typeof message === 'string'
                 ? message
                 : (message?.content ?? String(message ?? ''));
+        
+        // Логируем отправку сообщения
+        if (typeof window !== 'undefined' && window.DEV_MODE) {
+            console.log('[ActionExecutor] sendMessage called:', {
+                sessionId,
+                message: typeof message === 'string' ? message : JSON.stringify(message)
+            });
+            if (window.__devToolsLogAction) {
+                window.__devToolsLogAction('sendMessage', { sessionId, message: messageText });
+            }
+        }
+        
         return submit(sessionId, { message: messageText }, storeOverride);
     }
 
@@ -186,6 +258,17 @@
      * @returns {Promise<Object>} ответ сервера
      */
     async function sendChoice(sessionId, choiceId, storeOverride) {
+        // Логируем отправку выбора
+        if (typeof window !== 'undefined' && window.DEV_MODE) {
+            console.log('[ActionExecutor] sendChoice called:', {
+                sessionId,
+                choiceId
+            });
+            if (window.__devToolsLogAction) {
+                window.__devToolsLogAction('sendChoice', { sessionId, choiceId });
+            }
+        }
+        
         return submit(sessionId, { choice: choiceId }, storeOverride);
     }
 
@@ -264,6 +347,33 @@
         }
     }
 
+    /**
+     * Выполняет client-side actions (script, execute-command, run-script, rag-search)
+     * Использует ClientActionRunner для sandbox выполнения
+     * 
+     * @param {string} actionType - тип action
+     * @param {Object} params - параметры action из attachments
+     * @returns {Promise<Object>} результат выполнения
+     */
+    async function executeClientAction(actionType, params = {}) {
+        const runner = global.ClientActionRunner;
+        if (!runner?.executeClientAction) {
+            throw new Error('[ActionExecutor] ClientActionRunner not loaded. Include client-action-runner.js before action-executor.js');
+        }
+        return runner.executeClientAction(actionType, params);
+    }
+
+    /**
+     * Проверяет возможность выполнения client-side action
+     * 
+     * @param {string} actionType - тип action
+     * @returns {boolean} можно ли выполнить
+     */
+    function canExecuteClientAction(actionType) {
+        const runner = global.ClientActionRunner;
+        return runner?.canExecute?.(actionType) ?? false;
+     }
+
      // Экспорт модуля
      const ActionExecutor = {
          submit,
@@ -273,6 +383,8 @@
          pullSessionSnapshot,
          checkSessionAsync,
          bootstrapSessionUi,
+         executeClientAction,
+         canExecuteClientAction,
          POLL_INTERVAL
      };
 

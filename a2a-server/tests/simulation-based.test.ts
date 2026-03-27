@@ -12,10 +12,10 @@
  *   npm run sim:validate <name>  # Validate simulation result
  */
 
-import {readFileSync, writeFileSync, existsSync, readdirSync, statSync} from 'node:fs';
+import {readFileSync, existsSync, readdirSync, statSync} from 'node:fs';
 import {join, dirname} from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {describe, it, expect, beforeAll} from 'vitest';
+import {describe, it, expect} from 'vitest';
 import {validateInvokeEnvelopeResponse} from '../src/actions/action-validator.js';
 
 const __filename = fileURLToPath(import.meta.url);

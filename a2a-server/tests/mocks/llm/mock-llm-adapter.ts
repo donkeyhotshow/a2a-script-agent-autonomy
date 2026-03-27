@@ -157,7 +157,7 @@ export function clearLLMResponses(): void {
 export async function createReplayProvider(options: ReplayProviderOptions): Promise<(input: LLMInput) => Promise<string>> {
     const { replayDir, fallbackToReal = false } = options;
 
-    return async (input: LLMInput): Promise<string> => {
+    return async (_input: LLMInput): Promise<string> => {
         try {
             // Try to read from replay directory
             const responsePath = resolvePath(replayDir, 'response.md');

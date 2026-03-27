@@ -35,8 +35,8 @@ export function validateActionKeyShape(obj: unknown, context: 'execute' | 'resul
     return { success: false, errors: ['Must be an object'] };
   }
 
-  const validExecuteKeys = ['form', 'script', 'read-file', 'write-file', 'execute-command', 'message', 'rag-search', 'list-directory', 'grep-search', 'file-exists', 'edit-patch', 'run-script'];
-  const validResultKeys = [...validExecuteKeys, 'choice', 'completed'];
+  const validExecuteKeys = [...VALID_EXECUTE_KEYS];
+  const validResultKeys = [...VALID_EXECUTE_KEYS, 'choice', 'completed'];
   const validKeys = context === 'execute' ? validExecuteKeys : validResultKeys;
 
   const keys = Object.keys(obj);

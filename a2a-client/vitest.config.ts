@@ -24,12 +24,21 @@ export default defineConfig({
         '**/tests/**',
         '**/*.test.{js,ts}'
       ]
+    },
+    server: {
+      deps: {
+        inline: ['@a2a/execution', '@a2a/rag']
+      }
     }
   },
   resolve: {
+    extensions: ['.ts', '.mts', '.cts', '.tsx', '.js', '.mjs', '.cjs', '.json'],
     alias: {
       '@': './src',
       '@shared': './shared'
     }
+  },
+  ssr: {
+    noExternal: ['@a2a/execution', '@a2a/rag']
   }
 });

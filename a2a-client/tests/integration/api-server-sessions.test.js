@@ -3,7 +3,56 @@
  * POST /api/v1/sessions with projectId + task returns session id.
  */
 
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
+
+/** Avoid loading full RAG → @a2a/execution graph in unit tests (execution package is not pre-bundled). */
+vi.mock('@a2a/rag', () => ({
+    RAGSearcher: class {
+        async searchWithProtocol() {
+            return { query: '', results: [], files: [] };
+        }
+    },
+}));
+
+/** Do not call a real A2A Server during integration tests — return a minimal sync invoke payload. */
+vi.mock('../../packages/sdk/src/server/services/upstream.service.ts', async (importOriginal) => {
+    const mod = await importOriginal();
+    return {
+        ...mod,
+        getServerBaseUrl: async () => 'http://127.0.0.1:3000',
+        serverFetch: vi.fn(async (method, _base, pathName) => {
+            if (method === 'POST' && pathName === '/api/v1/invoke') {
+                return {
+                    ok: true,
+                    status: 200,
+                    json: async () => ({
+                        success: true,
+                        data: {
+                            sync: true,
+                            execute: {
+                                form: {
+                                    title: 'Test',
+                                    inputs: [],
+                                    choices: [
+                                        { id: 'dialog', label: 'Dialog', description: 'Test choice' },
+                                    ],
+                                },
+                            },
+                            message: '',
+                            context: {
+                                execution: { action: 'task', step: 'new' },
+                                history: [],
+                                workbench: { sections: {} },
+                            },
+                        },
+                    }),
+                };
+            }
+            return { ok: false, status: 404, json: async () => ({}) };
+        }),
+    };
+});
+
 import request from 'supertest';
 import fs from 'fs/promises';
 import path from 'path';
@@ -48,9 +97,9 @@ describe('Client API Server – sessions', () => {
 
         expect(res.status).toBe(201);
         expect(res.body.success).toBe(true);
-        const data = res.body.data;
+        const data = res.body.session;
         expect(data).toBeDefined();
-        expect(data.id).toMatch(/^[0-9a-f-]{36}$/i);
+        expect(data.id).toMatch(/^sess_\d+$/);
         expect(data.metadata?.projectId).toBe('test-proj');
         expect(data.metadata?.task).toBe('fix vue imports');
         expect(data.status).toBe('active');
@@ -60,7 +109,7 @@ describe('Client API Server – sessions', () => {
         const res = await request(app).post('/api/v1/sessions').send({ task: 'hello' });
 
         expect(res.status).toBe(201);
-        expect(res.body.data?.metadata?.task).toBe('hello');
+        expect(res.body.session?.metadata?.task).toBe('hello');
     });
 
     it('POST /api/v1/sessions allows empty projectId string (optional in SDK)', async () => {

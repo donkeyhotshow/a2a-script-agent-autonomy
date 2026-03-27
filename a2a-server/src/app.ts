@@ -3,7 +3,7 @@ import express, {Express, Request, Response} from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import compression from 'compression';
-import {logger, requestLogger} from './utils/logger.js';
+import {requestLogger} from './utils/logger.js';
 import {errorHandler} from './middleware/error.middleware.js';
 import routes from './routes/index.js';
 import sessionsRouter from './routes/sessions.routes.js';

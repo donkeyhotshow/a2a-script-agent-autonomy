@@ -16,6 +16,8 @@ import {requestService} from '../request/request.service.js';
 import {fetchLlmResponse, pollReadyThenFetch} from '../../../daemon/llm-hub-poll.js';
 import type {InterruptDirective, ServerInterruptTraceEvent} from '../../../transform/types.js';
 import {validateDialogExecuteShape, shouldEnforceTransformStrictMode} from './validators/transform-execute-validator.js';
+import {executeReadFile} from '../../../actions/handlers/file-operations.js';
+import {mergeServerRagPageIntoContext} from '../../rag/auto-rag-page-server.js';
 
 type DialogHistoryEntry = { role: string; message: string };
 
@@ -57,23 +59,6 @@ function getExistingDialogHistory(ctx: Record<string, unknown>): DialogHistoryEn
     const nested = (ctx['context'] as Record<string, unknown> | undefined)?.['history'];
     if (Array.isArray(nested)) return nested as DialogHistoryEntry[];
     return [];
-}
-
-/** User line for this step — prefer result.message, then top-level message (not task/session label). */
-function getDialogUserMessage(ctx: Record<string, unknown>): string | undefined {
-    const r = ctx['result'] as Record<string, unknown> | undefined;
-    const fromResult = r?.['message'];
-    if (typeof fromResult === 'string' && fromResult.length > 0) return fromResult;
-    const msg = ctx['message'];
-    if (typeof msg === 'string' && msg.length > 0) return msg;
-    return undefined;
-}
-
-/** Completed dialog context must not carry llmPromiseId — next invoke would re-enter poll branch. */
-function dialogContextWithoutTransientIds(ctx: Record<string, unknown>): Record<string, unknown> {
-    const out = {...ctx};
-    delete out['llmPromiseId'];
-    return out;
 }
 
 // Removed parseLlmResponseFields - parsing now handled by transforms
@@ -151,7 +136,7 @@ async function runResponseTransformWithOutput(
     schemaName: string,
     ctx: Record<string, unknown>,
     responseMd: string,
-    recovered: boolean = false
+    _recovered: boolean = false
 ): Promise<{result: ProcessResult; rawOutput: Record<string, unknown>} | null> {
     try {
         const {writeFile, mkdtemp} = await import('fs/promises');
@@ -391,14 +376,69 @@ async function applyInterrupt(
         return { nextCtx, continueLoop: true };
     }
 
+    if (reason === 'auto_read_file') {
+        const fp =
+            typeof data?.filePath === 'string'
+                ? data.filePath
+                : typeof data?.path === 'string'
+                  ? data.path
+                  : '';
+        if (!fp) {
+            logger.warn('[Interrupt:auto_read_file] missing data.filePath or data.path');
+            trace.push({kind: 'sidecar_llm', purpose: 'auto_read_file', ok: false, meta: 'missing_path'});
+            return {nextCtx, continueLoop: false};
+        }
+        const out = await executeReadFile({filePath: fp});
+        if (!out.success || out.content === undefined) {
+            trace.push({
+                kind: 'sidecar_llm',
+                purpose: 'auto_read_file',
+                ok: false,
+                meta: out.error ?? 'read_failed',
+            });
+            return {nextCtx, continueLoop: false};
+        }
+        const innerCtx = (nextCtx['context'] as Record<string, unknown>) ?? {};
+        const prevFiles = (innerCtx['files'] as Record<string, string>) ?? {};
+        nextCtx = {
+            ...nextCtx,
+            context: {...innerCtx, files: {...prevFiles, [fp]: out.content}},
+        };
+        trace.push({kind: 'sidecar_llm', purpose: 'auto_read_file', ok: true, meta: fp});
+        return {nextCtx, continueLoop: false};
+    }
+
+    if (reason === 'clarify') {
+        const innerCtx = (nextCtx['context'] as Record<string, unknown>) ?? {};
+        const wb = (innerCtx['workbench'] as Record<string, unknown>) ?? {};
+        const slots = (wb['slots'] as Record<string, unknown>) ?? {};
+        nextCtx = {
+            ...nextCtx,
+            context: {
+                ...innerCtx,
+                workbench: {
+                    ...wb,
+                    slots: {
+                        ...slots,
+                        clarify: data ?? {},
+                    },
+                },
+            },
+        };
+        trace.push({kind: 'sidecar_llm', purpose: 'clarify', ok: true, meta: 'slots.clarify'});
+        return {nextCtx, continueLoop: false};
+    }
+
     if (reason === 'auto_rag_page') {
-        // Signal to continue the main LLM loop with accumulated RAG context
-        // Actual RAG execution happens client-side; interrupt here means
-        // "re-run LLM with current context after client returns rag result"
-        // For server-side: just mark that we should continue the loop
-        const innerCtx = nextCtx['context'] as Record<string, unknown>;
-        nextCtx = { ...nextCtx, context: { ...innerCtx, _interrupt_reason: reason, ...(data ?? {}) } };
-        return { nextCtx, continueLoop: true };
+        const {nextCtx: afterRag, trace: ragTrace} = await mergeServerRagPageIntoContext(nextCtx, data);
+        nextCtx = afterRag;
+        if (ragTrace) trace.push(ragTrace);
+        const innerCtx = (nextCtx['context'] as Record<string, unknown>) ?? {};
+        nextCtx = {
+            ...nextCtx,
+            context: {...innerCtx, _interrupt_reason: reason, ...(data ?? {})},
+        };
+        return {nextCtx, continueLoop: true};
     }
 
     // Unknown reason — log and stop loop
@@ -421,10 +461,12 @@ async function processDialogResponseWithInterruptLoop(
     let md = responseMd;
     let isRecovered = recovered;
     let interruptBudget = MAX_INTERRUPT_TURNS;
+    /** Follow-up turns may switch transform pack when `interrupt.schema` is set. */
+    let activeSchemaName = schemaName;
     const trace: ServerInterruptTraceEvent[] = [];
     let turn = 0;
 
-    while (true) {
+    for (;;) {
         trace.push({
             kind: 'llm_output',
             phase: turn === 0 ? 'primary' : 'follow_up',
@@ -432,7 +474,7 @@ async function processDialogResponseWithInterruptLoop(
         });
         logger.info('[Dialog] LLM responseMd', {md: md.substring(0, 500)});
         const pair = await runResponseTransformWithOutput(
-            promptsPath, schemaName, workingCtx, md, isRecovered
+            promptsPath, activeSchemaName, workingCtx, md, isRecovered
         );
         logger.info('[Dialog] Transform result', {execute: pair?.result?.execute});
         isRecovered = false;
@@ -458,6 +500,10 @@ async function processDialogResponseWithInterruptLoop(
             return mergeTraceIntoResult(result, trace);
         }
 
+        if (typeof interrupt.maxTurns === 'number' && Number.isFinite(interrupt.maxTurns) && interrupt.maxTurns >= 0) {
+            interruptBudget = Math.min(interruptBudget, interrupt.maxTurns);
+        }
+
         if (interruptBudget <= 0) {
             const c = result.context as Record<string, unknown>;
             return mergeTraceIntoResult(
@@ -470,6 +516,9 @@ async function processDialogResponseWithInterruptLoop(
         const {nextCtx, continueLoop} = await applyInterrupt(
             interrupt, workingCtx, promptsPath, base, model, promiseId, trace
         );
+        if (continueLoop && typeof interrupt.schema === 'string' && interrupt.schema.trim() !== '') {
+            activeSchemaName = interrupt.schema.trim();
+        }
         trace.push({
             kind: 'interrupt_handler',
             reason: interrupt.reason,
@@ -493,7 +542,7 @@ async function processDialogResponseWithInterruptLoop(
         workingCtx = nextCtx;
 
         const requestTransformResult = await runPromptsTransform(
-            promptsPath, schemaName, workingCtx, 'request', {forceServerTransforms: true}
+            promptsPath, activeSchemaName, workingCtx, 'request', {forceServerTransforms: true}
         );
         if (!requestTransformResult.success) {
             return {

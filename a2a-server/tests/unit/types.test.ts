@@ -14,7 +14,6 @@ import type {
     SearchQuery,
     SearchFilters,
     SearchResult,
-    SearchMatch,
     ApiResponse,
     PaginatedResponse,
 } from '../../src/types/index.js';

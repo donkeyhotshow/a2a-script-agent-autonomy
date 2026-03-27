@@ -9,8 +9,7 @@
  * Run with: npm run test:integration
  */
 
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { serialize, deserialize } from 'v8';
+import { describe, it, expect, beforeAll } from 'vitest';
 import fs from 'fs/promises';
 import path from 'path';
 

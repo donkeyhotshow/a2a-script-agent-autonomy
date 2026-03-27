@@ -2,7 +2,7 @@
  * Context Parser Unit Tests
  */
 
-import {describe, it, expect, vi, beforeEach} from 'vitest';
+import {describe, it, expect} from 'vitest';
 
 // Simulated context parser functions
 const contextParser = {
