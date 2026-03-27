@@ -1,11 +1,10 @@
 import winston from 'winston';
+import DailyRotateFile from 'winston-daily-rotate-file';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import {config} from '../config/index.js';
 
 const logsDir = path.join(process.cwd(), 'logs');
-const LOG_FILE_NAME = 'a2a.log';
-const logFilePath = path.join(logsDir, LOG_FILE_NAME);
 
 // Define log format
 const logFormat = winston.format.combine(
@@ -46,17 +45,33 @@ async function safeUnlink(filePath: string): Promise<boolean> {
     }
 }
 
-async function prepareLogFile(): Promise<void> {
-    await ensureLogsDir();
-    const files = await fs.readdir(logsDir, {withFileTypes: true});
+/** Boot-clean: удаляем старые логи при запуске (старше 30 дней) */
+async function bootClean(): Promise<void> {
+    try {
+        const files = await fs.readdir(logsDir, {withFileTypes: true});
+        const now = Date.now();
+        const maxAge = 30 * 24 * 60 * 60 * 1000; // 30 days
+        let cleanedCount = 0;
 
-    for (const file of files) {
-        if (file.isDirectory()) continue;
-        if (file.name === LOG_FILE_NAME) continue;
-        await safeUnlink(path.join(logsDir, file.name));
+        for (const file of files) {
+            if (file.isDirectory()) continue;
+
+            const filePath = path.join(logsDir, file.name);
+            const stats = await fs.stat(filePath);
+
+            if (now - stats.mtime.getTime() > maxAge) {
+                if (await safeUnlink(filePath)) {
+                    cleanedCount++;
+                }
+            }
+        }
+
+        if (cleanedCount > 0) {
+            console.log(`[Boot-Clean] Removed ${cleanedCount} old log files`);
+        }
+    } catch (error) {
+        console.error('[Boot-Clean] Error during cleanup:', error);
     }
-
-    await fs.writeFile(logFilePath, '', {encoding: 'utf8'});
 }
 
 // Create logger instance
@@ -72,16 +87,27 @@ export const logger = winston.createLogger({
     ],
 });
 
+// Initialize logger with daily rotation
 (async () => {
     try {
-        await prepareLogFile();
-        logger.add(new winston.transports.File({
-            filename: logFilePath,
+        await ensureLogsDir();
+        await bootClean();
+
+        // Add daily rotation file transport
+        const dailyRotateTransport = new DailyRotateFile({
+            filename: path.join(logsDir, 'a2a-%DATE%.log'),
+            datePattern: 'YYYY-MM-DD',
+            zippedArchive: true,
+            maxSize: '100m',
+            maxFiles: '30d', // Keep logs for 30 days
             format: logFormat,
             level: config.logLevel,
-        }));
+        });
+
+        logger.add(dailyRotateTransport);
+        console.log(`[Logger] Initialized with daily rotation, level: ${config.logLevel}, format: ${config.logFormat}`);
     } catch (error) {
-        console.error('Failed to initialize log file', error);
+        console.error('Failed to initialize log rotation:', error);
     }
 })();
 
@@ -117,7 +143,6 @@ export async function cleanupOldLogs(): Promise<void> {
 
         for (const file of files) {
             if (file.isDirectory()) continue;
-            if (file.name === LOG_FILE_NAME) continue;
 
             const filePath = path.join(logsDir, file.name);
             const stats = await fs.stat(filePath);

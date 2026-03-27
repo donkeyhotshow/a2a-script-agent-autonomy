@@ -153,7 +153,14 @@ export function createSessionRoutes({ cwd }) {
             }
 
             if (req.method === 'GET') {
-                const includeContext = url.searchParams.get('includeContext') === '1';
+                const includeContextRaw = url.searchParams.get('includeContext');
+                // DEBUG-ONLY: ?includeContext=1 разрешён только в dev mode
+                const isProduction = process.env.NODE_ENV === 'production';
+                if (includeContextRaw === '1' && isProduction) {
+                    res.writeHead(403).end(JSON.stringify({ error: 'includeContext is debug-only and not available in production' }));
+                    return;
+                }
+                const includeContext = includeContextRaw === '1';
                 const session = storageMode === 'project'
                     ? loadSession(getProjectPathForSessions(cwd), sessionId)
                     : loadNewSession(cwd, sessionId);

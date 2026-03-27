@@ -1,19 +1,52 @@
 /**
  * Script Runner - execute TypeScript/JavaScript from MD action files
- *
- * TODO(Task-04): unified API for execute.script; result["script"] shape – tasks/client/04-script-runner-and-execute-script-alignment.md
- * TODO(Task-04): integrate with api-client createExecuteCode; sandbox/config per Task 39
  */
 
 // NOTE: `vm2` is optional at runtime.
 // `client-api` startup should not fail just because `vm2` isn't installed.
 // We load it lazily inside `executeScript()` and fall back to Node's `vm`.
 
-export interface ScriptResult {
+/**
+ * Canonical form for execute.script
+ * Used when receiving script execution requests from the server
+ */
+export interface ExecuteScript {
+    code: string;
+    language?: 'javascript' | 'typescript';
+    sandbox?: 'vm2' | 'node';
+    /** Input parameters for the script */
+    input?: Record<string, unknown>;
+}
+
+/**
+ * Canonical form for result["script"]
+ * Used when returning script execution results to the server
+ */
+export interface ScriptResultCanonical {
+    output?: unknown;
+    exitCode: number;
+    error?: string;
+}
+
+/**
+ * Internal result type with additional metadata
+ */
+export interface ScriptResultInternal {
     success: boolean;
     data?: unknown;
     error?: string;
     duration_ms: number;
+}
+
+/**
+ * Convert internal result to canonical form for server response
+ */
+export function toCanonicalResult(internal: ScriptResultInternal): ScriptResultCanonical {
+    return {
+        output: internal.data,
+        exitCode: internal.success ? 0 : 1,
+        error: internal.error,
+    };
 }
 
 export interface ScriptContext {
@@ -27,7 +60,7 @@ export async function executeScript(
     code: string,
     input: Record<string, unknown>,
     context: ScriptContext
-): Promise<ScriptResult> {
+): Promise<ScriptResultInternal> {
     const startTime = Date.now();
     try {
         const jsCode = code
@@ -126,7 +159,7 @@ export class ScriptRunner {
         scriptId: string,
         input: Record<string, unknown>,
         context: ScriptContext
-    ): Promise<ScriptResult> {
+    ): Promise<ScriptResultInternal> {
         const code = this.scriptCache.get(scriptId);
         if (!code) {
             return {success: false, error: `Script '${scriptId}' not found`, duration_ms: 0};

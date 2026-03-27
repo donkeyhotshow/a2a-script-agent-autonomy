@@ -7,6 +7,7 @@ import {requestLogger} from './utils/logger.js';
 import {errorHandler} from './middleware/error.middleware.js';
 import routes from './routes/index.js';
 import sessionsRouter from './routes/sessions.routes.js';
+import {register} from './utils/metrics.js';
 
 const app: Express = express();
 
@@ -20,6 +21,16 @@ app.use(requestLogger);
 
 app.get('/health', (_req: Request, res: Response) => {
     res.json({status: 'ok', timestamp: new Date().toISOString(), version: process.env.npm_package_version || '1.0.0'});
+});
+
+// Prometheus metrics endpoint
+app.get('/metrics', async (_req: Request, res: Response) => {
+    try {
+        res.set('Content-Type', register.contentType);
+        res.end(await register.metrics());
+    } catch (err) {
+        res.status(500).end(String(err));
+    }
 });
 
 app.use('/api/v1', routes);

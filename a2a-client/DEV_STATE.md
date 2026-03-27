@@ -153,8 +153,7 @@ SKIP_AUTH=1
 
 ## Известные проблемы
 
-- В `packages/sdk/src/server/server/middleware/auth.ts` есть временный bypass (`allow all requests`) до полной auth-реализации.
-- В `packages/execution/src/script-runner/index.ts` открыты `TODO(Task-04)` по унификации `execute.script`/`result["script"]`.
+- В `packages/execution/src/script-runner/index.ts` унифицированы формы `execute.script` (code, language, sandbox) и `result["script"]` (output, exitCode, error) — C-08.
 
 ---
 
@@ -190,6 +189,7 @@ SKIP_AUTH=1
 - [x] Проверка ESM `import http` в `stepRoutes.js`.
 - [x] Аудит `toWebExecute` - убедиться, что клиентские данные (`rag-search`, `read-file`) не просачиваются в JSON.
 - [x] Очистка `storage/sessions` (удалить тестовые сессии).
+- [x] **UA-C-02 debug-context-guard**: добавить проверку `NODE_ENV=production` → 403 для `?includeContext=1`. Документировать как debug-only. Тесты: `tests/unit/session-routes.test.mjs`.
 
 ### Средний приоритет (Phase 4-5)
 - [x] Сборка фронтенда: `npm run build`.
@@ -199,11 +199,12 @@ SKIP_AUTH=1
 ### Simulation Contract & Docs (Complex)
 - [x] Добавить client-specific checklist для `received.json`: в `execute` допускаются только web-safe поля (`message`/`form`/attachments), tool-actions (`read-file`, `rag-search`, `write-file`, `run-script`) должны оставаться вне `execute`.
 - [x] Завести отдельный контроль для `buildWebExecute` / `toWebExecute`: golden-проверки на sanitized DTO и отсутствие регрессий по loader/async полям в web-ответе. *(2026-03-27: `tests/unit/session-projection-dto.test.mjs` + `tests/unit/simulation-workbench-contract.test.mjs`)*
-- [ ] Формализовать требования к шагам хранения в `a2a-client/storage/sessions/*`: соответствие пары `response.json` ↔ `received.json` и явные причины, если в симуляции неполный pipeline.
+- [x] **C-10**: [P1] Формализовать требования к шагам хранения в `a2a-client/storage/sessions/*`: соответствие `response.json` ↔ `received.json`, явные причины неполного pipeline. Added validation functions `validateStepStorage()` and `validateSessionStorage()` to `newSessions.js`, documented in `docs/SESSION-STORAGE.md`.
 - [ ] Добавить client-ориентированные roadmap-сценарии в симуляции: paginated RAG в UI, очередь `read-file` с корректными attachments, human-gate после N единиц работы.
 
 ### Client Runtime Debt (Code)
-- [ ] Закрыть `TODO(Task-04)` в `packages/execution/src/script-runner/index.ts`: унифицировать `execute.script` API и форму `result["script"]`.
+- [x] **C-08**: [P2] Unified Execute Script API — define canonical forms for `execute.script` (code, language, sandbox) and `result["script"]` (output, exitCode, error) in `packages/execution/src/script-runner/index.ts`.
+- [x] **C-09**: [P1] Remove Auth Bypass — implement full JWT validation in `packages/sdk/src/server/server/middleware/auth.ts`: read JWT_SECRET, validate Bearer token, allow bypass only with SKIP_AUTH=1.
 - [ ] Интегрировать script-runner с `createExecuteCode` и согласовать sandbox/config (ссылка в TODO на Task 39).
 - [ ] Убрать временный bypass в `packages/sdk/src/server/server/middleware/auth.ts` (`allow all requests`) и включить полноценную auth-проверку по окружению.
 - [x] **C-06**: [P1] Cleanup Script: Create utility for cleaning up sessions older than 14 days. (Implemented: `scripts/cleanup-sessions.js`, npm scripts: `cleanup:sessions`, `cleanup:sessions:dry-run`)
@@ -222,8 +223,8 @@ SKIP_AUTH=1
 ### Large File Decomposition (400-500+ lines)
 - [x] **LF-C-01**: Decompose `vite-plugin-a2a/routes/stepRoutes.js` (~719) into `step-routes-read.js`, `step-routes-write.js`, and shared middleware/util layer.
 - [x] **LF-C-02**: Decompose `web/js/task-flow/render.js` (~1421) into focused render modules (`render-message`, `render-form`, `render-layout`, `render-state`).
-- [ ] **LF-C-03**: Decompose `packages/sdk/src/server/server/routes/sessions.ts` (~1033) into route groups (session read, session mutation, async/promise endpoints).
-- [ ] **LF-C-04**: Decompose `packages/rag/src/searcher/rag-searcher.ts` (~836) into query planner, chunk pipeline, ranking pipeline, and output shaping.
+- [x] **LF-C-03**: Decompose `packages/sdk/src/server/server/routes/sessions.ts` (~1033) into route groups (session read, session mutation, async/promise endpoints).
+- [x] **LF-C-04**: Decompose `packages/rag/src/searcher/rag-searcher.ts` (~836) into query planner, chunk pipeline, ranking pipeline, and output shaping.
 - [x] **LF-C-05**: Decompose `web/js/error-handler.js` (~772) into classification, UI mapping, telemetry/logging, and recovery actions.
 - [x] **LF-C-06**: Decompose `vite-plugin-a2a/routes/utils/agent-rag-chain.js` (~566) into chain steps + guards + depth policy helpers.
 
@@ -247,7 +248,14 @@ SKIP_AUTH=1
 - [x] **RF-C-01 inventory**: Build inventory of session-related modules and mark overlap (same responsibility implemented in 2+ places).
 - [x] **RF-C-02 usage-evidence**: For each candidate, confirm runtime usage via imports/routes/tests before removal.
 - [x] **RF-C-03 delete-plan**: Create per-item removal plan (what to delete, what remains as single owner module).
-- [ ] **RF-C-04 compatibility-window**: Keep temporary bridges max 1 release cycle; then remove legacy aliases/wrappers.
+- [x] **RF-C-04 compatibility-window**: Keep temporary bridges max 1 release cycle; then remove legacy aliases/wrappers.
+  - Audited legacy bridges/aliases in a2a-client
+  - Added @deprecated markers with dates (2026-03-27) to:
+    - `saveNewSession` function in `vite-plugin-a2a/storage/newSessions.js`
+    - `handlePostStep` function in `vite-plugin-a2a/routes/handlers/step-handlers.js`
+    - `LEGACY_SESSION_STATUS` constant in `packages/types/src/types.js`
+  - Created removal plan: items will be removed in next release cycle
+  - Legacy bridges remain functional but marked for removal
 - [ ] **RF-C-05 done-criteria**: Cleanup is done only if behavior is unchanged and simulation fixture matrix stays green.
 
 ### Redundancy Review Decisions (2026-03-27)

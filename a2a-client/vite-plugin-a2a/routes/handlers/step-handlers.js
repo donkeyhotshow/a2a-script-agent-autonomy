@@ -52,9 +52,12 @@ export function handleStepDetail(sessionId, stepNum, cwd) {
     return { ...step, execute: buildExecuteProjection(step.execute) };
 }
 
+/**
+ * @deprecated Since 2026-03-27 - Use POST /sessions/:id/next instead. Will be removed in next release cycle.
+ */
 export async function handlePostStep(sessionId, body, cwd) {
-    void sessionId;
-    void body;
-    void cwd;
-    throw new Error('POST /sessions/:id/steps is deprecated. Use POST /sessions/:id/next.');
-}
+     void sessionId;
+     void body;
+     void cwd;
+     throw new Error('POST /sessions/:id/steps is deprecated. Use POST /sessions/:id/next.');
+ }

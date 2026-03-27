@@ -212,15 +212,19 @@ export function loadNewSession(cwd, sessionId) {
   return session;
 }
 
+/**
+ * @deprecated Since 2026-03-27 - Use step-based storage instead. Will be removed in next release cycle.
+ * @see docs/new-request-flow/PROTOCOL.md#session-storage
+ */
 export function saveNewSession(cwd, session) {
-  // DEPRECATED: session.json is no longer written
-  // All session state is now derived from step files
-  // This function is kept for backward compatibility but does nothing
-  // Session is reconstructed from: server-response.json + messages.json files
-  const dir = getNewSessionDir(cwd, session.id);
-  ensureDir(dir);
-  // NOOP: We no longer write session.json
-  // The session is reconstructed from the highest step with server-response.json
+   // DEPRECATED: session.json is no longer written
+   // All session state is now derived from step files
+   // This function is kept for backward compatibility but does nothing
+   // Session is reconstructed from: server-response.json + messages.json files
+   const dir = getNewSessionDir(cwd, session.id);
+   ensureDir(dir);
+   // NOOP: We no longer write session.json
+   // The session is reconstructed from the highest step with server-response.json
 }
 
 export function saveNewStep(cwd, sessionId, stepNum, stepData) {
@@ -401,4 +405,82 @@ export function loadServerResponse(cwd, sessionId, stepNum) {
 
 export function saveServerResponse(cwd, sessionId, stepNum, responseData) {
   return saveNewStep(cwd, sessionId, stepNum, responseData);
+}
+
+/**
+ * Validate step storage integrity.
+ * @param {string} cwd - Working directory
+ * @param {string} sessionId - Session ID
+ * @param {number} stepNum - Step number
+ * @returns {Object} Validation result with isValid and errors array
+ */
+export function validateStepStorage(cwd, sessionId, stepNum) {
+  const stepDir = getNewStepDir(cwd, sessionId, stepNum);
+  const errors = [];
+  
+  // Check for mandatory files (at least one must exist)
+  const hasServerResponse = fs.existsSync(path.join(stepDir, 'server-response.json'));
+  const hasServerPromise = fs.existsSync(path.join(stepDir, 'server-promise.json'));
+  const hasClientResult = fs.existsSync(path.join(stepDir, 'client-result.json'));
+  const hasRequestToServer = fs.existsSync(path.join(stepDir, 'request-to-server.json'));
+  const hasMessages = fs.existsSync(path.join(stepDir, 'messages.json'));
+  
+  // Rule 1: Finalized step must have server-response.json + messages.json
+  if (hasServerResponse && !hasMessages) {
+    errors.push('FINALIZED_MISSING_MESSAGES: server-response.json exists but messages.json is missing');
+  }
+  
+  // Rule 2: Async completed step must NOT have stale server-promise.json
+  if (hasServerResponse && hasServerPromise) {
+    errors.push('STALE_PROMISE: server-response.json and server-promise.json should not coexist');
+  }
+  
+  // Rule 3: If only server-promise.json exists (no client-result, no request-to-server), it's valid in-flight
+  if (hasServerPromise && !hasClientResult && !hasRequestToServer && !hasServerResponse) {
+    // This is valid - step is waiting for async, client result was in previous step
+  }
+  
+  // Rule 4: If has client-result but no request-to-server, it's incomplete
+  if (hasClientResult && !hasRequestToServer) {
+    errors.push('INCOMPLETE_STEP: client-result.json exists but request-to-server.json is missing');
+  }
+  
+  // Rule 5: If has request-to-server but no client-result, may be server-initiated (valid for some flows)
+  // Allow this as server-initiated steps don't require client input
+  
+  return {
+    isValid: errors.length === 0,
+    errors,
+    files: {
+      serverResponse: hasServerResponse,
+      serverPromise: hasServerPromise,
+      clientResult: hasClientResult,
+      requestToServer: hasRequestToServer,
+      messages: hasMessages
+    }
+  };
+}
+
+/**
+ * Validate entire session storage integrity.
+ * @param {string} cwd - Working directory
+ * @param {string} sessionId - Session ID
+ * @returns {Object} Validation result with step results
+ */
+export function validateSessionStorage(cwd, sessionId) {
+  const steps = listNewSteps(cwd, sessionId);
+  const results = [];
+  
+  for (const stepNum of steps) {
+    const result = validateStepStorage(cwd, sessionId, stepNum);
+    results.push({ step: stepNum, ...result });
+  }
+  
+  const allValid = results.every(r => r.isValid);
+  return {
+    sessionId,
+    isValid: allValid,
+    stepCount: steps.length,
+    steps: results
+  };
 }

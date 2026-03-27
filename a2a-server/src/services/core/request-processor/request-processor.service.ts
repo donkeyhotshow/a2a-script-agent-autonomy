@@ -11,6 +11,7 @@
 
 import {requestService, isRetryableError} from '../request/request.service.js';
 import {logger} from '../../../utils/logger.js';
+import {requestProcessorLatencyHistogram} from '../../../utils/metrics.js';
 import type {RequestContext, ProcessResult, ProcessOutcome, Task, TaskAnalysis} from './request-processor.interfaces.js';
 import {
     actionRequestProcessor,
@@ -20,7 +21,7 @@ import {
     processorRegistry,
     recoverDialogFromLlmPromise,
 } from './index.js';
-import type {RequestType} from './request-processor.interfaces.js';
+import type {RequestType} from './base-processor.js';
 import { LLM_PIPELINE_ACTIONS, type LlmPipelineAction } from '../../../config/router-static.js';
 
 export { LLM_PIPELINE_ACTIONS, type LlmPipelineAction };
@@ -244,18 +245,32 @@ export async function processOneRequest(): Promise<ProcessResult | null> {
  * Timer tick for background processing
  */
 async function tick(): Promise<void> {
-    const result = await processOneRequest();
-    if (result?.outcome === 'failed') {
-        logger.warn('[RequestProcessor] Request failed, continuing...');
-    }
-    // When idle, revive retryable failed requests (e.g. after ai-integration starts)
-    if (!result) {
-        await requestService.scheduleRetryForFailed();
-        await requestService.reviveFailedAfterCooldown();
-        const cleanupStats = await requestService.cleanupStorage();
-        if (cleanupStats.removedByAge > 0 || cleanupStats.removedByLimit > 0) {
-            logger.info('[RequestProcessor] Cleaned up request storage', cleanupStats);
+    const startTime = Date.now();
+    try {
+        const result = await processOneRequest();
+        
+        // Record latency metric
+        const latency = Date.now() - startTime;
+        const outcome = result?.outcome ?? (result === null ? 'no_request' : 'unknown');
+        requestProcessorLatencyHistogram.observe({ outcome }, latency);
+        
+        if (result?.outcome === 'failed') {
+            logger.warn('[RequestProcessor] Request failed, continuing...');
         }
+        // When idle, revive retryable failed requests (e.g. after ai-integration starts)
+        if (!result) {
+            await requestService.scheduleRetryForFailed();
+            await requestService.reviveFailedAfterCooldown();
+            const cleanupStats = await requestService.cleanupStorage();
+            if (cleanupStats.removedByAge > 0 || cleanupStats.removedByLimit > 0) {
+                logger.info('[RequestProcessor] Cleaned up request storage', cleanupStats);
+            }
+        }
+    } catch (err) {
+        // Record error latency
+        const latency = Date.now() - startTime;
+        requestProcessorLatencyHistogram.observe({ outcome: 'error' }, latency);
+        logger.error('[RequestProcessor] Tick error', {error: String(err)});
     }
 }
 

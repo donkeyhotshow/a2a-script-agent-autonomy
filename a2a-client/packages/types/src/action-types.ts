@@ -86,9 +86,17 @@ export interface FormAction {
 }
 
 export interface ScriptAction {
-  input?: Record<string, unknown>;
-  output?: string;
+  /** Code to execute */
   code: string;
+  /** Programming language */
+  language?: 'javascript' | 'typescript';
+  /** Sandbox type */
+  sandbox?: 'vm2' | 'node';
+  /** Input parameters for the script */
+  input?: Record<string, unknown>;
+  /** Output (optional, for streaming) */
+  output?: string;
+  /** Timeout in milliseconds */
   timeout?: number;
 }
 
@@ -232,7 +240,11 @@ export type ExecuteActionType = keyof ExecutePayload;
 // ============================================
 
 export interface ScriptResult {
+  /** Script output */
   output?: unknown;
+  /** Exit code (0 for success) */
+  exitCode: number;
+  /** Error message if failed */
   error?: string;
 }
 

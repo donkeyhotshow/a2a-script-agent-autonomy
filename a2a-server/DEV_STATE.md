@@ -47,9 +47,32 @@
 |-----------|------|
 | `request-processor.service` | Выбор процессора по action/task |
 | `dialog-request-processor` | Dialog flow с LLM |
+| `gray-room-orchestrator` | Server-side LLM chaining (gray room / interrupt loop) |
 | `action-request-processor` | Tool/action flow |
 | `form-request-processor` | Form/choice handling |
 | `simulation-request-processor` | Simulation/golden flow |
+
+---
+
+## Gray Room (Concept: GR-S-01)
+
+**Gray room** — это overlay на interrupt loop в `dialog-request-processor`:
+- Product name: "gray room" (серверные LLM подзапросы)
+- Implementation: `GrayRoomOrchestrator` в [`gray-room-orchestrator.ts`](src/services/core/request-processor/gray-room-orchestrator.ts)
+- Trigger: `detectGrayRoomTrigger()` → explicit flag → env → policy
+- Loop: `runLoop()` → interrupt budget → transforms → LLM cycle
+
+### Data Flow Boundaries
+
+- **Only** modifies `context.workbench` and `context.history`
+- Does **not** modify `context.execution` (trace only)
+- Final `execute` follows **Action-Key Shape**
+- No client round-trips; server-only
+
+### Documentation
+
+- [`docs/GRAY-ROOM.md`](docs/GRAY-ROOM.md) — full specification with Concept Boundary section
+- [`docs/adr/ADR-0029-server-interrupt-loop.md`](docs/adr/ADR-0029-server-interrupt-loop.md) — decision record
 
 ---
 
@@ -146,6 +169,30 @@ curl -s -X POST http://localhost:3000/api/v1/invoke \
 
 ---
 
+## Архитектура скриптов (LF-S-04)
+
+**sim-lint разделён на модули:**
+- `scripts/registry.ts` - типы, константы, lint правила
+- `scripts/runners.ts` - запуск проверок файлов и симуляций
+- `scripts/reporters.ts` - генерация отчётов, CLI интерфейс
+- `scripts/sim-lint.ts` - точка входа (импортирует registry, runners, reporters)
+
+**Верификация:** `npm run sim:lint -- --help`
+
+---
+
+## Архитектура скриптов (LF-S-03)
+
+**sim-validate разделён на модули:**
+- `scripts/scanner.ts` - сканирование симуляций, CLI-интерфейс
+- `scripts/validators.ts` - валидация JSON по схемам, нормализация
+- `scripts/reporters.ts` - генерация отчётов, main()
+- `scripts/sim-validate.ts` - точка входа (импортирует reporters)
+
+**Верификация:** `npm run sim:validate -- --help`
+
+---
+
 ## Ссылки
 
 - [DEV_STATE.md](../DEV_STATE.md) - Root state файл (кросс-модульные зависимости)
@@ -174,9 +221,9 @@ curl -s -X POST http://localhost:3000/api/v1/invoke \
 - [x] **S-03 server-requests-storage**: define default/override storage path behavior (`REQUESTS_STORAGE_PATH`) and retention/cleanup policy.
 - [x] **S-04 server-llm-hub-polling**: standardize `LLM_POLL_*`/`POLL_*` defaults and timeout budget for daemon processing. Defaults documented in `.env.example`, implementation in `src/daemon/llm-hub-poll.ts` with 1h default / 24h cap aligned to ai-integration `PROMISE_TTL_SECONDS`.
 - [ ] **S-06 server-error-detail-level**: finalize production error redaction policy (`NODE_ENV`) and keep stack traces in dev only.
-- [ ] **S-07 server-background-processor**: set and verify `REQUEST_PROCESSOR_INTERVAL_MS` target based on queue latency SLO.
-- [ ] **S-08 server-logging**: unify `LOG_LEVEL`/`LOG_FORMAT` and Winston rotation/boot-clean strategy; add acceptance checks.
-- [ ] **S-09 agent-rag-chain-limits**: set safe defaults for `A2A_AGENT_RAG_CHAIN_MAX` + project path envs and verify fallback behavior.
+- [x] **S-07 server-background-processor**: add `REQUEST_PROCESSOR_INTERVAL_MS` config (default 5000ms), env variable support, and latency metrics via `/metrics` endpoint.
+- [x] **S-08 server-logging**: unify `LOG_LEVEL`/`LOG_FORMAT` and Winston rotation/boot-clean strategy; add acceptance checks.
+- [x] **S-09 agent-rag-chain-limits**: set safe defaults for `A2A_AGENT_RAG_CHAIN_MAX` + project path envs and verify fallback behavior.
 
 ### Высокий приоритет (Phase 2-3)
 - [x] Аудит всех процессоров на `Action-Key Shape`.
@@ -194,10 +241,10 @@ curl -s -X POST http://localhost:3000/api/v1/invoke \
 - [ ] Разделить в `sim-validate` два режима отчётности: structural validity и contract completeness (чтобы optional-missing не терялся в общем `valid`).
 
 ### Large File Decomposition (400-500+ lines)
-- [ ] **LF-S-01**: Decompose `src/transform/operations.ts` (~897) into grouped operation modules + shared JsonPath/value helpers.
-- [ ] **LF-S-02**: Decompose `src/services/core/request-processor/dialog-request-processor.ts` (~781) into request normalization, LLM step orchestration, and finalize response path.
-- [ ] **LF-S-03**: Decompose `scripts/sim-validate.ts` (~810) into scanner, validators, and report formatters.
-- [ ] **LF-S-04**: Decompose `scripts/sim-lint.ts` (~718) into lint rule registry + rule runners + reporters.
+- [x] **LF-S-01**: Decompose `src/transform/operations.ts` (~897) into `operations/json-path.ts`, `operations/value-helpers.ts`, `operations/transform-groups.ts` + index re-export.
+- [x] **LF-S-02**: Decompose `src/services/core/request-processor/dialog-request-processor.ts` (~781) into normalization.ts, llm-orchestration.ts, response-path.ts + index re-export.
+- [x] **LF-S-03**: Decompose `scripts/sim-validate.ts` (~810) into scanner, validators, and report formatters.
+- [x] **LF-S-04**: Decompose `scripts/sim-lint.ts` (~718) into lint rule registry + rule runners + reporters.
 - [ ] **LF-S-05**: Decompose `src/transform/pipeline.ts` (~481) into pipeline stages, error mapping, and pipeline context utilities.
 - [ ] **LF-S-06**: Decompose `src/actions/handlers/file-operations.ts` (~432) into read/list/write operation handlers with strict security wrappers.
 
@@ -212,6 +259,18 @@ curl -s -X POST http://localhost:3000/api/v1/invoke \
 - **No dead compatibility adapters found in runtime paths:** sampled candidates marked `legacy`/`deprecated` are docs/tests metadata or still referenced by active flows.
 - **Removal decision:** no runtime server file deletion in this pass; next removal candidate requires explicit proof of unreachable branch plus `sim:lint`/`sim:validate` gate.
 
+### Completed Tasks (2026-03-27)
+- [x] **LF-S-01**: Decomposed `src/transform/operations.ts` (~897 lines) into:
+  - `operations/json-path.ts` - JSONPath utilities (query, set, resolveTemplates, etc.)
+  - `operations/value-helpers.ts` - Value helpers (shouldSkipDuplicateUserHistoryAppend, truncateToMaxChars)
+  - `operations/transform-groups.ts` - Transform groups (applyPickContext, applyDrop, applyPickFiles, etc.)
+  - `operations.ts` - Re-exports all from submodules + core operations (copy, set, append-to-array, parse-json-from-md, render-markdown, truncate-section, switch)
+- [x] **LF-S-02**: Decomposed `src/services/core/request-processor/dialog-request-processor.ts` (~201 lines) into:
+  - `normalization.ts` - нормализация входных данных (resolveTransformSchema, normalizeContext, extractSchemaName)
+  - `llm-orchestration.ts` - оркестрация LLM вызовов (executeLlmCall, runRequestTransforms, initLlmPromise, recoverLlmPromise)
+  - `response-path.ts` - обработка путей ответа (recoverDialogFromLlmPromise, canRecoverFromLlmPromise, getLlmPromiseId)
+  - `dialog-request-processor.ts` - Re-exports + основной класс
+
 ### Unusual Findings Alignment (Server/Contracts)
 - [ ] **UA-S-01 interrupt-trace-contract**: Verify and document one canonical contract for interrupt trace placement (`context.workbench.slots.interruptTrace`) across server transforms and client projection.
 - [ ] **UA-S-02 no-llm-vs-llm-step-rules**: Tighten and centralize rules for required transform files on no-LLM vs LLM steps to reduce interpretation drift in simulations.
@@ -221,7 +280,13 @@ curl -s -X POST http://localhost:3000/api/v1/invoke \
 - [ ] **GR-S-12 orchestrator-unification**: Выделить общий orchestrator (например `gray-room-orchestrator.ts`) и подключить его к dialog + agent flows, чтобы модель подзапросов была одинаковой и не зависела от одного процессора.
 - [x] **S-10**: [P2] Request Cleanup Script: utility for cleaning up `storage/requests` older than 14 days.
 - [x] **S-11**: [P1] Realize unified Gray Room Orchestrator by extracting logic from `dialog-request-processor.ts`.
-- [ ] **GR-S-02 trigger-contract**: Описать, откуда включается gray room: (a) явный флаг в `context.execution` (например `flowControlHint: "gray-room"` или `context.execution.grayRoomRequested`), (b) политика для типов запросов (agent, task-decomposition), (c) env-переключатели `A2A_GRAY_ROOM_ENABLED`, `A2A_GRAY_ROOM_MAX_TURNS`; по умолчанию выключено. Не ломать существующее поведение `interrupt` без флага (backwards compatible path).
+- [x] **GR-S-02 trigger-contract**: Определены механизмы запуска gray room:
+  - (a) Explicit flag: `context.execution.grayRoomRequested = true` или `flowControlHint = "gray-room"`
+  - (b) Env toggle: `A2A_GRAY_ROOM_ENABLED=1` (по умолчанию off)
+  - (c) Policy для типов запросов: `dialog`, `agent`, `task-decomposition`
+  - Добавлены переменные: `A2A_GRAY_ROOM_MAX_TURNS` (default 10, max 100)
+  - Реализованы функции: `shouldUseGrayRoom()`, `detectGrayRoomTrigger()`, `isGrayRoomEnabled()`
+  - По умолчанию gray room выключен (backwards compatible)
 - [ ] **GR-S-03 schema-entry-points**: Определить, какими схемами и файлами описываются подзапросы: расширить `docs/GRAY-ROOM.md` разделом "server orchestration" и описать, как `interrupt.schema` переходит в `activeSchemaName` внутри существующего `ACTION_TO_SCHEMA`/`LLM_PIPELINE_ACTIONS`; отдельные `prompts/gray-room-*.md` и `prompts/transforms/gray-room-*.json` делать только как опциональные специализированные схемы, чтобы не плодить новый параллельный пайплайн.
 - [ ] **GR-S-04 orchestration-loop**: Зафиксировать цикл gray room: точка входа (вероятно `dialog-request-processor` / agent-процессор), ограничение по числу подшагов/времени, правила прерывания, и как финальный `workbench`/`history` мержится обратно в основной response до отправки клиенту. Уточнить поведение в ошибочных путях: что происходит при фейле sidecar LLM / RAG / read-file (fallback, trace, error mapping).
 - [ ] **GR-S-05 isolation-and-scheduling**: Описать ограничения: только разрешённые tools (`read-file`, `rag-search`, `grep-search`, и т.п.), уважение sandbox/таймаутов, никакой записи в client storage; первая версия — строго inline в рамках одного `/api/v1/invoke` без фонового планировщика.

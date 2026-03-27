@@ -11,6 +11,249 @@ import {validateDialogExecuteShape, shouldEnforceTransformStrictMode} from './va
 const DEFAULT_AI_HUB = 'http://localhost:11434';
 const DEFAULT_MODEL = 'qwen3:8b';
 
+/** Default value for A2A_GRAY_ROOM_MAX_TURNS */
+const DEFAULT_GRAY_ROOM_MAX_TURNS = 10;
+
+/** Default value for A2A_GRAY_ROOM_ENABLED (default: off) */
+const DEFAULT_GRAY_ROOM_ENABLED = false;
+
+/**
+ * Gray Room Trigger Configuration
+ * 
+ * Controls when gray room loop should be activated.
+ * Priority: (1) explicit flag in context.execution.grayRoomRequested, (2) env toggle, (3) policy for request types
+ */
+export interface GrayRoomTriggerConfig {
+    /** Enable/disable gray room globally (env override) */
+    enabled?: boolean;
+    /** Maximum number of gray room turns (env override) */
+    maxTurns?: number;
+    /** Enable gray room only for specific actions (policy) */
+    allowedActions?: string[];
+}
+
+/**
+ * Trigger sources for gray room activation
+ */
+export type GrayRoomTriggerSource = 
+    | 'env_enabled'           // Global env toggle A2A_GRAY_ROOM_ENABLED=1
+    | 'explicit_flag'        // context.execution.grayRoomRequested = true
+    | 'policy_dialog'        // Policy: action = dialog
+    | 'policy_agent'         // Policy: action = agent
+    | 'policy_task_decomposition' // Policy: action = task-decomposition
+    | 'disabled';            // Gray room disabled
+
+/**
+ * Gray Room trigger detection result
+ */
+export interface GrayRoomTriggerResult {
+    /** Whether gray room should be triggered */
+    shouldTrigger: boolean;
+    /** Source that triggered gray room */
+    source: GrayRoomTriggerSource;
+    /** Max turns allowed (null if disabled) */
+    maxTurns: number | null;
+}
+
+/**
+ * Check if gray room should be triggered based on request context
+ * 
+ * Priority of evaluation:
+ * 1. Explicit flag: context.execution.grayRoomRequested
+ * 2. Environment toggle: A2A_GRAY_ROOM_ENABLED
+ * 3. Policy for request types: dialog, agent, task-decomposition
+ * 
+ * @param ctx - Request context
+ * @returns GrayRoomTriggerResult with decision and source
+ */
+export function detectGrayRoomTrigger(ctx: Record<string, unknown>): GrayRoomTriggerResult {
+    // Check explicit flag first (highest priority)
+    const execution = (ctx['context'] as Record<string, unknown> | undefined)?.['execution'] as Record<string, unknown> | undefined;
+    const explicitFlag = execution?.['grayRoomRequested'];
+    
+    if (explicitFlag === true) {
+        const envMaxTurns = getGrayRoomMaxTurns();
+        return {
+            shouldTrigger: true,
+            source: 'explicit_flag',
+            maxTurns: envMaxTurns,
+        };
+    }
+    
+    // Check environment toggle
+    const envEnabled = getGrayRoomEnabled();
+    if (envEnabled) {
+        const envMaxTurns = getGrayRoomMaxTurns();
+        return {
+            shouldTrigger: true,
+            source: 'env_enabled',
+            maxTurns: envMaxTurns,
+        };
+    }
+    
+    // Check policy for request types
+    const action = execution?.['action'] as string | undefined;
+    
+    if (action === 'dialog') {
+        const envMaxTurns = getGrayRoomMaxTurns();
+        return {
+            shouldTrigger: true,
+            source: 'policy_dialog',
+            maxTurns: envMaxTurns,
+        };
+    }
+    
+    if (action === 'agent' || action === 'coder' || action === 'auto-ai' || action === 'analyze') {
+        const envMaxTurns = getGrayRoomMaxTurns();
+        return {
+            shouldTrigger: true,
+            source: 'policy_agent',
+            maxTurns: envMaxTurns,
+        };
+    }
+    
+    if (action === 'task-decomposition' || action === 'task') {
+        const envMaxTurns = getGrayRoomMaxTurns();
+        return {
+            shouldTrigger: true,
+            source: 'policy_task_decomposition',
+            maxTurns: envMaxTurns,
+        };
+    }
+    
+    // Default: disabled
+    return {
+        shouldTrigger: false,
+        source: 'disabled',
+        maxTurns: null,
+    };
+}
+
+/**
+ * Get A2A_GRAY_ROOM_ENABLED from environment (default: off)
+ */
+function getGrayRoomEnabled(): boolean {
+    const envValue = process.env.A2A_GRAY_ROOM_ENABLED;
+    if (envValue === undefined || envValue === null) {
+        return DEFAULT_GRAY_ROOM_ENABLED;
+    }
+    // Accept: '1', 'true', 'yes' as enabled
+    const normalized = envValue.toLowerCase().trim();
+    return normalized === '1' || normalized === 'true' || normalized === 'yes';
+}
+
+/**
+ * Get A2A_GRAY_ROOM_MAX_TURNS from environment (default: 10)
+ */
+function getGrayRoomMaxTurns(): number {
+    const envValue = process.env.A2A_GRAY_ROOM_MAX_TURNS;
+    if (envValue === undefined || envValue === null) {
+        return DEFAULT_GRAY_ROOM_MAX_TURNS;
+    }
+    const parsed = parseInt(envValue, 10);
+    if (Number.isNaN(parsed) || parsed < 1) {
+        return DEFAULT_GRAY_ROOM_MAX_TURNS;
+    }
+    return Math.min(parsed, 100); // Cap at 100 turns
+}
+
+/**
+ * Check if gray room should run based on context and environment
+ * 
+ * This is the main entry point for determining whether to run gray room loop.
+ * Used by DialogRequestProcessor and other processors to decide whether
+ * to invoke gray room after LLM response.
+ * 
+ * Priority of evaluation:
+ * 1. Explicit flag: context.execution.grayRoomRequested = true
+ * 2. flowControlHint: "gray-room" in invoke payload
+ * 3. Environment toggle: A2A_GRAY_ROOM_ENABLED
+ * 4. Policy for request types: dialog, agent, task-decomposition
+ * 
+ * @param ctx - Request context
+ * @param flowControlHint - Optional flowControlHint from invoke payload
+ * @returns GrayRoomTriggerResult with decision and source
+ */
+export function shouldUseGrayRoom(ctx: Record<string, unknown>, flowControlHint?: string): GrayRoomTriggerResult {
+    // Check explicit flag first (highest priority)
+    const execution = (ctx['context'] as Record<string, unknown> | undefined)?.['execution'] as Record<string, unknown> | undefined;
+    const explicitFlag = execution?.['grayRoomRequested'];
+    
+    if (explicitFlag === true) {
+        return {
+            shouldTrigger: true,
+            source: 'explicit_flag',
+            maxTurns: getGrayRoomMaxTurns(),
+        };
+    }
+    
+    // Check flowControlHint (second priority)
+    if (flowControlHint === 'gray-room' || flowControlHint === 'gray_room') {
+        return {
+            shouldTrigger: true,
+            source: 'explicit_flag',
+            maxTurns: getGrayRoomMaxTurns(),
+        };
+    }
+    
+    // Check environment toggle (third priority)
+    if (getGrayRoomEnabled()) {
+        return {
+            shouldTrigger: true,
+            source: 'env_enabled',
+            maxTurns: getGrayRoomMaxTurns(),
+        };
+    }
+    
+    // Check policy for request types (lowest priority)
+    const action = execution?.['action'] as string | undefined;
+    
+    if (action === 'dialog') {
+        return {
+            shouldTrigger: true,
+            source: 'policy_dialog',
+            maxTurns: getGrayRoomMaxTurns(),
+        };
+    }
+    
+    if (action === 'agent' || action === 'coder' || action === 'auto-ai' || action === 'analyze') {
+        return {
+            shouldTrigger: true,
+            source: 'policy_agent',
+            maxTurns: getGrayRoomMaxTurns(),
+        };
+    }
+    
+    if (action === 'task-decomposition' || action === 'task') {
+        return {
+            shouldTrigger: true,
+            source: 'policy_task_decomposition',
+            maxTurns: getGrayRoomMaxTurns(),
+        };
+    }
+    
+    // Default: disabled
+    return {
+        shouldTrigger: false,
+        source: 'disabled',
+        maxTurns: null,
+    };
+}
+
+/**
+ * Get current gray room enabled state (for diagnostics)
+ */
+export function isGrayRoomEnabled(): boolean {
+    return getGrayRoomEnabled();
+}
+
+/**
+ * Get current gray room max turns (for diagnostics)
+ */
+export function getConfiguredMaxTurns(): number {
+    return getGrayRoomMaxTurns();
+}
+
 /** Single-key `execute` payloads that must pass through to the client (tool rounds). */
 export const DIALOG_TOOL_EXECUTE_KEYS = [
     'rag-search',

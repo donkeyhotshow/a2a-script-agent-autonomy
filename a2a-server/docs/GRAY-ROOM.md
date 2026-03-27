@@ -26,6 +26,41 @@ Client → Server
               └── continueLoop → request transform → LLM #2 → response transform → …
 ```
 
+## Concept Boundary
+
+**Gray room** is an **overlay** on the existing **interrupt loop** mechanism, not a separate system. It reuses the same `interrupt` directive handling, transform pipeline, and budget enforcement (`A2A_MAX_INTERRUPT_TURNS` / `A2A_GRAY_ROOM_MAX_TURNS`).
+
+### Overlay characteristics
+
+| Aspect | Implementation |
+|--------|----------------|
+| **Core mechanism** | Same `InterruptDirective` handling via `applyInterrupt` in [`gray-room-orchestrator.ts`](../src/services/core/request-processor/gray-room-orchestrator.ts) |
+| **Trigger detection** | `detectGrayRoomTrigger()` — checks explicit flag → env toggle → policy |
+| **Loop execution** | `GrayRoomOrchestrator.runLoop()` — same interrupt budget, transform, LLM cycle |
+| **Result merging** | `mergeTraceIntoResult()` — adds `interruptTrace` to final result |
+
+### Data flow boundaries
+
+- **Only** modifies `context.workbench` and `context.history` during execution.
+- Does **not** modify `context.execution` directly except for trace events.
+- Final `execute` must follow **Action-Key Shape** (single action-type key per object).
+- Intermediate results stay on server; only final `ProcessResult` reaches client.
+
+### Limitations (Concept-level)
+
+| Limitation | Description |
+|------------|-------------|
+| **No client steps** | Gray room runs entirely server-side; no new client round-trips |
+| **Server-only** | Cannot trigger client-side actions; only LLM + transforms |
+| **Action-Key Shape** | All `execute`/`result` payloads must use single action-type key |
+| **Overlay on interrupt** | Requires existing interrupt loop; cannot run standalone |
+
+### Terminology alignment
+
+- "Gray room" = product/feature name for server-side LLM chaining
+- "Interrupt loop" = internal code name (`processDialogResponseWithInterruptLoop`, `runLoop`)
+- Both refer to the same mechanism; "overlay" emphasizes product-level UX layer
+
 ## Why use it
 
 - **History compression** — Summarize long `history` with an LLM instead of hard truncation.

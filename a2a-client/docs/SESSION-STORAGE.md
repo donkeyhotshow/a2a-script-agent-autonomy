@@ -218,7 +218,70 @@ storage/sessions/{sid}/
 
 ---
 
-## Validation Targets
+## Response ↔ Received Validation
+
+### Invariant
+
+Every step that has `server-response.json` MUST have a corresponding `received.json` (or equivalent client-side artifact) that represents the sanitized web DTO after server transforms. The relationship is:
+
+```
+server-response.json (raw server execute/context/result)
+    ↓ client transforms (toWebExecute)
+received.json (web-safe execute without tool-actions)
+```
+
+### Validation Rules
+
+| Rule | Description |
+|------|-------------|
+| **Complete Pipeline** | For every `server-response.json` there MUST be a `received.json` in simulations or equivalent client state |
+| **Sanitized Execute** | `received.json.execute` must NOT contain tool-actions (`rag-search`, `read-file`, `write-file`, `run-script`) - these stay server-side |
+| **Web-Safe Fields** | `execute` in `received.json` may only have: `message`, `form`, `attachments` |
+
+### Incomplete Pipeline Reasons
+
+When a simulation has `server-response.json` but NO `received.json`, the reason MUST be documented in the simulation folder `README.md` or a `INCOMPLETE.md` file:
+
+| Reason | Description |
+|--------|-------------|
+| `agent-tool-loop` | Agent mode continues looping; `received.json` would be intermediate, not final |
+| `async-pending` | Step has `server-promise.json` but not yet completed |
+| `gray-room-chain` | Server-side interrupt chain (Gray Room) that client never receives |
+| `deprecated-format` | Legacy simulation using old schema (not migrated) |
+| `test-only` | Unit test fixture, not a full end-to-end simulation |
+| `in-progress` | Active development, pipeline not yet complete |
+
+### Examples
+
+```markdown
+# simulations/dialog/example/README.md
+
+## Pipeline Status
+
+- ✅ `request.json` → `server-transforms-request.json` → `request.md`
+- ✅ LLM processed → `response.md`
+- ✅ `response.json` → `server-transforms-response.json`
+- ✅ Client sanitized → `received.json`
+
+**Complete pipeline.**
+```
+
+```markdown
+# simulations/agent-tool-loop/example/README.md
+
+## Pipeline Status
+
+- ✅ Full pipeline up to `server-response.json`
+- ❌ No `received.json` — Agent tool loop continues
+
+## Incomplete Reason
+
+`agent-tool-loop`: Agent mode has multiple tool executions. `received.json` would be intermediate state, not final. The loop continues until tool-action count reaches limit or user provides final input.
+```
+
+---
+
+## Validation Targets (Extended)
 
 | Rule | Validation |
 |------|------------|
@@ -227,6 +290,8 @@ storage/sessions/{sid}/
 | Reconstructed session matches latest finalized step | Highest step with `server-response.json` = current step |
 | System messages preserved | `role: 'system'` in timeline from metadata detection |
 | Async workflow integrity | `server-promise.json` → completion deletes file → writes response |
+| **Response ↔ Received** | Every `server-response.json` has `received.json` (or documented reason) |
+| **Sanitized Execute** | `received.json.execute` contains NO tool-actions |
 
 ---
 

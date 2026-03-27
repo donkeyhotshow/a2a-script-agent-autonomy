@@ -32,6 +32,7 @@ export interface ApiServerConfig {
     enableLogging: boolean;
     enableCORS: boolean;
     skipAuth: boolean;
+    jwtSecret: string;
 
     clientApiPort: number;
     clientApiHost: string;
@@ -79,6 +80,7 @@ export const config: ApiServerConfig = {
     enableLogging: toBoolean(process.env.ENABLE_LOGGING, true),
     enableCORS: toBoolean(process.env.ENABLE_CORS, true),
     skipAuth: toBoolean(process.env.SKIP_AUTH, false),
+    jwtSecret: process.env.JWT_SECRET || '',
 
     clientApiPort: PORT,
     clientApiHost: process.env.CLIENT_API_HOST || HOST,
