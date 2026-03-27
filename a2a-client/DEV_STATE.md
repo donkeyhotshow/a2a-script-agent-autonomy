@@ -11,6 +11,12 @@
 - Кросс-модульные решения/зависимости ведутся только в root: [`../DEV_STATE.md`](../DEV_STATE.md).
 - Не дублировать здесь server/ai-integration backlog; хранить только ссылки на них при необходимости.
 
+## AI-Integration Work Lock
+
+- Статус: **BLOCKED**.
+- Работы по `ai-integration` не выполняются в client-контуре.
+- Разрешение на возобновление `ai-integration` задач: только после закрытия активных задач этого файла и [`../a2a-server/DEV_STATE.md`](../a2a-server/DEV_STATE.md).
+
 ---
 
 ## Архитектура
@@ -238,6 +244,13 @@ SKIP_AUTH=1
 - [ ] **UA-C-03 tri-role-render-tests**: Add fixture tests proving timeline/render/storage support for `user`, `assistant`, and `system` (Red Room auto-response) roles without loss/reordering.
 - [ ] **UA-C-04 web-protocol-doc-cleanup**: Normalize `WEB_UI_PROTOCOL.md` wording (remove ambiguous/partial lines, keep one-term glossary for Red Room/Gray Room/Agent loop).
 
+### Code Cleanup Discovery Plan (Client: where/how)
+- [ ] **CCP-C-01 where-to-scan**: Primary folders: `web/js/`, `vite-plugin-a2a/routes/`, `vite-plugin-a2a/routes/utils/`, `packages/sdk/src/server/server/routes/`.
+- [ ] **CCP-C-02 how-to-find**: Look for duplicate logic by searching repeated responsibility keywords (`projection`, `dto`, `poll`, `session`, `execute`) across those folders.
+- [ ] **CCP-C-03 bridge-detection**: Identify temporary compatibility bridges/re-exports and mark removal owner + deadline.
+- [ ] **CCP-C-04 dead-path-check**: For each candidate, verify import/use coverage in tests before deletion.
+- [ ] **CCP-C-05 safe-remove-gate**: Removal only after `npm test`, `sim:lint`, and targeted fixture tests pass.
+
 ---
 
 ## 2026-03-27 Обновления
@@ -259,7 +272,7 @@ SKIP_AUTH=1
 
 *Обновлено: 2026-03-27*
 
-## 2026-03-27 Client Session Modernization (in progress)
+## 2026-03-27 Client Session Modernization (completed)
 
 ### Completed now
 - Added `vite-plugin-a2a/routes/utils/session-projection-dto.js` (canonical -> UI projection boundary).

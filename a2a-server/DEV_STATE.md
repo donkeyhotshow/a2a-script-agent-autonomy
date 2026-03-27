@@ -11,6 +11,12 @@
 - Кросс-модульные решения/зависимости ведутся только в root: [`../DEV_STATE.md`](../DEV_STATE.md).
 - Не дублировать здесь client/ai-integration backlog; хранить только ссылки на них при необходимости.
 
+## AI-Integration Work Lock
+
+- Статус: **BLOCKED**.
+- Работы по `ai-integration` не выполняются в server-контуре.
+- Разрешение на возобновление `ai-integration` задач: только после закрытия активных задач этого файла и [`../a2a-client/DEV_STATE.md`](../a2a-client/DEV_STATE.md).
+
 ---
 
 ## Текущая архитектура
@@ -205,6 +211,12 @@ curl -s -X POST http://localhost:3000/api/v1/invoke \
 ### Unusual Findings Alignment (Server/Contracts)
 - [ ] **UA-S-01 interrupt-trace-contract**: Verify and document one canonical contract for interrupt trace placement (`context.workbench.slots.interruptTrace`) across server transforms and client projection.
 - [ ] **UA-S-02 no-llm-vs-llm-step-rules**: Tighten and centralize rules for required transform files on no-LLM vs LLM steps to reduce interpretation drift in simulations.
+
+### Code Cleanup Discovery Plan (Server: where/how)
+- [ ] **CCP-S-01 where-to-scan**: Primary folders: `src/transform/`, `src/services/core/request-processor/`, `src/actions/handlers/`, `scripts/`.
+- [ ] **CCP-S-02 how-to-find**: Search for overlapping operations/validators/reporters and duplicate path-specific branches.
+- [ ] **CCP-S-03 deprecation-check**: Identify legacy branches still referenced by comments/docs but no longer used by runtime flow.
+- [ ] **CCP-S-04 safe-remove-gate**: Removal only after `npm run test`, `sim:lint`, `sim:validate` pass.
 
 ---
 

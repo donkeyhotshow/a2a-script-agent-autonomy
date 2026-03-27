@@ -31,30 +31,33 @@
 - `storage/projectSessions.js` (1.8KB) - project-specific
 - Сложная логика: highest step → server-response → messages.json
 
-**Предложение (step-based):**
-1. Добавить `session-index.json` - lightweight index для быстрого доступа
-2. Упростить loadNewSession() - использовать index вместо сканирования всех шагов
-3. Объединить server-response.json + messages.json в один файл (или делать lazily)
-4. Добавить mode flag в step файлы
+**Предложение (step-based, validated):**
 
-```json
-// session-index.json (новый файл)
-{
-  "sessionId": "sess_123",
-  "currentStep": 5,
-  "mode": "agent",
-  "steps": [
-    { "step": 1, "hasClientResult": false },
-    { "step": 2, "hasClientResult": true },
-    ...
-  ]
+1. **session-index.json** - lightweight index для быстрого доступа
+   - Пишется при каждом `saveNewStep()`
+   - Читается первым при loadNewSession() → fast path
+   - Fallback: если нет → существующая логика
+
+2. **mode derivation** - вычисление режима, не хранение
+   - Из `context.execution.action` (прямой флаг)
+   - Fallback: если есть `workbench` → 'agent', иначе → 'dialog'
+
+3. **Оптимизированный loadNewSession():**
+```javascript
+// Fast path: использовать index
+const index = loadSessionIndex(cwd, sessionId);
+if (index?.currentStep) {
+  const step = loadNewStep(cwd, sessionId, index.currentStep);
+  if (step) return reconstructFromStep(step, index);
 }
+// Fallback: существующая логика
 ```
 
 **Плюсы step-based:**
 - Историческая целостность
 - Легче debug
 - Меньше данных на запись
+- Обратная совместимость (fallback if no index)
 
 **Минусы (решаем):**
 - Сложное восстановление → добавить index

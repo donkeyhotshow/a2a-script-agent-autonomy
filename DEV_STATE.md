@@ -107,6 +107,14 @@ docker-compose up -d
 
 ---
 
+## AI-Integration Work Lock
+
+- Статус: **BLOCKED**.
+- Все execution-задачи по `ai-integration` ведутся только в [`ai-integration/DEV_STATE.md`](ai-integration/DEV_STATE.md).
+- Работы по `ai-integration` не запускать до завершения активных задач в [`a2a-client/DEV_STATE.md`](a2a-client/DEV_STATE.md) и [`a2a-server/DEV_STATE.md`](a2a-server/DEV_STATE.md).
+
+---
+
 ## Проверка работоспособности
 
 ```bash
@@ -262,10 +270,6 @@ cd a2a-client && npm test
 - [x] `list-directory`: Заменить самодельный regex на `picomatch` для полноценной поддержки glob.
 - [x] `list-directory`: Добавить параметры `maxDepth` и `limit` для предотвращения перегрузки.
 
-### AI Integration & Architecture (Complex)
-- [x] Документировать REST-поток тикетов (`/promises/pending` -> `/promise/<id>/execute`) - см. `ai-integration/docs/AI-INTEGRATION-UI.md`
-- [x] Восстановить/создать `ai-integration/DEV_STATE.md` и синхронизировать ссылку в таблице подсистем (сейчас ссылка есть, файла в workspace нет).
-
 ### Simulation Contract & Docs (Complex)
 - [x] Зафиксировать единый cross-repo baseline: что считаем “clean” для симуляций на уровне репозитория (`valid + 0 warnings` vs `valid + warnings`) и вынести это в единое правило для всех `DEV_STATE.md`.
 - [x] Добавить агрегированный отчёт по долгам симуляций в root: топ-папки с warning-уровнем (например `orchestrator-dialog`, `phpunit-deprecations`, `task-decomposition`) и план снижения по итерациям.
@@ -285,8 +289,18 @@ cd a2a-client && npm test
 - [ ] **CM-05**: Track client session-clarity alignment with simulation contracts (`simulations/dialog`, `simulations/agent-auto-ai`) and ensure no Web DTO regressions.
 - [ ] **CM-06**: Run quarterly cross-module redundancy review (duplicate abstractions, dead adapters, obsolete compatibility layers) and publish removal decisions in module states.
 - [ ] **CM-07**: Enforce tri-role dialogue contract (`user`/`assistant`/`system`) across client session storage and Web rendering; `system` messages represent Red Room auto-responses and must be preserved end-to-end.
-- [ ] **CM-08**: Remove duplicate/overlapping root session notes blocks and keep only cross-module facts in root history.
+- [x] **CM-08**: Remove duplicate/overlapping root session notes blocks and keep only cross-module facts in root history.
 - [ ] **CM-09**: Run docs encoding/terminology cleanup pass (mixed glyph artifacts, mixed-language drift) in high-impact protocol docs (`AGENTS.md`, Web protocol docs, simulation workflow docs).
+
+### Client Session Storage Improvements (P1-P2)
+- [ ] **P1: Implement session-index.json** - lightweight index for fast session recovery, stores promiseId/promiseStatus for page refresh resilience, supports auto-mode polling without Web UI
+- [ ] **P2: Add mode derivation** - derive session mode (dialog/agent) from `context.execution.action` or `workbench` presence
+
+### Code Cleanup Discovery Map (Where/How to Search)
+- [ ] **CDM-01 scope-map**: Each module keeps a target list of folders for cleanup scans (hotspots only, no broad random search).
+- [ ] **CDM-02 signal-set**: Search signals: duplicate adapters, legacy compatibility bridges, dead exports, unused route branches, overlapping DTO builders.
+- [ ] **CDM-03 evidence-format**: For every cleanup candidate, record: `path`, `why redundant`, `usage proof`, `safe removal check`.
+- [ ] **CDM-04 acceptance-gate**: Candidate can be removed only if module tests + simulation checks stay green.
 
 ### Module Task Sources (No Duplication in Root)
 - Client execution backlog: [`a2a-client/DEV_STATE.md`](a2a-client/DEV_STATE.md)
@@ -301,34 +315,11 @@ cd a2a-client && npm test
 - [x] Root `request.md` output side-effect removed by transform runtime `outputDir` isolation.
 - [x] State governance policy integrated and synchronized across module state files.
 - [x] Root backlog normalized to cross-module ownership; module-specific tasks moved to module `DEV_STATE.md` files.
-
+- [x] Root note cleanup done: duplicate/overlapping session-note blocks removed; client-specific history stays in `a2a-client/DEV_STATE.md`.
+- [x] Removed deprecated DTO files: `web-execute-dto.js` and `web-session-dto.js` from `a2a-client/vite-plugin-a2a/routes/utils/`.
+- [x] Analyzed client session storage plan: verified step-based storage logic works correctly, identified weak points (mode detection, index for fast recovery).
+- [x] Updated session-storage-analysis.md with implementation details for session-index.json and mode derivation.
+- [x] Added P1/P2 tasks to DEV_STATE.md: session-index.json + mode derivation.
+- [x] Added critical scenarios to plan: (1) Web UI page refresh resilience, (2) Auto mode with client API polling without Web UI.
+ 
 *Обновлено: 2026-03-27*
-
-### Session Notes (2026-03-27) - Client Session Systems
-- [x] Проверены tasks 00-05: все задачи модернизации системы сессий завершены
-- [x] Валидация: 437 unit tests passed, 89 simulations valid
-- [x] Создан план модернизации: [tasks/simulation-upgrade-plan.md](tasks/simulation-upgrade-plan.md)
-- [x] Симуляции уже соответствуют новой структуре (projection DTO, workbench, interruptTrace)
-
-### Session Notes (2026-03-27) - Session Storage Deep Analysis
-- [x] Проведен глубокий анализ системы хранения сессий
-- [x] Выявлены проблемы: 1) слишком много файлов, 2) дублирование, 3) context - black box, 4) нет единого состояния, 5) agent/dialog mixing
-- [x] Создан анализ: [tasks/session-storage-analysis.md](tasks/session-storage-analysis.md)
-- [x] **Решение принято:** Step-based storage сохраняется
-- [x] **Предложено:** Добавить session-index.json + mode flag для упрощения восстановления
-
-### Session Notes (2026-03-27) - Client Session Systems
-- [x] Проверены tasks 00-05: все задачи модернизации системы сессий завершены
-- [x] Валидация: 437 unit tests passed, 89 simulations valid
-- [x] Создан план модернизации: [tasks/simulation-upgrade-plan.md](tasks/simulation-upgrade-plan.md)
-- [x] Симуляции уже соответствуют новой структуре (projection DTO, workbench, interruptTrace)
-
-### Session Notes (2026-03-27) - Session Documentation
-- [x] Создана комплексная документация: [docs/SESSION-SYSTEMS-OVERVIEW.md](docs/SESSION-SYSTEMS-OVERVIEW.md)
-  - Promise System (async LLM)
-  - Red Room (client auto-response)
-  - Gray Room (server-only chain)
-  - Agent Mode (workbench)
-  - UI Updates (dialog sections)
-  - Session Storage (step folders)
-- [x] Созданы задачи по улучшению: tasks/06-session-architecture-clarity.md, tasks/08-async-polling-url-matrix.md
