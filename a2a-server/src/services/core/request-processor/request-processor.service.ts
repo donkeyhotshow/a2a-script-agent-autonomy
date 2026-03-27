@@ -29,7 +29,7 @@ export { LLM_PIPELINE_ACTIONS, type LlmPipelineAction };
 const DEFAULT_INTERVAL_MS = 5000;
 let timerId: ReturnType<typeof setInterval> | null = null;
 
-// Register processors
+// Register processors — `dialog` handles all LLM pipeline actions (dialog, agent, task-decomposition, …); see determineRequestType + GR-S-12.
 processorRegistry.register('action', actionRequestProcessor);
 processorRegistry.register('simulation', simulationRequestProcessor);
 processorRegistry.register('form', formRequestProcessor);

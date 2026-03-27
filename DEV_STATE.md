@@ -15,8 +15,8 @@ Current system state for production work. Methodology: always write DEV_STATE, a
 ### 2. Keyword-Based Routing
 
 Маршрутизация использует статический keyword matching:
-- Конфигурация: [`shared/router-static-choices.json`](shared/router-static-choices.json)
-- Обработка: [`a2a-server/src/config/router-static.ts`](a2a-server/src/config/router-static.ts)
+- Конфигурация: [`a2a-server/src/config/router-static.ts`](a2a-server/src/config/router-static.ts)
+- Fallback choices: hardcoded в panel-gateway.js
 
 ### 3. Action-Key Shape (MANDATORY)
 
@@ -34,37 +34,9 @@ Current system state for production work. Methodology: always write DEV_STATE, a
 
 ## Code Refactoring (2026-03-27)
 
-### Consolidations Completed
-
-#### 1. Retry Utilities Unified
-- **Status:** ✅ Complete
-- **Changes:**
-  - Merged `a2a-server/src/utils/retry.utils.ts` into `retry.ts`
-  - Added `RetryOptions` interface and `backoffDelay()` function
-  - Simplified `withRetry()` for common retry patterns
-  - Deleted unused `retry.utils.ts` file
-  - Updated test imports to use `backoff.js` facade
-- **Impact:** Single source for retry logic, test coverage maintained
-- **Files Changed:** `retry.ts`, `backoff.ts`, `retry.utils.test.ts`
-
-#### 2. API Helpers Deduplicated
-- **Status:** ✅ Complete
-- **Changes:**
-  - Deleted duplicate `a2a-client/shared/api-helpers.js`
-  - Canonical source: `/shared/api-helpers.js`
-  - SDK imports (`session-manager.ts`, `async-client.ts`) use correct path
-- **Impact:** Single source of truth for API utilities
-- **Files Changed:** Removed duplicate file
-
-#### 3. Type Consolidation (Ongoing)
-- **Status:** ✅ Complete (Phase 1)
-- **Changes:**
-  - `@a2a/json` now imports `Task`, `TaskType`, `TaskStatus`, `ContextBlock`, `ProtocolError` from `@a2a/types`
-  - Added `@a2a/types` as dependency to `@a2a/json` (package.json)
-  - Eliminated type duplication across packages
-- **Impact:** Single source for shared types, avoided drift
-- **Files Changed:** `a2a-client/packages/json/package.json`, `a2a-client/packages/json/src/types.ts`
-- **Canonical Pattern:** All client packages import from `@a2a/types` (not duplicating)
+- Основные задачи по консолидации кода выполнены; помощьные детали сохранены в модульных `DEV_STATE.md` и `docs/`.
+- Удалены дубли и выровнены imports для retry-логики, API-хелперов и shared типов.
+- В этом документе оставляем только высокоуровневый статус и ключевые архитектурные решения.
 
 ---
 

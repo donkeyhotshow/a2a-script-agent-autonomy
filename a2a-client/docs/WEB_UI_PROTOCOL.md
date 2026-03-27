@@ -9,6 +9,15 @@ Checkpoint: agent mode in `a2a-client/web` against the Vite **storage-mode** Cli
 3. **Ack + hydrate** — `POST .../next` returns a minimal ack; full state comes from `GET .../sessions/:id`.
 4. **Canonical + projection split** — step files stay canonical; API response for web uses a deterministic UI projection.
 
+## Glossary (one term each)
+
+| Term | Meaning |
+|------|---------|
+| **Web DTO** | Payload from `GET /sessions/:id` after `toPublicSession`: projected `execute`, no raw tool keys; **`context` omitted** unless `?includeContext=1` (debug). |
+| **Red Room** | Client-side label for **system-role** lines in the message timeline (auto tool summaries, RAG/read echoes). Same `history` roles as server: `user` / `assistant` / `system`. |
+| **Gray Room** | Server-side interrupt loop (extra LLM/transform turns). **Control envelope** may appear in persisted `context.workbench.slots.grayRoom`; Web sees it only with `includeContext=1` or when the app reads internal session storage. UI may show a **Gray room** collapsible when `session.context` is hydrated (e.g. debug). |
+| **Agent loop** | `execution.action === 'agent'` (or similar) with **single-key** `execute` per step: tools (`rag-search`, `read-file`, …) chained via `result` → next request. |
+
 ## `execute` shape for the browser (Web DTO)
 
 `GET /api/a2a/sessions/{id}` (and related routes that use the public session DTO) return **projected `execute` for the UI**: raw protocol actions such as `rag-search`, `read-file`, `write-file`, `script`, `execute-command`, `list-directory`, `grep-search`, `file-exists`, `edit-patch`, and `run-script` are **removed** and replaced with:

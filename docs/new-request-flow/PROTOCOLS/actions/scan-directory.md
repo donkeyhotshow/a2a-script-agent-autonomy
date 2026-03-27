@@ -2,116 +2,30 @@
 
 ## Описание
 
-Действие `scan-directory` используется для глубокого сканирования директорий по сложным критериям (glob паттерны, метаданные, структура проекта).
+Имя `scan-directory` **зарезервировано** в обсуждениях протокола как «объединённое» сканирование (glob, группировка, кэш). В текущей кодовой базе **нет** отдельного ключа `execute` / `result` `scan-directory`: он не зарегистрирован в серверном реестре действий и не обрабатывается клиентским SDK как самостоятельный тип.
 
 ## Статус
 
-🔶 **Частично реализовано** - требует доработки
+➖ **Не реализовано как отдельное действие** — используйте [`list-directory.md`](list-directory.md) и [`grep-search.md`](grep-search.md).
 
-## Направление
+## Что использовать вместо
 
-```
-Server → Client API → File System (execute)
-File System → Client API → Server (result)
-```
+| Задача | Действие | Примечание |
+|--------|----------|------------|
+| Список файлов под каталогом, фильтр по имени | `list-directory` | На сервере: `dirPath`, `recursive`, `pattern` (упрощённое выражение: `*` в шаблоне заменяется на `.*`, затем `RegExp` по **имени** записи). Есть `maxDepth`, `limit`. |
+| Поиск текста по проекту с glob путей | `grep-search` | `pattern`, опционально `path`, `glob`. |
+| «Глубокий» glob вида `**/*.test.ts` | — | Полный glob-матчинг **не** описан отдельным контрактом; комбинируйте `list-directory` + `grep-search` или уточняйте `pattern` / `glob` в рамках этих двух действий. |
 
-## Формат execute (план)
+## Сопоставление с ранним «планом» (не контракт)
 
-```json
-{
-  "execute": {
-    "scan-directory": {
-      "path": "src",
-      "pattern": "**/*.test.ts",
-      "options": {
-        "deep": true,
-        "includeMetadata": true,
-        "groupBy": "directory"
-      }
-    }
-  }
-}
-```
+Ранее в этом файле фигурировали поля вроде `options.groupBy`, `groups`, `totalSize`, кэш — **они не являются частью реализованного протокола** и остаются вне scope до появления отдельного действия или расширения схем.
 
-## Параметры
+## Связанные файлы (реализация)
 
-| Параметр | Тип | Обязательный | Описание |
-|----------|-----|--------------|----------|
-| `path` | string | ✅ | Путь к директории |
-| `pattern` | string | ❌ | Glob паттерн |
-| `options.deep` | boolean | ❌ | Глубокое сканирование |
-| `options.includeMetadata` | boolean | ❌ | Включить метаданные файлов |
-| `options.groupBy` | string | ❌ | Группировка: "directory", "extension", "size" |
+- Сервер: [`a2a-server/src/actions/handlers/file-operations/list-directory.ts`](../../../../a2a-server/src/actions/handlers/file-operations/list-directory.ts), [`grep-search.ts`](../../../../a2a-server/src/actions/handlers/grep-search.ts)
+- Реестр симуляций: [`a2a-server/src/actions/action-handler-registry.ts`](../../../../a2a-server/src/actions/action-handler-registry.ts)
+- Клиент (workspace tools): [`a2a-client/packages/sdk/src/action-handlers/workspace-tool-handlers.ts`](../../../../a2a-client/packages/sdk/src/action-handlers/workspace-tool-handlers.ts)
 
-## Формат result (план)
+## Связанные схемы
 
-```json
-{
-  "result": {
-    "scan-directory": {
-      "path": "src",
-      "pattern": "**/*.test.ts",
-      "entries": [
-        {
-          "path": "src/auth/auth.test.ts",
-          "name": "auth.test.ts",
-          "directory": "src/auth",
-          "extension": ".test.ts",
-          "size": 1024,
-          "lines": 50,
-          "modified": "2024-01-15T10:30:00Z"
-        }
-      ],
-      "groups": {
-        "src/auth": ["auth.test.ts"],
-        "src/user": ["user.test.ts"]
-      },
-      "total": 25,
-      "totalSize": 51200
-    }
-  }
-}
-```
-
-## Примеры
-
-### Пример 1: Поиск всех тестов
-
-```json
-{
-  "execute": {
-    "scan-directory": {
-      "path": "src",
-      "pattern": "**/*.test.ts"
-    }
-  }
-}
-```
-
-### Пример 2: Группировка по директориям
-
-```json
-{
-  "execute": {
-    "scan-directory": {
-      "path": "src",
-      "pattern": "**/*.{ts,js}",
-      "options": {
-        "groupBy": "directory",
-        "includeMetadata": true
-      }
-    }
-  }
-}
-```
-
-## TODO
-
-- [ ] Полная реализация glob паттернов
-- [ ] Группировка результатов
-- [ ] Кэширование сканирования
-
-## Связанные файлы
-
-- [server-invoke-response-execute.schema.json](../../json-schemas/server-invoke-response-execute.schema.json)
-- [client-result.schema.json](../../json-schemas/client-result.schema.json)
+Отдельной JSON-схемы для `scan-directory` нет. Актуальные ключи — те же, что для `list-directory` / `grep-search` в общих схемах execute/result.

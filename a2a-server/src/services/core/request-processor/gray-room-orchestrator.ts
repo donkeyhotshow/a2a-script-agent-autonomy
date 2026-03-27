@@ -1,7 +1,8 @@
 import * as path from 'path';
 import {logger} from '../../../utils/logger.js';
 import {runPromptsTransform} from '../../../transform/index.js';
-import type {InterruptDirective, ServerInterruptTraceEvent} from '../../../transform/types.js';
+import type {GrayRoomControlEnvelope, InterruptDirective, ServerInterruptTraceEvent} from '../../../transform/types.js';
+import {mergeGrayRoomSlotIntoContext, mergeInterruptTraceIntoContext} from '../../../transform/interrupt-trace-contract.js';
 import {executeReadFile} from '../../../actions/handlers/file-operations.js';
 import {mergeServerRagPageIntoContext} from '../../rag/auto-rag-page-server.js';
 import {pollReadyThenFetch} from '../../../daemon/llm-hub-poll.js';
@@ -316,8 +317,27 @@ export class GrayRoomOrchestrator {
         let activeSchemaName = schemaName;
         const trace: ServerInterruptTraceEvent[] = [];
         let turn = 0;
+        const startedAt = new Date().toISOString();
+        const grayRoom: GrayRoomControlEnvelope = {
+            enabled: true,
+            planId: promiseId,
+            phase: 'response_transform',
+            maxTurns: this.maxInterruptTurns,
+            turn: 0,
+            status: 'running',
+            timestamps: {startedAt, lastUpdateAt: startedAt},
+            remainingBudget: interruptBudget,
+            traceRef: {length: 0},
+        };
+
+        const touchGrayRoom = (patch: Partial<GrayRoomControlEnvelope>): void => {
+            Object.assign(grayRoom, patch);
+            grayRoom.timestamps = {startedAt, lastUpdateAt: new Date().toISOString()};
+            grayRoom.traceRef = {length: trace.length};
+        };
 
         for (;;) {
+            touchGrayRoom({phase: 'response_transform', turn, remainingBudget: interruptBudget});
             trace.push({
                 kind: 'llm_output',
                 phase: turn === 0 ? 'primary' : 'follow_up',
@@ -341,7 +361,8 @@ export class GrayRoomOrchestrator {
             });
 
             if (!interrupt) {
-                return this.mergeTraceIntoResult(result, trace);
+                touchGrayRoom({phase: 'completed', status: 'completed', turn, remainingBudget: interruptBudget});
+                return this.mergeTraceIntoResult(result, trace, grayRoom);
             }
 
             if (!this.interruptWhenSatisfied(interrupt, workingCtx)) {
@@ -350,7 +371,14 @@ export class GrayRoomOrchestrator {
                     reason: interrupt.reason,
                     detail: 'when_clause_not_met',
                 });
-                return this.mergeTraceIntoResult(result, trace);
+                touchGrayRoom({
+                    phase: 'completed',
+                    status: 'completed',
+                    turn,
+                    remainingBudget: interruptBudget,
+                    lastReason: interrupt.reason,
+                });
+                return this.mergeTraceIntoResult(result, trace, grayRoom);
             }
 
             if (typeof interrupt.maxTurns === 'number' && Number.isFinite(interrupt.maxTurns) && interrupt.maxTurns >= 0) {
@@ -359,9 +387,17 @@ export class GrayRoomOrchestrator {
 
             if (interruptBudget <= 0) {
                 const c = result.context as Record<string, unknown>;
+                touchGrayRoom({
+                    phase: 'completed',
+                    status: 'truncated',
+                    turn,
+                    remainingBudget: 0,
+                    lastReason: interrupt.reason,
+                });
                 return this.mergeTraceIntoResult(
                     {...result, context: {...c, interrupt_truncated: true}} as ProcessResult,
-                    trace
+                    trace,
+                    grayRoom
                 );
             }
             interruptBudget--;
@@ -381,6 +417,13 @@ export class GrayRoomOrchestrator {
                 note: interrupt.reason === 'auto_rag_page' ? 'merge_context_reenter' : undefined,
             });
 
+            touchGrayRoom({
+                phase: 'interrupt_handler',
+                lastReason: interrupt.reason,
+                turn,
+                remainingBudget: interruptBudget,
+            });
+
             if (!continueLoop) {
                 const normalizedExecute = rawOutput.execute as ProcessResult['execute'] | undefined;
                 const res: ProcessResult = {
@@ -389,7 +432,8 @@ export class GrayRoomOrchestrator {
                     execute: normalizedExecute,
                 };
                 this.warnOnInvalidExecute(res.execute, 'grayRoom.finalize');
-                return this.mergeTraceIntoResult(res, trace);
+                touchGrayRoom({phase: 'completed', status: 'completed', turn, remainingBudget: interruptBudget});
+                return this.mergeTraceIntoResult(res, trace, grayRoom);
             }
 
             workingCtx = nextCtx;
@@ -408,6 +452,7 @@ export class GrayRoomOrchestrator {
             }
 
             trace.push({kind: 'request_rebuild'});
+            touchGrayRoom({phase: 'follow_up_llm', turn, remainingBudget: interruptBudget});
             const files = (requestTransformResult.files as Record<string, string>) || {};
             const requestMd = files['request.md'];
             if (!requestMd) {
@@ -666,18 +711,20 @@ export class GrayRoomOrchestrator {
         }
     }
 
-    private mergeTraceIntoResult(result: ProcessResult, trace: ServerInterruptTraceEvent[]): ProcessResult {
-        if (trace.length === 0 || !result.context) return result;
-        const ctx = result.context as Record<string, unknown>;
-        const wb = (ctx['workbench'] as Record<string, unknown>) ?? {};
-        const slots = (wb['slots'] as Record<string, unknown>) ?? {};
-        return {
-            ...result,
-            context: {
-                ...ctx,
-                workbench: { ...wb, slots: { ...slots, interruptTrace: trace } }
-            }
-        };
+    private mergeTraceIntoResult(
+        result: ProcessResult,
+        trace: ServerInterruptTraceEvent[],
+        grayRoom?: GrayRoomControlEnvelope
+    ): ProcessResult {
+        if (!result.context) return result;
+        let ctx = result.context as Record<string, unknown>;
+        if (trace.length > 0) {
+            ctx = mergeInterruptTraceIntoContext(ctx, trace);
+        }
+        if (grayRoom) {
+            ctx = mergeGrayRoomSlotIntoContext(ctx, grayRoom);
+        }
+        return {...result, context: ctx};
     }
 
     private warnOnInvalidExecute(execute: ProcessResult['execute'] | undefined, source: string): void {

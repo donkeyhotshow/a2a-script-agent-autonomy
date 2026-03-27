@@ -1,0 +1,40 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://a2a-script-agent/new-request-flow/json-schemas/interrupt-directive.schema.json",
+  "title": "Gray room interrupt directive",
+  "description": "Emitted on transform output after response pipeline; see a2a-server/docs/GRAY-ROOM.md and a2a-server/src/transform/types.ts (InterruptDirective).",
+  "type": "object",
+  "required": ["reason"],
+  "additionalProperties": true,
+  "properties": {
+    "reason": {
+      "type": "string",
+      "description": "Handler key in applyInterrupt (compress_history, thinking, auto_rag_page, auto_read_file, clarify, or extension string)."
+    },
+    "maxTurns": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Tightens remaining interrupt budget for this interrupt."
+    },
+    "schema": {
+      "type": "string",
+      "description": "Transform pack folder name under prompts/transforms/ for the next follow-up turn when continueLoop is true."
+    },
+    "context": {
+      "type": "object",
+      "description": "Shallow-merged over invoke context before the interrupt handler runs."
+    },
+    "data": {
+      "type": "object",
+      "description": "Handler-specific payload (paths, RAG query, etc.)."
+    },
+    "when": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "historyMinLength": { "type": "number", "minimum": 0 },
+        "historyMaxLength": { "type": "number", "minimum": 0 }
+      }
+    }
+  }
+}

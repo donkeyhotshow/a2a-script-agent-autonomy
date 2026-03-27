@@ -86,6 +86,10 @@ For agent flows, keep `context.workbench.sections` as an object in `response.jso
 
 Gray-room substeps (`N-sub-M`) should also include `context.workbench.slots.interruptTrace` in `response.json`.
 
+**`resilience-contract/`** — multi-step golden for **resilience patterns**: human-gate `form`, paginated `rag-search` drain (`scratchpad.rag_offset` / `rag_has_more`), queued `read-file` with **`context.files`** accumulation; step `6` includes **`context.workbench.slots.grayRoom`** (see [`description.md`](resilience-contract/description.md)). Validate per step: `npm run sim:validate -- --sim resilience-contract/N`.
+
+**Resilience contract (human gate + RAG drain + read queue):** [`resilience-contract/`](resilience-contract/) — six-step golden with `execution.step` transitions, `scratchpad` RAG pagination hints, `context.files` accumulation, and sample `context.workbench.slots.grayRoom` on the final step (`resilience-contract/6/response.json`).
+
 Not every step has all 8 files: steps without LLM **always require** `server-transforms-*.json` (or fallback to base transforms from `prompts/transforms/`); steps with LLM add the `.md` files; transform docs describe server logic even when LLM is not used.
 
 > **Critical:** Even when `response.md` is absent (no LLM call), the server **must** apply transforms. The pipeline is:
@@ -98,6 +102,10 @@ Not every step has all 8 files: steps without LLM **always require** `server-tra
 > - **Never require** `server-transforms-response.json` — server builds response directly from transformed request (no LLM to parse)
 > 
 > This ensures simulation captures server logic deterministically, not just recorded results.
+
+### Shortened golden sets (server policy)
+
+Some legacy or router-only steps **omit** per-step `server-transforms-request.json` / `server-transforms-response.json` when the author relies on **bundled** transforms under `a2a-server/prompts/transforms/<schema>/` (runtime still applies transforms; the golden does not duplicate them). `sim-validate` may emit **warnings** (optional missing files, lenient transform checks) while remaining **structurally valid** (`valid: true`). To record deterministic server-side ops in the fixture, add the per-step `server-transforms-*.json` files and align with the no-LLM vs LLM rules above. **`npm run sim:contract-report`** (see `a2a-server/package.json`) summarizes warning debt for CI; stricter cleanup: **`npm run sim:quality`** (warnings must be zero).
 
 ### Supplementary: server interrupt loop (optional)
 

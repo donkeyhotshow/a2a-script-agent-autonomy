@@ -162,7 +162,7 @@ curl -s -X POST http://localhost:3000/api/v1/invoke \
 
 | Check | Command | Result |
 |-------|---------|--------|
-| Unit + integration | `cd a2a-server && npm run test` | 437 passed |
+| Unit + integration | `cd a2a-server && npm run test` | 445 passed |
 | Simulation lint | `cd a2a-server && npm run sim:lint -- --all --json` | valid |
 | Simulation validate | `cd a2a-server && npm run sim:validate -- --all --json` | valid |
 | ESLint | `cd a2a-server && npm run lint` | 0 errors |
@@ -215,9 +215,8 @@ curl -s -X POST http://localhost:3000/api/v1/invoke \
 
 ## Задачи (Next Tasks)
 
-### Alternatives Migration Plan (server scope)
-- [x] **S-01 server-prompt-transforms**: lock transform loading mode (bundled defaults vs `PROMPTS_TRANSFORMS_PATH`) and add startup diagnostics.
-- [x] **S-02 server-action-registry-bootstrap**: decide fail-fast vs lenient startup when action markdown loading fails; encode as policy + tests.
+- Основные задачи модуля закрыты; список выполненных пунктов зафиксирован в `docs/TASKS-COMPLETED.md`.
+- Оставляем только текущие/открытые риски и шаги, как требуется по нормам DEV_STATE.
 - [x] **S-03 server-requests-storage**: define default/override storage path behavior (`REQUESTS_STORAGE_PATH`) and retention/cleanup policy.
 - [x] **S-04 server-llm-hub-polling**: standardize `LLM_POLL_*`/`POLL_*` defaults and timeout budget for daemon processing. Defaults documented in `.env.example`, implementation in `src/daemon/llm-hub-poll.ts` with 1h default / 24h cap aligned to ai-integration `PROMISE_TTL_SECONDS`.
 - [x] **S-06 server-error-detail-level**: Production JSON responses omit stacks and genericize unknown `Error` messages; `exposeErrorDetailsToClient()` / `A2A_ERROR_EXPOSE_DETAILS`; server logs always include stacks. See `.env.example` and `src/middleware/error.middleware.ts`.
@@ -233,12 +232,12 @@ curl -s -X POST http://localhost:3000/api/v1/invoke \
 - [x] Очистка `storage/requests` (удалить старые файлы).
 
 ### Simulation Contract & Docs (Complex)
-- [ ] Выравнять серверный контракт transforms: для no-LLM шагов определить строгое правило по `server-transforms-request.json` и привести к нему `sim:validate`/`sim-lint` сообщения. *(Частично: см. UA-S-02 — `--step-contract` + `scripts/sim-contract/step-transform-rules.ts`; sim-lint сообщения ещё не унифицированы.)*
-- [ ] Добавить в процессоры явную диагностику contract warnings (не только `valid`): чтобы в CI видно было “warning debt” по конкретному simulation step.
-- [ ] Уточнить server policy для сокращённых golden-наборов: в каких action/step допускается отсутствие transform-файлов и где это фиксируется в документации.
-- [ ] Добавить server-centric симуляции устойчивости: paginated `rag-search` drain, очередь `read-file` с накоплением в `context.files`, human-gate переходы между `execution.step`.
-- [ ] Сверить реализацию и протокол по `scan-directory`: в docs есть открытые TODO (glob/grouping/cache), нужно либо реализовать, либо явно ограничить контракт и схемы.
-- [ ] Разделить в `sim-validate` два режима отчётности: structural validity и contract completeness (чтобы optional-missing не терялся в общем `valid`).
+- [x] **No-LLM transform messages (tooling)** (2026-03-27): Одно правило в `scripts/sim-contract/step-transform-rules.ts`; `npm run sim:validate -- --step-contract` и `npm run sim:lint -- --step-contract` (опционально, без изменения default CI). Полное строгое требование в `sim:quality` по-прежнему блокируется warning-debt по золотым.
+- [x] **Contract warnings / CI visibility** (2026-03-27): `npm run sim:contract-report` (JSON: structural + step-contract delta + `bySimulation`); `sim:validate --json` добавляет `structuralValid`, `contractComplete`, `warningCount`; `gate:cleanup` печатает `validate.warningCount` / `contractComplete`; workflow `simulations-ci.yml` — шаг **Contract debt report** в summary.
+- [x] **Shortened golden policy** (2026-03-27): [`simulations/SCHEMA.md`](../simulations/SCHEMA.md) § Shortened golden sets — bundled transforms, warnings vs `valid`, отсылки к `sim:contract-report` / `sim:quality`.
+- [x] **Resilience simulations** (2026-03-27): [`simulations/resilience-contract/`](../simulations/resilience-contract/) — шаги 1–6: human-gate `form`, два `rag-search` с `scratchpad` drain, два `read-file` с ростом `context.files`, финал с `slots.grayRoom` (`6/response.json`). Web UI: `buildGrayRoomHtml` в [`a2a-client/web/js/task-flow/render-layout.js`](../a2a-client/web/js/task-flow/render-layout.js).
+- [x] **scan-directory protocol alignment** (2026-03-27): Отдельного действия нет; протокол зафиксирован как зарезервированное имя + маппинг на `list-directory` / `grep-search` в [`docs/new-request-flow/PROTOCOLS/actions/scan-directory.md`](../docs/new-request-flow/PROTOCOLS/actions/scan-directory.md); индексы PROTOCOLS/README, actions/README, STAGES/03-execution обновлены.
+- [x] **sim-validate reporting modes** (2026-03-27): JSON `structuralValid` (= schema errors), `contractComplete` (= `warningCount === 0`), плюс `warningCount` per simulation.
 
 ### Large File Decomposition (400-500+ lines)
 - [x] **LF-S-01**: Decompose `src/transform/operations.ts` (~897) into `operations/json-path.ts`, `operations/value-helpers.ts`, `operations/transform-groups.ts` + index re-export.
@@ -278,12 +277,11 @@ curl -s -X POST http://localhost:3000/api/v1/invoke \
 - [x] **Stabilization (2026-03-27):** ESLint **0 warnings** on `src/**/*.ts`: removed unused `path` import in `index.ts`; trimmed `operations.ts` type imports; removed dead `truncateToMaxChars` copy in `json-path.ts`; trimmed unused json-path/value-helpers imports in `transform-groups.ts`.
 
 ### Unusual Findings Alignment (Server/Contracts)
-- [ ] **UA-S-01 interrupt-trace-contract**: Verify and document one canonical contract for interrupt trace placement (`context.workbench.slots.interruptTrace`) across server transforms and client projection.
-- [x] **UA-S-02 no-llm-vs-llm-step-rules** (2026-03-27): Canonical rules live in `scripts/sim-contract/step-transform-rules.ts` (aligned with `simulations/SCHEMA.md`). **Optional** CLI: `npm run sim:validate -- --step-contract` (with `--sim` or `--all`) emits extra warnings for no-LLM steps missing `server-transforms-request.json` or incorrectly keeping `server-transforms-response.json` without `response.md`. Default validate unchanged (legacy goldens retain warning debt until fixed).
+- [x] **UA-S-01 interrupt-trace-contract** (2026-03-27): Canonical path and merge helper in `src/transform/interrupt-trace-contract.ts` (`INTERRUPT_TRACE_CONTEXT_PATH`, `mergeInterruptTraceIntoContext`). `GrayRoomOrchestrator.mergeTraceIntoResult` uses this helper only. UI readers: `a2a-client/web/js/task-flow/render-layout.js` (`slots?.interruptTrace`).
+- [x] **UA-S-02 no-llm-vs-llm-step-rules** (2026-03-27): Canonical rules live in `scripts/sim-contract/step-transform-rules.ts` (aligned with `simulations/SCHEMA.md`). **`collectNoLlmStepContractWarningsForSimulation()`** walks numbered steps + `N-sub-M` + flat root (parity with `sim-lint --step-contract`). **Optional** CLI: `npm run sim:validate -- --step-contract` (with `--sim` or `--all`). Default validate unchanged (legacy goldens retain warning debt until fixed).
 
 ### Gray Room / Planned Sub-Requests (Server-Orchestrated)
-- [ ] **GR-S-01 concept-boundary**: Зафиксировать, что gray room = серия спланированных LLM-подзапросов, выполняемых *на сервере* после основного шага, без новых client steps; работают только через `context.workbench`/`context.history` и соблюдают Action-Key Shape. Уточнить, что это надстройка над уже реализованным interrupt loop в `DialogRequestProcessor`, а не параллельный механизм.
-- [ ] **GR-S-12 orchestrator-unification**: Выделить общий orchestrator (например `gray-room-orchestrator.ts`) и подключить его к dialog + agent flows, чтобы модель подзапросов была одинаковой и не зависела от одного процессора.
+- [x] **GR-S-01 concept-boundary** (2026-03-27): Зафиксировано в [`docs/GRAY-ROOM.md`](docs/GRAY-ROOM.md) § Concept Boundary + Status (overlay на interrupt loop, `DialogRequestProcessor` → `GrayRoomOrchestrator.runLoop`, trace через `interrupt-trace-contract.ts`).
 - [x] **S-10**: [P2] Request Cleanup Script: utility for cleaning up `storage/requests` older than 14 days.
 - [x] **S-11**: [P1] Realize unified Gray Room Orchestrator by extracting logic from `dialog-request-processor.ts`.
 - [x] **GR-S-02 trigger-contract**: Определены механизмы запуска gray room:
@@ -293,18 +291,18 @@ curl -s -X POST http://localhost:3000/api/v1/invoke \
   - Добавлены переменные: `A2A_GRAY_ROOM_MAX_TURNS` (default 10, max 100)
   - Реализованы функции: `shouldUseGrayRoom()`, `detectGrayRoomTrigger()`, `isGrayRoomEnabled()`
   - По умолчанию gray room выключен (backwards compatible)
-- [ ] **GR-S-03 schema-entry-points**: Определить, какими схемами и файлами описываются подзапросы: расширить `docs/GRAY-ROOM.md` разделом "server orchestration" и описать, как `interrupt.schema` переходит в `activeSchemaName` внутри существующего `ACTION_TO_SCHEMA`/`LLM_PIPELINE_ACTIONS`; отдельные `prompts/gray-room-*.md` и `prompts/transforms/gray-room-*.json` делать только как опциональные специализированные схемы, чтобы не плодить новый параллельный пайплайн.
-- [ ] **GR-S-04 orchestration-loop**: Зафиксировать цикл gray room: точка входа (вероятно `dialog-request-processor` / agent-процессор), ограничение по числу подшагов/времени, правила прерывания, и как финальный `workbench`/`history` мержится обратно в основной response до отправки клиенту. Уточнить поведение в ошибочных путях: что происходит при фейле sidecar LLM / RAG / read-file (fallback, trace, error mapping).
-- [ ] **GR-S-05 isolation-and-scheduling**: Описать ограничения: только разрешённые tools (`read-file`, `rag-search`, `grep-search`, и т.п.), уважение sandbox/таймаутов, никакой записи в client storage; первая версия — строго inline в рамках одного `/api/v1/invoke` без фонового планировщика.
-- [ ] **GR-S-06 simulations-and-ci**: Спланировать минимальный набор симуляций: (1) успешная серия подзапросов, (2) остановка по лимиту, (3) режим `A2A_GRAY_ROOM_ENABLED=0`, (4) некорректный trigger; убедиться, что `sim:lint`/`sim:validate` ловят нарушения контракта gray room.
-- [ ] **GR-S-07 runtime-gap-audit**: Зафиксировать расхождения текущей реализации и плана: сейчас loop живёт в `dialog-request-processor`, запускается только через `$out.interrupt`, и не имеет явного global feature-toggle для gray room.
-- [ ] **GR-S-08 control-envelope-schema**: Ввести прозрачную структуру контроля (`context.workbench.slots.grayRoom`) с полями `enabled`, `planId`, `phase`, `maxTurns`, `turn`, `status`, `lastReason`, `timestamps`, `traceRef`; обновлять её на каждом sub-turn.
-- [ ] **GR-S-09 interrupt-directive-schema**: Добавить отдельную JSON schema для `interrupt` (`reason`, `schema`, `maxTurns`, `when.historyMinLength/historyMaxLength`, `data`, `context`) и валидировать её в `sim:validate`.
-- [ ] **GR-S-10 substep-schemas**: Добавить схемы для `N-sub-M` (`server-interrupt-substep-request.schema.json`, `server-interrupt-substep-response.schema.json`) и требовать минимальный контракт, как у основной цепочки.
-- [ ] **GR-S-11 lint-validate-parity**: Обновить `sim-lint.ts`/`sim-validate.ts`: `--all` (или новый флаг `--include-substeps`) должен включать `N-sub-M`, проверять непрерывность sub-индексов, запрет `client.json`/`received.json` в sub-steps и обязательность `request.json`+`response.json`, не ломая озвученную в `simulations/SCHEMA.md` идею, что substeps — серверные вспомогательные фикстуры.
-- [ ] **GR-S-12 orchestrator-unification**: Выделить общий orchestrator (например `gray-room-orchestrator.ts`) и подключить его к dialog + agent flows, чтобы модель подзапросов была одинаковой и не зависела от одного процессора.
-- [ ] **GR-S-13 transform-contract-unification**: Зафиксировать единый transform-контракт: где и как `$.llm.interrupt` переносится в `$out.interrupt`, чтобы поведение gray room было детерминированным для всех поддерживаемых схем.
-- [ ] **GR-S-14 observability-and-ops**: Определить минимальный набор метрик/логов для gray room: счётчики сработавших interrupt по `reason`, доля invoke с gray room, средняя глубина цепочки, доля фейлов sidecar LLM/RAG; описать, как оператор включает/выключает gray room через env и что считается «здоровым» поведением.
+- [x] **GR-S-03 schema-entry-points** (2026-03-27): В [`docs/GRAY-ROOM.md`](docs/GRAY-ROOM.md) § **Server orchestration (schema entry points)** — цепочка `resolveTransformSchema` → `extractSchemaName` → `runLoop`; `ACTION_TO_SCHEMA` / `LLM_PIPELINE_ACTIONS` из `shared/router-static-choices.json`; `interrupt.schema` → `activeSchemaName` только при `continueLoop`, тот же `runPromptsTransform` / `prompts/transforms/<name>/`; опциональные пакеты без параллельного пайплайна.
+- [x] **GR-S-04 orchestration-loop** (2026-03-27): [`docs/GRAY-ROOM.md`](docs/GRAY-ROOM.md) § Orchestration loop + error paths.
+- [x] **GR-S-05 isolation-and-scheduling** (2026-03-27): [`docs/GRAY-ROOM.md`](docs/GRAY-ROOM.md) § Isolation and scheduling (policy).
+- [x] **GR-S-06 simulations-and-ci** (2026-03-27): [`docs/GRAY-ROOM.md`](docs/GRAY-ROOM.md) § Simulations and CI + CI step `sim:contract-report`.
+- [x] **GR-S-07 runtime-gap-audit** (2026-03-27): [`docs/GRAY-ROOM.md`](docs/GRAY-ROOM.md) § Runtime vs roadmap.
+- [x] **GR-S-08 control-envelope-schema** (2026-03-27): `GrayRoomControlEnvelope` в [`src/transform/types.ts`](src/transform/types.ts); `mergeGrayRoomSlotIntoContext` в [`interrupt-trace-contract.ts`](src/transform/interrupt-trace-contract.ts); `GrayRoomOrchestrator.runLoop` обновляет `context.workbench.slots.grayRoom` на каждом успешном выходе из цикла. Док: [`docs/GRAY-ROOM.md`](docs/GRAY-ROOM.md) § Client visibility `grayRoom`.
+- [x] **GR-S-09 interrupt-directive-schema** (2026-03-27): `docs/new-request-flow/json-schemas/interrupt-directive.schema.json`; при наличии `interrupt` в `response.json` — AJV в `validateFile` (`sim-validate`).
+- [x] **GR-S-10 substep-schemas** (2026-03-27): Loose `server-interrupt-substep-request.schema.json` / `server-interrupt-substep-response.schema.json` (документированы в GRAY-ROOM; строгая валидация в sim — по желанию).
+- [x] **GR-S-11 lint-validate-parity** (2026-03-27): `collectNoLlmStepContractWarningsForSimulation()` в `step-transform-rules.ts` — те же шаги что `sim-lint --step-contract` (numbered + `N-sub-M` + flat).
+- [x] **GR-S-12 orchestrator-unification** (2026-03-27): Все `LLM_PIPELINE_ACTIONS` (в т.ч. `agent`, `task-decomposition`) маршрутизируются в `dialogRequestProcessor` через `determineRequestType` → регистр `dialog`; один `GrayRoomOrchestrator` на процессор. Комментарий в [`request-processor.service.ts`](src/services/core/request-processor/request-processor.service.ts).
+- [x] **GR-S-13 transform-contract-unification** (2026-03-27): [`docs/GRAY-ROOM.md`](docs/GRAY-ROOM.md) § Transform `$.llm.interrupt` → `$out.interrupt`.
+- [x] **GR-S-14 observability-and-ops** (2026-03-27): [`docs/GRAY-ROOM.md`](docs/GRAY-ROOM.md) § Observability (planned) — метрики/логи как roadmap; сейчас trace + logs.
 
 ### Code Cleanup Discovery Plan (Server: where/how)
 - [x] **CCP-S-01 where-to-scan**: Primary folders for cleanup scans зафиксированы: `src/transform/`, `src/services/core/request-processor/`, `src/actions/handlers/`, `scripts/`.

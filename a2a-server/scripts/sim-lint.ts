@@ -47,12 +47,18 @@ function main() {
         console.log(`📂 Found ${simulations.length} simulations\n`);
 
         for (const sim of simulations) {
-            const result = lintSimulation(sim.path, sim.name, args.fix);
+            const result = lintSimulation(sim.path, sim.name, {
+                fix: args.fix,
+                stepContract: args.stepContract,
+            });
             results.push(result);
         }
     } else if (args.sim) {
         const simPath = join(SIMULATIONS_DIR, args.sim);
-        const result = lintSimulation(simPath, args.sim, args.fix);
+        const result = lintSimulation(simPath, args.sim, {
+            fix: args.fix,
+            stepContract: args.stepContract,
+        });
         results.push(result);
     }
 

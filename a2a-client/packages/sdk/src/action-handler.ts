@@ -196,37 +196,6 @@ export async function handleExecuteAction(
 }
 
 
-/**
- * Extract step info from response (supports both legacy action.currentStep and new execute.script formats)
- * @deprecated Used for legacy compatibility only
- */
-function extractStepInfo(response: {
-    action?: { currentStep?: { id?: string; code?: string } };
-    execute?: { script?: { code?: string } };
-    context?: { session_id?: string };
-}): { stepId: string; code: string; sessionId: string } | null {
-    // New format: execute.script
-    if (response?.execute?.script?.code) {
-        const stepId = response.action?.currentStep?.id || 'current';
-        return {
-            stepId,
-            code: response.execute.script.code,
-            sessionId: response.context?.session_id || ''
-        };
-    }
-    
-    // Legacy format: action.currentStep
-    const step = response?.action?.currentStep;
-    if (step?.code && response?.context?.session_id) {
-        return {
-            stepId: step.id || 'current',
-            code: step.code,
-            sessionId: response.context.session_id
-        };
-    }
-    
-    return null;
-}
 
 /**
  * Check if response contains execute.form.choices (new protocol format)
@@ -280,28 +249,3 @@ export type ExecuteCodeFn = (
     }
 ) => Promise<unknown>;
 
-/**
- * Create executeCode adapter for @a2a/script-runner executeScript (legacy).
- * @deprecated Use createExecuteScript instead
- */
-export function createExecuteCode(executeScript: ExecuteScriptFn): ExecuteCodeFn {
-    return async function executeCode(
-        code: string,
-        context: Record<string, unknown> & {
-            projectPath?: string;
-            sessionId?: string;
-            stepId?: string;
-            previousOutput?: unknown;
-        }
-    ): Promise<unknown> {
-        const result = await executeScript(code, (context?.previousOutput ?? {}) as Record<string, unknown>, {
-            workingDir: context?.projectPath,
-            sessionId: context?.sessionId,
-            stepId: context?.stepId,
-        });
-        if (result?.success === false && result?.error) {
-            throw new Error(result.error);
-        }
-        return result?.data ?? result;
-    };
-}

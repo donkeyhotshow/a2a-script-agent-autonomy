@@ -10,7 +10,7 @@ import {join} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import Ajv, {ErrorObject} from 'ajv';
 import addFormats from 'ajv-formats';
-import {noLlmStepTransformContractWarnings} from '../sim-contract/step-transform-rules.js';
+import {collectNoLlmStepContractWarningsForSimulation} from '../sim-contract/step-transform-rules.js';
 
 // ============================================
 // Константы
@@ -470,6 +470,31 @@ export function validateFile(filePath: string, filename: string, opts: ValidateO
         result.warnings.push(`No schema defined for: ${filename}`);
     }
 
+    if (
+        filename === 'response.json' &&
+        data &&
+        typeof data === 'object' &&
+        !Array.isArray(data) &&
+        data !== null &&
+        'interrupt' in data &&
+        (data as Record<string, unknown>)['interrupt'] != null &&
+        typeof (data as Record<string, unknown>)['interrupt'] === 'object' &&
+        !Array.isArray((data as Record<string, unknown>)['interrupt'])
+    ) {
+        const intr = (data as Record<string, unknown>)['interrupt'] as Record<string, unknown>;
+        const intResult = validateJsonAgainstSchema(intr, 'interrupt-directive.schema.json');
+        if (!intResult.valid) {
+            result.valid = false;
+            for (const e of intResult.errors) {
+                result.errors.push({
+                    path: `interrupt${e.path}`,
+                    message: e.message,
+                    keyword: e.keyword,
+                });
+            }
+        }
+    }
+
     return result;
 }
 
@@ -527,7 +552,7 @@ export function validateSimulation(simPath: string, simName: string, opts: Valid
     }
 
     if (opts.stepContractChecks) {
-        result.warnings.push(...noLlmStepTransformContractWarnings(simPath));
+        result.warnings.push(...collectNoLlmStepContractWarningsForSimulation(simPath));
     }
 
     return result;

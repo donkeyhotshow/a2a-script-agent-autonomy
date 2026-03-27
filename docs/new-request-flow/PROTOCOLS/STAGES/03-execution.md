@@ -65,7 +65,7 @@
 | `list-directory` | 🔶 Частично реализовано |
 | `grep-search` | ❌ Не реализовано |
 | `file-exists` | ❌ Не реализовано |
-| `scan-directory` | 🔶 Частично реализовано |
+| `scan-directory` | ➖ Не как отдельный ключ; см. [actions/scan-directory.md](../actions/scan-directory.md) |
 | `edit-patch` | ❌ Не реализовано |
 | `run-script` | ❌ Не реализовано |
 

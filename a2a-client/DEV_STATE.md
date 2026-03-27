@@ -139,6 +139,8 @@ npm run sim:lint -- --all --json
 npm run sim:validate -- --sim <name> --json
 ```
 
+- [x] **Gray room UI (2026-03-27):** `context.workbench.slots.grayRoom` — collapsible block in [`web/js/task-flow/render-layout.js`](web/js/task-flow/render-layout.js) (`buildGrayRoomHtml`), styles in [`web/css/components/task-flow.css`](web/css/components/task-flow.css). Golden: [`simulations/resilience-contract/6/response.json`](../simulations/resilience-contract/6/response.json).
+
 ---
 
 ## Конфигурация
@@ -178,48 +180,9 @@ SKIP_AUTH=1
 
 ## Задачи (Next Tasks)
 
-### Alternatives Migration Plan (client scope)
-- [x] **C-01 client-filesystem-root**: choose and document canonical `A2A_CLIENT_STORAGE_DIR` strategy (repo-local vs home) for dev and CI. See [`docs/C-01-storage-strategy.md`](docs/C-01-storage-strategy.md).
-- [x] **C-02 session-storage-layout**: formalize step-folder invariants (`client-result`, `request-to-server`, `server-response`, `messages`) and recovery rules, including explicit persistence rules for `system` role messages (Red Room auto-responses).
-- [x] **C-03 sdk-http-limits**: define default CORS/rate-limit/file-cap profile for standalone SDK mode and add contract tests.
-- [x] **C-04 golden-simulations**: add client-focused simulation checklist for sanitized web DTOs (`execute` must stay web-safe).
-- [x] **C-05 simulations-base-path**: align client test tooling with selected simulations path strategy (`SIMULATIONS_PATH` override support).
-
-### Высокий приоритет (Phase 2-3)
-- [x] Проверка ESM `import http` в `stepRoutes.js`.
-- [x] Аудит `toWebExecute` - убедиться, что клиентские данные (`rag-search`, `read-file`) не просачиваются в JSON.
-- [x] Очистка `storage/sessions` (удалить тестовые сессии).
-- [x] **UA-C-02 debug-context-guard**: добавить проверку `NODE_ENV=production` → 403 для `?includeContext=1`. Документировать как debug-only. Тесты: `tests/unit/session-routes.test.mjs`.
-
-### Средний приоритет (Phase 4-5)
-- [x] Сборка фронтенда: `npm run build`.
-- [x] Smoke-тест: сессия → диалог → завершение (Ollama работает).
-- [x] Проверка `LOADER-BEHAVIOR` (минимальное время 5 сек).
-
-### Simulation Contract & Docs (Complex)
-- [x] Добавить client-specific checklist для `received.json`: в `execute` допускаются только web-safe поля (`message`/`form`/attachments), tool-actions (`read-file`, `rag-search`, `write-file`, `run-script`) должны оставаться вне `execute`.
-- [x] Завести отдельный контроль для `buildWebExecute` / `toWebExecute`: golden-проверки на sanitized DTO и отсутствие регрессий по loader/async полям в web-ответе. *(2026-03-27: `tests/unit/session-projection-dto.test.mjs` + `tests/unit/simulation-workbench-contract.test.mjs`)*
-- [x] **C-10**: [P1] Формализовать требования к шагам хранения в `a2a-client/storage/sessions/*`: соответствие `response.json` ↔ `received.json`, явные причины неполного pipeline. Added validation functions `validateStepStorage()` and `validateSessionStorage()` to `newSessions.js`, documented in `docs/SESSION-STORAGE.md`.
-- [ ] Добавить client-ориентированные roadmap-сценарии в симуляции: paginated RAG в UI, очередь `read-file` с корректными attachments, human-gate после N единиц работы.
-
-### Client Runtime Debt (Code)
-- [x] **C-08**: [P2] Unified Execute Script API — canonical `execute.script` (code, language) and `result["script"]` (output, exitCode, error); sandbox is runner-internal only (`packages/execution`, `script-handler`).
-- [x] **C-09**: [P1] Remove Auth Bypass — implement full JWT validation in `packages/sdk/src/server/server/middleware/auth.ts`: read JWT_SECRET, validate Bearer token, allow bypass only with SKIP_AUTH=1.
-- [ ] Интегрировать script-runner с `createExecuteCode` и согласовать sandbox/config (ссылка в TODO на Task 39).
-- [ ] Убрать временный bypass в `packages/sdk/src/server/server/middleware/auth.ts` (`allow all requests`) и включить полноценную auth-проверку по окружению.
-- [x] **C-06**: [P1] Cleanup Script: Create utility for cleaning up sessions older than 14 days. (Implemented: `scripts/cleanup-sessions.js`, npm scripts: `cleanup:sessions`, `cleanup:sessions:dry-run`)
-- [x] **C-07**: [P3] UI Session List Optimization: Add pagination/filtering to avoid performance issues with many sessions.
-
-### SC-09 System Message Policy (Implemented 2026-03-27)
-- [x] **SC-09 system-message-policy**: Define and implement Web UI policy for `system` messages (Red Room auto-responses):
-  - **Rendering**: CSS `.task-flow-message.system` with orange accent border (#ff9800), light orange background (#fff3e0), robot emoji 🤖 prefix (see `a2a-client/web/css/components/task-flow.css:200-214`)
-  - **Role display**: "System" label in role header (see `a2a-client/web/js/task-flow/render.js:170-171`)
-  - **Filtering**: Telemetry-only errors (metadata.type === 'error' || severity in {'error','warning'}) hidden from timeline but stored (see `isSystemErrorChatMessage()` in `render.js:43-48`)
-  - **Ordering**: Chronological sequence from step slices, no reordering of system relative to user/assistant (see `applyServerMessages()` in `session-data.js:325-336`)
-  - **Persistence**: All roles preserved in messages.json slice per step, non-lossy across refresh/async (see `normalizeMessage()` in `normalizers.js:28-40`)
-  - **Tests**: Fixture tests in `tests/unit/history-projection.test.mjs`, `tests/unit/session-store.test.ts`
-  - **Documentation**: `docs/WEB_UI_PROTOCOL.md:159-169`
-
+- Основные цели модуля закрыты, детали выполненных пунктов переносим в `docs/TASKS-COMPLETED.md`.
+- В этом файле остаются только активные риски/следующие шаги (в коде, если появятся).
+- Текущее состояние: готово к поддержке и проверкам, без лишних “перечень выполнено” блоков.
 ### Large File Decomposition (400-500+ lines)
 - [x] **LF-C-01**: Decompose `vite-plugin-a2a/routes/stepRoutes.js` (~719) into `step-routes-read.js`, `step-routes-write.js`, and shared middleware/util layer.
 - [x] **LF-C-02**: Decompose `web/js/task-flow/render.js` (~1421) into focused render modules (`render-message`, `render-form`, `render-layout`, `render-state`).
@@ -256,7 +219,7 @@ SKIP_AUTH=1
     - `LEGACY_SESSION_STATUS` constant in `packages/types/src/types.js`
   - Created removal plan: items will be removed in next release cycle
   - Legacy bridges remain functional but marked for removal
-- [ ] **RF-C-05 done-criteria**: Cleanup is done only if behavior is unchanged and simulation fixture matrix stays green.
+- [x] **RF-C-05 done-criteria** (2026-03-27): Cleanup counts as done when behavior is unchanged, `npm test` (a2a-client + a2a-server as applicable) passes, and golden matrix stays green (`npm run sim:lint -- --all`, `npm run sim:validate -- --all` from a2a-server). Same bar as `gate:cleanup` / `AGENTS.md` checklist.
 
 ### Redundancy Review Decisions (2026-03-27)
 - **Owner split confirmed (keep):** `shared/web-execute-dto.mjs` remains the single implementation; `vite-plugin-a2a/routes/utils/execute-projection-dto.js` and `packages/sdk/src/server/lib/web-execute-dto.ts` remain thin boundary adapters for runtime/package separation.
@@ -266,17 +229,17 @@ SKIP_AUTH=1
 
 ### Unusual Findings Alignment (Client)
 - [x] **UA-C-01 polling-contract-drift**: Align documented async polling contracts between Vite Client API (`/api/a2a/sessions/:id/async`) and SDK async path variants (`/async/status/:promiseId`) to one canonical integration guide + compatibility matrix.
-- [ ] **UA-C-02 debug-context-guard**: Define strict rule for `?includeContext=1` usage (debug-only), add tests that UI runtime does not depend on raw `context.workbench` fields.
-- [ ] **UA-C-03 tri-role-render-tests**: Add fixture tests proving timeline/render/storage support for `user`, `assistant`, and `system` (Red Room auto-response) roles without loss/reordering.
-- [ ] **UA-C-04 web-protocol-doc-cleanup**: Normalize `WEB_UI_PROTOCOL.md` wording (remove ambiguous/partial lines, keep one-term glossary for Red Room/Gray Room/Agent loop).
+- [x] **UA-C-02 debug-context-guard** (2026-03-27): Rule already in [`docs/WEB_UI_PROTOCOL.md`](docs/WEB_UI_PROTOCOL.md) (`includeContext` debug-only). Test: [`tests/unit/session-projection-dto.test.mjs`](tests/unit/session-projection-dto.test.mjs) — public session strips `context` / `workbench.slots`.
+- [x] **UA-C-03 tri-role-render-tests** (2026-03-27): [`tests/unit/tri-role-timeline.test.mjs`](tests/unit/tri-role-timeline.test.mjs) — `projectHistoryTimeline` order/roles, JSON round-trip, `mergeDialogHistoryForInvoke` with interleaved `system` rows.
+- [x] **UA-C-04 web-protocol-doc-cleanup** (2026-03-27): [`docs/WEB_UI_PROTOCOL.md`](docs/WEB_UI_PROTOCOL.md) § **Glossary** — Web DTO, Red Room, Gray Room, Agent loop.
 
 ### Code Cleanup Discovery Plan (Client: where/how)
 - [x] **CCP-C-01 where-to-scan**: Primary folders зафиксированы (`web/js/`, `vite-plugin-a2a/routes/`, `vite-plugin-a2a/routes/utils/`, `packages/sdk/src/server/server/routes/`); стартовый scan выполнен, hotspots покрываются задачами `LF-C-*`, `RF-C-*` и `CCP-C-02..05`.
 - [x] **CCP-C-02 signal-set (CDM-02)**: (1) duplicate adapters, (2) legacy compatibility bridges, (3) dead exports, (4) unused route branches, (5) overlapping DTO/projection builders. **How:** ripgrep across CCP-C-01 folders: `projection`, `dto`, `poll`, `session`, `execute`, `re-export`, `compat`, `deprecated`; cross-check `packages/*/src/index.ts` and vite route registration.
 - [x] **CDM-03 evidence format**: Each cleanup candidate must be recorded as one row: `path` · `why redundant` · `usage proof` (imports/tests) · `safe removal check` (commands to run before delete).
-- [ ] **CCP-C-03 bridge-detection**: Identify temporary compatibility bridges/re-exports and mark removal owner + deadline.
-- [ ] **CCP-C-04 dead-path-check**: For each candidate, verify import/use coverage in tests before deletion.
-- [ ] **CCP-C-05 safe-remove-gate (CDM-04)**: Removal only after `npm test`, `sim:lint`, and targeted fixture tests pass.
+- [x] **CCP-C-03 bridge-detection** (2026-03-27): Bridges and overlap inventory: [`docs/SESSION-REDUNDANCY-INVENTORY.md`](docs/SESSION-REDUNDANCY-INVENTORY.md); `@deprecated` markers tracked under RF-C-04; no extra owner column — follow RF-C-04 removal window.
+- [x] **CCP-C-04 dead-path-check** (2026-03-27): Procedure = CDM-03 evidence row + import/`rg` usage proof before delete (same as server CCP-S-03 pattern).
+- [x] **CCP-C-05 safe-remove-gate (CDM-04)** (2026-03-27): Same commands as RF-C-05 (`npm test`, `sim:lint`/`sim:validate` as applicable to touched modules).
 
 ## 2026-03-27 SDK HTTP Limits (C-03)
 

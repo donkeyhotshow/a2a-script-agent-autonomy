@@ -7,6 +7,7 @@ import {join} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {INTERNAL_CLIENT_ACTION_KEYS} from '../../../shared/internal-client-action-keys.mjs';
 import {VALID_EXECUTE_KEYS} from '../../src/actions/action-validator.js';
+import {noLlmStepTransformContractWarnings} from '../sim-contract/step-transform-rules.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = join(__filename, '..');
@@ -63,6 +64,18 @@ export interface CliArgs {
     verbose: boolean;
     fix: boolean;
     help: boolean;
+    /** SCHEMA.md no-LLM step transform checks (same messages as `sim-validate --step-contract`). */
+    stepContract: boolean;
+}
+
+/** Optional warnings: no-LLM step vs `server-transforms-*.json` (UA-S-02 / `scripts/sim-contract/step-transform-rules.ts`). */
+export function lintStepTransformContract(stepDir: string, stepRelativePath: string): LintError[] {
+    return noLlmStepTransformContractWarnings(stepDir).map((message) => ({
+        path: stepRelativePath || '.',
+        message,
+        severity: 'warning' as const,
+        fixable: false,
+    }));
 }
 
 // ============================================

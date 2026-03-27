@@ -15,6 +15,7 @@ export function parseArgs(): {
     verbose: boolean;
     fix: boolean;
     help: boolean;
+    stepContract: boolean;
 } {
     const args = process.argv.slice(2);
 
@@ -36,6 +37,7 @@ export function parseArgs(): {
         verbose: args.includes('--verbose') || args.includes('-v'),
         fix: args.includes('--fix'),
         help: args.includes('--help') || args.includes('-h'),
+        stepContract: args.includes('--step-contract'),
     };
 }
 
@@ -51,6 +53,7 @@ Options:
   --json, -j         JSON output
   --verbose, -v      Verbose output
   --fix              Auto-fix issues (trailing commas)
+  --step-contract    Extra warnings: no-LLM steps vs server-transforms (same as sim:validate --step-contract)
   --help, -h         Show help
 
 Examples:

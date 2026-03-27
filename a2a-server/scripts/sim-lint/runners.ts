@@ -17,11 +17,17 @@ import {
     lintFirstResponse,
     lintDirectoryStructure,
     lintRequiredFiles,
+    lintStepTransformContract,
 } from './registry.js';
 
 // ============================================
 // Основные функции
 // ============================================
+
+export interface LintSimulationOptions {
+    fix: boolean;
+    stepContract: boolean;
+}
 
 export function lintFile(filePath: string, filename: string, simPath: string, stepNumber: number | null, fix: boolean): FileLintResult {
     const result: FileLintResult = {
@@ -98,7 +104,8 @@ export function lintFile(filePath: string, filename: string, simPath: string, st
     return result;
 }
 
-export function lintSimulation(simPath: string, simName: string, fix: boolean): SimulationLintResult {
+export function lintSimulation(simPath: string, simName: string, opts: LintSimulationOptions): SimulationLintResult {
+    const {fix, stepContract} = opts;
     const result: SimulationLintResult = {
         name: simName,
         path: simPath,
@@ -141,6 +148,9 @@ export function lintSimulation(simPath: string, simName: string, fix: boolean): 
                         const fileResult = lintFile(filePath, stepFile, simPath, stepNum, fix);
                         result.files.push(fileResult);
                     }
+                    if (stepContract) {
+                        result.errors.push(...lintStepTransformContract(stepPath, entry.name));
+                    }
                 } catch {
                     // Skip if cannot read
                 }
@@ -163,6 +173,9 @@ export function lintSimulation(simPath: string, simName: string, fix: boolean): 
                         const filePath = join(subPath, subFile);
                         const fileResult = lintFile(filePath, subFile, simPath, parentStep, fix);
                         result.files.push(fileResult);
+                    }
+                    if (stepContract) {
+                        result.errors.push(...lintStepTransformContract(subPath, entry.name));
                     }
                 } catch {
                     // Skip if cannot read
@@ -188,6 +201,9 @@ export function lintSimulation(simPath: string, simName: string, fix: boolean): 
                     result.files.push(fileResult);
                 }
             }
+        }
+        if (stepContract && existsSync(join(simPath, 'request.json'))) {
+            result.errors.push(...lintStepTransformContract(simPath, simName));
         }
     } else {
         // Numbered steps: any folder with request.json must have the full step bundle

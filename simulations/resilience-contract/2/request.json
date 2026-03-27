@@ -1,0 +1,16 @@
+{
+  "context": {
+    "task": "Golden: resilience contract (paginated RAG drain, read-file queue, human gate).",
+    "execution": {
+      "action": "agent",
+      "step": "human_gate"
+    },
+    "workbench": {
+      "sections": {}
+    },
+    "history": []
+  },
+  "result": {
+    "choice": "proceed_resilience"
+  }
+}

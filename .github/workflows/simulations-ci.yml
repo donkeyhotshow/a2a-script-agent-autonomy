@@ -5,13 +5,15 @@ on:
     branches: [main, develop]
     paths:
       - 'simulations/**'
-      - 'a2a-server/scripts/sim-*.ts'
+      - 'a2a-server/scripts/**'
       - 'a2a-server/package.json'
+      - 'docs/new-request-flow/json-schemas/**'
   pull_request:
     paths:
       - 'simulations/**'
-      - 'a2a-server/scripts/sim-*.ts'
+      - 'a2a-server/scripts/**'
       - 'a2a-server/package.json'
+      - 'docs/new-request-flow/json-schemas/**'
   workflow_dispatch:
 
 jobs:
@@ -82,6 +84,12 @@ jobs:
             echo "❌ Some simulations have validation errors" >> $GITHUB_STEP_SUMMARY
             npm run sim:validate:all || true
           fi
+
+      - name: Contract debt report (informational)
+        run: |
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Simulation contract debt (lint + validate, incl. step-contract delta)" >> $GITHUB_STEP_SUMMARY
+          npm run sim:contract-report >> $GITHUB_STEP_SUMMARY || true
 
   test:
     name: Test Simulations

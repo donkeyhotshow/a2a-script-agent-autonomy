@@ -8,7 +8,7 @@
 | **Gray room** | Server runs substeps (compress, thinking, re-LLM) | **None** — client gets one response after the chain finishes |
 | **Black room** | (Planned) `ai-integration` proxy loop | Out of current scope — see [WORKFLOW.md](../../docs/WORKFLOW.md) |
 
-**Status:** Implemented in [`DialogRequestProcessor`](../src/services/core/request-processor/dialog-request-processor.ts) (`processDialogResponseWithInterruptLoop`, `applyInterrupt`, `extractInterrupt`).
+**Status:** Implemented as an **overlay** on one invoke: [`DialogRequestProcessor`](../src/services/core/request-processor/dialog-request-processor.ts) delegates to [`GrayRoomOrchestrator.runLoop()`](../src/services/core/request-processor/gray-room-orchestrator.ts). Interrupt trace for the client is merged via [`mergeInterruptTraceIntoContext`](../src/transform/interrupt-trace-contract.ts) (see § Concept Boundary).
 
 **Related types:** [`InterruptDirective`](../src/transform/types.ts).
 
@@ -37,7 +37,7 @@ Client → Server
 | **Core mechanism** | Same `InterruptDirective` handling via `applyInterrupt` in [`gray-room-orchestrator.ts`](../src/services/core/request-processor/gray-room-orchestrator.ts) |
 | **Trigger detection** | `detectGrayRoomTrigger()` — checks explicit flag → env toggle → policy |
 | **Loop execution** | `GrayRoomOrchestrator.runLoop()` — same interrupt budget, transform, LLM cycle |
-| **Result merging** | `mergeTraceIntoResult()` — adds `interruptTrace` to final result |
+| **Result merging** | `mergeTraceIntoResult()` → [`mergeInterruptTraceIntoContext`](../src/transform/interrupt-trace-contract.ts) — writes `context.workbench.slots.interruptTrace` only |
 
 ### Data flow boundaries
 
@@ -60,6 +60,87 @@ Client → Server
 - "Gray room" = product/feature name for server-side LLM chaining
 - "Interrupt loop" = internal code name (`processDialogResponseWithInterruptLoop`, `runLoop`)
 - Both refer to the same mechanism; "overlay" emphasizes product-level UX layer
+
+## Server orchestration (schema entry points)
+
+Gray room does **not** introduce a second transform pipeline. It uses the **same** `prompts/transforms/<schemaName>/` layout and the same `runPromptsTransform` / response-transform machinery as the primary dialog invoke. Only the **active folder name** (`activeSchemaName`) can change between turns inside `runLoop`.
+
+### Primary invoke → first `schemaName`
+
+| Step | Code / data |
+|------|-------------|
+| Router / client | `execution.action` is one of [`LLM_PIPELINE_ACTIONS`](../../shared/router-static-choices.json) (`dialog`, `agent`, `task-decomposition`, …) **or** `context.transformSchema` is set explicitly. |
+| Map action → default schema folder | [`ACTION_TO_SCHEMA`](../../shared/router-static-choices.json) in [`router-static.ts`](../src/config/router-static.ts) (loaded from `shared/router-static-choices.json`). |
+| Resolve full schema string | [`resolveTransformSchema()`](../src/services/core/request-processor/normalization.ts): priority `context.transformSchema`, else `ACTION_TO_SCHEMA[action]` when `result.message` / `task` / `message` is present. |
+| Folder name for transforms | [`extractSchemaName()`](../src/services/core/request-processor/normalization.ts) — first path segment (e.g. `dialog/3` → `dialog`). That value is the initial `schemaName` passed into [`GrayRoomOrchestrator.runLoop()`](../src/services/core/request-processor/gray-room-orchestrator.ts). |
+| Caller | [`DialogRequestProcessor.doProcess()`](../src/services/core/request-processor/dialog-request-processor.ts) computes `schemaName` and passes it to `runLoop`; recovery path uses the same (`response-path.ts` uses the same `resolveTransformSchema` + `extractSchemaName`). |
+
+### Inside `runLoop`: `activeSchemaName` and `interrupt.schema`
+
+- On entry, `activeSchemaName = schemaName` (the primary invoke’s transform pack).
+- Each iteration runs the **response** transform with the current `activeSchemaName` (`runResponseTransform(activeSchemaName, …)`).
+- After [`applyInterrupt()`](../src/services/core/request-processor/gray-room-orchestrator.ts), if the handler returns **`continueLoop: true`** **and** `interrupt.schema` is a non-empty string, the server sets **`activeSchemaName = interrupt.schema.trim()`** before rebuilding `request.md` and running the next main LLM turn.
+- The **next** request rebuild uses `runPromptsTransform(..., activeSchemaName, ..., 'request', …)` — same API as the first LLM leg, only the directory name under `prompts/transforms/` may differ.
+
+`interrupt.schema` is **not** validated against `ACTION_TO_SCHEMA`. It is a **transform-pack directory name** (must exist on disk under `prompts/transforms/` with the usual `server-transforms-request.json` / `server-transforms-response.json` and templates). Typical use: a specialized pack for a follow-up turn (e.g. alternate prompts) without adding a new top-level router action.
+
+### Optional `gray-room-*` assets (no parallel pipeline)
+
+Adding **`prompts/transforms/<your-name>/`** (with `server-transforms-*.json` and `*-request.md` per [`pipeline/prompts.ts`](../src/transform/pipeline/prompts.ts) conventions) is enough to support `interrupt.schema: "<your-name>"` on `continueLoop`. You do **not** need a separate root pipeline, duplicate orchestrator, or mandatory registration in `ACTION_TO_SCHEMA` **unless** you also want that name as a **primary** `execution.action` target. Avoid maintaining a second parallel tree (e.g. “gray-room-only” prompts outside `prompts/transforms/`) unless there is a clear reason — the runtime always resolves through the same transform loader.
+
+## Orchestration loop (runtime)
+
+| Stage | Behavior |
+|-------|----------|
+| **Entry** | [`DialogRequestProcessor.doProcess()`](../src/services/core/request-processor/dialog-request-processor.ts) runs the LLM, then always calls [`GrayRoomOrchestrator.runLoop()`](../src/services/core/request-processor/gray-room-orchestrator.ts). Recovery uses [`recoverDialogFromLlmPromise()`](../src/services/core/request-processor/response-path.ts) → same `runLoop`. |
+| **Per iteration** | `runResponseTransform` → `extractInterrupt` → if none, `mergeTraceIntoResult` and return. If `interrupt` and `when` satisfied → budget → `applyInterrupt` → if `continueLoop`, rebuild `request.md` via `runPromptsTransform`, then main LLM again. |
+| **Budget** | `A2A_MAX_INTERRUPT_TURNS` (default 10) on the orchestrator; per-interrupt `maxTurns` clamps via `min`. At 0 with interrupt still present → `context.interrupt_truncated: true` and return. |
+| **Merge to client** | Final `ProcessResult` gets `mergeInterruptTraceIntoContext` → [`interrupt-trace-contract.ts`](../src/transform/interrupt-trace-contract.ts) only; `workbench` / `history` come from transform output and handlers. |
+
+### Error paths (sidecar / sub-LLM)
+
+| Failure | Outcome |
+|---------|---------|
+| **Response transform** (`runResponseTransform` → `runPromptsTransform` failure) | `ProcessResult` `outcome: 'failed'` — loop stops; no partial client merge beyond error. |
+| **Follow-up request rebuild** (`runPromptsTransform` for next turn) | Same — `failed` with message. |
+| **Main LLM after interrupt** (chat `!== 202` or poll timeout) | `failed` with short error text. |
+| **`compress_history` / `thinking` sidecar LLM** | Caught; trace row `sidecar_llm` with `ok: false`; `compress_history` still returns `continueLoop: false` with best-effort context; `thinking` returns `continueLoop: true` even if thinking slots empty. |
+| **`auto_read_file`** | Missing path → trace `missing_path`; read failure → `ok: false`, context unchanged for that file. |
+| **`auto_rag_page`** | See [`mergeServerRagPageIntoContext`](../src/services/rag/auto-rag-page-server.ts); merge-only if query/path missing. |
+| **Transform execute shape** | `warnOnInvalidExecute` — logs or throws if strict mode env. |
+
+## Isolation and scheduling (policy) — GR-S-05
+
+- **Scope:** One HTTP `/api/v1/invoke` (or session bridge equivalent); no background scheduler for gray room.
+- **Tools:** Interrupt handlers use server actions (`read-file` for `auto_read_file`, RAG via `@a2a/rag` for `auto_rag_page` when configured); no writes to client session storage from the loop.
+- **Sandbox:** Same workspace / env constraints as the rest of the server; no extra “gray room only” sandbox in v1.
+
+## Runtime vs roadmap (gap) — GR-S-07
+
+- **`shouldUseGrayRoom()` / `detectGrayRoomTrigger()`** exist in [`gray-room-orchestrator.ts`](../src/services/core/request-processor/gray-room-orchestrator.ts) for policy and diagnostics; **they are not wired to skip `runLoop()`** today. The loop runs whenever the dialog processor completes an LLM call and the **response transform** produces `interrupt` on transform output.
+- **`A2A_GRAY_ROOM_ENABLED`** and **`A2A_GRAY_ROOM_MAX_TURNS`** affect trigger helpers and env; the interrupt loop’s main budget is still **`A2A_MAX_INTERRUPT_TURNS`** unless overridden when constructing `GrayRoomOrchestrator`.
+
+## Transform: `$.llm.interrupt` → `$out.interrupt` — GR-S-13
+
+- The **response** pipeline reads LLM markdown from disk as `input.llm.response` / `llm` wrapper (see [`runPromptsTransform`](../src/transform/pipeline/prompts.ts) and `response.md` staging in `gray-room-orchestrator` `runResponseTransform`).
+- Transforms should copy or map `interrupt` onto the **same object** as `context` / `execute` after the pipeline (e.g. `copy` / `set` from `$.llm` to `$out`). Exact ops are per-schema `server-transforms-response.json`; keep behavior consistent across schemas so `extractInterrupt` always sees a top-level `interrupt` on transform output.
+
+## Simulations and CI — GR-S-06
+
+- Goldens: `N-sub-M/` folders (see [`simulations/SCHEMA.md`](../../simulations/SCHEMA.md)); `sim-lint` / `sim-validate` with `--step-contract` enforce no-LLM transform rules (see `scripts/sim-contract/step-transform-rules.ts`).
+- **CI:** `npm run sim:contract-report` prints structural validity + warning counts and step-contract **extra** warnings (JSON) for the GitHub Actions summary (informational; does not replace `sim:quality`).
+
+## JSON schemas (reference)
+
+| File | Role |
+|------|------|
+| [`interrupt-directive.schema.json`](../../docs/new-request-flow/json-schemas/interrupt-directive.schema.json) | `interrupt` object shape (GR-S-09); `sim-validate` validates `interrupt` when present on `response.json`. |
+| [`server-interrupt-substep-request.schema.json`](../../docs/new-request-flow/json-schemas/server-interrupt-substep-request.schema.json) / [`server-interrupt-substep-response.schema.json`](../../docs/new-request-flow/json-schemas/server-interrupt-substep-response.schema.json) | Loose fixtures for `N-sub-M` (GR-S-10); optional future strict validation. |
+
+## Observability (planned) — GR-S-14
+
+- **Today:** logs + `interruptTrace` + **`grayRoom`** control envelope in `context.workbench.slots` for UI/ops.
+- **Planned:** counters per `reason`, chain depth histogram, sidecar failure rate — tie to `/metrics` (beyond the static envelope).
 
 ## Why use it
 
@@ -142,6 +223,10 @@ The **response** transform must place `interrupt` on the same object that carrie
 ## Client visibility: `interruptTrace`
 
 Each completed dialog invoke may include **`context.workbench.slots.interruptTrace`**: an ordered array of [`ServerInterruptTraceEvent`](../src/transform/types.ts) objects (`llm_output`, `response_transform`, `interrupt_handler`, `request_rebuild`, `sidecar_llm`). The Web task-flow UI renders them as a collapsible **“Server LLM chain”** block (see `a2a-client/web/js/task-flow/render.js`).
+
+## Client visibility: `grayRoom` (GR-S-08)
+
+Each invoke that runs [`GrayRoomOrchestrator.runLoop()`](../src/services/core/request-processor/gray-room-orchestrator.ts) merges **`context.workbench.slots.grayRoom`**: a [`GrayRoomControlEnvelope`](../src/transform/types.ts) (`enabled`, `planId`, `phase`, `maxTurns`, `turn`, `remainingBudget`, `status`, `lastReason`, `timestamps`, `traceRef`). Updated on every successful return from the loop (including `interrupt_truncated`). Failed paths (transform/LLM hard errors) do not write the slot. The Web task-flow UI renders a collapsible **Gray room** block via `buildGrayRoomHtml()` in [`a2a-client/web/js/task-flow/render-layout.js`](../../a2a-client/web/js/task-flow/render-layout.js) (alongside **Server LLM chain** / `interruptTrace`). Golden fixture: [`simulations/resilience-contract/6/response.json`](../../simulations/resilience-contract/6/response.json).
 
 ## Limitations (current code)
 

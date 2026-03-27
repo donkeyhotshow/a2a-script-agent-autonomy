@@ -1,0 +1,10 @@
+{
+  "projectId": "golden-rc",
+  "sessionId": "sess-rc-1",
+  "result": {
+    "read-file": {
+      "path": "pkg/b.md",
+      "content": "# B\nsecond chunk\n"
+    }
+  }
+}

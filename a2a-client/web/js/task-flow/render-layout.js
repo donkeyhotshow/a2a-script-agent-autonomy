@@ -37,6 +37,35 @@
         return `<details class="task-flow-interrupt-trace"><summary class="task-flow-interrupt-trace-summary">Server LLM chain (${events.length} steps)</summary><ol class="task-flow-interrupt-trace-list">${rows}</ol></details>`;
     }
 
+    /** GR-S-08: `context.workbench.slots.grayRoom` control envelope (server interrupt loop metadata). */
+    function buildGrayRoomHtml(context) {
+        const g = context?.workbench?.slots?.grayRoom;
+        if (!g || typeof g !== 'object') return '';
+        const rows = [];
+        if (g.phase != null) rows.push(['Phase', String(g.phase)]);
+        if (g.status != null) rows.push(['Status', String(g.status)]);
+        if (g.turn != null) rows.push(['Turn', String(g.turn)]);
+        if (g.maxTurns != null) rows.push(['Max turns', String(g.maxTurns)]);
+        if (g.remainingBudget != null) rows.push(['Remaining budget', String(g.remainingBudget)]);
+        if (g.lastReason) rows.push(['Last reason', String(g.lastReason)]);
+        if (g.planId) rows.push(['Plan', String(g.planId)]);
+        if (g.traceRef && typeof g.traceRef === 'object' && g.traceRef.length != null) {
+            rows.push(['Trace length', String(g.traceRef.length)]);
+        }
+        if (g.timestamps && typeof g.timestamps === 'object') {
+            if (g.timestamps.startedAt) rows.push(['Started', String(g.timestamps.startedAt)]);
+            if (g.timestamps.lastUpdateAt) rows.push(['Updated', String(g.timestamps.lastUpdateAt)]);
+        }
+        if (rows.length === 0) return '';
+        const inner = rows
+            .map(
+                ([k, v]) =>
+                    `<div class="task-flow-gray-room-row"><span class="task-flow-gray-room-k">${escapeHtml(k)}</span> <span class="task-flow-gray-room-v">${escapeHtml(v)}</span></div>`
+            )
+            .join('');
+        return `<details class="task-flow-gray-room"><summary class="task-flow-gray-room-summary">Gray room</summary><div class="task-flow-gray-room-body">${inner}</div></details>`;
+    }
+
     function buildWorkbenchSectionsHtml(context) {
         const sections = context?.workbench?.sections;
         if (!sections) return '';
@@ -115,8 +144,9 @@
         }
 
         const interruptTraceHtml = buildInterruptTraceHtml(context);
+        const grayRoomHtml = buildGrayRoomHtml(context);
         const workbenchSectionsHtml = buildWorkbenchSectionsHtml(context);
-        executionStepHtml = executionStepHtml + interruptTraceHtml + workbenchSectionsHtml;
+        executionStepHtml = executionStepHtml + interruptTraceHtml + grayRoomHtml + workbenchSectionsHtml;
 
         const result = data?.result;
         const protocolCompleted =

@@ -134,6 +134,45 @@
   margin-right: 4px;
 }
 
+.task-flow-gray-room {
+  margin: 6px 0 10px;
+  padding: 8px 10px;
+  border-radius: var(--radius-md);
+  border: 1px solid color-mix(in srgb, var(--color-accent, #5c6bc0) 35%, var(--color-border-light));
+  background: color-mix(in srgb, var(--color-accent, #5c6bc0) 8%, var(--color-bg-tertiary));
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.task-flow-gray-room-summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.task-flow-gray-room-body {
+  margin-top: 8px;
+  display: grid;
+  gap: 4px;
+}
+
+.task-flow-gray-room-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  line-height: 1.35;
+}
+
+.task-flow-gray-room-k {
+  color: var(--color-text-muted);
+  min-width: 7rem;
+}
+
+.task-flow-gray-room-v {
+  color: var(--color-text-primary);
+  word-break: break-word;
+}
+
 .task-flow-dialog-error {
   margin: 0 16px 8px;
   padding: 8px 12px;

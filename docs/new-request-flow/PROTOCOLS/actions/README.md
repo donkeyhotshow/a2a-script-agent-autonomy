@@ -18,7 +18,7 @@
 | `list-directory` | [list-directory.md](actions/list-directory.md) | 🔶 | Список файлов в директории |
 | `grep-search` | [grep-search.md](actions/grep-search.md) | ❌ | Текстовый поиск по файлам |
 | `file-exists` | [file-exists.md](actions/file-exists.md) | ❌ | Проверка существования файла |
-| `scan-directory` | [scan-directory.md](actions/scan-directory.md) | 🔶 | Сканирование директорий |
+| `scan-directory` | [scan-directory.md](actions/scan-directory.md) | ➖ | Зарезервировано; используйте `list-directory` + `grep-search` |
 | `edit-patch` | [edit-patch.md](actions/edit-patch.md) | ❌ | Применение патча |
 | `run-script` | [run-script.md](actions/run-script.md) | ❌ | Запуск предопределенных скриптов |
 
@@ -27,6 +27,7 @@
 - ✅ **Реализовано** - полный протокол создан
 - 🔶 **Частично** - протокол требует доработки
 - ❌ **Не реализовано** - протокол только планируется
+- ➖ **Не отдельное действие** - зарезервировано или сведено к другим ключам (см. страницу действия)
 
 ## Структура каждого протокола
 

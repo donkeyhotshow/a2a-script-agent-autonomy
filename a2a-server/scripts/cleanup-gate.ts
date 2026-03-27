@@ -5,7 +5,7 @@
  */
 import {execSync} from 'node:child_process';
 
-function runJsonCommand(command: string): {valid?: boolean} {
+function runJsonCommand(command: string): {valid?: boolean; warningCount?: number} {
     const raw = execSync(command, {encoding: 'utf8', stdio: ['ignore', 'pipe', 'inherit']});
     const jsonStart = raw.indexOf('{');
     if (jsonStart < 0) {
@@ -28,7 +28,11 @@ function main() {
                 rule: 'tests pass && sim:lint.valid && sim:validate.valid (warnings allowed)',
                 ok,
                 lint: {valid: lintValid},
-                validate: {valid: validateValid},
+                validate: {
+                    valid: validateValid,
+                    warningCount: validateOutput.warningCount,
+                    contractComplete: validateOutput.contractComplete,
+                },
             },
             null,
             2

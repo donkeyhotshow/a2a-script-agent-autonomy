@@ -49,6 +49,24 @@ describe('session-projection-dto', () => {
         expect(projected.context).toEqual(session.context);
     });
 
+    /** UA-C-02: normal UI path must not expose raw workbench / slots — only ?includeContext=1 */
+    it('strips full context including workbench.slots on public session', () => {
+        const session = {
+            id: 'sess_wb',
+            context: {
+                execution: { action: 'agent', step: 'read_code' },
+                workbench: {
+                    sections: {},
+                    slots: { grayRoom: { enabled: true, phase: 'completed', status: 'completed' } },
+                },
+            },
+            execute: { message: 'done' },
+        };
+        const projected = toPublicSession(session, false);
+        expect(projected.context).toBeUndefined();
+        expect(projected.workbench).toBeUndefined();
+    });
+
     it('normalizes next response execute from projected session when top execute missing', () => {
         const out = toPublicNextResponse({
             success: true,

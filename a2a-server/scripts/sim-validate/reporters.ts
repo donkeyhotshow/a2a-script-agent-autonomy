@@ -44,16 +44,34 @@ export function main(): void {
     process.exit(ok ? 0 : 1);
 }
 
+function simulationWarningCount(r: SimulationValidationResult): number {
+    let n = r.warnings.length;
+    for (const f of r.files) {
+        n += f.warnings.length;
+    }
+    return n;
+}
+
 function printValidationResults(results: SimulationValidationResult[], json: boolean, verbose: boolean): void {
     if (json) {
+        const structuralValid = results.every(r => r.valid);
+        let warningCount = 0;
+        for (const r of results) {
+            warningCount += simulationWarningCount(r);
+        }
+        const contractComplete = warningCount === 0;
         const payload = {
-            valid: results.every(r => r.valid),
+            valid: structuralValid,
+            structuralValid,
+            contractComplete,
+            warningCount,
             simulations: results.map(r => ({
                 name: r.name,
                 path: r.path,
                 valid: r.valid,
                 errors: r.errors,
                 warnings: r.warnings,
+                warningCount: simulationWarningCount(r),
                 ...(verbose ? {files: r.files} : {}),
             })),
         };

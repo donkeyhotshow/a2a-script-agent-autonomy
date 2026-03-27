@@ -1,0 +1,12 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://a2a-script-agent/new-request-flow/json-schemas/server-interrupt-substep-request.schema.json",
+  "title": "Interrupt substep request fixture (N-sub-M)",
+  "description": "Optional strictness for simulations/agent-*/N-sub-M/request.json — same shape family as server invoke; substeps are server-only (see simulations/SCHEMA.md).",
+  "type": "object",
+  "additionalProperties": true,
+  "properties": {
+    "context": { "type": "object" },
+    "result": { "type": "object" }
+  }
+}

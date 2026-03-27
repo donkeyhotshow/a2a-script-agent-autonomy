@@ -1,0 +1,10 @@
+{
+  "projectId": "golden-rc",
+  "sessionId": "sess-rc-1",
+  "execute": {
+    "message": "Searching the codebase…",
+    "attachments": {
+      "ragQuery": "resilience pagination drain"
+    }
+  }
+}

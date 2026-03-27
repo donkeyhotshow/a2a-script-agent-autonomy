@@ -22,6 +22,13 @@
  */
 
 export * from './types.js';
+export {
+    INTERRUPT_TRACE_SLOT_KEY,
+    INTERRUPT_TRACE_CONTEXT_PATH,
+    GRAY_ROOM_SLOT_KEY,
+    mergeInterruptTraceIntoContext,
+    mergeGrayRoomSlotIntoContext,
+} from './interrupt-trace-contract.js';
 export * from './jsonpath.js';
 export * from './operations.js';
 export * from './pipeline.js';

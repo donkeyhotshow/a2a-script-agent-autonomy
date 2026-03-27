@@ -20,6 +20,30 @@ export interface InterruptWhenClause {
   historyMaxLength?: number;
 }
 
+/**
+ * GR-S-08 — Control envelope for gray-room / interrupt loop (UI + ops).
+ * Written under `context.workbench.slots.grayRoom` by `GrayRoomOrchestrator` on each return.
+ */
+export interface GrayRoomControlEnvelope {
+  /** Loop is active for this invoke (always true when slot is written from `runLoop`). */
+  enabled: boolean;
+  /** Correlate with server request / promise (default: `promiseId`). */
+  planId?: string;
+  phase: 'response_transform' | 'interrupt_handler' | 'follow_up_llm' | 'completed';
+  /** Global interrupt budget configured on the orchestrator (e.g. `A2A_MAX_INTERRUPT_TURNS`). */
+  maxTurns: number;
+  /** Loop iteration index (0 = primary LLM output, increments after each follow-up LLM). */
+  turn: number;
+  /** Remaining interrupt budget after clamps and decrements. */
+  remainingBudget?: number;
+  status: 'running' | 'completed' | 'truncated';
+  /** Last handled `interrupt.reason` when applicable. */
+  lastReason?: string;
+  timestamps: {startedAt: string; lastUpdateAt: string};
+  /** Mirrors `interruptTrace.length` for quick correlation. */
+  traceRef?: {length: number};
+}
+
 export interface InterruptDirective {
   /** Type of interrupt — determines server behavior */
   reason: 'compress_history' | 'auto_read_file' | 'auto_rag_page' | 'thinking' | 'clarify' | string;
@@ -38,6 +62,7 @@ export interface InterruptDirective {
 /**
  * One row in `context.workbench.slots.interruptTrace` — server-only LLM / transform chain for UI/debug.
  * Order in the array is chronological.
+ * @see `./interrupt-trace-contract.js` — canonical path and merge helper (UA-S-01).
  */
 export type ServerInterruptTraceEvent =
   | { kind: 'llm_output'; phase: 'primary' | 'follow_up'; chars: number }
